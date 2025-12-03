@@ -1,21 +1,24 @@
 import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Mail, Phone, Building2, User } from "lucide-react";
+import { Plus, Mail, Phone, User, MapPin, CheckCircle2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
+import { PageLayout } from "@/components/PageLayout";
+import { PageHeader } from "@/components/PageHeader";
 
 interface Lead {
   id: string;
   nome: string;
-  empresa?: string;
+  cpf?: string;
   email?: string;
-  telefone?: string;
+  contato?: string;
+  endereco?: string;
   observacoes?: string;
   status: "novo" | "contato" | "proposta" | "negociacao" | "ganho" | "perdido";
 }
@@ -34,18 +37,19 @@ export default function Leads() {
     {
       id: "1",
       nome: "Maria Silva",
-      empresa: "Tech Solutions",
       email: "maria@techsolutions.com",
-      telefone: "(11) 98765-4321",
+      contato: "(11) 98765-4321",
+      cpf: "123.456.789-00",
+      endereco: "Rua A, 123",
       observacoes: "Interessada em projeto residencial",
       status: "novo",
     },
     {
       id: "2",
       nome: "João Santos",
-      empresa: "Construções ABC",
       email: "joao@construcoesabc.com",
-      telefone: "(11) 91234-5678",
+      contato: "(11) 91234-5678",
+      cpf: "987.654.321-00",
       observacoes: "Projeto comercial de grande porte",
       status: "contato",
     },
@@ -54,11 +58,13 @@ export default function Leads() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [isConvertOpen, setIsConvertOpen] = useState(false);
   const [formData, setFormData] = useState({
     nome: "",
-    empresa: "",
+    cpf: "",
     email: "",
-    telefone: "",
+    contato: "",
+    endereco: "",
     observacoes: "",
   });
   const { toast } = useToast();
@@ -90,9 +96,10 @@ export default function Leads() {
 
     setFormData({
       nome: "",
-      empresa: "",
+      cpf: "",
       email: "",
-      telefone: "",
+      contato: "",
+      endereco: "",
       observacoes: "",
     });
     setIsDialogOpen(false);
@@ -123,107 +130,128 @@ export default function Leads() {
     });
   };
 
+  const handleConvertToClient = () => {
+    if (!selectedLead) return;
+    
+    // Aqui integraria com a API para criar o cliente e atualizar o lead
+    toast({
+      title: "Sucesso!",
+      description: `${selectedLead.nome} foi convertido em cliente.`,
+    });
+    
+    setIsConvertOpen(false);
+    setIsDetailOpen(false);
+  };
+
   const getLeadsByStatus = (status: Lead["status"]) => {
     return leads.filter((lead) => lead.status === status);
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-medium tracking-tight">Leads</h1>
-          <p className="text-sm text-black/60 mt-1">Gerencie seus leads em formato Kanban</p>
-        </div>
-
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="rounded-full bg-[hsl(var(--primary))] text-white hover:bg-[hsl(var(--primary))]/90 transition-colors px-5 py-2.5 text-sm">
-              <Plus className="mr-2 h-4 w-4" />
-              Novo Lead
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>Novo Lead</DialogTitle>
-              <DialogDescription>
-                Cadastre um novo lead no sistema
-              </DialogDescription>
-            </DialogHeader>
-
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="nome">Nome *</Label>
-                <Input
-                  id="nome"
-                  value={formData.nome}
-                  onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
-                  placeholder="Nome do lead"
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="empresa">Empresa</Label>
-                <Input
-                  id="empresa"
-                  value={formData.empresa}
-                  onChange={(e) => setFormData({ ...formData, empresa: e.target.value })}
-                  placeholder="Nome da empresa"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    placeholder="email@exemplo.com"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="telefone">Telefone</Label>
-                  <Input
-                    id="telefone"
-                    value={formData.telefone}
-                    onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
-                    placeholder="(11) 98765-4321"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="observacoes">Observações</Label>
-                <Textarea
-                  id="observacoes"
-                  value={formData.observacoes}
-                  onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
-                  placeholder="Informações adicionais sobre o lead"
-                  rows={3}
-                />
-              </div>
-
-              <div className="flex gap-2 pt-4">
-                <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)} className="flex-1">
-                  Cancelar
+    <PageLayout
+      header={
+        <PageHeader 
+          title="Leads" 
+          description="Gerencie seus leads em formato Kanban"
+          children={
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button className="rounded-full bg-[hsl(var(--primary))] text-white hover:bg-[hsl(var(--primary))]/90 transition-colors px-5 py-2.5 text-sm">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Novo Lead
                 </Button>
-                <Button type="submit" className="flex-1 vrz-button-primary">
-                  Salvar
-                </Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
-      </div>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>Novo Lead</DialogTitle>
+                  <DialogDescription>
+                    Cadastre um novo lead no sistema
+                  </DialogDescription>
+                </DialogHeader>
 
-      {/* Kanban Board */}
+                <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="nome">Nome *</Label>
+                    <Input
+                      id="nome"
+                      value={formData.nome}
+                      onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
+                      placeholder="Nome do lead"
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="cpf">CPF</Label>
+                    <Input
+                      id="cpf"
+                      value={formData.cpf}
+                      onChange={(e) => setFormData({ ...formData, cpf: e.target.value })}
+                      placeholder="000.000.000-00"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      placeholder="email@exemplo.com"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="contato">Contato (Celular)</Label>
+                    <Input
+                      id="contato"
+                      value={formData.contato}
+                      onChange={(e) => setFormData({ ...formData, contato: e.target.value })}
+                      placeholder="(11) 99999-9999"
+                    />
+                  </div>
+
+                  <div className="space-y-2 md:col-span-2">
+                    <Label htmlFor="endereco">Endereço</Label>
+                    <Input
+                      id="endereco"
+                      value={formData.endereco}
+                      onChange={(e) => setFormData({ ...formData, endereco: e.target.value })}
+                      placeholder="Endereço completo"
+                    />
+                  </div>
+
+                  <div className="space-y-2 md:col-span-2">
+                    <Label htmlFor="observacoes">Observações</Label>
+                    <Textarea
+                      id="observacoes"
+                      value={formData.observacoes}
+                      onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
+                      placeholder="Informações adicionais sobre o lead"
+                      rows={3}
+                    />
+                  </div>
+
+                  <div className="flex gap-2 pt-4 md:col-span-2">
+                    <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)} className="flex-1">
+                      Cancelar
+                    </Button>
+                    <Button type="submit" className="flex-1 vrz-button-primary">
+                      Salvar
+                    </Button>
+                  </div>
+                </form>
+              </DialogContent>
+            </Dialog>
+          }
+        />
+      }
+    >
       <DragDropContext onDragEnd={onDragEnd}>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 w-full">
           {Object.entries(statusConfig).map(([status, config]) => (
-            <div key={status} className="flex flex-col">
+            <div key={status} className="flex flex-col h-full">
               <div className={`${config.columnColor} rounded-t-lg p-3 border-b border-black/10`}>
                 <h3 className="font-medium text-sm flex items-center justify-between">
                   {config.label}
@@ -250,7 +278,7 @@ export default function Leads() {
                             {...provided.draggableProps}
                             {...provided.dragHandleProps}
                             onClick={() => handleCardClick(lead)}
-                            className={`cursor-pointer hover:shadow-md transition-shadow ${
+                            className={`cursor-pointer hover:shadow-md transition-shadow w-full ${
                               snapshot.isDragging ? "shadow-lg rotate-2" : ""
                             }`}
                           >
@@ -261,22 +289,16 @@ export default function Leads() {
                               </CardTitle>
                             </CardHeader>
                             <CardContent className="p-3 pt-0 space-y-1.5">
-                              {lead.empresa && (
-                                <div className="flex items-center gap-2 text-xs text-black/60">
-                                  <Building2 size={12} className="flex-shrink-0" />
-                                  <span className="line-clamp-1">{lead.empresa}</span>
-                                </div>
-                              )}
                               {lead.email && (
                                 <div className="flex items-center gap-2 text-xs text-black/60">
                                   <Mail size={12} className="flex-shrink-0" />
                                   <span className="line-clamp-1">{lead.email}</span>
                                 </div>
                               )}
-                              {lead.telefone && (
+                              {lead.contato && (
                                 <div className="flex items-center gap-2 text-xs text-black/60">
                                   <Phone size={12} className="flex-shrink-0" />
-                                  <span className="line-clamp-1">{lead.telefone}</span>
+                                  <span className="line-clamp-1">{lead.contato}</span>
                                 </div>
                               )}
                               {lead.observacoes && (
@@ -316,6 +338,17 @@ export default function Leads() {
                   <Badge className={statusConfig[selectedLead.status].color}>
                     {statusConfig[selectedLead.status].label}
                   </Badge>
+                  
+                  {selectedLead.status === "ganho" && (
+                    <Button 
+                      size="sm" 
+                      className="bg-green-600 hover:bg-green-700 text-white h-8"
+                      onClick={() => setIsConvertOpen(true)}
+                    >
+                      <CheckCircle2 className="mr-2 h-4 w-4" />
+                      Transformar em Cliente
+                    </Button>
+                  )}
                 </div>
 
                 {/* Informações */}
@@ -328,13 +361,10 @@ export default function Leads() {
                     </div>
                   </div>
 
-                  {selectedLead.empresa && (
+                  {selectedLead.cpf && (
                     <div className="space-y-2">
-                      <Label className="text-xs text-black/60">Empresa</Label>
-                      <div className="flex items-center gap-2 text-sm">
-                        <Building2 size={16} className="text-black/40" />
-                        {selectedLead.empresa}
-                      </div>
+                      <Label className="text-xs text-black/60">CPF</Label>
+                      <p className="text-sm">{selectedLead.cpf}</p>
                     </div>
                   )}
 
@@ -348,12 +378,22 @@ export default function Leads() {
                     </div>
                   )}
 
-                  {selectedLead.telefone && (
+                  {selectedLead.contato && (
                     <div className="space-y-2">
-                      <Label className="text-xs text-black/60">Telefone</Label>
+                      <Label className="text-xs text-black/60">Contato</Label>
                       <div className="flex items-center gap-2 text-sm">
                         <Phone size={16} className="text-black/40" />
-                        {selectedLead.telefone}
+                        {selectedLead.contato}
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedLead.endereco && (
+                    <div className="space-y-2">
+                      <Label className="text-xs text-black/60">Endereço</Label>
+                      <div className="flex items-center gap-2 text-sm">
+                        <MapPin size={16} className="text-black/40" />
+                        {selectedLead.endereco}
                       </div>
                     </div>
                   )}
@@ -395,6 +435,26 @@ export default function Leads() {
           )}
         </DialogContent>
       </Dialog>
-    </div>
+
+      {/* Modal de Confirmação de Conversão */}
+      <Dialog open={isConvertOpen} onOpenChange={setIsConvertOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Confirmar Conversão</DialogTitle>
+            <DialogDescription>
+              Deseja realmente transformar este lead em um cliente? Isso criará um novo registro na base de clientes.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="mt-4">
+            <Button variant="outline" onClick={() => setIsConvertOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleConvertToClient} className="bg-green-600 hover:bg-green-700 text-white">
+              Confirmar Conversão
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </PageLayout>
   );
 }

@@ -42,9 +42,9 @@ const items = [
   { title: "Dashboard", url: "/dashboard", icon: Home },
   { title: "Projetos", url: "/projetos", icon: Calendar },
   { title: "Financeiro", url: "/financeiro", icon: Wallet },
-  { title: "Clientes", url: "/clientes", icon: Users },
+  { title: "Clientes", url: "/clientes", icon: Building2 },
   { title: "Leads", url: "/leads", icon: UserPlus },
-  { title: "Funcionários", url: "/funcionarios", icon: User },
+  { title: "Pessoas", url: "/pessoas", icon: Users },
   { title: "Relatórios", url: "/relatorios", icon: BarChart },
 ];
 

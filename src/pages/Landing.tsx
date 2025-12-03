@@ -144,7 +144,7 @@ export default function Landing() {
       {/* Sobre Nós */}
       <section id="sobre" className="px-6 md:px-10 py-16 md:py-20 border-b border-black/5 bg-gray-50">
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-2xl md:text-3xl font-medium tracking-tight reveal-up">Sobre o Pilar</h2>
+          <h2 className="text-2xl md:text-3xl font-medium tracking-tight reveal-up">Sobre a Pilar</h2>
           <p className="mt-6 text-sm md:text-base text-black/70 leading-relaxed reveal-up" style={{ transitionDelay: "100ms" }}>
             Somos uma plataforma de gestão criada especificamente para empresas de Engenharia e Arquitetura. 
             Nossa missão é simplificar a gestão financeira e operacional, permitindo que você foque no que realmente importa: seus projetos.

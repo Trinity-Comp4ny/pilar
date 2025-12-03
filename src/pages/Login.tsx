@@ -95,11 +95,16 @@ export default function Login() {
           loop
           muted
           playsInline
-          className="w-full h-full object-cover opacity-40"
+          className="w-full h-full object-cover opacity-50"
+          style={{ filter: 'grayscale(100%)', WebkitFilter: 'grayscale(100%)' }}
+          ref={(video) => {
+            if (video) {
+              video.playbackRate = 1;
+            }
+          }}
         >
           <source src="/video-login.mp4" type="video/mp4" />
         </video>
-        <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-black/50 to-black/60"></div>
       </div>
 
       {/* Content */}

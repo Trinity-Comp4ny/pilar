@@ -135,7 +135,7 @@ export default function Receitas() {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 w-full max-w-none">
       <div className="flex justify-end items-center">
         <div className="flex gap-2">
           <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
@@ -184,50 +184,48 @@ export default function Receitas() {
               </DialogDescription>
             </DialogHeader>
             
-            <form onSubmit={handleSubmit} className="space-y-3">
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <Label htmlFor="dataRecebimento" className="text-xs">Data *</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          "w-full justify-start text-left font-normal text-xs h-9",
-                          !dataRecebimento && "text-muted-foreground"
-                        )}
-                      >
-                        <CalendarIcon className="mr-1 h-3 w-3" />
-                        {dataRecebimento ? format(dataRecebimento, "dd/MM/yyyy") : "Selecionar"}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={dataRecebimento}
-                        onSelect={setDataRecebimento}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
-                
-                <div className="space-y-1">
-                  <Label htmlFor="valorTotal" className="text-xs">Valor (R$) *</Label>
-                  <Input
-                    id="valorTotal"
-                    type="number"
-                    step="0.01"
-                    value={valorTotal}
-                    onChange={(e) => setValorTotal(e.target.value)}
-                    placeholder="0,00"
-                    required
-                    className="h-9"
-                  />
-                </div>
+            <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+              <div className="space-y-1">
+                <Label htmlFor="dataRecebimento" className="text-xs">Data *</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal text-xs h-9",
+                        !dataRecebimento && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-1 h-3 w-3" />
+                      {dataRecebimento ? format(dataRecebimento, "dd/MM/yyyy") : "Selecionar"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={dataRecebimento}
+                      onSelect={setDataRecebimento}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
               </div>
               
               <div className="space-y-1">
+                <Label htmlFor="valorTotal" className="text-xs">Valor (R$) *</Label>
+                <Input
+                  id="valorTotal"
+                  type="number"
+                  step="0.01"
+                  value={valorTotal}
+                  onChange={(e) => setValorTotal(e.target.value)}
+                  placeholder="0,00"
+                  required
+                  className="h-9"
+                />
+              </div>
+              
+              <div className="space-y-1 md:col-span-2">
                 <Label htmlFor="descricao" className="text-xs">Descrição *</Label>
                 <Input
                   id="descricao"
@@ -239,68 +237,64 @@ export default function Receitas() {
                 />
               </div>
               
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <Label htmlFor="projetoID" className="text-xs">ID do Projeto</Label>
-                  <Select value={projetoID} onValueChange={setProjetoID}>
-                    <SelectTrigger className="h-9">
-                      <SelectValue placeholder="Selecione" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {projetos.map((proj) => (
-                        <SelectItem key={proj.id} value={proj.projetoID}>{proj.projetoID}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div className="space-y-1">
-                  <Label htmlFor="notaFiscal" className="text-xs">Nota Fiscal</Label>
-                  <Select value={notaFiscal} onValueChange={setNotaFiscal}>
-                    <SelectTrigger className="h-9">
-                      <SelectValue placeholder="Selecione" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Sim">Sim</SelectItem>
-                      <SelectItem value="Não">Não</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+              <div className="space-y-1">
+                <Label htmlFor="projetoID" className="text-xs">ID do Projeto</Label>
+                <Select value={projetoID} onValueChange={setProjetoID}>
+                  <SelectTrigger className="h-9">
+                    <SelectValue placeholder="Selecione" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {projetos.map((proj) => (
+                      <SelectItem key={proj.id} value={proj.projetoID}>{proj.projetoID}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <Label htmlFor="categoria" className="text-xs">Categoria</Label>
-                  <Select value={categoria} onValueChange={setCategoria}>
-                    <SelectTrigger className="h-9">
-                      <SelectValue placeholder="Selecione" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {categorias.map((cat) => (
-                        <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div className="space-y-1">
-                  <Label htmlFor="formaPagamento" className="text-xs">Forma de Pagamento</Label>
-                  <Select value={formaPagamento} onValueChange={setFormaPagamento}>
-                    <SelectTrigger className="h-9">
-                      <SelectValue placeholder="Selecione" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="pix">PIX</SelectItem>
-                      <SelectItem value="transferencia">Transferência</SelectItem>
-                      <SelectItem value="boleto">Boleto</SelectItem>
-                      <SelectItem value="dinheiro">Dinheiro</SelectItem>
-                      <SelectItem value="cartao">Cartão</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+              <div className="space-y-1">
+                <Label htmlFor="notaFiscal" className="text-xs">Nota Fiscal</Label>
+                <Select value={notaFiscal} onValueChange={setNotaFiscal}>
+                  <SelectTrigger className="h-9">
+                    <SelectValue placeholder="Selecione" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Sim">Sim</SelectItem>
+                    <SelectItem value="Não">Não</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               
-              <div className="flex gap-2 pt-4">
+              <div className="space-y-1">
+                <Label htmlFor="categoria" className="text-xs">Categoria</Label>
+                <Select value={categoria} onValueChange={setCategoria}>
+                  <SelectTrigger className="h-9">
+                    <SelectValue placeholder="Selecione" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categorias.map((cat) => (
+                      <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-1">
+                <Label htmlFor="formaPagamento" className="text-xs">Forma de Pagamento</Label>
+                <Select value={formaPagamento} onValueChange={setFormaPagamento}>
+                  <SelectTrigger className="h-9">
+                    <SelectValue placeholder="Selecione" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pix">PIX</SelectItem>
+                    <SelectItem value="transferencia">Transferência</SelectItem>
+                    <SelectItem value="boleto">Boleto</SelectItem>
+                    <SelectItem value="dinheiro">Dinheiro</SelectItem>
+                    <SelectItem value="cartao">Cartão</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="flex gap-2 pt-4 md:col-span-2">
                 <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)} className="flex-1">
                   Cancelar
                 </Button>
@@ -314,7 +308,7 @@ export default function Receitas() {
         </div>
       </div>
 
-      <Card className="rounded-2xl border border-black/10 bg-white p-6">
+      <Card className="rounded-2xl border border-black/10 bg-white p-6 w-full">
         <CardHeader className="p-0 pb-4">
           <CardTitle className="text-lg font-medium tracking-tight">Lista de Receitas</CardTitle>
           <CardDescription className="text-sm text-black/60 mt-1">
@@ -322,7 +316,8 @@ export default function Receitas() {
           </CardDescription>
         </CardHeader>
         <CardContent className="p-0">
-          <Table>
+          <div className="overflow-x-auto w-full">
+            <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Data</TableHead>
@@ -354,6 +349,7 @@ export default function Receitas() {
               ))}
             </TableBody>
           </Table>
+          </div>
         </CardContent>
       </Card>
     </div>

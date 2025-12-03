@@ -24,8 +24,16 @@ export function Header() {
   useEffect(() => {
     const loadUserData = async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (user?.email) {
-        setUserName(user.email.split('@')[0]);
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('nome')
+          .eq('id', user.id)
+          .single();
+        
+        if (profile?.nome) {
+          setUserName(profile.nome);
+        }
       }
     };
     

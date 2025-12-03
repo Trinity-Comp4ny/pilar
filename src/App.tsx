@@ -4,12 +4,12 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Login from "./pages/Login";
-import DashboardNew from "./pages/DashboardNew";
-import Leads from "./pages/Leads";
+import Dashboard from "./pages/Dashboard";
+import Leads from "./pages/leads";
 import Financeiro from "./pages/Financeiro";
-import ProjetosKanban from "./pages/ProjetosKanban";
-import Clientes from "./pages/Clientes";
-import Funcionarios from "./pages/Funcionarios";
+import Projetos from "./pages/Projetos";
+import Clientes from "./pages/clientes";
+import Pessoas from "./pages/pessoas";
 import Relatorios from "./pages/Relatorios";
 import NotFound from "./pages/NotFound";
 import { PrivateRoute } from "./components/PrivateRoute";
@@ -27,13 +27,12 @@ const App = () => {
         <Sonner />
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<Navigate to="/login" replace />} />
-            <Route path="/home" element={<Landing />} />
+            <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Login />} />
             
             {/* Rotas Protegidas */}
             <Route path="/dashboard" element={<PrivateRoute />}>
-              <Route index element={<DashboardNew />} />
+              <Route index element={<Dashboard />} />
             </Route>
             
             <Route path="/leads" element={<PrivateRoute />}>
@@ -45,15 +44,15 @@ const App = () => {
             </Route>
             
             <Route path="/projetos" element={<PrivateRoute />}>
-              <Route index element={<ProjetosKanban />} />
+              <Route index element={<Projetos />} />
             </Route>
             
             <Route path="/clientes" element={<PrivateRoute />}>
               <Route index element={<Clientes />} />
             </Route>
             
-            <Route path="/funcionarios" element={<PrivateRoute />}>
-              <Route index element={<Funcionarios />} />
+            <Route path="/pessoas" element={<PrivateRoute />}>
+              <Route index element={<Pessoas />} />
             </Route>
             
             <Route path="/relatorios" element={<PrivateRoute />}>
