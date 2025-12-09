@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Mail, Phone, User, MapPin, CheckCircle2, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
@@ -45,6 +46,14 @@ export default function Leads() {
     origem: "",
   });
   const { toast } = useToast();
+
+  const formatTelefone = (value: string) => {
+    return value
+      .replace(/\D/g, "")
+      .replace(/(\d{2})(\d)/, "($1) $2")
+      .replace(/(\d{5})(\d)/, "$1-$2")
+      .replace(/(-\d{4})\d+?$/, "$1");
+  };
 
   useEffect(() => {
     fetchLeads();
@@ -150,12 +159,23 @@ export default function Leads() {
   const handleConvertToClient = async () => {
     if (!selectedLead) return;
 
+    if ((selectedLead as any).cliente_id) {
+      toast({
+        title: "Já convertido",
+        description: "Este lead já foi convertido em cliente.",
+        variant: "destructive",
+      });
+      setIsConvertOpen(false);
+      return;
+    }
+
     try {
       // 1. Create Client
       const { data: clientData, error: clientError } = await supabase.from('clientes').insert({
         nome: selectedLead.nome,
         email: selectedLead.email,
         contato: selectedLead.contato,
+        origem: selectedLead.origem,
         empresa_id: (await supabase.rpc('get_user_empresa_id')).data
       }).select().single();
 
@@ -212,7 +232,7 @@ export default function Leads() {
           children={
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="rounded-full bg-[hsl(var(--primary))] text-white hover:bg-[hsl(var(--primary))]/90 transition-colors px-5 py-2.5 text-sm">
+                <Button className="rounded-full bg-accent-orange hover:bg-accent-orange/90 text-white transition-colors px-5 py-2.5 text-sm">
                   <Plus className="mr-2 h-4 w-4" />
                   Novo Lead
                 </Button>
@@ -253,26 +273,37 @@ export default function Leads() {
                     <Input
                       id="contato"
                       value={formData.contato}
-                      onChange={(e) => setFormData({ ...formData, contato: e.target.value })}
+                      onChange={(e) => setFormData({ ...formData, contato: formatTelefone(e.target.value) })}
+                      maxLength={15}
                       placeholder="(11) 99999-9999"
                     />
                   </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="origem">Origem</Label>
-                    <Input
-                      id="origem"
-                      value={formData.origem}
-                      onChange={(e) => setFormData({ ...formData, origem: e.target.value })}
-                      placeholder="Indicação, Instagram, etc."
-                    />
+                    <Select 
+                      value={formData.origem} 
+                      onValueChange={(value) => setFormData({ ...formData, origem: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione a origem" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Instagram">Instagram</SelectItem>
+                        <SelectItem value="Tráfego">Tráfego</SelectItem>
+                        <SelectItem value="LinkedIn">LinkedIn</SelectItem>
+                        <SelectItem value="Pessoal">Pessoal</SelectItem>
+                        <SelectItem value="Parceria">Parceria</SelectItem>
+                        <SelectItem value="Outros">Outros</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   <div className="flex gap-2 pt-4 md:col-span-2">
                     <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)} className="flex-1">
                       Cancelar
                     </Button>
-                    <Button type="submit" className="flex-1 vrz-button-primary">
+                    <Button type="submit" className="flex-1 bg-accent-orange hover:bg-accent-orange/90 text-white">
                       Salvar
                     </Button>
                   </div>
@@ -379,7 +410,7 @@ export default function Leads() {
                     {selectedLead.status}
                   </Badge>
 
-                  {selectedLead.status === "Ganho" && (
+                  {selectedLead.status === "Ganho" && !selectedLead.cliente_id && (
                     <Button
                       size="sm"
                       className="bg-green-600 hover:bg-green-700 text-white h-8"

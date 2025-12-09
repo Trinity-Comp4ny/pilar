@@ -39,6 +39,9 @@
     --input: 240 6% 90%;
     --ring: 240 10% 4%;
 
+    --chart-success: 142.1 76.2% 36.3%; /* Green 600 */
+    --chart-danger: 346.8 77.2% 49.8%; /* Red 600 */
+    
     --radius: 0.75rem;
   }
 

@@ -1,4 +1,4 @@
-
+-- Atualiza a função create_projeto_completo para usar a nova coluna disciplinas
 CREATE OR REPLACE FUNCTION public.create_projeto_completo(
   p_codigo TEXT,
   p_nome TEXT,

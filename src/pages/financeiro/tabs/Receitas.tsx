@@ -13,7 +13,7 @@ import { format, addMonths } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CategoryManager } from "@/components/CategoryManager";
+import { CategoryManager } from "../components/CategoryManager";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -40,13 +40,13 @@ interface Receita {
 
 export default function Receitas() {
   const [receitas, setReceitas] = useState<Receita[]>([]);
-  const [contas, setContas] = useState<{id: string, nome: string}[]>([]);
-  
+  const [contas, setContas] = useState<{ id: string, nome: string }[]>([]);
+
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [selectedReceita, setSelectedReceita] = useState<Receita | null>(null);
-  
+
   const { data: userRole } = useUserRole();
   const isAdmin = userRole === 'admin';
 
@@ -65,11 +65,11 @@ export default function Receitas() {
   const [recorrencia, setRecorrencia] = useState("Nenhuma");
   const [parcelas, setParcelas] = useState("1");
 
-  const [categorias, setCategorias] = useState<{id: string, name: string}[]>([]);
-  const [projetos, setProjetos] = useState<{id: string, projetoID: string}[]>([]);
-  const [clientes, setClientes] = useState<{id: string, nome: string}[]>([]);
+  const [categorias, setCategorias] = useState<{ id: string, name: string }[]>([]);
+  const [projetos, setProjetos] = useState<{ id: string, projetoID: string }[]>([]);
+  const [clientes, setClientes] = useState<{ id: string, nome: string }[]>([]);
   const { toast } = useToast();
-  
+
   const fetchAuxiliaryData = async () => {
     // Fetch Categorias
     const { data: categoriasData } = await (supabase
@@ -77,7 +77,7 @@ export default function Receitas() {
       .select('*')
       .eq('tipo', 'Receita')
       .order('nome');
-    
+
     if (categoriasData) {
       setCategorias((categoriasData as any[]).map(cat => ({ id: cat.id, name: cat.nome })));
     }
@@ -87,7 +87,7 @@ export default function Receitas() {
       .from('clientes') as any)
       .select('*')
       .order('nome');
-    
+
     if (clientesData) {
       setClientes((clientesData as any[]).map(c => ({ id: c.id, nome: c.nome })));
     }
@@ -97,7 +97,7 @@ export default function Receitas() {
       .from('contas') as any)
       .select('*')
       .order('nome');
-    
+
     if (contasData) {
       setContas((contasData as any[]).map(c => ({ id: c.id, nome: c.nome })));
     }
@@ -107,7 +107,7 @@ export default function Receitas() {
       .from('projetos') as any)
       .select('id, nome, codigo_projeto')
       .order('nome');
-    
+
     if (projetosData) {
       setProjetos((projetosData as any[]).map(p => ({ id: p.id, projetoID: p.codigo_projeto })));
     }
@@ -130,13 +130,13 @@ export default function Receitas() {
         projetos (codigo_projeto)
       `)
       .order('data_vencimento', { ascending: false });
-    
+
     console.log('[RECEITAS] Fetch result:', { count: data?.length, error });
-    
+
     if (error) {
       console.error('[RECEITAS] Error fetching:', error);
     }
-    
+
     if (data) {
       const formattedData = (data as any[]).map((d: any) => ({
         ...d,
@@ -156,7 +156,7 @@ export default function Receitas() {
 
   const openEditReceita = (receita: Receita) => {
     setSelectedReceita(receita);
-    
+
     if (receita.data_vencimento) setDataVencimento(new Date(receita.data_vencimento));
     setDescricao(receita.descricao);
     setValorTotal(receita.valor.toString());
@@ -169,14 +169,14 @@ export default function Receitas() {
     setObservacao(receita.observacao || "");
     setFormaPagamento(receita.forma_pagamento || "");
     setParcelas("1");
-    
+
     setIsDetailOpen(false);
     setIsDialogOpen(true);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!dataVencimento || !descricao || !valorTotal) {
       toast({
         title: "Campos obrigatórios",
@@ -198,7 +198,7 @@ export default function Receitas() {
       for (let i = 0; i < numParcelas; i++) {
         const dataParcela = addMonths(dataVencimento, i);
         const dataStr = format(dataParcela, 'yyyy-MM-dd');
-        
+
         receitasToInsert.push({
           // user_id: user.id, // Not needed if trigger handles created_by
           data_vencimento: dataStr,
@@ -303,15 +303,15 @@ export default function Receitas() {
                     Gerencie as categorias de receitas
                   </DialogDescription>
                 </DialogHeader>
-                
+
                 <Tabs defaultValue="categorias" className="mt-4">
                   <TabsList className="grid w-full grid-cols-1">
                     <TabsTrigger value="categorias">Categorias</TabsTrigger>
                   </TabsList>
                   <TabsContent value="categorias" className="mt-4">
-                    <CategoryManager 
-                      title="Categorias de Receitas" 
-                      description="Gerencie as categorias disponíveis para classificar receitas" 
+                    <CategoryManager
+                      title="Categorias de Receitas"
+                      description="Gerencie as categorias disponíveis para classificar receitas"
                       type="Receita"
                       onCategoryChange={handleCategoryChange}
                     />
@@ -319,10 +319,10 @@ export default function Receitas() {
                 </Tabs>
               </DialogContent>
             </Dialog>
-            
+
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="rounded-full bg-[hsl(var(--primary))] text-white hover:bg-[hsl(var(--primary))]/90 transition-colors px-5 py-2.5 text-sm">
+                <Button className="rounded-full bg-accent-orange hover:bg-accent-orange/90 text-white transition-colors px-5 py-2.5 text-sm">
                   <Plus className="mr-2 h-4 w-4" />
                   Nova Receita
                 </Button>
@@ -334,7 +334,7 @@ export default function Receitas() {
                     Cadastre uma nova receita no sistema
                   </DialogDescription>
                 </DialogHeader>
-                
+
                 <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                   <div className="space-y-1">
                     <Label htmlFor="dataVencimento" className="text-xs">Data Vencimento *</Label>
@@ -361,7 +361,7 @@ export default function Receitas() {
                       </PopoverContent>
                     </Popover>
                   </div>
-                  
+
                   <div className="space-y-1">
                     <Label htmlFor="valorTotal" className="text-xs">Valor Total (R$) *</Label>
                     <Input
@@ -376,7 +376,7 @@ export default function Receitas() {
                     />
                   </div>
 
-                   <div className="space-y-1">
+                  <div className="space-y-1">
                     <Label htmlFor="status" className="text-xs">Status</Label>
                     <Select value={status} onValueChange={setStatus}>
                       <SelectTrigger className="h-9">
@@ -400,7 +400,7 @@ export default function Receitas() {
                       className="h-9"
                     />
                   </div>
-                  
+
                   <div className="space-y-1 md:col-span-2">
                     <Label htmlFor="descricao" className="text-xs">Descrição *</Label>
                     <Input
@@ -413,7 +413,7 @@ export default function Receitas() {
                     />
                   </div>
 
-                   <div className="space-y-1 md:col-span-2">
+                  <div className="space-y-1 md:col-span-2">
                     <Label htmlFor="observacao" className="text-xs">Observação</Label>
                     <Input
                       id="observacao"
@@ -423,7 +423,7 @@ export default function Receitas() {
                       className="h-9"
                     />
                   </div>
-                  
+
                   <div className="space-y-1">
                     <Label htmlFor="clienteId" className="text-xs">Cliente (Pagante)</Label>
                     <Select value={clienteId} onValueChange={setClienteId}>
@@ -465,7 +465,7 @@ export default function Receitas() {
                       </SelectContent>
                     </Select>
                   </div>
-                  
+
                   <div className="space-y-1">
                     <Label htmlFor="formaPagamento" className="text-xs">Forma de Pagamento</Label>
                     <Select value={formaPagamento} onValueChange={setFormaPagamento}>
@@ -481,7 +481,7 @@ export default function Receitas() {
                     </Select>
                   </div>
 
-                   <div className="space-y-1">
+                  <div className="space-y-1">
                     <Label htmlFor="contaId" className="text-xs">Conta de Recebimento</Label>
                     <Select value={contaId} onValueChange={setContaId}>
                       <SelectTrigger className="h-9">
@@ -509,7 +509,7 @@ export default function Receitas() {
                       </SelectContent>
                     </Select>
                   </div>
-                  
+
                   <div className="space-y-1">
                     <Label htmlFor="notaFiscal" className="text-xs">Nota Fiscal</Label>
                     <Select value={notaFiscal} onValueChange={setNotaFiscal}>
@@ -522,12 +522,12 @@ export default function Receitas() {
                       </SelectContent>
                     </Select>
                   </div>
-                  
+
                   <div className="flex gap-2 pt-4 md:col-span-2">
                     <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)} className="flex-1">
                       Cancelar
                     </Button>
-                    <Button type="submit" className="flex-1 vrz-button-primary">
+                    <Button type="submit" className="flex-1 bg-accent-orange hover:bg-accent-orange/90 text-white">
                       Salvar
                     </Button>
                   </div>
@@ -539,61 +539,61 @@ export default function Receitas() {
         <CardContent className="p-0">
           <div className="overflow-x-auto w-full">
             <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Vencimento</TableHead>
-                <TableHead>Descrição</TableHead>
-                <TableHead>Cliente</TableHead>
-                <TableHead>Projeto</TableHead>
-                <TableHead>Categoria</TableHead>
-                <TableHead>Forma Pag.</TableHead>
-                <TableHead>Parcela</TableHead>
-                <TableHead>Valor</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="w-[100px]"></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {receitas.map((receita) => (
-                <TableRow 
-                  key={receita.id} 
-                  className="cursor-pointer hover:bg-gray-50"
-                  onClick={() => {
-                    setSelectedReceita(receita);
-                    setIsDetailOpen(true);
-                  }}
-                >
-                  <TableCell>{format(new Date(receita.data_vencimento), "dd/MM/yyyy")}</TableCell>
-                  <TableCell className="font-medium">{receita.descricao}</TableCell>
-                  <TableCell>{receita.cliente_nome || "-"}</TableCell>
-                  <TableCell>{receita.projeto_codigo || "-"}</TableCell>
-                  <TableCell>{receita.categoria_nome || "-"}</TableCell>
-                  <TableCell>{receita.forma_pagamento || "-"}</TableCell>
-                  <TableCell>{receita.parcelas || "1"}</TableCell>
-                  <TableCell className="text-green-600 font-medium">
-                    R$ {receita.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={receita.status === 'Recebido' || receita.status === 'Recebida' ? 'default' : 'secondary'} className={receita.status === 'Recebido' || receita.status === 'Recebida' ? 'bg-green-500 hover:bg-green-600' : ''}>
-                      {receita.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell onClick={(e) => e.stopPropagation()}>
-                    <div className="flex gap-1 justify-end">
-                      {isAdmin && (
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50" onClick={() => openEditReceita(receita)}>
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                      )}
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50" onClick={() => handleDelete(receita.id)}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Vencimento</TableHead>
+                  <TableHead>Descrição</TableHead>
+                  <TableHead>Cliente</TableHead>
+                  <TableHead>Projeto</TableHead>
+                  <TableHead>Categoria</TableHead>
+                  <TableHead>Forma Pag.</TableHead>
+                  <TableHead>Parcela</TableHead>
+                  <TableHead>Valor</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="w-[100px]"></TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {receitas.map((receita) => (
+                  <TableRow
+                    key={receita.id}
+                    className="cursor-pointer hover:bg-gray-50"
+                    onClick={() => {
+                      setSelectedReceita(receita);
+                      setIsDetailOpen(true);
+                    }}
+                  >
+                    <TableCell>{format(new Date(receita.data_vencimento), "dd/MM/yyyy")}</TableCell>
+                    <TableCell className="font-medium">{receita.descricao}</TableCell>
+                    <TableCell>{receita.cliente_nome || "-"}</TableCell>
+                    <TableCell>{receita.projeto_codigo || "-"}</TableCell>
+                    <TableCell>{receita.categoria_nome || "-"}</TableCell>
+                    <TableCell>{receita.forma_pagamento || "-"}</TableCell>
+                    <TableCell>{receita.parcelas || "1"}</TableCell>
+                    <TableCell className="text-green-600 font-medium">
+                      R$ {receita.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={receita.status === 'Recebido' || receita.status === 'Recebida' ? 'default' : 'secondary'} className={receita.status === 'Recebido' || receita.status === 'Recebida' ? 'bg-green-500 hover:bg-green-600' : ''}>
+                        {receita.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell onClick={(e) => e.stopPropagation()}>
+                      <div className="flex gap-1 justify-end">
+                        {isAdmin && (
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50" onClick={() => openEditReceita(receita)}>
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                        )}
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50" onClick={() => handleDelete(receita.id)}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </div>
         </CardContent>
       </Card>
@@ -607,7 +607,7 @@ export default function Receitas() {
               Informações completas da receita selecionada
             </DialogDescription>
           </DialogHeader>
-          
+
           {selectedReceita && (
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
@@ -656,17 +656,17 @@ export default function Receitas() {
                   <p className="text-sm">{selectedReceita.parcelas || "1"}</p>
                 </div>
                 <div className="col-span-2">
-                    <Button variant="outline" className="flex-1" onClick={() => openEditReceita(selectedReceita)}>
-                      <Pencil className="mr-2 h-4 w-4" />
-                      Editar
-                    </Button>
-                    <Button variant="destructive" className="flex-1" onClick={() => {
-                      handleDelete(selectedReceita.id);
-                      setIsDetailOpen(false);
-                    }}>
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      Excluir
-                    </Button>
+                  <Button variant="outline" className="flex-1" onClick={() => openEditReceita(selectedReceita)}>
+                    <Pencil className="mr-2 h-4 w-4" />
+                    Editar
+                  </Button>
+                  <Button variant="destructive" className="flex-1" onClick={() => {
+                    handleDelete(selectedReceita.id);
+                    setIsDetailOpen(false);
+                  }}>
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Excluir
+                  </Button>
                 </div>
               </div>
             </div>

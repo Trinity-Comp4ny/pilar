@@ -181,7 +181,7 @@ export default function Metas() {
             
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="vrz-button-primary rounded-full">
+                <Button className="bg-accent-orange hover:bg-accent-orange/90 text-white rounded-full">
                   <Plus className="mr-2 h-4 w-4" />
                   Nova Meta
                 </Button>
@@ -243,7 +243,7 @@ export default function Metas() {
                       <option value="investimento">Investimento</option>
                     </select>
                   </div>
-                  <Button type="submit" className="w-full vrz-button-primary rounded-full" disabled={createMetaMutation.isPending}>
+                  <Button type="submit" className="w-full bg-accent-orange hover:bg-accent-orange/90 text-white rounded-full" disabled={createMetaMutation.isPending}>
                     {createMetaMutation.isPending ? "Salvando..." : "Salvar Meta"}
                   </Button>
                 </form>
@@ -312,7 +312,7 @@ export default function Metas() {
                       <option value="investimento">Investimento</option>
                     </select>
                   </div>
-                  <Button type="submit" className="w-full vrz-button-primary rounded-full" disabled={updateMetaMutation.isPending}>
+                  <Button type="submit" className="w-full bg-accent-orange hover:bg-accent-orange/90 text-white rounded-full" disabled={updateMetaMutation.isPending}>
                     {updateMetaMutation.isPending ? "Atualizando..." : "Atualizar Meta"}
                   </Button>
                 </form>

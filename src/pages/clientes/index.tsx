@@ -5,7 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, Search, ArrowUpDown, User, Mail, Phone, MapPin, Trash2, Pencil } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Plus, Search, ArrowUpDown, User, Mail, Phone, MapPin, Trash2, Pencil, Building2, Landmark, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
@@ -41,9 +42,19 @@ export default function Clientes() {
   const [email, setEmail] = useState("");
   const [tipoNf, setTipoNf] = useState("");
   const [origem, setOrigem] = useState("");
+  const [contasBancarias, setContasBancarias] = useState<any[]>([]);
+  const [newConta, setNewConta] = useState({ banco: "", agencia: "", conta: "", tipo: "corrente" });
   const [currentId, setCurrentId] = useState<string | null>(null);
   
   const [searchTerm, setSearchTerm] = useState("");
+
+  const formatTelefone = (value: string) => {
+    return value
+      .replace(/\D/g, "")
+      .replace(/(\d{2})(\d)/, "($1) $2")
+      .replace(/(\d{5})(\d)/, "$1-$2")
+      .replace(/(-\d{4})\d+?$/, "$1");
+  };
   const [sortField, setSortField] = useState<keyof Cliente | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const { toast } = useToast();
@@ -71,6 +82,8 @@ export default function Clientes() {
     setEmail("");
     setTipoNf("");
     setOrigem("");
+    setContasBancarias([]);
+    setNewConta({ banco: "", agencia: "", conta: "", tipo: "corrente" });
     setCurrentId(null);
     setIsEditMode(false);
   };
@@ -89,10 +102,30 @@ export default function Clientes() {
     setEmail(cliente.email || "");
     setTipoNf(cliente.tipo_nf || "");
     setOrigem(cliente.origem || "");
+    setContasBancarias(Array.isArray((cliente as any).contas_bancarias) ? (cliente as any).contas_bancarias : []);
+    setNewConta({ banco: "", agencia: "", conta: "", tipo: "corrente" });
     setCurrentId(cliente.id);
     setIsEditMode(true);
     setIsDialogOpen(true);
     setIsDetailOpen(false);
+  };
+
+  const handleAddConta = () => {
+    if (!newConta.banco || !newConta.agencia || !newConta.conta) {
+      toast({
+        title: "Dados incompletos",
+        description: "Preencha banco, agência e conta antes de adicionar",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setContasBancarias((prev) => [...prev, newConta]);
+    setNewConta({ banco: "", agencia: "", conta: "", tipo: "corrente" });
+  };
+
+  const handleRemoveConta = (index: number) => {
+    setContasBancarias((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -118,7 +151,8 @@ export default function Clientes() {
             contato,
             email,
             tipo_nf: tipoNf,
-            origem
+            origem,
+            contas_bancarias: contasBancarias
           })
           .eq('id', currentId);
 
@@ -136,6 +170,7 @@ export default function Clientes() {
             email,
             tipo_nf: tipoNf,
             origem,
+            contas_bancarias: contasBancarias,
             empresa_id: (await supabase.rpc('get_user_empresa_id')).data 
           });
 
@@ -213,7 +248,7 @@ export default function Clientes() {
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
                 <Button 
-                  className="rounded-full bg-[hsl(var(--primary))] text-white hover:bg-[hsl(var(--primary))]/90 transition-colors px-5 py-2.5 text-sm"
+                  className="rounded-full bg-accent-orange hover:bg-accent-orange/90 text-white transition-colors px-5 py-2.5 text-sm"
                   onClick={handleOpenDialog}
                 >
                   <Plus className="mr-2 h-4 w-4" />
@@ -267,19 +302,24 @@ export default function Clientes() {
                     <Input
                       id="contato"
                       value={contato}
-                      onChange={(e) => setContato(e.target.value)}
+                      onChange={(e) => setContato(formatTelefone(e.target.value))}
+                      maxLength={15}
                       placeholder="(11) 99999-9999"
                     />
                   </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="tipoNf">Tipo NF</Label>
-                    <Input
-                      id="tipoNf"
-                      value={tipoNf}
-                      onChange={(e) => setTipoNf(e.target.value)}
-                      placeholder="Ex: Serviço, Produto"
-                    />
+                    <Select value={tipoNf} onValueChange={setTipoNf}>
+                      <SelectTrigger id="tipoNf">
+                        <SelectValue placeholder="Selecione o tipo de NF" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="servico">Serviço</SelectItem>
+                        <SelectItem value="produto">Produto</SelectItem>
+                        <SelectItem value="misto">Misto</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   <div className="space-y-2">
@@ -301,12 +341,108 @@ export default function Clientes() {
                       placeholder="Endereço completo"
                     />
                   </div>
+
+                  <div className="space-y-3 md:col-span-2 mt-2">
+                    <div className="flex items-center justify-between">
+                      <Label>Contas Bancárias (para recebimento)</Label>
+                      <span className="text-xs text-black/50">Defina uma ou mais contas padrão para este cliente</span>
+                    </div>
+
+                    {/* Formulário para nova conta */}
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end bg-gray-50 p-3 rounded-lg border border-dashed border-gray-200">
+                      <div className="space-y-1">
+                        <Label className="text-xs">Banco</Label>
+                        <Input
+                          placeholder="Nome do banco"
+                          value={newConta.banco}
+                          onChange={(e) => setNewConta({ ...newConta, banco: e.target.value })}
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Agência</Label>
+                        <Input
+                          placeholder="0000"
+                          value={newConta.agencia}
+                          onChange={(e) => setNewConta({ ...newConta, agencia: e.target.value })}
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Conta</Label>
+                        <Input
+                          placeholder="000000-0"
+                          value={newConta.conta}
+                          onChange={(e) => setNewConta({ ...newConta, conta: e.target.value })}
+                        />
+                      </div>
+                      <div className="flex items-end gap-2">
+                        <Select
+                          value={newConta.tipo}
+                          onValueChange={(value) => setNewConta({ ...newConta, tipo: value })}
+                        >
+                          <SelectTrigger className="flex-1">
+                            <SelectValue placeholder="Tipo" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="corrente">Corrente</SelectItem>
+                            <SelectItem value="poupanca">Poupança</SelectItem>
+                            <SelectItem value="pj">PJ</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <Button
+                          type="button"
+                          size="icon"
+                          className="bg-accent-orange hover:bg-accent-orange/90 text-white rounded-full h-9 w-9"
+                          onClick={handleAddConta}
+                        >
+                          <Plus className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Lista de contas já adicionadas */}
+                    {contasBancarias.length > 0 && (
+                      <div className="space-y-2">
+                        <Label className="text-xs text-black/60">Contas cadastradas</Label>
+                        <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
+                          {contasBancarias.map((conta, index) => (
+                            <div
+                              key={index}
+                              className="flex items-center justify-between gap-3 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm"
+                            >
+                              <div className="flex items-center gap-3 flex-1 min-w-0">
+                                <div className="flex items-center gap-1.5 min-w-0">
+                                  <Building2 className="h-4 w-4 text-black/40 flex-shrink-0" />
+                                  <span className="font-medium truncate">{conta.banco}</span>
+                                </div>
+                                <div className="hidden md:flex items-center gap-2 text-xs text-black/60 flex-shrink-0">
+                                  <Landmark className="h-3 w-3" />
+                                  <span>Ag. {conta.agencia} / Cc. {conta.conta}</span>
+                                </div>
+                                <span className="text-xs text-black/50 capitalize flex-shrink-0">
+                                  {conta.tipo}
+                                </span>
+                              </div>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 text-red-500 flex-shrink-0"
+                                onClick={() => handleRemoveConta(index)}
+                              >
+                                <X className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                   
                   <div className="flex gap-2 pt-4 md:col-span-2">
                     <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)} className="flex-1">
                       Cancelar
                     </Button>
-                    <Button type="submit" className="flex-1 vrz-button-primary">
+                    <Button type="submit" className="flex-1 bg-accent-orange hover:bg-accent-orange/90 text-white">
                       Salvar
                     </Button>
                   </div>

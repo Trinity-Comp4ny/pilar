@@ -198,7 +198,7 @@ export function SupplierManager({ onSupplierChange }: SupplierManagerProps) {
         
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
-            <Button size="sm" className="vrz-button-primary">
+            <Button size="sm" className="bg-accent-orange hover:bg-accent-orange/90 text-white">
               <Plus className="h-4 w-4 mr-1" /> Adicionar
             </Button>
           </DialogTrigger>
@@ -256,7 +256,7 @@ export function SupplierManager({ onSupplierChange }: SupplierManagerProps) {
                 <Button variant="outline" onClick={() => setIsAddDialogOpen(false)} className="flex-1">
                   Cancelar
                 </Button>
-                <Button onClick={handleAddSupplier} className="flex-1 vrz-button-primary">
+                <Button onClick={handleAddSupplier} className="flex-1 bg-accent-orange hover:bg-accent-orange/90 text-white">
                   Adicionar
                 </Button>
               </div>
@@ -373,7 +373,7 @@ export function SupplierManager({ onSupplierChange }: SupplierManagerProps) {
               <Button variant="outline" onClick={() => setIsEditDialogOpen(false)} className="flex-1">
                 Cancelar
               </Button>
-              <Button onClick={handleEditSupplier} className="flex-1 vrz-button-primary">
+              <Button onClick={handleEditSupplier} className="flex-1 bg-accent-orange hover:bg-accent-orange/90 text-white">
                 Salvar
               </Button>
             </div>

@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowUpRight, ArrowDownRight, TrendingUp, TrendingDown, DollarSign, BarChart3, Loader2 } from "lucide-react";
 import { ResponsiveContainer, ComposedChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, Area, PieChart, Pie, Cell } from "recharts";
-import MetasSummary from "@/components/MetasSummary";
+import MetasSummary from "../components/MetasSummary";
 import { CustomTooltip } from "../components/CustomTooltip";
 import { useDashboardData } from "@/hooks/useDashboardData";
 
@@ -30,10 +30,10 @@ export default function VisaoGeral({ visualizacao, dateFrom, dateTo }: VisaoGera
     saldo: 0
   };
 
-  const chartData = visualizacao === 'dia' 
+  const chartData = visualizacao === 'dia'
     ? (dashboardData?.chartDataDiario || [])
     : (dashboardData?.chartData || []);
-    
+
   const categoriaData = dashboardData?.categoriaData || [];
   const despesasCategoriaData = dashboardData?.despesasCategoriaData || [];
 

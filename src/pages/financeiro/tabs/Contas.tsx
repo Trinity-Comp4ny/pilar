@@ -308,7 +308,7 @@ export default function Configuracoes() {
                 if (!open) resetForm();
               }}>
                 <DialogTrigger asChild>
-                  <Button className="vrz-button-primary rounded-full" size="sm" onClick={() => {
+                  <Button className="bg-accent-orange hover:bg-accent-orange/90 text-white rounded-full" size="sm" onClick={() => {
                     resetForm();
                     setIsNewContaOpen(true);
                   }}>
@@ -348,7 +348,7 @@ export default function Configuracoes() {
                       <Label>Saldo Inicial (R$)</Label>
                       <Input type="number" value={saldoInicial} onChange={(e) => setSaldoInicial(e.target.value)} placeholder="5000.00" step="0.01" />
                     </div>
-                    <Button className="w-full vrz-button-primary rounded-full" onClick={handleSaveConta}>
+                    <Button className="w-full bg-accent-orange hover:bg-accent-orange/90 text-white rounded-full" onClick={handleSaveConta}>
                       {selectedConta ? 'Atualizar Conta' : 'Salvar Conta'}
                     </Button>
                   </div>
@@ -431,7 +431,7 @@ export default function Configuracoes() {
                 if (!open) resetForm();
               }}>
                 <DialogTrigger asChild>
-                  <Button className="vrz-button-primary rounded-full" size="sm" onClick={() => {
+                  <Button className="bg-accent-orange hover:bg-accent-orange/90 text-white rounded-full" size="sm" onClick={() => {
                     resetForm();
                     setIsNewCartaoOpen(true);
                   }}>
@@ -463,7 +463,7 @@ export default function Configuracoes() {
                       <Label>Limite (R$)</Label>
                       <Input type="number" value={limite} onChange={(e) => setLimite(e.target.value)} placeholder="10000" />
                     </div>
-                    <Button className="w-full vrz-button-primary rounded-full" onClick={handleSaveCartao}>
+                    <Button className="w-full bg-accent-orange hover:bg-accent-orange/90 text-white rounded-full" onClick={handleSaveCartao}>
                       {selectedCartao ? 'Atualizar Cartão' : 'Salvar Cartão'}
                     </Button>
                   </div>

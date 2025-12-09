@@ -27,6 +27,9 @@ interface Pessoa {
   data_admissao?: string;
   salario_fixo?: number;
   valor_m2?: number;
+  data_demissao?: string;
+  conta_bancaria?: string;
+  contas_bancarias?: any[];
 }
 
 export default function Pessoas() {
@@ -53,10 +56,40 @@ export default function Pessoas() {
     email: "",
     endereco: "",
     data_admissao: "",
+    data_demissao: "",
     salario_fixo: "",
     valor_m2: "",
+    conta_bancaria: "",
   });
+  const [contasBancarias, setContasBancarias] = useState<any[]>([]);
+  const [newConta, setNewConta] = useState({ banco: "", agencia: "", conta: "", tipo: "corrente" });
   const [searchTerm, setSearchTerm] = useState("");
+
+  // Formatters
+  const formatCPF = (value: string) => {
+    return value
+      .replace(/\D/g, "")
+      .replace(/(\d{3})(\d)/, "$1.$2")
+      .replace(/(\d{3})(\d)/, "$1.$2")
+      .replace(/(\d{3})(\d{1,2})/, "$1-$2")
+      .replace(/(-\d{2})\d+?$/, "$1");
+  };
+
+  const formatTelefone = (value: string) => {
+    return value
+      .replace(/\D/g, "")
+      .replace(/(\d{2})(\d)/, "($1) $2")
+      .replace(/(\d{5})(\d)/, "$1-$2")
+      .replace(/(-\d{4})\d+?$/, "$1");
+  };
+
+  const formatCurrency = (value: string) => {
+    // Remove non-digits
+    const number = value.replace(/\D/g, "");
+    // Convert to decimal
+    const result = Number(number) / 100;
+    return result.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
+  };
   const [filterCargo, setFilterCargo] = useState("todos");
   const [sortField, setSortField] = useState<keyof Pessoa | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
@@ -90,9 +123,13 @@ export default function Pessoas() {
       email: "",
       endereco: "",
       data_admissao: "",
+      data_demissao: "",
       salario_fixo: "",
       valor_m2: "",
+      conta_bancaria: "",
     });
+    setContasBancarias([]);
+    setNewConta({ banco: "", agencia: "", conta: "", tipo: "corrente" });
     setIsEditMode(false);
   };
 
@@ -108,9 +145,12 @@ export default function Pessoas() {
       email: pessoa.email || "",
       endereco: pessoa.endereco || "",
       data_admissao: pessoa.data_admissao || "",
+      data_demissao: (pessoa as any).data_demissao || "",
       salario_fixo: pessoa.salario_fixo?.toString() || "",
       valor_m2: pessoa.valor_m2?.toString() || "",
+      conta_bancaria: (pessoa as any).conta_bancaria || "",
     });
+    setContasBancarias(Array.isArray((pessoa as any).contas_bancarias) ? (pessoa as any).contas_bancarias : []);
     setIsEditMode(true);
     setIsDialogOpen(true);
     setIsDetailOpen(false);
@@ -118,6 +158,24 @@ export default function Pessoas() {
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleAddConta = () => {
+    if (!newConta.banco || !newConta.agencia || !newConta.conta) {
+      toast({
+        title: "Dados incompletos",
+        description: "Preencha banco, agência e conta antes de adicionar",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setContasBancarias((prev) => [...prev, newConta]);
+    setNewConta({ banco: "", agencia: "", conta: "", tipo: "corrente" });
+  };
+
+  const handleRemoveConta = (index: number) => {
+    setContasBancarias((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -142,6 +200,9 @@ export default function Pessoas() {
         email: formData.email,
         endereco: formData.endereco,
         data_admissao: formData.data_admissao || null,
+        data_demissao: formData.data_demissao || null,
+        conta_bancaria: formData.conta_bancaria || null,
+        contas_bancarias: contasBancarias,
         salario_fixo: formData.salario_fixo ? parseFloat(formData.salario_fixo) : null,
         valor_m2: formData.valor_m2 ? parseFloat(formData.valor_m2) : null,
       };
@@ -253,7 +314,7 @@ export default function Pessoas() {
               if (!open) resetForm();
             }}>
               <DialogTrigger asChild>
-                <Button className="rounded-full bg-[hsl(var(--primary))] text-white hover:bg-[hsl(var(--primary))]/90 transition-colors px-5 py-2.5 text-sm">
+                <Button className="rounded-full bg-accent-orange hover:bg-accent-orange/90 text-white transition-colors px-5 py-2.5 text-sm">
                   <Plus className="mr-2 h-4 w-4" />
                   Nova Pessoa
                 </Button>
@@ -293,13 +354,24 @@ export default function Pessoas() {
                       required
                     />
                   </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="data_demissao">Data de Demissão</Label>
+                    <Input
+                      id="data_demissao"
+                      type="date"
+                      value={formData.data_demissao}
+                      onChange={(e) => handleInputChange("data_demissao", e.target.value)}
+                    />
+                  </div>
                   
                   <div className="space-y-2">
                     <Label htmlFor="cpf">CPF</Label>
                     <Input
                       id="cpf"
                       value={formData.cpf}
-                      onChange={(e) => handleInputChange("cpf", e.target.value)}
+                      onChange={(e) => handleInputChange("cpf", formatCPF(e.target.value))}
+                      maxLength={14}
                       placeholder="000.000.000-00"
                     />
                   </div>
@@ -331,7 +403,8 @@ export default function Pessoas() {
                     <Input
                       id="telefone"
                       value={formData.telefone}
-                      onChange={(e) => handleInputChange("telefone", e.target.value)}
+                      onChange={(e) => handleInputChange("telefone", formatTelefone(e.target.value))}
+                      maxLength={15}
                       placeholder="(11) 99999-9999"
                     />
                   </div>
@@ -368,6 +441,96 @@ export default function Pessoas() {
                     />
                   </div>
 
+                  <div className="space-y-3 md:col-span-2 mt-2">
+                    <div className="flex items-center justify-between">
+                      <Label>Contas Bancárias</Label>
+                      <span className="text-xs text-black/50">Cadastre uma ou mais contas para pagamento</span>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end bg-gray-50 p-3 rounded-lg border border-dashed border-gray-200">
+                      <div className="space-y-1">
+                        <Label className="text-xs">Banco</Label>
+                        <Input
+                          placeholder="Nome do banco"
+                          value={newConta.banco}
+                          onChange={(e) => setNewConta({ ...newConta, banco: e.target.value })}
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Agência</Label>
+                        <Input
+                          placeholder="0000"
+                          value={newConta.agencia}
+                          onChange={(e) => setNewConta({ ...newConta, agencia: e.target.value })}
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Conta</Label>
+                        <Input
+                          placeholder="000000-0"
+                          value={newConta.conta}
+                          onChange={(e) => setNewConta({ ...newConta, conta: e.target.value })}
+                        />
+                      </div>
+                      <div className="flex items-end gap-2">
+                        <Select
+                          value={newConta.tipo}
+                          onValueChange={(value) => setNewConta({ ...newConta, tipo: value })}
+                        >
+                          <SelectTrigger className="flex-1">
+                            <SelectValue placeholder="Tipo" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="corrente">Corrente</SelectItem>
+                            <SelectItem value="poupanca">Poupança</SelectItem>
+                            <SelectItem value="pj">PJ</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <Button
+                          type="button"
+                          size="icon"
+                          className="bg-accent-orange hover:bg-accent-orange/90 text-white rounded-full h-9 w-9"
+                          onClick={handleAddConta}
+                        >
+                          <Plus className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+
+                    {contasBancarias.length > 0 && (
+                      <div className="space-y-2">
+                        <Label className="text-xs text-black/60">Contas cadastradas</Label>
+                        <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
+                          {contasBancarias.map((conta, index) => (
+                            <div
+                              key={index}
+                              className="flex items-center justify-between gap-3 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm"
+                            >
+                              <div className="flex items-center gap-3 flex-1 min-w-0">
+                                <span className="font-medium truncate">{conta.banco}</span>
+                                <span className="hidden md:inline text-xs text-black/60 flex-shrink-0">
+                                  Ag. {conta.agencia} / Cc. {conta.conta}
+                                </span>
+                                <span className="text-xs text-black/50 capitalize flex-shrink-0">
+                                  {conta.tipo}
+                                </span>
+                              </div>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 text-red-500 flex-shrink-0"
+                                onClick={() => handleRemoveConta(index)}
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
                   <div className="space-y-2">
                     <Label htmlFor="valor_m2">Valor m²</Label>
                     <Input
@@ -387,7 +550,7 @@ export default function Pessoas() {
                     }} className="flex-1">
                       Cancelar
                     </Button>
-                    <Button type="submit" className="flex-1 vrz-button-primary">
+                    <Button type="submit" className="flex-1 bg-accent-orange hover:bg-accent-orange/90 text-white">
                       {isEditMode ? 'Atualizar' : 'Salvar'}
                     </Button>
                   </div>
@@ -552,6 +715,12 @@ export default function Pessoas() {
                     <Label className="text-xs text-muted-foreground">Admissão</Label>
                     <p className="font-medium">{selectedPessoa.data_admissao || '-'}</p>
                   </div>
+                  {(selectedPessoa as any).data_demissao && (
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Demissão</Label>
+                      <p className="font-medium">{(selectedPessoa as any).data_demissao}</p>
+                    </div>
+                  )}
                   <div>
                     <Label className="text-xs text-muted-foreground">Salário Fixo</Label>
                     <p className="font-medium">

@@ -13,8 +13,8 @@ import { format, addMonths, setDate } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CategoryManager } from "@/components/CategoryManager";
-import { SupplierManager } from "@/components/SupplierManager";
+import { CategoryManager } from "../components/CategoryManager";
+import { SupplierManager } from "../components/SupplierManager";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -42,14 +42,14 @@ interface Despesa {
 
 export default function Despesas() {
   const [despesasRaw, setDespesasRaw] = useState<Despesa[]>([]);
-  const [contas, setContas] = useState<{id: string, nome: string}[]>([]);
-  const [cartoes, setCartoes] = useState<{id: string, nome: string, dia_fechamento: number}[]>([]);
-  
+  const [contas, setContas] = useState<{ id: string, nome: string }[]>([]);
+  const [cartoes, setCartoes] = useState<{ id: string, nome: string, dia_fechamento: number }[]>([]);
+
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [selectedDespesa, setSelectedDespesa] = useState<Despesa | null>(null);
-  
+
   const { data: userRole } = useUserRole();
   const isAdmin = userRole === 'admin';
 
@@ -69,11 +69,11 @@ export default function Despesas() {
   const [observacao, setObservacao] = useState("");
   const [recorrencia, setRecorrencia] = useState("Nenhuma");
 
-  const [categorias, setCategorias] = useState<{id: string, name: string}[]>([]);
-  const [fornecedores, setFornecedores] = useState<{id: string, name: string}[]>([]);
-  const [projetos, setProjetos] = useState<{id: string, projetoID: string}[]>([]);
+  const [categorias, setCategorias] = useState<{ id: string, name: string }[]>([]);
+  const [fornecedores, setFornecedores] = useState<{ id: string, name: string }[]>([]);
+  const [projetos, setProjetos] = useState<{ id: string, projetoID: string }[]>([]);
   const { toast } = useToast();
-  
+
   const fetchData = async () => {
     try {
       console.log('[DESPESAS] Fetching all data...');
@@ -97,7 +97,7 @@ export default function Despesas() {
         `).order('data_vencimento', { ascending: true })
       ]);
 
-      console.log('[DESPESAS] Fetch results:', { 
+      console.log('[DESPESAS] Fetch results:', {
         despesas: despesasData?.length,
         despesasError,
         categorias: categoriasData?.length,
@@ -151,14 +151,14 @@ export default function Despesas() {
   const handleCategoryChange = () => {
     fetchData();
   };
-  
+
   const handleSupplierChange = () => {
     fetchData();
   };
 
   const openEditDespesa = (despesa: Despesa) => {
     setSelectedDespesa(despesa);
-    
+
     if (despesa.data_vencimento) setDataVencimento(new Date(despesa.data_vencimento));
     setDescricao(despesa.descricao);
     setValorTotal(despesa.valor.toString());
@@ -171,14 +171,14 @@ export default function Despesas() {
     setObservacao(despesa.observacao || "");
     setFornecedorId(despesa.fornecedor_id || "");
     setParcelas("1");
-    
+
     setIsDetailOpen(false);
     setIsDialogOpen(true);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!dataVencimento || !descricao || !valorTotal) {
       toast({
         title: "Campos obrigatórios",
@@ -189,7 +189,7 @@ export default function Despesas() {
     }
 
     if (status === 'Pago' && !contaId && !cartaoId) {
-       toast({
+      toast({
         title: "Origem do pagamento",
         description: "Para despesas pagas, selecione a Conta ou Cartão de Crédito.",
         variant: "destructive",
@@ -205,7 +205,7 @@ export default function Despesas() {
       if (!user) throw new Error("Usuário não autenticado");
 
       const despesasToInsert = [];
-      
+
       // Logic for Credit Card Date
       let initialDate = new Date(dataVencimento);
       if (formaPagamento === "Cartão de Crédito" && cartaoId) {
@@ -222,7 +222,7 @@ export default function Despesas() {
       for (let i = 0; i < numParcelas; i++) {
         const dataParcela = addMonths(initialDate, i);
         const dataStr = format(dataParcela, 'yyyy-MM-dd');
-        
+
         despesasToInsert.push({
           // user_id: user.id, 
           data_vencimento: dataStr,
@@ -236,7 +236,7 @@ export default function Despesas() {
           status: status === 'Pago' ? 'Pago' : 'Pendente',
           conta_id: contaId || null,
           cartao_id: cartaoId || null,
-          observacao: observacao || null, 
+          observacao: observacao || null,
         });
       }
 
@@ -277,9 +277,9 @@ export default function Despesas() {
     setObservacao("");
     setRecorrencia("Nenhuma");
   };
-  
+
   const handleDelete = async (id: string) => {
-     const { error } = await supabase.from('despesas').delete().eq('id', id);
+    const { error } = await supabase.from('despesas').delete().eq('id', id);
     if (!error) {
       toast({ title: "Despesa excluída" });
       fetchData();
@@ -311,32 +311,32 @@ export default function Despesas() {
                     Gerencie as categorias de despesas e fornecedores
                   </DialogDescription>
                 </DialogHeader>
-                
+
                 <Tabs defaultValue="categorias" className="mt-4">
                   <TabsList className="grid w-full grid-cols-2">
                     <TabsTrigger value="categorias">Categorias</TabsTrigger>
                     <TabsTrigger value="fornecedores">Fornecedores</TabsTrigger>
                   </TabsList>
                   <TabsContent value="categorias" className="mt-4">
-                    <CategoryManager 
-                      title="Categorias de Despesas" 
-                      description="Gerencie as categorias disponíveis para classificar despesas" 
+                    <CategoryManager
+                      title="Categorias de Despesas"
+                      description="Gerencie as categorias disponíveis para classificar despesas"
                       type="Despesa"
                       onCategoryChange={handleCategoryChange}
                     />
                   </TabsContent>
                   <TabsContent value="fornecedores" className="mt-4">
-                    <SupplierManager 
+                    <SupplierManager
                       onSupplierChange={handleSupplierChange}
                     />
                   </TabsContent>
                 </Tabs>
               </DialogContent>
             </Dialog>
-            
+
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="rounded-full bg-[hsl(var(--primary))] text-white hover:bg-[hsl(var(--primary))]/90 transition-colors px-5 py-2.5 text-sm">
+                <Button className="rounded-full bg-accent-orange hover:bg-accent-orange/90 text-white transition-colors px-5 py-2.5 text-sm">
                   <Plus className="mr-2 h-4 w-4" />
                   Nova Despesa
                 </Button>
@@ -348,7 +348,7 @@ export default function Despesas() {
                     Cadastre uma nova despesa no sistema
                   </DialogDescription>
                 </DialogHeader>
-                
+
                 <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                   <div className="space-y-1">
                     <Label htmlFor="dataVencimento" className="text-xs">Data *</Label>
@@ -375,7 +375,7 @@ export default function Despesas() {
                       </PopoverContent>
                     </Popover>
                   </div>
-                  
+
                   <div className="space-y-1">
                     <Label htmlFor="valorTotal" className="text-xs">Valor (R$) *</Label>
                     <Input
@@ -402,7 +402,7 @@ export default function Despesas() {
                       </SelectContent>
                     </Select>
                   </div>
-                  
+
                   <div className="space-y-1 md:col-span-2">
                     <Label htmlFor="descricao" className="text-xs">Descrição *</Label>
                     <Input
@@ -425,7 +425,7 @@ export default function Despesas() {
                       className="h-9"
                     />
                   </div>
-                  
+
                   <div className="space-y-1">
                     <Label htmlFor="formaPagamento" className="text-xs">Forma de Pagamento</Label>
                     <Select value={formaPagamento} onValueChange={setFormaPagamento}>
@@ -457,7 +457,7 @@ export default function Despesas() {
                       </Select>
                     </div>
                   ) : (
-                     <div className="space-y-1">
+                    <div className="space-y-1">
                       <Label htmlFor="contaId" className="text-xs">Conta de Saída</Label>
                       <Select value={contaId} onValueChange={setContaId}>
                         <SelectTrigger className="h-9">
@@ -499,7 +499,7 @@ export default function Despesas() {
                       </SelectContent>
                     </Select>
                   </div>
-                  
+
                   <div className="space-y-1">
                     <Label htmlFor="categoriaId" className="text-xs">Categoria</Label>
                     <Select value={categoriaId} onValueChange={setCategoriaId}>
@@ -513,7 +513,7 @@ export default function Despesas() {
                       </SelectContent>
                     </Select>
                   </div>
-                  
+
                   <div className="space-y-1">
                     <Label htmlFor="fornecedorId" className="text-xs">Fornecedor</Label>
                     <Select value={fornecedorId} onValueChange={setFornecedorId}>
@@ -527,7 +527,7 @@ export default function Despesas() {
                       </SelectContent>
                     </Select>
                   </div>
-                  
+
                   <div className="space-y-1">
                     <Label htmlFor="projetoID" className="text-xs">Projeto</Label>
                     <Select value={projetoID} onValueChange={setProjetoID}>
@@ -541,7 +541,7 @@ export default function Despesas() {
                       </SelectContent>
                     </Select>
                   </div>
-                  
+
                   <div className="space-y-1">
                     <Label htmlFor="notaFiscal" className="text-xs">Nota Fiscal</Label>
                     <Select value={notaFiscal} onValueChange={setNotaFiscal}>
@@ -554,12 +554,12 @@ export default function Despesas() {
                       </SelectContent>
                     </Select>
                   </div>
-                  
+
                   <div className="flex gap-2 pt-3 md:col-span-2">
                     <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)} className="flex-1 h-9">
                       Cancelar
                     </Button>
-                    <Button type="submit" className="flex-1 vrz-button-primary h-9">
+                    <Button type="submit" className="flex-1 bg-accent-orange hover:bg-accent-orange/90 text-white h-9">
                       Salvar
                     </Button>
                   </div>
@@ -571,63 +571,63 @@ export default function Despesas() {
         <CardContent className="p-0">
           <div className="overflow-x-auto w-full">
             <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Vencimento</TableHead>
-                <TableHead>Descrição</TableHead>
-                <TableHead>Fornecedor</TableHead>
-                <TableHead>Projeto</TableHead>
-                <TableHead>Categoria</TableHead>
-                <TableHead>Forma Pag.</TableHead>
-                <TableHead>Parcela</TableHead>
-                <TableHead>Valor</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Nota Fiscal</TableHead>
-                <TableHead className="w-[100px]"></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {despesas.map((despesa: any) => (
-                <TableRow key={despesa.id} className="cursor-pointer hover:bg-gray-50" onClick={() => {
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Vencimento</TableHead>
+                  <TableHead>Descrição</TableHead>
+                  <TableHead>Fornecedor</TableHead>
+                  <TableHead>Projeto</TableHead>
+                  <TableHead>Categoria</TableHead>
+                  <TableHead>Forma Pag.</TableHead>
+                  <TableHead>Parcela</TableHead>
+                  <TableHead>Valor</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Nota Fiscal</TableHead>
+                  <TableHead className="w-[100px]"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {despesas.map((despesa: any) => (
+                  <TableRow key={despesa.id} className="cursor-pointer hover:bg-gray-50" onClick={() => {
                     setSelectedDespesa(despesa);
                     setIsDetailOpen(true);
                   }}>
-                  <TableCell>{format(new Date(despesa.data_vencimento), "dd/MM/yyyy")}</TableCell>
-                  <TableCell className="font-medium">{despesa.descricao}</TableCell>
-                  <TableCell>{despesa.fornecedor_nome || "-"}</TableCell>
-                  <TableCell>{despesa.projeto_codigo || "-"}</TableCell>
-                  <TableCell>{despesa.categoria_nome || "-"}</TableCell>
-                  <TableCell>{despesa.forma_pagamento}</TableCell>
-                  <TableCell>1</TableCell>
-                  <TableCell className="text-red-600 font-medium">
-                    R$ {despesa.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={despesa.status === 'Pago' ? 'default' : 'secondary'} className={despesa.status === 'Pago' ? 'bg-green-500' : ''}>
-                      {despesa.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={despesa.nota_fiscal === "Sim" ? "default" : "outline"} className={despesa.nota_fiscal === "Sim" ? "bg-green-500" : ""}>
-                      {despesa.nota_fiscal || "-"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell onClick={(e) => e.stopPropagation()}>
-                    <div className="flex gap-1 justify-end">
-                      {isAdmin && (
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50" onClick={() => openEditDespesa(despesa)}>
-                          <Pencil className="h-4 w-4" />
+                    <TableCell>{format(new Date(despesa.data_vencimento), "dd/MM/yyyy")}</TableCell>
+                    <TableCell className="font-medium">{despesa.descricao}</TableCell>
+                    <TableCell>{despesa.fornecedor_nome || "-"}</TableCell>
+                    <TableCell>{despesa.projeto_codigo || "-"}</TableCell>
+                    <TableCell>{despesa.categoria_nome || "-"}</TableCell>
+                    <TableCell>{despesa.forma_pagamento}</TableCell>
+                    <TableCell>1</TableCell>
+                    <TableCell className="text-red-600 font-medium">
+                      R$ {despesa.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={despesa.status === 'Pago' ? 'default' : 'secondary'} className={despesa.status === 'Pago' ? 'bg-green-500' : ''}>
+                        {despesa.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={despesa.nota_fiscal === "Sim" ? "default" : "outline"} className={despesa.nota_fiscal === "Sim" ? "bg-green-500" : ""}>
+                        {despesa.nota_fiscal || "-"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell onClick={(e) => e.stopPropagation()}>
+                      <div className="flex gap-1 justify-end">
+                        {isAdmin && (
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50" onClick={() => openEditDespesa(despesa)}>
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                        )}
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50" onClick={() => handleDelete(despesa.id)}>
+                          <Trash2 className="h-4 w-4" />
                         </Button>
-                      )}
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50" onClick={() => handleDelete(despesa.id)}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </div>
         </CardContent>
       </Card>
@@ -641,7 +641,7 @@ export default function Despesas() {
               Informações completas da despesa selecionada
             </DialogDescription>
           </DialogHeader>
-          
+
           {selectedDespesa && (
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
@@ -680,10 +680,10 @@ export default function Despesas() {
                 <div>
                   <Label className="text-xs text-muted-foreground">Conta / Cartão</Label>
                   <p className="text-sm">
-                    {selectedDespesa.conta_id 
-                      ? contas.find(c => c.id === selectedDespesa.conta_id)?.nome 
-                      : selectedDespesa.cartao_id 
-                        ? cartoes.find(c => c.id === selectedDespesa.cartao_id)?.nome 
+                    {selectedDespesa.conta_id
+                      ? contas.find(c => c.id === selectedDespesa.conta_id)?.nome
+                      : selectedDespesa.cartao_id
+                        ? cartoes.find(c => c.id === selectedDespesa.cartao_id)?.nome
                         : "-"}
                   </p>
                 </div>
