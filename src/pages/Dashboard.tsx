@@ -51,7 +51,7 @@ export default function DashboardNew() {
         <Button variant="outline" className="text-sm rounded-full" onClick={() => navigate('/projetos')}>
           Projetos
         </Button>
-        <Button className="text-sm vrz-button-primary rounded-full" onClick={() => navigate('/financeiro')}>
+        <Button className="text-sm bg-accent-orange hover:bg-accent-orange/90 text-white rounded-full" onClick={() => navigate('/financeiro')}>
           Novo Lançamento
         </Button>
       </div> */}
@@ -97,7 +97,7 @@ export default function DashboardNew() {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold text-green-600">
-                R$ {(stats.receitasTotal / 1000).toFixed(0)}k
+                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(stats.receitasTotal)}
               </div>
               <p className="text-xs text-green-600 flex items-center gap-1 mt-1">
                 <TrendingUp size={12} />
@@ -116,7 +116,7 @@ export default function DashboardNew() {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold text-red-600">
-                R$ {(stats.despesasTotal / 1000).toFixed(0)}k
+                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(stats.despesasTotal)}
               </div>
               <p className="text-xs text-green-600 flex items-center gap-1 mt-1">
                 <TrendingDown size={12} />
@@ -317,35 +317,6 @@ export default function DashboardNew() {
             </Card>
           </div>
 
-        </div>
-
-        {/* Debug Info in Production/Development for Troubleshooting */}
-        <div className="mt-8 p-4 bg-gray-100 rounded-lg text-xs font-mono text-gray-600">
-          <h4 className="font-bold mb-2 uppercase tracking-wider">Status do Sistema (Debug)</h4>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div>
-              <span className="block text-gray-400">Receitas (Raw)</span>
-              <span className="font-medium">{dashboardData?.debug?.receitasCount ?? 0}</span>
-            </div>
-            <div>
-              <span className="block text-gray-400">Despesas (Raw)</span>
-              <span className="font-medium">{dashboardData?.debug?.despesasCount ?? 0}</span>
-            </div>
-            <div>
-              <span className="block text-gray-400">Início Período</span>
-              <span className="font-medium">{dashboardData?.debug?.periodStart ? new Date(dashboardData.debug.periodStart).toLocaleDateString() : 'N/A'}</span>
-            </div>
-            <div>
-              <span className="block text-gray-400">Fim Período</span>
-              <span className="font-medium">{dashboardData?.debug?.periodEnd ? new Date(dashboardData.debug.periodEnd).toLocaleDateString() : 'N/A'}</span>
-            </div>
-          </div>
-          {dashboardData?.debug?.receitasError && (
-            <div className="mt-2 text-red-600">Erro Receitas: {dashboardData.debug.receitasError}</div>
-          )}
-          {dashboardData?.debug?.despesasError && (
-            <div className="mt-2 text-red-600">Erro Despesas: {dashboardData.debug.despesasError}</div>
-          )}
         </div>
       </div>
     </PageLayout>

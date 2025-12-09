@@ -83,7 +83,7 @@ export default function ResumoMensal({ dateFrom, dateTo }: ResumoMensalProps) {
             <CardTitle className="text-sm font-medium text-green-800">Receitas</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-700">R$ {(stats.receitasTotal / 1000).toFixed(0)}k</div>
+            <div className="text-2xl font-bold text-green-700">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(stats.receitasTotal)}</div>
             <p className="text-xs text-green-600 mt-1 flex items-center">
               <ArrowUpRight size={12} className="mr-1" />
               {stats.receitasMes}% vs mês anterior
@@ -95,7 +95,7 @@ export default function ResumoMensal({ dateFrom, dateTo }: ResumoMensalProps) {
             <CardTitle className="text-sm font-medium text-red-800">Despesas</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-700">R$ {(stats.despesasTotal / 1000).toFixed(0)}k</div>
+            <div className="text-2xl font-bold text-red-700">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(stats.despesasTotal)}</div>
             <p className="text-xs text-green-600 mt-1 flex items-center">
               <ArrowDownRight size={12} className="mr-1" />
               {stats.despesasMes}% vs mês anterior
@@ -107,7 +107,7 @@ export default function ResumoMensal({ dateFrom, dateTo }: ResumoMensalProps) {
             <CardTitle className="text-sm font-medium text-blue-800">Lucro Líquido</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-700">R$ {(stats.saldo / 1000).toFixed(0)}k</div>
+            <div className="text-2xl font-bold text-blue-700">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(stats.saldo)}</div>
             <p className="text-xs text-blue-600 mt-1">Margem de {stats.receitasTotal > 0 ? ((stats.saldo / stats.receitasTotal) * 100).toFixed(1) : 0}%</p>
           </CardContent>
         </Card>
@@ -118,7 +118,7 @@ export default function ResumoMensal({ dateFrom, dateTo }: ResumoMensalProps) {
           <CardContent>
             {/* Simple projection: Current Saldo * (30 / Day of Month) */}
             <div className="text-2xl font-bold text-black/80">
-              R$ {((stats.saldo / Math.max(1, new Date().getDate())) * 30 / 1000).toFixed(0)}k
+              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(((stats.saldo / Math.max(1, new Date().getDate())) * 30))}
             </div>
             <p className="text-xs text-black/50 mt-1">Baseado na média diária</p>
           </CardContent>

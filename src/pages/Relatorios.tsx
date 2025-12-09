@@ -232,7 +232,7 @@ export default function Relatorios() {
 
                   <Button 
                     onClick={handleGerarRelatorio} 
-                    className="w-full vrz-button-primary mt-4"
+                    className="w-full bg-accent-orange hover:bg-accent-orange/90 text-white mt-4"
                     disabled={isLoading}
                   >
                     <Download className="mr-2 h-4 w-4" />

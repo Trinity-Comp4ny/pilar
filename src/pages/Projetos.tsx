@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Calendar, User, DollarSign, Trash2, HardHat, Ruler, Settings2 } from "lucide-react";
+import { Plus, Calendar, User, DollarSign, Trash2, HardHat, Ruler, Settings2, Edit } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 import { PageLayout } from "@/components/PageLayout";
@@ -16,11 +16,10 @@ import { supabase } from "@/integrations/supabase/client";
 
 import { useUserRole } from "@/hooks/useUserRole";
 
-interface ProjetoResponsavel {
-  id?: string;
-  pessoa_id: string;
-  pessoa_nome?: string;
-  responsabilidade: string;
+interface DisciplinaResponsavel {
+  disciplina: string;
+  responsavel_id: string;
+  responsavel_nome: string;
 }
 
 interface Projeto {
@@ -38,7 +37,7 @@ interface Projeto {
   status: "Planejamento" | "Em andamento" | "Paralisado" | "Concluído" | "Cancelado";
   valor_contrato: number;
   observacao: string;
-  projetos_responsaveis: ProjetoResponsavel[];
+  disciplinas: DisciplinaResponsavel[];
 }
 
 const statusConfig: Record<string, { label: string, color: string, columnColor: string }> = {
@@ -61,8 +60,10 @@ export default function ProjetosKanban() {
   const [newDisciplina, setNewDisciplina] = useState("");
   const [selectedProjeto, setSelectedProjeto] = useState<Projeto | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
 
   const [formData, setFormData] = useState({
+    id: "",
     codigo_projeto: "",
     nome: "",
     cliente_id: "",
@@ -74,12 +75,13 @@ export default function ProjetosKanban() {
     data_final: "",
     valor_contrato: "",
     observacao: "",
+    status: "Planejamento" as Projeto['status'],
   });
 
   const canEdit = userRole === 'admin' || userRole === 'operacional';
 
-  const [tempTecnico, setTempTecnico] = useState({ responsabilidade: "", pessoa_id: "" });
-  const [projetosTecnicos, setProjetosTecnicos] = useState<ProjetoResponsavel[]>([]);
+  const [tempDisciplina, setTempDisciplina] = useState({ disciplina: "", responsavel_id: "" });
+  const [projetosDisciplinas, setProjetosDisciplinas] = useState<DisciplinaResponsavel[]>([]);
 
   const { toast } = useToast();
 
@@ -113,13 +115,7 @@ export default function ProjetosKanban() {
       .from('projetos') as any)
       .select(`
         *,
-        clientes (nome),
-        projetos_responsaveis (
-          id,
-          pessoa_id,
-          responsabilidade,
-          pessoas (nome)
-        )
+        clientes (nome)
       `)
       .order('created_at', { ascending: false });
 
@@ -144,12 +140,7 @@ export default function ProjetosKanban() {
         status: p.status as Projeto['status'],
         valor_contrato: p.valor_contrato,
         observacao: p.observacao,
-        projetos_responsaveis: p.projetos_responsaveis?.map((pr: any) => ({
-          id: pr.id,
-          pessoa_id: pr.pessoa_id,
-          responsabilidade: pr.responsabilidade,
-          pessoa_nome: pr.pessoas?.nome
-        })) || []
+        disciplinas: Array.isArray(p.disciplinas) ? p.disciplinas : []
       }));
       setProjetos(mappedProjetos);
     }
@@ -160,28 +151,51 @@ export default function ProjetosKanban() {
     setIsDetailOpen(true);
   };
 
+  const handleEditClick = (projeto: Projeto) => {
+    setFormData({
+      id: projeto.id,
+      codigo_projeto: projeto.codigo_projeto,
+      nome: projeto.nome,
+      cliente_id: projeto.cliente_id,
+      localizacao: projeto.localizacao || "",
+      parcelas: projeto.parcelas || "",
+      area_m2: projeto.area_m2?.toString() || "",
+      data_inicio: projeto.data_inicio || "",
+      data_previsao: projeto.data_previsao || "",
+      data_final: projeto.data_final || "",
+      valor_contrato: projeto.valor_contrato?.toString() || "",
+      observacao: projeto.observacao || "",
+      status: projeto.status,
+    });
+    setProjetosDisciplinas(projeto.disciplinas || []);
+    setIsEditMode(true);
+    setIsDetailOpen(false);
+    setIsDialogOpen(true);
+  };
+
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const addProjetoTecnico = () => {
-    if (tempTecnico.responsabilidade && tempTecnico.pessoa_id) {
-      const pessoa = pessoas.find(p => p.id === tempTecnico.pessoa_id);
-      setProjetosTecnicos([
-        ...projetosTecnicos,
+  const addProjetoDisciplina = () => {
+    if (tempDisciplina.disciplina && tempDisciplina.responsavel_id) {
+      const pessoa = pessoas.find(p => p.id === tempDisciplina.responsavel_id);
+      setProjetosDisciplinas([
+        ...projetosDisciplinas,
         {
-          ...tempTecnico,
-          pessoa_nome: pessoa?.nome
+          disciplina: tempDisciplina.disciplina,
+          responsavel_id: tempDisciplina.responsavel_id,
+          responsavel_nome: pessoa?.nome || ''
         }
       ]);
-      setTempTecnico({ responsabilidade: "", pessoa_id: "" });
+      setTempDisciplina({ disciplina: "", responsavel_id: "" });
     }
   };
 
-  const removeProjetoTecnico = (index: number) => {
-    const newTecnicos = [...projetosTecnicos];
-    newTecnicos.splice(index, 1);
-    setProjetosTecnicos(newTecnicos);
+  const removeProjetoDisciplina = (index: number) => {
+    const newDisciplinas = [...projetosDisciplinas];
+    newDisciplinas.splice(index, 1);
+    setProjetosDisciplinas(newDisciplinas);
   };
 
   const handleAddDisciplina = async () => {
@@ -205,6 +219,26 @@ export default function ProjetosKanban() {
     }
   };
 
+  const resetForm = () => {
+    setFormData({
+      id: "",
+      codigo_projeto: "",
+      nome: "",
+      cliente_id: "",
+      localizacao: "",
+      parcelas: "",
+      area_m2: "",
+      data_inicio: "",
+      data_previsao: "",
+      data_final: "",
+      valor_contrato: "",
+      observacao: "",
+      status: "Planejamento",
+    });
+    setProjetosDisciplinas([]);
+    setIsEditMode(false);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -218,47 +252,57 @@ export default function ProjetosKanban() {
     }
 
     try {
-      // Use RPC to save Project + Responsibles in a transaction
-      const { data: projetoId, error } = await (supabase.rpc as any)('create_projeto_completo', {
-        p_codigo: formData.codigo_projeto,
-        p_nome: formData.nome,
-        p_cliente_id: formData.cliente_id,
-        p_data_inicio: formData.data_inicio || null,
-        p_data_previsao: formData.data_previsao || null,
-        p_data_final: formData.data_final || null,
-        p_valor_contrato: parseFloat(formData.valor_contrato) || 0,
-        p_observacao: formData.observacao,
-        p_localizacao: formData.localizacao,
-        p_parcelas: formData.parcelas,
-        p_area_m2: parseFloat(formData.area_m2) || 0,
-        p_responsaveis: projetosTecnicos.map(pt => ({
-          pessoa_id: pt.pessoa_id,
-          disciplina: pt.responsabilidade
-        }))
-      });
+      if (isEditMode && formData.id) {
+        // Update existing project
+        const { error } = await (supabase.rpc as any)('update_projeto_completo', {
+          p_projeto_id: formData.id,
+          p_codigo: formData.codigo_projeto,
+          p_nome: formData.nome,
+          p_cliente_id: formData.cliente_id,
+          p_data_inicio: formData.data_inicio || null,
+          p_data_previsao: formData.data_previsao || null,
+          p_data_final: formData.data_final || null,
+          p_valor_contrato: parseFloat(formData.valor_contrato) || 0,
+          p_observacao: formData.observacao,
+          p_localizacao: formData.localizacao,
+          p_parcelas: formData.parcelas || null,
+          p_area_m2: parseFloat(formData.area_m2) || 0,
+          p_disciplinas: projetosDisciplinas,
+          p_status: formData.status
+        });
 
-      if (error) throw error;
+        if (error) throw error;
 
-      toast({
-        title: "Projeto cadastrado",
-        description: "Novo projeto foi adicionado com sucesso",
-      });
+        toast({
+          title: "Projeto atualizado",
+          description: "Projeto foi atualizado com sucesso",
+        });
+      } else {
+        // Create new project
+        const { data: projetoId, error } = await (supabase.rpc as any)('create_projeto_completo', {
+          p_codigo: formData.codigo_projeto,
+          p_nome: formData.nome,
+          p_cliente_id: formData.cliente_id,
+          p_data_inicio: formData.data_inicio || null,
+          p_data_previsao: formData.data_previsao || null,
+          p_data_final: formData.data_final || null,
+          p_valor_contrato: parseFloat(formData.valor_contrato) || 0,
+          p_observacao: formData.observacao,
+          p_localizacao: formData.localizacao,
+          p_parcelas: formData.parcelas || null,
+          p_area_m2: parseFloat(formData.area_m2) || 0,
+          p_disciplinas: projetosDisciplinas
+        });
 
-      // Reset form
-      setFormData({
-        codigo_projeto: "",
-        nome: "",
-        cliente_id: "",
-        localizacao: "",
-        parcelas: "",
-        area_m2: "",
-        data_inicio: "",
-        data_previsao: "",
-        data_final: "",
-        valor_contrato: "",
-        observacao: "",
-      });
-      setProjetosTecnicos([]);
+        if (error) throw error;
+
+        toast({
+          title: "Projeto cadastrado",
+          description: "Novo projeto foi adicionado com sucesso",
+        });
+      }
+
+      resetForm();
       setIsDialogOpen(false);
       fetchProjetos();
 
@@ -292,8 +336,11 @@ export default function ProjetosKanban() {
 
     if (!destination) return;
     if (source.droppableId === destination.droppableId) return;
+    if (!canEdit) return; // Previne drag se não pode editar
 
     const newStatus = destination.droppableId as Projeto["status"];
+
+    console.log('Tentando atualizar status para:', newStatus);
 
     // Optimistic update
     setProjetos((prevProjetos) =>
@@ -308,15 +355,23 @@ export default function ProjetosKanban() {
         .update({ status: newStatus })
         .eq('id', draggableId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erro ao atualizar status:', error);
+        throw error;
+      }
 
       toast({
         title: "Status atualizado",
         description: `Projeto movido para ${statusConfig[newStatus].label}`,
       });
-    } catch (error) {
+
+      // Recarrega para garantir consistência
+      fetchProjetos();
+    } catch (error: any) {
+      console.error('Erro completo:', error);
       toast({
         title: "Erro ao atualizar status",
+        description: error.message || "Erro desconhecido",
         variant: "destructive"
       });
       fetchProjetos(); // Revert
@@ -332,6 +387,57 @@ export default function ProjetosKanban() {
       style: 'currency',
       currency: 'BRL'
     }).format(value);
+  };
+
+  // Formata data corrigindo o problema de timezone
+  const formatDate = (dateString: string | undefined) => {
+    if (!dateString) return '-';
+    const date = new Date(dateString + 'T00:00:00');
+    return date.toLocaleDateString('pt-BR');
+  };
+
+  const formatDateShort = (dateString: string | undefined) => {
+    if (!dateString) return '-';
+    const date = new Date(dateString + 'T00:00:00');
+    return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+  };
+
+  // Calcula o status de prazo do projeto e status_data
+  const getDeadlineStatus = (projeto: { data_previsao?: string, data_final?: string, status: string }) => {
+    const { data_previsao, data_final, status } = projeto;
+
+    // Se projeto está concluído, verifica se foi no prazo ou com atraso
+    if (status === 'Concluído' && data_final && data_previsao) {
+      const final = new Date(data_final + 'T00:00:00');
+      const previsao = new Date(data_previsao + 'T00:00:00');
+
+      if (final <= previsao) {
+        return { label: 'Concluído no Prazo', color: 'bg-green-600 text-white', days: 0, status_data: 'concluido_no_prazo' };
+      } else {
+        return { label: 'Concluído com Atraso', color: 'bg-orange-600 text-white', days: 0, status_data: 'concluido_com_atraso' };
+      }
+    }
+
+    if (!data_previsao || status === 'Cancelado') {
+      return null;
+    }
+
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+
+    const previsao = new Date(data_previsao + 'T00:00:00');
+    previsao.setHours(0, 0, 0, 0);
+
+    const diffTime = previsao.getTime() - hoje.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays < 0) {
+      return { label: 'Em Atraso', color: 'bg-red-500 text-white', days: Math.abs(diffDays), status_data: 'em_atraso' };
+    } else if (diffDays <= 7) {
+      return { label: 'Atenção', color: 'bg-yellow-500 text-white', days: diffDays, status_data: 'atencao' };
+    } else {
+      return { label: 'No Prazo', color: 'bg-green-500 text-white', days: diffDays, status_data: 'no_prazo' };
+    }
   };
 
   return (
@@ -386,16 +492,21 @@ export default function ProjetosKanban() {
               {canEdit && (
                 <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                   <DialogTrigger asChild>
-                    <Button className="rounded-full bg-[hsl(var(--primary))] text-white hover:bg-[hsl(var(--primary))]/90 transition-colors px-5 py-2.5 text-sm">
+                    <Button
+                      className="rounded-full bg-accent-orange hover:bg-accent-orange/90 text-white transition-colors px-5 py-2.5 text-sm"
+                      onClick={() => {
+                        resetForm();
+                      }}
+                    >
                       <Plus className="mr-2 h-4 w-4" />
                       Novo Projeto
                     </Button>
                   </DialogTrigger>
                   <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
-                      <DialogTitle>Novo Projeto</DialogTitle>
+                      <DialogTitle>{isEditMode ? 'Editar Projeto' : 'Novo Projeto'}</DialogTitle>
                       <DialogDescription>
-                        Cadastre um novo projeto e defina os responsáveis técnicos
+                        {isEditMode ? 'Atualize as informações do projeto' : 'Cadastre um novo projeto e defina os responsáveis técnicos'}
                       </DialogDescription>
                     </DialogHeader>
 
@@ -505,13 +616,25 @@ export default function ProjetosKanban() {
                         />
                       </div>
 
-                      {/* Seção de Projetos Técnicos */}
+                      <div className="space-y-2">
+                        <Label htmlFor="parcelas">Parcelas</Label>
+                        <Input
+                          id="parcelas"
+                          type="number"
+                          min="1"
+                          value={formData.parcelas}
+                          onChange={(e) => handleInputChange("parcelas", e.target.value)}
+                          placeholder="1"
+                        />
+                      </div>
+
+                      {/* Seção de Disciplinas e Responsáveis */}
                       <div className="space-y-2 md:col-span-2 border-t pt-4">
-                        <Label>Responsáveis Técnicos</Label>
+                        <Label>Disciplinas e Responsáveis</Label>
                         <div className="flex gap-2 items-end">
                           <div className="flex-1 space-y-1">
-                            <Label className="text-xs">Disciplina/Função</Label>
-                            <Select value={tempTecnico.responsabilidade} onValueChange={(val) => setTempTecnico({ ...tempTecnico, responsabilidade: val })}>
+                            <Label className="text-xs">Disciplina</Label>
+                            <Select value={tempDisciplina.disciplina} onValueChange={(val) => setTempDisciplina({ ...tempDisciplina, disciplina: val })}>
                               <SelectTrigger>
                                 <SelectValue placeholder="Selecione" />
                               </SelectTrigger>
@@ -524,7 +647,7 @@ export default function ProjetosKanban() {
                           </div>
                           <div className="flex-1 space-y-1">
                             <Label className="text-xs">Responsável</Label>
-                            <Select value={tempTecnico.pessoa_id} onValueChange={(val) => setTempTecnico({ ...tempTecnico, pessoa_id: val })}>
+                            <Select value={tempDisciplina.responsavel_id} onValueChange={(val) => setTempDisciplina({ ...tempDisciplina, responsavel_id: val })}>
                               <SelectTrigger>
                                 <SelectValue placeholder="Selecione a pessoa" />
                               </SelectTrigger>
@@ -535,17 +658,17 @@ export default function ProjetosKanban() {
                               </SelectContent>
                             </Select>
                           </div>
-                          <Button type="button" onClick={addProjetoTecnico} variant="secondary">
+                          <Button type="button" onClick={addProjetoDisciplina} variant="secondary">
                             <Plus size={16} />
                           </Button>
                         </div>
 
-                        {projetosTecnicos.length > 0 && (
+                        {projetosDisciplinas.length > 0 && (
                           <div className="space-y-2 mt-2">
-                            {projetosTecnicos.map((pt, idx) => (
+                            {projetosDisciplinas.map((pd, idx) => (
                               <div key={idx} className="flex items-center justify-between bg-gray-50 p-2 rounded text-sm">
-                                <span className="font-medium">{pt.responsabilidade}: <span className="font-normal text-gray-600">{pt.pessoa_nome}</span></span>
-                                <Button type="button" variant="ghost" size="sm" onClick={() => removeProjetoTecnico(idx)} className="h-6 w-6 p-0 text-red-500">
+                                <span className="font-medium">{pd.disciplina}: <span className="font-normal text-gray-600">{pd.responsavel_nome}</span></span>
+                                <Button type="button" variant="ghost" size="sm" onClick={() => removeProjetoDisciplina(idx)} className="h-6 w-6 p-0 text-red-500">
                                   <Trash2 size={14} />
                                 </Button>
                               </div>
@@ -566,11 +689,11 @@ export default function ProjetosKanban() {
                       </div>
 
                       <div className="flex gap-2 pt-4 md:col-span-2">
-                        <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)} className="flex-1">
+                        <Button type="button" variant="outline" onClick={() => { setIsDialogOpen(false); resetForm(); }} className="flex-1">
                           Cancelar
                         </Button>
-                        <Button type="submit" className="flex-1 vrz-button-primary">
-                          Salvar
+                        <Button type="submit" className="flex-1 bg-accent-orange hover:bg-accent-orange/90 text-white">
+                          {isEditMode ? 'Atualizar' : 'Salvar'}
                         </Button>
                       </div>
                     </form>
@@ -583,9 +706,9 @@ export default function ProjetosKanban() {
       }
     >
       <DragDropContext onDragEnd={onDragEnd}>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 w-full">
+        <div className="grid gap-3 w-full" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))' }}>
           {Object.entries(statusConfig).map(([status, config]) => (
-            <div key={status} className="flex flex-col h-full">
+            <div key={status} className="flex flex-col min-w-[280px]">
               <div className={`${config.columnColor} rounded-t-lg p-3 border-b border-black/10`}>
                 <h3 className="font-medium text-sm flex items-center justify-between">
                   {config.label}
@@ -614,42 +737,52 @@ export default function ProjetosKanban() {
                             className={`cursor-pointer hover:shadow-md transition-shadow w-full ${snapshot.isDragging ? "shadow-lg rotate-2" : ""
                               }`}
                           >
-                            <CardHeader className="p-3 pb-2">
-                              <div className="flex items-start justify-between gap-2 mb-1 flex-wrap">
-                                <Badge variant="outline" className="text-xs font-mono">
+                            <CardHeader className="p-2.5 pb-1.5">
+                              <div className="flex items-start justify-between gap-1.5 mb-1">
+                                <Badge variant="outline" className="text-[10px] font-mono px-1.5 py-0">
                                   {projeto.codigo_projeto}
                                 </Badge>
+                                {(() => {
+                                  const deadlineStatus = getDeadlineStatus(projeto);
+                                  return deadlineStatus && deadlineStatus.label !== 'No Prazo' ? (
+                                    <Badge className={`text-[9px] px-1.5 py-0 ${deadlineStatus.color}`}>
+                                      {deadlineStatus.label}
+                                    </Badge>
+                                  ) : null;
+                                })()}
                               </div>
-                              <CardTitle className="text-sm font-medium line-clamp-2">
+                              <CardTitle className="text-xs font-medium line-clamp-2 leading-tight">
                                 {projeto.nome}
                               </CardTitle>
-                              <p className="text-xs text-muted-foreground line-clamp-1">{projeto.cliente_nome}</p>
+                              <p className="text-[10px] text-muted-foreground line-clamp-1 mt-0.5">{projeto.cliente_nome}</p>
                             </CardHeader>
-                            <CardContent className="p-3 pt-0 space-y-2">
-                              {projeto.projetos_responsaveis && projeto.projetos_responsaveis.length > 0 && (
-                                <div className="flex flex-wrap gap-1 pt-1">
-                                  {projeto.projetos_responsaveis.slice(0, 2).map((pt, i) => (
-                                    <span key={i} className="text-[10px] bg-gray-100 px-1.5 py-0.5 rounded text-gray-600 flex items-center gap-1">
-                                      <HardHat size={8} /> {pt.responsabilidade}
+                            <CardContent className="p-2.5 pt-0 space-y-1.5">
+                              {projeto.disciplinas && projeto.disciplinas.length > 0 && (
+                                <div className="flex flex-wrap gap-1">
+                                  {projeto.disciplinas.slice(0, 1).map((disc, i) => (
+                                    <span key={i} className="text-[9px] bg-gray-100 px-1.5 py-0.5 rounded text-gray-600 flex items-center gap-0.5">
+                                      <HardHat size={8} /> {disc.disciplina}
                                     </span>
                                   ))}
-                                  {projeto.projetos_responsaveis.length > 2 && (
-                                    <span className="text-[10px] bg-gray-100 px-1.5 py-0.5 rounded text-gray-600">
-                                      +{projeto.projetos_responsaveis.length - 2}
+                                  {projeto.disciplinas.length > 1 && (
+                                    <span className="text-[9px] bg-gray-100 px-1.5 py-0.5 rounded text-gray-600">
+                                      +{projeto.disciplinas.length - 1}
                                     </span>
                                   )}
                                 </div>
                               )}
 
-                              <div className="flex items-center justify-between text-xs font-medium text-green-600 pt-2 border-t">
-                                <div className="flex items-center gap-1">
-                                  <DollarSign size={12} className="flex-shrink-0" />
-                                  <span>{formatCurrency(projeto.valor_contrato)}</span>
+                              <div className="flex items-center justify-between text-[10px] pt-1.5 border-t">
+                                <div className="flex items-center gap-0.5 font-medium text-green-600">
+                                  <DollarSign size={10} className="flex-shrink-0" />
+                                  <span className="truncate">{formatCurrency(projeto.valor_contrato)}</span>
                                 </div>
-                                <div className="flex items-center gap-1 text-gray-500 font-normal">
-                                  <Calendar size={12} />
-                                  <span>{projeto.data_previsao ? new Date(projeto.data_previsao).toLocaleDateString('pt-BR') : '-'}</span>
-                                </div>
+                                {projeto.data_previsao && (
+                                  <div className="flex items-center gap-0.5 text-gray-500">
+                                    <Calendar size={10} />
+                                    <span>{formatDateShort(projeto.data_previsao)}</span>
+                                  </div>
+                                )}
                               </div>
                             </CardContent>
                           </Card>
@@ -705,19 +838,27 @@ export default function ProjetosKanban() {
                   <div>
                     <Label className="text-xs text-muted-foreground">Início</Label>
                     <div className="font-medium flex items-center gap-2">
-                      <Calendar size={14} /> {selectedProjeto.data_inicio ? new Date(selectedProjeto.data_inicio).toLocaleDateString('pt-BR') : '-'}
+                      <Calendar size={14} /> {formatDate(selectedProjeto.data_inicio)}
                     </div>
                   </div>
                   <div>
                     <Label className="text-xs text-muted-foreground">Previsão Entrega</Label>
                     <div className="font-medium flex items-center gap-2">
-                      <Calendar size={14} /> {selectedProjeto.data_previsao ? new Date(selectedProjeto.data_previsao).toLocaleDateString('pt-BR') : '-'}
+                      <Calendar size={14} /> {formatDate(selectedProjeto.data_previsao)}
+                      {(() => {
+                        const deadlineStatus = getDeadlineStatus(selectedProjeto);
+                        return deadlineStatus ? (
+                          <Badge className={`text-xs ml-2 ${deadlineStatus.color}`}>
+                            {deadlineStatus.label} {deadlineStatus.days > 0 && `(${deadlineStatus.days}d)`}
+                          </Badge>
+                        ) : null;
+                      })()}
                     </div>
                   </div>
                   <div>
                     <Label className="text-xs text-muted-foreground">Data Final</Label>
                     <div className="font-medium flex items-center gap-2">
-                      <Calendar size={14} /> {selectedProjeto.data_final ? new Date(selectedProjeto.data_final).toLocaleDateString('pt-BR') : '-'}
+                      <Calendar size={14} /> {formatDate(selectedProjeto.data_final)}
                     </div>
                   </div>
                   <div>
@@ -726,16 +867,22 @@ export default function ProjetosKanban() {
                       {selectedProjeto.localizacao || '-'}
                     </div>
                   </div>
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Parcelas</Label>
+                    <div className="font-medium flex items-center gap-2">
+                      {selectedProjeto.parcelas || '-'}
+                    </div>
+                  </div>
                 </div>
 
-                {selectedProjeto.projetos_responsaveis && selectedProjeto.projetos_responsaveis.length > 0 && (
+                {selectedProjeto.disciplinas && selectedProjeto.disciplinas.length > 0 && (
                   <div>
-                    <Label className="text-xs text-muted-foreground mb-2 block">Responsáveis Técnicos</Label>
+                    <Label className="text-xs text-muted-foreground mb-2 block">Disciplinas e Responsáveis</Label>
                     <div className="space-y-2">
-                      {selectedProjeto.projetos_responsaveis.map((pt, idx) => (
+                      {selectedProjeto.disciplinas.map((disc, idx) => (
                         <div key={idx} className="flex justify-between text-sm border-b pb-1 last:border-0">
-                          <span className="text-gray-600">{pt.responsabilidade}</span>
-                          <span className="font-medium">{pt.pessoa_nome}</span>
+                          <span className="text-gray-600">{disc.disciplina}</span>
+                          <span className="font-medium">{disc.responsavel_nome}</span>
                         </div>
                       ))}
                     </div>
@@ -756,10 +903,19 @@ export default function ProjetosKanban() {
                     Fechar
                   </Button>
                   {canEdit && (
-                    <Button variant="destructive" onClick={() => handleDelete(selectedProjeto.id)} className="flex-1">
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      Excluir
-                    </Button>
+                    <>
+                      <Button
+                        variant="default"
+                        onClick={() => handleEditClick(selectedProjeto)}
+                        className="flex-1 bg-blue-600 hover:bg-blue-700"
+                      >
+                        <Edit className="mr-2 h-4 w-4" />
+                        Editar
+                      </Button>
+                      <Button variant="destructive" onClick={() => handleDelete(selectedProjeto.id)}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </>
                   )}
                 </div>
               </div>

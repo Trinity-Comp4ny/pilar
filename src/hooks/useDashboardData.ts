@@ -207,8 +207,8 @@ export const useDashboardData = (dateFrom?: Date, dateTo?: Date) => {
       const chartDataDiario = processDailyChartData(receitasMain, despesasMain, start, end);
 
       // Process Category Data
-      const categoriaData = processCategoryData(receitasMain);
-      const despesasCategoriaData = processCategoryData(despesasMain);
+      const categoriaData = processCategoryData(receitasMain, 'receitas');
+      const despesasCategoriaData = processCategoryData(despesasMain, 'despesas');
 
       // Format Recent Projects
       const formattedProjects = recentProjects?.map(p => ({
@@ -309,15 +309,20 @@ const processDailyChartData = (receitas: any[], despesas: any[], start: Date, en
   return Array.from(daysMap.entries()).sort().map(([_, val]) => val);
 };
 
-const processCategoryData = (items: any[]) => {
+const processCategoryData = (items: any[], type: 'receitas' | 'despesas' = 'receitas') => {
   const categoryMap = new Map<string, { name: string; value: number; color: string }>();
-  const colors = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884d8", "#82ca9d", "#ffc658", "#8dd1e1"];
+  
+  const greenShades = ["#16a34a", "#22c55e", "#4ade80", "#15803d", "#14532d", "#86efac", "#bbf7d0", "#86efac"];
+  const redShades = ["#dc2626", "#ef4444", "#f87171", "#b91c1c", "#7f1d1d", "#fca5a5", "#fecaca", "#fee2e2"];
 
-  items.forEach((item) => {
+  const colors = type === 'receitas' ? greenShades : redShades;
+
+  items.forEach((item, index) => {
     const categoryName = item.categorias_financeiras?.nome || "Outros";
-    const categoryColor = item.categorias_financeiras?.cor || colors[Math.floor(Math.random() * colors.length)];
-
+    
     if (!categoryMap.has(categoryName)) {
+      const colorIndex = categoryMap.size % colors.length;
+      const categoryColor = item.categorias_financeiras?.cor || colors[colorIndex];
       categoryMap.set(categoryName, { name: categoryName, value: 0, color: categoryColor });
     }
 

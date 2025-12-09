@@ -1,73 +1,181 @@
-# Welcome to your Lovable project
+# Pilar - Sistema de Gestão Trinity
 
-## Project info
+Sistema de gestão empresarial desenvolvido com React, TypeScript, Vite e Supabase.
 
-**URL**: https://lovable.dev/projects/22359da8-57eb-4eda-bdc2-452278964fcc
+## 🚀 Começando
 
-## How can I edit this code?
+### Pré-requisitos
 
-There are several ways of editing your application.
+- Node.js 18+ 
+- npm ou yarn
+- Conta no Supabase
 
-**Use Lovable**
+### Configuração Inicial
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/22359da8-57eb-4eda-bdc2-452278964fcc) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
+1. **Clone o repositório**
+```bash
 git clone <YOUR_GIT_URL>
+cd pilar
+```
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+2. **Instale as dependências**
+```bash
+npm install
+```
 
-# Step 3: Install the necessary dependencies.
-npm i
+3. **Configure as variáveis de ambiente**
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+Copie o arquivo `.env.example` para `.env`:
+```bash
+cp .env.example .env
+```
+
+Edite o arquivo `.env` e adicione suas credenciais do Supabase:
+```env
+VITE_SUPABASE_URL=sua_url_do_supabase
+VITE_SUPABASE_ANON_KEY=sua_chave_anonima_do_supabase
+```
+
+> ⚠️ **IMPORTANTE**: O arquivo `.env` contém informações sensíveis e **NÃO deve ser commitado** no Git. Ele já está incluído no `.gitignore`.
+
+4. **Inicie o servidor de desenvolvimento**
+```bash
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+## 📁 Estrutura do Projeto
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+```
+pilar/
+├── src/
+│   ├── components/        # Componentes reutilizáveis
+│   │   ├── ui/           # Componentes de UI (shadcn/ui)
+│   │   ├── Header.tsx
+│   │   ├── Layout.tsx
+│   │   └── ...
+│   ├── pages/            # Páginas da aplicação
+│   │   ├── financeiro/   # Módulo financeiro
+│   │   │   ├── components/  # Componentes específicos do financeiro
+│   │   │   └── tabs/        # Abas do módulo financeiro
+│   │   ├── leads/
+│   │   ├── pessoas/
+│   │   └── ...
+│   ├── hooks/            # Custom React hooks
+│   ├── integrations/     # Integrações externas
+│   │   └── supabase/     # Cliente e tipos do Supabase
+│   ├── lib/              # Utilitários e helpers
+│   └── main.tsx          # Ponto de entrada da aplicação
+├── .env                  # Variáveis de ambiente (NÃO commitar)
+├── .env.example          # Template de variáveis de ambiente
+└── .gitignore           # Arquivos ignorados pelo Git
+```
 
-**Use GitHub Codespaces**
+## 🔒 Segurança e Boas Práticas
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+### Variáveis de Ambiente
 
-## What technologies are used for this project?
+1. **Nunca commite o arquivo `.env`**
+   - O `.env` já está no `.gitignore`
+   - Use `.env.example` como template
 
-This project is built with:
+2. **Remover `.env` do histórico do Git** (se já foi commitado):
+```bash
+# Remove do índice do Git mas mantém o arquivo local
+git rm --cached .env
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+# Commit a remoção
+git commit -m "Remove .env from repository"
 
-## How can I deploy this project?
+# Push para o repositório remoto
+git push
+```
 
-Simply open [Lovable](https://lovable.dev/projects/22359da8-57eb-4eda-bdc2-452278964fcc) and click on Share -> Publish.
+3. **Rotação de credenciais**
+   - Se suas credenciais foram expostas, gere novas no Supabase
+   - Atualize o arquivo `.env` local
+   - Notifique a equipe sobre as novas credenciais
 
-## Can I connect a custom domain to my Lovable project?
+### Organização de Código
 
-Yes, you can!
+1. **Componentes**
+   - Componentes globais em `src/components/`
+   - Componentes específicos de módulo em `src/pages/[modulo]/components/`
+   - Componentes UI (shadcn) em `src/components/ui/`
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+2. **Importações**
+   - Use paths absolutos para componentes globais: `@/components/...`
+   - Use paths relativos para componentes do mesmo módulo: `../components/...`
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+3. **Tipos TypeScript**
+   - Defina interfaces para props de componentes
+   - Use tipos gerados pelo Supabase em `src/integrations/supabase/types.ts`
+
+## 🗄️ Banco de Dados
+
+O projeto usa Supabase como backend. As tabelas principais incluem:
+
+- `profiles` - Perfis de usuários
+- `projetos` - Gestão de projetos
+- `clientes` - Cadastro de clientes
+- `leads` - Gestão de leads
+- `receitas` - Receitas financeiras
+- `despesas` - Despesas financeiras
+- `contas` - Contas bancárias
+- `cartoes_credito` - Cartões de crédito
+- `categorias_financeiras` - Categorias para receitas/despesas
+- `fornecedores` - Cadastro de fornecedores
+
+## 🛠️ Scripts Disponíveis
+
+```bash
+# Desenvolvimento
+npm run dev
+
+# Build para produção
+npm run build
+
+# Preview da build de produção
+npm run preview
+
+# Lint
+npm run lint
+```
+
+## 📦 Tecnologias Principais
+
+- **React 18** - Biblioteca UI
+- **TypeScript** - Tipagem estática
+- **Vite** - Build tool e dev server
+- **Supabase** - Backend as a Service
+- **Tailwind CSS** - Framework CSS
+- **shadcn/ui** - Componentes UI
+- **React Router** - Roteamento
+- **Recharts** - Gráficos e visualizações
+
+## 🤝 Contribuindo
+
+1. Crie uma branch para sua feature: `git checkout -b feature/nova-feature`
+2. Commit suas mudanças: `git commit -m 'Adiciona nova feature'`
+3. Push para a branch: `git push origin feature/nova-feature`
+4. Abra um Pull Request
+
+## ⚠️ Problemas Comuns
+
+### Erro de autenticação no Supabase
+
+Verifique se as variáveis `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` estão corretas no arquivo `.env`.
+
+### Tipos TypeScript desatualizados
+
+Se você modificou o schema do Supabase, regenere os tipos:
+```bash
+npx supabase gen types typescript --project-id <seu-project-id> > src/integrations/supabase/types.ts
+```
+
+## 📄 Licença
+
+Este projeto é proprietário da Trinity Company.
+
+---
+
+**Project URL**: https://lovable.dev/projects/22359da8-57eb-4eda-bdc2-452278964fcc
