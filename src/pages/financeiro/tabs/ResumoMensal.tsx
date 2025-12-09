@@ -1,10 +1,80 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowUpRight, ArrowDownRight, TrendingUp, TrendingDown } from "lucide-react";
+import { ArrowUpRight, ArrowDownRight, TrendingUp, TrendingDown, Loader2 } from "lucide-react";
 import { ResponsiveContainer, AreaChart, Area, CartesianGrid, XAxis, YAxis, Tooltip } from "recharts";
-import { chartDataDiario } from "../data/mockData";
 import { CustomTooltip } from "../components/CustomTooltip";
+import { useDashboardData } from "@/hooks/useDashboardData";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
-export default function ResumoMensal() {
+import { startOfMonth, endOfMonth } from "date-fns";
+
+interface ResumoMensalProps {
+  dateFrom?: Date;
+  dateTo?: Date;
+}
+
+export default function ResumoMensal({ dateFrom, dateTo }: ResumoMensalProps) {
+  const { data: dashboardData, isLoading: isLoadingDashboard } = useDashboardData(dateFrom, dateTo);
+
+  const { data: topTransactions, isLoading: isLoadingTop } = useQuery({
+    queryKey: ["top-transactions-month", dateFrom, dateTo],
+    queryFn: async () => {
+      const today = new Date();
+      const start = dateFrom || startOfMonth(today);
+      const end = dateTo || endOfMonth(today);
+      
+      const firstDay = start.toISOString();
+      const lastDay = end.toISOString();
+
+      const { data: receitas } = await (supabase
+        .from("receitas") as any)
+        .select("*")
+        .gte("data_recebimento", firstDay)
+        .lte("data_recebimento", lastDay)
+        .order("valor", { ascending: false })
+        .limit(5);
+
+      const { data: despesas } = await (supabase
+        .from("despesas") as any)
+        .select("*, categorias_financeiras(nome)")
+        .gte("data_pagamento", firstDay)
+        .lte("data_pagamento", lastDay)
+        .order("valor", { ascending: false })
+        .limit(5);
+
+      return {
+        receitas: receitas || [],
+        despesas: despesas || []
+      };
+    }
+  });
+
+  if (isLoadingDashboard || isLoadingTop) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  const stats = dashboardData?.stats || {
+    receitasTotal: 0,
+    receitasMes: 0,
+    despesasTotal: 0,
+    despesasMes: 0,
+    saldo: 0
+  };
+
+  const chartDataDiario = dashboardData?.chartDataDiario || [];
+  const hasChartData = chartDataDiario.some(item => item.receitas > 0 || item.despesas > 0);
+
+  // Calculate totals for top 5 to display
+  const totalTopReceitas = topTransactions?.receitas.reduce((acc: number, curr: any) => acc + Number(curr.valor), 0) || 0;
+  const totalTopDespesas = topTransactions?.despesas.reduce((acc: number, curr: any) => acc + Number(curr.valor), 0) || 0;
+
+  // Format currency
+  const formatCurrency = (val: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
+
   return (
     <div className="space-y-6 w-full max-w-none">
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 w-full">
@@ -13,10 +83,10 @@ export default function ResumoMensal() {
             <CardTitle className="text-sm font-medium text-green-800">Receitas</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-700">R$ 145.000</div>
+            <div className="text-2xl font-bold text-green-700">R$ {(stats.receitasTotal / 1000).toFixed(0)}k</div>
             <p className="text-xs text-green-600 mt-1 flex items-center">
               <ArrowUpRight size={12} className="mr-1" />
-              12.5% vs mês anterior
+              {stats.receitasMes}% vs mês anterior
             </p>
           </CardContent>
         </Card>
@@ -25,10 +95,10 @@ export default function ResumoMensal() {
             <CardTitle className="text-sm font-medium text-red-800">Despesas</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-700">R$ 98.000</div>
+            <div className="text-2xl font-bold text-red-700">R$ {(stats.despesasTotal / 1000).toFixed(0)}k</div>
             <p className="text-xs text-green-600 mt-1 flex items-center">
               <ArrowDownRight size={12} className="mr-1" />
-              8.2% vs mês anterior
+              {stats.despesasMes}% vs mês anterior
             </p>
           </CardContent>
         </Card>
@@ -37,8 +107,8 @@ export default function ResumoMensal() {
             <CardTitle className="text-sm font-medium text-blue-800">Lucro Líquido</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-700">R$ 47.000</div>
-            <p className="text-xs text-blue-600 mt-1">Margem de 32%</p>
+            <div className="text-2xl font-bold text-blue-700">R$ {(stats.saldo / 1000).toFixed(0)}k</div>
+            <p className="text-xs text-blue-600 mt-1">Margem de {stats.receitasTotal > 0 ? ((stats.saldo / stats.receitasTotal) * 100).toFixed(1) : 0}%</p>
           </CardContent>
         </Card>
         <Card className="vrz-card border-black/5 w-full">
@@ -46,8 +116,11 @@ export default function ResumoMensal() {
             <CardTitle className="text-sm font-medium text-black/60">Projeção Final</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-black/80">R$ 52.000</div>
-            <p className="text-xs text-black/50 mt-1">Baseado na média</p>
+            {/* Simple projection: Current Saldo * (30 / Day of Month) */}
+            <div className="text-2xl font-bold text-black/80">
+              R$ {((stats.saldo / Math.max(1, new Date().getDate())) * 30 / 1000).toFixed(0)}k
+            </div>
+            <p className="text-xs text-black/50 mt-1">Baseado na média diária</p>
           </CardContent>
         </Card>
       </div>
@@ -58,7 +131,12 @@ export default function ResumoMensal() {
           <CardDescription>Acompanhamento do mês corrente</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="h-[300px] w-full">
+          <div className="h-[300px] w-full relative">
+            {!hasChartData && (
+              <div className="absolute inset-0 flex items-center justify-center bg-white/50 z-10">
+                <p className="text-muted-foreground text-sm">Não possui registros de dados ainda</p>
+              </div>
+            )}
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={chartDataDiario}>
                 <defs>
@@ -91,26 +169,23 @@ export default function ResumoMensal() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {[
-                { nome: 'Projeto Residencial XYZ - Pagamento 2/3', valor: 28500, data: '15/11' },
-                { nome: 'Consultoria Empresa A', valor: 18000, data: '10/11' },
-                { nome: 'Edifício Comercial ABC - Sinal', valor: 15000, data: '05/11' },
-                { nome: 'Auditoria Técnica Condomínio', valor: 10000, data: '20/11' },
-                { nome: 'Reforma Shopping - Fase 1', valor: 8500, data: '25/11' }
-              ].map((item, idx) => (
+              {topTransactions?.receitas.map((item: any, idx: number) => (
                 <div key={idx} className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-100 hover:bg-green-100 transition-colors">
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-900">{item.nome}</p>
-                    <p className="text-xs text-gray-500 mt-0.5">{item.data}</p>
+                    <p className="text-sm font-medium text-gray-900">{item.descricao}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">{new Date(item.data_recebimento).toLocaleDateString('pt-BR')}</p>
                   </div>
-                  <span className="text-sm font-bold text-green-700">R$ {item.valor.toLocaleString('pt-BR')}</span>
+                  <span className="text-sm font-bold text-green-700">{formatCurrency(item.valor)}</span>
                 </div>
               ))}
+              {topTransactions?.receitas.length === 0 && (
+                <p className="text-sm text-muted-foreground text-center py-4">Nenhuma receita encontrada.</p>
+              )}
             </div>
             <div className="mt-4 pt-4 border-t border-gray-200">
               <div className="flex justify-between items-center">
                 <span className="text-sm font-medium text-gray-700">Total das 5 principais</span>
-                <span className="text-lg font-bold text-green-600">R$ 80.000</span>
+                <span className="text-lg font-bold text-green-600">{formatCurrency(totalTopReceitas)}</span>
               </div>
             </div>
           </CardContent>
@@ -126,26 +201,25 @@ export default function ResumoMensal() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {[
-                { nome: 'Folha de Pagamento - Novembro', valor: 35000, data: '05/11', categoria: 'Pessoal' },
-                { nome: 'Aluguel Escritório', valor: 12000, data: '10/11', categoria: 'Operacional' },
-                { nome: 'Fornecedor Materials - Obra XYZ', valor: 8500, data: '15/11', categoria: 'Projetos' },
-                { nome: 'Encargos e Benefícios', valor: 8000, data: '05/11', categoria: 'Pessoal' },
-                { nome: 'Marketing Digital - Campanha', valor: 5000, data: '20/11', categoria: 'Marketing' }
-              ].map((item, idx) => (
+              {topTransactions?.despesas.map((item: any, idx: number) => (
                 <div key={idx} className="flex items-center justify-between p-3 bg-red-50 rounded-lg border border-red-100 hover:bg-red-100 transition-colors">
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-900">{item.nome}</p>
-                    <p className="text-xs text-gray-500 mt-0.5">{item.data} • {item.categoria}</p>
+                    <p className="text-sm font-medium text-gray-900">{item.descricao}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      {new Date(item.data_pagamento).toLocaleDateString('pt-BR')} • {item.categorias_financeiras?.nome || 'Outros'}
+                    </p>
                   </div>
-                  <span className="text-sm font-bold text-red-700">R$ {item.valor.toLocaleString('pt-BR')}</span>
+                  <span className="text-sm font-bold text-red-700">{formatCurrency(item.valor)}</span>
                 </div>
               ))}
+              {topTransactions?.despesas.length === 0 && (
+                <p className="text-sm text-muted-foreground text-center py-4">Nenhuma despesa encontrada.</p>
+              )}
             </div>
             <div className="mt-4 pt-4 border-t border-gray-200">
               <div className="flex justify-between items-center">
                 <span className="text-sm font-medium text-gray-700">Total das 5 principais</span>
-                <span className="text-lg font-bold text-red-600">R$ 68.500</span>
+                <span className="text-lg font-bold text-red-600">{formatCurrency(totalTopDespesas)}</span>
               </div>
             </div>
           </CardContent>

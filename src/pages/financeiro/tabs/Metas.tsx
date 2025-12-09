@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Plus, Target, TrendingUp, Wallet, Pencil, Trash2 } from "lucide-react";
+import { Plus, Target, TrendingUp, Wallet, Pencil, Trash2, Loader2 } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -18,6 +18,8 @@ import {
   AlertDialogHeader, 
   AlertDialogTitle 
 } from "@/components/ui/alert-dialog";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Meta {
   id: string;
@@ -30,40 +32,7 @@ interface Meta {
 
 export default function Metas() {
   const { toast } = useToast();
-  const [metas, setMetas] = useState<Meta[]>([
-    {
-      id: "1",
-      nome: "Faturamento Anual",
-      alvo: 1500000,
-      atual: 1500000,
-      prazo: "2024-12-31",
-      categoria: "receita"
-    },
-    {
-      id: "2",
-      nome: "Margem de Lucro Líquido",
-      alvo: 500000,
-      atual: 380000,
-      prazo: "2024-12-31",
-      categoria: "lucro"
-    },
-    {
-      id: "3",
-      nome: "Fundo de Reserva",
-      alvo: 100000,
-      atual: 45000,
-      prazo: "2024-12-31",
-      categoria: "investimento"
-    },
-    {
-      id: "4",
-      nome: "Redução de Custos Operacionais",
-      alvo: 50000,
-      atual: 15000,
-      prazo: "2024-06-30",
-      categoria: "economia"
-    }
-  ]);
+  const queryClient = useQueryClient();
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -79,24 +48,81 @@ export default function Metas() {
     categoria: "receita"
   });
 
+  // Fetch Metas
+  const { data: metas, isLoading } = useQuery({
+    queryKey: ["metas"],
+    queryFn: async () => {
+      const { data, error } = await (supabase.from("metas") as any).select("*").order("created_at", { ascending: false });
+      if (error) throw error;
+      return data as Meta[];
+    }
+  });
+
+  // Create Meta
+  const createMetaMutation = useMutation({
+    mutationFn: async (newMeta: Omit<Meta, "id">) => {
+      const { error } = await (supabase.from("metas") as any).insert(newMeta);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["metas"] });
+      setIsDialogOpen(false);
+      setNovaMeta({ nome: "", alvo: "", atual: "", prazo: "", categoria: "receita" });
+      toast({ title: "Meta criada", description: "Nova meta financeira estabelecida com sucesso." });
+    },
+    onError: (error: any) => {
+      toast({ title: "Erro ao criar meta", description: error.message, variant: "destructive" });
+    }
+  });
+
+  // Update Meta
+  const updateMetaMutation = useMutation({
+    mutationFn: async (meta: Meta) => {
+      const { error } = await (supabase.from("metas") as any).update({
+        nome: meta.nome,
+        alvo: meta.alvo,
+        atual: meta.atual,
+        prazo: meta.prazo,
+        categoria: meta.categoria
+      }).eq("id", meta.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["metas"] });
+      setIsEditDialogOpen(false);
+      setEditingMeta(null);
+      toast({ title: "Meta atualizada", description: "Meta financeira foi atualizada com sucesso." });
+    },
+    onError: (error: any) => {
+      toast({ title: "Erro ao atualizar meta", description: error.message, variant: "destructive" });
+    }
+  });
+
+  // Delete Meta
+  const deleteMetaMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await (supabase.from("metas") as any).delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["metas"] });
+      setDeleteAlertOpen(false);
+      setMetaToDelete(null);
+      toast({ title: "Meta excluída", description: "Meta financeira foi removida com sucesso." });
+    },
+    onError: (error: any) => {
+      toast({ title: "Erro ao excluir meta", description: error.message, variant: "destructive" });
+    }
+  });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const meta: Meta = {
-      id: Date.now().toString(),
+    createMetaMutation.mutate({
       nome: novaMeta.nome,
       alvo: Number(novaMeta.alvo),
       atual: Number(novaMeta.atual),
       prazo: novaMeta.prazo,
       categoria: novaMeta.categoria as any
-    };
-    
-    setMetas([...metas, meta]);
-    setIsDialogOpen(false);
-    setNovaMeta({ nome: "", alvo: "", atual: "", prazo: "", categoria: "receita" });
-    
-    toast({
-      title: "Meta criada",
-      description: "Nova meta financeira estabelecida com sucesso."
     });
   };
 
@@ -108,15 +134,7 @@ export default function Metas() {
   const handleEditSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingMeta) return;
-    
-    setMetas(metas.map(m => m.id === editingMeta.id ? editingMeta : m));
-    setIsEditDialogOpen(false);
-    setEditingMeta(null);
-    
-    toast({
-      title: "Meta atualizada",
-      description: "Meta financeira foi atualizada com sucesso."
-    });
+    updateMetaMutation.mutate(editingMeta);
   };
 
   const handleDeleteClick = (id: string) => {
@@ -126,21 +144,12 @@ export default function Metas() {
 
   const handleDeleteConfirm = () => {
     if (metaToDelete) {
-      setMetas(metas.filter(m => m.id !== metaToDelete));
-      toast({
-        title: "Meta excluída",
-        description: "Meta financeira foi removida com sucesso."
-      });
+      deleteMetaMutation.mutate(metaToDelete);
     }
-    setDeleteAlertOpen(false);
-    setMetaToDelete(null);
   };
 
   const getProgressColor = (percent: number) => {
-    if (percent >= 100) return "bg-green-500";
-    if (percent >= 75) return "bg-blue-500";
-    if (percent >= 50) return "bg-yellow-500";
-    return "bg-orange-500";
+    return "bg-green-500";
   };
 
   const getIcon = (categoria: string) => {
@@ -152,13 +161,21 @@ export default function Metas() {
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 w-full max-w-none">
       <Card className="vrz-card w-full">
         <CardHeader>
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
             <div>
-              <CardTitle>Metas Financeiras</CardTitle>
+              <CardTitle>Metas</CardTitle>
               <CardDescription>Acompanhe o progresso dos seus objetivos</CardDescription>
             </div>
             
@@ -213,7 +230,22 @@ export default function Metas() {
                       required
                     />
                   </div>
-                  <Button type="submit" className="w-full vrz-button-primary rounded-full">Salvar Meta</Button>
+                  <div className="space-y-2">
+                    <Label>Categoria</Label>
+                    <select
+                      className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      value={novaMeta.categoria}
+                      onChange={(e) => setNovaMeta({ ...novaMeta, categoria: e.target.value })}
+                    >
+                      <option value="receita">Receita</option>
+                      <option value="lucro">Lucro</option>
+                      <option value="economia">Economia</option>
+                      <option value="investimento">Investimento</option>
+                    </select>
+                  </div>
+                  <Button type="submit" className="w-full vrz-button-primary rounded-full" disabled={createMetaMutation.isPending}>
+                    {createMetaMutation.isPending ? "Salvando..." : "Salvar Meta"}
+                  </Button>
                 </form>
               </DialogContent>
             </Dialog>
@@ -267,7 +299,22 @@ export default function Metas() {
                       required
                     />
                   </div>
-                  <Button type="submit" className="w-full vrz-button-primary rounded-full">Atualizar Meta</Button>
+                  <div className="space-y-2">
+                    <Label>Categoria</Label>
+                    <select
+                      className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      value={editingMeta.categoria}
+                      onChange={(e) => setEditingMeta({ ...editingMeta, categoria: e.target.value as any })}
+                    >
+                      <option value="receita">Receita</option>
+                      <option value="lucro">Lucro</option>
+                      <option value="economia">Economia</option>
+                      <option value="investimento">Investimento</option>
+                    </select>
+                  </div>
+                  <Button type="submit" className="w-full vrz-button-primary rounded-full" disabled={updateMetaMutation.isPending}>
+                    {updateMetaMutation.isPending ? "Atualizando..." : "Atualizar Meta"}
+                  </Button>
                 </form>
               )}
             </DialogContent>
@@ -284,15 +331,20 @@ export default function Metas() {
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                <AlertDialogAction onClick={handleDeleteConfirm} className="bg-red-600 hover:bg-red-700">
-                  Excluir
+                <AlertDialogAction onClick={handleDeleteConfirm} className="bg-red-600 hover:bg-red-700" disabled={deleteMetaMutation.isPending}>
+                  {deleteMetaMutation.isPending ? "Excluindo..." : "Excluir"}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
 
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 w-full">
-            {metas.map((meta) => {
+            {metas?.length === 0 && (
+              <div className="col-span-full text-center py-10 text-muted-foreground">
+                Nenhuma meta cadastrada. Clique em "Nova Meta" para começar.
+              </div>
+            )}
+            {metas?.map((meta) => {
               const percent = Math.min(Math.round((meta.atual / meta.alvo) * 100), 100);
               const isCompleted = percent >= 100;
               return (
@@ -331,7 +383,7 @@ export default function Metas() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-2">
-                      <Progress value={percent} className="h-2" indicatorClassName={isCompleted ? "bg-green-500" : getProgressColor(percent)} />
+                      <Progress value={percent} className="h-2 bg-black" indicatorClassName="bg-green-500" />
                       <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground">Atual: <span className="font-medium text-foreground">R$ {meta.atual.toLocaleString('pt-BR')}</span></span>
                         <span className="text-muted-foreground">Alvo: <span className="font-medium text-foreground">R$ {meta.alvo.toLocaleString('pt-BR')}</span></span>

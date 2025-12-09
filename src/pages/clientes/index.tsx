@@ -1,90 +1,174 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, Search, ArrowUpDown, User, Mail, Phone, MapPin } from "lucide-react";
+import { Plus, Search, ArrowUpDown, User, Mail, Phone, MapPin, Trash2, Pencil } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
+import { supabase } from "@/integrations/supabase/client";
+import { useUserRole } from "@/hooks/useUserRole";
 
 interface Cliente {
   id: string;
   nome: string;
-  cpf: string;
+  cpf_cnpj: string;
   endereco: string;
   contato: string;
   email: string;
-  tipoNF: string;
+  tipo_nf?: string;
+  origem?: string;
 }
 
 export default function Clientes() {
-  const [clientes, setClientes] = useState<Cliente[]>([
-    {
-      id: "1",
-      nome: "João Silva",
-      cpf: "123.456.789-00",
-      endereco: "Rua das Flores, 123 - São Paulo, SP",
-      contato: "(11) 99999-9999",
-      email: "joao@email.com",
-      tipoNF: "CPF",
-    },
-  ]);
+  const { data: userRole } = useUserRole();
+  const isAdmin = userRole === 'admin';
+
+  const [clientes, setClientes] = useState<Cliente[]>([]);
   
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
   const [selectedCliente, setSelectedCliente] = useState<Cliente | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+  
   const [nome, setNome] = useState("");
-  const [cpf, setCpf] = useState("");
+  const [cpfCnpj, setCpfCnpj] = useState("");
   const [endereco, setEndereco] = useState("");
   const [contato, setContato] = useState("");
   const [email, setEmail] = useState("");
-  const [tipoNF, setTipoNF] = useState("");
+  const [tipoNf, setTipoNf] = useState("");
+  const [origem, setOrigem] = useState("");
+  const [currentId, setCurrentId] = useState<string | null>(null);
+  
   const [searchTerm, setSearchTerm] = useState("");
   const [sortField, setSortField] = useState<keyof Cliente | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const { toast } = useToast();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    fetchClientes();
+  }, []);
+
+  const fetchClientes = async () => {
+    const { data, error } = await supabase
+      .from('clientes')
+      .select('*')
+      .order('nome');
+    
+    if (data) {
+      setClientes(data as any[]);
+    }
+  };
+
+  const resetForm = () => {
+    setNome("");
+    setCpfCnpj("");
+    setEndereco("");
+    setContato("");
+    setEmail("");
+    setTipoNf("");
+    setOrigem("");
+    setCurrentId(null);
+    setIsEditMode(false);
+  };
+
+  const handleOpenDialog = () => {
+    resetForm();
+    setIsDialogOpen(true);
+  };
+
+  const handleEditClick = (cliente: Cliente, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    setNome(cliente.nome);
+    setCpfCnpj(cliente.cpf_cnpj);
+    setEndereco(cliente.endereco || "");
+    setContato(cliente.contato || "");
+    setEmail(cliente.email || "");
+    setTipoNf(cliente.tipo_nf || "");
+    setOrigem(cliente.origem || "");
+    setCurrentId(cliente.id);
+    setIsEditMode(true);
+    setIsDialogOpen(true);
+    setIsDetailOpen(false);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!nome || !cpf) {
+    if (!nome || !cpfCnpj) {
       toast({
         title: "Campos obrigatórios",
-        description: "Preencha pelo menos nome e CPF",
+        description: "Preencha pelo menos nome e CPF/CNPJ",
         variant: "destructive",
       });
       return;
     }
 
-    const novoCliente: Cliente = {
-      id: Date.now().toString(),
-      nome,
-      cpf,
-      endereco,
-      contato,
-      email,
-      tipoNF,
-    };
+    try {
+      if (isEditMode && currentId) {
+        const { error } = await supabase
+          .from('clientes')
+          .update({
+            nome,
+            cpf_cnpj: cpfCnpj,
+            endereco,
+            contato,
+            email,
+            tipo_nf: tipoNf,
+            origem
+          })
+          .eq('id', currentId);
 
-    setClientes([...clientes, novoCliente]);
-    
-    // Reset form
-    setNome("");
-    setCpf("");
-    setEndereco("");
-    setContato("");
-    setEmail("");
-    setTipoNF("");
-    setIsDialogOpen(false);
-    
-    toast({
-      title: "Cliente cadastrado",
-      description: "Novo cliente foi adicionado com sucesso",
-    });
+        if (error) throw error;
+
+        toast({ title: "Cliente atualizado", description: "Dados do cliente atualizados com sucesso" });
+      } else {
+        const { error } = await supabase
+          .from('clientes')
+          .insert({
+            nome,
+            cpf_cnpj: cpfCnpj,
+            endereco,
+            contato,
+            email,
+            tipo_nf: tipoNf,
+            origem,
+            empresa_id: (await supabase.rpc('get_user_empresa_id')).data 
+          });
+
+        if (error) throw error;
+
+        toast({ title: "Cliente cadastrado", description: "Novo cliente foi adicionado com sucesso" });
+      }
+      
+      resetForm();
+      setIsDialogOpen(false);
+      fetchClientes();
+
+    } catch (error: any) {
+      toast({
+        title: "Erro ao salvar",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDelete = async (id: string, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    if (!confirm("Tem certeza que deseja excluir este cliente?")) return;
+
+    const { error } = await supabase.from('clientes').delete().eq('id', id);
+    if (!error) {
+      toast({ title: "Cliente excluído" });
+      setIsDetailOpen(false);
+      fetchClientes();
+    } else {
+      toast({ title: "Erro ao excluir", description: "Verifique se existem registros vinculados.", variant: "destructive" });
+    }
   };
 
   const handleSort = (field: keyof Cliente) => {
@@ -104,13 +188,13 @@ export default function Clientes() {
   const filteredAndSortedClientes = useMemo(() => {
     let filtered = clientes.filter(cliente => 
       cliente.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      cliente.cpf.replace(/\D/g, '').includes(searchTerm.replace(/\D/g, ''))
+      (cliente.cpf_cnpj && cliente.cpf_cnpj.replace(/\D/g, '').includes(searchTerm.replace(/\D/g, '')))
     );
 
     if (sortField) {
       filtered.sort((a, b) => {
-        const aValue = a[sortField];
-        const bValue = b[sortField];
+        const aValue = a[sortField] || '';
+        const bValue = b[sortField] || '';
         const comparison = aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
         return sortDirection === 'asc' ? comparison : -comparison;
       });
@@ -128,16 +212,19 @@ export default function Clientes() {
           children={
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="rounded-full bg-[hsl(var(--primary))] text-white hover:bg-[hsl(var(--primary))]/90 transition-colors px-5 py-2.5 text-sm">
+                <Button 
+                  className="rounded-full bg-[hsl(var(--primary))] text-white hover:bg-[hsl(var(--primary))]/90 transition-colors px-5 py-2.5 text-sm"
+                  onClick={handleOpenDialog}
+                >
                   <Plus className="mr-2 h-4 w-4" />
                   Novo Cliente
                 </Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                  <DialogTitle>Novo Cliente</DialogTitle>
+                  <DialogTitle>{isEditMode ? "Editar Cliente" : "Novo Cliente"}</DialogTitle>
                   <DialogDescription>
-                    Cadastre um novo cliente no sistema
+                    {isEditMode ? "Atualize os dados do cliente" : "Cadastre um novo cliente no sistema"}
                   </DialogDescription>
                 </DialogHeader>
                 
@@ -154,11 +241,11 @@ export default function Clientes() {
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="cpf">CPF *</Label>
+                    <Label htmlFor="cpf">CPF/CNPJ *</Label>
                     <Input
                       id="cpf"
-                      value={cpf}
-                      onChange={(e) => setCpf(e.target.value)}
+                      value={cpfCnpj}
+                      onChange={(e) => setCpfCnpj(e.target.value)}
                       placeholder="000.000.000-00"
                       required
                     />
@@ -185,6 +272,26 @@ export default function Clientes() {
                     />
                   </div>
 
+                  <div className="space-y-2">
+                    <Label htmlFor="tipoNf">Tipo NF</Label>
+                    <Input
+                      id="tipoNf"
+                      value={tipoNf}
+                      onChange={(e) => setTipoNf(e.target.value)}
+                      placeholder="Ex: Serviço, Produto"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="origem">Origem</Label>
+                    <Input
+                      id="origem"
+                      value={origem}
+                      onChange={(e) => setOrigem(e.target.value)}
+                      placeholder="Ex: Indicação, Google"
+                    />
+                  </div>
+
                   <div className="space-y-2 md:col-span-2">
                     <Label htmlFor="endereco">Endereço</Label>
                     <Input
@@ -193,19 +300,6 @@ export default function Clientes() {
                       onChange={(e) => setEndereco(e.target.value)}
                       placeholder="Endereço completo"
                     />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="tipoNF">Tipo NF</Label>
-                    <Select value={tipoNF} onValueChange={setTipoNF}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione o tipo" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="PF">PF</SelectItem>
-                        <SelectItem value="Engenharia">Engenharia</SelectItem>
-                      </SelectContent>
-                    </Select>
                   </div>
                   
                   <div className="flex gap-2 pt-4 md:col-span-2">
@@ -255,20 +349,20 @@ export default function Clientes() {
                     </Button>
                   </TableHead>
                   <TableHead>
-                    <Button variant="ghost" size="sm" onClick={() => handleSort('cpf')} className="-ml-3 h-8 font-medium">
-                      CPF
+                    <Button variant="ghost" size="sm" onClick={() => handleSort('cpf_cnpj')} className="-ml-3 h-8 font-medium">
+                      CPF/CNPJ
                       <ArrowUpDown className="ml-2 h-3 w-3" />
                     </Button>
                   </TableHead>
                   <TableHead className="hidden md:table-cell">Email</TableHead>
                   <TableHead className="hidden lg:table-cell">Contato</TableHead>
-                  <TableHead>Tipo NF</TableHead>
+                  {isAdmin && <TableHead className="text-right">Ações</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredAndSortedClientes.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center text-black/50 py-8">
+                    <TableCell colSpan={isAdmin ? 5 : 4} className="text-center text-black/50 py-8">
                       Nenhum cliente encontrado
                     </TableCell>
                   </TableRow>
@@ -280,10 +374,21 @@ export default function Clientes() {
                       onClick={() => handleRowClick(cliente)}
                     >
                       <TableCell className="font-medium">{cliente.nome}</TableCell>
-                      <TableCell>{cliente.cpf}</TableCell>
+                      <TableCell>{cliente.cpf_cnpj}</TableCell>
                       <TableCell className="hidden md:table-cell text-sm text-black/70">{cliente.email}</TableCell>
                       <TableCell className="hidden lg:table-cell">{cliente.contato}</TableCell>
-                      <TableCell><span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700">{cliente.tipoNF}</span></TableCell>
+                      {isAdmin && (
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => handleEditClick(cliente, e)}>
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500" onClick={(e) => handleDelete(cliente.id, e)}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      )}
                     </TableRow>
                   ))
                 )}
@@ -301,9 +406,6 @@ export default function Clientes() {
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2">
                   {selectedCliente.nome}
-                  <span className="text-sm font-normal text-muted-foreground px-2 py-0.5 bg-gray-100 rounded-full">
-                    {selectedCliente.tipoNF}
-                  </span>
                 </DialogTitle>
                 <DialogDescription>
                   Detalhes do cliente
@@ -313,12 +415,8 @@ export default function Clientes() {
               <div className="space-y-6 mt-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label className="text-xs text-muted-foreground">CPF</Label>
-                    <p className="font-medium">{selectedCliente.cpf}</p>
-                  </div>
-                  <div>
-                    <Label className="text-xs text-muted-foreground">Tipo</Label>
-                    <p className="font-medium">{selectedCliente.tipoNF || '-'}</p>
+                    <Label className="text-xs text-muted-foreground">CPF/CNPJ</Label>
+                    <p className="font-medium">{selectedCliente.cpf_cnpj}</p>
                   </div>
                 </div>
 
@@ -346,9 +444,18 @@ export default function Clientes() {
                   <Button variant="outline" onClick={() => setIsDetailOpen(false)} className="flex-1">
                     Fechar
                   </Button>
-                  <Button className="flex-1 vrz-button-primary">
-                    Editar
-                  </Button>
+                  {isAdmin && (
+                    <>
+                      <Button variant="secondary" onClick={() => handleEditClick(selectedCliente)} className="flex-1">
+                        <Pencil className="mr-2 h-4 w-4" />
+                        Editar
+                      </Button>
+                      <Button variant="destructive" onClick={() => handleDelete(selectedCliente.id)} className="flex-1">
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Excluir
+                      </Button>
+                    </>
+                  )}
                 </div>
               </div>
             </>

@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function Relatorios() {
   const [tipoRelatorio, setTipoRelatorio] = useState("");
@@ -19,9 +20,40 @@ export default function Relatorios() {
   const [dateFrom, setDateFrom] = useState<Date>();
   const [dateTo, setDateTo] = useState<Date>();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
-  const handleGerarRelatorio = () => {
+  const generateCSV = (data: any[], filename: string) => {
+    if (!data.length) {
+      toast({
+        title: "Sem dados",
+        description: "Não há dados para o período selecionado",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const headers = Object.keys(data[0]).join(",");
+    const rows = data.map(row => 
+      Object.values(row).map(value => 
+        typeof value === 'string' && value.includes(',') ? `"${value}"` : value
+      ).join(",")
+    );
+    const csvContent = [headers, ...rows].join("\n");
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    
+    link.setAttribute("href", url);
+    link.setAttribute("download", `${filename}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleGerarRelatorio = async () => {
     if (!tipoRelatorio || !formato) {
       toast({
         title: "Campos obrigatórios",
@@ -31,13 +63,53 @@ export default function Relatorios() {
       return;
     }
 
-    // Simulação de geração de relatório
-    toast({
-      title: "Relatório gerado com sucesso!",
-      description: `Relatório de ${tipoRelatorio} em formato ${formato.toUpperCase()} foi gerado`,
-    });
+    if (formato !== 'csv') {
+      toast({
+        title: "Formato não suportado",
+        description: "No momento apenas CSV está disponível",
+        variant: "destructive",
+      });
+      return;
+    }
 
-    setIsDialogOpen(false);
+    setIsLoading(true);
+
+    try {
+      let query = (supabase.from(tipoRelatorio === 'funcionarios' ? 'pessoas' : tipoRelatorio) as any).select('*');
+
+      if (dateFrom) {
+        // Assuming generic created_at for simplicity, or specific date fields for financial
+        const dateField = ['receitas', 'despesas'].includes(tipoRelatorio) ? 'data_vencimento' : 'created_at';
+        query = query.gte(dateField, dateFrom.toISOString());
+      }
+      
+      if (dateTo) {
+        const dateField = ['receitas', 'despesas'].includes(tipoRelatorio) ? 'data_vencimento' : 'created_at';
+        query = query.lte(dateField, dateTo.toISOString());
+      }
+
+      const { data, error } = await query;
+
+      if (error) throw error;
+
+      generateCSV(data || [], `relatorio-${tipoRelatorio}-${format(new Date(), 'yyyy-MM-dd')}`);
+
+      toast({
+        title: "Relatório gerado",
+        description: "O download deve iniciar automaticamente",
+      });
+
+      setIsDialogOpen(false);
+    } catch (error: any) {
+      console.error("Erro ao gerar relatório:", error);
+      toast({
+        title: "Erro ao gerar",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const tiposRelatorio = [
@@ -46,16 +118,7 @@ export default function Relatorios() {
     { value: "projetos", label: "Projetos" },
     { value: "clientes", label: "Clientes" },
     { value: "funcionarios", label: "Pessoas" },
-    { value: "financeiro-completo", label: "Financeiro Completo" },
-    { value: "fluxo-caixa", label: "Fluxo de Caixa" },
-  ];
-
-  // Mock de histórico
-  const historicoRelatorios = [
-    { id: 1, titulo: "Relatório de Receitas - Janeiro 2024", detalhe: "PDF • Gerado em 15/01/2024 às 14:30" },
-    { id: 2, titulo: "Lista de Projetos Ativos", detalhe: "Excel • Gerado em 10/01/2024 às 09:15" },
-    { id: 3, titulo: "Fluxo de Caixa - Dezembro 2023", detalhe: "CSV • Gerado em 02/01/2024 às 16:45" },
-    { id: 4, titulo: "Relatório de Despesas - Dezembro 2023", detalhe: "PDF • Gerado em 02/01/2024 às 16:40" },
+    { value: "leads", label: "Leads" },
   ];
 
   return (
@@ -76,7 +139,7 @@ export default function Relatorios() {
                 <DialogHeader>
                   <DialogTitle>Gerar Relatório</DialogTitle>
                   <DialogDescription>
-                    Configure e gere relatórios personalizados
+                    Configure e gere relatórios personalizados (CSV)
                   </DialogDescription>
                 </DialogHeader>
                 
@@ -104,9 +167,9 @@ export default function Relatorios() {
                         <SelectValue placeholder="Selecione o formato" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="pdf">PDF</SelectItem>
+                        {/* <SelectItem value="pdf">PDF</SelectItem> */}
                         <SelectItem value="csv">CSV</SelectItem>
-                        <SelectItem value="xlsx">Excel (XLSX)</SelectItem>
+                        {/* <SelectItem value="xlsx">Excel (XLSX)</SelectItem> */}
                       </SelectContent>
                     </Select>
                   </div>
@@ -170,9 +233,10 @@ export default function Relatorios() {
                   <Button 
                     onClick={handleGerarRelatorio} 
                     className="w-full vrz-button-primary mt-4"
+                    disabled={isLoading}
                   >
                     <Download className="mr-2 h-4 w-4" />
-                    Gerar e Baixar
+                    {isLoading ? "Gerando..." : "Gerar e Baixar"}
                   </Button>
                 </div>
               </DialogContent>
@@ -185,28 +249,12 @@ export default function Relatorios() {
         <CardHeader>
           <CardTitle className="text-lg font-medium tracking-tight">Histórico de Relatórios</CardTitle>
           <CardDescription className="text-sm text-black/60 mt-1">
-            Últimos relatórios gerados no sistema
+            Histórico não disponível (Geração sob demanda)
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-0 divide-y divide-gray-100">
-            {historicoRelatorios.map((relatorio) => (
-              <div key={relatorio.id} className="flex items-center justify-between p-4 hover:bg-gray-50 transition-colors">
-                <div className="flex items-center gap-4">
-                  <div className="bg-blue-50 p-2 rounded-lg text-blue-600">
-                    <FileText size={20} />
-                  </div>
-                  <div>
-                    <p className="font-medium text-sm">{relatorio.titulo}</p>
-                    <p className="text-xs text-muted-foreground">{relatorio.detalhe}</p>
-                  </div>
-                </div>
-                <Button variant="ghost" size="sm" className="text-black/60 hover:text-black">
-                  <Download className="mr-2 h-4 w-4" />
-                  Baixar
-                </Button>
-              </div>
-            ))}
+          <div className="text-center text-gray-500 py-8">
+            Gere um novo relatório para baixar os dados.
           </div>
         </CardContent>
       </Card>

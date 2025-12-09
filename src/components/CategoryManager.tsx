@@ -6,20 +6,23 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Category {
   id: string;
-  name: string;
+  name: string; // In Supabase it is 'nome', mapping for compatibility
+  nome?: string;
 }
 
 interface CategoryManagerProps {
   title: string;
   description: string;
-  storageKey: string;
+  storageKey?: string; // Deprecated, keeping for interface compatibility if needed
+  type: 'Receita' | 'Despesa';
   onCategoryChange?: (categories: Category[]) => void;
 }
 
-export function CategoryManager({ title, description, storageKey, onCategoryChange }: CategoryManagerProps) {
+export function CategoryManager({ title, description, type, onCategoryChange }: CategoryManagerProps) {
   const [categories, setCategories] = useState<Category[]>([]);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -29,23 +32,41 @@ export function CategoryManager({ title, description, storageKey, onCategoryChan
   const [deleteCategory, setDeleteCategory] = useState<Category | null>(null);
   const { toast } = useToast();
 
-  // Carregar categorias do localStorage na inicialização
+  // Fetch categories from Supabase
   useEffect(() => {
-    const savedCategories = localStorage.getItem(storageKey);
-    if (savedCategories) {
-      setCategories(JSON.parse(savedCategories));
-    }
-  }, [storageKey]);
+    fetchCategories();
+  }, [type]);
 
-  // Salvar categorias no localStorage quando houver mudanças
-  useEffect(() => {
-    localStorage.setItem(storageKey, JSON.stringify(categories));
-    if (onCategoryChange) {
-      onCategoryChange(categories);
-    }
-  }, [categories, storageKey, onCategoryChange]);
+  const fetchCategories = async () => {
+    try {
+      const { data, error } = await (supabase
+        .from('categorias_financeiras') as any)
+        .select('*')
+        .eq('tipo', type)
+        .order('nome');
 
-  const handleAddCategory = () => {
+      if (error) throw error;
+
+      const mappedCategories = (data || []).map(cat => ({
+        id: cat.id,
+        name: cat.nome
+      }));
+
+      setCategories(mappedCategories);
+      if (onCategoryChange) {
+        onCategoryChange(mappedCategories);
+      }
+    } catch (error: any) {
+      console.error("Error fetching categories:", error);
+      toast({
+        title: "Erro ao carregar categorias",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleAddCategory = async () => {
     if (!newCategoryName.trim()) {
       toast({
         title: "Campo obrigatório",
@@ -55,22 +76,38 @@ export function CategoryManager({ title, description, storageKey, onCategoryChan
       return;
     }
 
-    const newCategory: Category = {
-      id: Date.now().toString(),
-      name: newCategoryName.trim(),
-    };
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Usuário não autenticado");
 
-    setCategories([...categories, newCategory]);
-    setNewCategoryName("");
-    setIsAddDialogOpen(false);
+      const { error } = await (supabase
+        .from('categorias_financeiras') as any)
+        .insert({
+          nome: newCategoryName.trim(),
+          tipo: type,
+          empresa_id: (await (supabase.rpc as any)('get_user_empresa_id')).data 
+        });
 
-    toast({
-      title: "Categoria adicionada",
-      description: "A categoria foi adicionada com sucesso",
-    });
+      if (error) throw error;
+
+      toast({
+        title: "Categoria adicionada",
+        description: "A categoria foi adicionada com sucesso",
+      });
+
+      setNewCategoryName("");
+      setIsAddDialogOpen(false);
+      fetchCategories();
+    } catch (error: any) {
+      toast({
+        title: "Erro ao adicionar",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleEditCategory = () => {
+  const handleEditCategory = async () => {
     if (!editCategory || !editCategory.name.trim()) {
       toast({
         title: "Campo obrigatório",
@@ -80,29 +117,57 @@ export function CategoryManager({ title, description, storageKey, onCategoryChan
       return;
     }
 
-    setCategories(categories.map(cat => 
-      cat.id === editCategory.id ? { ...cat, name: editCategory.name.trim() } : cat
-    ));
-    setEditCategory(null);
-    setIsEditDialogOpen(false);
+    try {
+      const { error } = await (supabase
+        .from('categorias_financeiras') as any)
+        .update({ nome: editCategory.name.trim() })
+        .eq('id', editCategory.id);
 
-    toast({
-      title: "Categoria atualizada",
-      description: "A categoria foi atualizada com sucesso",
-    });
+      if (error) throw error;
+
+      toast({
+        title: "Categoria atualizada",
+        description: "A categoria foi atualizada com sucesso",
+      });
+
+      setEditCategory(null);
+      setIsEditDialogOpen(false);
+      fetchCategories();
+    } catch (error: any) {
+      toast({
+        title: "Erro ao atualizar",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleDeleteCategory = () => {
+  const handleDeleteCategory = async () => {
     if (!deleteCategory) return;
 
-    setCategories(categories.filter(cat => cat.id !== deleteCategory.id));
-    setDeleteCategory(null);
-    setIsDeleteDialogOpen(false);
+    try {
+      const { error } = await (supabase
+        .from('categorias_financeiras') as any)
+        .delete()
+        .eq('id', deleteCategory.id);
 
-    toast({
-      title: "Categoria removida",
-      description: "A categoria foi removida com sucesso",
-    });
+      if (error) throw error;
+
+      toast({
+        title: "Categoria removida",
+        description: "A categoria foi removida com sucesso",
+      });
+
+      setDeleteCategory(null);
+      setIsDeleteDialogOpen(false);
+      fetchCategories();
+    } catch (error: any) {
+      toast({
+        title: "Erro ao remover",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -123,7 +188,7 @@ export function CategoryManager({ title, description, storageKey, onCategoryChan
             <DialogHeader>
               <DialogTitle>Nova Categoria</DialogTitle>
               <DialogDescription>
-                Adicione uma nova categoria ao sistema
+                Adicione uma nova categoria de {type.toLowerCase()} ao sistema
               </DialogDescription>
             </DialogHeader>
             

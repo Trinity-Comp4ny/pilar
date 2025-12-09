@@ -55,11 +55,11 @@ export function AppSidebar() {
   const currentPath = location.pathname;
   const [sidebarWidth, setSidebarWidth] = useState(state === "collapsed" ? "64px" : "240px");
   const [userName, setUserName] = useState("Usuário");
-  
+
   useEffect(() => {
     setSidebarWidth(state === "collapsed" ? "64px" : "240px");
   }, [state]);
-  
+
   useEffect(() => {
     const getUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -72,27 +72,27 @@ export function AppSidebar() {
     };
     getUser();
   }, []);
-  
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     localStorage.removeItem('pilar-auth');
     localStorage.removeItem('pilar-user-name');
     navigate("/login");
   };
-  
+
   const handleProfile = () => {
     navigate("/profile");
   };
-  
+
   const handleCompany = () => {
     navigate("/company");
   };
 
   return (
-    <div 
+    <div
       className="h-screen border-r border-black/5 bg-white fixed left-0 top-0 z-50"
-      style={{ 
-        minWidth: sidebarWidth, 
+      style={{
+        minWidth: sidebarWidth,
         width: sidebarWidth
       }}
     >
@@ -105,7 +105,7 @@ export function AppSidebar() {
                 <img src="/pilar-logo.svg" alt="Pilar" className="h-7 w-7" />
                 <span className="text-base font-normal tracking-tight">Pilar</span>
               </div>
-              <SidebarTrigger className="text-black/70 hover:text-[hsl(var(--primary))] hover:bg-black/5 transition-colors rounded-full h-8 w-8" />
+              <SidebarTrigger className="text-black/70 hover:text-accent-orange hover:bg-accent-orange/5 transition-colors rounded-full h-8 w-8" />
             </>
           ) : (
             <div className="flex items-center justify-center w-full relative group">
@@ -113,18 +113,18 @@ export function AppSidebar() {
                 <img src="/pilar-logo.svg" alt="Pilar" className="h-8 w-8" />
               </div>
               <div className="absolute opacity-0 group-hover:opacity-100 transition-opacity">
-                <SidebarTrigger className="text-black/70 hover:text-[hsl(var(--primary))] hover:bg-black/5 transition-colors rounded-full h-8 w-8" />
+                <SidebarTrigger className="text-black/70 hover:text-accent-orange hover:bg-accent-orange/5 transition-colors rounded-full h-8 w-8" />
               </div>
             </div>
           )}
         </div>
-        
+
         {/* Navigation */}
         <nav className="flex-1 p-3 space-y-1">
           {items.map((item) => {
             const isActive = currentPath === item.url;
             const Icon = item.icon;
-            
+
             return (
               <NavLink
                 key={item.title}
@@ -133,15 +133,15 @@ export function AppSidebar() {
                 className={cn(
                   "flex items-center gap-3 px-3 py-2 rounded-full text-sm transition-all duration-200 group relative",
                   state === "collapsed" && "justify-center",
-                  isActive 
-                    ? "bg-black/5 text-[hsl(var(--primary))] font-medium" 
-                    : "text-black/70 hover:bg-black/5 hover:text-[hsl(var(--primary))]"
+                  isActive
+                    ? "bg-accent-orange/10 text-accent-orange font-medium"
+                    : "text-black/70 hover:bg-accent-orange/5 hover:text-accent-orange"
                 )}
                 title={state === "collapsed" ? item.title : ""}
               >
                 <Icon size={18} strokeWidth={1.5} className="w-[18px] h-[18px] flex-shrink-0" />
                 {state !== "collapsed" && <span className="tracking-tight">{item.title}</span>}
-                
+
                 {/* Tooltip para sidebar minimizada */}
                 {state === "collapsed" && (
                   <span className="absolute left-full ml-3 bg-black text-white text-xs py-1.5 px-3 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50 shadow-lg">
@@ -152,7 +152,7 @@ export function AppSidebar() {
             );
           })}
         </nav>
-        
+
         {/* User Menu */}
         <div className="border-t border-black/5 p-3">
           <DropdownMenu>

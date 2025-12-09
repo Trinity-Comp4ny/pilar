@@ -6,13 +6,20 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Supplier {
   id: string;
-  name: string;
-  contact?: string;
+  name: string; // 'nome' in DB
+  contact?: string; // 'contato' in DB
   email?: string;
-  phone?: string;
+  phone?: string; // not in DB explicitly, but 'contato' might cover it, or I should add it. DB has 'contato' and 'email'. 'telefone' is not in fornecedores table in Schema!
+  // Schema: nome, cnpj, contato, email. No 'phone' column. 
+  // I will map 'phone' to 'contato' or assume 'contato' is generic. 
+  // Wait, schema says: contato TEXT.
+  // I will use 'contact' for 'contato' and 'email' for 'email'.
+  // I'll add 'cnpj' since it is in schema.
+  cnpj?: string;
 }
 
 interface SupplierManagerProps {
@@ -28,31 +35,47 @@ export function SupplierManager({ onSupplierChange }: SupplierManagerProps) {
     name: "",
     contact: "",
     email: "",
-    phone: "",
+    cnpj: "",
   });
   const [editSupplier, setEditSupplier] = useState<Supplier | null>(null);
   const [deleteSupplier, setDeleteSupplier] = useState<Supplier | null>(null);
   const { toast } = useToast();
 
-  const STORAGE_KEY = "vrz-financeiro-suppliers";
-
-  // Carregar fornecedores do localStorage na inicialização
   useEffect(() => {
-    const savedSuppliers = localStorage.getItem(STORAGE_KEY);
-    if (savedSuppliers) {
-      setSuppliers(JSON.parse(savedSuppliers));
-    }
+    fetchSuppliers();
   }, []);
 
-  // Salvar fornecedores no localStorage quando houver mudanças
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(suppliers));
-    if (onSupplierChange) {
-      onSupplierChange(suppliers);
-    }
-  }, [suppliers, onSupplierChange]);
+  const fetchSuppliers = async () => {
+    try {
+      const { data, error } = await (supabase
+        .from('fornecedores') as any)
+        .select('*')
+        .order('nome');
 
-  const handleAddSupplier = () => {
+      if (error) throw error;
+
+      const mappedSuppliers = (data || []).map(sup => ({
+        id: sup.id,
+        name: sup.nome,
+        contact: sup.contato,
+        email: sup.email,
+        cnpj: sup.cnpj
+      }));
+
+      setSuppliers(mappedSuppliers);
+      if (onSupplierChange) {
+        onSupplierChange(mappedSuppliers);
+      }
+    } catch (error: any) {
+      toast({
+        title: "Erro ao carregar fornecedores",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleAddSupplier = async () => {
     if (!newSupplier.name.trim()) {
       toast({
         title: "Campo obrigatório",
@@ -62,30 +85,42 @@ export function SupplierManager({ onSupplierChange }: SupplierManagerProps) {
       return;
     }
 
-    const supplier: Supplier = {
-      id: Date.now().toString(),
-      name: newSupplier.name.trim(),
-      contact: newSupplier.contact?.trim(),
-      email: newSupplier.email?.trim(),
-      phone: newSupplier.phone?.trim(),
-    };
+    try {
+       const { error } = await (supabase
+        .from('fornecedores') as any)
+        .insert({
+          nome: newSupplier.name.trim(),
+          contato: newSupplier.contact?.trim(),
+          email: newSupplier.email?.trim(),
+          cnpj: newSupplier.cnpj?.trim(),
+          empresa_id: (await (supabase.rpc as any)('get_user_empresa_id')).data 
+        });
 
-    setSuppliers([...suppliers, supplier]);
-    setNewSupplier({
-      name: "",
-      contact: "",
-      email: "",
-      phone: "",
-    });
-    setIsAddDialogOpen(false);
+      if (error) throw error;
 
-    toast({
-      title: "Fornecedor adicionado",
-      description: "O fornecedor foi adicionado com sucesso",
-    });
+      toast({
+        title: "Fornecedor adicionado",
+        description: "O fornecedor foi adicionado com sucesso",
+      });
+
+      setNewSupplier({
+        name: "",
+        contact: "",
+        email: "",
+        cnpj: "",
+      });
+      setIsAddDialogOpen(false);
+      fetchSuppliers();
+    } catch (error: any) {
+      toast({
+        title: "Erro ao adicionar",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleEditSupplier = () => {
+  const handleEditSupplier = async () => {
     if (!editSupplier || !editSupplier.name.trim()) {
       toast({
         title: "Campo obrigatório",
@@ -95,29 +130,62 @@ export function SupplierManager({ onSupplierChange }: SupplierManagerProps) {
       return;
     }
 
-    setSuppliers(suppliers.map(sup => 
-      sup.id === editSupplier.id ? { ...editSupplier, name: editSupplier.name.trim() } : sup
-    ));
-    setEditSupplier(null);
-    setIsEditDialogOpen(false);
+    try {
+      const { error } = await (supabase
+        .from('fornecedores') as any)
+        .update({
+          nome: editSupplier.name.trim(),
+          contato: editSupplier.contact?.trim(),
+          email: editSupplier.email?.trim(),
+          cnpj: editSupplier.cnpj?.trim()
+        })
+        .eq('id', editSupplier.id);
 
-    toast({
-      title: "Fornecedor atualizado",
-      description: "O fornecedor foi atualizado com sucesso",
-    });
+      if (error) throw error;
+
+      toast({
+        title: "Fornecedor atualizado",
+        description: "O fornecedor foi atualizado com sucesso",
+      });
+
+      setEditSupplier(null);
+      setIsEditDialogOpen(false);
+      fetchSuppliers();
+    } catch (error: any) {
+      toast({
+        title: "Erro ao atualizar",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleDeleteSupplier = () => {
+  const handleDeleteSupplier = async () => {
     if (!deleteSupplier) return;
 
-    setSuppliers(suppliers.filter(sup => sup.id !== deleteSupplier.id));
-    setDeleteSupplier(null);
-    setIsDeleteDialogOpen(false);
+    try {
+      const { error } = await (supabase
+        .from('fornecedores') as any)
+        .delete()
+        .eq('id', deleteSupplier.id);
 
-    toast({
-      title: "Fornecedor removido",
-      description: "O fornecedor foi removido com sucesso",
-    });
+      if (error) throw error;
+
+      toast({
+        title: "Fornecedor removido",
+        description: "O fornecedor foi removido com sucesso",
+      });
+
+      setDeleteSupplier(null);
+      setIsDeleteDialogOpen(false);
+      fetchSuppliers();
+    } catch (error: any) {
+      toast({
+        title: "Erro ao remover",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -154,6 +222,16 @@ export function SupplierManager({ onSupplierChange }: SupplierManagerProps) {
               </div>
               
               <div className="space-y-2">
+                <Label htmlFor="supplierCnpj">CNPJ</Label>
+                 <Input
+                  id="supplierCnpj"
+                  value={newSupplier.cnpj || ""}
+                  onChange={(e) => setNewSupplier({...newSupplier, cnpj: e.target.value})}
+                  placeholder="00.000.000/0000-00"
+                />
+              </div>
+
+              <div className="space-y-2">
                 <Label htmlFor="supplierContact">Pessoa de Contato</Label>
                 <Input
                   id="supplierContact"
@@ -174,16 +252,6 @@ export function SupplierManager({ onSupplierChange }: SupplierManagerProps) {
                 />
               </div>
               
-              <div className="space-y-2">
-                <Label htmlFor="supplierPhone">Telefone</Label>
-                <Input
-                  id="supplierPhone"
-                  value={newSupplier.phone || ""}
-                  onChange={(e) => setNewSupplier({...newSupplier, phone: e.target.value})}
-                  placeholder="(00) 00000-0000"
-                />
-              </div>
-              
               <div className="flex gap-2 pt-2">
                 <Button variant="outline" onClick={() => setIsAddDialogOpen(false)} className="flex-1">
                   Cancelar
@@ -201,9 +269,9 @@ export function SupplierManager({ onSupplierChange }: SupplierManagerProps) {
         <TableHeader>
           <TableRow>
             <TableHead>Nome</TableHead>
+            <TableHead>CNPJ</TableHead>
             <TableHead>Contato</TableHead>
             <TableHead>Email</TableHead>
-            <TableHead>Telefone</TableHead>
             <TableHead className="w-24 text-right">Ações</TableHead>
           </TableRow>
         </TableHeader>
@@ -218,9 +286,9 @@ export function SupplierManager({ onSupplierChange }: SupplierManagerProps) {
             suppliers.map((supplier) => (
               <TableRow key={supplier.id}>
                 <TableCell className="font-medium">{supplier.name}</TableCell>
+                 <TableCell>{supplier.cnpj || "-"}</TableCell>
                 <TableCell>{supplier.contact || "-"}</TableCell>
                 <TableCell>{supplier.email || "-"}</TableCell>
-                <TableCell>{supplier.phone || "-"}</TableCell>
                 <TableCell className="text-right space-x-1">
                   <Button
                     variant="ghost"
@@ -271,6 +339,16 @@ export function SupplierManager({ onSupplierChange }: SupplierManagerProps) {
             </div>
             
             <div className="space-y-2">
+                <Label htmlFor="editSupplierCnpj">CNPJ</Label>
+                 <Input
+                  id="editSupplierCnpj"
+                  value={editSupplier?.cnpj || ""}
+                  onChange={(e) => setEditSupplier(editSupplier ? { ...editSupplier, cnpj: e.target.value } : null)}
+                  placeholder="00.000.000/0000-00"
+                />
+              </div>
+
+            <div className="space-y-2">
               <Label htmlFor="editSupplierContact">Pessoa de Contato</Label>
               <Input
                 id="editSupplierContact"
@@ -288,16 +366,6 @@ export function SupplierManager({ onSupplierChange }: SupplierManagerProps) {
                 value={editSupplier?.email || ""}
                 onChange={(e) => setEditSupplier(editSupplier ? { ...editSupplier, email: e.target.value } : null)}
                 placeholder="email@exemplo.com"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="editSupplierPhone">Telefone</Label>
-              <Input
-                id="editSupplierPhone"
-                value={editSupplier?.phone || ""}
-                onChange={(e) => setEditSupplier(editSupplier ? { ...editSupplier, phone: e.target.value } : null)}
-                placeholder="(00) 00000-0000"
               />
             </div>
             

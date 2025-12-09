@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -37,6 +38,7 @@ export default function Company() {
   const { toast } = useToast();
   const [editingCompany, setEditingCompany] = useState(false);
   const [editingVisual, setEditingVisual] = useState(false);
+  const [isInviting, setIsInviting] = useState(false);
   
   // Company data
   const [companyData, setCompanyData] = useState<CompanyData>({
@@ -66,16 +68,56 @@ export default function Company() {
     background: "#000000",
   });
 
-  // Load persisted data
+  // Load data
   useEffect(() => {
-    const storedCompany = localStorage.getItem(COMPANY_KEY);
-    if (storedCompany) {
-      try { setCompanyData(JSON.parse(storedCompany)); } catch {}
-    }
-    const storedUsers = localStorage.getItem(USERS_KEY);
-    if (storedUsers) {
-      try { setUsers(JSON.parse(storedUsers)); } catch {}
-    }
+    const fetchData = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Fetch Profile & Company ID
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('empresa_id, empresas(*)')
+        .eq('id', user.id)
+        .single();
+
+      if (profile?.empresas) {
+        const emp = profile.empresas as any;
+        setCompanyData({
+          nomeEmpresa: emp.nome || "",
+          cnpj: emp.cnpj || "",
+          razaoSocial: emp.nome || "", // Mapping nome to Razao for now
+          email: "", // Not in table
+          telefone: "", 
+          endereco: "",
+          cidade: "",
+          estado: "",
+          cep: "",
+          sobre: ""
+        });
+      }
+
+      // Fetch Users
+      if (profile?.empresa_id) {
+        const { data: companyUsers } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('empresa_id', profile.empresa_id);
+        
+        if (companyUsers) {
+          setUsers(companyUsers.map((u: any) => ({
+            id: u.id,
+            name: u.nome,
+            email: u.email,
+            cargo: u.role
+          })));
+        }
+      }
+    };
+
+    fetchData();
+
+    // Load visual config from local storage for now (or could be in DB)
     const storedBrand = localStorage.getItem(BRAND_KEY);
     if (storedBrand) {
       try { setBrand((prev) => ({ ...prev, ...JSON.parse(storedBrand) })); } catch {}
@@ -122,33 +164,82 @@ export default function Company() {
     setCompanyData((prev) => ({ ...prev, [field]: e.target.value }));
   };
   
-  const handleSaveCompany = () => {
-    localStorage.setItem(COMPANY_KEY, JSON.stringify(companyData));
-    setEditingCompany(false);
-    toast({
-      title: "Dados salvos",
-      description: "Informações da empresa atualizadas com sucesso",
-    });
+  const handleSaveCompany = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Get company ID
+      const { data: profile } = await supabase.from('profiles').select('empresa_id').eq('id', user.id).single();
+      if (!profile?.empresa_id) return;
+
+      const { error } = await supabase
+        .from('empresas')
+        .update({
+          nome: companyData.nomeEmpresa,
+          cnpj: companyData.cnpj
+        })
+        .eq('id', profile.empresa_id);
+
+      if (error) throw error;
+
+      setEditingCompany(false);
+      toast({
+        title: "Dados salvos",
+        description: "Informações da empresa atualizadas com sucesso",
+      });
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Erro ao salvar",
+        description: error.message
+      });
+    }
   };
 
-  const addUser = () => {
+  const addUser = async () => {
     if (!name.trim() || !userEmail.trim()) return;
-    const newUser: CompanyUser = { 
-      id: crypto.randomUUID(), 
-      name: name.trim(), 
-      email: userEmail.trim(),
-      cargo: userCargo.trim() || undefined
-    };
-    const updated = [...users, newUser];
-    setUsers(updated);
-    localStorage.setItem(USERS_KEY, JSON.stringify(updated));
-    setName("");
-    setUserEmail("");
-    setUserCargo("");
-    toast({
-      title: "Usuário adicionado",
-      description: `${name} foi adicionado com sucesso`,
-    });
+    
+    setIsInviting(true);
+    try {
+      // Call Edge Function to invite user
+      const { error } = await supabase.functions.invoke('invite-user', {
+        body: { 
+          email: userEmail.trim(), 
+          nome: name.trim(), 
+          role: userCargo.trim() || 'user' 
+        } 
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Convite enviado",
+        description: `Um email foi enviado para ${userEmail}`,
+      });
+
+      // Optimistically add to list (or refetch)
+      setUsers([...users, {
+        id: "pending-" + Date.now(),
+        name: name.trim(),
+        email: userEmail.trim(),
+        cargo: userCargo.trim() || 'user'
+      }]);
+
+      setName("");
+      setUserEmail("");
+      setUserCargo("");
+
+    } catch (error: any) {
+      console.error("Invite error:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro ao convidar",
+        description: "Verifique se a função 'invite-user' está implantada ou tente novamente.",
+      });
+    } finally {
+      setIsInviting(false);
+    }
   };
 
   const removeUser = (id: string) => {

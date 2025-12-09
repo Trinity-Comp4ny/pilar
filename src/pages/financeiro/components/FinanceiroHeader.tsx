@@ -2,10 +2,18 @@ import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Calendar as CalendarIcon, Filter, CalendarDays } from "lucide-react";
-import { format } from "date-fns";
+import { format, startOfMonth, endOfMonth, subMonths, startOfYear, endOfYear } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
-import { Dispatch, SetStateAction } from "react";
+import { Dispatch, SetStateAction, useState, useEffect } from "react";
 import { TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface FinanceiroHeaderProps {
   dateFrom: Date | undefined;
@@ -24,6 +32,34 @@ export function FinanceiroHeader({
   visualizacao,
   setVisualizacao,
 }: FinanceiroHeaderProps) {
+  const [filterType, setFilterType] = useState("this-month");
+
+  useEffect(() => {
+    // Set default filter to current month on mount
+    const now = new Date();
+    setDateFrom(startOfMonth(now));
+    setDateTo(endOfMonth(now));
+  }, [setDateFrom, setDateTo]);
+
+  const handleFilterChange = (value: string) => {
+    setFilterType(value);
+    const now = new Date();
+    
+    if (value === "this-month") {
+      setDateFrom(startOfMonth(now));
+      setDateTo(endOfMonth(now));
+    } else if (value === "last-month") {
+      const last = subMonths(now, 1);
+      setDateFrom(startOfMonth(last));
+      setDateTo(endOfMonth(last));
+    } else if (value === "this-year") {
+      setDateFrom(startOfYear(now));
+      setDateTo(endOfYear(now));
+    } else if (value === "custom") {
+      // Do not change dates, let user pick
+    }
+  };
+
   return (
     <div className="sticky top-0 z-10 bg-white border-b shadow-sm w-full">
       <div className="px-6 py-4">
@@ -37,85 +73,69 @@ export function FinanceiroHeader({
             <div className="flex items-center gap-2">
               <CalendarDays className="h-4 w-4 text-gray-500" />
               <span className="text-sm font-medium text-gray-700">Período:</span>
-              <div className="flex gap-2">
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className={cn(
-                        "justify-start text-left font-normal text-xs h-9 min-w-[140px] rounded-full",
-                        !dateFrom && "text-muted-foreground"
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-3 w-3" />
-                      {dateFrom ? format(dateFrom, "dd/MM/yyyy") : "Data início"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={dateFrom}
-                      onSelect={setDateFrom}
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className={cn(
-                        "justify-start text-left font-normal text-xs h-9 min-w-[140px] rounded-full",
-                        !dateTo && "text-muted-foreground"
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-3 w-3" />
-                      {dateTo ? format(dateTo, "dd/MM/yyyy") : "Data fim"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={dateTo}
-                      onSelect={setDateTo}
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-            </div>
+              
+              <Select value={filterType} onValueChange={handleFilterChange}>
+                <SelectTrigger className="w-[180px] h-9 text-xs rounded-full">
+                  <SelectValue placeholder="Selecione o período" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="this-month">Este Mês</SelectItem>
+                  <SelectItem value="last-month">Mês Passado</SelectItem>
+                  <SelectItem value="this-year">Este Ano</SelectItem>
+                  <SelectItem value="custom">Personalizado</SelectItem>
+                </SelectContent>
+              </Select>
 
-            <div className="flex items-center gap-2">
-              <Filter className="h-4 w-4 text-gray-500" />
-              <span className="text-sm font-medium text-gray-700">Visualização:</span>
-              <div className="flex items-center gap-1 bg-gray-50 p-1 rounded-lg border border-black/5">
-                <Button
-                  variant={visualizacao === "dia" ? "secondary" : "ghost"}
-                  size="sm"
-                  onClick={() => setVisualizacao("dia")}
-                  className="text-xs h-8 rounded-full"
-                >
-                  Dia
-                </Button>
-                <Button
-                  variant={visualizacao === "mes" ? "secondary" : "ghost"}
-                  size="sm"
-                  onClick={() => setVisualizacao("mes")}
-                  className="text-xs h-8 rounded-full"
-                >
-                  Mês
-                </Button>
-                <Button
-                  variant={visualizacao === "ano" ? "secondary" : "ghost"}
-                  size="sm"
-                  onClick={() => setVisualizacao("ano")}
-                  className="text-xs h-8 rounded-full"
-                >
-                  Ano
-                </Button>
-              </div>
+              {filterType === "custom" && (
+                <div className="flex gap-2 animate-in fade-in slide-in-from-left-5 duration-300">
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className={cn(
+                          "justify-start text-left font-normal text-xs h-9 min-w-[120px] rounded-full",
+                          !dateFrom && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-3 w-3" />
+                        {dateFrom ? format(dateFrom, "dd/MM/yyyy") : "Início"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={dateFrom}
+                        onSelect={setDateFrom}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className={cn(
+                          "justify-start text-left font-normal text-xs h-9 min-w-[120px] rounded-full",
+                          !dateTo && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-3 w-3" />
+                        {dateTo ? format(dateTo, "dd/MM/yyyy") : "Fim"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={dateTo}
+                        onSelect={setDateTo}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -137,6 +157,12 @@ export function FinanceiroHeader({
             Fluxo de Caixa
           </TabsTrigger>
           <TabsTrigger 
+            value="lancamentos" 
+            className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#FF4000] data-[state=active]:bg-white data-[state=active]:text-[#FF4000] py-3"
+          >
+            Lançamentos
+          </TabsTrigger>
+          <TabsTrigger 
             value="mensal" 
             className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#FF4000] data-[state=active]:bg-white data-[state=active]:text-[#FF4000] py-3"
           >
@@ -149,22 +175,16 @@ export function FinanceiroHeader({
             Metas
           </TabsTrigger>
           <TabsTrigger 
-            value="receitas" 
+            value="pro-labore" 
             className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#FF4000] data-[state=active]:bg-white data-[state=active]:text-[#FF4000] py-3"
           >
-            Receitas
+            Pró-Labore
           </TabsTrigger>
           <TabsTrigger 
-            value="despesas" 
+            value="contas" 
             className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#FF4000] data-[state=active]:bg-white data-[state=active]:text-[#FF4000] py-3"
           >
-            Despesas
-          </TabsTrigger>
-          <TabsTrigger 
-            value="configuracoes" 
-            className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#FF4000] data-[state=active]:bg-white data-[state=active]:text-[#FF4000] py-3"
-          >
-            Configurações
+            Contas
           </TabsTrigger>
         </TabsList>
       </div>

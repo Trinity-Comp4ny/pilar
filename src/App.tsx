@@ -16,6 +16,8 @@ import { PrivateRoute } from "./components/PrivateRoute";
 import Profile from "./pages/Profile";
 import Company from "./pages/Company";
 import Landing from "./pages/Landing";
+import CompanySetup from "./pages/CompanySetup";
+import ProfileSetup from "./pages/ProfileSetup";
 
 const queryClient = new QueryClient();
 
@@ -62,9 +64,17 @@ const App = () => {
             <Route path="/profile" element={<PrivateRoute />}>
               <Route index element={<Profile />} />
             </Route>
-            
+
             <Route path="/company" element={<PrivateRoute />}>
               <Route index element={<Company />} />
+            </Route>
+
+            <Route path="/company-setup" element={<PrivateRoute />}>
+              <Route index element={<CompanySetup />} />
+            </Route>
+
+            <Route path="/profile-setup" element={<PrivateRoute />}>
+              <Route index element={<ProfileSetup />} />
             </Route>
             
             <Route path="*" element={<NotFound />} />

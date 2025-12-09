@@ -30,13 +30,13 @@ export function Header() {
           .select('nome')
           .eq('id', user.id)
           .single();
-        
+
         if (profile?.nome) {
           setUserName(profile.nome);
         }
       }
     };
-    
+
     loadUserData();
 
     // Recuperar configuração de marca da empresa
@@ -45,7 +45,7 @@ export function Header() {
       try {
         const brand = JSON.parse(brandRaw);
         if (brand?.headerLogo) setHeaderLogo(brand.headerLogo);
-      } catch {}
+      } catch { }
     }
   }, []);
 
@@ -61,11 +61,11 @@ export function Header() {
       navigate("/login");
     }
   };
-  
+
   const handleProfile = () => {
     navigate("/profile");
   };
-  
+
   const handleCompany = () => {
     navigate("/company");
   };
@@ -76,11 +76,11 @@ export function Header() {
         <img src="/pilar-logo.svg" alt="Pilar" className="h-7 w-7 transition-opacity duration-200 hover:opacity-80" />
         <span className="text-base font-semibold tracking-tight">Pilar</span>
       </div>
-      
+
       <div className="flex items-center gap-3">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="flex items-center gap-2 text-black/80 hover:text-[hsl(var(--primary))] transition-colors focus:outline-none rounded-full px-3 py-1.5 hover:bg-black/5">
+            <button className="flex items-center gap-2 text-black/80 hover:text-accent-orange transition-colors focus:outline-none rounded-full px-3 py-1.5 hover:bg-black/5">
               <User size={16} />
               <span className="text-sm font-medium">{userName}</span>
               <ChevronDown size={14} className="opacity-60" />
