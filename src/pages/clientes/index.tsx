@@ -12,6 +12,7 @@ import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 
 interface Cliente {
   id: string;
@@ -34,6 +35,8 @@ export default function Clientes() {
   const [isEditMode, setIsEditMode] = useState(false);
   const [selectedCliente, setSelectedCliente] = useState<Cliente | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [clienteToDelete, setClienteToDelete] = useState<string | null>(null);
   
   const [nome, setNome] = useState("");
   const [cpfCnpj, setCpfCnpj] = useState("");
@@ -55,6 +58,48 @@ export default function Clientes() {
       .replace(/(\d{5})(\d)/, "$1-$2")
       .replace(/(-\d{4})\d+?$/, "$1");
   };
+  const formatCpf = (digits: string) => {
+    return digits
+      .replace(/(\d{3})(\d)/, "$1.$2")
+      .replace(/(\d{3})(\d)/, "$1.$2")
+      .replace(/(\d{3})(\d{1,2})/, "$1-$2");
+  };
+
+  const formatCnpj = (digits: string) => {
+    return digits
+      .replace(/(\d{2})(\d)/, "$1.$2")
+      .replace(/(\d{3})(\d)/, "$1.$2")
+      .replace(/(\d{3})(\d)/, "$1/$2")
+      .replace(/(\d{4})(\d{1,2})/, "$1-$2");
+  };
+
+  const formatCpfCnpj = (value: string) => {
+    if (!value) return "";
+    const digits = value.replace(/\D/g, "");
+    if (digits.length === 11) return formatCpf(digits);
+    if (digits.length === 14) return formatCnpj(digits);
+    return value;
+  };
+
+  const normalize = (value: string) =>
+    value
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase();
+
+  const fuzzyMatch = (text: string, query: string) => {
+    const q = normalize(query);
+    if (!q) return true;
+    const t = normalize(text);
+    let ti = 0;
+    for (const qc of q) {
+      ti = t.indexOf(qc, ti);
+      if (ti === -1) return false;
+      ti++;
+    }
+    return true;
+  };
+
   const [sortField, setSortField] = useState<keyof Cliente | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const { toast } = useToast();
@@ -192,10 +237,7 @@ export default function Clientes() {
     }
   };
 
-  const handleDelete = async (id: string, e?: React.MouseEvent) => {
-    e?.stopPropagation();
-    if (!confirm("Tem certeza que deseja excluir este cliente?")) return;
-
+  const handleDelete = async (id: string) => {
     const { error } = await supabase.from('clientes').delete().eq('id', id);
     if (!error) {
       toast({ title: "Cliente excluído" });
@@ -204,6 +246,19 @@ export default function Clientes() {
     } else {
       toast({ title: "Erro ao excluir", description: "Verifique se existem registros vinculados.", variant: "destructive" });
     }
+  };
+
+  const handleDeleteClick = (id: string, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    setClienteToDelete(id);
+    setConfirmDeleteOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!clienteToDelete) return;
+    await handleDelete(clienteToDelete);
+    setConfirmDeleteOpen(false);
+    setClienteToDelete(null);
   };
 
   const handleSort = (field: keyof Cliente) => {
@@ -221,10 +276,17 @@ export default function Clientes() {
   };
 
   const filteredAndSortedClientes = useMemo(() => {
-    let filtered = clientes.filter(cliente => 
-      cliente.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (cliente.cpf_cnpj && cliente.cpf_cnpj.replace(/\D/g, '').includes(searchTerm.replace(/\D/g, '')))
-    );
+    const term = searchTerm.trim();
+    let filtered = clientes.filter((cliente) => {
+      if (!term) return true;
+      const digits = cliente.cpf_cnpj ? cliente.cpf_cnpj.replace(/\D/g, "") : "";
+      const termDigits = term.replace(/\D/g, "");
+
+      return (
+        fuzzyMatch(cliente.nome, term) ||
+        (termDigits && digits.includes(termDigits))
+      );
+    });
 
     if (sortField) {
       filtered.sort((a, b) => {
@@ -510,7 +572,7 @@ export default function Clientes() {
                       onClick={() => handleRowClick(cliente)}
                     >
                       <TableCell className="font-medium">{cliente.nome}</TableCell>
-                      <TableCell>{cliente.cpf_cnpj}</TableCell>
+                      <TableCell>{formatCpfCnpj(cliente.cpf_cnpj)}</TableCell>
                       <TableCell className="hidden md:table-cell text-sm text-black/70">{cliente.email}</TableCell>
                       <TableCell className="hidden lg:table-cell">{cliente.contato}</TableCell>
                       {isAdmin && (
@@ -519,7 +581,12 @@ export default function Clientes() {
                             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => handleEditClick(cliente, e)}>
                               <Pencil className="h-4 w-4" />
                             </Button>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500" onClick={(e) => handleDelete(cliente.id, e)}>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-red-500"
+                              onClick={(e) => handleDeleteClick(cliente.id, e)}
+                            >
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
@@ -552,7 +619,15 @@ export default function Clientes() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label className="text-xs text-muted-foreground">CPF/CNPJ</Label>
-                    <p className="font-medium">{selectedCliente.cpf_cnpj}</p>
+                    <p className="font-medium">{formatCpfCnpj(selectedCliente.cpf_cnpj)}</p>
+                  </div>
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Origem</Label>
+                    <p className="font-medium">{selectedCliente.origem || "-"}</p>
+                  </div>
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Tipo NF</Label>
+                    <p className="font-medium">{selectedCliente.tipo_nf || "-"}</p>
                   </div>
                 </div>
 
@@ -576,6 +651,36 @@ export default function Clientes() {
                   </div>
                 </div>
 
+                {Array.isArray((selectedCliente as any).contas_bancarias) && (selectedCliente as any).contas_bancarias.length > 0 && (
+                  <div className="bg-gray-50 p-4 rounded-lg space-y-3">
+                    <h4 className="font-medium text-sm flex items-center gap-2">
+                      <Building2 size={14} /> Contas Bancárias
+                    </h4>
+                    <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
+                      {(selectedCliente as any).contas_bancarias.map((conta: any, index: number) => (
+                        <div
+                          key={index}
+                          className="flex items-center justify-between gap-3 bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm"
+                        >
+                          <div className="flex items-center gap-3 flex-1 min-w-0">
+                            <div className="flex items-center gap-1.5 min-w-0">
+                              <Building2 className="h-4 w-4 text-black/40 flex-shrink-0" />
+                              <span className="font-medium truncate">{conta.banco}</span>
+                            </div>
+                            <div className="hidden md:flex items-center gap-2 text-xs text-black/60 flex-shrink-0">
+                              <Landmark className="h-3 w-3" />
+                              <span>
+                                Ag. {conta.agencia} / Cc. {conta.conta}
+                              </span>
+                            </div>
+                            <span className="text-xs text-black/50 capitalize flex-shrink-0">{conta.tipo}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 <div className="flex gap-2 pt-4">
                   <Button variant="outline" onClick={() => setIsDetailOpen(false)} className="flex-1">
                     Fechar
@@ -586,7 +691,11 @@ export default function Clientes() {
                         <Pencil className="mr-2 h-4 w-4" />
                         Editar
                       </Button>
-                      <Button variant="destructive" onClick={() => handleDelete(selectedCliente.id)} className="flex-1">
+                      <Button
+                        variant="destructive"
+                        onClick={() => selectedCliente && handleDeleteClick(selectedCliente.id)}
+                        className="flex-1"
+                      >
                         <Trash2 className="mr-2 h-4 w-4" />
                         Excluir
                       </Button>
@@ -598,6 +707,16 @@ export default function Clientes() {
           )}
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        open={confirmDeleteOpen}
+        onOpenChange={setConfirmDeleteOpen}
+        onConfirm={handleDeleteConfirm}
+        title="Excluir Cliente"
+        description="Tem certeza que deseja excluir este cliente? Esta ação não pode ser desfeita."
+        confirmText="Excluir"
+        cancelText="Cancelar"
+      />
     </PageLayout>
   );
 }
