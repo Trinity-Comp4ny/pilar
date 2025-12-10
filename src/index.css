@@ -85,3 +85,16 @@
     @apply bg-background text-foreground;
   }
 }
+@layer utilities {
+  .reveal-up {
+    @apply opacity-0 translate-y-8 transition-all duration-700 ease-out;
+  }
+  
+  .reveal-up.is-visible {
+    @apply opacity-100 translate-y-0;
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+}
