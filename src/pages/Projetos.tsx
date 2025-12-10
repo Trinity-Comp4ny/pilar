@@ -339,20 +339,32 @@ export default function ProjetosKanban() {
     if (!canEdit) return; // Previne drag se não pode editar
 
     const newStatus = destination.droppableId as Projeto["status"];
+    const todayStr = new Date().toISOString().slice(0, 10);
 
     console.log('Tentando atualizar status para:', newStatus);
 
-    // Optimistic update
+    // Optimistic update (inclui data_final quando for concluído)
     setProjetos((prevProjetos) =>
       prevProjetos.map((projeto) =>
-        projeto.id === draggableId ? { ...projeto, status: newStatus } : projeto
+        projeto.id === draggableId
+          ? {
+              ...projeto,
+              status: newStatus,
+              data_final: newStatus === "Concluído" ? todayStr : projeto.data_final,
+            }
+          : projeto
       )
     );
 
     try {
+      const updateData: any = { status: newStatus };
+      if (newStatus === "Concluído") {
+        updateData.data_final = todayStr;
+      }
+
       const { error } = await (supabase
         .from('projetos') as any)
-        .update({ status: newStatus })
+        .update(updateData)
         .eq('id', draggableId);
 
       if (error) {
@@ -586,34 +598,36 @@ export default function ProjetosKanban() {
                         />
                       </div>
 
-                      <div className="space-y-2">
-                        <Label htmlFor="dataInicio">Data Início</Label>
-                        <Input
-                          id="dataInicio"
-                          type="date"
-                          value={formData.data_inicio}
-                          onChange={(e) => handleInputChange("data_inicio", e.target.value)}
-                        />
-                      </div>
+                      <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="dataInicio">Data Início</Label>
+                          <Input
+                            id="dataInicio"
+                            type="date"
+                            value={formData.data_inicio}
+                            onChange={(e) => handleInputChange("data_inicio", e.target.value)}
+                          />
+                        </div>
 
-                      <div className="space-y-2">
-                        <Label htmlFor="dataPrevisao">Previsão de Término</Label>
-                        <Input
-                          id="dataPrevisao"
-                          type="date"
-                          value={formData.data_previsao}
-                          onChange={(e) => handleInputChange("data_previsao", e.target.value)}
-                        />
-                      </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="dataPrevisao">Previsão de Término</Label>
+                          <Input
+                            id="dataPrevisao"
+                            type="date"
+                            value={formData.data_previsao}
+                            onChange={(e) => handleInputChange("data_previsao", e.target.value)}
+                          />
+                        </div>
 
-                      <div className="space-y-2">
-                        <Label htmlFor="dataFinal">Data Final</Label>
-                        <Input
-                          id="dataFinal"
-                          type="date"
-                          value={formData.data_final}
-                          onChange={(e) => handleInputChange("data_final", e.target.value)}
-                        />
+                        <div className="space-y-2">
+                          <Label htmlFor="dataFinal">Data Final</Label>
+                          <Input
+                            id="dataFinal"
+                            type="date"
+                            value={formData.data_final}
+                            onChange={(e) => handleInputChange("data_final", e.target.value)}
+                          />
+                        </div>
                       </div>
 
                       <div className="space-y-2">
@@ -738,18 +752,21 @@ export default function ProjetosKanban() {
                               }`}
                           >
                             <CardHeader className="p-2.5 pb-1.5">
+                              {(() => {
+                                const deadlineStatus = getDeadlineStatus(projeto);
+                                return deadlineStatus ? (
+                                  <div className="mb-1 flex items-center justify-between">
+                                    <Badge className={`text-[9px] px-1.5 py-0 ${deadlineStatus.color}`}>
+                                      {deadlineStatus.label}
+                                      {deadlineStatus.days > 0 && ` (${deadlineStatus.days}d)`}
+                                    </Badge>
+                                  </div>
+                                ) : null;
+                              })()}
                               <div className="flex items-start justify-between gap-1.5 mb-1">
                                 <Badge variant="outline" className="text-[10px] font-mono px-1.5 py-0">
                                   {projeto.codigo_projeto}
                                 </Badge>
-                                {(() => {
-                                  const deadlineStatus = getDeadlineStatus(projeto);
-                                  return deadlineStatus && deadlineStatus.label !== 'No Prazo' ? (
-                                    <Badge className={`text-[9px] px-1.5 py-0 ${deadlineStatus.color}`}>
-                                      {deadlineStatus.label}
-                                    </Badge>
-                                  ) : null;
-                                })()}
                               </div>
                               <CardTitle className="text-xs font-medium line-clamp-2 leading-tight">
                                 {projeto.nome}
@@ -777,12 +794,20 @@ export default function ProjetosKanban() {
                                   <DollarSign size={10} className="flex-shrink-0" />
                                   <span className="truncate">{formatCurrency(projeto.valor_contrato)}</span>
                                 </div>
-                                {projeto.data_previsao && (
-                                  <div className="flex items-center gap-0.5 text-gray-500">
-                                    <Calendar size={10} />
-                                    <span>{formatDateShort(projeto.data_previsao)}</span>
-                                  </div>
-                                )}
+                                <div className="flex flex-col items-end gap-0.5 text-[10px] text-gray-500">
+                                  {projeto.area_m2 !== undefined && (
+                                    <div className="flex items-center gap-0.5">
+                                      <Ruler size={10} />
+                                      <span>{projeto.area_m2 || 0} m²</span>
+                                    </div>
+                                  )}
+                                  {projeto.data_previsao && (
+                                    <div className="flex items-center gap-0.5">
+                                      <Calendar size={10} />
+                                      <span>{formatDateShort(projeto.data_previsao)}</span>
+                                    </div>
+                                  )}
+                                </div>
                               </div>
                             </CardContent>
                           </Card>
@@ -907,7 +932,7 @@ export default function ProjetosKanban() {
                       <Button
                         variant="default"
                         onClick={() => handleEditClick(selectedProjeto)}
-                        className="flex-1 bg-blue-600 hover:bg-blue-700"
+                        className="flex-1 bg-accent-orange hover:bg-accent-orange/90 text-white"
                       >
                         <Edit className="mr-2 h-4 w-4" />
                         Editar

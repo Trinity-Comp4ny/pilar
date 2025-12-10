@@ -277,18 +277,46 @@ export default function Pessoas() {
     setIsDetailOpen(true);
   };
 
+  const normalize = (value: string) =>
+    value
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase();
+
+  const fuzzyMatch = (text: string, query: string) => {
+    const q = normalize(query);
+    if (!q) return true;
+    const t = normalize(text);
+    let ti = 0;
+    for (const qc of q) {
+      ti = t.indexOf(qc, ti);
+      if (ti === -1) return false;
+      ti++;
+    }
+    return true;
+  };
+
   const cargos = useMemo(() => {
     const uniqueCargos = Array.from(new Set(pessoas.map(p => p.cargo)));
     return uniqueCargos;
   }, [pessoas]);
 
   const filteredAndSortedPessoas = useMemo(() => {
-    let filtered = pessoas.filter(pessoa => 
-      (pessoa.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (pessoa.cpf && pessoa.cpf.replace(/\D/g, '').includes(searchTerm.replace(/\D/g, ''))) ||
-      pessoa.cargo.toLowerCase().includes(searchTerm.toLowerCase())) &&
-      (filterCargo === "todos" || pessoa.cargo === filterCargo)
-    );
+    const term = searchTerm.trim();
+    let filtered = pessoas.filter((pessoa) => {
+      if (!term) return filterCargo === "todos" || pessoa.cargo === filterCargo;
+
+      const digits = pessoa.cpf ? pessoa.cpf.replace(/\D/g, "") : "";
+      const termDigits = term.replace(/\D/g, "");
+
+      const matchesText =
+        fuzzyMatch(pessoa.nome, term) ||
+        fuzzyMatch(pessoa.cargo, term) ||
+        (termDigits && digits.includes(termDigits));
+
+      const matchesCargo = filterCargo === "todos" || pessoa.cargo === filterCargo;
+      return matchesText && matchesCargo;
+    });
 
     if (sortField) {
       filtered.sort((a, b) => {
