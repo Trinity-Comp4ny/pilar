@@ -32,6 +32,6 @@ jobs:
           password: ${{ secrets.SFTP_PASS }}
           port: 65002
           local_path: "./dist/*"
-          remote_path: "/home/u830145551/domains/pilarsoft.com.br/public_html"
+          remote_path: "/home/u830145551/domains/pilarsoft.com.br/public_html/"
           delete_remote_files: true
           sftp_only: true
