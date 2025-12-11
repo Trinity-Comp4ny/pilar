@@ -24,7 +24,7 @@ jobs:
       - name: Build project
         run: npm run build
 
-      # Limpa a pasta remota antes
+      # Limpa arquivos antigos
       - name: SSH Remove old files
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -34,14 +34,15 @@ jobs:
           port: 65002
           script: |
             rm -rf /home/u830145551/domains/pilarsoft.com.br/public_html/*
-      
-      # Faz upload dos arquivos do dist
-      - name: Upload dist via SCP
+
+      # Envia SOMENTE o conteúdo da dist
+      - name: Upload build files (no dist folder)
         uses: appleboy/scp-action@v0.1.4
         with:
           host: ${{ secrets.SFTP_HOST }}
           username: ${{ secrets.SFTP_USER }}
           password: ${{ secrets.SFTP_PASS }}
           port: 65002
-          source: "dist/*"
+          source: "dist/**"
           target: "/home/u830145551/domains/pilarsoft.com.br/public_html/"
+          strip_components: 1
