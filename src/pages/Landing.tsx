@@ -173,7 +173,6 @@ export default function Landing() {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent-orange opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-accent-orange"></span>
               </span>
-              Gestão para Engenharia e Arquitetura1234
               Gestão para Engenharia e Arquitetura
             </div>
             
