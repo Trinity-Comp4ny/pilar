@@ -1,0 +1,41 @@
+# .github/workflows/deploy.yml
+name: Deploy React App (Vite) via SSH
+
+on:
+  push:
+    branches:
+      - main 
+
+jobs:
+  build_and_deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20' 
+      
+      - name: Install Dependencies
+        run: npm install
+      
+      - name: Build React App (Vite)
+        run: npm run build # Cria a pasta 'dist'
+      
+      # 🔑 PASSO CRÍTICO: Configurar e Implantar via SSH
+      - name: Deploy via SSH and rsync
+        uses: easingthemes/ssh-deploy@main
+        with:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          REMOTE_HOST: ${{ secrets.SSH_HOST }}
+          REMOTE_USER: ${{ secrets.SSH_USERNAME }}
+          REMOTE_PORT: ${{ secrets.SSH_PORT }}
+          SOURCE: 'dist/'  # Pasta de build do Vite
+          TARGET: ${{ secrets.SSH_REMOTE_PATH }}
+          ARGS: '--archive --delete --compress' # Sincroniza e apaga arquivos antigos
+          
+      - name: Deployment Finished
+        run: echo "Implantação concluída em ${{ secrets.SSH_HOST }}!"
