@@ -27,12 +27,11 @@ jobs:
       - name: Deploy via SFTP
         uses: wlixcc/SFTP-Deploy-Action@v1.2.4
         with:
-          server: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USERNAME }}
-          port: ${{ secrets.SSH_PORT }}
-          ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY }}
+          server: ${{ secrets.SFTP_HOST }}
+          username: ${{ secrets.SFTP_USER }}
+          password: ${{ secrets.SFTP_PASS }}
+          port: 65002
           local_path: "./dist/*"
-          remote_path: ${{ secrets.SSH_REMOTE_PATH }}
+          remote_path: "/home/u830145551/domains/pilarsoft.com.br/public_html"
           delete_remote_files: true
           sftp_only: true
-
