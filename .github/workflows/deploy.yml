@@ -24,14 +24,24 @@ jobs:
       - name: Build project
         run: npm run build
 
-      - name: Deploy via SFTP
-        uses: wlixcc/SFTP-Deploy-Action@v1.2.4
+      # Limpa a pasta remota antes
+      - name: SSH Remove old files
+        uses: appleboy/ssh-action@v1.0.3
         with:
-          server: ${{ secrets.SFTP_HOST }}
+          host: ${{ secrets.SFTP_HOST }}
           username: ${{ secrets.SFTP_USER }}
           password: ${{ secrets.SFTP_PASS }}
           port: 65002
-          local_path: "./dist/*"
-          remote_path: "/home/u830145551/domains/pilarsoft.com.br/public_html/"
-          delete_remote_files: true
-          sftp_only: true
+          script: |
+            rm -rf /home/u830145551/domains/pilarsoft.com.br/public_html/*
+      
+      # Faz upload dos arquivos do dist
+      - name: Upload dist via SCP
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: ${{ secrets.SFTP_HOST }}
+          username: ${{ secrets.SFTP_USER }}
+          password: ${{ secrets.SFTP_PASS }}
+          port: 65002
+          source: "dist/*"
+          target: "/home/u830145551/domains/pilarsoft.com.br/public_html/"
