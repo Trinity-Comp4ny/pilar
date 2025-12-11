@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -6,13 +6,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { CalendarIcon, FileText, Download, Plus } from "lucide-react";
+import { CalendarIcon, Download, Plus } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { supabase } from "@/integrations/supabase/client";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 export default function Relatorios() {
   const [tipoRelatorio, setTipoRelatorio] = useState("");
@@ -22,6 +24,203 @@ export default function Relatorios() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const [profilesMap, setProfilesMap] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    fetchProfiles();
+  }, []);
+
+  const fetchProfiles = async () => {
+    try {
+      const { data: profiles } = await supabase.from('profiles').select('id, first_name, last_name, email');
+      const map: Record<string, string> = {};
+      if (profiles) {
+        profiles.forEach((p: any) => {
+           const name = p.first_name ? `${p.first_name} ${p.last_name || ''}`.trim() : p.email;
+           map[p.id] = name;
+        });
+      }
+      setProfilesMap(map);
+    } catch (e) {
+      console.error("Erro ao carregar perfis:", e);
+    }
+  };
+
+  const getUserName = (id: string) => {
+    if (!id) return "-";
+    return profilesMap[id] || id;
+  };
+
+  const fetchFinancialData = async (tipo: 'receitas' | 'despesas') => {
+    let query = supabase.from(tipo).select(`
+      *,
+      projetos (nome),
+      categorias_financeiras (nome),
+      contas (nome)
+    `);
+
+    if (tipo === 'receitas') {
+      query = query.select(`
+        *,
+        projetos (nome),
+        categorias_financeiras (nome),
+        contas (nome),
+        clientes (nome)
+      `);
+    } else {
+      query = query.select(`
+        *,
+        projetos (nome),
+        categorias_financeiras (nome),
+        contas (nome),
+        fornecedores (nome)
+      `);
+    }
+
+    if (dateFrom) {
+      query = query.gte('data_vencimento', dateFrom.toISOString());
+    }
+    
+    if (dateTo) {
+      query = query.lte('data_vencimento', dateTo.toISOString());
+    }
+
+    const { data, error } = await query;
+    if (error) throw error;
+    return data;
+  };
+
+  const processData = (data: any[], tipo: 'receitas' | 'despesas') => {
+    return data.map(item => ({
+      'Descricao': item.descricao,
+      'Valor': item.valor,
+      'Data Vencimento': item.data_vencimento ? format(new Date(item.data_vencimento), 'dd/MM/yyyy') : '-',
+      'Data Recebimento': item.data_recebimento || item.data_pagamento ? format(new Date(item.data_recebimento || item.data_pagamento), 'dd/MM/yyyy') : '-',
+      'Status': item.status,
+      'Nome do Projeto': item.projetos?.nome || '-',
+      'Nome do Cliente': tipo === 'receitas' ? (item.clientes?.nome || '-') : (item.fornecedores?.nome || '-'),
+      'Categoria': item.categorias_financeiras?.nome || '-',
+      'Conta': item.contas?.nome || '-',
+      'Nota Fiscal': item.nota_fiscal || '-',
+      'Observacao': item.observacao || '-',
+      'Criado por': getUserName(item.created_by),
+      'Updated por': getUserName(item.updated_by),
+      'Create at': item.created_at ? format(new Date(item.created_at), 'dd/MM/yyyy HH:mm') : '-',
+      'Updated at': item.updated_at ? format(new Date(item.updated_at), 'dd/MM/yyyy HH:mm') : '-',
+      'Forma Pagamento': item.forma_pagamento || '-',
+    }));
+  };
+
+  // Function to draw Pilar logo using vector lines (based on SVG)
+  const drawPilarLogo = (doc: jsPDF, x: number, y: number, scale: number = 1.0) => {
+    doc.setDrawColor(10, 10, 10); // #0A0A0A
+    doc.setLineWidth(1.6 * scale);
+    doc.setLineCap("round");
+
+    // Capital (top line)
+    doc.line(x + (1 * scale), y + (2 * scale), x + (27 * scale), y + (2 * scale));
+    
+    // Abacus (subtle line) - make it lighter manually or just draw
+    const originalColor = doc.getDrawColor();
+    doc.setDrawColor(100, 100, 100); 
+    doc.line(x + (3 * scale), y + (6 * scale), x + (25 * scale), y + (6 * scale));
+    doc.setDrawColor(10, 10, 10); // Reset
+
+    // Flutes (shaft)
+    doc.line(x + (7 * scale), y + (9 * scale), x + (7 * scale), y + (23 * scale));
+    doc.line(x + (12 * scale), y + (9 * scale), x + (12 * scale), y + (23 * scale));
+    doc.line(x + (17 * scale), y + (9 * scale), x + (17 * scale), y + (23 * scale));
+    doc.line(x + (22 * scale), y + (9 * scale), x + (22 * scale), y + (23 * scale));
+  };
+
+  const generatePDF = (data: any[], title: string) => {
+    const doc = new jsPDF();
+
+    // --- CAPA ---
+    doc.setFillColor(255, 255, 255);
+    doc.rect(0, 0, 210, 297, 'F');
+    
+    // Top Bar
+    doc.setFillColor(249, 115, 22); // Orange
+    doc.rect(0, 0, 210, 15, 'F');
+    
+    // Bottom Bar
+    doc.rect(0, 282, 210, 15, 'F');
+
+    // Logo Centered Big
+    const centerX = 105;
+    const centerY = 100;
+    // Draw scaled up logo (approx 64x64) - base is ~32x32, so scale 2
+    // Adjust x/y to center. Base width 28, height 24 roughly.
+    drawPilarLogo(doc, centerX - 14*2, centerY - 12*2, 2);
+
+    // Title
+    doc.setFontSize(24);
+    doc.setTextColor(33, 33, 33);
+    doc.text("RELATÓRIO FINANCEIRO", 105, centerY + 40, { align: "center" });
+    
+    doc.setFontSize(14);
+    doc.setTextColor(100, 100, 100);
+    doc.text(`Período: ${dateFrom ? format(dateFrom, 'dd/MM/yyyy') : 'Início'} a ${dateTo ? format(dateTo, 'dd/MM/yyyy') : 'Fim'}`, 105, centerY + 55, { align: "center" });
+    
+    doc.setFontSize(12);
+    doc.text(`Gerado em: ${format(new Date(), 'dd/MM/yyyy HH:mm')}`, 105, centerY + 65, { align: "center" });
+
+    doc.setFontSize(12);
+    doc.setTextColor(249, 115, 22);
+    doc.text("Pilar - Gestão de Engenharia", 105, 275, { align: "center" });
+
+    // --- PÁGINAS DE DADOS ---
+    doc.addPage();
+    
+    const columns = Object.keys(data[0]);
+    
+    // Prepare table data
+    const tableData = data.map(row => Object.values(row));
+
+    // Page styling function
+    const didDrawPage = (data: any) => {
+        // Logo on top right corner
+        // 210 width. Margin right 14. 
+        // Draw small logo scale 0.5
+        drawPilarLogo(doc, 210 - 25, 10, 0.5);
+        
+        // Page number
+        const pageSize = doc.internal.pageSize;
+        const pageHeight = pageSize.height ? pageSize.height : pageSize.getHeight();
+        doc.setFontSize(8);
+        doc.setTextColor(100);
+        doc.text(`Página ${doc.getNumberOfPages()}`, data.settings.margin.left, pageHeight - 10);
+    };
+
+    autoTable(doc, {
+      head: [columns],
+      body: tableData,
+      startY: 25,
+      theme: 'grid',
+      headStyles: { 
+        fillColor: [249, 115, 22], 
+        textColor: 255,
+        fontSize: 7,
+        fontStyle: 'bold'
+      },
+      styles: { 
+        fontSize: 6,
+        cellPadding: 2,
+        overflow: 'linebreak'
+      },
+      columnStyles: {
+        0: { cellWidth: 25 }, // Descricao
+        1: { cellWidth: 15 }, // Valor
+        2: { cellWidth: 15 }, // Vencimento
+        // Adjust others automatically
+      },
+      didDrawPage: didDrawPage,
+      margin: { top: 25 }
+    });
+
+    doc.save(`${title}.pdf`);
+  };
 
   const generateCSV = (data: any[], filename: string) => {
     if (!data.length) {
@@ -63,36 +262,52 @@ export default function Relatorios() {
       return;
     }
 
-    if (formato !== 'csv') {
-      toast({
-        title: "Formato não suportado",
-        description: "No momento apenas CSV está disponível",
-        variant: "destructive",
-      });
-      return;
-    }
-
     setIsLoading(true);
 
     try {
-      let query = (supabase.from(tipoRelatorio === 'funcionarios' ? 'pessoas' : tipoRelatorio) as any).select('*');
+      let finalData: any[] = [];
 
-      if (dateFrom) {
-        // Assuming generic created_at for simplicity, or specific date fields for financial
-        const dateField = ['receitas', 'despesas'].includes(tipoRelatorio) ? 'data_vencimento' : 'created_at';
-        query = query.gte(dateField, dateFrom.toISOString());
+      if (tipoRelatorio === 'financeiro') {
+        const [receitas, despesas] = await Promise.all([
+          fetchFinancialData('receitas'),
+          fetchFinancialData('despesas')
+        ]);
+        
+        const receitasProc = processData(receitas || [], 'receitas');
+        const despesasProc = processData(despesas || [], 'despesas');
+        finalData = [...receitasProc, ...despesasProc];
+        
+        // Ordenar por data de vencimento (descrescente)
+        finalData.sort((a, b) => {
+           // Need to parse 'dd/MM/yyyy' to compare
+           const parseDate = (str: string) => {
+             if(str === '-') return 0;
+             const [d, m, y] = str.split('/').map(Number);
+             return new Date(y, m-1, d).getTime();
+           };
+           return parseDate(b['Data Vencimento']) - parseDate(a['Data Vencimento']);
+        });
+
+      } else if (['receitas', 'despesas'].includes(tipoRelatorio)) {
+         const data = await fetchFinancialData(tipoRelatorio as 'receitas' | 'despesas');
+         finalData = processData(data || [], tipoRelatorio as 'receitas' | 'despesas');
       }
-      
-      if (dateTo) {
-        const dateField = ['receitas', 'despesas'].includes(tipoRelatorio) ? 'data_vencimento' : 'created_at';
-        query = query.lte(dateField, dateTo.toISOString());
+
+      if (finalData.length === 0) {
+        toast({
+          title: "Sem dados",
+          description: "Não foram encontrados dados para os filtros selecionados.",
+          variant: "destructive"
+        });
+        setIsLoading(false);
+        return;
       }
 
-      const { data, error } = await query;
-
-      if (error) throw error;
-
-      generateCSV(data || [], `relatorio-${tipoRelatorio}-${format(new Date(), 'yyyy-MM-dd')}`);
+      if (formato === 'csv') {
+        generateCSV(finalData, `relatorio-${tipoRelatorio}-${format(new Date(), 'yyyy-MM-dd')}`);
+      } else if (formato === 'pdf') {
+        generatePDF(finalData, `relatorio-${tipoRelatorio}-${format(new Date(), 'yyyy-MM-dd')}`);
+      }
 
       toast({
         title: "Relatório gerado",
@@ -113,12 +328,9 @@ export default function Relatorios() {
   };
 
   const tiposRelatorio = [
+    { value: "financeiro", label: "Financeiro (Receitas e Despesas)" },
     { value: "receitas", label: "Receitas" },
     { value: "despesas", label: "Despesas" },
-    { value: "projetos", label: "Projetos" },
-    { value: "clientes", label: "Clientes" },
-    { value: "funcionarios", label: "Pessoas" },
-    { value: "leads", label: "Leads" },
   ];
 
   return (
@@ -130,7 +342,7 @@ export default function Relatorios() {
           children={
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="rounded-full bg-[hsl(var(--primary))] text-white hover:bg-[hsl(var(--primary))]/90 transition-colors px-5 py-2.5 text-sm">
+                <Button className="rounded-full bg-accent-orange text-white hover:bg-accent-orange/90 transition-colors px-5 py-2.5 text-sm">
                   <Plus className="mr-2 h-4 w-4" />
                   Novo Relatório
                 </Button>
@@ -139,7 +351,7 @@ export default function Relatorios() {
                 <DialogHeader>
                   <DialogTitle>Gerar Relatório</DialogTitle>
                   <DialogDescription>
-                    Configure e gere relatórios personalizados (CSV)
+                    Configure e gere relatórios personalizados
                   </DialogDescription>
                 </DialogHeader>
                 
@@ -167,9 +379,8 @@ export default function Relatorios() {
                         <SelectValue placeholder="Selecione o formato" />
                       </SelectTrigger>
                       <SelectContent>
-                        {/* <SelectItem value="pdf">PDF</SelectItem> */}
+                        <SelectItem value="pdf">PDF</SelectItem>
                         <SelectItem value="csv">CSV</SelectItem>
-                        {/* <SelectItem value="xlsx">Excel (XLSX)</SelectItem> */}
                       </SelectContent>
                     </Select>
                   </div>
