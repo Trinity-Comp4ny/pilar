@@ -74,7 +74,7 @@ export default function Landing() {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent-orange opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-accent-orange"></span>
               </span>
-              Gestão para Engenharia e Arquitetura
+              Gestão para Engenharia e Arquitetura1
             </div>
             
             <h1 className="text-5xl md:text-7xl font-medium tracking-tight text-[#2E2E2E] mb-8 leading-[1.1]">
