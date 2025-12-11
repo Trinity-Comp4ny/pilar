@@ -28,7 +28,6 @@ interface Pessoa {
   salario_fixo?: number;
   valor_m2?: number;
   data_demissao?: string;
-  conta_bancaria?: string;
   contas_bancarias?: any[];
 }
 
@@ -59,7 +58,7 @@ export default function Pessoas() {
     data_demissao: "",
     salario_fixo: "",
     valor_m2: "",
-    conta_bancaria: "",
+    contas_bancarias: "",
   });
   const [contasBancarias, setContasBancarias] = useState<any[]>([]);
   const [newConta, setNewConta] = useState({ banco: "", agencia: "", conta: "", tipo: "corrente" });
@@ -126,7 +125,7 @@ export default function Pessoas() {
       data_demissao: "",
       salario_fixo: "",
       valor_m2: "",
-      conta_bancaria: "",
+      contas_bancarias: ""
     });
     setContasBancarias([]);
     setNewConta({ banco: "", agencia: "", conta: "", tipo: "corrente" });
@@ -148,7 +147,7 @@ export default function Pessoas() {
       data_demissao: (pessoa as any).data_demissao || "",
       salario_fixo: pessoa.salario_fixo?.toString() || "",
       valor_m2: pessoa.valor_m2?.toString() || "",
-      conta_bancaria: (pessoa as any).conta_bancaria || "",
+      contas_bancarias: (pessoa as any).contas_bancarias || "",
     });
     setContasBancarias(Array.isArray((pessoa as any).contas_bancarias) ? (pessoa as any).contas_bancarias : []);
     setIsEditMode(true);
@@ -201,7 +200,6 @@ export default function Pessoas() {
         endereco: formData.endereco,
         data_admissao: formData.data_admissao || null,
         data_demissao: formData.data_demissao || null,
-        conta_bancaria: formData.conta_bancaria || null,
         contas_bancarias: contasBancarias,
         salario_fixo: formData.salario_fixo ? parseFloat(formData.salario_fixo) : null,
         valor_m2: formData.valor_m2 ? parseFloat(formData.valor_m2) : null,

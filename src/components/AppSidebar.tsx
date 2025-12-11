@@ -4,8 +4,6 @@ import {
   Calendar,
   FileText,
   Home,
-  PieChart,
-  Plus,
   Users,
   User,
   UserCircle,
