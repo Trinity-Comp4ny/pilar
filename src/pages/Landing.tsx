@@ -153,7 +153,7 @@ export default function Landing() {
 
         {/* Mobile Menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden absolute top-full left-0 right-0 bg-white border-b border-black/5 p-6 flex flex-col gap-4 shadow-xl animate-in slide-in-from-top-5">
+          <div className="md:hidden absolute top-full left-0 right-0 bg-white border-b border-black/5 p-6 flex flex-col gap-4 shadow-xl animate-in slide-in-from-top-5 text-center">
             <a href="#funcionalidades" className="text-lg font-medium text-slate-600" onClick={() => setMobileMenuOpen(false)}>Funcionalidades</a>
             <a href="#sobre" className="text-lg font-medium text-slate-600" onClick={() => setMobileMenuOpen(false)}>Sobre</a>
             <Link to="/login" className="text-lg font-medium text-accent-orange" onClick={() => setMobileMenuOpen(false)}>Entrar</Link>
@@ -173,7 +173,7 @@ export default function Landing() {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent-orange opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-accent-orange"></span>
               </span>
-              Gestão para Engenharia e Arquitetura1
+              Gestão para Engenharia e Arquitetura
             </div>
             
             <h1 className="text-5xl md:text-7xl font-medium tracking-tight text-[#2E2E2E] mb-8 leading-[1.1]">
@@ -203,13 +203,13 @@ export default function Landing() {
           </div>
 
           {/* Tablet Dashboard Mockup */}
-          <div className="relative max-w-5xl mx-auto reveal-up" style={{ transitionDelay: "200ms" }}>
-            <div className="relative rounded-[2.5rem] bg-[#1a1a1a] p-2 sm:p-2 shadow-2xl ring-1 ring-white/10 hover:scale-[1.01] transition-transform duration-700">
+          <div className="relative max-w-5xl mx-auto reveal-up px-2 sm:px-4 md:px-0" style={{ transitionDelay: "200ms" }}>
+            <div className="relative rounded-[2.5rem] bg-[#1a1a1a] p-1.5 sm:p-2 shadow-2xl ring-1 ring-white/10 hover:scale-[1.01] transition-transform duration-700">
               <div className="absolute top-0 left-1/2 -translate-x-1/2 h-1 w-20 bg-white/10 rounded-b-lg" />
               <div className="absolute -left-1 top-20 h-10 w-1 bg-white/10 rounded-l-lg" />
               <div className="absolute -right-1 top-20 h-10 w-1 bg-white/10 rounded-r-lg" />
               
-              <div className="relative rounded-[2rem] overflow-hidden bg-slate-50 aspect-[16/10] group font-sans">
+              <div className="relative rounded-[2rem] overflow-hidden bg-slate-50 aspect-[9/16] sm:aspect-[4/3] lg:aspect-[16/10] group font-sans">
                 {/* Dashboard Mockup Content */}
                 <div className="absolute inset-0 flex flex-col h-full w-full bg-[#f8f9fa]">
                   {/* Top Header Mockup */}
@@ -259,7 +259,6 @@ export default function Landing() {
                          <Users className="w-5 h-5" />
                          {activeMockupTab === 'clientes' && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-accent-orange rounded-r-full" />}
                        </div>
-                       <div className="p-3 text-gray-400 hover:bg-gray-50 hover:text-gray-600 rounded-xl cursor-pointer transition-colors"><DollarSign className="w-5 h-5" /></div>
                        <div className="mt-auto p-3 text-gray-400 hover:bg-gray-50 hover:text-gray-600 rounded-xl cursor-pointer transition-colors"><Settings className="w-5 h-5" /></div>
                     </div>
 
@@ -365,11 +364,9 @@ export default function Landing() {
                                 <div className="h-[250px] w-full flex items-end gap-3 px-2 pb-2">
                                   {/* Fake Bar Chart */}
                                   {[40, 65, 45, 80, 55, 90, 70, 50, 75, 60, 85, 95].map((h, i) => (
-                                    <div key={i} className="flex-1 flex flex-col justify-end gap-1.5 h-full group cursor-pointer">
-                                      <div className="w-full bg-accent-orange/80 rounded-t-sm transition-all duration-500 hover:bg-accent-orange relative" style={{ height: `${h}%` }}>
-                                        <div className="opacity-0 group-hover:opacity-100 absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-gray-800 text-white text-[10px] px-2 py-1 rounded whitespace-nowrap transition-opacity pointer-events-none z-10">R$ {h * 100}</div>
-                                      </div>
-                                      <div className="w-full bg-gray-200 rounded-t-sm transition-all duration-300 group-hover:bg-gray-300" style={{ height: `${h * 0.4}%` }}></div>
+                                    <div key={i} className="flex-1 flex flex-col justify-end gap-1.5 h-full cursor-pointer">
+                                      <div className="w-full bg-accent-orange/80 rounded-t-sm transition-all duration-500 hover:bg-accent-orange" style={{ height: `${h}%` }}></div>
+                                      <div className="w-full bg-gray-200 rounded-t-sm transition-all duration-300 hover:bg-gray-300" style={{ height: `${h * 0.4}%` }}></div>
                                       <div className="text-[10px] text-gray-400 text-center mt-1 font-medium hidden md:block">
                                         {['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'][i]}
                                       </div>
@@ -390,9 +387,9 @@ export default function Landing() {
                               <CardContent className="flex-1">
                                 <div className="space-y-4 text-left">
                                   {[
-                                    { name: "Residencial Cascata", client: "Dr. Roberto", status: "Em andamento", color: "blue", initial: "R" },
-                                    { name: "Reforma Comercial", client: "Grupo Pão de Açúcar", status: "Planejamento", color: "yellow", initial: "C" },
-                                    { name: "Interiores Apto 402", client: "Sra. Mariana", status: "Concluído", color: "green", initial: "I" },
+                                    { name: "Cascata", client: "Dr. Roberto", status: "Em andamento", color: "blue", initial: "R" },
+                                    { name: "Reforma", client: "Grupo Pão de Açúcar", status: "Planejamento", color: "yellow", initial: "C" },
+                                    { name: "Apto 402", client: "Sra. Mariana", status: "Concluído", color: "green", initial: "I" },
                                   ].map((project, i) => (
                                     <div key={i} className="flex items-center justify-between p-3 rounded-lg bg-gray-50 border border-transparent hover:border-gray-100 hover:bg-gray-100/80 transition-all cursor-pointer group">
                                       <div className="flex items-center gap-3">
@@ -656,7 +653,7 @@ export default function Landing() {
               <div 
                 key={i} 
                 className="bg-white p-8 rounded-2xl shadow-sm transition-all duration-300 hover:-translate-y-2 hover:bg-orange-50 border border-slate-100 group reveal-up cursor-default hover:shadow-md hover:border-accent-orange/20"
-                style={{ transitionDelay: `${i * 100}ms` }}
+                style={{ transitionDelay: `${i * 10}ms` }}
               >
                 <div className="w-12 h-12 rounded-xl bg-accent-orange/10 flex items-center justify-center text-accent-orange mb-6 group-hover:bg-accent-orange group-hover:text-white transition-all duration-300 group-hover:scale-110">
                   {feature.icon}
@@ -773,7 +770,7 @@ export default function Landing() {
               <h4 className="text-sm font-semibold mb-6 tracking-wider text-white">Produto</h4>
               <ul className="space-y-4 text-slate-400 font-light text-sm">
                 <li><a href="#funcionalidades" className="hover:text-accent-orange transition-colors">Funcionalidades</a></li>
-                <li><a href="#sobre" className="hover:text-accent-orange transition-colors">Sobre Nós</a></li>
+                <li><a href="#sobre" className="hover:text-accent-orange transition-colors">Sobre</a></li>
                 <li><Link to="/login" className="hover:text-accent-orange transition-colors">Entrar</Link></li>
               </ul>
             </div>
