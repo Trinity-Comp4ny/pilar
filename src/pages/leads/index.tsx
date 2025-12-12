@@ -225,10 +225,12 @@ export default function Leads() {
 
   return (
     <PageLayout
+      className="overflow-y-hidden"
+      containerClassName="h-full flex flex-col min-h-0"
       header={
         <PageHeader
           title="Leads"
-          description="Gerencie seus leads em formato Kanban"
+          description="Gerencie seus leads"
           children={
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
@@ -315,9 +317,10 @@ export default function Leads() {
       }
     >
       <DragDropContext onDragEnd={onDragEnd}>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 w-full">
-          {Object.entries(statusConfig).map(([status, config]) => (
-            <div key={status} className="flex flex-col h-full">
+        <div className="flex-1 min-h-0">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 w-full h-full min-h-0">
+            {Object.entries(statusConfig).map(([status, config]) => (
+            <div key={status} className="flex flex-col min-h-0">
               <div className={`${config.columnColor} rounded-t-lg p-3 border-b border-black/10`}>
                 <h3 className="font-medium text-sm flex items-center justify-between">
                   {config.label}
@@ -332,7 +335,7 @@ export default function Leads() {
                   <div
                     ref={provided.innerRef}
                     {...provided.droppableProps}
-                    className={`flex-1 p-2 space-y-2 min-h-[200px] rounded-b-lg border border-t-0 ${snapshot.isDraggingOver ? "bg-blue-50" : "bg-gray-50"
+                    className={`flex-1 min-h-0 overflow-y-auto p-2 space-y-2 rounded-b-lg border border-t-0 ${snapshot.isDraggingOver ? "bg-blue-50" : "bg-gray-50"
                       }`}
                   >
                     {getLeadsByStatus(status).map((lead, index) => (
@@ -388,6 +391,7 @@ export default function Leads() {
               </Droppable>
             </div>
           ))}
+          </div>
         </div>
       </DragDropContext>
 

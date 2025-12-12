@@ -64,7 +64,8 @@ export function PrivateRoute() {
               setRedirectPath(null);
             }
           } else if (isNewCompany) {
-            if (!isCompanySetup) {
+            // Allow toggling between the two setup pages during onboarding
+            if (!isCompanySetup && !isProfileSetup) {
               setRedirectPath('/company-setup');
             } else {
               setRedirectPath(null);
@@ -103,7 +104,7 @@ export function PrivateRoute() {
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/" replace />;
   }
 
   if (redirectPath) {
