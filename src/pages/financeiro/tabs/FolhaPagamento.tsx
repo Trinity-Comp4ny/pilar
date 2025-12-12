@@ -42,7 +42,7 @@ interface HistoryItem {
   status: string;
 }
 
-export default function ProLabore() {
+export default function FolhaPagamento() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [data, setData] = useState<FolhaItem[]>([]);
@@ -388,15 +388,31 @@ export default function ProLabore() {
           .select('id, nome')
           .eq('tipo', 'Despesa');
 
-        const categoriaProLabore = categorias?.find((c: any) => c.nome === 'Pró-Labore');
+        let categoriaFolhaPagamento = categorias?.find((c: any) => c.nome === 'Folha de Pagamento');
 
-        const descricao = `Pró-Labore ${months.find((m) => m.value === selectedMonth)?.label}/${selectedYear} - ${currentItem.p_nome}`;
+        if (!categoriaFolhaPagamento) {
+          const empresaId = (await (supabase.rpc as any)('get_user_empresa_id')).data;
+          const { data: insertedCategory, error: insertCategoriaError } = await (supabase
+            .from('categorias_financeiras') as any)
+            .insert({
+              nome: 'Folha de Pagamento',
+              tipo: 'Despesa',
+              empresa_id: empresaId,
+            })
+            .select('id, nome')
+            .single();
+
+          if (insertCategoriaError) throw insertCategoriaError;
+          categoriaFolhaPagamento = insertedCategory;
+        }
+
+        const descricao = `Folha de Pagamento ${months.find((m) => m.value === selectedMonth)?.label}/${selectedYear} - ${currentItem.p_nome}`;
 
         const despesaPayload = {
           data_vencimento: dateStr,
           data_pagamento: dateStr,
           descricao,
-          categoria_id: categoriaProLabore ? categoriaProLabore.id : null,
+          categoria_id: categoriaFolhaPagamento ? categoriaFolhaPagamento.id : null,
           valor: currentItem.v_total,
           fornecedor_id: null,
           projeto_id: null,
@@ -404,12 +420,12 @@ export default function ProLabore() {
           status: 'Pago',
           conta_id: null,
           cartao_id: null,
-          observacao: 'Lançamento automático de Pró-Labore',
+          observacao: 'Lançamento automático de Folha de Pagamento',
         };
 
         const { error: despesaError } = await (supabase.from('despesas') as any).insert([despesaPayload]);
         if (despesaError) {
-          console.error('Erro ao lançar despesa de pró-labore:', despesaError);
+          console.error('Erro ao lançar despesa de folha de pagamento:', despesaError);
         }
       }
       
@@ -783,7 +799,7 @@ export default function ProLabore() {
       <Dialog open={personConfirmDialogOpen} onOpenChange={setPersonConfirmDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Confirmar Pró-Labore</DialogTitle>
+            <DialogTitle>Confirmar Folha de Pagamento</DialogTitle>
             <DialogDescription>
               Confira os dados antes de confirmar o colaborador.
             </DialogDescription>
@@ -827,7 +843,7 @@ export default function ProLabore() {
       <Dialog open={detailDialogOpen} onOpenChange={setDetailDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>{isEditingDetail ? 'Editar Pró-Labore' : 'Detalhes do Pró-Labore'}</DialogTitle>
+            <DialogTitle>{isEditingDetail ? 'Editar Folha de Pagamento' : 'Detalhes da Folha de Pagamento'}</DialogTitle>
             <DialogDescription>
               {isEditingDetail 
                 ? 'Ajuste os valores manualmente. As alterações serão salvas apenas para este mês.' 
@@ -986,7 +1002,7 @@ export default function ProLabore() {
       <Dialog open={personConfirmDialogOpen} onOpenChange={setPersonConfirmDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Confirmar Pró-Labore</DialogTitle>
+            <DialogTitle>Confirmar Folha de Pagamento</DialogTitle>
             <DialogDescription>
               Confira os dados antes de confirmar o colaborador.
             </DialogDescription>
@@ -1030,7 +1046,7 @@ export default function ProLabore() {
       <Dialog open={detailDialogOpen} onOpenChange={setDetailDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>{isEditingDetail ? 'Editar Pró-Labore' : 'Detalhes do Pró-Labore'}</DialogTitle>
+            <DialogTitle>{isEditingDetail ? 'Editar Folha de Pagamento' : 'Detalhes da Folha de Pagamento'}</DialogTitle>
             <DialogDescription>
               {isEditingDetail 
                 ? 'Ajuste os valores manualmente. As alterações serão salvas apenas para este mês.' 

@@ -70,8 +70,8 @@ ALTER TABLE public.projetos ADD COLUMN IF NOT EXISTS area_m2 NUMERIC DEFAULT 0;
 -- Ensure valor_m2 exists in pessoas (it might have been added in previous migration, but just in case)
 ALTER TABLE public.pessoas ADD COLUMN IF NOT EXISTS valor_m2 NUMERIC DEFAULT 0;
 
--- Create View for Pro-labore
-CREATE OR REPLACE VIEW public.view_pro_labore AS
+-- Create View for Folha de Pagamento
+CREATE OR REPLACE VIEW public.view_folha_pagamento AS
 SELECT 
   p.id as pessoa_id,
   p.nome as pessoa_nome,
@@ -94,5 +94,5 @@ GROUP BY
   p.id, p.nome, p.cargo, p.salario_fixo, p.valor_m2;
 
 -- Grant access to view
-GRANT SELECT ON public.view_pro_labore TO authenticated;
-GRANT SELECT ON public.view_pro_labore TO anon;
+GRANT SELECT ON public.view_folha_pagamento TO authenticated;
+GRANT SELECT ON public.view_folha_pagamento TO anon;

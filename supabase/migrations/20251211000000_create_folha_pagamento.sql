@@ -1,4 +1,4 @@
--- Create table for monthly pro-labore records
+-- Create table for monthly payroll records
 CREATE TABLE IF NOT EXISTS public.folha_pagamento (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     empresa_id UUID NOT NULL, -- references accounts/tenants if applicable, or just generic

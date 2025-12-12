@@ -165,12 +165,29 @@ export default function Clientes() {
       return;
     }
 
-    setContasBancarias((prev) => [...prev, newConta]);
+    const isFirst = contasBancarias.length === 0;
+    setContasBancarias((prev) => [
+      ...prev, 
+      { ...newConta, is_primary: isFirst }
+    ]);
     setNewConta({ banco: "", agencia: "", conta: "", tipo: "corrente" });
   };
 
+  const handleSetPrimaryConta = (index: number) => {
+    setContasBancarias(prev => prev.map((conta, i) => ({
+      ...conta,
+      is_primary: i === index
+    })));
+  };
+
   const handleRemoveConta = (index: number) => {
-    setContasBancarias((prev) => prev.filter((_, i) => i !== index));
+    setContasBancarias((prev) => {
+      const newContas = prev.filter((_, i) => i !== index);
+      if (prev[index].is_primary && newContas.length > 0) {
+        newContas[0].is_primary = true;
+      }
+      return newContas;
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -302,6 +319,8 @@ export default function Clientes() {
 
   return (
     <PageLayout
+      className="overflow-y-hidden"
+      containerClassName="h-full flex flex-col min-h-0"
       header={
         <PageHeader 
           title="Clientes" 
@@ -465,24 +484,35 @@ export default function Clientes() {
                     {contasBancarias.length > 0 && (
                       <div className="space-y-2">
                         <Label className="text-xs text-black/60">Contas cadastradas</Label>
-                        <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
+                        <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
                           {contasBancarias.map((conta, index) => (
                             <div
                               key={index}
-                              className="flex items-center justify-between gap-3 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm"
+                              className={`flex items-center justify-between gap-3 bg-gray-50 border rounded-lg px-3 py-2 text-sm ${conta.is_primary ? 'border-accent-orange/50 bg-accent-orange/5' : 'border-gray-200'}`}
                             >
                               <div className="flex items-center gap-3 flex-1 min-w-0">
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6 flex-shrink-0"
+                                  onClick={() => handleSetPrimaryConta(index)}
+                                  title="Definir como principal"
+                                >
+                                  <Landmark className={`h-4 w-4 ${conta.is_primary ? 'text-accent-orange fill-accent-orange' : 'text-gray-400'}`} />
+                                </Button>
                                 <div className="flex items-center gap-1.5 min-w-0">
-                                  <Building2 className="h-4 w-4 text-black/40 flex-shrink-0" />
                                   <span className="font-medium truncate">{conta.banco}</span>
                                 </div>
                                 <div className="hidden md:flex items-center gap-2 text-xs text-black/60 flex-shrink-0">
-                                  <Landmark className="h-3 w-3" />
                                   <span>Ag. {conta.agencia} / Cc. {conta.conta}</span>
                                 </div>
                                 <span className="text-xs text-black/50 capitalize flex-shrink-0">
                                   {conta.tipo}
                                 </span>
+                                {conta.is_primary && (
+                                  <span className="text-[10px] bg-accent-orange/10 text-accent-orange px-1.5 py-0.5 rounded">Principal</span>
+                                )}
                               </div>
                               <Button
                                 type="button"
@@ -515,7 +545,7 @@ export default function Clientes() {
         />
       }
     >
-      <Card className="rounded-2xl border border-black/5 bg-white w-full">
+      <Card className="rounded-2xl border border-black/5 bg-white w-full flex flex-col min-h-0">
         <CardHeader>
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
@@ -535,8 +565,8 @@ export default function Clientes() {
             </div>
           </div>
         </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto w-full">
+        <CardContent className="flex-1 min-h-0">
+          <div className="overflow-x-auto overflow-y-auto w-full max-h-[calc(100svh-240px)]">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -651,35 +681,43 @@ export default function Clientes() {
                   </div>
                 </div>
 
-                {Array.isArray((selectedCliente as any).contas_bancarias) && (selectedCliente as any).contas_bancarias.length > 0 && (
-                  <div className="bg-gray-50 p-4 rounded-lg space-y-3">
-                    <h4 className="font-medium text-sm flex items-center gap-2">
-                      <Building2 size={14} /> Contas Bancárias
-                    </h4>
-                    <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
+                {/* Seção de Contas Bancárias */}
+                <div className="space-y-2 mt-4 pt-4 border-t">
+                  <Label className="text-sm font-medium">Contas Bancárias</Label>
+                  {((selectedCliente as any).contas_bancarias && (selectedCliente as any).contas_bancarias.length > 0) ? (
+                    <div className="space-y-2">
                       {(selectedCliente as any).contas_bancarias.map((conta: any, index: number) => (
                         <div
                           key={index}
-                          className="flex items-center justify-between gap-3 bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm"
+                          className={`flex items-center justify-between gap-3 bg-gray-50 border rounded-lg px-3 py-2 text-sm ${conta.is_primary ? 'border-accent-orange/50 bg-accent-orange/5' : 'border-gray-200'}`}
                         >
                           <div className="flex items-center gap-3 flex-1 min-w-0">
-                            <div className="flex items-center gap-1.5 min-w-0">
-                              <Building2 className="h-4 w-4 text-black/40 flex-shrink-0" />
-                              <span className="font-medium truncate">{conta.banco}</span>
+                            <div className="p-1.5 rounded-full bg-white border border-gray-100 text-gray-500">
+                              <Landmark size={14} />
                             </div>
-                            <div className="hidden md:flex items-center gap-2 text-xs text-black/60 flex-shrink-0">
-                              <Landmark className="h-3 w-3" />
-                              <span>
-                                Ag. {conta.agencia} / Cc. {conta.conta}
-                              </span>
+                            <div className="flex flex-col min-w-0">
+                              <div className="flex items-center gap-2">
+                                <span className="font-medium truncate">{conta.banco}</span>
+                                {conta.is_primary && (
+                                  <span className="text-[10px] bg-accent-orange/10 text-accent-orange px-1.5 py-0.5 rounded font-medium">Principal</span>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-2 text-xs text-black/60">
+                                <span>Ag: {conta.agencia}</span>
+                                <span className="text-gray-300">|</span>
+                                <span>Cc: {conta.conta}</span>
+                                <span className="text-gray-300">|</span>
+                                <span className="capitalize">{conta.tipo}</span>
+                              </div>
                             </div>
-                            <span className="text-xs text-black/50 capitalize flex-shrink-0">{conta.tipo}</span>
                           </div>
                         </div>
                       ))}
                     </div>
-                  </div>
-                )}
+                  ) : (
+                    <p className="text-sm text-muted-foreground italic">Nenhuma conta bancária cadastrada.</p>
+                  )}
+                </div>
 
                 <div className="flex gap-2 pt-4">
                   <Button variant="outline" onClick={() => setIsDetailOpen(false)} className="flex-1">

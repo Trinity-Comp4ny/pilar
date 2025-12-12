@@ -3,8 +3,8 @@ import { SidebarProvider, useSidebar } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 
 function LayoutContent() {
-  const { state } = useSidebar();
-  const marginLeft = state === "collapsed" ? "ml-[64px]" : "ml-[240px]";
+  const { state, isMobile } = useSidebar();
+  const marginLeft = isMobile ? "ml-0" : state === "collapsed" ? "ml-[64px]" : "ml-[240px]";
   
   return (
     <div className="min-h-screen bg-white">

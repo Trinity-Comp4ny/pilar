@@ -116,9 +116,11 @@ export default function Landing() {
   return (
     <div className="min-h-screen bg-white text-[#2E2E2E] font-sans selection:bg-accent-orange/20 selection:text-accent-orange">
       {/* Top Bar */}
-      <div className="fixed top-0 inset-x-0 z-[100] bg-[#2E2E2E] text-white text-[10px] md:text-xs py-2 flex justify-end px-6 md:px-10 border-b border-white/5 shadow-sm">
-         <span className="opacity-80 font-light tracking-wide">Impulsionado por </span>
-         <a href="https://trnty.com.br" target="_blank" rel="noopener noreferrer" className="font-semibold hover:text-accent-orange transition-colors ml-1">Trinity Company</a>
+      <div className="fixed top-0 inset-x-0 z-[100] bg-[#2E2E2E] text-white text-[10px] md:text-xs py-2 border-b border-white/5 shadow-sm">
+        <div className="container mx-auto px-6 md:px-10 flex justify-end">
+          <span className="opacity-80 font-light tracking-wide">Impulsionado por </span>
+          <a href="https://trnty.com.br" target="_blank" rel="noopener noreferrer" className="font-semibold hover:text-accent-orange transition-colors ml-1">Trinity Company</a>
+        </div>
       </div>
 
       {/* Header */}
