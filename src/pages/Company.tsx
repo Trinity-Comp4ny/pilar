@@ -4,69 +4,96 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { PageLayout } from "@/components/PageLayout";
+import { PageHeader } from "@/components/PageHeader";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Link } from "react-router-dom";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Building2, Users as UsersIcon, Palette, Upload } from "lucide-react";
+import { ArrowUpRight, Building2, Maximize2, Users as UsersIcon, Palette, Upload, Pencil, Trash2 } from "lucide-react";
 
-type CompanyUser = { id: string; name: string; email: string; cargo?: string };
+type CompanyUser = { id: string; name: string; email: string; role: string; contato?: string };
 type CompanyData = {
   nomeEmpresa: string;
   cnpj: string;
-  razaoSocial: string;
   email: string;
-  telefone: string;
+  contato: string;
   endereco: string;
   cidade: string;
   estado: string;
   cep: string;
-  sobre: string;
-};
-type BrandConfig = {
-  headerLogo?: string;
-  sidebarLogo?: string;
-  primary?: string;
-  accent?: string;
-  text?: string;
-  background?: string;
+  status: string;
+  logoUrl?: string;
 };
 
-const USERS_KEY = "vrz-company-users";
-const BRAND_KEY = "vrz-company-brand";
-const COMPANY_KEY = "vrz-company-data";
+const ROLES = ["admin", "financeiro", "marketing", "operacional", "user"] as const;
+const STATUS_OPTIONS = [
+  { value: "active", label: "Ativa" },
+  { value: "suspended", label: "Suspensa" },
+  { value: "cancelled", label: "Cancelada" },
+] as const;
 
 export default function Company() {
   const { toast } = useToast();
   const [editingCompany, setEditingCompany] = useState(false);
   const [editingVisual, setEditingVisual] = useState(false);
   const [isInviting, setIsInviting] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [companyId, setCompanyId] = useState<string | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [currentRole, setCurrentRole] = useState<string>("user");
+  const isAdmin = currentRole === "admin";
+  const [isLogoPreviewOpen, setIsLogoPreviewOpen] = useState(false);
   
   // Company data
   const [companyData, setCompanyData] = useState<CompanyData>({
     nomeEmpresa: "",
     cnpj: "",
-    razaoSocial: "",
     email: "",
-    telefone: "",
+    contato: "",
     endereco: "",
     cidade: "",
     estado: "",
     cep: "",
-    sobre: ""
+    status: "active",
+    logoUrl: "",
   });
   
   // Users state
   const [users, setUsers] = useState<CompanyUser[]>([]);
-  const [name, setName] = useState("");
-  const [userEmail, setUserEmail] = useState("");
-  const [userCargo, setUserCargo] = useState("");
+  const [inviteName, setInviteName] = useState("");
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteRole, setInviteRole] = useState<(typeof ROLES)[number]>("user");
 
-  // Brand state
-  const [brand, setBrand] = useState<BrandConfig>({
-    primary: "#f97316",
-    accent: "#f97316",
-    text: "#ffffff",
-    background: "#000000",
-  });
+  const [isEditUserOpen, setIsEditUserOpen] = useState(false);
+  const [editUserId, setEditUserId] = useState<string | null>(null);
+  const [editUserName, setEditUserName] = useState("");
+  const [editUserContact, setEditUserContact] = useState("");
+  const [editUserRole, setEditUserRole] = useState<(typeof ROLES)[number]>("user");
+  const [isDeleteUserOpen, setIsDeleteUserOpen] = useState(false);
+  const [deleteUserId, setDeleteUserId] = useState<string | null>(null);
+
+  const [pendingLogoFile, setPendingLogoFile] = useState<File | null>(null);
 
   // Load data
   useEffect(() => {
@@ -74,26 +101,31 @@ export default function Company() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
+      setCurrentUserId(user.id);
+
       // Fetch Profile & Company ID
       const { data: profile } = await supabase
         .from('profiles')
-        .select('empresa_id, empresas(*)')
+        .select('id, empresa_id, role, empresas(id, nome, cnpj, status, email, contato, endereco, cidade, estado, cep, logo_url)')
         .eq('id', user.id)
         .single();
+
+      if (profile?.role) setCurrentRole((profile as any).role);
+      if (profile?.empresa_id) setCompanyId((profile as any).empresa_id);
 
       if (profile?.empresas) {
         const emp = profile.empresas as any;
         setCompanyData({
           nomeEmpresa: emp.nome || "",
           cnpj: emp.cnpj || "",
-          razaoSocial: emp.nome || "", // Mapping nome to Razao for now
-          email: "", // Not in table
-          telefone: "", 
-          endereco: "",
-          cidade: "",
-          estado: "",
-          cep: "",
-          sobre: ""
+          email: emp.email || "",
+          contato: emp.contato || "",
+          endereco: emp.endereco || "",
+          cidade: emp.cidade || "",
+          estado: emp.estado || "",
+          cep: emp.cep || "",
+          status: emp.status || "active",
+          logoUrl: emp.logo_url || "",
         });
       }
 
@@ -101,7 +133,7 @@ export default function Company() {
       if (profile?.empresa_id) {
         const { data: companyUsers } = await supabase
           .from('profiles')
-          .select('*')
+          .select('id, nome, email, role, contato')
           .eq('empresa_id', profile.empresa_id);
         
         if (companyUsers) {
@@ -109,59 +141,30 @@ export default function Company() {
             id: u.id,
             name: u.nome,
             email: u.email,
-            cargo: u.role
+            role: u.role,
+            contato: u.contato,
           })));
         }
       }
     };
 
-    fetchData();
-
-    // Load visual config from local storage for now (or could be in DB)
-    const storedBrand = localStorage.getItem(BRAND_KEY);
-    if (storedBrand) {
-      try { setBrand((prev) => ({ ...prev, ...JSON.parse(storedBrand) })); } catch {}
-    }
+    fetchData()
+      .catch((e) => {
+        toast({
+          variant: "destructive",
+          title: "Erro ao carregar",
+          description: e?.message,
+        });
+      })
+      .finally(() => setIsLoading(false));
   }, []);
-
-  // Util: HEX -> HSL triplet string: "H S% L%"
-  function hexToHslTriplet(hex?: string): string | null {
-    if (!hex) return null;
-    let c = hex.replace(/^#/, "");
-    if (c.length === 3) c = c.split("").map((ch) => ch + ch).join("");
-    if (c.length !== 6) return null;
-    const r = parseInt(c.slice(0, 2), 16) / 255;
-    const g = parseInt(c.slice(2, 4), 16) / 255;
-    const b = parseInt(c.slice(4, 6), 16) / 255;
-    const max = Math.max(r, g, b), min = Math.min(r, g, b);
-    let h = 0, s = 0, l = (max + min) / 2;
-    if (max !== min) {
-      const d = max - min;
-      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-      switch (max) {
-        case r:
-          h = (g - b) / d + (g < b ? 6 : 0);
-          break;
-        case g:
-          h = (b - r) / d + 2;
-          break;
-        case b:
-          h = (r - g) / d + 4;
-          break;
-      }
-      h /= 6;
-    }
-    const H = Math.round(h * 360);
-    const S = Math.round(s * 100);
-    const L = Math.round(l * 100);
-    return `${H} ${S}% ${L}%`;
-  }
-
-  // Removed global color application to prevent system-wide theme changes
-  // Colors are now only for preview/display purposes in the Company page
 
   const handleCompanyChange = (field: keyof CompanyData) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setCompanyData((prev) => ({ ...prev, [field]: e.target.value }));
+  };
+
+  const handleCompanyStatusChange = (value: string) => {
+    setCompanyData((prev) => ({ ...prev, status: value }));
   };
   
   const handleSaveCompany = async () => {
@@ -177,7 +180,14 @@ export default function Company() {
         .from('empresas')
         .update({
           nome: companyData.nomeEmpresa,
-          cnpj: companyData.cnpj
+          cnpj: companyData.cnpj,
+          status: companyData.status,
+          email: companyData.email,
+          contato: companyData.contato,
+          endereco: companyData.endereco,
+          cidade: companyData.cidade,
+          estado: companyData.estado,
+          cep: companyData.cep,
         })
         .eq('id', profile.empresa_id);
 
@@ -198,16 +208,16 @@ export default function Company() {
   };
 
   const addUser = async () => {
-    if (!name.trim() || !userEmail.trim()) return;
+    if (!inviteName.trim() || !inviteEmail.trim()) return;
     
     setIsInviting(true);
     try {
       // Call Edge Function to invite user
       const { error } = await supabase.functions.invoke('invite-user', {
         body: { 
-          email: userEmail.trim(), 
-          nome: name.trim(), 
-          role: userCargo.trim() || 'user' 
+          email: inviteEmail.trim(), 
+          nome: inviteName.trim(), 
+          role: inviteRole 
         } 
       });
 
@@ -215,20 +225,20 @@ export default function Company() {
 
       toast({
         title: "Convite enviado",
-        description: `Um email foi enviado para ${userEmail}`,
+        description: `Um email foi enviado para ${inviteEmail}`,
       });
 
       // Optimistically add to list (or refetch)
       setUsers([...users, {
         id: "pending-" + Date.now(),
-        name: name.trim(),
-        email: userEmail.trim(),
-        cargo: userCargo.trim() || 'user'
+        name: inviteName.trim(),
+        email: inviteEmail.trim(),
+        role: inviteRole,
       }]);
 
-      setName("");
-      setUserEmail("");
-      setUserCargo("");
+      setInviteName("");
+      setInviteEmail("");
+      setInviteRole("user");
 
     } catch (error: any) {
       console.error("Invite error:", error);
@@ -242,29 +252,63 @@ export default function Company() {
     }
   };
 
-  const removeUser = (id: string) => {
-    const updated = users.filter(u => u.id !== id);
-    setUsers(updated);
-    localStorage.setItem(USERS_KEY, JSON.stringify(updated));
+  const openEditUser = (u: CompanyUser) => {
+    setEditUserId(u.id);
+    setEditUserName(u.name || "");
+    setEditUserContact(u.contato || "");
+    setEditUserRole((ROLES.includes(u.role as any) ? (u.role as any) : "user") as any);
+    setIsEditUserOpen(true);
   };
 
-  const handleFile = (key: keyof BrandConfig) => (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      const dataUrl = reader.result as string;
-      const updated = { ...brand, [key]: dataUrl } as BrandConfig;
-      setBrand(updated);
-      localStorage.setItem(BRAND_KEY, JSON.stringify(updated));
-    };
-    reader.readAsDataURL(file);
+  const handleSaveUser = async () => {
+    if (!editUserId) return;
+
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          nome: editUserName,
+          contato: editUserContact,
+          role: editUserRole,
+        })
+        .eq("id", editUserId);
+
+      if (error) throw error;
+
+      setUsers((prev) =>
+        prev.map((u) =>
+          u.id === editUserId
+            ? { ...u, name: editUserName, contato: editUserContact, role: editUserRole }
+            : u
+        )
+      );
+
+      setIsEditUserOpen(false);
+      toast({ title: "Usuário atualizado" });
+    } catch (e: any) {
+      toast({ variant: "destructive", title: "Erro ao atualizar usuário", description: e?.message });
+    }
   };
 
-  const handleColor = (key: keyof BrandConfig) => (e: React.ChangeEvent<HTMLInputElement>) => {
-    const updated = { ...brand, [key]: e.target.value } as BrandConfig;
-    setBrand(updated);
-    localStorage.setItem(BRAND_KEY, JSON.stringify(updated));
+  const requestDeleteUser = (id: string) => {
+    setDeleteUserId(id);
+    setIsDeleteUserOpen(true);
+  };
+
+  const confirmDeleteUser = async () => {
+    if (!deleteUserId) return;
+
+    try {
+      const { error } = await supabase.from("profiles").delete().eq("id", deleteUserId);
+      if (error) throw error;
+
+      setUsers((prev) => prev.filter((u) => u.id !== deleteUserId));
+      setIsDeleteUserOpen(false);
+      setDeleteUserId(null);
+      toast({ title: "Usuário removido" });
+    } catch (e: any) {
+      toast({ variant: "destructive", title: "Erro ao remover usuário", description: e?.message });
+    }
   };
   
   const handleSaveVisual = () => {
@@ -275,226 +319,704 @@ export default function Company() {
     });
   };
 
+  const handleLogoFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setPendingLogoFile(file);
+  };
+
+  const uploadCompanyLogo = async () => {
+    if (!pendingLogoFile) return;
+    if (!companyId) throw new Error("Empresa não encontrada");
+
+    const ext = pendingLogoFile.name.split(".").pop()?.toLowerCase() || "png";
+    const filePath = `${companyId}/logo-${Date.now()}.${ext}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from("company-logos")
+      .upload(filePath, pendingLogoFile, { upsert: true });
+
+    if (uploadError) throw uploadError;
+
+    const { data } = supabase.storage.from("company-logos").getPublicUrl(filePath);
+    const publicUrl = data.publicUrl;
+
+    const { error: updateError } = await supabase
+      .from("empresas")
+      .update({ logo_url: publicUrl })
+      .eq("id", companyId);
+
+    if (updateError) throw updateError;
+
+    setCompanyData((prev) => ({ ...prev, logoUrl: publicUrl }));
+    setPendingLogoFile(null);
+  };
+
+  const getStatusBadge = (status: string) => {
+    const s = (status || "").toLowerCase();
+    if (s === "active") {
+      return { label: "Ativa", className: "bg-emerald-600/15 text-emerald-700 border border-emerald-600/20" };
+    }
+    if (s === "suspended") {
+      return { label: "Suspensa", className: "bg-amber-600/15 text-amber-700 border border-amber-600/20" };
+    }
+    if (s === "cancelled") {
+      return { label: "Cancelada", className: "bg-red-600/15 text-red-700 border border-red-600/20" };
+    }
+    return { label: status || "-", className: "bg-black/10 text-black/70 border border-black/10" };
+  };
+
+  const onlyDigits = (v: string) => (v || "").replace(/\D/g, "");
+
+  const formatCNPJ = (value: string) => {
+    const digits = onlyDigits(value).slice(0, 14);
+    if (!digits) return "";
+    if (digits.length <= 2) return digits;
+    if (digits.length <= 5) return `${digits.slice(0, 2)}.${digits.slice(2)}`;
+    if (digits.length <= 8) return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5)}`;
+    if (digits.length <= 12) {
+      return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8)}`;
+    }
+    return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8, 12)}-${digits.slice(12)}`;
+  };
+
+  const formatCEP = (value: string) => {
+    const digits = onlyDigits(value).slice(0, 8);
+    if (!digits) return "";
+    if (digits.length <= 5) return digits;
+    return `${digits.slice(0, 5)}-${digits.slice(5)}`;
+  };
+
+  const formatPhone = (value: string) => {
+    const digits = onlyDigits(value).slice(0, 11);
+    if (!digits) return "";
+    if (digits.length <= 2) return `(${digits}`;
+    const ddd = digits.slice(0, 2);
+    const rest = digits.slice(2);
+    if (rest.length <= 4) return `(${ddd}) ${rest}`;
+    if (rest.length <= 8) return `(${ddd}) ${rest.slice(0, 4)}-${rest.slice(4)}`;
+    if (rest.length <= 9) return `(${ddd}) ${rest.slice(0, 5)}-${rest.slice(5)}`;
+    return `(${ddd}) ${rest.slice(0, 5)}-${rest.slice(5, 9)}`;
+  };
+
+  const inputReadonlyClass = !editingCompany ? "bg-black/5 border-black/10 text-black/80" : "border-accent-orange/20 focus-visible:ring-accent-orange/20";
+  const alwaysReadonlyClass = "bg-black/5 border-black/10 text-black/80";
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl md:text-3xl font-medium tracking-tight">Empresa</h1>
-        <p className="text-sm text-black/60 mt-1">Gerencie as informações e configurações da empresa</p>
+    <PageLayout
+      header={
+        <PageHeader title="Empresa" description="Gerencie as informações e configurações da empresa" />
+      }
+    >
+      <div className="w-full max-w-6xl mx-auto space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <Card className={"border border-black/5 lg:col-span-1 overflow-hidden " + (editingCompany ? "ring-1 ring-accent-orange/25" : "")}
+          >
+            <CardHeader className={(editingCompany ? "bg-accent-orange/5" : "")}
+            >
+              <div className="flex flex-col items-center text-center space-y-4">
+                <div
+                  role="button"
+                  tabIndex={0}
+                  className="h-28 w-28 rounded-2xl bg-black/5 border border-black/10 flex items-center justify-center overflow-hidden cursor-pointer"
+                  onClick={() => {
+                    if (pendingLogoFile || companyData.logoUrl) setIsLogoPreviewOpen(true);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && (pendingLogoFile || companyData.logoUrl)) setIsLogoPreviewOpen(true);
+                  }}
+                >
+                  {pendingLogoFile ? (
+                    <img
+                      src={URL.createObjectURL(pendingLogoFile)}
+                      alt="Logo (prévia)"
+                      className="w-full h-full object-contain p-4"
+                    />
+                  ) : companyData.logoUrl ? (
+                    <img src={companyData.logoUrl} alt="Logo" className="w-full h-full object-contain p-4" />
+                  ) : (
+                    <span className="text-xs text-black/50">Sem logo</span>
+                  )}
+                </div>
+
+                <div className="min-w-0">
+                  <CardTitle className="text-xl truncate">{companyData.nomeEmpresa || "Empresa"}</CardTitle>
+                  <div className="mt-2 flex justify-center">
+                    <Badge className={"rounded-full " + getStatusBadge(companyData.status).className}>
+                      {getStatusBadge(companyData.status).label}
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+            </CardHeader>
+
+            <CardContent>
+              <div className="space-y-6">
+                <div className="space-y-4">
+                  <div className="space-y-1">
+                    <p className="text-xs text-black/50">Email</p>
+                    <p className="text-sm text-black/80 break-all">{companyData.email || "-"}</p>
+                  </div>
+
+                  <div className="space-y-1">
+                    <p className="text-xs text-black/50">Contato</p>
+                    <p className="text-sm text-black/80">{companyData.contato || "-"}</p>
+                  </div>
+
+                  <div className="space-y-1">
+                    <p className="text-xs text-black/50">CNPJ</p>
+                    <p className="text-sm text-black/80">{companyData.cnpj || "-"}</p>
+                  </div>
+
+                  <div className="space-y-1">
+                    <p className="text-xs text-black/50">Endereço</p>
+                    <p className="text-sm text-black/80">{companyData.endereco || "-"}</p>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <p className="text-xs text-black/50">Cidade</p>
+                      <p className="text-sm text-black/80">{companyData.cidade || "-"}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-xs text-black/50">Estado</p>
+                      <p className="text-sm text-black/80">{companyData.estado || "-"}</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <p className="text-xs text-black/50">CEP</p>
+                    <p className="text-sm text-black/80">{companyData.cep || "-"}</p>
+                  </div>
+                </div>
+
+                <div className="rounded-xl border border-black/5 bg-white p-4">
+                  <p className="text-xs text-black/50">Pessoas vinculadas</p>
+                  <div className="flex items-center justify-between gap-3 mt-1">
+                    <p className="text-sm font-medium">{users.length}</p>
+                    <Link
+                      to="/pessoas"
+                      className="text-sm text-accent-orange hover:underline inline-flex items-center gap-1"
+                    >
+                      Ver pessoas
+                      <ArrowUpRight className="h-4 w-4" />
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <div className="lg:col-span-2">
+            <Tabs defaultValue="dados" className="w-full">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <TabsList className="w-full sm:w-auto">
+                  <TabsTrigger value="dados" className="gap-2">
+                    <Building2 size={16} />
+                    Dados
+                  </TabsTrigger>
+                  <TabsTrigger value="usuarios" className="gap-2">
+                    <UsersIcon size={16} />
+                    Usuários
+                    <Badge variant="secondary" className="ml-1">
+                      {users.length}
+                    </Badge>
+                  </TabsTrigger>
+                  <TabsTrigger value="visual" className="gap-2">
+                    <Palette size={16} />
+                    Personalização
+                  </TabsTrigger>
+                </TabsList>
+              </div>
+
+          {/* Company Data Section */}
+          <TabsContent value="dados" className="mt-6">
+            <Card className={"border border-black/5 " + (editingCompany ? "ring-1 ring-accent-orange/25" : "")}
+            >
+              <CardHeader className={"flex flex-row items-center justify-between " + (editingCompany ? "bg-accent-orange/5" : "")}
+              >
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <Building2 size={20} />
+                    Dados da Empresa
+                  </CardTitle>
+                  <CardDescription className="mt-1">Informações gerais sobre a empresa</CardDescription>
+                </div>
+                {!editingCompany ? (
+                  <Button
+                    onClick={() => setEditingCompany(true)}
+                    className="rounded-full bg-accent-orange hover:bg-accent-orange/90 text-white"
+                    disabled={!isAdmin || isLoading}
+                  >
+                    Editar
+                  </Button>
+                ) : (
+                  <div className="flex gap-2">
+                    <Button variant="outline" onClick={() => setEditingCompany(false)} className="rounded-full">
+                      Cancelar
+                    </Button>
+                    <Button
+                      onClick={handleSaveCompany}
+                      className="rounded-full bg-accent-orange hover:bg-accent-orange/90 text-white"
+                    >
+                      Salvar
+                    </Button>
+                  </div>
+                )}
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Nome da Empresa</Label>
+                    <Input
+                      value={companyData.nomeEmpresa}
+                      onChange={handleCompanyChange("nomeEmpresa")}
+                      readOnly={!editingCompany}
+                      className={inputReadonlyClass}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>CNPJ</Label>
+                    <Input
+                      value={companyData.cnpj}
+                      onChange={(e) => setCompanyData((prev) => ({ ...prev, cnpj: formatCNPJ(e.target.value) }))}
+                      readOnly={!editingCompany}
+                      className={inputReadonlyClass}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Email</Label>
+                    <Input
+                      type="email"
+                      value={companyData.email}
+                      onChange={handleCompanyChange("email")}
+                      readOnly={!editingCompany}
+                      className={inputReadonlyClass}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Contato</Label>
+                    <Input
+                      value={companyData.contato}
+                      onChange={(e) => setCompanyData((prev) => ({ ...prev, contato: formatPhone(e.target.value) }))}
+                      readOnly={!editingCompany}
+                      className={inputReadonlyClass}
+                    />
+                  </div>
+                  <div className="space-y-2 md:col-span-2">
+                    <Label>Status</Label>
+                    {editingCompany ? (
+                      <Select value={companyData.status} onValueChange={handleCompanyStatusChange}>
+                        <SelectTrigger className={inputReadonlyClass}>
+                          <SelectValue placeholder="Selecione" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {STATUS_OPTIONS.map((s) => (
+                            <SelectItem key={s.value} value={s.value}>
+                              {s.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <div className={"h-10 rounded-md px-3 flex items-center " + alwaysReadonlyClass}>
+                        <Badge className={"rounded-full " + getStatusBadge(companyData.status).className}>
+                          {getStatusBadge(companyData.status).label}
+                        </Badge>
+                      </div>
+                    )}
+                  </div>
+                  <div className="space-y-2 md:col-span-2">
+                    <Label>Endereço</Label>
+                    <Input
+                      value={companyData.endereco}
+                      onChange={handleCompanyChange("endereco")}
+                      readOnly={!editingCompany}
+                      className={inputReadonlyClass}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Cidade</Label>
+                    <Input
+                      value={companyData.cidade}
+                      onChange={handleCompanyChange("cidade")}
+                      readOnly={!editingCompany}
+                      className={inputReadonlyClass}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Estado</Label>
+                    <Input
+                      value={companyData.estado}
+                      onChange={handleCompanyChange("estado")}
+                      readOnly={!editingCompany}
+                      className={inputReadonlyClass}
+                      maxLength={2}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>CEP</Label>
+                    <Input
+                      value={companyData.cep}
+                      onChange={(e) => setCompanyData((prev) => ({ ...prev, cep: formatCEP(e.target.value) }))}
+                      readOnly={!editingCompany}
+                      className={inputReadonlyClass}
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Users Section */}
+          <TabsContent value="usuarios" className="mt-6">
+            <Card className="border border-black/5">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <UsersIcon size={20} />
+                  Usuários da Empresa
+                </CardTitle>
+                <CardDescription>Gerencie os usuários com acesso ao sistema</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {isAdmin && (
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="invite-name">Nome completo</Label>
+                        <Input
+                          id="invite-name"
+                          value={inviteName}
+                          onChange={(e) => setInviteName(e.target.value)}
+                          placeholder="Nome completo"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="invite-email">Email</Label>
+                        <Input
+                          id="invite-email"
+                          type="email"
+                          value={inviteEmail}
+                          onChange={(e) => setInviteEmail(e.target.value)}
+                          placeholder="email@empresa.com"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Função</Label>
+                        <Select value={inviteRole} onValueChange={(v) => setInviteRole(v as any)}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {ROLES.map((r) => (
+                              <SelectItem key={r} value={r}>
+                                {r}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between gap-3 flex-wrap">
+                      <Button
+                        onClick={addUser}
+                        className="rounded-full bg-accent-orange hover:bg-accent-orange/90 text-white"
+                        disabled={isInviting || !inviteName.trim() || !inviteEmail.trim()}
+                      >
+                        {isInviting ? "Enviando convite..." : "Adicionar Usuário"}
+                      </Button>
+                      <p className="text-xs text-black/50">
+                        O convite será enviado por email e o usuário aparecerá como pendente.
+                      </p>
+                    </div>
+                  </div>
+                )}
+                <div className="hidden md:block mt-6">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Nome</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Função</TableHead>
+                        <TableHead className="text-right">Ações</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {users.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={4} className="text-black/50">
+                            Nenhum usuário adicionado
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        users.map((u) => (
+                          <TableRow key={u.id} className={u.id.startsWith("pending-") ? "opacity-80" : ""}>
+                            <TableCell className="font-medium">
+                              <div className="flex items-center gap-2">
+                                <span className="line-clamp-1">{u.name}</span>
+                                {u.id.startsWith("pending-") && <Badge variant="secondary">Pendente</Badge>}
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-black/70">{u.email}</TableCell>
+                            <TableCell className="text-black/70">{u.role || "-"}</TableCell>
+                            <TableCell className="text-right">
+                              {isAdmin && !u.id.startsWith("pending-") ? (
+                                <div className="flex justify-end gap-2">
+                                  <Button variant="outline" size="sm" className="rounded-full" onClick={() => openEditUser(u)}>
+                                    <Pencil className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="rounded-full text-red-600"
+                                    onClick={() => requestDeleteUser(u.id)}
+                                    disabled={u.id === currentUserId}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              ) : (
+                                <span className="text-black/40">-</span>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+                <div className="md:hidden mt-6 space-y-3">
+                  {users.length === 0 ? (
+                    <div className="text-sm text-black/50 bg-black/5 rounded-lg p-4">
+                      Nenhum usuário adicionado
+                    </div>
+                  ) : (
+                    users.map((u) => (
+                      <Card key={u.id} className="border border-black/5">
+                        <CardContent className="p-4">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2">
+                                <p className="text-sm font-medium line-clamp-1">{u.name}</p>
+                                {u.id.startsWith("pending-") && (
+                                  <Badge variant="secondary">Pendente</Badge>
+                                )}
+                              </div>
+                              <p className="text-xs text-black/60 break-all mt-1">{u.email}</p>
+                              <p className="text-xs text-black/60 mt-1">{u.role || "-"}</p>
+                            </div>
+                            {isAdmin && !u.id.startsWith("pending-") ? (
+                              <div className="flex flex-col gap-2">
+                                <Button variant="outline" size="sm" className="rounded-full" onClick={() => openEditUser(u)}>
+                                  Editar
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="rounded-full text-red-600"
+                                  onClick={() => requestDeleteUser(u.id)}
+                                  disabled={u.id === currentUserId}
+                                >
+                                  Remover
+                                </Button>
+                              </div>
+                            ) : null}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Visual Config Section */}
+          <TabsContent value="visual" className="mt-6">
+            <Card className={"border border-black/5 " + (editingVisual ? "ring-1 ring-accent-orange/25" : "")}
+            >
+              <CardHeader className={"flex flex-row items-center justify-between " + (editingVisual ? "bg-accent-orange/5" : "")}
+              >
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <Palette size={20} />
+                    Personalização Visual
+                  </CardTitle>
+                  <CardDescription className="mt-1">Envie a logo da sua empresa</CardDescription>
+                </div>
+                {!editingVisual ? (
+                  <Button
+                    onClick={() => setEditingVisual(true)}
+                    className="rounded-full bg-accent-orange hover:bg-accent-orange/90 text-white"
+                    disabled={!isAdmin || isLoading}
+                  >
+                    Editar
+                  </Button>
+                ) : (
+                  <div className="flex gap-2">
+                    <Button variant="outline" onClick={() => setEditingVisual(false)} className="rounded-full">
+                      Cancelar
+                    </Button>
+                    <Button
+                      onClick={async () => {
+                        try {
+                          await uploadCompanyLogo();
+                          handleSaveVisual();
+                        } catch (e: any) {
+                          toast({ variant: "destructive", title: "Erro ao salvar logo", description: e?.message });
+                        }
+                      }}
+                      className="rounded-full bg-accent-orange hover:bg-accent-orange/90 text-white"
+                    >
+                      Salvar
+                    </Button>
+                  </div>
+                )}
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div className="space-y-3">
+                    <Label className="flex items-center gap-2">
+                      <Upload size={14} />
+                      Logo da Empresa
+                    </Label>
+                    <Input type="file" accept="image/*" onChange={handleLogoFileChange} disabled={!editingVisual} />
+                    <p className="text-xs text-black/50">
+                      Recomendado: PNG/SVG com fundo transparente.
+                    </p>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <Label>Pré-visualização</Label>
+                      {(pendingLogoFile || companyData.logoUrl) && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="rounded-full"
+                          onClick={() => setIsLogoPreviewOpen(true)}
+                        >
+                          <Maximize2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                    <div
+                      role="button"
+                      tabIndex={0}
+                      className="p-4 bg-black/5 rounded-xl min-h-[180px] border border-black/10 flex items-center justify-center cursor-pointer"
+                      onClick={() => {
+                        if (pendingLogoFile || companyData.logoUrl) setIsLogoPreviewOpen(true);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && (pendingLogoFile || companyData.logoUrl)) setIsLogoPreviewOpen(true);
+                      }}
+                    >
+                      {pendingLogoFile ? (
+                        <img
+                          src={URL.createObjectURL(pendingLogoFile)}
+                          alt="Logo (prévia)"
+                          className="max-h-[240px] w-full object-contain"
+                        />
+                      ) : companyData.logoUrl ? (
+                        <img src={companyData.logoUrl} alt="Logo" className="max-h-[240px] w-full object-contain" />
+                      ) : (
+                        <span className="text-sm text-black/50">Nenhuma logo enviada</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+            </Tabs>
+          </div>
+        </div>
       </div>
 
-      {/* Company Data Section */}
-      <Card className="border border-black/5">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              <Building2 size={20} />
-              Dados da Empresa
-            </CardTitle>
-            <CardDescription className="mt-1">Informações gerais sobre a empresa</CardDescription>
+      <Dialog open={isLogoPreviewOpen} onOpenChange={setIsLogoPreviewOpen}>
+        <DialogContent className="sm:max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Logo da empresa</DialogTitle>
+            <DialogDescription>Pré-visualização ampliada.</DialogDescription>
+          </DialogHeader>
+          <div className="bg-black/5 border border-black/10 rounded-xl p-6 flex items-center justify-center min-h-[320px]">
+            {pendingLogoFile ? (
+              <img
+                src={URL.createObjectURL(pendingLogoFile)}
+                alt="Logo (prévia)"
+                className="max-h-[520px] w-full object-contain"
+              />
+            ) : companyData.logoUrl ? (
+              <img src={companyData.logoUrl} alt="Logo" className="max-h-[520px] w-full object-contain" />
+            ) : (
+              <span className="text-sm text-black/50">Nenhuma logo enviada</span>
+            )}
           </div>
-          {!editingCompany ? (
-            <Button onClick={() => setEditingCompany(true)} className="bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))]/90">
-              Editar
-            </Button>
-          ) : (
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={() => setEditingCompany(false)}>Cancelar</Button>
-              <Button onClick={handleSaveCompany} className="bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))]/90">
-                Salvar
-              </Button>
-            </div>
-          )}
-        </CardHeader>
-        <CardContent>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isEditUserOpen} onOpenChange={setIsEditUserOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Editar usuário</DialogTitle>
+            <DialogDescription>Altere o nome, contato e função do usuário.</DialogDescription>
+          </DialogHeader>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Nome da Empresa</Label>
-              <Input value={companyData.nomeEmpresa} onChange={handleCompanyChange("nomeEmpresa")} readOnly={!editingCompany} className={!editingCompany ? "bg-black/5" : ""} />
-            </div>
-            <div className="space-y-2">
-              <Label>CNPJ</Label>
-              <Input value={companyData.cnpj} onChange={handleCompanyChange("cnpj")} readOnly={!editingCompany} className={!editingCompany ? "bg-black/5" : ""} />
-            </div>
             <div className="space-y-2 md:col-span-2">
-              <Label>Razão Social</Label>
-              <Input value={companyData.razaoSocial} onChange={handleCompanyChange("razaoSocial")} readOnly={!editingCompany} className={!editingCompany ? "bg-black/5" : ""} />
+              <Label>Nome completo</Label>
+              <Input value={editUserName} onChange={(e) => setEditUserName(e.target.value)} />
             </div>
             <div className="space-y-2">
-              <Label>Email</Label>
-              <Input type="email" value={companyData.email} onChange={handleCompanyChange("email")} readOnly={!editingCompany} className={!editingCompany ? "bg-black/5" : ""} />
+              <Label>Contato</Label>
+              <Input value={editUserContact} onChange={(e) => setEditUserContact(e.target.value)} placeholder="(11) 99999-9999" />
             </div>
             <div className="space-y-2">
-              <Label>Telefone</Label>
-              <Input value={companyData.telefone} onChange={handleCompanyChange("telefone")} readOnly={!editingCompany} className={!editingCompany ? "bg-black/5" : ""} />
-            </div>
-            <div className="space-y-2 md:col-span-2">
-              <Label>Endereço</Label>
-              <Input value={companyData.endereco} onChange={handleCompanyChange("endereco")} readOnly={!editingCompany} className={!editingCompany ? "bg-black/5" : ""} />
-            </div>
-            <div className="space-y-2">
-              <Label>Cidade</Label>
-              <Input value={companyData.cidade} onChange={handleCompanyChange("cidade")} readOnly={!editingCompany} className={!editingCompany ? "bg-black/5" : ""} />
-            </div>
-            <div className="space-y-2">
-              <Label>Estado</Label>
-              <Input value={companyData.estado} onChange={handleCompanyChange("estado")} readOnly={!editingCompany} className={!editingCompany ? "bg-black/5" : ""} maxLength={2} />
-            </div>
-            <div className="space-y-2">
-              <Label>CEP</Label>
-              <Input value={companyData.cep} onChange={handleCompanyChange("cep")} readOnly={!editingCompany} className={!editingCompany ? "bg-black/5" : ""} />
-            </div>
-            <div className="space-y-2 md:col-span-2">
-              <Label>Sobre</Label>
-              <Textarea value={companyData.sobre} onChange={handleCompanyChange("sobre")} readOnly={!editingCompany} className={!editingCompany ? "bg-black/5" : ""} rows={3} />
+              <Label>Função</Label>
+              <Select value={editUserRole} onValueChange={(v) => setEditUserRole(v as any)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione" />
+                </SelectTrigger>
+                <SelectContent>
+                  {ROLES.map((r) => (
+                    <SelectItem key={r} value={r}>
+                      {r}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
-        </CardContent>
-      </Card>
 
-      {/* Users Section */}
-      <Card className="border border-black/5">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <UsersIcon size={20} />
-            Usuários da Empresa
-          </CardTitle>
-          <CardDescription>Gerencie os usuários com acesso ao sistema</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-            <div className="space-y-2">
-              <Label htmlFor="user-name">Nome</Label>
-              <Input id="user-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Nome completo" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="user-email">Email</Label>
-              <Input id="user-email" type="email" value={userEmail} onChange={(e) => setUserEmail(e.target.value)} placeholder="email@empresa.com" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="user-cargo">Cargo</Label>
-              <Input id="user-cargo" value={userCargo} onChange={(e) => setUserCargo(e.target.value)} placeholder="Cargo" />
-            </div>
-          </div>
-          <Button onClick={addUser} className="bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))]/90 mb-4">
-            Adicionar Usuário
-          </Button>
-
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-left border-b border-black/10">
-                  <th className="py-2 pr-4 font-medium">Nome</th>
-                  <th className="py-2 pr-4 font-medium">Email</th>
-                  <th className="py-2 pr-4 font-medium">Cargo</th>
-                  <th className="py-2 font-medium">Ações</th>
-                </tr>
-              </thead>
-              <tbody>
-                {users.length === 0 ? (
-                  <tr>
-                    <td className="py-3 text-black/50" colSpan={4}>Nenhum usuário adicionado</td>
-                  </tr>
-                ) : users.map(u => (
-                  <tr key={u.id} className="border-b border-black/5">
-                    <td className="py-2 pr-4">{u.name}</td>
-                    <td className="py-2 pr-4">{u.email}</td>
-                    <td className="py-2 pr-4">{u.cargo || "-"}</td>
-                    <td className="py-2">
-                      <Button variant="outline" size="sm" onClick={() => removeUser(u.id)}>Remover</Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Visual Config Section */}
-      <Card className="border border-black/5">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              <Palette size={20} />
-              Personalização Visual
-            </CardTitle>
-            <CardDescription className="mt-1">Configure cores e logotipos do sistema</CardDescription>
-          </div>
-          {!editingVisual ? (
-            <Button onClick={() => setEditingVisual(true)} className="bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))]/90">
-              Editar
+          <DialogFooter className="mt-4">
+            <Button variant="outline" onClick={() => setIsEditUserOpen(false)} className="rounded-full">
+              Cancelar
             </Button>
-          ) : (
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={() => setEditingVisual(false)}>Cancelar</Button>
-              <Button onClick={handleSaveVisual} className="bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))]/90">
-                Salvar
-              </Button>
-            </div>
-          )}
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label className="flex items-center gap-2">
-                  <Upload size={14} />
-                  Logo do Header
-                </Label>
-                <Input type="file" accept="image/*" onChange={handleFile("headerLogo")} disabled={!editingVisual} />
-                {brand.headerLogo && (
-                  <div className="mt-2 p-4 bg-black/5 rounded-lg">
-                    <img src={brand.headerLogo} alt="Logo Header" className="h-16 object-contain" />
-                  </div>
-                )}
-              </div>
-              <div className="space-y-2">
-                <Label className="flex items-center gap-2">
-                  <Upload size={14} />
-                  Logo da Sidebar
-                </Label>
-                <Input type="file" accept="image/*" onChange={handleFile("sidebarLogo")} disabled={!editingVisual} />
-                {brand.sidebarLogo && (
-                  <div className="mt-2 p-4 bg-black/5 rounded-lg">
-                    <img src={brand.sidebarLogo} alt="Logo Sidebar" className="h-16 object-contain" />
-                  </div>
-                )}
-              </div>
-            </div>
+            <Button onClick={handleSaveUser} className="rounded-full bg-accent-orange hover:bg-accent-orange/90 text-white">
+              Salvar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>Cor Primária</Label>
-                <div className="flex items-center gap-3">
-                  <Input type="color" value={brand.primary} onChange={handleColor("primary")} className="w-12 h-10 p-1 cursor-pointer" disabled={!editingVisual} />
-                  <Input value={brand.primary} onChange={handleColor("primary")} className="font-mono text-sm" disabled={!editingVisual} />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label>Cor de Acento</Label>
-                <div className="flex items-center gap-3">
-                  <Input type="color" value={brand.accent} onChange={handleColor("accent")} className="w-12 h-10 p-1 cursor-pointer" disabled={!editingVisual} />
-                  <Input value={brand.accent} onChange={handleColor("accent")} className="font-mono text-sm" disabled={!editingVisual} />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label>Cor do Texto</Label>
-                <div className="flex items-center gap-3">
-                  <Input type="color" value={brand.text} onChange={handleColor("text")} className="w-12 h-10 p-1 cursor-pointer" disabled={!editingVisual} />
-                  <Input value={brand.text} onChange={handleColor("text")} className="font-mono text-sm" disabled={!editingVisual} />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label>Cor de Fundo</Label>
-                <div className="flex items-center gap-3">
-                  <Input type="color" value={brand.background} onChange={handleColor("background")} className="w-12 h-10 p-1 cursor-pointer" disabled={!editingVisual} />
-                  <Input value={brand.background} onChange={handleColor("background")} className="font-mono text-sm" disabled={!editingVisual} />
-                </div>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+      <AlertDialog open={isDeleteUserOpen} onOpenChange={setIsDeleteUserOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remover usuário?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Isso removerá o perfil do usuário da sua empresa. Essa ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction className="bg-red-600 hover:bg-red-700" onClick={confirmDeleteUser}>
+              Remover
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </PageLayout>
   );
 }

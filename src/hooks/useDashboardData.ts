@@ -11,8 +11,8 @@ export const useDashboardData = (dateFrom?: Date, dateTo?: Date) => {
       const start = dateFrom || startOfMonth(now);
       const end = dateTo || endOfMonth(now);
 
-      // Fetch data from 1 month before start to calculate growth
-      const fetchStart = subMonths(start, 1);
+      // Fetch data from 12 months before start to calculate growth and show history
+      const fetchStart = subMonths(new Date(), 12);
 
       // 1. Fetch Categories first
       console.log('[DASHBOARD] Fetching categories...');
@@ -56,6 +56,27 @@ export const useDashboardData = (dateFrom?: Date, dateTo?: Date) => {
         categorias_financeiras: categoriesMap.get(r.categoria_id)
       }));
 
+      // 2a. Fetch Receitas (All time) for Chart
+      const { data: receitasChartAllRaw, error: receitasChartAllError } = await supabase
+        .from("receitas")
+        .select("valor,data_recebimento,data_vencimento")
+        .order("data_vencimento", { ascending: true });
+
+      if (receitasChartAllError) {
+        console.error('[DASHBOARD] Receitas chart all time error:', receitasChartAllError);
+        throw receitasChartAllError;
+      }
+
+      // 2b. Fetch Receitas (Total Geral)
+      const { data: receitasAllRaw, error: receitasAllError } = await supabase
+        .from("receitas")
+        .select("valor");
+
+      if (receitasAllError) {
+        console.error('[DASHBOARD] Receitas total geral error:', receitasAllError);
+        throw receitasAllError;
+      }
+
       // 3. Fetch Despesas
       console.log('[DASHBOARD] Fetching despesas...');
       let despesasQuery = supabase
@@ -83,6 +104,27 @@ export const useDashboardData = (dateFrom?: Date, dateTo?: Date) => {
         ...d,
         categorias_financeiras: categoriesMap.get(d.categoria_id)
       }));
+
+      // 3a. Fetch Despesas (All time) for Chart
+      const { data: despesasChartAllRaw, error: despesasChartAllError } = await supabase
+        .from("despesas")
+        .select("valor,data_pagamento,data_vencimento")
+        .order("data_vencimento", { ascending: true });
+
+      if (despesasChartAllError) {
+        console.error('[DASHBOARD] Despesas chart all time error:', despesasChartAllError);
+        throw despesasChartAllError;
+      }
+
+      // 3b. Fetch Despesas (Total Geral)
+      const { data: despesasAllRaw, error: despesasAllError } = await supabase
+        .from("despesas")
+        .select("valor");
+
+      if (despesasAllError) {
+        console.error('[DASHBOARD] Despesas total geral error:', despesasAllError);
+        throw despesasAllError;
+      }
 
       // 4. Fetch Leads (Total Novos)
       let leadsCount = 0;
@@ -173,11 +215,17 @@ export const useDashboardData = (dateFrom?: Date, dateTo?: Date) => {
       const receitasMain = (receitas as any[])?.filter(r => inMainPeriod(r.data_recebimento || r.data_vencimento)) || [];
       const despesasMain = (despesas as any[])?.filter(d => inMainPeriod(d.data_pagamento || d.data_vencimento)) || [];
 
+      const receitasChartAll = (receitasChartAllRaw as any[]) || [];
+      const despesasChartAll = (despesasChartAllRaw as any[]) || [];
+
       const receitasPrev = (receitas as any[])?.filter(r => inPreviousPeriod(r.data_recebimento || r.data_vencimento)) || [];
       const despesasPrev = (despesas as any[])?.filter(d => inPreviousPeriod(d.data_pagamento || d.data_vencimento)) || [];
 
       const receitasTotal = receitasMain.reduce((acc, curr) => acc + Number(curr.valor), 0);
       const despesasTotal = despesasMain.reduce((acc, curr) => acc + Number(curr.valor), 0);
+
+      const receitasTotalGeral = (receitasAllRaw as any[])?.reduce((acc, curr) => acc + Number(curr.valor), 0) || 0;
+      const despesasTotalGeral = (despesasAllRaw as any[])?.reduce((acc, curr) => acc + Number(curr.valor), 0) || 0;
 
       console.log('[DASHBOARD] Calculations:', {
         receitasMain: receitasMain.length,
@@ -200,8 +248,8 @@ export const useDashboardData = (dateFrom?: Date, dateTo?: Date) => {
         : 0;
 
       // Process Chart Data (Group by Month or Day depending on range duration)
-      // For simplicity, we keep the existing logic but pass the filtered MAIN data
-      const chartData = processChartData(receitasMain, despesasMain);
+      // We pass the CHART data (all time)
+      const chartData = processChartData(receitasChartAll, despesasChartAll);
 
       // Daily chart data for the selected period
       const chartDataDiario = processDailyChartData(receitasMain, despesasMain, start, end);
@@ -223,11 +271,14 @@ export const useDashboardData = (dateFrom?: Date, dateTo?: Date) => {
         stats: {
           receitasTotal,
           despesasTotal,
+          receitasTotalGeral,
+          despesasTotalGeral,
           receitasMes: receitasGrowth.toFixed(1),
           despesasMes: despesasGrowth.toFixed(1),
           leadsTotal: leadsCount,
           projectsActive: projectsCount || 0,
-          saldo: receitasTotal - despesasTotal
+          saldo: receitasTotal - despesasTotal,
+          saldoGeral: receitasTotalGeral - despesasTotalGeral
         },
         chartData,
         chartDataDiario,
@@ -248,8 +299,7 @@ export const useDashboardData = (dateFrom?: Date, dateTo?: Date) => {
 };
 
 const processChartData = (receitas: any[], despesas: any[]) => {
-  const monthsMap = new Map<string, { mes: string; receitas: number; despesas: number }>();
-  const monthsOrder = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+  const monthsMap = new Map<string, { mes: string; receitas: number; despesas: number; sortKey: string }>();
 
   // Helper
   const processItem = (item: any, type: 'receitas' | 'despesas', dateField: string) => {
@@ -258,10 +308,12 @@ const processChartData = (receitas: any[], despesas: any[]) => {
 
     const date = new Date(dateStr);
     const monthName = date.toLocaleString('pt-BR', { month: 'short' });
-    const key = monthName.charAt(0).toUpperCase() + monthName.slice(1).replace('.', '');
+    const year = date.getFullYear().toString().slice(-2);
+    const key = `${monthName.charAt(0).toUpperCase() + monthName.slice(1).replace('.', '')}/${year}`;
+    const sortKey = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}`;
 
     if (!monthsMap.has(key)) {
-      monthsMap.set(key, { mes: key, receitas: 0, despesas: 0 });
+      monthsMap.set(key, { mes: key, receitas: 0, despesas: 0, sortKey });
     }
 
     const current = monthsMap.get(key)!;
@@ -271,9 +323,7 @@ const processChartData = (receitas: any[], despesas: any[]) => {
   receitas.forEach(r => processItem(r, 'receitas', 'data_recebimento'));
   despesas.forEach(d => processItem(d, 'despesas', 'data_pagamento'));
 
-  return Array.from(monthsMap.values()).sort((a, b) => {
-    return monthsOrder.indexOf(a.mes) - monthsOrder.indexOf(b.mes);
-  });
+  return Array.from(monthsMap.values()).sort((a, b) => a.sortKey.localeCompare(b.sortKey));
 };
 
 const processDailyChartData = (receitas: any[], despesas: any[], start: Date, end: Date) => {

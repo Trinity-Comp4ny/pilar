@@ -33,10 +33,14 @@ export default function DashboardNew() {
   const stats = dashboardData?.stats || {
     receitasTotal: 0,
     despesasTotal: 0,
+    receitasTotalGeral: 0,
+    despesasTotalGeral: 0,
     receitasMes: 0,
     despesasMes: 0,
     leadsTotal: 0,
-    projectsActive: 0
+    projectsActive: 0,
+    saldo: 0,
+    saldoGeral: 0
   };
 
   const chartData = dashboardData?.chartData || [];
@@ -45,7 +49,7 @@ export default function DashboardNew() {
   const header = (
     <PageHeader
       title="Dashboard"
-      description="Visão geral do seu desempenho hoje"
+      description="Visão geral do seu desempenho da empresa"
     >
       {/* <div className="flex items-center gap-2">
         <Button variant="outline" className="text-sm rounded-full" onClick={() => navigate('/projetos')}>
@@ -86,65 +90,68 @@ export default function DashboardNew() {
       <div className="space-y-6 w-full max-w-none">
 
         {/* KPI Grid - Padronizado com Financeiro */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 w-full">
           {/* Receitas */}
           <Card className="vrz-card w-full">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-black/60">Receitas</CardTitle>
+              <CardTitle className="text-sm font-medium text-black/60">Receitas Totais</CardTitle>
               <div className="p-2 rounded-full bg-green-100 text-green-600">
                 <ArrowUpRight size={18} />
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-green-600">
-                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(stats.receitasTotal)}
+              <div className="text-2xl font-bold text-green-600">
+                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(stats.receitasTotalGeral)}
               </div>
-              <p className="text-xs text-green-600 flex items-center gap-1 mt-1">
-                <TrendingUp size={12} />
-                +{Number(stats.receitasMes).toFixed(1)}% vs período anterior
-              </p>
             </CardContent>
           </Card>
 
           {/* Despesas */}
           <Card className="vrz-card w-full">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-black/60">Despesas</CardTitle>
+              <CardTitle className="text-sm font-medium text-black/60">Despesas Totais</CardTitle>
               <div className="p-2 rounded-full bg-red-100 text-red-600">
                 <ArrowDownRight size={18} />
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-red-600">
-                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(stats.despesasTotal)}
+              <div className="text-2xl font-bold text-red-600">
+                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(stats.despesasTotalGeral)}
               </div>
-              <p className="text-xs text-green-600 flex items-center gap-1 mt-1">
-                <TrendingDown size={12} />
-                {stats.despesasMes}% vs período anterior
-              </p>
+            </CardContent>
+          </Card>
+
+          {/* Saldo Geral */}
+          <Card className="vrz-card w-full">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-black/60">Saldo Geral</CardTitle>
+              <div className="p-2 rounded-full bg-indigo-100 text-indigo-600">
+                <DollarSign size={18} />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className={`text-2xl font-bold ${stats.saldoGeral >= 0 ? 'text-indigo-600' : 'text-red-600'}`}>
+                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(stats.saldoGeral)}
+              </div>
             </CardContent>
           </Card>
 
           {/* Leads Novos */}
           <Card className="vrz-card w-full">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-black/60">Total de Leads Novos</CardTitle>
+              <CardTitle className="text-sm font-medium text-black/60">Leads</CardTitle>
               <div className="p-2 rounded-full bg-blue-100 text-blue-600">
                 <UserPlus size={18} />
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-blue-600">
+              <div className="text-2xl font-bold text-blue-600">
                 {stats.leadsTotal}
               </div>
-              <p className="text-xs text-green-600 flex items-center gap-1 mt-1">
-                <TrendingUp size={12} />
-                Total acumulado
-              </p>
             </CardContent>
           </Card>
 
-          {/* Projetos em Andamento */}
+          {/* Projetos em andamento */}
           <Card className="vrz-card w-full">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-black/60">Projetos em Andamento</CardTitle>
@@ -153,12 +160,9 @@ export default function DashboardNew() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-accent-orange">
+              <div className="text-2xl font-bold text-accent-orange">
                 {stats.projectsActive}
               </div>
-              <p className="text-xs text-black/50 mt-1">
-                Projetos ativos
-              </p>
             </CardContent>
           </Card>
         </div>

@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, ArrowUpDown, User, Briefcase, Trash2, Pencil, Loader2 } from "lucide-react";
+import { Plus, Search, ArrowUpDown, User, Briefcase, Trash2, Pencil, Loader2, Landmark, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
@@ -28,7 +28,6 @@ interface Pessoa {
   salario_fixo?: number;
   valor_m2?: number;
   data_demissao?: string;
-  conta_bancaria?: string;
   contas_bancarias?: any[];
 }
 
@@ -59,7 +58,7 @@ export default function Pessoas() {
     data_demissao: "",
     salario_fixo: "",
     valor_m2: "",
-    conta_bancaria: "",
+    contas_bancarias: "",
   });
   const [contasBancarias, setContasBancarias] = useState<any[]>([]);
   const [newConta, setNewConta] = useState({ banco: "", agencia: "", conta: "", tipo: "corrente" });
@@ -126,7 +125,7 @@ export default function Pessoas() {
       data_demissao: "",
       salario_fixo: "",
       valor_m2: "",
-      conta_bancaria: "",
+      contas_bancarias: ""
     });
     setContasBancarias([]);
     setNewConta({ banco: "", agencia: "", conta: "", tipo: "corrente" });
@@ -148,7 +147,7 @@ export default function Pessoas() {
       data_demissao: (pessoa as any).data_demissao || "",
       salario_fixo: pessoa.salario_fixo?.toString() || "",
       valor_m2: pessoa.valor_m2?.toString() || "",
-      conta_bancaria: (pessoa as any).conta_bancaria || "",
+      contas_bancarias: (pessoa as any).contas_bancarias || "",
     });
     setContasBancarias(Array.isArray((pessoa as any).contas_bancarias) ? (pessoa as any).contas_bancarias : []);
     setIsEditMode(true);
@@ -170,12 +169,29 @@ export default function Pessoas() {
       return;
     }
 
-    setContasBancarias((prev) => [...prev, newConta]);
+    const isFirst = contasBancarias.length === 0;
+    setContasBancarias((prev) => [
+      ...prev, 
+      { ...newConta, is_primary: isFirst }
+    ]);
     setNewConta({ banco: "", agencia: "", conta: "", tipo: "corrente" });
   };
 
+  const handleSetPrimaryConta = (index: number) => {
+    setContasBancarias(prev => prev.map((conta, i) => ({
+      ...conta,
+      is_primary: i === index
+    })));
+  };
+
   const handleRemoveConta = (index: number) => {
-    setContasBancarias((prev) => prev.filter((_, i) => i !== index));
+    setContasBancarias((prev) => {
+      const newContas = prev.filter((_, i) => i !== index);
+      if (prev[index].is_primary && newContas.length > 0) {
+        newContas[0].is_primary = true;
+      }
+      return newContas;
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -201,7 +217,6 @@ export default function Pessoas() {
         endereco: formData.endereco,
         data_admissao: formData.data_admissao || null,
         data_demissao: formData.data_demissao || null,
-        conta_bancaria: formData.conta_bancaria || null,
         contas_bancarias: contasBancarias,
         salario_fixo: formData.salario_fixo ? parseFloat(formData.salario_fixo) : null,
         valor_m2: formData.valor_m2 ? parseFloat(formData.valor_m2) : null,
@@ -332,6 +347,8 @@ export default function Pessoas() {
 
   return (
     <PageLayout
+      className="overflow-y-hidden"
+      containerClassName="h-full flex flex-col min-h-0"
       header={
         <PageHeader 
           title="Pessoas" 
@@ -382,16 +399,6 @@ export default function Pessoas() {
                       required
                     />
                   </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="data_demissao">Data de Demissão</Label>
-                    <Input
-                      id="data_demissao"
-                      type="date"
-                      value={formData.data_demissao}
-                      onChange={(e) => handleInputChange("data_demissao", e.target.value)}
-                    />
-                  </div>
                   
                   <div className="space-y-2">
                     <Label htmlFor="cpf">CPF</Label>
@@ -404,7 +411,7 @@ export default function Pessoas() {
                     />
                   </div>
                   
-                  <div className="space-y-2">
+                  <div className="space-y-2 md:col-span-2">
                     <Label htmlFor="cargo">Cargo/Função *</Label>
                     <Input
                       id="cargo"
@@ -412,28 +419,6 @@ export default function Pessoas() {
                       onChange={(e) => handleInputChange("cargo", e.target.value)}
                       placeholder="Ex: Arquiteto, Pedreiro"
                       required
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => handleInputChange("email", e.target.value)}
-                      placeholder="email@exemplo.com"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="telefone">Telefone/Celular</Label>
-                    <Input
-                      id="telefone"
-                      value={formData.telefone}
-                      onChange={(e) => handleInputChange("telefone", formatTelefone(e.target.value))}
-                      maxLength={15}
-                      placeholder="(11) 99999-9999"
                     />
                   </div>
 
@@ -447,29 +432,76 @@ export default function Pessoas() {
                     />
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="data_admissao">Data de Admissão</Label>
-                    <Input
-                      id="data_admissao"
-                      type="date"
-                      value={formData.data_admissao}
-                      onChange={(e) => handleInputChange("data_admissao", e.target.value)}
-                    />
+                  <div className="grid grid-cols-2 gap-4 md:col-span-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="telefone">Telefone/Celular</Label>
+                      <Input
+                        id="telefone"
+                        value={formData.telefone}
+                        onChange={(e) => handleInputChange("telefone", formatTelefone(e.target.value))}
+                        maxLength={15}
+                        placeholder="(11) 99999-9999"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="email">Email</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        value={formData.email}
+                        onChange={(e) => handleInputChange("email", e.target.value)}
+                        placeholder="email@exemplo.com"
+                      />
+                    </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="salario_fixo">Salário Fixo</Label>
-                    <Input
-                      id="salario_fixo"
-                      type="number"
-                      step="0.01"
-                      value={formData.salario_fixo}
-                      onChange={(e) => handleInputChange("salario_fixo", e.target.value)}
-                      placeholder="0.00"
-                    />
+                  <div className="grid grid-cols-2 gap-4 md:col-span-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="data_admissao">Data de Admissão</Label>
+                      <Input
+                        id="data_admissao"
+                        type="date"
+                        value={formData.data_admissao}
+                        onChange={(e) => handleInputChange("data_admissao", e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="data_demissao">Data de Demissão</Label>
+                      <Input
+                        id="data_demissao"
+                        type="date"
+                        value={formData.data_demissao}
+                        onChange={(e) => handleInputChange("data_demissao", e.target.value)}
+                      />
+                    </div>
                   </div>
 
-                  <div className="space-y-3 md:col-span-2 mt-2">
+                  <div className="grid grid-cols-2 gap-4 md:col-span-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="salario_fixo">Salário Fixo (R$)</Label>
+                      <Input
+                        id="salario_fixo"
+                        type="number"
+                        step="0.01"
+                        value={formData.salario_fixo}
+                        onChange={(e) => handleInputChange("salario_fixo", e.target.value)}
+                        placeholder="0.00"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="valor_m2">Valor m² (R$)</Label>
+                      <Input
+                        id="valor_m2"
+                        type="number"
+                        step="0.01"
+                        value={formData.valor_m2}
+                        onChange={(e) => handleInputChange("valor_m2", e.target.value)}
+                        placeholder="0.00"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-3 md:col-span-2 mt-2 border-t pt-4">
                     <div className="flex items-center justify-between">
                       <Label>Contas Bancárias</Label>
                       <span className="text-xs text-black/50">Cadastre uma ou mais contas para pagamento</span>
@@ -528,13 +560,23 @@ export default function Pessoas() {
                     {contasBancarias.length > 0 && (
                       <div className="space-y-2">
                         <Label className="text-xs text-black/60">Contas cadastradas</Label>
-                        <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
+                        <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
                           {contasBancarias.map((conta, index) => (
                             <div
                               key={index}
-                              className="flex items-center justify-between gap-3 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm"
+                              className={`flex items-center justify-between gap-3 bg-gray-50 border rounded-lg px-3 py-2 text-sm ${conta.is_primary ? 'border-accent-orange/50 bg-accent-orange/5' : 'border-gray-200'}`}
                             >
                               <div className="flex items-center gap-3 flex-1 min-w-0">
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6 flex-shrink-0"
+                                  onClick={() => handleSetPrimaryConta(index)}
+                                  title="Definir como principal"
+                                >
+                                  <Landmark className={`h-4 w-4 ${conta.is_primary ? 'text-accent-orange fill-accent-orange' : 'text-gray-400'}`} />
+                                </Button>
                                 <span className="font-medium truncate">{conta.banco}</span>
                                 <span className="hidden md:inline text-xs text-black/60 flex-shrink-0">
                                   Ag. {conta.agencia} / Cc. {conta.conta}
@@ -542,6 +584,9 @@ export default function Pessoas() {
                                 <span className="text-xs text-black/50 capitalize flex-shrink-0">
                                   {conta.tipo}
                                 </span>
+                                {conta.is_primary && (
+                                  <span className="text-[10px] bg-accent-orange/10 text-accent-orange px-1.5 py-0.5 rounded">Principal</span>
+                                )}
                               </div>
                               <Button
                                 type="button"
@@ -557,18 +602,6 @@ export default function Pessoas() {
                         </div>
                       </div>
                     )}
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="valor_m2">Valor m²</Label>
-                    <Input
-                      id="valor_m2"
-                      type="number"
-                      step="0.01"
-                      value={formData.valor_m2}
-                      onChange={(e) => handleInputChange("valor_m2", e.target.value)}
-                      placeholder="0.00"
-                    />
                   </div>
                   
                   <div className="flex gap-2 pt-4 md:col-span-2">
@@ -589,7 +622,7 @@ export default function Pessoas() {
         />
       }
     >
-      <Card className="rounded-2xl border border-black/5 bg-white w-full">
+      <Card className="rounded-2xl border border-black/5 bg-white w-full flex flex-col min-h-0">
         <CardHeader>
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
@@ -624,13 +657,13 @@ export default function Pessoas() {
             </div>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="flex-1 min-h-0">
           {isLoading ? (
             <div className="flex justify-center items-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
           ) : (
-            <div className="overflow-x-auto w-full">
+            <div className="overflow-x-auto overflow-y-auto w-full max-h-[calc(100svh-260px)]">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -783,6 +816,44 @@ export default function Pessoas() {
                       <span>{selectedPessoa.endereco || '-'}</span>
                     </div>
                   </div>
+                </div>
+
+                {/* Seção de Contas Bancárias no Detalhe */}
+                <div className="border-t pt-4 space-y-2">
+                  <h4 className="font-medium text-sm text-muted-foreground mb-2">Contas Bancárias</h4>
+                  {((selectedPessoa as any).contas_bancarias && (selectedPessoa as any).contas_bancarias.length > 0) ? (
+                    <div className="space-y-2">
+                      {(selectedPessoa as any).contas_bancarias.map((conta: any, index: number) => (
+                        <div
+                          key={index}
+                          className={`flex items-center justify-between gap-3 bg-gray-50 border rounded-lg px-3 py-2 text-sm ${conta.is_primary ? 'border-accent-orange/50 bg-accent-orange/5' : 'border-gray-200'}`}
+                        >
+                          <div className="flex items-center gap-3 flex-1 min-w-0">
+                            <div className="p-1.5 rounded-full bg-white border border-gray-100 text-gray-500">
+                              <Landmark size={14} />
+                            </div>
+                            <div className="flex flex-col min-w-0">
+                              <div className="flex items-center gap-2">
+                                <span className="font-medium truncate">{conta.banco}</span>
+                                {conta.is_primary && (
+                                  <span className="text-[10px] bg-accent-orange/10 text-accent-orange px-1.5 py-0.5 rounded font-medium">Principal</span>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-2 text-xs text-black/60">
+                                <span>Ag: {conta.agencia}</span>
+                                <span className="text-gray-300">|</span>
+                                <span>Cc: {conta.conta}</span>
+                                <span className="text-gray-300">|</span>
+                                <span className="capitalize">{conta.tipo}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground italic">Nenhuma conta bancária cadastrada.</p>
+                  )}
                 </div>
 
                 <div className="flex gap-2 pt-4">
