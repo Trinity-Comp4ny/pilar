@@ -240,13 +240,22 @@ export default function Despesas() {
         });
       }
 
-      const { error } = await (supabase.from('despesas') as any).insert(despesasToInsert);
+      let error = null;
+
+      if (selectedDespesa) {
+        ({ error } = await (supabase.from('despesas') as any)
+          .update(despesasToInsert[0])
+          .eq('id', selectedDespesa.id));
+      } else {
+        ({ error } = await (supabase.from('despesas') as any)
+          .insert(despesasToInsert));
+      }
 
       if (error) throw error;
 
       toast({
-        title: "Despesa cadastrada",
-        description: `${numParcelas} registro(s) criado(s) com sucesso`,
+        title: selectedDespesa ? "Despesa atualizada" : "Despesa cadastrada",
+        description: selectedDespesa ? "1 registro atualizado com sucesso" : `${numParcelas} registro(s) criado(s) com sucesso`,
       });
 
       setIsDialogOpen(false);
