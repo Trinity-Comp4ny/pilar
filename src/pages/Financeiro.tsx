@@ -9,7 +9,7 @@ import ResumoMensal from "./financeiro/tabs/ResumoMensal";
 import Contas from "./financeiro/tabs/Contas";
 import Lancamentos from "./financeiro/tabs/Lancamentos";
 import Metas from "./financeiro/tabs/Metas";
-import ProLabore from "./financeiro/tabs/ProLabore";
+import FolhaPagamento from "./financeiro/tabs/FolhaPagamento";
 
 export default function Financeiro() {
   const { state } = useSidebar();
@@ -71,8 +71,8 @@ export default function Financeiro() {
               <Metas />
             </TabsContent>
 
-            <TabsContent value="pro-labore" className="mt-0 w-full focus-visible:ring-0">
-              <ProLabore />
+            <TabsContent value="folha-pagamento" className="mt-0 w-full focus-visible:ring-0">
+              <FolhaPagamento />
             </TabsContent>
 
             <TabsContent value="contas" className="mt-0 w-full focus-visible:ring-0">

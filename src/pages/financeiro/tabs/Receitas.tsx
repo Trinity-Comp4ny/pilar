@@ -233,14 +233,25 @@ export default function Receitas() {
         valor: r.valor // Ensure we use 'valor' column name
       }));
 
-      const { error } = await (supabase.from('receitas') as any).insert(dataToInsert);
+      let error = null;
+      
+      if (selectedReceita) {
+        // Update existing receita
+        ({ error } = await (supabase.from('receitas') as any)
+          .update(dataToInsert[0])
+          .eq('id', selectedReceita.id));
+      } else {
+        ({ error } = await (supabase.from('receitas') as any)
+          .insert(dataToInsert));
+      }
 
       if (error) throw error;
 
       toast({
-        title: "Receita cadastrada",
-        description: `${numParcelas} registro(s) criado(s) com sucesso`,
+        title: selectedReceita ? "Receita atualizada" : "Receita cadastrada",
+        description: selectedReceita ? `1 registro atualizado com sucesso` : `${numParcelas} registro(s) criado(s) com sucesso`,
       });
+      
 
       setIsDialogOpen(false);
       fetchReceitas();

@@ -175,10 +175,10 @@ export function FinanceiroHeader({
             Metas
           </TabsTrigger>
           <TabsTrigger 
-            value="pro-labore" 
+            value="folha-pagamento" 
             className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#FF4000] data-[state=active]:bg-white data-[state=active]:text-[#FF4000] py-3"
           >
-            Pró-Labore
+            Folha de Pagamento
           </TabsTrigger>
           <TabsTrigger 
             value="contas" 
