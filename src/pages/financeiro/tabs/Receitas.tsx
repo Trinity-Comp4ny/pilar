@@ -17,7 +17,7 @@ import { CategoryManager } from "../components/CategoryManager";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
-import { getDisplayDate, formatDateDisplay, isBradescoTransaction, isManualTransaction } from "@/lib/dateUtils";
+import { getDisplayDate, formatDateDisplay } from "@/lib/dateUtils";
 import { formatCurrencyInput, parseCurrencyString } from "@/lib/currencyUtils";
 
 /**
