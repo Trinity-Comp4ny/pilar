@@ -7,7 +7,8 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
 import { CalendarIcon, Download, Plus } from "lucide-react";
-import { endOfDay, endOfMonth, format, startOfDay, startOfMonth, subDays, subMonths } from "date-fns";
+import { format, startOfDay, endOfDay, parse, subDays, startOfMonth, endOfMonth, subMonths } from "date-fns";
+import { getDisplayDate, formatDateDisplay } from "@/lib/dateUtils";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { PageLayout } from "@/components/PageLayout";
@@ -39,7 +40,11 @@ export default function Relatorios() {
       Tipo: tipo === "receitas" ? "Receita" : "Despesa",
       Descricao: item.descricao ?? "-",
       Valor: item.valor ?? 0,
-      "Data Vencimento": item.data_vencimento ? format(new Date(item.data_vencimento), "dd/MM/yyyy") : "-",
+      "Data": formatDateDisplay(getDisplayDate(
+        tipo === "receitas" ? item.data_recebimento : item.data_pagamento,
+        item.data_vencimento,
+        item.status
+      )) || "-",
       Status: item.status ?? "-",
       "Nome do Projeto": item.projetos?.nome ?? "-",
       "Nome do Cliente": tipo === "receitas" ? (item.clientes?.nome ?? "-") : (item.fornecedores?.nome ?? "-"),
@@ -112,14 +117,33 @@ export default function Relatorios() {
         `);
       }
 
-      query = query.order("data_vencimento", { ascending: false });
+      // Para receitas: ordenar por data_recebimento (real) primeiro, depois data_vencimento (planejado)
+      // Para despesas: ordenar por data_pagamento (real) primeiro, depois data_vencimento (planejado)
+      if (tipo === "receitas") {
+        query = query.order("data_recebimento", { ascending: false })
+          .order("data_vencimento", { ascending: false });
+      } else {
+        query = query.order("data_pagamento", { ascending: false })
+          .order("data_vencimento", { ascending: false });
+      }
 
+      // Filtros por período baseados na lógica de datas
       if (dateFrom) {
-        query = query.gte('data_vencimento', startOfDay(dateFrom).toISOString());
+        const start = startOfDay(dateFrom).toISOString();
+        if (tipo === "receitas") {
+          query = query.or(`data_recebimento.gte.${start},data_vencimento.gte.${start}`);
+        } else {
+          query = query.or(`data_pagamento.gte.${start},data_vencimento.gte.${start}`);
+        }
       }
 
       if (dateTo) {
-        query = query.lte('data_vencimento', endOfDay(dateTo).toISOString());
+        const end = endOfDay(dateTo).toISOString();
+        if (tipo === "receitas") {
+          query = query.or(`data_recebimento.lte.${end},data_vencimento.lte.${end}`);
+        } else {
+          query = query.or(`data_pagamento.lte.${end},data_vencimento.lte.${end}`);
+        }
       }
 
       query = query.range(page * pageLimit, page * pageLimit + pageLimit - 1);
@@ -219,15 +243,15 @@ export default function Relatorios() {
         const despesasProc = processData(despesas || [], 'despesas');
         finalData = [...receitasProc, ...despesasProc];
         
-        // Ordenar por data de vencimento (descrescente)
+        // Ordenar por data correta (data real para pagos/recebidos, data planejada para pendentes)
         finalData.sort((a, b) => {
-           // Need to parse 'dd/MM/yyyy' to compare
+           // Parse da data no formato dd/MM/yyyy para comparar
            const parseDate = (str: string) => {
              if(str === '-') return 0;
              const [d, m, y] = str.split('/').map(Number);
              return new Date(y, m-1, d).getTime();
            };
-           return parseDate(b['Data Vencimento']) - parseDate(a['Data Vencimento']);
+           return parseDate(b['Data']) - parseDate(a['Data']);
         });
 
       } else if (['receitas', 'despesas'].includes(tipoRelatorio)) {
