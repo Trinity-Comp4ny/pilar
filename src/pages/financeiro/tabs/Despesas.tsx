@@ -18,6 +18,16 @@ import { SupplierManager } from "../components/SupplierManager";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
+import { formatCurrencyInput, parseCurrencyString } from "@/lib/currencyUtils";
+import { getDisplayDate, formatDateDisplay } from "@/lib/dateUtils";
+
+/**
+ * Função para obter a data de exibição correta baseada no status para despesas
+ */
+const getDespesaDisplayDate = (despesa: Despesa): string => {
+  const displayDate = getDisplayDate(despesa.data_pagamento, despesa.data_vencimento, despesa.status);
+  return formatDateDisplay(displayDate);
+};
 
 interface Despesa {
   id: string;
@@ -57,7 +67,7 @@ export default function Despesas() {
   const [dataVencimento, setDataVencimento] = useState<Date | undefined>(new Date());
   const [descricao, setDescricao] = useState("");
   const [categoriaId, setCategoriaId] = useState("");
-  const [valorTotal, setValorTotal] = useState("");
+  const [valorTotal, setValorTotal] = useState("R$ 0,00");
   const [parcelas, setParcelas] = useState("1");
   const [formaPagamento, setFormaPagamento] = useState("");
   const [fornecedorId, setFornecedorId] = useState("");
@@ -94,7 +104,8 @@ export default function Despesas() {
           *,
           projetos (codigo_projeto),
           fornecedores (nome)
-        `).order('data_vencimento', { ascending: true })
+        `).order('data_pagamento', { ascending: false }) // Ordena por data_pagamento (real) primeiro
+          .order('data_vencimento', { ascending: false }) // Fallback para data_vencimento (planejado)
       ]);
 
       console.log('[DESPESAS] Fetch results:', {
@@ -156,12 +167,18 @@ export default function Despesas() {
     fetchData();
   };
 
+  const handleValorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const inputValue = e.target.value;
+    const formattedValue = formatCurrencyInput(inputValue);
+    setValorTotal(formattedValue);
+  };
+
   const openEditDespesa = (despesa: Despesa) => {
     setSelectedDespesa(despesa);
 
     if (despesa.data_vencimento) setDataVencimento(new Date(despesa.data_vencimento));
     setDescricao(despesa.descricao);
-    setValorTotal(despesa.valor.toString());
+    setValorTotal(formatCurrencyInput((despesa.valor * 100).toString()));
     setStatus(despesa.status);
     setCategoriaId(despesa.categoria_id || "");
     setProjetoID(despesa.projeto_id || "");
@@ -199,7 +216,8 @@ export default function Despesas() {
 
     try {
       const numParcelas = parseInt(parcelas) || 1;
-      const valorParcela = parseFloat(valorTotal) / numParcelas;
+      const valorNumerico = parseCurrencyString(valorTotal);
+      const valorParcela = valorNumerico / numParcelas;
       const { data: { user } } = await supabase.auth.getUser();
 
       if (!user) throw new Error("Usuário não autenticado");
@@ -274,7 +292,7 @@ export default function Despesas() {
     setDataVencimento(new Date());
     setDescricao("");
     setCategoriaId("");
-    setValorTotal("");
+    setValorTotal("R$ 0,00");
     setParcelas("1");
     setFormaPagamento("");
     setFornecedorId("");
@@ -389,11 +407,10 @@ export default function Despesas() {
                     <Label htmlFor="valorTotal" className="text-xs">Valor (R$) *</Label>
                     <Input
                       id="valorTotal"
-                      type="number"
-                      step="0.01"
+                      type="text"
                       value={valorTotal}
-                      onChange={(e) => setValorTotal(e.target.value)}
-                      placeholder="0,00"
+                      onChange={handleValorChange}
+                      placeholder="R$ 0,00"
                       required
                       className="h-9"
                     />
@@ -582,7 +599,7 @@ export default function Despesas() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Vencimento</TableHead>
+                  <TableHead>Data (Venc/Pag)</TableHead> {/* Mais claro: mostra vencimento para pendentes, pagamento para pagos */}
                   <TableHead>Descrição</TableHead>
                   <TableHead>Fornecedor</TableHead>
                   <TableHead>Projeto</TableHead>
@@ -601,7 +618,7 @@ export default function Despesas() {
                     setSelectedDespesa(despesa);
                     setIsDetailOpen(true);
                   }}>
-                    <TableCell>{format(new Date(despesa.data_vencimento), "dd/MM/yyyy")}</TableCell>
+                    <TableCell>{getDespesaDisplayDate(despesa)}</TableCell>
                     <TableCell className="font-medium">{despesa.descricao}</TableCell>
                     <TableCell>{despesa.fornecedor_nome || "-"}</TableCell>
                     <TableCell>{despesa.projeto_codigo || "-"}</TableCell>
@@ -655,9 +672,15 @@ export default function Despesas() {
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-xs text-muted-foreground">Vencimento</Label>
-                  <p className="text-sm font-medium">{format(new Date(selectedDespesa.data_vencimento), "dd/MM/yyyy")}</p>
+                  <Label className="text-xs text-muted-foreground">Data Vencimento</Label>
+                  <p className="text-sm font-medium">{formatDateDisplay(selectedDespesa.data_vencimento)}</p>
                 </div>
+                {selectedDespesa.data_pagamento && selectedDespesa.data_pagamento !== selectedDespesa.data_vencimento && (
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Data Pagamento</Label>
+                    <p className="text-sm font-medium text-green-600">{formatDateDisplay(selectedDespesa.data_pagamento)}</p>
+                  </div>
+                )}
                 <div>
                   <Label className="text-xs text-muted-foreground">Valor</Label>
                   <p className="text-sm font-bold text-red-600">R$ {selectedDespesa.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
