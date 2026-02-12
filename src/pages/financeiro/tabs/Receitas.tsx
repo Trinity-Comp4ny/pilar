@@ -17,6 +17,16 @@ import { CategoryManager } from "../components/CategoryManager";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
+import { getDisplayDate, formatDateDisplay } from "@/lib/dateUtils";
+import { formatCurrencyInput, parseCurrencyString } from "@/lib/currencyUtils";
+
+/**
+ * Função para obter a data de exibição correta baseada no status
+ */
+const getReceitaDisplayDate = (receita: Receita): string => {
+  const displayDate = getDisplayDate(receita.data_recebimento, receita.data_vencimento, receita.status);
+  return formatDateDisplay(displayDate);
+};
 
 interface Receita {
   id: string;
@@ -55,7 +65,7 @@ export default function Receitas() {
   const [descricao, setDescricao] = useState("");
   const [projetoID, setProjetoID] = useState("");
   const [categoriaId, setCategoriaId] = useState("");
-  const [valorTotal, setValorTotal] = useState("");
+  const [valorTotal, setValorTotal] = useState("R$ 0,00");
   const [formaPagamento, setFormaPagamento] = useState("");
   const [notaFiscal, setNotaFiscal] = useState("");
   const [status, setStatus] = useState("Recebida");
@@ -129,7 +139,8 @@ export default function Receitas() {
         clientes (nome),
         projetos (codigo_projeto)
       `)
-      .order('data_vencimento', { ascending: false });
+      .order('data_recebimento', { ascending: false }) // Ordena por data_recebimento (automação Bradesco)
+      .order('data_vencimento', { ascending: false }); // Fallback para data_vencimento (manual)
 
     console.log('[RECEITAS] Fetch result:', { count: data?.length, error });
 
@@ -154,12 +165,18 @@ export default function Receitas() {
     fetchAuxiliaryData();
   };
 
+  const handleValorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const inputValue = e.target.value;
+    const formattedValue = formatCurrencyInput(inputValue);
+    setValorTotal(formattedValue);
+  };
+
   const openEditReceita = (receita: Receita) => {
     setSelectedReceita(receita);
 
     if (receita.data_vencimento) setDataVencimento(new Date(receita.data_vencimento));
     setDescricao(receita.descricao);
-    setValorTotal(receita.valor.toString());
+    setValorTotal(formatCurrencyInput((receita.valor * 100).toString()));
     setStatus(receita.status === 'Recebido' ? 'Recebida' : 'Pendente');
     setCategoriaId(receita.categoria_id || "");
     setProjetoID(receita.projeto_id || "");
@@ -188,7 +205,8 @@ export default function Receitas() {
 
     try {
       const numParcelas = parseInt(parcelas) || 1;
-      const valorParcela = parseFloat(valorTotal) / numParcelas;
+      const valorNumerico = parseCurrencyString(valorTotal);
+      const valorParcela = valorNumerico / numParcelas;
       const { data: { user } } = await supabase.auth.getUser();
 
       if (!user) throw new Error("Usuário não autenticado");
@@ -233,14 +251,25 @@ export default function Receitas() {
         valor: r.valor // Ensure we use 'valor' column name
       }));
 
-      const { error } = await (supabase.from('receitas') as any).insert(dataToInsert);
+      let error = null;
+      
+      if (selectedReceita) {
+        // Update existing receita
+        ({ error } = await (supabase.from('receitas') as any)
+          .update(dataToInsert[0])
+          .eq('id', selectedReceita.id));
+      } else {
+        ({ error } = await (supabase.from('receitas') as any)
+          .insert(dataToInsert));
+      }
 
       if (error) throw error;
 
       toast({
-        title: "Receita cadastrada",
-        description: `${numParcelas} registro(s) criado(s) com sucesso`,
+        title: selectedReceita ? "Receita atualizada" : "Receita cadastrada",
+        description: selectedReceita ? `1 registro atualizado com sucesso` : `${numParcelas} registro(s) criado(s) com sucesso`,
       });
+      
 
       setIsDialogOpen(false);
       fetchReceitas();
@@ -259,7 +288,7 @@ export default function Receitas() {
     setDescricao("");
     setProjetoID("");
     setCategoriaId("");
-    setValorTotal("");
+    setValorTotal("R$ 0,00");
     setFormaPagamento("");
     setNotaFiscal("");
     setStatus("Recebida");
@@ -268,6 +297,7 @@ export default function Receitas() {
     setObservacao("");
     setRecorrencia("Nenhuma");
     setParcelas("1");
+    setSelectedReceita(null);
   };
 
   const handleDelete = async (id: string) => {
@@ -320,7 +350,13 @@ export default function Receitas() {
               </DialogContent>
             </Dialog>
 
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <Dialog open={isDialogOpen} onOpenChange={(open) => {
+              setIsDialogOpen(open);
+              if (open) {
+                setSelectedReceita(null);
+                resetForm();
+              }
+            }}>
               <DialogTrigger asChild>
                 <Button className="rounded-full bg-accent-orange hover:bg-accent-orange/90 text-white transition-colors px-5 py-2.5 text-sm">
                   <Plus className="mr-2 h-4 w-4" />
@@ -366,11 +402,10 @@ export default function Receitas() {
                     <Label htmlFor="valorTotal" className="text-xs">Valor Total (R$) *</Label>
                     <Input
                       id="valorTotal"
-                      type="number"
-                      step="0.01"
+                      type="text"
                       value={valorTotal}
-                      onChange={(e) => setValorTotal(e.target.value)}
-                      placeholder="0,00"
+                      onChange={handleValorChange}
+                      placeholder="R$ 0,00"
                       required
                       className="h-9"
                     />
@@ -541,7 +576,7 @@ export default function Receitas() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Vencimento</TableHead>
+                  <TableHead>Data (Venc/Pag)</TableHead> {/* Mais claro: mostra vencimento para pendentes, pagamento para recebidos */}
                   <TableHead>Descrição</TableHead>
                   <TableHead>Cliente</TableHead>
                   <TableHead>Projeto</TableHead>
@@ -563,7 +598,7 @@ export default function Receitas() {
                       setIsDetailOpen(true);
                     }}
                   >
-                    <TableCell>{format(new Date(receita.data_vencimento), "dd/MM/yyyy")}</TableCell>
+                    <TableCell>{getReceitaDisplayDate(receita)}</TableCell>
                     <TableCell className="font-medium">{receita.descricao}</TableCell>
                     <TableCell>{receita.cliente_nome || "-"}</TableCell>
                     <TableCell>{receita.projeto_codigo || "-"}</TableCell>
@@ -612,9 +647,15 @@ export default function Receitas() {
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-xs text-muted-foreground">Vencimento</Label>
-                  <p className="text-sm font-medium">{format(new Date(selectedReceita.data_vencimento), "dd/MM/yyyy")}</p>
+                  <Label className="text-xs text-muted-foreground">Data Vencimento</Label>
+                  <p className="text-sm font-medium">{formatDateDisplay(selectedReceita.data_vencimento)}</p>
                 </div>
+                {selectedReceita.data_recebimento && selectedReceita.data_recebimento !== selectedReceita.data_vencimento && (
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Data Recebimento</Label>
+                    <p className="text-sm font-medium text-green-600">{formatDateDisplay(selectedReceita.data_recebimento)}</p>
+                  </div>
+                )}
                 <div>
                   <Label className="text-xs text-muted-foreground">Valor</Label>
                   <p className="text-sm font-bold text-green-600">R$ {selectedReceita.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>

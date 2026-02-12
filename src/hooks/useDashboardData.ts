@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { subMonths, startOfMonth, endOfMonth } from "date-fns";
+import { getDisplayDate } from "@/lib/dateUtils";
 
 export const useDashboardData = (dateFrom?: Date, dateTo?: Date) => {
   return useQuery({
@@ -33,7 +34,8 @@ export const useDashboardData = (dateFrom?: Date, dateTo?: Date) => {
       let receitasQuery = supabase
         .from("receitas")
         .select("*")
-        .order("data_vencimento", { ascending: true });
+        .order("data_recebimento", { ascending: false }) // Ordena por data_recebimento (automação Bradesco)
+        .order("data_vencimento", { ascending: false }); // Fallback para data_vencimento (manual)
 
       if (fetchStart) receitasQuery = receitasQuery.gte('data_vencimento', fetchStart.toISOString());
       if (end) receitasQuery = receitasQuery.lte('data_vencimento', end.toISOString());
@@ -60,7 +62,8 @@ export const useDashboardData = (dateFrom?: Date, dateTo?: Date) => {
       const { data: receitasChartAllRaw, error: receitasChartAllError } = await supabase
         .from("receitas")
         .select("valor,data_recebimento,data_vencimento")
-        .order("data_vencimento", { ascending: true });
+        .order("data_recebimento", { ascending: false }) // Ordena por data_recebimento (automação Bradesco)
+        .order("data_vencimento", { ascending: false }); // Fallback para data_vencimento (manual)
 
       if (receitasChartAllError) {
         console.error('[DASHBOARD] Receitas chart all time error:', receitasChartAllError);
@@ -212,14 +215,28 @@ export const useDashboardData = (dateFrom?: Date, dateTo?: Date) => {
         despesasSample: despesas?.[0]
       });
 
-      const receitasMain = (receitas as any[])?.filter(r => inMainPeriod(r.data_recebimento || r.data_vencimento)) || [];
-      const despesasMain = (despesas as any[])?.filter(d => inMainPeriod(d.data_pagamento || d.data_vencimento)) || [];
+      // Para receitas: usar data_recebimento se existir (automação Bradesco), senão data_vencimento (manual)
+      const receitasMain = (receitas as any[])?.filter(r => {
+        const displayDate = getDisplayDate(r.data_recebimento, r.data_vencimento, r.status);
+        return displayDate && inMainPeriod(displayDate);
+      }) || [];
+      // Para despesas: usar data_pagamento se existir, senão data_vencimento
+      const despesasMain = (despesas as any[])?.filter(d => {
+        const displayDate = getDisplayDate(d.data_pagamento, d.data_vencimento, d.status);
+        return displayDate && inMainPeriod(displayDate);
+      }) || [];
 
       const receitasChartAll = (receitasChartAllRaw as any[]) || [];
       const despesasChartAll = (despesasChartAllRaw as any[]) || [];
 
-      const receitasPrev = (receitas as any[])?.filter(r => inPreviousPeriod(r.data_recebimento || r.data_vencimento)) || [];
-      const despesasPrev = (despesas as any[])?.filter(d => inPreviousPeriod(d.data_pagamento || d.data_vencimento)) || [];
+      const receitasPrev = (receitas as any[])?.filter(r => {
+        const displayDate = getDisplayDate(r.data_recebimento, r.data_vencimento, r.status);
+        return displayDate && inPreviousPeriod(displayDate);
+      }) || [];
+      const despesasPrev = (despesas as any[])?.filter(d => {
+        const displayDate = getDisplayDate(d.data_pagamento, d.data_vencimento, d.status);
+        return displayDate && inPreviousPeriod(displayDate);
+      }) || [];
 
       const receitasTotal = receitasMain.reduce((acc, curr) => acc + Number(curr.valor), 0);
       const despesasTotal = despesasMain.reduce((acc, curr) => acc + Number(curr.valor), 0);
@@ -303,10 +320,14 @@ const processChartData = (receitas: any[], despesas: any[]) => {
 
   // Helper
   const processItem = (item: any, type: 'receitas' | 'despesas', dateField: string) => {
-    const dateStr = item[dateField] || item.data_vencimento;
-    if (!dateStr) return;
+    const displayDate = getDisplayDate(
+      dateField === 'data_recebimento' ? item.data_recebimento : null,
+      dateField === 'data_pagamento' ? item.data_pagamento : item.data_vencimento,
+      item.status
+    );
+    if (!displayDate) return;
 
-    const date = new Date(dateStr);
+    const date = new Date(displayDate);
     const monthName = date.toLocaleString('pt-BR', { month: 'short' });
     const year = date.getFullYear().toString().slice(-2);
     const key = `${monthName.charAt(0).toUpperCase() + monthName.slice(1).replace('.', '')}/${year}`;
@@ -320,8 +341,8 @@ const processChartData = (receitas: any[], despesas: any[]) => {
     current[type] += Number(item.valor);
   };
 
-  receitas.forEach(r => processItem(r, 'receitas', 'data_recebimento'));
-  despesas.forEach(d => processItem(d, 'despesas', 'data_pagamento'));
+  receitas.forEach(r => processItem(r, 'receitas', 'data_recebimento')); // Usa data_recebimento (automação Bradesco)
+  despesas.forEach(d => processItem(d, 'despesas', 'data_pagamento')); // Usa data_pagamento
 
   return Array.from(monthsMap.values()).sort((a, b) => a.sortKey.localeCompare(b.sortKey));
 };
@@ -339,10 +360,14 @@ const processDailyChartData = (receitas: any[], despesas: any[], start: Date, en
   }
 
   const processItem = (item: any, type: 'receitas' | 'despesas', dateField: string) => {
-    const dateStr = item[dateField] || item.data_vencimento;
-    if (!dateStr) return;
+    const displayDate = getDisplayDate(
+      dateField === 'data_recebimento' ? item.data_recebimento : null,
+      dateField === 'data_pagamento' ? item.data_pagamento : item.data_vencimento,
+      item.status
+    );
+    if (!displayDate) return;
 
-    const date = new Date(dateStr);
+    const date = new Date(displayDate);
     if (date >= start && date <= end) {
       const key = date.toISOString().split('T')[0];
       const current = daysMap.get(key);
@@ -352,8 +377,8 @@ const processDailyChartData = (receitas: any[], despesas: any[], start: Date, en
     }
   };
 
-  receitas.forEach(r => processItem(r, 'receitas', 'data_recebimento'));
-  despesas.forEach(d => processItem(d, 'despesas', 'data_pagamento'));
+  receitas.forEach(r => processItem(r, 'receitas', 'data_recebimento')); // Usa data_recebimento (automação Bradesco)
+  despesas.forEach(d => processItem(d, 'despesas', 'data_pagamento')); // Usa data_pagamento
 
   // Sort by date
   return Array.from(daysMap.entries()).sort().map(([_, val]) => val);
