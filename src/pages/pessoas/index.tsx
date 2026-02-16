@@ -254,7 +254,7 @@ export default function Pessoas() {
     } catch (error: any) {
       toast({
         title: "Erro ao salvar",
-        description: error.message,
+        description: "Verifique os dados e tente novamente. Certifique-se de que não existem dados duplicados.",
         variant: "destructive",
       });
     }
