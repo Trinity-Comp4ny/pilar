@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Search, ArrowUpDown, User, Mail, Phone, MapPin, Trash2, Pencil, Building2, Landmark, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { formatPhone, formatDocument } from "@/lib/maskUtils";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { supabase } from "@/integrations/supabase/client";
@@ -51,13 +52,7 @@ export default function Clientes() {
   
   const [searchTerm, setSearchTerm] = useState("");
 
-  const formatTelefone = (value: string) => {
-    return value
-      .replace(/\D/g, "")
-      .replace(/(\d{2})(\d)/, "($1) $2")
-      .replace(/(\d{5})(\d)/, "$1-$2")
-      .replace(/(-\d{4})\d+?$/, "$1");
-  };
+  
   const formatCpf = (digits: string) => {
     return digits
       .replace(/(\d{3})(\d)/, "$1.$2")
@@ -361,8 +356,9 @@ export default function Clientes() {
                     <Input
                       id="cpf"
                       value={cpfCnpj}
-                      onChange={(e) => setCpfCnpj(e.target.value)}
+                      onChange={(e) => setCpfCnpj(formatDocument(e.target.value))}
                       placeholder="000.000.000-00"
+                      maxLength={18}
                       required
                     />
                   </div>
@@ -383,7 +379,7 @@ export default function Clientes() {
                     <Input
                       id="contato"
                       value={contato}
-                      onChange={(e) => setContato(formatTelefone(e.target.value))}
+                      onChange={(e) => setContato(formatPhone(e.target.value))}
                       maxLength={15}
                       placeholder="(11) 99999-9999"
                     />
