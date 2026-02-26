@@ -9,6 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Plus, Search, ArrowUpDown, User, Briefcase, Trash2, Pencil, Loader2, Landmark, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { formatCurrencyInput, parseCurrencyString } from "@/lib/currencyUtils";
+import { formatCPF, formatPhone } from "@/lib/maskUtils";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { supabase } from "@/integrations/supabase/client";
@@ -64,31 +66,8 @@ export default function Pessoas() {
   const [newConta, setNewConta] = useState({ banco: "", agencia: "", conta: "", tipo: "corrente" });
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Formatters
-  const formatCPF = (value: string) => {
-    return value
-      .replace(/\D/g, "")
-      .replace(/(\d{3})(\d)/, "$1.$2")
-      .replace(/(\d{3})(\d)/, "$1.$2")
-      .replace(/(\d{3})(\d{1,2})/, "$1-$2")
-      .replace(/(-\d{2})\d+?$/, "$1");
-  };
-
-  const formatTelefone = (value: string) => {
-    return value
-      .replace(/\D/g, "")
-      .replace(/(\d{2})(\d)/, "($1) $2")
-      .replace(/(\d{5})(\d)/, "$1-$2")
-      .replace(/(-\d{4})\d+?$/, "$1");
-  };
-
-  const formatCurrency = (value: string) => {
-    // Remove non-digits
-    const number = value.replace(/\D/g, "");
-    // Convert to decimal
-    const result = Number(number) / 100;
-    return result.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
-  };
+  
+  
   const [filterCargo, setFilterCargo] = useState("todos");
   const [sortField, setSortField] = useState<keyof Pessoa | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
@@ -145,8 +124,8 @@ export default function Pessoas() {
       endereco: pessoa.endereco || "",
       data_admissao: pessoa.data_admissao || "",
       data_demissao: (pessoa as any).data_demissao || "",
-      salario_fixo: pessoa.salario_fixo?.toString() || "",
-      valor_m2: pessoa.valor_m2?.toString() || "",
+      salario_fixo: pessoa.salario_fixo !== undefined && pessoa.salario_fixo !== null ? formatCurrencyInput((pessoa.salario_fixo * 100).toString()) : "",
+      valor_m2: pessoa.valor_m2 !== undefined && pessoa.valor_m2 !== null ? formatCurrencyInput((pessoa.valor_m2 * 100).toString()) : "",
       contas_bancarias: (pessoa as any).contas_bancarias || "",
     });
     setContasBancarias(Array.isArray((pessoa as any).contas_bancarias) ? (pessoa as any).contas_bancarias : []);
@@ -218,8 +197,8 @@ export default function Pessoas() {
         data_admissao: formData.data_admissao || null,
         data_demissao: formData.data_demissao || null,
         contas_bancarias: contasBancarias,
-        salario_fixo: formData.salario_fixo ? parseFloat(formData.salario_fixo) : null,
-        valor_m2: formData.valor_m2 ? parseFloat(formData.valor_m2) : null,
+        salario_fixo: formData.salario_fixo ? parseCurrencyString(formData.salario_fixo) : null,
+        valor_m2: formData.valor_m2 ? parseCurrencyString(formData.valor_m2) : null,
       };
 
       if (isEditMode && formData.id) {
@@ -438,7 +417,7 @@ export default function Pessoas() {
                       <Input
                         id="telefone"
                         value={formData.telefone}
-                        onChange={(e) => handleInputChange("telefone", formatTelefone(e.target.value))}
+                        onChange={(e) => handleInputChange("telefone", formatPhone(e.target.value))}
                         maxLength={15}
                         placeholder="(11) 99999-9999"
                       />
@@ -481,22 +460,20 @@ export default function Pessoas() {
                       <Label htmlFor="salario_fixo">Salário Fixo (R$)</Label>
                       <Input
                         id="salario_fixo"
-                        type="number"
-                        step="0.01"
+                        type="text"
                         value={formData.salario_fixo}
-                        onChange={(e) => handleInputChange("salario_fixo", e.target.value)}
-                        placeholder="0.00"
+                        onChange={(e) => handleInputChange("salario_fixo", formatCurrencyInput(e.target.value))}
+                        placeholder="R$ 0,00"
                       />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="valor_m2">Valor m² (R$)</Label>
                       <Input
                         id="valor_m2"
-                        type="number"
-                        step="0.01"
+                        type="text"
                         value={formData.valor_m2}
-                        onChange={(e) => handleInputChange("valor_m2", e.target.value)}
-                        placeholder="0.00"
+                        onChange={(e) => handleInputChange("valor_m2", formatCurrencyInput(e.target.value))}
+                        placeholder="R$ 0,00"
                       />
                     </div>
                   </div>
