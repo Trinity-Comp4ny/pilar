@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Plus, Calendar, User, DollarSign, Trash2, HardHat, Ruler, Settings2, Edit, CheckCircle2, MessageSquare } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { formatCurrencyInput, parseCurrencyString } from "@/lib/currencyUtils";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
@@ -278,7 +279,7 @@ export default function ProjetosKanban() {
       data_inicio: projeto.data_inicio || "",
       data_previsao: projeto.data_previsao || "",
       data_final: projeto.data_final || "",
-      valor_contrato: projeto.valor_contrato?.toString() || "",
+      valor_contrato: projeto.valor_contrato !== undefined ? formatCurrencyInput((projeto.valor_contrato * 100).toString()) : "",
       observacao: projeto.observacao || "",
       status: projeto.status,
     });
@@ -401,7 +402,7 @@ export default function ProjetosKanban() {
           p_data_inicio: formData.data_inicio || null,
           p_data_previsao: formData.data_previsao || null,
           p_data_final: formData.data_final || null,
-          p_valor_contrato: parseFloat(formData.valor_contrato) || 0,
+          p_valor_contrato: parseCurrencyString(formData.valor_contrato) || 0,
           p_observacao: formData.observacao,
           p_localizacao: formData.localizacao,
           p_parcelas: formData.parcelas || null,
@@ -425,7 +426,7 @@ export default function ProjetosKanban() {
           p_data_inicio: formData.data_inicio || null,
           p_data_previsao: formData.data_previsao || null,
           p_data_final: formData.data_final || null,
-          p_valor_contrato: parseFloat(formData.valor_contrato) || 0,
+          p_valor_contrato: parseCurrencyString(formData.valor_contrato) || 0,
           p_observacao: formData.observacao,
           p_localizacao: formData.localizacao,
           p_parcelas: formData.parcelas || null,
@@ -750,11 +751,10 @@ export default function ProjetosKanban() {
                               <Label htmlFor="valorTotal" className="text-xs text-green-700">Valor (R$)</Label>
                               <Input
                                 id="valorTotal"
-                                type="number"
-                                step="0.01"
+                                type="text"
                                 value={formData.valor_contrato}
-                                onChange={(e) => handleInputChange("valor_contrato", e.target.value)}
-                                placeholder="0.00"
+                                onChange={(e) => handleInputChange("valor_contrato", formatCurrencyInput(e.target.value))}
+                                placeholder="R$ 0,00"
                                 className="border-green-200 focus-visible:ring-green-200"
                               />
                             </div>
