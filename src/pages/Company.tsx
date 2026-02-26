@@ -31,6 +31,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowUpRight, Building2, Maximize2, Users as UsersIcon, Palette, Upload, Pencil, Trash2 } from "lucide-react";
+import { formatCNPJ, formatPhone, onlyDigits } from "@/lib/maskUtils";
 
 type CompanyUser = { id: string; name: string; email: string; role: string; contato?: string };
 type CompanyData = {
@@ -366,37 +367,11 @@ export default function Company() {
     return { label: status || "-", className: "bg-black/10 text-black/70 border border-black/10" };
   };
 
-  const onlyDigits = (v: string) => (v || "").replace(/\D/g, "");
-
-  const formatCNPJ = (value: string) => {
-    const digits = onlyDigits(value).slice(0, 14);
-    if (!digits) return "";
-    if (digits.length <= 2) return digits;
-    if (digits.length <= 5) return `${digits.slice(0, 2)}.${digits.slice(2)}`;
-    if (digits.length <= 8) return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5)}`;
-    if (digits.length <= 12) {
-      return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8)}`;
-    }
-    return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8, 12)}-${digits.slice(12)}`;
-  };
-
   const formatCEP = (value: string) => {
     const digits = onlyDigits(value).slice(0, 8);
     if (!digits) return "";
     if (digits.length <= 5) return digits;
     return `${digits.slice(0, 5)}-${digits.slice(5)}`;
-  };
-
-  const formatPhone = (value: string) => {
-    const digits = onlyDigits(value).slice(0, 11);
-    if (!digits) return "";
-    if (digits.length <= 2) return `(${digits}`;
-    const ddd = digits.slice(0, 2);
-    const rest = digits.slice(2);
-    if (rest.length <= 4) return `(${ddd}) ${rest}`;
-    if (rest.length <= 8) return `(${ddd}) ${rest.slice(0, 4)}-${rest.slice(4)}`;
-    if (rest.length <= 9) return `(${ddd}) ${rest.slice(0, 5)}-${rest.slice(5)}`;
-    return `(${ddd}) ${rest.slice(0, 5)}-${rest.slice(5, 9)}`;
   };
 
   const inputReadonlyClass = !editingCompany ? "bg-black/5 border-black/10 text-black/80" : "border-accent-orange/20 focus-visible:ring-accent-orange/20";

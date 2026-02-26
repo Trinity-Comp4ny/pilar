@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Mail, Phone, User, MapPin, CheckCircle2, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { formatPhone } from "@/lib/maskUtils";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
@@ -47,13 +48,7 @@ export default function Leads() {
   });
   const { toast } = useToast();
 
-  const formatTelefone = (value: string) => {
-    return value
-      .replace(/\D/g, "")
-      .replace(/(\d{2})(\d)/, "($1) $2")
-      .replace(/(\d{5})(\d)/, "$1-$2")
-      .replace(/(-\d{4})\d+?$/, "$1");
-  };
+  
 
   useEffect(() => {
     fetchLeads();
@@ -275,7 +270,7 @@ export default function Leads() {
                     <Input
                       id="contato"
                       value={formData.contato}
-                      onChange={(e) => setFormData({ ...formData, contato: formatTelefone(e.target.value) })}
+                      onChange={(e) => setFormData({ ...formData, contato: formatPhone(e.target.value) })}
                       maxLength={15}
                       placeholder="(11) 99999-9999"
                     />
