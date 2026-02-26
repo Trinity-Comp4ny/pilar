@@ -8,6 +8,7 @@ import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { useToast } from "@/hooks/use-toast";
 import { User, Mail, Phone, Building2 } from "lucide-react";
+import { formatPhone, onlyDigits } from "@/lib/maskUtils";
 
 export default function Profile() {
   const [editing, setEditing] = useState(false);
@@ -19,18 +20,7 @@ export default function Profile() {
   const [lastName, setLastName] = useState<string>("");
   const [contact, setContact] = useState<string>("");
 
-  const onlyDigits = (v: string) => (v || "").replace(/\D/g, "");
-  const formatPhone = (value: string) => {
-    const digits = onlyDigits(value).slice(0, 11);
-    if (!digits) return "";
-    if (digits.length <= 2) return `(${digits}`;
-    const ddd = digits.slice(0, 2);
-    const rest = digits.slice(2);
-    if (rest.length <= 4) return `(${ddd}) ${rest}`;
-    if (rest.length <= 8) return `(${ddd}) ${rest.slice(0, 4)}-${rest.slice(4)}`;
-    if (rest.length <= 9) return `(${ddd}) ${rest.slice(0, 5)}-${rest.slice(5)}`;
-    return `(${ddd}) ${rest.slice(0, 5)}-${rest.slice(5, 9)}`;
-  };
+  
 
   useEffect(() => {
     const fetchProfile = async () => {
