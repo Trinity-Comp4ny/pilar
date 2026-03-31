@@ -10,7 +10,7 @@ function LayoutContent() {
     <div className="min-h-screen bg-white">
       <AppSidebar />
       <div className={`${marginLeft}`}>
-        <main className="p-6 md:p-10">
+        <main className="md:p-10">
           <Outlet />
         </main>
       </div>
