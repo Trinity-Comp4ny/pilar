@@ -373,7 +373,6 @@ export default function Relatorios() {
 
   return (
     <PageLayout
-      className="overflow-y-hidden"
       containerClassName="h-full flex flex-col min-h-0"
       header={
         <PageHeader
@@ -383,7 +382,7 @@ export default function Relatorios() {
       }
     >
       <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-5 gap-6">
-        <div className="lg:col-span-2 flex flex-col gap-6 min-h-0">
+        <div className="lg:col-span-2 flex flex-col gap-6 min-h-0 order-2 lg:order-1">
           <Card className="rounded-2xl border border-black/5 bg-white">
             <CardHeader>
               <CardTitle className="text-lg font-medium tracking-tight">Construtor</CardTitle>
@@ -501,7 +500,7 @@ export default function Relatorios() {
           </Card>
         </div>
 
-        <div className="lg:col-span-3 min-h-0 flex flex-col">
+        <div className="lg:col-span-3 min-h-0 flex flex-col order-1 lg:order-2">
           <Card className="rounded-2xl border border-black/5 bg-white w-full flex flex-col min-h-0">
             <CardHeader>
               <div className="flex items-start justify-between gap-4">
