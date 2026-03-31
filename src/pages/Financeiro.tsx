@@ -12,7 +12,7 @@ import Metas from "./financeiro/tabs/Metas";
 import FolhaPagamento from "./financeiro/tabs/FolhaPagamento";
 
 export default function Financeiro() {
-  const { state } = useSidebar();
+  const { state, isMobile } = useSidebar();
   const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState<string>("visao-geral");
   const [visualizacao, setVisualizacao] = useState<"dia" | "mes" | "ano">("mes");
@@ -27,11 +27,11 @@ export default function Financeiro() {
   }, [searchParams]);
 
   return (
-    <div 
-      className="fixed top-0 right-0 bottom-0 bg-white z-40 overflow-hidden flex flex-col transition-[left] duration-300 ease-in-out"
-      style={{ left: state === "collapsed" ? "64px" : "240px" }}
+    <div
+      className="fixed top-0 right-0 bottom-0 bg-white z-40 overflow-x-hidden flex flex-col transition-[left] duration-300 ease-in-out"
+      style={{ left: isMobile ? "0px" : state === "collapsed" ? "64px" : "240px" }}
     >
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full h-full flex flex-col">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full flex flex-col h-full flex-1 overflow-hidden">
         {/* Header with Navigation */}
         <div className="sticky top-0 z-20 w-full bg-white border-b">
           <FinanceiroHeader
