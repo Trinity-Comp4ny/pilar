@@ -1,4 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { despesaSchema, despesaDefaultValues, type DespesaFormData } from "@/schemas/despesaSchema";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -63,21 +66,10 @@ export default function Despesas() {
   const { data: userRole } = useUserRole();
   const isAdmin = userRole === 'admin';
 
-  // Form States
-  const [dataVencimento, setDataVencimento] = useState<Date | undefined>(new Date());
-  const [descricao, setDescricao] = useState("");
-  const [categoriaId, setCategoriaId] = useState("");
-  const [valorTotal, setValorTotal] = useState("R$ 0,00");
-  const [parcelas, setParcelas] = useState("1");
-  const [formaPagamento, setFormaPagamento] = useState("");
-  const [fornecedorId, setFornecedorId] = useState("");
-  const [projetoID, setProjetoID] = useState("");
-  const [notaFiscal, setNotaFiscal] = useState("");
-  const [status, setStatus] = useState("Pago");
-  const [contaId, setContaId] = useState("");
-  const [cartaoId, setCartaoId] = useState("");
-  const [observacao, setObservacao] = useState("");
-  const [recorrencia, setRecorrencia] = useState("Nenhuma");
+  const form = useForm<DespesaFormData>({
+    resolver: zodResolver(despesaSchema),
+    defaultValues: despesaDefaultValues,
+  });
 
   const [categorias, setCategorias] = useState<{ id: string, name: string }[]>([]);
   const [fornecedores, setFornecedores] = useState<{ id: string, name: string }[]>([]);
@@ -158,53 +150,37 @@ export default function Despesas() {
   const handleValorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value;
     const formattedValue = formatCurrencyInput(inputValue);
-    setValorTotal(formattedValue);
+    form.setValue("valorTotal", formattedValue);
   };
 
   const openEditDespesa = (despesa: Despesa) => {
     setSelectedDespesa(despesa);
 
-    if (despesa.data_vencimento) setDataVencimento(new Date(despesa.data_vencimento));
-    setDescricao(despesa.descricao);
-    setValorTotal(formatCurrencyInput((despesa.valor * 100).toString()));
-    setStatus(despesa.status);
-    setCategoriaId(despesa.categoria_id || "");
-    setProjetoID(despesa.projeto_id || "");
-    setNotaFiscal(despesa.nota_fiscal || "");
-    setContaId(despesa.conta_id || "");
-    setCartaoId(despesa.cartao_id || "");
-    setObservacao(despesa.observacao || "");
-    setFornecedorId(despesa.fornecedor_id || "");
-    setParcelas("1");
+    form.reset({
+      dataVencimento: despesa.data_vencimento ? new Date(despesa.data_vencimento) : new Date(),
+      descricao: despesa.descricao,
+      valorTotal: formatCurrencyInput((despesa.valor * 100).toString()),
+      status: despesa.status as "Pago" | "Pendente",
+      categoriaId: despesa.categoria_id || "",
+      projetoID: despesa.projeto_id || "",
+      notaFiscal: despesa.nota_fiscal || "",
+      contaId: despesa.conta_id || "",
+      cartaoId: despesa.cartao_id || "",
+      observacao: despesa.observacao || "",
+      fornecedorId: despesa.fornecedor_id || "",
+      parcelas: "1",
+      formaPagamento: "",
+      recorrencia: "Nenhuma",
+    });
 
     setIsDetailOpen(false);
     setIsDialogOpen(true);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!dataVencimento || !descricao || !valorTotal) {
-      toast({
-        title: "Campos obrigatórios",
-        description: "Preencha todos os campos obrigatórios",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (status === 'Pago' && !contaId && !cartaoId) {
-      toast({
-        title: "Origem do pagamento",
-        description: "Para despesas pagas, selecione a Conta ou Cartão de Crédito.",
-        variant: "destructive",
-      });
-      return;
-    }
-
+  const handleSubmit = form.handleSubmit(async (formData) => {
     try {
-      const numParcelas = parseInt(parcelas) || 1;
-      const valorNumerico = parseCurrencyString(valorTotal);
+      const numParcelas = parseInt(formData.parcelas) || 1;
+      const valorNumerico = parseCurrencyString(formData.valorTotal);
       const valorParcela = valorNumerico / numParcelas;
       const { data: { user } } = await supabase.auth.getUser();
 
@@ -213,9 +189,9 @@ export default function Despesas() {
       const despesasToInsert = [];
 
       // Logic for Credit Card Date
-      let initialDate = new Date(dataVencimento);
-      if (formaPagamento === "Cartão de Crédito" && cartaoId) {
-        const card = cartoes.find(c => c.id === cartaoId);
+      let initialDate = new Date(formData.dataVencimento);
+      if (formData.formaPagamento === "Cartão de Crédito" && formData.cartaoId) {
+        const card = cartoes.find(c => c.id === formData.cartaoId);
         if (card) {
           const dayOfPurchase = initialDate.getDate();
           if (dayOfPurchase > card.dia_fechamento) {
@@ -230,19 +206,19 @@ export default function Despesas() {
         const dataStr = format(dataParcela, 'yyyy-MM-dd');
 
         despesasToInsert.push({
-          // user_id: user.id, 
+          // user_id: user.id,
           data_vencimento: dataStr,
-          data_pagamento: status === 'Pago' ? dataStr : null,
-          descricao: numParcelas > 1 ? `${descricao} (${i + 1}/${numParcelas})` : descricao,
-          categoria_id: categoriaId || null,
+          data_pagamento: formData.status === 'Pago' ? dataStr : null,
+          descricao: numParcelas > 1 ? `${formData.descricao} (${i + 1}/${numParcelas})` : formData.descricao,
+          categoria_id: formData.categoriaId || null,
           valor: valorParcela,
-          fornecedor_id: fornecedorId || null,
-          projeto_id: projetoID || null,
-          nota_fiscal: notaFiscal || null,
-          status: status === 'Pago' ? 'Pago' : 'Pendente',
-          conta_id: contaId || null,
-          cartao_id: cartaoId || null,
-          observacao: observacao || null,
+          fornecedor_id: formData.fornecedorId || null,
+          projeto_id: formData.projetoID || null,
+          nota_fiscal: formData.notaFiscal || null,
+          status: formData.status === 'Pago' ? 'Pago' : 'Pendente',
+          conta_id: formData.contaId || null,
+          cartao_id: formData.cartaoId || null,
+          observacao: formData.observacao || null,
         });
       }
 
@@ -274,23 +250,10 @@ export default function Despesas() {
         variant: "destructive",
       });
     }
-  };
+  });
 
   const resetForm = () => {
-    setDataVencimento(new Date());
-    setDescricao("");
-    setCategoriaId("");
-    setValorTotal("R$ 0,00");
-    setParcelas("1");
-    setFormaPagamento("");
-    setFornecedorId("");
-    setProjetoID("");
-    setNotaFiscal("");
-    setStatus("Pago");
-    setContaId("");
-    setCartaoId("");
-    setObservacao("");
-    setRecorrencia("Nenhuma");
+    form.reset(despesaDefaultValues);
   };
 
   const handleDelete = async (id: string) => {
@@ -373,22 +336,25 @@ export default function Despesas() {
                           variant="outline"
                           className={cn(
                             "w-full justify-start text-left font-normal text-xs h-9",
-                            !dataVencimento && "text-muted-foreground"
+                            !form.watch("dataVencimento") && "text-muted-foreground"
                           )}
                         >
                           <CalendarIcon className="mr-1 h-3 w-3" />
-                          {dataVencimento ? format(dataVencimento, "dd/MM/yyyy") : "Selecionar"}
+                          {form.watch("dataVencimento") ? format(form.watch("dataVencimento"), "dd/MM/yyyy") : "Selecionar"}
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0" align="start">
                         <Calendar
                           mode="single"
-                          selected={dataVencimento}
-                          onSelect={setDataVencimento}
+                          selected={form.watch("dataVencimento")}
+                          onSelect={(d) => form.setValue("dataVencimento", d as Date)}
                           initialFocus
                         />
                       </PopoverContent>
                     </Popover>
+                    {form.formState.errors.dataVencimento && (
+                      <p className="text-xs text-red-500">{form.formState.errors.dataVencimento.message}</p>
+                    )}
                   </div>
 
                   <div className="space-y-1">
@@ -396,17 +362,19 @@ export default function Despesas() {
                     <Input
                       id="valorTotal"
                       type="text"
-                      value={valorTotal}
+                      value={form.watch("valorTotal")}
                       onChange={handleValorChange}
                       placeholder="R$ 0,00"
-                      required
                       className="h-9"
                     />
+                    {form.formState.errors.valorTotal && (
+                      <p className="text-xs text-red-500">{form.formState.errors.valorTotal.message}</p>
+                    )}
                   </div>
 
                   <div className="space-y-1">
                     <Label htmlFor="status" className="text-xs">Status</Label>
-                    <Select value={status} onValueChange={setStatus}>
+                    <Select value={form.watch("status")} onValueChange={(v) => form.setValue("status", v as "Pago" | "Pendente")}>
                       <SelectTrigger className="h-9">
                         <SelectValue placeholder="Selecione" />
                       </SelectTrigger>
@@ -421,20 +389,20 @@ export default function Despesas() {
                     <Label htmlFor="descricao" className="text-xs">Descrição *</Label>
                     <Input
                       id="descricao"
-                      value={descricao}
-                      onChange={(e) => setDescricao(e.target.value)}
+                      {...form.register("descricao")}
                       placeholder="Descreva a despesa"
-                      required
                       className="h-9"
                     />
+                    {form.formState.errors.descricao && (
+                      <p className="text-xs text-red-500">{form.formState.errors.descricao.message}</p>
+                    )}
                   </div>
 
                   <div className="space-y-1 md:col-span-2">
                     <Label htmlFor="observacao" className="text-xs">Observação / Conta Destino</Label>
                     <Input
                       id="observacao"
-                      value={observacao}
-                      onChange={(e) => setObservacao(e.target.value)}
+                      {...form.register("observacao")}
                       placeholder="Observações adicionais"
                       className="h-9"
                     />
@@ -442,7 +410,7 @@ export default function Despesas() {
 
                   <div className="space-y-1">
                     <Label htmlFor="formaPagamento" className="text-xs">Forma de Pagamento</Label>
-                    <Select value={formaPagamento} onValueChange={setFormaPagamento}>
+                    <Select value={form.watch("formaPagamento")} onValueChange={(v) => form.setValue("formaPagamento", v)}>
                       <SelectTrigger className="h-9">
                         <SelectValue placeholder="Selecione" />
                       </SelectTrigger>
@@ -456,10 +424,10 @@ export default function Despesas() {
                     </Select>
                   </div>
 
-                  {formaPagamento === "Cartão de Crédito" ? (
+                  {form.watch("formaPagamento") === "Cartão de Crédito" ? (
                     <div className="space-y-1">
                       <Label htmlFor="cartaoId" className="text-xs">Cartão de Crédito</Label>
-                      <Select value={cartaoId} onValueChange={setCartaoId}>
+                      <Select value={form.watch("cartaoId")} onValueChange={(v) => form.setValue("cartaoId", v)}>
                         <SelectTrigger className="h-9">
                           <SelectValue placeholder="Selecione o cartão" />
                         </SelectTrigger>
@@ -473,7 +441,7 @@ export default function Despesas() {
                   ) : (
                     <div className="space-y-1">
                       <Label htmlFor="contaId" className="text-xs">Conta de Saída</Label>
-                      <Select value={contaId} onValueChange={setContaId}>
+                      <Select value={form.watch("contaId")} onValueChange={(v) => form.setValue("contaId", v)}>
                         <SelectTrigger className="h-9">
                           <SelectValue placeholder="Selecione a conta" />
                         </SelectTrigger>
@@ -483,6 +451,9 @@ export default function Despesas() {
                           ))}
                         </SelectContent>
                       </Select>
+                      {form.formState.errors.contaId && (
+                        <p className="text-xs text-red-500">{form.formState.errors.contaId.message}</p>
+                      )}
                     </div>
                   )}
 
@@ -492,8 +463,7 @@ export default function Despesas() {
                       id="parcelas"
                       type="number"
                       min="1"
-                      value={parcelas}
-                      onChange={(e) => setParcelas(e.target.value)}
+                      {...form.register("parcelas")}
                       placeholder="1"
                       className="h-9"
                     />
@@ -501,7 +471,7 @@ export default function Despesas() {
 
                   <div className="space-y-1">
                     <Label htmlFor="recorrencia" className="text-xs">Recorrência</Label>
-                    <Select value={recorrencia} onValueChange={setRecorrencia}>
+                    <Select value={form.watch("recorrencia")} onValueChange={(v) => form.setValue("recorrencia", v)}>
                       <SelectTrigger className="h-9">
                         <SelectValue placeholder="Selecione" />
                       </SelectTrigger>
@@ -516,7 +486,7 @@ export default function Despesas() {
 
                   <div className="space-y-1">
                     <Label htmlFor="categoriaId" className="text-xs">Categoria</Label>
-                    <Select value={categoriaId} onValueChange={setCategoriaId}>
+                    <Select value={form.watch("categoriaId")} onValueChange={(v) => form.setValue("categoriaId", v)}>
                       <SelectTrigger className="h-9">
                         <SelectValue placeholder="Selecione" />
                       </SelectTrigger>
@@ -530,7 +500,7 @@ export default function Despesas() {
 
                   <div className="space-y-1">
                     <Label htmlFor="fornecedorId" className="text-xs">Fornecedor</Label>
-                    <Select value={fornecedorId} onValueChange={setFornecedorId}>
+                    <Select value={form.watch("fornecedorId")} onValueChange={(v) => form.setValue("fornecedorId", v)}>
                       <SelectTrigger className="h-9">
                         <SelectValue placeholder="Selecione" />
                       </SelectTrigger>
@@ -544,7 +514,7 @@ export default function Despesas() {
 
                   <div className="space-y-1">
                     <Label htmlFor="projetoID" className="text-xs">Projeto</Label>
-                    <Select value={projetoID} onValueChange={setProjetoID}>
+                    <Select value={form.watch("projetoID")} onValueChange={(v) => form.setValue("projetoID", v)}>
                       <SelectTrigger className="h-9">
                         <SelectValue placeholder="Selecione" />
                       </SelectTrigger>
@@ -558,7 +528,7 @@ export default function Despesas() {
 
                   <div className="space-y-1">
                     <Label htmlFor="notaFiscal" className="text-xs">Nota Fiscal</Label>
-                    <Select value={notaFiscal} onValueChange={setNotaFiscal}>
+                    <Select value={form.watch("notaFiscal")} onValueChange={(v) => form.setValue("notaFiscal", v)}>
                       <SelectTrigger className="h-9">
                         <SelectValue placeholder="Selecione" />
                       </SelectTrigger>
