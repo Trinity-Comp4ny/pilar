@@ -11,10 +11,7 @@ const NotFound = () => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
 
   useEffect(() => {
-    console.error(
-      "404 Error: User attempted to access non-existent route:",
-      location.pathname
-    );
+    // 404: non-existent route accessed
   }, [location.pathname]);
 
   useEffect(() => {

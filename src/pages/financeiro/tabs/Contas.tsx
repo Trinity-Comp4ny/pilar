@@ -64,7 +64,7 @@ export default function Configuracoes() {
         return;
       }
 
-      const empresaIdResult = await (supabase.rpc as any)('get_user_empresa_id');
+      const empresaIdResult = await supabase.rpc('get_user_empresa_id', {});
       const empresaId = empresaIdResult.data;
 
       if (!empresaId) {
@@ -90,7 +90,6 @@ export default function Configuracoes() {
         }).eq('id', selectedConta.id);
 
         if (error) {
-          console.error('Erro ao atualizar conta:', error);
           toast({
             title: "Erro ao atualizar",
             description: error.message,
@@ -107,7 +106,6 @@ export default function Configuracoes() {
         const { error } = await supabase.from('contas').insert(payload);
 
         if (error) {
-          console.error('Erro ao criar conta:', error);
           toast({
             title: "Erro ao criar conta",
             description: error.message,
@@ -122,7 +120,6 @@ export default function Configuracoes() {
       }
       resetForm();
     } catch (err: any) {
-      console.error('Erro geral:', err);
       toast({
         title: "Erro",
         description: err.message || "Erro desconhecido",
@@ -148,7 +145,7 @@ export default function Configuracoes() {
         return;
       }
 
-      const empresaIdResult = await (supabase.rpc as any)('get_user_empresa_id');
+      const empresaIdResult = await supabase.rpc('get_user_empresa_id', {});
       const empresaId = empresaIdResult.data;
 
       if (!empresaId) {
@@ -175,7 +172,6 @@ export default function Configuracoes() {
         }).eq('id', selectedCartao.id);
 
         if (error) {
-          console.error('Erro ao atualizar cartão:', error);
           toast({
             title: "Erro ao atualizar",
             description: error.message,
@@ -192,7 +188,6 @@ export default function Configuracoes() {
         const { error } = await supabase.from('cartoes_credito').insert(payload);
 
         if (error) {
-          console.error('Erro ao criar cartão:', error);
           toast({
             title: "Erro ao criar cartão",
             description: error.message,
@@ -207,7 +202,6 @@ export default function Configuracoes() {
       }
       resetForm();
     } catch (err: any) {
-      console.error('Erro geral:', err);
       toast({
         title: "Erro",
         description: err.message || "Erro desconhecido",

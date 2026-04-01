@@ -40,13 +40,12 @@ export function PrivateRoute() {
           .single();
 
         if (error) {
-          console.error("Error fetching profile:", error);
           if (mounted) setIsLoading(false);
           return;
         }
 
         if (profile && mounted) {
-          const userProfile = profile as any;
+          const userProfile = profile;
           const isCompanySetup = location.pathname === '/company-setup';
           const isProfileSetup = location.pathname === '/profile-setup';
 
@@ -78,7 +77,7 @@ export function PrivateRoute() {
           }
         }
       } catch (error) {
-        console.error("Auth check error:", error);
+        // Auth check failed silently - user will be redirected to login
       } finally {
         if (mounted) setIsLoading(false);
       }

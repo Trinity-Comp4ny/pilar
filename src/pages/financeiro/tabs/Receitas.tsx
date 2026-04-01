@@ -82,44 +82,44 @@ export default function Receitas() {
 
   const fetchAuxiliaryData = async () => {
     // Fetch Categorias
-    const { data: categoriasData } = await (supabase
-      .from('categorias_financeiras') as any)
+    const { data: categoriasData } = await supabase
+      .from('categorias_financeiras')
       .select('*')
       .eq('tipo', 'Receita')
       .order('nome');
 
     if (categoriasData) {
-      setCategorias((categoriasData as any[]).map(cat => ({ id: cat.id, name: cat.nome })));
+      setCategorias((categoriasData ?? []).map((cat: any) => ({ id: cat.id, name: cat.nome })));
     }
 
     // Fetch Clientes
-    const { data: clientesData } = await (supabase
-      .from('clientes') as any)
+    const { data: clientesData } = await supabase
+      .from('clientes')
       .select('*')
       .order('nome');
 
     if (clientesData) {
-      setClientes((clientesData as any[]).map(c => ({ id: c.id, nome: c.nome })));
+      setClientes((clientesData ?? []).map((c: any) => ({ id: c.id, nome: c.nome })));
     }
 
     // Fetch Contas
-    const { data: contasData } = await (supabase
-      .from('contas') as any)
+    const { data: contasData } = await supabase
+      .from('contas')
       .select('*')
       .order('nome');
 
     if (contasData) {
-      setContas((contasData as any[]).map(c => ({ id: c.id, nome: c.nome })));
+      setContas((contasData ?? []).map((c: any) => ({ id: c.id, nome: c.nome })));
     }
 
     // Fetch Projetos
-    const { data: projetosData } = await (supabase
-      .from('projetos') as any)
+    const { data: projetosData } = await supabase
+      .from('projetos')
       .select('id, nome, codigo_projeto')
       .order('nome');
 
     if (projetosData) {
-      setProjetos((projetosData as any[]).map(p => ({ id: p.id, projetoID: p.codigo_projeto })));
+      setProjetos((projetosData ?? []).map((p: any) => ({ id: p.id, projetoID: p.codigo_projeto })));
     }
   };
 
@@ -130,9 +130,8 @@ export default function Receitas() {
   }, []);
 
   const fetchReceitas = async () => {
-    console.log('[RECEITAS] Fetching receitas...');
-    const { data, error } = await (supabase
-      .from('receitas') as any)
+    const { data, error } = await supabase
+      .from('receitas')
       .select(`
         *,
         categorias_financeiras (nome),
@@ -142,21 +141,18 @@ export default function Receitas() {
       .order('data_recebimento', { ascending: false }) // Ordena por data_recebimento (automação Bradesco)
       .order('data_vencimento', { ascending: false }); // Fallback para data_vencimento (manual)
 
-    console.log('[RECEITAS] Fetch result:', { count: data?.length, error });
-
     if (error) {
-      console.error('[RECEITAS] Error fetching:', error);
+      // Error will be visible through empty data state
     }
 
     if (data) {
-      const formattedData = (data as any[]).map((d: any) => ({
+      const formattedData = (data ?? []).map((d: any) => ({
         ...d,
         categoria_nome: d.categorias_financeiras?.nome,
         cliente_nome: d.clientes?.nome,
         projeto_codigo: d.projetos?.codigo_projeto,
         data_recebimento: d.data_recebimento || d.data_vencimento
       }));
-      console.log('[RECEITAS] Formatted data:', { count: formattedData.length, sample: formattedData[0] });
       setReceitas(formattedData);
     }
   };
@@ -255,11 +251,11 @@ export default function Receitas() {
       
       if (selectedReceita) {
         // Update existing receita
-        ({ error } = await (supabase.from('receitas') as any)
+        ({ error } = await supabase.from('receitas')
           .update(dataToInsert[0])
           .eq('id', selectedReceita.id));
       } else {
-        ({ error } = await (supabase.from('receitas') as any)
+        ({ error } = await supabase.from('receitas')
           .insert(dataToInsert));
       }
 

@@ -17,6 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Progress } from "@/components/ui/progress";
 
 import { useUserRole } from "@/hooks/useUserRole";
+import { PROJECT_STATUS, PROJECT_STATUS_CONFIG, KANBAN_COLUMN_ORDER, type ProjectStatus } from "@/constants";
 
 interface DisciplinaObservacao {
   id: string;
@@ -48,19 +49,13 @@ interface Projeto {
   localizacao?: string;
   parcelas?: string;
   area_m2?: number;
-  status: "Planejamento" | "Em andamento" | "Paralisado" | "Concluído" | "Cancelado";
+  status: ProjectStatus;
   valor_contrato: number;
   observacao: string;
   disciplinas: DisciplinaResponsavel[];
 }
 
-const statusConfig: Record<string, { label: string, color: string, columnColor: string }> = {
-  "Planejamento": { label: "Planejamento", color: "bg-yellow-100 text-yellow-800", columnColor: "bg-yellow-50" },
-  "Em andamento": { label: "Em andamento", color: "bg-blue-100 text-blue-800", columnColor: "bg-blue-50" },
-  "Concluído": { label: "Concluído", color: "bg-green-100 text-green-800", columnColor: "bg-green-50" },
-  "Paralisado": { label: "Paralisado", color: "bg-accent-orange/10 text-accent-orange", columnColor: "bg-accent-orange/5" },
-  "Cancelado": { label: "Cancelado", color: "bg-red-100 text-red-800", columnColor: "bg-red-50" },
-};
+const statusConfig = PROJECT_STATUS_CONFIG;
 
 const disciplinaStatusOptions = [
   "Não Iniciado",
@@ -97,7 +92,7 @@ export default function ProjetosKanban() {
     data_final: "",
     valor_contrato: "",
     observacao: "",
-    status: "Planejamento" as Projeto['status'],
+    status: PROJECT_STATUS.PLANEJAMENTO as Projeto['status'],
   });
 
   const canEdit = userRole === 'admin' || userRole === 'operacional';
@@ -174,11 +169,11 @@ export default function ProjetosKanban() {
 
   const fetchData = async () => {
     // Fetch Clientes
-    const { data: clientesData } = await (supabase.from('clientes') as any).select('id, nome').order('nome');
+    const { data: clientesData } = await supabase.from('clientes').select('id, nome').order('nome');
     if (clientesData) setClientes(clientesData);
 
     // Fetch Pessoas
-    const { data: pessoasData } = await (supabase.from('pessoas') as any).select('id, nome').order('nome');
+    const { data: pessoasData } = await supabase.from('pessoas').select('id, nome').order('nome');
     if (pessoasData) setPessoas(pessoasData);
 
     // Fetch Disciplinas
@@ -189,13 +184,13 @@ export default function ProjetosKanban() {
   };
 
   const fetchDisciplinas = async () => {
-    const { data } = await (supabase.from('disciplinas') as any).select('id, nome').order('nome');
+    const { data } = await supabase.from('disciplinas').select('id, nome').order('nome');
     if (data) setDisciplinas(data);
   };
 
   const fetchProjetos = async () => {
-    const { data, error } = await (supabase
-      .from('projetos') as any)
+    const { data, error } = await supabase
+      .from('projetos')
       .select(`
         *,
         clientes (nome)
@@ -203,12 +198,11 @@ export default function ProjetosKanban() {
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('Erro ao buscar projetos:', error);
       return;
     }
 
     if (data) {
-      const mappedProjetos: Projeto[] = (data as any[]).map((p: any) => ({
+      const mappedProjetos: Projeto[] = (data ?? []).map((p: any) => ({
         id: p.id,
         codigo_projeto: p.codigo_projeto,
         nome: p.nome,
@@ -258,7 +252,6 @@ export default function ProjetosKanban() {
       
       setIsDisciplinaDetailOpen(false);
     } catch (error: any) {
-      console.error("Erro ao salvar disciplinas:", error);
       toast({
         title: "Erro ao salvar",
         description: error.message,
@@ -341,7 +334,7 @@ export default function ProjetosKanban() {
   const handleAddDisciplina = async () => {
     if (!newDisciplina.trim()) return;
 
-    const { error } = await (supabase.from('disciplinas') as any).insert({ nome: newDisciplina });
+    const { error } = await supabase.from('disciplinas').insert({ nome: newDisciplina });
 
     if (error) {
       toast({ title: "Erro ao adicionar disciplina", variant: "destructive" });
@@ -353,7 +346,7 @@ export default function ProjetosKanban() {
   };
 
   const handleDeleteDisciplina = async (id: string) => {
-    const { error } = await (supabase.from('disciplinas') as any).delete().eq('id', id);
+    const { error } = await supabase.from('disciplinas').delete().eq('id', id);
     if (!error) {
       fetchDisciplinas();
     }
@@ -373,7 +366,7 @@ export default function ProjetosKanban() {
       data_final: "",
       valor_contrato: "",
       observacao: "",
-      status: "Planejamento",
+      status: PROJECT_STATUS.PLANEJAMENTO,
     });
     setProjetosDisciplinas([]);
     setIsEditMode(false);
@@ -394,7 +387,7 @@ export default function ProjetosKanban() {
     try {
       if (isEditMode && formData.id) {
         // Update existing project
-        const { error } = await (supabase.rpc as any)('update_projeto_completo', {
+        const { error } = await supabase.rpc('update_projeto_completo', {
           p_projeto_id: formData.id,
           p_codigo: formData.codigo_projeto,
           p_nome: formData.nome,
@@ -419,7 +412,7 @@ export default function ProjetosKanban() {
         });
       } else {
         // Create new project
-        const { data: projetoId, error } = await (supabase.rpc as any)('create_projeto_completo', {
+        const { data: projetoId, error } = await supabase.rpc('create_projeto_completo', {
           p_codigo: formData.codigo_projeto,
           p_nome: formData.nome,
           p_cliente_id: formData.cliente_id,
@@ -447,7 +440,6 @@ export default function ProjetosKanban() {
       fetchProjetos();
 
     } catch (error: any) {
-      console.error("Erro ao salvar:", error);
       toast({
         title: "Erro ao salvar",
         description: error.message || "Erro desconhecido",
@@ -457,7 +449,7 @@ export default function ProjetosKanban() {
   };
 
   const handleDelete = async (id: string) => {
-    const { error } = await (supabase.from('projetos') as any).delete().eq('id', id);
+    const { error } = await supabase.from('projetos').delete().eq('id', id);
     if (!error) {
       toast({ title: "Projeto excluído" });
       setIsDetailOpen(false);
@@ -481,8 +473,6 @@ export default function ProjetosKanban() {
     const newStatus = destination.droppableId as Projeto["status"];
     const todayStr = new Date().toISOString().slice(0, 10);
 
-    console.log('Tentando atualizar status para:', newStatus);
-
     // Optimistic update (inclui data_final quando for concluído)
     setProjetos((prevProjetos) =>
       prevProjetos.map((projeto) =>
@@ -490,7 +480,7 @@ export default function ProjetosKanban() {
           ? {
               ...projeto,
               status: newStatus,
-              data_final: newStatus === "Concluído" ? todayStr : projeto.data_final,
+              data_final: newStatus === PROJECT_STATUS.CONCLUIDO ? todayStr : projeto.data_final,
             }
           : projeto
       )
@@ -498,17 +488,16 @@ export default function ProjetosKanban() {
 
     try {
       const updateData: any = { status: newStatus };
-      if (newStatus === "Concluído") {
+      if (newStatus === PROJECT_STATUS.CONCLUIDO) {
         updateData.data_final = todayStr;
       }
 
-      const { error } = await (supabase
-        .from('projetos') as any)
+      const { error } = await supabase
+        .from('projetos')
         .update(updateData)
         .eq('id', draggableId);
 
       if (error) {
-        console.error('Erro ao atualizar status:', error);
         throw error;
       }
 
@@ -520,7 +509,6 @@ export default function ProjetosKanban() {
       // Recarrega para garantir consistência
       fetchProjetos();
     } catch (error: any) {
-      console.error('Erro completo:', error);
       toast({
         title: "Erro ao atualizar status",
         description: error.message || "Erro desconhecido",
