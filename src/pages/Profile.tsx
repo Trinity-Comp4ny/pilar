@@ -38,15 +38,15 @@ export default function Profile() {
 
         if (error) throw error;
 
-        const fullName = (profile as any)?.nome || "";
+        const fullName = profile?.nome || "";
         const parts = fullName.trim().split(/\s+/).filter(Boolean);
         const first = parts[0] || "";
         const last = parts.slice(1).join(" ");
 
         setFirstName(first);
         setLastName(last);
-        setContact((profile as any)?.contato || "");
-        setCompanyName((profile as any)?.empresas?.nome || "");
+        setContact(profile?.contato || "");
+        setCompanyName(profile?.empresas?.nome || "");
       } catch (err: any) {
         toast({
           variant: "destructive",

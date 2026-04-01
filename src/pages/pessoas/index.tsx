@@ -16,6 +16,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { CONTRACT_TYPES, CONTRACT_TYPE_LABELS } from "@/constants";
 
 interface Pessoa {
   id: string;
@@ -51,7 +52,7 @@ export default function Pessoas() {
     id: "",
     nome: "",
     cpf: "",
-    tipo_contrato: "contratado",
+    tipo_contrato: CONTRACT_TYPES.CONTRATADO,
     cargo: "",
     telefone: "",
     email: "",
@@ -79,13 +80,13 @@ export default function Pessoas() {
 
   const fetchPessoas = async () => {
     setIsLoading(true);
-    const { data, error } = await (supabase
-      .from('pessoas') as any)
+    const { data, error } = await supabase
+      .from('pessoas')
       .select('*')
       .order('nome');
-    
+
     if (data) {
-      setPessoas(data as any[]);
+      setPessoas(data as unknown as Pessoa[]);
     }
     setIsLoading(false);
   };
@@ -95,7 +96,7 @@ export default function Pessoas() {
       id: "",
       nome: "",
       cpf: "",
-      tipo_contrato: "contratado",
+      tipo_contrato: CONTRACT_TYPES.CONTRATADO,
       cargo: "",
       telefone: "",
       email: "",
@@ -123,12 +124,12 @@ export default function Pessoas() {
       email: pessoa.email || "",
       endereco: pessoa.endereco || "",
       data_admissao: pessoa.data_admissao || "",
-      data_demissao: (pessoa as any).data_demissao || "",
+      data_demissao: pessoa.data_demissao || "",
       salario_fixo: pessoa.salario_fixo !== undefined && pessoa.salario_fixo !== null ? formatCurrencyInput((pessoa.salario_fixo * 100).toString()) : "",
       valor_m2: pessoa.valor_m2 !== undefined && pessoa.valor_m2 !== null ? formatCurrencyInput((pessoa.valor_m2 * 100).toString()) : "",
-      contas_bancarias: (pessoa as any).contas_bancarias || "",
+      contas_bancarias: pessoa.contas_bancarias || "",
     });
-    setContasBancarias(Array.isArray((pessoa as any).contas_bancarias) ? (pessoa as any).contas_bancarias : []);
+    setContasBancarias(Array.isArray(pessoa.contas_bancarias) ? pessoa.contas_bancarias : []);
     setIsEditMode(true);
     setIsDialogOpen(true);
     setIsDetailOpen(false);
@@ -202,7 +203,7 @@ export default function Pessoas() {
       };
 
       if (isEditMode && formData.id) {
-        const { error } = await (supabase.from('pessoas') as any)
+        const { error } = await supabase.from('pessoas')
           .update(payload)
           .eq('id', formData.id);
 
@@ -213,9 +214,9 @@ export default function Pessoas() {
           description: "Dados da pessoa atualizados com sucesso",
         });
       } else {
-        const { error } = await (supabase.from('pessoas') as any).insert({
+        const { error } = await supabase.from('pessoas').insert({
           ...payload,
-          empresa_id: (await (supabase.rpc as any)('get_user_empresa_id')).data 
+          empresa_id: (await supabase.rpc('get_user_empresa_id', {})).data
         });
 
         if (error) throw error;
@@ -247,7 +248,7 @@ export default function Pessoas() {
   const handleDeleteConfirm = async () => {
     if (!pessoaToDelete) return;
     
-    const { error } = await (supabase.from('pessoas') as any).delete().eq('id', pessoaToDelete);
+    const { error } = await supabase.from('pessoas').delete().eq('id', pessoaToDelete);
     if (!error) {
       toast({ title: "Pessoa excluída" });
       setIsDetailOpen(false);
@@ -297,7 +298,7 @@ export default function Pessoas() {
 
   const filteredAndSortedPessoas = useMemo(() => {
     const term = searchTerm.trim();
-    let filtered = pessoas.filter((pessoa) => {
+    const filtered = pessoas.filter((pessoa) => {
       if (!term) return filterCargo === "todos" || pessoa.cargo === filterCargo;
 
       const digits = pessoa.cpf ? pessoa.cpf.replace(/\D/g, "") : "";
@@ -362,8 +363,8 @@ export default function Pessoas() {
                         <SelectValue placeholder="Selecione o tipo" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="contratado">Contratado (CLT/PJ)</SelectItem>
-                        <SelectItem value="terceirizado">Terceirizado</SelectItem>
+                        <SelectItem value={CONTRACT_TYPES.CONTRATADO}>{CONTRACT_TYPE_LABELS[CONTRACT_TYPES.CONTRATADO]}</SelectItem>
+                        <SelectItem value={CONTRACT_TYPES.TERCEIRIZADO}>{CONTRACT_TYPE_LABELS[CONTRACT_TYPES.TERCEIRIZADO]}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -753,10 +754,10 @@ export default function Pessoas() {
                     <Label className="text-xs text-muted-foreground">Admissão</Label>
                     <p className="font-medium">{selectedPessoa.data_admissao || '-'}</p>
                   </div>
-                  {(selectedPessoa as any).data_demissao && (
+                  {selectedPessoa.data_demissao && (
                     <div>
                       <Label className="text-xs text-muted-foreground">Demissão</Label>
-                      <p className="font-medium">{(selectedPessoa as any).data_demissao}</p>
+                      <p className="font-medium">{selectedPessoa.data_demissao}</p>
                     </div>
                   )}
                   <div>
@@ -798,9 +799,9 @@ export default function Pessoas() {
                 {/* Seção de Contas Bancárias no Detalhe */}
                 <div className="border-t pt-4 space-y-2">
                   <h4 className="font-medium text-sm text-muted-foreground mb-2">Contas Bancárias</h4>
-                  {((selectedPessoa as any).contas_bancarias && (selectedPessoa as any).contas_bancarias.length > 0) ? (
+                  {(selectedPessoa.contas_bancarias && selectedPessoa.contas_bancarias.length > 0) ? (
                     <div className="space-y-2">
-                      {(selectedPessoa as any).contas_bancarias.map((conta: any, index: number) => (
+                      {selectedPessoa.contas_bancarias.map((conta: any, index: number) => (
                         <div
                           key={index}
                           className={`flex items-center justify-between gap-3 bg-gray-50 border rounded-lg px-3 py-2 text-sm ${conta.is_primary ? 'border-accent-orange/50 bg-accent-orange/5' : 'border-gray-200'}`}

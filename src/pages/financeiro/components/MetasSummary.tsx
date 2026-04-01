@@ -21,7 +21,7 @@ export default function MetasSummary() {
   const { data: metas, isLoading } = useQuery({
     queryKey: ['metas-summary'],
     queryFn: async () => {
-      const { data, error } = await (supabase.from('metas') as any).select('*').limit(3);
+      const { data, error } = await supabase.from('metas').select('*').limit(3);
       if (error) throw error;
       return data as Meta[];
     }
