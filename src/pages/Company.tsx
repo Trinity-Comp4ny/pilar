@@ -111,11 +111,11 @@ export default function Company() {
         .eq('id', user.id)
         .single();
 
-      if (profile?.role) setCurrentRole((profile as any).role);
-      if (profile?.empresa_id) setCompanyId((profile as any).empresa_id);
+      if (profile?.role) setCurrentRole(profile.role);
+      if (profile?.empresa_id) setCompanyId(profile.empresa_id);
 
       if (profile?.empresas) {
-        const emp = profile.empresas as any;
+        const emp = profile.empresas;
         setCompanyData({
           nomeEmpresa: emp.nome || "",
           cnpj: emp.cnpj || "",
@@ -242,7 +242,6 @@ export default function Company() {
       setInviteRole("user");
 
     } catch (error: any) {
-      console.error("Invite error:", error);
       toast({
         variant: "destructive",
         title: "Erro ao convidar",
@@ -257,7 +256,7 @@ export default function Company() {
     setEditUserId(u.id);
     setEditUserName(u.name || "");
     setEditUserContact(u.contato || "");
-    setEditUserRole((ROLES.includes(u.role as any) ? (u.role as any) : "user") as any);
+    setEditUserRole(ROLES.includes(u.role as typeof ROLES[number]) ? u.role as typeof ROLES[number] : "user");
     setIsEditUserOpen(true);
   };
 
@@ -678,7 +677,7 @@ export default function Company() {
                       </div>
                       <div className="space-y-2">
                         <Label>Função</Label>
-                        <Select value={inviteRole} onValueChange={(v) => setInviteRole(v as any)}>
+                        <Select value={inviteRole} onValueChange={(v) => setInviteRole(v as typeof ROLES[number])}>
                           <SelectTrigger>
                             <SelectValue placeholder="Selecione" />
                           </SelectTrigger>
@@ -950,7 +949,7 @@ export default function Company() {
             </div>
             <div className="space-y-2">
               <Label>Função</Label>
-              <Select value={editUserRole} onValueChange={(v) => setEditUserRole(v as any)}>
+              <Select value={editUserRole} onValueChange={(v) => setEditUserRole(v as typeof ROLES[number])}>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>

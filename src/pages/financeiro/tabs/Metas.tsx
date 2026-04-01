@@ -52,7 +52,7 @@ export default function Metas() {
   const { data: metas, isLoading } = useQuery({
     queryKey: ["metas"],
     queryFn: async () => {
-      const { data, error } = await (supabase.from("metas") as any).select("*").order("created_at", { ascending: false });
+      const { data, error } = await supabase.from("metas").select("*").order("created_at", { ascending: false });
       if (error) throw error;
       return data as Meta[];
     }
@@ -61,7 +61,7 @@ export default function Metas() {
   // Create Meta
   const createMetaMutation = useMutation({
     mutationFn: async (newMeta: Omit<Meta, "id">) => {
-      const { error } = await (supabase.from("metas") as any).insert(newMeta);
+      const { error } = await supabase.from("metas").insert(newMeta);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -78,7 +78,7 @@ export default function Metas() {
   // Update Meta
   const updateMetaMutation = useMutation({
     mutationFn: async (meta: Meta) => {
-      const { error } = await (supabase.from("metas") as any).update({
+      const { error } = await supabase.from("metas").update({
         nome: meta.nome,
         alvo: meta.alvo,
         atual: meta.atual,
@@ -101,7 +101,7 @@ export default function Metas() {
   // Delete Meta
   const deleteMetaMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await (supabase.from("metas") as any).delete().eq("id", id);
+      const { error } = await supabase.from("metas").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -122,7 +122,7 @@ export default function Metas() {
       alvo: Number(novaMeta.alvo),
       atual: Number(novaMeta.atual),
       prazo: novaMeta.prazo,
-      categoria: novaMeta.categoria as any
+      categoria: novaMeta.categoria as Meta["categoria"]
     });
   };
 
@@ -304,7 +304,7 @@ export default function Metas() {
                     <select
                       className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                       value={editingMeta.categoria}
-                      onChange={(e) => setEditingMeta({ ...editingMeta, categoria: e.target.value as any })}
+                      onChange={(e) => setEditingMeta({ ...editingMeta, categoria: e.target.value as Meta["categoria"] })}
                     >
                       <option value="receita">Receita</option>
                       <option value="lucro">Lucro</option>

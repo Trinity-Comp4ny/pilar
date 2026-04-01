@@ -39,8 +39,8 @@ export function CategoryManager({ title, description, type, onCategoryChange }: 
 
   const fetchCategories = async () => {
     try {
-      const { data, error } = await (supabase
-        .from('categorias_financeiras') as any)
+      const { data, error } = await supabase
+        .from('categorias_financeiras')
         .select('*')
         .eq('tipo', type)
         .order('nome');
@@ -57,7 +57,6 @@ export function CategoryManager({ title, description, type, onCategoryChange }: 
         onCategoryChange(mappedCategories);
       }
     } catch (error: any) {
-      console.error("Error fetching categories:", error);
       toast({
         title: "Erro ao carregar categorias",
         description: error.message,
@@ -80,12 +79,12 @@ export function CategoryManager({ title, description, type, onCategoryChange }: 
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Usuário não autenticado");
 
-      const { error } = await (supabase
-        .from('categorias_financeiras') as any)
+      const { error } = await supabase
+        .from('categorias_financeiras')
         .insert({
           nome: newCategoryName.trim(),
           tipo: type,
-          empresa_id: (await (supabase.rpc as any)('get_user_empresa_id')).data 
+          empresa_id: (await supabase.rpc('get_user_empresa_id', {})).data
         });
 
       if (error) throw error;
@@ -118,8 +117,8 @@ export function CategoryManager({ title, description, type, onCategoryChange }: 
     }
 
     try {
-      const { error } = await (supabase
-        .from('categorias_financeiras') as any)
+      const { error } = await supabase
+        .from('categorias_financeiras')
         .update({ nome: editCategory.name.trim() })
         .eq('id', editCategory.id);
 
@@ -146,8 +145,8 @@ export function CategoryManager({ title, description, type, onCategoryChange }: 
     if (!deleteCategory) return;
 
     try {
-      const { error } = await (supabase
-        .from('categorias_financeiras') as any)
+      const { error } = await supabase
+        .from('categorias_financeiras')
         .delete()
         .eq('id', deleteCategory.id);
 
