@@ -26,16 +26,16 @@ export default function ResumoMensal({ dateFrom, dateTo }: ResumoMensalProps) {
       const firstDay = start.toISOString();
       const lastDay = end.toISOString();
 
-      const { data: receitas } = await (supabase
-        .from("receitas") as any)
+      const { data: receitas } = await supabase
+        .from("receitas")
         .select("*")
         .gte("data_recebimento", firstDay)
         .lte("data_recebimento", lastDay)
         .order("valor", { ascending: false })
         .limit(5);
 
-      const { data: despesas } = await (supabase
-        .from("despesas") as any)
+      const { data: despesas } = await supabase
+        .from("despesas")
         .select("*, categorias_financeiras(nome)")
         .gte("data_pagamento", firstDay)
         .lte("data_pagamento", lastDay)

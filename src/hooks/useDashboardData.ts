@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { subMonths, startOfMonth, endOfMonth } from "date-fns";
 import { getDisplayDate } from "@/lib/dateUtils";
+import { PROJECT_STATUS, FINANCIAL_STATUS } from "@/constants";
 
 export const useDashboardData = (dateFrom?: Date, dateTo?: Date) => {
   return useQuery({
@@ -16,21 +17,13 @@ export const useDashboardData = (dateFrom?: Date, dateTo?: Date) => {
       const fetchStart = subMonths(new Date(), 12);
 
       // 1. Fetch Categories first
-      console.log('[DASHBOARD] Fetching categories...');
-      const { data: categoriesData, error: categoriesError } = await (supabase as any)
+      const { data: categoriesData, error: categoriesError } = await supabase
         .from('categorias_financeiras')
         .select('id, nome, tipo');
-
-      console.log('[DASHBOARD] Categories:', {
-        count: categoriesData?.length,
-        error: categoriesError,
-        errorDetails: categoriesError ? JSON.stringify(categoriesError, null, 2) : null
-      });
 
       const categoriesMap = new Map(categoriesData?.map((c: any) => [c.id, c]) || []);
 
       // 2. Fetch Receitas
-      console.log('[DASHBOARD] Fetching receitas...');
       let receitasQuery = supabase
         .from("receitas")
         .select("*")
@@ -42,14 +35,7 @@ export const useDashboardData = (dateFrom?: Date, dateTo?: Date) => {
 
       const { data: receitasRaw, error: receitasError } = await receitasQuery;
 
-      console.log('[DASHBOARD] Receitas:', {
-        count: receitasRaw?.length,
-        error: receitasError,
-        sample: receitasRaw?.[0]
-      });
-
       if (receitasError) {
-        console.error('[DASHBOARD] Receitas error:', receitasError);
         throw receitasError;
       }
 
@@ -66,7 +52,6 @@ export const useDashboardData = (dateFrom?: Date, dateTo?: Date) => {
         .order("data_vencimento", { ascending: false }); // Fallback para data_vencimento (manual)
 
       if (receitasChartAllError) {
-        console.error('[DASHBOARD] Receitas chart all time error:', receitasChartAllError);
         throw receitasChartAllError;
       }
 
@@ -76,12 +61,10 @@ export const useDashboardData = (dateFrom?: Date, dateTo?: Date) => {
         .select("valor");
 
       if (receitasAllError) {
-        console.error('[DASHBOARD] Receitas total geral error:', receitasAllError);
         throw receitasAllError;
       }
 
       // 3. Fetch Despesas
-      console.log('[DASHBOARD] Fetching despesas...');
       let despesasQuery = supabase
         .from("despesas")
         .select("*")
@@ -92,14 +75,7 @@ export const useDashboardData = (dateFrom?: Date, dateTo?: Date) => {
 
       const { data: despesasRaw, error: despesasError } = await despesasQuery;
 
-      console.log('[DASHBOARD] Despesas:', {
-        count: despesasRaw?.length,
-        error: despesasError,
-        sample: despesasRaw?.[0]
-      });
-
       if (despesasError) {
-        console.error('[DASHBOARD] Despesas error:', despesasError);
         throw despesasError;
       }
 
@@ -115,7 +91,6 @@ export const useDashboardData = (dateFrom?: Date, dateTo?: Date) => {
         .order("data_vencimento", { ascending: true });
 
       if (despesasChartAllError) {
-        console.error('[DASHBOARD] Despesas chart all time error:', despesasChartAllError);
         throw despesasChartAllError;
       }
 
@@ -125,14 +100,13 @@ export const useDashboardData = (dateFrom?: Date, dateTo?: Date) => {
         .select("valor");
 
       if (despesasAllError) {
-        console.error('[DASHBOARD] Despesas total geral error:', despesasAllError);
         throw despesasAllError;
       }
 
       // 4. Fetch Leads (Total Novos)
       let leadsCount = 0;
       try {
-        const { count, error: leadsError } = await (supabase as any)
+        const { count, error: leadsError } = await supabase
           .from("leads")
           .select("*", { count: 'exact', head: true });
 
@@ -140,7 +114,7 @@ export const useDashboardData = (dateFrom?: Date, dateTo?: Date) => {
           leadsCount = count || 0;
         }
       } catch (e) {
-        console.log("Leads table might not exist yet");
+        // Leads table might not exist yet
       }
 
       // 5. Fetch Recent Projects
@@ -148,13 +122,12 @@ export const useDashboardData = (dateFrom?: Date, dateTo?: Date) => {
       let projectsCount = 0;
 
       try {
-        console.log('[DASHBOARD] Fetching projects...');
 
         // First fetch count
         const { count, error: countError } = await supabase
           .from("projetos")
           .select("*", { count: 'exact', head: true })
-          .eq("status", "Em andamento");
+          .eq("status", PROJECT_STATUS.EM_ANDAMENTO);
 
         if (!countError) projectsCount = count || 0;
 
@@ -174,14 +147,11 @@ export const useDashboardData = (dateFrom?: Date, dateTo?: Date) => {
           .order("created_at", { ascending: false })
           .limit(5);
 
-        if (projectsError) {
-          console.error('[DASHBOARD] Projects error:', projectsError);
-        } else {
+        if (!projectsError) {
           recentProjects = projectsData || [];
-          console.log('[DASHBOARD] Projects fetched:', recentProjects.length);
         }
       } catch (error) {
-        console.error('[DASHBOARD] Projects unexpected error:', error);
+        // Projects fetch failed silently
       }
 
       // Filter data for the Main Period (dateFrom to dateTo)
@@ -207,33 +177,25 @@ export const useDashboardData = (dateFrom?: Date, dateTo?: Date) => {
       };
 
       // Stats Calculation
-      console.log('[DASHBOARD] Period filters:', { start, end, fetchStart });
-      console.log('[DASHBOARD] Raw data before filtering:', {
-        totalReceitas: receitas?.length,
-        totalDespesas: despesas?.length,
-        receitasSample: receitas?.[0],
-        despesasSample: despesas?.[0]
-      });
-
       // Para receitas: usar data_recebimento se existir (automação Bradesco), senão data_vencimento (manual)
-      const receitasMain = (receitas as any[])?.filter(r => {
+      const receitasMain = (receitas ?? []).filter(r => {
         const displayDate = getDisplayDate(r.data_recebimento, r.data_vencimento, r.status);
         return displayDate && inMainPeriod(displayDate);
       }) || [];
       // Para despesas: usar data_pagamento se existir, senão data_vencimento
-      const despesasMain = (despesas as any[])?.filter(d => {
+      const despesasMain = (despesas ?? []).filter(d => {
         const displayDate = getDisplayDate(d.data_pagamento, d.data_vencimento, d.status);
         return displayDate && inMainPeriod(displayDate);
       }) || [];
 
-      const receitasChartAll = (receitasChartAllRaw as any[]) || [];
-      const despesasChartAll = (despesasChartAllRaw as any[]) || [];
+      const receitasChartAll = receitasChartAllRaw ?? [];
+      const despesasChartAll = despesasChartAllRaw ?? [];
 
-      const receitasPrev = (receitas as any[])?.filter(r => {
+      const receitasPrev = (receitas ?? []).filter(r => {
         const displayDate = getDisplayDate(r.data_recebimento, r.data_vencimento, r.status);
         return displayDate && inPreviousPeriod(displayDate);
       }) || [];
-      const despesasPrev = (despesas as any[])?.filter(d => {
+      const despesasPrev = (despesas ?? []).filter(d => {
         const displayDate = getDisplayDate(d.data_pagamento, d.data_vencimento, d.status);
         return displayDate && inPreviousPeriod(displayDate);
       }) || [];
@@ -241,17 +203,8 @@ export const useDashboardData = (dateFrom?: Date, dateTo?: Date) => {
       const receitasTotal = receitasMain.reduce((acc, curr) => acc + Number(curr.valor), 0);
       const despesasTotal = despesasMain.reduce((acc, curr) => acc + Number(curr.valor), 0);
 
-      const receitasTotalGeral = (receitasAllRaw as any[])?.reduce((acc, curr) => acc + Number(curr.valor), 0) || 0;
-      const despesasTotalGeral = (despesasAllRaw as any[])?.reduce((acc, curr) => acc + Number(curr.valor), 0) || 0;
-
-      console.log('[DASHBOARD] Calculations:', {
-        receitasMain: receitasMain.length,
-        despesasMain: despesasMain.length,
-        receitasTotal,
-        despesasTotal,
-        receitasMainSample: receitasMain[0],
-        despesasMainSample: despesasMain[0]
-      });
+      const receitasTotalGeral = (receitasAllRaw ?? []).reduce((acc, curr) => acc + Number(curr.valor), 0);
+      const despesasTotalGeral = (despesasAllRaw ?? []).reduce((acc, curr) => acc + Number(curr.valor), 0);
 
       const receitasPrevTotal = receitasPrev.reduce((acc, curr) => acc + Number(curr.valor), 0);
       const despesasPrevTotal = despesasPrev.reduce((acc, curr) => acc + Number(curr.valor), 0);
@@ -279,7 +232,7 @@ export const useDashboardData = (dateFrom?: Date, dateTo?: Date) => {
       const formattedProjects = recentProjects?.map(p => ({
         id: p.id,
         name: p.codigo_projeto || "Sem Nome",
-        status: p.status || "Pendente",
+        status: p.status || FINANCIAL_STATUS.PENDENTE,
         client: p.clientes?.nome || "Cliente não informado",
         value: p.valor_contrato ? `R$ ${Number(p.valor_contrato).toLocaleString('pt-BR')}` : "R$ 0,00"
       })) || [];
@@ -302,14 +255,6 @@ export const useDashboardData = (dateFrom?: Date, dateTo?: Date) => {
         recentProjects: formattedProjects,
         categoriaData,
         despesasCategoriaData,
-        debug: {
-          receitasCount: receitasRaw?.length || 0,
-          despesasCount: despesasRaw?.length || 0,
-          receitasError: receitasError?.message,
-          despesasError: despesasError?.message,
-          periodStart: start.toISOString(),
-          periodEnd: end.toISOString()
-        }
       };
     }
   });
