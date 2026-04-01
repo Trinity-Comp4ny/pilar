@@ -19,6 +19,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
 import { getDisplayDate, formatDateDisplay } from "@/lib/dateUtils";
 import { formatCurrencyInput, parseCurrencyString } from "@/lib/currencyUtils";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { receitaSchema, receitaDefaultValues, type ReceitaFormData } from "@/schemas/receitaSchema";
 
 /**
  * Função para obter a data de exibição correta baseada no status
@@ -60,20 +63,10 @@ export default function Receitas() {
   const { data: userRole } = useUserRole();
   const isAdmin = userRole === 'admin';
 
-  // Form States
-  const [dataVencimento, setDataVencimento] = useState<Date | undefined>(new Date());
-  const [descricao, setDescricao] = useState("");
-  const [projetoID, setProjetoID] = useState("");
-  const [categoriaId, setCategoriaId] = useState("");
-  const [valorTotal, setValorTotal] = useState("R$ 0,00");
-  const [formaPagamento, setFormaPagamento] = useState("");
-  const [notaFiscal, setNotaFiscal] = useState("");
-  const [status, setStatus] = useState("Recebida");
-  const [contaId, setContaId] = useState("");
-  const [clienteId, setClienteId] = useState("");
-  const [observacao, setObservacao] = useState("");
-  const [recorrencia, setRecorrencia] = useState("Nenhuma");
-  const [parcelas, setParcelas] = useState("1");
+  const form = useForm<ReceitaFormData>({
+    resolver: zodResolver(receitaSchema),
+    defaultValues: receitaDefaultValues,
+  });
 
   const [categorias, setCategorias] = useState<{ id: string, name: string }[]>([]);
   const [projetos, setProjetos] = useState<{ id: string, projetoID: string }[]>([]);
@@ -164,44 +157,36 @@ export default function Receitas() {
   const handleValorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value;
     const formattedValue = formatCurrencyInput(inputValue);
-    setValorTotal(formattedValue);
+    form.setValue("valorTotal", formattedValue);
   };
 
   const openEditReceita = (receita: Receita) => {
     setSelectedReceita(receita);
 
-    if (receita.data_vencimento) setDataVencimento(new Date(receita.data_vencimento));
-    setDescricao(receita.descricao);
-    setValorTotal(formatCurrencyInput((receita.valor * 100).toString()));
-    setStatus(receita.status === 'Recebido' ? 'Recebida' : 'Pendente');
-    setCategoriaId(receita.categoria_id || "");
-    setProjetoID(receita.projeto_id || "");
-    setNotaFiscal(receita.nota_fiscal || "");
-    setContaId(receita.conta_id || "");
-    setClienteId(receita.cliente_id || "");
-    setObservacao(receita.observacao || "");
-    setFormaPagamento(receita.forma_pagamento || "");
-    setParcelas("1");
+    form.reset({
+      dataVencimento: receita.data_vencimento ? new Date(receita.data_vencimento) : new Date(),
+      descricao: receita.descricao,
+      valorTotal: formatCurrencyInput((receita.valor * 100).toString()),
+      status: receita.status === 'Recebido' ? 'Recebida' : 'Pendente',
+      categoriaId: receita.categoria_id || "",
+      projetoID: receita.projeto_id || "",
+      notaFiscal: receita.nota_fiscal || "",
+      contaId: receita.conta_id || "",
+      clienteId: receita.cliente_id || "",
+      observacao: receita.observacao || "",
+      formaPagamento: receita.forma_pagamento || "",
+      parcelas: "1",
+      recorrencia: "Nenhuma",
+    });
 
     setIsDetailOpen(false);
     setIsDialogOpen(true);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!dataVencimento || !descricao || !valorTotal) {
-      toast({
-        title: "Campos obrigatórios",
-        description: "Preencha todos os campos obrigatórios",
-        variant: "destructive",
-      });
-      return;
-    }
-
+  const handleSubmit = form.handleSubmit(async (formData) => {
     try {
-      const numParcelas = parseInt(parcelas) || 1;
-      const valorNumerico = parseCurrencyString(valorTotal);
+      const numParcelas = parseInt(formData.parcelas) || 1;
+      const valorNumerico = parseCurrencyString(formData.valorTotal);
       const valorParcela = valorNumerico / numParcelas;
       const { data: { user } } = await supabase.auth.getUser();
 
@@ -210,47 +195,33 @@ export default function Receitas() {
       const receitasToInsert = [];
 
       for (let i = 0; i < numParcelas; i++) {
-        const dataParcela = addMonths(dataVencimento, i);
+        const dataParcela = addMonths(formData.dataVencimento, i);
         const dataStr = format(dataParcela, 'yyyy-MM-dd');
 
         receitasToInsert.push({
-          // user_id: user.id, // Not needed if trigger handles created_by
           data_vencimento: dataStr,
-          data_recebimento: status === 'Recebida' ? dataStr : null,
-          descricao: numParcelas > 1 ? `${descricao} (${i + 1}/${numParcelas})` : descricao,
-          projeto_id: projetoID || null,
-          categoria_id: categoriaId || null,
-          valor: valorParcela, // Mapped to 'valor' in DB if using 'valor', but schema says 'valor'. Wait, types say 'valor_total'.
-          // Types file says 'valor_total' for receitas table?
-          // Let me check schema again.
-          // Schema line 287: valor DECIMAL(12,2) NOT NULL.
-          // Types file might be wrong. I should use 'valor' and cast to any if needed.
-          // But wait, 'Receitas.tsx' previously used 'valor_total'.
-          // I will use 'valor' as per schema.
-          forma_pagamento: formaPagamento || null,
-          nota_fiscal: notaFiscal || null,
-          status: status === 'Recebida' ? 'Recebido' : 'Pendente', // Schema uses 'Recebido' (Past Participle) or 'Pendente'. Form uses 'Recebida'.
-          conta_id: contaId || null,
-          cliente_id: clienteId || null,
-          observacao: observacao || null
+          data_recebimento: formData.status === 'Recebida' ? dataStr : null,
+          descricao: numParcelas > 1 ? `${formData.descricao} (${i + 1}/${numParcelas})` : formData.descricao,
+          projeto_id: formData.projetoID || null,
+          categoria_id: formData.categoriaId || null,
+          valor: valorParcela,
+          forma_pagamento: formData.formaPagamento || null,
+          nota_fiscal: formData.notaFiscal || null,
+          status: formData.status === 'Recebida' ? 'Recebido' : 'Pendente',
+          conta_id: formData.contaId || null,
+          cliente_id: formData.clienteId || null,
+          observacao: formData.observacao || null
         });
       }
 
-      // Need to use 'valor' not 'valor_total' if schema says 'valor'.
-      // I'll map it to 'valor' in the object. 
-      // But I need to check if `receitas` table in types has `valor` or `valor_total`.
-      // Types file says `valor_total` for `receitas`.
-      // Schema says `valor`.
-      // Since I can't regenerate types, I will cast insert to any.
       const dataToInsert = receitasToInsert.map(r => ({
         ...r,
-        valor: r.valor // Ensure we use 'valor' column name
+        valor: r.valor
       }));
 
       let error = null;
-      
+
       if (selectedReceita) {
-        // Update existing receita
         ({ error } = await supabase.from('receitas')
           .update(dataToInsert[0])
           .eq('id', selectedReceita.id));
@@ -265,7 +236,6 @@ export default function Receitas() {
         title: selectedReceita ? "Receita atualizada" : "Receita cadastrada",
         description: selectedReceita ? `1 registro atualizado com sucesso` : `${numParcelas} registro(s) criado(s) com sucesso`,
       });
-      
 
       setIsDialogOpen(false);
       fetchReceitas();
@@ -277,22 +247,10 @@ export default function Receitas() {
         variant: "destructive",
       });
     }
-  };
+  });
 
   const resetForm = () => {
-    setDataVencimento(new Date());
-    setDescricao("");
-    setProjetoID("");
-    setCategoriaId("");
-    setValorTotal("R$ 0,00");
-    setFormaPagamento("");
-    setNotaFiscal("");
-    setStatus("Recebida");
-    setContaId("");
-    setClienteId("");
-    setObservacao("");
-    setRecorrencia("Nenhuma");
-    setParcelas("1");
+    form.reset(receitaDefaultValues);
     setSelectedReceita(null);
   };
 
@@ -376,18 +334,18 @@ export default function Receitas() {
                           variant="outline"
                           className={cn(
                             "w-full justify-start text-left font-normal text-xs h-9",
-                            !dataVencimento && "text-muted-foreground"
+                            !form.watch("dataVencimento") && "text-muted-foreground"
                           )}
                         >
                           <CalendarIcon className="mr-1 h-3 w-3" />
-                          {dataVencimento ? format(dataVencimento, "dd/MM/yyyy") : "Selecionar"}
+                          {form.watch("dataVencimento") ? format(form.watch("dataVencimento"), "dd/MM/yyyy") : "Selecionar"}
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0" align="start">
                         <Calendar
                           mode="single"
-                          selected={dataVencimento}
-                          onSelect={setDataVencimento}
+                          selected={form.watch("dataVencimento")}
+                          onSelect={(d) => form.setValue("dataVencimento", d as Date)}
                           initialFocus
                         />
                       </PopoverContent>
@@ -399,17 +357,16 @@ export default function Receitas() {
                     <Input
                       id="valorTotal"
                       type="text"
-                      value={valorTotal}
+                      value={form.watch("valorTotal")}
                       onChange={handleValorChange}
                       placeholder="R$ 0,00"
-                      required
                       className="h-9"
                     />
                   </div>
 
                   <div className="space-y-1">
                     <Label htmlFor="status" className="text-xs">Status</Label>
-                    <Select value={status} onValueChange={setStatus}>
+                    <Select value={form.watch("status")} onValueChange={(v) => form.setValue("status", v as "Recebida" | "Pendente")}>
                       <SelectTrigger className="h-9">
                         <SelectValue placeholder="Selecione" />
                       </SelectTrigger>
@@ -426,8 +383,7 @@ export default function Receitas() {
                       id="parcelas"
                       type="number"
                       min="1"
-                      value={parcelas}
-                      onChange={(e) => setParcelas(e.target.value)}
+                      {...form.register("parcelas")}
                       className="h-9"
                     />
                   </div>
@@ -436,10 +392,8 @@ export default function Receitas() {
                     <Label htmlFor="descricao" className="text-xs">Descrição *</Label>
                     <Input
                       id="descricao"
-                      value={descricao}
-                      onChange={(e) => setDescricao(e.target.value)}
+                      {...form.register("descricao")}
                       placeholder="Descreva a receita"
-                      required
                       className="h-9"
                     />
                   </div>
@@ -448,8 +402,7 @@ export default function Receitas() {
                     <Label htmlFor="observacao" className="text-xs">Observação</Label>
                     <Input
                       id="observacao"
-                      value={observacao}
-                      onChange={(e) => setObservacao(e.target.value)}
+                      {...form.register("observacao")}
                       placeholder="Observações adicionais"
                       className="h-9"
                     />
@@ -457,7 +410,7 @@ export default function Receitas() {
 
                   <div className="space-y-1">
                     <Label htmlFor="clienteId" className="text-xs">Cliente (Pagante)</Label>
-                    <Select value={clienteId} onValueChange={setClienteId}>
+                    <Select value={form.watch("clienteId")} onValueChange={(v) => form.setValue("clienteId", v)}>
                       <SelectTrigger className="h-9">
                         <SelectValue placeholder="Selecione o cliente" />
                       </SelectTrigger>
@@ -471,7 +424,7 @@ export default function Receitas() {
 
                   <div className="space-y-1">
                     <Label htmlFor="projetoID" className="text-xs">Projeto</Label>
-                    <Select value={projetoID} onValueChange={setProjetoID}>
+                    <Select value={form.watch("projetoID")} onValueChange={(v) => form.setValue("projetoID", v)}>
                       <SelectTrigger className="h-9">
                         <SelectValue placeholder="Selecione" />
                       </SelectTrigger>
@@ -485,7 +438,7 @@ export default function Receitas() {
 
                   <div className="space-y-1">
                     <Label htmlFor="categoriaId" className="text-xs">Categoria</Label>
-                    <Select value={categoriaId} onValueChange={setCategoriaId}>
+                    <Select value={form.watch("categoriaId")} onValueChange={(v) => form.setValue("categoriaId", v)}>
                       <SelectTrigger className="h-9">
                         <SelectValue placeholder="Selecione" />
                       </SelectTrigger>
@@ -499,7 +452,7 @@ export default function Receitas() {
 
                   <div className="space-y-1">
                     <Label htmlFor="formaPagamento" className="text-xs">Forma de Pagamento</Label>
-                    <Select value={formaPagamento} onValueChange={setFormaPagamento}>
+                    <Select value={form.watch("formaPagamento")} onValueChange={(v) => form.setValue("formaPagamento", v)}>
                       <SelectTrigger className="h-9">
                         <SelectValue placeholder="Selecione" />
                       </SelectTrigger>
@@ -514,7 +467,7 @@ export default function Receitas() {
 
                   <div className="space-y-1">
                     <Label htmlFor="contaId" className="text-xs">Conta de Recebimento</Label>
-                    <Select value={contaId} onValueChange={setContaId}>
+                    <Select value={form.watch("contaId")} onValueChange={(v) => form.setValue("contaId", v)}>
                       <SelectTrigger className="h-9">
                         <SelectValue placeholder="Selecione a conta" />
                       </SelectTrigger>
@@ -528,7 +481,7 @@ export default function Receitas() {
 
                   <div className="space-y-1">
                     <Label htmlFor="recorrencia" className="text-xs">Recorrência</Label>
-                    <Select value={recorrencia} onValueChange={setRecorrencia}>
+                    <Select value={form.watch("recorrencia")} onValueChange={(v) => form.setValue("recorrencia", v)}>
                       <SelectTrigger className="h-9">
                         <SelectValue placeholder="Selecione" />
                       </SelectTrigger>
@@ -543,7 +496,7 @@ export default function Receitas() {
 
                   <div className="space-y-1">
                     <Label htmlFor="notaFiscal" className="text-xs">Nota Fiscal</Label>
-                    <Select value={notaFiscal} onValueChange={setNotaFiscal}>
+                    <Select value={form.watch("notaFiscal")} onValueChange={(v) => form.setValue("notaFiscal", v)}>
                       <SelectTrigger className="h-9">
                         <SelectValue placeholder="Selecione" />
                       </SelectTrigger>
