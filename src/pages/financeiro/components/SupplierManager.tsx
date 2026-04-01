@@ -47,8 +47,8 @@ export function SupplierManager({ onSupplierChange }: SupplierManagerProps) {
 
   const fetchSuppliers = async () => {
     try {
-      const { data, error } = await (supabase
-        .from('fornecedores') as any)
+      const { data, error } = await supabase
+        .from('fornecedores')
         .select('*')
         .order('nome');
 
@@ -86,14 +86,14 @@ export function SupplierManager({ onSupplierChange }: SupplierManagerProps) {
     }
 
     try {
-       const { error } = await (supabase
-        .from('fornecedores') as any)
+       const { error } = await supabase
+        .from('fornecedores')
         .insert({
           nome: newSupplier.name.trim(),
           contato: newSupplier.contact?.trim(),
           email: newSupplier.email?.trim(),
           cnpj: newSupplier.cnpj?.trim(),
-          empresa_id: (await (supabase.rpc as any)('get_user_empresa_id')).data 
+          empresa_id: (await supabase.rpc('get_user_empresa_id', {})).data
         });
 
       if (error) throw error;
@@ -131,8 +131,8 @@ export function SupplierManager({ onSupplierChange }: SupplierManagerProps) {
     }
 
     try {
-      const { error } = await (supabase
-        .from('fornecedores') as any)
+      const { error } = await supabase
+        .from('fornecedores')
         .update({
           nome: editSupplier.name.trim(),
           contato: editSupplier.contact?.trim(),
@@ -164,8 +164,8 @@ export function SupplierManager({ onSupplierChange }: SupplierManagerProps) {
     if (!deleteSupplier) return;
 
     try {
-      const { error } = await (supabase
-        .from('fornecedores') as any)
+      const { error } = await supabase
+        .from('fornecedores')
         .delete()
         .eq('id', deleteSupplier.id);
 

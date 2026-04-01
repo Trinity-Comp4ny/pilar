@@ -86,7 +86,6 @@ export default function Despesas() {
 
   const fetchData = async () => {
     try {
-      console.log('[DESPESAS] Fetching all data...');
       const [
         { data: categoriasData },
         { data: fornecedoresData },
@@ -95,12 +94,12 @@ export default function Despesas() {
         { data: projetosData },
         { data: despesasData, error: despesasError }
       ] = await Promise.all([
-        (supabase.from('categorias_financeiras') as any).select('id, nome').eq('tipo', 'Despesa').order('nome'),
-        (supabase.from('fornecedores') as any).select('id, nome').order('nome'),
-        (supabase.from('contas') as any).select('id, nome'),
-        (supabase.from('cartoes_credito') as any).select('id, nome, dia_fechamento'),
-        (supabase.from('projetos') as any).select('id, nome, codigo_projeto').order('nome'),
-        (supabase.from('despesas') as any).select(`
+        supabase.from('categorias_financeiras').select('id, nome').eq('tipo', 'Despesa').order('nome'),
+        supabase.from('fornecedores').select('id, nome').order('nome'),
+        supabase.from('contas').select('id, nome'),
+        supabase.from('cartoes_credito').select('id, nome, dia_fechamento'),
+        supabase.from('projetos').select('id, nome, codigo_projeto').order('nome'),
+        supabase.from('despesas').select(`
           *,
           projetos (codigo_projeto),
           fornecedores (nome)
@@ -108,27 +107,16 @@ export default function Despesas() {
           .order('data_vencimento', { ascending: false }) // Fallback para data_vencimento (planejado)
       ]);
 
-      console.log('[DESPESAS] Fetch results:', {
-        despesas: despesasData?.length,
-        despesasError,
-        categorias: categoriasData?.length,
-        fornecedores: fornecedoresData?.length,
-        contas: contasData?.length,
-        cartoes: cartoesData?.length
-      });
-
       if (categoriasData) setCategorias(categoriasData.map((c: any) => ({ id: c.id, name: c.nome })));
       if (fornecedoresData) setFornecedores(fornecedoresData.map((s: any) => ({ id: s.id, name: s.nome })));
       if (contasData) setContas(contasData);
       if (cartoesData) setCartoes(cartoesData);
       if (projetosData) setProjetos(projetosData.map((p: any) => ({ id: p.id, projetoID: p.codigo_projeto })));
       if (despesasData) {
-        console.log('[DESPESAS] Setting despesas:', { count: despesasData.length, sample: despesasData[0] });
         setDespesasRaw(despesasData);
       }
 
     } catch (error) {
-      console.error("[DESPESAS] Error fetching data:", error);
       toast({
         title: "Erro ao carregar dados",
         description: "Não foi possível carregar as informações financeiras.",
@@ -261,11 +249,11 @@ export default function Despesas() {
       let error = null;
 
       if (selectedDespesa) {
-        ({ error } = await (supabase.from('despesas') as any)
+        ({ error } = await supabase.from('despesas')
           .update(despesasToInsert[0])
           .eq('id', selectedDespesa.id));
       } else {
-        ({ error } = await (supabase.from('despesas') as any)
+        ({ error } = await supabase.from('despesas')
           .insert(despesasToInsert));
       }
 

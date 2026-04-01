@@ -24,6 +24,7 @@ interface Cliente {
   email: string;
   tipo_nf?: string;
   origem?: string;
+  contas_bancarias?: any[];
 }
 
 export default function Clientes() {
@@ -110,7 +111,7 @@ export default function Clientes() {
       .order('nome');
     
     if (data) {
-      setClientes(data as any[]);
+      setClientes(data as Cliente[]);
     }
   };
 
@@ -142,7 +143,7 @@ export default function Clientes() {
     setEmail(cliente.email || "");
     setTipoNf(cliente.tipo_nf || "");
     setOrigem(cliente.origem || "");
-    setContasBancarias(Array.isArray((cliente as any).contas_bancarias) ? (cliente as any).contas_bancarias : []);
+    setContasBancarias(Array.isArray(cliente.contas_bancarias) ? cliente.contas_bancarias : []);
     setNewConta({ banco: "", agencia: "", conta: "", tipo: "corrente" });
     setCurrentId(cliente.id);
     setIsEditMode(true);
@@ -289,7 +290,7 @@ export default function Clientes() {
 
   const filteredAndSortedClientes = useMemo(() => {
     const term = searchTerm.trim();
-    let filtered = clientes.filter((cliente) => {
+    const filtered = clientes.filter((cliente) => {
       if (!term) return true;
       const digits = cliente.cpf_cnpj ? cliente.cpf_cnpj.replace(/\D/g, "") : "";
       const termDigits = term.replace(/\D/g, "");
@@ -680,9 +681,9 @@ export default function Clientes() {
                 {/* Seção de Contas Bancárias */}
                 <div className="space-y-2 mt-4 pt-4 border-t">
                   <Label className="text-sm font-medium">Contas Bancárias</Label>
-                  {((selectedCliente as any).contas_bancarias && (selectedCliente as any).contas_bancarias.length > 0) ? (
+                  {(selectedCliente.contas_bancarias && selectedCliente.contas_bancarias.length > 0) ? (
                     <div className="space-y-2">
-                      {(selectedCliente as any).contas_bancarias.map((conta: any, index: number) => (
+                      {selectedCliente.contas_bancarias.map((conta: any, index: number) => (
                         <div
                           key={index}
                           className={`flex items-center justify-between gap-3 bg-gray-50 border rounded-lg px-3 py-2 text-sm ${conta.is_primary ? 'border-accent-orange/50 bg-accent-orange/5' : 'border-gray-200'}`}

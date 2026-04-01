@@ -129,7 +129,7 @@ export default function FolhaPagamento() {
 
       setHistory(Array.from(grouped.values()));
     } catch (error) {
-      console.error('Error fetching history:', error);
+      // History fetch failed silently
     }
   };
 
@@ -237,7 +237,6 @@ export default function FolhaPagamento() {
         setData(normalized);
       }
     } catch (error: any) {
-      console.error('Error fetching data:', error);
       toast({
         title: "Erro ao carregar dados",
         description: error.message,
@@ -384,16 +383,16 @@ export default function FolhaPagamento() {
         const today = new Date();
         const dateStr = today.toISOString().slice(0, 10);
 
-        const { data: categorias } = await (supabase.from('categorias_financeiras') as any)
+        const { data: categorias } = await supabase.from('categorias_financeiras')
           .select('id, nome')
           .eq('tipo', 'Despesa');
 
         let categoriaFolhaPagamento = categorias?.find((c: any) => c.nome === 'Folha de Pagamento');
 
         if (!categoriaFolhaPagamento) {
-          const empresaId = (await (supabase.rpc as any)('get_user_empresa_id')).data;
-          const { data: insertedCategory, error: insertCategoriaError } = await (supabase
-            .from('categorias_financeiras') as any)
+          const empresaId = (await supabase.rpc('get_user_empresa_id', {})).data;
+          const { data: insertedCategory, error: insertCategoriaError } = await supabase
+            .from('categorias_financeiras')
             .insert({
               nome: 'Folha de Pagamento',
               tipo: 'Despesa',
@@ -423,9 +422,9 @@ export default function FolhaPagamento() {
           observacao: 'Lançamento automático de Folha de Pagamento',
         };
 
-        const { error: despesaError } = await (supabase.from('despesas') as any).insert([despesaPayload]);
+        const { error: despesaError } = await supabase.from('despesas').insert([despesaPayload]);
         if (despesaError) {
-          console.error('Erro ao lançar despesa de folha de pagamento:', despesaError);
+          // Expense auto-creation failed but payroll status was updated
         }
       }
       
@@ -496,7 +495,6 @@ export default function FolhaPagamento() {
         setHistoryDetailItems(mappedData);
       }
     } catch (error) {
-      console.error('Erro ao carregar detalhes do histórico:', error);
       toast({
         title: 'Erro ao carregar detalhes',
         description: 'Não foi possível carregar os detalhes da folha selecionada.',
