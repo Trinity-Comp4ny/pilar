@@ -77,8 +77,8 @@ export default function ProfileSetup() {
         .eq("id", user.id)
         .single();
 
-      const isAdmin = (updatedProfile as any)?.role === "admin";
-      const companyName = (updatedProfile as any)?.empresas?.nome;
+      const isAdmin = updatedProfile?.role === "admin";
+      const companyName = updatedProfile?.empresas?.nome;
       const needsCompanySetup = isAdmin && companyName === "Minha Empresa";
 
       navigate(needsCompanySetup ? "/company-setup" : "/dashboard");

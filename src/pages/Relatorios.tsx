@@ -280,7 +280,6 @@ export default function Relatorios() {
         description: "Pré-visualização carregada. Agora você pode exportar em CSV ou PDF.",
       });
     } catch (error: any) {
-      console.error("Erro ao gerar relatório:", error);
       toast({
         title: "Erro ao gerar",
         description: error.message,
@@ -354,7 +353,6 @@ export default function Relatorios() {
         description: "O download deve iniciar automaticamente.",
       });
     } catch (e: any) {
-      console.error("Erro ao exportar:", e);
       toast({
         title: "Erro ao exportar",
         description: e?.message,

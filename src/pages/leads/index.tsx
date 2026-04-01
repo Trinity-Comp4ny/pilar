@@ -61,7 +61,7 @@ export default function Leads() {
       .order('created_at', { ascending: false });
 
     if (data) {
-      setLeads(data as unknown as Lead[]);
+      setLeads(data as Lead[]);
     }
   };
 
@@ -154,7 +154,7 @@ export default function Leads() {
   const handleConvertToClient = async () => {
     if (!selectedLead) return;
 
-    if ((selectedLead as any).cliente_id) {
+    if (selectedLead.cliente_id) {
       toast({
         title: "Já convertido",
         description: "Este lead já foi convertido em cliente.",
