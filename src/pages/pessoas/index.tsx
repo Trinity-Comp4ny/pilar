@@ -17,6 +17,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { CONTRACT_TYPES, CONTRACT_TYPE_LABELS } from "@/constants";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { pessoaSchema, pessoaDefaultValues, type PessoaFormData } from "@/schemas";
 
 interface Pessoa {
   id: string;
@@ -48,20 +51,10 @@ export default function Pessoas() {
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [pessoaToDelete, setPessoaToDelete] = useState<string | null>(null);
   
-  const [formData, setFormData] = useState({
-    id: "",
-    nome: "",
-    cpf: "",
-    tipo_contrato: CONTRACT_TYPES.CONTRATADO,
-    cargo: "",
-    telefone: "",
-    email: "",
-    endereco: "",
-    data_admissao: "",
-    data_demissao: "",
-    salario_fixo: "",
-    valor_m2: "",
-    contas_bancarias: "",
+  const [editId, setEditId] = useState("");
+  const form = useForm<PessoaFormData>({
+    resolver: zodResolver(pessoaSchema),
+    defaultValues: pessoaDefaultValues,
   });
   const [contasBancarias, setContasBancarias] = useState<any[]>([]);
   const [newConta, setNewConta] = useState({ banco: "", agencia: "", conta: "", tipo: "corrente" });
@@ -92,21 +85,8 @@ export default function Pessoas() {
   };
 
   const resetForm = () => {
-    setFormData({
-      id: "",
-      nome: "",
-      cpf: "",
-      tipo_contrato: CONTRACT_TYPES.CONTRATADO,
-      cargo: "",
-      telefone: "",
-      email: "",
-      endereco: "",
-      data_admissao: "",
-      data_demissao: "",
-      salario_fixo: "",
-      valor_m2: "",
-      contas_bancarias: ""
-    });
+    form.reset(pessoaDefaultValues);
+    setEditId("");
     setContasBancarias([]);
     setNewConta({ banco: "", agencia: "", conta: "", tipo: "corrente" });
     setIsEditMode(false);
@@ -114,8 +94,8 @@ export default function Pessoas() {
 
   const handleEditClick = (pessoa: Pessoa, e?: React.MouseEvent) => {
     e?.stopPropagation();
-    setFormData({
-      id: pessoa.id,
+    setEditId(pessoa.id);
+    form.reset({
       nome: pessoa.nome,
       cpf: pessoa.cpf || "",
       tipo_contrato: pessoa.tipo_contrato,
@@ -127,16 +107,11 @@ export default function Pessoas() {
       data_demissao: pessoa.data_demissao || "",
       salario_fixo: pessoa.salario_fixo !== undefined && pessoa.salario_fixo !== null ? formatCurrencyInput((pessoa.salario_fixo * 100).toString()) : "",
       valor_m2: pessoa.valor_m2 !== undefined && pessoa.valor_m2 !== null ? formatCurrencyInput((pessoa.valor_m2 * 100).toString()) : "",
-      contas_bancarias: pessoa.contas_bancarias || "",
     });
     setContasBancarias(Array.isArray(pessoa.contas_bancarias) ? pessoa.contas_bancarias : []);
     setIsEditMode(true);
     setIsDialogOpen(true);
     setIsDetailOpen(false);
-  };
-
-  const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
   };
 
   const handleAddConta = () => {
@@ -174,18 +149,7 @@ export default function Pessoas() {
     });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!formData.nome || !formData.cargo) {
-      toast({
-        title: "Campos obrigatórios",
-        description: "Preencha nome e cargo",
-        variant: "destructive",
-      });
-      return;
-    }
-
+  const handleSubmit = form.handleSubmit(async (formData: PessoaFormData) => {
     try {
       const payload = {
         nome: formData.nome,
@@ -202,10 +166,10 @@ export default function Pessoas() {
         valor_m2: formData.valor_m2 ? parseCurrencyString(formData.valor_m2) : null,
       };
 
-      if (isEditMode && formData.id) {
+      if (isEditMode && editId) {
         const { error } = await supabase.from('pessoas')
           .update(payload)
-          .eq('id', formData.id);
+          .eq('id', editId);
 
         if (error) throw error;
 
@@ -238,7 +202,7 @@ export default function Pessoas() {
         variant: "destructive",
       });
     }
-  };
+  });
 
   const handleDeleteClick = (id: string) => {
     setPessoaToDelete(id);
@@ -355,9 +319,9 @@ export default function Pessoas() {
                 <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                   <div className="space-y-2 md:col-span-2">
                     <Label htmlFor="tipo_contrato">Tipo de Contrato *</Label>
-                    <Select 
-                      value={formData.tipo_contrato} 
-                      onValueChange={(value) => handleInputChange("tipo_contrato", value)}
+                    <Select
+                      value={form.watch("tipo_contrato")}
+                      onValueChange={(value) => form.setValue("tipo_contrato", value)}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione o tipo" />
@@ -373,41 +337,42 @@ export default function Pessoas() {
                     <Label htmlFor="nome">Nome *</Label>
                     <Input
                       id="nome"
-                      value={formData.nome}
-                      onChange={(e) => handleInputChange("nome", e.target.value)}
+                      {...form.register("nome")}
                       placeholder="Nome completo"
-                      required
                     />
+                    {form.formState.errors.nome && (
+                      <p className="text-xs text-red-500">{form.formState.errors.nome.message}</p>
+                    )}
                   </div>
-                  
+
                   <div className="space-y-2">
                     <Label htmlFor="cpf">CPF</Label>
                     <Input
                       id="cpf"
-                      value={formData.cpf}
-                      onChange={(e) => handleInputChange("cpf", formatCPF(e.target.value))}
+                      value={form.watch("cpf")}
+                      onChange={(e) => form.setValue("cpf", formatCPF(e.target.value))}
                       maxLength={14}
                       placeholder="000.000.000-00"
                     />
                   </div>
-                  
+
                   <div className="space-y-2 md:col-span-2">
                     <Label htmlFor="cargo">Cargo/Função *</Label>
                     <Input
                       id="cargo"
-                      value={formData.cargo}
-                      onChange={(e) => handleInputChange("cargo", e.target.value)}
+                      {...form.register("cargo")}
                       placeholder="Ex: Arquiteto, Pedreiro"
-                      required
                     />
+                    {form.formState.errors.cargo && (
+                      <p className="text-xs text-red-500">{form.formState.errors.cargo.message}</p>
+                    )}
                   </div>
 
                   <div className="space-y-2 md:col-span-2">
                     <Label htmlFor="endereco">Endereço</Label>
                     <Input
                       id="endereco"
-                      value={formData.endereco}
-                      onChange={(e) => handleInputChange("endereco", e.target.value)}
+                      {...form.register("endereco")}
                       placeholder="Endereço completo"
                     />
                   </div>
@@ -417,8 +382,8 @@ export default function Pessoas() {
                       <Label htmlFor="telefone">Telefone/Celular</Label>
                       <Input
                         id="telefone"
-                        value={formData.telefone}
-                        onChange={(e) => handleInputChange("telefone", formatPhone(e.target.value))}
+                        value={form.watch("telefone")}
+                        onChange={(e) => form.setValue("telefone", formatPhone(e.target.value))}
                         maxLength={15}
                         placeholder="(11) 99999-9999"
                       />
@@ -428,8 +393,7 @@ export default function Pessoas() {
                       <Input
                         id="email"
                         type="email"
-                        value={formData.email}
-                        onChange={(e) => handleInputChange("email", e.target.value)}
+                        {...form.register("email")}
                         placeholder="email@exemplo.com"
                       />
                     </div>
@@ -441,8 +405,7 @@ export default function Pessoas() {
                       <Input
                         id="data_admissao"
                         type="date"
-                        value={formData.data_admissao}
-                        onChange={(e) => handleInputChange("data_admissao", e.target.value)}
+                        {...form.register("data_admissao")}
                       />
                     </div>
                     <div className="space-y-2">
@@ -450,8 +413,7 @@ export default function Pessoas() {
                       <Input
                         id="data_demissao"
                         type="date"
-                        value={formData.data_demissao}
-                        onChange={(e) => handleInputChange("data_demissao", e.target.value)}
+                        {...form.register("data_demissao")}
                       />
                     </div>
                   </div>
@@ -462,8 +424,8 @@ export default function Pessoas() {
                       <Input
                         id="salario_fixo"
                         type="text"
-                        value={formData.salario_fixo}
-                        onChange={(e) => handleInputChange("salario_fixo", formatCurrencyInput(e.target.value))}
+                        value={form.watch("salario_fixo")}
+                        onChange={(e) => form.setValue("salario_fixo", formatCurrencyInput(e.target.value))}
                         placeholder="R$ 0,00"
                       />
                     </div>
@@ -472,8 +434,8 @@ export default function Pessoas() {
                       <Input
                         id="valor_m2"
                         type="text"
-                        value={formData.valor_m2}
-                        onChange={(e) => handleInputChange("valor_m2", formatCurrencyInput(e.target.value))}
+                        value={form.watch("valor_m2")}
+                        onChange={(e) => form.setValue("valor_m2", formatCurrencyInput(e.target.value))}
                         placeholder="R$ 0,00"
                       />
                     </div>
