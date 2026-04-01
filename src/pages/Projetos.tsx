@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,62 +6,22 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Calendar, User, DollarSign, Trash2, HardHat, Ruler, Settings2, Edit, CheckCircle2, MessageSquare } from "lucide-react";
+import { Plus, Calendar, DollarSign, Trash2, Settings2, Edit, MessageSquare } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrencyInput, parseCurrencyString } from "@/lib/currencyUtils";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { supabase } from "@/integrations/supabase/client";
-import { Progress } from "@/components/ui/progress";
 
 import { useUserRole } from "@/hooks/useUserRole";
-import { PROJECT_STATUS, PROJECT_STATUS_CONFIG, KANBAN_COLUMN_ORDER, type ProjectStatus } from "@/constants";
+import { PROJECT_STATUS, PROJECT_STATUS_CONFIG } from "@/constants";
 
-interface DisciplinaObservacao {
-  id: string;
-  texto: string;
-  usuario: string;
-  data: string;
-}
-
-interface DisciplinaResponsavel {
-  disciplina: string;
-  responsavel_id: string;
-  responsavel_nome: string;
-  data_inicio?: string;
-  data_previsao?: string;
-  data_final?: string;
-  status?: string;
-  observacoes?: DisciplinaObservacao[];
-}
-
-interface Projeto {
-  id: string;
-  codigo_projeto: string;
-  nome: string;
-  cliente_id: string;
-  cliente_nome?: string;
-  data_inicio: string;
-  data_previsao: string;
-  data_final?: string;
-  localizacao?: string;
-  parcelas?: string;
-  area_m2?: number;
-  status: ProjectStatus;
-  valor_contrato: number;
-  observacao: string;
-  disciplinas: DisciplinaResponsavel[];
-}
+import { type Projeto, type DisciplinaResponsavel, type DisciplinaObservacao, disciplinaStatusOptions, formatCurrency, formatDateShort } from "@/pages/projetos/types";
+import { ProjectCard } from "@/pages/projetos/components/ProjectCard";
+import { ProjectDetailDialog } from "@/pages/projetos/components/ProjectDetailDialog";
 
 const statusConfig = PROJECT_STATUS_CONFIG;
-
-const disciplinaStatusOptions = [
-  "Não Iniciado",
-  "Em Andamento",
-  "Concluído",
-  "Pendente"
-];
 
 export default function ProjetosKanban() {
   const { data: userRole } = useUserRole();
@@ -520,70 +479,6 @@ export default function ProjetosKanban() {
 
   const getProjetosByStatus = (status: string) => {
     return projetos.filter((projeto) => projeto.status === status);
-  };
-
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(value);
-  };
-
-  // Formata data corrigindo o problema de timezone
-  const formatDate = (dateString: string | undefined) => {
-    if (!dateString) return '-';
-    const date = new Date(dateString + 'T00:00:00');
-    return date.toLocaleDateString('pt-BR');
-  };
-
-  const formatDateShort = (dateString: string | undefined) => {
-    if (!dateString) return '-';
-    const date = new Date(dateString + 'T00:00:00');
-    return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
-  };
-
-  // Calcula o status de prazo do projeto e status_data
-  const getDeadlineStatus = (projeto: { data_previsao?: string, data_final?: string, status: string }) => {
-    const { data_previsao, data_final, status } = projeto;
-
-    // Se projeto está concluído, verifica se foi no prazo ou com atraso
-    if (status === 'Concluído' && data_final && data_previsao) {
-      const final = new Date(data_final + 'T00:00:00');
-      const previsao = new Date(data_previsao + 'T00:00:00');
-
-      if (final <= previsao) {
-        return { label: 'Concluído no Prazo', color: 'bg-green-600 text-white', days: 0, status_data: 'concluido_no_prazo' };
-      } else {
-        return { label: 'Concluído com Atraso', color: 'bg-orange-600 text-white', days: 0, status_data: 'concluido_com_atraso' };
-      }
-    }
-
-    if (!data_previsao || status === 'Cancelado') {
-      return null;
-    }
-
-    const hoje = new Date();
-    hoje.setHours(0, 0, 0, 0);
-
-    const previsao = new Date(data_previsao + 'T00:00:00');
-    previsao.setHours(0, 0, 0, 0);
-
-    const diffTime = previsao.getTime() - hoje.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-    if (diffDays < 0) {
-      return { label: 'Em Atraso', color: 'bg-red-500 text-white', days: Math.abs(diffDays), status_data: 'em_atraso' };
-    } else if (diffDays <= 7) {
-      return { label: 'Atenção', color: 'bg-yellow-500 text-white', days: diffDays, status_data: 'atencao' };
-    } else {
-      return { label: 'No Prazo', color: 'bg-green-500 text-white', days: diffDays, status_data: 'no_prazo' };
-    }
-  };
-
-  const getProjectProgress = (disciplinas: DisciplinaResponsavel[]) => {
-    if (!disciplinas || disciplinas.length === 0) return 0;
-    const completed = disciplinas.filter(d => d.status === 'Concluído').length;
-    return Math.round((completed / disciplinas.length) * 100);
   };
 
   return (
@@ -1080,85 +975,17 @@ export default function ProjetosKanban() {
                     {getProjetosByStatus(status).map((projeto, index) => (
                       <Draggable key={projeto.id} draggableId={projeto.id} index={index}>
                         {(provided, snapshot) => (
-                          <Card
+                          <div
                             ref={provided.innerRef}
                             {...provided.draggableProps}
                             {...provided.dragHandleProps}
-                            onClick={() => handleCardClick(projeto)}
-                            className={`cursor-pointer hover:shadow-md transition-shadow w-full ${snapshot.isDragging ? "shadow-lg rotate-2" : ""
-                              }`}
                           >
-                            <CardHeader className="p-2.5 pb-1.5">
-                              {(() => {
-                                const deadlineStatus = getDeadlineStatus(projeto);
-                                return deadlineStatus ? (
-                                  <div className="mb-1 flex items-center justify-between">
-                                    <Badge className={`text-[9px] px-1.5 py-0 ${deadlineStatus.color}`}>
-                                      {deadlineStatus.label}
-                                      {deadlineStatus.days > 0 && ` (${deadlineStatus.days}d)`}
-                                    </Badge>
-                                  </div>
-                                ) : null;
-                              })()}
-                              <div className="flex items-start justify-between gap-1.5 mb-1">
-                                <Badge variant="outline" className="text-[10px] font-mono px-1.5 py-0">
-                                  {projeto.codigo_projeto}
-                                </Badge>
-                              </div>
-                              <CardTitle className="text-xs font-medium line-clamp-2 leading-tight">
-                                {projeto.nome}
-                              </CardTitle>
-                              <p className="text-[10px] text-muted-foreground line-clamp-1 mt-0.5">{projeto.cliente_nome}</p>
-                            </CardHeader>
-                            <CardContent className="p-2.5 pt-0 space-y-1.5">
-                               <div className="space-y-1">
-                                  <div className="flex justify-between text-[10px] text-gray-500">
-                                     <span>Progresso</span>
-                                     <span>{getProjectProgress(projeto.disciplinas)}%</span>
-                                  </div>
-                                  <Progress value={getProjectProgress(projeto.disciplinas)} className="h-1.5" />
-                               </div>
-
-                              {projeto.disciplinas && projeto.disciplinas.length > 0 && (
-                                <div className="flex flex-wrap gap-1 mt-2">
-                                  {projeto.disciplinas.slice(0, 2).map((disc, i) => (
-                                    <span key={i} className={`text-[9px] px-1.5 py-0.5 rounded flex items-center gap-0.5 ${
-                                      disc.status === 'Concluído' ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-600'
-                                    }`}>
-                                      <HardHat size={8} /> {disc.disciplina}
-                                    </span>
-                                  ))}
-                                  {projeto.disciplinas.length > 2 && (
-                                    <span className="text-[9px] bg-gray-100 px-1.5 py-0.5 rounded text-gray-600">
-                                      +{projeto.disciplinas.length - 2}
-                                    </span>
-                                  )}
-                                </div>
-                              )}
-
-                              <div className="flex items-center justify-between text-[10px] pt-1.5 border-t">
-                                <div className="flex items-center gap-0.5 font-medium text-green-600">
-                                  <DollarSign size={10} className="flex-shrink-0" />
-
-                                  <span className="truncate">{formatCurrency(projeto.valor_contrato)}</span>
-                                </div>
-                                <div className="flex flex-col items-end gap-0.5 text-[10px] text-gray-500">
-                                  {projeto.area_m2 !== undefined && (
-                                    <div className="flex items-center gap-0.5">
-                                      <Ruler size={10} />
-                                      <span>{projeto.area_m2 || 0} m²</span>
-                                    </div>
-                                  )}
-                                  {projeto.data_previsao && (
-                                    <div className="flex items-center gap-0.5">
-                                      <Calendar size={10} />
-                                      <span>{formatDateShort(projeto.data_previsao)}</span>
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            </CardContent>
-                          </Card>
+                            <ProjectCard
+                              projeto={projeto}
+                              onClick={handleCardClick}
+                              isDragging={snapshot.isDragging}
+                            />
+                          </div>
                         )}
                       </Draggable>
                     ))}
@@ -1172,175 +999,14 @@ export default function ProjetosKanban() {
         </div>
       </DragDropContext>
 
-      {/* Modal de Detalhes do Projeto */}
-      <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
-        <DialogContent className="sm:max-w-lg">
-          {selectedProjeto && (
-            <>
-              <DialogHeader>
-                <div className="flex items-center gap-2">
-                  <DialogTitle className="text-xl">{selectedProjeto.codigo_projeto}</DialogTitle>
-                  <Badge className={statusConfig[selectedProjeto.status]?.color}>
-                    {statusConfig[selectedProjeto.status]?.label}
-                  </Badge>
-                </div>
-                <DialogDescription>
-                  {selectedProjeto.nome}
-                </DialogDescription>
-              </DialogHeader>
-
-              <div className="space-y-6 mt-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label className="text-xs text-muted-foreground">Cliente</Label>
-                    <div className="font-medium flex items-center gap-2">
-                      <User size={14} /> {selectedProjeto.cliente_nome}
-                    </div>
-                  </div>
-                  <div>
-                    <Label className="text-xs text-muted-foreground">Valor Contrato</Label>
-                    <div className="font-medium flex items-center gap-2">
-                      <DollarSign size={14} /> {formatCurrency(selectedProjeto.valor_contrato)}
-                    </div>
-                  </div>
-                  <div>
-                    <Label className="text-xs text-muted-foreground">Área (m²)</Label>
-                    <div className="font-medium flex items-center gap-2">
-                      <Ruler size={14} /> {selectedProjeto.area_m2 || 0} m²
-                    </div>
-                  </div>
-                  <div>
-                    <Label className="text-xs text-muted-foreground">Início</Label>
-                    <div className="font-medium flex items-center gap-2">
-                      <Calendar size={14} /> {formatDate(selectedProjeto.data_inicio)}
-                    </div>
-                  </div>
-                  <div>
-                    <Label className="text-xs text-muted-foreground">Previsão Entrega</Label>
-                    <div className="font-medium flex items-center gap-2">
-                      <Calendar size={14} /> {formatDate(selectedProjeto.data_previsao)}
-                      {(() => {
-                        const deadlineStatus = getDeadlineStatus(selectedProjeto);
-                        return deadlineStatus ? (
-                          <Badge className={`text-xs ml-2 ${deadlineStatus.color}`}>
-                            {deadlineStatus.label} {deadlineStatus.days > 0 && `(${deadlineStatus.days}d)`}
-                          </Badge>
-                        ) : null;
-                      })()}
-                    </div>
-                  </div>
-                  <div>
-                    <Label className="text-xs text-muted-foreground">Data Final</Label>
-                    <div className="font-medium flex items-center gap-2">
-                      <Calendar size={14} /> {formatDate(selectedProjeto.data_final)}
-                    </div>
-                  </div>
-                  <div className="col-span-2">
-                    <Label className="text-xs text-muted-foreground mb-1 block">Progresso</Label>
-                    <div className="flex items-center gap-2">
-                       <Progress value={getProjectProgress(selectedProjeto.disciplinas)} className="h-2 flex-1" />
-                       <span className="text-sm font-medium">{getProjectProgress(selectedProjeto.disciplinas)}%</span>
-                    </div>
-                  </div>
-                  <div>
-                    <Label className="text-xs text-muted-foreground">Localização</Label>
-                    <div className="font-medium flex items-center gap-2">
-                      {selectedProjeto.localizacao || '-'}
-                    </div>
-                  </div>
-                  <div>
-                    <Label className="text-xs text-muted-foreground">Parcelas</Label>
-                    <div className="font-medium flex items-center gap-2">
-                      {selectedProjeto.parcelas || '-'}
-                    </div>
-                  </div>
-                </div>
-
-                {selectedProjeto.disciplinas && selectedProjeto.disciplinas.length > 0 && (
-                  <div>
-                    <Label className="text-xs text-muted-foreground mb-3 block">Disciplinas, Prazos e Status</Label>
-                    <div className="space-y-3">
-                      {selectedProjeto.disciplinas.map((disc, idx) => (
-                        <div key={idx} className="bg-gray-50 rounded-lg p-3 border border-gray-100">
-                          <div className="flex justify-between items-start mb-2">
-                            <div>
-                              <span className="font-medium text-sm block">{disc.disciplina}</span>
-                              <span className="text-xs text-muted-foreground">{disc.responsavel_nome}</span>
-                            </div>
-                            <Badge variant="outline" className={`${
-                              disc.status === 'Concluído' ? 'bg-green-50 text-green-700 border-green-200' : 
-                              disc.status === 'Em Andamento' ? 'bg-blue-50 text-blue-700 border-blue-200' : 
-                              'bg-gray-100 text-gray-700 border-gray-200'
-                            }`}>
-                              {disc.status || 'Não Iniciado'}
-                            </Badge>
-                          </div>
-                          
-                          <div className="grid grid-cols-3 gap-2 text-xs text-gray-600 mb-2">
-                            <div>
-                              <span className="block text-[10px] uppercase text-gray-400">Início</span>
-                              {formatDateShort(disc.data_inicio) || '-'}
-                            </div>
-                            <div>
-                              <span className="block text-[10px] uppercase text-gray-400">Previsão</span>
-                              {formatDateShort(disc.data_previsao) || '-'}
-                            </div>
-                            <div>
-                              <span className="block text-[10px] uppercase text-gray-400">Final</span>
-                              {formatDateShort(disc.data_final) || '-'}
-                            </div>
-                          </div>
-
-                          {disc.observacoes && disc.observacoes.length > 0 && (
-                            <div className="border-t border-gray-100 pt-2 mt-2">
-                              <p className="text-[10px] text-gray-400 mb-1 flex items-center gap-1">
-                                <MessageSquare size={10} /> Última observação
-                              </p>
-                              <p className="text-xs text-gray-700 line-clamp-2 italic">
-                                "{disc.observacoes[disc.observacoes.length - 1].texto}"
-                              </p>
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {selectedProjeto.observacao && (
-                  <div>
-                    <Label className="text-xs text-muted-foreground">Observações</Label>
-                    <p className="text-sm bg-gray-50 p-3 rounded mt-1 text-gray-700">
-                      {selectedProjeto.observacao}
-                    </p>
-                  </div>
-                )}
-
-                <div className="flex gap-2 pt-4">
-                  <Button variant="outline" onClick={() => setIsDetailOpen(false)} className="flex-1">
-                    Fechar
-                  </Button>
-                  {canEdit && (
-                    <>
-                      <Button
-                        variant="default"
-                        onClick={() => handleEditClick(selectedProjeto)}
-                        className="flex-1 bg-accent-orange hover:bg-accent-orange/90 text-white"
-                      >
-                        <Edit className="mr-2 h-4 w-4" />
-                        Editar
-                      </Button>
-                      <Button variant="destructive" onClick={() => handleDelete(selectedProjeto.id)}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </>
-                  )}
-                </div>
-              </div>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
+      <ProjectDetailDialog
+        open={isDetailOpen}
+        onOpenChange={setIsDetailOpen}
+        projeto={selectedProjeto}
+        canEdit={canEdit}
+        onEdit={handleEditClick}
+        onDelete={handleDelete}
+      />
     </PageLayout>
   );
 }
