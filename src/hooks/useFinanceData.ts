@@ -2,7 +2,6 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { subMonths, startOfMonth, endOfMonth } from "date-fns";
 import { getDisplayDate } from "@/lib/dateUtils";
-import { PROJECT_STATUS, FINANCIAL_STATUS } from "@/constants";
 
 export const useFinanceData = (dateFrom?: Date, dateTo?: Date) => {
   return useQuery({
