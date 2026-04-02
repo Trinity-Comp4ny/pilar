@@ -18,7 +18,15 @@ export type Database = {
           owner_id: string | null
           nome: string
           cnpj: string | null
+          email: string | null
+          contato: string | null
+          endereco: string | null
+          cidade: string | null
+          estado: string | null
+          cep: string | null
+          logo_url: string | null
           status: Database["public"]["Enums"]["status_empresa"]
+          onboarding_completed: boolean
           created_at: string
           updated_at: string
           created_by: string | null
@@ -29,7 +37,15 @@ export type Database = {
           owner_id?: string | null
           nome: string
           cnpj?: string | null
+          email?: string | null
+          contato?: string | null
+          endereco?: string | null
+          cidade?: string | null
+          estado?: string | null
+          cep?: string | null
+          logo_url?: string | null
           status?: Database["public"]["Enums"]["status_empresa"]
+          onboarding_completed?: boolean
           created_at?: string
           updated_at?: string
           created_by?: string | null
@@ -40,7 +56,15 @@ export type Database = {
           owner_id?: string | null
           nome?: string
           cnpj?: string | null
+          email?: string | null
+          contato?: string | null
+          endereco?: string | null
+          cidade?: string | null
+          estado?: string | null
+          cep?: string | null
+          logo_url?: string | null
           status?: Database["public"]["Enums"]["status_empresa"]
+          onboarding_completed?: boolean
           created_at?: string
           updated_at?: string
           created_by?: string | null
@@ -57,6 +81,7 @@ export type Database = {
           role: Database["public"]["Enums"]["user_role"]
           contato: string | null
           avatar_url: string | null
+          onboarding_completed: boolean
           created_at: string
           updated_at: string
           created_by: string | null
@@ -70,6 +95,7 @@ export type Database = {
           role?: Database["public"]["Enums"]["user_role"]
           contato?: string | null
           avatar_url?: string | null
+          onboarding_completed?: boolean
           created_at?: string
           updated_at?: string
           created_by?: string | null
@@ -83,6 +109,7 @@ export type Database = {
           role?: Database["public"]["Enums"]["user_role"]
           contato?: string | null
           avatar_url?: string | null
+          onboarding_completed?: boolean
           created_at?: string
           updated_at?: string
           created_by?: string | null
@@ -484,7 +511,10 @@ export type Database = {
           codigo_projeto: string | null
           nome: string
           localizacao: string | null
+          latitude: number | null
+          longitude: number | null
           status: Database["public"]["Enums"]["status_projeto"]
+          prioridade: string
           data_inicio: string | null
           data_previsao: string | null
           data_final: string | null
@@ -507,7 +537,10 @@ export type Database = {
           codigo_projeto?: string | null
           nome: string
           localizacao?: string | null
+          latitude?: number | null
+          longitude?: number | null
           status?: Database["public"]["Enums"]["status_projeto"]
+          prioridade?: string
           data_inicio?: string | null
           data_previsao?: string | null
           data_final?: string | null
@@ -530,7 +563,10 @@ export type Database = {
           codigo_projeto?: string | null
           nome?: string
           localizacao?: string | null
+          latitude?: number | null
+          longitude?: number | null
           status?: Database["public"]["Enums"]["status_projeto"]
+          prioridade?: string
           data_inicio?: string | null
           data_previsao?: string | null
           data_final?: string | null
