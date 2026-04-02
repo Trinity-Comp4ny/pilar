@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Calendar, DollarSign, HardHat, Ruler } from "lucide-react";
 import { type Projeto, formatCurrency, formatDateShort, getDeadlineStatus, getProjectProgress } from "@/pages/projetos/types";
+import { PROJECT_PRIORITY_CONFIG, type ProjectPriority } from "@/constants";
 
 interface ProjectCardProps {
   projeto: Projeto;
@@ -11,10 +12,12 @@ interface ProjectCardProps {
 }
 
 export function ProjectCard({ projeto, onClick, isDragging = false }: ProjectCardProps) {
+  const priorityConfig = PROJECT_PRIORITY_CONFIG[projeto.prioridade as ProjectPriority];
+
   return (
     <Card
       onClick={() => onClick(projeto)}
-      className={`cursor-pointer hover:shadow-md transition-shadow w-full ${isDragging ? "shadow-lg rotate-2" : ""}`}
+      className={`cursor-pointer hover:shadow-md transition-shadow w-full border-l-[3px] ${priorityConfig?.borderColor || "border-l-gray-300"} ${isDragging ? "shadow-lg rotate-2" : ""}`}
     >
       <CardHeader className="p-2.5 pb-1.5">
         {(() => {
@@ -25,8 +28,21 @@ export function ProjectCard({ projeto, onClick, isDragging = false }: ProjectCar
                 {deadlineStatus.label}
                 {deadlineStatus.days > 0 && ` (${deadlineStatus.days}d)`}
               </Badge>
+              {priorityConfig && (
+                <span className={`text-[9px] px-1.5 py-0 rounded-full font-medium ${priorityConfig.bgColor} ${priorityConfig.color}`}>
+                  {priorityConfig.label}
+                </span>
+              )}
             </div>
-          ) : null;
+          ) : (
+            priorityConfig ? (
+              <div className="mb-1 flex items-center justify-end">
+                <span className={`text-[9px] px-1.5 py-0 rounded-full font-medium ${priorityConfig.bgColor} ${priorityConfig.color}`}>
+                  {priorityConfig.label}
+                </span>
+              </div>
+            ) : null
+          );
         })()}
         <div className="flex items-start justify-between gap-1.5 mb-1">
           <Badge variant="outline" className="text-[10px] font-mono px-1.5 py-0">
@@ -49,13 +65,18 @@ export function ProjectCard({ projeto, onClick, isDragging = false }: ProjectCar
 
         {projeto.disciplinas && projeto.disciplinas.length > 0 && (
           <div className="flex flex-wrap gap-1 mt-2">
-            {projeto.disciplinas.slice(0, 2).map((disc, i) => (
-              <span key={i} className={`text-[9px] px-1.5 py-0.5 rounded flex items-center gap-0.5 ${
-                disc.status === 'Concluído' ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-600'
-              }`}>
-                <HardHat size={8} /> {disc.disciplina}
-              </span>
-            ))}
+            {projeto.disciplinas.slice(0, 2).map((disc, i) => {
+              const discPriority = disc.prioridade ? PROJECT_PRIORITY_CONFIG[disc.prioridade as ProjectPriority] : null;
+              return (
+                <span key={i} className={`text-[9px] px-1.5 py-0.5 rounded flex items-center gap-0.5 ${
+                  disc.status === 'Concluído' ? 'bg-green-50 text-green-700' :
+                  discPriority?.bgColor ? `${discPriority.bgColor} ${discPriority.color}` :
+                  'bg-gray-100 text-gray-600'
+                }`}>
+                  <HardHat size={8} /> {disc.disciplina}
+                </span>
+              );
+            })}
             {projeto.disciplinas.length > 2 && (
               <span className="text-[9px] bg-gray-100 px-1.5 py-0.5 rounded text-gray-600">
                 +{projeto.disciplinas.length - 2}

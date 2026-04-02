@@ -186,7 +186,7 @@ export default function Metas() {
                   Nova Meta
                 </Button>
               </DialogTrigger>
-              <DialogContent>
+              <DialogContent className="sm:max-w-md">
                 <DialogHeader>
                   <DialogTitle>Definir Nova Meta</DialogTitle>
                   <DialogDescription>Estabeleça um novo objetivo financeiro para sua empresa.</DialogDescription>
@@ -254,7 +254,7 @@ export default function Metas() {
         <CardContent>
           {/* Edit Dialog */}
           <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-            <DialogContent>
+            <DialogContent className="sm:max-w-md">
               <DialogHeader>
                 <DialogTitle>Editar Meta</DialogTitle>
                 <DialogDescription>Atualize as informações da meta financeira.</DialogDescription>
