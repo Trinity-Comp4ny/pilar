@@ -23,3 +23,7 @@ supabase/.temp
 *.sln
 *.sw?
 .env
+.env.*
+coverage
+.eslintcache
+*.tsbuildinfo
