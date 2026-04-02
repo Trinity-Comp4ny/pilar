@@ -7,7 +7,6 @@ import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { Dispatch, SetStateAction, useState, useEffect } from "react";
 import { TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 import {
   Select,
   SelectContent,
@@ -33,7 +32,6 @@ export function FinanceiroHeader({
   visualizacao,
   setVisualizacao,
 }: FinanceiroHeaderProps) {
-  const { isMobile } = useSidebar();
   const [filterType, setFilterType] = useState("this-month");
 
   useEffect(() => {
@@ -66,14 +64,9 @@ export function FinanceiroHeader({
     <div className="sticky top-0 z-10 bg-white border-b shadow-sm w-full">
       <div className="px-6 py-4">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-start gap-3">
-            {isMobile && (
-              <SidebarTrigger className="mt-0.5 text-black/80 hover:text-accent-orange hover:bg-black/5 transition-colors rounded-full h-9 w-9" />
-            )}
-            <div>
-              <h1 className="text-2xl md:text-3xl font-medium tracking-tight">Financeiro</h1>
-              <p className="text-sm text-black/60 mt-1">Gerencie receitas e despesas</p>
-            </div>
+          <div>
+            <h1 className="text-2xl md:text-3xl font-medium tracking-tight">Financeiro</h1>
+            <p className="text-sm text-black/60 mt-1">Gerencie receitas e despesas</p>
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-end">
@@ -149,47 +142,47 @@ export function FinanceiroHeader({
       </div>
 
       {/* Tabs Navigation */}
-      <div className="w-full bg-white border-t overflow-x-auto">
-        <TabsList className="rounded-none bg-transparent border-none h-auto p-0 flex flex-nowrap gap-0 min-w-max w-full">
+      <div className="w-full bg-white border-t">
+        <TabsList className="w-full rounded-none bg-transparent border-none h-auto p-0 grid grid-cols-7 gap-0">
           <TabsTrigger 
             value="visao-geral" 
-            className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#FF4000] data-[state=active]:bg-white data-[state=active]:text-[#FF4000] py-3 px-4 min-w-max whitespace-nowrap text-sm"
+            className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#FF4000] data-[state=active]:bg-white data-[state=active]:text-[#FF4000] py-3"
           >
             Visão Geral
           </TabsTrigger>
           <TabsTrigger 
             value="fluxo-caixa" 
-            className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#FF4000] data-[state=active]:bg-white data-[state=active]:text-[#FF4000] py-3 px-4 min-w-max whitespace-nowrap text-sm"
+            className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#FF4000] data-[state=active]:bg-white data-[state=active]:text-[#FF4000] py-3"
           >
             Fluxo de Caixa
           </TabsTrigger>
           <TabsTrigger 
             value="lancamentos" 
-            className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#FF4000] data-[state=active]:bg-white data-[state=active]:text-[#FF4000] py-3 px-4 min-w-max whitespace-nowrap text-sm"
+            className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#FF4000] data-[state=active]:bg-white data-[state=active]:text-[#FF4000] py-3"
           >
             Lançamentos
           </TabsTrigger>
           <TabsTrigger 
             value="mensal" 
-            className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#FF4000] data-[state=active]:bg-white data-[state=active]:text-[#FF4000] py-3 px-4 min-w-max whitespace-nowrap text-sm"
+            className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#FF4000] data-[state=active]:bg-white data-[state=active]:text-[#FF4000] py-3"
           >
             Resumo Mensal
           </TabsTrigger>
           <TabsTrigger 
             value="metas" 
-            className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#FF4000] data-[state=active]:bg-white data-[state=active]:text-[#FF4000] py-3 px-4 min-w-max whitespace-nowrap text-sm"
+            className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#FF4000] data-[state=active]:bg-white data-[state=active]:text-[#FF4000] py-3"
           >
             Metas
           </TabsTrigger>
           <TabsTrigger 
             value="folha-pagamento" 
-            className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#FF4000] data-[state=active]:bg-white data-[state=active]:text-[#FF4000] py-3 px-4 min-w-max whitespace-nowrap text-sm"
+            className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#FF4000] data-[state=active]:bg-white data-[state=active]:text-[#FF4000] py-3"
           >
             Folha de Pagamento
           </TabsTrigger>
           <TabsTrigger 
             value="contas" 
-            className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#FF4000] data-[state=active]:bg-white data-[state=active]:text-[#FF4000] py-3 px-4 min-w-max whitespace-nowrap text-sm"
+            className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#FF4000] data-[state=active]:bg-white data-[state=active]:text-[#FF4000] py-3"
           >
             Contas
           </TabsTrigger>

@@ -14,7 +14,6 @@ import { useToast } from "@/hooks/use-toast";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { supabase } from "@/integrations/supabase/client";
-import { getSafeErrorMessage } from "@/lib/safeError";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
@@ -280,10 +279,11 @@ export default function Relatorios() {
         title: "Relatório gerado",
         description: "Pré-visualização carregada. Agora você pode exportar em CSV ou PDF.",
       });
-    } catch (err: unknown) {
+    } catch (error: any) {
+      console.error("Erro ao gerar relatório:", error);
       toast({
         title: "Erro ao gerar",
-        description: getSafeErrorMessage(err),
+        description: error.message,
         variant: "destructive",
       });
     } finally {
@@ -353,10 +353,11 @@ export default function Relatorios() {
         title: "Exportação iniciada",
         description: "O download deve iniciar automaticamente.",
       });
-    } catch (e: unknown) {
+    } catch (e: any) {
+      console.error("Erro ao exportar:", e);
       toast({
         title: "Erro ao exportar",
-        description: getSafeErrorMessage(e),
+        description: e?.message,
         variant: "destructive",
       });
     } finally {
@@ -372,6 +373,7 @@ export default function Relatorios() {
 
   return (
     <PageLayout
+      className="overflow-y-hidden"
       containerClassName="h-full flex flex-col min-h-0"
       header={
         <PageHeader
@@ -381,7 +383,7 @@ export default function Relatorios() {
       }
     >
       <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-5 gap-6">
-        <div className="lg:col-span-2 flex flex-col gap-6 min-h-0 order-2 lg:order-1">
+        <div className="lg:col-span-2 flex flex-col gap-6 min-h-0">
           <Card className="rounded-2xl border border-black/5 bg-white">
             <CardHeader>
               <CardTitle className="text-lg font-medium tracking-tight">Construtor</CardTitle>
@@ -499,7 +501,7 @@ export default function Relatorios() {
           </Card>
         </div>
 
-        <div className="lg:col-span-3 min-h-0 flex flex-col order-1 lg:order-2">
+        <div className="lg:col-span-3 min-h-0 flex flex-col">
           <Card className="rounded-2xl border border-black/5 bg-white w-full flex flex-col min-h-0">
             <CardHeader>
               <div className="flex items-start justify-between gap-4">

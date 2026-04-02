@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ResponsiveContainer, ComposedChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, Bar, Line } from "recharts";
 import { CustomTooltip } from "../components/CustomTooltip";
-import { useFinanceData } from "@/hooks/useFinanceData";
+import { useDashboardData } from "@/hooks/useDashboardData";
 import { Loader2 } from "lucide-react";
 
 interface FluxoCaixaProps {
@@ -10,7 +10,7 @@ interface FluxoCaixaProps {
 }
 
 export default function FluxoCaixa({ dateFrom, dateTo }: FluxoCaixaProps) {
-  const { data: dashboardData, isLoading } = useFinanceData(dateFrom, dateTo);
+  const { data: dashboardData, isLoading } = useDashboardData(dateFrom, dateTo);
 
   if (isLoading) {
     return (

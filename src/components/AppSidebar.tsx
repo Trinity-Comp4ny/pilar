@@ -2,14 +2,7 @@ import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
   BarChart,
   Calendar,
-  Clock,
-  Copy,
-  FileText,
   Home,
-  LayoutGrid,
-  MapPin,
-  Sparkles,
-  TrendingUp,
   Users,
   User,
   UserCircle,
@@ -38,19 +31,12 @@ import { supabase } from "@/integrations/supabase/client";
 
 const items = [
   { title: "Dashboard", url: "/dashboard", icon: Home },
-  { title: "Rentabilidade", url: "/rentabilidade", icon: TrendingUp },
   { title: "Projetos", url: "/projetos", icon: Calendar },
-  { title: "Propostas", url: "/propostas", icon: FileText },
-  { title: "Leads", url: "/leads", icon: UserPlus },
-  { title: "Clientes", url: "/clientes", icon: Building2 },
   { title: "Financeiro", url: "/financeiro", icon: Wallet },
-  { title: "Timesheet", url: "/timesheet", icon: Clock },
+  { title: "Clientes", url: "/clientes", icon: Building2 },
+  { title: "Leads", url: "/leads", icon: UserPlus },
   { title: "Pessoas", url: "/pessoas", icon: Users },
-  { title: "Mapa", url: "/mapa", icon: MapPin },
-  { title: "Capacidade", url: "/capacidade", icon: LayoutGrid },
   { title: "Relatórios", url: "/relatorios", icon: BarChart },
-  { title: "Templates", url: "/templates", icon: Copy },
-  { title: "IA Pilar", url: "/ai", icon: Sparkles },
 ];
 
 export function AppSidebar() {

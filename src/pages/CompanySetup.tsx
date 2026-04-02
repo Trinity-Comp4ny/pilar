@@ -5,7 +5,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
-import { getSafeErrorMessage } from "@/lib/safeError";
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, ArrowRight, Building2, Hash, Loader2 } from "lucide-react";
 
@@ -45,10 +44,10 @@ export default function CompanySetup() {
 
       if (!profile?.empresa_id) throw new Error("Empresa não encontrada");
 
-      // 2. Atualizar dados da empresa e marcar onboarding completo
+      // 2. Atualizar dados da empresa
       const { error } = await supabase
         .from('empresas')
-        .update({ nome: name, cnpj: cnpj, onboarding_completed: true })
+        .update({ nome: name, cnpj: cnpj })
         .eq('id', profile.empresa_id);
 
       if (error) throw error;
@@ -60,11 +59,11 @@ export default function CompanySetup() {
       
       navigate("/dashboard");
 
-    } catch (err: unknown) {
+    } catch (error: any) {
       toast({
         variant: "destructive",
         title: "Erro ao salvar",
-        description: getSafeErrorMessage(err),
+        description: error.message,
       });
     } finally {
       setIsLoading(false);

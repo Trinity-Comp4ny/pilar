@@ -2,7 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ArrowUpRight, ArrowDownRight, TrendingUp, TrendingDown, Loader2 } from "lucide-react";
 import { ResponsiveContainer, AreaChart, Area, CartesianGrid, XAxis, YAxis, Tooltip } from "recharts";
 import { CustomTooltip } from "../components/CustomTooltip";
-import { useFinanceData } from "@/hooks/useFinanceData";
+import { useDashboardData } from "@/hooks/useDashboardData";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -14,7 +14,7 @@ interface ResumoMensalProps {
 }
 
 export default function ResumoMensal({ dateFrom, dateTo }: ResumoMensalProps) {
-  const { data: dashboardData, isLoading: isLoadingDashboard } = useFinanceData(dateFrom, dateTo);
+  const { data: dashboardData, isLoading: isLoadingDashboard } = useDashboardData(dateFrom, dateTo);
 
   const { data: topTransactions, isLoading: isLoadingTop } = useQuery({
     queryKey: ["top-transactions-month", dateFrom, dateTo],
@@ -26,16 +26,16 @@ export default function ResumoMensal({ dateFrom, dateTo }: ResumoMensalProps) {
       const firstDay = start.toISOString();
       const lastDay = end.toISOString();
 
-      const { data: receitas } = await supabase
-        .from("receitas")
+      const { data: receitas } = await (supabase
+        .from("receitas") as any)
         .select("*")
         .gte("data_recebimento", firstDay)
         .lte("data_recebimento", lastDay)
         .order("valor", { ascending: false })
         .limit(5);
 
-      const { data: despesas } = await supabase
-        .from("despesas")
+      const { data: despesas } = await (supabase
+        .from("despesas") as any)
         .select("*, categorias_financeiras(nome)")
         .gte("data_pagamento", firstDay)
         .lte("data_pagamento", lastDay)

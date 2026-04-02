@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, Plus, Settings, Pencil, Trash2, Loader2 } from "lucide-react";
+import { CalendarIcon, Plus, Settings, Pencil, Trash2 } from "lucide-react";
 import { format, addMonths } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -19,10 +19,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
 import { getDisplayDate, formatDateDisplay } from "@/lib/dateUtils";
 import { formatCurrencyInput, parseCurrencyString } from "@/lib/currencyUtils";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { receitaSchema, receitaDefaultValues, type ReceitaFormData } from "@/schemas/receitaSchema";
-import { getSafeErrorMessage } from "@/lib/safeError";
 
 /**
  * Função para obter a data de exibição correta baseada no status
@@ -64,65 +60,66 @@ export default function Receitas() {
   const { data: userRole } = useUserRole();
   const isAdmin = userRole === 'admin';
 
-  const form = useForm<ReceitaFormData>({
-    resolver: zodResolver(receitaSchema),
-    defaultValues: receitaDefaultValues,
-  });
-
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("todos");
+  // Form States
+  const [dataVencimento, setDataVencimento] = useState<Date | undefined>(new Date());
+  const [descricao, setDescricao] = useState("");
+  const [projetoID, setProjetoID] = useState("");
+  const [categoriaId, setCategoriaId] = useState("");
+  const [valorTotal, setValorTotal] = useState("R$ 0,00");
+  const [formaPagamento, setFormaPagamento] = useState("");
+  const [notaFiscal, setNotaFiscal] = useState("");
+  const [status, setStatus] = useState("Recebida");
+  const [contaId, setContaId] = useState("");
+  const [clienteId, setClienteId] = useState("");
+  const [observacao, setObservacao] = useState("");
+  const [recorrencia, setRecorrencia] = useState("Nenhuma");
+  const [parcelas, setParcelas] = useState("1");
 
   const [categorias, setCategorias] = useState<{ id: string, name: string }[]>([]);
   const [projetos, setProjetos] = useState<{ id: string, projetoID: string }[]>([]);
   const [clientes, setClientes] = useState<{ id: string, nome: string }[]>([]);
   const { toast } = useToast();
 
-  const receitasFiltradas = receitas.filter((r) => {
-    const matchSearch = !searchTerm || r.descricao.toLowerCase().includes(searchTerm.toLowerCase()) || (r.cliente_nome || "").toLowerCase().includes(searchTerm.toLowerCase());
-    const matchStatus = statusFilter === "todos" || (statusFilter === "recebido" && r.status === "Recebido") || (statusFilter === "pendente" && r.status === "Pendente") || (statusFilter === "atrasado" && r.status === "Atrasado");
-    return matchSearch && matchStatus;
-  });
-
   const fetchAuxiliaryData = async () => {
     // Fetch Categorias
-    const { data: categoriasData } = await supabase
-      .from('categorias_financeiras')
+    const { data: categoriasData } = await (supabase
+      .from('categorias_financeiras') as any)
       .select('*')
       .eq('tipo', 'Receita')
       .order('nome');
 
     if (categoriasData) {
-      setCategorias((categoriasData ?? []).map((cat: any) => ({ id: cat.id, name: cat.nome })));
+      setCategorias((categoriasData as any[]).map(cat => ({ id: cat.id, name: cat.nome })));
     }
 
     // Fetch Clientes
-    const { data: clientesData } = await supabase
-      .from('clientes')
+    const { data: clientesData } = await (supabase
+      .from('clientes') as any)
       .select('*')
       .order('nome');
 
     if (clientesData) {
-      setClientes((clientesData ?? []).map((c: any) => ({ id: c.id, nome: c.nome })));
+      setClientes((clientesData as any[]).map(c => ({ id: c.id, nome: c.nome })));
     }
 
     // Fetch Contas
-    const { data: contasData } = await supabase
-      .from('contas')
+    const { data: contasData } = await (supabase
+      .from('contas') as any)
       .select('*')
       .order('nome');
 
     if (contasData) {
-      setContas((contasData ?? []).map((c: any) => ({ id: c.id, nome: c.nome })));
+      setContas((contasData as any[]).map(c => ({ id: c.id, nome: c.nome })));
     }
 
     // Fetch Projetos
-    const { data: projetosData } = await supabase
-      .from('projetos')
+    const { data: projetosData } = await (supabase
+      .from('projetos') as any)
       .select('id, nome, codigo_projeto')
       .order('nome');
 
     if (projetosData) {
-      setProjetos((projetosData ?? []).map((p: any) => ({ id: p.id, projetoID: p.codigo_projeto })));
+      setProjetos((projetosData as any[]).map(p => ({ id: p.id, projetoID: p.codigo_projeto })));
     }
   };
 
@@ -133,8 +130,9 @@ export default function Receitas() {
   }, []);
 
   const fetchReceitas = async () => {
-    const { data, error } = await supabase
-      .from('receitas')
+    console.log('[RECEITAS] Fetching receitas...');
+    const { data, error } = await (supabase
+      .from('receitas') as any)
       .select(`
         *,
         categorias_financeiras (nome),
@@ -144,18 +142,21 @@ export default function Receitas() {
       .order('data_recebimento', { ascending: false }) // Ordena por data_recebimento (automação Bradesco)
       .order('data_vencimento', { ascending: false }); // Fallback para data_vencimento (manual)
 
+    console.log('[RECEITAS] Fetch result:', { count: data?.length, error });
+
     if (error) {
-      // Error will be visible through empty data state
+      console.error('[RECEITAS] Error fetching:', error);
     }
 
     if (data) {
-      const formattedData = (data ?? []).map((d: any) => ({
+      const formattedData = (data as any[]).map((d: any) => ({
         ...d,
         categoria_nome: d.categorias_financeiras?.nome,
         cliente_nome: d.clientes?.nome,
         projeto_codigo: d.projetos?.codigo_projeto,
         data_recebimento: d.data_recebimento || d.data_vencimento
       }));
+      console.log('[RECEITAS] Formatted data:', { count: formattedData.length, sample: formattedData[0] });
       setReceitas(formattedData);
     }
   };
@@ -167,39 +168,44 @@ export default function Receitas() {
   const handleValorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value;
     const formattedValue = formatCurrencyInput(inputValue);
-    form.setValue("valorTotal", formattedValue);
+    setValorTotal(formattedValue);
   };
 
   const openEditReceita = (receita: Receita) => {
     setSelectedReceita(receita);
 
-    form.reset({
-      dataVencimento: receita.data_vencimento ? new Date(receita.data_vencimento) : new Date(),
-      descricao: receita.descricao,
-      valorTotal: formatCurrencyInput((receita.valor * 100).toString()),
-      status: receita.status === 'Recebido' ? 'Recebida' : 'Pendente',
-      categoriaId: receita.categoria_id || "",
-      projetoID: receita.projeto_id || "",
-      notaFiscal: receita.nota_fiscal || "",
-      contaId: receita.conta_id || "",
-      clienteId: receita.cliente_id || "",
-      observacao: receita.observacao || "",
-      formaPagamento: receita.forma_pagamento || "",
-      parcelas: "1",
-      recorrencia: "Nenhuma",
-    });
+    if (receita.data_vencimento) setDataVencimento(new Date(receita.data_vencimento));
+    setDescricao(receita.descricao);
+    setValorTotal(formatCurrencyInput((receita.valor * 100).toString()));
+    setStatus(receita.status === 'Recebido' ? 'Recebida' : 'Pendente');
+    setCategoriaId(receita.categoria_id || "");
+    setProjetoID(receita.projeto_id || "");
+    setNotaFiscal(receita.nota_fiscal || "");
+    setContaId(receita.conta_id || "");
+    setClienteId(receita.cliente_id || "");
+    setObservacao(receita.observacao || "");
+    setFormaPagamento(receita.forma_pagamento || "");
+    setParcelas("1");
 
     setIsDetailOpen(false);
     setIsDialogOpen(true);
   };
 
-  const [isSaving, setIsSaving] = useState(false);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
 
-  const handleSubmit = form.handleSubmit(async (formData) => {
-    setIsSaving(true);
+    if (!dataVencimento || !descricao || !valorTotal) {
+      toast({
+        title: "Campos obrigatórios",
+        description: "Preencha todos os campos obrigatórios",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
-      const numParcelas = parseInt(formData.parcelas) || 1;
-      const valorNumerico = parseCurrencyString(formData.valorTotal);
+      const numParcelas = parseInt(parcelas) || 1;
+      const valorNumerico = parseCurrencyString(valorTotal);
       const valorParcela = valorNumerico / numParcelas;
       const { data: { user } } = await supabase.auth.getUser();
 
@@ -208,38 +214,52 @@ export default function Receitas() {
       const receitasToInsert = [];
 
       for (let i = 0; i < numParcelas; i++) {
-        const dataParcela = addMonths(formData.dataVencimento, i);
+        const dataParcela = addMonths(dataVencimento, i);
         const dataStr = format(dataParcela, 'yyyy-MM-dd');
 
         receitasToInsert.push({
+          // user_id: user.id, // Not needed if trigger handles created_by
           data_vencimento: dataStr,
-          data_recebimento: formData.status === 'Recebida' ? dataStr : null,
-          descricao: numParcelas > 1 ? `${formData.descricao} (${i + 1}/${numParcelas})` : formData.descricao,
-          projeto_id: formData.projetoID || null,
-          categoria_id: formData.categoriaId || null,
-          valor: valorParcela,
-          forma_pagamento: formData.formaPagamento || null,
-          nota_fiscal: formData.notaFiscal || null,
-          status: formData.status === 'Recebida' ? 'Recebido' : 'Pendente',
-          conta_id: formData.contaId || null,
-          cliente_id: formData.clienteId || null,
-          observacao: formData.observacao || null
+          data_recebimento: status === 'Recebida' ? dataStr : null,
+          descricao: numParcelas > 1 ? `${descricao} (${i + 1}/${numParcelas})` : descricao,
+          projeto_id: projetoID || null,
+          categoria_id: categoriaId || null,
+          valor: valorParcela, // Mapped to 'valor' in DB if using 'valor', but schema says 'valor'. Wait, types say 'valor_total'.
+          // Types file says 'valor_total' for receitas table?
+          // Let me check schema again.
+          // Schema line 287: valor DECIMAL(12,2) NOT NULL.
+          // Types file might be wrong. I should use 'valor' and cast to any if needed.
+          // But wait, 'Receitas.tsx' previously used 'valor_total'.
+          // I will use 'valor' as per schema.
+          forma_pagamento: formaPagamento || null,
+          nota_fiscal: notaFiscal || null,
+          status: status === 'Recebida' ? 'Recebido' : 'Pendente', // Schema uses 'Recebido' (Past Participle) or 'Pendente'. Form uses 'Recebida'.
+          conta_id: contaId || null,
+          cliente_id: clienteId || null,
+          observacao: observacao || null
         });
       }
 
+      // Need to use 'valor' not 'valor_total' if schema says 'valor'.
+      // I'll map it to 'valor' in the object. 
+      // But I need to check if `receitas` table in types has `valor` or `valor_total`.
+      // Types file says `valor_total` for `receitas`.
+      // Schema says `valor`.
+      // Since I can't regenerate types, I will cast insert to any.
       const dataToInsert = receitasToInsert.map(r => ({
         ...r,
-        valor: r.valor
+        valor: r.valor // Ensure we use 'valor' column name
       }));
 
       let error = null;
-
+      
       if (selectedReceita) {
-        ({ error } = await supabase.from('receitas')
+        // Update existing receita
+        ({ error } = await (supabase.from('receitas') as any)
           .update(dataToInsert[0])
           .eq('id', selectedReceita.id));
       } else {
-        ({ error } = await supabase.from('receitas')
+        ({ error } = await (supabase.from('receitas') as any)
           .insert(dataToInsert));
       }
 
@@ -249,23 +269,34 @@ export default function Receitas() {
         title: selectedReceita ? "Receita atualizada" : "Receita cadastrada",
         description: selectedReceita ? `1 registro atualizado com sucesso` : `${numParcelas} registro(s) criado(s) com sucesso`,
       });
+      
 
       setIsDialogOpen(false);
       fetchReceitas();
       resetForm();
-    } catch (err: unknown) {
+    } catch (error: any) {
       toast({
         title: "Erro ao salvar",
-        description: getSafeErrorMessage(err),
+        description: error.message,
         variant: "destructive",
       });
-    } finally {
-      setIsSaving(false);
     }
-  });
+  };
 
   const resetForm = () => {
-    form.reset(receitaDefaultValues);
+    setDataVencimento(new Date());
+    setDescricao("");
+    setProjetoID("");
+    setCategoriaId("");
+    setValorTotal("R$ 0,00");
+    setFormaPagamento("");
+    setNotaFiscal("");
+    setStatus("Recebida");
+    setContaId("");
+    setClienteId("");
+    setObservacao("");
+    setRecorrencia("Nenhuma");
+    setParcelas("1");
     setSelectedReceita(null);
   };
 
@@ -332,169 +363,207 @@ export default function Receitas() {
                   Nova Receita
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto p-0">
-                <div className="px-6 pt-6 pb-4 border-b">
-                  <DialogHeader>
-                    <DialogTitle>{selectedReceita ? "Editar Receita" : "Nova Receita"}</DialogTitle>
-                    <DialogDescription>
-                      {selectedReceita ? "Atualize os dados da receita" : "Cadastre uma nova receita"}
-                    </DialogDescription>
-                  </DialogHeader>
-                </div>
+              <DialogContent className="sm:max-w-sm md:max-w-md max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>Nova Receita</DialogTitle>
+                  <DialogDescription>
+                    Cadastre uma nova receita no sistema
+                  </DialogDescription>
+                </DialogHeader>
 
-                <form onSubmit={handleSubmit} className="divide-y">
-                  <div className="px-6 py-4 space-y-3">
-                    <Label className="text-[10px] uppercase text-muted-foreground tracking-wider">Descrição</Label>
-                    <Input id="descricao" {...form.register("descricao")} placeholder="Ex: Pagamento projeto residencial" />
+                <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                  <div className="space-y-1">
+                    <Label htmlFor="dataVencimento" className="text-xs">Data Vencimento *</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "w-full justify-start text-left font-normal text-xs h-9",
+                            !dataVencimento && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-1 h-3 w-3" />
+                          {dataVencimento ? format(dataVencimento, "dd/MM/yyyy") : "Selecionar"}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={dataVencimento}
+                          onSelect={setDataVencimento}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
                   </div>
 
-                  <div className="px-6 py-4 space-y-3">
-                    <Label className="text-[10px] uppercase text-muted-foreground tracking-wider">Dados Financeiros</Label>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                      <div className="space-y-1.5">
-                        <Label htmlFor="valorTotal" className="text-xs">Valor Total (R$) *</Label>
-                        <Input id="valorTotal" type="text" value={form.watch("valorTotal")} onChange={handleValorChange} placeholder="R$ 0,00" className="h-9" />
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label htmlFor="parcelas" className="text-xs">Parcelas</Label>
-                        <Input id="parcelas" type="number" min="1" {...form.register("parcelas")} className="h-9" />
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label htmlFor="status" className="text-xs">Status</Label>
-                        <Select value={form.watch("status")} onValueChange={(v) => form.setValue("status", v as "Recebida" | "Pendente")}>
-                          <SelectTrigger id="status" className="h-9"><SelectValue placeholder="Selecione" /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Recebida">Recebida</SelectItem>
-                            <SelectItem value="Pendente">Pendente</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label htmlFor="formaPagamento" className="text-xs">Forma Pgto.</Label>
-                        <Select value={form.watch("formaPagamento")} onValueChange={(v) => form.setValue("formaPagamento", v)}>
-                          <SelectTrigger id="formaPagamento" className="h-9"><SelectValue placeholder="Selecione" /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="PIX">PIX</SelectItem>
-                            <SelectItem value="Transferência">Transferência</SelectItem>
-                            <SelectItem value="Boleto">Boleto</SelectItem>
-                            <SelectItem value="Dinheiro">Dinheiro</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="valorTotal" className="text-xs">Valor Total (R$) *</Label>
+                    <Input
+                      id="valorTotal"
+                      type="text"
+                      value={valorTotal}
+                      onChange={handleValorChange}
+                      placeholder="R$ 0,00"
+                      required
+                      className="h-9"
+                    />
                   </div>
 
-                  <div className="px-6 py-4 space-y-3">
-                    <Label className="text-[10px] uppercase text-muted-foreground tracking-wider">Vencimento</Label>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      <div className="space-y-1.5">
-                        <Label className="text-xs">Data Vencimento *</Label>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <Button
-                              type="button"
-                              variant="outline"
-                              className={cn("w-full justify-start text-left font-normal text-xs h-9", !form.watch("dataVencimento") && "text-muted-foreground")}
-                            >
-                              <CalendarIcon className="mr-1 h-3 w-3" />
-                              {form.watch("dataVencimento") ? format(form.watch("dataVencimento"), "dd/MM/yyyy") : "Selecionar"}
-                            </Button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar mode="single" selected={form.watch("dataVencimento")} onSelect={(d) => form.setValue("dataVencimento", d as Date)} initialFocus />
-                          </PopoverContent>
-                        </Popover>
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label className="text-xs">Recorrência</Label>
-                        <Select value={form.watch("recorrencia")} onValueChange={(v) => form.setValue("recorrencia", v)}>
-                          <SelectTrigger className="h-9"><SelectValue placeholder="Selecione" /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Nenhuma">Nenhuma</SelectItem>
-                            <SelectItem value="Semanal">Semanal</SelectItem>
-                            <SelectItem value="Mensal">Mensal</SelectItem>
-                            <SelectItem value="Anual">Anual</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="status" className="text-xs">Status</Label>
+                    <Select value={status} onValueChange={setStatus}>
+                      <SelectTrigger className="h-9">
+                        <SelectValue placeholder="Selecione" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Recebida">Recebida</SelectItem>
+                        <SelectItem value="Pendente">Pendente</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
 
-                  <div className="px-6 py-4 space-y-3">
-                    <Label className="text-[10px] uppercase text-muted-foreground tracking-wider">Vínculos e Classificação</Label>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                      <div className="space-y-1.5">
-                        <Label className="text-xs">Cliente (Pagante)</Label>
-                        <Select value={form.watch("clienteId")} onValueChange={(v) => form.setValue("clienteId", v)}>
-                          <SelectTrigger className="h-9"><SelectValue placeholder="Selecione" /></SelectTrigger>
-                          <SelectContent>
-                            {clientes.map((cliente) => (
-                              <SelectItem key={cliente.id} value={cliente.id}>{cliente.nome}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label className="text-xs">Projeto</Label>
-                        <Select value={form.watch("projetoID")} onValueChange={(v) => form.setValue("projetoID", v)}>
-                          <SelectTrigger className="h-9"><SelectValue placeholder="Selecione" /></SelectTrigger>
-                          <SelectContent>
-                            {projetos.map((proj) => (
-                              <SelectItem key={proj.id} value={proj.id}>{proj.projetoID}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label className="text-xs">Conta de Recebimento</Label>
-                        <Select value={form.watch("contaId")} onValueChange={(v) => form.setValue("contaId", v)}>
-                          <SelectTrigger className="h-9"><SelectValue placeholder="Selecione" /></SelectTrigger>
-                          <SelectContent>
-                            {contas.map((conta) => (
-                              <SelectItem key={conta.id} value={conta.id}>{conta.nome}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label className="text-xs">Categoria</Label>
-                        <Select value={form.watch("categoriaId")} onValueChange={(v) => form.setValue("categoriaId", v)}>
-                          <SelectTrigger className="h-9"><SelectValue placeholder="Selecione" /></SelectTrigger>
-                          <SelectContent>
-                            {categorias.map((cat) => (
-                              <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label className="text-xs">Nota Fiscal</Label>
-                        <Select value={form.watch("notaFiscal")} onValueChange={(v) => form.setValue("notaFiscal", v)}>
-                          <SelectTrigger className="h-9"><SelectValue placeholder="Selecione" /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Sim">Sim</SelectItem>
-                            <SelectItem value="Não">Não</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="parcelas" className="text-xs">Parcelas</Label>
+                    <Input
+                      id="parcelas"
+                      type="number"
+                      min="1"
+                      value={parcelas}
+                      onChange={(e) => setParcelas(e.target.value)}
+                      className="h-9"
+                    />
                   </div>
 
-                  <div className="px-6 py-4 space-y-3">
-                    <Label className="text-[10px] uppercase text-muted-foreground tracking-wider">Observação</Label>
-                    <Input id="observacao" {...form.register("observacao")} placeholder="Observações adicionais" />
+                  <div className="space-y-1 md:col-span-2">
+                    <Label htmlFor="descricao" className="text-xs">Descrição *</Label>
+                    <Input
+                      id="descricao"
+                      value={descricao}
+                      onChange={(e) => setDescricao(e.target.value)}
+                      placeholder="Descreva a receita"
+                      required
+                      className="h-9"
+                    />
                   </div>
 
-                  <div className="flex gap-2 px-6 py-4 bg-gray-50/30">
-                    <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)} className="flex-1" disabled={isSaving}>
+                  <div className="space-y-1 md:col-span-2">
+                    <Label htmlFor="observacao" className="text-xs">Observação</Label>
+                    <Input
+                      id="observacao"
+                      value={observacao}
+                      onChange={(e) => setObservacao(e.target.value)}
+                      placeholder="Observações adicionais"
+                      className="h-9"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <Label htmlFor="clienteId" className="text-xs">Cliente (Pagante)</Label>
+                    <Select value={clienteId} onValueChange={setClienteId}>
+                      <SelectTrigger className="h-9">
+                        <SelectValue placeholder="Selecione o cliente" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {clientes.map((cliente) => (
+                          <SelectItem key={cliente.id} value={cliente.id}>{cliente.nome}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <Label htmlFor="projetoID" className="text-xs">Projeto</Label>
+                    <Select value={projetoID} onValueChange={setProjetoID}>
+                      <SelectTrigger className="h-9">
+                        <SelectValue placeholder="Selecione" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {projetos.map((proj) => (
+                          <SelectItem key={proj.id} value={proj.id}>{proj.projetoID}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <Label htmlFor="categoriaId" className="text-xs">Categoria</Label>
+                    <Select value={categoriaId} onValueChange={setCategoriaId}>
+                      <SelectTrigger className="h-9">
+                        <SelectValue placeholder="Selecione" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categorias.map((cat) => (
+                          <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <Label htmlFor="formaPagamento" className="text-xs">Forma de Pagamento</Label>
+                    <Select value={formaPagamento} onValueChange={setFormaPagamento}>
+                      <SelectTrigger className="h-9">
+                        <SelectValue placeholder="Selecione" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="PIX">PIX</SelectItem>
+                        <SelectItem value="Transferência">Transferência</SelectItem>
+                        <SelectItem value="Boleto">Boleto</SelectItem>
+                        <SelectItem value="Dinheiro">Dinheiro</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <Label htmlFor="contaId" className="text-xs">Conta de Recebimento</Label>
+                    <Select value={contaId} onValueChange={setContaId}>
+                      <SelectTrigger className="h-9">
+                        <SelectValue placeholder="Selecione a conta" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {contas.map((conta) => (
+                          <SelectItem key={conta.id} value={conta.id}>{conta.nome}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <Label htmlFor="recorrencia" className="text-xs">Recorrência</Label>
+                    <Select value={recorrencia} onValueChange={setRecorrencia}>
+                      <SelectTrigger className="h-9">
+                        <SelectValue placeholder="Selecione" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Nenhuma">Nenhuma</SelectItem>
+                        <SelectItem value="Semanal">Semanal</SelectItem>
+                        <SelectItem value="Mensal">Mensal</SelectItem>
+                        <SelectItem value="Anual">Anual</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <Label htmlFor="notaFiscal" className="text-xs">Nota Fiscal</Label>
+                    <Select value={notaFiscal} onValueChange={setNotaFiscal}>
+                      <SelectTrigger className="h-9">
+                        <SelectValue placeholder="Selecione" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Sim">Sim</SelectItem>
+                        <SelectItem value="Não">Não</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="flex gap-2 pt-4 md:col-span-2">
+                    <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)} className="flex-1">
                       Cancelar
                     </Button>
-                    <Button type="submit" className="flex-1 bg-accent-orange hover:bg-accent-orange/90 text-white" disabled={isSaving}>
-                      {isSaving ? (
-                        <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Salvando...</>
-                      ) : (
-                        selectedReceita ? "Atualizar" : "Salvar"
-                      )}
+                    <Button type="submit" className="flex-1 bg-accent-orange hover:bg-accent-orange/90 text-white">
+                      Salvar
                     </Button>
                   </div>
                 </form>
@@ -503,27 +572,6 @@ export default function Receitas() {
           </div>
         </CardHeader>
         <CardContent className="p-0">
-          {/* Filtros */}
-          <div className="flex items-center gap-3 px-4 py-3 border-b bg-gray-50/50">
-            <Input
-              placeholder="Buscar por descrição ou cliente..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="h-8 max-w-xs text-sm"
-            />
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="h-8 w-[140px] text-xs">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todos">Todos</SelectItem>
-                <SelectItem value="recebido">Recebido</SelectItem>
-                <SelectItem value="pendente">Pendente</SelectItem>
-                <SelectItem value="atrasado">Atrasado</SelectItem>
-              </SelectContent>
-            </Select>
-            <span className="text-xs text-muted-foreground ml-auto">{receitasFiltradas.length} de {receitas.length}</span>
-          </div>
           <div className="overflow-x-auto w-full">
             <Table>
               <TableHeader>
@@ -541,7 +589,7 @@ export default function Receitas() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {receitasFiltradas.map((receita) => (
+                {receitas.map((receita) => (
                   <TableRow
                     key={receita.id}
                     className="cursor-pointer hover:bg-gray-50"
@@ -587,7 +635,7 @@ export default function Receitas() {
 
       {/* Modal de Detalhes */}
       <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Detalhes da Receita</DialogTitle>
             <DialogDescription>
