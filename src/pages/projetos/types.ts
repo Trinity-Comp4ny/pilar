@@ -1,10 +1,19 @@
-import { type ProjectStatus } from "@/constants";
+import { type ProjectStatus, type ProjectPriority } from "@/constants";
 
 export interface DisciplinaObservacao {
   id: string;
   texto: string;
   usuario: string;
   data: string;
+}
+
+export interface ResponsavelDatas {
+  responsavel_id: string;
+  responsavel_nome: string;
+  data_inicio?: string;
+  data_previsao?: string;
+  data_final?: string;
+  status?: string;
 }
 
 export interface DisciplinaResponsavel {
@@ -15,8 +24,23 @@ export interface DisciplinaResponsavel {
   data_previsao?: string;
   data_final?: string;
   status?: string;
+  prioridade?: ProjectPriority;
   observacoes?: DisciplinaObservacao[];
+  responsaveis?: ResponsavelDatas[];
 }
+
+export const getResponsaveisList = (disc: DisciplinaResponsavel): ResponsavelDatas[] => {
+  if (disc.responsaveis && disc.responsaveis.length > 0) return disc.responsaveis;
+  if (!disc.responsavel_id) return [];
+  return [{
+    responsavel_id: disc.responsavel_id,
+    responsavel_nome: disc.responsavel_nome,
+    data_inicio: disc.data_inicio,
+    data_previsao: disc.data_previsao,
+    data_final: disc.data_final,
+    status: disc.status,
+  }];
+};
 
 export interface Projeto {
   id: string;
@@ -31,6 +55,7 @@ export interface Projeto {
   parcelas?: string;
   area_m2?: number;
   status: ProjectStatus;
+  prioridade: ProjectPriority;
   valor_contrato: number;
   observacao: string;
   disciplinas: DisciplinaResponsavel[];

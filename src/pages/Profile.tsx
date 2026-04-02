@@ -8,7 +8,8 @@ import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { useToast } from "@/hooks/use-toast";
 import { User, Mail, Phone, Building2 } from "lucide-react";
-import { formatPhone, onlyDigits } from "@/lib/maskUtils";
+import { formatPhone } from "@/lib/maskUtils";
+import { getSafeErrorMessage } from "@/lib/safeError";
 
 export default function Profile() {
   const [editing, setEditing] = useState(false);
@@ -47,11 +48,11 @@ export default function Profile() {
         setLastName(last);
         setContact(profile?.contato || "");
         setCompanyName(profile?.empresas?.nome || "");
-      } catch (err: any) {
+      } catch (err: unknown) {
         toast({
           variant: "destructive",
           title: "Erro ao carregar perfil",
-          description: err?.message,
+          description: getSafeErrorMessage(err),
         });
       } finally {
         setIsLoading(false);
@@ -83,11 +84,11 @@ export default function Profile() {
         title: "Perfil atualizado",
         description: "Suas informações foram salvas com sucesso",
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast({
         variant: "destructive",
         title: "Erro ao salvar",
-        description: err?.message,
+        description: getSafeErrorMessage(err),
       });
     }
   };
