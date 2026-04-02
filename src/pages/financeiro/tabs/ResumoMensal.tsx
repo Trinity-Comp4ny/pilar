@@ -2,7 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ArrowUpRight, ArrowDownRight, TrendingUp, TrendingDown, Loader2 } from "lucide-react";
 import { ResponsiveContainer, AreaChart, Area, CartesianGrid, XAxis, YAxis, Tooltip } from "recharts";
 import { CustomTooltip } from "../components/CustomTooltip";
-import { useDashboardData } from "@/hooks/useDashboardData";
+import { useFinanceData } from "@/hooks/useFinanceData";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -14,7 +14,7 @@ interface ResumoMensalProps {
 }
 
 export default function ResumoMensal({ dateFrom, dateTo }: ResumoMensalProps) {
-  const { data: dashboardData, isLoading: isLoadingDashboard } = useDashboardData(dateFrom, dateTo);
+  const { data: dashboardData, isLoading: isLoadingDashboard } = useFinanceData(dateFrom, dateTo);
 
   const { data: topTransactions, isLoading: isLoadingTop } = useQuery({
     queryKey: ["top-transactions-month", dateFrom, dateTo],
