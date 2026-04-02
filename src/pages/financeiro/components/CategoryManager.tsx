@@ -3,12 +3,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Pencil, Trash2, Loader2 } from "lucide-react";
+import { Plus, Pencil, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { getSafeErrorMessage } from "@/lib/safeError";
 
 interface Category {
   id: string;
@@ -29,8 +27,6 @@ export function CategoryManager({ title, description, type, onCategoryChange }: 
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
   const [editCategory, setEditCategory] = useState<Category | null>(null);
   const [deleteCategory, setDeleteCategory] = useState<Category | null>(null);
@@ -43,8 +39,8 @@ export function CategoryManager({ title, description, type, onCategoryChange }: 
 
   const fetchCategories = async () => {
     try {
-      const { data, error } = await supabase
-        .from('categorias_financeiras')
+      const { data, error } = await (supabase
+        .from('categorias_financeiras') as any)
         .select('*')
         .eq('tipo', type)
         .order('nome');
@@ -60,10 +56,11 @@ export function CategoryManager({ title, description, type, onCategoryChange }: 
       if (onCategoryChange) {
         onCategoryChange(mappedCategories);
       }
-    } catch (err: unknown) {
+    } catch (error: any) {
+      console.error("Error fetching categories:", error);
       toast({
         title: "Erro ao carregar categorias",
-        description: getSafeErrorMessage(err),
+        description: error.message,
         variant: "destructive",
       });
     }
@@ -79,17 +76,16 @@ export function CategoryManager({ title, description, type, onCategoryChange }: 
       return;
     }
 
-    setIsSaving(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Usuário não autenticado");
 
-      const { error } = await supabase
-        .from('categorias_financeiras')
+      const { error } = await (supabase
+        .from('categorias_financeiras') as any)
         .insert({
           nome: newCategoryName.trim(),
           tipo: type,
-          empresa_id: (await supabase.rpc('get_user_empresa_id', {})).data
+          empresa_id: (await (supabase.rpc as any)('get_user_empresa_id')).data 
         });
 
       if (error) throw error;
@@ -102,14 +98,12 @@ export function CategoryManager({ title, description, type, onCategoryChange }: 
       setNewCategoryName("");
       setIsAddDialogOpen(false);
       fetchCategories();
-    } catch (err: unknown) {
+    } catch (error: any) {
       toast({
         title: "Erro ao adicionar",
-        description: getSafeErrorMessage(err),
+        description: error.message,
         variant: "destructive",
       });
-    } finally {
-      setIsSaving(false);
     }
   };
 
@@ -123,10 +117,9 @@ export function CategoryManager({ title, description, type, onCategoryChange }: 
       return;
     }
 
-    setIsSaving(true);
     try {
-      const { error } = await supabase
-        .from('categorias_financeiras')
+      const { error } = await (supabase
+        .from('categorias_financeiras') as any)
         .update({ nome: editCategory.name.trim() })
         .eq('id', editCategory.id);
 
@@ -140,24 +133,21 @@ export function CategoryManager({ title, description, type, onCategoryChange }: 
       setEditCategory(null);
       setIsEditDialogOpen(false);
       fetchCategories();
-    } catch (err: unknown) {
+    } catch (error: any) {
       toast({
         title: "Erro ao atualizar",
-        description: getSafeErrorMessage(err),
+        description: error.message,
         variant: "destructive",
       });
-    } finally {
-      setIsSaving(false);
     }
   };
 
   const handleDeleteCategory = async () => {
     if (!deleteCategory) return;
 
-    setIsDeleting(true);
     try {
-      const { error } = await supabase
-        .from('categorias_financeiras')
+      const { error } = await (supabase
+        .from('categorias_financeiras') as any)
         .delete()
         .eq('id', deleteCategory.id);
 
@@ -171,14 +161,12 @@ export function CategoryManager({ title, description, type, onCategoryChange }: 
       setDeleteCategory(null);
       setIsDeleteDialogOpen(false);
       fetchCategories();
-    } catch (err: unknown) {
+    } catch (error: any) {
       toast({
         title: "Erro ao remover",
-        description: getSafeErrorMessage(err),
+        description: error.message,
         variant: "destructive",
       });
-    } finally {
-      setIsDeleting(false);
     }
   };
 
@@ -196,7 +184,7 @@ export function CategoryManager({ title, description, type, onCategoryChange }: 
               <Plus className="h-4 w-4 mr-1" /> Adicionar
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-sm">
+          <DialogContent className="max-w-sm">
             <DialogHeader>
               <DialogTitle>Nova Categoria</DialogTitle>
               <DialogDescription>
@@ -216,11 +204,11 @@ export function CategoryManager({ title, description, type, onCategoryChange }: 
               </div>
               
               <div className="flex gap-2 pt-2">
-                <Button variant="outline" onClick={() => setIsAddDialogOpen(false)} className="flex-1" disabled={isSaving}>
+                <Button variant="outline" onClick={() => setIsAddDialogOpen(false)} className="flex-1">
                   Cancelar
                 </Button>
-                <Button onClick={handleAddCategory} className="flex-1 bg-accent-orange hover:bg-accent-orange/90 text-white" disabled={isSaving}>
-                  {isSaving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Salvando...</> : "Adicionar"}
+                <Button onClick={handleAddCategory} className="flex-1 pilar-button-primary">
+                  Adicionar
                 </Button>
               </div>
             </div>
@@ -276,7 +264,7 @@ export function CategoryManager({ title, description, type, onCategoryChange }: 
       
       {/* Dialog para editar categoria */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="sm:max-w-sm">
+        <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle>Editar Categoria</DialogTitle>
             <DialogDescription>
@@ -296,34 +284,38 @@ export function CategoryManager({ title, description, type, onCategoryChange }: 
             </div>
             
             <div className="flex gap-2 pt-2">
-              <Button variant="outline" onClick={() => setIsEditDialogOpen(false)} className="flex-1" disabled={isSaving}>
+              <Button variant="outline" onClick={() => setIsEditDialogOpen(false)} className="flex-1">
                 Cancelar
               </Button>
-              <Button onClick={handleEditCategory} className="flex-1 bg-accent-orange hover:bg-accent-orange/90 text-white" disabled={isSaving}>
-                {isSaving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Salvando...</> : "Salvar"}
+              <Button onClick={handleEditCategory} className="flex-1 pilar-button-primary">
+                Salvar
               </Button>
             </div>
           </div>
         </DialogContent>
       </Dialog>
       
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
-            <AlertDialogDescription>
-              Tem certeza que deseja excluir a categoria &quot;{deleteCategory?.name}&quot;?
+      {/* Dialog para confirmar exclusão */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Confirmar Exclusão</DialogTitle>
+            <DialogDescription>
+              Tem certeza que deseja excluir a categoria "{deleteCategory?.name}"?
               Esta ação não pode ser desfeita.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteCategory} className="bg-red-600 hover:bg-red-700" disabled={isDeleting}>
-              {isDeleting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Excluindo...</> : "Excluir"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="flex gap-2 pt-4">
+            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)} className="flex-1">
+              Cancelar
+            </Button>
+            <Button variant="destructive" onClick={handleDeleteCategory} className="flex-1">
+              Excluir
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -40,39 +40,45 @@ export function PrivateRoute() {
           .single();
 
         if (error) {
+          console.error("Error fetching profile:", error);
           if (mounted) setIsLoading(false);
           return;
         }
 
         if (profile && mounted) {
-          const userProfile = profile;
+          const userProfile = profile as any;
           const isCompanySetup = location.pathname === '/company-setup';
           const isProfileSetup = location.pathname === '/profile-setup';
 
-          const profileDone = userProfile.onboarding_completed === true;
-          const companyDone = userProfile.empresas?.onboarding_completed === true;
-          const isAdmin = userProfile.role === 'admin';
+          // Default "Minha Empresa" name check for admins
+          const isNewCompany = userProfile.role === 'admin' && userProfile.empresas?.nome === 'Minha Empresa';
+          // Name same as email check for invited users OR if they explicitly need setup
+          // We also check if 'contato' is missing as a proxy for completed profile setup
+          const isNewUser = !userProfile.contato || userProfile.nome === userProfile.email;
 
-          if (!profileDone) {
+          // Priority: Profile -> Company -> Dashboard
+          if (isNewUser) {
             if (!isProfileSetup) {
               setRedirectPath('/profile-setup');
             } else {
               setRedirectPath(null);
             }
-          } else if (isAdmin && !companyDone) {
+          } else if (isNewCompany) {
+            // Allow toggling between the two setup pages during onboarding
             if (!isCompanySetup && !isProfileSetup) {
               setRedirectPath('/company-setup');
             } else {
               setRedirectPath(null);
             }
           } else if (isCompanySetup || isProfileSetup) {
+            // If they are done but trying to access setup pages
             setRedirectPath('/dashboard');
           } else {
             setRedirectPath(null);
           }
         }
-      } catch {
-        if (mounted) setIsAuthenticated(false);
+      } catch (error) {
+        console.error("Auth check error:", error);
       } finally {
         if (mounted) setIsLoading(false);
       }

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowUpCircle, ArrowDownCircle } from "lucide-react";
@@ -18,7 +19,7 @@ export default function Lancamentos() {
         </CardHeader>
         <CardContent className="px-0">
           <Tabs defaultValue="receitas" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 gap-2 mb-6">
+            <TabsList className="grid w-full max-w-[400px] grid-cols-2 mb-6">
               <TabsTrigger value="receitas" className="data-[state=active]:bg-green-100 data-[state=active]:text-green-700">
                 <ArrowUpCircle className="mr-2 h-4 w-4" />
                 Receitas

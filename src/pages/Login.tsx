@@ -11,7 +11,6 @@ export default function Login() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  const [isResetting, setIsResetting] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -40,62 +39,14 @@ export default function Login() {
         description: "Verifique suas credenciais e tente novamente.",
         variant: "destructive",
       });
-      setIsLoading(false);
-      return;
-    }
-
-    toast({
-      title: "Login realizado com sucesso!",
-      description: "Bem-vindo de volta.",
-    });
-
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('onboarding_completed, role, empresas(onboarding_completed)')
-        .eq('id', user.id)
-        .single();
-
-      if (profile && !profile.onboarding_completed) {
-        navigate("/profile-setup");
-      } else if (profile?.role === 'admin' && !profile.empresas?.onboarding_completed) {
-        navigate("/company-setup");
-      } else {
-        navigate("/dashboard");
-      }
     } else {
+      toast({
+        title: "Login realizado com sucesso!",
+        description: "Bem-vindo de volta.",
+      });
       navigate("/dashboard");
     }
     setIsLoading(false);
-  };
-
-  const handleResetPassword = async () => {
-    if (!email.trim()) {
-      toast({
-        title: "Informe o email",
-        description: "Digite seu email no campo acima para receber o link de redefinição.",
-        variant: "destructive",
-      });
-      return;
-    }
-    setIsResetting(true);
-    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-      redirectTo: `${window.location.origin}/profile-setup`,
-    });
-    if (error) {
-      toast({
-        title: "Erro ao enviar",
-        description: "Tente novamente em alguns instantes.",
-        variant: "destructive",
-      });
-    } else {
-      toast({
-        title: "Email enviado!",
-        description: "Verifique sua caixa de entrada para redefinir a senha.",
-      });
-    }
-    setIsResetting(false);
   };
 
   return (
@@ -144,14 +95,9 @@ export default function Login() {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="password" className="text-slate-700 font-medium">Senha</Label>
-                <button
-                  type="button"
-                  onClick={handleResetPassword}
-                  disabled={isResetting}
-                  className="text-xs font-medium text-accent-orange hover:text-orange-700 hover:underline disabled:opacity-50"
-                >
-                  {isResetting ? "Enviando..." : "Esqueceu a senha?"}
-                </button>
+                <Link to="#" className="text-xs font-medium text-accent-orange hover:text-orange-700 hover:underline">
+                  Esqueceu a senha?
+                </Link>
               </div>
               <div className="relative group">
                 <Lock className="absolute left-3 top-3 h-4 w-4 text-slate-400 group-focus-within:text-accent-orange transition-colors" />

@@ -66,3 +66,11 @@ export const formatCurrencyInput = (value: string): string => {
     currency: 'BRL',
   }).format(reais);
 };
+
+/**
+ * Formata um valor para exibição com símbolo R$
+ */
+export const formatCurrencyDisplay = (value: number | string): string => {
+  const numValue = typeof value === 'string' ? parseFloat(value) || 0 : value;
+  return formatCurrency(numValue);
+};

@@ -3,7 +3,7 @@ import { ArrowUpRight, ArrowDownRight, TrendingUp, TrendingDown, DollarSign, Bar
 import { ResponsiveContainer, ComposedChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, Area, PieChart, Pie, Cell } from "recharts";
 import MetasSummary from "../components/MetasSummary";
 import { CustomTooltip } from "../components/CustomTooltip";
-import { useFinanceData } from "@/hooks/useFinanceData";
+import { useDashboardData } from "@/hooks/useDashboardData";
 
 interface VisaoGeralProps {
   visualizacao: "dia" | "mes" | "ano";
@@ -12,7 +12,7 @@ interface VisaoGeralProps {
 }
 
 export default function VisaoGeral({ visualizacao, dateFrom, dateTo }: VisaoGeralProps) {
-  const { data: dashboardData, isLoading } = useFinanceData(dateFrom, dateTo);
+  const { data: dashboardData, isLoading } = useDashboardData(dateFrom, dateTo);
 
   if (isLoading) {
     return (

@@ -6,15 +6,13 @@ import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Search, ArrowUpDown, User, Mail, Phone, MapPin, Trash2, Pencil, Landmark, X, Loader2 } from "lucide-react";
+import { Plus, Search, ArrowUpDown, User, Mail, Phone, MapPin, Trash2, Pencil, Building2, Landmark, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { formatPhone, formatDocument } from "@/lib/maskUtils";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
-import { getSafeErrorMessage } from "@/lib/safeError";
 
 interface Cliente {
   id: string;
@@ -25,7 +23,6 @@ interface Cliente {
   email: string;
   tipo_nf?: string;
   origem?: string;
-  contas_bancarias?: any[];
 }
 
 export default function Clientes() {
@@ -53,8 +50,14 @@ export default function Clientes() {
   const [currentId, setCurrentId] = useState<string | null>(null);
   
   const [searchTerm, setSearchTerm] = useState("");
-  const [isSaving, setIsSaving] = useState(false);
 
+  const formatTelefone = (value: string) => {
+    return value
+      .replace(/\D/g, "")
+      .replace(/(\d{2})(\d)/, "($1) $2")
+      .replace(/(\d{5})(\d)/, "$1-$2")
+      .replace(/(-\d{4})\d+?$/, "$1");
+  };
   const formatCpf = (digits: string) => {
     return digits
       .replace(/(\d{3})(\d)/, "$1.$2")
@@ -112,7 +115,7 @@ export default function Clientes() {
       .order('nome');
     
     if (data) {
-      setClientes(data as Cliente[]);
+      setClientes(data as any[]);
     }
   };
 
@@ -144,7 +147,7 @@ export default function Clientes() {
     setEmail(cliente.email || "");
     setTipoNf(cliente.tipo_nf || "");
     setOrigem(cliente.origem || "");
-    setContasBancarias(Array.isArray(cliente.contas_bancarias) ? cliente.contas_bancarias : []);
+    setContasBancarias(Array.isArray((cliente as any).contas_bancarias) ? (cliente as any).contas_bancarias : []);
     setNewConta({ banco: "", agencia: "", conta: "", tipo: "corrente" });
     setCurrentId(cliente.id);
     setIsEditMode(true);
@@ -199,7 +202,6 @@ export default function Clientes() {
       return;
     }
 
-    setIsSaving(true);
     try {
       if (isEditMode && currentId) {
         const { error } = await supabase
@@ -243,14 +245,12 @@ export default function Clientes() {
       setIsDialogOpen(false);
       fetchClientes();
 
-    } catch (err: unknown) {
+    } catch (error: any) {
       toast({
         title: "Erro ao salvar",
-        description: getSafeErrorMessage(err),
+        description: error.message,
         variant: "destructive",
       });
-    } finally {
-      setIsSaving(false);
     }
   };
 
@@ -294,7 +294,7 @@ export default function Clientes() {
 
   const filteredAndSortedClientes = useMemo(() => {
     const term = searchTerm.trim();
-    const filtered = clientes.filter((cliente) => {
+    let filtered = clientes.filter((cliente) => {
       if (!term) return true;
       const digits = cliente.cpf_cnpj ? cliente.cpf_cnpj.replace(/\D/g, "") : "";
       const termDigits = term.replace(/\D/g, "");
@@ -336,125 +336,206 @@ export default function Clientes() {
                   Novo Cliente
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto p-0">
-                <div className="px-6 pt-6 pb-4 border-b">
-                  <DialogHeader>
-                    <DialogTitle>{isEditMode ? "Editar Cliente" : "Novo Cliente"}</DialogTitle>
-                    <DialogDescription>{isEditMode ? "Atualize os dados do cliente" : "Cadastre um novo cliente no sistema"}</DialogDescription>
-                  </DialogHeader>
-                </div>
-
-                <form onSubmit={handleSubmit} className="divide-y">
-                  {/* Identificação */}
-                  <div className="px-6 py-4 space-y-3">
-                    <Label className="text-[10px] uppercase text-muted-foreground tracking-wider">Identificação</Label>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      <div className="space-y-1.5">
-                        <Label htmlFor="nome" className="text-xs">Nome *</Label>
-                        <Input id="nome" value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Nome completo ou razão social" required />
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label htmlFor="cpf" className="text-xs">CPF/CNPJ *</Label>
-                        <Input id="cpf" value={cpfCnpj} onChange={(e) => setCpfCnpj(formatDocument(e.target.value))} placeholder="000.000.000-00" maxLength={18} required />
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label htmlFor="email" className="text-xs">Email</Label>
-                        <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="email@exemplo.com" />
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label htmlFor="contato" className="text-xs">Contato</Label>
-                        <Input id="contato" value={contato} onChange={(e) => setContato(formatPhone(e.target.value))} maxLength={15} placeholder="(14) 99999-9999" />
-                      </div>
-                      <div className="md:col-span-2 space-y-1.5">
-                        <Label htmlFor="endereco" className="text-xs">Endereço</Label>
-                        <Input id="endereco" value={endereco} onChange={(e) => setEndereco(e.target.value)} placeholder="Endereço completo" />
-                      </div>
-                    </div>
+              <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>{isEditMode ? "Editar Cliente" : "Novo Cliente"}</DialogTitle>
+                  <DialogDescription>
+                    {isEditMode ? "Atualize os dados do cliente" : "Cadastre um novo cliente no sistema"}
+                  </DialogDescription>
+                </DialogHeader>
+                
+                <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="nome">Nome *</Label>
+                    <Input
+                      id="nome"
+                      value={nome}
+                      onChange={(e) => setNome(e.target.value)}
+                      placeholder="Nome completo"
+                      required
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="cpf">CPF/CNPJ *</Label>
+                    <Input
+                      id="cpf"
+                      value={cpfCnpj}
+                      onChange={(e) => setCpfCnpj(e.target.value)}
+                      placeholder="000.000.000-00"
+                      required
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="email@exemplo.com"
+                    />
                   </div>
 
-                  {/* Comercial */}
-                  <div className="px-6 py-4 space-y-3">
-                    <Label className="text-[10px] uppercase text-muted-foreground tracking-wider">Comercial</Label>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      <div className="space-y-1.5">
-                        <Label htmlFor="tipoNf" className="text-xs">Tipo de Nota Fiscal</Label>
-                        <Select value={tipoNf} onValueChange={setTipoNf}>
-                          <SelectTrigger id="tipoNf"><SelectValue placeholder="Selecione" /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="servico">Serviço</SelectItem>
-                            <SelectItem value="produto">Produto</SelectItem>
-                            <SelectItem value="misto">Misto</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label htmlFor="origem" className="text-xs">Origem</Label>
-                        <Input id="origem" value={origem} onChange={(e) => setOrigem(e.target.value)} placeholder="Ex: Indicação, Instagram, Site" />
-                      </div>
-                    </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="contato">Contato</Label>
+                    <Input
+                      id="contato"
+                      value={contato}
+                      onChange={(e) => setContato(formatTelefone(e.target.value))}
+                      maxLength={15}
+                      placeholder="(11) 99999-9999"
+                    />
                   </div>
 
-                  {/* Contas Bancárias */}
-                  <div className="px-6 py-4 space-y-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="tipoNf">Tipo NF</Label>
+                    <Select value={tipoNf} onValueChange={setTipoNf}>
+                      <SelectTrigger id="tipoNf">
+                        <SelectValue placeholder="Selecione o tipo de NF" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="servico">Serviço</SelectItem>
+                        <SelectItem value="produto">Produto</SelectItem>
+                        <SelectItem value="misto">Misto</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="origem">Origem</Label>
+                    <Input
+                      id="origem"
+                      value={origem}
+                      onChange={(e) => setOrigem(e.target.value)}
+                      placeholder="Ex: Indicação, Google"
+                    />
+                  </div>
+
+                  <div className="space-y-2 md:col-span-2">
+                    <Label htmlFor="endereco">Endereço</Label>
+                    <Input
+                      id="endereco"
+                      value={endereco}
+                      onChange={(e) => setEndereco(e.target.value)}
+                      placeholder="Endereço completo"
+                    />
+                  </div>
+
+                  <div className="space-y-3 md:col-span-2 mt-2">
                     <div className="flex items-center justify-between">
-                      <Label className="text-[10px] uppercase text-muted-foreground tracking-wider">Contas Bancárias</Label>
-                      <span className="text-[10px] text-muted-foreground">Para recebimento</span>
+                      <Label>Contas Bancárias (para recebimento)</Label>
+                      <span className="text-xs text-black/50">Defina uma ou mais contas padrão para este cliente</span>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
+
+                    {/* Formulário para nova conta */}
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end bg-gray-50 p-3 rounded-lg border border-dashed border-gray-200">
                       <div className="space-y-1">
                         <Label className="text-xs">Banco</Label>
-                        <Input placeholder="Nome do banco" value={newConta.banco} onChange={(e) => setNewConta({ ...newConta, banco: e.target.value })} />
+                        <Input
+                          placeholder="Nome do banco"
+                          value={newConta.banco}
+                          onChange={(e) => setNewConta({ ...newConta, banco: e.target.value })}
+                        />
                       </div>
                       <div className="space-y-1">
                         <Label className="text-xs">Agência</Label>
-                        <Input placeholder="0000" value={newConta.agencia} onChange={(e) => setNewConta({ ...newConta, agencia: e.target.value })} />
+                        <Input
+                          placeholder="0000"
+                          value={newConta.agencia}
+                          onChange={(e) => setNewConta({ ...newConta, agencia: e.target.value })}
+                        />
                       </div>
                       <div className="space-y-1">
                         <Label className="text-xs">Conta</Label>
-                        <Input placeholder="000000-0" value={newConta.conta} onChange={(e) => setNewConta({ ...newConta, conta: e.target.value })} />
+                        <Input
+                          placeholder="000000-0"
+                          value={newConta.conta}
+                          onChange={(e) => setNewConta({ ...newConta, conta: e.target.value })}
+                        />
                       </div>
                       <div className="flex items-end gap-2">
-                        <Select value={newConta.tipo} onValueChange={(value) => setNewConta({ ...newConta, tipo: value })}>
-                          <SelectTrigger className="flex-1"><SelectValue placeholder="Tipo" /></SelectTrigger>
+                        <Select
+                          value={newConta.tipo}
+                          onValueChange={(value) => setNewConta({ ...newConta, tipo: value })}
+                        >
+                          <SelectTrigger className="flex-1">
+                            <SelectValue placeholder="Tipo" />
+                          </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="corrente">Corrente</SelectItem>
                             <SelectItem value="poupanca">Poupança</SelectItem>
                             <SelectItem value="pj">PJ</SelectItem>
                           </SelectContent>
                         </Select>
-                        <Button type="button" size="icon" variant="outline" className="h-9 w-9 shrink-0" onClick={handleAddConta}>
+                        <Button
+                          type="button"
+                          size="icon"
+                          className="bg-accent-orange hover:bg-accent-orange/90 text-white rounded-full h-9 w-9"
+                          onClick={handleAddConta}
+                        >
                           <Plus className="h-4 w-4" />
                         </Button>
                       </div>
                     </div>
 
+                    {/* Lista de contas já adicionadas */}
                     {contasBancarias.length > 0 && (
-                      <div className="space-y-1.5">
-                        {contasBancarias.map((conta, index) => (
-                          <div key={index} className={`flex items-center justify-between gap-3 border rounded-lg px-3 py-2 text-sm ${conta.is_primary ? 'border-accent-orange/40' : ''}`}>
-                            <div className="flex items-center gap-3 flex-1 min-w-0">
-                              <button type="button" className="shrink-0" onClick={() => handleSetPrimaryConta(index)} title="Definir como principal">
-                                <Landmark className={`h-4 w-4 ${conta.is_primary ? 'text-accent-orange' : 'text-muted-foreground/40'}`} />
-                              </button>
-                              <span className="font-medium truncate">{conta.banco}</span>
-                              <span className="hidden md:inline text-xs text-muted-foreground shrink-0">Ag. {conta.agencia} / Cc. {conta.conta}</span>
-                              <span className="text-xs text-muted-foreground capitalize shrink-0">{conta.tipo}</span>
-                              {conta.is_primary && <span className="text-[10px] text-accent-orange font-medium">Principal</span>}
+                      <div className="space-y-2">
+                        <Label className="text-xs text-black/60">Contas cadastradas</Label>
+                        <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                          {contasBancarias.map((conta, index) => (
+                            <div
+                              key={index}
+                              className={`flex items-center justify-between gap-3 bg-gray-50 border rounded-lg px-3 py-2 text-sm ${conta.is_primary ? 'border-accent-orange/50 bg-accent-orange/5' : 'border-gray-200'}`}
+                            >
+                              <div className="flex items-center gap-3 flex-1 min-w-0">
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6 flex-shrink-0"
+                                  onClick={() => handleSetPrimaryConta(index)}
+                                  title="Definir como principal"
+                                >
+                                  <Landmark className={`h-4 w-4 ${conta.is_primary ? 'text-accent-orange fill-accent-orange' : 'text-gray-400'}`} />
+                                </Button>
+                                <div className="flex items-center gap-1.5 min-w-0">
+                                  <span className="font-medium truncate">{conta.banco}</span>
+                                </div>
+                                <div className="hidden md:flex items-center gap-2 text-xs text-black/60 flex-shrink-0">
+                                  <span>Ag. {conta.agencia} / Cc. {conta.conta}</span>
+                                </div>
+                                <span className="text-xs text-black/50 capitalize flex-shrink-0">
+                                  {conta.tipo}
+                                </span>
+                                {conta.is_primary && (
+                                  <span className="text-[10px] bg-accent-orange/10 text-accent-orange px-1.5 py-0.5 rounded">Principal</span>
+                                )}
+                              </div>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 text-red-500 flex-shrink-0"
+                                onClick={() => handleRemoveConta(index)}
+                              >
+                                <X className="h-3 w-3" />
+                              </Button>
                             </div>
-                            <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-red-500 shrink-0" onClick={() => handleRemoveConta(index)}>
-                              <X className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        ))}
+                          ))}
+                        </div>
                       </div>
                     )}
                   </div>
-
-                  {/* Footer */}
-                  <div className="flex gap-2 px-6 py-4 bg-gray-50/30">
-                    <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)} className="flex-1" disabled={isSaving}>Cancelar</Button>
-                    <Button type="submit" className="flex-1 bg-accent-orange hover:bg-accent-orange/90 text-white" disabled={isSaving}>
-                      {isSaving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Salvando...</> : isEditMode ? "Atualizar" : "Salvar"}
+                  
+                  <div className="flex gap-2 pt-4 md:col-span-2">
+                    <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)} className="flex-1">
+                      Cancelar
+                    </Button>
+                    <Button type="submit" className="flex-1 bg-accent-orange hover:bg-accent-orange/90 text-white">
+                      Salvar
                     </Button>
                   </div>
                 </form>
@@ -603,9 +684,9 @@ export default function Clientes() {
                 {/* Seção de Contas Bancárias */}
                 <div className="space-y-2 mt-4 pt-4 border-t">
                   <Label className="text-sm font-medium">Contas Bancárias</Label>
-                  {(selectedCliente.contas_bancarias && selectedCliente.contas_bancarias.length > 0) ? (
+                  {((selectedCliente as any).contas_bancarias && (selectedCliente as any).contas_bancarias.length > 0) ? (
                     <div className="space-y-2">
-                      {selectedCliente.contas_bancarias.map((conta: any, index: number) => (
+                      {(selectedCliente as any).contas_bancarias.map((conta: any, index: number) => (
                         <div
                           key={index}
                           className={`flex items-center justify-between gap-3 bg-gray-50 border rounded-lg px-3 py-2 text-sm ${conta.is_primary ? 'border-accent-orange/50 bg-accent-orange/5' : 'border-gray-200'}`}

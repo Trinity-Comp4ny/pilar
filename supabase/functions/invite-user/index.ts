@@ -1,7 +1,10 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-import { corsHeaders } from "../_shared/cors.ts";
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -36,13 +39,10 @@ serve(async (req) => {
       throw new Error('You must belong to a company to invite users');
     }
 
-    // 3. Get and validate request body
+    // 3. Get request body
     const { email, nome, role } = await req.json();
 
     if (!email) throw new Error('Email is required');
-
-    const VALID_ROLES = ['admin', 'financeiro', 'marketing', 'operacional', 'user'];
-    const safeRole = VALID_ROLES.includes(role) ? role : 'user';
 
     // Get the origin from the request or referer to use as the redirect URL
     let origin = req.headers.get('origin') || req.headers.get('referer') || '';
@@ -58,7 +58,7 @@ serve(async (req) => {
     // 4. Invite user using Service Role Key (Admin)
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      Deno.env.get('SERVICE_ROLE_KEY') ?? ''
     );
 
     const { data: invitation, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(
@@ -67,8 +67,9 @@ serve(async (req) => {
         redirectTo: `${origin}/profile-setup`,
         data: {
           empresa_id_convite: profile.empresa_id,
-          cargo_convite: safeRole,
-          nome: nome || '',
+          cargo_convite: role || 'user',
+          nome: nome,
+          company_name: 'Pilar' // Just a placeholder, logic handled by trigger
         }
       }
     );
@@ -76,17 +77,16 @@ serve(async (req) => {
     if (inviteError) throw inviteError;
 
     return new Response(
-      JSON.stringify({ success: true, email }),
+      JSON.stringify(invitation),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200 
       }
     );
 
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Internal error";
+  } catch (error: any) {
     return new Response(
-      JSON.stringify({ error: message }),
+      JSON.stringify({ error: error.message }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 400 

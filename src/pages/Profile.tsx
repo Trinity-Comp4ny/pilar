@@ -8,8 +8,6 @@ import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { useToast } from "@/hooks/use-toast";
 import { User, Mail, Phone, Building2 } from "lucide-react";
-import { formatPhone } from "@/lib/maskUtils";
-import { getSafeErrorMessage } from "@/lib/safeError";
 
 export default function Profile() {
   const [editing, setEditing] = useState(false);
@@ -21,7 +19,18 @@ export default function Profile() {
   const [lastName, setLastName] = useState<string>("");
   const [contact, setContact] = useState<string>("");
 
-  
+  const onlyDigits = (v: string) => (v || "").replace(/\D/g, "");
+  const formatPhone = (value: string) => {
+    const digits = onlyDigits(value).slice(0, 11);
+    if (!digits) return "";
+    if (digits.length <= 2) return `(${digits}`;
+    const ddd = digits.slice(0, 2);
+    const rest = digits.slice(2);
+    if (rest.length <= 4) return `(${ddd}) ${rest}`;
+    if (rest.length <= 8) return `(${ddd}) ${rest.slice(0, 4)}-${rest.slice(4)}`;
+    if (rest.length <= 9) return `(${ddd}) ${rest.slice(0, 5)}-${rest.slice(5)}`;
+    return `(${ddd}) ${rest.slice(0, 5)}-${rest.slice(5, 9)}`;
+  };
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -39,20 +48,20 @@ export default function Profile() {
 
         if (error) throw error;
 
-        const fullName = profile?.nome || "";
+        const fullName = (profile as any)?.nome || "";
         const parts = fullName.trim().split(/\s+/).filter(Boolean);
         const first = parts[0] || "";
         const last = parts.slice(1).join(" ");
 
         setFirstName(first);
         setLastName(last);
-        setContact(profile?.contato || "");
-        setCompanyName(profile?.empresas?.nome || "");
-      } catch (err: unknown) {
+        setContact((profile as any)?.contato || "");
+        setCompanyName((profile as any)?.empresas?.nome || "");
+      } catch (err: any) {
         toast({
           variant: "destructive",
           title: "Erro ao carregar perfil",
-          description: getSafeErrorMessage(err),
+          description: err?.message,
         });
       } finally {
         setIsLoading(false);
@@ -84,11 +93,11 @@ export default function Profile() {
         title: "Perfil atualizado",
         description: "Suas informações foram salvas com sucesso",
       });
-    } catch (err: unknown) {
+    } catch (err: any) {
       toast({
         variant: "destructive",
         title: "Erro ao salvar",
-        description: getSafeErrorMessage(err),
+        description: err?.message,
       });
     }
   };
