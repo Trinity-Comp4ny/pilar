@@ -11,7 +11,6 @@ import { ArrowLeft, ArrowRight, Loader2, Lock, Phone, User } from "lucide-react"
 
 export default function ProfileSetup() {
   const [isLoading, setIsLoading] = useState(false);
-  const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
@@ -52,7 +51,6 @@ export default function ProfileSetup() {
           }
         }
       } finally {
-        setIsLoadingProfile(false);
       }
     };
     loadProfile();
