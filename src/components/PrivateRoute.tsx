@@ -49,35 +49,30 @@ export function PrivateRoute() {
           const isCompanySetup = location.pathname === '/company-setup';
           const isProfileSetup = location.pathname === '/profile-setup';
 
-          // Default "Minha Empresa" name check for admins
-          const isNewCompany = userProfile.role === 'admin' && userProfile.empresas?.nome === 'Minha Empresa';
-          // Name same as email check for invited users OR if they explicitly need setup
-          // We also check if 'contato' is missing as a proxy for completed profile setup
-          const isNewUser = !userProfile.contato || userProfile.nome === userProfile.email;
+          const profileDone = userProfile.onboarding_completed === true;
+          const companyDone = userProfile.empresas?.onboarding_completed === true;
+          const isAdmin = userProfile.role === 'admin';
 
-          // Priority: Profile -> Company -> Dashboard
-          if (isNewUser) {
+          if (!profileDone) {
             if (!isProfileSetup) {
               setRedirectPath('/profile-setup');
             } else {
               setRedirectPath(null);
             }
-          } else if (isNewCompany) {
-            // Allow toggling between the two setup pages during onboarding
+          } else if (isAdmin && !companyDone) {
             if (!isCompanySetup && !isProfileSetup) {
               setRedirectPath('/company-setup');
             } else {
               setRedirectPath(null);
             }
           } else if (isCompanySetup || isProfileSetup) {
-            // If they are done but trying to access setup pages
             setRedirectPath('/dashboard');
           } else {
             setRedirectPath(null);
           }
         }
-      } catch (error) {
-        // Auth check failed silently - user will be redirected to login
+      } catch {
+        if (mounted) setIsAuthenticated(false);
       } finally {
         if (mounted) setIsLoading(false);
       }
