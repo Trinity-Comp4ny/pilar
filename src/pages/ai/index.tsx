@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -7,10 +7,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Sparkles, BarChart3, FileText, AlertTriangle, Users, FileCheck, Loader2, Clock, ChevronRight } from "lucide-react";
+import {
+  Sparkles, BarChart3, FileText, AlertTriangle, Users, FileCheck,
+  Loader2, Clock, ChevronRight, FileStack, FilePlus2, CalendarCheck,
+  UserPlus, FlaskConical, BadgeDollarSign,
+} from "lucide-react";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import {
   useAiInsights,
   useAiUsage,
@@ -26,6 +31,12 @@ const ICON_MAP: Record<string, typeof BarChart3> = {
   AlertTriangle,
   Users,
   FileCheck,
+  FileStack,
+  FilePlus2,
+  CalendarCheck,
+  UserPlus,
+  FlaskConical,
+  BadgeDollarSign,
 };
 
 function formatTimeAgo(dateStr: string): string {
@@ -51,6 +62,19 @@ export default function AiHub() {
   const [propostaForm, setPropostaForm] = useState({ briefing: "", area_m2: "", tipologia: "", prazo_dias: "" });
   const [relatorioForm, setRelatorioForm] = useState({ periodo: "semanal" });
   const [fechamentoForm, setFechamentoForm] = useState({ mes: String(new Date().getMonth() + 1), ano: String(new Date().getFullYear()) });
+  const [documentosForm, setDocumentosForm] = useState({ projeto_id: "", tipo_documento: "relatorio_progresso" });
+  const [aditivoForm, setAditivoForm] = useState({ projeto_id: "", motivo_aditivo: "", descricao_mudanca: "" });
+  const [pautaForm, setPautaForm] = useState({ tipo_reuniao: "diretoria", projeto_id: "", participantes_contexto: "" });
+  const [contratacaoForm, setContratacaoForm] = useState({ horizonte_meses: "6" });
+  const [simulacaoForm, setSimulacaoForm] = useState({ tipo: "perda_cliente", descricao: "" });
+  const [projetosOptions, setProjetosOptions] = useState<{ id: string; nome: string }[]>([]);
+
+  // Carrega projetos para selects
+  useEffect(() => {
+    supabase.from("projetos").select("id, nome").is("deleted_at", null).order("nome").then(({ data }) => {
+      if (data) setProjetosOptions(data);
+    });
+  }, []);
 
   const handleGenerate = (tipo: AiTipo) => {
     let params: any = {};
@@ -69,6 +93,21 @@ export default function AiHub() {
         break;
       case "fechamento_mensal":
         params = { mes: parseInt(fechamentoForm.mes), ano: parseInt(fechamentoForm.ano) };
+        break;
+      case "documentos":
+        params = { projeto_id: documentosForm.projeto_id, tipo_documento: documentosForm.tipo_documento };
+        break;
+      case "aditivo_copilot":
+        params = { projeto_id: aditivoForm.projeto_id, motivo_aditivo: aditivoForm.motivo_aditivo, descricao_mudanca: aditivoForm.descricao_mudanca };
+        break;
+      case "pauta_reuniao":
+        params = { tipo_reuniao: pautaForm.tipo_reuniao, projeto_id: pautaForm.projeto_id || undefined, participantes_contexto: pautaForm.participantes_contexto || undefined };
+        break;
+      case "planejador_contratacao":
+        params = { horizonte_meses: parseInt(contratacaoForm.horizonte_meses) || 6 };
+        break;
+      case "simulacao_impacto":
+        params = { cenario: { tipo: simulacaoForm.tipo, descricao: simulacaoForm.descricao } };
         break;
       default:
         params = {};
@@ -235,10 +274,133 @@ export default function AiHub() {
               </div>
             )}
 
-            {(activeGenerator === "previsao_atraso" || activeGenerator === "radar_cliente") && (
+            {(activeGenerator === "previsao_atraso" || activeGenerator === "radar_cliente" || activeGenerator === "diagnostico_precificacao") && (
               <p className="text-sm text-muted-foreground">
                 Esta análise será gerada automaticamente com base nos dados atuais dos seus projetos e clientes.
               </p>
+            )}
+
+            {activeGenerator === "documentos" && (
+              <>
+                <div className="space-y-2">
+                  <Label>Projeto</Label>
+                  <Select value={documentosForm.projeto_id} onValueChange={(v) => setDocumentosForm({ ...documentosForm, projeto_id: v })}>
+                    <SelectTrigger><SelectValue placeholder="Selecione o projeto" /></SelectTrigger>
+                    <SelectContent>
+                      {projetosOptions.map((p) => (
+                        <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Tipo de Documento</Label>
+                  <Select value={documentosForm.tipo_documento} onValueChange={(v) => setDocumentosForm({ ...documentosForm, tipo_documento: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ata_reuniao">Ata de Reunião</SelectItem>
+                      <SelectItem value="relatorio_progresso">Relatório de Progresso</SelectItem>
+                      <SelectItem value="termo_encerramento">Termo de Encerramento</SelectItem>
+                      <SelectItem value="memorial_descritivo">Memorial Descritivo</SelectItem>
+                      <SelectItem value="ordem_servico">Ordem de Serviço</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </>
+            )}
+
+            {activeGenerator === "aditivo_copilot" && (
+              <>
+                <div className="space-y-2">
+                  <Label>Projeto</Label>
+                  <Select value={aditivoForm.projeto_id} onValueChange={(v) => setAditivoForm({ ...aditivoForm, projeto_id: v })}>
+                    <SelectTrigger><SelectValue placeholder="Selecione o projeto" /></SelectTrigger>
+                    <SelectContent>
+                      {projetosOptions.map((p) => (
+                        <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Motivo do Aditivo</Label>
+                  <Input value={aditivoForm.motivo_aditivo} onChange={(e) => setAditivoForm({ ...aditivoForm, motivo_aditivo: e.target.value })} placeholder="Ex: mudança de escopo, atraso do cliente..." />
+                </div>
+                <div className="space-y-2">
+                  <Label>Descrição da Mudança</Label>
+                  <Textarea value={aditivoForm.descricao_mudanca} onChange={(e) => setAditivoForm({ ...aditivoForm, descricao_mudanca: e.target.value })} rows={3} placeholder="Descreva o que mudou ou precisa ser adicionado..." />
+                </div>
+              </>
+            )}
+
+            {activeGenerator === "pauta_reuniao" && (
+              <>
+                <div className="space-y-2">
+                  <Label>Tipo de Reunião</Label>
+                  <Select value={pautaForm.tipo_reuniao} onValueChange={(v) => setPautaForm({ ...pautaForm, tipo_reuniao: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="diretoria">Diretoria / Sócios</SelectItem>
+                      <SelectItem value="projeto">Acompanhamento de Projeto</SelectItem>
+                      <SelectItem value="comercial">Comercial</SelectItem>
+                      <SelectItem value="operacional">Operacional</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Projeto (opcional)</Label>
+                  <Select value={pautaForm.projeto_id} onValueChange={(v) => setPautaForm({ ...pautaForm, projeto_id: v })}>
+                    <SelectTrigger><SelectValue placeholder="Selecione se for reunião de projeto" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">Nenhum (geral)</SelectItem>
+                      {projetosOptions.map((p) => (
+                        <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Contexto adicional (opcional)</Label>
+                  <Textarea value={pautaForm.participantes_contexto} onChange={(e) => setPautaForm({ ...pautaForm, participantes_contexto: e.target.value })} rows={2} placeholder="Participantes, temas específicos..." />
+                </div>
+              </>
+            )}
+
+            {activeGenerator === "planejador_contratacao" && (
+              <div className="space-y-2">
+                <Label>Horizonte de Planejamento (meses)</Label>
+                <Select value={contratacaoForm.horizonte_meses} onValueChange={(v) => setContratacaoForm({ horizonte_meses: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="3">3 meses</SelectItem>
+                    <SelectItem value="6">6 meses</SelectItem>
+                    <SelectItem value="12">12 meses</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {activeGenerator === "simulacao_impacto" && (
+              <>
+                <div className="space-y-2">
+                  <Label>Tipo de Cenário</Label>
+                  <Select value={simulacaoForm.tipo} onValueChange={(v) => setSimulacaoForm({ ...simulacaoForm, tipo: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="perda_cliente">Perda de Cliente</SelectItem>
+                      <SelectItem value="novo_projeto">Novo Projeto Grande</SelectItem>
+                      <SelectItem value="aumento_custo">Aumento de Custo</SelectItem>
+                      <SelectItem value="atraso_projeto">Atraso de Projeto</SelectItem>
+                      <SelectItem value="contratacao">Nova Contratação</SelectItem>
+                      <SelectItem value="custom">Cenário Personalizado</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Descrição do Cenário</Label>
+                  <Textarea value={simulacaoForm.descricao} onChange={(e) => setSimulacaoForm({ ...simulacaoForm, descricao: e.target.value })} rows={3} placeholder="Descreva o cenário que deseja simular..." />
+                </div>
+              </>
             )}
 
             <div className="flex justify-end gap-2 pt-2">

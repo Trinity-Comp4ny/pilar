@@ -56,6 +56,42 @@ export const AI_TIPOS = {
     edgeFunction: "ai-relatorio-executivo",
     icon: "FileCheck",
   },
+  documentos: {
+    label: "Gerador de Documentos",
+    descricao: "Gere atas, relatórios de progresso, termos e memoriais descritivos",
+    edgeFunction: "ai-documentos",
+    icon: "FileStack",
+  },
+  aditivo_copilot: {
+    label: "Co-piloto de Aditivo",
+    descricao: "Análise de impacto e sugestão de aditivo contratual",
+    edgeFunction: "ai-aditivo-copilot",
+    icon: "FilePlus2",
+  },
+  pauta_reuniao: {
+    label: "Pauta de Reunião",
+    descricao: "Gere pautas inteligentes com base nos dados da operação",
+    edgeFunction: "ai-pauta-reuniao",
+    icon: "CalendarCheck",
+  },
+  planejador_contratacao: {
+    label: "Planejador de Contratação",
+    descricao: "Análise de capacidade e recomendação de novas contratações",
+    edgeFunction: "ai-planejador-contratacao",
+    icon: "UserPlus",
+  },
+  simulacao_impacto: {
+    label: "Simulação de Impacto",
+    descricao: "Simule cenários (perda de cliente, novo projeto, aumento de custo)",
+    edgeFunction: "ai-simulacao-impacto",
+    icon: "FlaskConical",
+  },
+  diagnostico_precificacao: {
+    label: "Diagnóstico de Precificação",
+    descricao: "Análise de margens, valor/hora e estratégia de preços",
+    edgeFunction: "ai-diagnostico-precificacao",
+    icon: "BadgeDollarSign",
+  },
 } as const;
 
 export type AiTipo = keyof typeof AI_TIPOS;
