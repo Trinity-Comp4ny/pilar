@@ -29,6 +29,17 @@ export default function CompanySetup() {
 
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validate required fields
+    if (!name.trim()) {
+      toast({
+        variant: "destructive",
+        title: "Campo obrigatório",
+        description: "Preencha a Razão social / Nome fantasia da empresa",
+      });
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -112,7 +123,7 @@ export default function CompanySetup() {
 
           <form onSubmit={handleUpdate} className="space-y-5">
             <div className="space-y-2">
-              <Label htmlFor="name" className="text-slate-700 font-medium">Razão social / Nome fantasia</Label>
+              <Label htmlFor="name" className="text-slate-700 font-medium">Razão social / Nome fantasia *</Label>
               <div className="relative group">
                 <Building2 className="absolute left-3 top-3 h-4 w-4 text-slate-400 group-focus-within:text-accent-orange transition-colors" />
                 <Input

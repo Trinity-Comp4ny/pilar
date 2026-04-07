@@ -167,9 +167,44 @@ export default function Company() {
   const handleCompanyStatusChange = (value: string) => {
     setCompanyData((prev) => ({ ...prev, status: value }));
   };
+
+  const validateCompanyData = () => {
+    const requiredFields = {
+      nomeEmpresa: "Nome da Empresa",
+      cnpj: "CNPJ",
+      email: "Email",
+      contato: "Contato",
+      endereco: "Endereço",
+      cidade: "Cidade",
+      estado: "Estado",
+      cep: "CEP",
+    };
+
+    const missingFields: string[] = [];
+
+    Object.entries(requiredFields).forEach(([key, label]) => {
+      const value = companyData[key as keyof CompanyData];
+      if (!value || (typeof value === "string" && value.trim() === "")) {
+        missingFields.push(label);
+      }
+    });
+
+    return missingFields;
+  };
   
   const handleSaveCompany = async () => {
     try {
+      // Validate required fields
+      const missingFields = validateCompanyData();
+      if (missingFields.length > 0) {
+        toast({
+          variant: "destructive",
+          title: "Campos obrigatórios",
+          description: `Preencha os seguintes campos: ${missingFields.join(", ")}`,
+        });
+        return;
+      }
+
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
@@ -542,40 +577,44 @@ export default function Company() {
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>Nome da Empresa</Label>
+                    <Label>Nome da Empresa *</Label>
                     <Input
                       value={companyData.nomeEmpresa}
                       onChange={handleCompanyChange("nomeEmpresa")}
                       readOnly={!editingCompany}
                       className={inputReadonlyClass}
+                      required={editingCompany}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>CNPJ</Label>
+                    <Label>CNPJ *</Label>
                     <Input
                       value={companyData.cnpj}
                       onChange={(e) => setCompanyData((prev) => ({ ...prev, cnpj: formatCNPJ(e.target.value) }))}
                       readOnly={!editingCompany}
                       className={inputReadonlyClass}
+                      required={editingCompany}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>Email</Label>
+                    <Label>Email *</Label>
                     <Input
                       type="email"
                       value={companyData.email}
                       onChange={handleCompanyChange("email")}
                       readOnly={!editingCompany}
                       className={inputReadonlyClass}
+                      required={editingCompany}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>Contato</Label>
+                    <Label>Contato *</Label>
                     <Input
                       value={companyData.contato}
                       onChange={(e) => setCompanyData((prev) => ({ ...prev, contato: formatPhone(e.target.value) }))}
                       readOnly={!editingCompany}
                       className={inputReadonlyClass}
+                      required={editingCompany}
                     />
                   </div>
                   <div className="space-y-2 md:col-span-2">
@@ -602,40 +641,44 @@ export default function Company() {
                     )}
                   </div>
                   <div className="space-y-2 md:col-span-2">
-                    <Label>Endereço</Label>
+                    <Label>Endereço *</Label>
                     <Input
                       value={companyData.endereco}
                       onChange={handleCompanyChange("endereco")}
                       readOnly={!editingCompany}
                       className={inputReadonlyClass}
+                      required={editingCompany}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>Cidade</Label>
+                    <Label>Cidade *</Label>
                     <Input
                       value={companyData.cidade}
                       onChange={handleCompanyChange("cidade")}
                       readOnly={!editingCompany}
                       className={inputReadonlyClass}
+                      required={editingCompany}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>Estado</Label>
+                    <Label>Estado *</Label>
                     <Input
                       value={companyData.estado}
                       onChange={handleCompanyChange("estado")}
                       readOnly={!editingCompany}
                       className={inputReadonlyClass}
                       maxLength={2}
+                      required={editingCompany}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>CEP</Label>
+                    <Label>CEP *</Label>
                     <Input
                       value={companyData.cep}
                       onChange={(e) => setCompanyData((prev) => ({ ...prev, cep: formatCEP(e.target.value) }))}
                       readOnly={!editingCompany}
                       className={inputReadonlyClass}
+                      required={editingCompany}
                     />
                   </div>
                 </div>

@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, Search, ArrowUpDown, User, Briefcase, Trash2, Pencil, Loader2, Landmark, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrencyInput, parseCurrencyString } from "@/lib/currencyUtils";
-import { formatCPF, formatPhone } from "@/lib/maskUtils";
+import { formatCPF, formatPhone, formatAgency, formatBankAccount } from "@/lib/maskUtils";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { supabase } from "@/integrations/supabase/client";
@@ -496,9 +496,9 @@ export default function Pessoas() {
                       <div className="space-y-1">
                         <Label className="text-xs">Agência</Label>
                         <Input
-                          placeholder="0000"
+                          placeholder="0000-0"
                           value={newConta.agencia}
-                          onChange={(e) => setNewConta({ ...newConta, agencia: e.target.value })}
+                          onChange={(e) => setNewConta({ ...newConta, agencia: formatAgency(e.target.value) })}
                         />
                       </div>
                       <div className="space-y-1">
@@ -506,7 +506,7 @@ export default function Pessoas() {
                         <Input
                           placeholder="000000-0"
                           value={newConta.conta}
-                          onChange={(e) => setNewConta({ ...newConta, conta: e.target.value })}
+                          onChange={(e) => setNewConta({ ...newConta, conta: formatBankAccount(e.target.value) })}
                         />
                       </div>
                       <div className="flex items-end gap-2">

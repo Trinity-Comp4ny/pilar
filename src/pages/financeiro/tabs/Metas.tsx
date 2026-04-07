@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import { formatCurrencyInput, parseCurrencyString } from "@/lib/maskUtils";
 import { cn } from "@/lib/utils";
 import { 
   AlertDialog, 
@@ -39,6 +40,15 @@ export default function Metas() {
   const [deleteAlertOpen, setDeleteAlertOpen] = useState(false);
   const [metaToDelete, setMetaToDelete] = useState<string | null>(null);
   const [editingMeta, setEditingMeta] = useState<Meta | null>(null);
+
+  const [editingMetaForm, setEditingMetaForm] = useState({
+    id: "",
+    nome: "",
+    alvo: "",
+    atual: "",
+    prazo: "",
+    categoria: "receita"
+  });
   
   const [novaMeta, setNovaMeta] = useState({
     nome: "",
@@ -119,8 +129,8 @@ export default function Metas() {
     e.preventDefault();
     createMetaMutation.mutate({
       nome: novaMeta.nome,
-      alvo: Number(novaMeta.alvo),
-      atual: Number(novaMeta.atual),
+      alvo: parseCurrencyString(novaMeta.alvo),
+      atual: parseCurrencyString(novaMeta.atual),
       prazo: novaMeta.prazo,
       categoria: novaMeta.categoria as any
     });
@@ -128,13 +138,28 @@ export default function Metas() {
 
   const handleEdit = (meta: Meta) => {
     setEditingMeta(meta);
+    setEditingMetaForm({
+      id: meta.id,
+      nome: meta.nome,
+      alvo: formatCurrencyInput((meta.alvo * 100).toString()),
+      atual: formatCurrencyInput((meta.atual * 100).toString()),
+      prazo: meta.prazo,
+      categoria: meta.categoria
+    });
     setIsEditDialogOpen(true);
   };
 
   const handleEditSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingMeta) return;
-    updateMetaMutation.mutate(editingMeta);
+    updateMetaMutation.mutate({
+      id: editingMeta.id,
+      nome: editingMetaForm.nome,
+      alvo: parseCurrencyString(editingMetaForm.alvo),
+      atual: parseCurrencyString(editingMetaForm.atual),
+      prazo: editingMetaForm.prazo,
+      categoria: editingMetaForm.categoria as any
+    });
   };
 
   const handleDeleteClick = (id: string) => {
@@ -205,18 +230,20 @@ export default function Metas() {
                     <div className="space-y-2">
                       <Label>Valor Alvo (R$)</Label>
                       <Input 
-                        type="number"
+                        type="text"
                         value={novaMeta.alvo}
-                        onChange={e => setNovaMeta({...novaMeta, alvo: e.target.value})}
+                        onChange={e => setNovaMeta({...novaMeta, alvo: formatCurrencyInput(e.target.value)})}
+                        placeholder="R$ 0,00"
                         required
                       />
                     </div>
                     <div className="space-y-2">
                       <Label>Valor Atual (R$)</Label>
                       <Input 
-                        type="number"
+                        type="text"
                         value={novaMeta.atual}
-                        onChange={e => setNovaMeta({...novaMeta, atual: e.target.value})}
+                        onChange={e => setNovaMeta({...novaMeta, atual: formatCurrencyInput(e.target.value)})}
+                        placeholder="R$ 0,00"
                         required
                       />
                     </div>
@@ -264,8 +291,8 @@ export default function Metas() {
                   <div className="space-y-2">
                     <Label>Nome da Meta</Label>
                     <Input 
-                      value={editingMeta.nome}
-                      onChange={e => setEditingMeta({...editingMeta, nome: e.target.value})}
+                      value={editingMetaForm.nome}
+                      onChange={e => setEditingMetaForm({...editingMetaForm, nome: e.target.value})}
                       placeholder="Ex: Faturamento 2024"
                       required
                     />
@@ -274,18 +301,20 @@ export default function Metas() {
                     <div className="space-y-2">
                       <Label>Valor Alvo (R$)</Label>
                       <Input 
-                        type="number"
-                        value={editingMeta.alvo}
-                        onChange={e => setEditingMeta({...editingMeta, alvo: Number(e.target.value)})}
+                        type="text"
+                        value={editingMetaForm.alvo}
+                        onChange={e => setEditingMetaForm({...editingMetaForm, alvo: formatCurrencyInput(e.target.value)})}
+                        placeholder="R$ 0,00"
                         required
                       />
                     </div>
                     <div className="space-y-2">
                       <Label>Valor Atual (R$)</Label>
                       <Input 
-                        type="number"
-                        value={editingMeta.atual}
-                        onChange={e => setEditingMeta({...editingMeta, atual: Number(e.target.value)})}
+                        type="text"
+                        value={editingMetaForm.atual}
+                        onChange={e => setEditingMetaForm({...editingMetaForm, atual: formatCurrencyInput(e.target.value)})}
+                        placeholder="R$ 0,00"
                         required
                       />
                     </div>
@@ -294,8 +323,8 @@ export default function Metas() {
                     <Label>Prazo</Label>
                     <Input 
                       type="date"
-                      value={editingMeta.prazo}
-                      onChange={e => setEditingMeta({...editingMeta, prazo: e.target.value})}
+                      value={editingMetaForm.prazo}
+                      onChange={e => setEditingMetaForm({...editingMetaForm, prazo: e.target.value})}
                       required
                     />
                   </div>
@@ -303,8 +332,8 @@ export default function Metas() {
                     <Label>Categoria</Label>
                     <select
                       className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                      value={editingMeta.categoria}
-                      onChange={(e) => setEditingMeta({ ...editingMeta, categoria: e.target.value as any })}
+                      value={editingMetaForm.categoria}
+                      onChange={(e) => setEditingMetaForm({ ...editingMetaForm, categoria: e.target.value })}
                     >
                       <option value="receita">Receita</option>
                       <option value="lucro">Lucro</option>

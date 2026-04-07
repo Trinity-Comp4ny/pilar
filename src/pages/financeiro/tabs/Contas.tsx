@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { CreditCard, Wallet, Plus, Settings, Pencil, Trash2, TrendingUp, TrendingDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { formatCurrencyInput, parseCurrencyString } from "@/lib/maskUtils";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -77,8 +78,8 @@ export default function Configuracoes() {
         empresa_id: empresaId,
         nome,
         banco,
-        saldo_inicial: parseFloat(saldoInicial),
-        saldo_atual: parseFloat(saldoInicial),
+        saldo_inicial: parseCurrencyString(saldoInicial),
+        saldo_atual: parseCurrencyString(saldoInicial),
         cor: '#888888'
       };
 
@@ -86,7 +87,7 @@ export default function Configuracoes() {
         const { error } = await supabase.from('contas').update({
           nome,
           banco,
-          saldo_inicial: parseFloat(saldoInicial)
+          saldo_inicial: parseCurrencyString(saldoInicial)
         }).eq('id', selectedConta.id);
 
         if (error) {
@@ -160,18 +161,18 @@ export default function Configuracoes() {
         user_id: user.id,
         empresa_id: empresaId,
         nome,
-        dia_fechamento: parseInt(diaFechamento),
-        dia_vencimento: parseInt(diaVencimento),
-        limite: parseFloat(limite),
+        dia_fechamento: parseInt(diaFechamento, 10),
+        dia_vencimento: parseInt(diaVencimento, 10),
+        limite: parseCurrencyString(limite),
         usado: 0
       };
 
       if (selectedCartao) {
         const { error } = await supabase.from('cartoes_credito').update({
           nome,
-          dia_fechamento: parseInt(diaFechamento),
-          dia_vencimento: parseInt(diaVencimento),
-          limite: parseFloat(limite)
+          dia_fechamento: parseInt(diaFechamento, 10),
+          dia_vencimento: parseInt(diaVencimento, 10),
+          limite: parseCurrencyString(limite)
         }).eq('id', selectedCartao.id);
 
         if (error) {
@@ -249,7 +250,7 @@ export default function Configuracoes() {
     setSelectedConta(conta);
     setNome(conta.nome);
     setBanco(conta.banco);
-    setSaldoInicial(conta.saldo_inicial.toString());
+    setSaldoInicial(formatCurrencyInput((conta.saldo_inicial * 100).toString()));
     setIsNewContaOpen(true);
   };
 
@@ -258,7 +259,7 @@ export default function Configuracoes() {
     setNome(cartao.nome);
     setDiaFechamento(cartao.dia_fechamento.toString());
     setDiaVencimento(cartao.dia_vencimento.toString());
-    setLimite(cartao.limite.toString());
+    setLimite(formatCurrencyInput((cartao.limite * 100).toString()));
     setIsNewCartaoOpen(true);
   };
 
@@ -346,7 +347,7 @@ export default function Configuracoes() {
                     </div>
                     <div className="space-y-2">
                       <Label>Saldo Inicial (R$)</Label>
-                      <Input type="number" value={saldoInicial} onChange={(e) => setSaldoInicial(e.target.value)} placeholder="5000.00" step="0.01" />
+                      <Input type="text" value={saldoInicial} onChange={(e) => setSaldoInicial(formatCurrencyInput(e.target.value))} placeholder="R$ 0,00" />
                     </div>
                     <Button className="w-full bg-accent-orange hover:bg-accent-orange/90 text-white rounded-full" onClick={handleSaveConta}>
                       {selectedConta ? 'Atualizar Conta' : 'Salvar Conta'}
@@ -461,7 +462,7 @@ export default function Configuracoes() {
                     </div>
                     <div className="space-y-2">
                       <Label>Limite (R$)</Label>
-                      <Input type="number" value={limite} onChange={(e) => setLimite(e.target.value)} placeholder="10000" />
+                      <Input type="text" value={limite} onChange={(e) => setLimite(formatCurrencyInput(e.target.value))} placeholder="R$ 0,00" />
                     </div>
                     <Button className="w-full bg-accent-orange hover:bg-accent-orange/90 text-white rounded-full" onClick={handleSaveCartao}>
                       {selectedCartao ? 'Atualizar Cartão' : 'Salvar Cartão'}

@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Search, ArrowUpDown, User, Mail, Phone, MapPin, Trash2, Pencil, Building2, Landmark, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { formatPhone, formatDocument } from "@/lib/maskUtils";
+import { formatPhone, formatDocument, formatAgency, formatBankAccount } from "@/lib/maskUtils";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { supabase } from "@/integrations/supabase/client";
@@ -438,9 +438,9 @@ export default function Clientes() {
                       <div className="space-y-1">
                         <Label className="text-xs">Agência</Label>
                         <Input
-                          placeholder="0000"
+                          placeholder="0000-0"
                           value={newConta.agencia}
-                          onChange={(e) => setNewConta({ ...newConta, agencia: e.target.value })}
+                          onChange={(e) => setNewConta({ ...newConta, agencia: formatAgency(e.target.value) })}
                         />
                       </div>
                       <div className="space-y-1">
@@ -448,7 +448,7 @@ export default function Clientes() {
                         <Input
                           placeholder="000000-0"
                           value={newConta.conta}
-                          onChange={(e) => setNewConta({ ...newConta, conta: e.target.value })}
+                          onChange={(e) => setNewConta({ ...newConta, conta: formatBankAccount(e.target.value) })}
                         />
                       </div>
                       <div className="flex items-end gap-2">
