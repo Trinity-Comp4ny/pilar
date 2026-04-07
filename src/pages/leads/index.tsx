@@ -7,13 +7,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Mail, Phone, User, MapPin, CheckCircle2, Trash2 } from "lucide-react";
+import { Plus, Mail, Phone, User, MapPin, CheckCircle2, Trash2, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatPhone } from "@/lib/maskUtils";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { supabase } from "@/integrations/supabase/client";
+import { getSafeErrorMessage } from "@/lib/safeError";
 
 interface Lead {
   id: string;
@@ -46,9 +47,8 @@ export default function Leads() {
     contato: "",
     origem: "",
   });
+  const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
-
-  
 
   useEffect(() => {
     fetchLeads();
@@ -61,7 +61,7 @@ export default function Leads() {
       .order('created_at', { ascending: false });
 
     if (data) {
-      setLeads(data as unknown as Lead[]);
+      setLeads(data as Lead[]);
     }
   };
 
@@ -82,6 +82,7 @@ export default function Leads() {
       return;
     }
 
+    setIsSaving(true);
     try {
       const { error } = await supabase.from('leads').insert({
         nome: formData.nome,
@@ -99,20 +100,17 @@ export default function Leads() {
         description: "Novo lead foi adicionado com sucesso",
       });
 
-      setFormData({
-        nome: "",
-        email: "",
-        contato: "",
-        origem: "",
-      });
+      setFormData({ nome: "", email: "", contato: "", origem: "" });
       setIsDialogOpen(false);
       fetchLeads();
-    } catch (error: any) {
+    } catch (err: unknown) {
       toast({
         title: "Erro ao salvar",
-        description: error.message,
+        description: getSafeErrorMessage(err),
         variant: "destructive",
       });
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -142,9 +140,10 @@ export default function Leads() {
         title: "Status atualizado",
         description: `Lead movido para ${newStatus}`,
       });
-    } catch (error) {
+    } catch (error: unknown) {
       toast({
         title: "Erro ao atualizar status",
+        description: getSafeErrorMessage(error),
         variant: "destructive"
       });
       fetchLeads(); // Revert changes
@@ -154,7 +153,7 @@ export default function Leads() {
   const handleConvertToClient = async () => {
     if (!selectedLead) return;
 
-    if ((selectedLead as any).cliente_id) {
+    if (selectedLead.cliente_id) {
       toast({
         title: "Já convertido",
         description: "Este lead já foi convertido em cliente.",
@@ -195,10 +194,10 @@ export default function Leads() {
       setIsConvertOpen(false);
       setIsDetailOpen(false);
       fetchLeads();
-    } catch (error: any) {
+    } catch (err: unknown) {
       toast({
         title: "Erro na conversão",
-        description: error.message,
+        description: getSafeErrorMessage(err),
         variant: "destructive"
       });
     }
@@ -234,74 +233,51 @@ export default function Leads() {
                   Novo Lead
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle>Novo Lead</DialogTitle>
-                  <DialogDescription>
-                    Cadastre um novo lead no sistema
-                  </DialogDescription>
-                </DialogHeader>
+              <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto p-0">
+                <div className="px-6 pt-6 pb-4 border-b">
+                  <DialogHeader>
+                    <DialogTitle>Novo Lead</DialogTitle>
+                    <DialogDescription>Cadastre um novo lead no sistema</DialogDescription>
+                  </DialogHeader>
+                </div>
 
-                <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="nome">Nome *</Label>
-                    <Input
-                      id="nome"
-                      value={formData.nome}
-                      onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
-                      placeholder="Nome do lead"
-                      required
-                    />
+                <form onSubmit={handleSubmit} className="divide-y">
+                  <div className="px-6 py-4 space-y-3">
+                    <Label className="text-[10px] uppercase text-muted-foreground tracking-wider">Informações do Lead</Label>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div className="space-y-1.5">
+                        <Label htmlFor="nome" className="text-xs">Nome *</Label>
+                        <Input id="nome" value={formData.nome} onChange={(e) => setFormData({ ...formData, nome: e.target.value })} placeholder="Nome completo" required />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label htmlFor="email" className="text-xs">Email</Label>
+                        <Input id="email" type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} placeholder="email@exemplo.com" />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label htmlFor="contato" className="text-xs">Celular</Label>
+                        <Input id="contato" value={formData.contato} onChange={(e) => setFormData({ ...formData, contato: formatPhone(e.target.value) })} maxLength={15} placeholder="(14) 99999-9999" />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label htmlFor="origem" className="text-xs">Origem</Label>
+                        <Select value={formData.origem} onValueChange={(value) => setFormData({ ...formData, origem: value })}>
+                          <SelectTrigger><SelectValue placeholder="Como chegou até você?" /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Instagram">Instagram</SelectItem>
+                            <SelectItem value="Tráfego">Tráfego Pago</SelectItem>
+                            <SelectItem value="LinkedIn">LinkedIn</SelectItem>
+                            <SelectItem value="Pessoal">Indicação Pessoal</SelectItem>
+                            <SelectItem value="Parceria">Parceria</SelectItem>
+                            <SelectItem value="Outros">Outros</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      placeholder="email@exemplo.com"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="contato">Contato (Celular)</Label>
-                    <Input
-                      id="contato"
-                      value={formData.contato}
-                      onChange={(e) => setFormData({ ...formData, contato: formatPhone(e.target.value) })}
-                      maxLength={15}
-                      placeholder="(11) 99999-9999"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="origem">Origem</Label>
-                    <Select 
-                      value={formData.origem} 
-                      onValueChange={(value) => setFormData({ ...formData, origem: value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione a origem" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Instagram">Instagram</SelectItem>
-                        <SelectItem value="Tráfego">Tráfego</SelectItem>
-                        <SelectItem value="LinkedIn">LinkedIn</SelectItem>
-                        <SelectItem value="Pessoal">Pessoal</SelectItem>
-                        <SelectItem value="Parceria">Parceria</SelectItem>
-                        <SelectItem value="Outros">Outros</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="flex gap-2 pt-4 md:col-span-2">
-                    <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)} className="flex-1">
-                      Cancelar
-                    </Button>
-                    <Button type="submit" className="flex-1 bg-accent-orange hover:bg-accent-orange/90 text-white">
-                      Salvar
+                  <div className="flex gap-2 px-6 py-4 bg-gray-50/30">
+                    <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)} className="flex-1" disabled={isSaving}>Cancelar</Button>
+                    <Button type="submit" className="flex-1 bg-accent-orange hover:bg-accent-orange/90 text-white" disabled={isSaving}>
+                      {isSaving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Salvando...</> : "Salvar"}
                     </Button>
                   </div>
                 </form>

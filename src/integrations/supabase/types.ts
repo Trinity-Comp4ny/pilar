@@ -7,23 +7,982 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "13.0.5"
   }
   public: {
     Tables: {
-      [_ in never]: never
+      empresas: {
+        Row: {
+          id: string
+          owner_id: string | null
+          nome: string
+          cnpj: string | null
+          email: string | null
+          contato: string | null
+          endereco: string | null
+          cidade: string | null
+          estado: string | null
+          cep: string | null
+          logo_url: string | null
+          status: Database["public"]["Enums"]["status_empresa"]
+          onboarding_completed: boolean
+          created_at: string
+          updated_at: string
+          created_by: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          id?: string
+          owner_id?: string | null
+          nome: string
+          cnpj?: string | null
+          email?: string | null
+          contato?: string | null
+          endereco?: string | null
+          cidade?: string | null
+          estado?: string | null
+          cep?: string | null
+          logo_url?: string | null
+          status?: Database["public"]["Enums"]["status_empresa"]
+          onboarding_completed?: boolean
+          created_at?: string
+          updated_at?: string
+          created_by?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          id?: string
+          owner_id?: string | null
+          nome?: string
+          cnpj?: string | null
+          email?: string | null
+          contato?: string | null
+          endereco?: string | null
+          cidade?: string | null
+          estado?: string | null
+          cep?: string | null
+          logo_url?: string | null
+          status?: Database["public"]["Enums"]["status_empresa"]
+          onboarding_completed?: boolean
+          created_at?: string
+          updated_at?: string
+          created_by?: string | null
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          id: string
+          empresa_id: string
+          nome: string
+          email: string
+          role: Database["public"]["Enums"]["user_role"]
+          contato: string | null
+          avatar_url: string | null
+          onboarding_completed: boolean
+          created_at: string
+          updated_at: string
+          created_by: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          id: string
+          empresa_id: string
+          nome: string
+          email: string
+          role?: Database["public"]["Enums"]["user_role"]
+          contato?: string | null
+          avatar_url?: string | null
+          onboarding_completed?: boolean
+          created_at?: string
+          updated_at?: string
+          created_by?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          id?: string
+          empresa_id?: string
+          nome?: string
+          email?: string
+          role?: Database["public"]["Enums"]["user_role"]
+          contato?: string | null
+          avatar_url?: string | null
+          onboarding_completed?: boolean
+          created_at?: string
+          updated_at?: string
+          created_by?: string | null
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      pessoas: {
+        Row: {
+          id: string
+          empresa_id: string
+          profile_id: string | null
+          nome: string
+          cpf: string | null
+          cargo: string | null
+          email: string | null
+          telefone: string | null
+          tipo_contrato: string | null
+          endereco: string | null
+          data_admissao: string | null
+          data_demissao: string | null
+          salario_fixo: number | null
+          valor_m2: number | null
+          conta_bancaria: string | null
+          contas_bancarias: Json
+          created_by: string | null
+          updated_by: string | null
+          created_at: string
+          updated_at: string
+          deleted_at: string | null
+        }
+        Insert: {
+          id?: string
+          empresa_id: string
+          profile_id?: string | null
+          nome: string
+          cpf?: string | null
+          cargo?: string | null
+          email?: string | null
+          telefone?: string | null
+          tipo_contrato?: string | null
+          endereco?: string | null
+          data_admissao?: string | null
+          data_demissao?: string | null
+          salario_fixo?: number | null
+          valor_m2?: number | null
+          conta_bancaria?: string | null
+          contas_bancarias?: Json
+          created_by?: string | null
+          updated_by?: string | null
+          created_at?: string
+          updated_at?: string
+          deleted_at?: string | null
+        }
+        Update: {
+          id?: string
+          empresa_id?: string
+          profile_id?: string | null
+          nome?: string
+          cpf?: string | null
+          cargo?: string | null
+          email?: string | null
+          telefone?: string | null
+          tipo_contrato?: string | null
+          endereco?: string | null
+          data_admissao?: string | null
+          data_demissao?: string | null
+          salario_fixo?: number | null
+          valor_m2?: number | null
+          conta_bancaria?: string | null
+          contas_bancarias?: Json
+          created_by?: string | null
+          updated_by?: string | null
+          created_at?: string
+          updated_at?: string
+          deleted_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pessoas_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      clientes: {
+        Row: {
+          id: string
+          empresa_id: string
+          nome: string
+          cpf_cnpj: string | null
+          contato: string | null
+          email: string | null
+          endereco: string | null
+          tipo_nf: string | null
+          origem: string | null
+          contas_bancarias: Json
+          created_by: string | null
+          updated_by: string | null
+          created_at: string
+          updated_at: string
+          deleted_at: string | null
+        }
+        Insert: {
+          id?: string
+          empresa_id: string
+          nome: string
+          cpf_cnpj?: string | null
+          contato?: string | null
+          email?: string | null
+          endereco?: string | null
+          tipo_nf?: string | null
+          origem?: string | null
+          contas_bancarias?: Json
+          created_by?: string | null
+          updated_by?: string | null
+          created_at?: string
+          updated_at?: string
+          deleted_at?: string | null
+        }
+        Update: {
+          id?: string
+          empresa_id?: string
+          nome?: string
+          cpf_cnpj?: string | null
+          contato?: string | null
+          email?: string | null
+          endereco?: string | null
+          tipo_nf?: string | null
+          origem?: string | null
+          contas_bancarias?: Json
+          created_by?: string | null
+          updated_by?: string | null
+          created_at?: string
+          updated_at?: string
+          deleted_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clientes_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      leads: {
+        Row: {
+          id: string
+          empresa_id: string
+          nome: string
+          email: string | null
+          contato: string | null
+          status: string
+          origem: string | null
+          cliente_id: string | null
+          created_by: string | null
+          created_at: string
+          updated_at: string
+          deleted_at: string | null
+        }
+        Insert: {
+          id?: string
+          empresa_id: string
+          nome: string
+          email?: string | null
+          contato?: string | null
+          status?: string
+          origem?: string | null
+          cliente_id?: string | null
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+          deleted_at?: string | null
+        }
+        Update: {
+          id?: string
+          empresa_id?: string
+          nome?: string
+          email?: string | null
+          contato?: string | null
+          status?: string
+          origem?: string | null
+          cliente_id?: string | null
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+          deleted_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leads_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      fornecedores: {
+        Row: {
+          id: string
+          empresa_id: string
+          nome: string
+          cnpj: string | null
+          contato: string | null
+          email: string | null
+          created_at: string
+          updated_at: string
+          deleted_at: string | null
+        }
+        Insert: {
+          id?: string
+          empresa_id: string
+          nome: string
+          cnpj?: string | null
+          contato?: string | null
+          email?: string | null
+          created_at?: string
+          updated_at?: string
+          deleted_at?: string | null
+        }
+        Update: {
+          id?: string
+          empresa_id?: string
+          nome?: string
+          cnpj?: string | null
+          contato?: string | null
+          email?: string | null
+          created_at?: string
+          updated_at?: string
+          deleted_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fornecedores_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      contas: {
+        Row: {
+          id: string
+          empresa_id: string
+          nome: string
+          banco: string
+          saldo_inicial: number
+          saldo_atual: number
+          cor: string | null
+          created_at: string
+          updated_at: string
+          deleted_at: string | null
+        }
+        Insert: {
+          id?: string
+          empresa_id: string
+          nome: string
+          banco: string
+          saldo_inicial?: number
+          saldo_atual?: number
+          cor?: string | null
+          created_at?: string
+          updated_at?: string
+          deleted_at?: string | null
+        }
+        Update: {
+          id?: string
+          empresa_id?: string
+          nome?: string
+          banco?: string
+          saldo_inicial?: number
+          saldo_atual?: number
+          cor?: string | null
+          created_at?: string
+          updated_at?: string
+          deleted_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contas_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      cartoes_credito: {
+        Row: {
+          id: string
+          empresa_id: string
+          nome: string
+          dia_fechamento: number | null
+          dia_vencimento: number | null
+          limite: number
+          usado: number
+          cor: string | null
+          created_at: string
+          updated_at: string
+          deleted_at: string | null
+        }
+        Insert: {
+          id?: string
+          empresa_id: string
+          nome: string
+          dia_fechamento?: number | null
+          dia_vencimento?: number | null
+          limite: number
+          usado?: number
+          cor?: string | null
+          created_at?: string
+          updated_at?: string
+          deleted_at?: string | null
+        }
+        Update: {
+          id?: string
+          empresa_id?: string
+          nome?: string
+          dia_fechamento?: number | null
+          dia_vencimento?: number | null
+          limite?: number
+          usado?: number
+          cor?: string | null
+          created_at?: string
+          updated_at?: string
+          deleted_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cartoes_credito_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      categorias_financeiras: {
+        Row: {
+          id: string
+          empresa_id: string
+          nome: string
+          tipo: Database["public"]["Enums"]["tipo_categoria"]
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          empresa_id: string
+          nome: string
+          tipo: Database["public"]["Enums"]["tipo_categoria"]
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          empresa_id?: string
+          nome?: string
+          tipo?: Database["public"]["Enums"]["tipo_categoria"]
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "categorias_financeiras_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      projetos: {
+        Row: {
+          id: string
+          empresa_id: string
+          cliente_id: string | null
+          codigo_projeto: string | null
+          nome: string
+          localizacao: string | null
+          latitude: number | null
+          longitude: number | null
+          status: Database["public"]["Enums"]["status_projeto"]
+          prioridade: string
+          data_inicio: string | null
+          data_previsao: string | null
+          data_final: string | null
+          valor_contrato: number | null
+          observacao: string | null
+          parcelas: string | null
+          area_m2: number
+          disciplinas: Json
+          status_data: string | null
+          created_by: string | null
+          updated_by: string | null
+          created_at: string
+          updated_at: string
+          deleted_at: string | null
+        }
+        Insert: {
+          id?: string
+          empresa_id: string
+          cliente_id?: string | null
+          codigo_projeto?: string | null
+          nome: string
+          localizacao?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          status?: Database["public"]["Enums"]["status_projeto"]
+          prioridade?: string
+          data_inicio?: string | null
+          data_previsao?: string | null
+          data_final?: string | null
+          valor_contrato?: number | null
+          observacao?: string | null
+          parcelas?: string | null
+          area_m2?: number
+          disciplinas?: Json
+          status_data?: string | null
+          created_by?: string | null
+          updated_by?: string | null
+          created_at?: string
+          updated_at?: string
+          deleted_at?: string | null
+        }
+        Update: {
+          id?: string
+          empresa_id?: string
+          cliente_id?: string | null
+          codigo_projeto?: string | null
+          nome?: string
+          localizacao?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          status?: Database["public"]["Enums"]["status_projeto"]
+          prioridade?: string
+          data_inicio?: string | null
+          data_previsao?: string | null
+          data_final?: string | null
+          valor_contrato?: number | null
+          observacao?: string | null
+          parcelas?: string | null
+          area_m2?: number
+          disciplinas?: Json
+          status_data?: string | null
+          created_by?: string | null
+          updated_by?: string | null
+          created_at?: string
+          updated_at?: string
+          deleted_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projetos_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projetos_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      projetos_responsaveis: {
+        Row: {
+          id: string
+          empresa_id: string
+          projeto_id: string
+          pessoa_id: string
+          disciplina: string
+          responsabilidade: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          empresa_id: string
+          projeto_id: string
+          pessoa_id: string
+          disciplina: string
+          responsabilidade?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          empresa_id?: string
+          projeto_id?: string
+          pessoa_id?: string
+          disciplina?: string
+          responsabilidade?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projetos_responsaveis_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projetos_responsaveis_pessoa_id_fkey"
+            columns: ["pessoa_id"]
+            isOneToOne: false
+            referencedRelation: "pessoas"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      receitas: {
+        Row: {
+          id: string
+          empresa_id: string
+          descricao: string
+          valor: number
+          data_vencimento: string
+          data_recebimento: string | null
+          status: Database["public"]["Enums"]["status_financeiro"]
+          projeto_id: string | null
+          cliente_id: string | null
+          categoria_id: string | null
+          conta_id: string | null
+          nota_fiscal: string | null
+          forma_pagamento: string | null
+          observacao: string | null
+          created_by: string | null
+          updated_by: string | null
+          created_at: string
+          updated_at: string
+          deleted_at: string | null
+        }
+        Insert: {
+          id?: string
+          empresa_id?: string
+          descricao: string
+          valor: number
+          data_vencimento: string
+          data_recebimento?: string | null
+          status?: Database["public"]["Enums"]["status_financeiro"]
+          projeto_id?: string | null
+          cliente_id?: string | null
+          categoria_id?: string | null
+          conta_id?: string | null
+          nota_fiscal?: string | null
+          forma_pagamento?: string | null
+          observacao?: string | null
+          created_by?: string | null
+          updated_by?: string | null
+          created_at?: string
+          updated_at?: string
+          deleted_at?: string | null
+        }
+        Update: {
+          id?: string
+          empresa_id?: string
+          descricao?: string
+          valor?: number
+          data_vencimento?: string
+          data_recebimento?: string | null
+          status?: Database["public"]["Enums"]["status_financeiro"]
+          projeto_id?: string | null
+          cliente_id?: string | null
+          categoria_id?: string | null
+          conta_id?: string | null
+          nota_fiscal?: string | null
+          forma_pagamento?: string | null
+          observacao?: string | null
+          created_by?: string | null
+          updated_by?: string | null
+          created_at?: string
+          updated_at?: string
+          deleted_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "receitas_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "receitas_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "receitas_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "receitas_categoria_id_fkey"
+            columns: ["categoria_id"]
+            isOneToOne: false
+            referencedRelation: "categorias_financeiras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "receitas_conta_id_fkey"
+            columns: ["conta_id"]
+            isOneToOne: false
+            referencedRelation: "contas"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      despesas: {
+        Row: {
+          id: string
+          empresa_id: string
+          descricao: string
+          valor: number
+          data_vencimento: string
+          data_pagamento: string | null
+          status: Database["public"]["Enums"]["status_financeiro"]
+          projeto_id: string | null
+          fornecedor_id: string | null
+          categoria_id: string | null
+          conta_id: string | null
+          cartao_id: string | null
+          nota_fiscal: string | null
+          observacao: string | null
+          created_by: string | null
+          updated_by: string | null
+          created_at: string
+          updated_at: string
+          deleted_at: string | null
+        }
+        Insert: {
+          id?: string
+          empresa_id?: string
+          descricao: string
+          valor: number
+          data_vencimento: string
+          data_pagamento?: string | null
+          status?: Database["public"]["Enums"]["status_financeiro"]
+          projeto_id?: string | null
+          fornecedor_id?: string | null
+          categoria_id?: string | null
+          conta_id?: string | null
+          cartao_id?: string | null
+          nota_fiscal?: string | null
+          observacao?: string | null
+          created_by?: string | null
+          updated_by?: string | null
+          created_at?: string
+          updated_at?: string
+          deleted_at?: string | null
+        }
+        Update: {
+          id?: string
+          empresa_id?: string
+          descricao?: string
+          valor?: number
+          data_vencimento?: string
+          data_pagamento?: string | null
+          status?: Database["public"]["Enums"]["status_financeiro"]
+          projeto_id?: string | null
+          fornecedor_id?: string | null
+          categoria_id?: string | null
+          conta_id?: string | null
+          cartao_id?: string | null
+          nota_fiscal?: string | null
+          observacao?: string | null
+          created_by?: string | null
+          updated_by?: string | null
+          created_at?: string
+          updated_at?: string
+          deleted_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "despesas_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "despesas_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "despesas_fornecedor_id_fkey"
+            columns: ["fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "fornecedores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "despesas_categoria_id_fkey"
+            columns: ["categoria_id"]
+            isOneToOne: false
+            referencedRelation: "categorias_financeiras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "despesas_conta_id_fkey"
+            columns: ["conta_id"]
+            isOneToOne: false
+            referencedRelation: "contas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "despesas_cartao_id_fkey"
+            columns: ["cartao_id"]
+            isOneToOne: false
+            referencedRelation: "cartoes_credito"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      folha_pagamento: {
+        Row: {
+          id: string
+          empresa_id: string
+          pessoa_id: string
+          mes: number
+          ano: number
+          salario_fixo: number
+          total_area_projetada: number
+          valor_m2: number
+          adicional_variavel: number
+          total_receber: number
+          status: string
+          data_pagamento: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          empresa_id: string
+          pessoa_id: string
+          mes: number
+          ano: number
+          salario_fixo?: number
+          total_area_projetada?: number
+          valor_m2?: number
+          adicional_variavel?: number
+          total_receber?: number
+          status?: string
+          data_pagamento?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          empresa_id?: string
+          pessoa_id?: string
+          mes?: number
+          ano?: number
+          salario_fixo?: number
+          total_area_projetada?: number
+          valor_m2?: number
+          adicional_variavel?: number
+          total_receber?: number
+          status?: string
+          data_pagamento?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "folha_pagamento_pessoa_id_fkey"
+            columns: ["pessoa_id"]
+            isOneToOne: false
+            referencedRelation: "pessoas"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      disciplinas: {
+        Row: {
+          id: string
+          nome: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          nome: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          nome?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
+      metas: {
+        Row: {
+          id: string
+          nome: string
+          alvo: number
+          atual: number
+          prazo: string | null
+          categoria: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          nome: string
+          alvo: number
+          atual?: number
+          prazo?: string | null
+          categoria?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          nome?: string
+          alvo?: number
+          atual?: number
+          prazo?: string | null
+          categoria?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_empresa_id: {
+        Args: Record<string, never>
+        Returns: string
+      }
+      has_role: {
+        Args: { required_roles: string[] }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      status_empresa: "active" | "suspended" | "cancelled"
+      user_role: "admin" | "financeiro" | "marketing" | "operacional" | "user"
+      status_projeto: "Planejamento" | "Em andamento" | "Paralisado" | "Concluído" | "Cancelado"
+      status_financeiro: "Pendente" | "Pago" | "Recebido" | "Atrasado" | "Cancelado"
+      tipo_categoria: "Receita" | "Despesa"
+      status_lead: "Novo" | "Em contato" | "Proposta" | "Negociação" | "Ganho" | "Perdido"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +1109,13 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      status_empresa: ["active", "suspended", "cancelled"],
+      user_role: ["admin", "financeiro", "marketing", "operacional", "user"],
+      status_projeto: ["Planejamento", "Em andamento", "Paralisado", "Concluído", "Cancelado"],
+      status_financeiro: ["Pendente", "Pago", "Recebido", "Atrasado", "Cancelado"],
+      tipo_categoria: ["Receita", "Despesa"],
+      status_lead: ["Novo", "Em contato", "Proposta", "Negociação", "Ganho", "Perdido"],
+    },
   },
 } as const

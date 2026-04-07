@@ -1,409 +1,345 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { subMonths, startOfMonth, endOfMonth } from "date-fns";
+import { startOfMonth, endOfMonth, subMonths, differenceInDays, addDays } from "date-fns";
 import { getDisplayDate } from "@/lib/dateUtils";
+import { PROJECT_STATUS, LEAD_STATUS } from "@/constants";
 
-export const useDashboardData = (dateFrom?: Date, dateTo?: Date) => {
+export interface DashboardKPI {
+  receitaMes: number;
+  despesaMes: number;
+  saldoMes: number;
+  receitaVariacao: number;
+  despesaVariacao: number;
+  aReceber: number;
+  aPagar: number;
+  projetosAtivos: number;
+}
+
+export interface DashboardProjeto {
+  id: string;
+  nome: string;
+  cliente: string;
+  status: string;
+  prioridade: string;
+  statusData: string | null;
+  valorContrato: number;
+  dataInicio: string | null;
+  dataPrevisao: string | null;
+  dataFinal: string | null;
+  progressoPrazo: number;
+}
+
+export interface DashboardVencimento {
+  id: string;
+  tipo: "receita" | "despesa";
+  descricao: string;
+  valor: number;
+  vencimento: string;
+  diasRestantes: number;
+  status: string;
+  projeto?: string | null;
+  entidade?: string | null;
+}
+
+export interface LeadsPipeline {
+  status: string;
+  count: number;
+  valor: number;
+}
+
+export interface DashboardAlerta {
+  id: string;
+  tipo: string;
+  severidade: string;
+  titulo: string;
+  mensagem: string;
+  created_at: string;
+}
+
+export interface ChartDataPoint {
+  mes: string;
+  receitas: number;
+  despesas: number;
+  saldo: number;
+  sortKey: string;
+}
+
+export interface DashboardData {
+  kpis: DashboardKPI;
+  projetos: DashboardProjeto[];
+  proximosVencimentos: DashboardVencimento[];
+  leadsPipeline: LeadsPipeline[];
+  leadsTotal: number;
+  alertas: DashboardAlerta[];
+  alertasNaoLidos: number;
+  chartData: ChartDataPoint[];
+}
+
+export const useDashboardData = () => {
   return useQuery({
-    queryKey: ["dashboard-data", dateFrom, dateTo],
-    queryFn: async () => {
-      // Default to current month if no dates provided
+    queryKey: ["dashboard-v2"],
+    queryFn: async (): Promise<DashboardData> => {
       const now = new Date();
-      const start = dateFrom || startOfMonth(now);
-      const end = dateTo || endOfMonth(now);
+      const mesAtualStart = startOfMonth(now);
+      const mesAtualEnd = endOfMonth(now);
+      const mesAnteriorStart = startOfMonth(subMonths(now, 1));
+      const mesAnteriorEnd = endOfMonth(subMonths(now, 1));
+      const chartStart = subMonths(now, 11);
 
-      // Fetch data from 12 months before start to calculate growth and show history
-      const fetchStart = subMonths(new Date(), 12);
+      const [
+        receitasMesRes,
+        receitasMesAntRes,
+        despesasMesRes,
+        despesasMesAntRes,
+        receitasPendentesRes,
+        despesasPendentesRes,
+        projetosRes,
+        leadsRes,
+        alertasRes,
+        alertasNaoLidosRes,
+        receitasChartRes,
+        despesasChartRes,
+        proximasReceitasRes,
+        proximasDespesasRes,
+      ] = await Promise.all([
+        supabase
+          .from("receitas")
+          .select("valor")
+          .gte("data_vencimento", mesAtualStart.toISOString())
+          .lte("data_vencimento", mesAtualEnd.toISOString())
+          .is("deleted_at", null),
 
-      // 1. Fetch Categories first
-      console.log('[DASHBOARD] Fetching categories...');
-      const { data: categoriesData, error: categoriesError } = await (supabase as any)
-        .from('categorias_financeiras')
-        .select('id, nome, tipo');
+        supabase
+          .from("receitas")
+          .select("valor")
+          .gte("data_vencimento", mesAnteriorStart.toISOString())
+          .lte("data_vencimento", mesAnteriorEnd.toISOString())
+          .is("deleted_at", null),
 
-      console.log('[DASHBOARD] Categories:', {
-        count: categoriesData?.length,
-        error: categoriesError,
-        errorDetails: categoriesError ? JSON.stringify(categoriesError, null, 2) : null
-      });
+        supabase
+          .from("despesas")
+          .select("valor")
+          .gte("data_vencimento", mesAtualStart.toISOString())
+          .lte("data_vencimento", mesAtualEnd.toISOString())
+          .is("deleted_at", null),
 
-      const categoriesMap = new Map(categoriesData?.map((c: any) => [c.id, c]) || []);
+        supabase
+          .from("despesas")
+          .select("valor")
+          .gte("data_vencimento", mesAnteriorStart.toISOString())
+          .lte("data_vencimento", mesAnteriorEnd.toISOString())
+          .is("deleted_at", null),
 
-      // 2. Fetch Receitas
-      console.log('[DASHBOARD] Fetching receitas...');
-      let receitasQuery = supabase
-        .from("receitas")
-        .select("*")
-        .order("data_recebimento", { ascending: false }) // Ordena por data_recebimento (automação Bradesco)
-        .order("data_vencimento", { ascending: false }); // Fallback para data_vencimento (manual)
+        supabase
+          .from("receitas")
+          .select("valor")
+          .eq("status", "Pendente")
+          .is("deleted_at", null),
 
-      if (fetchStart) receitasQuery = receitasQuery.gte('data_vencimento', fetchStart.toISOString());
-      if (end) receitasQuery = receitasQuery.lte('data_vencimento', end.toISOString());
+        supabase
+          .from("despesas")
+          .select("valor")
+          .eq("status", "Pendente")
+          .is("deleted_at", null),
 
-      const { data: receitasRaw, error: receitasError } = await receitasQuery;
-
-      console.log('[DASHBOARD] Receitas:', {
-        count: receitasRaw?.length,
-        error: receitasError,
-        sample: receitasRaw?.[0]
-      });
-
-      if (receitasError) {
-        console.error('[DASHBOARD] Receitas error:', receitasError);
-        throw receitasError;
-      }
-
-      const receitas = receitasRaw?.map((r: any) => ({
-        ...r,
-        categorias_financeiras: categoriesMap.get(r.categoria_id)
-      }));
-
-      // 2a. Fetch Receitas (All time) for Chart
-      const { data: receitasChartAllRaw, error: receitasChartAllError } = await supabase
-        .from("receitas")
-        .select("valor,data_recebimento,data_vencimento")
-        .order("data_recebimento", { ascending: false }) // Ordena por data_recebimento (automação Bradesco)
-        .order("data_vencimento", { ascending: false }); // Fallback para data_vencimento (manual)
-
-      if (receitasChartAllError) {
-        console.error('[DASHBOARD] Receitas chart all time error:', receitasChartAllError);
-        throw receitasChartAllError;
-      }
-
-      // 2b. Fetch Receitas (Total Geral)
-      const { data: receitasAllRaw, error: receitasAllError } = await supabase
-        .from("receitas")
-        .select("valor");
-
-      if (receitasAllError) {
-        console.error('[DASHBOARD] Receitas total geral error:', receitasAllError);
-        throw receitasAllError;
-      }
-
-      // 3. Fetch Despesas
-      console.log('[DASHBOARD] Fetching despesas...');
-      let despesasQuery = supabase
-        .from("despesas")
-        .select("*")
-        .order("data_vencimento", { ascending: true });
-
-      if (fetchStart) despesasQuery = despesasQuery.gte('data_vencimento', fetchStart.toISOString());
-      if (end) despesasQuery = despesasQuery.lte('data_vencimento', end.toISOString());
-
-      const { data: despesasRaw, error: despesasError } = await despesasQuery;
-
-      console.log('[DASHBOARD] Despesas:', {
-        count: despesasRaw?.length,
-        error: despesasError,
-        sample: despesasRaw?.[0]
-      });
-
-      if (despesasError) {
-        console.error('[DASHBOARD] Despesas error:', despesasError);
-        throw despesasError;
-      }
-
-      const despesas = despesasRaw?.map((d: any) => ({
-        ...d,
-        categorias_financeiras: categoriesMap.get(d.categoria_id)
-      }));
-
-      // 3a. Fetch Despesas (All time) for Chart
-      const { data: despesasChartAllRaw, error: despesasChartAllError } = await supabase
-        .from("despesas")
-        .select("valor,data_pagamento,data_vencimento")
-        .order("data_vencimento", { ascending: true });
-
-      if (despesasChartAllError) {
-        console.error('[DASHBOARD] Despesas chart all time error:', despesasChartAllError);
-        throw despesasChartAllError;
-      }
-
-      // 3b. Fetch Despesas (Total Geral)
-      const { data: despesasAllRaw, error: despesasAllError } = await supabase
-        .from("despesas")
-        .select("valor");
-
-      if (despesasAllError) {
-        console.error('[DASHBOARD] Despesas total geral error:', despesasAllError);
-        throw despesasAllError;
-      }
-
-      // 4. Fetch Leads (Total Novos)
-      let leadsCount = 0;
-      try {
-        const { count, error: leadsError } = await (supabase as any)
-          .from("leads")
-          .select("*", { count: 'exact', head: true });
-
-        if (!leadsError) {
-          leadsCount = count || 0;
-        }
-      } catch (e) {
-        console.log("Leads table might not exist yet");
-      }
-
-      // 5. Fetch Recent Projects
-      let recentProjects = [];
-      let projectsCount = 0;
-
-      try {
-        console.log('[DASHBOARD] Fetching projects...');
-
-        // First fetch count
-        const { count, error: countError } = await supabase
+        supabase
           .from("projetos")
-          .select("*", { count: 'exact', head: true })
-          .eq("status", "Em andamento");
-
-        if (!countError) projectsCount = count || 0;
-
-        // Then fetch data
-        const { data: projectsData, error: projectsError } = await supabase
-          .from("projetos")
-          .select(`
-            id,
-            codigo_projeto,
-            status,
-            valor_contrato,
-            cliente_id,
-            clientes (
-              nome
-            )
-          `)
+          .select("id, codigo_projeto, nome, status, prioridade, status_data, valor_contrato, data_inicio, data_previsao, data_final, cliente_id, clientes(nome)")
+          .is("deleted_at", null)
+          .in("status", [PROJECT_STATUS.EM_ANDAMENTO, PROJECT_STATUS.PLANEJAMENTO])
           .order("created_at", { ascending: false })
-          .limit(5);
+          .limit(8),
 
-        if (projectsError) {
-          console.error('[DASHBOARD] Projects error:', projectsError);
-        } else {
-          recentProjects = projectsData || [];
-          console.log('[DASHBOARD] Projects fetched:', recentProjects.length);
+        supabase
+          .from("leads")
+          .select("id, status, nome")
+          .is("deleted_at", null),
+
+        supabase
+          .from("alertas")
+          .select("id, tipo, severidade, titulo, mensagem, created_at")
+          .eq("lido", false)
+          .order("created_at", { ascending: false })
+          .limit(5),
+
+        supabase
+          .from("alertas")
+          .select("*", { count: "exact", head: true })
+          .eq("lido", false),
+
+        supabase
+          .from("receitas")
+          .select("valor, data_recebimento, data_vencimento, status")
+          .gte("data_vencimento", startOfMonth(chartStart).toISOString())
+          .is("deleted_at", null),
+
+        supabase
+          .from("despesas")
+          .select("valor, data_pagamento, data_vencimento, status")
+          .gte("data_vencimento", startOfMonth(chartStart).toISOString())
+          .is("deleted_at", null),
+
+        supabase
+          .from("receitas")
+          .select("id, descricao, valor, data_vencimento, status, projeto_id, projetos(codigo_projeto), cliente_id, clientes(nome)")
+          .eq("status", "Pendente")
+          .gte("data_vencimento", now.toISOString())
+          .lte("data_vencimento", addDays(now, 30).toISOString())
+          .is("deleted_at", null)
+          .order("data_vencimento", { ascending: true })
+          .limit(5),
+
+        supabase
+          .from("despesas")
+          .select("id, descricao, valor, data_vencimento, status, projeto_id, projetos(codigo_projeto), fornecedor_id, fornecedores(nome)")
+          .eq("status", "Pendente")
+          .gte("data_vencimento", now.toISOString())
+          .lte("data_vencimento", addDays(now, 30).toISOString())
+          .is("deleted_at", null)
+          .order("data_vencimento", { ascending: true })
+          .limit(5),
+      ]);
+
+      const sumValues = (data: { valor: number }[] | null) =>
+        (data || []).reduce((acc, item) => acc + Number(item.valor), 0);
+
+      const receitaMes = sumValues(receitasMesRes.data);
+      const receitaMesAnt = sumValues(receitasMesAntRes.data);
+      const despesaMes = sumValues(despesasMesRes.data);
+      const despesaMesAnt = sumValues(despesasMesAntRes.data);
+
+      const kpis: DashboardKPI = {
+        receitaMes,
+        despesaMes,
+        saldoMes: receitaMes - despesaMes,
+        receitaVariacao: receitaMesAnt > 0 ? ((receitaMes - receitaMesAnt) / receitaMesAnt) * 100 : 0,
+        despesaVariacao: despesaMesAnt > 0 ? ((despesaMes - despesaMesAnt) / despesaMesAnt) * 100 : 0,
+        aReceber: sumValues(receitasPendentesRes.data),
+        aPagar: sumValues(despesasPendentesRes.data),
+        projetosAtivos: (projetosRes.data || []).filter(p => p.status === PROJECT_STATUS.EM_ANDAMENTO).length,
+      };
+
+      const projetos: DashboardProjeto[] = (projetosRes.data || []).map((p: any) => {
+        let progressoPrazo = 0;
+        if (p.data_inicio && p.data_previsao) {
+          const totalDias = differenceInDays(new Date(p.data_previsao), new Date(p.data_inicio));
+          const diasPassados = differenceInDays(now, new Date(p.data_inicio));
+          progressoPrazo = totalDias > 0 ? Math.min(100, Math.max(0, (diasPassados / totalDias) * 100)) : 0;
         }
-      } catch (error) {
-        console.error('[DASHBOARD] Projects unexpected error:', error);
-      }
 
-      // Filter data for the Main Period (dateFrom to dateTo)
-      // Use string comparison to avoid timezone issues with dates
-      const startStr = start.toISOString().split('T')[0];
-      const endStr = end.toISOString().split('T')[0];
-
-      const inMainPeriod = (dateStr: string) => {
-        if (!dateStr) return false;
-        // dateStr from supabase is usually YYYY-MM-DD
-        const dStr = dateStr.split('T')[0];
-        return dStr >= startStr && dStr <= endStr;
-      };
-
-      // Filter data for the Previous Period (subMonths(start, 1) to start)
-      const previousStart = subMonths(start, 1);
-      const prevStartStr = previousStart.toISOString().split('T')[0];
-
-      const inPreviousPeriod = (dateStr: string) => {
-        if (!dateStr) return false;
-        const dStr = dateStr.split('T')[0];
-        return dStr >= prevStartStr && dStr < startStr;
-      };
-
-      // Stats Calculation
-      console.log('[DASHBOARD] Period filters:', { start, end, fetchStart });
-      console.log('[DASHBOARD] Raw data before filtering:', {
-        totalReceitas: receitas?.length,
-        totalDespesas: despesas?.length,
-        receitasSample: receitas?.[0],
-        despesasSample: despesas?.[0]
+        return {
+          id: p.id,
+          nome: p.codigo_projeto || p.nome || "Sem nome",
+          cliente: p.clientes?.nome || "—",
+          status: p.status,
+          prioridade: p.prioridade || "Media",
+          statusData: p.status_data,
+          valorContrato: Number(p.valor_contrato) || 0,
+          dataInicio: p.data_inicio,
+          dataPrevisao: p.data_previsao,
+          dataFinal: p.data_final,
+          progressoPrazo: Math.round(progressoPrazo),
+        };
       });
 
-      // Para receitas: usar data_recebimento se existir (automação Bradesco), senão data_vencimento (manual)
-      const receitasMain = (receitas as any[])?.filter(r => {
-        const displayDate = getDisplayDate(r.data_recebimento, r.data_vencimento, r.status);
-        return displayDate && inMainPeriod(displayDate);
-      }) || [];
-      // Para despesas: usar data_pagamento se existir, senão data_vencimento
-      const despesasMain = (despesas as any[])?.filter(d => {
-        const displayDate = getDisplayDate(d.data_pagamento, d.data_vencimento, d.status);
-        return displayDate && inMainPeriod(displayDate);
-      }) || [];
+      const priorityWeight: Record<string, number> = { Alta: 0, Media: 1, Baixa: 2 };
+      projetos.sort((a, b) => (priorityWeight[a.prioridade] ?? 1) - (priorityWeight[b.prioridade] ?? 1));
 
-      const receitasChartAll = (receitasChartAllRaw as any[]) || [];
-      const despesasChartAll = (despesasChartAllRaw as any[]) || [];
+      const leads = leadsRes.data || [];
+      const pipelineOrder = [LEAD_STATUS.NOVO, LEAD_STATUS.EM_CONTATO, LEAD_STATUS.PROPOSTA, LEAD_STATUS.NEGOCIACAO, LEAD_STATUS.GANHO, LEAD_STATUS.PERDIDO];
+      const leadsPipeline: LeadsPipeline[] = pipelineOrder
+        .map((status) => ({
+          status,
+          count: leads.filter((l: any) => l.status === status).length,
+          valor: 0,
+        }))
+        .filter((p) => p.count > 0);
 
-      const receitasPrev = (receitas as any[])?.filter(r => {
-        const displayDate = getDisplayDate(r.data_recebimento, r.data_vencimento, r.status);
-        return displayDate && inPreviousPeriod(displayDate);
-      }) || [];
-      const despesasPrev = (despesas as any[])?.filter(d => {
-        const displayDate = getDisplayDate(d.data_pagamento, d.data_vencimento, d.status);
-        return displayDate && inPreviousPeriod(displayDate);
-      }) || [];
+      const proximosVencimentos: DashboardVencimento[] = [
+        ...(proximasReceitasRes.data || []).map((r: any) => ({
+          id: r.id,
+          tipo: "receita" as const,
+          descricao: r.descricao || "Receita",
+          valor: Number(r.valor),
+          vencimento: r.data_vencimento,
+          diasRestantes: differenceInDays(new Date(r.data_vencimento), now),
+          status: r.status,
+          projeto: r.projetos?.codigo_projeto || null,
+          entidade: r.clientes?.nome || null,
+        })),
+        ...(proximasDespesasRes.data || []).map((d: any) => ({
+          id: d.id,
+          tipo: "despesa" as const,
+          descricao: d.descricao || "Despesa",
+          valor: Number(d.valor),
+          vencimento: d.data_vencimento,
+          diasRestantes: differenceInDays(new Date(d.data_vencimento), now),
+          status: d.status,
+          projeto: d.projetos?.codigo_projeto || null,
+          entidade: d.fornecedores?.nome || null,
+        })),
+      ].sort((a, b) => a.diasRestantes - b.diasRestantes).slice(0, 8);
 
-      const receitasTotal = receitasMain.reduce((acc, curr) => acc + Number(curr.valor), 0);
-      const despesasTotal = despesasMain.reduce((acc, curr) => acc + Number(curr.valor), 0);
+      const alertas: DashboardAlerta[] = (alertasRes.data || []).map((a: any) => ({
+        id: a.id,
+        tipo: a.tipo,
+        severidade: a.severidade,
+        titulo: a.titulo,
+        mensagem: a.mensagem,
+        created_at: a.created_at,
+      }));
 
-      const receitasTotalGeral = (receitasAllRaw as any[])?.reduce((acc, curr) => acc + Number(curr.valor), 0) || 0;
-      const despesasTotalGeral = (despesasAllRaw as any[])?.reduce((acc, curr) => acc + Number(curr.valor), 0) || 0;
-
-      console.log('[DASHBOARD] Calculations:', {
-        receitasMain: receitasMain.length,
-        despesasMain: despesasMain.length,
-        receitasTotal,
-        despesasTotal,
-        receitasMainSample: receitasMain[0],
-        despesasMainSample: despesasMain[0]
-      });
-
-      const receitasPrevTotal = receitasPrev.reduce((acc, curr) => acc + Number(curr.valor), 0);
-      const despesasPrevTotal = despesasPrev.reduce((acc, curr) => acc + Number(curr.valor), 0);
-
-      const receitasGrowth = receitasPrevTotal > 0
-        ? ((receitasTotal - receitasPrevTotal) / receitasPrevTotal) * 100
-        : 0;
-
-      const despesasGrowth = despesasPrevTotal > 0
-        ? ((despesasTotal - despesasPrevTotal) / despesasPrevTotal) * 100
-        : 0;
-
-      // Process Chart Data (Group by Month or Day depending on range duration)
-      // We pass the CHART data (all time)
-      const chartData = processChartData(receitasChartAll, despesasChartAll);
-
-      // Daily chart data for the selected period
-      const chartDataDiario = processDailyChartData(receitasMain, despesasMain, start, end);
-
-      // Process Category Data
-      const categoriaData = processCategoryData(receitasMain, 'receitas');
-      const despesasCategoriaData = processCategoryData(despesasMain, 'despesas');
-
-      // Format Recent Projects
-      const formattedProjects = recentProjects?.map(p => ({
-        id: p.id,
-        name: p.codigo_projeto || "Sem Nome",
-        status: p.status || "Pendente",
-        client: p.clientes?.nome || "Cliente não informado",
-        value: p.valor_contrato ? `R$ ${Number(p.valor_contrato).toLocaleString('pt-BR')}` : "R$ 0,00"
-      })) || [];
+      const chartData = processChartData(
+        receitasChartRes.data || [],
+        despesasChartRes.data || []
+      );
 
       return {
-        stats: {
-          receitasTotal,
-          despesasTotal,
-          receitasTotalGeral,
-          despesasTotalGeral,
-          receitasMes: receitasGrowth.toFixed(1),
-          despesasMes: despesasGrowth.toFixed(1),
-          leadsTotal: leadsCount,
-          projectsActive: projectsCount || 0,
-          saldo: receitasTotal - despesasTotal,
-          saldoGeral: receitasTotalGeral - despesasTotalGeral
-        },
+        kpis,
+        projetos,
+        proximosVencimentos,
+        leadsPipeline,
+        leadsTotal: leads.length,
+        alertas,
+        alertasNaoLidos: alertasNaoLidosRes.count || 0,
         chartData,
-        chartDataDiario,
-        recentProjects: formattedProjects,
-        categoriaData,
-        despesasCategoriaData,
-        debug: {
-          receitasCount: receitasRaw?.length || 0,
-          despesasCount: despesasRaw?.length || 0,
-          receitasError: receitasError?.message,
-          despesasError: despesasError?.message,
-          periodStart: start.toISOString(),
-          periodEnd: end.toISOString()
-        }
       };
-    }
+    },
+    staleTime: 1000 * 60 * 5,
+    refetchInterval: 1000 * 60 * 10,
   });
 };
 
-const processChartData = (receitas: any[], despesas: any[]) => {
-  const monthsMap = new Map<string, { mes: string; receitas: number; despesas: number; sortKey: string }>();
+function processChartData(receitas: any[], despesas: any[]): ChartDataPoint[] {
+  const monthsMap = new Map<string, ChartDataPoint>();
 
-  // Helper
-  const processItem = (item: any, type: 'receitas' | 'despesas', dateField: string) => {
+  const addToMonth = (item: any, type: "receitas" | "despesas") => {
     const displayDate = getDisplayDate(
-      dateField === 'data_recebimento' ? item.data_recebimento : null,
-      dateField === 'data_pagamento' ? item.data_pagamento : item.data_vencimento,
+      type === "receitas" ? item.data_recebimento : item.data_pagamento,
+      item.data_vencimento,
       item.status
     );
     if (!displayDate) return;
 
     const date = new Date(displayDate);
-    const monthName = date.toLocaleString('pt-BR', { month: 'short' });
+    const monthName = date.toLocaleString("pt-BR", { month: "short" });
     const year = date.getFullYear().toString().slice(-2);
-    const key = `${monthName.charAt(0).toUpperCase() + monthName.slice(1).replace('.', '')}/${year}`;
-    const sortKey = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}`;
+    const key = `${monthName.charAt(0).toUpperCase() + monthName.slice(1).replace(".", "")}/${year}`;
+    const sortKey = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, "0")}`;
 
     if (!monthsMap.has(key)) {
-      monthsMap.set(key, { mes: key, receitas: 0, despesas: 0, sortKey });
+      monthsMap.set(key, { mes: key, receitas: 0, despesas: 0, saldo: 0, sortKey });
     }
 
-    const current = monthsMap.get(key)!;
-    current[type] += Number(item.valor);
+    const entry = monthsMap.get(key)!;
+    entry[type] += Number(item.valor);
+    entry.saldo = entry.receitas - entry.despesas;
   };
 
-  receitas.forEach(r => processItem(r, 'receitas', 'data_recebimento')); // Usa data_recebimento (automação Bradesco)
-  despesas.forEach(d => processItem(d, 'despesas', 'data_pagamento')); // Usa data_pagamento
+  receitas.forEach((r) => addToMonth(r, "receitas"));
+  despesas.forEach((d) => addToMonth(d, "despesas"));
 
-  return Array.from(monthsMap.values()).sort((a, b) => a.sortKey.localeCompare(b.sortKey));
-};
-
-const processDailyChartData = (receitas: any[], despesas: any[], start: Date, end: Date) => {
-  const daysMap = new Map<string, { dia: string; receitas: number; despesas: number }>();
-
-  // Helper to fill all days in range
-  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-    const dayStr = d.getDate().toString();
-    const key = d.toISOString().split('T')[0]; // Unique key YYYY-MM-DD
-    if (!daysMap.has(key)) {
-      daysMap.set(key, { dia: dayStr, receitas: 0, despesas: 0 });
-    }
-  }
-
-  const processItem = (item: any, type: 'receitas' | 'despesas', dateField: string) => {
-    const displayDate = getDisplayDate(
-      dateField === 'data_recebimento' ? item.data_recebimento : null,
-      dateField === 'data_pagamento' ? item.data_pagamento : item.data_vencimento,
-      item.status
-    );
-    if (!displayDate) return;
-
-    const date = new Date(displayDate);
-    if (date >= start && date <= end) {
-      const key = date.toISOString().split('T')[0];
-      const current = daysMap.get(key);
-      if (current) {
-        current[type] += Number(item.valor);
-      }
-    }
-  };
-
-  receitas.forEach(r => processItem(r, 'receitas', 'data_recebimento')); // Usa data_recebimento (automação Bradesco)
-  despesas.forEach(d => processItem(d, 'despesas', 'data_pagamento')); // Usa data_pagamento
-
-  // Sort by date
-  return Array.from(daysMap.entries()).sort().map(([_, val]) => val);
-};
-
-const processCategoryData = (items: any[], type: 'receitas' | 'despesas' = 'receitas') => {
-  const categoryMap = new Map<string, { name: string; value: number; color: string }>();
-  
-  const greenShades = ["#16a34a", "#22c55e", "#4ade80", "#15803d", "#14532d", "#86efac", "#bbf7d0", "#86efac"];
-  const redShades = ["#dc2626", "#ef4444", "#f87171", "#b91c1c", "#7f1d1d", "#fca5a5", "#fecaca", "#fee2e2"];
-
-  const colors = type === 'receitas' ? greenShades : redShades;
-
-  items.forEach((item, index) => {
-    const categoryName = item.categorias_financeiras?.nome || "Outros";
-    
-    if (!categoryMap.has(categoryName)) {
-      const colorIndex = categoryMap.size % colors.length;
-      const categoryColor = item.categorias_financeiras?.cor || colors[colorIndex];
-      categoryMap.set(categoryName, { name: categoryName, value: 0, color: categoryColor });
-    }
-
-    const current = categoryMap.get(categoryName)!;
-    current.value += Number(item.valor);
-  });
-
-  return Array.from(categoryMap.values());
-};
+  return Array.from(monthsMap.values())
+    .sort((a, b) => a.sortKey.localeCompare(b.sortKey))
+    .slice(-12);
+}

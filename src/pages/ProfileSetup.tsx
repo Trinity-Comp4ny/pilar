@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
+import { getSafeErrorMessage } from "@/lib/safeError";
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, ArrowRight, Loader2, Lock, Phone, User } from "lucide-react";
 
@@ -28,6 +29,32 @@ export default function ProfileSetup() {
     const t = window.setTimeout(() => setProgressValue(targetProgress), 150);
     return () => window.clearTimeout(t);
   }, [targetProgress]);
+
+  useEffect(() => {
+    const loadProfile = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('nome, contato, email')
+          .eq('id', user.id)
+          .single();
+
+        if (profile) {
+          if (profile.nome && profile.nome !== profile.email) {
+            setName(profile.nome);
+          }
+          if (profile.contato) {
+            setPhone(profile.contato);
+          }
+        }
+      } finally {
+      }
+    };
+    loadProfile();
+  }, []);
 
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,12 +82,13 @@ export default function ProfileSetup() {
         if (pwdError) throw pwdError;
       }
 
-      // 2. Atualizar perfil
+      // 2. Atualizar perfil e marcar onboarding como completo
       const { error } = await supabase
         .from('profiles')
         .update({
           nome: name,
-          contato: phone
+          contato: phone,
+          onboarding_completed: true,
         })
         .eq('id', user.id);
 
@@ -73,21 +101,20 @@ export default function ProfileSetup() {
 
       const { data: updatedProfile } = await supabase
         .from("profiles")
-        .select("role, empresas(nome)")
+        .select("role, empresas(onboarding_completed)")
         .eq("id", user.id)
         .single();
 
-      const isAdmin = (updatedProfile as any)?.role === "admin";
-      const companyName = (updatedProfile as any)?.empresas?.nome;
-      const needsCompanySetup = isAdmin && companyName === "Minha Empresa";
+      const isAdmin = updatedProfile?.role === "admin";
+      const needsCompanySetup = isAdmin && !updatedProfile?.empresas?.onboarding_completed;
 
       navigate(needsCompanySetup ? "/company-setup" : "/dashboard");
 
-    } catch (error: any) {
+    } catch (err: unknown) {
       toast({
         variant: "destructive",
         title: "Erro ao salvar",
-        description: error.message,
+        description: getSafeErrorMessage(err),
       });
     } finally {
       setIsLoading(false);

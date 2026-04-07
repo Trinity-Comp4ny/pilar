@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { supabase } from "@/integrations/supabase/client";
+import { getSafeErrorMessage } from "@/lib/safeError";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
@@ -279,11 +280,10 @@ export default function Relatorios() {
         title: "Relatório gerado",
         description: "Pré-visualização carregada. Agora você pode exportar em CSV ou PDF.",
       });
-    } catch (error: any) {
-      console.error("Erro ao gerar relatório:", error);
+    } catch (err: unknown) {
       toast({
         title: "Erro ao gerar",
-        description: error.message,
+        description: getSafeErrorMessage(err),
         variant: "destructive",
       });
     } finally {
@@ -353,11 +353,10 @@ export default function Relatorios() {
         title: "Exportação iniciada",
         description: "O download deve iniciar automaticamente.",
       });
-    } catch (e: any) {
-      console.error("Erro ao exportar:", e);
+    } catch (e: unknown) {
       toast({
         title: "Erro ao exportar",
-        description: e?.message,
+        description: getSafeErrorMessage(e),
         variant: "destructive",
       });
     } finally {

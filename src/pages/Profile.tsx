@@ -8,7 +8,8 @@ import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { useToast } from "@/hooks/use-toast";
 import { User, Mail, Phone, Building2 } from "lucide-react";
-import { formatPhone, onlyDigits } from "@/lib/maskUtils";
+import { formatPhone } from "@/lib/maskUtils";
+import { getSafeErrorMessage } from "@/lib/safeError";
 
 export default function Profile() {
   const [editing, setEditing] = useState(false);
@@ -38,20 +39,20 @@ export default function Profile() {
 
         if (error) throw error;
 
-        const fullName = (profile as any)?.nome || "";
+        const fullName = profile?.nome || "";
         const parts = fullName.trim().split(/\s+/).filter(Boolean);
         const first = parts[0] || "";
         const last = parts.slice(1).join(" ");
 
         setFirstName(first);
         setLastName(last);
-        setContact((profile as any)?.contato || "");
-        setCompanyName((profile as any)?.empresas?.nome || "");
-      } catch (err: any) {
+        setContact(profile?.contato || "");
+        setCompanyName(profile?.empresas?.nome || "");
+      } catch (err: unknown) {
         toast({
           variant: "destructive",
           title: "Erro ao carregar perfil",
-          description: err?.message,
+          description: getSafeErrorMessage(err),
         });
       } finally {
         setIsLoading(false);
@@ -83,11 +84,11 @@ export default function Profile() {
         title: "Perfil atualizado",
         description: "Suas informações foram salvas com sucesso",
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast({
         variant: "destructive",
         title: "Erro ao salvar",
-        description: err?.message,
+        description: getSafeErrorMessage(err),
       });
     }
   };

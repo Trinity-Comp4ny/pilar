@@ -10,6 +10,7 @@ import { formatCurrencyInput, parseCurrencyString } from "@/lib/maskUtils";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { getSafeErrorMessage } from "@/lib/safeError";
 
 export default function Configuracoes() {
   const [cartoes, setCartoes] = useState<any[]>([]);
@@ -65,7 +66,7 @@ export default function Configuracoes() {
         return;
       }
 
-      const empresaIdResult = await (supabase.rpc as any)('get_user_empresa_id');
+      const empresaIdResult = await supabase.rpc('get_user_empresa_id', {});
       const empresaId = empresaIdResult.data;
 
       if (!empresaId) {
@@ -91,7 +92,6 @@ export default function Configuracoes() {
         }).eq('id', selectedConta.id);
 
         if (error) {
-          console.error('Erro ao atualizar conta:', error);
           toast({
             title: "Erro ao atualizar",
             description: error.message,
@@ -108,7 +108,6 @@ export default function Configuracoes() {
         const { error } = await supabase.from('contas').insert(payload);
 
         if (error) {
-          console.error('Erro ao criar conta:', error);
           toast({
             title: "Erro ao criar conta",
             description: error.message,
@@ -122,11 +121,10 @@ export default function Configuracoes() {
         setIsNewContaOpen(false);
       }
       resetForm();
-    } catch (err: any) {
-      console.error('Erro geral:', err);
+    } catch (err: unknown) {
       toast({
         title: "Erro",
-        description: err.message || "Erro desconhecido",
+        description: getSafeErrorMessage(err),
         variant: "destructive"
       });
     }
@@ -149,7 +147,7 @@ export default function Configuracoes() {
         return;
       }
 
-      const empresaIdResult = await (supabase.rpc as any)('get_user_empresa_id');
+      const empresaIdResult = await supabase.rpc('get_user_empresa_id', {});
       const empresaId = empresaIdResult.data;
 
       if (!empresaId) {
@@ -176,7 +174,6 @@ export default function Configuracoes() {
         }).eq('id', selectedCartao.id);
 
         if (error) {
-          console.error('Erro ao atualizar cartão:', error);
           toast({
             title: "Erro ao atualizar",
             description: error.message,
@@ -193,7 +190,6 @@ export default function Configuracoes() {
         const { error } = await supabase.from('cartoes_credito').insert(payload);
 
         if (error) {
-          console.error('Erro ao criar cartão:', error);
           toast({
             title: "Erro ao criar cartão",
             description: error.message,
@@ -207,11 +203,10 @@ export default function Configuracoes() {
         setIsNewCartaoOpen(false);
       }
       resetForm();
-    } catch (err: any) {
-      console.error('Erro geral:', err);
+    } catch (err: unknown) {
       toast({
         title: "Erro",
-        description: err.message || "Erro desconhecido",
+        description: getSafeErrorMessage(err),
         variant: "destructive"
       });
     }
@@ -317,7 +312,7 @@ export default function Configuracoes() {
                     Nova Conta
                   </Button>
                 </DialogTrigger>
-                <DialogContent>
+                <DialogContent className="sm:max-w-md">
                   <DialogHeader>
                     <DialogTitle>{selectedConta ? 'Editar Conta' : 'Adicionar Conta Bancária'}</DialogTitle>
                     <DialogDescription>Configure sua conta para acompanhamento automático</DialogDescription>
@@ -440,7 +435,7 @@ export default function Configuracoes() {
                     Novo Cartão
                   </Button>
                 </DialogTrigger>
-                <DialogContent>
+                <DialogContent className="sm:max-w-md">
                   <DialogHeader>
                     <DialogTitle>{selectedCartao ? 'Editar Cartão' : 'Adicionar Cartão de Crédito'}</DialogTitle>
                     <DialogDescription>Configure as datas do seu cartão para melhor controle financeiro</DialogDescription>
@@ -528,7 +523,7 @@ export default function Configuracoes() {
 
       {/* Modal de Detalhes do Cartão */}
       <Dialog open={isCartaoDetailOpen} onOpenChange={setIsCartaoDetailOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Detalhes do Cartão</DialogTitle>
             <DialogDescription>Informações do cartão selecionado</DialogDescription>
@@ -573,7 +568,7 @@ export default function Configuracoes() {
 
       {/* Modal de Detalhes da Conta */}
       <Dialog open={isContaDetailOpen} onOpenChange={setIsContaDetailOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Detalhes da Conta</DialogTitle>
             <DialogDescription>Informações da conta selecionada</DialogDescription>
