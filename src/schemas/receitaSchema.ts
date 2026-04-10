@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { parseCurrencyString } from "@/lib/currencyUtils";
+import { parseCurrencyString } from "@/lib/maskUtils";
 
 export const receitaSchema = z.object({
   dataVencimento: z.date({ required_error: "Data é obrigatória" }),
