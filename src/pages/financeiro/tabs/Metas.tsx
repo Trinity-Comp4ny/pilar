@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { formatCurrencyInput, parseCurrencyString } from "@/lib/maskUtils";
 
 interface Meta {
   id: string;
@@ -119,15 +120,19 @@ export default function Metas() {
     e.preventDefault();
     createMetaMutation.mutate({
       nome: novaMeta.nome,
-      alvo: Number(novaMeta.alvo),
-      atual: Number(novaMeta.atual),
+      alvo: parseCurrencyString(novaMeta.alvo),
+      atual: parseCurrencyString(novaMeta.atual),
       prazo: novaMeta.prazo,
       categoria: novaMeta.categoria as Meta["categoria"]
     });
   };
 
   const handleEdit = (meta: Meta) => {
-    setEditingMeta(meta);
+    setEditingMeta({
+      ...meta,
+      alvo: formatCurrencyInput((meta.alvo * 100).toString()),
+      atual: formatCurrencyInput((meta.atual * 100).toString())
+    });
     setIsEditDialogOpen(true);
   };
 
@@ -205,18 +210,20 @@ export default function Metas() {
                     <div className="space-y-2">
                       <Label>Valor Alvo (R$)</Label>
                       <Input 
-                        type="number"
+                        type="text"
                         value={novaMeta.alvo}
-                        onChange={e => setNovaMeta({...novaMeta, alvo: e.target.value})}
+                        onChange={e => setNovaMeta({...novaMeta, alvo: formatCurrencyInput(e.target.value)})}
+                        placeholder="R$ 0,00"
                         required
                       />
                     </div>
                     <div className="space-y-2">
                       <Label>Valor Atual (R$)</Label>
                       <Input 
-                        type="number"
+                        type="text"
                         value={novaMeta.atual}
-                        onChange={e => setNovaMeta({...novaMeta, atual: e.target.value})}
+                        onChange={e => setNovaMeta({...novaMeta, atual: formatCurrencyInput(e.target.value)})}
+                        placeholder="R$ 0,00"
                         required
                       />
                     </div>
@@ -274,18 +281,20 @@ export default function Metas() {
                     <div className="space-y-2">
                       <Label>Valor Alvo (R$)</Label>
                       <Input 
-                        type="number"
+                        type="text"
                         value={editingMeta.alvo}
-                        onChange={e => setEditingMeta({...editingMeta, alvo: Number(e.target.value)})}
+                        onChange={e => setEditingMeta({...editingMeta, alvo: formatCurrencyInput(e.target.value)})}
+                        placeholder="R$ 0,00"
                         required
                       />
                     </div>
                     <div className="space-y-2">
                       <Label>Valor Atual (R$)</Label>
                       <Input 
-                        type="number"
+                        type="text"
                         value={editingMeta.atual}
-                        onChange={e => setEditingMeta({...editingMeta, atual: Number(e.target.value)})}
+                        onChange={e => setEditingMeta({...editingMeta, atual: formatCurrencyInput(e.target.value)})}
+                        placeholder="R$ 0,00"
                         required
                       />
                     </div>
