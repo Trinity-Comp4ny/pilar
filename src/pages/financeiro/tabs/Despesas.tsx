@@ -21,7 +21,7 @@ import { SupplierManager } from "../components/SupplierManager";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
-import { formatCurrencyInput, parseCurrencyString } from "@/lib/currencyUtils";
+import { formatCurrencyInput, parseCurrencyString } from "@/lib/maskUtils";
 import { getDisplayDate, formatDateDisplay } from "@/lib/dateUtils";
 import { getSafeErrorMessage } from "@/lib/safeError";
 

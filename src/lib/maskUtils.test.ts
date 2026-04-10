@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { formatCPF, formatCNPJ, formatPhone, formatDocument, onlyDigits } from "./maskUtils";
+import { formatCPF, formatCNPJ, formatPhone, formatDocument, onlyDigits, formatAgency, formatBankAccount } from "./maskUtils";
 
 describe("onlyDigits", () => {
   it("strips non-digit characters", () => {
@@ -74,5 +74,49 @@ describe("formatDocument", () => {
 
   it("formats as CNPJ when more than 11 digits", () => {
     expect(formatDocument("12345678000190")).toBe("12.345.678/0001-90");
+  });
+});
+
+describe("formatAgency", () => {
+  it("formats agency with up to 5 digits", () => {
+    expect(formatAgency("1234")).toBe("1234");
+    expect(formatAgency("12345")).toBe("12345");
+  });
+
+  it("limits to 5 digits", () => {
+    expect(formatAgency("123456")).toBe("12345");
+  });
+
+  it("returns empty for empty input", () => {
+    expect(formatAgency("")).toBe("");
+  });
+
+  it("removes non-digit characters", () => {
+    expect(formatAgency("12a34")).toBe("1234");
+  });
+});
+
+describe("formatBankAccount", () => {
+  it("formats account with check digit when 6+ digits", () => {
+    expect(formatBankAccount("123456")).toBe("12345-6");
+    expect(formatBankAccount("1234567")).toBe("123456-7");
+    expect(formatBankAccount("12345678")).toBe("1234567-8");
+  });
+
+  it("returns digits without dash when less than 6 digits", () => {
+    expect(formatBankAccount("12345")).toBe("12345");
+    expect(formatBankAccount("123")).toBe("123");
+  });
+
+  it("limits to 10 digits", () => {
+    expect(formatBankAccount("12345678901")).toBe("123456789-0");
+  });
+
+  it("returns empty for empty input", () => {
+    expect(formatBankAccount("")).toBe("");
+  });
+
+  it("removes non-digit characters", () => {
+    expect(formatBankAccount("12a34b56")).toBe("12345-6");
   });
 });
