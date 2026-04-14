@@ -68,7 +68,7 @@ export function ProjectBudgetTab({ projetoId, canEdit, disciplinas }: ProjectBud
       setEditRow({});
       setIsEditing(false);
     },
-    onError: (err: any) => toast({ variant: "destructive", title: "Erro", description: err.message }),
+    onError: (err: Error) => toast({ variant: "destructive", title: "Erro", description: err.message }),
   });
 
   const deleteMutation = useMutation({

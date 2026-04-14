@@ -1,11 +1,12 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { TrendingUp, TrendingDown, DollarSign, Clock, BarChart3, Loader2 } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { TrendingUp, TrendingDown, DollarSign, Clock, BarChart3, Loader2, AlertTriangle, Users } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, PieChart, Pie } from "recharts";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
-import { useDashboardRentabilidade } from "@/hooks/useRentabilidade";
+import { useDashboardRentabilidade, useRentabilidadePorCliente, useProjetosDrenandoCaixa } from "@/hooks/useRentabilidade";
 
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
@@ -54,8 +55,16 @@ export default function Rentabilidade() {
     <PageLayout>
       <PageHeader title="Rentabilidade" description="Visão geral da rentabilidade dos projetos" />
 
+      <Tabs defaultValue="por-projeto" className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="por-projeto">Por Projeto</TabsTrigger>
+          <TabsTrigger value="por-cliente">Por Cliente</TabsTrigger>
+          <TabsTrigger value="riscos">Riscos</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="por-projeto" className="space-y-6">
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
@@ -206,6 +215,252 @@ export default function Rentabilidade() {
           )}
         </CardContent>
       </Card>
+        </TabsContent>
+
+        <TabsContent value="por-cliente">
+          <RentabilidadePorClienteTab />
+        </TabsContent>
+
+        <TabsContent value="riscos">
+          <RiscosTab />
+        </TabsContent>
+      </Tabs>
     </PageLayout>
+  );
+}
+
+function RentabilidadePorClienteTab() {
+  const { data, isLoading } = useRentabilidadePorCliente();
+
+  if (isLoading) {
+    return <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
+  }
+
+  const { clientes = [] } = data || {};
+
+  const COLORS = ["#10b981", "#3b82f6", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899", "#06b6d4", "#84cc16"];
+
+  const pieData = clientes.slice(0, 8).map((c, i) => ({
+    name: c.cliente_nome,
+    value: c.total_receitas,
+    fill: COLORS[i % COLORS.length],
+  }));
+
+  const clienteConcentrado = clientes.find((c) => c.concentracao_pct > 30);
+
+  return (
+    <div className="space-y-6">
+      {clienteConcentrado && (
+        <Card className="border-amber-200 bg-amber-50">
+          <CardContent className="p-4 flex items-center gap-3">
+            <AlertTriangle className="h-5 w-5 text-amber-600 flex-shrink-0" />
+            <div>
+              <p className="text-sm font-medium text-amber-800">Risco de concentração</p>
+              <p className="text-xs text-amber-700">
+                {clienteConcentrado.cliente_nome} representa {clienteConcentrado.concentracao_pct.toFixed(0)}% da receita total.
+                Diversifique sua base para reduzir risco.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Pie Chart de concentração */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <Users className="h-4 w-4" /> Concentração de Receita
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {pieData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={250}>
+                <PieChart>
+                  <Pie
+                    data={pieData}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={90}
+                    label={({ name, percent }) => `${name.substring(0, 12)} (${(percent * 100).toFixed(0)}%)`}
+                    labelLine={false}
+                    fontSize={10}
+                  >
+                    {pieData.map((entry, i) => (
+                      <Cell key={i} fill={entry.fill} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(v: number) => formatCurrency(v)} />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <p className="text-sm text-muted-foreground text-center py-8">Sem dados</p>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Ranking por margem */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <TrendingUp className="h-4 w-4 text-green-600" /> Ranking por Margem
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {clientes.length > 0 ? (
+              <ResponsiveContainer width="100%" height={250}>
+                <BarChart data={clientes.slice(0, 8)} layout="vertical">
+                  <XAxis type="number" tickFormatter={(v) => `${v.toFixed(0)}%`} fontSize={11} />
+                  <YAxis type="category" dataKey="cliente_nome" width={100} fontSize={10} tickFormatter={(v) => v.substring(0, 15)} />
+                  <Tooltip formatter={(v: number) => `${v.toFixed(1)}%`} />
+                  <Bar dataKey="margem_bruta_pct" radius={[0, 4, 4, 0]}>
+                    {clientes.slice(0, 8).map((c, i) => (
+                      <Cell key={i} fill={c.margem_bruta_pct >= 0 ? "#22c55e" : "#ef4444"} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <p className="text-sm text-muted-foreground text-center py-8">Sem dados</p>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Tabela de clientes */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-medium">Todos os Clientes ({clientes.length})</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="text-xs">Cliente</TableHead>
+                  <TableHead className="text-xs text-center">Projetos</TableHead>
+                  <TableHead className="text-xs text-right">Receitas</TableHead>
+                  <TableHead className="text-xs text-right">Despesas</TableHead>
+                  <TableHead className="text-xs text-center">Margem</TableHead>
+                  <TableHead className="text-xs text-center">Concentração</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {clientes.map((c) => (
+                  <TableRow key={c.cliente_id}>
+                    <TableCell className="text-xs py-2 font-medium">{c.cliente_nome}</TableCell>
+                    <TableCell className="text-xs py-2 text-center">{c.num_projetos}</TableCell>
+                    <TableCell className="text-xs py-2 text-right">{formatCurrency(c.total_receitas)}</TableCell>
+                    <TableCell className="text-xs py-2 text-right">{formatCurrency(c.total_despesas)}</TableCell>
+                    <TableCell className="text-xs py-2 text-center">
+                      <MargemBadge pct={c.margem_bruta_pct} />
+                    </TableCell>
+                    <TableCell className="text-xs py-2 text-center">
+                      <Badge variant={c.concentracao_pct > 30 ? "destructive" : "secondary"} className="text-[10px]">
+                        {c.concentracao_pct.toFixed(0)}%
+                      </Badge>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function RiscosTab() {
+  const { data: projetosDrenando = [], isLoading } = useProjetosDrenandoCaixa();
+
+  if (isLoading) {
+    return <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
+  }
+
+  const totalDeficit = projetosDrenando.reduce((s, p) => s + Math.abs(p.margem_bruta), 0);
+
+  return (
+    <div className="space-y-6">
+      {projetosDrenando.length === 0 ? (
+        <Card>
+          <CardContent className="p-8 text-center">
+            <TrendingUp className="h-10 w-10 mx-auto mb-3 text-green-500 opacity-50" />
+            <p className="text-sm text-muted-foreground">Nenhum projeto com margem negativa. Parabéns!</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <>
+          <Card className="border-red-200 bg-red-50">
+            <CardContent className="p-4 flex items-center gap-3">
+              <AlertTriangle className="h-5 w-5 text-red-600 flex-shrink-0" />
+              <div>
+                <p className="text-sm font-medium text-red-800">
+                  {projetosDrenando.length} projeto(s) drenando caixa
+                </p>
+                <p className="text-xs text-red-700">
+                  Déficit total: {formatCurrency(totalDeficit)}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <TrendingDown className="h-4 w-4 text-red-600" /> Projetos com Margem Negativa
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="text-xs">Projeto</TableHead>
+                      <TableHead className="text-xs">Status</TableHead>
+                      <TableHead className="text-xs text-right">Receitas</TableHead>
+                      <TableHead className="text-xs text-right">Despesas</TableHead>
+                      <TableHead className="text-xs text-right">Déficit</TableHead>
+                      <TableHead className="text-xs text-center">Margem</TableHead>
+                      <TableHead className="text-xs text-center">Horas</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {projetosDrenando.map((p) => (
+                      <TableRow key={p.projeto_id} className="bg-red-50/50">
+                        <TableCell className="text-xs py-2">
+                          <span className="font-medium">{p.codigo_projeto}</span>
+                          <span className="text-muted-foreground ml-1">- {p.projeto_nome}</span>
+                        </TableCell>
+                        <TableCell className="text-xs py-2">
+                          <Badge variant="secondary" className="text-[10px]">{p.status}</Badge>
+                        </TableCell>
+                        <TableCell className="text-xs py-2 text-right">{formatCurrency(p.receitas_total)}</TableCell>
+                        <TableCell className="text-xs py-2 text-right">{formatCurrency(p.despesas_diretas)}</TableCell>
+                        <TableCell className="text-xs py-2 text-right text-red-600 font-semibold">
+                          {formatCurrency(Math.abs(p.margem_bruta))}
+                        </TableCell>
+                        <TableCell className="text-xs py-2 text-center">
+                          <MargemBadge pct={p.margem_bruta_pct} />
+                        </TableCell>
+                        <TableCell className="text-xs py-2 text-center">
+                          {p.horas_orcadas > 0 ? (
+                            <span className={p.horas_consumidas > p.horas_orcadas ? "text-red-600 font-semibold" : ""}>
+                              {p.horas_consumidas.toFixed(0)}/{p.horas_orcadas.toFixed(0)}h
+                            </span>
+                          ) : "—"}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+        </>
+      )}
+    </div>
   );
 }

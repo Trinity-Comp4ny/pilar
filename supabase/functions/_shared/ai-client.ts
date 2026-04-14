@@ -1,4 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY") || "";
 const GEMINI_MODEL = "gemini-2.0-flash";
@@ -16,16 +16,55 @@ export interface AiRequest {
 }
 
 export interface AiResponse {
-  conteudo: any;
+  conteudo: Record<string, unknown>;
   resumo: string;
   tokensEntrada: number;
   tokensSaida: number;
 }
 
+interface GeminiCandidate {
+  content?: {
+    parts?: Array<{ text?: string }>;
+  };
+}
+
+interface GeminiUsageMetadata {
+  promptTokenCount?: number;
+  candidatesTokenCount?: number;
+}
+
+interface GeminiApiResponse {
+  candidates?: GeminiCandidate[];
+  usageMetadata?: GeminiUsageMetadata;
+}
+
+interface AiUsageRow {
+  total_requests: number;
+  limite_requests: number;
+}
+
+interface AiUsageDetailRow {
+  id: string;
+  total_requests: number;
+  total_tokens_entrada: number;
+  total_tokens_saida: number;
+}
+
+/** Record returned from ai_insights after insert */
+export interface AiInsightRow {
+  id: string;
+  empresa_id: string;
+  tipo: string;
+  conteudo: Record<string, unknown>;
+  resumo: string;
+  created_at: string;
+  [key: string]: unknown;
+}
+
 /**
  * Verifica rate limit e retorna se pode prosseguir
  */
-export async function checkRateLimit(supabaseAdmin: any, empresaId: string): Promise<boolean> {
+export async function checkRateLimit(supabaseAdmin: SupabaseClient, empresaId: string): Promise<boolean> {
   const now = new Date();
   const mes = now.getMonth() + 1;
   const ano = now.getFullYear();
@@ -38,7 +77,8 @@ export async function checkRateLimit(supabaseAdmin: any, empresaId: string): Pro
     .eq("ano", ano)
     .maybeSingle();
 
-  if (data && data.total_requests >= data.limite_requests) {
+  const row = data as AiUsageRow | null;
+  if (row && row.total_requests >= row.limite_requests) {
     return false;
   }
   return true;
@@ -76,21 +116,21 @@ export async function callGemini(request: AiRequest): Promise<AiResponse> {
     throw new Error(`Gemini API error (${response.status}): ${errorText}`);
   }
 
-  const result = await response.json();
+  const result: GeminiApiResponse = await response.json();
 
   const textContent = result.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
   const usageMetadata = result.usageMetadata || {};
 
-  let parsed: any;
+  let parsed: Record<string, unknown>;
   try {
-    parsed = JSON.parse(textContent);
+    parsed = JSON.parse(textContent) as Record<string, unknown>;
   } catch {
     parsed = { texto: textContent };
   }
 
   return {
     conteudo: parsed,
-    resumo: parsed.resumo || parsed.summary || textContent.substring(0, 200),
+    resumo: (parsed.resumo as string) || (parsed.summary as string) || textContent.substring(0, 200),
     tokensEntrada: usageMetadata.promptTokenCount || 0,
     tokensSaida: usageMetadata.candidatesTokenCount || 0,
   };
@@ -100,11 +140,11 @@ export async function callGemini(request: AiRequest): Promise<AiResponse> {
  * Salva o insight no banco e atualiza usage
  */
 export async function saveInsight(
-  supabaseAdmin: any,
+  supabaseAdmin: SupabaseClient,
   request: AiRequest,
   aiResponse: AiResponse,
   userId: string
-): Promise<any> {
+): Promise<AiInsightRow> {
   const now = new Date();
   const mes = now.getMonth() + 1;
   const ano = now.getFullYear();
@@ -132,13 +172,15 @@ export async function saveInsight(
   if (insightError) throw insightError;
 
   // Upsert usage
-  const { data: existing } = await supabaseAdmin
+  const { data: existingData } = await supabaseAdmin
     .from("ai_usage")
     .select("id, total_requests, total_tokens_entrada, total_tokens_saida")
     .eq("empresa_id", request.empresaId)
     .eq("mes", mes)
     .eq("ano", ano)
     .maybeSingle();
+
+  const existing = existingData as AiUsageDetailRow | null;
 
   if (existing) {
     await supabaseAdmin
@@ -163,7 +205,7 @@ export async function saveInsight(
       });
   }
 
-  return insight;
+  return insight as AiInsightRow;
 }
 
 /**

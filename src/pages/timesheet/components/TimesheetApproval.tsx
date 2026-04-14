@@ -24,7 +24,7 @@ export function TimesheetApproval() {
           });
           setProcessingId(null);
         },
-        onError: (error: any) => {
+        onError: (error: Error) => {
           toast({
             variant: "destructive",
             title: "Erro",

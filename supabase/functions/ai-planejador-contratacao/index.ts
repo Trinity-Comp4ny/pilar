@@ -9,6 +9,46 @@ import {
   type AiRequest,
 } from "../_shared/ai-client.ts";
 
+interface PessoaRow {
+  id: string;
+  nome: string;
+  cargo: string;
+  disciplinas: string[] | null;
+  tipo_contrato: string;
+  custo_hora: number;
+  carga_horaria_mensal: number | null;
+  ativo: boolean;
+}
+
+interface ProjetoAtivoRow {
+  id: string;
+  nome: string;
+  status: string;
+  data_inicio: string | null;
+  data_final: string | null;
+  disciplinas: string[] | null;
+  valor_contrato: number | null;
+}
+
+interface LeadRow {
+  nome: string;
+  valor_estimado: number | null;
+  probabilidade: number | null;
+  status: string;
+  disciplinas: string[] | null;
+}
+
+interface EquipeResumo {
+  nome: string;
+  cargo: string;
+  disciplinas: string[] | null;
+  tipo: string;
+  custo_hora: number;
+  carga_mensal: number | null;
+  horas_3m: number;
+  utilizacao_pct: string;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -64,7 +104,7 @@ serve(async (req) => {
       utilizacaoPorPessoa[t.pessoa_id] = (utilizacaoPorPessoa[t.pessoa_id] || 0) + (t.horas || 0);
     }
 
-    const equipeResumo = (pessoas || []).map((p: any) => ({
+    const equipeResumo = (pessoas || []).map((p: PessoaRow) => ({
       nome: p.nome,
       cargo: p.cargo,
       disciplinas: p.disciplinas,
@@ -87,13 +127,13 @@ serve(async (req) => {
 
     const contexto = `
 EQUIPE ATUAL (${equipeResumo.length} pessoas):
-${equipeResumo.map((p: any) => `- ${p.nome} (${p.cargo}): ${p.disciplinas?.join(", ") || "geral"}, ${p.tipo}, R$ ${p.custo_hora}/h, utilização 3m: ${p.utilizacao_pct}%`).join("\n")}
+${equipeResumo.map((p: EquipeResumo) => `- ${p.nome} (${p.cargo}): ${p.disciplinas?.join(", ") || "geral"}, ${p.tipo}, R$ ${p.custo_hora}/h, utilização 3m: ${p.utilizacao_pct}%`).join("\n")}
 
 PROJETOS ATIVOS (${(projetosAtivos || []).length}):
-${(projetosAtivos || []).map((p: any) => `- ${p.nome}: ${p.status}, disciplinas: ${p.disciplinas?.join(", ") || "N/A"}, previsão: ${p.data_final || "N/A"}`).join("\n")}
+${(projetosAtivos || []).map((p: ProjetoAtivoRow) => `- ${p.nome}: ${p.status}, disciplinas: ${p.disciplinas?.join(", ") || "N/A"}, previsão: ${p.data_final || "N/A"}`).join("\n")}
 
 PIPELINE (leads qualificados):
-${(leads || []).map((l: any) => `- ${l.nome}: R$ ${l.valor_estimado || 0}, ${l.probabilidade || 0}% prob., disciplinas: ${l.disciplinas?.join(", ") || "N/A"}`).join("\n") || "Nenhum"}
+${(leads || []).map((l: LeadRow) => `- ${l.nome}: R$ ${l.valor_estimado || 0}, ${l.probabilidade || 0}% prob., disciplinas: ${l.disciplinas?.join(", ") || "N/A"}`).join("\n") || "Nenhum"}
 
 DEMANDA POR DISCIPLINA (projetos ativos):
 ${Object.entries(disciplinasDemanda).map(([d, n]) => `- ${d}: ${n} projetos`).join("\n") || "N/A"}

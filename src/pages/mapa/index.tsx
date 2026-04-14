@@ -11,7 +11,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { supabase } from "@/integrations/supabase/client";
 import { PROJECT_STATUS, PROJECT_STATUS_CONFIG, type ProjectStatus } from "@/constants";
 
-delete (L.Icon.Default.prototype as any)._getIconUrl;
+delete (L.Icon.Default.prototype as Record<string, unknown>)._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png",
   iconUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png",
@@ -64,8 +64,8 @@ export default function MapaObras() {
       if (error) throw error;
 
       return (data || [])
-        .filter((p: any) => typeof p.latitude === "number" && typeof p.longitude === "number")
-        .map((p: any) => ({
+        .filter((p) => typeof p.latitude === "number" && typeof p.longitude === "number")
+        .map((p) => ({
           id: p.id,
           nome: p.nome,
           codigo_projeto: p.codigo_projeto ?? "—",

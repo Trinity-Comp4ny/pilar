@@ -58,18 +58,66 @@ serve(async (req) => {
         .limit(20),
     ]);
 
+    // Tipos para as queries
+    interface TimesheetRow {
+      projeto_id: string;
+      horas: number;
+      pessoa_id: string;
+      pessoas: { custo_hora: number } | null;
+    }
+    interface ProjetoRow {
+      id: string;
+      nome: string;
+      status: string;
+      valor_contrato: number | null;
+      orcamento: number | null;
+      area_m2: number | null;
+      tipologia: string | null;
+      disciplinas: string[] | null;
+      data_inicio: string | null;
+      data_final: string | null;
+      percentual_conclusao: number | null;
+    }
+    interface PessoaRow {
+      id: string;
+      cargo: string;
+      custo_hora: number;
+      disciplinas: string[] | null;
+    }
+    interface PropostaRow {
+      nome: string;
+      valor_estimado: number | null;
+      status: string;
+      motivo_perda: string | null;
+    }
+
     // Calcula métricas por projeto
     const horasPorProjeto: Record<string, { horas: number; custo: number }> = {};
-    for (const t of (timesheets || [])) {
+    for (const t of ((timesheets || []) as TimesheetRow[])) {
       if (!horasPorProjeto[t.projeto_id]) horasPorProjeto[t.projeto_id] = { horas: 0, custo: 0 };
       horasPorProjeto[t.projeto_id].horas += t.horas || 0;
       horasPorProjeto[t.projeto_id].custo += (t.horas || 0) * (t.pessoas?.custo_hora || 0);
     }
 
-    const projetosComMetricas = (projetos || []).map((p: any) => {
+    interface ProjetoMetrica {
+      nome: string;
+      status: string;
+      valor: number | null;
+      area: number | null;
+      tipologia: string | null;
+      disciplinas: string[] | null;
+      horas_realizadas: number;
+      custo_real: number;
+      margem_real_pct: string | undefined;
+      valor_hora_real: string | undefined;
+      valor_m2: string | undefined;
+      concluido: number | null;
+    }
+
+    const projetosComMetricas: ProjetoMetrica[] = ((projetos || []) as ProjetoRow[]).map((p) => {
       const hp = horasPorProjeto[p.id] || { horas: 0, custo: 0 };
       const margemReal = p.valor_contrato ? (1 - hp.custo / p.valor_contrato) * 100 : null;
-      const valorHoraReal = hp.horas > 0 ? p.valor_contrato / hp.horas : null;
+      const valorHoraReal = hp.horas > 0 && p.valor_contrato ? p.valor_contrato / hp.horas : null;
       const valorM2 = p.area_m2 && p.valor_contrato ? p.valor_contrato / p.area_m2 : null;
       return {
         nome: p.nome,
@@ -87,16 +135,17 @@ serve(async (req) => {
       };
     });
 
-    const projetosConcluidos = projetosComMetricas.filter((p: any) => p.status === "Concluído" && p.horas_realizadas > 0);
+    const projetosConcluidos = projetosComMetricas.filter((p) => p.status === "Concluído" && p.horas_realizadas > 0);
     const margemMedia = projetosConcluidos.length > 0
-      ? projetosConcluidos.reduce((s: number, p: any) => s + parseFloat(p.margem_real_pct || "0"), 0) / projetosConcluidos.length
+      ? projetosConcluidos.reduce((s: number, p) => s + parseFloat(p.margem_real_pct || "0"), 0) / projetosConcluidos.length
       : 0;
-    const valorHoraMedio = projetosConcluidos.filter((p: any) => p.valor_hora_real).length > 0
-      ? projetosConcluidos.reduce((s: number, p: any) => s + parseFloat(p.valor_hora_real || "0"), 0) / projetosConcluidos.filter((p: any) => p.valor_hora_real).length
+    const projetosComValorHora = projetosConcluidos.filter((p) => p.valor_hora_real);
+    const valorHoraMedio = projetosComValorHora.length > 0
+      ? projetosConcluidos.reduce((s: number, p) => s + parseFloat(p.valor_hora_real || "0"), 0) / projetosComValorHora.length
       : 0;
 
-    const propostasPerdidasPreco = (propostas || []).filter(
-      (p: any) => p.status === "Perdido" && p.motivo_perda?.toLowerCase().includes("preço")
+    const propostasPerdidasPreco = ((propostas || []) as PropostaRow[]).filter(
+      (p) => p.status === "Perdido" && p.motivo_perda?.toLowerCase().includes("preço")
     );
 
     const contexto = `
@@ -110,13 +159,13 @@ MÉTRICAS GERAIS:
 - Propostas perdidas por preço: ${propostasPerdidasPreco.length}
 
 CUSTO MÉDIO DA EQUIPE:
-${(pessoas || []).map((p: any) => `- ${p.cargo} (${p.disciplinas?.join(", ") || "geral"}): R$ ${p.custo_hora}/h`).join("\n")}
+${((pessoas || []) as PessoaRow[]).map((p) => `- ${p.cargo} (${p.disciplinas?.join(", ") || "geral"}): R$ ${p.custo_hora}/h`).join("\n")}
 
 PROJETOS DETALHADOS:
-${projetosComMetricas.map((p: any) => `- ${p.nome} [${p.status}]: R$ ${p.valor || 0}, ${p.area || "?"}m², ${p.tipologia || "?"}, margem: ${p.margem_real_pct || "?"}%, R$/h: ${p.valor_hora_real || "?"}, R$/m²: ${p.valor_m2 || "?"}`).join("\n")}
+${projetosComMetricas.map((p) => `- ${p.nome} [${p.status}]: R$ ${p.valor || 0}, ${p.area || "?"}m², ${p.tipologia || "?"}, margem: ${p.margem_real_pct || "?"}%, R$/h: ${p.valor_hora_real || "?"}, R$/m²: ${p.valor_m2 || "?"}`).join("\n")}
 
 PROPOSTAS PERDIDAS POR PREÇO:
-${propostasPerdidasPreco.map((p: any) => `- ${p.nome}: R$ ${p.valor_estimado || 0}`).join("\n") || "Nenhuma registrada"}
+${propostasPerdidasPreco.map((p) => `- ${p.nome}: R$ ${p.valor_estimado || 0}`).join("\n") || "Nenhuma registrada"}
 `.trim();
 
     const aiRequest: AiRequest = {

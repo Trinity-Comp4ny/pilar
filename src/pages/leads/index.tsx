@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Mail, Phone, User, MapPin, CheckCircle2, Trash2, Loader2 } from "lucide-react";
+import { Plus, Mail, Phone, User, CheckCircle2, Loader2, AlertTriangle, UserPlus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatPhone } from "@/lib/maskUtils";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
@@ -24,6 +24,8 @@ interface Lead {
   status: "Novo" | "Em contato" | "Proposta" | "Negociação" | "Ganho" | "Perdido";
   origem?: string;
   cliente_id?: string;
+  motivo_perda?: string;
+  convertido_em?: string;
 }
 
 const statusConfig: Record<string, { label: string, color: string, columnColor: string }> = {
@@ -48,6 +50,11 @@ export default function Leads() {
     origem: "",
   });
   const [isSaving, setIsSaving] = useState(false);
+  const [isConverting, setIsConverting] = useState(false);
+  const [pendingDrop, setPendingDrop] = useState<{ leadId: string; newStatus: string } | null>(null);
+  const [isMotivoPerdasOpen, setIsMotivoPerdasOpen] = useState(false);
+  const [motivoPerda, setMotivoPerda] = useState("");
+  const [isAutoConvertOpen, setIsAutoConvertOpen] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -55,7 +62,7 @@ export default function Leads() {
   }, []);
 
   const fetchLeads = async () => {
-    const { data, error } = await supabase
+    const { data, error: _error } = await supabase
       .from('leads')
       .select('*')
       .order('created_at', { ascending: false });
@@ -122,17 +129,40 @@ export default function Leads() {
 
     const newStatus = destination.droppableId;
 
-    // Otimistic update
+    // Interceptar: "Perdido" precisa de motivo
+    if (newStatus === "Perdido") {
+      setPendingDrop({ leadId: draggableId, newStatus });
+      setMotivoPerda("");
+      setIsMotivoPerdasOpen(true);
+      return;
+    }
+
+    // Interceptar: "Ganho" oferece conversao automatica
+    if (newStatus === "Ganho") {
+      const lead = leads.find((l) => l.id === draggableId);
+      if (lead && !lead.cliente_id) {
+        setPendingDrop({ leadId: draggableId, newStatus });
+        setIsAutoConvertOpen(true);
+        return;
+      }
+    }
+
+    // Para outros status, fluxo normal
+    await updateLeadStatus(draggableId, newStatus);
+  };
+
+  const updateLeadStatus = async (leadId: string, newStatus: string, extraFields?: Record<string, unknown>) => {
+    // Optimistic update
     const updatedLeads = leads.map((lead) =>
-      lead.id === draggableId ? { ...lead, status: newStatus as Lead["status"] } : lead
+      lead.id === leadId ? { ...lead, status: newStatus as Lead["status"], ...extraFields } : lead
     );
     setLeads(updatedLeads);
 
     try {
       const { error } = await supabase
         .from('leads')
-        .update({ status: newStatus })
-        .eq('id', draggableId);
+        .update({ status: newStatus, ...extraFields })
+        .eq('id', leadId);
 
       if (error) throw error;
 
@@ -146,8 +176,57 @@ export default function Leads() {
         description: getSafeErrorMessage(error),
         variant: "destructive"
       });
-      fetchLeads(); // Revert changes
+      fetchLeads();
     }
+  };
+
+  const handleConfirmMotivoPerdas = async () => {
+    if (!pendingDrop || !motivoPerda.trim()) {
+      toast({ title: "Motivo obrigatório", description: "Informe o motivo da perda do lead.", variant: "destructive" });
+      return;
+    }
+
+    await updateLeadStatus(pendingDrop.leadId, "Perdido", { motivo_perda: motivoPerda.trim() });
+    setIsMotivoPerdasOpen(false);
+    setPendingDrop(null);
+    setMotivoPerda("");
+  };
+
+  const handleAutoConvert = async () => {
+    if (!pendingDrop) return;
+    setIsConverting(true);
+
+    try {
+      const { data: _clienteId, error } = await supabase.rpc('rpc_converter_lead_cliente', {
+        p_lead_id: pendingDrop.leadId,
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Lead convertido!",
+        description: "Cliente criado automaticamente a partir do lead.",
+      });
+
+      setIsAutoConvertOpen(false);
+      setPendingDrop(null);
+      fetchLeads();
+    } catch (err: unknown) {
+      toast({
+        title: "Erro na conversão",
+        description: getSafeErrorMessage(err),
+        variant: "destructive",
+      });
+    } finally {
+      setIsConverting(false);
+    }
+  };
+
+  const handleSkipConvert = async () => {
+    if (!pendingDrop) return;
+    await updateLeadStatus(pendingDrop.leadId, "Ganho");
+    setIsAutoConvertOpen(false);
+    setPendingDrop(null);
   };
 
   const handleConvertToClient = async () => {
@@ -347,8 +426,13 @@ export default function Leads() {
                                 </div>
                               )}
                               {lead.origem && (
-                                <p className="text-xs text-black/50 line-clamp-2 mt-2 pt-2 border-t">
+                                <p className="text-xs text-black/50 line-clamp-1 mt-2 pt-2 border-t">
                                   Origem: {lead.origem}
+                                </p>
+                              )}
+                              {lead.status === "Perdido" && lead.motivo_perda && (
+                                <p className="text-xs text-red-500/80 line-clamp-2 mt-1 pt-1 border-t border-red-100">
+                                  Motivo: {lead.motivo_perda}
                                 </p>
                               )}
                             </CardContent>
@@ -435,6 +519,24 @@ export default function Leads() {
                       </p>
                     </div>
                   )}
+
+                  {selectedLead.status === "Perdido" && selectedLead.motivo_perda && (
+                    <div className="space-y-2">
+                      <Label className="text-xs text-red-500">Motivo da Perda</Label>
+                      <p className="text-sm text-red-700 bg-red-50 p-3 rounded-lg border border-red-100">
+                        {selectedLead.motivo_perda}
+                      </p>
+                    </div>
+                  )}
+
+                  {selectedLead.convertido_em && (
+                    <div className="space-y-2">
+                      <Label className="text-xs text-green-600">Convertido em</Label>
+                      <p className="text-sm text-green-700 bg-green-50 p-3 rounded-lg border border-green-100">
+                        {new Date(selectedLead.convertido_em).toLocaleDateString("pt-BR")}
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 {/* Ações */}
@@ -456,7 +558,7 @@ export default function Leads() {
         </DialogContent>
       </Dialog>
 
-      {/* Modal de Confirmação de Conversão */}
+      {/* Modal de Confirmação de Conversão (via detalhe) */}
       <Dialog open={isConvertOpen} onOpenChange={setIsConvertOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -471,6 +573,66 @@ export default function Leads() {
             </Button>
             <Button onClick={handleConvertToClient} className="bg-green-600 hover:bg-green-700 text-white">
               Confirmar Conversão
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal Motivo de Perda (drag para Perdido) */}
+      <Dialog open={isMotivoPerdasOpen} onOpenChange={(open) => {
+        if (!open) { setPendingDrop(null); setMotivoPerda(""); }
+        setIsMotivoPerdasOpen(open);
+      }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-red-500" />
+              Motivo da Perda
+            </DialogTitle>
+            <DialogDescription>
+              Por que este lead foi perdido? Isso ajuda a analisar seu funil comercial.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 mt-2">
+            <Textarea
+              value={motivoPerda}
+              onChange={(e) => setMotivoPerda(e.target.value)}
+              placeholder="Ex: Preço acima do orçamento, escolheu concorrente, projeto cancelado..."
+              rows={3}
+            />
+          </div>
+          <DialogFooter className="mt-4">
+            <Button variant="outline" onClick={() => { setIsMotivoPerdasOpen(false); setPendingDrop(null); }}>
+              Cancelar
+            </Button>
+            <Button onClick={handleConfirmMotivoPerdas} variant="destructive" disabled={!motivoPerda.trim()}>
+              Confirmar Perda
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal Conversão Automática (drag para Ganho) */}
+      <Dialog open={isAutoConvertOpen} onOpenChange={(open) => {
+        if (!open) { setPendingDrop(null); }
+        setIsAutoConvertOpen(open);
+      }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <UserPlus className="h-5 w-5 text-green-600" />
+              Lead Ganho!
+            </DialogTitle>
+            <DialogDescription>
+              Deseja criar um cliente automaticamente a partir deste lead? Os dados de contato serão copiados.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="mt-4 flex gap-2">
+            <Button variant="outline" onClick={handleSkipConvert}>
+              Apenas marcar como Ganho
+            </Button>
+            <Button onClick={handleAutoConvert} className="bg-green-600 hover:bg-green-700 text-white" disabled={isConverting}>
+              {isConverting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Convertendo...</> : "Criar Cliente"}
             </Button>
           </DialogFooter>
         </DialogContent>

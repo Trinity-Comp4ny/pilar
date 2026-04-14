@@ -77,7 +77,7 @@ export default function AiHub() {
   }, []);
 
   const handleGenerate = (tipo: AiTipo) => {
-    let params: any = {};
+    let params: Record<string, unknown> = {};
 
     switch (tipo) {
       case "proposta_copilot":
@@ -121,7 +121,7 @@ export default function AiHub() {
           setActiveGenerator(null);
           setSelectedInsight(data);
         },
-        onError: (err: any) => {
+        onError: (err: Error) => {
           toast({ variant: "destructive", title: "Erro na IA", description: err.message });
         },
       }

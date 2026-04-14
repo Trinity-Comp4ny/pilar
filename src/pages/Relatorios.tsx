@@ -18,16 +18,42 @@ import { getSafeErrorMessage } from "@/lib/safeError";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
+interface ReportRow {
+  Tipo: string;
+  Descricao: string;
+  Valor: number;
+  Data: string;
+  Status: string;
+  "Nome do Projeto": string;
+  "Nome do Cliente": string;
+  Categoria: string;
+  Conta: string;
+}
+
+interface FinancialRecord {
+  descricao: string | null;
+  valor: number | null;
+  data_recebimento?: string | null;
+  data_pagamento?: string | null;
+  data_vencimento: string | null;
+  status: string | null;
+  projetos: { nome: string } | null;
+  clientes?: { nome: string } | null;
+  fornecedores?: { nome: string } | null;
+  categorias_financeiras: { nome: string } | null;
+  contas: { nome: string } | null;
+}
+
 export default function Relatorios() {
   const [tipoRelatorio, setTipoRelatorio] = useState("");
   const [dateFrom, setDateFrom] = useState<Date>();
   const [dateTo, setDateTo] = useState<Date>();
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const [reportData, setReportData] = useState<any[]>([]);
+  const [reportData, setReportData] = useState<ReportRow[]>([]);
   const [reportTitle, setReportTitle] = useState<string>("");
 
-  const toCurrency = (value: any) => {
+  const toCurrency = (value: string | number | null | undefined) => {
     const n = Number(value);
     if (!Number.isFinite(n)) return "-";
     return new Intl.NumberFormat("pt-BR", {
@@ -36,7 +62,7 @@ export default function Relatorios() {
     }).format(n);
   };
 
-  const processData = (data: any[], tipo: "receitas" | "despesas") => {
+  const processData = (data: FinancialRecord[], tipo: "receitas" | "despesas"): ReportRow[] => {
     return (data || []).map((item) => ({
       Tipo: tipo === "receitas" ? "Receita" : "Despesa",
       Descricao: item.descricao ?? "-",
@@ -54,7 +80,7 @@ export default function Relatorios() {
     }));
   };
 
-  const generateCSV = (data: any[], filename: string) => {
+  const generateCSV = (data: ReportRow[], filename: string) => {
     if (!data.length) {
       toast({
         title: "Sem dados",
@@ -90,7 +116,7 @@ export default function Relatorios() {
   const fetchFinancialData = async (tipo: 'receitas' | 'despesas') => {
     const pageLimit = 1000;
     let page = 0;
-    const all: any[] = [];
+    const all: FinancialRecord[] = [];
 
     while (true) {
       let query = supabase.from(tipo).select(`
@@ -161,7 +187,7 @@ export default function Relatorios() {
     return all;
   };
 
-  const generatePDF = (data: any[], title: string, filename: string) => {
+  const generatePDF = (data: ReportRow[], title: string, filename: string) => {
     const doc = new jsPDF({ orientation: "landscape" });
 
     doc.setFontSize(16);
@@ -232,7 +258,7 @@ export default function Relatorios() {
     setIsLoading(true);
 
     try {
-      let finalData: any[] = [];
+      let finalData: ReportRow[] = [];
 
       if (tipoRelatorio === 'financeiro') {
         const [receitas, despesas] = await Promise.all([
@@ -320,7 +346,7 @@ export default function Relatorios() {
     }
   };
 
-  const resetBuilder = () => {
+  const _resetBuilder = () => {
     setTipoRelatorio("");
     setDateFrom(undefined);
     setDateTo(undefined);

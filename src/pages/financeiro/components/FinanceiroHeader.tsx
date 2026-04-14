@@ -1,9 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { Calendar as CalendarIcon, Filter, CalendarDays } from "lucide-react";
+import { Calendar as CalendarIcon, CalendarDays } from "lucide-react";
 import { format, startOfMonth, endOfMonth, subMonths, startOfYear, endOfYear } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { Dispatch, SetStateAction, useState, useEffect } from "react";
 import { TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -30,8 +29,8 @@ export function FinanceiroHeader({
   setDateFrom,
   dateTo,
   setDateTo,
-  visualizacao,
-  setVisualizacao,
+  visualizacao: _visualizacao,
+  setVisualizacao: _setVisualizacao,
 }: FinanceiroHeaderProps) {
   const { isMobile } = useSidebar();
   const [filterType, setFilterType] = useState("this-month");
@@ -175,23 +174,52 @@ export function FinanceiroHeader({
           >
             Resumo Mensal
           </TabsTrigger>
-          <TabsTrigger 
-            value="metas" 
-            className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#FF4000] data-[state=active]:bg-white data-[state=active]:text-[#FF4000] py-3 px-4 min-w-max whitespace-nowrap text-sm"
-          >
-            Metas
-          </TabsTrigger>
-          <TabsTrigger 
+          <TabsTrigger
             value="folha-pagamento" 
             className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#FF4000] data-[state=active]:bg-white data-[state=active]:text-[#FF4000] py-3 px-4 min-w-max whitespace-nowrap text-sm"
           >
             Folha de Pagamento
           </TabsTrigger>
-          <TabsTrigger 
-            value="contas" 
+          <TabsTrigger
+            value="faturas"
+            disabled
+            className="rounded-none border-b-2 border-transparent py-3 px-4 min-w-max whitespace-nowrap text-sm opacity-40 cursor-not-allowed"
+          >
+            Faturas
+          </TabsTrigger>
+          <TabsTrigger
+            value="contas"
             className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#FF4000] data-[state=active]:bg-white data-[state=active]:text-[#FF4000] py-3 px-4 min-w-max whitespace-nowrap text-sm"
           >
             Contas
+          </TabsTrigger>
+          <TabsTrigger
+            value="projecao"
+            disabled
+            className="rounded-none border-b-2 border-transparent py-3 px-4 min-w-max whitespace-nowrap text-sm opacity-40 cursor-not-allowed"
+          >
+            Projeção
+          </TabsTrigger>
+          <TabsTrigger
+            value="aging"
+            disabled
+            className="rounded-none border-b-2 border-transparent py-3 px-4 min-w-max whitespace-nowrap text-sm opacity-40 cursor-not-allowed"
+          >
+            Aging
+          </TabsTrigger>
+          <TabsTrigger
+            value="dre"
+            disabled
+            className="rounded-none border-b-2 border-transparent py-3 px-4 min-w-max whitespace-nowrap text-sm opacity-40 cursor-not-allowed"
+          >
+            DRE
+          </TabsTrigger>
+          <TabsTrigger
+            value="wip"
+            disabled
+            className="rounded-none border-b-2 border-transparent py-3 px-4 min-w-max whitespace-nowrap text-sm opacity-40 cursor-not-allowed"
+          >
+            WIP
           </TabsTrigger>
         </TabsList>
       </div>

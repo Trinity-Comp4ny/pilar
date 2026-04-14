@@ -30,8 +30,12 @@ serve(async (req) => {
       });
     }
 
-    const { cenario } = await req.json();
-    // cenario: { tipo: "perda_cliente" | "novo_projeto" | "aumento_custo" | "atraso_projeto" | "contratacao" | "custom", descricao: string, parametros: any }
+    interface CenarioInput {
+      tipo: "perda_cliente" | "novo_projeto" | "aumento_custo" | "atraso_projeto" | "contratacao" | "custom";
+      descricao: string;
+      parametros: Record<string, unknown>;
+    }
+    const { cenario } = await req.json() as { cenario: CenarioInput | undefined };
 
     // Busca panorama financeiro completo
     const now = new Date();
@@ -68,17 +72,29 @@ serve(async (req) => {
           .in("status", ["Qualificado", "Proposta Enviada"]),
       ]);
 
-    const receitaTotal = (receitas || []).reduce((s: number, r: any) => s + (r.valor || 0), 0);
-    const despesaTotal = (despesas || []).reduce((s: number, d: any) => s + (d.valor || 0), 0);
-    const folhaMensal = (pessoas || []).reduce(
-      (s: number, p: any) => s + (p.custo_hora || 0) * (p.carga_horaria_mensal || 160),
+    interface ProjetoRow { id: string; nome: string; status: string; valor_contrato: number | null; orcamento: number | null; data_inicio: string | null; data_final: string | null; percentual_conclusao: number | null }
+    interface ReceitaRow { valor: number; status: string; data_competencia: string; projeto_id: string }
+    interface DespesaRow { valor: number; categoria: string; data_competencia: string; recorrente: boolean }
+    interface PessoaRow { nome: string; cargo: string; custo_hora: number; carga_horaria_mensal: number | null; tipo_contrato: string }
+    interface LeadRow { nome: string; valor_estimado: number | null; probabilidade: number | null; status: string }
+
+    const receitasList = (receitas || []) as ReceitaRow[];
+    const despesasList = (despesas || []) as DespesaRow[];
+    const pessoasList = (pessoas || []) as PessoaRow[];
+    const projetosList = (projetos || []) as ProjetoRow[];
+    const leadsList = (leads || []) as LeadRow[];
+
+    const receitaTotal = receitasList.reduce((s: number, r) => s + (r.valor || 0), 0);
+    const despesaTotal = despesasList.reduce((s: number, d) => s + (d.valor || 0), 0);
+    const folhaMensal = pessoasList.reduce(
+      (s: number, p) => s + (p.custo_hora || 0) * (p.carga_horaria_mensal || 160),
       0
     );
-    const despesasRecorrentes = (despesas || [])
-      .filter((d: any) => d.recorrente)
-      .reduce((s: number, d: any) => s + (d.valor || 0), 0) / mesAtual;
-    const pipelineValor = (leads || []).reduce(
-      (s: number, l: any) => s + (l.valor_estimado || 0) * ((l.probabilidade || 0) / 100),
+    const despesasRecorrentes = despesasList
+      .filter((d) => d.recorrente)
+      .reduce((s: number, d) => s + (d.valor || 0), 0) / mesAtual;
+    const pipelineValor = leadsList.reduce(
+      (s: number, l) => s + (l.valor_estimado || 0) * ((l.probabilidade || 0) / 100),
       0
     );
 
@@ -96,14 +112,14 @@ SITUAÇÃO FINANCEIRA ATUAL (${anoAtual}):
 - Despesas recorrentes mensais: R$ ${despesasRecorrentes.toFixed(2)}
 - Custo fixo mensal total: R$ ${(folhaMensal + despesasRecorrentes).toFixed(2)}
 
-PROJETOS ATIVOS (${(projetos || []).length}):
-${(projetos || []).map((p: any) => `- ${p.nome}: R$ ${p.valor_contrato || 0}, ${p.percentual_conclusao || 0}% concluído, previsão: ${p.data_final || "N/A"}`).join("\n")}
+PROJETOS ATIVOS (${projetosList.length}):
+${projetosList.map((p) => `- ${p.nome}: R$ ${p.valor_contrato || 0}, ${p.percentual_conclusao || 0}% concluído, previsão: ${p.data_final || "N/A"}`).join("\n")}
 
 PIPELINE PONDERADO: R$ ${pipelineValor.toFixed(2)}
-${(leads || []).map((l: any) => `- ${l.nome}: R$ ${l.valor_estimado || 0} x ${l.probabilidade}% = R$ ${((l.valor_estimado || 0) * (l.probabilidade || 0) / 100).toFixed(2)}`).join("\n") || "Nenhum lead"}
+${leadsList.map((l) => `- ${l.nome}: R$ ${l.valor_estimado || 0} x ${l.probabilidade}% = R$ ${((l.valor_estimado || 0) * (l.probabilidade || 0) / 100).toFixed(2)}`).join("\n") || "Nenhum lead"}
 
-EQUIPE (${(pessoas || []).length}):
-${(pessoas || []).map((p: any) => `- ${p.nome} (${p.cargo}): R$ ${p.custo_hora}/h, ${p.tipo_contrato}`).join("\n")}
+EQUIPE (${pessoasList.length}):
+${pessoasList.map((p) => `- ${p.nome} (${p.cargo}): R$ ${p.custo_hora}/h, ${p.tipo_contrato}`).join("\n")}
 `.trim();
 
     const aiRequest: AiRequest = {

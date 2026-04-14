@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
@@ -9,16 +9,20 @@ import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { ArrowLeft, User, DollarSign, Calendar, Ruler, MapPin, Loader2, Edit, Plus, Trash2, MessageSquare, ChevronDown } from "lucide-react";
+import { ArrowLeft, User, DollarSign, Calendar, Ruler, Loader2, Edit, Plus, Trash2, MessageSquare, ChevronDown } from "lucide-react";
 import { PageLayout } from "@/components/PageLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useToast } from "@/hooks/use-toast";
 import { PROJECT_STATUS_CONFIG, PROJECT_PRIORITY, PROJECT_PRIORITY_CONFIG, PRIORITY_OPTIONS, type ProjectPriority } from "@/constants";
-import { type Projeto, type DisciplinaResponsavel, type DisciplinaObservacao, type ResponsavelDatas, disciplinaStatusOptions, formatCurrency, formatDate, formatDateShort, getDeadlineStatus, getProjectProgress, getResponsaveisList } from "./types";
+import { type Projeto, type DisciplinaResponsavel, type DisciplinaObservacao, type ResponsavelDatas, disciplinaStatusOptions, formatCurrency, formatDate, formatDateShort, getDeadlineStatus, getProjectProgress, getResponsaveisList, isDiscAtrasada } from "./types";
+import { Textarea } from "@/components/ui/textarea";
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
+import { AlertTriangle } from "lucide-react";
 import { ProjectBudgetTab } from "./components/ProjectBudgetTab";
 import { BillingMilestonesTab } from "./components/BillingMilestonesTab";
 import { EscopoTab } from "./components/EscopoTab";
+import { BurnRateChart } from "./components/BurnRateChart";
 import { useProjetoRentabilidade } from "@/hooks/useRentabilidade";
 
 export default function ProjetoDetail() {
@@ -43,6 +47,8 @@ export default function ProjetoDetail() {
   const [expandedDiscIdx, setExpandedDiscIdx] = useState<number | null>(null);
   const [addingResponsavelToDisc, setAddingResponsavelToDisc] = useState<number | null>(null);
   const [newResp, setNewResp] = useState({ responsavel_id: "", data_inicio: "", data_previsao: "", data_final: "" });
+  const [justificativaDialog, setJustificativaDialog] = useState<{ discIdx: number; newStatus: string } | null>(null);
+  const [justificativaText, setJustificativaText] = useState("");
 
   useEffect(() => {
     if (!id) return;
@@ -63,7 +69,7 @@ export default function ProjetoDetail() {
         codigo_projeto: data.codigo_projeto,
         nome: data.nome,
         cliente_id: data.cliente_id,
-        cliente_nome: (data as any).clientes?.nome,
+        cliente_nome: (data as unknown as { clientes?: { nome?: string } }).clientes?.nome,
         localizacao: data.localizacao || undefined,
         parcelas: data.parcelas || undefined,
         area_m2: data.area_m2 || undefined,
@@ -71,7 +77,7 @@ export default function ProjetoDetail() {
         data_previsao: data.data_previsao,
         data_final: data.data_final || undefined,
         status: data.status as Projeto["status"],
-        prioridade: ((data as any).prioridade as ProjectPriority) || PROJECT_PRIORITY.MEDIA,
+        prioridade: (data.prioridade as ProjectPriority) || PROJECT_PRIORITY.MEDIA,
         valor_contrato: data.valor_contrato,
         observacao: data.observacao,
         disciplinas: Array.isArray(data.disciplinas) ? data.disciplinas : [],
@@ -108,6 +114,18 @@ export default function ProjetoDetail() {
 
   const handleDiscStatusChange = async (idx: number, newStatus: string) => {
     if (!projeto) return;
+    const disc = projeto.disciplinas[idx];
+    // Se a disciplina está atrasada e o novo status NÃO é "Concluído", exigir justificativa
+    if (isDiscAtrasada(disc) && newStatus !== "Concluído" && !disc.justificativa_atraso) {
+      setJustificativaDialog({ discIdx: idx, newStatus });
+      setJustificativaText("");
+      return;
+    }
+    await applyDiscStatusChange(idx, newStatus);
+  };
+
+  const applyDiscStatusChange = async (idx: number, newStatus: string, justificativa?: string) => {
+    if (!projeto) return;
     setUpdatingDisc(idx);
     const updated = [...projeto.disciplinas];
     updated[idx] = {
@@ -116,10 +134,18 @@ export default function ProjetoDetail() {
       ...(newStatus === "Concluído" && !updated[idx].data_final
         ? { data_final: new Date().toISOString().split("T")[0] }
         : {}),
+      ...(justificativa !== undefined ? { justificativa_atraso: justificativa } : {}),
     };
     const ok = await saveDisciplinas(updated);
     if (ok) toast({ title: `${updated[idx].disciplina}: ${newStatus}` });
     setUpdatingDisc(null);
+  };
+
+  const handleJustificativaConfirm = async () => {
+    if (!justificativaDialog || !justificativaText.trim()) return;
+    await applyDiscStatusChange(justificativaDialog.discIdx, justificativaDialog.newStatus, justificativaText.trim());
+    setJustificativaDialog(null);
+    setJustificativaText("");
   };
 
   const handleDiscFieldUpdate = (field: keyof DisciplinaResponsavel, value: string) => {
@@ -370,6 +396,7 @@ export default function ProjetoDetail() {
           <TabsTrigger value="orcamento">Orçamento</TabsTrigger>
           <TabsTrigger value="marcos">Marcos</TabsTrigger>
           <TabsTrigger value="escopo">Escopo & Aditivos</TabsTrigger>
+          <TabsTrigger value="burn-rate">Burn Rate</TabsTrigger>
         </TabsList>
 
         <TabsContent value="disciplinas">
@@ -450,10 +477,20 @@ export default function ProjetoDetail() {
                               <span className="text-[10px] text-muted-foreground ml-1">
                                 ({resps.length} {resps.length === 1 ? "responsável" : "responsáveis"})
                               </span>
+                              {isDiscAtrasada(d) && (
+                                <span className="text-[9px] px-1.5 py-0.5 rounded-full font-medium bg-red-100 text-red-700 flex items-center gap-0.5">
+                                  <AlertTriangle size={10} /> Atrasada
+                                </span>
+                              )}
                             </div>
                             <p className="text-xs text-muted-foreground mt-0.5">
                               {resps.map((r) => r.responsavel_nome).join(", ") || "Sem responsável"}
                             </p>
+                            {isDiscAtrasada(d) && d.justificativa_atraso && (
+                              <p className="text-[10px] text-red-600 mt-0.5 italic">
+                                Justificativa: {d.justificativa_atraso}
+                              </p>
+                            )}
                           </div>
 
                           <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
@@ -775,7 +812,47 @@ export default function ProjetoDetail() {
         <TabsContent value="escopo">
           <EscopoTab projetoId={projeto.id} canEdit={canEdit} />
         </TabsContent>
+
+        <TabsContent value="burn-rate">
+          <BurnRateChart projetoId={projeto.id} />
+        </TabsContent>
       </Tabs>
+
+      {/* Dialog de justificativa obrigatória para atraso */}
+      <AlertDialog open={!!justificativaDialog} onOpenChange={(open) => { if (!open) { setJustificativaDialog(null); setJustificativaText(""); } }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-red-500" />
+              Justificativa de Atraso Obrigatória
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              A disciplina <strong>{justificativaDialog !== null && projeto?.disciplinas[justificativaDialog.discIdx]?.disciplina}</strong> está atrasada.
+              É necessário informar uma justificativa para continuar.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="py-2">
+            <Label className="text-sm mb-2 block">Justificativa</Label>
+            <Textarea
+              value={justificativaText}
+              onChange={(e) => setJustificativaText(e.target.value)}
+              placeholder="Explique o motivo do atraso..."
+              className="min-h-[80px]"
+              autoFocus
+            />
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleJustificativaConfirm}
+              disabled={!justificativaText.trim()}
+              className="bg-accent-orange hover:bg-accent-orange/90"
+            >
+              Confirmar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </PageLayout>
   );
 }
