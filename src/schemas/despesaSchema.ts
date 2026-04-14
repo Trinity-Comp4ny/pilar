@@ -27,7 +27,8 @@ export const despesaSchema = z.object({
   contaId: z.string().optional().default(""),
   cartaoId: z.string().optional().default(""),
   observacao: z.string().optional().default(""),
-  recorrencia: z.string().default("Nenhuma"),
+  recorrente: z.boolean().default(false),
+  periodicidade: z.string().optional().default("mensal"),
 }).refine(
   (data) => {
     if (data.status === "Pago") {
@@ -67,5 +68,6 @@ export const despesaDefaultValues: DespesaFormData = {
   contaId: "",
   cartaoId: "",
   observacao: "",
-  recorrencia: "Nenhuma",
+  recorrente: false,
+  periodicidade: "mensal",
 };

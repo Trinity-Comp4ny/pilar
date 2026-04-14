@@ -27,7 +27,18 @@ export const receitaSchema = z.object({
   clienteId: z.string().optional().default(""),
   observacao: z.string().optional().default(""),
   recorrencia: z.string().default("Nenhuma"),
-});
+}).refine(
+  (data) => {
+    if (data.status === "Recebida") {
+      return !!data.contaId;
+    }
+    return true;
+  },
+  {
+    message: "Para receitas recebidas, selecione a Conta de destino.",
+    path: ["contaId"],
+  }
+);
 
 export type ReceitaFormData = z.infer<typeof receitaSchema>;
 

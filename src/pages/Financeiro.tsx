@@ -8,8 +8,12 @@ import FluxoCaixa from "./financeiro/tabs/FluxoCaixa";
 import ResumoMensal from "./financeiro/tabs/ResumoMensal";
 import Contas from "./financeiro/tabs/Contas";
 import Lancamentos from "./financeiro/tabs/Lancamentos";
-import Metas from "./financeiro/tabs/Metas";
 import FolhaPagamento from "./financeiro/tabs/FolhaPagamento";
+import Faturas from "./financeiro/tabs/Faturas";
+import ProjecaoFluxoCaixa from "./financeiro/tabs/ProjecaoFluxoCaixa";
+import AgingRecebiveis from "./financeiro/tabs/AgingRecebiveis";
+import DRE from "./financeiro/tabs/DRE";
+import WIP from "./financeiro/tabs/WIP";
 
 export default function Financeiro() {
   const { state, isMobile } = useSidebar();
@@ -67,16 +71,32 @@ export default function Financeiro() {
               <ResumoMensal dateFrom={dateFrom} dateTo={dateTo} />
             </TabsContent>
 
-            <TabsContent value="metas" className="mt-0 w-full focus-visible:ring-0">
-              <Metas />
-            </TabsContent>
-
             <TabsContent value="folha-pagamento" className="mt-0 w-full focus-visible:ring-0">
               <FolhaPagamento />
             </TabsContent>
 
+            <TabsContent value="faturas" className="mt-0 w-full focus-visible:ring-0">
+              <Faturas />
+            </TabsContent>
+
             <TabsContent value="contas" className="mt-0 w-full focus-visible:ring-0">
               <Contas />
+            </TabsContent>
+
+            <TabsContent value="projecao" className="mt-0 w-full focus-visible:ring-0">
+              <ProjecaoFluxoCaixa />
+            </TabsContent>
+
+            <TabsContent value="aging" className="mt-0 w-full focus-visible:ring-0">
+              <AgingRecebiveis />
+            </TabsContent>
+
+            <TabsContent value="dre" className="mt-0 w-full focus-visible:ring-0">
+              <DRE />
+            </TabsContent>
+
+            <TabsContent value="wip" className="mt-0 w-full focus-visible:ring-0">
+              <WIP />
             </TabsContent>
           </div>
         </div>
