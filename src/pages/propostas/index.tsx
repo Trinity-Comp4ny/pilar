@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,7 +8,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, FileText, Loader2, Trash2, Send, CheckCircle2 } from "lucide-react";
+import { Plus, FileText, Loader2, Trash2, Send, CheckCircle2, FolderPlus } from "lucide-react";
+import { DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { useNavigate } from "react-router-dom";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -19,10 +21,20 @@ import {
   useCreateProposta,
   useUpdateProposta,
   useDeleteProposta,
+  useConverterProposta,
+  usePropostaDisciplinas,
   PROPOSTA_STATUS_CONFIG,
   type PropostaInsert,
 } from "@/hooks/usePropostas";
 import { formatCurrencyInput, parseCurrencyString } from "@/lib/currencyUtils";
+import { CapacidadeSimulacao } from "./components/CapacidadeSimulacao";
+
+interface PropostaDisciplina {
+  id: string;
+  disciplina: string;
+  horas_estimadas: number;
+  custo_hora: number;
+}
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 
@@ -34,9 +46,16 @@ export default function Propostas() {
   const updateProposta = useUpdateProposta();
   const deleteProposta = useDeleteProposta();
 
+  const converterProposta = useConverterProposta();
+  const navigate = useNavigate();
+
   const canEdit = userRole === "admin" || userRole === "operacional" || userRole === "marketing";
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [convertPropostaId, setConvertPropostaId] = useState<string | null>(null);
+
+  const convertProposta = propostas.find((p) => p.id === convertPropostaId);
+  const { data: convertDisciplinas = [] } = usePropostaDisciplinas(convertPropostaId);
 
   // Form state
   const [form, setForm] = useState<PropostaInsert>({
@@ -87,7 +106,7 @@ export default function Propostas() {
           setIsFormOpen(false);
           resetForm();
         },
-        onError: (err: any) => toast({ variant: "destructive", title: "Erro", description: err.message }),
+        onError: (err: Error) => toast({ variant: "destructive", title: "Erro", description: err.message }),
       }
     );
   };
@@ -97,7 +116,7 @@ export default function Propostas() {
       { id, status },
       {
         onSuccess: () => toast({ title: `Proposta ${PROPOSTA_STATUS_CONFIG[status]?.label || status}` }),
-        onError: (err: any) => toast({ variant: "destructive", title: "Erro", description: err.message }),
+        onError: (err: Error) => toast({ variant: "destructive", title: "Erro", description: err.message }),
       }
     );
   };
@@ -106,7 +125,19 @@ export default function Propostas() {
     if (!confirmDeleteId) return;
     deleteProposta.mutate(confirmDeleteId, {
       onSuccess: () => { toast({ title: "Proposta removida" }); setConfirmDeleteId(null); },
-      onError: (err: any) => toast({ variant: "destructive", title: "Erro", description: err.message }),
+      onError: (err: Error) => toast({ variant: "destructive", title: "Erro", description: err.message }),
+    });
+  };
+
+  const handleConverterEmProjeto = () => {
+    if (!convertPropostaId) return;
+    converterProposta.mutate(convertPropostaId, {
+      onSuccess: (projetoId) => {
+        toast({ title: "Projeto criado!", description: "A proposta foi convertida em projeto com orçamento pré-preenchido." });
+        setConvertPropostaId(null);
+        navigate(`/projetos/${projetoId}`);
+      },
+      onError: (err: Error) => toast({ variant: "destructive", title: "Erro na conversão", description: err.message }),
     });
   };
 
@@ -192,8 +223,18 @@ export default function Propostas() {
                             </Button>
                           )}
                           {p.status === "enviada" && (
-                            <Button variant="ghost" size="icon" className="h-7 w-7 text-green-600" onClick={() => handleStatusChange(p.id, "aceita")}>
-                              <CheckCircle2 className="h-3.5 w-3.5" />
+                            <>
+                              <Button variant="ghost" size="icon" className="h-7 w-7 text-green-600" title="Aceitar" onClick={() => handleStatusChange(p.id, "aceita")}>
+                                <CheckCircle2 className="h-3.5 w-3.5" />
+                              </Button>
+                              <Button variant="ghost" size="icon" className="h-7 w-7 text-blue-600" title="Aceitar e criar projeto" onClick={() => setConvertPropostaId(p.id)}>
+                                <FolderPlus className="h-3.5 w-3.5" />
+                              </Button>
+                            </>
+                          )}
+                          {p.status === "aceita" && !p.projeto_id && (
+                            <Button variant="ghost" size="icon" className="h-7 w-7 text-blue-600" title="Criar projeto" onClick={() => setConvertPropostaId(p.id)}>
+                              <FolderPlus className="h-3.5 w-3.5" />
                             </Button>
                           )}
                           <Button variant="ghost" size="icon" className="h-7 w-7 text-red-500" onClick={() => setConfirmDeleteId(p.id)}>
@@ -231,7 +272,7 @@ export default function Propostas() {
                 <Select value={form.cliente_id || ""} onValueChange={(v) => setForm({ ...form, cliente_id: v })}>
                   <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                   <SelectContent>
-                    {clientes.map((c: any) => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
+                    {clientes.map((c) => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
@@ -240,7 +281,7 @@ export default function Propostas() {
                 <Select value={form.lead_id || ""} onValueChange={(v) => setForm({ ...form, lead_id: v })}>
                   <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                   <SelectContent>
-                    {leads.map((l: any) => <SelectItem key={l.id} value={l.id}>{l.nome}</SelectItem>)}
+                    {leads.map((l) => <SelectItem key={l.id} value={l.id}>{l.nome}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
@@ -282,6 +323,89 @@ export default function Propostas() {
         description="Tem certeza que deseja excluir esta proposta?"
         onConfirm={handleDelete}
       />
+
+      {/* Dialog de Conversão Proposta → Projeto */}
+      <Dialog open={!!convertPropostaId} onOpenChange={(open) => { if (!open) setConvertPropostaId(null); }}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FolderPlus className="h-5 w-5 text-blue-600" />
+              Converter em Projeto
+            </DialogTitle>
+            <DialogDescription>
+              Um novo projeto será criado automaticamente com os dados desta proposta.
+            </DialogDescription>
+          </DialogHeader>
+
+          {convertProposta && (
+            <div className="space-y-4 mt-2">
+              <div className="bg-muted/50 rounded-lg p-4 space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Título</span>
+                  <span className="font-medium">{convertProposta.titulo}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Cliente</span>
+                  <span className="font-medium">{convertProposta.cliente_nome || convertProposta.lead_nome || "—"}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Valor</span>
+                  <span className="font-medium">{formatCurrency(convertProposta.valor_proposto)}</span>
+                </div>
+                {convertProposta.area_m2 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Área</span>
+                    <span className="font-medium">{convertProposta.area_m2} m²</span>
+                  </div>
+                )}
+                {convertProposta.prazo_estimado_dias && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Prazo</span>
+                    <span className="font-medium">{convertProposta.prazo_estimado_dias} dias</span>
+                  </div>
+                )}
+              </div>
+
+              {convertDisciplinas.length > 0 && (
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground mb-2">Disciplinas (serão copiadas para o orçamento):</p>
+                  <div className="space-y-1">
+                    {convertDisciplinas.map((d: PropostaDisciplina) => (
+                      <div key={d.id} className="flex justify-between items-center text-xs bg-blue-50 rounded px-3 py-1.5">
+                        <span className="font-medium">{d.disciplina}</span>
+                        <span className="text-muted-foreground">{d.horas_estimadas}h · R$ {Number(d.custo_hora).toFixed(0)}/h</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {convertDisciplinas.length > 0 && (
+                <CapacidadeSimulacao
+                  disciplinas={convertDisciplinas.map((d: PropostaDisciplina) => ({
+                    disciplina: d.disciplina,
+                    horas_estimadas: Number(d.horas_estimadas) || 0,
+                  }))}
+                  prazoEstimadoDias={convertProposta?.prazo_estimado_dias || undefined}
+                />
+              )}
+
+              <div className="text-xs text-muted-foreground bg-amber-50 border border-amber-200 rounded-lg p-3">
+                O projeto será criado com status "Planejamento" e orçamento por disciplina pré-preenchido. Você poderá editar tudo depois.
+              </div>
+            </div>
+          )}
+
+          <DialogFooter className="mt-4">
+            <Button variant="outline" onClick={() => setConvertPropostaId(null)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleConverterEmProjeto} disabled={converterProposta.isPending} className="bg-blue-600 hover:bg-blue-700 text-white">
+              {converterProposta.isPending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Criando...</> : "Criar Projeto"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </PageLayout>
   );
 }

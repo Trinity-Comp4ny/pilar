@@ -9,6 +9,23 @@ import {
   type AiRequest,
 } from "../_shared/ai-client.ts";
 
+interface TimesheetRow {
+  horas: number | null;
+  pessoas: { nome: string; cargo: string; custo_hora: number } | null;
+}
+
+interface ReceitaRow {
+  valor: number | null;
+  descricao: string | null;
+  data_competencia: string | null;
+}
+
+interface MarcoRow {
+  descricao: string;
+  valor: number;
+  status: string;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -61,9 +78,9 @@ serve(async (req) => {
         .order("data_competencia", { ascending: true }),
     ]);
 
-    const horasTotais = (timesheets || []).reduce((s: number, t: any) => s + (t.horas || 0), 0);
-    const custoReal = (timesheets || []).reduce((s: number, t: any) => s + (t.horas || 0) * (t.pessoas?.custo_hora || 0), 0);
-    const receitaTotal = (receitas || []).reduce((s: number, r: any) => s + (r.valor || 0), 0);
+    const horasTotais = (timesheets || []).reduce((s: number, t: TimesheetRow) => s + (t.horas || 0), 0);
+    const custoReal = (timesheets || []).reduce((s: number, t: TimesheetRow) => s + (t.horas || 0) * (t.pessoas?.custo_hora || 0), 0);
+    const receitaTotal = (receitas || []).reduce((s: number, r: ReceitaRow) => s + (r.valor || 0), 0);
 
     const contexto = `
 PROJETO: ${projeto.nome}
@@ -83,7 +100,7 @@ CONSUMO ATUAL:
 - Margem atual: ${projeto.valor_contrato ? ((1 - custoReal / projeto.valor_contrato) * 100).toFixed(1) : "N/A"}%
 
 MARCOS:
-${(marcos || []).map((m: any) => `- ${m.descricao}: R$ ${m.valor} (${m.status})`).join("\n") || "Nenhum"}
+${(marcos || []).map((m: MarcoRow) => `- ${m.descricao}: R$ ${m.valor} (${m.status})`).join("\n") || "Nenhum"}
 
 MOTIVO DO ADITIVO: ${motivo_aditivo || "Não informado"}
 DESCRIÇÃO DA MUDANÇA: ${descricao_mudanca || "Não informada"}

@@ -40,7 +40,7 @@ describe("useUserRole", () => {
     vi.mocked(supabase.auth.getUser).mockResolvedValue({
       data: { user: null },
       error: null,
-    } as any);
+    } as unknown as Awaited<ReturnType<typeof supabase.auth.getUser>>);
 
     const { result } = renderHook(() => useUserRole(), { wrapper: createWrapper() });
 
@@ -52,7 +52,7 @@ describe("useUserRole", () => {
     vi.mocked(supabase.auth.getUser).mockResolvedValue({
       data: { user: { id: "user-123" } },
       error: null,
-    } as any);
+    } as unknown as Awaited<ReturnType<typeof supabase.auth.getUser>>);
 
     const mockSingle = vi.fn().mockResolvedValue({
       data: { role: "admin" },
@@ -60,7 +60,7 @@ describe("useUserRole", () => {
     });
     const mockEq = vi.fn(() => ({ single: mockSingle }));
     const mockSelect = vi.fn(() => ({ eq: mockEq }));
-    vi.mocked(supabase.from).mockReturnValue({ select: mockSelect } as any);
+    vi.mocked(supabase.from).mockReturnValue({ select: mockSelect } as unknown as ReturnType<typeof supabase.from>);
 
     const { result } = renderHook(() => useUserRole(), { wrapper: createWrapper() });
 
@@ -75,7 +75,7 @@ describe("useUserRole", () => {
     vi.mocked(supabase.auth.getUser).mockResolvedValue({
       data: { user: { id: "user-123" } },
       error: null,
-    } as any);
+    } as unknown as Awaited<ReturnType<typeof supabase.auth.getUser>>);
 
     const mockSingle = vi.fn().mockResolvedValue({
       data: null,
@@ -83,7 +83,7 @@ describe("useUserRole", () => {
     });
     const mockEq = vi.fn(() => ({ single: mockSingle }));
     const mockSelect = vi.fn(() => ({ eq: mockEq }));
-    vi.mocked(supabase.from).mockReturnValue({ select: mockSelect } as any);
+    vi.mocked(supabase.from).mockReturnValue({ select: mockSelect } as unknown as ReturnType<typeof supabase.from>);
 
     const { result } = renderHook(() => useUserRole(), { wrapper: createWrapper() });
 

@@ -4,7 +4,6 @@ import { Calendar as CalendarIcon, CheckCircle2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { formatCurrency } from "@/lib/utils";
 import { getSafeErrorMessage } from "@/lib/safeError";
 import type { FolhaItem, HistoryItem } from "./folha-pagamento/types";
 import { MONTHS, getMonthLabel, buildYearRange } from "./folha-pagamento/types";
@@ -97,11 +96,11 @@ export default function FolhaPagamento() {
 
       if (existingData && existingData.length > 0) {
         setStatusFolha("closed");
-        const personIds = existingData.map((d: any) => d.pessoa_id);
+        const personIds = existingData.map((d) => d.pessoa_id);
         const { data: peopleData } = await supabase.from("pessoas").select("id, nome, cargo").in("id", personIds);
-        const peopleMap = new Map((peopleData || []).map((p: any) => [p.id, p]));
+        const peopleMap = new Map((peopleData || []).map((p) => [p.id, p]));
 
-        setData(existingData.map((item: any) => {
+        setData(existingData.map((item) => {
           const salario_fixo = Number(item.salario_fixo ?? 0);
           const valor_m2 = Number(item.valor_m2 ?? 0);
           const soma_area = Number(item.total_area_projetada ?? 0);
@@ -119,7 +118,7 @@ export default function FolhaPagamento() {
         const { data: previewData, error: rpcError } = await supabase.rpc("get_folha_preview", { p_mes: selectedMonth, p_ano: selectedYear });
         if (rpcError) throw rpcError;
 
-        setData((previewData || []).map((item: any) => {
+        setData((previewData || []).map((item: Record<string, unknown>) => {
           const salario_fixo = Number(item.p_salario_fixo ?? item.salario_fixo ?? 0);
           const valor_m2 = Number(item.p_valor_m2 ?? item.valor_m2 ?? 0);
           const soma_area = Number(item.soma_area ?? item.total_area ?? 0);
@@ -230,7 +229,7 @@ export default function FolhaPagamento() {
         const dateStr = today.toISOString().slice(0, 10);
 
         const { data: categorias } = await supabase.from("categorias_financeiras").select("id, nome").eq("tipo", "Despesa");
-        let categoriaFolhaPagamento = categorias?.find((c: any) => c.nome === "Folha de Pagamento");
+        let categoriaFolhaPagamento = categorias?.find((c) => c.nome === "Folha de Pagamento");
 
         if (!categoriaFolhaPagamento) {
           const empresaId = (await supabase.rpc("get_user_empresa_id", {})).data;
@@ -270,11 +269,11 @@ export default function FolhaPagamento() {
       if (!existingData || existingData.length === 0) {
         setHistoryDetailItems([]);
       } else {
-        const personIds = existingData.map((d: any) => d.pessoa_id);
+        const personIds = existingData.map((d) => d.pessoa_id);
         const { data: peopleData } = await supabase.from("pessoas").select("id, nome, cargo").in("id", personIds);
-        const peopleMap = new Map((peopleData || []).map((p: any) => [p.id, p]));
+        const peopleMap = new Map((peopleData || []).map((p) => [p.id, p]));
 
-        setHistoryDetailItems(existingData.map((item: any) => {
+        setHistoryDetailItems(existingData.map((item) => {
           const salario_fixo = Number(item.salario_fixo ?? 0);
           const valor_m2 = Number(item.valor_m2 ?? 0);
           const soma_area = Number(item.total_area_projetada ?? 0);

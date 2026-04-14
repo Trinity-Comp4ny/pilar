@@ -4,8 +4,30 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createElement } from "react";
 
 vi.mock("@/integrations/supabase/client", () => {
-  const makeChainable = (resolvedData: any = { data: [], error: null, count: 0 }) => {
-    const chain: any = {
+  interface MockResolvedData {
+    data: unknown[];
+    error: null | { message: string };
+    count?: number;
+  }
+
+  interface MockChain {
+    select: ReturnType<typeof vi.fn>;
+    eq: ReturnType<typeof vi.fn>;
+    gte: ReturnType<typeof vi.fn>;
+    lte: ReturnType<typeof vi.fn>;
+    in: ReturnType<typeof vi.fn>;
+    is: ReturnType<typeof vi.fn>;
+    order: ReturnType<typeof vi.fn>;
+    limit: ReturnType<typeof vi.fn>;
+    single: ReturnType<typeof vi.fn>;
+    then: (resolve: (value: MockResolvedData) => void) => void;
+    readonly data: unknown[];
+    readonly error: null | { message: string };
+    readonly count: number;
+  }
+
+  const makeChainable = (resolvedData: MockResolvedData = { data: [], error: null, count: 0 }) => {
+    const chain: MockChain = {
       select: vi.fn(() => chain),
       eq: vi.fn(() => chain),
       gte: vi.fn(() => chain),
@@ -15,8 +37,8 @@ vi.mock("@/integrations/supabase/client", () => {
       order: vi.fn(() => chain),
       limit: vi.fn(() => chain),
       single: vi.fn(() => Promise.resolve(resolvedData)),
-      then: (resolve: any) => resolve(resolvedData),
-    };
+      then: (resolve: (value: MockResolvedData) => void) => resolve(resolvedData),
+    } as MockChain;
     Object.defineProperty(chain, "data", { get: () => resolvedData.data });
     Object.defineProperty(chain, "error", { get: () => resolvedData.error });
     Object.defineProperty(chain, "count", { get: () => resolvedData.count ?? 0 });

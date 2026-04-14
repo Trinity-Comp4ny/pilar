@@ -27,10 +27,6 @@ export default function MetasSummary() {
     }
   });
 
-  const getProgressColor = (percent: number) => {
-    return "bg-green-500";
-  };
-
   if (isLoading) {
     return (
       <Card className="vrz-card w-full h-full">
@@ -63,7 +59,7 @@ export default function MetasSummary() {
         <Button 
           variant="outline" 
           size="sm"
-          onClick={() => navigate('/financeiro?tab=metas')}
+          onClick={() => navigate('/metas')}
           className="text-xs rounded-full"
         >
           Ver Todas

@@ -41,15 +41,23 @@ serve(async (req) => {
       .eq("empresa_id", empresaId)
       .is("deleted_at", null);
 
-    const clienteData = (clientes || []).map((c: any) => {
-      const recs = (receitas || []).filter((r: any) => r.cliente_id === c.id);
-      const projs = (projetos || []).filter((p: any) => p.cliente_id === c.id);
-      const atrasadas = recs.filter((r: any) => r.status === "Pendente" && new Date(r.data_vencimento) < new Date());
-      const totalFaturado = recs.reduce((s: number, r: any) => s + Number(r.valor), 0);
-      const totalRecebido = recs.filter((r: any) => r.status === "Recebido").reduce((s: number, r: any) => s + Number(r.valor), 0);
-      const projetosAtrasados = projs.filter((p: any) => p.data_previsao && !p.data_final && new Date(p.data_previsao) < new Date());
+    interface ClienteRow { id: string; nome: string }
+    interface ReceitaRow { cliente_id: string; valor: number; status: string; data_vencimento: string; data_recebimento: string | null }
+    interface ProjetoRow { id: string; cliente_id: string; nome: string; status: string; data_previsao: string | null; data_final: string | null }
 
-      return `- ${c.nome}: ${projs.length} projetos, faturado=R$${totalFaturado.toFixed(0)}, recebido=R$${totalRecebido.toFixed(0)}, ${atrasadas.length} receitas atrasadas (R$${atrasadas.reduce((s: number, r: any) => s + Number(r.valor), 0).toFixed(0)}), ${projetosAtrasados.length} projetos atrasados`;
+    const clientesList = (clientes || []) as ClienteRow[];
+    const receitasList = (receitas || []) as ReceitaRow[];
+    const projetosList = (projetos || []) as ProjetoRow[];
+
+    const clienteData = clientesList.map((c) => {
+      const recs = receitasList.filter((r) => r.cliente_id === c.id);
+      const projs = projetosList.filter((p) => p.cliente_id === c.id);
+      const atrasadas = recs.filter((r) => r.status === "Pendente" && new Date(r.data_vencimento) < new Date());
+      const totalFaturado = recs.reduce((s: number, r) => s + Number(r.valor), 0);
+      const totalRecebido = recs.filter((r) => r.status === "Recebido").reduce((s: number, r) => s + Number(r.valor), 0);
+      const projetosAtrasados = projs.filter((p) => p.data_previsao && !p.data_final && new Date(p.data_previsao) < new Date());
+
+      return `- ${c.nome}: ${projs.length} projetos, faturado=R$${totalFaturado.toFixed(0)}, recebido=R$${totalRecebido.toFixed(0)}, ${atrasadas.length} receitas atrasadas (R$${atrasadas.reduce((s: number, r) => s + Number(r.valor), 0).toFixed(0)}), ${projetosAtrasados.length} projetos atrasados`;
     }).join("\n");
 
     const aiRequest: AiRequest = {

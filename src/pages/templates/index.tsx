@@ -39,7 +39,7 @@ export default function Templates() {
         toast({ title: "Template criado com sucesso" });
         setIsFormOpen(false);
       },
-      onError: (error: any) => {
+      onError: (error: Error) => {
         toast({ variant: "destructive", title: "Erro", description: error.message });
       },
     });
@@ -55,7 +55,7 @@ export default function Templates() {
           setEditingTemplate(undefined);
           setIsFormOpen(false);
         },
-        onError: (error: any) => {
+        onError: (error: Error) => {
           toast({ variant: "destructive", title: "Erro", description: error.message });
         },
       }
@@ -69,7 +69,7 @@ export default function Templates() {
         toast({ title: "Template removido" });
         setConfirmDeleteId(null);
       },
-      onError: (error: any) => {
+      onError: (error: Error) => {
         toast({ variant: "destructive", title: "Erro", description: error.message });
       },
     });

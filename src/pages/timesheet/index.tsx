@@ -48,7 +48,7 @@ export default function Timesheet() {
   const [activeTab, setActiveTab] = useState("meu-timesheet");
 
   // Pessoa selecionada: ou a que o admin escolheu, ou a do próprio usuário
-  const pessoaId = activeTab === "aprovacao"
+  const _pessoaId = activeTab === "aprovacao"
     ? undefined
     : (isAdmin && selectedPessoaId) || pessoaAtual?.id;
 

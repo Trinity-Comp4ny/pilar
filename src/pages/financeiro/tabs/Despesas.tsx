@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CalendarIcon, Plus, Settings, Pencil, Trash2, Loader2 } from "lucide-react";
-import { format, addMonths, setDate } from "date-fns";
+import { format, addMonths } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -89,7 +89,7 @@ export default function Despesas() {
         { data: contasData },
         { data: cartoesData },
         { data: projetosData },
-        { data: despesasData, error: despesasError }
+        { data: despesasData, error: _despesasError }
       ] = await Promise.all([
         supabase.from('categorias_financeiras').select('id, nome').eq('tipo', 'Despesa').order('nome'),
         supabase.from('fornecedores').select('id, nome').order('nome'),
@@ -104,16 +104,16 @@ export default function Despesas() {
           .order('data_vencimento', { ascending: false }) // Fallback para data_vencimento (planejado)
       ]);
 
-      if (categoriasData) setCategorias(categoriasData.map((c: any) => ({ id: c.id, name: c.nome })));
-      if (fornecedoresData) setFornecedores(fornecedoresData.map((s: any) => ({ id: s.id, name: s.nome })));
+      if (categoriasData) setCategorias(categoriasData.map((c) => ({ id: c.id, name: c.nome })));
+      if (fornecedoresData) setFornecedores(fornecedoresData.map((s) => ({ id: s.id, name: s.nome })));
       if (contasData) setContas(contasData);
       if (cartoesData) setCartoes(cartoesData);
-      if (projetosData) setProjetos(projetosData.map((p: any) => ({ id: p.id, projetoID: p.codigo_projeto })));
+      if (projetosData) setProjetos(projetosData.map((p) => ({ id: p.id, projetoID: p.codigo_projeto })));
       if (despesasData) {
         setDespesasRaw(despesasData);
       }
 
-    } catch (error) {
+    } catch {
       toast({
         title: "Erro ao carregar dados",
         description: "Não foi possível carregar as informações financeiras.",
@@ -127,7 +127,7 @@ export default function Despesas() {
   }, []);
 
   const despesas = useMemo(() => {
-    return despesasRaw.map((d: any) => {
+    return despesasRaw.map((d) => {
       // Derive payment method
       let forma = "-";
       if (d.cartao_id) forma = "Cartão de Crédito";
@@ -137,14 +137,14 @@ export default function Despesas() {
         ...d,
         categoria_nome: categorias.find(c => c.id === d.categoria_id)?.name || d.categoria_id,
         data_pagamento: d.data_pagamento || d.data_vencimento,
-        projeto_codigo: d.projetos?.codigo_projeto,
-        fornecedor_nome: d.fornecedores?.nome,
+        projeto_codigo: (d as Despesa & { projetos?: { codigo_projeto?: string } }).projetos?.codigo_projeto,
+        fornecedor_nome: (d as Despesa & { fornecedores?: { nome?: string } }).fornecedores?.nome,
         forma_pagamento: forma
       };
     });
   }, [despesasRaw, categorias]);
 
-  const despesasFiltradas = despesas.filter((d: any) => {
+  const despesasFiltradas = despesas.filter((d) => {
     const matchSearch = !searchTerm || d.descricao.toLowerCase().includes(searchTerm.toLowerCase()) || (d.fornecedor_nome || "").toLowerCase().includes(searchTerm.toLowerCase());
     const matchStatus = statusFilter === "todos" || (statusFilter === "pago" && d.status === "Pago") || (statusFilter === "pendente" && d.status === "Pendente") || (statusFilter === "atrasado" && d.status === "Atrasado");
     return matchSearch && matchStatus;
@@ -181,7 +181,8 @@ export default function Despesas() {
       fornecedorId: despesa.fornecedor_id || "",
       parcelas: "1",
       formaPagamento: "",
-      recorrencia: "Nenhuma",
+      recorrente: (despesa as Despesa & { recorrente?: boolean }).recorrente || false,
+      periodicidade: (despesa as Despesa & { periodicidade?: string }).periodicidade || "mensal",
     });
 
     setIsDetailOpen(false);
@@ -199,6 +200,9 @@ export default function Despesas() {
       const { data: { user } } = await supabase.auth.getUser();
 
       if (!user) throw new Error("Usuário não autenticado");
+
+      const { data: empresaId } = await supabase.rpc('get_user_empresa_id');
+      if (!empresaId) throw new Error("Usuário não vinculado a uma empresa");
 
       const despesasToInsert = [];
 
@@ -233,6 +237,9 @@ export default function Despesas() {
           conta_id: formData.contaId || null,
           cartao_id: formData.cartaoId || null,
           observacao: formData.observacao || null,
+          recorrente: formData.recorrente || false,
+          periodicidade: formData.recorrente ? (formData.periodicidade || 'mensal') : null,
+          empresa_id: empresaId
         });
       }
 
@@ -248,6 +255,23 @@ export default function Despesas() {
       }
 
       if (error) throw error;
+
+      // Associar despesas de cartão às faturas correspondentes
+      if (formData.cartaoId) {
+        const mesesGerados = new Set<string>();
+        for (const d of despesasToInsert) {
+          const dt = new Date(d.data_vencimento + 'T00:00:00');
+          const key = `${dt.getMonth() + 1}-${dt.getFullYear()}`;
+          if (!mesesGerados.has(key)) {
+            mesesGerados.add(key);
+            await supabase.rpc('gerar_fatura', {
+              p_cartao_id: formData.cartaoId,
+              p_mes: dt.getMonth() + 1,
+              p_ano: dt.getFullYear(),
+            }).catch(() => {}); // Ignora se falhar (RPC cria fatura e associa despesas)
+          }
+        }
+      }
 
       toast({
         title: selectedDespesa ? "Despesa atualizada" : "Despesa cadastrada",
@@ -421,16 +445,8 @@ export default function Despesas() {
                         </Popover>
                       </div>
                       <div className="space-y-1.5">
-                        <Label className="text-xs">Recorrência</Label>
-                        <Select value={form.watch("recorrencia")} onValueChange={(v) => form.setValue("recorrencia", v)}>
-                          <SelectTrigger className="h-9"><SelectValue placeholder="Selecione" /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Nenhuma">Nenhuma</SelectItem>
-                            <SelectItem value="Semanal">Semanal</SelectItem>
-                            <SelectItem value="Mensal">Mensal</SelectItem>
-                            <SelectItem value="Anual">Anual</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        <Label className="text-xs">Parcelas</Label>
+                        <Input type="number" min={1} max={60} className="h-9" {...form.register("parcelas")} />
                       </div>
                     </div>
                   </div>
@@ -523,6 +539,32 @@ export default function Despesas() {
                     <Input id="observacao" {...form.register("observacao")} placeholder="Observações adicionais" />
                   </div>
 
+                  {/* Recorrência */}
+                  <div className="px-6 py-4 space-y-3">
+                    <Label className="text-[10px] uppercase text-muted-foreground tracking-wider">Recorrência</Label>
+                    <div className="flex items-center gap-4">
+                      <label className="flex items-center gap-2 text-sm cursor-pointer">
+                        <input
+                          type="checkbox"
+                          className="h-4 w-4 rounded border-gray-300"
+                          {...form.register("recorrente")}
+                        />
+                        Despesa recorrente
+                      </label>
+                      {form.watch("recorrente") && (
+                        <select
+                          className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                          {...form.register("periodicidade")}
+                        >
+                          <option value="mensal">Mensal</option>
+                          <option value="trimestral">Trimestral</option>
+                          <option value="semestral">Semestral</option>
+                          <option value="anual">Anual</option>
+                        </select>
+                      )}
+                    </div>
+                  </div>
+
                   {/* Footer */}
                   <div className="flex gap-2 px-6 py-4 bg-gray-50/30">
                     <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)} className="flex-1" disabled={isSaving}>
@@ -581,7 +623,7 @@ export default function Despesas() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {despesasFiltradas.map((despesa: any) => (
+                {despesasFiltradas.map((despesa) => (
                   <TableRow key={despesa.id} className="cursor-pointer hover:bg-gray-50" onClick={() => {
                     setSelectedDespesa(despesa);
                     setIsDetailOpen(true);

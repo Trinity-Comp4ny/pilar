@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Plus, Trash2, Loader2, FileText, AlertTriangle, CheckCircle2, XCircle, Clock, ChevronDown } from "lucide-react";
+import { Plus, Trash2, Loader2, FileText, CheckCircle2, XCircle, Clock, ChevronDown } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -83,7 +83,7 @@ export function EscopoTab({ projetoId, canEdit }: EscopoTabProps) {
         .in("escopo_id", escopoIds);
       if (error) throw error;
       const map: Record<string, EscopoItem[]> = {};
-      (data || []).forEach((item: any) => {
+      (data || []).forEach((item) => {
         if (!map[item.escopo_id]) map[item.escopo_id] = [];
         map[item.escopo_id].push(item);
       });
@@ -138,13 +138,13 @@ export function EscopoTab({ projetoId, canEdit }: EscopoTabProps) {
       toast({ title: formTipo === "original" ? "Escopo original definido" : "Aditivo criado" });
       resetForm();
     },
-    onError: (err: any) => toast({ variant: "destructive", title: "Erro", description: err.message }),
+    onError: (err: Error) => toast({ variant: "destructive", title: "Erro", description: err.message }),
   });
 
   const updateStatusMutation = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
       const { data: { user } } = await supabase.auth.getUser();
-      const updateData: any = { status };
+      const updateData: Record<string, string> = { status };
       if (status === "aprovado" || status === "rejeitado") {
         updateData.aprovado_por = user?.id;
         updateData.aprovado_em = new Date().toISOString();
@@ -159,9 +159,17 @@ export function EscopoTab({ projetoId, canEdit }: EscopoTabProps) {
         usuario_nome: user?.email,
       });
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["escopos", projetoId] });
-      toast({ title: "Status atualizado" });
+      // Quando aditivo é aprovado, o trigger atualiza orçamento e valor_contrato
+      if (variables.status === "aprovado") {
+        queryClient.invalidateQueries({ queryKey: ["projeto-orcamento"] });
+        queryClient.invalidateQueries({ queryKey: ["projetos"] });
+        queryClient.invalidateQueries({ queryKey: ["projeto-rentabilidade"] });
+        toast({ title: "Aditivo aprovado!", description: "Orçamento do projeto atualizado automaticamente." });
+      } else {
+        toast({ title: "Status atualizado" });
+      }
     },
   });
 
@@ -177,9 +185,9 @@ export function EscopoTab({ projetoId, canEdit }: EscopoTabProps) {
     setFormItens([...formItens, { descricao: "", disciplina: "", horas: 0, custo: 0 }]);
   };
 
-  const updateItem = (index: number, field: string, value: any) => {
+  const updateItem = (index: number, field: keyof typeof formItens[number], value: string | number) => {
     const updated = [...formItens];
-    (updated[index] as any)[field] = value;
+    (updated[index] as Record<string, string | number>)[field] = value;
     setFormItens(updated);
   };
 

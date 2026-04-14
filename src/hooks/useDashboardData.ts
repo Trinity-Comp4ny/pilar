@@ -4,6 +4,74 @@ import { startOfMonth, endOfMonth, subMonths, differenceInDays, addDays } from "
 import { getDisplayDate } from "@/lib/dateUtils";
 import { PROJECT_STATUS, LEAD_STATUS } from "@/constants";
 
+interface ProjetoWithCliente {
+  id: string;
+  codigo_projeto: string | null;
+  nome: string;
+  status: string;
+  prioridade: string;
+  status_data: string | null;
+  valor_contrato: number | null;
+  data_inicio: string | null;
+  data_previsao: string | null;
+  data_final: string | null;
+  cliente_id: string | null;
+  clientes: { nome: string } | null;
+}
+
+interface LeadRow {
+  id: string;
+  status: string;
+  nome: string;
+}
+
+interface AlertaRow {
+  id: string;
+  tipo: string;
+  severidade: string;
+  titulo: string;
+  mensagem: string;
+  created_at: string;
+}
+
+interface ReceitaChartRow {
+  valor: number;
+  data_recebimento: string | null;
+  data_vencimento: string;
+  status: string;
+}
+
+interface DespesaChartRow {
+  valor: number;
+  data_pagamento: string | null;
+  data_vencimento: string;
+  status: string;
+}
+
+interface ProximaReceitaRow {
+  id: string;
+  descricao: string;
+  valor: number;
+  data_vencimento: string;
+  status: string;
+  projeto_id: string | null;
+  projetos: { codigo_projeto: string | null } | null;
+  cliente_id: string | null;
+  clientes: { nome: string } | null;
+}
+
+interface ProximaDespesaRow {
+  id: string;
+  descricao: string;
+  valor: number;
+  data_vencimento: string;
+  status: string;
+  projeto_id: string | null;
+  projetos: { codigo_projeto: string | null } | null;
+  fornecedor_id: string | null;
+  fornecedores: { nome: string } | null;
+}
+
 export interface DashboardKPI {
   receitaMes: number;
   despesaMes: number;
@@ -219,7 +287,7 @@ export const useDashboardData = () => {
         projetosAtivos: (projetosRes.data || []).filter(p => p.status === PROJECT_STATUS.EM_ANDAMENTO).length,
       };
 
-      const projetos: DashboardProjeto[] = (projetosRes.data || []).map((p: any) => {
+      const projetos: DashboardProjeto[] = ((projetosRes.data || []) as ProjetoWithCliente[]).map((p) => {
         let progressoPrazo = 0;
         if (p.data_inicio && p.data_previsao) {
           const totalDias = differenceInDays(new Date(p.data_previsao), new Date(p.data_inicio));
@@ -245,18 +313,18 @@ export const useDashboardData = () => {
       const priorityWeight: Record<string, number> = { Alta: 0, Media: 1, Baixa: 2 };
       projetos.sort((a, b) => (priorityWeight[a.prioridade] ?? 1) - (priorityWeight[b.prioridade] ?? 1));
 
-      const leads = leadsRes.data || [];
+      const leads = (leadsRes.data || []) as LeadRow[];
       const pipelineOrder = [LEAD_STATUS.NOVO, LEAD_STATUS.EM_CONTATO, LEAD_STATUS.PROPOSTA, LEAD_STATUS.NEGOCIACAO, LEAD_STATUS.GANHO, LEAD_STATUS.PERDIDO];
       const leadsPipeline: LeadsPipeline[] = pipelineOrder
         .map((status) => ({
           status,
-          count: leads.filter((l: any) => l.status === status).length,
+          count: leads.filter((l) => l.status === status).length,
           valor: 0,
         }))
         .filter((p) => p.count > 0);
 
       const proximosVencimentos: DashboardVencimento[] = [
-        ...(proximasReceitasRes.data || []).map((r: any) => ({
+        ...((proximasReceitasRes.data || []) as ProximaReceitaRow[]).map((r) => ({
           id: r.id,
           tipo: "receita" as const,
           descricao: r.descricao || "Receita",
@@ -267,7 +335,7 @@ export const useDashboardData = () => {
           projeto: r.projetos?.codigo_projeto || null,
           entidade: r.clientes?.nome || null,
         })),
-        ...(proximasDespesasRes.data || []).map((d: any) => ({
+        ...((proximasDespesasRes.data || []) as ProximaDespesaRow[]).map((d) => ({
           id: d.id,
           tipo: "despesa" as const,
           descricao: d.descricao || "Despesa",
@@ -280,7 +348,7 @@ export const useDashboardData = () => {
         })),
       ].sort((a, b) => a.diasRestantes - b.diasRestantes).slice(0, 8);
 
-      const alertas: DashboardAlerta[] = (alertasRes.data || []).map((a: any) => ({
+      const alertas: DashboardAlerta[] = ((alertasRes.data || []) as AlertaRow[]).map((a) => ({
         id: a.id,
         tipo: a.tipo,
         severidade: a.severidade,
@@ -310,12 +378,13 @@ export const useDashboardData = () => {
   });
 };
 
-function processChartData(receitas: any[], despesas: any[]): ChartDataPoint[] {
+function processChartData(receitas: ReceitaChartRow[], despesas: DespesaChartRow[]): ChartDataPoint[] {
   const monthsMap = new Map<string, ChartDataPoint>();
 
-  const addToMonth = (item: any, type: "receitas" | "despesas") => {
+  const addToMonth = (item: ReceitaChartRow | DespesaChartRow, type: "receitas" | "despesas") => {
+    const dateReceived = type === "receitas" ? (item as ReceitaChartRow).data_recebimento : (item as DespesaChartRow).data_pagamento;
     const displayDate = getDisplayDate(
-      type === "receitas" ? item.data_recebimento : item.data_pagamento,
+      dateReceived,
       item.data_vencimento,
       item.status
     );

@@ -77,7 +77,7 @@ export const useProjetosAtribuidos = (pessoaId: string | undefined) => {
 
       // Filtra projetos onde a pessoa é responsável por alguma disciplina
       const projetosAtribuidos = (projetos || [])
-        .map((p: any) => {
+        .map((p) => {
           const disciplinas = (p.disciplinas || []) as Array<{
             disciplina: string;
             responsavel_id: string;
@@ -212,22 +212,22 @@ export const useTimesheetsPendentes = () => {
       if (!data || data.length === 0) return [];
 
       // Busca nomes das pessoas e projetos
-      const pessoaIds = [...new Set(data.map((t: any) => t.pessoa_id))];
-      const projetoIds = [...new Set(data.map((t: any) => t.projeto_id))];
+      const pessoaIds = [...new Set(data.map((t) => t.pessoa_id))];
+      const projetoIds = [...new Set(data.map((t) => t.projeto_id))];
 
       const [pessoasRes, projetosRes] = await Promise.all([
         supabase.from("pessoas").select("id, nome").in("id", pessoaIds),
         supabase.from("projetos").select("id, nome, codigo_projeto").in("id", projetoIds),
       ]);
 
-      const pessoasMap = new Map(
-        (pessoasRes.data || []).map((p: any) => [p.id, p.nome])
+      const pessoasMap = new Map<string, string>(
+        (pessoasRes.data || []).map((p) => [p.id, p.nome])
       );
-      const projetosMap = new Map(
-        (projetosRes.data || []).map((p: any) => [p.id, { nome: p.nome, codigo: p.codigo_projeto }])
+      const projetosMap = new Map<string, { nome: string; codigo: string | null }>(
+        (projetosRes.data || []).map((p) => [p.id, { nome: p.nome, codigo: p.codigo_projeto }])
       );
 
-      return data.map((t: any) => ({
+      return data.map((t) => ({
         ...t,
         pessoa_nome: pessoasMap.get(t.pessoa_id) || "—",
         projeto_nome: projetosMap.get(t.projeto_id)?.nome || "—",
@@ -266,6 +266,55 @@ export const useAprovarTimesheet = () => {
       queryClient.invalidateQueries({ queryKey: ["timesheets"] });
       queryClient.invalidateQueries({ queryKey: ["timesheets-pendentes"] });
     },
+  });
+};
+
+/**
+ * Busca horas orçadas e consumidas por projeto/disciplina (para feedback visual no timesheet)
+ */
+export const useHorasOrcadasPorProjeto = (projetoIds: string[]) => {
+  return useQuery({
+    queryKey: ["horas-orcadas", projetoIds],
+    queryFn: async () => {
+      if (projetoIds.length === 0) return new Map<string, { orcadas: number; consumidas: number }>();
+
+      // Buscar horas orçadas de projeto_orcamento_fases
+      const { data: orcamento, error: orcError } = await supabase
+        .from("projeto_orcamento_fases")
+        .select("projeto_id, disciplina, horas_estimadas")
+        .in("projeto_id", projetoIds)
+        .is("deleted_at", null);
+
+      if (orcError) throw orcError;
+
+      // Buscar total de horas consumidas (aprovadas + pendentes) por projeto/disciplina
+      const { data: consumidas, error: consError } = await supabase
+        .from("timesheets")
+        .select("projeto_id, disciplina, horas")
+        .in("projeto_id", projetoIds)
+        .in("status", ["pendente", "aprovado"])
+        .is("deleted_at", null);
+
+      if (consError) throw consError;
+
+      const map = new Map<string, { orcadas: number; consumidas: number }>();
+
+      for (const row of orcamento || []) {
+        const key = `${row.projeto_id}::${row.disciplina}`;
+        map.set(key, { orcadas: Number(row.horas_estimadas) || 0, consumidas: 0 });
+      }
+
+      for (const row of consumidas || []) {
+        const key = `${row.projeto_id}::${row.disciplina}`;
+        const existing = map.get(key) || { orcadas: 0, consumidas: 0 };
+        existing.consumidas += Number(row.horas) || 0;
+        map.set(key, existing);
+      }
+
+      return map;
+    },
+    enabled: projetoIds.length > 0,
+    staleTime: 1000 * 60 * 3,
   });
 };
 

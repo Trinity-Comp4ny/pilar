@@ -5,7 +5,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Trash2, Loader2, CheckCircle2, Clock, XCircle, Banknote } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -77,12 +76,12 @@ export function BillingMilestonesTab({ projetoId, canEdit }: BillingMilestonesTa
       setIsFormOpen(false);
       setFormNome(""); setFormValor(""); setFormData(""); setFormPercentual("");
     },
-    onError: (err: any) => toast({ variant: "destructive", title: "Erro", description: err.message }),
+    onError: (err: Error) => toast({ variant: "destructive", title: "Erro", description: err.message }),
   });
 
   const updateStatusMutation = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
-      const updateData: any = { status };
+      const updateData: Record<string, string> = { status };
       if (status === "faturado") updateData.data_faturada = new Date().toISOString().split("T")[0];
       const { error } = await supabase.from("marcos_faturamento").update(updateData).eq("id", id);
       if (error) throw error;
@@ -91,6 +90,20 @@ export function BillingMilestonesTab({ projetoId, canEdit }: BillingMilestonesTa
       queryClient.invalidateQueries({ queryKey: ["marcos-faturamento", projetoId] });
       toast({ title: "Status atualizado" });
     },
+  });
+
+  const faturarMarcoMutation = useMutation({
+    mutationFn: async (marcoId: string) => {
+      const { data, error } = await supabase.rpc("rpc_faturar_marco", { p_marco_id: marcoId });
+      if (error) throw error;
+      return data as string;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["marcos-faturamento", projetoId] });
+      queryClient.invalidateQueries({ queryKey: ["receitas"] });
+      toast({ title: "Marco faturado!", description: "Receita criada automaticamente." });
+    },
+    onError: (err: Error) => toast({ variant: "destructive", title: "Erro ao faturar", description: err.message }),
   });
 
   const deleteMutation = useMutation({
@@ -117,7 +130,7 @@ export function BillingMilestonesTab({ projetoId, canEdit }: BillingMilestonesTa
     onSuccess: (count) => {
       toast({ title: `${count} parcela(s) gerada(s) como receitas` });
     },
-    onError: (err: any) => toast({ variant: "destructive", title: "Erro", description: err.message }),
+    onError: (err: Error) => toast({ variant: "destructive", title: "Erro", description: err.message }),
   });
 
   const formatCurrency = (v: number) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
@@ -183,8 +196,15 @@ export function BillingMilestonesTab({ projetoId, canEdit }: BillingMilestonesTa
                   {canEdit && (
                     <div className="flex items-center gap-1 ml-2">
                       {marco.status === "pendente" && (
-                        <Button variant="ghost" size="icon" className="h-7 w-7 text-blue-600" onClick={() => updateStatusMutation.mutate({ id: marco.id, status: "faturado" })}>
-                          <CheckCircle2 className="h-3.5 w-3.5" />
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-blue-600"
+                          title="Faturar (cria receita)"
+                          disabled={faturarMarcoMutation.isPending}
+                          onClick={() => faturarMarcoMutation.mutate(marco.id)}
+                        >
+                          <Banknote className="h-3.5 w-3.5" />
                         </Button>
                       )}
                       {marco.status === "faturado" && (

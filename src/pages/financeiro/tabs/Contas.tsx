@@ -12,17 +12,40 @@ import { useToast } from "@/hooks/use-toast";
 import { getSafeErrorMessage } from "@/lib/safeError";
 import { formatCurrencyInput, parseCurrencyString } from "@/lib/maskUtils";
 
+interface ContaItem {
+  id: string;
+  nome: string;
+  banco: string;
+  cor: string | null;
+  empresa_id: string;
+  saldo_inicial: number;
+  saldo_atual: number;
+  total_entradas: number;
+  total_saidas: number;
+}
+
+interface CartaoItem {
+  id: string;
+  nome: string;
+  dia_fechamento: number;
+  dia_vencimento: number;
+  limite: number;
+  usado: number;
+  disponivel: number;
+  conta_pagamento_id: string | null;
+}
+
 export default function Configuracoes() {
-  const [cartoes, setCartoes] = useState<any[]>([]);
-  const [contas, setContas] = useState<any[]>([]);
+  const [cartoes, setCartoes] = useState<CartaoItem[]>([]);
+  const [contas, setContas] = useState<ContaItem[]>([]);
 
   const [isCartaoDetailOpen, setIsCartaoDetailOpen] = useState(false);
   const [isContaDetailOpen, setIsContaDetailOpen] = useState(false);
   const [isNewCartaoOpen, setIsNewCartaoOpen] = useState(false);
   const [isNewContaOpen, setIsNewContaOpen] = useState(false);
 
-  const [selectedCartao, setSelectedCartao] = useState<any>(null);
-  const [selectedConta, setSelectedConta] = useState<any>(null);
+  const [selectedCartao, setSelectedCartao] = useState<CartaoItem | null>(null);
+  const [selectedConta, setSelectedConta] = useState<ContaItem | null>(null);
 
   // Form States
   const [nome, setNome] = useState("");
@@ -31,6 +54,7 @@ export default function Configuracoes() {
   const [diaFechamento, setDiaFechamento] = useState("");
   const [diaVencimento, setDiaVencimento] = useState("");
   const [limite, setLimite] = useState("");
+  const [contaPagamentoId, setContaPagamentoId] = useState("");
 
   const { toast } = useToast();
 
@@ -40,12 +64,22 @@ export default function Configuracoes() {
   }, []);
 
   const fetchContas = async () => {
-    const { data } = await supabase.from('contas').select('*');
-    if (data) setContas(data);
+    const { data } = await supabase.from('view_financas_resumo').select('*');
+    if (data) setContas(data.map(c => ({
+      id: c.conta_id,
+      nome: c.conta_nome,
+      banco: c.banco,
+      cor: c.cor,
+      empresa_id: c.empresa_id,
+      saldo_inicial: c.saldo_inicial,
+      saldo_atual: c.saldo_atual,
+      total_entradas: c.total_entradas,
+      total_saidas: c.total_saidas,
+    })));
   };
 
   const fetchCartoes = async () => {
-    const { data } = await supabase.from('cartoes_credito').select('*');
+    const { data } = await supabase.from('view_cartao_resumo').select('*');
     if (data) setCartoes(data);
   };
 
@@ -75,7 +109,6 @@ export default function Configuracoes() {
       }
 
       const payload = {
-        user_id: user.id,
         empresa_id: empresaId,
         nome,
         banco,
@@ -156,13 +189,13 @@ export default function Configuracoes() {
       }
 
       const payload = {
-        user_id: user.id,
         empresa_id: empresaId,
         nome,
         dia_fechamento: parseInt(diaFechamento),
         dia_vencimento: parseInt(diaVencimento),
         limite: parseCurrencyString(limite),
-        usado: 0
+        usado: 0,
+        conta_pagamento_id: contaPagamentoId || null,
       };
 
       if (selectedCartao) {
@@ -170,7 +203,8 @@ export default function Configuracoes() {
           nome,
           dia_fechamento: parseInt(diaFechamento),
           dia_vencimento: parseInt(diaVencimento),
-          limite: parseCurrencyString(limite)
+          limite: parseCurrencyString(limite),
+          conta_pagamento_id: contaPagamentoId || null,
         }).eq('id', selectedCartao.id);
 
         if (error) {
@@ -237,11 +271,12 @@ export default function Configuracoes() {
     setDiaFechamento("");
     setDiaVencimento("");
     setLimite("");
+    setContaPagamentoId("");
     setSelectedConta(null);
     setSelectedCartao(null);
   };
 
-  const openEditConta = (conta: any) => {
+  const openEditConta = (conta: ContaItem) => {
     setSelectedConta(conta);
     setNome(conta.nome);
     setBanco(conta.banco);
@@ -249,12 +284,13 @@ export default function Configuracoes() {
     setIsNewContaOpen(true);
   };
 
-  const openEditCartao = (cartao: any) => {
+  const openEditCartao = (cartao: CartaoItem) => {
     setSelectedCartao(cartao);
     setNome(cartao.nome);
     setDiaFechamento(cartao.dia_fechamento.toString());
     setDiaVencimento(cartao.dia_vencimento.toString());
     setLimite(formatCurrencyInput((cartao.limite * 100).toString()));
+    setContaPagamentoId(cartao.conta_pagamento_id || "");
     setIsNewCartaoOpen(true);
   };
 
@@ -275,6 +311,18 @@ export default function Configuracoes() {
               <p className="text-xs text-blue-700 font-medium mb-1">Total em Contas</p>
               <p className="text-2xl font-bold text-blue-900">
                 R$ {contas.reduce((acc, c) => acc + (c.saldo_atual || 0), 0).toLocaleString('pt-BR')}
+              </p>
+            </div>
+            <div className="p-4 bg-green-50 rounded-lg border border-green-100">
+              <p className="text-xs text-green-700 font-medium mb-1">Total Entradas</p>
+              <p className="text-2xl font-bold text-green-900">
+                R$ {contas.reduce((acc, c) => acc + (c.total_entradas || 0), 0).toLocaleString('pt-BR')}
+              </p>
+            </div>
+            <div className="p-4 bg-red-50 rounded-lg border border-red-100">
+              <p className="text-xs text-red-700 font-medium mb-1">Total Saídas</p>
+              <p className="text-2xl font-bold text-red-900">
+                R$ {contas.reduce((acc, c) => acc + (c.total_saidas || 0), 0).toLocaleString('pt-BR')}
               </p>
             </div>
             <div className="p-4 bg-accent-orange/10 rounded-lg border border-accent-orange/20">
@@ -459,6 +507,23 @@ export default function Configuracoes() {
                       <Label>Limite (R$)</Label>
                       <Input type="text" value={limite} onChange={(e) => setLimite(formatCurrencyInput(e.target.value))} placeholder="R$ 10.000,00" />
                     </div>
+                    <div className="space-y-2">
+                      <Label>Conta para Pagamento de Faturas</Label>
+                      <Select value={contaPagamentoId} onValueChange={setContaPagamentoId}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione a conta (opcional)" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="">Nenhuma</SelectItem>
+                          {contas.map((conta) => (
+                            <SelectItem key={conta.id} value={conta.id}>
+                              {conta.nome}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-muted-foreground">Conta padrão usada ao pagar faturas deste cartão</p>
+                    </div>
                     <Button className="w-full bg-accent-orange hover:bg-accent-orange/90 text-white rounded-full" onClick={handleSaveCartao}>
                       {selectedCartao ? 'Atualizar Cartão' : 'Salvar Cartão'}
                     </Button>
@@ -549,7 +614,11 @@ export default function Configuracoes() {
                 </div>
                 <div>
                   <Label className="text-xs text-muted-foreground">Utilizado</Label>
-                  <p className="text-sm">R$ {selectedCartao.usado?.toLocaleString('pt-BR')}</p>
+                  <p className="text-sm text-accent-orange font-medium">R$ {selectedCartao.usado?.toLocaleString('pt-BR')}</p>
+                </div>
+                <div className="col-span-2 pt-2 border-t">
+                  <Label className="text-xs text-muted-foreground">Disponível</Label>
+                  <p className="text-lg font-bold text-green-600">R$ {selectedCartao.disponivel?.toLocaleString('pt-BR')}</p>
                 </div>
               </div>
               <div className="flex gap-2 mt-4 border-t pt-4">
@@ -585,12 +654,20 @@ export default function Configuracoes() {
                   <p className="text-sm">{selectedConta.banco}</p>
                 </div>
                 <div>
-                  <Label className="text-xs text-muted-foreground">Saldo Atual</Label>
-                  <p className="text-sm font-bold">R$ {selectedConta.saldo_atual?.toLocaleString('pt-BR')}</p>
-                </div>
-                <div>
                   <Label className="text-xs text-muted-foreground">Saldo Inicial</Label>
                   <p className="text-sm">R$ {selectedConta.saldo_inicial?.toLocaleString('pt-BR')}</p>
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground">Entradas (Recebidas)</Label>
+                  <p className="text-sm font-medium text-green-600">+ R$ {selectedConta.total_entradas?.toLocaleString('pt-BR')}</p>
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground">Saídas (Pagas)</Label>
+                  <p className="text-sm font-medium text-red-600">- R$ {selectedConta.total_saidas?.toLocaleString('pt-BR')}</p>
+                </div>
+                <div className="col-span-2 pt-2 border-t">
+                  <Label className="text-xs text-muted-foreground">Saldo Atual</Label>
+                  <p className="text-lg font-bold">R$ {selectedConta.saldo_atual?.toLocaleString('pt-BR')}</p>
                 </div>
               </div>
               <div className="flex gap-2 mt-4 border-t pt-4">

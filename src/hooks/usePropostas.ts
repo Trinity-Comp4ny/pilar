@@ -17,7 +17,7 @@ export interface Proposta {
   status: string;
   validade: string | null;
   projeto_id: string | null;
-  dados_simulacao: any;
+  dados_simulacao: Record<string, unknown> | null;
   observacao: string | null;
   created_at: string;
   // Joins
@@ -68,7 +68,7 @@ export const usePropostas = () => {
 
       if (error) throw error;
 
-      return (data || []).map((p: any) => ({
+      return (data || []).map((p) => ({
         ...p,
         cliente_nome: p.clientes?.nome || null,
         lead_nome: p.leads?.nome || null,
@@ -83,9 +83,12 @@ export const useCreateProposta = () => {
 
   return useMutation({
     mutationFn: async (proposta: PropostaInsert) => {
+      const { data: empresaId } = await supabase.rpc('get_user_empresa_id');
+      if (!empresaId) throw new Error("Usuário não vinculado a uma empresa");
+
       const { data, error } = await supabase
         .from("propostas")
-        .insert(proposta)
+        .insert({ ...proposta, empresa_id: empresaId })
         .select()
         .single();
 
@@ -130,5 +133,39 @@ export const useDeleteProposta = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["propostas"] });
     },
+  });
+};
+
+export const useConverterProposta = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (propostaId: string) => {
+      const { data, error } = await supabase.rpc("rpc_converter_proposta_projeto", {
+        p_proposta_id: propostaId,
+      });
+      if (error) throw error;
+      return data as string;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["propostas"] });
+      queryClient.invalidateQueries({ queryKey: ["projetos"] });
+    },
+  });
+};
+
+export const usePropostaDisciplinas = (propostaId: string | null) => {
+  return useQuery({
+    queryKey: ["proposta-disciplinas", propostaId],
+    queryFn: async () => {
+      if (!propostaId) return [];
+      const { data, error } = await supabase
+        .from("proposta_disciplinas")
+        .select("*")
+        .eq("proposta_id", propostaId);
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!propostaId,
   });
 };

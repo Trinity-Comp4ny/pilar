@@ -92,7 +92,7 @@ export default function Receitas() {
       .order('nome');
 
     if (categoriasData) {
-      setCategorias((categoriasData ?? []).map((cat: any) => ({ id: cat.id, name: cat.nome })));
+      setCategorias((categoriasData ?? []).map((cat) => ({ id: cat.id, name: cat.nome })));
     }
 
     // Fetch Clientes
@@ -102,7 +102,7 @@ export default function Receitas() {
       .order('nome');
 
     if (clientesData) {
-      setClientes((clientesData ?? []).map((c: any) => ({ id: c.id, nome: c.nome })));
+      setClientes((clientesData ?? []).map((c) => ({ id: c.id, nome: c.nome })));
     }
 
     // Fetch Contas
@@ -112,7 +112,7 @@ export default function Receitas() {
       .order('nome');
 
     if (contasData) {
-      setContas((contasData ?? []).map((c: any) => ({ id: c.id, nome: c.nome })));
+      setContas((contasData ?? []).map((c) => ({ id: c.id, nome: c.nome })));
     }
 
     // Fetch Projetos
@@ -122,7 +122,7 @@ export default function Receitas() {
       .order('nome');
 
     if (projetosData) {
-      setProjetos((projetosData ?? []).map((p: any) => ({ id: p.id, projetoID: p.codigo_projeto })));
+      setProjetos((projetosData ?? []).map((p) => ({ id: p.id, projetoID: p.codigo_projeto })));
     }
   };
 
@@ -149,7 +149,7 @@ export default function Receitas() {
     }
 
     if (data) {
-      const formattedData = (data ?? []).map((d: any) => ({
+      const formattedData = (data ?? []).map((d) => ({
         ...d,
         categoria_nome: d.categorias_financeiras?.nome,
         cliente_nome: d.clientes?.nome,
@@ -205,6 +205,9 @@ export default function Receitas() {
 
       if (!user) throw new Error("Usuário não autenticado");
 
+      const { data: empresaId } = await supabase.rpc('get_user_empresa_id');
+      if (!empresaId) throw new Error("Usuário não vinculado a uma empresa");
+
       const receitasToInsert = [];
 
       for (let i = 0; i < numParcelas; i++) {
@@ -223,7 +226,8 @@ export default function Receitas() {
           status: formData.status === 'Recebida' ? 'Recebido' : 'Pendente',
           conta_id: formData.contaId || null,
           cliente_id: formData.clienteId || null,
-          observacao: formData.observacao || null
+          observacao: formData.observacao || null,
+          empresa_id: empresaId
         });
       }
 
