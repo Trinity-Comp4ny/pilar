@@ -26,6 +26,7 @@ const MapaObras = lazy(() => import("./pages/mapa"));
 const Propostas = lazy(() => import("./pages/propostas"));
 const Capacidade = lazy(() => import("./pages/capacidade"));
 const Portal = lazy(() => import("./pages/portal"));
+const MetasPage = lazy(() => import("./pages/metas"));
 const AiHub = lazy(() => import("./pages/ai"));
 const ProjetoDetail = lazy(() => import("./pages/projetos/ProjetoDetail"));
 const PortalTimeline = lazy(() => import("./pages/portal/PortalTimeline"));
@@ -103,6 +104,10 @@ const App = () => {
 
               <Route path="/capacidade" element={<PrivateRoute />}>
                 <Route index element={<Capacidade />} />
+              </Route>
+
+              <Route path="/metas" element={<PrivateRoute />}>
+                <Route index element={<MetasPage />} />
               </Route>
 
               {/* Portal do Cliente (rota pública) */}

@@ -9,6 +9,7 @@ import {
   LayoutGrid,
   MapPin,
   Sparkles,
+  Target,
   TrendingUp,
   Users,
   User,
@@ -40,17 +41,18 @@ const items = [
   { title: "Dashboard", url: "/dashboard", icon: Home },
   { title: "Rentabilidade", url: "/rentabilidade", icon: TrendingUp },
   { title: "Projetos", url: "/projetos", icon: Calendar },
-  { title: "Propostas", url: "/propostas", icon: FileText },
+  { title: "Propostas", url: "/propostas", icon: FileText, disabled: true },
   { title: "Leads", url: "/leads", icon: UserPlus },
   { title: "Clientes", url: "/clientes", icon: Building2 },
   { title: "Financeiro", url: "/financeiro", icon: Wallet },
-  { title: "Timesheet", url: "/timesheet", icon: Clock },
+  { title: "Metas", url: "/metas", icon: Target, disabled: true },
+  { title: "Timesheet", url: "/timesheet", icon: Clock, disabled: true },
   { title: "Pessoas", url: "/pessoas", icon: Users },
   { title: "Mapa", url: "/mapa", icon: MapPin },
-  { title: "Capacidade", url: "/capacidade", icon: LayoutGrid },
+  { title: "Capacidade", url: "/capacidade", icon: LayoutGrid, disabled: true },
   { title: "Relatórios", url: "/relatorios", icon: BarChart },
-  { title: "Templates", url: "/templates", icon: Copy },
-  { title: "IA Pilar", url: "/ai", icon: Sparkles },
+  { title: "Templates", url: "/templates", icon: Copy, disabled: true },
+  { title: "IA Pilar", url: "/ai", icon: Sparkles, disabled: true },
 ];
 
 export function AppSidebar() {
@@ -165,6 +167,27 @@ export function AppSidebar() {
         {items.map((item) => {
           const isActive = currentPath === item.url;
           const Icon = item.icon;
+
+          if (item.disabled) {
+            return (
+              <span
+                key={item.title}
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2 rounded-full text-sm group relative cursor-not-allowed opacity-40",
+                  state === "collapsed" && "justify-center"
+                )}
+                title={state === "collapsed" ? item.title : ""}
+              >
+                <Icon size={18} strokeWidth={1.5} className="w-[18px] h-[18px] flex-shrink-0" />
+                {state !== "collapsed" && <span className="tracking-tight">{item.title}</span>}
+                {state === "collapsed" && (
+                  <span className="absolute left-full ml-3 bg-black text-white text-xs py-1.5 px-3 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50 shadow-lg">
+                    {item.title}
+                  </span>
+                )}
+              </span>
+            );
+          }
 
           return (
             <NavLink
