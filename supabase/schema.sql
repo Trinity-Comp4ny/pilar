@@ -12,7 +12,7 @@ DO $$ BEGIN
 EXCEPTION WHEN duplicate_object THEN null; END $$;
 
 DO $$ BEGIN
-    CREATE TYPE status_projeto AS ENUM ('Planejamento', 'Em andamento', 'Paralisado', 'Concluído', 'Cancelado');
+    CREATE TYPE status_projeto AS ENUM ('Planejamento', 'Em andamento', 'Revisão', 'Paralisado', 'Concluído', 'Cancelado');
 EXCEPTION WHEN duplicate_object THEN null; END $$;
 
 DO $$ BEGIN
@@ -339,16 +339,18 @@ CREATE TABLE IF NOT EXISTS public.despesas (
 -- ==============================================================================
 
 CREATE OR REPLACE VIEW public.view_financas_resumo AS
-SELECT 
+SELECT
   c.id as conta_id,
   c.nome as conta_nome,
+  c.banco,
+  c.cor,
   c.empresa_id,
   c.saldo_inicial,
-  COALESCE((SELECT SUM(r.valor) FROM public.receitas r WHERE r.conta_id = c.id AND r.status = 'Recebido'), 0) as total_entradas,
-  COALESCE((SELECT SUM(d.valor) FROM public.despesas d WHERE d.conta_id = c.id AND d.status = 'Pago'), 0) as total_saidas,
-  (c.saldo_inicial + 
-   COALESCE((SELECT SUM(r.valor) FROM public.receitas r WHERE r.conta_id = c.id AND r.status = 'Recebido'), 0) - 
-   COALESCE((SELECT SUM(d.valor) FROM public.despesas d WHERE d.conta_id = c.id AND d.status = 'Pago'), 0)
+  COALESCE((SELECT SUM(r.valor) FROM public.receitas r WHERE r.conta_id = c.id AND r.status = 'Recebido' AND r.deleted_at IS NULL), 0) as total_entradas,
+  COALESCE((SELECT SUM(d.valor) FROM public.despesas d WHERE d.conta_id = c.id AND d.status = 'Pago' AND d.deleted_at IS NULL), 0) as total_saidas,
+  (c.saldo_inicial +
+   COALESCE((SELECT SUM(r.valor) FROM public.receitas r WHERE r.conta_id = c.id AND r.status = 'Recebido' AND r.deleted_at IS NULL), 0) -
+   COALESCE((SELECT SUM(d.valor) FROM public.despesas d WHERE d.conta_id = c.id AND d.status = 'Pago' AND d.deleted_at IS NULL), 0)
   ) as saldo_atual
 FROM public.contas c
 WHERE c.deleted_at IS NULL;
@@ -358,9 +360,13 @@ SELECT
   cc.id,
   cc.nome,
   cc.empresa_id,
+  cc.dia_fechamento,
+  cc.dia_vencimento,
+  cc.cor,
   cc.limite,
-  COALESCE((SELECT SUM(d.valor) FROM public.despesas d WHERE d.cartao_id = cc.id AND d.status = 'Pendente'), 0) as usado,
-  (cc.limite - COALESCE((SELECT SUM(d.valor) FROM public.despesas d WHERE d.cartao_id = cc.id AND d.status = 'Pendente'), 0)) as disponivel
+  cc.conta_pagamento_id,
+  COALESCE((SELECT SUM(d.valor) FROM public.despesas d WHERE d.cartao_id = cc.id AND d.status = 'Pendente' AND d.deleted_at IS NULL), 0) as usado,
+  (cc.limite - COALESCE((SELECT SUM(d.valor) FROM public.despesas d WHERE d.cartao_id = cc.id AND d.status = 'Pendente' AND d.deleted_at IS NULL), 0)) as disponivel
 FROM public.cartoes_credito cc
 WHERE cc.deleted_at IS NULL;
 
