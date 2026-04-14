@@ -28,7 +28,7 @@ DECLARE
   v_projeto_id UUID;
 BEGIN
   v_user_id := auth.uid();
-  SELECT empresa_id INTO v_empresa_id FROM public.user_profiles WHERE id = v_user_id;
+  SELECT empresa_id INTO v_empresa_id FROM public.profiles WHERE id = v_user_id;
 
   IF v_empresa_id IS NULL THEN
     RAISE EXCEPTION 'Usuário não vinculado a uma empresa';
