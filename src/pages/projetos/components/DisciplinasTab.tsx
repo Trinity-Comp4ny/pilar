@@ -27,7 +27,6 @@ import {
   ChevronDown,
   ChevronRight,
   User,
-  CalendarDays,
   LayoutGrid,
   List,
 } from "lucide-react";

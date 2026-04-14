@@ -130,7 +130,7 @@ export default function PortalLayout() {
   );
 }
 
-function PortalDashboard({ data, token }: { data: PortalData; token: string }) {
+function PortalDashboard({ data, token: _token }: { data: PortalData; token: string }) {
   const [disciplinas, setDisciplinas] = useState<PortalDisciplina[]>([]);
   const [entregas, setEntregas] = useState<PortalEntregaRow[]>([]);
   const [loading, setLoading] = useState(true);

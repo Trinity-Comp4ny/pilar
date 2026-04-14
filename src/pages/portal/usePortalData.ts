@@ -25,7 +25,7 @@ export function usePortalData() {
       try {
         const { data: result, error: err } = await supabase.rpc("verify_portal_token", { p_token: token });
         if (err) throw err;
-        setData(result as any);
+        setData(result as unknown as PortalData);
       } catch (e: unknown) {
         setError(e instanceof Error ? e.message : "Token inválido");
       } finally {

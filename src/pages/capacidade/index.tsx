@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { supabase } from "@/integrations/supabase/client";
+import { AlocacaoVsReal } from "./components/AlocacaoVsReal";
 
 interface PessoaCapacidade {
   id: string;
@@ -66,7 +67,7 @@ export default function Capacidade() {
         .is("deleted_at", null)
         .order("nome");
       if (error) throw error;
-      return (data || []).map((p: any) => ({
+      return (data || []).map((p) => ({
         ...p,
         horas_semanais: p.horas_semanais || 40,
       })) as PessoaCapacidade[];
@@ -210,6 +211,11 @@ export default function Capacidade() {
         <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded bg-green-200" /> &le;80%</div>
         <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded bg-yellow-200" /> 80-100%</div>
         <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded bg-red-200" /> &gt;100%</div>
+      </div>
+
+      {/* Planejado vs Real */}
+      <div className="mt-6">
+        <AlocacaoVsReal weekStart={weeks[0]} weekEnd={weeks[weeks.length - 1]} />
       </div>
     </PageLayout>
   );

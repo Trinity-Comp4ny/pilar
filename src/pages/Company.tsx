@@ -78,7 +78,7 @@ export default function Company() {
           .select('id, nome, email, role, contato')
           .eq('empresa_id', profile.empresa_id);
         if (companyUsers) {
-          setUsers(companyUsers.map((u: any) => ({ id: u.id, name: u.nome, email: u.email, role: u.role, contato: u.contato })));
+          setUsers(companyUsers.map((u) => ({ id: u.id, name: u.nome, email: u.email, role: u.role, contato: u.contato })));
         }
       }
     };

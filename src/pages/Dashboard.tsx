@@ -18,7 +18,6 @@ import {
   FileText,
   BarChart3,
   Target,
-  CircleDot,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {

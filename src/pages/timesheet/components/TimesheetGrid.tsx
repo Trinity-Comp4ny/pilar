@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from "react";
+import { useCallback, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Loader2 } from "lucide-react";
@@ -7,6 +7,7 @@ import {
   useTimesheetsByWeek,
   useProjetosAtribuidos,
   useUpsertTimesheet,
+  useHorasOrcadasPorProjeto,
 } from "@/hooks/useTimesheets";
 
 interface TimesheetGridProps {
@@ -21,6 +22,9 @@ export function TimesheetGrid({ pessoaId, weekStart, weekEnd, weekDays }: Timesh
   const { data: timesheets = [], isLoading: loadingTimesheets } = useTimesheetsByWeek(pessoaId, weekStart, weekEnd);
   const { data: projetos = [], isLoading: loadingProjetos } = useProjetosAtribuidos(pessoaId);
   const upsert = useUpsertTimesheet();
+
+  const projetoIds = projetos.map((p) => p.id);
+  const { data: horasOrcadasMap = new Map() } = useHorasOrcadasPorProjeto(projetoIds);
 
   const debounceTimers = useRef<Map<string, NodeJS.Timeout>>(new Map());
 
@@ -59,7 +63,7 @@ export function TimesheetGrid({ pessoaId, weekStart, weekEnd, weekDays }: Timesh
           upsert.mutate(
             { pessoa_id: pessoaId, projeto_id: projetoId, disciplina, data, horas },
             {
-              onError: (error: any) => {
+              onError: (error: Error) => {
                 toast({
                   variant: "destructive",
                   title: "Erro ao salvar",
@@ -151,6 +155,7 @@ export function TimesheetGrid({ pessoaId, weekStart, weekEnd, weekDays }: Timesh
                 <td className="py-2 px-3">
                   <div className="font-medium text-xs truncate">{linha.projetoCodigo} - {linha.projetoNome}</div>
                   <div className="text-xs text-muted-foreground">{linha.disciplina}</div>
+                  <HorasProgress projetoId={linha.projetoId} disciplina={linha.disciplina} horasMap={horasOrcadasMap} />
                 </td>
                 {weekDays.map((dia) => {
                   const status = getStatus(linha.projetoId, linha.disciplina, dia);
@@ -207,6 +212,42 @@ export function TimesheetGrid({ pessoaId, weekStart, weekEnd, weekDays }: Timesh
           </tr>
         </tfoot>
       </table>
+    </div>
+  );
+}
+
+function HorasProgress({
+  projetoId,
+  disciplina,
+  horasMap,
+}: {
+  projetoId: string;
+  disciplina: string;
+  horasMap: Map<string, { orcadas: number; consumidas: number }>;
+}) {
+  const key = `${projetoId}::${disciplina}`;
+  const data = horasMap.get(key);
+
+  if (!data || data.orcadas <= 0) return null;
+
+  const pct = Math.min((data.consumidas / data.orcadas) * 100, 100);
+  const overflow = data.consumidas > data.orcadas;
+  const color = overflow
+    ? "bg-red-500"
+    : pct >= 90
+      ? "bg-red-400"
+      : pct >= 70
+        ? "bg-amber-400"
+        : "bg-emerald-400";
+
+  return (
+    <div className="flex items-center gap-1.5 mt-1">
+      <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden max-w-[120px]">
+        <div className={`h-full rounded-full ${color} transition-all`} style={{ width: `${pct}%` }} />
+      </div>
+      <span className={`text-[10px] font-medium ${overflow ? "text-red-600" : "text-muted-foreground"}`}>
+        {data.consumidas.toFixed(0)}/{data.orcadas.toFixed(0)}h
+      </span>
     </div>
   );
 }

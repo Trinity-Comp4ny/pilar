@@ -6,10 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar, User, DollarSign, Ruler, Trash2, Edit, MapPin, ExternalLink } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
+import { User, DollarSign, Ruler, Trash2, Edit, MapPin, ExternalLink, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { PROJECT_STATUS_CONFIG, PROJECT_PRIORITY_CONFIG, type ProjectPriority } from "@/constants";
-import { type Projeto, type DisciplinaResponsavel, disciplinaStatusOptions, formatCurrency, formatDate, formatDateShort, getDeadlineStatus, getProjectProgress, getResponsaveisList } from "@/pages/projetos/types";
+import { type Projeto, disciplinaStatusOptions, formatCurrency, formatDate, formatDateShort, getDeadlineStatus, getProjectProgress, getResponsaveisList, isDiscAtrasada } from "@/pages/projetos/types";
 import { supabase } from "@/integrations/supabase/client";
 
 interface ProjectDetailDialogProps {
@@ -33,6 +35,8 @@ export function ProjectDetailDialog({ open, onOpenChange, projeto, canEdit, onEd
   const navigate = useNavigate();
   const { toast } = useToast();
   const [updatingDisc, setUpdatingDisc] = useState<number | null>(null);
+  const [justificativaDialog, setJustificativaDialog] = useState<{ discIdx: number; newStatus: string } | null>(null);
+  const [justificativaText, setJustificativaText] = useState("");
 
   if (!projeto) return null;
 
@@ -40,7 +44,7 @@ export function ProjectDetailDialog({ open, onOpenChange, projeto, canEdit, onEd
   const progress = getProjectProgress(projeto.disciplinas);
   const statusConfig = PROJECT_STATUS_CONFIG[projeto.status];
 
-  const handleDisciplineStatusChange = async (index: number, newStatus: string) => {
+  const applyDisciplineStatusChange = async (index: number, newStatus: string, justificativa?: string) => {
     setUpdatingDisc(index);
     const updatedDisciplinas = [...projeto.disciplinas];
     updatedDisciplinas[index] = {
@@ -49,6 +53,7 @@ export function ProjectDetailDialog({ open, onOpenChange, projeto, canEdit, onEd
       ...(newStatus === "Concluído" && !updatedDisciplinas[index].data_final
         ? { data_final: new Date().toISOString().split("T")[0] }
         : {}),
+      ...(justificativa !== undefined ? { justificativa_atraso: justificativa } : {}),
     };
 
     const { error } = await supabase
@@ -66,7 +71,25 @@ export function ProjectDetailDialog({ open, onOpenChange, projeto, canEdit, onEd
     setUpdatingDisc(null);
   };
 
+  const handleDisciplineStatusChange = async (index: number, newStatus: string) => {
+    const disc = projeto.disciplinas[index];
+    if (isDiscAtrasada(disc) && newStatus !== "Concluído" && !disc.justificativa_atraso) {
+      setJustificativaDialog({ discIdx: index, newStatus });
+      setJustificativaText("");
+      return;
+    }
+    await applyDisciplineStatusChange(index, newStatus);
+  };
+
+  const handleJustificativaConfirm = async () => {
+    if (!justificativaDialog || !justificativaText.trim()) return;
+    await applyDisciplineStatusChange(justificativaDialog.discIdx, justificativaDialog.newStatus, justificativaText.trim());
+    setJustificativaDialog(null);
+    setJustificativaText("");
+  };
+
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto p-0">
         {/* Header compacto */}
@@ -156,10 +179,20 @@ export function ProjectDetailDialog({ open, onOpenChange, projeto, canEdit, onEd
                                 </span>
                               ) : null;
                             })()}
+                            {isDiscAtrasada(disc) && (
+                              <span className="text-[9px] px-1.5 py-0.5 rounded-full font-medium bg-red-100 text-red-700 flex items-center gap-0.5">
+                                <AlertTriangle size={10} /> Atrasada
+                              </span>
+                            )}
                           </div>
                           <p className="text-[11px] text-muted-foreground">
                             {resps.map((r) => r.responsavel_nome).join(", ") || "Sem responsável"}
                           </p>
+                          {isDiscAtrasada(disc) && disc.justificativa_atraso && (
+                            <p className="text-[10px] text-red-600 mt-0.5 italic">
+                              Justificativa: {disc.justificativa_atraso}
+                            </p>
+                          )}
                         </div>
 
                         {canEdit ? (
@@ -246,10 +279,47 @@ export function ProjectDetailDialog({ open, onOpenChange, projeto, canEdit, onEd
         </div>
       </DialogContent>
     </Dialog>
+
+    {/* Dialog de justificativa obrigatória para atraso */}
+    <AlertDialog open={!!justificativaDialog} onOpenChange={(open) => { if (!open) { setJustificativaDialog(null); setJustificativaText(""); } }}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle className="flex items-center gap-2">
+            <AlertTriangle className="h-5 w-5 text-red-500" />
+            Justificativa de Atraso Obrigatória
+          </AlertDialogTitle>
+          <AlertDialogDescription>
+            A disciplina <strong>{justificativaDialog !== null && projeto?.disciplinas[justificativaDialog.discIdx]?.disciplina}</strong> está atrasada.
+            É necessário informar uma justificativa para continuar.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <div className="py-2">
+          <Label className="text-sm mb-2 block">Justificativa</Label>
+          <Textarea
+            value={justificativaText}
+            onChange={(e) => setJustificativaText(e.target.value)}
+            placeholder="Explique o motivo do atraso..."
+            className="min-h-[80px]"
+            autoFocus
+          />
+        </div>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={handleJustificativaConfirm}
+            disabled={!justificativaText.trim()}
+            className="bg-accent-orange hover:bg-accent-orange/90"
+          >
+            Confirmar
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 }
 
-function InfoRow({ icon: Icon, label, value, valueClass = "" }: { icon: any; label: string; value: string; valueClass?: string }) {
+function InfoRow({ icon: Icon, label, value, valueClass = "" }: { icon: React.ComponentType<{ className?: string }>; label: string; value: string; valueClass?: string }) {
   return (
     <div className="flex items-center gap-3">
       <Icon className="h-4 w-4 text-muted-foreground shrink-0" />

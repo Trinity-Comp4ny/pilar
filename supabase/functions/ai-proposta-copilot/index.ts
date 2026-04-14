@@ -32,7 +32,10 @@ serve(async (req) => {
       .order("created_at", { ascending: false })
       .limit(20);
 
-    const projetosHist = (historicos || []).map((p: any) => ({
+    interface ProjetoHistRow { nome: string; area_m2: number | null; valor_contrato: number | null; data_inicio: string | null; data_final: string | null; status: string }
+    interface ProjetoHistMetrica { nome: string; area: number | null; valor: number | null; duracao_dias: number | null }
+
+    const projetosHist: ProjetoHistMetrica[] = ((historicos || []) as ProjetoHistRow[]).map((p) => ({
       nome: p.nome,
       area: p.area_m2,
       valor: p.valor_contrato,
@@ -41,8 +44,9 @@ serve(async (req) => {
         : null,
     }));
 
-    const valorMedioM2 = projetosHist.filter((p: any) => p.area && p.valor).length > 0
-      ? projetosHist.filter((p: any) => p.area && p.valor).reduce((s: number, p: any) => s + p.valor / p.area, 0) / projetosHist.filter((p: any) => p.area && p.valor).length
+    const projetosComAreaValor = projetosHist.filter((p): p is ProjetoHistMetrica & { area: number; valor: number } => p.area != null && p.area > 0 && p.valor != null && p.valor > 0);
+    const valorMedioM2 = projetosComAreaValor.length > 0
+      ? projetosComAreaValor.reduce((s: number, p) => s + p.valor / p.area, 0) / projetosComAreaValor.length
       : 0;
 
     const contexto = `
@@ -56,7 +60,7 @@ DADOS DA PROPOSTA:
 - Prazo desejado: ${prazo_dias || "não informado"} dias
 
 HISTÓRICO DO ESCRITÓRIO (últimos 20 projetos concluídos):
-${projetosHist.map((p: any) => `- ${p.nome}: ${p.area}m², R$ ${p.valor}, ${p.duracao_dias} dias`).join("\n")}
+${projetosHist.map((p) => `- ${p.nome}: ${p.area}m², R$ ${p.valor}, ${p.duracao_dias} dias`).join("\n")}
 
 Valor médio por m² do escritório: R$ ${valorMedioM2.toFixed(2)}/m²
 `.trim();

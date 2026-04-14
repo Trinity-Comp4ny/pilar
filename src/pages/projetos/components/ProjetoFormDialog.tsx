@@ -18,7 +18,6 @@ import {
   type DisciplinaObservacao,
   type ResponsavelDatas,
   disciplinaStatusOptions,
-  formatDateShort,
   getResponsaveisList,
 } from "@/pages/projetos/types";
 import { type TemplateProjeto } from "@/hooks/useTemplates";

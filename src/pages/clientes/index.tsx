@@ -16,6 +16,14 @@ import { useUserRole } from "@/hooks/useUserRole";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { getSafeErrorMessage } from "@/lib/safeError";
 
+interface ContaBancaria {
+  banco: string;
+  agencia: string;
+  conta: string;
+  tipo: string;
+  is_primary?: boolean;
+}
+
 interface Cliente {
   id: string;
   nome: string;
@@ -25,7 +33,7 @@ interface Cliente {
   email: string;
   tipo_nf?: string;
   origem?: string;
-  contas_bancarias?: any[];
+  contas_bancarias?: ContaBancaria[];
 }
 
 export default function Clientes() {
@@ -48,7 +56,7 @@ export default function Clientes() {
   const [email, setEmail] = useState("");
   const [tipoNf, setTipoNf] = useState("");
   const [origem, setOrigem] = useState("");
-  const [contasBancarias, setContasBancarias] = useState<any[]>([]);
+  const [contasBancarias, setContasBancarias] = useState<ContaBancaria[]>([]);
   const [newConta, setNewConta] = useState({ banco: "", agencia: "", conta: "", tipo: "corrente" });
   const [currentId, setCurrentId] = useState<string | null>(null);
   
@@ -106,7 +114,7 @@ export default function Clientes() {
   }, []);
 
   const fetchClientes = async () => {
-    const { data, error } = await supabase
+    const { data, error: _error } = await supabase
       .from('clientes')
       .select('*')
       .order('nome');
@@ -605,7 +613,7 @@ export default function Clientes() {
                   <Label className="text-sm font-medium">Contas Bancárias</Label>
                   {(selectedCliente.contas_bancarias && selectedCliente.contas_bancarias.length > 0) ? (
                     <div className="space-y-2">
-                      {selectedCliente.contas_bancarias.map((conta: any, index: number) => (
+                      {selectedCliente.contas_bancarias.map((conta, index) => (
                         <div
                           key={index}
                           className={`flex items-center justify-between gap-3 bg-gray-50 border rounded-lg px-3 py-2 text-sm ${conta.is_primary ? 'border-accent-orange/50 bg-accent-orange/5' : 'border-gray-200'}`}

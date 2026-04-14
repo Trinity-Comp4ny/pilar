@@ -107,6 +107,100 @@ export const useDashboardRentabilidade = () => {
   });
 };
 
+export interface ClienteRentabilidade {
+  cliente_id: string;
+  cliente_nome: string;
+  total_receitas: number;
+  total_despesas: number;
+  margem_bruta: number;
+  margem_bruta_pct: number;
+  num_projetos: number;
+  concentracao_pct: number;
+}
+
+export const useRentabilidadePorCliente = () => {
+  return useQuery({
+    queryKey: ["rentabilidade-por-cliente"],
+    queryFn: async () => {
+      // Buscar todos os projetos com rentabilidade
+      const { data, error } = await supabase.rpc("rpc_dashboard_rentabilidade");
+      if (error) throw error;
+
+      const rows = Array.isArray(data) ? data : [];
+      const projetos = rows.map((p) => calcularMargens(p as RpcRentabilidadeRow));
+
+      // Buscar clientes dos projetos
+      const projetoIds = projetos.map((p) => p.projeto_id).filter(Boolean);
+      if (projetoIds.length === 0) return { clientes: [], totalReceitas: 0 };
+
+      const { data: projetosData } = await supabase
+        .from("projetos")
+        .select("id, cliente_id, clientes(nome)")
+        .in("id", projetoIds)
+        .is("deleted_at", null);
+
+      const clienteMap = new Map<string, { nome: string; projetos: typeof projetos }>();
+
+      for (const pd of projetosData || []) {
+        const clienteId = pd.cliente_id;
+        if (!clienteId) continue;
+        const clienteNome = pd.clientes?.nome || "Sem cliente";
+        const projeto = projetos.find((p) => p.projeto_id === pd.id);
+        if (!projeto) continue;
+
+        if (!clienteMap.has(clienteId)) {
+          clienteMap.set(clienteId, { nome: clienteNome, projetos: [] });
+        }
+        clienteMap.get(clienteId)!.projetos.push(projeto);
+      }
+
+      const totalReceitas = projetos.reduce((s, p) => s + p.receitas_total, 0);
+
+      const clientes: ClienteRentabilidade[] = Array.from(clienteMap.entries()).map(
+        ([clienteId, { nome, projetos: clienteProjetos }]) => {
+          const rec = clienteProjetos.reduce((s, p) => s + p.receitas_total, 0);
+          const desp = clienteProjetos.reduce((s, p) => s + p.despesas_diretas, 0);
+          const margem = rec - desp;
+
+          return {
+            cliente_id: clienteId,
+            cliente_nome: nome,
+            total_receitas: rec,
+            total_despesas: desp,
+            margem_bruta: margem,
+            margem_bruta_pct: rec > 0 ? (margem / rec) * 100 : 0,
+            num_projetos: clienteProjetos.length,
+            concentracao_pct: totalReceitas > 0 ? (rec / totalReceitas) * 100 : 0,
+          };
+        }
+      );
+
+      clientes.sort((a, b) => b.margem_bruta - a.margem_bruta);
+
+      return { clientes, totalReceitas };
+    },
+    staleTime: 1000 * 60 * 5,
+  });
+};
+
+export const useProjetosDrenandoCaixa = () => {
+  return useQuery({
+    queryKey: ["projetos-drenando-caixa"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("rpc_dashboard_rentabilidade");
+      if (error) throw error;
+
+      const rows = Array.isArray(data) ? data : [];
+      const projetos = rows.map((p) => calcularMargens(p as RpcRentabilidadeRow));
+
+      return projetos
+        .filter((p) => p.margem_bruta < 0)
+        .sort((a, b) => a.margem_bruta - b.margem_bruta);
+    },
+    staleTime: 1000 * 60 * 5,
+  });
+};
+
 export const useProjetoRentabilidade = (projetoId: string | undefined) => {
   return useQuery({
     queryKey: ["projeto-rentabilidade", projetoId],

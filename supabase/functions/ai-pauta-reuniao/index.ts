@@ -37,7 +37,18 @@ serve(async (req) => {
     const mesAtual = now.getMonth() + 1;
     const anoAtual = now.getFullYear();
 
-    const queries: Promise<any>[] = [
+    interface ProjetoRow { id: string; nome: string; status: string; data_final: string | null; valor_contrato: number | null; percentual_conclusao: number | null; prioridade: string | null }
+    interface ReceitaPendenteRow { valor: number; descricao: string; status: string; projeto_id: string }
+    interface LeadAtivoRow { nome: string; valor_estimado: number | null; status: string; probabilidade: number | null }
+    interface ProjetoDetalheRow { nome: string; status: string; valor_contrato: number | null; clientes: { nome: string } | null; [key: string]: unknown }
+    interface TimesheetRow { horas: number; data: string; pessoas: { nome: string } | null }
+
+    interface SupabaseQueryResult {
+      data: unknown[] | Record<string, unknown> | null;
+      error: unknown;
+    }
+
+    const queries: Promise<SupabaseQueryResult>[] = [
       // Projetos ativos com alertas
       adminClient
         .from("projetos")
@@ -84,16 +95,16 @@ serve(async (req) => {
     }
 
     const results = await Promise.all(queries);
-    const projetosAtivos = results[0].data || [];
-    const receitasPendentes = results[1].data || [];
-    const leadsAtivos = results[2].data || [];
-    const projetoDetalhe = projeto_id ? results[3]?.data : null;
-    const timesheetsRecentes = projeto_id ? (results[4]?.data || []) : [];
+    const projetosAtivos = (results[0].data || []) as ProjetoRow[];
+    const receitasPendentes = (results[1].data || []) as ReceitaPendenteRow[];
+    const leadsAtivos = (results[2].data || []) as LeadAtivoRow[];
+    const projetoDetalhe = projeto_id ? results[3]?.data as ProjetoDetalheRow | null : null;
+    const timesheetsRecentes = projeto_id ? ((results[4]?.data || []) as TimesheetRow[]) : [] as TimesheetRow[];
 
-    const projetosAtrasados = projetosAtivos.filter((p: any) =>
+    const projetosAtrasados = projetosAtivos.filter((p) =>
       p.data_final && new Date(p.data_final) < now
     );
-    const totalPendente = receitasPendentes.reduce((s: number, r: any) => s + (r.valor || 0), 0);
+    const totalPendente = receitasPendentes.reduce((s: number, r) => s + (r.valor || 0), 0);
 
     const contexto = `
 TIPO DE REUNIÃO: ${tipo_reuniao || "diretoria"}
@@ -104,23 +115,23 @@ PANORAMA GERAL:
 - Projetos ativos: ${projetosAtivos.length}
 - Projetos atrasados: ${projetosAtrasados.length}
 - Receitas pendentes: R$ ${totalPendente.toFixed(2)} (${receitasPendentes.length} itens)
-- Leads ativos: ${leadsAtivos.length} (R$ ${leadsAtivos.reduce((s: number, l: any) => s + (l.valor_estimado || 0), 0).toFixed(2)} pipeline)
+- Leads ativos: ${leadsAtivos.length} (R$ ${leadsAtivos.reduce((s: number, l) => s + (l.valor_estimado || 0), 0).toFixed(2)} pipeline)
 
 PROJETOS COM ATENÇÃO:
-${projetosAtrasados.map((p: any) => `- ⚠️ ${p.nome}: atrasado (previsão: ${p.data_final}), ${p.percentual_conclusao || 0}% concluído`).join("\n") || "Nenhum projeto atrasado"}
+${projetosAtrasados.map((p) => `- ⚠️ ${p.nome}: atrasado (previsão: ${p.data_final}), ${p.percentual_conclusao || 0}% concluído`).join("\n") || "Nenhum projeto atrasado"}
 
 PROJETOS ATIVOS TOP:
-${projetosAtivos.slice(0, 8).map((p: any) => `- ${p.nome}: ${p.status}, ${p.percentual_conclusao || 0}% concluído, prioridade ${p.prioridade || "N/A"}`).join("\n")}
+${projetosAtivos.slice(0, 8).map((p) => `- ${p.nome}: ${p.status}, ${p.percentual_conclusao || 0}% concluído, prioridade ${p.prioridade || "N/A"}`).join("\n")}
 
 PIPELINE COMERCIAL:
-${leadsAtivos.map((l: any) => `- ${l.nome}: ${l.status}, R$ ${l.valor_estimado || 0} (${l.probabilidade || 0}%)`).join("\n") || "Nenhum lead ativo"}
+${leadsAtivos.map((l) => `- ${l.nome}: ${l.status}, R$ ${l.valor_estimado || 0} (${l.probabilidade || 0}%)`).join("\n") || "Nenhum lead ativo"}
 
 ${projetoDetalhe ? `
 PROJETO ESPECÍFICO (${projetoDetalhe.nome}):
 - Cliente: ${projetoDetalhe.clientes?.nome || "N/A"}
 - Valor: R$ ${projetoDetalhe.valor_contrato || 0}
 - Status: ${projetoDetalhe.status}
-- Horas recentes: ${timesheetsRecentes.reduce((s: number, t: any) => s + (t.horas || 0), 0)}h
+- Horas recentes: ${timesheetsRecentes.reduce((s: number, t) => s + (t.horas || 0), 0)}h
 ` : ""}
 `.trim();
 

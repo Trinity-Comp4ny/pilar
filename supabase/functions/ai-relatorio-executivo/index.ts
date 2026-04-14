@@ -36,32 +36,38 @@ serve(async (req) => {
       adminClient.from("pessoas").select("nome, cargo").eq("empresa_id", empresaId).is("deleted_at", null),
     ]);
 
-    const receitas = receitasRes.data || [];
-    const despesas = despesasRes.data || [];
-    const projetos = projetosRes.data || [];
-    const leads = leadsRes.data || [];
-    const pessoas = pessoasRes.data || [];
+    interface ReceitaRow { valor: number; status: string; data_recebimento: string | null }
+    interface DespesaRow { valor: number; status: string; data_pagamento: string | null }
+    interface ProjetoRow { nome: string; codigo_projeto: string; status: string; data_previsao: string | null; valor_contrato: number | null }
+    interface LeadRow { nome: string; status: string }
+    interface PessoaRow { nome: string; cargo: string }
 
-    const totalRec = receitas.reduce((s: number, r: any) => s + Number(r.valor), 0);
-    const totalDesp = despesas.reduce((s: number, d: any) => s + Number(d.valor), 0);
+    const receitas = (receitasRes.data || []) as ReceitaRow[];
+    const despesas = (despesasRes.data || []) as DespesaRow[];
+    const projetos = (projetosRes.data || []) as ProjetoRow[];
+    const leads = (leadsRes.data || []) as LeadRow[];
+    const pessoas = (pessoasRes.data || []) as PessoaRow[];
+
+    const totalRec = receitas.reduce((s: number, r) => s + Number(r.valor), 0);
+    const totalDesp = despesas.reduce((s: number, d) => s + Number(d.valor), 0);
 
     const contexto = `
 RELATÓRIO EXECUTIVO - Período: ${periodo === "semanal" ? "Última semana" : "Mês atual"}
 
 FINANCEIRO:
-- Receitas: R$ ${totalRec.toFixed(2)} (${receitas.filter((r: any) => r.status === "Recebido").length} recebidas)
-- Despesas: R$ ${totalDesp.toFixed(2)} (${despesas.filter((d: any) => d.status === "Pago").length} pagas)
+- Receitas: R$ ${totalRec.toFixed(2)} (${receitas.filter((r) => r.status === "Recebido").length} recebidas)
+- Despesas: R$ ${totalDesp.toFixed(2)} (${despesas.filter((d) => d.status === "Pago").length} pagas)
 - Saldo: R$ ${(totalRec - totalDesp).toFixed(2)}
 
 PROJETOS ATIVOS (${projetos.length}):
-${projetos.slice(0, 15).map((p: any) => `- ${p.codigo_projeto}: ${p.nome} (${p.status}, previsão: ${p.data_previsao || "?"}, R$ ${p.valor_contrato || 0})`).join("\n")}
+${projetos.slice(0, 15).map((p) => `- ${p.codigo_projeto}: ${p.nome} (${p.status}, previsão: ${p.data_previsao || "?"}, R$ ${p.valor_contrato || 0})`).join("\n")}
 
 PIPELINE:
 - ${leads.length} leads no período
-- Novos: ${leads.filter((l: any) => l.status === "Novo").length}
-- Em negociação: ${leads.filter((l: any) => l.status === "Negociação").length}
-- Ganhos: ${leads.filter((l: any) => l.status === "Ganho").length}
-- Perdidos: ${leads.filter((l: any) => l.status === "Perdido").length}
+- Novos: ${leads.filter((l) => l.status === "Novo").length}
+- Em negociação: ${leads.filter((l) => l.status === "Negociação").length}
+- Ganhos: ${leads.filter((l) => l.status === "Ganho").length}
+- Perdidos: ${leads.filter((l) => l.status === "Perdido").length}
 
 EQUIPE: ${pessoas.length} pessoas
 `.trim();

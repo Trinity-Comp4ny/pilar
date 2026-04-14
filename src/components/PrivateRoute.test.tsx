@@ -45,8 +45,8 @@ function renderWithRouter(initialRoute = "/dashboard") {
 describe("PrivateRoute", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    delete (window as any).location;
-    (window as any).location = { hash: "" };
+    delete (window as unknown as { location?: Location }).location;
+    (window as unknown as { location: Partial<Location> }).location = { hash: "" };
   });
 
   it("shows loading state initially", () => {
@@ -59,7 +59,7 @@ describe("PrivateRoute", () => {
     vi.mocked(supabase.auth.getSession).mockResolvedValue({
       data: { session: null },
       error: null,
-    } as any);
+    } as Awaited<ReturnType<typeof supabase.auth.getSession>>);
 
     renderWithRouter();
 
@@ -72,7 +72,7 @@ describe("PrivateRoute", () => {
     vi.mocked(supabase.auth.getSession).mockResolvedValue({
       data: { session: { user: { id: "user-123" } } },
       error: null,
-    } as any);
+    } as unknown as Awaited<ReturnType<typeof supabase.auth.getSession>>);
 
     const mockSingle = vi.fn().mockResolvedValue({
       data: {
@@ -88,7 +88,7 @@ describe("PrivateRoute", () => {
     });
     const mockEq = vi.fn(() => ({ single: mockSingle }));
     const mockSelect = vi.fn(() => ({ eq: mockEq }));
-    vi.mocked(supabase.from).mockReturnValue({ select: mockSelect } as any);
+    vi.mocked(supabase.from).mockReturnValue({ select: mockSelect } as unknown as ReturnType<typeof supabase.from>);
 
     renderWithRouter();
 
@@ -101,7 +101,7 @@ describe("PrivateRoute", () => {
     vi.mocked(supabase.auth.getSession).mockResolvedValue({
       data: { session: { user: { id: "user-123" } } },
       error: null,
-    } as any);
+    } as unknown as Awaited<ReturnType<typeof supabase.auth.getSession>>);
 
     const mockSingle = vi.fn().mockResolvedValue({
       data: {
@@ -117,7 +117,7 @@ describe("PrivateRoute", () => {
     });
     const mockEq = vi.fn(() => ({ single: mockSingle }));
     const mockSelect = vi.fn(() => ({ eq: mockEq }));
-    vi.mocked(supabase.from).mockReturnValue({ select: mockSelect } as any);
+    vi.mocked(supabase.from).mockReturnValue({ select: mockSelect } as unknown as ReturnType<typeof supabase.from>);
 
     renderWithRouter();
 
@@ -130,7 +130,7 @@ describe("PrivateRoute", () => {
     vi.mocked(supabase.auth.getSession).mockResolvedValue({
       data: { session: { user: { id: "user-123" } } },
       error: null,
-    } as any);
+    } as unknown as Awaited<ReturnType<typeof supabase.auth.getSession>>);
 
     const mockSingle = vi.fn().mockResolvedValue({
       data: {
@@ -146,7 +146,7 @@ describe("PrivateRoute", () => {
     });
     const mockEq = vi.fn(() => ({ single: mockSingle }));
     const mockSelect = vi.fn(() => ({ eq: mockEq }));
-    vi.mocked(supabase.from).mockReturnValue({ select: mockSelect } as any);
+    vi.mocked(supabase.from).mockReturnValue({ select: mockSelect } as unknown as ReturnType<typeof supabase.from>);
 
     renderWithRouter();
 

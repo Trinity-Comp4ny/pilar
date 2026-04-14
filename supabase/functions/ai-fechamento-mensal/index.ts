@@ -67,25 +67,34 @@ serve(async (req) => {
       adminClient.from("despesas").select("valor, data_vencimento, descricao").eq("empresa_id", empresaId).eq("status", "Pendente").gte("data_vencimento", endDate).is("deleted_at", null).order("data_vencimento").limit(20),
     ]);
 
-    const receitas = receitasRes.data || [];
-    const despesas = despesasRes.data || [];
-    const receitasPrev = receitasPrevRes.data || [];
-    const despesasPrev = despesasPrevRes.data || [];
-    const projetos = projetosRes.data || [];
-    const folha = folhaRes.data || [];
-    const leads = leadsRes.data || [];
-    const futuras = despesasFuturas.data || [];
+    interface ReceitaRow { valor: number; status: string; projeto_id: string; categoria_id: string }
+    interface DespesaRow { valor: number; status: string; projeto_id: string; categoria_id: string }
+    interface ReceitaPrevRow { valor: number; status: string }
+    interface DespesaPrevRow { valor: number; status: string }
+    interface ProjetoRow { id: string; nome: string; status: string; valor_contrato: number | null }
+    interface FolhaRow { total_receber: number; status: string }
+    interface LeadRow { id: string; status: string }
+    interface DespesaFuturaRow { valor: number; data_vencimento: string; descricao: string }
 
-    const totalReceitas = receitas.reduce((s: number, r: any) => s + Number(r.valor), 0);
-    const totalReceitasRecebidas = receitas.filter((r: any) => r.status === "Recebido").reduce((s: number, r: any) => s + Number(r.valor), 0);
-    const totalDespesas = despesas.reduce((s: number, d: any) => s + Number(d.valor), 0);
-    const totalDespesasPagas = despesas.filter((d: any) => d.status === "Pago").reduce((s: number, d: any) => s + Number(d.valor), 0);
-    const totalReceitasPrev = receitasPrev.reduce((s: number, r: any) => s + Number(r.valor), 0);
-    const totalDespesasPrev = despesasPrev.reduce((s: number, d: any) => s + Number(d.valor), 0);
-    const totalFolha = folha.reduce((s: number, f: any) => s + Number(f.total_receber), 0);
+    const receitas = (receitasRes.data || []) as ReceitaRow[];
+    const despesas = (despesasRes.data || []) as DespesaRow[];
+    const receitasPrev = (receitasPrevRes.data || []) as ReceitaPrevRow[];
+    const despesasPrev = (despesasPrevRes.data || []) as DespesaPrevRow[];
+    const projetos = (projetosRes.data || []) as ProjetoRow[];
+    const folha = (folhaRes.data || []) as FolhaRow[];
+    const leads = (leadsRes.data || []) as LeadRow[];
+    const futuras = (despesasFuturas.data || []) as DespesaFuturaRow[];
+
+    const totalReceitas = receitas.reduce((s: number, r) => s + Number(r.valor), 0);
+    const totalReceitasRecebidas = receitas.filter((r) => r.status === "Recebido").reduce((s: number, r) => s + Number(r.valor), 0);
+    const totalDespesas = despesas.reduce((s: number, d) => s + Number(d.valor), 0);
+    const totalDespesasPagas = despesas.filter((d) => d.status === "Pago").reduce((s: number, d) => s + Number(d.valor), 0);
+    const totalReceitasPrev = receitasPrev.reduce((s: number, r) => s + Number(r.valor), 0);
+    const totalDespesasPrev = despesasPrev.reduce((s: number, d) => s + Number(d.valor), 0);
+    const totalFolha = folha.reduce((s: number, f) => s + Number(f.total_receber), 0);
     const leadsNovos = leads.length;
-    const leadsGanhos = leads.filter((l: any) => l.status === "Ganho").length;
-    const despesasFuturasTotal = futuras.reduce((s: number, d: any) => s + Number(d.valor), 0);
+    const leadsGanhos = leads.filter((l) => l.status === "Ganho").length;
+    const despesasFuturasTotal = futuras.reduce((s: number, d) => s + Number(d.valor), 0);
 
     const contexto = `
 DADOS FINANCEIROS - ${String(targetMes).padStart(2, "0")}/${targetAno}:
@@ -101,14 +110,14 @@ MÊS ANTERIOR (${String(prevMes).padStart(2, "0")}/${prevAno}):
 - Despesas: R$ ${totalDespesasPrev.toFixed(2)}
 
 PROJETOS ATIVOS: ${projetos.length}
-${projetos.slice(0, 10).map((p: any) => `- ${p.nome} (${p.status}, contrato: R$ ${p.valor_contrato || 0})`).join("\n")}
+${projetos.slice(0, 10).map((p) => `- ${p.nome} (${p.status}, contrato: R$ ${p.valor_contrato || 0})`).join("\n")}
 
 PIPELINE:
 - Leads novos no mês: ${leadsNovos}
 - Leads convertidos: ${leadsGanhos}
 
 DESPESAS FUTURAS (próximos 60 dias): R$ ${despesasFuturasTotal.toFixed(2)}
-${futuras.slice(0, 5).map((d: any) => `- ${d.descricao}: R$ ${d.valor} (${d.data_vencimento})`).join("\n")}
+${futuras.slice(0, 5).map((d) => `- ${d.descricao}: R$ ${d.valor} (${d.data_vencimento})`).join("\n")}
 `.trim();
 
     const aiRequest: AiRequest = {

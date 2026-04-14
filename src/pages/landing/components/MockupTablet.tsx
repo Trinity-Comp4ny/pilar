@@ -276,7 +276,7 @@ function ProjetosTab() {
               </Badge>
             </div>
             <div className="p-3 space-y-3 overflow-y-auto flex-1 custom-scrollbar">
-              {col.items.map((item: any, idx) => (
+              {col.items.map((item, idx) => (
                 <Card key={idx} className="cursor-pointer hover:shadow-md transition-all hover:-translate-y-1 border-gray-100">
                   <CardContent className="p-4 space-y-3">
                     <div className="flex justify-between items-start">

@@ -14,8 +14,17 @@ export default function PortalTimeline() {
   );
 }
 
+interface Disciplina {
+  disciplina: string;
+  status?: string;
+  data_inicio?: string;
+  data_previsao?: string;
+  data_final?: string;
+  responsavel_nome?: string;
+}
+
 function TimelineContent({ projetoId }: { projetoId: string }) {
-  const [disciplinas, setDisciplinas] = useState<any[]>([]);
+  const [disciplinas, setDisciplinas] = useState<Disciplina[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -34,7 +43,7 @@ function TimelineContent({ projetoId }: { projetoId: string }) {
   if (loading) return <div className="flex justify-center py-8"><Loader2 className="h-5 w-5 animate-spin" /></div>;
 
   const total = disciplinas.length;
-  const concluidas = disciplinas.filter((d: any) => d.status === "Concluído").length;
+  const concluidas = disciplinas.filter((d) => d.status === "Concluído").length;
   const progress = total > 0 ? Math.round((concluidas / total) * 100) : 0;
 
   const formatDate = (d: string | undefined) => d ? new Date(d + "T00:00:00").toLocaleDateString("pt-BR") : "—";
@@ -53,7 +62,7 @@ function TimelineContent({ projetoId }: { projetoId: string }) {
         <CardContent className="p-6">
           <h3 className="text-sm font-semibold mb-4">Etapas do Projeto</h3>
           <div className="relative">
-            {disciplinas.map((d: any, i: number) => {
+            {disciplinas.map((d, i) => {
               const isConcluido = d.status === "Concluído";
               const isAndamento = d.status === "Em Andamento";
               return (

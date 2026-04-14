@@ -2,7 +2,18 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { subMonths, startOfMonth, endOfMonth } from "date-fns";
 import { getDisplayDate } from "@/lib/dateUtils";
+import type { Tables } from "@/integrations/supabase/types";
 
+type CategoriaFinanceira = Tables<"categorias_financeiras">;
+type ReceitaRow = Tables<"receitas">;
+type DespesaRow = Tables<"despesas">;
+
+type CategoriaSelect = Pick<CategoriaFinanceira, "id" | "nome" | "tipo">;
+type ReceitaWithCategoria = ReceitaRow & { categorias_financeiras?: CategoriaSelect };
+type DespesaWithCategoria = DespesaRow & { categorias_financeiras?: CategoriaSelect };
+
+type ReceitaChartItem = Pick<ReceitaRow, "valor" | "data_recebimento" | "data_vencimento">;
+type DespesaChartItem = Pick<DespesaRow, "valor" | "data_pagamento" | "data_vencimento">;
 export const useFinanceData = (dateFrom?: Date, dateTo?: Date) => {
   return useQuery({
     queryKey: ["finance-data", dateFrom, dateTo],
@@ -17,7 +28,7 @@ export const useFinanceData = (dateFrom?: Date, dateTo?: Date) => {
         .from('categorias_financeiras')
         .select('id, nome, tipo');
 
-      const categoriesMap = new Map(categoriesData?.map((c: any) => [c.id, c]) || []);
+      const categoriesMap = new Map<string, CategoriaSelect>(categoriesData?.map((c) => [c.id, c]) || []);
 
       let receitasQuery = supabase
         .from("receitas")
@@ -31,9 +42,9 @@ export const useFinanceData = (dateFrom?: Date, dateTo?: Date) => {
       const { data: receitasRaw, error: receitasError } = await receitasQuery;
       if (receitasError) throw receitasError;
 
-      const receitas = receitasRaw?.map((r: any) => ({
+      const receitas: ReceitaWithCategoria[] | undefined = receitasRaw?.map((r) => ({
         ...r,
-        categorias_financeiras: categoriesMap.get(r.categoria_id)
+        categorias_financeiras: r.categoria_id ? categoriesMap.get(r.categoria_id) : undefined
       }));
 
       const { data: receitasChartAllRaw, error: receitasChartAllError } = await supabase
@@ -61,9 +72,9 @@ export const useFinanceData = (dateFrom?: Date, dateTo?: Date) => {
       const { data: despesasRaw, error: despesasError } = await despesasQuery;
       if (despesasError) throw despesasError;
 
-      const despesas = despesasRaw?.map((d: any) => ({
+      const despesas: DespesaWithCategoria[] | undefined = despesasRaw?.map((d) => ({
         ...d,
-        categorias_financeiras: categoriesMap.get(d.categoria_id)
+        categorias_financeiras: d.categoria_id ? categoriesMap.get(d.categoria_id) : undefined
       }));
 
       const { data: despesasChartAllRaw, error: despesasChartAllError } = await supabase
@@ -140,7 +151,7 @@ export const useFinanceData = (dateFrom?: Date, dateTo?: Date) => {
       const categoriaData = processCategoryData(receitasMain, 'receitas');
       const despesasCategoriaData = processCategoryData(despesasMain, 'despesas');
 
-      const formattedProjects: any[] = [];
+      const formattedProjects: never[] = [];
 
       return {
         stats: {
@@ -165,10 +176,18 @@ export const useFinanceData = (dateFrom?: Date, dateTo?: Date) => {
   });
 };
 
-const processChartData = (receitas: any[], despesas: any[]) => {
+interface ChartItem {
+  valor: number;
+  data_recebimento?: string | null;
+  data_pagamento?: string | null;
+  data_vencimento: string;
+  status?: string;
+}
+
+const processChartData = (receitas: ReceitaChartItem[], despesas: DespesaChartItem[]) => {
   const monthsMap = new Map<string, { mes: string; receitas: number; despesas: number; sortKey: string }>();
 
-  const processItem = (item: any, type: 'receitas' | 'despesas', dateField: string) => {
+  const processItem = (item: ChartItem, type: 'receitas' | 'despesas', dateField: string) => {
     const displayDate = getDisplayDate(
       dateField === 'data_recebimento' ? item.data_recebimento : null,
       dateField === 'data_pagamento' ? item.data_pagamento : item.data_vencimento,
@@ -196,7 +215,7 @@ const processChartData = (receitas: any[], despesas: any[]) => {
   return Array.from(monthsMap.values()).sort((a, b) => a.sortKey.localeCompare(b.sortKey));
 };
 
-const processDailyChartData = (receitas: any[], despesas: any[], start: Date, end: Date) => {
+const processDailyChartData = (receitas: ReceitaWithCategoria[], despesas: DespesaWithCategoria[], start: Date, end: Date) => {
   const daysMap = new Map<string, { dia: string; receitas: number; despesas: number }>();
 
   for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
@@ -207,12 +226,8 @@ const processDailyChartData = (receitas: any[], despesas: any[], start: Date, en
     }
   }
 
-  const processItem = (item: any, type: 'receitas' | 'despesas', dateField: string) => {
-    const displayDate = getDisplayDate(
-      dateField === 'data_recebimento' ? item.data_recebimento : null,
-      dateField === 'data_pagamento' ? item.data_pagamento : item.data_vencimento,
-      item.status
-    );
+  const processReceitaItem = (item: ReceitaWithCategoria) => {
+    const displayDate = getDisplayDate(item.data_recebimento, item.data_vencimento, item.status);
     if (!displayDate) return;
 
     const date = new Date(displayDate);
@@ -220,18 +235,32 @@ const processDailyChartData = (receitas: any[], despesas: any[], start: Date, en
       const key = date.toISOString().split('T')[0];
       const current = daysMap.get(key);
       if (current) {
-        current[type] += Number(item.valor);
+        current.receitas += Number(item.valor);
       }
     }
   };
 
-  receitas.forEach(r => processItem(r, 'receitas', 'data_recebimento'));
-  despesas.forEach(d => processItem(d, 'despesas', 'data_pagamento'));
+  const processDespesaItem = (item: DespesaWithCategoria) => {
+    const displayDate = getDisplayDate(item.data_pagamento, item.data_vencimento, item.status);
+    if (!displayDate) return;
+
+    const date = new Date(displayDate);
+    if (date >= start && date <= end) {
+      const key = date.toISOString().split('T')[0];
+      const current = daysMap.get(key);
+      if (current) {
+        current.despesas += Number(item.valor);
+      }
+    }
+  };
+
+  receitas.forEach(r => processReceitaItem(r));
+  despesas.forEach(d => processDespesaItem(d));
 
   return Array.from(daysMap.entries()).sort().map(([_, val]) => val);
 };
 
-const processCategoryData = (items: any[], type: 'receitas' | 'despesas' = 'receitas') => {
+const processCategoryData = (items: (ReceitaWithCategoria | DespesaWithCategoria)[], type: 'receitas' | 'despesas' = 'receitas') => {
   const categoryMap = new Map<string, { name: string; value: number; color: string }>();
 
   const greenShades = ["#16a34a", "#22c55e", "#4ade80", "#15803d", "#14532d", "#86efac", "#bbf7d0", "#86efac"];

@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import type { Json } from "@/integrations/supabase/types";
 
 export interface AiInsight {
   id: string;
@@ -7,7 +8,7 @@ export interface AiInsight {
   tipo: string;
   referencia_id: string | null;
   referencia_tipo: string | null;
-  conteudo: any;
+  conteudo: Json;
   resumo: string | null;
   status: string;
   mes_referencia: number | null;
@@ -159,7 +160,7 @@ export const useGenerateInsight = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ tipo, params }: { tipo: AiTipo; params?: any }) => {
+    mutationFn: async ({ tipo, params }: { tipo: AiTipo; params?: Record<string, unknown> }) => {
       const config = AI_TIPOS[tipo];
 
       const { data, error } = await supabase.functions.invoke(config.edgeFunction, {

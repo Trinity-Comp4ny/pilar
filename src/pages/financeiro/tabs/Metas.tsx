@@ -71,7 +71,7 @@ export default function Metas() {
       setNovaMeta({ nome: "", alvo: "", atual: "", prazo: "", categoria: "receita" });
       toast({ title: "Meta criada", description: "Nova meta financeira estabelecida com sucesso." });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({ title: "Erro ao criar meta", description: error.message, variant: "destructive" });
     }
   });
@@ -94,7 +94,7 @@ export default function Metas() {
       setEditingMeta(null);
       toast({ title: "Meta atualizada", description: "Meta financeira foi atualizada com sucesso." });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({ title: "Erro ao atualizar meta", description: error.message, variant: "destructive" });
     }
   });
@@ -111,7 +111,7 @@ export default function Metas() {
       setMetaToDelete(null);
       toast({ title: "Meta excluída", description: "Meta financeira foi removida com sucesso." });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({ title: "Erro ao excluir meta", description: error.message, variant: "destructive" });
     }
   });
@@ -151,10 +151,6 @@ export default function Metas() {
     if (metaToDelete) {
       deleteMetaMutation.mutate(metaToDelete);
     }
-  };
-
-  const getProgressColor = (percent: number) => {
-    return "bg-green-500";
   };
 
   const getIcon = (categoria: string) => {

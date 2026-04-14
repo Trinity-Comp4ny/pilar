@@ -69,8 +69,8 @@ export default function ResumoMensal({ dateFrom, dateTo }: ResumoMensalProps) {
   const hasChartData = chartDataDiario.some(item => item.receitas > 0 || item.despesas > 0);
 
   // Calculate totals for top 5 to display
-  const totalTopReceitas = topTransactions?.receitas.reduce((acc: number, curr: any) => acc + Number(curr.valor), 0) || 0;
-  const totalTopDespesas = topTransactions?.despesas.reduce((acc: number, curr: any) => acc + Number(curr.valor), 0) || 0;
+  const totalTopReceitas = topTransactions?.receitas.reduce((acc: number, curr) => acc + Number(curr.valor), 0) || 0;
+  const totalTopDespesas = topTransactions?.despesas.reduce((acc: number, curr) => acc + Number(curr.valor), 0) || 0;
 
   // Format currency
   const formatCurrency = (val: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
@@ -169,7 +169,7 @@ export default function ResumoMensal({ dateFrom, dateTo }: ResumoMensalProps) {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {topTransactions?.receitas.map((item: any, idx: number) => (
+              {topTransactions?.receitas.map((item, idx) => (
                 <div key={idx} className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-100 hover:bg-green-100 transition-colors">
                   <div className="flex-1">
                     <p className="text-sm font-medium text-gray-900">{item.descricao}</p>
@@ -201,7 +201,7 @@ export default function ResumoMensal({ dateFrom, dateTo }: ResumoMensalProps) {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {topTransactions?.despesas.map((item: any, idx: number) => (
+              {topTransactions?.despesas.map((item, idx) => (
                 <div key={idx} className="flex items-center justify-between p-3 bg-red-50 rounded-lg border border-red-100 hover:bg-red-100 transition-colors">
                   <div className="flex-1">
                     <p className="text-sm font-medium text-gray-900">{item.descricao}</p>

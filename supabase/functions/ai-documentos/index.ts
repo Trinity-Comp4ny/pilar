@@ -9,6 +9,18 @@ import {
   type AiRequest,
 } from "../_shared/ai-client.ts";
 
+interface TimesheetRow {
+  horas: number | null;
+  pessoas: { nome: string; cargo: string } | null;
+}
+
+interface MarcoRow {
+  descricao: string;
+  valor: number;
+  status: string;
+  data_prevista: string;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -58,7 +70,7 @@ serve(async (req) => {
         .limit(50),
     ]);
 
-    const horasTotais = (timesheets || []).reduce((s: number, t: any) => s + (t.horas || 0), 0);
+    const horasTotais = (timesheets || []).reduce((s: number, t: TimesheetRow) => s + (t.horas || 0), 0);
 
     const contexto = `
 PROJETO: ${projeto.nome}
@@ -72,10 +84,10 @@ Disciplinas: ${projeto.disciplinas?.join(", ") || "N/A"}
 Escopo: ${projeto.escopo || "N/A"}
 
 MARCOS DO PROJETO:
-${(marcos || []).map((m: any) => `- ${m.descricao}: R$ ${m.valor} (${m.status}) - previsto: ${m.data_prevista}`).join("\n") || "Nenhum marco registrado"}
+${(marcos || []).map((m: MarcoRow) => `- ${m.descricao}: R$ ${m.valor} (${m.status}) - previsto: ${m.data_prevista}`).join("\n") || "Nenhum marco registrado"}
 
 HORAS REGISTRADAS: ${horasTotais}h
-Equipe envolvida: ${[...new Set((timesheets || []).map((t: any) => t.pessoas?.nome).filter(Boolean))].join(", ") || "N/A"}
+Equipe envolvida: ${[...new Set((timesheets || []).map((t: TimesheetRow) => t.pessoas?.nome).filter(Boolean))].join(", ") || "N/A"}
 
 TIPO DE DOCUMENTO SOLICITADO: ${tipo_documento}
 `.trim();

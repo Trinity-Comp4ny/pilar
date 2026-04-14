@@ -36,10 +36,15 @@ serve(async (req) => {
       .eq("status", "aprovado")
       .is("deleted_at", null);
 
-    const horasPorProjeto = (timesheets || []).reduce((acc: any, t: any) => {
+    interface TimesheetRow { projeto_id: string; horas: number }
+    interface ReceitaRow { projeto_id: string; valor: number; status: string }
+    interface ProjetoRow { id: string; nome: string; codigo_projeto: string; status: string; data_inicio: string | null; data_previsao: string | null; data_final: string | null; valor_contrato: number | null; disciplinas: Array<{ status?: string }> | null }
+    interface ProjetoConcluidoRow { data_inicio: string | null; data_previsao: string | null; data_final: string | null }
+
+    const horasPorProjeto = ((timesheets || []) as TimesheetRow[]).reduce((acc: Record<string, number>, t) => {
       acc[t.projeto_id] = (acc[t.projeto_id] || 0) + Number(t.horas);
       return acc;
-    }, {});
+    }, {} as Record<string, number>);
 
     // Busca receitas por projeto
     const { data: receitas } = await adminClient
@@ -48,12 +53,12 @@ serve(async (req) => {
       .eq("empresa_id", empresaId)
       .is("deleted_at", null);
 
-    const receitasPorProjeto = (receitas || []).reduce((acc: any, r: any) => {
+    const receitasPorProjeto = ((receitas || []) as ReceitaRow[]).reduce((acc: Record<string, { total: number; recebido: number }>, r) => {
       if (!acc[r.projeto_id]) acc[r.projeto_id] = { total: 0, recebido: 0 };
       acc[r.projeto_id].total += Number(r.valor);
       if (r.status === "Recebido") acc[r.projeto_id].recebido += Number(r.valor);
       return acc;
-    }, {});
+    }, {} as Record<string, { total: number; recebido: number }>);
 
     // Projetos concluídos para histórico
     const { data: concluidos } = await adminClient
@@ -64,18 +69,20 @@ serve(async (req) => {
       .is("deleted_at", null)
       .limit(50);
 
-    const taxaAtraso = (concluidos || []).filter((p: any) => p.data_final && p.data_previsao && new Date(p.data_final) > new Date(p.data_previsao)).length / Math.max((concluidos || []).length, 1) * 100;
+    const concluidosList = (concluidos || []) as ProjetoConcluidoRow[];
+    const taxaAtraso = concluidosList.filter((p) => p.data_final && p.data_previsao && new Date(p.data_final) > new Date(p.data_previsao)).length / Math.max(concluidosList.length, 1) * 100;
 
+    const projetosList = (projetos || []) as ProjetoRow[];
     const contexto = `
-PROJETOS ATIVOS (${(projetos || []).length}):
-${(projetos || []).map((p: any) => {
+PROJETOS ATIVOS (${projetosList.length}):
+${projetosList.map((p) => {
   const disc = Array.isArray(p.disciplinas) ? p.disciplinas : [];
-  const concluidas = disc.filter((d: any) => d.status === "Concluído").length;
+  const concluidas = disc.filter((d) => d.status === "Concluído").length;
   const rec = receitasPorProjeto[p.id] || { total: 0, recebido: 0 };
   return `- ${p.codigo_projeto} "${p.nome}": status=${p.status}, início=${p.data_inicio || "?"}, previsão=${p.data_previsao || "?"}, contrato=R$${p.valor_contrato || 0}, disciplinas=${concluidas}/${disc.length} concluídas, horas=${horasPorProjeto[p.id] || 0}h, receitas=R$${rec.recebido}/R$${rec.total}`;
 }).join("\n")}
 
-HISTÓRICO: Taxa de atraso em projetos concluídos: ${taxaAtraso.toFixed(0)}% (${(concluidos || []).length} projetos)
+HISTÓRICO: Taxa de atraso em projetos concluídos: ${taxaAtraso.toFixed(0)}% (${concluidosList.length} projetos)
 `.trim();
 
     const aiRequest: AiRequest = {

@@ -1,6 +1,34 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
+interface ReceitaHealth {
+  valor: number;
+  status: string;
+  cliente_id: string | null;
+  data_vencimento: string;
+  data_recebimento: string | null;
+  projeto_id: string | null;
+}
+
+interface DespesaHealth {
+  valor: number;
+  status: string;
+  projeto_id: string | null;
+}
+
+interface ProjetoAtivo {
+  id: string;
+  status: string;
+  data_previsao: string | null;
+  data_final: string | null;
+}
+
+interface ProjetoConcluido {
+  id: string;
+  data_previsao: string | null;
+  data_final: string | null;
+}
+
 export interface HealthBreakdown {
   margem: number;          // 0-100
   previsibilidade: number; // 0-100
@@ -50,18 +78,18 @@ export const useHealthIndex = () => {
         supabase.from("projetos").select("id, data_previsao, data_final").is("deleted_at", null).eq("status", "Concluído"),
       ]);
 
-      const receitas = receitasRes.data || [];
-      const despesas = despesasRes.data || [];
-      const projetosAtivos = projetosRes.data || [];
-      const projetosConcluidos = projetosConcRes.data || [];
+      const receitas = (receitasRes.data || []) as ReceitaHealth[];
+      const despesas = (despesasRes.data || []) as DespesaHealth[];
+      const projetosAtivos = (projetosRes.data || []) as ProjetoAtivo[];
+      const projetosConcluidos = (projetosConcRes.data || []) as ProjetoConcluido[];
 
       // 1. MARGEM (25%) - Margem média dos projetos com receita
       const receitasPorProjeto: Record<string, number> = {};
       const despesasPorProjeto: Record<string, number> = {};
-      receitas.forEach((r: any) => {
+      receitas.forEach((r) => {
         if (r.projeto_id) receitasPorProjeto[r.projeto_id] = (receitasPorProjeto[r.projeto_id] || 0) + Number(r.valor);
       });
-      despesas.forEach((d: any) => {
+      despesas.forEach((d) => {
         if (d.projeto_id) despesasPorProjeto[d.projeto_id] = (despesasPorProjeto[d.projeto_id] || 0) + Number(d.valor);
       });
 
@@ -81,8 +109,8 @@ export const useHealthIndex = () => {
       // 2. PREVISIBILIDADE (20%) - % projetos entregues no prazo (últimos 12 meses)
       const umAnoAtras = new Date();
       umAnoAtras.setFullYear(umAnoAtras.getFullYear() - 1);
-      const recentes = projetosConcluidos.filter((p: any) => p.data_final && new Date(p.data_final) >= umAnoAtras);
-      const noPrazo = recentes.filter((p: any) => p.data_previsao && new Date(p.data_final) <= new Date(p.data_previsao));
+      const recentes = projetosConcluidos.filter((p) => p.data_final && new Date(p.data_final) >= umAnoAtras);
+      const noPrazo = recentes.filter((p) => p.data_previsao && p.data_final && new Date(p.data_final) <= new Date(p.data_previsao));
       const scorePrevisibilidade = recentes.length > 0 ? (noPrazo.length / recentes.length) * 100 : 50;
 
       // 3. OCIOSIDADE (15%) - Invertido: mais ociosos = menor score
@@ -91,7 +119,7 @@ export const useHealthIndex = () => {
       const scoreOciosidade = 70;
 
       // 4. ATRASOS (15%) - % projetos ativos SEM atraso
-      const atrasados = projetosAtivos.filter((p: any) =>
+      const atrasados = projetosAtivos.filter((p) =>
         p.data_previsao && !p.data_final && new Date(p.data_previsao) < new Date()
       ).length;
       const scoreAtrasos = projetosAtivos.length > 0
@@ -99,20 +127,20 @@ export const useHealthIndex = () => {
         : 100;
 
       // 5. INADIMPLÊNCIA (15%) - % receitas NÃO atrasadas
-      const receitasPendentes = receitas.filter((r: any) => r.status === "Pendente");
-      const receitasAtrasadas = receitasPendentes.filter((r: any) =>
+      const receitasPendentes = receitas.filter((r) => r.status === "Pendente");
+      const receitasAtrasadas = receitasPendentes.filter((r) =>
         r.data_vencimento && new Date(r.data_vencimento) < new Date()
       );
-      const valorAtrasado = receitasAtrasadas.reduce((s: number, r: any) => s + Number(r.valor), 0);
-      const valorPendente = receitasPendentes.reduce((s: number, r: any) => s + Number(r.valor), 0);
+      const valorAtrasado = receitasAtrasadas.reduce((s, r) => s + Number(r.valor), 0);
+      const valorPendente = receitasPendentes.reduce((s, r) => s + Number(r.valor), 0);
       const scoreInadimplencia = valorPendente > 0
         ? ((valorPendente - valorAtrasado) / valorPendente) * 100
         : 100;
 
       // 6. CONCENTRAÇÃO DE CLIENTES (10%) - HHI invertido
       const receitaPorCliente: Record<string, number> = {};
-      const totalReceita = receitas.reduce((s: number, r: any) => s + Number(r.valor), 0);
-      receitas.forEach((r: any) => {
+      const totalReceita = receitas.reduce((s, r) => s + Number(r.valor), 0);
+      receitas.forEach((r) => {
         const cid = r.cliente_id || "sem_cliente";
         receitaPorCliente[cid] = (receitaPorCliente[cid] || 0) + Number(r.valor);
       });
