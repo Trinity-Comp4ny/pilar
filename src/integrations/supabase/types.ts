@@ -426,7 +426,7 @@ export type Database = {
           dia_fechamento: number | null
           dia_vencimento: number | null
           limite: number
-          usado: number
+          conta_pagamento_id: string | null
           cor: string | null
           created_at: string
           updated_at: string
@@ -439,7 +439,7 @@ export type Database = {
           dia_fechamento?: number | null
           dia_vencimento?: number | null
           limite: number
-          usado?: number
+          conta_pagamento_id?: string | null
           cor?: string | null
           created_at?: string
           updated_at?: string
@@ -452,7 +452,7 @@ export type Database = {
           dia_fechamento?: number | null
           dia_vencimento?: number | null
           limite?: number
-          usado?: number
+          conta_pagamento_id?: string | null
           cor?: string | null
           created_at?: string
           updated_at?: string
@@ -746,6 +746,84 @@ export type Database = {
           }
         ]
       }
+      faturas: {
+        Row: {
+          id: string
+          empresa_id: string
+          cartao_id: string
+          mes_referencia: number
+          ano_referencia: number
+          data_inicio: string
+          data_fim: string
+          data_vencimento: string
+          valor_total: number
+          valor_pago: number
+          status: string
+          conta_pagamento_id: string | null
+          data_pagamento: string | null
+          created_by: string | null
+          updated_by: string | null
+          created_at: string
+          updated_at: string
+          deleted_at: string | null
+        }
+        Insert: {
+          id?: string
+          empresa_id: string
+          cartao_id: string
+          mes_referencia: number
+          ano_referencia: number
+          data_inicio: string
+          data_fim: string
+          data_vencimento: string
+          valor_total?: number
+          valor_pago?: number
+          status?: string
+          conta_pagamento_id?: string | null
+          data_pagamento?: string | null
+          created_by?: string | null
+          updated_by?: string | null
+          created_at?: string
+          updated_at?: string
+          deleted_at?: string | null
+        }
+        Update: {
+          id?: string
+          empresa_id?: string
+          cartao_id?: string
+          mes_referencia?: number
+          ano_referencia?: number
+          data_inicio?: string
+          data_fim?: string
+          data_vencimento?: string
+          valor_total?: number
+          valor_pago?: number
+          status?: string
+          conta_pagamento_id?: string | null
+          data_pagamento?: string | null
+          created_by?: string | null
+          updated_by?: string | null
+          created_at?: string
+          updated_at?: string
+          deleted_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "faturas_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "faturas_cartao_id_fkey"
+            columns: ["cartao_id"]
+            isOneToOne: false
+            referencedRelation: "cartoes_credito"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       despesas: {
         Row: {
           id: string
@@ -760,6 +838,7 @@ export type Database = {
           categoria_id: string | null
           conta_id: string | null
           cartao_id: string | null
+          fatura_id: string | null
           nota_fiscal: string | null
           observacao: string | null
           created_by: string | null
@@ -781,6 +860,7 @@ export type Database = {
           categoria_id?: string | null
           conta_id?: string | null
           cartao_id?: string | null
+          fatura_id?: string | null
           nota_fiscal?: string | null
           observacao?: string | null
           created_by?: string | null
@@ -802,6 +882,7 @@ export type Database = {
           categoria_id?: string | null
           conta_id?: string | null
           cartao_id?: string | null
+          fatura_id?: string | null
           nota_fiscal?: string | null
           observacao?: string | null
           created_by?: string | null
@@ -940,6 +1021,12 @@ export type Database = {
           atual: number
           prazo: string | null
           categoria: string | null
+          tipo: string
+          pessoa_id: string | null
+          projeto_id: string | null
+          empresa_id: string | null
+          descricao: string | null
+          unidade: string
           created_at: string
         }
         Insert: {
@@ -949,6 +1036,12 @@ export type Database = {
           atual?: number
           prazo?: string | null
           categoria?: string | null
+          tipo?: string
+          pessoa_id?: string | null
+          projeto_id?: string | null
+          empresa_id?: string | null
+          descricao?: string | null
+          unidade?: string
           created_at?: string
         }
         Update: {
@@ -958,13 +1051,88 @@ export type Database = {
           atual?: number
           prazo?: string | null
           categoria?: string | null
+          tipo?: string
+          pessoa_id?: string | null
+          projeto_id?: string | null
+          empresa_id?: string | null
+          descricao?: string | null
+          unidade?: string
           created_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "metas_pessoa_id_fkey"
+            columns: ["pessoa_id"]
+            isOneToOne: false
+            referencedRelation: "pessoas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "metas_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "metas_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          }
+        ]
       }
     }
     Views: {
-      [_ in never]: never
+      view_financas_resumo: {
+        Row: {
+          conta_id: string
+          conta_nome: string
+          banco: string
+          cor: string | null
+          empresa_id: string
+          saldo_inicial: number
+          total_entradas: number
+          total_saidas: number
+          saldo_atual: number
+        }
+      }
+      view_cartao_resumo: {
+        Row: {
+          id: string
+          nome: string
+          empresa_id: string
+          dia_fechamento: number
+          dia_vencimento: number
+          cor: string | null
+          limite: number
+          conta_pagamento_id: string | null
+          usado: number
+          disponivel: number
+        }
+      }
+      view_fatura_resumo: {
+        Row: {
+          id: string
+          empresa_id: string
+          cartao_id: string
+          cartao_nome: string
+          cartao_cor: string | null
+          mes_referencia: number
+          ano_referencia: number
+          data_inicio: string
+          data_fim: string
+          data_vencimento: string
+          status: string
+          data_pagamento: string | null
+          conta_pagamento_id: string | null
+          conta_pagamento_nome: string | null
+          valor_total: number
+          valor_pago: number
+          qtd_despesas: number
+        }
+      }
     }
     Functions: {
       get_user_empresa_id: {
@@ -975,11 +1143,24 @@ export type Database = {
         Args: { required_roles: string[] }
         Returns: boolean
       }
+      gerar_fatura: {
+        Args: { p_cartao_id: string; p_mes: number; p_ano: number }
+        Returns: string
+      }
+      pagar_fatura: {
+        Args: {
+          p_fatura_id: string
+          p_conta_id: string
+          p_valor_pago?: number | null
+          p_data_pagamento?: string | null
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       status_empresa: "active" | "suspended" | "cancelled"
       user_role: "admin" | "financeiro" | "marketing" | "operacional" | "user"
-      status_projeto: "Planejamento" | "Em andamento" | "Paralisado" | "Concluído" | "Cancelado"
+      status_projeto: "Planejamento" | "Em andamento" | "Revisão" | "Paralisado" | "Concluído" | "Cancelado"
       status_financeiro: "Pendente" | "Pago" | "Recebido" | "Atrasado" | "Cancelado"
       tipo_categoria: "Receita" | "Despesa"
       status_lead: "Novo" | "Em contato" | "Proposta" | "Negociação" | "Ganho" | "Perdido"
@@ -1112,7 +1293,7 @@ export const Constants = {
     Enums: {
       status_empresa: ["active", "suspended", "cancelled"],
       user_role: ["admin", "financeiro", "marketing", "operacional", "user"],
-      status_projeto: ["Planejamento", "Em andamento", "Paralisado", "Concluído", "Cancelado"],
+      status_projeto: ["Planejamento", "Em andamento", "Revisão", "Paralisado", "Concluído", "Cancelado"],
       status_financeiro: ["Pendente", "Pago", "Recebido", "Atrasado", "Cancelado"],
       tipo_categoria: ["Receita", "Despesa"],
       status_lead: ["Novo", "Em contato", "Proposta", "Negociação", "Ganho", "Perdido"],

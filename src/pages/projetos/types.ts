@@ -27,6 +27,16 @@ export interface DisciplinaResponsavel {
   prioridade?: ProjectPriority;
   observacoes?: DisciplinaObservacao[];
   responsaveis?: ResponsavelDatas[];
+  justificativa_atraso?: string;
+}
+
+export function isDiscAtrasada(disc: DisciplinaResponsavel): boolean {
+  if (disc.status === "Concluído") return false;
+  if (!disc.data_previsao) return false;
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+  const previsao = new Date(disc.data_previsao + "T00:00:00");
+  return previsao < hoje;
 }
 
 export const getResponsaveisList = (disc: DisciplinaResponsavel): ResponsavelDatas[] => {
