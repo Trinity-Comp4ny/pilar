@@ -8,8 +8,10 @@ import { useToast } from "@/hooks/use-toast";
 import { getSafeErrorMessage } from "@/lib/safeError";
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, ArrowRight, Loader2, Lock, Phone, User } from "lucide-react";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 export default function ProfileSetup() {
+  usePageTitle("Configuração do Perfil");
   const [isLoading, setIsLoading] = useState(false);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");

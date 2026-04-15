@@ -7,8 +7,10 @@ import MetasDashboard from "./tabs/MetasDashboard";
 import MetasFinanceiras from "./tabs/MetasFinanceiras";
 import MetasPessoais from "./tabs/MetasPessoais";
 import MetasProjetos from "./tabs/MetasProjetos";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 export default function MetasPage() {
+  usePageTitle("Metas");
   const { state, isMobile } = useSidebar();
   const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState("dashboard");

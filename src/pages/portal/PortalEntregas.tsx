@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Loader2, FileCheck, CheckCircle2, RotateCcw, FileText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { PortalShell } from "./PortalShell";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 interface Entrega {
   id: string;
@@ -25,6 +26,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
 };
 
 export default function PortalEntregas() {
+  usePageTitle("Portal | Entregas");
   return <PortalShell>{(data) => <EntregasContent projetoId={data.projeto_id} />}</PortalShell>;
 }
 

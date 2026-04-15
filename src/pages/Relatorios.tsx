@@ -31,6 +31,7 @@ import { getSafeErrorMessage } from "@/lib/safeError";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from "recharts";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 interface ReportRow {
   Tipo: string;
@@ -97,6 +98,7 @@ function parseDDMMYYYY(str: string): Date | null {
 }
 
 export default function Relatorios() {
+  usePageTitle("Relatórios");
   const [tipoRelatorio, setTipoRelatorio] = useState("");
   const [dateFrom, setDateFrom] = useState<Date>();
   const [dateTo, setDateTo] = useState<Date>();

@@ -5,6 +5,7 @@ import { Loader2, FolderKanban, ArrowRight } from "lucide-react";
 import { ClienteShell } from "./ClienteShell";
 import { useClienteProjetos, type ClienteProjeto } from "./useClienteProjetos";
 import type { ClienteAccount } from "./useClienteAuth";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 const STATUS_COLORS: Record<string, string> = {
   Planejamento: "bg-blue-100 text-blue-800",
@@ -27,6 +28,7 @@ function formatDate(d: string | null): string {
 }
 
 export default function ClienteDashboard() {
+  usePageTitle("Portal | Dashboard");
   const account = useOutletContext<ClienteAccount>();
   const { projetos, loading, error } = useClienteProjetos();
 
