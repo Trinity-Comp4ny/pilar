@@ -9,6 +9,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { type DisciplinaResponsavel } from "@/pages/projetos/types";
+import { formatCurrency } from "@/lib/currencyUtils";
 
 interface ProjectBudgetTabProps {
   projetoId: string;
@@ -129,9 +130,6 @@ export function ProjectBudgetTab({ projetoId, canEdit, disciplinas }: ProjectBud
   const totalCusto = orcamentos.reduce((s, o) => s + (o.custo_estimado || 0), 0);
   const totalVenda = orcamentos.reduce((s, o) => s + (o.valor_venda || 0), 0);
   const totalHoras = orcamentos.reduce((s, o) => s + (o.horas_estimadas || 0), 0);
-
-  const formatCurrency = (v: number) =>
-    new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
 
   if (isLoading) {
     return (

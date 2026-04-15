@@ -654,6 +654,9 @@ export type Database = {
           nota_fiscal: string | null;
           forma_pagamento: string | null;
           observacao: string | null;
+          grupo_parcela: string | null;
+          parcela_numero: number | null;
+          parcela_total: number | null;
           created_by: string | null;
           updated_by: string | null;
           created_at: string;
@@ -675,6 +678,9 @@ export type Database = {
           nota_fiscal?: string | null;
           forma_pagamento?: string | null;
           observacao?: string | null;
+          grupo_parcela?: string | null;
+          parcela_numero?: number | null;
+          parcela_total?: number | null;
           created_by?: string | null;
           updated_by?: string | null;
           created_at?: string;
@@ -696,6 +702,9 @@ export type Database = {
           nota_fiscal?: string | null;
           forma_pagamento?: string | null;
           observacao?: string | null;
+          grupo_parcela?: string | null;
+          parcela_numero?: number | null;
+          parcela_total?: number | null;
           created_by?: string | null;
           updated_by?: string | null;
           created_at?: string;
@@ -835,6 +844,10 @@ export type Database = {
           fatura_id: string | null;
           nota_fiscal: string | null;
           observacao: string | null;
+          is_fatura_payment: boolean;
+          grupo_parcela: string | null;
+          parcela_numero: number | null;
+          parcela_total: number | null;
           created_by: string | null;
           updated_by: string | null;
           created_at: string;
@@ -857,6 +870,10 @@ export type Database = {
           fatura_id?: string | null;
           nota_fiscal?: string | null;
           observacao?: string | null;
+          is_fatura_payment?: boolean;
+          grupo_parcela?: string | null;
+          parcela_numero?: number | null;
+          parcela_total?: number | null;
           created_by?: string | null;
           updated_by?: string | null;
           created_at?: string;
@@ -879,6 +896,10 @@ export type Database = {
           fatura_id?: string | null;
           nota_fiscal?: string | null;
           observacao?: string | null;
+          is_fatura_payment?: boolean;
+          grupo_parcela?: string | null;
+          parcela_numero?: number | null;
+          parcela_total?: number | null;
           created_by?: string | null;
           updated_by?: string | null;
           created_at?: string;

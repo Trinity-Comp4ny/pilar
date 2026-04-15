@@ -9,7 +9,7 @@ import { Plus, Trash2, Loader2, CheckCircle2, Clock, XCircle, Banknote } from "l
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { formatCurrencyInput, parseCurrencyString } from "@/lib/currencyUtils";
+import { formatCurrencyInput, parseCurrencyString, formatCurrency } from "@/lib/currencyUtils";
 
 interface BillingMilestonesTabProps {
   projetoId: string;
@@ -136,8 +136,6 @@ export function BillingMilestonesTab({ projetoId, canEdit }: BillingMilestonesTa
     onError: (err: Error) => toast({ variant: "destructive", title: "Erro", description: err.message }),
   });
 
-  const formatCurrency = (v: number) =>
-    new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
   const formatDate = (d: string | null) => (d ? new Date(d + "T00:00:00").toLocaleDateString("pt-BR") : "—");
 
   const totalMarcos = marcos.reduce((s, m) => s + m.valor, 0);

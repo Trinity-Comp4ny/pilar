@@ -34,11 +34,28 @@ export const useUploadTemplate = () => {
 
   return useMutation({
     mutationFn: async ({ file, nome, descricao }: { file: File; nome: string; descricao?: string }) => {
+      // Validação de segurança do arquivo
+      const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+      const ALLOWED_EXTENSIONS = [".docx"];
+      const ALLOWED_MIME_TYPES = ["application/vnd.openxmlformats-officedocument.wordprocessingml.document"];
+
+      const fileExtension = file.name.substring(file.name.lastIndexOf(".")).toLowerCase();
+      if (!ALLOWED_EXTENSIONS.includes(fileExtension)) {
+        throw new Error("Apenas arquivos .docx são permitidos");
+      }
+      if (file.type && !ALLOWED_MIME_TYPES.includes(file.type)) {
+        throw new Error("Tipo de arquivo inválido. Envie um .docx");
+      }
+      if (file.size > MAX_FILE_SIZE) {
+        throw new Error("Arquivo excede o limite de 10MB");
+      }
+
       const { data: empresaId } = await supabase.rpc("get_user_empresa_id");
       if (!empresaId) throw new Error("Usuário não vinculado a uma empresa");
 
       // 1. Upload file to storage
-      const filePath = `${empresaId}/${Date.now()}_${file.name}`;
+      const sanitizedName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+      const filePath = `${empresaId}/${Date.now()}_${sanitizedName}`;
       const { error: uploadError } = await supabase.storage.from("proposta-templates").upload(filePath, file);
 
       if (uploadError) throw new Error(`Erro no upload: ${uploadError.message}`);

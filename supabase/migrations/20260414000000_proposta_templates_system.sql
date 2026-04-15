@@ -20,6 +20,7 @@ CREATE INDEX IF NOT EXISTS idx_proposta_templates_empresa ON public.proposta_tem
 -- RLS
 ALTER TABLE public.proposta_templates ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "PropostaTemplates Full" ON public.proposta_templates;
 CREATE POLICY "PropostaTemplates Full" ON public.proposta_templates
   FOR ALL USING (
     empresa_id = public.get_user_empresa_id()
@@ -31,6 +32,7 @@ CREATE POLICY "PropostaTemplates Full" ON public.proposta_templates
     AND public.has_role('admin', 'operacional', 'marketing')
   );
 
+DROP POLICY IF EXISTS "PropostaTemplates Read" ON public.proposta_templates;
 CREATE POLICY "PropostaTemplates Read" ON public.proposta_templates
   FOR SELECT USING (
     empresa_id = public.get_user_empresa_id()

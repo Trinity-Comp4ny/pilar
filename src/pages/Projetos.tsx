@@ -212,7 +212,7 @@ export default function ProjetosKanban() {
   };
 
   const tabs: { id: Tab; label: string; icon: typeof CalendarIcon }[] = [
-    { id: "kanban", label: "Kanban", icon: CalendarIcon },
+    { id: "kanban", label: "Quadro", icon: CalendarIcon },
     { id: "disciplinas", label: "Disciplinas", icon: Layers },
   ];
 

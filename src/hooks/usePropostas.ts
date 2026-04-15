@@ -154,7 +154,10 @@ export const usePropostaDisciplinas = (propostaId: string | null) => {
     queryKey: ["proposta-disciplinas", propostaId],
     queryFn: async () => {
       if (!propostaId) return [];
-      const { data, error } = await supabase.from("proposta_disciplinas").select("*").eq("proposta_id", propostaId);
+      const { data, error } = await supabase
+        .from("proposta_disciplinas")
+        .select("id, proposta_id, disciplina, horas_estimadas, valor_unitario, valor_total, descricao")
+        .eq("proposta_id", propostaId);
       if (error) throw error;
       return data || [];
     },
