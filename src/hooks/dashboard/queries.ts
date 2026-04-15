@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { startOfMonth, endOfMonth, addDays } from "date-fns";
+import { startOfMonth, addDays } from "date-fns";
 import { PROJECT_STATUS } from "@/constants";
 
 export function buildDashboardQueries(

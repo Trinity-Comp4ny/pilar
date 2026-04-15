@@ -902,7 +902,7 @@ export default function Relatorios() {
                     size="sm"
                     className="h-8 text-xs gap-1.5"
                     onClick={() => handleExport("csv")}
-                    disabled={isLoading || !filteredData.length}
+                    disabled={!filteredData.length}
                   >
                     <Download size={13} />
                     CSV
@@ -911,7 +911,7 @@ export default function Relatorios() {
                     size="sm"
                     className="h-8 text-xs gap-1.5 bg-accent-orange text-white hover:bg-accent-orange/90"
                     onClick={() => handleExport("pdf")}
-                    disabled={isLoading || !filteredData.length}
+                    disabled={!filteredData.length}
                   >
                     <Download size={13} />
                     PDF

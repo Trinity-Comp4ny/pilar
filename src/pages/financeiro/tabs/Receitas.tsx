@@ -112,30 +112,22 @@ export default function Receitas() {
       .eq("tipo", "Receita")
       .order("nome");
 
-    if (categoriasData) {
-      setCategorias((categoriasData ?? []).map((cat) => ({ id: cat.id, name: cat.nome })));
-    }
+    setCategorias((categoriasData ?? []).map((cat) => ({ id: cat.id, name: cat.nome })));
 
     // Fetch Clientes
     const { data: clientesData } = await supabase.from("clientes").select("*").order("nome");
 
-    if (clientesData) {
-      setClientes((clientesData ?? []).map((c) => ({ id: c.id, nome: c.nome })));
-    }
+    setClientes((clientesData ?? []).map((c) => ({ id: c.id, nome: c.nome })));
 
     // Fetch Contas
     const { data: contasData } = await supabase.from("contas").select("*").order("nome");
 
-    if (contasData) {
-      setContas((contasData ?? []).map((c) => ({ id: c.id, nome: c.nome })));
-    }
+    setContas((contasData ?? []).map((c) => ({ id: c.id, nome: c.nome })));
 
     // Fetch Projetos
     const { data: projetosData } = await supabase.from("projetos").select("id, nome, codigo_projeto").order("nome");
 
-    if (projetosData) {
-      setProjetos((projetosData ?? []).map((p) => ({ id: p.id, projetoID: p.codigo_projeto })));
-    }
+    setProjetos((projetosData ?? []).map((p) => ({ id: p.id, projetoID: p.codigo_projeto })));
   };
 
   // Fetch Initial Data
@@ -162,16 +154,14 @@ export default function Receitas() {
       // Error will be visible through empty data state
     }
 
-    if (data) {
-      const formattedData = (data ?? []).map((d) => ({
-        ...d,
-        categoria_nome: d.categorias_financeiras?.nome,
-        cliente_nome: d.clientes?.nome,
-        projeto_codigo: d.projetos?.codigo_projeto,
-        data_recebimento: d.data_recebimento || d.data_vencimento,
-      }));
-      setReceitas(formattedData);
-    }
+    const formattedData = (data ?? []).map((d) => ({
+      ...d,
+      categoria_nome: d.categorias_financeiras?.nome,
+      cliente_nome: d.clientes?.nome,
+      projeto_codigo: d.projetos?.codigo_projeto,
+      data_recebimento: d.data_recebimento || d.data_vencimento,
+    }));
+    setReceitas(formattedData);
   };
 
   const handleCategoryChange = () => {
