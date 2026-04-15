@@ -26,6 +26,7 @@ import {
   Landmark,
   X,
   Loader2,
+  Globe,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatPhone, formatDocument, formatAgency, formatBankAccount } from "@/lib/maskUtils";
@@ -101,6 +102,11 @@ export default function Clientes() {
 
   const [searchTerm, setSearchTerm] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+
+  // Portal do Cliente
+  const [portalStatus, setPortalStatus] = useState<"idle" | "loading" | "exists" | "none">("idle");
+  const [isInvitingPortal, setIsInvitingPortal] = useState(false);
+  const [portalCredentials, setPortalCredentials] = useState<{ email: string; senha: string } | null>(null);
 
   const formatCpf = (digits: string) => {
     return digits
@@ -315,6 +321,44 @@ export default function Clientes() {
   const handleRowClick = (cliente: Cliente) => {
     setSelectedCliente(cliente);
     setIsDetailOpen(true);
+    setPortalCredentials(null);
+    // Verifica se já tem acesso ao portal
+    setPortalStatus("loading");
+    supabase
+      .from("cliente_portal_accounts")
+      .select("id")
+      .eq("cliente_id", cliente.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        setPortalStatus(data ? "exists" : "none");
+      })
+      .catch(() => setPortalStatus("none"));
+  };
+
+  const handleInvitePortal = async () => {
+    if (!selectedCliente?.email) return;
+    setIsInvitingPortal(true);
+    try {
+      const { data, error: fnError } = await supabase.functions.invoke("invite-cliente-portal", {
+        body: { cliente_id: selectedCliente.id, email: selectedCliente.email },
+      });
+      if (fnError) {
+        const body = fnError.context ? await fnError.context.json?.().catch(() => null) : null;
+        throw new Error(body?.error || fnError.message || "Erro desconhecido");
+      }
+      if (data?.error) throw new Error(data.error);
+      setPortalCredentials({ email: data.email, senha: data.senha });
+      setPortalStatus("exists");
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "Erro desconhecido";
+      toast({
+        title: "Erro ao criar acesso",
+        description: msg,
+        variant: "destructive",
+      });
+    } finally {
+      setIsInvitingPortal(false);
+    }
   };
 
   const filteredAndSortedClientes = useMemo(() => {
@@ -750,6 +794,90 @@ export default function Clientes() {
                     </div>
                   </div>
                 </div>
+
+                {/* Acesso ao Portal do Cliente */}
+                {isAdmin && (
+                  <div className="space-y-3 mt-4 pt-4 border-t">
+                    <Label className="text-sm font-medium flex items-center gap-2">
+                      <Globe size={14} /> Portal do Cliente
+                    </Label>
+                    {portalStatus === "loading" && (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Loader2 size={14} className="animate-spin" /> Verificando...
+                      </div>
+                    )}
+                    {portalStatus === "exists" && !portalCredentials && (
+                      <div className="flex items-center gap-2 bg-green-50 border border-green-200 rounded-lg px-3 py-2 text-sm text-green-800">
+                        <Globe size={14} />
+                        Cliente possui acesso ao portal
+                      </div>
+                    )}
+                    {portalCredentials && (
+                      <div className="space-y-3 bg-green-50 border border-green-200 rounded-lg p-4">
+                        <p className="text-sm font-medium text-green-800">Acesso criado com sucesso!</p>
+                        <p className="text-xs text-green-700">Envie as credenciais abaixo para o cliente:</p>
+                        <div className="bg-white rounded border p-3 space-y-1.5 font-mono text-sm">
+                          <div className="flex items-center justify-between">
+                            <span className="text-muted-foreground">Email:</span>
+                            <span className="font-medium">{portalCredentials.email}</span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-muted-foreground">Senha:</span>
+                            <span className="font-medium">{portalCredentials.senha}</span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-muted-foreground">Link:</span>
+                            <span className="font-medium text-xs">{window.location.origin}/cliente/login</span>
+                          </div>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="w-full"
+                          onClick={() => {
+                            const text = `Portal do Cliente Pilar\n\nEmail: ${portalCredentials.email}\nSenha: ${portalCredentials.senha}\nLink: ${window.location.origin}/cliente/login`;
+                            navigator.clipboard.writeText(text);
+                            toast({
+                              title: "Copiado!",
+                              description: "Credenciais copiadas para a área de transferência.",
+                            });
+                          }}
+                        >
+                          Copiar credenciais
+                        </Button>
+                      </div>
+                    )}
+                    {portalStatus === "none" && !portalCredentials && (
+                      <div className="space-y-2">
+                        {selectedCliente.email ? (
+                          <>
+                            <p className="text-xs text-muted-foreground">
+                              Criar acesso ao portal para{" "}
+                              <span className="font-medium text-foreground">{selectedCliente.email}</span>
+                            </p>
+                            <Button
+                              size="sm"
+                              onClick={handleInvitePortal}
+                              disabled={isInvitingPortal}
+                              className="bg-accent-orange hover:bg-orange-600 text-white"
+                            >
+                              {isInvitingPortal ? (
+                                <Loader2 size={14} className="animate-spin mr-1.5" />
+                              ) : (
+                                <Globe size={14} className="mr-1.5" />
+                              )}
+                              {isInvitingPortal ? "Criando..." : "Criar acesso ao portal"}
+                            </Button>
+                          </>
+                        ) : (
+                          <p className="text-xs text-muted-foreground italic">
+                            Cadastre um email para este cliente antes de criar o acesso ao portal.
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* Seção de Contas Bancárias */}
                 <div className="space-y-2 mt-4 pt-4 border-t">

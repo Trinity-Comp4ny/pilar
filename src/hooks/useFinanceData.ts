@@ -22,67 +22,40 @@ export const useFinanceData = (dateFrom?: Date, dateTo?: Date) => {
       const start = dateFrom || startOfMonth(now);
       const end = dateTo || endOfMonth(now);
 
-      const fetchStart = subMonths(new Date(), 12);
+      const previousStart = subMonths(start, 1);
 
-      const { data: categoriesData } = await supabase.from("categorias_financeiras").select("id, nome, tipo");
+      const [categoriesRes, receitasRes, despesasRes] = await Promise.all([
+        supabase.from("categorias_financeiras").select("id, nome, tipo"),
+        supabase
+          .from("receitas")
+          .select("*")
+          .order("data_recebimento", { ascending: false })
+          .order("data_vencimento", { ascending: false }),
+        supabase
+          .from("despesas")
+          .select("*")
+          .eq("is_fatura_payment", false)
+          .order("data_vencimento", { ascending: true }),
+      ]);
 
-      const categoriesMap = new Map<string, CategoriaSelect>(categoriesData?.map((c) => [c.id, c]) || []);
+      if (receitasRes.error) throw receitasRes.error;
+      if (despesasRes.error) throw despesasRes.error;
 
-      let receitasQuery = supabase
-        .from("receitas")
-        .select("*")
-        .order("data_recebimento", { ascending: false })
-        .order("data_vencimento", { ascending: false });
+      const categoriesMap = new Map<string, CategoriaSelect>(categoriesRes.data?.map((c) => [c.id, c]) || []);
 
-      if (fetchStart) receitasQuery = receitasQuery.gte("data_vencimento", fetchStart.toISOString());
-      if (end) receitasQuery = receitasQuery.lte("data_vencimento", end.toISOString());
-
-      const { data: receitasRaw, error: receitasError } = await receitasQuery;
-      if (receitasError) throw receitasError;
-
-      const receitas: ReceitaWithCategoria[] | undefined = receitasRaw?.map((r) => ({
+      const receitas: ReceitaWithCategoria[] = (receitasRes.data ?? []).map((r) => ({
         ...r,
         categorias_financeiras: r.categoria_id ? categoriesMap.get(r.categoria_id) : undefined,
       }));
 
-      const { data: receitasChartAllRaw, error: receitasChartAllError } = await supabase
-        .from("receitas")
-        .select("valor,data_recebimento,data_vencimento")
-        .order("data_recebimento", { ascending: false })
-        .order("data_vencimento", { ascending: false });
-
-      if (receitasChartAllError) throw receitasChartAllError;
-
-      const { data: receitasAllRaw, error: receitasAllError } = await supabase.from("receitas").select("valor");
-
-      if (receitasAllError) throw receitasAllError;
-
-      let despesasQuery = supabase.from("despesas").select("*").order("data_vencimento", { ascending: true });
-
-      if (fetchStart) despesasQuery = despesasQuery.gte("data_vencimento", fetchStart.toISOString());
-      if (end) despesasQuery = despesasQuery.lte("data_vencimento", end.toISOString());
-
-      const { data: despesasRaw, error: despesasError } = await despesasQuery;
-      if (despesasError) throw despesasError;
-
-      const despesas: DespesaWithCategoria[] | undefined = despesasRaw?.map((d) => ({
+      const despesas: DespesaWithCategoria[] = (despesasRes.data ?? []).map((d) => ({
         ...d,
         categorias_financeiras: d.categoria_id ? categoriesMap.get(d.categoria_id) : undefined,
       }));
 
-      const { data: despesasChartAllRaw, error: despesasChartAllError } = await supabase
-        .from("despesas")
-        .select("valor,data_pagamento,data_vencimento")
-        .order("data_vencimento", { ascending: true });
-
-      if (despesasChartAllError) throw despesasChartAllError;
-
-      const { data: despesasAllRaw, error: despesasAllError } = await supabase.from("despesas").select("valor");
-
-      if (despesasAllError) throw despesasAllError;
-
       const startStr = start.toISOString().split("T")[0];
       const endStr = end.toISOString().split("T")[0];
+      const prevStartStr = previousStart.toISOString().split("T")[0];
 
       const inMainPeriod = (dateStr: string) => {
         if (!dateStr) return false;
@@ -90,32 +63,26 @@ export const useFinanceData = (dateFrom?: Date, dateTo?: Date) => {
         return dStr >= startStr && dStr <= endStr;
       };
 
-      const previousStart = subMonths(start, 1);
-      const prevStartStr = previousStart.toISOString().split("T")[0];
-
       const inPreviousPeriod = (dateStr: string) => {
         if (!dateStr) return false;
         const dStr = dateStr.split("T")[0];
         return dStr >= prevStartStr && dStr < startStr;
       };
 
-      const receitasMain = (receitas ?? []).filter((r) => {
+      const receitasMain = receitas.filter((r) => {
         const displayDate = getDisplayDate(r.data_recebimento, r.data_vencimento, r.status);
         return displayDate && inMainPeriod(displayDate);
       });
-      const despesasMain = (despesas ?? []).filter((d) => {
+      const despesasMain = despesas.filter((d) => {
         const displayDate = getDisplayDate(d.data_pagamento, d.data_vencimento, d.status);
         return displayDate && inMainPeriod(displayDate);
       });
 
-      const receitasChartAll = receitasChartAllRaw ?? [];
-      const despesasChartAll = despesasChartAllRaw ?? [];
-
-      const receitasPrev = (receitas ?? []).filter((r) => {
+      const receitasPrev = receitas.filter((r) => {
         const displayDate = getDisplayDate(r.data_recebimento, r.data_vencimento, r.status);
         return displayDate && inPreviousPeriod(displayDate);
       });
-      const despesasPrev = (despesas ?? []).filter((d) => {
+      const despesasPrev = despesas.filter((d) => {
         const displayDate = getDisplayDate(d.data_pagamento, d.data_vencimento, d.status);
         return displayDate && inPreviousPeriod(displayDate);
       });
@@ -123,8 +90,8 @@ export const useFinanceData = (dateFrom?: Date, dateTo?: Date) => {
       const receitasTotal = receitasMain.reduce((acc, curr) => acc + Number(curr.valor), 0);
       const despesasTotal = despesasMain.reduce((acc, curr) => acc + Number(curr.valor), 0);
 
-      const receitasTotalGeral = (receitasAllRaw ?? []).reduce((acc, curr) => acc + Number(curr.valor), 0);
-      const despesasTotalGeral = (despesasAllRaw ?? []).reduce((acc, curr) => acc + Number(curr.valor), 0);
+      const receitasTotalGeral = receitas.reduce((acc, curr) => acc + Number(curr.valor), 0);
+      const despesasTotalGeral = despesas.reduce((acc, curr) => acc + Number(curr.valor), 0);
 
       const receitasPrevTotal = receitasPrev.reduce((acc, curr) => acc + Number(curr.valor), 0);
       const despesasPrevTotal = despesasPrev.reduce((acc, curr) => acc + Number(curr.valor), 0);
@@ -134,6 +101,17 @@ export const useFinanceData = (dateFrom?: Date, dateTo?: Date) => {
 
       const despesasGrowth =
         despesasPrevTotal > 0 ? ((despesasTotal - despesasPrevTotal) / despesasPrevTotal) * 100 : 0;
+
+      const receitasChartAll: ReceitaChartItem[] = receitas.map((r) => ({
+        valor: r.valor,
+        data_recebimento: r.data_recebimento,
+        data_vencimento: r.data_vencimento,
+      }));
+      const despesasChartAll: DespesaChartItem[] = despesas.map((d) => ({
+        valor: d.valor,
+        data_pagamento: d.data_pagamento,
+        data_vencimento: d.data_vencimento,
+      }));
 
       const chartData = processChartData(receitasChartAll, despesasChartAll);
       const chartDataDiario = processDailyChartData(receitasMain, despesasMain, start, end);

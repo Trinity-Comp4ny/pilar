@@ -10,6 +10,7 @@ import { Plus, Trash2, Loader2, FileText, CheckCircle2, XCircle, Clock, ChevronD
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { formatCurrency } from "@/lib/currencyUtils";
 
 interface EscopoTabProps {
   projetoId: string;
@@ -203,9 +204,6 @@ export function EscopoTab({ projetoId, canEdit }: EscopoTabProps) {
   const removeItem = (index: number) => {
     setFormItens(formItens.filter((_, i) => i !== index));
   };
-
-  const formatCurrency = (v: number) =>
-    new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
 
   const escopoOriginal = escopos.find((e) => e.tipo === "original");
   const aditivos = escopos.filter((e) => e.tipo === "aditivo");

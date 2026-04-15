@@ -28,9 +28,11 @@ import { SupplierManager } from "../components/SupplierManager";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
-import { formatCurrencyInput, parseCurrencyString } from "@/lib/maskUtils";
+import { formatCurrencyInput, parseCurrencyString } from "@/lib/currencyUtils";
 import { getDisplayDate, formatDateDisplay } from "@/lib/dateUtils";
 import { getSafeErrorMessage } from "@/lib/safeError";
+import { checkDuplicates, type DuplicateMatch } from "@/lib/duplicateCheck";
+import { DuplicateWarningDialog } from "@/components/DuplicateWarningDialog";
 
 /**
  * Função para obter a data de exibição correta baseada no status para despesas
@@ -59,6 +61,9 @@ interface Despesa {
   fornecedor_nome?: string;
   forma_pagamento?: string;
   created_by?: string; // user uuid
+  grupo_parcela?: string | null;
+  parcela_numero?: number | null;
+  parcela_total?: number | null;
 }
 
 export default function Despesas() {
@@ -111,8 +116,9 @@ export default function Despesas() {
           fornecedores (nome)
         `
           )
-          .order("data_pagamento", { ascending: false }) // Ordena por data_pagamento (real) primeiro
-          .order("data_vencimento", { ascending: false }), // Fallback para data_vencimento (planejado)
+          .eq("is_fatura_payment", false)
+          .order("data_pagamento", { ascending: false })
+          .order("data_vencimento", { ascending: false }),
       ]);
 
       if (categoriasData) setCategorias(categoriasData.map((c) => ({ id: c.id, name: c.nome })));
@@ -154,18 +160,20 @@ export default function Despesas() {
     });
   }, [despesasRaw, categorias]);
 
-  const despesasFiltradas = despesas.filter((d) => {
-    const matchSearch =
-      !searchTerm ||
-      d.descricao.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (d.fornecedor_nome || "").toLowerCase().includes(searchTerm.toLowerCase());
-    const matchStatus =
-      statusFilter === "todos" ||
-      (statusFilter === "pago" && d.status === "Pago") ||
-      (statusFilter === "pendente" && d.status === "Pendente") ||
-      (statusFilter === "atrasado" && d.status === "Atrasado");
-    return matchSearch && matchStatus;
-  });
+  const despesasFiltradas = useMemo(() => {
+    return despesas.filter((d) => {
+      const matchSearch =
+        !searchTerm ||
+        d.descricao.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (d.fornecedor_nome || "").toLowerCase().includes(searchTerm.toLowerCase());
+      const matchStatus =
+        statusFilter === "todos" ||
+        (statusFilter === "pago" && d.status === "Pago") ||
+        (statusFilter === "pendente" && d.status === "Pendente") ||
+        (statusFilter === "atrasado" && d.status === "Atrasado");
+      return matchSearch && matchStatus;
+    });
+  }, [despesas, searchTerm, statusFilter]);
 
   const handleCategoryChange = () => {
     fetchData();
@@ -184,6 +192,9 @@ export default function Despesas() {
   const openEditDespesa = (despesa: Despesa) => {
     setSelectedDespesa(despesa);
 
+    // Derivar forma de pagamento pelo vínculo existente
+    const formaPgto = despesa.cartao_id ? "Cartão de Crédito" : "";
+
     form.reset({
       dataVencimento: despesa.data_vencimento ? new Date(despesa.data_vencimento) : new Date(),
       descricao: despesa.descricao,
@@ -197,7 +208,7 @@ export default function Despesas() {
       observacao: despesa.observacao || "",
       fornecedorId: despesa.fornecedor_id || "",
       parcelas: "1",
-      formaPagamento: "",
+      formaPagamento: formaPgto,
       recorrente: (despesa as Despesa & { recorrente?: boolean }).recorrente || false,
       periodicidade: (despesa as Despesa & { periodicidade?: string }).periodicidade || "mensal",
     });
@@ -207,13 +218,16 @@ export default function Despesas() {
   };
 
   const [isSaving, setIsSaving] = useState(false);
+  const [duplicates, setDuplicates] = useState<DuplicateMatch[]>([]);
+  const [showDuplicateWarning, setShowDuplicateWarning] = useState(false);
+  const [pendingFormData, setPendingFormData] = useState<DespesaFormData | null>(null);
 
-  const handleSubmit = form.handleSubmit(async (formData) => {
+  const saveDespesa = async (formData: DespesaFormData) => {
     setIsSaving(true);
     try {
       const numParcelas = parseInt(formData.parcelas) || 1;
       const valorNumerico = parseCurrencyString(formData.valorTotal);
-      const valorParcela = valorNumerico / numParcelas;
+      const valorParcela = Math.round((valorNumerico / numParcelas) * 100) / 100;
       const {
         data: { user },
       } = await supabase.auth.getUser();
@@ -223,32 +237,27 @@ export default function Despesas() {
       const { data: empresaId } = await supabase.rpc("get_user_empresa_id");
       if (!empresaId) throw new Error("Usuário não vinculado a uma empresa");
 
+      const grupoParcela = numParcelas > 1 ? crypto.randomUUID() : null;
       const despesasToInsert = [];
 
-      // Logic for Credit Card Date
-      let initialDate = new Date(formData.dataVencimento);
-      if (formData.formaPagamento === "Cartão de Crédito" && formData.cartaoId) {
-        const card = cartoes.find((c) => c.id === formData.cartaoId);
-        if (card) {
-          const dayOfPurchase = initialDate.getDate();
-          if (dayOfPurchase > card.dia_fechamento) {
-            // Move to next month if after closing date
-            initialDate = addMonths(initialDate, 1);
-          }
-        }
-      }
+      // Data base para parcelas — mantém a data original da compra.
+      // O mês de billing correto é calculado ao chamar gerar_fatura.
+      const initialDate = new Date(formData.dataVencimento);
 
       for (let i = 0; i < numParcelas; i++) {
         const dataParcela = addMonths(initialDate, i);
         const dataStr = format(dataParcela, "yyyy-MM-dd");
+        const isUltimaParcela = i === numParcelas - 1 && numParcelas > 1;
+        const valorFinal = isUltimaParcela
+          ? Math.round((valorNumerico - valorParcela * (numParcelas - 1)) * 100) / 100
+          : valorParcela;
 
         despesasToInsert.push({
-          // user_id: user.id,
           data_vencimento: dataStr,
           data_pagamento: formData.status === "Pago" ? dataStr : null,
           descricao: numParcelas > 1 ? `${formData.descricao} (${i + 1}/${numParcelas})` : formData.descricao,
           categoria_id: formData.categoriaId || null,
-          valor: valorParcela,
+          valor: valorFinal,
           fornecedor_id: formData.fornecedorId || null,
           projeto_id: formData.projetoID || null,
           nota_fiscal: formData.notaFiscal || null,
@@ -259,6 +268,9 @@ export default function Despesas() {
           recorrente: formData.recorrente || false,
           periodicidade: formData.recorrente ? formData.periodicidade || "mensal" : null,
           empresa_id: empresaId,
+          grupo_parcela: grupoParcela,
+          parcela_numero: numParcelas > 1 ? i + 1 : null,
+          parcela_total: numParcelas > 1 ? numParcelas : null,
         });
       }
 
@@ -272,21 +284,37 @@ export default function Despesas() {
 
       if (error) throw error;
 
-      // Associar despesas de cartão às faturas correspondentes
+      // Associar despesas de cartão às faturas correspondentes.
+      // O mês de billing é calculado com base no dia de fechamento do cartão:
+      // compras após o fechamento pertencem à fatura do mês seguinte.
       if (formData.cartaoId) {
+        const card = cartoes.find((c) => c.id === formData.cartaoId);
+        const diaFechamento = card?.dia_fechamento ?? 31;
         const mesesGerados = new Set<string>();
+
         for (const d of despesasToInsert) {
           const dt = new Date(d.data_vencimento + "T00:00:00");
-          const key = `${dt.getMonth() + 1}-${dt.getFullYear()}`;
+          let billingMonth = dt.getMonth() + 1;
+          let billingYear = dt.getFullYear();
+
+          if (dt.getDate() > diaFechamento) {
+            billingMonth++;
+            if (billingMonth > 12) {
+              billingMonth = 1;
+              billingYear++;
+            }
+          }
+
+          const key = `${billingMonth}-${billingYear}`;
           if (!mesesGerados.has(key)) {
             mesesGerados.add(key);
             await supabase
               .rpc("gerar_fatura", {
                 p_cartao_id: formData.cartaoId,
-                p_mes: dt.getMonth() + 1,
-                p_ano: dt.getFullYear(),
+                p_mes: billingMonth,
+                p_ano: billingYear,
               })
-              .catch(() => {}); // Ignora se falhar (RPC cria fatura e associa despesas)
+              .catch(() => {});
           }
         }
       }
@@ -310,6 +338,41 @@ export default function Despesas() {
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleSubmit = form.handleSubmit(async (formData) => {
+    if (selectedDespesa) {
+      await saveDespesa(formData);
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const valorNumerico = parseCurrencyString(formData.valorTotal);
+      const numParcelas = parseInt(formData.parcelas) || 1;
+      const valorParcela = valorNumerico / numParcelas;
+
+      const found = await checkDuplicates({
+        table: "despesas",
+        descricao: formData.descricao,
+        valor: valorParcela,
+        dataVencimento: formData.dataVencimento,
+      });
+
+      if (found.length > 0) {
+        setDuplicates(found);
+        setPendingFormData(formData);
+        setShowDuplicateWarning(true);
+        setIsSaving(false);
+        return;
+      }
+    } catch {
+      // Se a checagem falhar, prossegue com o salvamento
+    } finally {
+      if (!showDuplicateWarning) setIsSaving(false);
+    }
+
+    await saveDespesa(formData);
   });
 
   const resetForm = () => {
@@ -434,7 +497,11 @@ export default function Despesas() {
                           {...form.register("parcelas")}
                           placeholder="1"
                           className="h-9"
+                          disabled={!!selectedDespesa}
                         />
+                        {selectedDespesa && (
+                          <p className="text-xs text-muted-foreground">Editando parcela individual</p>
+                        )}
                       </div>
                       <div className="space-y-1.5">
                         <Label htmlFor="status" className="text-xs">
@@ -508,10 +575,12 @@ export default function Despesas() {
                           </PopoverContent>
                         </Popover>
                       </div>
-                      <div className="space-y-1.5">
-                        <Label className="text-xs">Parcelas</Label>
-                        <Input type="number" min={1} max={60} className="h-9" {...form.register("parcelas")} />
-                      </div>
+                      {!selectedDespesa && (
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">Parcelas</Label>
+                          <Input type="number" min={1} max={60} className="h-9" {...form.register("parcelas")} />
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -747,7 +816,11 @@ export default function Despesas() {
                     <TableCell>{despesa.projeto_codigo || "-"}</TableCell>
                     <TableCell>{despesa.categoria_nome || "-"}</TableCell>
                     <TableCell>{despesa.forma_pagamento}</TableCell>
-                    <TableCell>1</TableCell>
+                    <TableCell>
+                      {despesa.parcela_numero && despesa.parcela_total
+                        ? `${despesa.parcela_numero}/${despesa.parcela_total}`
+                        : "1/1"}
+                    </TableCell>
                     <TableCell className="text-red-600 font-medium">
                       R$ {despesa.valor.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                     </TableCell>
@@ -867,7 +940,11 @@ export default function Despesas() {
                 </div>
                 <div>
                   <Label className="text-xs text-muted-foreground">Parcela</Label>
-                  <p className="text-sm">1</p>
+                  <p className="text-sm">
+                    {selectedDespesa.parcela_numero && selectedDespesa.parcela_total
+                      ? `${selectedDespesa.parcela_numero}/${selectedDespesa.parcela_total}`
+                      : "1/1"}
+                  </p>
                 </div>
                 <div className="col-span-2">
                   <Label className="text-xs text-muted-foreground">Observação</Label>
@@ -903,6 +980,22 @@ export default function Despesas() {
           )}
         </DialogContent>
       </Dialog>
+
+      <DuplicateWarningDialog
+        open={showDuplicateWarning}
+        onOpenChange={(open) => {
+          setShowDuplicateWarning(open);
+          if (!open) setPendingFormData(null);
+        }}
+        duplicates={duplicates}
+        onConfirm={() => {
+          setShowDuplicateWarning(false);
+          if (pendingFormData) {
+            saveDespesa(pendingFormData);
+            setPendingFormData(null);
+          }
+        }}
+      />
     </div>
   );
 }

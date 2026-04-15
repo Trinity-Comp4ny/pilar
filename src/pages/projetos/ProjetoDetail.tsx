@@ -21,8 +21,10 @@ import {
   Trash2,
   MessageSquare,
   ChevronDown,
+  Layers,
 } from "lucide-react";
 import { PageLayout } from "@/components/PageLayout";
+import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useToast } from "@/hooks/use-toast";
@@ -61,6 +63,7 @@ import {
 import { AlertTriangle } from "lucide-react";
 import { ProjectBudgetTab } from "./components/ProjectBudgetTab";
 import { BillingMilestonesTab } from "./components/BillingMilestonesTab";
+import { PagamentosTab } from "./components/PagamentosTab";
 import { EscopoTab } from "./components/EscopoTab";
 import { BurnRateChart } from "./components/BurnRateChart";
 import { useProjetoRentabilidade } from "@/hooks/useRentabilidade";
@@ -447,17 +450,26 @@ export default function ProjetoDetail() {
       <Tabs defaultValue="disciplinas" className="space-y-4">
         <TabsList className="flex-wrap">
           <TabsTrigger value="disciplinas">Disciplinas</TabsTrigger>
-          <TabsTrigger value="orcamento">Orçamento</TabsTrigger>
-          <TabsTrigger value="marcos">Marcos</TabsTrigger>
-          <TabsTrigger value="escopo">Escopo & Aditivos</TabsTrigger>
-          <TabsTrigger value="burn-rate">Burn Rate</TabsTrigger>
+          <TabsTrigger value="pagamentos">Pagamentos</TabsTrigger>
+          <TabsTrigger value="orcamento" disabled className="cursor-not-allowed opacity-40">
+            Orçamento
+          </TabsTrigger>
+          <TabsTrigger value="marcos" disabled className="cursor-not-allowed opacity-40">
+            Marcos
+          </TabsTrigger>
+          <TabsTrigger value="escopo" disabled className="cursor-not-allowed opacity-40">
+            Escopo & Aditivos
+          </TabsTrigger>
+          <TabsTrigger value="burn-rate" disabled className="cursor-not-allowed opacity-40">
+            Burn Rate
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="disciplinas">
           <Card>
             <CardContent className="p-4">
-              {canEdit && (
-                <div className="flex justify-end mb-3">
+              {canEdit && !isAddingDisc && (
+                <div className="flex justify-end mb-4">
                   <Button size="sm" variant="outline" onClick={() => setIsAddingDisc(true)}>
                     <Plus className="h-3.5 w-3.5 mr-1.5" /> Adicionar Disciplina
                   </Button>
@@ -465,16 +477,17 @@ export default function ProjetoDetail() {
               )}
 
               {isAddingDisc && canEdit && (
-                <div className="mb-4 p-3 border rounded-lg bg-gray-50 space-y-3">
-                  <div className="grid grid-cols-2 gap-3">
+                <div className="mb-4 p-4 border-2 border-dashed border-primary/20 rounded-lg bg-primary/5 space-y-4">
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Nova Disciplina</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div className="space-y-1">
                       <Label className="text-xs">Disciplina</Label>
                       <Select
                         value={newDisc.disciplina}
                         onValueChange={(v) => setNewDisc((p) => ({ ...p, disciplina: v }))}
                       >
-                        <SelectTrigger className="h-8 text-xs">
-                          <SelectValue placeholder="Selecione" />
+                        <SelectTrigger className="h-9 text-xs">
+                          <SelectValue placeholder="Selecione a disciplina" />
                         </SelectTrigger>
                         <SelectContent>
                           {disciplinasCatalog.map((d) => (
@@ -491,8 +504,8 @@ export default function ProjetoDetail() {
                         value={newDisc.responsavel_id}
                         onValueChange={(v) => setNewDisc((p) => ({ ...p, responsavel_id: v }))}
                       >
-                        <SelectTrigger className="h-8 text-xs">
-                          <SelectValue placeholder="Selecione" />
+                        <SelectTrigger className="h-9 text-xs">
+                          <SelectValue placeholder="Selecione o responsável" />
                         </SelectTrigger>
                         <SelectContent>
                           {pessoas.map((p) => (
@@ -503,86 +516,152 @@ export default function ProjetoDetail() {
                         </SelectContent>
                       </Select>
                     </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button size="sm" onClick={handleAddDisc} disabled={!newDisc.disciplina || !newDisc.responsavel_id}>
-                      Adicionar
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => {
-                        setIsAddingDisc(false);
-                        setNewDisc({ disciplina: "", responsavel_id: "" });
-                      }}
-                    >
-                      Cancelar
-                    </Button>
+                    <div className="flex items-end gap-2">
+                      <Button
+                        size="sm"
+                        className="h-9 flex-1"
+                        onClick={handleAddDisc}
+                        disabled={!newDisc.disciplina || !newDisc.responsavel_id}
+                      >
+                        <Plus className="h-3.5 w-3.5 mr-1.5" /> Adicionar
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-9"
+                        onClick={() => {
+                          setIsAddingDisc(false);
+                          setNewDisc({ disciplina: "", responsavel_id: "" });
+                        }}
+                      >
+                        Cancelar
+                      </Button>
+                    </div>
                   </div>
                 </div>
               )}
 
               {projeto.disciplinas.length === 0 && !isAddingDisc ? (
-                <p className="text-sm text-muted-foreground text-center py-6">Nenhuma disciplina definida.</p>
+                <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                  <Layers className="h-10 w-10 mb-3 opacity-30" />
+                  <p className="text-sm font-medium">Nenhuma disciplina definida</p>
+                  <p className="text-xs mt-1">Adicione disciplinas para acompanhar o progresso do projeto</p>
+                  {canEdit && (
+                    <Button size="sm" variant="outline" className="mt-4" onClick={() => setIsAddingDisc(true)}>
+                      <Plus className="h-3.5 w-3.5 mr-1.5" /> Adicionar Disciplina
+                    </Button>
+                  )}
+                </div>
               ) : (
                 <div className="space-y-3">
                   {projeto.disciplinas.map((d, i) => {
                     const dpc = d.prioridade ? PROJECT_PRIORITY_CONFIG[d.prioridade as ProjectPriority] : null;
                     const DISC_STATUS_COLORS: Record<string, string> = {
-                      Concluído: "bg-green-100 text-green-800 border-green-200",
-                      "Em Andamento": "bg-blue-100 text-blue-800 border-blue-200",
-                      Pendente: "bg-yellow-100 text-yellow-800 border-yellow-200",
-                      "Não Iniciado": "bg-gray-100 text-gray-600 border-gray-200",
+                      Concluído: "bg-green-50 text-green-800 border-green-200",
+                      "Em Andamento": "bg-blue-50 text-blue-800 border-blue-200",
+                      Pendente: "bg-amber-50 text-amber-800 border-amber-200",
+                      "Não Iniciado": "bg-gray-50 text-gray-600 border-gray-200",
                     };
                     const statusColor =
                       DISC_STATUS_COLORS[d.status || "Não Iniciado"] || DISC_STATUS_COLORS["Não Iniciado"];
                     const resps = getResponsaveisList(d);
                     const isExpanded = expandedDiscIdx === i;
+                    const atrasada = isDiscAtrasada(d);
 
                     return (
-                      <div key={i} className={`rounded-lg border ${dpc ? `border-l-[3px] ${dpc.borderColor}` : ""}`}>
-                        {/* Header da disciplina - clicável para expandir */}
+                      <div
+                        key={i}
+                        className={cn(
+                          "rounded-lg border transition-all group",
+                          dpc ? `border-l-4 ${dpc.borderColor}` : "border-l-4 border-l-gray-200",
+                          atrasada && "bg-red-50/30",
+                          isExpanded && "shadow-sm ring-1 ring-black/5"
+                        )}
+                      >
+                        {/* Header */}
                         <div
-                          className="flex items-center justify-between gap-2 p-3 cursor-pointer hover:bg-muted/30 transition-colors"
+                          className="flex items-center gap-3 p-4 cursor-pointer hover:bg-muted/30 transition-colors"
                           onClick={() => setExpandedDiscIdx(isExpanded ? null : i)}
                         >
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-1.5">
-                              <p className="text-sm font-medium">{d.disciplina}</p>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="text-sm font-semibold">{d.disciplina}</span>
                               {dpc && (
                                 <span
-                                  className={`text-[9px] px-1.5 py-0 rounded-full font-medium ${dpc.bgColor} ${dpc.color}`}
+                                  className={cn(
+                                    "text-[10px] px-2 py-0.5 rounded-full font-medium",
+                                    dpc.bgColor,
+                                    dpc.color
+                                  )}
                                 >
                                   {dpc.label}
                                 </span>
                               )}
-                              <span className="text-[10px] text-muted-foreground ml-1">
-                                ({resps.length} {resps.length === 1 ? "responsável" : "responsáveis"})
-                              </span>
-                              {isDiscAtrasada(d) && (
-                                <span className="text-[9px] px-1.5 py-0.5 rounded-full font-medium bg-red-100 text-red-700 flex items-center gap-0.5">
+                              {atrasada && (
+                                <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold bg-red-100 text-red-700 flex items-center gap-1">
                                   <AlertTriangle size={10} /> Atrasada
                                 </span>
                               )}
                             </div>
-                            <p className="text-xs text-muted-foreground mt-0.5">
-                              {resps.map((r) => r.responsavel_nome).join(", ") || "Sem responsável"}
-                            </p>
-                            {isDiscAtrasada(d) && d.justificativa_atraso && (
-                              <p className="text-[10px] text-red-600 mt-0.5 italic">
+                            <div className="flex items-center gap-2 mt-1.5 text-xs text-muted-foreground">
+                              <span className="flex items-center gap-1">
+                                <User className="h-3 w-3" />
+                                {resps.map((r) => r.responsavel_nome).join(", ") || "Sem responsável"}
+                              </span>
+                              {d.data_previsao && (
+                                <>
+                                  <span className="text-muted-foreground/30">·</span>
+                                  <span className="flex items-center gap-1">
+                                    <Calendar className="h-3 w-3" />
+                                    Prev: {formatDateShort(d.data_previsao)}
+                                  </span>
+                                </>
+                              )}
+                              {resps.length > 1 && (
+                                <>
+                                  <span className="text-muted-foreground/30">·</span>
+                                  <span>{resps.length} responsáveis</span>
+                                </>
+                              )}
+                            </div>
+                            {atrasada && d.justificativa_atraso && (
+                              <p className="text-[11px] text-red-600 mt-1 italic">
                                 Justificativa: {d.justificativa_atraso}
                               </p>
                             )}
                           </div>
 
                           <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                            {canEdit && (
+                              <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                                  onClick={() => {
+                                    setEditingDiscIdx(i);
+                                    setIsDiscDialogOpen(true);
+                                  }}
+                                >
+                                  <Edit className="h-3.5 w-3.5" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7 text-muted-foreground hover:text-red-600"
+                                  onClick={() => handleRemoveDisc(i)}
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </Button>
+                              </div>
+                            )}
                             {canEdit ? (
                               <Select
                                 value={d.status || "Não Iniciado"}
                                 onValueChange={(val) => handleDiscStatusChange(i, val)}
                                 disabled={updatingDisc === i}
                               >
-                                <SelectTrigger className={`h-7 w-[130px] text-[11px] border ${statusColor}`}>
+                                <SelectTrigger className={cn("h-8 w-[140px] text-xs border rounded-full", statusColor)}>
                                   <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -599,93 +678,97 @@ export default function ProjetoDetail() {
                               </Badge>
                             )}
                             <ChevronDown
-                              className={`h-4 w-4 text-muted-foreground transition-transform ${isExpanded ? "rotate-180" : ""}`}
+                              className={cn(
+                                "h-4 w-4 text-muted-foreground transition-transform",
+                                isExpanded && "rotate-180"
+                              )}
                             />
                           </div>
                         </div>
 
-                        {/* Painel expandido - responsáveis com datas */}
+                        {/* Painel expandido */}
                         {isExpanded && (
-                          <div className="border-t px-3 pb-3">
-                            <div className="mt-3 space-y-2">
+                          <div className="border-t bg-muted/10">
+                            <div className="p-4 space-y-3">
                               {resps.map((resp, rIdx) => (
-                                <div key={rIdx} className="bg-muted/30 rounded-lg p-3 space-y-2">
-                                  <div className="flex items-center justify-between">
+                                <div key={rIdx} className="flex items-start gap-3 p-3 rounded-lg bg-white border">
+                                  <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                    <User className="h-4 w-4 text-primary/70" />
+                                  </div>
+                                  <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-2">
-                                      <User className="h-3.5 w-3.5 text-muted-foreground" />
                                       <span className="text-sm font-medium">{resp.responsavel_nome}</span>
-                                      {resp.status && (
+                                      {resp.status && resp.status !== d.status && (
                                         <Badge variant="outline" className="text-[10px] h-5">
                                           {resp.status}
                                         </Badge>
                                       )}
                                     </div>
-                                    {canEdit && resps.length > 1 && (
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
-                                        onClick={() => handleRemoveResponsavel(i, rIdx)}
-                                      >
-                                        <Trash2 size={12} />
-                                      </Button>
+                                    {canEdit ? (
+                                      <div className="grid grid-cols-3 gap-2 mt-2">
+                                        <div className="space-y-1">
+                                          <Label className="text-[10px] text-muted-foreground">Início</Label>
+                                          <Input
+                                            type="date"
+                                            className="h-8 text-xs"
+                                            value={resp.data_inicio || ""}
+                                            onChange={(e) =>
+                                              handleUpdateResponsavelDatas(i, rIdx, "data_inicio", e.target.value)
+                                            }
+                                            onBlur={handleSaveResponsavelDatas}
+                                          />
+                                        </div>
+                                        <div className="space-y-1">
+                                          <Label className="text-[10px] text-muted-foreground">Previsão</Label>
+                                          <Input
+                                            type="date"
+                                            className="h-8 text-xs"
+                                            value={resp.data_previsao || ""}
+                                            onChange={(e) =>
+                                              handleUpdateResponsavelDatas(i, rIdx, "data_previsao", e.target.value)
+                                            }
+                                            onBlur={handleSaveResponsavelDatas}
+                                          />
+                                        </div>
+                                        <div className="space-y-1">
+                                          <Label className="text-[10px] text-muted-foreground">Final</Label>
+                                          <Input
+                                            type="date"
+                                            className="h-8 text-xs"
+                                            value={resp.data_final || ""}
+                                            onChange={(e) =>
+                                              handleUpdateResponsavelDatas(i, rIdx, "data_final", e.target.value)
+                                            }
+                                            onBlur={handleSaveResponsavelDatas}
+                                          />
+                                        </div>
+                                      </div>
+                                    ) : (
+                                      <div className="flex items-center gap-3 mt-1.5 text-xs text-muted-foreground">
+                                        {resp.data_inicio && <span>Início: {formatDateShort(resp.data_inicio)}</span>}
+                                        {resp.data_previsao && (
+                                          <span>Previsão: {formatDateShort(resp.data_previsao)}</span>
+                                        )}
+                                        {resp.data_final && (
+                                          <span className="text-green-700 font-medium">
+                                            Final: {formatDateShort(resp.data_final)}
+                                          </span>
+                                        )}
+                                        {!resp.data_inicio && !resp.data_previsao && !resp.data_final && (
+                                          <span>Sem datas definidas</span>
+                                        )}
+                                      </div>
                                     )}
                                   </div>
-
-                                  {canEdit ? (
-                                    <div className="grid grid-cols-3 gap-2">
-                                      <div className="space-y-1">
-                                        <Label className="text-[10px] text-muted-foreground">Início</Label>
-                                        <Input
-                                          type="date"
-                                          className="h-8 text-xs"
-                                          value={resp.data_inicio || ""}
-                                          onChange={(e) =>
-                                            handleUpdateResponsavelDatas(i, rIdx, "data_inicio", e.target.value)
-                                          }
-                                          onBlur={handleSaveResponsavelDatas}
-                                        />
-                                      </div>
-                                      <div className="space-y-1">
-                                        <Label className="text-[10px] text-muted-foreground">Previsão</Label>
-                                        <Input
-                                          type="date"
-                                          className="h-8 text-xs"
-                                          value={resp.data_previsao || ""}
-                                          onChange={(e) =>
-                                            handleUpdateResponsavelDatas(i, rIdx, "data_previsao", e.target.value)
-                                          }
-                                          onBlur={handleSaveResponsavelDatas}
-                                        />
-                                      </div>
-                                      <div className="space-y-1">
-                                        <Label className="text-[10px] text-muted-foreground">Final</Label>
-                                        <Input
-                                          type="date"
-                                          className="h-8 text-xs"
-                                          value={resp.data_final || ""}
-                                          onChange={(e) =>
-                                            handleUpdateResponsavelDatas(i, rIdx, "data_final", e.target.value)
-                                          }
-                                          onBlur={handleSaveResponsavelDatas}
-                                        />
-                                      </div>
-                                    </div>
-                                  ) : (
-                                    <div className="flex items-center gap-4 text-[10px] text-muted-foreground">
-                                      {resp.data_inicio && <span>Início: {formatDateShort(resp.data_inicio)}</span>}
-                                      {resp.data_previsao && (
-                                        <span>Previsão: {formatDateShort(resp.data_previsao)}</span>
-                                      )}
-                                      {resp.data_final && (
-                                        <span className="text-green-700 font-medium">
-                                          Final: {formatDateShort(resp.data_final)}
-                                        </span>
-                                      )}
-                                      {!resp.data_inicio && !resp.data_previsao && !resp.data_final && (
-                                        <span>Sem datas definidas</span>
-                                      )}
-                                    </div>
+                                  {canEdit && resps.length > 1 && (
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-7 w-7 text-muted-foreground hover:text-red-600 flex-shrink-0"
+                                      onClick={() => handleRemoveResponsavel(i, rIdx)}
+                                    >
+                                      <Trash2 size={14} />
+                                    </Button>
                                   )}
                                 </div>
                               ))}
@@ -693,27 +776,24 @@ export default function ProjetoDetail() {
 
                             {/* Adicionar responsável */}
                             {canEdit && (
-                              <div className="mt-3">
+                              <div className="px-4 pb-4">
                                 {addingResponsavelToDisc === i ? (
-                                  <div className="bg-muted/20 rounded-lg p-3 border border-dashed space-y-3">
-                                    <div className="space-y-1">
-                                      <Label className="text-xs">Responsável</Label>
-                                      <Select
-                                        value={newResp.responsavel_id}
-                                        onValueChange={(v) => setNewResp((prev) => ({ ...prev, responsavel_id: v }))}
-                                      >
-                                        <SelectTrigger className="h-8 text-xs">
-                                          <SelectValue placeholder="Selecione" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                          {pessoas.map((p) => (
-                                            <SelectItem key={p.id} value={p.id} className="text-xs">
-                                              {p.nome}
-                                            </SelectItem>
-                                          ))}
-                                        </SelectContent>
-                                      </Select>
-                                    </div>
+                                  <div className="p-3 rounded-lg border-2 border-dashed border-primary/20 bg-primary/5 space-y-3">
+                                    <Select
+                                      value={newResp.responsavel_id}
+                                      onValueChange={(v) => setNewResp((prev) => ({ ...prev, responsavel_id: v }))}
+                                    >
+                                      <SelectTrigger className="h-8 text-xs">
+                                        <SelectValue placeholder="Selecione o responsável" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        {pessoas.map((p) => (
+                                          <SelectItem key={p.id} value={p.id} className="text-xs">
+                                            {p.nome}
+                                          </SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
                                     <div className="grid grid-cols-3 gap-2">
                                       <div className="space-y-1">
                                         <Label className="text-[10px] text-muted-foreground">Início</Label>
@@ -722,7 +802,10 @@ export default function ProjetoDetail() {
                                           className="h-8 text-xs"
                                           value={newResp.data_inicio}
                                           onChange={(e) =>
-                                            setNewResp((prev) => ({ ...prev, data_inicio: e.target.value }))
+                                            setNewResp((prev) => ({
+                                              ...prev,
+                                              data_inicio: e.target.value,
+                                            }))
                                           }
                                         />
                                       </div>
@@ -733,7 +816,10 @@ export default function ProjetoDetail() {
                                           className="h-8 text-xs"
                                           value={newResp.data_previsao}
                                           onChange={(e) =>
-                                            setNewResp((prev) => ({ ...prev, data_previsao: e.target.value }))
+                                            setNewResp((prev) => ({
+                                              ...prev,
+                                              data_previsao: e.target.value,
+                                            }))
                                           }
                                         />
                                       </div>
@@ -744,7 +830,10 @@ export default function ProjetoDetail() {
                                           className="h-8 text-xs"
                                           value={newResp.data_final}
                                           onChange={(e) =>
-                                            setNewResp((prev) => ({ ...prev, data_final: e.target.value }))
+                                            setNewResp((prev) => ({
+                                              ...prev,
+                                              data_final: e.target.value,
+                                            }))
                                           }
                                         />
                                       </div>
@@ -779,39 +868,14 @@ export default function ProjetoDetail() {
                                   </div>
                                 ) : (
                                   <Button
-                                    variant="ghost"
+                                    variant="outline"
                                     size="sm"
-                                    className="h-7 text-xs w-full text-muted-foreground hover:text-foreground"
+                                    className="h-8 text-xs w-full border-dashed"
                                     onClick={() => setAddingResponsavelToDisc(i)}
                                   >
-                                    <Plus className="h-3 w-3 mr-1" /> Adicionar responsável
+                                    <Plus className="h-3.5 w-3.5 mr-1.5" /> Adicionar responsável
                                   </Button>
                                 )}
-                              </div>
-                            )}
-
-                            {/* Ações da disciplina */}
-                            {canEdit && (
-                              <div className="flex items-center justify-end gap-2 mt-3 pt-2 border-t">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-7 text-xs"
-                                  onClick={() => {
-                                    setEditingDiscIdx(i);
-                                    setIsDiscDialogOpen(true);
-                                  }}
-                                >
-                                  <Edit className="h-3 w-3 mr-1" /> Editar Disciplina
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-7 text-xs text-red-500 hover:text-red-700"
-                                  onClick={() => handleRemoveDisc(i)}
-                                >
-                                  <Trash2 className="h-3 w-3 mr-1" /> Remover
-                                </Button>
                               </div>
                             )}
                           </div>
@@ -837,66 +901,72 @@ export default function ProjetoDetail() {
           >
             <DialogContent className="sm:max-w-lg">
               <DialogHeader>
-                <DialogTitle>Editar Disciplina</DialogTitle>
+                <DialogTitle className="flex items-center gap-2">
+                  <Edit className="h-4 w-4 text-muted-foreground" />
+                  Editar Disciplina
+                </DialogTitle>
                 <DialogDescription>
                   Altere os dados da disciplina. As mudanças são salvas ao clicar em Salvar.
                 </DialogDescription>
               </DialogHeader>
 
               {editingDiscIdx !== null && projeto.disciplinas[editingDiscIdx] && (
-                <div className="space-y-4 mt-2">
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-2">
-                      <Label className="text-xs">Disciplina</Label>
-                      <Select
-                        value={projeto.disciplinas[editingDiscIdx].disciplina}
-                        onValueChange={(val) => handleDiscFieldUpdate("disciplina", val)}
-                      >
-                        <SelectTrigger className="h-9">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {disciplinasCatalog.map((d) => (
-                            <SelectItem key={d.id} value={d.nome}>
-                              {d.nome}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                <div className="space-y-5 mt-2">
+                  {/* Seção: Dados básicos */}
+                  <div className="space-y-3">
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Dados Básicos</p>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Disciplina</Label>
+                        <Select
+                          value={projeto.disciplinas[editingDiscIdx].disciplina}
+                          onValueChange={(val) => handleDiscFieldUpdate("disciplina", val)}
+                        >
+                          <SelectTrigger className="h-9">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {disciplinasCatalog.map((d) => (
+                              <SelectItem key={d.id} value={d.nome}>
+                                {d.nome}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Prioridade</Label>
+                        <Select
+                          value={projeto.disciplinas[editingDiscIdx].prioridade || PROJECT_PRIORITY.MEDIA}
+                          onValueChange={(val) => handleDiscFieldUpdate("prioridade", val)}
+                        >
+                          <SelectTrigger className="h-9">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {PRIORITY_OPTIONS.map((p) => (
+                              <SelectItem key={p} value={p}>
+                                <span className="flex items-center gap-1.5">
+                                  <span
+                                    className={cn(
+                                      "h-2 w-2 rounded-full",
+                                      p === PROJECT_PRIORITY.ALTA
+                                        ? "bg-red-500"
+                                        : p === PROJECT_PRIORITY.MEDIA
+                                          ? "bg-amber-400"
+                                          : "bg-blue-400"
+                                    )}
+                                  />
+                                  {PROJECT_PRIORITY_CONFIG[p].label}
+                                </span>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
-                    <div className="space-y-2">
-                      <Label className="text-xs">Prioridade</Label>
-                      <Select
-                        value={projeto.disciplinas[editingDiscIdx].prioridade || PROJECT_PRIORITY.MEDIA}
-                        onValueChange={(val) => handleDiscFieldUpdate("prioridade", val)}
-                      >
-                        <SelectTrigger className="h-9">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {PRIORITY_OPTIONS.map((p) => (
-                            <SelectItem key={p} value={p}>
-                              <span className="flex items-center gap-1.5">
-                                <span
-                                  className={`h-2 w-2 rounded-full ${
-                                    p === PROJECT_PRIORITY.ALTA
-                                      ? "bg-red-500"
-                                      : p === PROJECT_PRIORITY.MEDIA
-                                        ? "bg-amber-400"
-                                        : "bg-blue-400"
-                                  }`}
-                                />
-                                {PROJECT_PRIORITY_CONFIG[p].label}
-                              </span>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
 
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-2">
+                    <div className="space-y-1.5">
                       <Label className="text-xs">Status</Label>
                       <Select
                         value={projeto.disciplinas[editingDiscIdx].status || "Não Iniciado"}
@@ -914,27 +984,35 @@ export default function ProjetoDetail() {
                         </SelectContent>
                       </Select>
                     </div>
-                    <div className="space-y-2">
-                      <Label className="text-xs">Datas (disciplina)</Label>
-                      <div className="grid grid-cols-3 gap-1">
+                  </div>
+
+                  {/* Seção: Datas */}
+                  <div className="space-y-3">
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Cronograma</p>
+                    <div className="grid grid-cols-3 gap-3">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Início</Label>
                         <Input
                           type="date"
                           className="h-9 text-xs"
-                          title="Início"
                           value={projeto.disciplinas[editingDiscIdx].data_inicio || ""}
                           onChange={(e) => handleDiscFieldUpdate("data_inicio", e.target.value)}
                         />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Previsão</Label>
                         <Input
                           type="date"
                           className="h-9 text-xs"
-                          title="Previsão"
                           value={projeto.disciplinas[editingDiscIdx].data_previsao || ""}
                           onChange={(e) => handleDiscFieldUpdate("data_previsao", e.target.value)}
                         />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Final</Label>
                         <Input
                           type="date"
                           className="h-9 text-xs"
-                          title="Final"
                           value={projeto.disciplinas[editingDiscIdx].data_final || ""}
                           onChange={(e) => handleDiscFieldUpdate("data_final", e.target.value)}
                         />
@@ -942,31 +1020,34 @@ export default function ProjetoDetail() {
                     </div>
                   </div>
 
-                  <div className="border-t pt-4 space-y-3">
-                    <Label className="flex items-center gap-2 text-xs">
-                      <MessageSquare size={14} /> Observações
-                    </Label>
+                  {/* Seção: Observações */}
+                  <div className="space-y-3">
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
+                      <MessageSquare size={12} /> Observações
+                    </p>
 
-                    <div className="bg-gray-50 rounded-lg p-3 max-h-40 overflow-y-auto space-y-2">
+                    <div className="rounded-lg border max-h-48 overflow-y-auto">
                       {!projeto.disciplinas[editingDiscIdx].observacoes ||
                       projeto.disciplinas[editingDiscIdx].observacoes!.length === 0 ? (
-                        <p className="text-xs text-center text-gray-400 py-3">Nenhuma observação</p>
+                        <p className="text-xs text-center text-muted-foreground py-6">Nenhuma observação registrada</p>
                       ) : (
-                        projeto.disciplinas[editingDiscIdx].observacoes!.map((obs, oi) => (
-                          <div key={oi} className="bg-white p-2 rounded border shadow-sm text-sm">
-                            <p className="text-gray-800">{obs.texto}</p>
-                            <div className="flex justify-between items-center mt-1 text-[10px] text-gray-400">
-                              <span>{obs.usuario}</span>
-                              <span>{new Date(obs.data).toLocaleString()}</span>
+                        <div className="divide-y">
+                          {projeto.disciplinas[editingDiscIdx].observacoes!.map((obs, oi) => (
+                            <div key={oi} className="px-3 py-2.5">
+                              <p className="text-sm text-foreground">{obs.texto}</p>
+                              <div className="flex justify-between items-center mt-1.5 text-[10px] text-muted-foreground">
+                                <span className="font-medium">{obs.usuario}</span>
+                                <span>{new Date(obs.data).toLocaleString()}</span>
+                              </div>
                             </div>
-                          </div>
-                        ))
+                          ))}
+                        </div>
                       )}
                     </div>
 
                     <div className="flex gap-2">
                       <Input
-                        placeholder="Nova observação..."
+                        placeholder="Escreva uma observação..."
                         value={newObservation}
                         onChange={(e) => setNewObservation(e.target.value)}
                         onKeyDown={(e) => {
@@ -977,13 +1058,20 @@ export default function ProjetoDetail() {
                         }}
                         className="h-9"
                       />
-                      <Button size="icon" className="h-9 w-9" onClick={handleAddObservation}>
+                      <Button
+                        size="icon"
+                        variant="outline"
+                        className="h-9 w-9"
+                        onClick={handleAddObservation}
+                        disabled={!newObservation.trim()}
+                      >
                         <Plus size={16} />
                       </Button>
                     </div>
                   </div>
 
-                  <div className="flex gap-2 pt-2">
+                  {/* Ações */}
+                  <div className="flex gap-2 pt-2 border-t">
                     <Button
                       variant="outline"
                       className="flex-1"
@@ -1003,6 +1091,10 @@ export default function ProjetoDetail() {
               )}
             </DialogContent>
           </Dialog>
+        </TabsContent>
+
+        <TabsContent value="pagamentos">
+          <PagamentosTab projetoId={projeto.id} canEdit={canEdit} />
         </TabsContent>
 
         <TabsContent value="orcamento">

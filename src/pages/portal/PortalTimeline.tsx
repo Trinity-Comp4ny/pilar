@@ -19,7 +19,7 @@ interface Disciplina {
   responsavel_nome?: string;
 }
 
-function TimelineContent({ projetoId }: { projetoId: string }) {
+export function TimelineContent({ projetoId }: { projetoId: string }) {
   const [disciplinas, setDisciplinas] = useState<Disciplina[]>([]);
   const [loading, setLoading] = useState(true);
 

@@ -18,7 +18,7 @@ export default function PortalFinanceiro() {
   return <PortalShell>{(data) => <FinanceiroContent projetoId={data.projeto_id} />}</PortalShell>;
 }
 
-function FinanceiroContent({ projetoId }: { projetoId: string }) {
+export function FinanceiroContent({ projetoId }: { projetoId: string }) {
   const [receitas, setReceitas] = useState<Receita[]>([]);
   const [loading, setLoading] = useState(true);
 

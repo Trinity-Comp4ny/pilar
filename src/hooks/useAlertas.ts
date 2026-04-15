@@ -27,7 +27,7 @@ export const useAlertas = (limit = 20) => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("alertas")
-        .select("*")
+        .select("id, empresa_id, tipo, severidade, titulo, mensagem, referencia_tipo, referencia_id, lido, created_at")
         .order("created_at", { ascending: false })
         .limit(limit);
 
@@ -45,7 +45,7 @@ export const useAlertasNaoLidos = () => {
     queryFn: async () => {
       const { count, error } = await supabase
         .from("alertas")
-        .select("*", { count: "exact", head: true })
+        .select("id", { count: "exact", head: true })
         .eq("lido", false);
 
       if (error) throw error;

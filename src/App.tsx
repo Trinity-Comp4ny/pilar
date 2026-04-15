@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { PrivateRoute } from "./components/PrivateRoute";
+import { ClientePrivateRoute } from "./components/ClientePrivateRoute";
 
 const Landing = lazy(() => import("./pages/Landing"));
 const Login = lazy(() => import("./pages/Login"));
@@ -31,9 +32,21 @@ const ProjetoDetail = lazy(() => import("./pages/projetos/ProjetoDetail"));
 const PortalTimeline = lazy(() => import("./pages/portal/PortalTimeline"));
 const PortalFinanceiro = lazy(() => import("./pages/portal/PortalFinanceiro"));
 const PortalEntregas = lazy(() => import("./pages/portal/PortalEntregas"));
+const ClienteLogin = lazy(() => import("./pages/cliente/ClienteLogin"));
+const ClienteDashboard = lazy(() => import("./pages/cliente/ClienteDashboard"));
+const ClienteProjetoDetail = lazy(() => import("./pages/cliente/ClienteProjetoDetail"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5,
+      gcTime: 1000 * 60 * 15,
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 const App = () => {
   return (
@@ -110,11 +123,21 @@ const App = () => {
                 <Route index element={<MetasPage />} />
               </Route>
 
-              {/* Portal do Cliente (rota pública) */}
+              {/* Portal do Cliente — Token (rota pública legada) */}
               <Route path="/portal/:token" element={<Portal />} />
               <Route path="/portal/:token/timeline" element={<PortalTimeline />} />
               <Route path="/portal/:token/financeiro" element={<PortalFinanceiro />} />
               <Route path="/portal/:token/entregas" element={<PortalEntregas />} />
+
+              {/* Portal do Cliente — Autenticado */}
+              <Route path="/cliente/login" element={<ClienteLogin />} />
+              <Route path="/cliente" element={<ClientePrivateRoute />}>
+                <Route path="dashboard" element={<ClienteDashboard />} />
+                <Route path="projeto/:id" element={<ClienteProjetoDetail />} />
+                <Route path="projeto/:id/timeline" element={<ClienteProjetoDetail />} />
+                <Route path="projeto/:id/financeiro" element={<ClienteProjetoDetail />} />
+                <Route path="projeto/:id/entregas" element={<ClienteProjetoDetail />} />
+              </Route>
 
               <Route path="/ai" element={<PrivateRoute />}>
                 <Route index element={<AiHub />} />

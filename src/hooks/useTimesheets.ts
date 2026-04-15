@@ -42,7 +42,9 @@ export const useTimesheetsByWeek = (pessoaId: string | undefined, weekStart: str
 
       const { data, error } = await supabase
         .from("timesheets")
-        .select("*")
+        .select(
+          "id, empresa_id, pessoa_id, projeto_id, disciplina, data, horas, descricao, status, aprovado_por, aprovado_em, created_at"
+        )
         .eq("pessoa_id", pessoaId)
         .gte("data", weekStart)
         .lte("data", weekEnd)
@@ -195,7 +197,7 @@ export const useTimesheetsPendentes = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("timesheets")
-        .select("*")
+        .select("id, pessoa_id, projeto_id, disciplina, data, horas, descricao, status, created_at")
         .eq("status", "pendente")
         .is("deleted_at", null)
         .order("data", { ascending: false });

@@ -76,23 +76,23 @@ CREATE POLICY "faturas_select" ON public.faturas
 CREATE POLICY "faturas_insert" ON public.faturas
   FOR INSERT WITH CHECK (
     empresa_id = public.get_user_empresa_id()
-    AND public.has_role(ARRAY['admin', 'financeiro'])
+    AND public.has_role('admin', 'financeiro')
   );
 
 CREATE POLICY "faturas_update" ON public.faturas
   FOR UPDATE USING (
     empresa_id = public.get_user_empresa_id()
     AND deleted_at IS NULL
-    AND public.has_role(ARRAY['admin', 'financeiro'])
+    AND public.has_role('admin', 'financeiro')
   ) WITH CHECK (
     empresa_id = public.get_user_empresa_id()
-    AND public.has_role(ARRAY['admin', 'financeiro'])
+    AND public.has_role('admin', 'financeiro')
   );
 
 CREATE POLICY "faturas_delete" ON public.faturas
   FOR DELETE USING (
     empresa_id = public.get_user_empresa_id()
-    AND public.has_role(ARRAY['admin', 'financeiro'])
+    AND public.has_role('admin', 'financeiro')
   );
 
 -- 7. VIEW: RESUMO DE FATURAS

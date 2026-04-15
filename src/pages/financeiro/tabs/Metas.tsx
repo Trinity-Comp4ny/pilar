@@ -27,7 +27,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { formatCurrencyInput, parseCurrencyString } from "@/lib/maskUtils";
+import { formatCurrencyInput, parseCurrencyString } from "@/lib/currencyUtils";
 
 interface Meta {
   id: string;
