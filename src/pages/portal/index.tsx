@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Building2, FolderKanban, Clock, FileCheck, DollarSign } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 interface PortalData {
   projeto_id: string;
@@ -33,6 +34,7 @@ function errorMessageFromUnknown(e: unknown): string {
 }
 
 export default function PortalLayout() {
+  usePageTitle("Portal do Cliente");
   const { token } = useParams<{ token: string }>();
   const [data, setData] = useState<PortalData | null>(null);
   const [error, setError] = useState<string | null>(null);

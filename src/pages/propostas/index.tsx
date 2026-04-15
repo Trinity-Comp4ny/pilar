@@ -51,8 +51,10 @@ interface PropostaDisciplina {
 import { supabase } from "@/integrations/supabase/client";
 import { fetchClientesLookup, fetchLeadsLookup } from "@/lib/supabaseQueries";
 import { useQuery } from "@tanstack/react-query";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 export default function Propostas() {
+  usePageTitle("Propostas");
   const { data: userRole } = useUserRole();
   const { toast } = useToast();
   const { data: propostas = [], isLoading } = usePropostas();

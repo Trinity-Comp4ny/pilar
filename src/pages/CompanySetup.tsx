@@ -8,8 +8,10 @@ import { useToast } from "@/hooks/use-toast";
 import { getSafeErrorMessage } from "@/lib/safeError";
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, ArrowRight, Building2, Hash, Loader2 } from "lucide-react";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 export default function CompanySetup() {
+  usePageTitle("Configuração da Empresa");
   const [isLoading, setIsLoading] = useState(false);
   const [name, setName] = useState("");
   const [cnpj, setCnpj] = useState("");

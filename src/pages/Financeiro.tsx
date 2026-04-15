@@ -15,8 +15,10 @@ import AgingRecebiveis from "./financeiro/tabs/AgingRecebiveis";
 import DRE from "./financeiro/tabs/DRE";
 import WIP from "./financeiro/tabs/WIP";
 import Rentabilidade from "./financeiro/tabs/Rentabilidade";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 export default function Financeiro() {
+  usePageTitle("Financeiro");
   const { state, isMobile } = useSidebar();
   const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState<string>("visao-geral");

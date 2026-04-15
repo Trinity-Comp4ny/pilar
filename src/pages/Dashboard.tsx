@@ -32,6 +32,7 @@ import {
   type LeadsPipeline,
 } from "@/hooks/useDashboardData";
 import { PROJECT_STATUS_CONFIG, PROJECT_PRIORITY_CONFIG, type ProjectStatus, type ProjectPriority } from "@/constants";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 const fmt = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 const fmtCompact = new Intl.NumberFormat("pt-BR", {
@@ -266,6 +267,7 @@ function DashboardSkeleton() {
 }
 
 export default function Dashboard() {
+  usePageTitle("Dashboard");
   const navigate = useNavigate();
   const { data, isLoading, error } = useDashboardData();
 

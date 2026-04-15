@@ -7,12 +7,14 @@ import { PageHeader } from "@/components/PageHeader";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { usePageTitle } from "@/hooks/usePageTitle";
 import type { Pessoa } from "./types";
 import { PessoaFormDialog } from "./components/PessoaFormDialog";
 import { PessoaDetailDialog } from "./components/PessoaDetailDialog";
 import { PessoaTable } from "./components/PessoaTable";
 
 export default function Pessoas() {
+  usePageTitle("Pessoas");
   const { data: userRole } = useUserRole();
   const isAdmin = userRole === "admin";
   const { toast } = useToast();

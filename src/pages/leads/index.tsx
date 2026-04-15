@@ -23,6 +23,7 @@ import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { supabase } from "@/integrations/supabase/client";
 import { getSafeErrorMessage } from "@/lib/safeError";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 interface Lead {
   id: string;
@@ -50,6 +51,7 @@ const statusConfig: Record<string, { label: string; color: string; columnColor: 
 };
 
 export default function Leads() {
+  usePageTitle("Leads");
   const [leads, setLeads] = useState<Lead[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);

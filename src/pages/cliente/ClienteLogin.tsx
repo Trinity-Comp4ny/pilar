@@ -7,8 +7,10 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Mail, Lock, Loader2 } from "lucide-react";
 import { getPortalToken, setPortalToken } from "./useClienteAuth";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 export default function ClienteLogin() {
+  usePageTitle("Portal | Login");
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
