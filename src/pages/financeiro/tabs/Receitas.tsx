@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,11 +25,13 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
 import { getDisplayDate, formatDateDisplay } from "@/lib/dateUtils";
-import { formatCurrencyInput, parseCurrencyString } from "@/lib/maskUtils";
+import { formatCurrencyInput, parseCurrencyString } from "@/lib/currencyUtils";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { receitaSchema, receitaDefaultValues, type ReceitaFormData } from "@/schemas/receitaSchema";
 import { getSafeErrorMessage } from "@/lib/safeError";
+import { checkDuplicates, type DuplicateMatch } from "@/lib/duplicateCheck";
+import { DuplicateWarningDialog } from "@/components/DuplicateWarningDialog";
 
 /**
  * Função para obter a data de exibição correta baseada no status
@@ -57,6 +59,9 @@ interface Receita {
   cliente_nome?: string;
   projeto_codigo?: string;
   parcelas?: string;
+  grupo_parcela?: string | null;
+  parcela_numero?: number | null;
+  parcela_total?: number | null;
 }
 
 export default function Receitas() {
@@ -84,18 +89,20 @@ export default function Receitas() {
   const [clientes, setClientes] = useState<{ id: string; nome: string }[]>([]);
   const { toast } = useToast();
 
-  const receitasFiltradas = receitas.filter((r) => {
-    const matchSearch =
-      !searchTerm ||
-      r.descricao.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (r.cliente_nome || "").toLowerCase().includes(searchTerm.toLowerCase());
-    const matchStatus =
-      statusFilter === "todos" ||
-      (statusFilter === "recebido" && r.status === "Recebido") ||
-      (statusFilter === "pendente" && r.status === "Pendente") ||
-      (statusFilter === "atrasado" && r.status === "Atrasado");
-    return matchSearch && matchStatus;
-  });
+  const receitasFiltradas = useMemo(() => {
+    return receitas.filter((r) => {
+      const matchSearch =
+        !searchTerm ||
+        r.descricao.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (r.cliente_nome || "").toLowerCase().includes(searchTerm.toLowerCase());
+      const matchStatus =
+        statusFilter === "todos" ||
+        (statusFilter === "recebido" && r.status === "Recebido") ||
+        (statusFilter === "pendente" && r.status === "Pendente") ||
+        (statusFilter === "atrasado" && r.status === "Atrasado");
+      return matchSearch && matchStatus;
+    });
+  }, [receitas, searchTerm, statusFilter]);
 
   const fetchAuxiliaryData = async () => {
     // Fetch Categorias
@@ -201,13 +208,16 @@ export default function Receitas() {
   };
 
   const [isSaving, setIsSaving] = useState(false);
+  const [duplicates, setDuplicates] = useState<DuplicateMatch[]>([]);
+  const [showDuplicateWarning, setShowDuplicateWarning] = useState(false);
+  const [pendingFormData, setPendingFormData] = useState<ReceitaFormData | null>(null);
 
-  const handleSubmit = form.handleSubmit(async (formData) => {
+  const saveReceita = async (formData: ReceitaFormData) => {
     setIsSaving(true);
     try {
       const numParcelas = parseInt(formData.parcelas) || 1;
       const valorNumerico = parseCurrencyString(formData.valorTotal);
-      const valorParcela = valorNumerico / numParcelas;
+      const valorParcela = Math.round((valorNumerico / numParcelas) * 100) / 100;
       const {
         data: { user },
       } = await supabase.auth.getUser();
@@ -217,11 +227,16 @@ export default function Receitas() {
       const { data: empresaId } = await supabase.rpc("get_user_empresa_id");
       if (!empresaId) throw new Error("Usuário não vinculado a uma empresa");
 
+      const grupoParcela = numParcelas > 1 ? crypto.randomUUID() : null;
       const receitasToInsert = [];
 
       for (let i = 0; i < numParcelas; i++) {
         const dataParcela = addMonths(formData.dataVencimento, i);
         const dataStr = format(dataParcela, "yyyy-MM-dd");
+        const isUltimaParcela = i === numParcelas - 1 && numParcelas > 1;
+        const valorFinal = isUltimaParcela
+          ? Math.round((valorNumerico - valorParcela * (numParcelas - 1)) * 100) / 100
+          : valorParcela;
 
         receitasToInsert.push({
           data_vencimento: dataStr,
@@ -229,7 +244,7 @@ export default function Receitas() {
           descricao: numParcelas > 1 ? `${formData.descricao} (${i + 1}/${numParcelas})` : formData.descricao,
           projeto_id: formData.projetoID || null,
           categoria_id: formData.categoriaId || null,
-          valor: valorParcela,
+          valor: valorFinal,
           forma_pagamento: formData.formaPagamento || null,
           nota_fiscal: formData.notaFiscal || null,
           status: formData.status === "Recebida" ? "Recebido" : "Pendente",
@@ -237,20 +252,18 @@ export default function Receitas() {
           cliente_id: formData.clienteId || null,
           observacao: formData.observacao || null,
           empresa_id: empresaId,
+          grupo_parcela: grupoParcela,
+          parcela_numero: numParcelas > 1 ? i + 1 : null,
+          parcela_total: numParcelas > 1 ? numParcelas : null,
         });
       }
-
-      const dataToInsert = receitasToInsert.map((r) => ({
-        ...r,
-        valor: r.valor,
-      }));
 
       let error = null;
 
       if (selectedReceita) {
-        ({ error } = await supabase.from("receitas").update(dataToInsert[0]).eq("id", selectedReceita.id));
+        ({ error } = await supabase.from("receitas").update(receitasToInsert[0]).eq("id", selectedReceita.id));
       } else {
-        ({ error } = await supabase.from("receitas").insert(dataToInsert));
+        ({ error } = await supabase.from("receitas").insert(receitasToInsert));
       }
 
       if (error) throw error;
@@ -274,6 +287,41 @@ export default function Receitas() {
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleSubmit = form.handleSubmit(async (formData) => {
+    if (selectedReceita) {
+      await saveReceita(formData);
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const valorNumerico = parseCurrencyString(formData.valorTotal);
+      const numParcelas = parseInt(formData.parcelas) || 1;
+      const valorParcela = valorNumerico / numParcelas;
+
+      const found = await checkDuplicates({
+        table: "receitas",
+        descricao: formData.descricao,
+        valor: valorParcela,
+        dataVencimento: formData.dataVencimento,
+      });
+
+      if (found.length > 0) {
+        setDuplicates(found);
+        setPendingFormData(formData);
+        setShowDuplicateWarning(true);
+        setIsSaving(false);
+        return;
+      }
+    } catch {
+      // Se a checagem falhar, prossegue com o salvamento
+    } finally {
+      if (!showDuplicateWarning) setIsSaving(false);
+    }
+
+    await saveReceita(formData);
   });
 
   const resetForm = () => {
@@ -655,7 +703,11 @@ export default function Receitas() {
                     <TableCell>{receita.projeto_codigo || "-"}</TableCell>
                     <TableCell>{receita.categoria_nome || "-"}</TableCell>
                     <TableCell>{receita.forma_pagamento || "-"}</TableCell>
-                    <TableCell>{receita.parcelas || "1"}</TableCell>
+                    <TableCell>
+                      {receita.parcela_numero && receita.parcela_total
+                        ? `${receita.parcela_numero}/${receita.parcela_total}`
+                        : "1/1"}
+                    </TableCell>
                     <TableCell className="text-green-600 font-medium">
                       R$ {receita.valor.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                     </TableCell>
@@ -766,8 +818,12 @@ export default function Receitas() {
                   <p className="text-sm">{selectedReceita.nota_fiscal || "-"}</p>
                 </div>
                 <div>
-                  <Label className="text-xs text-muted-foreground">Parcelas</Label>
-                  <p className="text-sm">{selectedReceita.parcelas || "1"}</p>
+                  <Label className="text-xs text-muted-foreground">Parcela</Label>
+                  <p className="text-sm">
+                    {selectedReceita.parcela_numero && selectedReceita.parcela_total
+                      ? `${selectedReceita.parcela_numero}/${selectedReceita.parcela_total}`
+                      : "1/1"}
+                  </p>
                 </div>
                 <div className="col-span-2">
                   <Button variant="outline" className="flex-1" onClick={() => openEditReceita(selectedReceita)}>
@@ -791,6 +847,22 @@ export default function Receitas() {
           )}
         </DialogContent>
       </Dialog>
+
+      <DuplicateWarningDialog
+        open={showDuplicateWarning}
+        onOpenChange={(open) => {
+          setShowDuplicateWarning(open);
+          if (!open) setPendingFormData(null);
+        }}
+        duplicates={duplicates}
+        onConfirm={() => {
+          setShowDuplicateWarning(false);
+          if (pendingFormData) {
+            saveReceita(pendingFormData);
+            setPendingFormData(null);
+          }
+        }}
+      />
     </div>
   );
 }

@@ -31,7 +31,6 @@ import {
   type DashboardAlerta,
   type LeadsPipeline,
 } from "@/hooks/useDashboardData";
-import { HealthIndexCard } from "@/components/HealthIndexCard";
 import { PROJECT_STATUS_CONFIG, PROJECT_PRIORITY_CONFIG, type ProjectStatus, type ProjectPriority } from "@/constants";
 
 const fmt = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
@@ -401,9 +400,9 @@ export default function Dashboard() {
           </Card>
         </div>
 
-        {/* Gráfico Financeiro + Saúde Operacional */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <Card className="lg:col-span-2 bg-white border border-gray-100 shadow-sm">
+        {/* Gráfico Financeiro */}
+        <div className="grid grid-cols-1 gap-6">
+          <Card className="bg-white border border-gray-100 shadow-sm">
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
                 <CardTitle className="flex items-center gap-2 text-base font-semibold">
@@ -475,8 +474,6 @@ export default function Dashboard() {
               </div>
             </CardContent>
           </Card>
-
-          <HealthIndexCard />
         </div>
 
         {/* Projetos + Alertas */}

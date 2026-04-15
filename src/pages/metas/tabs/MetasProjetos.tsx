@@ -27,11 +27,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-
-interface Projeto {
-  id: string;
-  nome: string;
-}
+import { fetchProjetosLookup } from "@/lib/supabaseQueries";
 
 interface MetaProjeto {
   id: string;
@@ -69,11 +65,7 @@ export default function MetasProjetos() {
 
   const { data: projetos } = useQuery({
     queryKey: ["projetos-list"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("projetos").select("id, nome").is("deleted_at", null).order("nome");
-      if (error) throw error;
-      return data as Projeto[];
-    },
+    queryFn: fetchProjetosLookup,
   });
 
   const { data: metas, isLoading } = useQuery({

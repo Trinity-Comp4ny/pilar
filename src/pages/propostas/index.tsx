@@ -49,6 +49,7 @@ interface PropostaDisciplina {
   custo_hora: number;
 }
 import { supabase } from "@/integrations/supabase/client";
+import { fetchClientesLookup, fetchLeadsLookup } from "@/lib/supabaseQueries";
 import { useQuery } from "@tanstack/react-query";
 
 export default function Propostas() {
@@ -90,18 +91,12 @@ export default function Propostas() {
   // Clientes e leads para o select
   const { data: clientes = [] } = useQuery({
     queryKey: ["clientes-select"],
-    queryFn: async () => {
-      const { data } = await supabase.from("clientes").select("id, nome").is("deleted_at", null).order("nome");
-      return data || [];
-    },
+    queryFn: fetchClientesLookup,
   });
 
   const { data: leads = [] } = useQuery({
     queryKey: ["leads-select"],
-    queryFn: async () => {
-      const { data } = await supabase.from("leads").select("id, nome").is("deleted_at", null).order("nome");
-      return data || [];
-    },
+    queryFn: fetchLeadsLookup,
   });
 
   const resetForm = () => {

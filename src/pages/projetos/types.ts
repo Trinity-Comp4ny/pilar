@@ -75,25 +75,9 @@ export interface Projeto {
 
 export const disciplinaStatusOptions = ["Não Iniciado", "Em Andamento", "Concluído", "Pendente"];
 
-export const formatCurrency = (value: number) => {
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  }).format(value);
-};
-
-// Formata data corrigindo o problema de timezone
-export const formatDate = (dateString: string | undefined) => {
-  if (!dateString) return "-";
-  const date = new Date(dateString + "T00:00:00");
-  return date.toLocaleDateString("pt-BR");
-};
-
-export const formatDateShort = (dateString: string | undefined) => {
-  if (!dateString) return "-";
-  const date = new Date(dateString + "T00:00:00");
-  return date.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
-};
+// Re-export de utilitários centralizados para manter compatibilidade de imports existentes
+export { formatCurrency } from "@/lib/currencyUtils";
+export { formatDate, formatDateShort } from "@/lib/dateUtils";
 
 // Calcula o status de prazo do projeto e status_data
 export const getDeadlineStatus = (projeto: { data_previsao?: string; data_final?: string; status: string }) => {
