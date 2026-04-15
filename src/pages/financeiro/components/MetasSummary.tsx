@@ -19,12 +19,12 @@ export default function MetasSummary() {
   const navigate = useNavigate();
 
   const { data: metas, isLoading } = useQuery({
-    queryKey: ['metas-summary'],
+    queryKey: ["metas-summary"],
     queryFn: async () => {
-      const { data, error } = await supabase.from('metas').select('*').limit(3);
+      const { data, error } = await supabase.from("metas").select("*").limit(3);
       if (error) throw error;
       return data as Meta[];
-    }
+    },
   });
 
   if (isLoading) {
@@ -56,12 +56,7 @@ export default function MetasSummary() {
           </CardTitle>
           <CardDescription className="mt-1">Principais metas</CardDescription>
         </div>
-        <Button 
-          variant="outline" 
-          size="sm"
-          onClick={() => navigate('/metas')}
-          className="text-xs rounded-full"
-        >
+        <Button variant="outline" size="sm" onClick={() => navigate("/metas")} className="text-xs rounded-full">
           Ver Todas
         </Button>
       </CardHeader>

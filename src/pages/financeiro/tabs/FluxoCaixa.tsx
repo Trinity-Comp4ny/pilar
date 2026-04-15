@@ -21,7 +21,7 @@ export default function FluxoCaixa({ dateFrom, dateTo }: FluxoCaixaProps) {
   }
 
   const chartData = dashboardData?.chartData || [];
-  const hasData = chartData.some(item => item.receitas > 0 || item.despesas > 0);
+  const hasData = chartData.some((item) => item.receitas > 0 || item.despesas > 0);
 
   return (
     <div className="space-y-6 w-full max-w-none">
@@ -44,9 +44,28 @@ export default function FluxoCaixa({ dateFrom, dateTo }: FluxoCaixaProps) {
                 <YAxis stroke="#888" axisLine={false} tickLine={false} />
                 <Tooltip content={<CustomTooltip />} />
                 <Legend />
-                <Bar dataKey="receitas" name="Entradas" fill="hsl(var(--chart-success))" radius={[4, 4, 0, 0]} barSize={20} />
-                <Bar dataKey="despesas" name="Saídas" fill="hsl(var(--chart-danger))" radius={[4, 4, 0, 0]} barSize={20} />
-                <Line type="monotone" dataKey={(data) => data.receitas - data.despesas} name="Saldo Líquido" stroke="hsl(var(--primary))" strokeWidth={3} dot={{ r: 4 }} />
+                <Bar
+                  dataKey="receitas"
+                  name="Entradas"
+                  fill="hsl(var(--chart-success))"
+                  radius={[4, 4, 0, 0]}
+                  barSize={20}
+                />
+                <Bar
+                  dataKey="despesas"
+                  name="Saídas"
+                  fill="hsl(var(--chart-danger))"
+                  radius={[4, 4, 0, 0]}
+                  barSize={20}
+                />
+                <Line
+                  type="monotone"
+                  dataKey={(data) => data.receitas - data.despesas}
+                  name="Saldo Líquido"
+                  stroke="hsl(var(--primary))"
+                  strokeWidth={3}
+                  dot={{ r: 4 }}
+                />
               </ComposedChart>
             </ResponsiveContainer>
           </div>

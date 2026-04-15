@@ -11,10 +11,22 @@ export const PROJECT_STATUS = {
 export type ProjectStatus = (typeof PROJECT_STATUS)[keyof typeof PROJECT_STATUS];
 
 export const PROJECT_STATUS_CONFIG: Record<ProjectStatus, { label: string; color: string; columnColor: string }> = {
-  [PROJECT_STATUS.PLANEJAMENTO]: { label: "Planejamento", color: "bg-yellow-100 text-yellow-800", columnColor: "bg-yellow-50" },
-  [PROJECT_STATUS.EM_ANDAMENTO]: { label: "Em andamento", color: "bg-blue-100 text-blue-800", columnColor: "bg-blue-50" },
+  [PROJECT_STATUS.PLANEJAMENTO]: {
+    label: "Planejamento",
+    color: "bg-yellow-100 text-yellow-800",
+    columnColor: "bg-yellow-50",
+  },
+  [PROJECT_STATUS.EM_ANDAMENTO]: {
+    label: "Em andamento",
+    color: "bg-blue-100 text-blue-800",
+    columnColor: "bg-blue-50",
+  },
   [PROJECT_STATUS.REVISAO]: { label: "Revisão", color: "bg-purple-100 text-purple-800", columnColor: "bg-purple-50" },
-  [PROJECT_STATUS.PARALISADO]: { label: "Paralisado", color: "bg-accent-orange/10 text-accent-orange", columnColor: "bg-accent-orange/5" },
+  [PROJECT_STATUS.PARALISADO]: {
+    label: "Paralisado",
+    color: "bg-accent-orange/10 text-accent-orange",
+    columnColor: "bg-accent-orange/5",
+  },
   [PROJECT_STATUS.CONCLUIDO]: { label: "Concluído", color: "bg-green-100 text-green-800", columnColor: "bg-green-50" },
   [PROJECT_STATUS.CANCELADO]: { label: "Cancelado", color: "bg-red-100 text-red-800", columnColor: "bg-red-50" },
 };
@@ -37,13 +49,16 @@ export const PROJECT_PRIORITY = {
 
 export type ProjectPriority = (typeof PROJECT_PRIORITY)[keyof typeof PROJECT_PRIORITY];
 
-export const PROJECT_PRIORITY_CONFIG: Record<ProjectPriority, {
-  label: string;
-  color: string;
-  bgColor: string;
-  borderColor: string;
-  sortWeight: number;
-}> = {
+export const PROJECT_PRIORITY_CONFIG: Record<
+  ProjectPriority,
+  {
+    label: string;
+    color: string;
+    bgColor: string;
+    borderColor: string;
+    sortWeight: number;
+  }
+> = {
   [PROJECT_PRIORITY.ALTA]: {
     label: "Alta",
     color: "text-red-700",

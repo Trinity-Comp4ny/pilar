@@ -51,13 +51,8 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
         data_admissao: editPessoa.data_admissao || "",
         data_demissao: editPessoa.data_demissao || "",
         salario_fixo:
-          editPessoa.salario_fixo != null
-            ? formatCurrencyInput((editPessoa.salario_fixo * 100).toString())
-            : "",
-        valor_m2:
-          editPessoa.valor_m2 != null
-            ? formatCurrencyInput((editPessoa.valor_m2 * 100).toString())
-            : "",
+          editPessoa.salario_fixo != null ? formatCurrencyInput((editPessoa.salario_fixo * 100).toString()) : "",
+        valor_m2: editPessoa.valor_m2 != null ? formatCurrencyInput((editPessoa.valor_m2 * 100).toString()) : "",
       });
       setContasBancarias(Array.isArray(editPessoa.contas_bancarias) ? editPessoa.contas_bancarias : []);
     } else {
@@ -148,11 +143,20 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
           <div className="px-6 py-4">
             <Label className="text-[10px] uppercase text-muted-foreground tracking-wider">Tipo de Contrato</Label>
             <div className="mt-2">
-              <Select value={form.watch("tipo_contrato")} onValueChange={(value) => form.setValue("tipo_contrato", value)}>
-                <SelectTrigger><SelectValue placeholder="Selecione o tipo" /></SelectTrigger>
+              <Select
+                value={form.watch("tipo_contrato")}
+                onValueChange={(value) => form.setValue("tipo_contrato", value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o tipo" />
+                </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={CONTRACT_TYPES.CONTRATADO}>{CONTRACT_TYPE_LABELS[CONTRACT_TYPES.CONTRATADO]}</SelectItem>
-                  <SelectItem value={CONTRACT_TYPES.TERCEIRIZADO}>{CONTRACT_TYPE_LABELS[CONTRACT_TYPES.TERCEIRIZADO]}</SelectItem>
+                  <SelectItem value={CONTRACT_TYPES.CONTRATADO}>
+                    {CONTRACT_TYPE_LABELS[CONTRACT_TYPES.CONTRATADO]}
+                  </SelectItem>
+                  <SelectItem value={CONTRACT_TYPES.TERCEIRIZADO}>
+                    {CONTRACT_TYPE_LABELS[CONTRACT_TYPES.TERCEIRIZADO]}
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -163,29 +167,57 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
             <Label className="text-[10px] uppercase text-muted-foreground tracking-wider">Dados Pessoais</Label>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label htmlFor="nome" className="text-xs">Nome Completo *</Label>
+                <Label htmlFor="nome" className="text-xs">
+                  Nome Completo *
+                </Label>
                 <Input id="nome" {...form.register("nome")} placeholder="Nome completo" />
-                {form.formState.errors.nome && <p className="text-xs text-red-500">{form.formState.errors.nome.message}</p>}
+                {form.formState.errors.nome && (
+                  <p className="text-xs text-red-500">{form.formState.errors.nome.message}</p>
+                )}
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="cpf" className="text-xs">CPF</Label>
-                <Input id="cpf" value={form.watch("cpf")} onChange={(e) => form.setValue("cpf", formatCPF(e.target.value))} maxLength={14} placeholder="000.000.000-00" />
+                <Label htmlFor="cpf" className="text-xs">
+                  CPF
+                </Label>
+                <Input
+                  id="cpf"
+                  value={form.watch("cpf")}
+                  onChange={(e) => form.setValue("cpf", formatCPF(e.target.value))}
+                  maxLength={14}
+                  placeholder="000.000.000-00"
+                />
               </div>
               <div className="md:col-span-2 space-y-1.5">
-                <Label htmlFor="cargo" className="text-xs">Cargo/Função *</Label>
+                <Label htmlFor="cargo" className="text-xs">
+                  Cargo/Função *
+                </Label>
                 <Input id="cargo" {...form.register("cargo")} placeholder="Ex: Arquiteto, Engenheiro, Projetista" />
-                {form.formState.errors.cargo && <p className="text-xs text-red-500">{form.formState.errors.cargo.message}</p>}
+                {form.formState.errors.cargo && (
+                  <p className="text-xs text-red-500">{form.formState.errors.cargo.message}</p>
+                )}
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="telefone" className="text-xs">Telefone</Label>
-                <Input id="telefone" value={form.watch("telefone")} onChange={(e) => form.setValue("telefone", formatPhone(e.target.value))} maxLength={15} placeholder="(14) 99999-9999" />
+                <Label htmlFor="telefone" className="text-xs">
+                  Telefone
+                </Label>
+                <Input
+                  id="telefone"
+                  value={form.watch("telefone")}
+                  onChange={(e) => form.setValue("telefone", formatPhone(e.target.value))}
+                  maxLength={15}
+                  placeholder="(14) 99999-9999"
+                />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="email" className="text-xs">Email</Label>
+                <Label htmlFor="email" className="text-xs">
+                  Email
+                </Label>
                 <Input id="email" type="email" {...form.register("email")} placeholder="email@exemplo.com" />
               </div>
               <div className="md:col-span-2 space-y-1.5">
-                <Label htmlFor="endereco" className="text-xs">Endereço</Label>
+                <Label htmlFor="endereco" className="text-xs">
+                  Endereço
+                </Label>
                 <Input id="endereco" {...form.register("endereco")} placeholder="Endereço completo" />
               </div>
             </div>
@@ -196,19 +228,39 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
             <Label className="text-[10px] uppercase text-muted-foreground tracking-wider">Remuneração e Datas</Label>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               <div className="space-y-1.5">
-                <Label htmlFor="salario_fixo" className="text-xs">Salário Fixo (R$)</Label>
-                <Input id="salario_fixo" type="text" value={form.watch("salario_fixo")} onChange={(e) => form.setValue("salario_fixo", formatCurrencyInput(e.target.value))} placeholder="R$ 0,00" />
+                <Label htmlFor="salario_fixo" className="text-xs">
+                  Salário Fixo (R$)
+                </Label>
+                <Input
+                  id="salario_fixo"
+                  type="text"
+                  value={form.watch("salario_fixo")}
+                  onChange={(e) => form.setValue("salario_fixo", formatCurrencyInput(e.target.value))}
+                  placeholder="R$ 0,00"
+                />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="valor_m2" className="text-xs">Valor m² (R$)</Label>
-                <Input id="valor_m2" type="text" value={form.watch("valor_m2")} onChange={(e) => form.setValue("valor_m2", formatCurrencyInput(e.target.value))} placeholder="R$ 0,00" />
+                <Label htmlFor="valor_m2" className="text-xs">
+                  Valor m² (R$)
+                </Label>
+                <Input
+                  id="valor_m2"
+                  type="text"
+                  value={form.watch("valor_m2")}
+                  onChange={(e) => form.setValue("valor_m2", formatCurrencyInput(e.target.value))}
+                  placeholder="R$ 0,00"
+                />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="data_admissao" className="text-xs">Admissão</Label>
+                <Label htmlFor="data_admissao" className="text-xs">
+                  Admissão
+                </Label>
                 <Input id="data_admissao" type="date" {...form.register("data_admissao")} className="h-9" />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="data_demissao" className="text-xs">Demissão</Label>
+                <Label htmlFor="data_demissao" className="text-xs">
+                  Demissão
+                </Label>
                 <Input id="data_demissao" type="date" {...form.register("data_demissao")} className="h-9" />
               </div>
             </div>
@@ -224,26 +276,46 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
             <div className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
               <div className="space-y-1">
                 <Label className="text-xs">Banco</Label>
-                <Input placeholder="Nome do banco" value={newConta.banco} onChange={(e) => setNewConta({ ...newConta, banco: e.target.value })} />
+                <Input
+                  placeholder="Nome do banco"
+                  value={newConta.banco}
+                  onChange={(e) => setNewConta({ ...newConta, banco: e.target.value })}
+                />
               </div>
               <div className="space-y-1">
                 <Label className="text-xs">Agência</Label>
-                <Input placeholder="0000" value={newConta.agencia} onChange={(e) => setNewConta({ ...newConta, agencia: formatAgency(e.target.value) })} />
+                <Input
+                  placeholder="0000"
+                  value={newConta.agencia}
+                  onChange={(e) => setNewConta({ ...newConta, agencia: formatAgency(e.target.value) })}
+                />
               </div>
               <div className="space-y-1">
                 <Label className="text-xs">Conta</Label>
-                <Input placeholder="000000-0" value={newConta.conta} onChange={(e) => setNewConta({ ...newConta, conta: formatBankAccount(e.target.value) })} />
+                <Input
+                  placeholder="000000-0"
+                  value={newConta.conta}
+                  onChange={(e) => setNewConta({ ...newConta, conta: formatBankAccount(e.target.value) })}
+                />
               </div>
               <div className="flex items-end gap-2">
                 <Select value={newConta.tipo} onValueChange={(value) => setNewConta({ ...newConta, tipo: value })}>
-                  <SelectTrigger className="flex-1"><SelectValue placeholder="Tipo" /></SelectTrigger>
+                  <SelectTrigger className="flex-1">
+                    <SelectValue placeholder="Tipo" />
+                  </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="corrente">Corrente</SelectItem>
                     <SelectItem value="poupanca">Poupança</SelectItem>
                     <SelectItem value="pj">PJ</SelectItem>
                   </SelectContent>
                 </Select>
-                <Button type="button" size="icon" variant="outline" className="h-9 w-9 shrink-0" onClick={handleAddConta}>
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="outline"
+                  className="h-9 w-9 shrink-0"
+                  onClick={handleAddConta}
+                >
                   <Plus className="h-4 w-4" />
                 </Button>
               </div>
@@ -252,17 +324,37 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
             {contasBancarias.length > 0 && (
               <div className="space-y-1.5">
                 {contasBancarias.map((conta, index) => (
-                  <div key={index} className={`flex items-center justify-between gap-3 border rounded-lg px-3 py-2 text-sm ${conta.is_primary ? "border-accent-orange/40" : ""}`}>
+                  <div
+                    key={index}
+                    className={`flex items-center justify-between gap-3 border rounded-lg px-3 py-2 text-sm ${conta.is_primary ? "border-accent-orange/40" : ""}`}
+                  >
                     <div className="flex items-center gap-3 flex-1 min-w-0">
-                      <button type="button" className="shrink-0" onClick={() => handleSetPrimaryConta(index)} title="Definir como principal">
-                        <Landmark className={`h-4 w-4 ${conta.is_primary ? "text-accent-orange" : "text-muted-foreground/40"}`} />
+                      <button
+                        type="button"
+                        className="shrink-0"
+                        onClick={() => handleSetPrimaryConta(index)}
+                        title="Definir como principal"
+                      >
+                        <Landmark
+                          className={`h-4 w-4 ${conta.is_primary ? "text-accent-orange" : "text-muted-foreground/40"}`}
+                        />
                       </button>
                       <span className="font-medium truncate">{conta.banco}</span>
-                      <span className="hidden md:inline text-xs text-muted-foreground shrink-0">Ag. {conta.agencia} / Cc. {conta.conta}</span>
+                      <span className="hidden md:inline text-xs text-muted-foreground shrink-0">
+                        Ag. {conta.agencia} / Cc. {conta.conta}
+                      </span>
                       <span className="text-xs text-muted-foreground capitalize shrink-0">{conta.tipo}</span>
-                      {conta.is_primary && <span className="text-[10px] text-accent-orange font-medium">Principal</span>}
+                      {conta.is_primary && (
+                        <span className="text-[10px] text-accent-orange font-medium">Principal</span>
+                      )}
                     </div>
-                    <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-red-500 shrink-0" onClick={() => handleRemoveConta(index)}>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-red-500 shrink-0"
+                      onClick={() => handleRemoveConta(index)}
+                    >
                       <Trash2 className="h-3 w-3" />
                     </Button>
                   </div>
@@ -273,9 +365,29 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
 
           {/* Footer */}
           <div className="flex gap-2 px-6 py-4 bg-gray-50/30">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="flex-1" disabled={isSaving}>Cancelar</Button>
-            <Button type="submit" className="flex-1 bg-accent-orange hover:bg-accent-orange/90 text-white" disabled={isSaving}>
-              {isSaving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Salvando...</> : isEditMode ? "Atualizar" : "Salvar"}
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              className="flex-1"
+              disabled={isSaving}
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="submit"
+              className="flex-1 bg-accent-orange hover:bg-accent-orange/90 text-white"
+              disabled={isSaving}
+            >
+              {isSaving ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Salvando...
+                </>
+              ) : isEditMode ? (
+                "Atualizar"
+              ) : (
+                "Salvar"
+              )}
             </Button>
           </div>
         </form>

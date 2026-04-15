@@ -14,14 +14,7 @@ interface PessoaDetailDialogProps {
   onDelete: (id: string) => void;
 }
 
-export function PessoaDetailDialog({
-  open,
-  onOpenChange,
-  pessoa,
-  isAdmin,
-  onEdit,
-  onDelete,
-}: PessoaDetailDialogProps) {
+export function PessoaDetailDialog({ open, onOpenChange, pessoa, isAdmin, onEdit, onDelete }: PessoaDetailDialogProps) {
   if (!pessoa) return null;
 
   return (
@@ -97,46 +90,48 @@ export function PessoaDetailDialog({
             </div>
           </div>
 
-          {isAdmin && <div className="border-t pt-4 space-y-2">
-            <h4 className="font-medium text-sm text-muted-foreground mb-2">Contas Bancárias</h4>
-            {pessoa.contas_bancarias && pessoa.contas_bancarias.length > 0 ? (
-              <div className="space-y-2">
-                {pessoa.contas_bancarias.map((conta, index) => (
-                  <div
-                    key={index}
-                    className={`flex items-center justify-between gap-3 bg-gray-50 border rounded-lg px-3 py-2 text-sm ${
-                      conta.is_primary ? "border-accent-orange/50 bg-accent-orange/5" : "border-gray-200"
-                    }`}
-                  >
-                    <div className="flex items-center gap-3 flex-1 min-w-0">
-                      <div className="p-1.5 rounded-full bg-white border border-gray-100 text-gray-500">
-                        <Landmark size={14} />
-                      </div>
-                      <div className="flex flex-col min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium truncate">{conta.banco}</span>
-                          {conta.is_primary && (
-                            <span className="text-[10px] bg-accent-orange/10 text-accent-orange px-1.5 py-0.5 rounded font-medium">
-                              Principal
-                            </span>
-                          )}
+          {isAdmin && (
+            <div className="border-t pt-4 space-y-2">
+              <h4 className="font-medium text-sm text-muted-foreground mb-2">Contas Bancárias</h4>
+              {pessoa.contas_bancarias && pessoa.contas_bancarias.length > 0 ? (
+                <div className="space-y-2">
+                  {pessoa.contas_bancarias.map((conta, index) => (
+                    <div
+                      key={index}
+                      className={`flex items-center justify-between gap-3 bg-gray-50 border rounded-lg px-3 py-2 text-sm ${
+                        conta.is_primary ? "border-accent-orange/50 bg-accent-orange/5" : "border-gray-200"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <div className="p-1.5 rounded-full bg-white border border-gray-100 text-gray-500">
+                          <Landmark size={14} />
                         </div>
-                        <div className="flex items-center gap-2 text-xs text-black/60">
-                          <span>Ag: {conta.agencia}</span>
-                          <span className="text-gray-300">|</span>
-                          <span>Cc: {conta.conta}</span>
-                          <span className="text-gray-300">|</span>
-                          <span className="capitalize">{conta.tipo}</span>
+                        <div className="flex flex-col min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium truncate">{conta.banco}</span>
+                            {conta.is_primary && (
+                              <span className="text-[10px] bg-accent-orange/10 text-accent-orange px-1.5 py-0.5 rounded font-medium">
+                                Principal
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 text-xs text-black/60">
+                            <span>Ag: {conta.agencia}</span>
+                            <span className="text-gray-300">|</span>
+                            <span>Cc: {conta.conta}</span>
+                            <span className="text-gray-300">|</span>
+                            <span className="capitalize">{conta.tipo}</span>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground italic">Nenhuma conta bancária cadastrada.</p>
-            )}
-          </div>}
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground italic">Nenhuma conta bancária cadastrada.</p>
+              )}
+            </div>
+          )}
 
           <div className="flex gap-2 pt-4">
             <Button variant="outline" onClick={() => onOpenChange(false)} className="flex-1">

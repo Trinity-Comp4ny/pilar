@@ -48,17 +48,34 @@ export function ProjectBudgetTab({ projetoId, canEdit, disciplinas }: ProjectBud
   const [isEditing, setIsEditing] = useState(false);
 
   const upsertMutation = useMutation({
-    mutationFn: async (row: { id?: string; disciplina: string; horas_estimadas: number; custo_hora: number; margem_alvo_pct: number; valor_venda: number }) => {
+    mutationFn: async (row: {
+      id?: string;
+      disciplina: string;
+      horas_estimadas: number;
+      custo_hora: number;
+      margem_alvo_pct: number;
+      valor_venda: number;
+    }) => {
       if (row.id) {
         const { error } = await supabase
           .from("projeto_orcamento_fases")
-          .update({ horas_estimadas: row.horas_estimadas, custo_hora: row.custo_hora, margem_alvo_pct: row.margem_alvo_pct, valor_venda: row.valor_venda })
+          .update({
+            horas_estimadas: row.horas_estimadas,
+            custo_hora: row.custo_hora,
+            margem_alvo_pct: row.margem_alvo_pct,
+            valor_venda: row.valor_venda,
+          })
           .eq("id", row.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase
-          .from("projeto_orcamento_fases")
-          .insert({ projeto_id: projetoId, disciplina: row.disciplina, horas_estimadas: row.horas_estimadas, custo_hora: row.custo_hora, margem_alvo_pct: row.margem_alvo_pct, valor_venda: row.valor_venda });
+        const { error } = await supabase.from("projeto_orcamento_fases").insert({
+          projeto_id: projetoId,
+          disciplina: row.disciplina,
+          horas_estimadas: row.horas_estimadas,
+          custo_hora: row.custo_hora,
+          margem_alvo_pct: row.margem_alvo_pct,
+          valor_venda: row.valor_venda,
+        });
         if (error) throw error;
       }
     },
@@ -113,10 +130,15 @@ export function ProjectBudgetTab({ projetoId, canEdit, disciplinas }: ProjectBud
   const totalVenda = orcamentos.reduce((s, o) => s + (o.valor_venda || 0), 0);
   const totalHoras = orcamentos.reduce((s, o) => s + (o.horas_estimadas || 0), 0);
 
-  const formatCurrency = (v: number) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
+  const formatCurrency = (v: number) =>
+    new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
 
   if (isLoading) {
-    return <div className="flex justify-center py-8"><Loader2 className="h-5 w-5 animate-spin" /></div>;
+    return (
+      <div className="flex justify-center py-8">
+        <Loader2 className="h-5 w-5 animate-spin" />
+      </div>
+    );
   }
 
   return (
@@ -129,7 +151,7 @@ export function ProjectBudgetTab({ projetoId, canEdit, disciplinas }: ProjectBud
           <Badge variant="secondary">Venda: {formatCurrency(totalVenda)}</Badge>
           {totalVenda > 0 && (
             <Badge className={totalVenda - totalCusto > 0 ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}>
-              Margem: {((totalVenda - totalCusto) / totalVenda * 100).toFixed(1)}%
+              Margem: {(((totalVenda - totalCusto) / totalVenda) * 100).toFixed(1)}%
             </Badge>
           )}
         </div>
@@ -158,7 +180,15 @@ export function ProjectBudgetTab({ projetoId, canEdit, disciplinas }: ProjectBud
                 <TableCell className="text-xs text-right">{formatCurrency(o.valor_venda)}</TableCell>
                 {canEdit && (
                   <TableCell className="text-right">
-                    <Button variant="ghost" size="icon" className="h-6 w-6 text-red-500" onClick={(e) => { e.stopPropagation(); deleteMutation.mutate(o.id); }}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 text-red-500"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deleteMutation.mutate(o.id);
+                      }}
+                    >
                       <Trash2 className="h-3 w-3" />
                     </Button>
                   </TableCell>
@@ -170,11 +200,41 @@ export function ProjectBudgetTab({ projetoId, canEdit, disciplinas }: ProjectBud
             {isEditing && (
               <TableRow className="bg-blue-50/50">
                 <TableCell className="text-xs font-medium">{editRow.disciplina}</TableCell>
-                <TableCell><Input type="number" className="h-7 text-xs w-20 ml-auto" value={editRow.horas_estimadas || ""} onChange={(e) => setEditRow({ ...editRow, horas_estimadas: parseFloat(e.target.value) || 0 })} /></TableCell>
-                <TableCell><Input type="number" className="h-7 text-xs w-20 ml-auto" value={editRow.custo_hora || ""} onChange={(e) => setEditRow({ ...editRow, custo_hora: parseFloat(e.target.value) || 0 })} /></TableCell>
-                <TableCell className="text-xs text-right">{formatCurrency((editRow.horas_estimadas || 0) * (editRow.custo_hora || 0))}</TableCell>
-                <TableCell><Input type="number" className="h-7 text-xs w-16 ml-auto" value={editRow.margem_alvo_pct || ""} onChange={(e) => setEditRow({ ...editRow, margem_alvo_pct: parseFloat(e.target.value) || 0 })} /></TableCell>
-                <TableCell><Input type="number" className="h-7 text-xs w-24 ml-auto" value={editRow.valor_venda || ""} onChange={(e) => setEditRow({ ...editRow, valor_venda: parseFloat(e.target.value) || 0 })} /></TableCell>
+                <TableCell>
+                  <Input
+                    type="number"
+                    className="h-7 text-xs w-20 ml-auto"
+                    value={editRow.horas_estimadas || ""}
+                    onChange={(e) => setEditRow({ ...editRow, horas_estimadas: parseFloat(e.target.value) || 0 })}
+                  />
+                </TableCell>
+                <TableCell>
+                  <Input
+                    type="number"
+                    className="h-7 text-xs w-20 ml-auto"
+                    value={editRow.custo_hora || ""}
+                    onChange={(e) => setEditRow({ ...editRow, custo_hora: parseFloat(e.target.value) || 0 })}
+                  />
+                </TableCell>
+                <TableCell className="text-xs text-right">
+                  {formatCurrency((editRow.horas_estimadas || 0) * (editRow.custo_hora || 0))}
+                </TableCell>
+                <TableCell>
+                  <Input
+                    type="number"
+                    className="h-7 text-xs w-16 ml-auto"
+                    value={editRow.margem_alvo_pct || ""}
+                    onChange={(e) => setEditRow({ ...editRow, margem_alvo_pct: parseFloat(e.target.value) || 0 })}
+                  />
+                </TableCell>
+                <TableCell>
+                  <Input
+                    type="number"
+                    className="h-7 text-xs w-24 ml-auto"
+                    value={editRow.valor_venda || ""}
+                    onChange={(e) => setEditRow({ ...editRow, valor_venda: parseFloat(e.target.value) || 0 })}
+                  />
+                </TableCell>
                 <TableCell className="text-right">
                   <Button size="icon" className="h-6 w-6" onClick={handleSave} disabled={upsertMutation.isPending}>
                     <Save className="h-3 w-3" />

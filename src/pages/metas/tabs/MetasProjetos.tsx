@@ -3,7 +3,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Plus, Calendar, Pencil, Trash2, Loader2 } from "lucide-react";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
@@ -92,7 +99,16 @@ export default function MetasProjetos() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["metas"] });
       setIsDialogOpen(false);
-      setNovaMeta({ nome: "", alvo: "", atual: "", prazo: "", projeto_id: "", categoria: "prazo", descricao: "", unidade: "percentage" });
+      setNovaMeta({
+        nome: "",
+        alvo: "",
+        atual: "",
+        prazo: "",
+        projeto_id: "",
+        categoria: "prazo",
+        descricao: "",
+        unidade: "percentage",
+      });
       toast({ title: "Meta criada", description: "Meta de projeto criada com sucesso." });
     },
     onError: (error: Error) => {
@@ -173,11 +189,16 @@ export default function MetasProjetos() {
 
   const getCategoriaColor = (categoria: string | null) => {
     switch (categoria) {
-      case "prazo": return { icon: "text-orange-500", bg: "bg-orange-50" };
-      case "custo": return { icon: "text-green-500", bg: "bg-green-50" };
-      case "qualidade": return { icon: "text-blue-500", bg: "bg-blue-50" };
-      case "escopo": return { icon: "text-purple-500", bg: "bg-purple-50" };
-      default: return { icon: "text-gray-500", bg: "bg-gray-50" };
+      case "prazo":
+        return { icon: "text-orange-500", bg: "bg-orange-50" };
+      case "custo":
+        return { icon: "text-green-500", bg: "bg-green-50" };
+      case "qualidade":
+        return { icon: "text-blue-500", bg: "bg-blue-50" };
+      case "escopo":
+        return { icon: "text-purple-500", bg: "bg-purple-50" };
+      default:
+        return { icon: "text-gray-500", bg: "bg-gray-50" };
     }
   };
 
@@ -189,7 +210,10 @@ export default function MetasProjetos() {
     );
   }
 
-  const metaFormFields = (values: Record<string, string | number | null>, onChange: (field: string, value: string | number | null) => void) => (
+  const metaFormFields = (
+    values: Record<string, string | number | null>,
+    onChange: (field: string, value: string | number | null) => void
+  ) => (
     <>
       <div className="space-y-2">
         <Label>Projeto</Label>
@@ -200,17 +224,28 @@ export default function MetasProjetos() {
         >
           <option value="">Selecione um projeto</option>
           {(projetos ?? []).map((p) => (
-            <option key={p.id} value={p.id}>{p.nome}</option>
+            <option key={p.id} value={p.id}>
+              {p.nome}
+            </option>
           ))}
         </select>
       </div>
       <div className="space-y-2">
         <Label>Nome da Meta</Label>
-        <Input value={values.nome} onChange={(e) => onChange("nome", e.target.value)} placeholder="Ex: Conclusão no prazo" required />
+        <Input
+          value={values.nome}
+          onChange={(e) => onChange("nome", e.target.value)}
+          placeholder="Ex: Conclusão no prazo"
+          required
+        />
       </div>
       <div className="space-y-2">
         <Label>Descrição</Label>
-        <Input value={values.descricao ?? ""} onChange={(e) => onChange("descricao", e.target.value)} placeholder="Descreva o objetivo do projeto" />
+        <Input
+          value={values.descricao ?? ""}
+          onChange={(e) => onChange("descricao", e.target.value)}
+          placeholder="Descreva o objetivo do projeto"
+        />
       </div>
       <div className="space-y-2">
         <Label>Unidade</Label>
@@ -279,7 +314,11 @@ export default function MetasProjetos() {
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4 mt-4">
                   {metaFormFields(novaMeta, (field, value) => setNovaMeta({ ...novaMeta, [field]: value }))}
-                  <Button type="submit" className="w-full bg-accent-orange hover:bg-accent-orange/90 text-white rounded-full" disabled={createMutation.isPending}>
+                  <Button
+                    type="submit"
+                    className="w-full bg-accent-orange hover:bg-accent-orange/90 text-white rounded-full"
+                    disabled={createMutation.isPending}
+                  >
                     {createMutation.isPending ? "Salvando..." : "Salvar Meta"}
                   </Button>
                 </form>
@@ -296,8 +335,17 @@ export default function MetasProjetos() {
               </DialogHeader>
               {editingMeta && (
                 <form onSubmit={handleEditSubmit} className="space-y-4 mt-4">
-                  {metaFormFields(editingMeta, (field, value) => setEditingMeta({ ...editingMeta, [field]: field === "alvo" || field === "atual" ? Number(value) : value }))}
-                  <Button type="submit" className="w-full bg-accent-orange hover:bg-accent-orange/90 text-white rounded-full" disabled={updateMutation.isPending}>
+                  {metaFormFields(editingMeta, (field, value) =>
+                    setEditingMeta({
+                      ...editingMeta,
+                      [field]: field === "alvo" || field === "atual" ? Number(value) : value,
+                    })
+                  )}
+                  <Button
+                    type="submit"
+                    className="w-full bg-accent-orange hover:bg-accent-orange/90 text-white rounded-full"
+                    disabled={updateMutation.isPending}
+                  >
                     {updateMutation.isPending ? "Atualizando..." : "Atualizar Meta"}
                   </Button>
                 </form>
@@ -313,7 +361,11 @@ export default function MetasProjetos() {
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                <AlertDialogAction onClick={() => metaToDelete && deleteMutation.mutate(metaToDelete)} className="bg-red-600 hover:bg-red-700" disabled={deleteMutation.isPending}>
+                <AlertDialogAction
+                  onClick={() => metaToDelete && deleteMutation.mutate(metaToDelete)}
+                  className="bg-red-600 hover:bg-red-700"
+                  disabled={deleteMutation.isPending}
+                >
                   {deleteMutation.isPending ? "Excluindo..." : "Excluir"}
                 </AlertDialogAction>
               </AlertDialogFooter>
@@ -332,7 +384,10 @@ export default function MetasProjetos() {
               const projetoNome = meta.projeto_id ? projetoMap.get(meta.projeto_id) : null;
               const colors = getCategoriaColor(meta.categoria);
               return (
-                <Card key={meta.id} className={cn("vrz-card border-2 transition-all", isCompleted && "border-green-500 bg-green-50")}>
+                <Card
+                  key={meta.id}
+                  className={cn("vrz-card border-2 transition-all", isCompleted && "border-green-500 bg-green-50")}
+                >
                   <CardHeader className="pb-2">
                     <div className="flex justify-between items-start">
                       <div className="flex items-center gap-3 flex-1">
@@ -342,15 +397,33 @@ export default function MetasProjetos() {
                         <div>
                           <CardTitle className="text-base">{meta.nome}</CardTitle>
                           {projetoNome && <CardDescription>{projetoNome}</CardDescription>}
-                          {meta.prazo && <CardDescription>Prazo: {new Date(meta.prazo).toLocaleDateString("pt-BR")}</CardDescription>}
+                          {meta.prazo && (
+                            <CardDescription>Prazo: {new Date(meta.prazo).toLocaleDateString("pt-BR")}</CardDescription>
+                          )}
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
                         <span className={cn("text-2xl font-bold", isCompleted && "text-green-600")}>{percent}%</span>
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditingMeta(meta); setIsEditDialogOpen(true); }}>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => {
+                            setEditingMeta(meta);
+                            setIsEditDialogOpen(true);
+                          }}
+                        >
                           <Pencil className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600 hover:text-red-700" onClick={() => { setMetaToDelete(meta.id); setDeleteAlertOpen(true); }}>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-red-600 hover:text-red-700"
+                          onClick={() => {
+                            setMetaToDelete(meta.id);
+                            setDeleteAlertOpen(true);
+                          }}
+                        >
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
@@ -358,10 +431,20 @@ export default function MetasProjetos() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-2">
-                      <Progress value={percent} className="h-2 bg-gray-100" indicatorClassName={isCompleted ? "bg-green-500" : "bg-purple-500"} />
+                      <Progress
+                        value={percent}
+                        className="h-2 bg-gray-100"
+                        indicatorClassName={isCompleted ? "bg-green-500" : "bg-purple-500"}
+                      />
                       <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Atual: <span className="font-medium text-foreground">{formatValue(meta.atual, meta.unidade)}</span></span>
-                        <span className="text-muted-foreground">Alvo: <span className="font-medium text-foreground">{formatValue(meta.alvo, meta.unidade)}</span></span>
+                        <span className="text-muted-foreground">
+                          Atual:{" "}
+                          <span className="font-medium text-foreground">{formatValue(meta.atual, meta.unidade)}</span>
+                        </span>
+                        <span className="text-muted-foreground">
+                          Alvo:{" "}
+                          <span className="font-medium text-foreground">{formatValue(meta.alvo, meta.unidade)}</span>
+                        </span>
                       </div>
                     </div>
                   </CardContent>

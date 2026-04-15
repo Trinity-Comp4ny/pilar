@@ -24,10 +24,20 @@ interface TemplateFormProps {
 }
 
 const DISCIPLINAS_PADRAO = [
-  "Arquitetônico", "Estrutural", "Estrutura Metálica", "Alvenaria Estrutural",
-  "Elétrico", "Hidráulico", "Hidrossanitário", "Automação",
-  "Climatização/Exaustão", "Gases Medicinais", "Sistema Fotovoltaico",
-  "PPCI", "AVCB", "SPDA",
+  "Arquitetônico",
+  "Estrutural",
+  "Estrutura Metálica",
+  "Alvenaria Estrutural",
+  "Elétrico",
+  "Hidráulico",
+  "Hidrossanitário",
+  "Automação",
+  "Climatização/Exaustão",
+  "Gases Medicinais",
+  "Sistema Fotovoltaico",
+  "PPCI",
+  "AVCB",
+  "SPDA",
 ];
 
 export function TemplateForm({ template, onSubmit, onCancel, isLoading }: TemplateFormProps) {
@@ -116,7 +126,9 @@ export function TemplateForm({ template, onSubmit, onCancel, isLoading }: Templa
             </SelectTrigger>
             <SelectContent>
               {TIPOS_SERVICO.map((tipo) => (
-                <SelectItem key={tipo} value={tipo}>{tipo}</SelectItem>
+                <SelectItem key={tipo} value={tipo}>
+                  {tipo}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -124,7 +136,12 @@ export function TemplateForm({ template, onSubmit, onCancel, isLoading }: Templa
       </div>
       <div className="space-y-2">
         <Label>Descrição</Label>
-        <Textarea value={descricao} onChange={(e) => setDescricao(e.target.value)} placeholder="Descrição do template..." rows={2} />
+        <Textarea
+          value={descricao}
+          onChange={(e) => setDescricao(e.target.value)}
+          placeholder="Descrição do template..."
+          rows={2}
+        />
       </div>
 
       {/* Fases */}
@@ -137,7 +154,9 @@ export function TemplateForm({ template, onSubmit, onCancel, isLoading }: Templa
         </div>
 
         {fases.length === 0 && (
-          <p className="text-sm text-muted-foreground text-center py-4">Nenhuma fase adicionada. Clique em "+ Fase" para começar.</p>
+          <p className="text-sm text-muted-foreground text-center py-4">
+            Nenhuma fase adicionada. Clique em "+ Fase" para começar.
+          </p>
         )}
 
         {fases.map((fase, fi) => (
@@ -172,18 +191,22 @@ export function TemplateForm({ template, onSubmit, onCancel, isLoading }: Templa
                       <SelectValue placeholder="+ Disciplina" />
                     </SelectTrigger>
                     <SelectContent>
-                      {DISCIPLINAS_PADRAO.filter(
-                        (d) => !fase.disciplinas.some((fd) => fd.disciplina === d)
-                      ).map((d) => (
-                        <SelectItem key={d} value={d} className="text-xs">{d}</SelectItem>
-                      ))}
+                      {DISCIPLINAS_PADRAO.filter((d) => !fase.disciplinas.some((fd) => fd.disciplina === d)).map(
+                        (d) => (
+                          <SelectItem key={d} value={d} className="text-xs">
+                            {d}
+                          </SelectItem>
+                        )
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
 
                 {fase.disciplinas.map((disc, di) => (
                   <div key={di} className="flex items-center gap-2 text-xs">
-                    <Badge variant="secondary" className="text-xs">{disc.disciplina}</Badge>
+                    <Badge variant="secondary" className="text-xs">
+                      {disc.disciplina}
+                    </Badge>
                     <Input
                       type="number"
                       value={disc.horas_estimadas || ""}
@@ -193,7 +216,12 @@ export function TemplateForm({ template, onSubmit, onCancel, isLoading }: Templa
                       min={0}
                     />
                     <span className="text-muted-foreground">h</span>
-                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => removeDisciplinaFromFase(fi, di)}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6"
+                      onClick={() => removeDisciplinaFromFase(fi, di)}
+                    >
                       <Trash2 className="h-3 w-3 text-red-400" />
                     </Button>
                   </div>
@@ -238,7 +266,9 @@ export function TemplateForm({ template, onSubmit, onCancel, isLoading }: Templa
 
       {/* Ações */}
       <div className="flex items-center justify-end gap-2 pt-4 border-t">
-        <Button variant="outline" onClick={onCancel} disabled={isLoading}>Cancelar</Button>
+        <Button variant="outline" onClick={onCancel} disabled={isLoading}>
+          Cancelar
+        </Button>
         <Button onClick={handleSubmit} disabled={isLoading || !nome.trim() || !tipoServico}>
           {template ? "Salvar Alterações" : "Criar Template"}
         </Button>

@@ -198,30 +198,21 @@ export const useDashboardData = () => {
           .lte("data_vencimento", mesAnteriorEnd.toISOString())
           .is("deleted_at", null),
 
-        supabase
-          .from("receitas")
-          .select("valor")
-          .eq("status", "Pendente")
-          .is("deleted_at", null),
+        supabase.from("receitas").select("valor").eq("status", "Pendente").is("deleted_at", null),
 
-        supabase
-          .from("despesas")
-          .select("valor")
-          .eq("status", "Pendente")
-          .is("deleted_at", null),
+        supabase.from("despesas").select("valor").eq("status", "Pendente").is("deleted_at", null),
 
         supabase
           .from("projetos")
-          .select("id, codigo_projeto, nome, status, prioridade, status_data, valor_contrato, data_inicio, data_previsao, data_final, cliente_id, clientes(nome)")
+          .select(
+            "id, codigo_projeto, nome, status, prioridade, status_data, valor_contrato, data_inicio, data_previsao, data_final, cliente_id, clientes(nome)"
+          )
           .is("deleted_at", null)
           .in("status", [PROJECT_STATUS.EM_ANDAMENTO, PROJECT_STATUS.PLANEJAMENTO])
           .order("created_at", { ascending: false })
           .limit(8),
 
-        supabase
-          .from("leads")
-          .select("id, status, nome")
-          .is("deleted_at", null),
+        supabase.from("leads").select("id, status, nome").is("deleted_at", null),
 
         supabase
           .from("alertas")
@@ -230,10 +221,7 @@ export const useDashboardData = () => {
           .order("created_at", { ascending: false })
           .limit(5),
 
-        supabase
-          .from("alertas")
-          .select("*", { count: "exact", head: true })
-          .eq("lido", false),
+        supabase.from("alertas").select("*", { count: "exact", head: true }).eq("lido", false),
 
         supabase
           .from("receitas")
@@ -249,7 +237,9 @@ export const useDashboardData = () => {
 
         supabase
           .from("receitas")
-          .select("id, descricao, valor, data_vencimento, status, projeto_id, projetos(codigo_projeto), cliente_id, clientes(nome)")
+          .select(
+            "id, descricao, valor, data_vencimento, status, projeto_id, projetos(codigo_projeto), cliente_id, clientes(nome)"
+          )
           .eq("status", "Pendente")
           .gte("data_vencimento", now.toISOString())
           .lte("data_vencimento", addDays(now, 30).toISOString())
@@ -259,7 +249,9 @@ export const useDashboardData = () => {
 
         supabase
           .from("despesas")
-          .select("id, descricao, valor, data_vencimento, status, projeto_id, projetos(codigo_projeto), fornecedor_id, fornecedores(nome)")
+          .select(
+            "id, descricao, valor, data_vencimento, status, projeto_id, projetos(codigo_projeto), fornecedor_id, fornecedores(nome)"
+          )
           .eq("status", "Pendente")
           .gte("data_vencimento", now.toISOString())
           .lte("data_vencimento", addDays(now, 30).toISOString())
@@ -284,7 +276,7 @@ export const useDashboardData = () => {
         despesaVariacao: despesaMesAnt > 0 ? ((despesaMes - despesaMesAnt) / despesaMesAnt) * 100 : 0,
         aReceber: sumValues(receitasPendentesRes.data),
         aPagar: sumValues(despesasPendentesRes.data),
-        projetosAtivos: (projetosRes.data || []).filter(p => p.status === PROJECT_STATUS.EM_ANDAMENTO).length,
+        projetosAtivos: (projetosRes.data || []).filter((p) => p.status === PROJECT_STATUS.EM_ANDAMENTO).length,
       };
 
       const projetos: DashboardProjeto[] = ((projetosRes.data || []) as ProjetoWithCliente[]).map((p) => {
@@ -314,7 +306,14 @@ export const useDashboardData = () => {
       projetos.sort((a, b) => (priorityWeight[a.prioridade] ?? 1) - (priorityWeight[b.prioridade] ?? 1));
 
       const leads = (leadsRes.data || []) as LeadRow[];
-      const pipelineOrder = [LEAD_STATUS.NOVO, LEAD_STATUS.EM_CONTATO, LEAD_STATUS.PROPOSTA, LEAD_STATUS.NEGOCIACAO, LEAD_STATUS.GANHO, LEAD_STATUS.PERDIDO];
+      const pipelineOrder = [
+        LEAD_STATUS.NOVO,
+        LEAD_STATUS.EM_CONTATO,
+        LEAD_STATUS.PROPOSTA,
+        LEAD_STATUS.NEGOCIACAO,
+        LEAD_STATUS.GANHO,
+        LEAD_STATUS.PERDIDO,
+      ];
       const leadsPipeline: LeadsPipeline[] = pipelineOrder
         .map((status) => ({
           status,
@@ -346,7 +345,9 @@ export const useDashboardData = () => {
           projeto: d.projetos?.codigo_projeto || null,
           entidade: d.fornecedores?.nome || null,
         })),
-      ].sort((a, b) => a.diasRestantes - b.diasRestantes).slice(0, 8);
+      ]
+        .sort((a, b) => a.diasRestantes - b.diasRestantes)
+        .slice(0, 8);
 
       const alertas: DashboardAlerta[] = ((alertasRes.data || []) as AlertaRow[]).map((a) => ({
         id: a.id,
@@ -357,10 +358,7 @@ export const useDashboardData = () => {
         created_at: a.created_at,
       }));
 
-      const chartData = processChartData(
-        receitasChartRes.data || [],
-        despesasChartRes.data || []
-      );
+      const chartData = processChartData(receitasChartRes.data || [], despesasChartRes.data || []);
 
       return {
         kpis,
@@ -382,12 +380,9 @@ function processChartData(receitas: ReceitaChartRow[], despesas: DespesaChartRow
   const monthsMap = new Map<string, ChartDataPoint>();
 
   const addToMonth = (item: ReceitaChartRow | DespesaChartRow, type: "receitas" | "despesas") => {
-    const dateReceived = type === "receitas" ? (item as ReceitaChartRow).data_recebimento : (item as DespesaChartRow).data_pagamento;
-    const displayDate = getDisplayDate(
-      dateReceived,
-      item.data_vencimento,
-      item.status
-    );
+    const dateReceived =
+      type === "receitas" ? (item as ReceitaChartRow).data_recebimento : (item as DespesaChartRow).data_pagamento;
+    const displayDate = getDisplayDate(dateReceived, item.data_vencimento, item.status);
     if (!displayDate) return;
 
     const date = new Date(displayDate);

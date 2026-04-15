@@ -61,8 +61,18 @@ interface Conta {
 }
 
 const MESES = [
-  "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
-  "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
+  "Janeiro",
+  "Fevereiro",
+  "Março",
+  "Abril",
+  "Maio",
+  "Junho",
+  "Julho",
+  "Agosto",
+  "Setembro",
+  "Outubro",
+  "Novembro",
+  "Dezembro",
 ];
 
 function getStatusBadge(status: string, dataVencimento: string) {
@@ -96,7 +106,7 @@ export default function Faturas() {
   const { toast } = useToast();
 
   const fetchCartoes = useCallback(async () => {
-    const { data } = await supabase.from('view_cartao_resumo').select('*');
+    const { data } = await supabase.from("view_cartao_resumo").select("*");
     if (data) {
       setCartoes(data as Cartao[]);
       if (data.length > 0 && !selectedCartaoId) {
@@ -106,7 +116,7 @@ export default function Faturas() {
   }, [selectedCartaoId]);
 
   const fetchContas = useCallback(async () => {
-    const { data } = await supabase.from('contas').select('id, nome');
+    const { data } = await supabase.from("contas").select("id, nome");
     if (data) setContas(data);
   }, []);
 
@@ -116,7 +126,7 @@ export default function Faturas() {
     for (let i = -2; i <= 1; i++) {
       const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
       try {
-        await supabase.rpc('gerar_fatura', {
+        await supabase.rpc("gerar_fatura", {
           p_cartao_id: cartaoId,
           p_mes: d.getMonth() + 1,
           p_ano: d.getFullYear(),
@@ -127,42 +137,49 @@ export default function Faturas() {
     }
   }, []);
 
-  const fetchFaturas = useCallback(async (cartaoId: string) => {
-    setLoading(true);
-    try {
-      // Gerar faturas pendentes
-      await gerarFaturasCartao(cartaoId);
+  const fetchFaturas = useCallback(
+    async (cartaoId: string) => {
+      setLoading(true);
+      try {
+        // Gerar faturas pendentes
+        await gerarFaturasCartao(cartaoId);
 
-      const { data } = await supabase
-        .from('view_fatura_resumo')
-        .select('*')
-        .eq('cartao_id', cartaoId)
-        .order('ano_referencia', { ascending: false })
-        .order('mes_referencia', { ascending: false });
+        const { data } = await supabase
+          .from("view_fatura_resumo")
+          .select("*")
+          .eq("cartao_id", cartaoId)
+          .order("ano_referencia", { ascending: false })
+          .order("mes_referencia", { ascending: false });
 
-      if (data) {
-        // Determinar status real baseado na data
-        const today = new Date();
-        setFaturas(data.filter(f => f.valor_total > 0 || f.status !== 'Aberta').map(f => {
-          let status = f.status;
-          if (status === 'Aberta' && new Date(f.data_fim) < today) {
-            status = 'Fechada';
-          }
-          return { ...f, status };
-        }));
+        if (data) {
+          // Determinar status real baseado na data
+          const today = new Date();
+          setFaturas(
+            data
+              .filter((f) => f.valor_total > 0 || f.status !== "Aberta")
+              .map((f) => {
+                let status = f.status;
+                if (status === "Aberta" && new Date(f.data_fim) < today) {
+                  status = "Fechada";
+                }
+                return { ...f, status };
+              })
+          );
+        }
+      } finally {
+        setLoading(false);
       }
-    } finally {
-      setLoading(false);
-    }
-  }, [gerarFaturasCartao]);
+    },
+    [gerarFaturasCartao]
+  );
 
   const fetchDespesasFatura = async (faturaId: string) => {
     const { data } = await supabase
-      .from('despesas')
-      .select('id, descricao, valor, data_vencimento, status, categoria_id, categorias_financeiras(nome)')
-      .eq('fatura_id', faturaId)
-      .not('cartao_id', 'is', null)
-      .order('data_vencimento', { ascending: true });
+      .from("despesas")
+      .select("id, descricao, valor, data_vencimento, status, categoria_id, categorias_financeiras(nome)")
+      .eq("fatura_id", faturaId)
+      .not("cartao_id", "is", null)
+      .order("data_vencimento", { ascending: true });
 
     if (data) setDespesasFatura(data as Despesa[]);
   };
@@ -186,7 +203,7 @@ export default function Faturas() {
 
   const handleOpenPagamento = (fatura: Fatura) => {
     setSelectedFatura(fatura);
-    const cartao = cartoes.find(c => c.id === fatura.cartao_id);
+    const cartao = cartoes.find((c) => c.id === fatura.cartao_id);
     setContaPagamentoId(cartao?.conta_pagamento_id || "");
     const restante = fatura.valor_total - fatura.valor_pago;
     setValorPagamento(restante.toFixed(2));
@@ -201,11 +218,11 @@ export default function Faturas() {
 
     setIsPaying(true);
     try {
-      const { error } = await supabase.rpc('pagar_fatura', {
+      const { error } = await supabase.rpc("pagar_fatura", {
         p_fatura_id: selectedFatura.id,
         p_conta_id: contaPagamentoId,
         p_valor_pago: parseFloat(valorPagamento),
-        p_data_pagamento: format(new Date(), 'yyyy-MM-dd'),
+        p_data_pagamento: format(new Date(), "yyyy-MM-dd"),
       });
 
       if (error) throw error;
@@ -226,7 +243,7 @@ export default function Faturas() {
     }
   };
 
-  const selectedCartao = cartoes.find(c => c.id === selectedCartaoId);
+  const selectedCartao = cartoes.find((c) => c.id === selectedCartaoId);
 
   return (
     <div className="space-y-6 w-full max-w-none">
@@ -241,9 +258,7 @@ export default function Faturas() {
         </CardHeader>
         <CardContent>
           {cartoes.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              Nenhum cartão cadastrado. Cadastre um cartão na aba Contas.
-            </p>
+            <p className="text-sm text-muted-foreground">Nenhum cartão cadastrado. Cadastre um cartão na aba Contas.</p>
           ) : (
             <div className="flex gap-3 overflow-x-auto pb-2">
               {cartoes.map((cartao) => (
@@ -258,17 +273,14 @@ export default function Faturas() {
                   )}
                 >
                   <div className="flex items-center gap-2 mb-2">
-                    <div
-                      className="w-3 h-3 rounded-full"
-                      style={{ backgroundColor: cartao.cor || '#888' }}
-                    />
+                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: cartao.cor || "#888" }} />
                     <span className="font-medium text-sm">{cartao.nome}</span>
                   </div>
                   <div className="text-xs text-gray-500">
                     Fecha: dia {cartao.dia_fechamento} | Vence: dia {cartao.dia_vencimento}
                   </div>
                   <div className="text-xs text-gray-500 mt-1">
-                    Usado: R$ {cartao.usado?.toLocaleString('pt-BR')} / R$ {cartao.limite?.toLocaleString('pt-BR')}
+                    Usado: R$ {cartao.usado?.toLocaleString("pt-BR")} / R$ {cartao.limite?.toLocaleString("pt-BR")}
                   </div>
                 </button>
               ))}
@@ -298,7 +310,7 @@ export default function Faturas() {
               <div className="space-y-3">
                 {faturas.map((fatura) => {
                   const restante = fatura.valor_total - fatura.valor_pago;
-                  const isPagavel = fatura.status !== 'Paga' && fatura.status !== 'Aberta' && fatura.valor_total > 0;
+                  const isPagavel = fatura.status !== "Paga" && fatura.status !== "Aberta" && fatura.valor_total > 0;
 
                   return (
                     <div
@@ -317,9 +329,10 @@ export default function Faturas() {
                           <div className="flex gap-4 text-xs text-gray-500 mt-1">
                             <span className="flex items-center gap-1">
                               <Calendar className="h-3 w-3" />
-                              {format(new Date(fatura.data_inicio + 'T00:00:00'), 'dd/MM')} a {format(new Date(fatura.data_fim + 'T00:00:00'), 'dd/MM')}
+                              {format(new Date(fatura.data_inicio + "T00:00:00"), "dd/MM")} a{" "}
+                              {format(new Date(fatura.data_fim + "T00:00:00"), "dd/MM")}
                             </span>
-                            <span>Vence: {format(new Date(fatura.data_vencimento + 'T00:00:00'), 'dd/MM/yyyy')}</span>
+                            <span>Vence: {format(new Date(fatura.data_vencimento + "T00:00:00"), "dd/MM/yyyy")}</span>
                             <span>{fatura.qtd_despesas} despesa(s)</span>
                           </div>
                         </div>
@@ -327,11 +340,11 @@ export default function Faturas() {
                         <div className="flex items-center gap-3">
                           <div className="text-right">
                             <p className="text-lg font-bold">
-                              R$ {fatura.valor_total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                              R$ {fatura.valor_total.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                             </p>
-                            {fatura.valor_pago > 0 && fatura.status !== 'Paga' && (
+                            {fatura.valor_pago > 0 && fatura.status !== "Paga" && (
                               <p className="text-xs text-gray-500">
-                                Restante: R$ {restante.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                Restante: R$ {restante.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                               </p>
                             )}
                           </div>
@@ -382,26 +395,27 @@ export default function Faturas() {
                 <div className="p-3 bg-gray-50 rounded-lg">
                   <p className="text-xs text-gray-500">Valor Total</p>
                   <p className="text-sm font-bold mt-1">
-                    R$ {selectedFatura.valor_total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    R$ {selectedFatura.valor_total.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                   </p>
                 </div>
                 <div className="p-3 bg-gray-50 rounded-lg">
                   <p className="text-xs text-gray-500">Vencimento</p>
                   <p className="text-sm font-medium mt-1">
-                    {format(new Date(selectedFatura.data_vencimento + 'T00:00:00'), 'dd/MM/yyyy')}
+                    {format(new Date(selectedFatura.data_vencimento + "T00:00:00"), "dd/MM/yyyy")}
                   </p>
                 </div>
                 <div className="p-3 bg-gray-50 rounded-lg">
                   <p className="text-xs text-gray-500">Ciclo</p>
                   <p className="text-sm mt-1">
-                    {format(new Date(selectedFatura.data_inicio + 'T00:00:00'), 'dd/MM')} a {format(new Date(selectedFatura.data_fim + 'T00:00:00'), 'dd/MM')}
+                    {format(new Date(selectedFatura.data_inicio + "T00:00:00"), "dd/MM")} a{" "}
+                    {format(new Date(selectedFatura.data_fim + "T00:00:00"), "dd/MM")}
                   </p>
                 </div>
               </div>
 
               {selectedFatura.data_pagamento && (
                 <div className="p-3 bg-green-50 rounded-lg text-sm text-green-800">
-                  Paga em {format(new Date(selectedFatura.data_pagamento + 'T00:00:00'), 'dd/MM/yyyy')}
+                  Paga em {format(new Date(selectedFatura.data_pagamento + "T00:00:00"), "dd/MM/yyyy")}
                   {selectedFatura.conta_pagamento_nome && ` via ${selectedFatura.conta_pagamento_nome}`}
                 </div>
               )}
@@ -420,7 +434,7 @@ export default function Faturas() {
                         <div>
                           <p className="text-sm font-medium">{d.descricao}</p>
                           <div className="flex gap-2 text-xs text-gray-500 mt-0.5">
-                            <span>{format(new Date(d.data_vencimento + 'T00:00:00'), 'dd/MM/yyyy')}</span>
+                            <span>{format(new Date(d.data_vencimento + "T00:00:00"), "dd/MM/yyyy")}</span>
                             {d.categorias_financeiras?.nome && (
                               <span className="text-gray-400">| {d.categorias_financeiras.nome}</span>
                             )}
@@ -428,9 +442,9 @@ export default function Faturas() {
                         </div>
                         <div className="flex items-center gap-2">
                           <span className="text-sm font-medium">
-                            R$ {d.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                            R$ {d.valor.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                           </span>
-                          <Badge variant={d.status === 'Pago' ? 'default' : 'secondary'} className="text-xs">
+                          <Badge variant={d.status === "Pago" ? "default" : "secondary"} className="text-xs">
                             {d.status}
                           </Badge>
                         </div>
@@ -441,26 +455,31 @@ export default function Faturas() {
               </div>
 
               {/* Ações */}
-              {selectedFatura.status !== 'Paga' && selectedFatura.status !== 'Aberta' && selectedFatura.valor_total > 0 && (
-                <>
-                  <Separator />
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <p className="text-sm text-gray-500">Valor restante</p>
-                      <p className="text-lg font-bold">
-                        R$ {(selectedFatura.valor_total - selectedFatura.valor_pago).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                      </p>
+              {selectedFatura.status !== "Paga" &&
+                selectedFatura.status !== "Aberta" &&
+                selectedFatura.valor_total > 0 && (
+                  <>
+                    <Separator />
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <p className="text-sm text-gray-500">Valor restante</p>
+                        <p className="text-lg font-bold">
+                          R${" "}
+                          {(selectedFatura.valor_total - selectedFatura.valor_pago).toLocaleString("pt-BR", {
+                            minimumFractionDigits: 2,
+                          })}
+                        </p>
+                      </div>
+                      <Button
+                        className="bg-accent-orange hover:bg-accent-orange/90 text-white rounded-full"
+                        onClick={() => handleOpenPagamento(selectedFatura)}
+                      >
+                        <DollarSign className="h-4 w-4 mr-2" />
+                        Pagar Fatura
+                      </Button>
                     </div>
-                    <Button
-                      className="bg-accent-orange hover:bg-accent-orange/90 text-white rounded-full"
-                      onClick={() => handleOpenPagamento(selectedFatura)}
-                    >
-                      <DollarSign className="h-4 w-4 mr-2" />
-                      Pagar Fatura
-                    </Button>
-                  </div>
-                </>
-              )}
+                  </>
+                )}
             </div>
           )}
         </DialogContent>
@@ -472,7 +491,8 @@ export default function Faturas() {
           <DialogHeader>
             <DialogTitle>Pagar Fatura</DialogTitle>
             <DialogDescription>
-              {selectedFatura && `${selectedFatura.cartao_nome} — ${MESES[selectedFatura.mes_referencia - 1]} ${selectedFatura.ano_referencia}`}
+              {selectedFatura &&
+                `${selectedFatura.cartao_nome} — ${MESES[selectedFatura.mes_referencia - 1]} ${selectedFatura.ano_referencia}`}
             </DialogDescription>
           </DialogHeader>
           {selectedFatura && (
@@ -481,7 +501,7 @@ export default function Faturas() {
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500">Valor total da fatura</span>
                   <span className="font-bold">
-                    R$ {selectedFatura.valor_total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    R$ {selectedFatura.valor_total.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                   </span>
                 </div>
                 {selectedFatura.valor_pago > 0 && (
@@ -489,14 +509,17 @@ export default function Faturas() {
                     <div className="flex justify-between text-sm mt-1">
                       <span className="text-gray-500">Já pago</span>
                       <span className="text-green-600">
-                        - R$ {selectedFatura.valor_pago.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        - R$ {selectedFatura.valor_pago.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                       </span>
                     </div>
                     <Separator className="my-2" />
                     <div className="flex justify-between text-sm font-bold">
                       <span>Restante</span>
                       <span>
-                        R$ {(selectedFatura.valor_total - selectedFatura.valor_pago).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        R${" "}
+                        {(selectedFatura.valor_total - selectedFatura.valor_pago).toLocaleString("pt-BR", {
+                          minimumFractionDigits: 2,
+                        })}
                       </span>
                     </div>
                   </>

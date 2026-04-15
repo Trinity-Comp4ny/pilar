@@ -4,15 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  Legend,
-} from "recharts";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from "recharts";
 
 interface AlocacaoVsRealProps {
   weekStart: string;
@@ -107,15 +99,20 @@ export function AlocacaoVsReal({ weekStart, weekEnd }: AlocacaoVsRealProps) {
           <div className="flex gap-3 text-xs">
             <Badge variant="secondary">Planejado: {totalPlanejado.toFixed(0)}h</Badge>
             <Badge className="bg-blue-100 text-blue-800">Real: {totalReal.toFixed(0)}h</Badge>
-            <Badge className={totalReal > totalPlanejado ? "bg-red-100 text-red-800" : "bg-emerald-100 text-emerald-800"}>
-              Delta: {(totalReal - totalPlanejado) > 0 ? "+" : ""}{(totalReal - totalPlanejado).toFixed(0)}h
+            <Badge
+              className={totalReal > totalPlanejado ? "bg-red-100 text-red-800" : "bg-emerald-100 text-emerald-800"}
+            >
+              Delta: {totalReal - totalPlanejado > 0 ? "+" : ""}
+              {(totalReal - totalPlanejado).toFixed(0)}h
             </Badge>
           </div>
         </div>
       </CardHeader>
       <CardContent>
         {isLoading ? (
-          <div className="flex justify-center py-8"><Loader2 className="h-5 w-5 animate-spin" /></div>
+          <div className="flex justify-center py-8">
+            <Loader2 className="h-5 w-5 animate-spin" />
+          </div>
         ) : chartData.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-8">
             Nenhuma alocação ou timesheet registrado no período selecionado.

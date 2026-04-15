@@ -7,13 +7,7 @@ import { cn } from "@/lib/utils";
 import { Dispatch, SetStateAction, useState, useEffect } from "react";
 import { TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface FinanceiroHeaderProps {
   dateFrom: Date | undefined;
@@ -45,7 +39,7 @@ export function FinanceiroHeader({
   const handleFilterChange = (value: string) => {
     setFilterType(value);
     const now = new Date();
-    
+
     if (value === "this-month") {
       setDateFrom(startOfMonth(now));
       setDateTo(endOfMonth(now));
@@ -79,7 +73,7 @@ export function FinanceiroHeader({
             <div className="flex items-center gap-2">
               <CalendarDays className="h-4 w-4 text-gray-500" />
               <span className="text-sm font-medium text-gray-700">Período:</span>
-              
+
               <Select value={filterType} onValueChange={handleFilterChange}>
                 <SelectTrigger className="w-[180px] h-9 text-xs rounded-full">
                   <SelectValue placeholder="Selecione o período" />
@@ -109,12 +103,7 @@ export function FinanceiroHeader({
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={dateFrom}
-                        onSelect={setDateFrom}
-                        initialFocus
-                      />
+                      <Calendar mode="single" selected={dateFrom} onSelect={setDateFrom} initialFocus />
                     </PopoverContent>
                   </Popover>
                   <Popover>
@@ -132,12 +121,7 @@ export function FinanceiroHeader({
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={dateTo}
-                        onSelect={setDateTo}
-                        initialFocus
-                      />
+                      <Calendar mode="single" selected={dateTo} onSelect={setDateTo} initialFocus />
                     </PopoverContent>
                   </Popover>
                 </div>
@@ -150,32 +134,32 @@ export function FinanceiroHeader({
       {/* Tabs Navigation */}
       <div className="w-full bg-white border-t overflow-x-auto">
         <TabsList className="rounded-none bg-transparent border-none h-auto p-0 flex flex-nowrap gap-0 min-w-max w-full">
-          <TabsTrigger 
-            value="visao-geral" 
+          <TabsTrigger
+            value="visao-geral"
             className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#FF4000] data-[state=active]:bg-white data-[state=active]:text-[#FF4000] py-3 px-4 min-w-max whitespace-nowrap text-sm"
           >
             Visão Geral
           </TabsTrigger>
-          <TabsTrigger 
-            value="fluxo-caixa" 
+          <TabsTrigger
+            value="fluxo-caixa"
             className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#FF4000] data-[state=active]:bg-white data-[state=active]:text-[#FF4000] py-3 px-4 min-w-max whitespace-nowrap text-sm"
           >
             Fluxo de Caixa
           </TabsTrigger>
-          <TabsTrigger 
-            value="lancamentos" 
+          <TabsTrigger
+            value="lancamentos"
             className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#FF4000] data-[state=active]:bg-white data-[state=active]:text-[#FF4000] py-3 px-4 min-w-max whitespace-nowrap text-sm"
           >
             Lançamentos
           </TabsTrigger>
-          <TabsTrigger 
-            value="mensal" 
+          <TabsTrigger
+            value="mensal"
             className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#FF4000] data-[state=active]:bg-white data-[state=active]:text-[#FF4000] py-3 px-4 min-w-max whitespace-nowrap text-sm"
           >
             Resumo Mensal
           </TabsTrigger>
           <TabsTrigger
-            value="folha-pagamento" 
+            value="folha-pagamento"
             className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#FF4000] data-[state=active]:bg-white data-[state=active]:text-[#FF4000] py-3 px-4 min-w-max whitespace-nowrap text-sm"
           >
             Folha de Pagamento
@@ -220,6 +204,12 @@ export function FinanceiroHeader({
             className="rounded-none border-b-2 border-transparent py-3 px-4 min-w-max whitespace-nowrap text-sm opacity-40 cursor-not-allowed"
           >
             WIP
+          </TabsTrigger>
+          <TabsTrigger
+            value="rentabilidade"
+            className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#FF4000] data-[state=active]:bg-white data-[state=active]:text-[#FF4000] py-3 px-4 min-w-max whitespace-nowrap text-sm"
+          >
+            Rentabilidade
           </TabsTrigger>
         </TabsList>
       </div>

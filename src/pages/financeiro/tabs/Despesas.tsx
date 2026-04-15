@@ -8,7 +8,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CalendarIcon, Plus, Settings, Pencil, Trash2, Loader2 } from "lucide-react";
@@ -56,8 +63,8 @@ interface Despesa {
 
 export default function Despesas() {
   const [despesasRaw, setDespesasRaw] = useState<Despesa[]>([]);
-  const [contas, setContas] = useState<{ id: string, nome: string }[]>([]);
-  const [cartoes, setCartoes] = useState<{ id: string, nome: string, dia_fechamento: number }[]>([]);
+  const [contas, setContas] = useState<{ id: string; nome: string }[]>([]);
+  const [cartoes, setCartoes] = useState<{ id: string; nome: string; dia_fechamento: number }[]>([]);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -65,7 +72,7 @@ export default function Despesas() {
   const [selectedDespesa, setSelectedDespesa] = useState<Despesa | null>(null);
 
   const { data: userRole } = useUserRole();
-  const isAdmin = userRole === 'admin';
+  const isAdmin = userRole === "admin";
 
   const form = useForm<DespesaFormData>({
     resolver: zodResolver(despesaSchema),
@@ -75,11 +82,10 @@ export default function Despesas() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("todos");
 
-  const [categorias, setCategorias] = useState<{ id: string, name: string }[]>([]);
-  const [fornecedores, setFornecedores] = useState<{ id: string, name: string }[]>([]);
-  const [projetos, setProjetos] = useState<{ id: string, projetoID: string }[]>([]);
+  const [categorias, setCategorias] = useState<{ id: string; name: string }[]>([]);
+  const [fornecedores, setFornecedores] = useState<{ id: string; name: string }[]>([]);
+  const [projetos, setProjetos] = useState<{ id: string; projetoID: string }[]>([]);
   const { toast } = useToast();
-
 
   const fetchData = async () => {
     try {
@@ -89,19 +95,24 @@ export default function Despesas() {
         { data: contasData },
         { data: cartoesData },
         { data: projetosData },
-        { data: despesasData, error: _despesasError }
+        { data: despesasData, error: _despesasError },
       ] = await Promise.all([
-        supabase.from('categorias_financeiras').select('id, nome').eq('tipo', 'Despesa').order('nome'),
-        supabase.from('fornecedores').select('id, nome').order('nome'),
-        supabase.from('contas').select('id, nome'),
-        supabase.from('cartoes_credito').select('id, nome, dia_fechamento'),
-        supabase.from('projetos').select('id, nome, codigo_projeto').order('nome'),
-        supabase.from('despesas').select(`
+        supabase.from("categorias_financeiras").select("id, nome").eq("tipo", "Despesa").order("nome"),
+        supabase.from("fornecedores").select("id, nome").order("nome"),
+        supabase.from("contas").select("id, nome"),
+        supabase.from("cartoes_credito").select("id, nome, dia_fechamento"),
+        supabase.from("projetos").select("id, nome, codigo_projeto").order("nome"),
+        supabase
+          .from("despesas")
+          .select(
+            `
           *,
           projetos (codigo_projeto),
           fornecedores (nome)
-        `).order('data_pagamento', { ascending: false }) // Ordena por data_pagamento (real) primeiro
-          .order('data_vencimento', { ascending: false }) // Fallback para data_vencimento (planejado)
+        `
+          )
+          .order("data_pagamento", { ascending: false }) // Ordena por data_pagamento (real) primeiro
+          .order("data_vencimento", { ascending: false }), // Fallback para data_vencimento (planejado)
       ]);
 
       if (categoriasData) setCategorias(categoriasData.map((c) => ({ id: c.id, name: c.nome })));
@@ -112,12 +123,11 @@ export default function Despesas() {
       if (despesasData) {
         setDespesasRaw(despesasData);
       }
-
     } catch {
       toast({
         title: "Erro ao carregar dados",
         description: "Não foi possível carregar as informações financeiras.",
-        variant: "destructive"
+        variant: "destructive",
       });
     }
   };
@@ -135,18 +145,25 @@ export default function Despesas() {
 
       return {
         ...d,
-        categoria_nome: categorias.find(c => c.id === d.categoria_id)?.name || d.categoria_id,
+        categoria_nome: categorias.find((c) => c.id === d.categoria_id)?.name || d.categoria_id,
         data_pagamento: d.data_pagamento || d.data_vencimento,
         projeto_codigo: (d as Despesa & { projetos?: { codigo_projeto?: string } }).projetos?.codigo_projeto,
         fornecedor_nome: (d as Despesa & { fornecedores?: { nome?: string } }).fornecedores?.nome,
-        forma_pagamento: forma
+        forma_pagamento: forma,
       };
     });
   }, [despesasRaw, categorias]);
 
   const despesasFiltradas = despesas.filter((d) => {
-    const matchSearch = !searchTerm || d.descricao.toLowerCase().includes(searchTerm.toLowerCase()) || (d.fornecedor_nome || "").toLowerCase().includes(searchTerm.toLowerCase());
-    const matchStatus = statusFilter === "todos" || (statusFilter === "pago" && d.status === "Pago") || (statusFilter === "pendente" && d.status === "Pendente") || (statusFilter === "atrasado" && d.status === "Atrasado");
+    const matchSearch =
+      !searchTerm ||
+      d.descricao.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (d.fornecedor_nome || "").toLowerCase().includes(searchTerm.toLowerCase());
+    const matchStatus =
+      statusFilter === "todos" ||
+      (statusFilter === "pago" && d.status === "Pago") ||
+      (statusFilter === "pendente" && d.status === "Pendente") ||
+      (statusFilter === "atrasado" && d.status === "Atrasado");
     return matchSearch && matchStatus;
   });
 
@@ -197,11 +214,13 @@ export default function Despesas() {
       const numParcelas = parseInt(formData.parcelas) || 1;
       const valorNumerico = parseCurrencyString(formData.valorTotal);
       const valorParcela = valorNumerico / numParcelas;
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
       if (!user) throw new Error("Usuário não autenticado");
 
-      const { data: empresaId } = await supabase.rpc('get_user_empresa_id');
+      const { data: empresaId } = await supabase.rpc("get_user_empresa_id");
       if (!empresaId) throw new Error("Usuário não vinculado a uma empresa");
 
       const despesasToInsert = [];
@@ -209,7 +228,7 @@ export default function Despesas() {
       // Logic for Credit Card Date
       let initialDate = new Date(formData.dataVencimento);
       if (formData.formaPagamento === "Cartão de Crédito" && formData.cartaoId) {
-        const card = cartoes.find(c => c.id === formData.cartaoId);
+        const card = cartoes.find((c) => c.id === formData.cartaoId);
         if (card) {
           const dayOfPurchase = initialDate.getDate();
           if (dayOfPurchase > card.dia_fechamento) {
@@ -221,37 +240,34 @@ export default function Despesas() {
 
       for (let i = 0; i < numParcelas; i++) {
         const dataParcela = addMonths(initialDate, i);
-        const dataStr = format(dataParcela, 'yyyy-MM-dd');
+        const dataStr = format(dataParcela, "yyyy-MM-dd");
 
         despesasToInsert.push({
           // user_id: user.id,
           data_vencimento: dataStr,
-          data_pagamento: formData.status === 'Pago' ? dataStr : null,
+          data_pagamento: formData.status === "Pago" ? dataStr : null,
           descricao: numParcelas > 1 ? `${formData.descricao} (${i + 1}/${numParcelas})` : formData.descricao,
           categoria_id: formData.categoriaId || null,
           valor: valorParcela,
           fornecedor_id: formData.fornecedorId || null,
           projeto_id: formData.projetoID || null,
           nota_fiscal: formData.notaFiscal || null,
-          status: formData.status === 'Pago' ? 'Pago' : 'Pendente',
+          status: formData.status === "Pago" ? "Pago" : "Pendente",
           conta_id: formData.contaId || null,
           cartao_id: formData.cartaoId || null,
           observacao: formData.observacao || null,
           recorrente: formData.recorrente || false,
-          periodicidade: formData.recorrente ? (formData.periodicidade || 'mensal') : null,
-          empresa_id: empresaId
+          periodicidade: formData.recorrente ? formData.periodicidade || "mensal" : null,
+          empresa_id: empresaId,
         });
       }
 
       let error = null;
 
       if (selectedDespesa) {
-        ({ error } = await supabase.from('despesas')
-          .update(despesasToInsert[0])
-          .eq('id', selectedDespesa.id));
+        ({ error } = await supabase.from("despesas").update(despesasToInsert[0]).eq("id", selectedDespesa.id));
       } else {
-        ({ error } = await supabase.from('despesas')
-          .insert(despesasToInsert));
+        ({ error } = await supabase.from("despesas").insert(despesasToInsert));
       }
 
       if (error) throw error;
@@ -260,22 +276,26 @@ export default function Despesas() {
       if (formData.cartaoId) {
         const mesesGerados = new Set<string>();
         for (const d of despesasToInsert) {
-          const dt = new Date(d.data_vencimento + 'T00:00:00');
+          const dt = new Date(d.data_vencimento + "T00:00:00");
           const key = `${dt.getMonth() + 1}-${dt.getFullYear()}`;
           if (!mesesGerados.has(key)) {
             mesesGerados.add(key);
-            await supabase.rpc('gerar_fatura', {
-              p_cartao_id: formData.cartaoId,
-              p_mes: dt.getMonth() + 1,
-              p_ano: dt.getFullYear(),
-            }).catch(() => {}); // Ignora se falhar (RPC cria fatura e associa despesas)
+            await supabase
+              .rpc("gerar_fatura", {
+                p_cartao_id: formData.cartaoId,
+                p_mes: dt.getMonth() + 1,
+                p_ano: dt.getFullYear(),
+              })
+              .catch(() => {}); // Ignora se falhar (RPC cria fatura e associa despesas)
           }
         }
       }
 
       toast({
         title: selectedDespesa ? "Despesa atualizada" : "Despesa cadastrada",
-        description: selectedDespesa ? "1 registro atualizado com sucesso" : `${numParcelas} registro(s) criado(s) com sucesso`,
+        description: selectedDespesa
+          ? "1 registro atualizado com sucesso"
+          : `${numParcelas} registro(s) criado(s) com sucesso`,
       });
 
       setIsDialogOpen(false);
@@ -297,7 +317,7 @@ export default function Despesas() {
   };
 
   const handleDelete = async (id: string) => {
-    const { error } = await supabase.from('despesas').delete().eq('id', id);
+    const { error } = await supabase.from("despesas").delete().eq("id", id);
     if (!error) {
       toast({ title: "Despesa excluída" });
       fetchData();
@@ -325,9 +345,7 @@ export default function Despesas() {
               <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>Configurações de Despesas</DialogTitle>
-                  <DialogDescription>
-                    Gerencie as categorias de despesas e fornecedores
-                  </DialogDescription>
+                  <DialogDescription>Gerencie as categorias de despesas e fornecedores</DialogDescription>
                 </DialogHeader>
 
                 <Tabs defaultValue="categorias" className="mt-4">
@@ -344,9 +362,7 @@ export default function Despesas() {
                     />
                   </TabsContent>
                   <TabsContent value="fornecedores" className="mt-4">
-                    <SupplierManager
-                      onSupplierChange={handleSupplierChange}
-                    />
+                    <SupplierManager onSupplierChange={handleSupplierChange} />
                   </TabsContent>
                 </Tabs>
               </DialogContent>
@@ -374,7 +390,11 @@ export default function Despesas() {
                   <div className="px-6 py-4 space-y-3">
                     <Label className="text-[10px] uppercase text-muted-foreground tracking-wider">Descrição</Label>
                     <div>
-                      <Input id="descricao" {...form.register("descricao")} placeholder="Ex: Material de escritório, Aluguel" />
+                      <Input
+                        id="descricao"
+                        {...form.register("descricao")}
+                        placeholder="Ex: Material de escritório, Aluguel"
+                      />
                       {form.formState.errors.descricao && (
                         <p className="text-xs text-red-500 mt-1">{form.formState.errors.descricao.message}</p>
                       )}
@@ -383,23 +403,50 @@ export default function Despesas() {
 
                   {/* Financeiro */}
                   <div className="px-6 py-4 space-y-3">
-                    <Label className="text-[10px] uppercase text-muted-foreground tracking-wider">Dados Financeiros</Label>
+                    <Label className="text-[10px] uppercase text-muted-foreground tracking-wider">
+                      Dados Financeiros
+                    </Label>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                       <div className="space-y-1.5">
-                        <Label htmlFor="valorTotal" className="text-xs">Valor (R$) *</Label>
-                        <Input id="valorTotal" type="text" value={form.watch("valorTotal")} onChange={handleValorChange} placeholder="R$ 0,00" className="h-9" />
+                        <Label htmlFor="valorTotal" className="text-xs">
+                          Valor (R$) *
+                        </Label>
+                        <Input
+                          id="valorTotal"
+                          type="text"
+                          value={form.watch("valorTotal")}
+                          onChange={handleValorChange}
+                          placeholder="R$ 0,00"
+                          className="h-9"
+                        />
                         {form.formState.errors.valorTotal && (
                           <p className="text-xs text-red-500 mt-1">{form.formState.errors.valorTotal.message}</p>
                         )}
                       </div>
                       <div className="space-y-1.5">
-                        <Label htmlFor="parcelas" className="text-xs">Parcelas</Label>
-                        <Input id="parcelas" type="number" min="1" {...form.register("parcelas")} placeholder="1" className="h-9" />
+                        <Label htmlFor="parcelas" className="text-xs">
+                          Parcelas
+                        </Label>
+                        <Input
+                          id="parcelas"
+                          type="number"
+                          min="1"
+                          {...form.register("parcelas")}
+                          placeholder="1"
+                          className="h-9"
+                        />
                       </div>
                       <div className="space-y-1.5">
-                        <Label htmlFor="status" className="text-xs">Status</Label>
-                        <Select value={form.watch("status")} onValueChange={(v) => form.setValue("status", v as "Pago" | "Pendente")}>
-                          <SelectTrigger className="h-9"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                        <Label htmlFor="status" className="text-xs">
+                          Status
+                        </Label>
+                        <Select
+                          value={form.watch("status")}
+                          onValueChange={(v) => form.setValue("status", v as "Pago" | "Pendente")}
+                        >
+                          <SelectTrigger className="h-9">
+                            <SelectValue placeholder="Selecione" />
+                          </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="Pago">Pago</SelectItem>
                             <SelectItem value="Pendente">Pendente</SelectItem>
@@ -407,9 +454,16 @@ export default function Despesas() {
                         </Select>
                       </div>
                       <div className="space-y-1.5">
-                        <Label htmlFor="formaPagamento" className="text-xs">Forma Pgto.</Label>
-                        <Select value={form.watch("formaPagamento")} onValueChange={(v) => form.setValue("formaPagamento", v)}>
-                          <SelectTrigger className="h-9"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                        <Label htmlFor="formaPagamento" className="text-xs">
+                          Forma Pgto.
+                        </Label>
+                        <Select
+                          value={form.watch("formaPagamento")}
+                          onValueChange={(v) => form.setValue("formaPagamento", v)}
+                        >
+                          <SelectTrigger className="h-9">
+                            <SelectValue placeholder="Selecione" />
+                          </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="Cartão de Crédito">Cartão de Crédito</SelectItem>
                             <SelectItem value="PIX">PIX</SelectItem>
@@ -433,14 +487,24 @@ export default function Despesas() {
                             <Button
                               type="button"
                               variant="outline"
-                              className={cn("w-full justify-start text-left font-normal text-xs h-9", !form.watch("dataVencimento") && "text-muted-foreground")}
+                              className={cn(
+                                "w-full justify-start text-left font-normal text-xs h-9",
+                                !form.watch("dataVencimento") && "text-muted-foreground"
+                              )}
                             >
                               <CalendarIcon className="mr-1 h-3 w-3" />
-                              {form.watch("dataVencimento") ? format(form.watch("dataVencimento"), "dd/MM/yyyy") : "Selecionar"}
+                              {form.watch("dataVencimento")
+                                ? format(form.watch("dataVencimento"), "dd/MM/yyyy")
+                                : "Selecionar"}
                             </Button>
                           </PopoverTrigger>
                           <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar mode="single" selected={form.watch("dataVencimento")} onSelect={(d) => form.setValue("dataVencimento", d as Date)} initialFocus />
+                            <Calendar
+                              mode="single"
+                              selected={form.watch("dataVencimento")}
+                              onSelect={(d) => form.setValue("dataVencimento", d as Date)}
+                              initialFocus
+                            />
                           </PopoverContent>
                         </Popover>
                       </div>
@@ -459,10 +523,14 @@ export default function Despesas() {
                         <div className="space-y-1.5">
                           <Label className="text-xs">Cartão de Crédito</Label>
                           <Select value={form.watch("cartaoId")} onValueChange={(v) => form.setValue("cartaoId", v)}>
-                            <SelectTrigger className="h-9"><SelectValue placeholder="Selecione o cartão" /></SelectTrigger>
+                            <SelectTrigger className="h-9">
+                              <SelectValue placeholder="Selecione o cartão" />
+                            </SelectTrigger>
                             <SelectContent>
                               {cartoes.map((cartao) => (
-                                <SelectItem key={cartao.id} value={cartao.id}>{cartao.nome}</SelectItem>
+                                <SelectItem key={cartao.id} value={cartao.id}>
+                                  {cartao.nome}
+                                </SelectItem>
                               ))}
                             </SelectContent>
                           </Select>
@@ -471,10 +539,14 @@ export default function Despesas() {
                         <div className="space-y-1.5">
                           <Label className="text-xs">Conta de Saída</Label>
                           <Select value={form.watch("contaId")} onValueChange={(v) => form.setValue("contaId", v)}>
-                            <SelectTrigger className="h-9"><SelectValue placeholder="Selecione a conta" /></SelectTrigger>
+                            <SelectTrigger className="h-9">
+                              <SelectValue placeholder="Selecione a conta" />
+                            </SelectTrigger>
                             <SelectContent>
                               {contas.map((conta) => (
-                                <SelectItem key={conta.id} value={conta.id}>{conta.nome}</SelectItem>
+                                <SelectItem key={conta.id} value={conta.id}>
+                                  {conta.nome}
+                                </SelectItem>
                               ))}
                             </SelectContent>
                           </Select>
@@ -483,7 +555,9 @@ export default function Despesas() {
                       <div className="space-y-1.5">
                         <Label className="text-xs">Nota Fiscal</Label>
                         <Select value={form.watch("notaFiscal")} onValueChange={(v) => form.setValue("notaFiscal", v)}>
-                          <SelectTrigger className="h-9"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                          <SelectTrigger className="h-9">
+                            <SelectValue placeholder="Selecione" />
+                          </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="Sim">Sim</SelectItem>
                             <SelectItem value="Não">Não</SelectItem>
@@ -499,11 +573,18 @@ export default function Despesas() {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                       <div className="space-y-1.5">
                         <Label className="text-xs">Fornecedor</Label>
-                        <Select value={form.watch("fornecedorId")} onValueChange={(v) => form.setValue("fornecedorId", v)}>
-                          <SelectTrigger className="h-9"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                        <Select
+                          value={form.watch("fornecedorId")}
+                          onValueChange={(v) => form.setValue("fornecedorId", v)}
+                        >
+                          <SelectTrigger className="h-9">
+                            <SelectValue placeholder="Selecione" />
+                          </SelectTrigger>
                           <SelectContent>
                             {fornecedores.map((forn) => (
-                              <SelectItem key={forn.id} value={forn.id}>{forn.name}</SelectItem>
+                              <SelectItem key={forn.id} value={forn.id}>
+                                {forn.name}
+                              </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
@@ -511,21 +592,32 @@ export default function Despesas() {
                       <div className="space-y-1.5">
                         <Label className="text-xs">Projeto</Label>
                         <Select value={form.watch("projetoID")} onValueChange={(v) => form.setValue("projetoID", v)}>
-                          <SelectTrigger className="h-9"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                          <SelectTrigger className="h-9">
+                            <SelectValue placeholder="Selecione" />
+                          </SelectTrigger>
                           <SelectContent>
                             {projetos.map((proj) => (
-                              <SelectItem key={proj.id} value={proj.id}>{proj.projetoID}</SelectItem>
+                              <SelectItem key={proj.id} value={proj.id}>
+                                {proj.projetoID}
+                              </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
                       </div>
                       <div className="space-y-1.5">
                         <Label className="text-xs">Categoria</Label>
-                        <Select value={form.watch("categoriaId")} onValueChange={(v) => form.setValue("categoriaId", v)}>
-                          <SelectTrigger className="h-9"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                        <Select
+                          value={form.watch("categoriaId")}
+                          onValueChange={(v) => form.setValue("categoriaId", v)}
+                        >
+                          <SelectTrigger className="h-9">
+                            <SelectValue placeholder="Selecione" />
+                          </SelectTrigger>
                           <SelectContent>
                             {categorias.map((cat) => (
-                              <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                              <SelectItem key={cat.id} value={cat.id}>
+                                {cat.name}
+                              </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
@@ -567,14 +659,28 @@ export default function Despesas() {
 
                   {/* Footer */}
                   <div className="flex gap-2 px-6 py-4 bg-gray-50/30">
-                    <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)} className="flex-1" disabled={isSaving}>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setIsDialogOpen(false)}
+                      className="flex-1"
+                      disabled={isSaving}
+                    >
                       Cancelar
                     </Button>
-                    <Button type="submit" className="flex-1 bg-accent-orange hover:bg-accent-orange/90 text-white" disabled={isSaving}>
+                    <Button
+                      type="submit"
+                      className="flex-1 bg-accent-orange hover:bg-accent-orange/90 text-white"
+                      disabled={isSaving}
+                    >
                       {isSaving ? (
-                        <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Salvando...</>
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Salvando...
+                        </>
+                      ) : selectedDespesa ? (
+                        "Atualizar"
                       ) : (
-                        selectedDespesa ? "Atualizar" : "Salvar"
+                        "Salvar"
                       )}
                     </Button>
                   </div>
@@ -603,13 +709,16 @@ export default function Despesas() {
                 <SelectItem value="atrasado">Atrasado</SelectItem>
               </SelectContent>
             </Select>
-            <span className="text-xs text-muted-foreground ml-auto">{despesasFiltradas.length} de {despesasRaw.length}</span>
+            <span className="text-xs text-muted-foreground ml-auto">
+              {despesasFiltradas.length} de {despesasRaw.length}
+            </span>
           </div>
           <div className="overflow-x-auto w-full">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Data (Venc/Pag)</TableHead> {/* Mais claro: mostra vencimento para pendentes, pagamento para pagos */}
+                  <TableHead>Data (Venc/Pag)</TableHead>{" "}
+                  {/* Mais claro: mostra vencimento para pendentes, pagamento para pagos */}
                   <TableHead>Descrição</TableHead>
                   <TableHead>Fornecedor</TableHead>
                   <TableHead>Projeto</TableHead>
@@ -624,10 +733,14 @@ export default function Despesas() {
               </TableHeader>
               <TableBody>
                 {despesasFiltradas.map((despesa) => (
-                  <TableRow key={despesa.id} className="cursor-pointer hover:bg-gray-50" onClick={() => {
-                    setSelectedDespesa(despesa);
-                    setIsDetailOpen(true);
-                  }}>
+                  <TableRow
+                    key={despesa.id}
+                    className="cursor-pointer hover:bg-gray-50"
+                    onClick={() => {
+                      setSelectedDespesa(despesa);
+                      setIsDetailOpen(true);
+                    }}
+                  >
                     <TableCell>{getDespesaDisplayDate(despesa)}</TableCell>
                     <TableCell className="font-medium">{despesa.descricao}</TableCell>
                     <TableCell>{despesa.fornecedor_nome || "-"}</TableCell>
@@ -636,26 +749,42 @@ export default function Despesas() {
                     <TableCell>{despesa.forma_pagamento}</TableCell>
                     <TableCell>1</TableCell>
                     <TableCell className="text-red-600 font-medium">
-                      R$ {despesa.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      R$ {despesa.valor.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                     </TableCell>
                     <TableCell>
-                      <Badge variant={despesa.status === 'Pago' ? 'default' : 'secondary'} className={despesa.status === 'Pago' ? 'bg-green-500' : ''}>
+                      <Badge
+                        variant={despesa.status === "Pago" ? "default" : "secondary"}
+                        className={despesa.status === "Pago" ? "bg-green-500" : ""}
+                      >
                         {despesa.status}
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <Badge variant={despesa.nota_fiscal === "Sim" ? "default" : "outline"} className={despesa.nota_fiscal === "Sim" ? "bg-green-500" : ""}>
+                      <Badge
+                        variant={despesa.nota_fiscal === "Sim" ? "default" : "outline"}
+                        className={despesa.nota_fiscal === "Sim" ? "bg-green-500" : ""}
+                      >
                         {despesa.nota_fiscal || "-"}
                       </Badge>
                     </TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()}>
                       <div className="flex gap-1 justify-end">
                         {isAdmin && (
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50" onClick={() => openEditDespesa(despesa)}>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                            onClick={() => openEditDespesa(despesa)}
+                          >
                             <Pencil className="h-4 w-4" />
                           </Button>
                         )}
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50" onClick={() => handleDelete(despesa.id)}>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                          onClick={() => handleDelete(despesa.id)}
+                        >
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
@@ -673,9 +802,7 @@ export default function Despesas() {
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>Detalhes da Despesa</DialogTitle>
-            <DialogDescription>
-              Informações completas da despesa selecionada
-            </DialogDescription>
+            <DialogDescription>Informações completas da despesa selecionada</DialogDescription>
           </DialogHeader>
 
           {selectedDespesa && (
@@ -685,15 +812,20 @@ export default function Despesas() {
                   <Label className="text-xs text-muted-foreground">Data Vencimento</Label>
                   <p className="text-sm font-medium">{formatDateDisplay(selectedDespesa.data_vencimento)}</p>
                 </div>
-                {selectedDespesa.data_pagamento && selectedDespesa.data_pagamento !== selectedDespesa.data_vencimento && (
-                  <div>
-                    <Label className="text-xs text-muted-foreground">Data Pagamento</Label>
-                    <p className="text-sm font-medium text-green-600">{formatDateDisplay(selectedDespesa.data_pagamento)}</p>
-                  </div>
-                )}
+                {selectedDespesa.data_pagamento &&
+                  selectedDespesa.data_pagamento !== selectedDespesa.data_vencimento && (
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Data Pagamento</Label>
+                      <p className="text-sm font-medium text-green-600">
+                        {formatDateDisplay(selectedDespesa.data_pagamento)}
+                      </p>
+                    </div>
+                  )}
                 <div>
                   <Label className="text-xs text-muted-foreground">Valor</Label>
-                  <p className="text-sm font-bold text-red-600">R$ {selectedDespesa.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                  <p className="text-sm font-bold text-red-600">
+                    R$ {selectedDespesa.valor.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                  </p>
                 </div>
                 <div className="col-span-2">
                   <Label className="text-xs text-muted-foreground">Descrição</Label>
@@ -723,9 +855,9 @@ export default function Despesas() {
                   <Label className="text-xs text-muted-foreground">Conta / Cartão</Label>
                   <p className="text-sm">
                     {selectedDespesa.conta_id
-                      ? contas.find(c => c.id === selectedDespesa.conta_id)?.nome
+                      ? contas.find((c) => c.id === selectedDespesa.conta_id)?.nome
                       : selectedDespesa.cartao_id
-                        ? cartoes.find(c => c.id === selectedDespesa.cartao_id)?.nome
+                        ? cartoes.find((c) => c.id === selectedDespesa.cartao_id)?.nome
                         : "-"}
                   </p>
                 </div>
@@ -753,10 +885,14 @@ export default function Despesas() {
                       <Pencil className="mr-2 h-4 w-4" />
                       Editar
                     </Button>
-                    <Button variant="destructive" className="flex-1" onClick={() => {
-                      handleDelete(selectedDespesa.id);
-                      setIsDetailOpen(false);
-                    }}>
+                    <Button
+                      variant="destructive"
+                      className="flex-1"
+                      onClick={() => {
+                        handleDelete(selectedDespesa.id);
+                        setIsDetailOpen(false);
+                      }}
+                    >
                       <Trash2 className="mr-2 h-4 w-4" />
                       Excluir
                     </Button>

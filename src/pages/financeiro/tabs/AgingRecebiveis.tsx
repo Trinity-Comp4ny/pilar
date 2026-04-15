@@ -4,15 +4,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Loader2, AlertTriangle, Clock } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  Legend,
-} from "recharts";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from "recharts";
 
 const formatCurrency = (v: number) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 }).format(v);
@@ -81,15 +73,20 @@ export default function AgingRecebiveis() {
   const totalGeral = aging.reduce((s, a) => s + a.total, 0);
   const total90Plus = aging.reduce((s, a) => s + a.bucket_90_plus, 0);
   const totalAtrasado = aging.reduce((s, a) => s + a.bucket_31_60 + a.bucket_61_90 + a.bucket_90_plus, 0);
-  const prazoMedio = receitas.length > 0
-    ? receitas.reduce((s, r) => {
-        const venc = new Date(r.data_vencimento + "T00:00:00");
-        return s + Math.max(0, Math.floor((Date.now() - venc.getTime()) / 86400000));
-      }, 0) / receitas.length
-    : 0;
+  const prazoMedio =
+    receitas.length > 0
+      ? receitas.reduce((s, r) => {
+          const venc = new Date(r.data_vencimento + "T00:00:00");
+          return s + Math.max(0, Math.floor((Date.now() - venc.getTime()) / 86400000));
+        }, 0) / receitas.length
+      : 0;
 
   if (isLoading) {
-    return <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
+    return (
+      <div className="flex justify-center py-12">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
   }
 
   const chartData = aging.slice(0, 10).map((a) => ({

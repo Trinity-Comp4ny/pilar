@@ -12,12 +12,36 @@ import { CTASection } from "./landing/components/CTASection";
 import { LandingFooter } from "./landing/components/LandingFooter";
 
 const features: Feature[] = [
-  { icon: <DollarSign className="w-6 h-6" />, title: "Financeiro Completo", description: "Fluxo de caixa, receitas, despesas e indicadores financeiros em tempo real para sua empresa." },
-  { icon: <Users className="w-6 h-6" />, title: "Gestão de Leads", description: "Pipeline visual para acompanhar suas oportunidades comerciais do contato ao fechamento." },
-  { icon: <FolderKanban className="w-6 h-6" />, title: "Projetos", description: "Gerencie tarefas e etapas de cada projeto com visualização Kanban intuitiva." },
-  { icon: <Users className="w-6 h-6" />, title: "Pessoas", description: "Gerencie sua equipe, acompanhe desempenho e organize a estrutura organizacional." },
-  { icon: <BarChart3 className="w-6 h-6" />, title: "Metas Empresariais", description: "Defina objetivos estratégicos e acompanhe o progresso da sua empresa em tempo real." },
-  { icon: <PieChart className="w-6 h-6" />, title: "Relatórios", description: "Dashboards que mostram a saúde do seu negócio para tomada de decisões." },
+  {
+    icon: <DollarSign className="w-6 h-6" />,
+    title: "Financeiro Completo",
+    description: "Fluxo de caixa, receitas, despesas e indicadores financeiros em tempo real para sua empresa.",
+  },
+  {
+    icon: <Users className="w-6 h-6" />,
+    title: "Gestão de Leads",
+    description: "Pipeline visual para acompanhar suas oportunidades comerciais do contato ao fechamento.",
+  },
+  {
+    icon: <FolderKanban className="w-6 h-6" />,
+    title: "Projetos",
+    description: "Gerencie tarefas e etapas de cada projeto com visualização Kanban intuitiva.",
+  },
+  {
+    icon: <Users className="w-6 h-6" />,
+    title: "Pessoas",
+    description: "Gerencie sua equipe, acompanhe desempenho e organize a estrutura organizacional.",
+  },
+  {
+    icon: <BarChart3 className="w-6 h-6" />,
+    title: "Metas Empresariais",
+    description: "Defina objetivos estratégicos e acompanhe o progresso da sua empresa em tempo real.",
+  },
+  {
+    icon: <PieChart className="w-6 h-6" />,
+    title: "Relatórios",
+    description: "Dashboards que mostram a saúde do seu negócio para tomada de decisões.",
+  },
 ];
 
 export default function Landing() {
@@ -25,7 +49,9 @@ export default function Landing() {
 
   useEffect(() => {
     const checkUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       if (session) navigate("/dashboard");
     };
     checkUser();

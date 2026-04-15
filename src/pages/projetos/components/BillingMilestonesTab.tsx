@@ -74,7 +74,10 @@ export function BillingMilestonesTab({ projetoId, canEdit }: BillingMilestonesTa
       queryClient.invalidateQueries({ queryKey: ["marcos-faturamento", projetoId] });
       toast({ title: "Marco criado" });
       setIsFormOpen(false);
-      setFormNome(""); setFormValor(""); setFormData(""); setFormPercentual("");
+      setFormNome("");
+      setFormValor("");
+      setFormData("");
+      setFormPercentual("");
     },
     onError: (err: Error) => toast({ variant: "destructive", title: "Erro", description: err.message }),
   });
@@ -133,14 +136,22 @@ export function BillingMilestonesTab({ projetoId, canEdit }: BillingMilestonesTa
     onError: (err: Error) => toast({ variant: "destructive", title: "Erro", description: err.message }),
   });
 
-  const formatCurrency = (v: number) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
-  const formatDate = (d: string | null) => d ? new Date(d + "T00:00:00").toLocaleDateString("pt-BR") : "—";
+  const formatCurrency = (v: number) =>
+    new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
+  const formatDate = (d: string | null) => (d ? new Date(d + "T00:00:00").toLocaleDateString("pt-BR") : "—");
 
   const totalMarcos = marcos.reduce((s, m) => s + m.valor, 0);
-  const totalFaturado = marcos.filter((m) => m.status === "faturado" || m.status === "recebido").reduce((s, m) => s + m.valor, 0);
+  const totalFaturado = marcos
+    .filter((m) => m.status === "faturado" || m.status === "recebido")
+    .reduce((s, m) => s + m.valor, 0);
   const totalRecebido = marcos.filter((m) => m.status === "recebido").reduce((s, m) => s + m.valor, 0);
 
-  if (isLoading) return <div className="flex justify-center py-8"><Loader2 className="h-5 w-5 animate-spin" /></div>;
+  if (isLoading)
+    return (
+      <div className="flex justify-center py-8">
+        <Loader2 className="h-5 w-5 animate-spin" />
+      </div>
+    );
 
   return (
     <Card>
@@ -208,11 +219,21 @@ export function BillingMilestonesTab({ projetoId, canEdit }: BillingMilestonesTa
                         </Button>
                       )}
                       {marco.status === "faturado" && (
-                        <Button variant="ghost" size="icon" className="h-7 w-7 text-green-600" onClick={() => updateStatusMutation.mutate({ id: marco.id, status: "recebido" })}>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-green-600"
+                          onClick={() => updateStatusMutation.mutate({ id: marco.id, status: "recebido" })}
+                        >
                           <CheckCircle2 className="h-3.5 w-3.5" />
                         </Button>
                       )}
-                      <Button variant="ghost" size="icon" className="h-7 w-7 text-red-500" onClick={() => deleteMutation.mutate(marco.id)}>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-red-500"
+                        onClick={() => deleteMutation.mutate(marco.id)}
+                      >
                         <Trash2 className="h-3.5 w-3.5" />
                       </Button>
                     </div>
@@ -226,17 +247,48 @@ export function BillingMilestonesTab({ projetoId, canEdit }: BillingMilestonesTa
         {/* Dialog de criação */}
         <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
           <DialogContent className="sm:max-w-sm">
-            <DialogHeader><DialogTitle>Novo Marco de Faturamento</DialogTitle></DialogHeader>
+            <DialogHeader>
+              <DialogTitle>Novo Marco de Faturamento</DialogTitle>
+            </DialogHeader>
             <div className="space-y-3 mt-2">
-              <div className="space-y-1"><Label className="text-xs">Nome *</Label><Input value={formNome} onChange={(e) => setFormNome(e.target.value)} placeholder="Ex: Entrega Projeto Legal" /></div>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1"><Label className="text-xs">Valor *</Label><Input value={formValor} onChange={(e) => setFormValor(formatCurrencyInput(e.target.value))} placeholder="R$ 0,00" /></div>
-                <div className="space-y-1"><Label className="text-xs">% do Contrato</Label><Input type="number" value={formPercentual} onChange={(e) => setFormPercentual(e.target.value)} placeholder="25" /></div>
+              <div className="space-y-1">
+                <Label className="text-xs">Nome *</Label>
+                <Input
+                  value={formNome}
+                  onChange={(e) => setFormNome(e.target.value)}
+                  placeholder="Ex: Entrega Projeto Legal"
+                />
               </div>
-              <div className="space-y-1"><Label className="text-xs">Data Prevista</Label><Input type="date" value={formData} onChange={(e) => setFormData(e.target.value)} /></div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-xs">Valor *</Label>
+                  <Input
+                    value={formValor}
+                    onChange={(e) => setFormValor(formatCurrencyInput(e.target.value))}
+                    placeholder="R$ 0,00"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">% do Contrato</Label>
+                  <Input
+                    type="number"
+                    value={formPercentual}
+                    onChange={(e) => setFormPercentual(e.target.value)}
+                    placeholder="25"
+                  />
+                </div>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Data Prevista</Label>
+                <Input type="date" value={formData} onChange={(e) => setFormData(e.target.value)} />
+              </div>
               <div className="flex justify-end gap-2 pt-2">
-                <Button variant="outline" size="sm" onClick={() => setIsFormOpen(false)}>Cancelar</Button>
-                <Button size="sm" onClick={() => createMutation.mutate()} disabled={createMutation.isPending}>Criar</Button>
+                <Button variant="outline" size="sm" onClick={() => setIsFormOpen(false)}>
+                  Cancelar
+                </Button>
+                <Button size="sm" onClick={() => createMutation.mutate()} disabled={createMutation.isPending}>
+                  Criar
+                </Button>
               </div>
             </div>
           </DialogContent>

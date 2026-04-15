@@ -20,39 +20,50 @@ import {
   Target,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import {
-  ResponsiveContainer,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ComposedChart,
-  Legend,
-  Line,
-} from "recharts";
+import { ResponsiveContainer, Area, XAxis, YAxis, CartesianGrid, Tooltip, ComposedChart, Legend, Line } from "recharts";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { CustomTooltip } from "./financeiro/components/CustomTooltip";
-import { useDashboardData, type DashboardProjeto, type DashboardVencimento, type DashboardAlerta, type LeadsPipeline } from "@/hooks/useDashboardData";
+import {
+  useDashboardData,
+  type DashboardProjeto,
+  type DashboardVencimento,
+  type DashboardAlerta,
+  type LeadsPipeline,
+} from "@/hooks/useDashboardData";
 import { HealthIndexCard } from "@/components/HealthIndexCard";
 import { PROJECT_STATUS_CONFIG, PROJECT_PRIORITY_CONFIG, type ProjectStatus, type ProjectPriority } from "@/constants";
 
 const fmt = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
-const fmtCompact = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", notation: "compact", maximumFractionDigits: 1 });
+const fmtCompact = new Intl.NumberFormat("pt-BR", {
+  style: "currency",
+  currency: "BRL",
+  notation: "compact",
+  maximumFractionDigits: 1,
+});
 
 function VariacaoBadge({ valor }: { valor: number }) {
   if (valor === 0) return null;
   const positivo = valor > 0;
   return (
-    <span className={`inline-flex items-center gap-0.5 text-[11px] font-medium px-1.5 py-0.5 rounded-full ${positivo ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}`}>
+    <span
+      className={`inline-flex items-center gap-0.5 text-[11px] font-medium px-1.5 py-0.5 rounded-full ${positivo ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}`}
+    >
       {positivo ? <TrendingUp size={11} /> : <TrendingDown size={11} />}
       {Math.abs(valor).toFixed(1)}%
     </span>
   );
 }
 
-function KPICard({ title, value, icon: Icon, iconBg, iconColor, variacao, subtitle }: {
+function KPICard({
+  title,
+  value,
+  icon: Icon,
+  iconBg,
+  iconColor,
+  variacao,
+  subtitle,
+}: {
   title: string;
   value: string;
   icon: React.ElementType;
@@ -100,7 +111,9 @@ function ProjectRow({ project, onClick }: { project: DashboardProjeto; onClick: 
             {project.status}
           </Badge>
           {priorityConfig && (
-            <span className={`text-[10px] px-1.5 py-0 h-4 rounded-full font-medium inline-flex items-center ${priorityConfig.bgColor} ${priorityConfig.color}`}>
+            <span
+              className={`text-[10px] px-1.5 py-0 h-4 rounded-full font-medium inline-flex items-center ${priorityConfig.bgColor} ${priorityConfig.color}`}
+            >
               {priorityConfig.label}
             </span>
           )}
@@ -116,7 +129,9 @@ function ProjectRow({ project, onClick }: { project: DashboardProjeto; onClick: 
         </div>
       </div>
       <div className="text-right shrink-0 hidden sm:block">
-        <div className="text-sm font-medium">{project.valorContrato > 0 ? fmtCompact.format(project.valorContrato) : "—"}</div>
+        <div className="text-sm font-medium">
+          {project.valorContrato > 0 ? fmtCompact.format(project.valorContrato) : "—"}
+        </div>
         {project.dataInicio && project.dataPrevisao && (
           <div className="w-16 mt-1">
             <div className="h-1 bg-gray-200 rounded-full overflow-hidden">
@@ -137,8 +152,14 @@ function VencimentoRow({ item }: { item: DashboardVencimento }) {
   const isReceita = item.tipo === "receita";
   return (
     <div className="flex items-center gap-3 py-2.5 border-b border-gray-50 last:border-0">
-      <div className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 ${isReceita ? "bg-green-50" : "bg-red-50"}`}>
-        {isReceita ? <ArrowUpRight size={14} className="text-green-600" /> : <ArrowDownRight size={14} className="text-red-600" />}
+      <div
+        className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 ${isReceita ? "bg-green-50" : "bg-red-50"}`}
+      >
+        {isReceita ? (
+          <ArrowUpRight size={14} className="text-green-600" />
+        ) : (
+          <ArrowDownRight size={14} className="text-red-600" />
+        )}
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-gray-800 truncate">{item.entidade || item.descricao}</p>
@@ -146,7 +167,8 @@ function VencimentoRow({ item }: { item: DashboardVencimento }) {
       </div>
       <div className="text-right shrink-0">
         <p className={`text-sm font-semibold ${isReceita ? "text-green-600" : "text-red-600"}`}>
-          {isReceita ? "+" : "-"}{fmt.format(item.valor)}
+          {isReceita ? "+" : "-"}
+          {fmt.format(item.valor)}
         </p>
         <p className="text-[11px] text-gray-400">
           {item.diasRestantes === 0 ? "Hoje" : item.diasRestantes === 1 ? "Amanhã" : `${item.diasRestantes}d`}
@@ -177,12 +199,12 @@ function AlertaRow({ alerta }: { alerta: DashboardAlerta }) {
 }
 
 const PIPELINE_COLORS: Record<string, string> = {
-  "Novo": "bg-blue-500",
+  Novo: "bg-blue-500",
   "Em contato": "bg-indigo-500",
-  "Proposta": "bg-purple-500",
-  "Negociação": "bg-amber-500",
-  "Ganho": "bg-green-500",
-  "Perdido": "bg-gray-400",
+  Proposta: "bg-purple-500",
+  Negociação: "bg-amber-500",
+  Ganho: "bg-green-500",
+  Perdido: "bg-gray-400",
 };
 
 function LeadsFunnel({ pipeline, total }: { pipeline: LeadsPipeline[]; total: number }) {
@@ -259,7 +281,11 @@ export default function Dashboard() {
         <Button variant="outline" size="sm" className="text-xs" onClick={() => navigate("/financeiro")}>
           <DollarSign size={14} className="mr-1" /> Financeiro
         </Button>
-        <Button size="sm" className="text-xs bg-accent-orange hover:bg-accent-orange/90 text-white" onClick={() => navigate("/projetos")}>
+        <Button
+          size="sm"
+          className="text-xs bg-accent-orange hover:bg-accent-orange/90 text-white"
+          onClick={() => navigate("/projetos")}
+        >
           <Plus size={14} className="mr-1" /> Novo Projeto
         </Button>
       </div>
@@ -292,7 +318,6 @@ export default function Dashboard() {
   return (
     <PageLayout header={header}>
       <div className="space-y-6 w-full max-w-none">
-
         {/* KPIs */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <KPICard
@@ -346,7 +371,10 @@ export default function Dashboard() {
               </div>
             </CardContent>
           </Card>
-          <Card className="bg-white border border-gray-100 shadow-sm cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate("/projetos")}>
+          <Card
+            className="bg-white border border-gray-100 shadow-sm cursor-pointer hover:shadow-md transition-shadow"
+            onClick={() => navigate("/projetos")}
+          >
             <CardContent className="p-4 flex items-center gap-4">
               <div className="p-2.5 rounded-xl bg-accent-orange/10">
                 <Briefcase size={20} className="text-accent-orange" />
@@ -357,7 +385,10 @@ export default function Dashboard() {
               </div>
             </CardContent>
           </Card>
-          <Card className="bg-white border border-gray-100 shadow-sm cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate("/leads")}>
+          <Card
+            className="bg-white border border-gray-100 shadow-sm cursor-pointer hover:shadow-md transition-shadow"
+            onClick={() => navigate("/leads")}
+          >
             <CardContent className="p-4 flex items-center gap-4">
               <div className="p-2.5 rounded-xl bg-purple-50">
                 <Target size={20} className="text-purple-600" />
@@ -379,7 +410,12 @@ export default function Dashboard() {
                   <BarChart3 size={18} className="text-gray-500" />
                   Fluxo Financeiro
                 </CardTitle>
-                <Button variant="ghost" size="sm" className="text-xs text-gray-500" onClick={() => navigate("/financeiro")}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-xs text-gray-500"
+                  onClick={() => navigate("/financeiro")}
+                >
                   Ver detalhes <ChevronRight size={14} />
                 </Button>
               </div>
@@ -400,12 +436,40 @@ export default function Dashboard() {
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" vertical={false} />
                     <XAxis dataKey="mes" stroke="#9ca3af" fontSize={11} tickLine={false} axisLine={false} />
-                    <YAxis stroke="#9ca3af" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(v) => fmtCompact.format(v)} />
+                    <YAxis
+                      stroke="#9ca3af"
+                      fontSize={11}
+                      tickLine={false}
+                      axisLine={false}
+                      tickFormatter={(v) => fmtCompact.format(v)}
+                    />
                     <Tooltip content={<CustomTooltip />} />
                     <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 11 }} />
-                    <Area type="monotone" dataKey="receitas" name="Receitas" stroke="#22c55e" fill="url(#gReceitas)" strokeWidth={2} />
-                    <Area type="monotone" dataKey="despesas" name="Despesas" stroke="#ef4444" fill="url(#gDespesas)" strokeWidth={2} />
-                    <Line type="monotone" dataKey="saldo" name="Saldo" stroke="#6366f1" strokeWidth={1.5} strokeDasharray="4 4" dot={false} />
+                    <Area
+                      type="monotone"
+                      dataKey="receitas"
+                      name="Receitas"
+                      stroke="#22c55e"
+                      fill="url(#gReceitas)"
+                      strokeWidth={2}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="despesas"
+                      name="Despesas"
+                      stroke="#ef4444"
+                      fill="url(#gDespesas)"
+                      strokeWidth={2}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="saldo"
+                      name="Saldo"
+                      stroke="#6366f1"
+                      strokeWidth={1.5}
+                      strokeDasharray="4 4"
+                      dot={false}
+                    />
                   </ComposedChart>
                 </ResponsiveContainer>
               </div>
@@ -424,7 +488,12 @@ export default function Dashboard() {
                   <Briefcase size={18} className="text-gray-500" />
                   Projetos
                 </CardTitle>
-                <Button variant="ghost" size="sm" className="text-xs text-gray-500" onClick={() => navigate("/projetos")}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-xs text-gray-500"
+                  onClick={() => navigate("/projetos")}
+                >
                   Ver todos <ChevronRight size={14} />
                 </Button>
               </div>
@@ -489,7 +558,12 @@ export default function Dashboard() {
                   <CalendarClock size={18} className="text-gray-500" />
                   Próximos Vencimentos
                 </CardTitle>
-                <Button variant="ghost" size="sm" className="text-xs text-gray-500" onClick={() => navigate("/financeiro")}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-xs text-gray-500"
+                  onClick={() => navigate("/financeiro")}
+                >
                   Ver todos <ChevronRight size={14} />
                 </Button>
               </div>
@@ -531,10 +605,25 @@ export default function Dashboard() {
         {/* Atalhos rápidos */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
-            { label: "Novo Projeto", icon: Briefcase, path: "/projetos", color: "hover:border-orange-300 hover:bg-orange-50/50" },
+            {
+              label: "Novo Projeto",
+              icon: Briefcase,
+              path: "/projetos",
+              color: "hover:border-orange-300 hover:bg-orange-50/50",
+            },
             { label: "Novo Lead", icon: Users, path: "/leads", color: "hover:border-purple-300 hover:bg-purple-50/50" },
-            { label: "Lançamento", icon: DollarSign, path: "/financeiro", color: "hover:border-green-300 hover:bg-green-50/50" },
-            { label: "Relatórios", icon: FileText, path: "/relatorios", color: "hover:border-blue-300 hover:bg-blue-50/50" },
+            {
+              label: "Lançamento",
+              icon: DollarSign,
+              path: "/financeiro",
+              color: "hover:border-green-300 hover:bg-green-50/50",
+            },
+            {
+              label: "Relatórios",
+              icon: FileText,
+              path: "/relatorios",
+              color: "hover:border-blue-300 hover:bg-blue-50/50",
+            },
           ].map((atalho) => (
             <button
               key={atalho.label}
@@ -546,7 +635,6 @@ export default function Dashboard() {
             </button>
           ))}
         </div>
-
       </div>
     </PageLayout>
   );

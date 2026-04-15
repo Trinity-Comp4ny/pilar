@@ -4,7 +4,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2 } from "lucide-react";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { formatCurrency } from "@/lib/utils";
 import type { FolhaItem } from "../types";
 
@@ -18,7 +23,15 @@ interface FolhaTableProps {
   onStatusChange: (folhaId: string | undefined, newStatus: string) => void;
 }
 
-export function FolhaTable({ data, loading, statusFolha, confirmedUsers, onCheckboxChange, onRowClick, onStatusChange }: FolhaTableProps) {
+export function FolhaTable({
+  data,
+  loading,
+  statusFolha,
+  confirmedUsers,
+  onCheckboxChange,
+  onRowClick,
+  onStatusChange,
+}: FolhaTableProps) {
   const isEdited = (item: FolhaItem, field: string) => item.edited_fields?.includes(field);
 
   return (
@@ -46,7 +59,10 @@ export function FolhaTable({ data, loading, statusFolha, confirmedUsers, onCheck
               <TableBody>
                 {data.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={statusFolha === "preview" ? 8 : 7} className="text-center py-8 text-muted-foreground">
+                    <TableCell
+                      colSpan={statusFolha === "preview" ? 8 : 7}
+                      className="text-center py-8 text-muted-foreground"
+                    >
                       Nenhum registro encontrado para este período.
                     </TableCell>
                   </TableRow>
@@ -62,19 +78,28 @@ export function FolhaTable({ data, loading, statusFolha, confirmedUsers, onCheck
                       >
                         {statusFolha === "preview" && (
                           <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
-                            <Checkbox checked={isConfirmed} onCheckedChange={(checked) => onCheckboxChange(item, checked as boolean)} />
+                            <Checkbox
+                              checked={isConfirmed}
+                              onCheckedChange={(checked) => onCheckboxChange(item, checked as boolean)}
+                            />
                           </TableCell>
                         )}
                         <TableCell>
                           <div className="font-medium">{item.p_nome}</div>
                           {item.lista_projetos && item.lista_projetos.length > 0 && (
-                            <div className="text-xs text-muted-foreground truncate max-w-[200px]" title={item.lista_projetos.join(", ")}>
-                              {item.lista_projetos.length} projeto(s): {item.lista_projetos[0]} {item.lista_projetos.length > 1 && `+${item.lista_projetos.length - 1}`}
+                            <div
+                              className="text-xs text-muted-foreground truncate max-w-[200px]"
+                              title={item.lista_projetos.join(", ")}
+                            >
+                              {item.lista_projetos.length} projeto(s): {item.lista_projetos[0]}{" "}
+                              {item.lista_projetos.length > 1 && `+${item.lista_projetos.length - 1}`}
                             </div>
                           )}
                         </TableCell>
                         <TableCell>{item.p_cargo}</TableCell>
-                        <TableCell className={`text-right ${isEdited(item, "salario") ? "text-accent-orange font-medium" : ""}`}>
+                        <TableCell
+                          className={`text-right ${isEdited(item, "salario") ? "text-accent-orange font-medium" : ""}`}
+                        >
                           {formatCurrency(item.p_salario_fixo)} {isEdited(item, "salario") && "*"}
                         </TableCell>
                         <TableCell className="text-center">
@@ -82,13 +107,20 @@ export function FolhaTable({ data, loading, statusFolha, confirmedUsers, onCheck
                             <span className={`font-medium ${isEdited(item, "area") ? "text-accent-orange" : ""}`}>
                               {area.toLocaleString("pt-BR")} m² {isEdited(item, "area") && "*"}
                             </span>
-                            <span className="text-xs text-muted-foreground">x {formatCurrency(item.p_valor_m2)}/m²</span>
+                            <span className="text-xs text-muted-foreground">
+                              x {formatCurrency(item.p_valor_m2)}/m²
+                            </span>
                           </div>
                         </TableCell>
-                        <TableCell className={`text-right font-medium ${isEdited(item, "variavel") ? "text-accent-orange" : "text-green-600"}`}>
-                          {isEdited(item, "variavel") ? "" : "+"} {formatCurrency(item.v_variavel)} {isEdited(item, "variavel") && "*"}
+                        <TableCell
+                          className={`text-right font-medium ${isEdited(item, "variavel") ? "text-accent-orange" : "text-green-600"}`}
+                        >
+                          {isEdited(item, "variavel") ? "" : "+"} {formatCurrency(item.v_variavel)}{" "}
+                          {isEdited(item, "variavel") && "*"}
                         </TableCell>
-                        <TableCell className={`text-right font-bold text-lg ${isEdited(item, "total") ? "text-accent-orange" : ""}`}>
+                        <TableCell
+                          className={`text-right font-bold text-lg ${isEdited(item, "total") ? "text-accent-orange" : ""}`}
+                        >
                           {formatCurrency(item.v_total)} {isEdited(item, "total") && "*"}
                         </TableCell>
                         {statusFolha === "closed" && (
@@ -109,9 +141,18 @@ export function FolhaTable({ data, loading, statusFolha, confirmedUsers, onCheck
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => onStatusChange(item.folha_id, "pendente")}>Marcar como Pendente</DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => onStatusChange(item.folha_id, "pago")}>Marcar como Pago</DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => onStatusChange(item.folha_id, "cancelado")} className="text-red-600">Cancelar Pagamento</DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => onStatusChange(item.folha_id, "pendente")}>
+                                  Marcar como Pendente
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => onStatusChange(item.folha_id, "pago")}>
+                                  Marcar como Pago
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => onStatusChange(item.folha_id, "cancelado")}
+                                  className="text-red-600"
+                                >
+                                  Cancelar Pagamento
+                                </DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
                           </TableCell>

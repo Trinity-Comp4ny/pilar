@@ -3,7 +3,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Plus, Target, TrendingUp, Wallet, Pencil, Trash2, Loader2 } from "lucide-react";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
@@ -136,10 +143,14 @@ export default function MetasFinanceiras() {
 
   const getIcon = (categoria: string) => {
     switch (categoria) {
-      case "receita": return <TrendingUp className="h-5 w-5 text-green-500" />;
-      case "lucro": return <Wallet className="h-5 w-5 text-blue-500" />;
-      case "investimento": return <Target className="h-5 w-5 text-purple-500" />;
-      default: return <Target className="h-5 w-5 text-gray-500" />;
+      case "receita":
+        return <TrendingUp className="h-5 w-5 text-green-500" />;
+      case "lucro":
+        return <Wallet className="h-5 w-5 text-blue-500" />;
+      case "investimento":
+        return <Target className="h-5 w-5 text-purple-500" />;
+      default:
+        return <Target className="h-5 w-5 text-gray-500" />;
     }
   };
 
@@ -175,21 +186,41 @@ export default function MetasFinanceiras() {
                 <form onSubmit={handleSubmit} className="space-y-4 mt-4">
                   <div className="space-y-2">
                     <Label>Nome da Meta</Label>
-                    <Input value={novaMeta.nome} onChange={(e) => setNovaMeta({ ...novaMeta, nome: e.target.value })} placeholder="Ex: Faturamento 2026" required />
+                    <Input
+                      value={novaMeta.nome}
+                      onChange={(e) => setNovaMeta({ ...novaMeta, nome: e.target.value })}
+                      placeholder="Ex: Faturamento 2026"
+                      required
+                    />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label>Valor Alvo (R$)</Label>
-                      <Input type="number" value={novaMeta.alvo} onChange={(e) => setNovaMeta({ ...novaMeta, alvo: e.target.value })} required />
+                      <Input
+                        type="number"
+                        value={novaMeta.alvo}
+                        onChange={(e) => setNovaMeta({ ...novaMeta, alvo: e.target.value })}
+                        required
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label>Valor Atual (R$)</Label>
-                      <Input type="number" value={novaMeta.atual} onChange={(e) => setNovaMeta({ ...novaMeta, atual: e.target.value })} required />
+                      <Input
+                        type="number"
+                        value={novaMeta.atual}
+                        onChange={(e) => setNovaMeta({ ...novaMeta, atual: e.target.value })}
+                        required
+                      />
                     </div>
                   </div>
                   <div className="space-y-2">
                     <Label>Prazo</Label>
-                    <Input type="date" value={novaMeta.prazo} onChange={(e) => setNovaMeta({ ...novaMeta, prazo: e.target.value })} required />
+                    <Input
+                      type="date"
+                      value={novaMeta.prazo}
+                      onChange={(e) => setNovaMeta({ ...novaMeta, prazo: e.target.value })}
+                      required
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label>Categoria</Label>
@@ -232,12 +263,18 @@ export default function MetasFinanceiras() {
                           <option value="leads_convertidos">Leads Convertidos (ano)</option>
                           <option value="horas_faturadas">Horas Faturadas (ano)</option>
                         </select>
-                        <p className="text-[10px] text-muted-foreground">O valor atual será atualizado ao clicar "Sincronizar"</p>
+                        <p className="text-[10px] text-muted-foreground">
+                          O valor atual será atualizado ao clicar "Sincronizar"
+                        </p>
                       </div>
                     )}
                   </div>
 
-                  <Button type="submit" className="w-full bg-accent-orange hover:bg-accent-orange/90 text-white rounded-full" disabled={createMetaMutation.isPending}>
+                  <Button
+                    type="submit"
+                    className="w-full bg-accent-orange hover:bg-accent-orange/90 text-white rounded-full"
+                    disabled={createMetaMutation.isPending}
+                  >
                     {createMetaMutation.isPending ? "Salvando..." : "Salvar Meta"}
                   </Button>
                 </form>
@@ -256,28 +293,49 @@ export default function MetasFinanceiras() {
                 <form onSubmit={handleEditSubmit} className="space-y-4 mt-4">
                   <div className="space-y-2">
                     <Label>Nome da Meta</Label>
-                    <Input value={editingMeta.nome} onChange={(e) => setEditingMeta({ ...editingMeta, nome: e.target.value })} required />
+                    <Input
+                      value={editingMeta.nome}
+                      onChange={(e) => setEditingMeta({ ...editingMeta, nome: e.target.value })}
+                      required
+                    />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label>Valor Alvo (R$)</Label>
-                      <Input type="number" value={editingMeta.alvo} onChange={(e) => setEditingMeta({ ...editingMeta, alvo: Number(e.target.value) })} required />
+                      <Input
+                        type="number"
+                        value={editingMeta.alvo}
+                        onChange={(e) => setEditingMeta({ ...editingMeta, alvo: Number(e.target.value) })}
+                        required
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label>Valor Atual (R$)</Label>
-                      <Input type="number" value={editingMeta.atual} onChange={(e) => setEditingMeta({ ...editingMeta, atual: Number(e.target.value) })} required />
+                      <Input
+                        type="number"
+                        value={editingMeta.atual}
+                        onChange={(e) => setEditingMeta({ ...editingMeta, atual: Number(e.target.value) })}
+                        required
+                      />
                     </div>
                   </div>
                   <div className="space-y-2">
                     <Label>Prazo</Label>
-                    <Input type="date" value={editingMeta.prazo} onChange={(e) => setEditingMeta({ ...editingMeta, prazo: e.target.value })} required />
+                    <Input
+                      type="date"
+                      value={editingMeta.prazo}
+                      onChange={(e) => setEditingMeta({ ...editingMeta, prazo: e.target.value })}
+                      required
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label>Categoria</Label>
                     <select
                       className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                       value={editingMeta.categoria}
-                      onChange={(e) => setEditingMeta({ ...editingMeta, categoria: e.target.value as Meta["categoria"] })}
+                      onChange={(e) =>
+                        setEditingMeta({ ...editingMeta, categoria: e.target.value as Meta["categoria"] })
+                      }
                     >
                       <option value="receita">Receita</option>
                       <option value="lucro">Lucro</option>
@@ -285,7 +343,11 @@ export default function MetasFinanceiras() {
                       <option value="investimento">Investimento</option>
                     </select>
                   </div>
-                  <Button type="submit" className="w-full bg-accent-orange hover:bg-accent-orange/90 text-white rounded-full" disabled={updateMetaMutation.isPending}>
+                  <Button
+                    type="submit"
+                    className="w-full bg-accent-orange hover:bg-accent-orange/90 text-white rounded-full"
+                    disabled={updateMetaMutation.isPending}
+                  >
                     {updateMetaMutation.isPending ? "Atualizando..." : "Atualizar Meta"}
                   </Button>
                 </form>
@@ -297,11 +359,17 @@ export default function MetasFinanceiras() {
             <AlertDialogContent>
               <AlertDialogHeader>
                 <AlertDialogTitle>Tem certeza?</AlertDialogTitle>
-                <AlertDialogDescription>Esta ação não pode ser desfeita. Esta meta será permanentemente excluída.</AlertDialogDescription>
+                <AlertDialogDescription>
+                  Esta ação não pode ser desfeita. Esta meta será permanentemente excluída.
+                </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                <AlertDialogAction onClick={() => metaToDelete && deleteMetaMutation.mutate(metaToDelete)} className="bg-red-600 hover:bg-red-700" disabled={deleteMetaMutation.isPending}>
+                <AlertDialogAction
+                  onClick={() => metaToDelete && deleteMetaMutation.mutate(metaToDelete)}
+                  className="bg-red-600 hover:bg-red-700"
+                  disabled={deleteMetaMutation.isPending}
+                >
                   {deleteMetaMutation.isPending ? "Excluindo..." : "Excluir"}
                 </AlertDialogAction>
               </AlertDialogFooter>
@@ -318,7 +386,10 @@ export default function MetasFinanceiras() {
               const percent = Math.min(Math.round((meta.atual / meta.alvo) * 100), 100);
               const isCompleted = percent >= 100;
               return (
-                <Card key={meta.id} className={cn("vrz-card border-2 transition-all", isCompleted && "border-green-500 bg-green-50")}>
+                <Card
+                  key={meta.id}
+                  className={cn("vrz-card border-2 transition-all", isCompleted && "border-green-500 bg-green-50")}
+                >
                   <CardHeader className="pb-2">
                     <div className="flex justify-between items-start">
                       <div className="flex items-center gap-3 flex-1">
@@ -327,15 +398,33 @@ export default function MetasFinanceiras() {
                         </div>
                         <div>
                           <CardTitle className="text-base">{meta.nome}</CardTitle>
-                          <CardDescription>Prazo: {meta.prazo ? new Date(meta.prazo).toLocaleDateString("pt-BR") : "—"}</CardDescription>
+                          <CardDescription>
+                            Prazo: {meta.prazo ? new Date(meta.prazo).toLocaleDateString("pt-BR") : "—"}
+                          </CardDescription>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
                         <span className={cn("text-2xl font-bold", isCompleted && "text-green-600")}>{percent}%</span>
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditingMeta(meta); setIsEditDialogOpen(true); }}>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => {
+                            setEditingMeta(meta);
+                            setIsEditDialogOpen(true);
+                          }}
+                        >
                           <Pencil className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600 hover:text-red-700" onClick={() => { setMetaToDelete(meta.id); setDeleteAlertOpen(true); }}>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-red-600 hover:text-red-700"
+                          onClick={() => {
+                            setMetaToDelete(meta.id);
+                            setDeleteAlertOpen(true);
+                          }}
+                        >
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
@@ -345,8 +434,14 @@ export default function MetasFinanceiras() {
                     <div className="space-y-2">
                       <Progress value={percent} className="h-2 bg-black" indicatorClassName="bg-green-500" />
                       <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Atual: <span className="font-medium text-foreground">R$ {meta.atual.toLocaleString("pt-BR")}</span></span>
-                        <span className="text-muted-foreground">Alvo: <span className="font-medium text-foreground">R$ {meta.alvo.toLocaleString("pt-BR")}</span></span>
+                        <span className="text-muted-foreground">
+                          Atual:{" "}
+                          <span className="font-medium text-foreground">R$ {meta.atual.toLocaleString("pt-BR")}</span>
+                        </span>
+                        <span className="text-muted-foreground">
+                          Alvo:{" "}
+                          <span className="font-medium text-foreground">R$ {meta.alvo.toLocaleString("pt-BR")}</span>
+                        </span>
                       </div>
                     </div>
                   </CardContent>

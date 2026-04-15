@@ -19,7 +19,10 @@ export default function Lancamentos() {
         <CardContent className="px-0">
           <Tabs defaultValue="receitas" className="w-full">
             <TabsList className="grid w-full grid-cols-2 gap-2 mb-6">
-              <TabsTrigger value="receitas" className="data-[state=active]:bg-green-100 data-[state=active]:text-green-700">
+              <TabsTrigger
+                value="receitas"
+                className="data-[state=active]:bg-green-100 data-[state=active]:text-green-700"
+              >
                 <ArrowUpCircle className="mr-2 h-4 w-4" />
                 Receitas
               </TabsTrigger>
@@ -28,11 +31,11 @@ export default function Lancamentos() {
                 Despesas
               </TabsTrigger>
             </TabsList>
-            
+
             <TabsContent value="receitas" className="mt-0">
               <Receitas />
             </TabsContent>
-            
+
             <TabsContent value="despesas" className="mt-0">
               <Despesas />
             </TabsContent>

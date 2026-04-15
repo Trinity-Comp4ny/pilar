@@ -69,7 +69,9 @@ export default function PortalLayout() {
           <CardContent className="p-8 text-center">
             <Building2 className="h-10 w-10 mx-auto mb-4 text-muted-foreground" />
             <h2 className="text-lg font-semibold mb-2">Acesso negado</h2>
-            <p className="text-sm text-muted-foreground">{error || "Link inválido ou expirado. Solicite um novo link ao escritório."}</p>
+            <p className="text-sm text-muted-foreground">
+              {error || "Link inválido ou expirado. Solicite um novo link ao escritório."}
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -90,11 +92,15 @@ export default function PortalLayout() {
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <div>
             <p className="text-xs text-muted-foreground">{data.empresa_nome}</p>
-            <h1 className="text-lg font-semibold">{data.projeto_codigo} — {data.projeto_nome}</h1>
+            <h1 className="text-lg font-semibold">
+              {data.projeto_codigo} — {data.projeto_nome}
+            </h1>
           </div>
           <div className="text-right">
             <p className="text-xs text-muted-foreground">{data.cliente_nome}</p>
-            <Badge variant="secondary" className="text-xs mt-1">{data.projeto_status}</Badge>
+            <Badge variant="secondary" className="text-xs mt-1">
+              {data.projeto_status}
+            </Badge>
           </div>
         </div>
       </header>
@@ -165,7 +171,11 @@ function PortalDashboard({ data, token: _token }: { data: PortalData; token: str
   }, [data.projeto_id]);
 
   if (loading) {
-    return <div className="flex justify-center py-8"><Loader2 className="h-5 w-5 animate-spin" /></div>;
+    return (
+      <div className="flex justify-center py-8">
+        <Loader2 className="h-5 w-5 animate-spin" />
+      </div>
+    );
   }
 
   const total = disciplinas.length;
@@ -181,7 +191,9 @@ function PortalDashboard({ data, token: _token }: { data: PortalData; token: str
           <div className="w-full bg-gray-200 rounded-full h-3 mb-2">
             <div className="bg-primary h-3 rounded-full transition-all" style={{ width: `${progresso}%` }} />
           </div>
-          <p className="text-xs text-muted-foreground">{progresso}% concluído — {concluidas} de {total} disciplinas</p>
+          <p className="text-xs text-muted-foreground">
+            {progresso}% concluído — {concluidas} de {total} disciplinas
+          </p>
         </CardContent>
       </Card>
 
@@ -216,7 +228,9 @@ function PortalDashboard({ data, token: _token }: { data: PortalData; token: str
                       <p className="text-xs text-muted-foreground">{String(e.descricao)}</p>
                     )}
                   </div>
-                  <Badge variant="secondary" className="text-xs">{String(e.tipo ?? "")}</Badge>
+                  <Badge variant="secondary" className="text-xs">
+                    {String(e.tipo ?? "")}
+                  </Badge>
                 </div>
               ))}
             </div>

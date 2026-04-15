@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Bell, Check, AlertTriangle, Clock, DollarSign } from "lucide-react";
-import { useAlertas, useAlertasNaoLidos, useMarcarAlertaLido, useMarcarTodosLidos, SEVERIDADE_CONFIG } from "@/hooks/useAlertas";
+import {
+  useAlertas,
+  useAlertasNaoLidos,
+  useMarcarAlertaLido,
+  useMarcarTodosLidos,
+  SEVERIDADE_CONFIG,
+} from "@/hooks/useAlertas";
 
 const TIPO_ICON: Record<string, typeof AlertTriangle> = {
   horas_excedidas: Clock,
@@ -54,12 +56,7 @@ export function AlertsBell() {
         <div className="flex items-center justify-between px-4 py-3 border-b">
           <h4 className="text-sm font-semibold">Alertas</h4>
           {naoLidos > 0 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-xs h-7"
-              onClick={() => marcarTodos.mutate()}
-            >
+            <Button variant="ghost" size="sm" className="text-xs h-7" onClick={() => marcarTodos.mutate()}>
               <Check className="h-3 w-3 mr-1" />
               Marcar todos como lidos
             </Button>
@@ -68,9 +65,7 @@ export function AlertsBell() {
 
         <div className="max-h-[400px] overflow-y-auto">
           {alertas.length === 0 ? (
-            <div className="py-8 text-center text-sm text-muted-foreground">
-              Nenhum alerta
-            </div>
+            <div className="py-8 text-center text-sm text-muted-foreground">Nenhum alerta</div>
           ) : (
             alertas.map((alerta) => {
               const Icon = TIPO_ICON[alerta.tipo] || AlertTriangle;
@@ -90,12 +85,12 @@ export function AlertsBell() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <p className={`text-xs font-medium truncate ${!alerta.lido ? "text-foreground" : "text-muted-foreground"}`}>
+                        <p
+                          className={`text-xs font-medium truncate ${!alerta.lido ? "text-foreground" : "text-muted-foreground"}`}
+                        >
                           {alerta.titulo}
                         </p>
-                        {!alerta.lido && (
-                          <span className="h-1.5 w-1.5 rounded-full bg-blue-500 shrink-0" />
-                        )}
+                        {!alerta.lido && <span className="h-1.5 w-1.5 rounded-full bg-blue-500 shrink-0" />}
                       </div>
                       <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2">{alerta.mensagem}</p>
                       <p className="text-[10px] text-muted-foreground mt-1">{formatTimeAgo(alerta.created_at)}</p>

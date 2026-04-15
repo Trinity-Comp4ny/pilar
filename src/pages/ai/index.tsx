@@ -8,9 +8,21 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
-  Sparkles, BarChart3, FileText, AlertTriangle, Users, FileCheck,
-  Loader2, Clock, ChevronRight, FileStack, FilePlus2, CalendarCheck,
-  UserPlus, FlaskConical, BadgeDollarSign,
+  Sparkles,
+  BarChart3,
+  FileText,
+  AlertTriangle,
+  Users,
+  FileCheck,
+  Loader2,
+  Clock,
+  ChevronRight,
+  FileStack,
+  FilePlus2,
+  CalendarCheck,
+  UserPlus,
+  FlaskConical,
+  BadgeDollarSign,
 } from "lucide-react";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
@@ -61,7 +73,10 @@ export default function AiHub() {
   // Form states para cada tipo
   const [propostaForm, setPropostaForm] = useState({ briefing: "", area_m2: "", tipologia: "", prazo_dias: "" });
   const [relatorioForm, setRelatorioForm] = useState({ periodo: "semanal" });
-  const [fechamentoForm, setFechamentoForm] = useState({ mes: String(new Date().getMonth() + 1), ano: String(new Date().getFullYear()) });
+  const [fechamentoForm, setFechamentoForm] = useState({
+    mes: String(new Date().getMonth() + 1),
+    ano: String(new Date().getFullYear()),
+  });
   const [documentosForm, setDocumentosForm] = useState({ projeto_id: "", tipo_documento: "relatorio_progresso" });
   const [aditivoForm, setAditivoForm] = useState({ projeto_id: "", motivo_aditivo: "", descricao_mudanca: "" });
   const [pautaForm, setPautaForm] = useState({ tipo_reuniao: "diretoria", projeto_id: "", participantes_contexto: "" });
@@ -71,9 +86,14 @@ export default function AiHub() {
 
   // Carrega projetos para selects
   useEffect(() => {
-    supabase.from("projetos").select("id, nome").is("deleted_at", null).order("nome").then(({ data }) => {
-      if (data) setProjetosOptions(data);
-    });
+    supabase
+      .from("projetos")
+      .select("id, nome")
+      .is("deleted_at", null)
+      .order("nome")
+      .then(({ data }) => {
+        if (data) setProjetosOptions(data);
+      });
   }, []);
 
   const handleGenerate = (tipo: AiTipo) => {
@@ -98,10 +118,18 @@ export default function AiHub() {
         params = { projeto_id: documentosForm.projeto_id, tipo_documento: documentosForm.tipo_documento };
         break;
       case "aditivo_copilot":
-        params = { projeto_id: aditivoForm.projeto_id, motivo_aditivo: aditivoForm.motivo_aditivo, descricao_mudanca: aditivoForm.descricao_mudanca };
+        params = {
+          projeto_id: aditivoForm.projeto_id,
+          motivo_aditivo: aditivoForm.motivo_aditivo,
+          descricao_mudanca: aditivoForm.descricao_mudanca,
+        };
         break;
       case "pauta_reuniao":
-        params = { tipo_reuniao: pautaForm.tipo_reuniao, projeto_id: pautaForm.projeto_id || undefined, participantes_contexto: pautaForm.participantes_contexto || undefined };
+        params = {
+          tipo_reuniao: pautaForm.tipo_reuniao,
+          projeto_id: pautaForm.projeto_id || undefined,
+          participantes_contexto: pautaForm.participantes_contexto || undefined,
+        };
         break;
       case "planejador_contratacao":
         params = { horizonte_meses: parseInt(contratacaoForm.horizonte_meses) || 6 };
@@ -154,7 +182,11 @@ export default function AiHub() {
         {(Object.entries(AI_TIPOS) as [AiTipo, (typeof AI_TIPOS)[AiTipo]][]).map(([tipo, config]) => {
           const Icon = ICON_MAP[config.icon] || Sparkles;
           return (
-            <Card key={tipo} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => setActiveGenerator(tipo)}>
+            <Card
+              key={tipo}
+              className="hover:shadow-md transition-shadow cursor-pointer"
+              onClick={() => setActiveGenerator(tipo)}
+            >
               <CardContent className="p-5">
                 <div className="flex items-start gap-3">
                   <div className="p-2 rounded-lg bg-primary/10">
@@ -179,7 +211,9 @@ export default function AiHub() {
         </CardHeader>
         <CardContent>
           {loadingInsights ? (
-            <div className="flex justify-center py-8"><Loader2 className="h-5 w-5 animate-spin" /></div>
+            <div className="flex justify-center py-8">
+              <Loader2 className="h-5 w-5 animate-spin" />
+            </div>
           ) : insights.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <Sparkles className="h-8 w-8 mx-auto mb-2 opacity-40" />
@@ -215,7 +249,12 @@ export default function AiHub() {
       </Card>
 
       {/* Dialog: Gerador */}
-      <Dialog open={!!activeGenerator} onOpenChange={(open) => { if (!open) setActiveGenerator(null); }}>
+      <Dialog
+        open={!!activeGenerator}
+        onOpenChange={(open) => {
+          if (!open) setActiveGenerator(null);
+        }}
+      >
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -229,12 +268,38 @@ export default function AiHub() {
               <>
                 <div className="space-y-2">
                   <Label>Briefing do Cliente</Label>
-                  <Textarea value={propostaForm.briefing} onChange={(e) => setPropostaForm({ ...propostaForm, briefing: e.target.value })} rows={3} placeholder="Descreva o que o cliente precisa..." />
+                  <Textarea
+                    value={propostaForm.briefing}
+                    onChange={(e) => setPropostaForm({ ...propostaForm, briefing: e.target.value })}
+                    rows={3}
+                    placeholder="Descreva o que o cliente precisa..."
+                  />
                 </div>
                 <div className="grid grid-cols-3 gap-3">
-                  <div className="space-y-2"><Label>Área (m²)</Label><Input value={propostaForm.area_m2} onChange={(e) => setPropostaForm({ ...propostaForm, area_m2: e.target.value })} type="number" /></div>
-                  <div className="space-y-2"><Label>Tipologia</Label><Input value={propostaForm.tipologia} onChange={(e) => setPropostaForm({ ...propostaForm, tipologia: e.target.value })} placeholder="Residencial" /></div>
-                  <div className="space-y-2"><Label>Prazo (dias)</Label><Input value={propostaForm.prazo_dias} onChange={(e) => setPropostaForm({ ...propostaForm, prazo_dias: e.target.value })} type="number" /></div>
+                  <div className="space-y-2">
+                    <Label>Área (m²)</Label>
+                    <Input
+                      value={propostaForm.area_m2}
+                      onChange={(e) => setPropostaForm({ ...propostaForm, area_m2: e.target.value })}
+                      type="number"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Tipologia</Label>
+                    <Input
+                      value={propostaForm.tipologia}
+                      onChange={(e) => setPropostaForm({ ...propostaForm, tipologia: e.target.value })}
+                      placeholder="Residencial"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Prazo (dias)</Label>
+                    <Input
+                      value={propostaForm.prazo_dias}
+                      onChange={(e) => setPropostaForm({ ...propostaForm, prazo_dias: e.target.value })}
+                      type="number"
+                    />
+                  </div>
                 </div>
               </>
             )}
@@ -243,7 +308,9 @@ export default function AiHub() {
               <div className="space-y-2">
                 <Label>Período</Label>
                 <Select value={relatorioForm.periodo} onValueChange={(v) => setRelatorioForm({ periodo: v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="semanal">Semanal</SelectItem>
                     <SelectItem value="mensal">Mensal</SelectItem>
@@ -256,8 +323,13 @@ export default function AiHub() {
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
                   <Label>Mês</Label>
-                  <Select value={fechamentoForm.mes} onValueChange={(v) => setFechamentoForm({ ...fechamentoForm, mes: v })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                  <Select
+                    value={fechamentoForm.mes}
+                    onValueChange={(v) => setFechamentoForm({ ...fechamentoForm, mes: v })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
                     <SelectContent>
                       {Array.from({ length: 12 }, (_, i) => (
                         <SelectItem key={i + 1} value={String(i + 1)}>
@@ -269,12 +341,18 @@ export default function AiHub() {
                 </div>
                 <div className="space-y-2">
                   <Label>Ano</Label>
-                  <Input value={fechamentoForm.ano} onChange={(e) => setFechamentoForm({ ...fechamentoForm, ano: e.target.value })} type="number" />
+                  <Input
+                    value={fechamentoForm.ano}
+                    onChange={(e) => setFechamentoForm({ ...fechamentoForm, ano: e.target.value })}
+                    type="number"
+                  />
                 </div>
               </div>
             )}
 
-            {(activeGenerator === "previsao_atraso" || activeGenerator === "radar_cliente" || activeGenerator === "diagnostico_precificacao") && (
+            {(activeGenerator === "previsao_atraso" ||
+              activeGenerator === "radar_cliente" ||
+              activeGenerator === "diagnostico_precificacao") && (
               <p className="text-sm text-muted-foreground">
                 Esta análise será gerada automaticamente com base nos dados atuais dos seus projetos e clientes.
               </p>
@@ -284,19 +362,31 @@ export default function AiHub() {
               <>
                 <div className="space-y-2">
                   <Label>Projeto</Label>
-                  <Select value={documentosForm.projeto_id} onValueChange={(v) => setDocumentosForm({ ...documentosForm, projeto_id: v })}>
-                    <SelectTrigger><SelectValue placeholder="Selecione o projeto" /></SelectTrigger>
+                  <Select
+                    value={documentosForm.projeto_id}
+                    onValueChange={(v) => setDocumentosForm({ ...documentosForm, projeto_id: v })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o projeto" />
+                    </SelectTrigger>
                     <SelectContent>
                       {projetosOptions.map((p) => (
-                        <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>
+                        <SelectItem key={p.id} value={p.id}>
+                          {p.nome}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
                   <Label>Tipo de Documento</Label>
-                  <Select value={documentosForm.tipo_documento} onValueChange={(v) => setDocumentosForm({ ...documentosForm, tipo_documento: v })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                  <Select
+                    value={documentosForm.tipo_documento}
+                    onValueChange={(v) => setDocumentosForm({ ...documentosForm, tipo_documento: v })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="ata_reuniao">Ata de Reunião</SelectItem>
                       <SelectItem value="relatorio_progresso">Relatório de Progresso</SelectItem>
@@ -313,22 +403,38 @@ export default function AiHub() {
               <>
                 <div className="space-y-2">
                   <Label>Projeto</Label>
-                  <Select value={aditivoForm.projeto_id} onValueChange={(v) => setAditivoForm({ ...aditivoForm, projeto_id: v })}>
-                    <SelectTrigger><SelectValue placeholder="Selecione o projeto" /></SelectTrigger>
+                  <Select
+                    value={aditivoForm.projeto_id}
+                    onValueChange={(v) => setAditivoForm({ ...aditivoForm, projeto_id: v })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o projeto" />
+                    </SelectTrigger>
                     <SelectContent>
                       {projetosOptions.map((p) => (
-                        <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>
+                        <SelectItem key={p.id} value={p.id}>
+                          {p.nome}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
                   <Label>Motivo do Aditivo</Label>
-                  <Input value={aditivoForm.motivo_aditivo} onChange={(e) => setAditivoForm({ ...aditivoForm, motivo_aditivo: e.target.value })} placeholder="Ex: mudança de escopo, atraso do cliente..." />
+                  <Input
+                    value={aditivoForm.motivo_aditivo}
+                    onChange={(e) => setAditivoForm({ ...aditivoForm, motivo_aditivo: e.target.value })}
+                    placeholder="Ex: mudança de escopo, atraso do cliente..."
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label>Descrição da Mudança</Label>
-                  <Textarea value={aditivoForm.descricao_mudanca} onChange={(e) => setAditivoForm({ ...aditivoForm, descricao_mudanca: e.target.value })} rows={3} placeholder="Descreva o que mudou ou precisa ser adicionado..." />
+                  <Textarea
+                    value={aditivoForm.descricao_mudanca}
+                    onChange={(e) => setAditivoForm({ ...aditivoForm, descricao_mudanca: e.target.value })}
+                    rows={3}
+                    placeholder="Descreva o que mudou ou precisa ser adicionado..."
+                  />
                 </div>
               </>
             )}
@@ -337,8 +443,13 @@ export default function AiHub() {
               <>
                 <div className="space-y-2">
                   <Label>Tipo de Reunião</Label>
-                  <Select value={pautaForm.tipo_reuniao} onValueChange={(v) => setPautaForm({ ...pautaForm, tipo_reuniao: v })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                  <Select
+                    value={pautaForm.tipo_reuniao}
+                    onValueChange={(v) => setPautaForm({ ...pautaForm, tipo_reuniao: v })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="diretoria">Diretoria / Sócios</SelectItem>
                       <SelectItem value="projeto">Acompanhamento de Projeto</SelectItem>
@@ -349,19 +460,31 @@ export default function AiHub() {
                 </div>
                 <div className="space-y-2">
                   <Label>Projeto (opcional)</Label>
-                  <Select value={pautaForm.projeto_id} onValueChange={(v) => setPautaForm({ ...pautaForm, projeto_id: v })}>
-                    <SelectTrigger><SelectValue placeholder="Selecione se for reunião de projeto" /></SelectTrigger>
+                  <Select
+                    value={pautaForm.projeto_id}
+                    onValueChange={(v) => setPautaForm({ ...pautaForm, projeto_id: v })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione se for reunião de projeto" />
+                    </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="">Nenhum (geral)</SelectItem>
                       {projetosOptions.map((p) => (
-                        <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>
+                        <SelectItem key={p.id} value={p.id}>
+                          {p.nome}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
                   <Label>Contexto adicional (opcional)</Label>
-                  <Textarea value={pautaForm.participantes_contexto} onChange={(e) => setPautaForm({ ...pautaForm, participantes_contexto: e.target.value })} rows={2} placeholder="Participantes, temas específicos..." />
+                  <Textarea
+                    value={pautaForm.participantes_contexto}
+                    onChange={(e) => setPautaForm({ ...pautaForm, participantes_contexto: e.target.value })}
+                    rows={2}
+                    placeholder="Participantes, temas específicos..."
+                  />
                 </div>
               </>
             )}
@@ -369,8 +492,13 @@ export default function AiHub() {
             {activeGenerator === "planejador_contratacao" && (
               <div className="space-y-2">
                 <Label>Horizonte de Planejamento (meses)</Label>
-                <Select value={contratacaoForm.horizonte_meses} onValueChange={(v) => setContratacaoForm({ horizonte_meses: v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                <Select
+                  value={contratacaoForm.horizonte_meses}
+                  onValueChange={(v) => setContratacaoForm({ horizonte_meses: v })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="3">3 meses</SelectItem>
                     <SelectItem value="6">6 meses</SelectItem>
@@ -384,8 +512,13 @@ export default function AiHub() {
               <>
                 <div className="space-y-2">
                   <Label>Tipo de Cenário</Label>
-                  <Select value={simulacaoForm.tipo} onValueChange={(v) => setSimulacaoForm({ ...simulacaoForm, tipo: v })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                  <Select
+                    value={simulacaoForm.tipo}
+                    onValueChange={(v) => setSimulacaoForm({ ...simulacaoForm, tipo: v })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="perda_cliente">Perda de Cliente</SelectItem>
                       <SelectItem value="novo_projeto">Novo Projeto Grande</SelectItem>
@@ -398,18 +531,32 @@ export default function AiHub() {
                 </div>
                 <div className="space-y-2">
                   <Label>Descrição do Cenário</Label>
-                  <Textarea value={simulacaoForm.descricao} onChange={(e) => setSimulacaoForm({ ...simulacaoForm, descricao: e.target.value })} rows={3} placeholder="Descreva o cenário que deseja simular..." />
+                  <Textarea
+                    value={simulacaoForm.descricao}
+                    onChange={(e) => setSimulacaoForm({ ...simulacaoForm, descricao: e.target.value })}
+                    rows={3}
+                    placeholder="Descreva o cenário que deseja simular..."
+                  />
                 </div>
               </>
             )}
 
             <div className="flex justify-end gap-2 pt-2">
-              <Button variant="outline" onClick={() => setActiveGenerator(null)}>Cancelar</Button>
-              <Button onClick={() => activeGenerator && handleGenerate(activeGenerator)} disabled={generateInsight.isPending}>
+              <Button variant="outline" onClick={() => setActiveGenerator(null)}>
+                Cancelar
+              </Button>
+              <Button
+                onClick={() => activeGenerator && handleGenerate(activeGenerator)}
+                disabled={generateInsight.isPending}
+              >
                 {generateInsight.isPending ? (
-                  <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> Analisando...</>
+                  <>
+                    <Loader2 className="h-4 w-4 mr-1 animate-spin" /> Analisando...
+                  </>
                 ) : (
-                  <><Sparkles className="h-4 w-4 mr-1" /> Gerar Análise</>
+                  <>
+                    <Sparkles className="h-4 w-4 mr-1" /> Gerar Análise
+                  </>
                 )}
               </Button>
             </div>
@@ -418,7 +565,12 @@ export default function AiHub() {
       </Dialog>
 
       {/* Dialog: Visualizar Insight */}
-      <Dialog open={!!selectedInsight} onOpenChange={(open) => { if (!open) setSelectedInsight(null); }}>
+      <Dialog
+        open={!!selectedInsight}
+        onOpenChange={(open) => {
+          if (!open) setSelectedInsight(null);
+        }}
+      >
         <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
