@@ -3,9 +3,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Trash2, Edit, User, ChevronDown } from "lucide-react";
+import { Plus, Trash2, Edit, User, ChevronDown, AlertTriangle, Clock, CheckCircle } from "lucide-react";
 import { PROJECT_PRIORITY, PRIORITY_OPTIONS, PROJECT_PRIORITY_CONFIG, type ProjectPriority } from "@/constants";
-import { type DisciplinaResponsavel, type ResponsavelDatas, getResponsaveisList } from "@/pages/projetos/types";
+import {
+  type DisciplinaResponsavel,
+  type ResponsavelDatas,
+  getResponsaveisList,
+  getDiscDeadlineStatus,
+} from "@/pages/projetos/types";
 
 interface DisciplinasSectionProps {
   disciplinas: { id: string; nome: string }[];
@@ -165,12 +170,16 @@ export function DisciplinasSection({
           {projetosDisciplinas.map((pd, idx) => {
             const resps = getResponsaveisList(pd);
             const isExpanded = expandedFormDiscIdx === idx;
+            const deadlineStatus = getDiscDeadlineStatus(pd);
 
             return (
-              <div key={idx} className="bg-white border rounded-lg hover:shadow-sm transition-shadow">
+              <div
+                key={idx}
+                className={`bg-white border rounded-lg hover:shadow-sm transition-shadow ${deadlineStatus?.status_data === "em_atraso" ? "border-red-300" : ""}`}
+              >
                 <div className="flex items-center justify-between p-3">
                   <div
-                    className="flex items-center gap-2 flex-1 cursor-pointer"
+                    className="flex items-center gap-2 flex-1 cursor-pointer flex-wrap"
                     onClick={() => onExpandToggle(isExpanded ? null : idx)}
                   >
                     <Badge variant="outline">{pd.disciplina}</Badge>
@@ -181,6 +190,23 @@ export function DisciplinasSection({
                         {PROJECT_PRIORITY_CONFIG[pd.prioridade as ProjectPriority]?.label || pd.prioridade}
                       </span>
                     )}
+                    {deadlineStatus &&
+                      (deadlineStatus.status_data === "em_atraso" || deadlineStatus.status_data === "atencao") && (
+                        <span
+                          className={`text-[9px] px-1.5 py-0.5 rounded-full font-medium flex items-center gap-0.5 ${
+                            deadlineStatus.status_data === "em_atraso"
+                              ? "bg-red-100 text-red-700"
+                              : "bg-yellow-100 text-yellow-700"
+                          }`}
+                        >
+                          {deadlineStatus.status_data === "em_atraso" ? (
+                            <AlertTriangle size={10} />
+                          ) : (
+                            <Clock size={10} />
+                          )}
+                          {deadlineStatus.label} {deadlineStatus.days > 0 ? `(${deadlineStatus.days}d)` : ""}
+                        </span>
+                      )}
                     <span className="text-[10px] text-muted-foreground">
                       {resps.length} {resps.length === 1 ? "resp." : "resps."}
                     </span>
@@ -226,6 +252,11 @@ export function DisciplinasSection({
                       >
                         {pd.status || "Não Iniciado"}
                       </span>
+                      {pd.data_previsao && (
+                        <span className="text-[10px] text-muted-foreground">
+                          Prev: {pd.data_previsao.split("-").reverse().join("/")}
+                        </span>
+                      )}
                     </div>
                   </div>
                 )}

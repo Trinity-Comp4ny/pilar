@@ -50,7 +50,7 @@ export function FinanceiroContent({ projetoId }: { projetoId: string }) {
   const formatDate = (d: string | null) => (d ? new Date(d + "T00:00:00").toLocaleDateString("pt-BR") : "—");
 
   const totalPrevisto = receitas.reduce((s, r) => s + r.valor, 0);
-  const totalRecebido = receitas.filter((r) => r.status === "Recebido").reduce((s, r) => s + r.valor, 0);
+  const totalPago = receitas.filter((r) => r.status === "Recebido").reduce((s, r) => s + r.valor, 0);
   const totalPendente = receitas.filter((r) => r.status === "Pendente").reduce((s, r) => s + r.valor, 0);
 
   return (
@@ -59,14 +59,14 @@ export function FinanceiroContent({ projetoId }: { projetoId: string }) {
       <div className="grid grid-cols-3 gap-4">
         <Card>
           <CardContent className="p-4 text-center">
-            <p className="text-xs text-muted-foreground">Total Previsto</p>
+            <p className="text-xs text-muted-foreground">Total do Contrato</p>
             <p className="text-lg font-bold">{formatCurrency(totalPrevisto)}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4 text-center">
-            <p className="text-xs text-muted-foreground">Recebido</p>
-            <p className="text-lg font-bold text-green-600">{formatCurrency(totalRecebido)}</p>
+            <p className="text-xs text-muted-foreground">Pago</p>
+            <p className="text-lg font-bold text-green-600">{formatCurrency(totalPago)}</p>
           </CardContent>
         </Card>
         <Card>
@@ -83,12 +83,12 @@ export function FinanceiroContent({ projetoId }: { projetoId: string }) {
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-medium">Progresso de Pagamento</span>
-              <span className="text-sm font-bold">{((totalRecebido / totalPrevisto) * 100).toFixed(0)}%</span>
+              <span className="text-sm font-bold">{((totalPago / totalPrevisto) * 100).toFixed(0)}%</span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-3">
               <div
                 className="bg-green-500 h-3 rounded-full transition-all"
-                style={{ width: `${(totalRecebido / totalPrevisto) * 100}%` }}
+                style={{ width: `${(totalPago / totalPrevisto) * 100}%` }}
               />
             </div>
           </CardContent>
@@ -117,7 +117,7 @@ export function FinanceiroContent({ projetoId }: { projetoId: string }) {
                       <p className="text-sm font-medium">{r.descricao}</p>
                       <p className="text-xs text-muted-foreground">
                         Vencimento: {formatDate(r.data_vencimento)}
-                        {r.data_recebimento && ` · Recebido: ${formatDate(r.data_recebimento)}`}
+                        {r.data_recebimento && ` · Pago em: ${formatDate(r.data_recebimento)}`}
                       </p>
                     </div>
                     <div className="text-right">
@@ -125,7 +125,7 @@ export function FinanceiroContent({ projetoId }: { projetoId: string }) {
                       <Badge
                         className={`text-[10px] ${isRecebido ? "bg-green-100 text-green-800" : isAtrasado ? "bg-red-100 text-red-800" : "bg-yellow-100 text-yellow-800"}`}
                       >
-                        {isRecebido ? "Recebido" : isAtrasado ? "Atrasado" : "Pendente"}
+                        {isRecebido ? "Pago" : isAtrasado ? "Atrasado" : "Pendente"}
                       </Badge>
                     </div>
                   </div>

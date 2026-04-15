@@ -67,7 +67,10 @@ import { BillingMilestonesTab } from "./components/BillingMilestonesTab";
 import { PagamentosTab } from "./components/PagamentosTab";
 import { EscopoTab } from "./components/EscopoTab";
 import { BurnRateChart } from "./components/BurnRateChart";
+import { CronogramaTab } from "./components/CronogramaTab";
+import { ProjetoFormDialog } from "./components/ProjetoFormDialog";
 import { useProjetoRentabilidade } from "@/hooks/useRentabilidade";
+import { useTemplates } from "@/hooks/useTemplates";
 
 export default function ProjetoDetail() {
   const { id } = useParams<{ id: string }>();
@@ -94,6 +97,11 @@ export default function ProjetoDetail() {
   const [newResp, setNewResp] = useState({ responsavel_id: "", data_inicio: "", data_previsao: "", data_final: "" });
   const [justificativaDialog, setJustificativaDialog] = useState<{ discIdx: number; newStatus: string } | null>(null);
   const [justificativaText, setJustificativaText] = useState("");
+
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [clientes, setClientes] = useState<{ id: string; nome: string }[]>([]);
+  const [currentUser, setCurrentUser] = useState<{ name: string; email: string } | null>(null);
+  const { data: templatesData = [] } = useTemplates();
 
   useEffect(() => {
     if (!id) return;
@@ -133,9 +141,19 @@ export default function ProjetoDetail() {
     Promise.all([
       supabase.from("disciplinas").select("id, nome").order("nome"),
       supabase.from("pessoas").select("id, nome").order("nome"),
-    ]).then(([discRes, pesRes]) => {
+      supabase.from("clientes").select("id, nome").order("nome"),
+      supabase.auth.getUser(),
+    ]).then(([discRes, pesRes, cliRes, userRes]) => {
       if (discRes.data) setDisciplinasCatalog(discRes.data);
       if (pesRes.data) setPessoas(pesRes.data);
+      if (cliRes.data) setClientes(cliRes.data);
+      const user = userRes.data.user;
+      if (user) {
+        setCurrentUser({
+          name: user.user_metadata?.full_name || user.email?.split("@")[0] || "Usuário",
+          email: user.email || "",
+        });
+      }
     });
   }, [canEdit]);
 
@@ -387,6 +405,12 @@ export default function ProjetoDetail() {
           </div>
           <p className="text-sm text-muted-foreground">{projeto.nome}</p>
         </div>
+        {canEdit && (
+          <Button variant="outline" size="sm" onClick={() => setIsEditDialogOpen(true)}>
+            <Edit className="h-3.5 w-3.5 mr-1.5" />
+            Editar Projeto
+          </Button>
+        )}
       </div>
 
       {/* KPI Cards */}
@@ -452,6 +476,7 @@ export default function ProjetoDetail() {
       <Tabs defaultValue="disciplinas" className="space-y-4">
         <TabsList className="flex-wrap">
           <TabsTrigger value="disciplinas">Disciplinas</TabsTrigger>
+          <TabsTrigger value="cronograma">Cronograma</TabsTrigger>
           <TabsTrigger value="pagamentos">Pagamentos</TabsTrigger>
           <TabsTrigger value="orcamento" disabled className="cursor-not-allowed opacity-40">
             Orçamento
@@ -1095,6 +1120,14 @@ export default function ProjetoDetail() {
           </Dialog>
         </TabsContent>
 
+        <TabsContent value="cronograma">
+          <CronogramaTab
+            disciplinas={projeto.disciplinas}
+            projetoDataInicio={projeto.data_inicio}
+            projetoDataPrevisao={projeto.data_previsao}
+          />
+        </TabsContent>
+
         <TabsContent value="pagamentos">
           <PagamentosTab projetoId={projeto.id} canEdit={canEdit} />
         </TabsContent>
@@ -1115,6 +1148,40 @@ export default function ProjetoDetail() {
           <BurnRateChart projetoId={projeto.id} />
         </TabsContent>
       </Tabs>
+
+      <ProjetoFormDialog
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        editProjeto={projeto}
+        clientes={clientes}
+        pessoas={pessoas}
+        disciplinas={disciplinasCatalog}
+        templatesData={templatesData}
+        currentUser={currentUser}
+        onSaved={async () => {
+          const { data } = await supabase.from("projetos").select("*, clientes(nome)").eq("id", projeto.id).single();
+          if (data) {
+            setProjeto({
+              id: data.id,
+              codigo_projeto: data.codigo_projeto,
+              nome: data.nome,
+              cliente_id: data.cliente_id,
+              cliente_nome: (data as unknown as { clientes?: { nome?: string } }).clientes?.nome,
+              localizacao: data.localizacao || undefined,
+              parcelas: data.parcelas || undefined,
+              area_m2: data.area_m2 || undefined,
+              data_inicio: data.data_inicio,
+              data_previsao: data.data_previsao,
+              data_final: data.data_final || undefined,
+              status: data.status as Projeto["status"],
+              prioridade: (data.prioridade as ProjectPriority) || PROJECT_PRIORITY.MEDIA,
+              valor_contrato: data.valor_contrato,
+              observacao: data.observacao,
+              disciplinas: Array.isArray(data.disciplinas) ? data.disciplinas : [],
+            });
+          }
+        }}
+      />
 
       {/* Dialog de justificativa obrigatória para atraso */}
       <AlertDialog

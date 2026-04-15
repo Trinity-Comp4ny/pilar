@@ -27,6 +27,7 @@ import {
   formatDate,
   formatDateShort,
   getResponsaveisList,
+  getDiscDeadlineStatus,
 } from "@/pages/projetos/types";
 import { PROJECT_STATUS_CONFIG } from "@/constants";
 import { cn } from "@/lib/utils";
@@ -83,15 +84,6 @@ function getStatusBadge(status: string | undefined) {
       {config.label}
     </Badge>
   );
-}
-
-function isAtrasada(disc: DisciplinaResponsavel): boolean {
-  if (disc.status === "Concluído") return false;
-  if (!disc.data_previsao) return false;
-  const hoje = new Date();
-  hoje.setHours(0, 0, 0, 0);
-  const previsao = new Date(disc.data_previsao + "T00:00:00");
-  return previsao < hoje;
 }
 
 /** Mini stacked bar showing status distribution */
@@ -223,12 +215,15 @@ export function DisciplinasTab({ projetos, isLoading }: DisciplinasTabProps) {
     const allDiscs = projetos.flatMap((p) => p.disciplinas);
     const concluidas = allDiscs.filter((d) => d.status === "Concluído").length;
     const emAndamento = allDiscs.filter((d) => d.status === "Em Andamento").length;
-    const atrasadas = allDiscs.filter((d) => isAtrasada(d)).length;
+    const statuses = allDiscs.map((d) => getDiscDeadlineStatus(d));
+    const atrasadas = statuses.filter((s) => s?.status_data === "em_atraso").length;
+    const emAtencao = statuses.filter((s) => s?.status_data === "atencao").length;
     return {
       total: allDiscs.length,
       concluidas,
       emAndamento,
       atrasadas,
+      emAtencao,
       disciplinasUnicas: disciplinasAgrupadas.length,
       progressoPct: allDiscs.length > 0 ? Math.round((concluidas / allDiscs.length) * 100) : 0,
     };
@@ -289,7 +284,7 @@ export function DisciplinasTab({ projetos, isLoading }: DisciplinasTabProps) {
         </Card>
 
         {/* KPI Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
           <Card className="border-l-4 border-l-green-500">
             <CardContent className="p-4">
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
@@ -298,7 +293,7 @@ export function DisciplinasTab({ projetos, isLoading }: DisciplinasTabProps) {
               </div>
               <div className="flex items-baseline gap-2">
                 <p className="text-2xl font-bold text-green-700">{metrics.concluidas}</p>
-                <p className="text-xs text-muted-foreground">{metrics.progressoPct}% do total</p>
+                <p className="text-xs text-muted-foreground">{metrics.progressoPct}%</p>
               </div>
             </CardContent>
           </Card>
@@ -309,6 +304,15 @@ export function DisciplinasTab({ projetos, isLoading }: DisciplinasTabProps) {
                 Em Andamento
               </div>
               <p className="text-2xl font-bold text-blue-700">{metrics.emAndamento}</p>
+            </CardContent>
+          </Card>
+          <Card className={cn("border-l-4 border-l-yellow-500", metrics.emAtencao > 0 && "bg-yellow-50/40")}>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
+                <Clock className="h-3.5 w-3.5 text-yellow-500" />
+                Atenção
+              </div>
+              <p className="text-2xl font-bold text-yellow-600">{metrics.emAtencao}</p>
             </CardContent>
           </Card>
           <Card className={cn("border-l-4 border-l-red-500", metrics.atrasadas > 0 && "bg-red-50/40")}>
@@ -429,7 +433,10 @@ export function DisciplinasTab({ projetos, isLoading }: DisciplinasTabProps) {
         <div className="space-y-3">
           {filtered.map((grupo) => {
             const isExpanded = expandedDisciplinas.has(grupo.nome);
-            const hasAtrasadas = grupo.projetos.some(({ disciplina }) => isAtrasada(disciplina));
+            const hasAtrasadas = grupo.projetos.some(({ disciplina }) => {
+              const s = getDiscDeadlineStatus(disciplina);
+              return s?.status_data === "em_atraso";
+            });
 
             return (
               <Card key={grupo.nome} className={cn("overflow-hidden transition-all", isExpanded && "shadow-sm")}>
@@ -516,7 +523,9 @@ export function DisciplinasTab({ projetos, isLoading }: DisciplinasTabProps) {
                   <div className="border-t bg-muted/10">
                     <div className="divide-y">
                       {grupo.projetos.map(({ projeto, disciplina }) => {
-                        const atrasada = isAtrasada(disciplina);
+                        const dlStatus = getDiscDeadlineStatus(disciplina);
+                        const atrasada = dlStatus?.status_data === "em_atraso";
+                        const atencao = dlStatus?.status_data === "atencao";
                         const resps = getResponsaveisList(disciplina);
 
                         return (
@@ -524,7 +533,8 @@ export function DisciplinasTab({ projetos, isLoading }: DisciplinasTabProps) {
                             key={projeto.id}
                             className={cn(
                               "px-4 py-3 flex flex-col sm:flex-row sm:items-center gap-2 transition-colors hover:bg-muted/20",
-                              atrasada && "bg-red-50/30"
+                              atrasada && "bg-red-50/30",
+                              atencao && "bg-yellow-50/30"
                             )}
                           >
                             <div className="flex-1 min-w-0 pl-7">
@@ -563,9 +573,16 @@ export function DisciplinasTab({ projetos, isLoading }: DisciplinasTabProps) {
 
                             <div className="flex items-center gap-2 pl-7 sm:pl-0 flex-shrink-0">
                               {getStatusBadge(disciplina.status)}
-                              {atrasada && (
-                                <Badge variant="destructive" className="text-[10px]">
-                                  Atrasada
+                              {atrasada && dlStatus && (
+                                <Badge variant="destructive" className="text-[10px] gap-0.5">
+                                  <AlertTriangle className="h-3 w-3" />
+                                  Em Atraso {dlStatus.days > 0 ? `(${dlStatus.days}d)` : ""}
+                                </Badge>
+                              )}
+                              {atencao && dlStatus && (
+                                <Badge className="text-[10px] gap-0.5 bg-yellow-500 hover:bg-yellow-500 text-white">
+                                  <Clock className="h-3 w-3" />
+                                  Atenção {dlStatus.days > 0 ? `(${dlStatus.days}d)` : ""}
                                 </Badge>
                               )}
                               {PROJECT_STATUS_CONFIG[projeto.status] && (
@@ -605,14 +622,20 @@ export function DisciplinasTab({ projetos, isLoading }: DisciplinasTabProps) {
               <tbody>
                 {filtered.flatMap((grupo) =>
                   grupo.projetos.map(({ projeto, disciplina }, idx) => {
-                    const atrasada = isAtrasada(disciplina);
+                    const dlStatus = getDiscDeadlineStatus(disciplina);
+                    const atrasada = dlStatus?.status_data === "em_atraso";
+                    const atencao = dlStatus?.status_data === "atencao";
 
                     return (
                       <tr
                         key={`${grupo.nome}-${projeto.id}`}
                         className={cn(
                           "border-b transition-colors",
-                          atrasada ? "bg-red-50/30 hover:bg-red-50/50" : "hover:bg-muted/30"
+                          atrasada
+                            ? "bg-red-50/30 hover:bg-red-50/50"
+                            : atencao
+                              ? "bg-yellow-50/30 hover:bg-yellow-50/50"
+                              : "hover:bg-muted/30"
                         )}
                       >
                         <td className="py-2.5 px-4">
@@ -642,9 +665,16 @@ export function DisciplinasTab({ projetos, isLoading }: DisciplinasTabProps) {
                         <td className="py-2.5 px-4">
                           <div className="flex items-center gap-1">
                             {getStatusBadge(disciplina.status)}
-                            {atrasada && (
-                              <Badge variant="destructive" className="text-[10px]">
-                                Atrasada
+                            {atrasada && dlStatus && (
+                              <Badge variant="destructive" className="text-[10px] gap-0.5">
+                                <AlertTriangle className="h-3 w-3" />
+                                {dlStatus.days}d
+                              </Badge>
+                            )}
+                            {atencao && dlStatus && (
+                              <Badge className="text-[10px] gap-0.5 bg-yellow-500 hover:bg-yellow-500 text-white">
+                                <Clock className="h-3 w-3" />
+                                {dlStatus.days}d
                               </Badge>
                             )}
                           </div>
@@ -652,7 +682,11 @@ export function DisciplinasTab({ projetos, isLoading }: DisciplinasTabProps) {
                         <td
                           className={cn(
                             "py-2.5 px-4 text-sm",
-                            atrasada ? "text-red-600 font-medium" : "text-muted-foreground"
+                            atrasada
+                              ? "text-red-600 font-medium"
+                              : atencao
+                                ? "text-yellow-600 font-medium"
+                                : "text-muted-foreground"
                           )}
                         >
                           {formatDate(disciplina.data_previsao)}

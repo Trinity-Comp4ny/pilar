@@ -4,18 +4,49 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, Building2 } from "lucide-react";
 import { ClienteShell } from "./ClienteShell";
 import { useClienteProjetoData } from "./useClienteProjetoData";
-import { TimelineContent } from "@/pages/portal/PortalTimeline";
 import { FinanceiroContent } from "@/pages/portal/PortalFinanceiro";
 import { EntregasContent } from "@/pages/portal/PortalEntregas";
 import type { ClienteAccount } from "./useClienteAuth";
 import { usePageTitle } from "@/hooks/usePageTitle";
 
+interface DisciplinaResponsavel {
+  data_inicio?: string;
+  data_previsao?: string;
+  data_final?: string;
+}
+
+interface OverviewDisciplina {
+  disciplina?: string;
+  status?: string;
+  data_inicio?: string;
+  data_previsao?: string;
+  data_final?: string;
+  responsaveis?: DisciplinaResponsavel[];
+}
+
+function formatDate(d: string | null | undefined): string {
+  if (!d) return "—";
+  return new Date(d + "T00:00:00").toLocaleDateString("pt-BR");
+}
+
+/** Extrai datas da disciplina ou do primeiro responsável */
+function getDisciplinaDates(d: OverviewDisciplina) {
+  const r = d.responsaveis?.[0];
+  return {
+    inicio: d.data_inicio || r?.data_inicio || "",
+    previsao: d.data_previsao || r?.data_previsao || "",
+    final: d.data_final || r?.data_final || "",
+  };
+}
+
 function ProjetoOverview({
-  projetoId,
   disciplinas,
+  dataInicio,
+  dataPrevisao,
 }: {
-  projetoId: string;
-  disciplinas: Array<{ disciplina?: string; status?: string }>;
+  disciplinas: OverviewDisciplina[];
+  dataInicio: string | null;
+  dataPrevisao: string | null;
 }) {
   const total = disciplinas.length;
   const concluidas = disciplinas.filter((d) => d.status === "Concluído").length;
@@ -23,6 +54,22 @@ function ProjetoOverview({
 
   return (
     <div className="space-y-6">
+      {/* Prazos do projeto */}
+      <div className="grid grid-cols-2 gap-4">
+        <Card>
+          <CardContent className="p-4">
+            <p className="text-xs text-muted-foreground">Início do Projeto</p>
+            <p className="text-sm font-semibold mt-1">{formatDate(dataInicio)}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <p className="text-xs text-muted-foreground">Previsão de Conclusão</p>
+            <p className="text-sm font-semibold mt-1">{formatDate(dataPrevisao)}</p>
+          </CardContent>
+        </Card>
+      </div>
+
       {/* Progresso */}
       <Card>
         <CardContent className="p-6">
@@ -38,21 +85,44 @@ function ProjetoOverview({
 
       {/* Disciplinas */}
       {total > 0 && (
-        <Card>
-          <CardContent className="p-6">
-            <h3 className="text-sm font-semibold mb-3">Etapas</h3>
-            <div className="space-y-2">
-              {disciplinas.map((d, i) => (
-                <div key={i} className="flex items-center justify-between py-2 border-b last:border-0">
-                  <span className="text-sm">{d.disciplina}</span>
-                  <Badge variant={d.status === "Concluído" ? "default" : "secondary"} className="text-xs">
-                    {d.status || "Não iniciado"}
-                  </Badge>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+        <div>
+          <h3 className="text-sm font-semibold mb-3">Disciplinas</h3>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {disciplinas.map((d, i) => {
+              const isConcluido = d.status === "Concluído";
+              const isAndamento = d.status === "Em Andamento";
+              const statusColor = isConcluido
+                ? "bg-green-100 text-green-800"
+                : isAndamento
+                  ? "bg-accent-orange/10 text-accent-orange"
+                  : "bg-gray-100 text-gray-600";
+              const dotColor = isConcluido ? "bg-green-500" : isAndamento ? "bg-accent-orange" : "bg-gray-300";
+              const dates = getDisciplinaDates(d);
+
+              return (
+                <Card key={i}>
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <div className={`w-2 h-2 rounded-full shrink-0 ${dotColor}`} />
+                        <p className="text-sm font-medium">{d.disciplina}</p>
+                      </div>
+                      <Badge className={`text-[10px] ${statusColor}`}>{d.status || "Não iniciado"}</Badge>
+                    </div>
+                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                      {dates.inicio && <span>Início: {formatDate(dates.inicio)}</span>}
+                      {dates.previsao && <span>Previsão: {formatDate(dates.previsao)}</span>}
+                      {dates.final && <span>Concluído: {formatDate(dates.final)}</span>}
+                      {!dates.inicio && !dates.previsao && !dates.final && (
+                        <span className="italic">Datas não definidas</span>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </div>
       )}
     </div>
   );
@@ -98,17 +168,16 @@ export default function ClienteProjetoDetail() {
   const subPath = location.pathname.replace(basePath, "");
 
   let content: React.ReactNode;
-  if (subPath === "/timeline") {
-    content = <TimelineContent projetoId={data.projeto_id} />;
-  } else if (subPath === "/financeiro") {
+  if (subPath === "/financeiro") {
     content = <FinanceiroContent projetoId={data.projeto_id} />;
   } else if (subPath === "/entregas") {
     content = <EntregasContent projetoId={data.projeto_id} />;
   } else {
     content = (
       <ProjetoOverview
-        projetoId={data.projeto_id}
         disciplinas={Array.isArray(data.disciplinas) ? data.disciplinas : []}
+        dataInicio={data.data_inicio}
+        dataPrevisao={data.data_previsao}
       />
     );
   }

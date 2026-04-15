@@ -18,8 +18,11 @@ import {
   FolderPlus,
   Download,
   LayoutTemplate,
+  Undo2,
+  XCircle,
 } from "lucide-react";
 import { DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useNavigate } from "react-router-dom";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
@@ -66,6 +69,7 @@ export default function Propostas() {
 
   const canEdit = userRole === "admin" || userRole === "operacional" || userRole === "marketing";
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [vinculoTipo, setVinculoTipo] = useState<"cliente" | "lead">("cliente");
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [convertPropostaId, setConvertPropostaId] = useState<string | null>(null);
   const [gerarDocxPropostaId, setGerarDocxPropostaId] = useState<string | null>(null);
@@ -111,6 +115,7 @@ export default function Propostas() {
       observacao: "",
     });
     setValorDisplay("");
+    setVinculoTipo("cliente");
   };
 
   const handleCreate = () => {
@@ -173,6 +178,14 @@ export default function Propostas() {
     v ? new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v) : "—";
 
   const formatDate = (d: string | null) => (d ? new Date(d + "T00:00:00").toLocaleDateString("pt-BR") : "—");
+
+  const hoje = new Date().toISOString().slice(0, 10);
+  const getDisplayStatus = (p: { status: string; validade: string | null }) => {
+    if (p.validade && p.validade < hoje && (p.status === "rascunho" || p.status === "enviada")) {
+      return "expirada";
+    }
+    return p.status;
+  };
 
   // Métricas
   const totalPropostas = propostas.length;
@@ -279,76 +292,153 @@ export default function Propostas() {
                         <TableCell className="text-xs py-2">{p.cliente_nome || p.lead_nome || "—"}</TableCell>
                         <TableCell className="text-xs py-2 text-right">{formatCurrency(p.valor_proposto)}</TableCell>
                         <TableCell className="text-xs py-2 text-center">
-                          <Badge className={`text-[10px] ${PROPOSTA_STATUS_CONFIG[p.status]?.color || ""}`}>
-                            {PROPOSTA_STATUS_CONFIG[p.status]?.label || p.status}
-                          </Badge>
+                          {(() => {
+                            const displayStatus = getDisplayStatus(p);
+                            return (
+                              <Badge className={`text-[10px] ${PROPOSTA_STATUS_CONFIG[displayStatus]?.color || ""}`}>
+                                {PROPOSTA_STATUS_CONFIG[displayStatus]?.label || displayStatus}
+                              </Badge>
+                            );
+                          })()}
                         </TableCell>
-                        <TableCell className="text-xs py-2">{formatDate(p.validade)}</TableCell>
+                        <TableCell
+                          className={`text-xs py-2 ${p.validade && p.validade < hoje ? "text-red-500 font-medium" : ""}`}
+                        >
+                          {formatDate(p.validade)}
+                        </TableCell>
                         {canEdit && (
                           <TableCell className="text-xs py-2 text-right">
-                            <div className="flex items-center justify-end gap-1">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-7 w-7 text-accent-orange"
-                                title="Gerar DOCX"
-                                onClick={() => setGerarDocxPropostaId(p.id)}
-                              >
-                                <Download className="h-3.5 w-3.5" />
-                              </Button>
-                              {p.status === "rascunho" && (
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-7 w-7 text-blue-600"
-                                  title="Enviar"
-                                  onClick={() => handleStatusChange(p.id, "enviada")}
-                                >
-                                  <Send className="h-3.5 w-3.5" />
-                                </Button>
-                              )}
-                              {p.status === "enviada" && (
-                                <>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-7 w-7 text-green-600"
-                                    title="Aceitar"
-                                    onClick={() => handleStatusChange(p.id, "aceita")}
-                                  >
-                                    <CheckCircle2 className="h-3.5 w-3.5" />
-                                  </Button>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-7 w-7 text-blue-600"
-                                    title="Aceitar e criar projeto"
-                                    onClick={() => setConvertPropostaId(p.id)}
-                                  >
-                                    <FolderPlus className="h-3.5 w-3.5" />
-                                  </Button>
-                                </>
-                              )}
-                              {p.status === "aceita" && !p.projeto_id && (
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-7 w-7 text-blue-600"
-                                  title="Criar projeto"
-                                  onClick={() => setConvertPropostaId(p.id)}
-                                >
-                                  <FolderPlus className="h-3.5 w-3.5" />
-                                </Button>
-                              )}
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-7 w-7 text-red-500"
-                                onClick={() => setConfirmDeleteId(p.id)}
-                              >
-                                <Trash2 className="h-3.5 w-3.5" />
-                              </Button>
-                            </div>
+                            <TooltipProvider delayDuration={200}>
+                              <div className="flex items-center justify-end gap-1">
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-7 w-7 text-accent-orange"
+                                      onClick={() => setGerarDocxPropostaId(p.id)}
+                                    >
+                                      <Download className="h-3.5 w-3.5" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>Gerar DOCX</TooltipContent>
+                                </Tooltip>
+                                {p.status === "rascunho" && (
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-7 w-7 text-blue-600"
+                                        onClick={() => handleStatusChange(p.id, "enviada")}
+                                      >
+                                        <Send className="h-3.5 w-3.5" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>Marcar como enviada</TooltipContent>
+                                  </Tooltip>
+                                )}
+                                {p.status === "enviada" && (
+                                  <>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          className="h-7 w-7 text-gray-500"
+                                          onClick={() => handleStatusChange(p.id, "rascunho")}
+                                        >
+                                          <Undo2 className="h-3.5 w-3.5" />
+                                        </Button>
+                                      </TooltipTrigger>
+                                      <TooltipContent>Voltar para rascunho</TooltipContent>
+                                    </Tooltip>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          className="h-7 w-7 text-green-600"
+                                          onClick={() => handleStatusChange(p.id, "aceita")}
+                                        >
+                                          <CheckCircle2 className="h-3.5 w-3.5" />
+                                        </Button>
+                                      </TooltipTrigger>
+                                      <TooltipContent>Aceitar proposta</TooltipContent>
+                                    </Tooltip>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          className="h-7 w-7 text-red-500"
+                                          onClick={() => handleStatusChange(p.id, "recusada")}
+                                        >
+                                          <XCircle className="h-3.5 w-3.5" />
+                                        </Button>
+                                      </TooltipTrigger>
+                                      <TooltipContent>Recusar proposta</TooltipContent>
+                                    </Tooltip>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          className="h-7 w-7 text-blue-600"
+                                          onClick={() => setConvertPropostaId(p.id)}
+                                        >
+                                          <FolderPlus className="h-3.5 w-3.5" />
+                                        </Button>
+                                      </TooltipTrigger>
+                                      <TooltipContent>Aceitar e criar projeto</TooltipContent>
+                                    </Tooltip>
+                                  </>
+                                )}
+                                {p.status === "aceita" && !p.projeto_id && (
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-7 w-7 text-blue-600"
+                                        onClick={() => setConvertPropostaId(p.id)}
+                                      >
+                                        <FolderPlus className="h-3.5 w-3.5" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>Criar projeto</TooltipContent>
+                                  </Tooltip>
+                                )}
+                                {p.status === "recusada" && (
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-7 w-7 text-gray-500"
+                                        onClick={() => handleStatusChange(p.id, "rascunho")}
+                                      >
+                                        <Undo2 className="h-3.5 w-3.5" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>Reabrir como rascunho</TooltipContent>
+                                  </Tooltip>
+                                )}
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-7 w-7 text-red-500"
+                                      onClick={() => setConfirmDeleteId(p.id)}
+                                    >
+                                      <Trash2 className="h-3.5 w-3.5" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>Excluir proposta</TooltipContent>
+                                </Tooltip>
+                              </div>
+                            </TooltipProvider>
                           </TableCell>
                         )}
                       </TableRow>
@@ -390,37 +480,81 @@ export default function Propostas() {
                 />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Cliente</Label>
-                <Select value={form.cliente_id || ""} onValueChange={(v) => setForm({ ...form, cliente_id: v })}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {clientes.map((c) => (
-                      <SelectItem key={c.id} value={c.id}>
-                        {c.nome}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+            <div className="space-y-3">
+              <div className="flex items-center gap-4">
+                <Label className="text-sm font-medium">Vincular a:</Label>
+                <div className="flex items-center gap-3">
+                  <label className="flex items-center gap-1.5 text-sm cursor-pointer">
+                    <input
+                      type="radio"
+                      name="vinculo"
+                      className="accent-primary"
+                      checked={vinculoTipo === "cliente"}
+                      onChange={() => {
+                        setVinculoTipo("cliente");
+                        setForm({ ...form, lead_id: undefined });
+                      }}
+                    />
+                    Cliente existente
+                  </label>
+                  <label className="flex items-center gap-1.5 text-sm cursor-pointer">
+                    <input
+                      type="radio"
+                      name="vinculo"
+                      className="accent-primary"
+                      checked={vinculoTipo === "lead"}
+                      onChange={() => {
+                        setVinculoTipo("lead");
+                        setForm({ ...form, cliente_id: undefined });
+                      }}
+                    />
+                    Lead (prospecto)
+                  </label>
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label>Lead</Label>
-                <Select value={form.lead_id || ""} onValueChange={(v) => setForm({ ...form, lead_id: v })}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {leads.map((l) => (
-                      <SelectItem key={l.id} value={l.id}>
-                        {l.nome}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              {vinculoTipo === "lead" ? (
+                <div className="space-y-1">
+                  <Select
+                    value={form.lead_id || ""}
+                    onValueChange={(v) => setForm({ ...form, lead_id: v, cliente_id: undefined })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o lead" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {leads.map((l) => (
+                        <SelectItem key={l.id} value={l.id}>
+                          {l.nome}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-[11px] text-muted-foreground">
+                    Ao converter em projeto, o lead será automaticamente promovido a cliente.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-1">
+                  <Select
+                    value={form.cliente_id || ""}
+                    onValueChange={(v) => setForm({ ...form, cliente_id: v, lead_id: undefined })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o cliente" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {clientes.map((c) => (
+                        <SelectItem key={c.id} value={c.id}>
+                          {c.nome}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-[11px] text-muted-foreground">
+                    Opcional. Você pode criar a proposta sem vínculo e associar depois.
+                  </p>
+                </div>
+              )}
             </div>
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">

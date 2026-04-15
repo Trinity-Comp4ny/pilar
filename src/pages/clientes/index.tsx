@@ -27,6 +27,8 @@ import {
   X,
   Loader2,
   Globe,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatPhone, formatDocument, formatAgency, formatBankAccount } from "@/lib/maskUtils";
@@ -109,6 +111,8 @@ export default function Clientes() {
   const [portalStatus, setPortalStatus] = useState<"idle" | "loading" | "exists" | "none">("idle");
   const [isInvitingPortal, setIsInvitingPortal] = useState(false);
   const [portalCredentials, setPortalCredentials] = useState<{ email: string; senha: string } | null>(null);
+  const [portalAccount, setPortalAccount] = useState<{ email: string; senha: string } | null>(null);
+  const [showPortalInfo, setShowPortalInfo] = useState(false);
 
   const formatCpf = (digits: string) => {
     return digits
@@ -324,6 +328,8 @@ export default function Clientes() {
     setSelectedCliente(cliente);
     setIsDetailOpen(true);
     setPortalCredentials(null);
+    setPortalAccount(null);
+    setShowPortalInfo(false);
     // Verifica se já tem acesso ao portal
     setPortalStatus("loading");
     supabase
@@ -360,6 +366,27 @@ export default function Clientes() {
       });
     } finally {
       setIsInvitingPortal(false);
+    }
+  };
+
+  const handleTogglePortalInfo = async () => {
+    if (showPortalInfo) {
+      setShowPortalInfo(false);
+      return;
+    }
+    if (portalAccount) {
+      setShowPortalInfo(true);
+      return;
+    }
+    if (!selectedCliente) return;
+    const { data } = await supabase
+      .from("cliente_portal_accounts")
+      .select("email, senha")
+      .eq("cliente_id", selectedCliente.id)
+      .maybeSingle();
+    if (data) {
+      setPortalAccount({ email: data.email ?? "", senha: data.senha ?? "" });
+      setShowPortalInfo(true);
     }
   };
 
@@ -809,9 +836,53 @@ export default function Clientes() {
                       </div>
                     )}
                     {portalStatus === "exists" && !portalCredentials && (
-                      <div className="flex items-center gap-2 bg-green-50 border border-green-200 rounded-lg px-3 py-2 text-sm text-green-800">
-                        <Globe size={14} />
-                        Cliente possui acesso ao portal
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2 bg-green-50 border border-green-200 rounded-lg px-3 py-2 text-sm text-green-800">
+                          <Globe size={14} />
+                          <span className="flex-1">Cliente possui acesso ao portal</span>
+                          <button
+                            type="button"
+                            onClick={handleTogglePortalInfo}
+                            className="p-1 hover:bg-green-100 rounded transition-colors"
+                            title={showPortalInfo ? "Ocultar credenciais" : "Ver credenciais"}
+                          >
+                            {showPortalInfo ? <EyeOff size={14} /> : <Eye size={14} />}
+                          </button>
+                        </div>
+                        {showPortalInfo && portalAccount && (
+                          <div className="bg-green-50 border border-green-200 rounded-lg p-4 space-y-3">
+                            <p className="text-xs text-green-700">Credenciais do portal:</p>
+                            <div className="bg-white rounded border p-3 space-y-1.5 font-mono text-sm">
+                              <div className="flex items-center justify-between">
+                                <span className="text-muted-foreground">Email:</span>
+                                <span className="font-medium">{portalAccount.email}</span>
+                              </div>
+                              <div className="flex items-center justify-between">
+                                <span className="text-muted-foreground">Senha:</span>
+                                <span className="font-medium">{portalAccount.senha}</span>
+                              </div>
+                              <div className="flex items-center justify-between">
+                                <span className="text-muted-foreground">Link:</span>
+                                <span className="font-medium text-xs">{window.location.origin}/cliente/login</span>
+                              </div>
+                            </div>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="w-full"
+                              onClick={() => {
+                                const text = `Portal do Cliente Pilar\n\nEmail: ${portalAccount.email}\nSenha: ${portalAccount.senha}\nLink: ${window.location.origin}/cliente/login`;
+                                navigator.clipboard.writeText(text);
+                                toast({
+                                  title: "Copiado!",
+                                  description: "Credenciais copiadas para a área de transferência.",
+                                });
+                              }}
+                            >
+                              Copiar credenciais
+                            </Button>
+                          </div>
+                        )}
                       </div>
                     )}
                     {portalCredentials && (

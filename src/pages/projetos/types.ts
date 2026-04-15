@@ -39,6 +39,52 @@ export function isDiscAtrasada(disc: DisciplinaResponsavel): boolean {
   return previsao < hoje;
 }
 
+export const getDiscDeadlineStatus = (disc: { data_previsao?: string; data_final?: string; status?: string }) => {
+  const { data_previsao, data_final, status } = disc;
+
+  if (status === "Concluído" && data_final && data_previsao) {
+    const final = new Date(data_final + "T00:00:00");
+    const previsao = new Date(data_previsao + "T00:00:00");
+    if (final <= previsao) {
+      return {
+        label: "No Prazo",
+        color: "bg-green-600 text-white",
+        days: 0,
+        status_data: "concluido_no_prazo" as const,
+      };
+    }
+    return {
+      label: "Com Atraso",
+      color: "bg-orange-600 text-white",
+      days: 0,
+      status_data: "concluido_com_atraso" as const,
+    };
+  }
+
+  if (!data_previsao || status === "Concluído") return null;
+
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+  const previsao = new Date(data_previsao + "T00:00:00");
+  previsao.setHours(0, 0, 0, 0);
+
+  const diffTime = previsao.getTime() - hoje.getTime();
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+  if (diffDays < 0) {
+    return {
+      label: "Em Atraso",
+      color: "bg-red-500 text-white",
+      days: Math.abs(diffDays),
+      status_data: "em_atraso" as const,
+    };
+  }
+  if (diffDays <= 7) {
+    return { label: "Atenção", color: "bg-yellow-500 text-white", days: diffDays, status_data: "atencao" as const };
+  }
+  return { label: "No Prazo", color: "bg-green-500 text-white", days: diffDays, status_data: "no_prazo" as const };
+};
+
 export const getResponsaveisList = (disc: DisciplinaResponsavel): ResponsavelDatas[] => {
   if (disc.responsaveis && disc.responsaveis.length > 0) return disc.responsaveis;
   if (!disc.responsavel_id) return [];

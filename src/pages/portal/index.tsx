@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, NavLink } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Building2, FolderKanban, Clock, FileCheck, DollarSign } from "lucide-react";
+import { Loader2, Building2, FolderKanban, FileCheck, DollarSign } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { usePageTitle } from "@/hooks/usePageTitle";
 
@@ -17,12 +17,31 @@ interface PortalData {
   empresa_nome: string;
 }
 
+interface PortalResponsavel {
+  data_inicio?: string;
+  data_previsao?: string;
+  data_final?: string;
+}
+
 interface PortalDisciplina {
   disciplina?: string;
   status?: string;
+  data_inicio?: string;
+  data_previsao?: string;
+  data_final?: string;
+  responsaveis?: PortalResponsavel[];
 }
 
 type PortalEntregaRow = Record<string, unknown>;
+
+function getPortalDisciplinaDates(d: PortalDisciplina) {
+  const r = d.responsaveis?.[0];
+  return {
+    inicio: d.data_inicio || r?.data_inicio || "",
+    previsao: d.data_previsao || r?.data_previsao || "",
+    final: d.data_final || r?.data_final || "",
+  };
+}
 
 function errorMessageFromUnknown(e: unknown): string {
   if (e instanceof Error) return e.message;
@@ -82,7 +101,6 @@ export default function PortalLayout() {
 
   const navItems = [
     { to: `/portal/${token}`, label: "Visão Geral", icon: FolderKanban, end: true },
-    { to: `/portal/${token}/timeline`, label: "Etapas", icon: Clock, end: false },
     { to: `/portal/${token}/financeiro`, label: "Financeiro", icon: DollarSign, end: false },
     { to: `/portal/${token}/entregas`, label: "Entregas", icon: FileCheck, end: false },
   ];
@@ -138,14 +156,20 @@ export default function PortalLayout() {
   );
 }
 
+function formatPortalDate(d: string | null | undefined): string {
+  if (!d) return "—";
+  return new Date(d + "T00:00:00").toLocaleDateString("pt-BR");
+}
+
 function PortalDashboard({ data, token: _token }: { data: PortalData; token: string }) {
   const [disciplinas, setDisciplinas] = useState<PortalDisciplina[]>([]);
+  const [dataInicio, setDataInicio] = useState<string | null>(null);
+  const [dataPrevisao, setDataPrevisao] = useState<string | null>(null);
   const [entregas, setEntregas] = useState<PortalEntregaRow[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
-      // Busca disciplinas do projeto
       const { data: proj } = await supabase
         .from("projetos")
         .select("disciplinas, data_inicio, data_previsao, valor_contrato")
@@ -155,9 +179,10 @@ function PortalDashboard({ data, token: _token }: { data: PortalData; token: str
       if (proj) {
         const raw = Array.isArray(proj.disciplinas) ? proj.disciplinas : [];
         setDisciplinas(raw as PortalDisciplina[]);
+        setDataInicio(proj.data_inicio);
+        setDataPrevisao(proj.data_previsao);
       }
 
-      // Busca entregas pendentes
       const { data: entregasData } = await supabase
         .from("portal_entregas")
         .select("*")
@@ -186,6 +211,22 @@ function PortalDashboard({ data, token: _token }: { data: PortalData; token: str
 
   return (
     <div className="space-y-6">
+      {/* Prazos do projeto */}
+      <div className="grid grid-cols-2 gap-4">
+        <Card>
+          <CardContent className="p-4">
+            <p className="text-xs text-muted-foreground">Início do Projeto</p>
+            <p className="text-sm font-semibold mt-1">{formatPortalDate(dataInicio)}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <p className="text-xs text-muted-foreground">Previsão de Conclusão</p>
+            <p className="text-sm font-semibold mt-1">{formatPortalDate(dataPrevisao)}</p>
+          </CardContent>
+        </Card>
+      </div>
+
       {/* Progresso */}
       <Card>
         <CardContent className="p-6">
@@ -200,21 +241,46 @@ function PortalDashboard({ data, token: _token }: { data: PortalData; token: str
       </Card>
 
       {/* Disciplinas */}
-      <Card>
-        <CardContent className="p-6">
-          <h3 className="text-sm font-semibold mb-3">Etapas</h3>
-          <div className="space-y-2">
-            {disciplinas.map((d, i) => (
-              <div key={i} className="flex items-center justify-between py-2 border-b last:border-0">
-                <span className="text-sm">{d.disciplina}</span>
-                <Badge variant={d.status === "Concluído" ? "default" : "secondary"} className="text-xs">
-                  {d.status || "Não iniciado"}
-                </Badge>
-              </div>
-            ))}
+      {total > 0 && (
+        <div>
+          <h3 className="text-sm font-semibold mb-3">Disciplinas</h3>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {disciplinas.map((d, i) => {
+              const isConcluido = d.status === "Concluído";
+              const isAndamento = d.status === "Em Andamento";
+              const statusColor = isConcluido
+                ? "bg-green-100 text-green-800"
+                : isAndamento
+                  ? "bg-blue-100 text-blue-800"
+                  : "bg-gray-100 text-gray-600";
+              const dotColor = isConcluido ? "bg-green-500" : isAndamento ? "bg-blue-500" : "bg-gray-300";
+              const dates = getPortalDisciplinaDates(d);
+
+              return (
+                <Card key={i}>
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <div className={`w-2 h-2 rounded-full shrink-0 ${dotColor}`} />
+                        <p className="text-sm font-medium">{d.disciplina}</p>
+                      </div>
+                      <Badge className={`text-[10px] ${statusColor}`}>{d.status || "Não iniciado"}</Badge>
+                    </div>
+                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                      {dates.inicio && <span>Início: {formatPortalDate(dates.inicio)}</span>}
+                      {dates.previsao && <span>Previsão: {formatPortalDate(dates.previsao)}</span>}
+                      {dates.final && <span>Concluído: {formatPortalDate(dates.final)}</span>}
+                      {!dates.inicio && !dates.previsao && !dates.final && (
+                        <span className="italic">Datas não definidas</span>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      )}
 
       {/* Entregas pendentes */}
       {entregas.length > 0 && (

@@ -29,7 +29,6 @@ const Portal = lazy(() => import("./pages/portal"));
 const MetasPage = lazy(() => import("./pages/metas"));
 const AiHub = lazy(() => import("./pages/ai"));
 const ProjetoDetail = lazy(() => import("./pages/projetos/ProjetoDetail"));
-const PortalTimeline = lazy(() => import("./pages/portal/PortalTimeline"));
 const PortalFinanceiro = lazy(() => import("./pages/portal/PortalFinanceiro"));
 const PortalEntregas = lazy(() => import("./pages/portal/PortalEntregas"));
 const ClienteLogin = lazy(() => import("./pages/cliente/ClienteLogin"));
@@ -125,7 +124,6 @@ const App = () => {
 
               {/* Portal do Cliente — Token (rota pública legada) */}
               <Route path="/portal/:token" element={<Portal />} />
-              <Route path="/portal/:token/timeline" element={<PortalTimeline />} />
               <Route path="/portal/:token/financeiro" element={<PortalFinanceiro />} />
               <Route path="/portal/:token/entregas" element={<PortalEntregas />} />
 
@@ -134,7 +132,6 @@ const App = () => {
               <Route path="/cliente" element={<ClientePrivateRoute />}>
                 <Route path="dashboard" element={<ClienteDashboard />} />
                 <Route path="projeto/:id" element={<ClienteProjetoDetail />} />
-                <Route path="projeto/:id/timeline" element={<ClienteProjetoDetail />} />
                 <Route path="projeto/:id/financeiro" element={<ClienteProjetoDetail />} />
                 <Route path="projeto/:id/entregas" element={<ClienteProjetoDetail />} />
               </Route>
