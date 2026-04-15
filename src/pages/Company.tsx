@@ -108,7 +108,7 @@ export default function Company() {
         toast({ variant: "destructive", title: "Erro ao carregar", description: getSafeErrorMessage(e) })
       )
       .finally(() => setIsLoading(false));
-  }, []);
+  }, [toast]);
 
   const formatCEP = (value: string) => {
     const digits = onlyDigits(value).slice(0, 8);

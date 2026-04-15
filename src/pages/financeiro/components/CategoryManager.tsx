@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -53,11 +53,7 @@ export function CategoryManager({ title, description, type, onCategoryChange }: 
   const { toast } = useToast();
 
   // Fetch categories from Supabase
-  useEffect(() => {
-    fetchCategories();
-  }, [type]);
-
-  const fetchCategories = async () => {
+  const fetchCategories = useCallback(async () => {
     try {
       const { data, error } = await supabase.from("categorias_financeiras").select("*").eq("tipo", type).order("nome");
 
@@ -79,7 +75,11 @@ export function CategoryManager({ title, description, type, onCategoryChange }: 
         variant: "destructive",
       });
     }
-  };
+  }, [type, onCategoryChange, toast]);
+
+  useEffect(() => {
+    fetchCategories();
+  }, [fetchCategories]);
 
   const handleAddCategory = async () => {
     if (!newCategoryName.trim()) {
