@@ -5,8 +5,10 @@ import { Progress } from "@/components/ui/progress";
 import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { PortalShell } from "./PortalShell";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 export default function PortalTimeline() {
+  usePageTitle("Portal | Timeline");
   return <PortalShell>{(data) => <TimelineContent projetoId={data.projeto_id} />}</PortalShell>;
 }
 

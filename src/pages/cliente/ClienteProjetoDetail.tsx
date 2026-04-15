@@ -8,6 +8,7 @@ import { TimelineContent } from "@/pages/portal/PortalTimeline";
 import { FinanceiroContent } from "@/pages/portal/PortalFinanceiro";
 import { EntregasContent } from "@/pages/portal/PortalEntregas";
 import type { ClienteAccount } from "./useClienteAuth";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 function ProjetoOverview({
   projetoId,
@@ -59,6 +60,7 @@ function ProjetoOverview({
 
 export default function ClienteProjetoDetail() {
   const { id } = useParams<{ id: string }>();
+  usePageTitle("Portal | Projeto");
   const account = useOutletContext<ClienteAccount>();
   const { data, loading, error } = useClienteProjetoData(id);
   const location = useLocation();

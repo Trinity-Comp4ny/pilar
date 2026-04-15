@@ -15,6 +15,7 @@ import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { supabase } from "@/integrations/supabase/client";
 import { PROJECT_STATUS, PROJECT_STATUS_CONFIG, type ProjectStatus } from "@/constants";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 delete (L.Icon.Default.prototype as Record<string, unknown>)._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -100,6 +101,7 @@ function FlyToProject({
 }
 
 export default function MapaObras() {
+  usePageTitle("Mapa de Obras");
   const navigate = useNavigate();
   const [statusFilter, setStatusFilter] = useState<string>("todos");
   const [searchOpen, setSearchOpen] = useState(false);

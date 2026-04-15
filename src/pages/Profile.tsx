@@ -10,8 +10,10 @@ import { useToast } from "@/hooks/use-toast";
 import { User, Mail, Phone, Building2 } from "lucide-react";
 import { formatPhone } from "@/lib/maskUtils";
 import { getSafeErrorMessage } from "@/lib/safeError";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 export default function Profile() {
+  usePageTitle("Perfil");
   const [editing, setEditing] = useState(false);
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);

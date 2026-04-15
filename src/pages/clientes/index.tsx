@@ -36,6 +36,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { getSafeErrorMessage } from "@/lib/safeError";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 const normalize = (value: string) =>
   value
@@ -77,6 +78,7 @@ interface Cliente {
 }
 
 export default function Clientes() {
+  usePageTitle("Clientes");
   const { data: userRole } = useUserRole();
   const isAdmin = userRole === "admin";
 

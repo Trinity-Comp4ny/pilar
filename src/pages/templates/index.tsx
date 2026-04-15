@@ -18,8 +18,10 @@ import {
   type TemplateInsert,
 } from "@/hooks/useTemplates";
 import { TemplateForm } from "./components/TemplateForm";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 export default function Templates() {
+  usePageTitle("Templates");
   const { data: userRole } = useUserRole();
   const { toast } = useToast();
   const { data: templates = [], isLoading } = useTemplates();

@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, CheckCircle2, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { PortalShell } from "./PortalShell";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 interface Receita {
   id: string;
@@ -15,6 +16,7 @@ interface Receita {
 }
 
 export default function PortalFinanceiro() {
+  usePageTitle("Portal | Financeiro");
   return <PortalShell>{(data) => <FinanceiroContent projetoId={data.projeto_id} />}</PortalShell>;
 }
 

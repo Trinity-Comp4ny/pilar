@@ -10,6 +10,7 @@ import { useUserRole } from "@/hooks/useUserRole";
 import { usePessoaAtual, usePessoasEmpresa } from "@/hooks/useTimesheets";
 import { TimesheetGrid } from "./components/TimesheetGrid";
 import { TimesheetApproval } from "./components/TimesheetApproval";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 function getMonday(date: Date): Date {
   const d = new Date(date);
@@ -37,6 +38,7 @@ function formatWeekLabel(monday: Date): string {
 }
 
 export default function Timesheet() {
+  usePageTitle("Timesheet");
   const { data: userRole } = useUserRole();
   const { data: pessoaAtual } = usePessoaAtual();
   const { data: todasPessoas = [] } = usePessoasEmpresa();

@@ -28,6 +28,7 @@ import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { usePageTitle } from "@/hooks/usePageTitle";
 import {
   useAiInsights,
   useAiUsage,
@@ -62,6 +63,7 @@ function formatTimeAgo(dateStr: string): string {
 }
 
 export default function AiHub() {
+  usePageTitle("IA");
   const { toast } = useToast();
   const { data: insights = [], isLoading: loadingInsights } = useAiInsights(undefined, 20);
   const { data: usage } = useAiUsage();
