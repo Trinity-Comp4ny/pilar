@@ -48,7 +48,6 @@ interface PropostaDisciplina {
   horas_estimadas: number;
   custo_hora: number;
 }
-import { supabase } from "@/integrations/supabase/client";
 import { fetchClientesLookup, fetchLeadsLookup } from "@/lib/supabaseQueries";
 import { useQuery } from "@tanstack/react-query";
 import { usePageTitle } from "@/hooks/usePageTitle";
