@@ -1,39 +1,27 @@
 import { z } from "zod";
-import { parseCurrencyString } from "@/lib/maskUtils";
+import {
+  dataVencimentoField,
+  descricaoField,
+  valorCurrencyField,
+  parcelasField,
+  optionalStringField,
+} from "./financialFields";
 
 export const despesaSchema = z
   .object({
-    dataVencimento: z.date({ required_error: "Data é obrigatória" }),
-    descricao: z.string().min(1, "Descrição é obrigatória"),
-    valorTotal: z
-      .string()
-      .min(1, "Valor é obrigatório")
-      .refine(
-        (val) => {
-          const parsed = parseCurrencyString(val);
-          return parsed > 0;
-        },
-        { message: "Valor deve ser maior que zero" }
-      ),
+    dataVencimento: dataVencimentoField,
+    descricao: descricaoField,
+    valorTotal: valorCurrencyField,
     status: z.enum(["Pago", "Pendente"]).default("Pendente"),
-    parcelas: z
-      .string()
-      .default("1")
-      .refine(
-        (val) => {
-          const num = parseInt(val);
-          return num >= 1 && num <= 60;
-        },
-        { message: "Parcelas deve ser entre 1 e 60" }
-      ),
-    categoriaId: z.string().optional().default(""),
-    formaPagamento: z.string().optional().default(""),
-    fornecedorId: z.string().optional().default(""),
-    projetoID: z.string().optional().default(""),
-    notaFiscal: z.string().optional().default(""),
-    contaId: z.string().optional().default(""),
-    cartaoId: z.string().optional().default(""),
-    observacao: z.string().optional().default(""),
+    parcelas: parcelasField,
+    categoriaId: optionalStringField,
+    formaPagamento: optionalStringField,
+    fornecedorId: optionalStringField,
+    projetoID: optionalStringField,
+    notaFiscal: optionalStringField,
+    contaId: optionalStringField,
+    cartaoId: optionalStringField,
+    observacao: optionalStringField,
     recorrente: z.boolean().default(false),
     periodicidade: z.string().optional().default("mensal"),
   })
@@ -51,7 +39,6 @@ export const despesaSchema = z
   )
   .refine(
     (data) => {
-      // Se tem cartão, não pode ter conta (e vice-versa)
       if (data.contaId && data.cartaoId) return false;
       return true;
     },

@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { usePropostaTemplates, useUploadTemplate, useDeleteTemplate } from "@/hooks/usePropostaTemplates";
 import { AUTO_VARIABLES } from "@/lib/docxUtils";
+import { VariaveisGuideButton } from "./VariaveisGuideDialog";
 
 export function TemplatesManager() {
   const { toast } = useToast();
@@ -89,10 +90,16 @@ export function TemplatesManager() {
             Faça upload de arquivos DOCX com variáveis {"{{VARIAVEL}}"} para gerar propostas automaticamente
           </p>
         </div>
-        <Button onClick={() => setIsUploadOpen(true)} className="bg-accent-orange hover:bg-accent-orange/90 text-white">
-          <Upload className="h-4 w-4 mr-2" />
-          Upload Template
-        </Button>
+        <div className="flex items-center gap-2">
+          <VariaveisGuideButton />
+          <Button
+            onClick={() => setIsUploadOpen(true)}
+            className="bg-accent-orange hover:bg-accent-orange/90 text-white"
+          >
+            <Upload className="h-4 w-4 mr-2" />
+            Upload Template
+          </Button>
+        </div>
       </div>
 
       {templates.length === 0 ? (

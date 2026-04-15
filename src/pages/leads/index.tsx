@@ -14,7 +14,6 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Mail, Phone, User, CheckCircle2, Loader2, AlertTriangle, UserPlus, FileText } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -367,14 +366,14 @@ export default function Leads() {
                 </Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto p-0">
-                <div className="px-6 pt-6 pb-4 border-b">
+                <div className="px-6 pt-6 pb-4">
                   <DialogHeader>
                     <DialogTitle>Novo Lead</DialogTitle>
                     <DialogDescription>Cadastre um novo lead no sistema</DialogDescription>
                   </DialogHeader>
                 </div>
 
-                <form onSubmit={handleSubmit} className="divide-y">
+                <form onSubmit={handleSubmit}>
                   <div className="px-6 py-4 space-y-3">
                     <Label className="text-[10px] uppercase text-muted-foreground tracking-wider">
                       Informações do Lead
@@ -420,22 +419,12 @@ export default function Leads() {
                         <Label htmlFor="origem" className="text-xs">
                           Origem
                         </Label>
-                        <Select
+                        <Input
+                          id="origem"
                           value={formData.origem}
-                          onValueChange={(value) => setFormData({ ...formData, origem: value })}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Como chegou até você?" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Instagram">Instagram</SelectItem>
-                            <SelectItem value="Tráfego">Tráfego Pago</SelectItem>
-                            <SelectItem value="LinkedIn">LinkedIn</SelectItem>
-                            <SelectItem value="Pessoal">Indicação Pessoal</SelectItem>
-                            <SelectItem value="Parceria">Parceria</SelectItem>
-                            <SelectItem value="Outros">Outros</SelectItem>
-                          </SelectContent>
-                        </Select>
+                          onChange={(e) => setFormData({ ...formData, origem: e.target.value })}
+                          placeholder="Ex: Instagram, LinkedIn, Indicação..."
+                        />
                       </div>
                     </div>
                   </div>

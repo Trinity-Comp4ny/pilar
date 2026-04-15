@@ -60,6 +60,24 @@ export const getDisplayDate = (
 };
 
 /**
+ * Formata data corrigindo problema de timezone (adiciona T00:00:00)
+ */
+export const formatDate = (dateString: string | null | undefined): string => {
+  if (!dateString) return "-";
+  const date = new Date(dateString + "T00:00:00");
+  return date.toLocaleDateString("pt-BR");
+};
+
+/**
+ * Formata data curta (dd/MM) corrigindo timezone
+ */
+export const formatDateShort = (dateString: string | null | undefined): string => {
+  if (!dateString) return "-";
+  const date = new Date(dateString + "T00:00:00");
+  return date.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
+};
+
+/**
  * Formata data para exibição no formato dd/MM/yyyy
  */
 export const formatDateDisplay = (dateString: string | null | undefined): string => {

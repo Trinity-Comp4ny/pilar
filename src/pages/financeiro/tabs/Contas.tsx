@@ -17,7 +17,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { getSafeErrorMessage } from "@/lib/safeError";
-import { formatCurrencyInput, parseCurrencyString } from "@/lib/maskUtils";
+import { formatCurrencyInput, parseCurrencyString } from "@/lib/currencyUtils";
 
 interface ContaItem {
   id: string;
@@ -120,12 +120,12 @@ export default function Configuracoes() {
         return;
       }
 
+      // saldo_atual não é definido aqui — é calculado pela view_financas_resumo
       const payload = {
         empresa_id: empresaId,
         nome,
         banco,
         saldo_inicial: parseCurrencyString(saldoInicial),
-        saldo_atual: parseCurrencyString(saldoInicial),
         cor: "#888888",
       };
 
@@ -403,21 +403,11 @@ export default function Configuracoes() {
                     </div>
                     <div className="space-y-2">
                       <Label>Banco</Label>
-                      <Select value={banco} onValueChange={setBanco}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione o banco" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="nubank">Nubank</SelectItem>
-                          <SelectItem value="itau">Itaú</SelectItem>
-                          <SelectItem value="bradesco">Bradesco</SelectItem>
-                          <SelectItem value="santander">Santander</SelectItem>
-                          <SelectItem value="bb">Banco do Brasil</SelectItem>
-                          <SelectItem value="caixa">Caixa Econômica</SelectItem>
-                          <SelectItem value="inter">Inter</SelectItem>
-                          <SelectItem value="c6">C6 Bank</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <Input
+                        value={banco}
+                        onChange={(e) => setBanco(e.target.value)}
+                        placeholder="Ex: Nubank, Itaú, Bradesco..."
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label>Saldo Inicial (R$)</Label>

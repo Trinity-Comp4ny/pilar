@@ -28,7 +28,7 @@ export default function PortalEntregas() {
   return <PortalShell>{(data) => <EntregasContent projetoId={data.projeto_id} />}</PortalShell>;
 }
 
-function EntregasContent({ projetoId }: { projetoId: string }) {
+export function EntregasContent({ projetoId }: { projetoId: string }) {
   const [entregas, setEntregas] = useState<Entrega[]>([]);
   const [loading, setLoading] = useState(true);
   const [respondingId, setRespondingId] = useState<string | null>(null);

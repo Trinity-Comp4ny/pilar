@@ -27,11 +27,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-
-interface Pessoa {
-  id: string;
-  nome: string;
-}
+import { fetchPessoasLookup } from "@/lib/supabaseQueries";
 
 interface MetaPessoal {
   id: string;
@@ -69,11 +65,7 @@ export default function MetasPessoais() {
 
   const { data: pessoas } = useQuery({
     queryKey: ["pessoas-list"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("pessoas").select("id, nome").is("deleted_at", null).order("nome");
-      if (error) throw error;
-      return data as Pessoa[];
-    },
+    queryFn: fetchPessoasLookup,
   });
 
   const { data: metas, isLoading } = useQuery({
