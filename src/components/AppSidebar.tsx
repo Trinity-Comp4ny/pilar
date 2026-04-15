@@ -10,7 +10,6 @@ import {
   MapPin,
   Sparkles,
   Target,
-  TrendingUp,
   Users,
   User,
   UserCircle,
@@ -20,10 +19,7 @@ import {
   Wallet,
   UserPlus,
 } from "lucide-react";
-import {
-  useSidebar,
-  SidebarTrigger,
-} from "@/components/ui/sidebar";
+import { useSidebar, SidebarTrigger } from "@/components/ui/sidebar";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import {
   DropdownMenu,
@@ -39,9 +35,8 @@ import { supabase } from "@/integrations/supabase/client";
 
 const items = [
   { title: "Dashboard", url: "/dashboard", icon: Home },
-  { title: "Rentabilidade", url: "/rentabilidade", icon: TrendingUp },
   { title: "Projetos", url: "/projetos", icon: Calendar },
-  { title: "Propostas", url: "/propostas", icon: FileText, disabled: true },
+  { title: "Propostas", url: "/propostas", icon: FileText },
   { title: "Leads", url: "/leads", icon: UserPlus },
   { title: "Clientes", url: "/clientes", icon: Building2 },
   { title: "Financeiro", url: "/financeiro", icon: Wallet },
@@ -73,7 +68,9 @@ export function AppSidebar() {
     let active = true;
 
     const loadUserData = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!active) return;
 
       if (!user) {
@@ -84,11 +81,7 @@ export function AppSidebar() {
 
       setUserEmail(user.email ?? null);
 
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("nome")
-        .eq("id", user.id)
-        .single();
+      const { data: profile } = await supabase.from("profiles").select("nome").eq("id", user.id).single();
 
       if (!active) return;
 
@@ -119,8 +112,8 @@ export function AppSidebar() {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    localStorage.removeItem('pilar-auth');
-    localStorage.removeItem('pilar-user-name');
+    localStorage.removeItem("pilar-auth");
+    localStorage.removeItem("pilar-user-name");
     navigate("/login");
   };
 
@@ -237,10 +230,7 @@ export function AppSidebar() {
                   <span className="flex-1 text-left text-black/70 tracking-tight">{userName}</span>
                   <ChevronDown
                     size={14}
-                    className={cn(
-                      "text-black/50 transition-transform duration-200",
-                      isUserMenuOpen && "rotate-180"
-                    )}
+                    className={cn("text-black/50 transition-transform duration-200", isUserMenuOpen && "rotate-180")}
                   />
                 </>
               )}
@@ -250,9 +240,7 @@ export function AppSidebar() {
             <DropdownMenuLabel className="font-normal">
               <div className="flex flex-col space-y-1">
                 <span className="text-sm font-medium leading-none">{userName}</span>
-                {userEmail && (
-                  <span className="text-xs leading-none text-muted-foreground">{userEmail}</span>
-                )}
+                {userEmail && <span className="text-xs leading-none text-muted-foreground">{userEmail}</span>}
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
@@ -278,10 +266,7 @@ export function AppSidebar() {
   if (isMobile) {
     return (
       <Sheet open={openMobile} onOpenChange={setOpenMobile}>
-        <SheetContent
-          side="left"
-          className="p-0 w-[18rem] [&>button]:hidden"
-        >
+        <SheetContent side="left" className="p-0 w-[18rem] [&>button]:hidden">
           <div className="h-full border-r border-black/5 bg-white">{sidebarInner}</div>
         </SheetContent>
       </Sheet>
@@ -293,7 +278,7 @@ export function AppSidebar() {
       className="h-screen border-r border-black/5 bg-white fixed left-0 top-0 z-50"
       style={{
         minWidth: sidebarWidth,
-        width: sidebarWidth
+        width: sidebarWidth,
       }}
     >
       {sidebarInner}

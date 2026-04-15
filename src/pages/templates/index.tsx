@@ -93,13 +93,9 @@ export default function Templates() {
   }, {});
 
   const totalHorasFases = (template: TemplateProjeto) =>
-    template.fases.reduce(
-      (sum, f) => sum + f.disciplinas.reduce((s, d) => s + (d.horas_estimadas || 0), 0),
-      0
-    );
+    template.fases.reduce((sum, f) => sum + f.disciplinas.reduce((s, d) => s + (d.horas_estimadas || 0), 0), 0);
 
-  const totalDias = (template: TemplateProjeto) =>
-    template.fases.reduce((sum, f) => sum + (f.duracao_dias || 0), 0);
+  const totalDias = (template: TemplateProjeto) => template.fases.reduce((sum, f) => sum + (f.duracao_dias || 0), 0);
 
   if (isLoading) {
     return (
@@ -126,7 +122,9 @@ export default function Templates() {
         <div className="text-center py-12 text-muted-foreground">
           <FileText className="h-10 w-10 mx-auto mb-3 opacity-40" />
           <p className="text-sm">Nenhum template criado ainda.</p>
-          <p className="text-xs mt-1">Templates permitem criar projetos rapidamente com fases e disciplinas pré-definidas.</p>
+          <p className="text-xs mt-1">
+            Templates permitem criar projetos rapidamente com fases e disciplinas pré-definidas.
+          </p>
           {canEdit && (
             <Button variant="outline" className="mt-4" onClick={openCreate}>
               <Plus className="h-4 w-4 mr-1" /> Criar Primeiro Template
@@ -177,11 +175,14 @@ export default function Templates() {
                         <span>{totalDias(template)} dias</span>
                       </div>
                       <div className="flex flex-wrap gap-1 mt-2">
-                        {template.fases.flatMap((f) => f.disciplinas.map((d) => d.disciplina))
+                        {template.fases
+                          .flatMap((f) => f.disciplinas.map((d) => d.disciplina))
                           .filter((v, i, a) => a.indexOf(v) === i)
                           .slice(0, 4)
                           .map((disc) => (
-                            <Badge key={disc} variant="secondary" className="text-[10px]">{disc}</Badge>
+                            <Badge key={disc} variant="secondary" className="text-[10px]">
+                              {disc}
+                            </Badge>
                           ))}
                         {template.fases.flatMap((f) => f.disciplinas).length > 4 && (
                           <Badge variant="secondary" className="text-[10px]">
@@ -204,7 +205,15 @@ export default function Templates() {
       )}
 
       {/* Dialog de criação/edição */}
-      <Dialog open={isFormOpen} onOpenChange={(open) => { if (!open) { setIsFormOpen(false); setEditingTemplate(undefined); } }}>
+      <Dialog
+        open={isFormOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            setIsFormOpen(false);
+            setEditingTemplate(undefined);
+          }
+        }}
+      >
         <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingTemplate ? "Editar Template" : "Novo Template"}</DialogTitle>
@@ -212,7 +221,10 @@ export default function Templates() {
           <TemplateForm
             template={editingTemplate}
             onSubmit={editingTemplate ? handleUpdate : handleCreate}
-            onCancel={() => { setIsFormOpen(false); setEditingTemplate(undefined); }}
+            onCancel={() => {
+              setIsFormOpen(false);
+              setEditingTemplate(undefined);
+            }}
             isLoading={createTemplate.isPending || updateTemplate.isPending}
           />
         </DialogContent>
@@ -221,7 +233,9 @@ export default function Templates() {
       {/* Confirmação de exclusão */}
       <ConfirmDialog
         open={!!confirmDeleteId}
-        onOpenChange={(open) => { if (!open) setConfirmDeleteId(null); }}
+        onOpenChange={(open) => {
+          if (!open) setConfirmDeleteId(null);
+        }}
         title="Excluir Template"
         description="Tem certeza que deseja excluir este template? Esta ação não pode ser desfeita."
         onConfirm={handleDelete}

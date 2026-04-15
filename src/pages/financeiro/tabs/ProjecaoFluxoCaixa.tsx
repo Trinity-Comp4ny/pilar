@@ -4,16 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, TrendingUp, TrendingDown, AlertTriangle } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  ReferenceLine,
-} from "recharts";
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts";
 
 interface ProjecaoItem {
   data: string;
@@ -32,9 +23,7 @@ export default function ProjecaoFluxoCaixa() {
   const { data: saldoAtual = 0, isLoading: loadingSaldo } = useQuery({
     queryKey: ["saldo-atual-total"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("view_financas_resumo")
-        .select("saldo_atual");
+      const { data, error } = await supabase.from("view_financas_resumo").select("saldo_atual");
       if (error) throw error;
       return (data || []).reduce((sum: number, row) => sum + (Number(row.saldo_atual) || 0), 0);
     },
@@ -207,10 +196,7 @@ export default function ProjecaoFluxoCaixa() {
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                 <XAxis dataKey="label" tick={{ fontSize: 11 }} />
-                <YAxis
-                  tick={{ fontSize: 11 }}
-                  tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`}
-                />
+                <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
                 <Tooltip
                   formatter={(value: number, name: string) => [
                     formatCurrency(value),
@@ -219,13 +205,7 @@ export default function ProjecaoFluxoCaixa() {
                   labelStyle={{ fontWeight: 600 }}
                 />
                 <ReferenceLine y={0} stroke="#ef4444" strokeDasharray="5 5" strokeWidth={1.5} />
-                <Area
-                  type="monotone"
-                  dataKey="saldo"
-                  stroke="#10b981"
-                  fill="url(#gradientSaldo)"
-                  strokeWidth={2}
-                />
+                <Area type="monotone" dataKey="saldo" stroke="#10b981" fill="url(#gradientSaldo)" strokeWidth={2} />
               </AreaChart>
             </ResponsiveContainer>
           )}
@@ -259,7 +239,9 @@ export default function ProjecaoFluxoCaixa() {
                       <td className="py-2 px-3 text-right text-red-600">
                         {p.saidas > 0 ? `-${formatCurrency(p.saidas)}` : "—"}
                       </td>
-                      <td className={`py-2 px-3 text-right font-medium ${p.saldo >= 0 ? "text-emerald-600" : "text-red-600"}`}>
+                      <td
+                        className={`py-2 px-3 text-right font-medium ${p.saldo >= 0 ? "text-emerald-600" : "text-red-600"}`}
+                      >
                         {formatCurrency(p.saldo)}
                       </td>
                     </tr>

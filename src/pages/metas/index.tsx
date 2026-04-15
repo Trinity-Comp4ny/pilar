@@ -23,7 +23,11 @@ export default function MetasPage() {
       className="fixed top-0 right-0 bottom-0 bg-white z-40 overflow-x-hidden flex flex-col transition-[left] duration-300 ease-in-out"
       style={{ left: isMobile ? "0px" : state === "collapsed" ? "64px" : "240px" }}
     >
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full flex flex-col h-full flex-1 overflow-hidden">
+      <Tabs
+        value={activeTab}
+        onValueChange={setActiveTab}
+        className="w-full flex flex-col h-full flex-1 overflow-hidden"
+      >
         <div className="sticky top-0 z-20 w-full bg-white border-b">
           <MetasHeader />
         </div>

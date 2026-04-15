@@ -5,7 +5,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CalendarIcon, Plus, Settings, Pencil, Trash2, Loader2 } from "lucide-react";
@@ -54,7 +61,7 @@ interface Receita {
 
 export default function Receitas() {
   const [receitas, setReceitas] = useState<Receita[]>([]);
-  const [contas, setContas] = useState<{ id: string, nome: string }[]>([]);
+  const [contas, setContas] = useState<{ id: string; nome: string }[]>([]);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -62,7 +69,7 @@ export default function Receitas() {
   const [selectedReceita, setSelectedReceita] = useState<Receita | null>(null);
 
   const { data: userRole } = useUserRole();
-  const isAdmin = userRole === 'admin';
+  const isAdmin = userRole === "admin";
 
   const form = useForm<ReceitaFormData>({
     resolver: zodResolver(receitaSchema),
@@ -72,54 +79,52 @@ export default function Receitas() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("todos");
 
-  const [categorias, setCategorias] = useState<{ id: string, name: string }[]>([]);
-  const [projetos, setProjetos] = useState<{ id: string, projetoID: string }[]>([]);
-  const [clientes, setClientes] = useState<{ id: string, nome: string }[]>([]);
+  const [categorias, setCategorias] = useState<{ id: string; name: string }[]>([]);
+  const [projetos, setProjetos] = useState<{ id: string; projetoID: string }[]>([]);
+  const [clientes, setClientes] = useState<{ id: string; nome: string }[]>([]);
   const { toast } = useToast();
 
   const receitasFiltradas = receitas.filter((r) => {
-    const matchSearch = !searchTerm || r.descricao.toLowerCase().includes(searchTerm.toLowerCase()) || (r.cliente_nome || "").toLowerCase().includes(searchTerm.toLowerCase());
-    const matchStatus = statusFilter === "todos" || (statusFilter === "recebido" && r.status === "Recebido") || (statusFilter === "pendente" && r.status === "Pendente") || (statusFilter === "atrasado" && r.status === "Atrasado");
+    const matchSearch =
+      !searchTerm ||
+      r.descricao.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (r.cliente_nome || "").toLowerCase().includes(searchTerm.toLowerCase());
+    const matchStatus =
+      statusFilter === "todos" ||
+      (statusFilter === "recebido" && r.status === "Recebido") ||
+      (statusFilter === "pendente" && r.status === "Pendente") ||
+      (statusFilter === "atrasado" && r.status === "Atrasado");
     return matchSearch && matchStatus;
   });
 
   const fetchAuxiliaryData = async () => {
     // Fetch Categorias
     const { data: categoriasData } = await supabase
-      .from('categorias_financeiras')
-      .select('*')
-      .eq('tipo', 'Receita')
-      .order('nome');
+      .from("categorias_financeiras")
+      .select("*")
+      .eq("tipo", "Receita")
+      .order("nome");
 
     if (categoriasData) {
       setCategorias((categoriasData ?? []).map((cat) => ({ id: cat.id, name: cat.nome })));
     }
 
     // Fetch Clientes
-    const { data: clientesData } = await supabase
-      .from('clientes')
-      .select('*')
-      .order('nome');
+    const { data: clientesData } = await supabase.from("clientes").select("*").order("nome");
 
     if (clientesData) {
       setClientes((clientesData ?? []).map((c) => ({ id: c.id, nome: c.nome })));
     }
 
     // Fetch Contas
-    const { data: contasData } = await supabase
-      .from('contas')
-      .select('*')
-      .order('nome');
+    const { data: contasData } = await supabase.from("contas").select("*").order("nome");
 
     if (contasData) {
       setContas((contasData ?? []).map((c) => ({ id: c.id, nome: c.nome })));
     }
 
     // Fetch Projetos
-    const { data: projetosData } = await supabase
-      .from('projetos')
-      .select('id, nome, codigo_projeto')
-      .order('nome');
+    const { data: projetosData } = await supabase.from("projetos").select("id, nome, codigo_projeto").order("nome");
 
     if (projetosData) {
       setProjetos((projetosData ?? []).map((p) => ({ id: p.id, projetoID: p.codigo_projeto })));
@@ -134,15 +139,17 @@ export default function Receitas() {
 
   const fetchReceitas = async () => {
     const { data, error } = await supabase
-      .from('receitas')
-      .select(`
+      .from("receitas")
+      .select(
+        `
         *,
         categorias_financeiras (nome),
         clientes (nome),
         projetos (codigo_projeto)
-      `)
-      .order('data_recebimento', { ascending: false }) // Ordena por data_recebimento (automação Bradesco)
-      .order('data_vencimento', { ascending: false }); // Fallback para data_vencimento (manual)
+      `
+      )
+      .order("data_recebimento", { ascending: false }) // Ordena por data_recebimento (automação Bradesco)
+      .order("data_vencimento", { ascending: false }); // Fallback para data_vencimento (manual)
 
     if (error) {
       // Error will be visible through empty data state
@@ -154,7 +161,7 @@ export default function Receitas() {
         categoria_nome: d.categorias_financeiras?.nome,
         cliente_nome: d.clientes?.nome,
         projeto_codigo: d.projetos?.codigo_projeto,
-        data_recebimento: d.data_recebimento || d.data_vencimento
+        data_recebimento: d.data_recebimento || d.data_vencimento,
       }));
       setReceitas(formattedData);
     }
@@ -177,7 +184,7 @@ export default function Receitas() {
       dataVencimento: receita.data_vencimento ? new Date(receita.data_vencimento) : new Date(),
       descricao: receita.descricao,
       valorTotal: formatCurrencyInput((receita.valor * 100).toString()),
-      status: receita.status === 'Recebido' ? 'Recebida' : 'Pendente',
+      status: receita.status === "Recebido" ? "Recebida" : "Pendente",
       categoriaId: receita.categoria_id || "",
       projetoID: receita.projeto_id || "",
       notaFiscal: receita.nota_fiscal || "",
@@ -201,57 +208,58 @@ export default function Receitas() {
       const numParcelas = parseInt(formData.parcelas) || 1;
       const valorNumerico = parseCurrencyString(formData.valorTotal);
       const valorParcela = valorNumerico / numParcelas;
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
       if (!user) throw new Error("Usuário não autenticado");
 
-      const { data: empresaId } = await supabase.rpc('get_user_empresa_id');
+      const { data: empresaId } = await supabase.rpc("get_user_empresa_id");
       if (!empresaId) throw new Error("Usuário não vinculado a uma empresa");
 
       const receitasToInsert = [];
 
       for (let i = 0; i < numParcelas; i++) {
         const dataParcela = addMonths(formData.dataVencimento, i);
-        const dataStr = format(dataParcela, 'yyyy-MM-dd');
+        const dataStr = format(dataParcela, "yyyy-MM-dd");
 
         receitasToInsert.push({
           data_vencimento: dataStr,
-          data_recebimento: formData.status === 'Recebida' ? dataStr : null,
+          data_recebimento: formData.status === "Recebida" ? dataStr : null,
           descricao: numParcelas > 1 ? `${formData.descricao} (${i + 1}/${numParcelas})` : formData.descricao,
           projeto_id: formData.projetoID || null,
           categoria_id: formData.categoriaId || null,
           valor: valorParcela,
           forma_pagamento: formData.formaPagamento || null,
           nota_fiscal: formData.notaFiscal || null,
-          status: formData.status === 'Recebida' ? 'Recebido' : 'Pendente',
+          status: formData.status === "Recebida" ? "Recebido" : "Pendente",
           conta_id: formData.contaId || null,
           cliente_id: formData.clienteId || null,
           observacao: formData.observacao || null,
-          empresa_id: empresaId
+          empresa_id: empresaId,
         });
       }
 
-      const dataToInsert = receitasToInsert.map(r => ({
+      const dataToInsert = receitasToInsert.map((r) => ({
         ...r,
-        valor: r.valor
+        valor: r.valor,
       }));
 
       let error = null;
 
       if (selectedReceita) {
-        ({ error } = await supabase.from('receitas')
-          .update(dataToInsert[0])
-          .eq('id', selectedReceita.id));
+        ({ error } = await supabase.from("receitas").update(dataToInsert[0]).eq("id", selectedReceita.id));
       } else {
-        ({ error } = await supabase.from('receitas')
-          .insert(dataToInsert));
+        ({ error } = await supabase.from("receitas").insert(dataToInsert));
       }
 
       if (error) throw error;
 
       toast({
         title: selectedReceita ? "Receita atualizada" : "Receita cadastrada",
-        description: selectedReceita ? `1 registro atualizado com sucesso` : `${numParcelas} registro(s) criado(s) com sucesso`,
+        description: selectedReceita
+          ? `1 registro atualizado com sucesso`
+          : `${numParcelas} registro(s) criado(s) com sucesso`,
       });
 
       setIsDialogOpen(false);
@@ -274,7 +282,7 @@ export default function Receitas() {
   };
 
   const handleDelete = async (id: string) => {
-    const { error } = await supabase.from('receitas').delete().eq('id', id);
+    const { error } = await supabase.from("receitas").delete().eq("id", id);
     if (!error) {
       toast({ title: "Receita excluída" });
       fetchReceitas();
@@ -302,9 +310,7 @@ export default function Receitas() {
               <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>Configurações de Receitas</DialogTitle>
-                  <DialogDescription>
-                    Gerencie as categorias de receitas
-                  </DialogDescription>
+                  <DialogDescription>Gerencie as categorias de receitas</DialogDescription>
                 </DialogHeader>
 
                 <Tabs defaultValue="categorias" className="mt-4">
@@ -323,13 +329,16 @@ export default function Receitas() {
               </DialogContent>
             </Dialog>
 
-            <Dialog open={isDialogOpen} onOpenChange={(open) => {
-              setIsDialogOpen(open);
-              if (open) {
-                setSelectedReceita(null);
-                resetForm();
-              }
-            }}>
+            <Dialog
+              open={isDialogOpen}
+              onOpenChange={(open) => {
+                setIsDialogOpen(open);
+                if (open) {
+                  setSelectedReceita(null);
+                  resetForm();
+                }
+              }}
+            >
               <DialogTrigger asChild>
                 <Button className="rounded-full bg-accent-orange hover:bg-accent-orange/90 text-white transition-colors px-5 py-2.5 text-sm">
                   <Plus className="mr-2 h-4 w-4" />
@@ -349,24 +358,48 @@ export default function Receitas() {
                 <form onSubmit={handleSubmit} className="divide-y">
                   <div className="px-6 py-4 space-y-3">
                     <Label className="text-[10px] uppercase text-muted-foreground tracking-wider">Descrição</Label>
-                    <Input id="descricao" {...form.register("descricao")} placeholder="Ex: Pagamento projeto residencial" />
+                    <Input
+                      id="descricao"
+                      {...form.register("descricao")}
+                      placeholder="Ex: Pagamento projeto residencial"
+                    />
                   </div>
 
                   <div className="px-6 py-4 space-y-3">
-                    <Label className="text-[10px] uppercase text-muted-foreground tracking-wider">Dados Financeiros</Label>
+                    <Label className="text-[10px] uppercase text-muted-foreground tracking-wider">
+                      Dados Financeiros
+                    </Label>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                       <div className="space-y-1.5">
-                        <Label htmlFor="valorTotal" className="text-xs">Valor Total (R$) *</Label>
-                        <Input id="valorTotal" type="text" value={form.watch("valorTotal")} onChange={handleValorChange} placeholder="R$ 0,00" className="h-9" />
+                        <Label htmlFor="valorTotal" className="text-xs">
+                          Valor Total (R$) *
+                        </Label>
+                        <Input
+                          id="valorTotal"
+                          type="text"
+                          value={form.watch("valorTotal")}
+                          onChange={handleValorChange}
+                          placeholder="R$ 0,00"
+                          className="h-9"
+                        />
                       </div>
                       <div className="space-y-1.5">
-                        <Label htmlFor="parcelas" className="text-xs">Parcelas</Label>
+                        <Label htmlFor="parcelas" className="text-xs">
+                          Parcelas
+                        </Label>
                         <Input id="parcelas" type="number" min="1" {...form.register("parcelas")} className="h-9" />
                       </div>
                       <div className="space-y-1.5">
-                        <Label htmlFor="status" className="text-xs">Status</Label>
-                        <Select value={form.watch("status")} onValueChange={(v) => form.setValue("status", v as "Recebida" | "Pendente")}>
-                          <SelectTrigger id="status" className="h-9"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                        <Label htmlFor="status" className="text-xs">
+                          Status
+                        </Label>
+                        <Select
+                          value={form.watch("status")}
+                          onValueChange={(v) => form.setValue("status", v as "Recebida" | "Pendente")}
+                        >
+                          <SelectTrigger id="status" className="h-9">
+                            <SelectValue placeholder="Selecione" />
+                          </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="Recebida">Recebida</SelectItem>
                             <SelectItem value="Pendente">Pendente</SelectItem>
@@ -374,9 +407,16 @@ export default function Receitas() {
                         </Select>
                       </div>
                       <div className="space-y-1.5">
-                        <Label htmlFor="formaPagamento" className="text-xs">Forma Pgto.</Label>
-                        <Select value={form.watch("formaPagamento")} onValueChange={(v) => form.setValue("formaPagamento", v)}>
-                          <SelectTrigger id="formaPagamento" className="h-9"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                        <Label htmlFor="formaPagamento" className="text-xs">
+                          Forma Pgto.
+                        </Label>
+                        <Select
+                          value={form.watch("formaPagamento")}
+                          onValueChange={(v) => form.setValue("formaPagamento", v)}
+                        >
+                          <SelectTrigger id="formaPagamento" className="h-9">
+                            <SelectValue placeholder="Selecione" />
+                          </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="PIX">PIX</SelectItem>
                             <SelectItem value="Transferência">Transferência</SelectItem>
@@ -398,21 +438,36 @@ export default function Receitas() {
                             <Button
                               type="button"
                               variant="outline"
-                              className={cn("w-full justify-start text-left font-normal text-xs h-9", !form.watch("dataVencimento") && "text-muted-foreground")}
+                              className={cn(
+                                "w-full justify-start text-left font-normal text-xs h-9",
+                                !form.watch("dataVencimento") && "text-muted-foreground"
+                              )}
                             >
                               <CalendarIcon className="mr-1 h-3 w-3" />
-                              {form.watch("dataVencimento") ? format(form.watch("dataVencimento"), "dd/MM/yyyy") : "Selecionar"}
+                              {form.watch("dataVencimento")
+                                ? format(form.watch("dataVencimento"), "dd/MM/yyyy")
+                                : "Selecionar"}
                             </Button>
                           </PopoverTrigger>
                           <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar mode="single" selected={form.watch("dataVencimento")} onSelect={(d) => form.setValue("dataVencimento", d as Date)} initialFocus />
+                            <Calendar
+                              mode="single"
+                              selected={form.watch("dataVencimento")}
+                              onSelect={(d) => form.setValue("dataVencimento", d as Date)}
+                              initialFocus
+                            />
                           </PopoverContent>
                         </Popover>
                       </div>
                       <div className="space-y-1.5">
                         <Label className="text-xs">Recorrência</Label>
-                        <Select value={form.watch("recorrencia")} onValueChange={(v) => form.setValue("recorrencia", v)}>
-                          <SelectTrigger className="h-9"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                        <Select
+                          value={form.watch("recorrencia")}
+                          onValueChange={(v) => form.setValue("recorrencia", v)}
+                        >
+                          <SelectTrigger className="h-9">
+                            <SelectValue placeholder="Selecione" />
+                          </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="Nenhuma">Nenhuma</SelectItem>
                             <SelectItem value="Semanal">Semanal</SelectItem>
@@ -425,15 +480,21 @@ export default function Receitas() {
                   </div>
 
                   <div className="px-6 py-4 space-y-3">
-                    <Label className="text-[10px] uppercase text-muted-foreground tracking-wider">Vínculos e Classificação</Label>
+                    <Label className="text-[10px] uppercase text-muted-foreground tracking-wider">
+                      Vínculos e Classificação
+                    </Label>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                       <div className="space-y-1.5">
                         <Label className="text-xs">Cliente (Pagante)</Label>
                         <Select value={form.watch("clienteId")} onValueChange={(v) => form.setValue("clienteId", v)}>
-                          <SelectTrigger className="h-9"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                          <SelectTrigger className="h-9">
+                            <SelectValue placeholder="Selecione" />
+                          </SelectTrigger>
                           <SelectContent>
                             {clientes.map((cliente) => (
-                              <SelectItem key={cliente.id} value={cliente.id}>{cliente.nome}</SelectItem>
+                              <SelectItem key={cliente.id} value={cliente.id}>
+                                {cliente.nome}
+                              </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
@@ -441,10 +502,14 @@ export default function Receitas() {
                       <div className="space-y-1.5">
                         <Label className="text-xs">Projeto</Label>
                         <Select value={form.watch("projetoID")} onValueChange={(v) => form.setValue("projetoID", v)}>
-                          <SelectTrigger className="h-9"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                          <SelectTrigger className="h-9">
+                            <SelectValue placeholder="Selecione" />
+                          </SelectTrigger>
                           <SelectContent>
                             {projetos.map((proj) => (
-                              <SelectItem key={proj.id} value={proj.id}>{proj.projetoID}</SelectItem>
+                              <SelectItem key={proj.id} value={proj.id}>
+                                {proj.projetoID}
+                              </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
@@ -452,21 +517,32 @@ export default function Receitas() {
                       <div className="space-y-1.5">
                         <Label className="text-xs">Conta de Recebimento</Label>
                         <Select value={form.watch("contaId")} onValueChange={(v) => form.setValue("contaId", v)}>
-                          <SelectTrigger className="h-9"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                          <SelectTrigger className="h-9">
+                            <SelectValue placeholder="Selecione" />
+                          </SelectTrigger>
                           <SelectContent>
                             {contas.map((conta) => (
-                              <SelectItem key={conta.id} value={conta.id}>{conta.nome}</SelectItem>
+                              <SelectItem key={conta.id} value={conta.id}>
+                                {conta.nome}
+                              </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
                       </div>
                       <div className="space-y-1.5">
                         <Label className="text-xs">Categoria</Label>
-                        <Select value={form.watch("categoriaId")} onValueChange={(v) => form.setValue("categoriaId", v)}>
-                          <SelectTrigger className="h-9"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                        <Select
+                          value={form.watch("categoriaId")}
+                          onValueChange={(v) => form.setValue("categoriaId", v)}
+                        >
+                          <SelectTrigger className="h-9">
+                            <SelectValue placeholder="Selecione" />
+                          </SelectTrigger>
                           <SelectContent>
                             {categorias.map((cat) => (
-                              <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                              <SelectItem key={cat.id} value={cat.id}>
+                                {cat.name}
+                              </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
@@ -474,7 +550,9 @@ export default function Receitas() {
                       <div className="space-y-1.5">
                         <Label className="text-xs">Nota Fiscal</Label>
                         <Select value={form.watch("notaFiscal")} onValueChange={(v) => form.setValue("notaFiscal", v)}>
-                          <SelectTrigger className="h-9"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                          <SelectTrigger className="h-9">
+                            <SelectValue placeholder="Selecione" />
+                          </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="Sim">Sim</SelectItem>
                             <SelectItem value="Não">Não</SelectItem>
@@ -490,14 +568,28 @@ export default function Receitas() {
                   </div>
 
                   <div className="flex gap-2 px-6 py-4 bg-gray-50/30">
-                    <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)} className="flex-1" disabled={isSaving}>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setIsDialogOpen(false)}
+                      className="flex-1"
+                      disabled={isSaving}
+                    >
                       Cancelar
                     </Button>
-                    <Button type="submit" className="flex-1 bg-accent-orange hover:bg-accent-orange/90 text-white" disabled={isSaving}>
+                    <Button
+                      type="submit"
+                      className="flex-1 bg-accent-orange hover:bg-accent-orange/90 text-white"
+                      disabled={isSaving}
+                    >
                       {isSaving ? (
-                        <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Salvando...</>
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Salvando...
+                        </>
+                      ) : selectedReceita ? (
+                        "Atualizar"
                       ) : (
-                        selectedReceita ? "Atualizar" : "Salvar"
+                        "Salvar"
                       )}
                     </Button>
                   </div>
@@ -526,13 +618,16 @@ export default function Receitas() {
                 <SelectItem value="atrasado">Atrasado</SelectItem>
               </SelectContent>
             </Select>
-            <span className="text-xs text-muted-foreground ml-auto">{receitasFiltradas.length} de {receitas.length}</span>
+            <span className="text-xs text-muted-foreground ml-auto">
+              {receitasFiltradas.length} de {receitas.length}
+            </span>
           </div>
           <div className="overflow-x-auto w-full">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Data (Venc/Pag)</TableHead> {/* Mais claro: mostra vencimento para pendentes, pagamento para recebidos */}
+                  <TableHead>Data (Venc/Pag)</TableHead>{" "}
+                  {/* Mais claro: mostra vencimento para pendentes, pagamento para recebidos */}
                   <TableHead>Descrição</TableHead>
                   <TableHead>Cliente</TableHead>
                   <TableHead>Projeto</TableHead>
@@ -562,21 +657,40 @@ export default function Receitas() {
                     <TableCell>{receita.forma_pagamento || "-"}</TableCell>
                     <TableCell>{receita.parcelas || "1"}</TableCell>
                     <TableCell className="text-green-600 font-medium">
-                      R$ {receita.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      R$ {receita.valor.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                     </TableCell>
                     <TableCell>
-                      <Badge variant={receita.status === 'Recebido' || receita.status === 'Recebida' ? 'default' : 'secondary'} className={receita.status === 'Recebido' || receita.status === 'Recebida' ? 'bg-green-500 hover:bg-green-600' : ''}>
+                      <Badge
+                        variant={
+                          receita.status === "Recebido" || receita.status === "Recebida" ? "default" : "secondary"
+                        }
+                        className={
+                          receita.status === "Recebido" || receita.status === "Recebida"
+                            ? "bg-green-500 hover:bg-green-600"
+                            : ""
+                        }
+                      >
                         {receita.status}
                       </Badge>
                     </TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()}>
                       <div className="flex gap-1 justify-end">
                         {isAdmin && (
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50" onClick={() => openEditReceita(receita)}>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                            onClick={() => openEditReceita(receita)}
+                          >
                             <Pencil className="h-4 w-4" />
                           </Button>
                         )}
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50" onClick={() => handleDelete(receita.id)}>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                          onClick={() => handleDelete(receita.id)}
+                        >
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
@@ -594,9 +708,7 @@ export default function Receitas() {
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>Detalhes da Receita</DialogTitle>
-            <DialogDescription>
-              Informações completas da receita selecionada
-            </DialogDescription>
+            <DialogDescription>Informações completas da receita selecionada</DialogDescription>
           </DialogHeader>
 
           {selectedReceita && (
@@ -606,15 +718,20 @@ export default function Receitas() {
                   <Label className="text-xs text-muted-foreground">Data Vencimento</Label>
                   <p className="text-sm font-medium">{formatDateDisplay(selectedReceita.data_vencimento)}</p>
                 </div>
-                {selectedReceita.data_recebimento && selectedReceita.data_recebimento !== selectedReceita.data_vencimento && (
-                  <div>
-                    <Label className="text-xs text-muted-foreground">Data Recebimento</Label>
-                    <p className="text-sm font-medium text-green-600">{formatDateDisplay(selectedReceita.data_recebimento)}</p>
-                  </div>
-                )}
+                {selectedReceita.data_recebimento &&
+                  selectedReceita.data_recebimento !== selectedReceita.data_vencimento && (
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Data Recebimento</Label>
+                      <p className="text-sm font-medium text-green-600">
+                        {formatDateDisplay(selectedReceita.data_recebimento)}
+                      </p>
+                    </div>
+                  )}
                 <div>
                   <Label className="text-xs text-muted-foreground">Valor</Label>
-                  <p className="text-sm font-bold text-green-600">R$ {selectedReceita.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                  <p className="text-sm font-bold text-green-600">
+                    R$ {selectedReceita.valor.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                  </p>
                 </div>
                 <div className="col-span-2">
                   <Label className="text-xs text-muted-foreground">Descrição</Label>
@@ -642,7 +759,7 @@ export default function Receitas() {
                 </div>
                 <div>
                   <Label className="text-xs text-muted-foreground">Conta</Label>
-                  <p className="text-sm">{contas.find(c => c.id === selectedReceita.conta_id)?.nome || "-"}</p>
+                  <p className="text-sm">{contas.find((c) => c.id === selectedReceita.conta_id)?.nome || "-"}</p>
                 </div>
                 <div>
                   <Label className="text-xs text-muted-foreground">Nota Fiscal</Label>
@@ -657,10 +774,14 @@ export default function Receitas() {
                     <Pencil className="mr-2 h-4 w-4" />
                     Editar
                   </Button>
-                  <Button variant="destructive" className="flex-1" onClick={() => {
-                    handleDelete(selectedReceita.id);
-                    setIsDetailOpen(false);
-                  }}>
+                  <Button
+                    variant="destructive"
+                    className="flex-1"
+                    onClick={() => {
+                      handleDelete(selectedReceita.id);
+                      setIsDetailOpen(false);
+                    }}
+                  >
                     <Trash2 className="mr-2 h-4 w-4" />
                     Excluir
                   </Button>

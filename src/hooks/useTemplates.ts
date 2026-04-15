@@ -136,10 +136,7 @@ export const useDeleteTemplate = () => {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from("templates_projeto")
-        .delete()
-        .eq("id", id);
+      const { error } = await supabase.from("templates_projeto").delete().eq("id", id);
 
       if (error) throw error;
     },

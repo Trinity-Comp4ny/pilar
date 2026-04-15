@@ -21,8 +21,6 @@ export default function Profile() {
   const [lastName, setLastName] = useState<string>("");
   const [contact, setContact] = useState<string>("");
 
-  
-
   useEffect(() => {
     const fetchProfile = async () => {
       try {
@@ -93,7 +91,9 @@ export default function Profile() {
     }
   };
 
-  const inputReadonlyClass = !editing ? "bg-black/5 border-black/10 text-black/80" : "border-accent-orange/20 focus-visible:ring-accent-orange/20";
+  const inputReadonlyClass = !editing
+    ? "bg-black/5 border-black/10 text-black/80"
+    : "border-accent-orange/20 focus-visible:ring-accent-orange/20";
   const alwaysReadonlyClass = "bg-black/5 border-black/10 text-black/80";
 
   return (
@@ -133,9 +133,7 @@ export default function Profile() {
                   <User size={40} className="text-accent-orange" />
                 </div>
                 <div>
-                  <CardTitle className="text-xl">
-                    {[firstName, lastName].filter(Boolean).join(" ") || "-"}
-                  </CardTitle>
+                  <CardTitle className="text-xl">{[firstName, lastName].filter(Boolean).join(" ") || "-"}</CardTitle>
                   <CardDescription className="mt-1">{companyName || "-"}</CardDescription>
                 </div>
               </div>

@@ -4,9 +4,29 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Search, ArrowUpDown, User, Mail, Phone, MapPin, Trash2, Pencil, Landmark, X, Loader2 } from "lucide-react";
+import {
+  Plus,
+  Search,
+  ArrowUpDown,
+  User,
+  Mail,
+  Phone,
+  MapPin,
+  Trash2,
+  Pencil,
+  Landmark,
+  X,
+  Loader2,
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatPhone, formatDocument, formatAgency, formatBankAccount } from "@/lib/maskUtils";
 import { PageLayout } from "@/components/PageLayout";
@@ -38,17 +58,17 @@ interface Cliente {
 
 export default function Clientes() {
   const { data: userRole } = useUserRole();
-  const isAdmin = userRole === 'admin';
+  const isAdmin = userRole === "admin";
 
   const [clientes, setClientes] = useState<Cliente[]>([]);
-  
+
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [selectedCliente, setSelectedCliente] = useState<Cliente | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [clienteToDelete, setClienteToDelete] = useState<string | null>(null);
-  
+
   const [nome, setNome] = useState("");
   const [cpfCnpj, setCpfCnpj] = useState("");
   const [endereco, setEndereco] = useState("");
@@ -59,7 +79,7 @@ export default function Clientes() {
   const [contasBancarias, setContasBancarias] = useState<ContaBancaria[]>([]);
   const [newConta, setNewConta] = useState({ banco: "", agencia: "", conta: "", tipo: "corrente" });
   const [currentId, setCurrentId] = useState<string | null>(null);
-  
+
   const [searchTerm, setSearchTerm] = useState("");
   const [isSaving, setIsSaving] = useState(false);
 
@@ -106,7 +126,7 @@ export default function Clientes() {
   };
 
   const [sortField, setSortField] = useState<keyof Cliente | null>(null);
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const { toast } = useToast();
 
   useEffect(() => {
@@ -114,11 +134,8 @@ export default function Clientes() {
   }, []);
 
   const fetchClientes = async () => {
-    const { data, error: _error } = await supabase
-      .from('clientes')
-      .select('*')
-      .order('nome');
-    
+    const { data, error: _error } = await supabase.from("clientes").select("*").order("nome");
+
     if (data) {
       setClientes(data as Cliente[]);
     }
@@ -171,18 +188,17 @@ export default function Clientes() {
     }
 
     const isFirst = contasBancarias.length === 0;
-    setContasBancarias((prev) => [
-      ...prev, 
-      { ...newConta, is_primary: isFirst }
-    ]);
+    setContasBancarias((prev) => [...prev, { ...newConta, is_primary: isFirst }]);
     setNewConta({ banco: "", agencia: "", conta: "", tipo: "corrente" });
   };
 
   const handleSetPrimaryConta = (index: number) => {
-    setContasBancarias(prev => prev.map((conta, i) => ({
-      ...conta,
-      is_primary: i === index
-    })));
+    setContasBancarias((prev) =>
+      prev.map((conta, i) => ({
+        ...conta,
+        is_primary: i === index,
+      }))
+    );
   };
 
   const handleRemoveConta = (index: number) => {
@@ -197,7 +213,7 @@ export default function Clientes() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!nome || !cpfCnpj) {
       toast({
         title: "Campos obrigatórios",
@@ -211,7 +227,7 @@ export default function Clientes() {
     try {
       if (isEditMode && currentId) {
         const { error } = await supabase
-          .from('clientes')
+          .from("clientes")
           .update({
             nome,
             cpf_cnpj: cpfCnpj,
@@ -220,37 +236,34 @@ export default function Clientes() {
             email,
             tipo_nf: tipoNf,
             origem,
-            contas_bancarias: contasBancarias
+            contas_bancarias: contasBancarias,
           })
-          .eq('id', currentId);
+          .eq("id", currentId);
 
         if (error) throw error;
 
         toast({ title: "Cliente atualizado", description: "Dados do cliente atualizados com sucesso" });
       } else {
-        const { error } = await supabase
-          .from('clientes')
-          .insert({
-            nome,
-            cpf_cnpj: cpfCnpj,
-            endereco,
-            contato,
-            email,
-            tipo_nf: tipoNf,
-            origem,
-            contas_bancarias: contasBancarias,
-            empresa_id: (await supabase.rpc('get_user_empresa_id')).data 
-          });
+        const { error } = await supabase.from("clientes").insert({
+          nome,
+          cpf_cnpj: cpfCnpj,
+          endereco,
+          contato,
+          email,
+          tipo_nf: tipoNf,
+          origem,
+          contas_bancarias: contasBancarias,
+          empresa_id: (await supabase.rpc("get_user_empresa_id")).data,
+        });
 
         if (error) throw error;
 
         toast({ title: "Cliente cadastrado", description: "Novo cliente foi adicionado com sucesso" });
       }
-      
+
       resetForm();
       setIsDialogOpen(false);
       fetchClientes();
-
     } catch (err: unknown) {
       toast({
         title: "Erro ao salvar",
@@ -263,13 +276,17 @@ export default function Clientes() {
   };
 
   const handleDelete = async (id: string) => {
-    const { error } = await supabase.from('clientes').delete().eq('id', id);
+    const { error } = await supabase.from("clientes").delete().eq("id", id);
     if (!error) {
       toast({ title: "Cliente excluído" });
       setIsDetailOpen(false);
       fetchClientes();
     } else {
-      toast({ title: "Erro ao excluir", description: "Verifique se existem registros vinculados.", variant: "destructive" });
+      toast({
+        title: "Erro ao excluir",
+        description: "Verifique se existem registros vinculados.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -288,10 +305,10 @@ export default function Clientes() {
 
   const handleSort = (field: keyof Cliente) => {
     if (sortField === field) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
     } else {
       setSortField(field);
-      setSortDirection('asc');
+      setSortDirection("asc");
     }
   };
 
@@ -307,18 +324,15 @@ export default function Clientes() {
       const digits = cliente.cpf_cnpj ? cliente.cpf_cnpj.replace(/\D/g, "") : "";
       const termDigits = term.replace(/\D/g, "");
 
-      return (
-        fuzzyMatch(cliente.nome, term) ||
-        (termDigits && digits.includes(termDigits))
-      );
+      return fuzzyMatch(cliente.nome, term) || (termDigits && digits.includes(termDigits));
     });
 
     if (sortField) {
       filtered.sort((a, b) => {
-        const aValue = a[sortField] || '';
-        const bValue = b[sortField] || '';
+        const aValue = a[sortField] || "";
+        const bValue = b[sortField] || "";
         const comparison = aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
-        return sortDirection === 'asc' ? comparison : -comparison;
+        return sortDirection === "asc" ? comparison : -comparison;
       });
     }
 
@@ -330,13 +344,13 @@ export default function Clientes() {
       className="overflow-y-hidden"
       containerClassName="h-full flex flex-col min-h-0"
       header={
-        <PageHeader 
-          title="Clientes" 
+        <PageHeader
+          title="Clientes"
           description="Gerencie seus clientes"
           children={
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
-                <Button 
+                <Button
                   className="rounded-full bg-accent-orange hover:bg-accent-orange/90 text-white transition-colors px-5 py-2.5 text-sm"
                   onClick={handleOpenDialog}
                 >
@@ -348,7 +362,9 @@ export default function Clientes() {
                 <div className="px-6 pt-6 pb-4 border-b">
                   <DialogHeader>
                     <DialogTitle>{isEditMode ? "Editar Cliente" : "Novo Cliente"}</DialogTitle>
-                    <DialogDescription>{isEditMode ? "Atualize os dados do cliente" : "Cadastre um novo cliente no sistema"}</DialogDescription>
+                    <DialogDescription>
+                      {isEditMode ? "Atualize os dados do cliente" : "Cadastre um novo cliente no sistema"}
+                    </DialogDescription>
                   </DialogHeader>
                 </div>
 
@@ -358,24 +374,64 @@ export default function Clientes() {
                     <Label className="text-[10px] uppercase text-muted-foreground tracking-wider">Identificação</Label>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <div className="space-y-1.5">
-                        <Label htmlFor="nome" className="text-xs">Nome *</Label>
-                        <Input id="nome" value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Nome completo ou razão social" required />
+                        <Label htmlFor="nome" className="text-xs">
+                          Nome *
+                        </Label>
+                        <Input
+                          id="nome"
+                          value={nome}
+                          onChange={(e) => setNome(e.target.value)}
+                          placeholder="Nome completo ou razão social"
+                          required
+                        />
                       </div>
                       <div className="space-y-1.5">
-                        <Label htmlFor="cpf" className="text-xs">CPF/CNPJ *</Label>
-                        <Input id="cpf" value={cpfCnpj} onChange={(e) => setCpfCnpj(formatDocument(e.target.value))} placeholder="000.000.000-00" maxLength={18} required />
+                        <Label htmlFor="cpf" className="text-xs">
+                          CPF/CNPJ *
+                        </Label>
+                        <Input
+                          id="cpf"
+                          value={cpfCnpj}
+                          onChange={(e) => setCpfCnpj(formatDocument(e.target.value))}
+                          placeholder="000.000.000-00"
+                          maxLength={18}
+                          required
+                        />
                       </div>
                       <div className="space-y-1.5">
-                        <Label htmlFor="email" className="text-xs">Email</Label>
-                        <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="email@exemplo.com" />
+                        <Label htmlFor="email" className="text-xs">
+                          Email
+                        </Label>
+                        <Input
+                          id="email"
+                          type="email"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          placeholder="email@exemplo.com"
+                        />
                       </div>
                       <div className="space-y-1.5">
-                        <Label htmlFor="contato" className="text-xs">Contato</Label>
-                        <Input id="contato" value={contato} onChange={(e) => setContato(formatPhone(e.target.value))} maxLength={15} placeholder="(14) 99999-9999" />
+                        <Label htmlFor="contato" className="text-xs">
+                          Contato
+                        </Label>
+                        <Input
+                          id="contato"
+                          value={contato}
+                          onChange={(e) => setContato(formatPhone(e.target.value))}
+                          maxLength={15}
+                          placeholder="(14) 99999-9999"
+                        />
                       </div>
                       <div className="md:col-span-2 space-y-1.5">
-                        <Label htmlFor="endereco" className="text-xs">Endereço</Label>
-                        <Input id="endereco" value={endereco} onChange={(e) => setEndereco(e.target.value)} placeholder="Endereço completo" />
+                        <Label htmlFor="endereco" className="text-xs">
+                          Endereço
+                        </Label>
+                        <Input
+                          id="endereco"
+                          value={endereco}
+                          onChange={(e) => setEndereco(e.target.value)}
+                          placeholder="Endereço completo"
+                        />
                       </div>
                     </div>
                   </div>
@@ -385,9 +441,13 @@ export default function Clientes() {
                     <Label className="text-[10px] uppercase text-muted-foreground tracking-wider">Comercial</Label>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <div className="space-y-1.5">
-                        <Label htmlFor="tipoNf" className="text-xs">Tipo de Nota Fiscal</Label>
+                        <Label htmlFor="tipoNf" className="text-xs">
+                          Tipo de Nota Fiscal
+                        </Label>
                         <Select value={tipoNf} onValueChange={setTipoNf}>
-                          <SelectTrigger id="tipoNf"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                          <SelectTrigger id="tipoNf">
+                            <SelectValue placeholder="Selecione" />
+                          </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="servico">Serviço</SelectItem>
                             <SelectItem value="produto">Produto</SelectItem>
@@ -396,8 +456,15 @@ export default function Clientes() {
                         </Select>
                       </div>
                       <div className="space-y-1.5">
-                        <Label htmlFor="origem" className="text-xs">Origem</Label>
-                        <Input id="origem" value={origem} onChange={(e) => setOrigem(e.target.value)} placeholder="Ex: Indicação, Instagram, Site" />
+                        <Label htmlFor="origem" className="text-xs">
+                          Origem
+                        </Label>
+                        <Input
+                          id="origem"
+                          value={origem}
+                          onChange={(e) => setOrigem(e.target.value)}
+                          placeholder="Ex: Indicação, Instagram, Site"
+                        />
                       </div>
                     </div>
                   </div>
@@ -405,32 +472,57 @@ export default function Clientes() {
                   {/* Contas Bancárias */}
                   <div className="px-6 py-4 space-y-3">
                     <div className="flex items-center justify-between">
-                      <Label className="text-[10px] uppercase text-muted-foreground tracking-wider">Contas Bancárias</Label>
+                      <Label className="text-[10px] uppercase text-muted-foreground tracking-wider">
+                        Contas Bancárias
+                      </Label>
                       <span className="text-[10px] text-muted-foreground">Para recebimento</span>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
                       <div className="space-y-1">
                         <Label className="text-xs">Banco</Label>
-                        <Input placeholder="Nome do banco" value={newConta.banco} onChange={(e) => setNewConta({ ...newConta, banco: e.target.value })} />
+                        <Input
+                          placeholder="Nome do banco"
+                          value={newConta.banco}
+                          onChange={(e) => setNewConta({ ...newConta, banco: e.target.value })}
+                        />
                       </div>
                       <div className="space-y-1">
                         <Label className="text-xs">Agência</Label>
-                        <Input placeholder="0000" value={newConta.agencia} onChange={(e) => setNewConta({ ...newConta, agencia: formatAgency(e.target.value) })} />
+                        <Input
+                          placeholder="0000"
+                          value={newConta.agencia}
+                          onChange={(e) => setNewConta({ ...newConta, agencia: formatAgency(e.target.value) })}
+                        />
                       </div>
                       <div className="space-y-1">
                         <Label className="text-xs">Conta</Label>
-                        <Input placeholder="000000-0" value={newConta.conta} onChange={(e) => setNewConta({ ...newConta, conta: formatBankAccount(e.target.value) })} />
+                        <Input
+                          placeholder="000000-0"
+                          value={newConta.conta}
+                          onChange={(e) => setNewConta({ ...newConta, conta: formatBankAccount(e.target.value) })}
+                        />
                       </div>
                       <div className="flex items-end gap-2">
-                        <Select value={newConta.tipo} onValueChange={(value) => setNewConta({ ...newConta, tipo: value })}>
-                          <SelectTrigger className="flex-1"><SelectValue placeholder="Tipo" /></SelectTrigger>
+                        <Select
+                          value={newConta.tipo}
+                          onValueChange={(value) => setNewConta({ ...newConta, tipo: value })}
+                        >
+                          <SelectTrigger className="flex-1">
+                            <SelectValue placeholder="Tipo" />
+                          </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="corrente">Corrente</SelectItem>
                             <SelectItem value="poupanca">Poupança</SelectItem>
                             <SelectItem value="pj">PJ</SelectItem>
                           </SelectContent>
                         </Select>
-                        <Button type="button" size="icon" variant="outline" className="h-9 w-9 shrink-0" onClick={handleAddConta}>
+                        <Button
+                          type="button"
+                          size="icon"
+                          variant="outline"
+                          className="h-9 w-9 shrink-0"
+                          onClick={handleAddConta}
+                        >
                           <Plus className="h-4 w-4" />
                         </Button>
                       </div>
@@ -439,17 +531,37 @@ export default function Clientes() {
                     {contasBancarias.length > 0 && (
                       <div className="space-y-1.5">
                         {contasBancarias.map((conta, index) => (
-                          <div key={index} className={`flex items-center justify-between gap-3 border rounded-lg px-3 py-2 text-sm ${conta.is_primary ? 'border-accent-orange/40' : ''}`}>
+                          <div
+                            key={index}
+                            className={`flex items-center justify-between gap-3 border rounded-lg px-3 py-2 text-sm ${conta.is_primary ? "border-accent-orange/40" : ""}`}
+                          >
                             <div className="flex items-center gap-3 flex-1 min-w-0">
-                              <button type="button" className="shrink-0" onClick={() => handleSetPrimaryConta(index)} title="Definir como principal">
-                                <Landmark className={`h-4 w-4 ${conta.is_primary ? 'text-accent-orange' : 'text-muted-foreground/40'}`} />
+                              <button
+                                type="button"
+                                className="shrink-0"
+                                onClick={() => handleSetPrimaryConta(index)}
+                                title="Definir como principal"
+                              >
+                                <Landmark
+                                  className={`h-4 w-4 ${conta.is_primary ? "text-accent-orange" : "text-muted-foreground/40"}`}
+                                />
                               </button>
                               <span className="font-medium truncate">{conta.banco}</span>
-                              <span className="hidden md:inline text-xs text-muted-foreground shrink-0">Ag. {conta.agencia} / Cc. {conta.conta}</span>
+                              <span className="hidden md:inline text-xs text-muted-foreground shrink-0">
+                                Ag. {conta.agencia} / Cc. {conta.conta}
+                              </span>
                               <span className="text-xs text-muted-foreground capitalize shrink-0">{conta.tipo}</span>
-                              {conta.is_primary && <span className="text-[10px] text-accent-orange font-medium">Principal</span>}
+                              {conta.is_primary && (
+                                <span className="text-[10px] text-accent-orange font-medium">Principal</span>
+                              )}
                             </div>
-                            <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-red-500 shrink-0" onClick={() => handleRemoveConta(index)}>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 text-red-500 shrink-0"
+                              onClick={() => handleRemoveConta(index)}
+                            >
                               <X className="h-3 w-3" />
                             </Button>
                           </div>
@@ -460,9 +572,29 @@ export default function Clientes() {
 
                   {/* Footer */}
                   <div className="flex gap-2 px-6 py-4 bg-gray-50/30">
-                    <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)} className="flex-1" disabled={isSaving}>Cancelar</Button>
-                    <Button type="submit" className="flex-1 bg-accent-orange hover:bg-accent-orange/90 text-white" disabled={isSaving}>
-                      {isSaving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Salvando...</> : isEditMode ? "Atualizar" : "Salvar"}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setIsDialogOpen(false)}
+                      className="flex-1"
+                      disabled={isSaving}
+                    >
+                      Cancelar
+                    </Button>
+                    <Button
+                      type="submit"
+                      className="flex-1 bg-accent-orange hover:bg-accent-orange/90 text-white"
+                      disabled={isSaving}
+                    >
+                      {isSaving ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Salvando...
+                        </>
+                      ) : isEditMode ? (
+                        "Atualizar"
+                      ) : (
+                        "Salvar"
+                      )}
                     </Button>
                   </div>
                 </form>
@@ -498,13 +630,23 @@ export default function Clientes() {
               <TableHeader>
                 <TableRow>
                   <TableHead>
-                    <Button variant="ghost" size="sm" onClick={() => handleSort('nome')} className="-ml-3 h-8 font-medium">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleSort("nome")}
+                      className="-ml-3 h-8 font-medium"
+                    >
                       Nome
                       <ArrowUpDown className="ml-2 h-3 w-3" />
                     </Button>
                   </TableHead>
                   <TableHead>
-                    <Button variant="ghost" size="sm" onClick={() => handleSort('cpf_cnpj')} className="-ml-3 h-8 font-medium">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleSort("cpf_cnpj")}
+                      className="-ml-3 h-8 font-medium"
+                    >
                       CPF/CNPJ
                       <ArrowUpDown className="ml-2 h-3 w-3" />
                     </Button>
@@ -523,7 +665,7 @@ export default function Clientes() {
                   </TableRow>
                 ) : (
                   filteredAndSortedClientes.map((cliente) => (
-                    <TableRow 
+                    <TableRow
                       key={cliente.id}
                       className="cursor-pointer hover:bg-gray-50"
                       onClick={() => handleRowClick(cliente)}
@@ -535,7 +677,12 @@ export default function Clientes() {
                       {isAdmin && (
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
-                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => handleEditClick(cliente, e)}>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={(e) => handleEditClick(cliente, e)}
+                            >
                               <Pencil className="h-4 w-4" />
                             </Button>
                             <Button
@@ -564,14 +711,10 @@ export default function Clientes() {
           {selectedCliente && (
             <>
               <DialogHeader>
-                <DialogTitle className="flex items-center gap-2">
-                  {selectedCliente.nome}
-                </DialogTitle>
-                <DialogDescription>
-                  Detalhes do cliente
-                </DialogDescription>
+                <DialogTitle className="flex items-center gap-2">{selectedCliente.nome}</DialogTitle>
+                <DialogDescription>Detalhes do cliente</DialogDescription>
               </DialogHeader>
-              
+
               <div className="space-y-6 mt-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
@@ -611,12 +754,12 @@ export default function Clientes() {
                 {/* Seção de Contas Bancárias */}
                 <div className="space-y-2 mt-4 pt-4 border-t">
                   <Label className="text-sm font-medium">Contas Bancárias</Label>
-                  {(selectedCliente.contas_bancarias && selectedCliente.contas_bancarias.length > 0) ? (
+                  {selectedCliente.contas_bancarias && selectedCliente.contas_bancarias.length > 0 ? (
                     <div className="space-y-2">
                       {selectedCliente.contas_bancarias.map((conta, index) => (
                         <div
                           key={index}
-                          className={`flex items-center justify-between gap-3 bg-gray-50 border rounded-lg px-3 py-2 text-sm ${conta.is_primary ? 'border-accent-orange/50 bg-accent-orange/5' : 'border-gray-200'}`}
+                          className={`flex items-center justify-between gap-3 bg-gray-50 border rounded-lg px-3 py-2 text-sm ${conta.is_primary ? "border-accent-orange/50 bg-accent-orange/5" : "border-gray-200"}`}
                         >
                           <div className="flex items-center gap-3 flex-1 min-w-0">
                             <div className="p-1.5 rounded-full bg-white border border-gray-100 text-gray-500">
@@ -626,7 +769,9 @@ export default function Clientes() {
                               <div className="flex items-center gap-2">
                                 <span className="font-medium truncate">{conta.banco}</span>
                                 {conta.is_primary && (
-                                  <span className="text-[10px] bg-accent-orange/10 text-accent-orange px-1.5 py-0.5 rounded font-medium">Principal</span>
+                                  <span className="text-[10px] bg-accent-orange/10 text-accent-orange px-1.5 py-0.5 rounded font-medium">
+                                    Principal
+                                  </span>
                                 )}
                               </div>
                               <div className="flex items-center gap-2 text-xs text-black/60">

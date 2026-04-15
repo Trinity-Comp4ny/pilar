@@ -15,7 +15,9 @@ export function HeroSection() {
 
         <h1 className="text-5xl md:text-7xl font-medium tracking-tight text-[#2E2E2E] mb-8 leading-[1.1]">
           O pilar fundamental da <br className="hidden md:block" />
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-accent-orange to-orange-600 animate-gradient-x">sua gestão.</span>
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-accent-orange to-orange-600 animate-gradient-x">
+            sua gestão.
+          </span>
         </h1>
 
         <p className="text-lg md:text-xl text-slate-600 max-w-2xl mx-auto mb-10 leading-relaxed font-light">

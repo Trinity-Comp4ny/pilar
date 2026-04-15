@@ -83,9 +83,7 @@ export const useProjetosAtribuidos = (pessoaId: string | undefined) => {
             responsavel_id: string;
             responsavel_nome: string;
           }>;
-          const minhasDisciplinas = disciplinas.filter(
-            (d) => d.responsavel_id === pessoaId
-          );
+          const minhasDisciplinas = disciplinas.filter((d) => d.responsavel_id === pessoaId);
           if (minhasDisciplinas.length === 0) return null;
           return {
             id: p.id,
@@ -115,7 +113,9 @@ export const usePessoaAtual = () => {
   return useQuery({
     queryKey: ["pessoa-atual"],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) return null;
 
       const { data, error } = await supabase
@@ -159,10 +159,7 @@ export const useUpsertTimesheet = () => {
 
         if (entry.horas <= 0) {
           // Remove se zerou as horas
-          const { error } = await supabase
-            .from("timesheets")
-            .delete()
-            .eq("id", existing.id);
+          const { error } = await supabase.from("timesheets").delete().eq("id", existing.id);
           if (error) throw error;
           return null;
         }
@@ -178,11 +175,7 @@ export const useUpsertTimesheet = () => {
       } else {
         if (entry.horas <= 0) return null;
 
-        const { data, error } = await supabase
-          .from("timesheets")
-          .insert(entry)
-          .select()
-          .single();
+        const { data, error } = await supabase.from("timesheets").insert(entry).select().single();
         if (error) throw error;
         return data;
       }
@@ -220,9 +213,7 @@ export const useTimesheetsPendentes = () => {
         supabase.from("projetos").select("id, nome, codigo_projeto").in("id", projetoIds),
       ]);
 
-      const pessoasMap = new Map<string, string>(
-        (pessoasRes.data || []).map((p) => [p.id, p.nome])
-      );
+      const pessoasMap = new Map<string, string>((pessoasRes.data || []).map((p) => [p.id, p.nome]));
       const projetosMap = new Map<string, { nome: string; codigo: string | null }>(
         (projetosRes.data || []).map((p) => [p.id, { nome: p.nome, codigo: p.codigo_projeto }])
       );
@@ -246,7 +237,9 @@ export const useAprovarTimesheet = () => {
 
   return useMutation({
     mutationFn: async ({ id, status }: { id: string; status: "aprovado" | "rejeitado" }) => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
       const { data, error } = await supabase
         .from("timesheets")

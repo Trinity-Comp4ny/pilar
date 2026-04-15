@@ -4,18 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   Loader2,
   Search,
@@ -34,11 +24,29 @@ import { type DisciplinaResponsavel, type Projeto, formatDate, getResponsaveisLi
 import { PROJECT_STATUS_CONFIG } from "@/constants";
 import { cn } from "@/lib/utils";
 
-const DISCIPLINA_STATUS_CONFIG: Record<string, { label: string; color: string; icon: typeof CheckCircle2; bgColor: string }> = {
-  "Concluído": { label: "Concluído", color: "text-green-700", icon: CheckCircle2, bgColor: "bg-green-50 border-green-200" },
+const DISCIPLINA_STATUS_CONFIG: Record<
+  string,
+  { label: string; color: string; icon: typeof CheckCircle2; bgColor: string }
+> = {
+  Concluído: {
+    label: "Concluído",
+    color: "text-green-700",
+    icon: CheckCircle2,
+    bgColor: "bg-green-50 border-green-200",
+  },
   "Em Andamento": { label: "Em Andamento", color: "text-blue-700", icon: Clock, bgColor: "bg-blue-50 border-blue-200" },
-  "Não Iniciado": { label: "Não Iniciado", color: "text-gray-500", icon: PauseCircle, bgColor: "bg-gray-50 border-gray-200" },
-  "Pendente": { label: "Pendente", color: "text-amber-700", icon: AlertTriangle, bgColor: "bg-amber-50 border-amber-200" },
+  "Não Iniciado": {
+    label: "Não Iniciado",
+    color: "text-gray-500",
+    icon: PauseCircle,
+    bgColor: "bg-gray-50 border-gray-200",
+  },
+  Pendente: {
+    label: "Pendente",
+    color: "text-amber-700",
+    icon: AlertTriangle,
+    bgColor: "bg-amber-50 border-amber-200",
+  },
 };
 
 interface DisciplinaAgrupada {
@@ -132,9 +140,7 @@ export function DisciplinasTab({ projetos, isLoading }: DisciplinasTabProps) {
         }
 
         if (statusFilter !== "todos") {
-          projetosFiltrados = projetosFiltrados.filter(
-            (p) => (p.disciplina.status || "Não Iniciado") === statusFilter
-          );
+          projetosFiltrados = projetosFiltrados.filter((p) => (p.disciplina.status || "Não Iniciado") === statusFilter);
         }
 
         if (projetosFiltrados.length === 0) return null;
@@ -142,7 +148,9 @@ export function DisciplinasTab({ projetos, isLoading }: DisciplinasTabProps) {
         const totalConcluido = projetosFiltrados.filter((p) => p.disciplina.status === "Concluído").length;
         const totalEmAndamento = projetosFiltrados.filter((p) => p.disciplina.status === "Em Andamento").length;
         const totalPendente = projetosFiltrados.filter((p) => p.disciplina.status === "Pendente").length;
-        const totalNaoIniciado = projetosFiltrados.filter((p) => (p.disciplina.status || "Não Iniciado") === "Não Iniciado").length;
+        const totalNaoIniciado = projetosFiltrados.filter(
+          (p) => (p.disciplina.status || "Não Iniciado") === "Não Iniciado"
+        ).length;
         const total = projetosFiltrados.length;
 
         return {
@@ -194,9 +202,7 @@ export function DisciplinasTab({ projetos, isLoading }: DisciplinasTabProps) {
   };
 
   const projetosUnicos = useMemo(() => {
-    return projetos
-      .filter((p) => p.disciplinas.length > 0)
-      .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
+    return projetos.filter((p) => p.disciplinas.length > 0).sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
   }, [projetos]);
 
   if (isLoading) {
@@ -292,7 +298,8 @@ export function DisciplinasTab({ projetos, isLoading }: DisciplinasTabProps) {
             <SelectItem value="todos">Todos os projetos</SelectItem>
             {projetosUnicos.map((p) => (
               <SelectItem key={p.id} value={p.id}>
-                {p.codigo_projeto ? `${p.codigo_projeto} — ` : ""}{p.nome}
+                {p.codigo_projeto ? `${p.codigo_projeto} — ` : ""}
+                {p.nome}
               </SelectItem>
             ))}
           </SelectContent>
@@ -386,7 +393,10 @@ export function DisciplinasTab({ projetos, isLoading }: DisciplinasTabProps) {
                       {grupo.totalConcluido > 0 && (
                         <Tooltip>
                           <TooltipTrigger>
-                            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-[11px]">
+                            <Badge
+                              variant="outline"
+                              className="bg-green-50 text-green-700 border-green-200 text-[11px]"
+                            >
                               <CheckCircle2 className="h-3 w-3 mr-1" />
                               {grupo.totalConcluido}
                             </Badge>
@@ -408,7 +418,10 @@ export function DisciplinasTab({ projetos, isLoading }: DisciplinasTabProps) {
                       {grupo.totalPendente > 0 && (
                         <Tooltip>
                           <TooltipTrigger>
-                            <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 text-[11px]">
+                            <Badge
+                              variant="outline"
+                              className="bg-amber-50 text-amber-700 border-amber-200 text-[11px]"
+                            >
                               <AlertTriangle className="h-3 w-3 mr-1" />
                               {grupo.totalPendente}
                             </Badge>
@@ -443,9 +456,7 @@ export function DisciplinasTab({ projetos, isLoading }: DisciplinasTabProps) {
                             <div className="flex items-center gap-2">
                               <span className="font-medium text-sm truncate">{projeto.nome}</span>
                               {projeto.codigo_projeto && (
-                                <span className="text-xs text-muted-foreground">
-                                  {projeto.codigo_projeto}
-                                </span>
+                                <span className="text-xs text-muted-foreground">{projeto.codigo_projeto}</span>
                               )}
                             </div>
                             <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground flex-wrap">
@@ -456,15 +467,15 @@ export function DisciplinasTab({ projetos, isLoading }: DisciplinasTabProps) {
                                     <User className="h-3 w-3" />
                                     {r.responsavel_nome}
                                     {r.data_previsao && (
-                                      <span className="text-muted-foreground/60 ml-0.5">({formatDate(r.data_previsao)})</span>
+                                      <span className="text-muted-foreground/60 ml-0.5">
+                                        ({formatDate(r.data_previsao)})
+                                      </span>
                                     )}
                                   </span>
                                 ));
                               })()}
                               {projeto.cliente_nome && (
-                                <span className="text-muted-foreground/70">
-                                  {projeto.cliente_nome}
-                                </span>
+                                <span className="text-muted-foreground/70">{projeto.cliente_nome}</span>
                               )}
                             </div>
                           </div>
@@ -472,15 +483,14 @@ export function DisciplinasTab({ projetos, isLoading }: DisciplinasTabProps) {
                           <div className="flex items-center gap-2 pl-7 sm:pl-0">
                             {getStatusBadge(disciplina.status)}
                             {isAtrasada(disciplina) && (
-                              <Badge variant="destructive" className="text-[11px]">Atrasada</Badge>
+                              <Badge variant="destructive" className="text-[11px]">
+                                Atrasada
+                              </Badge>
                             )}
                             {PROJECT_STATUS_CONFIG[projeto.status] && (
                               <Badge
                                 variant="outline"
-                                className={cn(
-                                  "text-[11px]",
-                                  PROJECT_STATUS_CONFIG[projeto.status].color
-                                )}
+                                className={cn("text-[11px]", PROJECT_STATUS_CONFIG[projeto.status].color)}
                               >
                                 {PROJECT_STATUS_CONFIG[projeto.status].label}
                               </Badge>
@@ -512,15 +522,14 @@ export function DisciplinasTab({ projetos, isLoading }: DisciplinasTabProps) {
               <tbody>
                 {filtered.flatMap((grupo) =>
                   grupo.projetos.map(({ projeto, disciplina }, idx) => (
-                    <tr
-                      key={`${grupo.nome}-${projeto.id}`}
-                      className="border-b hover:bg-gray-50/50 transition-colors"
-                    >
+                    <tr key={`${grupo.nome}-${projeto.id}`} className="border-b hover:bg-gray-50/50 transition-colors">
                       <td className="py-2.5 px-4">
                         {idx === 0 ? (
                           <div className="flex items-center gap-2">
                             <span className="font-medium">{grupo.nome}</span>
-                            <Badge variant="secondary" className="text-[10px]">{grupo.projetos.length}</Badge>
+                            <Badge variant="secondary" className="text-[10px]">
+                              {grupo.projetos.length}
+                            </Badge>
                           </div>
                         ) : (
                           <span className="text-muted-foreground/40">↳</span>
@@ -535,16 +544,16 @@ export function DisciplinasTab({ projetos, isLoading }: DisciplinasTabProps) {
                       <td className="py-2.5 px-4 text-sm">
                         {(() => {
                           const resps = getResponsaveisList(disciplina);
-                          return resps.length > 0
-                            ? resps.map((r) => r.responsavel_nome).join(", ")
-                            : "—";
+                          return resps.length > 0 ? resps.map((r) => r.responsavel_nome).join(", ") : "—";
                         })()}
                       </td>
                       <td className="py-2.5 px-4">
                         <div className="flex items-center gap-1">
                           {getStatusBadge(disciplina.status)}
                           {isAtrasada(disciplina) && (
-                            <Badge variant="destructive" className="text-[10px]">Atrasada</Badge>
+                            <Badge variant="destructive" className="text-[10px]">
+                              Atrasada
+                            </Badge>
                           )}
                         </div>
                       </td>

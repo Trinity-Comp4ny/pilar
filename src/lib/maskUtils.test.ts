@@ -1,5 +1,13 @@
 import { describe, it, expect } from "vitest";
-import { formatCPF, formatCNPJ, formatPhone, formatDocument, onlyDigits, formatAgency, formatBankAccount } from "./maskUtils";
+import {
+  formatCPF,
+  formatCNPJ,
+  formatPhone,
+  formatDocument,
+  onlyDigits,
+  formatAgency,
+  formatBankAccount,
+} from "./maskUtils";
 
 describe("onlyDigits", () => {
   it("strips non-digit characters", () => {

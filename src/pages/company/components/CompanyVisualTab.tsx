@@ -19,8 +19,16 @@ interface CompanyVisualTabProps {
 }
 
 export function CompanyVisualTab({
-  companyData, editing, isAdmin, isLoading, pendingLogoFile,
-  onEdit, onCancel, onSave, onLogoFileChange, onLogoPreview,
+  companyData,
+  editing,
+  isAdmin,
+  isLoading,
+  pendingLogoFile,
+  onEdit,
+  onCancel,
+  onSave,
+  onLogoFileChange,
+  onLogoPreview,
 }: CompanyVisualTabProps) {
   const openPreview = () => {
     if (pendingLogoFile || companyData.logoUrl) onLogoPreview();
@@ -37,13 +45,21 @@ export function CompanyVisualTab({
           <CardDescription className="mt-1">Envie a logo da sua empresa</CardDescription>
         </div>
         {!editing ? (
-          <Button onClick={onEdit} className="rounded-full bg-accent-orange hover:bg-accent-orange/90 text-white" disabled={!isAdmin || isLoading}>
+          <Button
+            onClick={onEdit}
+            className="rounded-full bg-accent-orange hover:bg-accent-orange/90 text-white"
+            disabled={!isAdmin || isLoading}
+          >
             Editar
           </Button>
         ) : (
           <div className="flex gap-2">
-            <Button variant="outline" onClick={onCancel} className="rounded-full">Cancelar</Button>
-            <Button onClick={onSave} className="rounded-full bg-accent-orange hover:bg-accent-orange/90 text-white">Salvar</Button>
+            <Button variant="outline" onClick={onCancel} className="rounded-full">
+              Cancelar
+            </Button>
+            <Button onClick={onSave} className="rounded-full bg-accent-orange hover:bg-accent-orange/90 text-white">
+              Salvar
+            </Button>
           </div>
         )}
       </CardHeader>
@@ -72,10 +88,16 @@ export function CompanyVisualTab({
               tabIndex={0}
               className="p-4 bg-black/5 rounded-xl min-h-[180px] border border-black/10 flex items-center justify-center cursor-pointer"
               onClick={openPreview}
-              onKeyDown={(e) => { if (e.key === "Enter") openPreview(); }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") openPreview();
+              }}
             >
               {pendingLogoFile ? (
-                <img src={URL.createObjectURL(pendingLogoFile)} alt="Logo (prévia)" className="max-h-[240px] w-full object-contain" />
+                <img
+                  src={URL.createObjectURL(pendingLogoFile)}
+                  alt="Logo (prévia)"
+                  className="max-h-[240px] w-full object-contain"
+                />
               ) : companyData.logoUrl ? (
                 <img src={companyData.logoUrl} alt="Logo" className="max-h-[240px] w-full object-contain" />
               ) : (

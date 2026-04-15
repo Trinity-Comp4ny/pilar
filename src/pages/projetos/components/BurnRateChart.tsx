@@ -34,13 +34,10 @@ export function BurnRateChart({ projetoId }: BurnRateChartProps) {
         .is("deleted_at", null);
 
       const orcamentoTotal = (orcamento || []).reduce(
-        (s, r) => s + (Number(r.horas_estimadas) * Number(r.custo_hora)),
+        (s, r) => s + Number(r.horas_estimadas) * Number(r.custo_hora),
         0
       );
-      const valorVendaTotal = (orcamento || []).reduce(
-        (s, r) => s + Number(r.valor_venda),
-        0
-      );
+      const valorVendaTotal = (orcamento || []).reduce((s, r) => s + Number(r.valor_venda), 0);
 
       // Buscar despesas por mês
       const { data: despesas } = await supabase
@@ -123,14 +120,23 @@ export function BurnRateChart({ projetoId }: BurnRateChartProps) {
   });
 
   if (isLoading) {
-    return <div className="flex justify-center py-8"><Loader2 className="h-5 w-5 animate-spin" /></div>;
+    return (
+      <div className="flex justify-center py-8">
+        <Loader2 className="h-5 w-5 animate-spin" />
+      </div>
+    );
   }
 
   const { serie = [], orcamentoTotal = 0, custoAcum = 0, receitaAcum = 0, pctConsumido = 0 } = data || {};
 
   const statusColor = pctConsumido > 90 ? "text-red-600" : pctConsumido > 70 ? "text-amber-600" : "text-emerald-600";
   const statusLabel = pctConsumido > 90 ? "Crítico" : pctConsumido > 70 ? "Atenção" : "Saudável";
-  const statusBadge = pctConsumido > 90 ? "bg-red-100 text-red-800" : pctConsumido > 70 ? "bg-amber-100 text-amber-800" : "bg-emerald-100 text-emerald-800";
+  const statusBadge =
+    pctConsumido > 90
+      ? "bg-red-100 text-red-800"
+      : pctConsumido > 70
+        ? "bg-amber-100 text-amber-800"
+        : "bg-emerald-100 text-emerald-800";
 
   return (
     <Card>
@@ -139,7 +145,9 @@ export function BurnRateChart({ projetoId }: BurnRateChartProps) {
           <CardTitle className="text-base flex items-center gap-2">
             <TrendingUp className="h-4 w-4" /> Burn Rate
           </CardTitle>
-          <Badge className={`${statusBadge} text-xs`}>{statusLabel} — {pctConsumido.toFixed(0)}% consumido</Badge>
+          <Badge className={`${statusBadge} text-xs`}>
+            {statusLabel} — {pctConsumido.toFixed(0)}% consumido
+          </Badge>
         </div>
       </CardHeader>
       <CardContent>
@@ -171,9 +179,28 @@ export function BurnRateChart({ projetoId }: BurnRateChartProps) {
               <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
               <Tooltip formatter={(v: number) => formatCurrency(v)} />
               <Legend fontSize={11} />
-              <ReferenceLine y={orcamentoTotal} stroke="#94a3b8" strokeDasharray="5 5" label={{ value: "Orçamento", fontSize: 10, fill: "#94a3b8" }} />
-              <Line type="monotone" dataKey="custo_acumulado" name="Custo Acum." stroke="#ef4444" strokeWidth={2} dot={{ r: 3 }} />
-              <Line type="monotone" dataKey="receita_acumulada" name="Receita Acum." stroke="#10b981" strokeWidth={2} dot={{ r: 3 }} />
+              <ReferenceLine
+                y={orcamentoTotal}
+                stroke="#94a3b8"
+                strokeDasharray="5 5"
+                label={{ value: "Orçamento", fontSize: 10, fill: "#94a3b8" }}
+              />
+              <Line
+                type="monotone"
+                dataKey="custo_acumulado"
+                name="Custo Acum."
+                stroke="#ef4444"
+                strokeWidth={2}
+                dot={{ r: 3 }}
+              />
+              <Line
+                type="monotone"
+                dataKey="receita_acumulada"
+                name="Receita Acum."
+                stroke="#10b981"
+                strokeWidth={2}
+                dot={{ r: 3 }}
+              />
             </LineChart>
           </ResponsiveContainer>
         )}

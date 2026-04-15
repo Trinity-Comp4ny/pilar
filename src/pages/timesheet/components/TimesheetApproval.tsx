@@ -117,7 +117,9 @@ export function TimesheetApproval() {
                         <span className="text-muted-foreground ml-1">- {entry.projeto_nome}</span>
                       </TableCell>
                       <TableCell className="text-xs py-2">{entry.disciplina}</TableCell>
-                      <TableCell className="text-xs py-2 text-center font-medium">{Number(entry.horas).toFixed(1)}h</TableCell>
+                      <TableCell className="text-xs py-2 text-center font-medium">
+                        {Number(entry.horas).toFixed(1)}h
+                      </TableCell>
                       <TableCell className="text-xs py-2 text-right">
                         <div className="flex items-center justify-end gap-1">
                           <Button

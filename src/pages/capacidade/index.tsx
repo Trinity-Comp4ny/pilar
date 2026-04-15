@@ -53,8 +53,8 @@ const NUM_WEEKS = 12;
 export default function Capacidade() {
   const [startMonday, setStartMonday] = useState(() => getMonday(new Date()));
 
-  const weeks = useMemo(() =>
-    Array.from({ length: NUM_WEEKS }, (_, i) => formatDateISO(addDays(startMonday, i * 7))),
+  const weeks = useMemo(
+    () => Array.from({ length: NUM_WEEKS }, (_, i) => formatDateISO(addDays(startMonday, i * 7))),
     [startMonday]
   );
 
@@ -128,9 +128,27 @@ export default function Capacidade() {
 
       {/* Métricas */}
       <div className="grid grid-cols-3 gap-4 mb-6">
-        <Card><CardContent className="p-4"><p className="text-xs text-muted-foreground">Equipe</p><p className="text-xl font-bold">{totalPessoas}</p></CardContent></Card>
-        <Card><CardContent className="p-4"><p className="text-xs text-muted-foreground flex items-center gap-1"><AlertTriangle className="h-3 w-3 text-red-500" />Sobrecarregados</p><p className="text-xl font-bold text-red-600">{sobrecarregados}</p></CardContent></Card>
-        <Card><CardContent className="p-4"><p className="text-xs text-muted-foreground">Ociosos (semana atual)</p><p className="text-xl font-bold text-gray-500">{ociosos}</p></CardContent></Card>
+        <Card>
+          <CardContent className="p-4">
+            <p className="text-xs text-muted-foreground">Equipe</p>
+            <p className="text-xl font-bold">{totalPessoas}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <p className="text-xs text-muted-foreground flex items-center gap-1">
+              <AlertTriangle className="h-3 w-3 text-red-500" />
+              Sobrecarregados
+            </p>
+            <p className="text-xl font-bold text-red-600">{sobrecarregados}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <p className="text-xs text-muted-foreground">Ociosos (semana atual)</p>
+            <p className="text-xl font-bold text-gray-500">{ociosos}</p>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Navegação */}
@@ -141,7 +159,10 @@ export default function Capacidade() {
         <span className="text-sm font-medium">
           {new Date(weeks[0] + "T00:00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}
           {" — "}
-          {new Date(weeks[weeks.length - 1] + "T00:00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}
+          {new Date(weeks[weeks.length - 1] + "T00:00:00").toLocaleDateString("pt-BR", {
+            day: "2-digit",
+            month: "short",
+          })}
         </span>
         <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => navegarSemanas(1)}>
           <ChevronRight className="h-4 w-4" />
@@ -184,7 +205,9 @@ export default function Capacidade() {
                   <tr key={pessoa.id} className="border-b hover:bg-muted/30">
                     <td className="py-2 px-3 sticky left-0 bg-white z-10">
                       <div className="font-medium">{pessoa.nome}</div>
-                      <div className="text-[10px] text-muted-foreground">{pessoa.cargo || "—"} · {pessoa.horas_semanais}h/sem</div>
+                      <div className="text-[10px] text-muted-foreground">
+                        {pessoa.cargo || "—"} · {pessoa.horas_semanais}h/sem
+                      </div>
                     </td>
                     {weeks.map((w) => {
                       const horas = getHorasAlocadas(pessoa.id, w);
@@ -207,10 +230,18 @@ export default function Capacidade() {
 
       {/* Legenda */}
       <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground flex-wrap">
-        <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded bg-gray-100 border" /> 0%</div>
-        <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded bg-green-200" /> &le;80%</div>
-        <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded bg-yellow-200" /> 80-100%</div>
-        <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded bg-red-200" /> &gt;100%</div>
+        <div className="flex items-center gap-1.5">
+          <div className="w-3 h-3 rounded bg-gray-100 border" /> 0%
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div className="w-3 h-3 rounded bg-green-200" /> &le;80%
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div className="w-3 h-3 rounded bg-yellow-200" /> 80-100%
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div className="w-3 h-3 rounded bg-red-200" /> &gt;100%
+        </div>
       </div>
 
       {/* Planejado vs Real */}

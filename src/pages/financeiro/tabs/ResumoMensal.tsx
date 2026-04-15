@@ -22,7 +22,7 @@ export default function ResumoMensal({ dateFrom, dateTo }: ResumoMensalProps) {
       const today = new Date();
       const start = dateFrom || startOfMonth(today);
       const end = dateTo || endOfMonth(today);
-      
+
       const firstDay = start.toISOString();
       const lastDay = end.toISOString();
 
@@ -44,9 +44,9 @@ export default function ResumoMensal({ dateFrom, dateTo }: ResumoMensalProps) {
 
       return {
         receitas: receitas || [],
-        despesas: despesas || []
+        despesas: despesas || [],
       };
-    }
+    },
   });
 
   if (isLoadingDashboard || isLoadingTop) {
@@ -62,18 +62,19 @@ export default function ResumoMensal({ dateFrom, dateTo }: ResumoMensalProps) {
     receitasMes: 0,
     despesasTotal: 0,
     despesasMes: 0,
-    saldo: 0
+    saldo: 0,
   };
 
   const chartDataDiario = dashboardData?.chartDataDiario || [];
-  const hasChartData = chartDataDiario.some(item => item.receitas > 0 || item.despesas > 0);
+  const hasChartData = chartDataDiario.some((item) => item.receitas > 0 || item.despesas > 0);
 
   // Calculate totals for top 5 to display
   const totalTopReceitas = topTransactions?.receitas.reduce((acc: number, curr) => acc + Number(curr.valor), 0) || 0;
   const totalTopDespesas = topTransactions?.despesas.reduce((acc: number, curr) => acc + Number(curr.valor), 0) || 0;
 
   // Format currency
-  const formatCurrency = (val: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
+  const formatCurrency = (val: number) =>
+    new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(val);
 
   return (
     <div className="space-y-6 w-full max-w-none">
@@ -83,7 +84,9 @@ export default function ResumoMensal({ dateFrom, dateTo }: ResumoMensalProps) {
             <CardTitle className="text-sm font-medium text-green-800">Receitas</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-700">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(stats.receitasTotal)}</div>
+            <div className="text-2xl font-bold text-green-700">
+              {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(stats.receitasTotal)}
+            </div>
             <p className="text-xs text-green-600 mt-1 flex items-center">
               <ArrowUpRight size={12} className="mr-1" />
               {stats.receitasMes}% vs mês anterior
@@ -95,7 +98,9 @@ export default function ResumoMensal({ dateFrom, dateTo }: ResumoMensalProps) {
             <CardTitle className="text-sm font-medium text-red-800">Despesas</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-700">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(stats.despesasTotal)}</div>
+            <div className="text-2xl font-bold text-red-700">
+              {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(stats.despesasTotal)}
+            </div>
             <p className="text-xs text-green-600 mt-1 flex items-center">
               <ArrowDownRight size={12} className="mr-1" />
               {stats.despesasMes}% vs mês anterior
@@ -107,8 +112,12 @@ export default function ResumoMensal({ dateFrom, dateTo }: ResumoMensalProps) {
             <CardTitle className="text-sm font-medium text-blue-800">Lucro Líquido</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-700">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(stats.saldo)}</div>
-            <p className="text-xs text-blue-600 mt-1">Margem de {stats.receitasTotal > 0 ? ((stats.saldo / stats.receitasTotal) * 100).toFixed(1) : 0}%</p>
+            <div className="text-2xl font-bold text-blue-700">
+              {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(stats.saldo)}
+            </div>
+            <p className="text-xs text-blue-600 mt-1">
+              Margem de {stats.receitasTotal > 0 ? ((stats.saldo / stats.receitasTotal) * 100).toFixed(1) : 0}%
+            </p>
           </CardContent>
         </Card>
         <Card className="vrz-card border-black/5 w-full">
@@ -118,7 +127,9 @@ export default function ResumoMensal({ dateFrom, dateTo }: ResumoMensalProps) {
           <CardContent>
             {/* Simple projection: Current Saldo * (30 / Day of Month) */}
             <div className="text-2xl font-bold text-black/80">
-              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(((stats.saldo / Math.max(1, new Date().getDate())) * 30))}
+              {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(
+                (stats.saldo / Math.max(1, new Date().getDate())) * 30
+              )}
             </div>
             <p className="text-xs text-black/50 mt-1">Baseado na média diária</p>
           </CardContent>
@@ -149,8 +160,22 @@ export default function ResumoMensal({ dateFrom, dateTo }: ResumoMensalProps) {
                 <XAxis dataKey="dia" stroke="#888" axisLine={false} tickLine={false} />
                 <YAxis stroke="#888" axisLine={false} tickLine={false} />
                 <Tooltip content={<CustomTooltip />} />
-                <Area type="monotone" dataKey="receitas" stackId="1" stroke="hsl(var(--chart-success))" fill="hsl(var(--chart-success))" fillOpacity={0.6} />
-                <Area type="monotone" dataKey="despesas" stackId="2" stroke="hsl(var(--chart-danger))" fill="hsl(var(--chart-danger))" fillOpacity={0.6} />
+                <Area
+                  type="monotone"
+                  dataKey="receitas"
+                  stackId="1"
+                  stroke="hsl(var(--chart-success))"
+                  fill="hsl(var(--chart-success))"
+                  fillOpacity={0.6}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="despesas"
+                  stackId="2"
+                  stroke="hsl(var(--chart-danger))"
+                  fill="hsl(var(--chart-danger))"
+                  fillOpacity={0.6}
+                />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -170,10 +195,15 @@ export default function ResumoMensal({ dateFrom, dateTo }: ResumoMensalProps) {
           <CardContent>
             <div className="space-y-3">
               {topTransactions?.receitas.map((item, idx) => (
-                <div key={idx} className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-100 hover:bg-green-100 transition-colors">
+                <div
+                  key={idx}
+                  className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-100 hover:bg-green-100 transition-colors"
+                >
                   <div className="flex-1">
                     <p className="text-sm font-medium text-gray-900">{item.descricao}</p>
-                    <p className="text-xs text-gray-500 mt-0.5">{new Date(item.data_recebimento).toLocaleDateString('pt-BR')}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      {new Date(item.data_recebimento).toLocaleDateString("pt-BR")}
+                    </p>
                   </div>
                   <span className="text-sm font-bold text-green-700">{formatCurrency(item.valor)}</span>
                 </div>
@@ -202,11 +232,15 @@ export default function ResumoMensal({ dateFrom, dateTo }: ResumoMensalProps) {
           <CardContent>
             <div className="space-y-3">
               {topTransactions?.despesas.map((item, idx) => (
-                <div key={idx} className="flex items-center justify-between p-3 bg-red-50 rounded-lg border border-red-100 hover:bg-red-100 transition-colors">
+                <div
+                  key={idx}
+                  className="flex items-center justify-between p-3 bg-red-50 rounded-lg border border-red-100 hover:bg-red-100 transition-colors"
+                >
                   <div className="flex-1">
                     <p className="text-sm font-medium text-gray-900">{item.descricao}</p>
                     <p className="text-xs text-gray-500 mt-0.5">
-                      {new Date(item.data_pagamento).toLocaleDateString('pt-BR')} • {item.categorias_financeiras?.nome || 'Outros'}
+                      {new Date(item.data_pagamento).toLocaleDateString("pt-BR")} •{" "}
+                      {item.categorias_financeiras?.nome || "Outros"}
                     </p>
                   </div>
                   <span className="text-sm font-bold text-red-700">{formatCurrency(item.valor)}</span>

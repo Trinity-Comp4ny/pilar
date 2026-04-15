@@ -36,14 +36,7 @@ const fuzzyMatch = (text: string, query: string) => {
   return true;
 };
 
-export function PessoaTable({
-  pessoas,
-  isLoading,
-  isAdmin,
-  onRowClick,
-  onEditClick,
-  onDeleteClick,
-}: PessoaTableProps) {
+export function PessoaTable({ pessoas, isLoading, isAdmin, onRowClick, onEditClick, onDeleteClick }: PessoaTableProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCargo, setFilterCargo] = useState("todos");
   const [sortField, setSortField] = useState<keyof Pessoa | null>(null);
@@ -62,9 +55,7 @@ export function PessoaTable({
       const termDigits = term.replace(/\D/g, "");
 
       const matchesText =
-        fuzzyMatch(pessoa.nome, term) ||
-        fuzzyMatch(pessoa.cargo, term) ||
-        (termDigits && digits.includes(termDigits));
+        fuzzyMatch(pessoa.nome, term) || fuzzyMatch(pessoa.cargo, term) || (termDigits && digits.includes(termDigits));
 
       const matchesCargo = filterCargo === "todos" || pessoa.cargo === filterCargo;
       return matchesText && matchesCargo;
@@ -119,7 +110,9 @@ export function PessoaTable({
                 <SelectContent>
                   <SelectItem value="todos">Todos os Cargos</SelectItem>
                   {cargos.map((cargo) => (
-                    <SelectItem key={cargo} value={cargo}>{cargo}</SelectItem>
+                    <SelectItem key={cargo} value={cargo}>
+                      {cargo}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -138,7 +131,12 @@ export function PessoaTable({
               <TableHeader>
                 <TableRow>
                   <TableHead>
-                    <Button variant="ghost" size="sm" onClick={() => handleSort("nome")} className="-ml-3 h-8 font-medium">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleSort("nome")}
+                      className="-ml-3 h-8 font-medium"
+                    >
                       Nome
                       <ArrowUpDown className="ml-2 h-3 w-3" />
                     </Button>

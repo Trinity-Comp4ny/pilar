@@ -14,6 +14,7 @@ import ProjecaoFluxoCaixa from "./financeiro/tabs/ProjecaoFluxoCaixa";
 import AgingRecebiveis from "./financeiro/tabs/AgingRecebiveis";
 import DRE from "./financeiro/tabs/DRE";
 import WIP from "./financeiro/tabs/WIP";
+import Rentabilidade from "./financeiro/tabs/Rentabilidade";
 
 export default function Financeiro() {
   const { state, isMobile } = useSidebar();
@@ -24,7 +25,7 @@ export default function Financeiro() {
   const [dateTo, setDateTo] = useState<Date>();
 
   useEffect(() => {
-    const tab = searchParams.get('tab');
+    const tab = searchParams.get("tab");
     if (tab) {
       setActiveTab(tab);
     }
@@ -35,7 +36,11 @@ export default function Financeiro() {
       className="fixed top-0 right-0 bottom-0 bg-white z-40 overflow-x-hidden flex flex-col transition-[left] duration-300 ease-in-out"
       style={{ left: isMobile ? "0px" : state === "collapsed" ? "64px" : "240px" }}
     >
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full flex flex-col h-full flex-1 overflow-hidden">
+      <Tabs
+        value={activeTab}
+        onValueChange={setActiveTab}
+        className="w-full flex flex-col h-full flex-1 overflow-hidden"
+      >
         {/* Header with Navigation */}
         <div className="sticky top-0 z-20 w-full bg-white border-b">
           <FinanceiroHeader
@@ -47,16 +52,12 @@ export default function Financeiro() {
             setVisualizacao={setVisualizacao}
           />
         </div>
-        
+
         {/* Scrollable Content Area */}
         <div className="flex-1 overflow-y-auto w-full bg-gray-50/50 p-6 md:p-8">
           <div className="w-full mx-auto space-y-6">
             <TabsContent value="visao-geral" className="mt-0 w-full focus-visible:ring-0">
-              <VisaoGeral 
-                visualizacao={visualizacao} 
-                dateFrom={dateFrom}
-                dateTo={dateTo}
-              />
+              <VisaoGeral visualizacao={visualizacao} dateFrom={dateFrom} dateTo={dateTo} />
             </TabsContent>
 
             <TabsContent value="fluxo-caixa" className="mt-0 w-full focus-visible:ring-0">
@@ -97,6 +98,10 @@ export default function Financeiro() {
 
             <TabsContent value="wip" className="mt-0 w-full focus-visible:ring-0">
               <WIP />
+            </TabsContent>
+
+            <TabsContent value="rentabilidade" className="mt-0 w-full focus-visible:ring-0">
+              <Rentabilidade />
             </TabsContent>
           </div>
         </div>

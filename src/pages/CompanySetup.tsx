@@ -34,22 +34,20 @@ export default function CompanySetup() {
 
     try {
       // 1. Pegar ID da empresa do usuário logado
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) throw new Error("Usuário não logado");
 
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('empresa_id')
-        .eq('id', user.id)
-        .single();
+      const { data: profile } = await supabase.from("profiles").select("empresa_id").eq("id", user.id).single();
 
       if (!profile?.empresa_id) throw new Error("Empresa não encontrada");
 
       // 2. Atualizar dados da empresa e marcar onboarding completo
       const { error } = await supabase
-        .from('empresas')
+        .from("empresas")
         .update({ nome: name, cnpj: cnpj, onboarding_completed: true })
-        .eq('id', profile.empresa_id);
+        .eq("id", profile.empresa_id);
 
       if (error) throw error;
 
@@ -57,9 +55,8 @@ export default function CompanySetup() {
         title: "Empresa configurada!",
         description: "Bem-vindo ao sistema Pilar.",
       });
-      
-      navigate("/dashboard");
 
+      navigate("/dashboard");
     } catch (err: unknown) {
       toast({
         variant: "destructive",
@@ -86,7 +83,11 @@ export default function CompanySetup() {
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <img src="/pilar-logo.svg" alt="Pilar" className="h-10 w-auto hover:rotate-12 transition-transform duration-300" />
+                <img
+                  src="/pilar-logo.svg"
+                  alt="Pilar"
+                  className="h-10 w-auto hover:rotate-12 transition-transform duration-300"
+                />
                 <div className="leading-tight">
                   <div className="text-sm font-medium text-slate-900">Configuração inicial</div>
                   <div className="text-xs text-slate-500">Etapa 2 de 2</div>
@@ -113,7 +114,9 @@ export default function CompanySetup() {
 
           <form onSubmit={handleUpdate} className="space-y-5">
             <div className="space-y-2">
-              <Label htmlFor="name" className="text-slate-700 font-medium">Razão social / Nome fantasia</Label>
+              <Label htmlFor="name" className="text-slate-700 font-medium">
+                Razão social / Nome fantasia
+              </Label>
               <div className="relative group">
                 <Building2 className="absolute left-3 top-3 h-4 w-4 text-slate-400 group-focus-within:text-accent-orange transition-colors" />
                 <Input
@@ -128,7 +131,9 @@ export default function CompanySetup() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="cnpj" className="text-slate-700 font-medium">CNPJ</Label>
+              <Label htmlFor="cnpj" className="text-slate-700 font-medium">
+                CNPJ
+              </Label>
               <div className="relative group">
                 <Hash className="absolute left-3 top-3 h-4 w-4 text-slate-400 group-focus-within:text-accent-orange transition-colors" />
                 <Input
@@ -137,12 +142,12 @@ export default function CompanySetup() {
                   className="pl-10 h-11 bg-slate-50 border-slate-200 focus:border-accent-orange focus:ring-accent-orange/20 transition-all"
                   value={cnpj}
                   onChange={(e) => {
-                    const value = e.target.value.replace(/\D/g, '');
+                    const value = e.target.value.replace(/\D/g, "");
                     const formatted = value
-                      .replace(/^(\d{2})(\d)/, '$1.$2')
-                      .replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
-                      .replace(/\.(\d{3})(\d)/, '.$1/$2')
-                      .replace(/(\d{4})(\d)/, '$1-$2')
+                      .replace(/^(\d{2})(\d)/, "$1.$2")
+                      .replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3")
+                      .replace(/\.(\d{3})(\d)/, ".$1/$2")
+                      .replace(/(\d{4})(\d)/, "$1-$2")
                       .slice(0, 18);
                     setCnpj(formatted);
                   }}
@@ -170,9 +175,7 @@ export default function CompanySetup() {
             </Button>
           </form>
 
-          <div className="text-xs text-slate-400">
-            Pronto: ao finalizar, você será direcionado para o dashboard.
-          </div>
+          <div className="text-xs text-slate-400">Pronto: ao finalizar, você será direcionado para o dashboard.</div>
         </div>
       </div>
 
@@ -185,7 +188,7 @@ export default function CompanySetup() {
             muted
             playsInline
             className="w-full h-full object-cover opacity-60 scale-105 animate-pulse-slow grayscale contrast-125"
-            style={{ animationDuration: '20s' }}
+            style={{ animationDuration: "20s" }}
           />
           <div className="absolute inset-0 bg-accent-orange/40 mix-blend-multiply" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/10" />
@@ -194,7 +197,11 @@ export default function CompanySetup() {
         <div className="relative z-10 flex flex-col justify-between h-full w-full p-16 text-white">
           <div className="animate-in fade-in slide-in-from-top-8 duration-700 flex justify-end">
             <div className="flex items-center gap-3 opacity-80">
-              <img src="/pilar-logo.svg" alt="Pilar" className="h-8 w-8 brightness-0 invert hover:rotate-12 transition-transform duration-300" />
+              <img
+                src="/pilar-logo.svg"
+                alt="Pilar"
+                className="h-8 w-8 brightness-0 invert hover:rotate-12 transition-transform duration-300"
+              />
               <span className="text-xl font-medium tracking-tight">Pilar</span>
             </div>
           </div>
@@ -210,9 +217,7 @@ export default function CompanySetup() {
               "Uma empresa bem configurada vira processo. Processo vira escala."
             </blockquote>
 
-            <p className="text-sm text-white/70">
-              Você está a um clique do dashboard. Vamos começar.
-            </p>
+            <p className="text-sm text-white/70">Você está a um clique do dashboard. Vamos começar.</p>
           </div>
 
           <div className="text-xs text-white/40 text-right animate-in fade-in duration-1000 delay-300">

@@ -18,17 +18,11 @@ export function PageHeader({ title, description, children }: PageHeaderProps) {
           )}
           <div>
             <h1 className="text-2xl md:text-3xl font-medium tracking-tight">{title}</h1>
-          {description && (
-            <p className="text-sm text-black/60 mt-1">{description}</p>
-          )}
+            {description && <p className="text-sm text-black/60 mt-1">{description}</p>}
           </div>
         </div>
-        
-        {children && (
-          <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-end">
-            {children}
-          </div>
-        )}
+
+        {children && <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-end">{children}</div>}
       </div>
     </div>
   );

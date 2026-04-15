@@ -9,15 +9,55 @@ import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { ArrowLeft, User, DollarSign, Calendar, Ruler, Loader2, Edit, Plus, Trash2, MessageSquare, ChevronDown } from "lucide-react";
+import {
+  ArrowLeft,
+  User,
+  DollarSign,
+  Calendar,
+  Ruler,
+  Loader2,
+  Edit,
+  Plus,
+  Trash2,
+  MessageSquare,
+  ChevronDown,
+} from "lucide-react";
 import { PageLayout } from "@/components/PageLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useToast } from "@/hooks/use-toast";
-import { PROJECT_STATUS_CONFIG, PROJECT_PRIORITY, PROJECT_PRIORITY_CONFIG, PRIORITY_OPTIONS, type ProjectPriority } from "@/constants";
-import { type Projeto, type DisciplinaResponsavel, type DisciplinaObservacao, type ResponsavelDatas, disciplinaStatusOptions, formatCurrency, formatDate, formatDateShort, getDeadlineStatus, getProjectProgress, getResponsaveisList, isDiscAtrasada } from "./types";
+import {
+  PROJECT_STATUS_CONFIG,
+  PROJECT_PRIORITY,
+  PROJECT_PRIORITY_CONFIG,
+  PRIORITY_OPTIONS,
+  type ProjectPriority,
+} from "@/constants";
+import {
+  type Projeto,
+  type DisciplinaResponsavel,
+  type DisciplinaObservacao,
+  type ResponsavelDatas,
+  disciplinaStatusOptions,
+  formatCurrency,
+  formatDate,
+  formatDateShort,
+  getDeadlineStatus,
+  getProjectProgress,
+  getResponsaveisList,
+  isDiscAtrasada,
+} from "./types";
 import { Textarea } from "@/components/ui/textarea";
-import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
 import { AlertTriangle } from "lucide-react";
 import { ProjectBudgetTab } from "./components/ProjectBudgetTab";
 import { BillingMilestonesTab } from "./components/BillingMilestonesTab";
@@ -53,11 +93,7 @@ export default function ProjetoDetail() {
   useEffect(() => {
     if (!id) return;
     const fetch = async () => {
-      const { data, error } = await supabase
-        .from("projetos")
-        .select("*, clientes(nome)")
-        .eq("id", id)
-        .single();
+      const { data, error } = await supabase.from("projetos").select("*, clientes(nome)").eq("id", id).single();
 
       if (error || !data) {
         navigate("/projetos");
@@ -100,10 +136,7 @@ export default function ProjetoDetail() {
 
   const saveDisciplinas = async (newDiscs: DisciplinaResponsavel[]) => {
     if (!projeto) return false;
-    const { error } = await supabase
-      .from("projetos")
-      .update({ disciplinas: newDiscs })
-      .eq("id", projeto.id);
+    const { error } = await supabase.from("projetos").update({ disciplinas: newDiscs }).eq("id", projeto.id);
     if (error) {
       toast({ variant: "destructive", title: "Erro ao atualizar", description: error.message });
       return false;
@@ -209,11 +242,13 @@ export default function ProjetoDetail() {
       responsavel_nome: pessoa?.nome || "",
       status: "Não Iniciado",
       observacoes: [],
-      responsaveis: [{
-        responsavel_id: newDisc.responsavel_id,
-        responsavel_nome: pessoa?.nome || "",
-        status: "Não Iniciado",
-      }],
+      responsaveis: [
+        {
+          responsavel_id: newDisc.responsavel_id,
+          responsavel_nome: pessoa?.nome || "",
+          status: "Não Iniciado",
+        },
+      ],
     };
     const updated = [...projeto.disciplinas, nova];
     const ok = await saveDisciplinas(updated);
@@ -281,7 +316,12 @@ export default function ProjetoDetail() {
     if (ok) toast({ title: "Responsável removido" });
   };
 
-  const handleUpdateResponsavelDatas = async (discIdx: number, respIdx: number, field: keyof ResponsavelDatas, value: string) => {
+  const handleUpdateResponsavelDatas = async (
+    discIdx: number,
+    respIdx: number,
+    field: keyof ResponsavelDatas,
+    value: string
+  ) => {
     if (!projeto) return;
     const updated = [...projeto.disciplinas];
     const disc = updated[discIdx];
@@ -348,32 +388,46 @@ export default function ProjetoDetail() {
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
         <Card>
           <CardContent className="p-3">
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1"><User className="h-3 w-3" />Cliente</div>
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
+              <User className="h-3 w-3" />
+              Cliente
+            </div>
             <p className="text-sm font-medium truncate">{projeto.cliente_nome || "—"}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-3">
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1"><DollarSign className="h-3 w-3" />Contrato</div>
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
+              <DollarSign className="h-3 w-3" />
+              Contrato
+            </div>
             <p className="text-sm font-medium">{formatCurrency(projeto.valor_contrato)}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-3">
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1"><Ruler className="h-3 w-3" />Área</div>
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
+              <Ruler className="h-3 w-3" />
+              Área
+            </div>
             <p className="text-sm font-medium">{projeto.area_m2 || 0} m²</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-3">
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1"><Calendar className="h-3 w-3" />Prazo</div>
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
+              <Calendar className="h-3 w-3" />
+              Prazo
+            </div>
             <p className="text-sm font-medium">{formatDate(projeto.data_previsao)}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-3">
             <div className="text-xs text-muted-foreground mb-1">Margem Bruta</div>
-            <p className={`text-sm font-bold ${margemBrutaPct !== null ? (margemBrutaPct >= 20 ? "text-green-600" : margemBrutaPct >= 0 ? "text-yellow-600" : "text-red-600") : ""}`}>
+            <p
+              className={`text-sm font-bold ${margemBrutaPct !== null ? (margemBrutaPct >= 20 ? "text-green-600" : margemBrutaPct >= 0 ? "text-yellow-600" : "text-red-600") : ""}`}
+            >
               {margemBrutaPct !== null ? `${margemBrutaPct.toFixed(1)}%` : "—"}
             </p>
           </CardContent>
@@ -415,30 +469,55 @@ export default function ProjetoDetail() {
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1">
                       <Label className="text-xs">Disciplina</Label>
-                      <Select value={newDisc.disciplina} onValueChange={(v) => setNewDisc((p) => ({ ...p, disciplina: v }))}>
-                        <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                      <Select
+                        value={newDisc.disciplina}
+                        onValueChange={(v) => setNewDisc((p) => ({ ...p, disciplina: v }))}
+                      >
+                        <SelectTrigger className="h-8 text-xs">
+                          <SelectValue placeholder="Selecione" />
+                        </SelectTrigger>
                         <SelectContent>
                           {disciplinasCatalog.map((d) => (
-                            <SelectItem key={d.id} value={d.nome} className="text-xs">{d.nome}</SelectItem>
+                            <SelectItem key={d.id} value={d.nome} className="text-xs">
+                              {d.nome}
+                            </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     </div>
                     <div className="space-y-1">
                       <Label className="text-xs">Responsável</Label>
-                      <Select value={newDisc.responsavel_id} onValueChange={(v) => setNewDisc((p) => ({ ...p, responsavel_id: v }))}>
-                        <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                      <Select
+                        value={newDisc.responsavel_id}
+                        onValueChange={(v) => setNewDisc((p) => ({ ...p, responsavel_id: v }))}
+                      >
+                        <SelectTrigger className="h-8 text-xs">
+                          <SelectValue placeholder="Selecione" />
+                        </SelectTrigger>
                         <SelectContent>
                           {pessoas.map((p) => (
-                            <SelectItem key={p.id} value={p.id} className="text-xs">{p.nome}</SelectItem>
+                            <SelectItem key={p.id} value={p.id} className="text-xs">
+                              {p.nome}
+                            </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <Button size="sm" onClick={handleAddDisc} disabled={!newDisc.disciplina || !newDisc.responsavel_id}>Adicionar</Button>
-                    <Button size="sm" variant="ghost" onClick={() => { setIsAddingDisc(false); setNewDisc({ disciplina: "", responsavel_id: "" }); }}>Cancelar</Button>
+                    <Button size="sm" onClick={handleAddDisc} disabled={!newDisc.disciplina || !newDisc.responsavel_id}>
+                      Adicionar
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => {
+                        setIsAddingDisc(false);
+                        setNewDisc({ disciplina: "", responsavel_id: "" });
+                      }}
+                    >
+                      Cancelar
+                    </Button>
                   </div>
                 </div>
               )}
@@ -450,12 +529,13 @@ export default function ProjetoDetail() {
                   {projeto.disciplinas.map((d, i) => {
                     const dpc = d.prioridade ? PROJECT_PRIORITY_CONFIG[d.prioridade as ProjectPriority] : null;
                     const DISC_STATUS_COLORS: Record<string, string> = {
-                      "Concluído": "bg-green-100 text-green-800 border-green-200",
+                      Concluído: "bg-green-100 text-green-800 border-green-200",
                       "Em Andamento": "bg-blue-100 text-blue-800 border-blue-200",
-                      "Pendente": "bg-yellow-100 text-yellow-800 border-yellow-200",
+                      Pendente: "bg-yellow-100 text-yellow-800 border-yellow-200",
                       "Não Iniciado": "bg-gray-100 text-gray-600 border-gray-200",
                     };
-                    const statusColor = DISC_STATUS_COLORS[d.status || "Não Iniciado"] || DISC_STATUS_COLORS["Não Iniciado"];
+                    const statusColor =
+                      DISC_STATUS_COLORS[d.status || "Não Iniciado"] || DISC_STATUS_COLORS["Não Iniciado"];
                     const resps = getResponsaveisList(d);
                     const isExpanded = expandedDiscIdx === i;
 
@@ -470,7 +550,9 @@ export default function ProjetoDetail() {
                             <div className="flex items-center gap-1.5">
                               <p className="text-sm font-medium">{d.disciplina}</p>
                               {dpc && (
-                                <span className={`text-[9px] px-1.5 py-0 rounded-full font-medium ${dpc.bgColor} ${dpc.color}`}>
+                                <span
+                                  className={`text-[9px] px-1.5 py-0 rounded-full font-medium ${dpc.bgColor} ${dpc.color}`}
+                                >
                                   {dpc.label}
                                 </span>
                               )}
@@ -505,7 +587,9 @@ export default function ProjetoDetail() {
                                 </SelectTrigger>
                                 <SelectContent>
                                   {disciplinaStatusOptions.map((s) => (
-                                    <SelectItem key={s} value={s} className="text-xs">{s}</SelectItem>
+                                    <SelectItem key={s} value={s} className="text-xs">
+                                      {s}
+                                    </SelectItem>
                                   ))}
                                 </SelectContent>
                               </Select>
@@ -514,7 +598,9 @@ export default function ProjetoDetail() {
                                 {d.status || "Não iniciado"}
                               </Badge>
                             )}
-                            <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${isExpanded ? "rotate-180" : ""}`} />
+                            <ChevronDown
+                              className={`h-4 w-4 text-muted-foreground transition-transform ${isExpanded ? "rotate-180" : ""}`}
+                            />
                           </div>
                         </div>
 
@@ -529,7 +615,9 @@ export default function ProjetoDetail() {
                                       <User className="h-3.5 w-3.5 text-muted-foreground" />
                                       <span className="text-sm font-medium">{resp.responsavel_nome}</span>
                                       {resp.status && (
-                                        <Badge variant="outline" className="text-[10px] h-5">{resp.status}</Badge>
+                                        <Badge variant="outline" className="text-[10px] h-5">
+                                          {resp.status}
+                                        </Badge>
                                       )}
                                     </div>
                                     {canEdit && resps.length > 1 && (
@@ -552,7 +640,9 @@ export default function ProjetoDetail() {
                                           type="date"
                                           className="h-8 text-xs"
                                           value={resp.data_inicio || ""}
-                                          onChange={(e) => handleUpdateResponsavelDatas(i, rIdx, "data_inicio", e.target.value)}
+                                          onChange={(e) =>
+                                            handleUpdateResponsavelDatas(i, rIdx, "data_inicio", e.target.value)
+                                          }
                                           onBlur={handleSaveResponsavelDatas}
                                         />
                                       </div>
@@ -562,7 +652,9 @@ export default function ProjetoDetail() {
                                           type="date"
                                           className="h-8 text-xs"
                                           value={resp.data_previsao || ""}
-                                          onChange={(e) => handleUpdateResponsavelDatas(i, rIdx, "data_previsao", e.target.value)}
+                                          onChange={(e) =>
+                                            handleUpdateResponsavelDatas(i, rIdx, "data_previsao", e.target.value)
+                                          }
                                           onBlur={handleSaveResponsavelDatas}
                                         />
                                       </div>
@@ -572,7 +664,9 @@ export default function ProjetoDetail() {
                                           type="date"
                                           className="h-8 text-xs"
                                           value={resp.data_final || ""}
-                                          onChange={(e) => handleUpdateResponsavelDatas(i, rIdx, "data_final", e.target.value)}
+                                          onChange={(e) =>
+                                            handleUpdateResponsavelDatas(i, rIdx, "data_final", e.target.value)
+                                          }
                                           onBlur={handleSaveResponsavelDatas}
                                         />
                                       </div>
@@ -580,9 +674,17 @@ export default function ProjetoDetail() {
                                   ) : (
                                     <div className="flex items-center gap-4 text-[10px] text-muted-foreground">
                                       {resp.data_inicio && <span>Início: {formatDateShort(resp.data_inicio)}</span>}
-                                      {resp.data_previsao && <span>Previsão: {formatDateShort(resp.data_previsao)}</span>}
-                                      {resp.data_final && <span className="text-green-700 font-medium">Final: {formatDateShort(resp.data_final)}</span>}
-                                      {!resp.data_inicio && !resp.data_previsao && !resp.data_final && <span>Sem datas definidas</span>}
+                                      {resp.data_previsao && (
+                                        <span>Previsão: {formatDateShort(resp.data_previsao)}</span>
+                                      )}
+                                      {resp.data_final && (
+                                        <span className="text-green-700 font-medium">
+                                          Final: {formatDateShort(resp.data_final)}
+                                        </span>
+                                      )}
+                                      {!resp.data_inicio && !resp.data_previsao && !resp.data_final && (
+                                        <span>Sem datas definidas</span>
+                                      )}
                                     </div>
                                   )}
                                 </div>
@@ -596,11 +698,18 @@ export default function ProjetoDetail() {
                                   <div className="bg-muted/20 rounded-lg p-3 border border-dashed space-y-3">
                                     <div className="space-y-1">
                                       <Label className="text-xs">Responsável</Label>
-                                      <Select value={newResp.responsavel_id} onValueChange={(v) => setNewResp((prev) => ({ ...prev, responsavel_id: v }))}>
-                                        <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                                      <Select
+                                        value={newResp.responsavel_id}
+                                        onValueChange={(v) => setNewResp((prev) => ({ ...prev, responsavel_id: v }))}
+                                      >
+                                        <SelectTrigger className="h-8 text-xs">
+                                          <SelectValue placeholder="Selecione" />
+                                        </SelectTrigger>
                                         <SelectContent>
                                           {pessoas.map((p) => (
-                                            <SelectItem key={p.id} value={p.id} className="text-xs">{p.nome}</SelectItem>
+                                            <SelectItem key={p.id} value={p.id} className="text-xs">
+                                              {p.nome}
+                                            </SelectItem>
                                           ))}
                                         </SelectContent>
                                       </Select>
@@ -608,20 +717,64 @@ export default function ProjetoDetail() {
                                     <div className="grid grid-cols-3 gap-2">
                                       <div className="space-y-1">
                                         <Label className="text-[10px] text-muted-foreground">Início</Label>
-                                        <Input type="date" className="h-8 text-xs" value={newResp.data_inicio} onChange={(e) => setNewResp((prev) => ({ ...prev, data_inicio: e.target.value }))} />
+                                        <Input
+                                          type="date"
+                                          className="h-8 text-xs"
+                                          value={newResp.data_inicio}
+                                          onChange={(e) =>
+                                            setNewResp((prev) => ({ ...prev, data_inicio: e.target.value }))
+                                          }
+                                        />
                                       </div>
                                       <div className="space-y-1">
                                         <Label className="text-[10px] text-muted-foreground">Previsão</Label>
-                                        <Input type="date" className="h-8 text-xs" value={newResp.data_previsao} onChange={(e) => setNewResp((prev) => ({ ...prev, data_previsao: e.target.value }))} />
+                                        <Input
+                                          type="date"
+                                          className="h-8 text-xs"
+                                          value={newResp.data_previsao}
+                                          onChange={(e) =>
+                                            setNewResp((prev) => ({ ...prev, data_previsao: e.target.value }))
+                                          }
+                                        />
                                       </div>
                                       <div className="space-y-1">
                                         <Label className="text-[10px] text-muted-foreground">Final</Label>
-                                        <Input type="date" className="h-8 text-xs" value={newResp.data_final} onChange={(e) => setNewResp((prev) => ({ ...prev, data_final: e.target.value }))} />
+                                        <Input
+                                          type="date"
+                                          className="h-8 text-xs"
+                                          value={newResp.data_final}
+                                          onChange={(e) =>
+                                            setNewResp((prev) => ({ ...prev, data_final: e.target.value }))
+                                          }
+                                        />
                                       </div>
                                     </div>
                                     <div className="flex gap-2">
-                                      <Button type="button" size="sm" className="h-7 text-xs" onClick={() => handleAddResponsavel(i)}>Adicionar</Button>
-                                      <Button type="button" variant="ghost" size="sm" className="h-7 text-xs" onClick={() => { setAddingResponsavelToDisc(null); setNewResp({ responsavel_id: "", data_inicio: "", data_previsao: "", data_final: "" }); }}>Cancelar</Button>
+                                      <Button
+                                        type="button"
+                                        size="sm"
+                                        className="h-7 text-xs"
+                                        onClick={() => handleAddResponsavel(i)}
+                                      >
+                                        Adicionar
+                                      </Button>
+                                      <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-7 text-xs"
+                                        onClick={() => {
+                                          setAddingResponsavelToDisc(null);
+                                          setNewResp({
+                                            responsavel_id: "",
+                                            data_inicio: "",
+                                            data_previsao: "",
+                                            data_final: "",
+                                          });
+                                        }}
+                                      >
+                                        Cancelar
+                                      </Button>
                                     </div>
                                   </div>
                                 ) : (
@@ -640,10 +793,23 @@ export default function ProjetoDetail() {
                             {/* Ações da disciplina */}
                             {canEdit && (
                               <div className="flex items-center justify-end gap-2 mt-3 pt-2 border-t">
-                                <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => { setEditingDiscIdx(i); setIsDiscDialogOpen(true); }}>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-7 text-xs"
+                                  onClick={() => {
+                                    setEditingDiscIdx(i);
+                                    setIsDiscDialogOpen(true);
+                                  }}
+                                >
                                   <Edit className="h-3 w-3 mr-1" /> Editar Disciplina
                                 </Button>
-                                <Button variant="ghost" size="sm" className="h-7 text-xs text-red-500 hover:text-red-700" onClick={() => handleRemoveDisc(i)}>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-7 text-xs text-red-500 hover:text-red-700"
+                                  onClick={() => handleRemoveDisc(i)}
+                                >
                                   <Trash2 className="h-3 w-3 mr-1" /> Remover
                                 </Button>
                               </div>
@@ -659,7 +825,16 @@ export default function ProjetoDetail() {
           </Card>
 
           {/* Dialog de edição de disciplina */}
-          <Dialog open={isDiscDialogOpen} onOpenChange={(open) => { if (!open) { setIsDiscDialogOpen(false); setEditingDiscIdx(null); setNewObservation(""); } }}>
+          <Dialog
+            open={isDiscDialogOpen}
+            onOpenChange={(open) => {
+              if (!open) {
+                setIsDiscDialogOpen(false);
+                setEditingDiscIdx(null);
+                setNewObservation("");
+              }
+            }}
+          >
             <DialogContent className="sm:max-w-lg">
               <DialogHeader>
                 <DialogTitle>Editar Disciplina</DialogTitle>
@@ -677,10 +852,14 @@ export default function ProjetoDetail() {
                         value={projeto.disciplinas[editingDiscIdx].disciplina}
                         onValueChange={(val) => handleDiscFieldUpdate("disciplina", val)}
                       >
-                        <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                        <SelectTrigger className="h-9">
+                          <SelectValue />
+                        </SelectTrigger>
                         <SelectContent>
                           {disciplinasCatalog.map((d) => (
-                            <SelectItem key={d.id} value={d.nome}>{d.nome}</SelectItem>
+                            <SelectItem key={d.id} value={d.nome}>
+                              {d.nome}
+                            </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -691,15 +870,22 @@ export default function ProjetoDetail() {
                         value={projeto.disciplinas[editingDiscIdx].prioridade || PROJECT_PRIORITY.MEDIA}
                         onValueChange={(val) => handleDiscFieldUpdate("prioridade", val)}
                       >
-                        <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                        <SelectTrigger className="h-9">
+                          <SelectValue />
+                        </SelectTrigger>
                         <SelectContent>
                           {PRIORITY_OPTIONS.map((p) => (
                             <SelectItem key={p} value={p}>
                               <span className="flex items-center gap-1.5">
-                                <span className={`h-2 w-2 rounded-full ${
-                                  p === PROJECT_PRIORITY.ALTA ? "bg-red-500" :
-                                  p === PROJECT_PRIORITY.MEDIA ? "bg-amber-400" : "bg-blue-400"
-                                }`} />
+                                <span
+                                  className={`h-2 w-2 rounded-full ${
+                                    p === PROJECT_PRIORITY.ALTA
+                                      ? "bg-red-500"
+                                      : p === PROJECT_PRIORITY.MEDIA
+                                        ? "bg-amber-400"
+                                        : "bg-blue-400"
+                                  }`}
+                                />
                                 {PROJECT_PRIORITY_CONFIG[p].label}
                               </span>
                             </SelectItem>
@@ -716,10 +902,14 @@ export default function ProjetoDetail() {
                         value={projeto.disciplinas[editingDiscIdx].status || "Não Iniciado"}
                         onValueChange={(val) => handleDiscFieldUpdate("status", val)}
                       >
-                        <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                        <SelectTrigger className="h-9">
+                          <SelectValue />
+                        </SelectTrigger>
                         <SelectContent>
                           {disciplinaStatusOptions.map((opt) => (
-                            <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                            <SelectItem key={opt} value={opt}>
+                              {opt}
+                            </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -758,7 +948,8 @@ export default function ProjetoDetail() {
                     </Label>
 
                     <div className="bg-gray-50 rounded-lg p-3 max-h-40 overflow-y-auto space-y-2">
-                      {(!projeto.disciplinas[editingDiscIdx].observacoes || projeto.disciplinas[editingDiscIdx].observacoes!.length === 0) ? (
+                      {!projeto.disciplinas[editingDiscIdx].observacoes ||
+                      projeto.disciplinas[editingDiscIdx].observacoes!.length === 0 ? (
                         <p className="text-xs text-center text-gray-400 py-3">Nenhuma observação</p>
                       ) : (
                         projeto.disciplinas[editingDiscIdx].observacoes!.map((obs, oi) => (
@@ -778,7 +969,12 @@ export default function ProjetoDetail() {
                         placeholder="Nova observação..."
                         value={newObservation}
                         onChange={(e) => setNewObservation(e.target.value)}
-                        onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleAddObservation(); } }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            handleAddObservation();
+                          }
+                        }}
                         className="h-9"
                       />
                       <Button size="icon" className="h-9 w-9" onClick={handleAddObservation}>
@@ -788,7 +984,15 @@ export default function ProjetoDetail() {
                   </div>
 
                   <div className="flex gap-2 pt-2">
-                    <Button variant="outline" className="flex-1" onClick={() => { setIsDiscDialogOpen(false); setEditingDiscIdx(null); setNewObservation(""); }}>
+                    <Button
+                      variant="outline"
+                      className="flex-1"
+                      onClick={() => {
+                        setIsDiscDialogOpen(false);
+                        setEditingDiscIdx(null);
+                        setNewObservation("");
+                      }}
+                    >
                       Cancelar
                     </Button>
                     <Button className="flex-1" onClick={handleSaveDiscChanges}>
@@ -819,7 +1023,15 @@ export default function ProjetoDetail() {
       </Tabs>
 
       {/* Dialog de justificativa obrigatória para atraso */}
-      <AlertDialog open={!!justificativaDialog} onOpenChange={(open) => { if (!open) { setJustificativaDialog(null); setJustificativaText(""); } }}>
+      <AlertDialog
+        open={!!justificativaDialog}
+        onOpenChange={(open) => {
+          if (!open) {
+            setJustificativaDialog(null);
+            setJustificativaText("");
+          }
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
@@ -827,8 +1039,11 @@ export default function ProjetoDetail() {
               Justificativa de Atraso Obrigatória
             </AlertDialogTitle>
             <AlertDialogDescription>
-              A disciplina <strong>{justificativaDialog !== null && projeto?.disciplinas[justificativaDialog.discIdx]?.disciplina}</strong> está atrasada.
-              É necessário informar uma justificativa para continuar.
+              A disciplina{" "}
+              <strong>
+                {justificativaDialog !== null && projeto?.disciplinas[justificativaDialog.discIdx]?.disciplina}
+              </strong>{" "}
+              está atrasada. É necessário informar uma justificativa para continuar.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="py-2">

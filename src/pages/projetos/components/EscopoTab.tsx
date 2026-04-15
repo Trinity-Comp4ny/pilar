@@ -56,7 +56,9 @@ export function EscopoTab({ projetoId, canEdit }: EscopoTabProps) {
   const [formTipo, setFormTipo] = useState<"original" | "aditivo">("aditivo");
   const [formDescricao, setFormDescricao] = useState("");
   const [formJustificativa, setFormJustificativa] = useState("");
-  const [formItens, setFormItens] = useState<Array<{ descricao: string; disciplina: string; horas: number; custo: number }>>([]);
+  const [formItens, setFormItens] = useState<
+    Array<{ descricao: string; disciplina: string; horas: number; custo: number }>
+  >([]);
 
   const { data: escopos = [], isLoading } = useQuery({
     queryKey: ["escopos", projetoId],
@@ -77,10 +79,7 @@ export function EscopoTab({ projetoId, canEdit }: EscopoTabProps) {
     queryFn: async () => {
       const escopoIds = escopos.map((e) => e.id);
       if (escopoIds.length === 0) return {};
-      const { data, error } = await supabase
-        .from("escopo_itens")
-        .select("*")
-        .in("escopo_id", escopoIds);
+      const { data, error } = await supabase.from("escopo_itens").select("*").in("escopo_id", escopoIds);
       if (error) throw error;
       const map: Record<string, EscopoItem[]> = {};
       (data || []).forEach((item) => {
@@ -117,14 +116,22 @@ export function EscopoTab({ projetoId, canEdit }: EscopoTabProps) {
 
       // Insere itens
       if (formItens.length > 0) {
-        const { error: itensError } = await supabase
-          .from("escopo_itens")
-          .insert(formItens.map((item) => ({ escopo_id: escopo.id, descricao: item.descricao, disciplina: item.disciplina || null, horas: item.horas, custo: item.custo })));
+        const { error: itensError } = await supabase.from("escopo_itens").insert(
+          formItens.map((item) => ({
+            escopo_id: escopo.id,
+            descricao: item.descricao,
+            disciplina: item.disciplina || null,
+            horas: item.horas,
+            custo: item.custo,
+          }))
+        );
         if (itensError) throw itensError;
       }
 
       // Registra histórico
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       await supabase.from("escopo_historico").insert({
         escopo_id: escopo.id,
         acao: "criado",
@@ -143,7 +150,9 @@ export function EscopoTab({ projetoId, canEdit }: EscopoTabProps) {
 
   const updateStatusMutation = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       const updateData: Record<string, string> = { status };
       if (status === "aprovado" || status === "rejeitado") {
         updateData.aprovado_por = user?.id;
@@ -185,7 +194,7 @@ export function EscopoTab({ projetoId, canEdit }: EscopoTabProps) {
     setFormItens([...formItens, { descricao: "", disciplina: "", horas: 0, custo: 0 }]);
   };
 
-  const updateItem = (index: number, field: keyof typeof formItens[number], value: string | number) => {
+  const updateItem = (index: number, field: keyof (typeof formItens)[number], value: string | number) => {
     const updated = [...formItens];
     (updated[index] as Record<string, string | number>)[field] = value;
     setFormItens(updated);
@@ -195,13 +204,19 @@ export function EscopoTab({ projetoId, canEdit }: EscopoTabProps) {
     setFormItens(formItens.filter((_, i) => i !== index));
   };
 
-  const formatCurrency = (v: number) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
+  const formatCurrency = (v: number) =>
+    new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
 
   const escopoOriginal = escopos.find((e) => e.tipo === "original");
   const aditivos = escopos.filter((e) => e.tipo === "aditivo");
   const totalAditivos = aditivos.filter((a) => a.status === "aprovado").reduce((s, a) => s + a.valor_aditivo, 0);
 
-  if (isLoading) return <div className="flex justify-center py-8"><Loader2 className="h-5 w-5 animate-spin" /></div>;
+  if (isLoading)
+    return (
+      <div className="flex justify-center py-8">
+        <Loader2 className="h-5 w-5 animate-spin" />
+      </div>
+    );
 
   return (
     <div className="space-y-4">
@@ -210,16 +225,31 @@ export function EscopoTab({ projetoId, canEdit }: EscopoTabProps) {
         <div className="flex items-center gap-3">
           {escopoOriginal && <Badge variant="secondary">Escopo original definido</Badge>}
           <Badge variant="secondary">{aditivos.length} aditivo(s)</Badge>
-          {totalAditivos > 0 && <Badge className="bg-orange-100 text-orange-800">+ {formatCurrency(totalAditivos)} em aditivos</Badge>}
+          {totalAditivos > 0 && (
+            <Badge className="bg-orange-100 text-orange-800">+ {formatCurrency(totalAditivos)} em aditivos</Badge>
+          )}
         </div>
         {canEdit && (
           <div className="flex gap-2">
             {!escopoOriginal && (
-              <Button size="sm" variant="outline" onClick={() => { setFormTipo("original"); setIsFormOpen(true); }}>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  setFormTipo("original");
+                  setIsFormOpen(true);
+                }}
+              >
                 <Plus className="h-3.5 w-3.5 mr-1" /> Escopo Original
               </Button>
             )}
-            <Button size="sm" onClick={() => { setFormTipo("aditivo"); setIsFormOpen(true); }}>
+            <Button
+              size="sm"
+              onClick={() => {
+                setFormTipo("aditivo");
+                setIsFormOpen(true);
+              }}
+            >
               <Plus className="h-3.5 w-3.5 mr-1" /> Novo Aditivo
             </Button>
           </div>
@@ -244,7 +274,10 @@ export function EscopoTab({ projetoId, canEdit }: EscopoTabProps) {
           return (
             <Card key={escopo.id}>
               <CardContent className="p-4">
-                <div className="flex items-start gap-3 cursor-pointer" onClick={() => setExpandedId(isExpanded ? null : escopo.id)}>
+                <div
+                  className="flex items-start gap-3 cursor-pointer"
+                  onClick={() => setExpandedId(isExpanded ? null : escopo.id)}
+                >
                   <div className={`p-1.5 rounded mt-0.5 ${config.color}`}>
                     <Icon className="h-4 w-4" />
                   </div>
@@ -260,12 +293,16 @@ export function EscopoTab({ projetoId, canEdit }: EscopoTabProps) {
                       {escopo.horas_estimadas > 0 && <span>{escopo.horas_estimadas}h</span>}
                       {escopo.custo_estimado > 0 && <span>Custo: {formatCurrency(escopo.custo_estimado)}</span>}
                       {escopo.tipo === "aditivo" && escopo.valor_aditivo > 0 && (
-                        <span className="font-medium text-orange-700">Aditivo: {formatCurrency(escopo.valor_aditivo)}</span>
+                        <span className="font-medium text-orange-700">
+                          Aditivo: {formatCurrency(escopo.valor_aditivo)}
+                        </span>
                       )}
                       {escopo.impacto_prazo_dias > 0 && <span>+{escopo.impacto_prazo_dias} dias</span>}
                     </div>
                   </div>
-                  <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${isExpanded ? "rotate-180" : ""}`} />
+                  <ChevronDown
+                    className={`h-4 w-4 text-muted-foreground transition-transform ${isExpanded ? "rotate-180" : ""}`}
+                  />
                 </div>
 
                 {/* Expandido: itens + ações */}
@@ -276,9 +313,15 @@ export function EscopoTab({ projetoId, canEdit }: EscopoTabProps) {
                         {itens.map((item) => (
                           <div key={item.id} className="flex items-center gap-2 text-xs py-1">
                             <span className="flex-1">{item.descricao}</span>
-                            {item.disciplina && <Badge variant="secondary" className="text-[10px]">{item.disciplina}</Badge>}
+                            {item.disciplina && (
+                              <Badge variant="secondary" className="text-[10px]">
+                                {item.disciplina}
+                              </Badge>
+                            )}
                             {item.horas > 0 && <span className="text-muted-foreground">{item.horas}h</span>}
-                            {item.custo > 0 && <span className="text-muted-foreground">{formatCurrency(item.custo)}</span>}
+                            {item.custo > 0 && (
+                              <span className="text-muted-foreground">{formatCurrency(item.custo)}</span>
+                            )}
                           </div>
                         ))}
                       </div>
@@ -289,16 +332,30 @@ export function EscopoTab({ projetoId, canEdit }: EscopoTabProps) {
                     {canEdit && (
                       <div className="flex items-center gap-2">
                         {escopo.status === "rascunho" && (
-                          <Button size="sm" variant="outline" className="text-xs h-7" onClick={() => updateStatusMutation.mutate({ id: escopo.id, status: "pendente_aprovacao" })}>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-xs h-7"
+                            onClick={() => updateStatusMutation.mutate({ id: escopo.id, status: "pendente_aprovacao" })}
+                          >
                             Enviar para Aprovação
                           </Button>
                         )}
                         {escopo.status === "pendente_aprovacao" && (
                           <>
-                            <Button size="sm" className="text-xs h-7 bg-green-600 hover:bg-green-700" onClick={() => updateStatusMutation.mutate({ id: escopo.id, status: "aprovado" })}>
+                            <Button
+                              size="sm"
+                              className="text-xs h-7 bg-green-600 hover:bg-green-700"
+                              onClick={() => updateStatusMutation.mutate({ id: escopo.id, status: "aprovado" })}
+                            >
                               <CheckCircle2 className="h-3 w-3 mr-1" /> Aprovar
                             </Button>
-                            <Button size="sm" variant="destructive" className="text-xs h-7" onClick={() => updateStatusMutation.mutate({ id: escopo.id, status: "rejeitado" })}>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              className="text-xs h-7"
+                              onClick={() => updateStatusMutation.mutate({ id: escopo.id, status: "rejeitado" })}
+                            >
                               <XCircle className="h-3 w-3 mr-1" /> Rejeitar
                             </Button>
                           </>
@@ -314,7 +371,12 @@ export function EscopoTab({ projetoId, canEdit }: EscopoTabProps) {
       )}
 
       {/* Dialog de criação */}
-      <Dialog open={isFormOpen} onOpenChange={(open) => { if (!open) resetForm(); }}>
+      <Dialog
+        open={isFormOpen}
+        onOpenChange={(open) => {
+          if (!open) resetForm();
+        }}
+      >
         <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{formTipo === "original" ? "Definir Escopo Original" : "Novo Aditivo"}</DialogTitle>
@@ -322,13 +384,23 @@ export function EscopoTab({ projetoId, canEdit }: EscopoTabProps) {
           <div className="space-y-4 mt-2">
             <div className="space-y-2">
               <Label>Descrição *</Label>
-              <Textarea value={formDescricao} onChange={(e) => setFormDescricao(e.target.value)} rows={2} placeholder="Descreva o escopo ou a mudança solicitada..." />
+              <Textarea
+                value={formDescricao}
+                onChange={(e) => setFormDescricao(e.target.value)}
+                rows={2}
+                placeholder="Descreva o escopo ou a mudança solicitada..."
+              />
             </div>
 
             {formTipo === "aditivo" && (
               <div className="space-y-2">
                 <Label>Justificativa</Label>
-                <Textarea value={formJustificativa} onChange={(e) => setFormJustificativa(e.target.value)} rows={2} placeholder="Por que este aditivo é necessário?" />
+                <Textarea
+                  value={formJustificativa}
+                  onChange={(e) => setFormJustificativa(e.target.value)}
+                  rows={2}
+                  placeholder="Por que este aditivo é necessário?"
+                />
               </div>
             )}
 
@@ -342,16 +414,41 @@ export function EscopoTab({ projetoId, canEdit }: EscopoTabProps) {
               </div>
               {formItens.map((item, i) => (
                 <div key={i} className="flex items-center gap-2 mb-2">
-                  <Input className="flex-1 h-8 text-xs" placeholder="Descrição" value={item.descricao} onChange={(e) => updateItem(i, "descricao", e.target.value)} />
-                  <Input className="w-24 h-8 text-xs" placeholder="Disciplina" value={item.disciplina} onChange={(e) => updateItem(i, "disciplina", e.target.value)} />
-                  <Input className="w-16 h-8 text-xs" type="number" placeholder="Horas" value={item.horas || ""} onChange={(e) => updateItem(i, "horas", parseFloat(e.target.value) || 0)} />
-                  <Input className="w-20 h-8 text-xs" type="number" placeholder="Custo" value={item.custo || ""} onChange={(e) => updateItem(i, "custo", parseFloat(e.target.value) || 0)} />
-                  <Button variant="ghost" size="icon" className="h-7 w-7 text-red-400" onClick={() => removeItem(i)}><Trash2 className="h-3 w-3" /></Button>
+                  <Input
+                    className="flex-1 h-8 text-xs"
+                    placeholder="Descrição"
+                    value={item.descricao}
+                    onChange={(e) => updateItem(i, "descricao", e.target.value)}
+                  />
+                  <Input
+                    className="w-24 h-8 text-xs"
+                    placeholder="Disciplina"
+                    value={item.disciplina}
+                    onChange={(e) => updateItem(i, "disciplina", e.target.value)}
+                  />
+                  <Input
+                    className="w-16 h-8 text-xs"
+                    type="number"
+                    placeholder="Horas"
+                    value={item.horas || ""}
+                    onChange={(e) => updateItem(i, "horas", parseFloat(e.target.value) || 0)}
+                  />
+                  <Input
+                    className="w-20 h-8 text-xs"
+                    type="number"
+                    placeholder="Custo"
+                    value={item.custo || ""}
+                    onChange={(e) => updateItem(i, "custo", parseFloat(e.target.value) || 0)}
+                  />
+                  <Button variant="ghost" size="icon" className="h-7 w-7 text-red-400" onClick={() => removeItem(i)}>
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
                 </div>
               ))}
               {formItens.length > 0 && (
                 <div className="text-xs text-muted-foreground mt-1">
-                  Total: {formItens.reduce((s, i) => s + i.horas, 0)}h · {formatCurrency(formItens.reduce((s, i) => s + i.custo, 0))}
+                  Total: {formItens.reduce((s, i) => s + i.horas, 0)}h ·{" "}
+                  {formatCurrency(formItens.reduce((s, i) => s + i.custo, 0))}
                   {formTipo === "aditivo" && (
                     <span className="ml-2 font-medium text-orange-700">
                       Valor sugerido (30% margem): {formatCurrency(formItens.reduce((s, i) => s + i.custo, 0) * 1.3)}
@@ -362,7 +459,9 @@ export function EscopoTab({ projetoId, canEdit }: EscopoTabProps) {
             </div>
 
             <div className="flex justify-end gap-2 pt-2">
-              <Button variant="outline" onClick={resetForm}>Cancelar</Button>
+              <Button variant="outline" onClick={resetForm}>
+                Cancelar
+              </Button>
               <Button onClick={() => createMutation.mutate()} disabled={createMutation.isPending}>
                 {formTipo === "original" ? "Definir Escopo" : "Criar Aditivo"}
               </Button>

@@ -104,11 +104,7 @@ export const useAiInsights = (tipo?: AiTipo, limit = 10) => {
   return useQuery({
     queryKey: ["ai-insights", tipo, limit],
     queryFn: async () => {
-      let query = supabase
-        .from("ai_insights")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .limit(limit);
+      let query = supabase.from("ai_insights").select("*").order("created_at", { ascending: false }).limit(limit);
 
       if (tipo) {
         query = query.eq("tipo", tipo);

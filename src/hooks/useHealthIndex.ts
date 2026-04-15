@@ -30,16 +30,16 @@ interface ProjetoConcluido {
 }
 
 export interface HealthBreakdown {
-  margem: number;          // 0-100
+  margem: number; // 0-100
   previsibilidade: number; // 0-100
-  ociosidade: number;      // 0-100 (100 = sem ociosos)
-  atrasos: number;         // 0-100 (100 = sem atrasos)
-  inadimplencia: number;   // 0-100 (100 = sem inadimplência)
-  concentracao: number;    // 0-100 (100 = diversificado)
+  ociosidade: number; // 0-100 (100 = sem ociosos)
+  atrasos: number; // 0-100 (100 = sem atrasos)
+  inadimplencia: number; // 0-100 (100 = sem inadimplência)
+  concentracao: number; // 0-100 (100 = diversificado)
 }
 
 export interface HealthIndex {
-  score: number;           // 0-100
+  score: number; // 0-100
   breakdown: HealthBreakdown;
   label: string;
   color: string;
@@ -47,11 +47,11 @@ export interface HealthIndex {
 
 const PESOS = {
   margem: 0.25,
-  previsibilidade: 0.20,
+  previsibilidade: 0.2,
   ociosidade: 0.15,
   atrasos: 0.15,
   inadimplencia: 0.15,
-  concentracao: 0.10,
+  concentracao: 0.1,
 };
 
 function getLabel(score: number): { label: string; color: string } {
@@ -72,10 +72,21 @@ export const useHealthIndex = () => {
     queryFn: async () => {
       // Busca dados em paralelo
       const [receitasRes, despesasRes, projetosRes, projetosConcRes] = await Promise.all([
-        supabase.from("receitas").select("valor, status, cliente_id, data_vencimento, data_recebimento, projeto_id").is("deleted_at", null),
+        supabase
+          .from("receitas")
+          .select("valor, status, cliente_id, data_vencimento, data_recebimento, projeto_id")
+          .is("deleted_at", null),
         supabase.from("despesas").select("valor, status, projeto_id").is("deleted_at", null),
-        supabase.from("projetos").select("id, status, data_previsao, data_final").is("deleted_at", null).in("status", ["Planejamento", "Em andamento"]),
-        supabase.from("projetos").select("id, data_previsao, data_final").is("deleted_at", null).eq("status", "Concluído"),
+        supabase
+          .from("projetos")
+          .select("id, status, data_previsao, data_final")
+          .is("deleted_at", null)
+          .in("status", ["Planejamento", "Em andamento"]),
+        supabase
+          .from("projetos")
+          .select("id, data_previsao, data_final")
+          .is("deleted_at", null)
+          .eq("status", "Concluído"),
       ]);
 
       const receitas = (receitasRes.data || []) as ReceitaHealth[];
@@ -110,7 +121,9 @@ export const useHealthIndex = () => {
       const umAnoAtras = new Date();
       umAnoAtras.setFullYear(umAnoAtras.getFullYear() - 1);
       const recentes = projetosConcluidos.filter((p) => p.data_final && new Date(p.data_final) >= umAnoAtras);
-      const noPrazo = recentes.filter((p) => p.data_previsao && p.data_final && new Date(p.data_final) <= new Date(p.data_previsao));
+      const noPrazo = recentes.filter(
+        (p) => p.data_previsao && p.data_final && new Date(p.data_final) <= new Date(p.data_previsao)
+      );
       const scorePrevisibilidade = recentes.length > 0 ? (noPrazo.length / recentes.length) * 100 : 50;
 
       // 3. OCIOSIDADE (15%) - Invertido: mais ociosos = menor score
@@ -119,23 +132,20 @@ export const useHealthIndex = () => {
       const scoreOciosidade = 70;
 
       // 4. ATRASOS (15%) - % projetos ativos SEM atraso
-      const atrasados = projetosAtivos.filter((p) =>
-        p.data_previsao && !p.data_final && new Date(p.data_previsao) < new Date()
+      const atrasados = projetosAtivos.filter(
+        (p) => p.data_previsao && !p.data_final && new Date(p.data_previsao) < new Date()
       ).length;
-      const scoreAtrasos = projetosAtivos.length > 0
-        ? ((projetosAtivos.length - atrasados) / projetosAtivos.length) * 100
-        : 100;
+      const scoreAtrasos =
+        projetosAtivos.length > 0 ? ((projetosAtivos.length - atrasados) / projetosAtivos.length) * 100 : 100;
 
       // 5. INADIMPLÊNCIA (15%) - % receitas NÃO atrasadas
       const receitasPendentes = receitas.filter((r) => r.status === "Pendente");
-      const receitasAtrasadas = receitasPendentes.filter((r) =>
-        r.data_vencimento && new Date(r.data_vencimento) < new Date()
+      const receitasAtrasadas = receitasPendentes.filter(
+        (r) => r.data_vencimento && new Date(r.data_vencimento) < new Date()
       );
       const valorAtrasado = receitasAtrasadas.reduce((s, r) => s + Number(r.valor), 0);
       const valorPendente = receitasPendentes.reduce((s, r) => s + Number(r.valor), 0);
-      const scoreInadimplencia = valorPendente > 0
-        ? ((valorPendente - valorAtrasado) / valorPendente) * 100
-        : 100;
+      const scoreInadimplencia = valorPendente > 0 ? ((valorPendente - valorAtrasado) / valorPendente) * 100 : 100;
 
       // 6. CONCENTRAÇÃO DE CLIENTES (10%) - HHI invertido
       const receitaPorCliente: Record<string, number> = {};
@@ -166,11 +176,11 @@ export const useHealthIndex = () => {
 
       const score = Math.round(
         breakdown.margem * PESOS.margem +
-        breakdown.previsibilidade * PESOS.previsibilidade +
-        breakdown.ociosidade * PESOS.ociosidade +
-        breakdown.atrasos * PESOS.atrasos +
-        breakdown.inadimplencia * PESOS.inadimplencia +
-        breakdown.concentracao * PESOS.concentracao
+          breakdown.previsibilidade * PESOS.previsibilidade +
+          breakdown.ociosidade * PESOS.ociosidade +
+          breakdown.atrasos * PESOS.atrasos +
+          breakdown.inadimplencia * PESOS.inadimplencia +
+          breakdown.concentracao * PESOS.concentracao
       );
 
       const { label, color } = getLabel(score);

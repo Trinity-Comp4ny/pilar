@@ -15,11 +15,7 @@ interface Receita {
 }
 
 export default function PortalFinanceiro() {
-  return (
-    <PortalShell>
-      {(data) => <FinanceiroContent projetoId={data.projeto_id} />}
-    </PortalShell>
-  );
+  return <PortalShell>{(data) => <FinanceiroContent projetoId={data.projeto_id} />}</PortalShell>;
 }
 
 function FinanceiroContent({ projetoId }: { projetoId: string }) {
@@ -40,10 +36,16 @@ function FinanceiroContent({ projetoId }: { projetoId: string }) {
     fetch();
   }, [projetoId]);
 
-  if (loading) return <div className="flex justify-center py-8"><Loader2 className="h-5 w-5 animate-spin" /></div>;
+  if (loading)
+    return (
+      <div className="flex justify-center py-8">
+        <Loader2 className="h-5 w-5 animate-spin" />
+      </div>
+    );
 
-  const formatCurrency = (v: number) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
-  const formatDate = (d: string | null) => d ? new Date(d + "T00:00:00").toLocaleDateString("pt-BR") : "—";
+  const formatCurrency = (v: number) =>
+    new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
+  const formatDate = (d: string | null) => (d ? new Date(d + "T00:00:00").toLocaleDateString("pt-BR") : "—");
 
   const totalPrevisto = receitas.reduce((s, r) => s + r.valor, 0);
   const totalRecebido = receitas.filter((r) => r.status === "Recebido").reduce((s, r) => s + r.valor, 0);
@@ -82,7 +84,10 @@ function FinanceiroContent({ projetoId }: { projetoId: string }) {
               <span className="text-sm font-bold">{((totalRecebido / totalPrevisto) * 100).toFixed(0)}%</span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-3">
-              <div className="bg-green-500 h-3 rounded-full transition-all" style={{ width: `${(totalRecebido / totalPrevisto) * 100}%` }} />
+              <div
+                className="bg-green-500 h-3 rounded-full transition-all"
+                style={{ width: `${(totalRecebido / totalPrevisto) * 100}%` }}
+              />
             </div>
           </CardContent>
         </Card>
@@ -101,7 +106,9 @@ function FinanceiroContent({ projetoId }: { projetoId: string }) {
                 const isAtrasado = !isRecebido && new Date(r.data_vencimento) < new Date();
                 return (
                   <div key={r.id} className="flex items-center gap-3 p-3 border rounded-lg">
-                    <div className={`p-1.5 rounded ${isRecebido ? "bg-green-100 text-green-700" : isAtrasado ? "bg-red-100 text-red-700" : "bg-yellow-100 text-yellow-700"}`}>
+                    <div
+                      className={`p-1.5 rounded ${isRecebido ? "bg-green-100 text-green-700" : isAtrasado ? "bg-red-100 text-red-700" : "bg-yellow-100 text-yellow-700"}`}
+                    >
                       {isRecebido ? <CheckCircle2 className="h-4 w-4" /> : <Clock className="h-4 w-4" />}
                     </div>
                     <div className="flex-1">
@@ -113,7 +120,9 @@ function FinanceiroContent({ projetoId }: { projetoId: string }) {
                     </div>
                     <div className="text-right">
                       <p className="text-sm font-bold">{formatCurrency(r.valor)}</p>
-                      <Badge className={`text-[10px] ${isRecebido ? "bg-green-100 text-green-800" : isAtrasado ? "bg-red-100 text-red-800" : "bg-yellow-100 text-yellow-800"}`}>
+                      <Badge
+                        className={`text-[10px] ${isRecebido ? "bg-green-100 text-green-800" : isAtrasado ? "bg-red-100 text-red-800" : "bg-yellow-100 text-yellow-800"}`}
+                      >
                         {isRecebido ? "Recebido" : isAtrasado ? "Atrasado" : "Pendente"}
                       </Badge>
                     </div>

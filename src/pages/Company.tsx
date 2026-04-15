@@ -29,8 +29,16 @@ export default function Company() {
   const [isLogoPreviewOpen, setIsLogoPreviewOpen] = useState(false);
 
   const [companyData, setCompanyData] = useState<CompanyData>({
-    nomeEmpresa: "", cnpj: "", email: "", contato: "",
-    endereco: "", cidade: "", estado: "", cep: "", status: "active", logoUrl: "",
+    nomeEmpresa: "",
+    cnpj: "",
+    email: "",
+    contato: "",
+    endereco: "",
+    cidade: "",
+    estado: "",
+    cep: "",
+    status: "active",
+    logoUrl: "",
   });
 
   const [users, setUsers] = useState<CompanyUser[]>([]);
@@ -49,14 +57,18 @@ export default function Company() {
 
   useEffect(() => {
     const fetchData = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) return;
       setCurrentUserId(user.id);
 
       const { data: profile } = await supabase
-        .from('profiles')
-        .select('id, empresa_id, role, empresas(id, nome, cnpj, status, email, contato, endereco, cidade, estado, cep, logo_url)')
-        .eq('id', user.id)
+        .from("profiles")
+        .select(
+          "id, empresa_id, role, empresas(id, nome, cnpj, status, email, contato, endereco, cidade, estado, cep, logo_url)"
+        )
+        .eq("id", user.id)
         .single();
 
       if (profile?.role) setCurrentRole(profile.role);
@@ -65,26 +77,36 @@ export default function Company() {
       if (profile?.empresas) {
         const emp = profile.empresas;
         setCompanyData({
-          nomeEmpresa: emp.nome || "", cnpj: emp.cnpj || "", email: emp.email || "",
-          contato: emp.contato || "", endereco: emp.endereco || "", cidade: emp.cidade || "",
-          estado: emp.estado || "", cep: emp.cep || "", status: emp.status || "active",
+          nomeEmpresa: emp.nome || "",
+          cnpj: emp.cnpj || "",
+          email: emp.email || "",
+          contato: emp.contato || "",
+          endereco: emp.endereco || "",
+          cidade: emp.cidade || "",
+          estado: emp.estado || "",
+          cep: emp.cep || "",
+          status: emp.status || "active",
           logoUrl: emp.logo_url || "",
         });
       }
 
       if (profile?.empresa_id) {
         const { data: companyUsers } = await supabase
-          .from('profiles')
-          .select('id, nome, email, role, contato')
-          .eq('empresa_id', profile.empresa_id);
+          .from("profiles")
+          .select("id, nome, email, role, contato")
+          .eq("empresa_id", profile.empresa_id);
         if (companyUsers) {
-          setUsers(companyUsers.map((u) => ({ id: u.id, name: u.nome, email: u.email, role: u.role, contato: u.contato })));
+          setUsers(
+            companyUsers.map((u) => ({ id: u.id, name: u.nome, email: u.email, role: u.role, contato: u.contato }))
+          );
         }
       }
     };
 
     fetchData()
-      .catch((e: unknown) => toast({ variant: "destructive", title: "Erro ao carregar", description: getSafeErrorMessage(e) }))
+      .catch((e: unknown) =>
+        toast({ variant: "destructive", title: "Erro ao carregar", description: getSafeErrorMessage(e) })
+      )
       .finally(() => setIsLoading(false));
   }, []);
 
@@ -107,16 +129,27 @@ export default function Company() {
 
   const handleSaveCompany = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) return;
-      const { data: profile } = await supabase.from('profiles').select('empresa_id').eq('id', user.id).single();
+      const { data: profile } = await supabase.from("profiles").select("empresa_id").eq("id", user.id).single();
       if (!profile?.empresa_id) return;
 
-      const { error } = await supabase.from('empresas').update({
-        nome: companyData.nomeEmpresa, cnpj: companyData.cnpj, status: companyData.status,
-        email: companyData.email, contato: companyData.contato, endereco: companyData.endereco,
-        cidade: companyData.cidade, estado: companyData.estado, cep: companyData.cep,
-      }).eq('id', profile.empresa_id);
+      const { error } = await supabase
+        .from("empresas")
+        .update({
+          nome: companyData.nomeEmpresa,
+          cnpj: companyData.cnpj,
+          status: companyData.status,
+          email: companyData.email,
+          contato: companyData.contato,
+          endereco: companyData.endereco,
+          cidade: companyData.cidade,
+          estado: companyData.estado,
+          cep: companyData.cep,
+        })
+        .eq("id", profile.empresa_id);
       if (error) throw error;
 
       setEditingCompany(false);
@@ -130,16 +163,25 @@ export default function Company() {
     if (!inviteName.trim() || !inviteEmail.trim()) return;
     setIsInviting(true);
     try {
-      const { error } = await supabase.functions.invoke('invite-user', {
+      const { error } = await supabase.functions.invoke("invite-user", {
         body: { email: inviteEmail.trim(), nome: inviteName.trim(), role: inviteRole },
       });
       if (error) throw error;
 
       toast({ title: "Convite enviado", description: `Um email foi enviado para ${inviteEmail}` });
-      setUsers([...users, { id: "pending-" + Date.now(), name: inviteName.trim(), email: inviteEmail.trim(), role: inviteRole }]);
-      setInviteName(""); setInviteEmail(""); setInviteRole("user");
+      setUsers([
+        ...users,
+        { id: "pending-" + Date.now(), name: inviteName.trim(), email: inviteEmail.trim(), role: inviteRole },
+      ]);
+      setInviteName("");
+      setInviteEmail("");
+      setInviteRole("user");
     } catch {
-      toast({ variant: "destructive", title: "Erro ao convidar", description: "Verifique se a função 'invite-user' está implantada ou tente novamente." });
+      toast({
+        variant: "destructive",
+        title: "Erro ao convidar",
+        description: "Verifique se a função 'invite-user' está implantada ou tente novamente.",
+      });
     } finally {
       setIsInviting(false);
     }
@@ -149,16 +191,23 @@ export default function Company() {
     setEditUserId(u.id);
     setEditUserName(u.name || "");
     setEditUserContact(u.contato || "");
-    setEditUserRole(ROLES.includes(u.role as (typeof ROLES)[number]) ? u.role as (typeof ROLES)[number] : "user");
+    setEditUserRole(ROLES.includes(u.role as (typeof ROLES)[number]) ? (u.role as (typeof ROLES)[number]) : "user");
     setIsEditUserOpen(true);
   };
 
   const handleSaveUser = async () => {
     if (!editUserId) return;
     try {
-      const { error } = await supabase.from("profiles").update({ nome: editUserName, contato: editUserContact, role: editUserRole }).eq("id", editUserId);
+      const { error } = await supabase
+        .from("profiles")
+        .update({ nome: editUserName, contato: editUserContact, role: editUserRole })
+        .eq("id", editUserId);
       if (error) throw error;
-      setUsers((prev) => prev.map((u) => u.id === editUserId ? { ...u, name: editUserName, contato: editUserContact, role: editUserRole } : u));
+      setUsers((prev) =>
+        prev.map((u) =>
+          u.id === editUserId ? { ...u, name: editUserName, contato: editUserContact, role: editUserRole } : u
+        )
+      );
       setIsEditUserOpen(false);
       toast({ title: "Usuário atualizado" });
     } catch (e: unknown) {
@@ -172,7 +221,8 @@ export default function Company() {
       const { error } = await supabase.from("profiles").delete().eq("id", deleteUserId);
       if (error) throw error;
       setUsers((prev) => prev.filter((u) => u.id !== deleteUserId));
-      setIsDeleteUserOpen(false); setDeleteUserId(null);
+      setIsDeleteUserOpen(false);
+      setDeleteUserId(null);
       toast({ title: "Usuário removido" });
     } catch (e: unknown) {
       toast({ variant: "destructive", title: "Erro ao remover usuário", description: getSafeErrorMessage(e) });
@@ -205,11 +255,16 @@ export default function Company() {
     const ext = pendingLogoFile.name.split(".").pop()?.toLowerCase() || "png";
     const filePath = `${companyId}/logo-${Date.now()}.${ext}`;
 
-    const { error: uploadError } = await supabase.storage.from("company-logos").upload(filePath, pendingLogoFile, { upsert: true });
+    const { error: uploadError } = await supabase.storage
+      .from("company-logos")
+      .upload(filePath, pendingLogoFile, { upsert: true });
     if (uploadError) throw uploadError;
 
     const { data } = supabase.storage.from("company-logos").getPublicUrl(filePath);
-    const { error: updateError } = await supabase.from("empresas").update({ logo_url: data.publicUrl }).eq("id", companyId);
+    const { error: updateError } = await supabase
+      .from("empresas")
+      .update({ logo_url: data.publicUrl })
+      .eq("id", companyId);
     if (updateError) throw updateError;
 
     setCompanyData((prev) => ({ ...prev, logoUrl: data.publicUrl }));
@@ -227,7 +282,9 @@ export default function Company() {
   };
 
   return (
-    <PageLayout header={<PageHeader title="Empresa" description="Gerencie as informações e configurações da empresa" />}>
+    <PageLayout
+      header={<PageHeader title="Empresa" description="Gerencie as informações e configurações da empresa" />}
+    >
       <div className="w-full max-w-6xl mx-auto space-y-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <CompanySummaryCard
@@ -242,37 +299,67 @@ export default function Company() {
             <Tabs defaultValue="dados" className="w-full">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <TabsList className="w-full sm:w-auto">
-                  <TabsTrigger value="dados" className="gap-2"><Building2 size={16} /> Dados</TabsTrigger>
-                  <TabsTrigger value="usuarios" className="gap-2"><UsersIcon size={16} /> Usuários <Badge variant="secondary" className="ml-1">{users.length}</Badge></TabsTrigger>
-                  <TabsTrigger value="visual" className="gap-2"><Palette size={16} /> Personalização</TabsTrigger>
+                  <TabsTrigger value="dados" className="gap-2">
+                    <Building2 size={16} /> Dados
+                  </TabsTrigger>
+                  <TabsTrigger value="usuarios" className="gap-2">
+                    <UsersIcon size={16} /> Usuários{" "}
+                    <Badge variant="secondary" className="ml-1">
+                      {users.length}
+                    </Badge>
+                  </TabsTrigger>
+                  <TabsTrigger value="visual" className="gap-2">
+                    <Palette size={16} /> Personalização
+                  </TabsTrigger>
                 </TabsList>
               </div>
 
               <TabsContent value="dados" className="mt-6">
                 <CompanyDataTab
-                  companyData={companyData} editing={editingCompany} isAdmin={isAdmin} isLoading={isLoading}
-                  onEdit={() => setEditingCompany(true)} onCancel={() => setEditingCompany(false)}
-                  onSave={handleSaveCompany} onChange={handleCompanyFieldChange}
+                  companyData={companyData}
+                  editing={editingCompany}
+                  isAdmin={isAdmin}
+                  isLoading={isLoading}
+                  onEdit={() => setEditingCompany(true)}
+                  onCancel={() => setEditingCompany(false)}
+                  onSave={handleSaveCompany}
+                  onChange={handleCompanyFieldChange}
                   onStatusChange={(v) => setCompanyData((prev) => ({ ...prev, status: v }))}
                 />
               </TabsContent>
 
               <TabsContent value="usuarios" className="mt-6">
                 <CompanyUsersTab
-                  users={users} isAdmin={isAdmin} currentUserId={currentUserId}
-                  inviteName={inviteName} inviteEmail={inviteEmail} inviteRole={inviteRole} isInviting={isInviting}
-                  onInviteNameChange={setInviteName} onInviteEmailChange={setInviteEmail} onInviteRoleChange={setInviteRole}
-                  onAddUser={addUser} onEditUser={openEditUser}
-                  onDeleteUser={(id) => { setDeleteUserId(id); setIsDeleteUserOpen(true); }}
+                  users={users}
+                  isAdmin={isAdmin}
+                  currentUserId={currentUserId}
+                  inviteName={inviteName}
+                  inviteEmail={inviteEmail}
+                  inviteRole={inviteRole}
+                  isInviting={isInviting}
+                  onInviteNameChange={setInviteName}
+                  onInviteEmailChange={setInviteEmail}
+                  onInviteRoleChange={setInviteRole}
+                  onAddUser={addUser}
+                  onEditUser={openEditUser}
+                  onDeleteUser={(id) => {
+                    setDeleteUserId(id);
+                    setIsDeleteUserOpen(true);
+                  }}
                 />
               </TabsContent>
 
               <TabsContent value="visual" className="mt-6">
                 <CompanyVisualTab
-                  companyData={companyData} editing={editingVisual} isAdmin={isAdmin} isLoading={isLoading}
+                  companyData={companyData}
+                  editing={editingVisual}
+                  isAdmin={isAdmin}
+                  isLoading={isLoading}
                   pendingLogoFile={pendingLogoFile}
-                  onEdit={() => setEditingVisual(true)} onCancel={() => setEditingVisual(false)}
-                  onSave={handleSaveVisual} onLogoFileChange={handleLogoFileChange}
+                  onEdit={() => setEditingVisual(true)}
+                  onCancel={() => setEditingVisual(false)}
+                  onSave={handleSaveVisual}
+                  onLogoFileChange={handleLogoFileChange}
                   onLogoPreview={() => setIsLogoPreviewOpen(true)}
                 />
               </TabsContent>
@@ -281,11 +368,21 @@ export default function Company() {
         </div>
       </div>
 
-      <LogoPreviewDialog open={isLogoPreviewOpen} onOpenChange={setIsLogoPreviewOpen} pendingLogoFile={pendingLogoFile} logoUrl={companyData.logoUrl} />
+      <LogoPreviewDialog
+        open={isLogoPreviewOpen}
+        onOpenChange={setIsLogoPreviewOpen}
+        pendingLogoFile={pendingLogoFile}
+        logoUrl={companyData.logoUrl}
+      />
       <EditUserDialog
-        open={isEditUserOpen} onOpenChange={setIsEditUserOpen}
-        name={editUserName} contact={editUserContact} role={editUserRole}
-        onNameChange={setEditUserName} onContactChange={setEditUserContact} onRoleChange={setEditUserRole}
+        open={isEditUserOpen}
+        onOpenChange={setIsEditUserOpen}
+        name={editUserName}
+        contact={editUserContact}
+        role={editUserRole}
+        onNameChange={setEditUserName}
+        onContactChange={setEditUserContact}
+        onRoleChange={setEditUserRole}
         onSave={handleSaveUser}
       />
       <DeleteUserDialog open={isDeleteUserOpen} onOpenChange={setIsDeleteUserOpen} onConfirm={confirmDeleteUser} />

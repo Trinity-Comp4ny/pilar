@@ -68,8 +68,18 @@ export default function WIP() {
   const wipNegativo = snapshots.filter((w) => Number(w.wip_saldo) < 0).length;
 
   const meses = [
-    "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
-    "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
+    "Janeiro",
+    "Fevereiro",
+    "Março",
+    "Abril",
+    "Maio",
+    "Junho",
+    "Julho",
+    "Agosto",
+    "Setembro",
+    "Outubro",
+    "Novembro",
+    "Dezembro",
   ];
 
   return (
@@ -77,19 +87,40 @@ export default function WIP() {
       {/* Controles */}
       <div className="flex items-center gap-3 flex-wrap">
         <Select value={String(mes)} onValueChange={(v) => setMes(Number(v))}>
-          <SelectTrigger className="w-[160px]"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="w-[160px]">
+            <SelectValue />
+          </SelectTrigger>
           <SelectContent>
-            {meses.map((m, i) => <SelectItem key={i} value={String(i + 1)}>{m}</SelectItem>)}
+            {meses.map((m, i) => (
+              <SelectItem key={i} value={String(i + 1)}>
+                {m}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
         <Select value={String(ano)} onValueChange={(v) => setAno(Number(v))}>
-          <SelectTrigger className="w-[100px]"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="w-[100px]">
+            <SelectValue />
+          </SelectTrigger>
           <SelectContent>
-            {[ano - 1, ano, ano + 1].map((a) => <SelectItem key={a} value={String(a)}>{a}</SelectItem>)}
+            {[ano - 1, ano, ano + 1].map((a) => (
+              <SelectItem key={a} value={String(a)}>
+                {a}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
-        <Button variant="outline" size="sm" onClick={() => calcularMutation.mutate()} disabled={calcularMutation.isPending}>
-          {calcularMutation.isPending ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5 mr-1" />}
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => calcularMutation.mutate()}
+          disabled={calcularMutation.isPending}
+        >
+          {calcularMutation.isPending ? (
+            <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />
+          ) : (
+            <RefreshCw className="h-3.5 w-3.5 mr-1" />
+          )}
           Calcular WIP
         </Button>
       </div>
@@ -146,7 +177,9 @@ export default function WIP() {
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="flex justify-center py-8"><Loader2 className="h-5 w-5 animate-spin" /></div>
+            <div className="flex justify-center py-8">
+              <Loader2 className="h-5 w-5 animate-spin" />
+            </div>
           ) : snapshots.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <p className="text-sm">Nenhum snapshot WIP para este período.</p>
@@ -160,9 +193,13 @@ export default function WIP() {
                     <TableHead className="text-xs">Projeto</TableHead>
                     <TableHead className="text-xs text-right">Horas</TableHead>
                     <TableHead className="text-xs text-right">Custo Realizado</TableHead>
-                    <TableHead className="text-xs text-center"><ArrowRight className="h-3 w-3 mx-auto" /></TableHead>
+                    <TableHead className="text-xs text-center">
+                      <ArrowRight className="h-3 w-3 mx-auto" />
+                    </TableHead>
                     <TableHead className="text-xs text-right">Faturado</TableHead>
-                    <TableHead className="text-xs text-center"><ArrowRight className="h-3 w-3 mx-auto" /></TableHead>
+                    <TableHead className="text-xs text-center">
+                      <ArrowRight className="h-3 w-3 mx-auto" />
+                    </TableHead>
                     <TableHead className="text-xs text-right">Recebido</TableHead>
                     <TableHead className="text-xs text-right">Saldo WIP</TableHead>
                   </TableRow>
@@ -176,13 +213,23 @@ export default function WIP() {
                           <span className="font-medium">{w.projetos?.codigo_projeto || "—"}</span>
                           <span className="text-muted-foreground ml-1">- {w.projetos?.nome || "—"}</span>
                         </TableCell>
-                        <TableCell className="text-xs py-2 text-right">{Number(w.horas_realizadas).toFixed(0)}h</TableCell>
-                        <TableCell className="text-xs py-2 text-right">{formatCurrency(Number(w.custo_realizado))}</TableCell>
+                        <TableCell className="text-xs py-2 text-right">
+                          {Number(w.horas_realizadas).toFixed(0)}h
+                        </TableCell>
+                        <TableCell className="text-xs py-2 text-right">
+                          {formatCurrency(Number(w.custo_realizado))}
+                        </TableCell>
                         <TableCell className="text-xs py-2 text-center text-muted-foreground">→</TableCell>
-                        <TableCell className="text-xs py-2 text-right text-blue-600">{formatCurrency(Number(w.faturado))}</TableCell>
+                        <TableCell className="text-xs py-2 text-right text-blue-600">
+                          {formatCurrency(Number(w.faturado))}
+                        </TableCell>
                         <TableCell className="text-xs py-2 text-center text-muted-foreground">→</TableCell>
-                        <TableCell className="text-xs py-2 text-right text-emerald-600">{formatCurrency(Number(w.recebido))}</TableCell>
-                        <TableCell className={`text-xs py-2 text-right font-semibold ${wipSaldo > 0 ? "text-amber-600" : wipSaldo < 0 ? "text-blue-600" : ""}`}>
+                        <TableCell className="text-xs py-2 text-right text-emerald-600">
+                          {formatCurrency(Number(w.recebido))}
+                        </TableCell>
+                        <TableCell
+                          className={`text-xs py-2 text-right font-semibold ${wipSaldo > 0 ? "text-amber-600" : wipSaldo < 0 ? "text-blue-600" : ""}`}
+                        >
                           {formatCurrency(wipSaldo)}
                         </TableCell>
                       </TableRow>
@@ -197,8 +244,14 @@ export default function WIP() {
 
       {/* Explicação */}
       <div className="text-xs text-muted-foreground bg-muted/50 rounded-lg p-4 space-y-1">
-        <p><strong>WIP positivo (subfaturado):</strong> Trabalho realizado mas ainda não faturado ao cliente. Indica serviço prestado sem cobrança.</p>
-        <p><strong>WIP negativo (sobrefaturado):</strong> Faturado mais do que o trabalho realizado. Pode indicar adiantamento ou risco de entrega.</p>
+        <p>
+          <strong>WIP positivo (subfaturado):</strong> Trabalho realizado mas ainda não faturado ao cliente. Indica
+          serviço prestado sem cobrança.
+        </p>
+        <p>
+          <strong>WIP negativo (sobrefaturado):</strong> Faturado mais do que o trabalho realizado. Pode indicar
+          adiantamento ou risco de entrega.
+        </p>
       </div>
     </div>
   );

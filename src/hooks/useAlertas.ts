@@ -61,7 +61,9 @@ export const useMarcarAlertaLido = () => {
 
   return useMutation({
     mutationFn: async (alertaId: string) => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
       const { error } = await supabase
         .from("alertas")
@@ -86,7 +88,9 @@ export const useMarcarTodosLidos = () => {
 
   return useMutation({
     mutationFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
       const { error } = await supabase
         .from("alertas")

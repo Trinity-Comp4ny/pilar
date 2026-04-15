@@ -83,7 +83,7 @@ export const useCreateProposta = () => {
 
   return useMutation({
     mutationFn: async (proposta: PropostaInsert) => {
-      const { data: empresaId } = await supabase.rpc('get_user_empresa_id');
+      const { data: empresaId } = await supabase.rpc("get_user_empresa_id");
       if (!empresaId) throw new Error("Usuário não vinculado a uma empresa");
 
       const { data, error } = await supabase
@@ -106,12 +106,7 @@ export const useUpdateProposta = () => {
 
   return useMutation({
     mutationFn: async ({ id, ...proposta }: Partial<PropostaInsert> & { id: string; status?: string }) => {
-      const { data, error } = await supabase
-        .from("propostas")
-        .update(proposta)
-        .eq("id", id)
-        .select()
-        .single();
+      const { data, error } = await supabase.from("propostas").update(proposta).eq("id", id).select().single();
 
       if (error) throw error;
       return data;
@@ -159,10 +154,7 @@ export const usePropostaDisciplinas = (propostaId: string | null) => {
     queryKey: ["proposta-disciplinas", propostaId],
     queryFn: async () => {
       if (!propostaId) return [];
-      const { data, error } = await supabase
-        .from("proposta_disciplinas")
-        .select("*")
-        .eq("proposta_id", propostaId);
+      const { data, error } = await supabase.from("proposta_disciplinas").select("*").eq("proposta_id", propostaId);
       if (error) throw error;
       return data || [];
     },
