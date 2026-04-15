@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -61,11 +61,7 @@ export function SupplierManager({ onSupplierChange }: SupplierManagerProps) {
   const [deleteSupplier, setDeleteSupplier] = useState<Supplier | null>(null);
   const { toast } = useToast();
 
-  useEffect(() => {
-    fetchSuppliers();
-  }, []);
-
-  const fetchSuppliers = async () => {
+  const fetchSuppliers = useCallback(async () => {
     try {
       const { data, error } = await supabase.from("fornecedores").select("*").order("nome");
 
@@ -90,7 +86,11 @@ export function SupplierManager({ onSupplierChange }: SupplierManagerProps) {
         variant: "destructive",
       });
     }
-  };
+  }, [onSupplierChange, toast]);
+
+  useEffect(() => {
+    fetchSuppliers();
+  }, [fetchSuppliers]);
 
   const handleAddSupplier = async () => {
     if (!newSupplier.name.trim()) {

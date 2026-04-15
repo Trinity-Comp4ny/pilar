@@ -58,7 +58,7 @@ export default function Profile() {
     };
 
     fetchProfile();
-  }, []);
+  }, [toast]);
 
   const handleSave = async () => {
     try {

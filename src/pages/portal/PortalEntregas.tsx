@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -35,7 +35,7 @@ function EntregasContent({ projetoId }: { projetoId: string }) {
   const [resposta, setResposta] = useState("");
   const [saving, setSaving] = useState(false);
 
-  const fetchEntregas = async () => {
+  const fetchEntregas = useCallback(async () => {
     const { data } = await supabase
       .from("portal_entregas")
       .select("*")
@@ -43,11 +43,11 @@ function EntregasContent({ projetoId }: { projetoId: string }) {
       .order("created_at", { ascending: false });
     if (data) setEntregas(data as Entrega[]);
     setLoading(false);
-  };
+  }, [projetoId]);
 
   useEffect(() => {
     fetchEntregas();
-  }, [projetoId]);
+  }, [fetchEntregas]);
 
   const handleAprovar = async (id: string) => {
     setSaving(true);
