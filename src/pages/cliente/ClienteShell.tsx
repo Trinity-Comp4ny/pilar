@@ -1,6 +1,6 @@
 import { useNavigate, NavLink } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { LogOut, ArrowLeft, FolderKanban, Clock, DollarSign, FileCheck } from "lucide-react";
+import { LogOut, ArrowLeft, FolderKanban, DollarSign, FileCheck } from "lucide-react";
 import { clearPortalToken, type ClienteAccount } from "./useClienteAuth";
 
 interface ClienteShellProps {
@@ -13,7 +13,6 @@ interface ClienteShellProps {
 
 const projetoNavItems = [
   { path: "", label: "Visão Geral", icon: FolderKanban, end: true },
-  { path: "/timeline", label: "Etapas", icon: Clock, end: false },
   { path: "/financeiro", label: "Financeiro", icon: DollarSign, end: false },
   { path: "/entregas", label: "Entregas", icon: FileCheck, end: false },
 ];

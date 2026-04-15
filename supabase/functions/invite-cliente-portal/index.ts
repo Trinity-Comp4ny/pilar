@@ -100,7 +100,12 @@ serve(async (req) => {
       status: 200,
     });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Erro interno";
+    const message =
+      error instanceof Error
+        ? error.message
+        : typeof error === "object" && error !== null && "message" in error
+          ? String((error as { message: unknown }).message)
+          : "Erro interno";
     return new Response(JSON.stringify({ error: message }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 400,

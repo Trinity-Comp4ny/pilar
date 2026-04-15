@@ -1,12 +1,11 @@
 import { NavLink } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Building2, FolderKanban, Clock, DollarSign, FileCheck, Loader2 } from "lucide-react";
+import { Building2, FolderKanban, DollarSign, FileCheck, Loader2 } from "lucide-react";
 import { usePortalData, type PortalData } from "./usePortalData";
 
 const navItems = [
   { path: "", label: "Visão Geral", icon: FolderKanban, end: true },
-  { path: "/timeline", label: "Etapas", icon: Clock, end: false },
   { path: "/financeiro", label: "Financeiro", icon: DollarSign, end: false },
   { path: "/entregas", label: "Entregas", icon: FileCheck, end: false },
 ];

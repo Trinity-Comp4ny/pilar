@@ -73,10 +73,10 @@ function KPICard({
   subtitle?: string;
 }) {
   return (
-    <Card className="bg-white border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+    <Card className="hover:shadow-md transition-shadow">
       <CardContent className="p-4">
         <div className="flex items-start justify-between mb-3">
-          <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">{title}</span>
+          <span className="text-xs font-medium text-gray-500">{title}</span>
           <div className={`p-1.5 rounded-lg ${iconBg}`}>
             <Icon size={15} className={iconColor} />
           </div>
@@ -245,7 +245,7 @@ function DashboardSkeleton() {
     <div className="space-y-6 w-full animate-pulse">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[1, 2, 3, 4].map((i) => (
-          <Card key={i} className="bg-white border border-gray-100">
+          <Card key={i}>
             <CardContent className="p-4">
               <Skeleton className="h-3 w-20 mb-4" />
               <Skeleton className="h-6 w-28 mb-2" />
@@ -359,43 +359,37 @@ export default function Dashboard() {
 
         {/* Saldo + Projetos Ativos (mini KPIs) */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card className="bg-white border border-gray-100 shadow-sm col-span-2">
+          <Card className="col-span-2">
             <CardContent className="p-4 flex items-center gap-4">
               <div className={`p-2.5 rounded-xl ${kpis.saldoMes >= 0 ? "bg-green-50" : "bg-red-50"}`}>
                 <DollarSign size={20} className={kpis.saldoMes >= 0 ? "text-green-600" : "text-red-600"} />
               </div>
               <div>
-                <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Saldo do Mês</span>
+                <span className="text-xs font-medium text-gray-500">Saldo do Mês</span>
                 <p className={`text-2xl font-bold ${kpis.saldoMes >= 0 ? "text-green-600" : "text-red-600"}`}>
                   {fmt.format(kpis.saldoMes)}
                 </p>
               </div>
             </CardContent>
           </Card>
-          <Card
-            className="bg-white border border-gray-100 shadow-sm cursor-pointer hover:shadow-md transition-shadow"
-            onClick={() => navigate("/projetos")}
-          >
+          <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate("/projetos")}>
             <CardContent className="p-4 flex items-center gap-4">
               <div className="p-2.5 rounded-xl bg-accent-orange/10">
                 <Briefcase size={20} className="text-accent-orange" />
               </div>
               <div>
-                <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Projetos Ativos</span>
+                <span className="text-xs font-medium text-gray-500">Projetos Ativos</span>
                 <p className="text-2xl font-bold text-accent-orange">{kpis.projetosAtivos}</p>
               </div>
             </CardContent>
           </Card>
-          <Card
-            className="bg-white border border-gray-100 shadow-sm cursor-pointer hover:shadow-md transition-shadow"
-            onClick={() => navigate("/leads")}
-          >
+          <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate("/leads")}>
             <CardContent className="p-4 flex items-center gap-4">
               <div className="p-2.5 rounded-xl bg-purple-50">
                 <Target size={20} className="text-purple-600" />
               </div>
               <div>
-                <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Leads</span>
+                <span className="text-xs font-medium text-gray-500">Leads</span>
                 <p className="text-2xl font-bold text-purple-600">{leadsTotal}</p>
               </div>
             </CardContent>
@@ -404,7 +398,7 @@ export default function Dashboard() {
 
         {/* Gráfico Financeiro */}
         <div className="grid grid-cols-1 gap-6">
-          <Card className="bg-white border border-gray-100 shadow-sm">
+          <Card>
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
                 <CardTitle className="flex items-center gap-2 text-base font-semibold">
@@ -480,7 +474,7 @@ export default function Dashboard() {
 
         {/* Projetos + Alertas */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <Card className="lg:col-span-2 bg-white border border-gray-100 shadow-sm">
+          <Card className="lg:col-span-2">
             <CardHeader className="pb-1">
               <div className="flex items-center justify-between">
                 <CardTitle className="flex items-center gap-2 text-base font-semibold">
@@ -517,7 +511,7 @@ export default function Dashboard() {
           </Card>
 
           {/* Alertas */}
-          <Card className="bg-white border border-gray-100 shadow-sm">
+          <Card>
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
                 <CardTitle className="flex items-center gap-2 text-base font-semibold">
@@ -550,7 +544,7 @@ export default function Dashboard() {
 
         {/* Próximos Vencimentos + Pipeline de Leads */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <Card className="lg:col-span-2 bg-white border border-gray-100 shadow-sm">
+          <Card className="lg:col-span-2">
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
                 <CardTitle className="flex items-center gap-2 text-base font-semibold">
@@ -583,7 +577,7 @@ export default function Dashboard() {
             </CardContent>
           </Card>
 
-          <Card className="bg-white border border-gray-100 shadow-sm">
+          <Card>
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
                 <CardTitle className="flex items-center gap-2 text-base font-semibold">
