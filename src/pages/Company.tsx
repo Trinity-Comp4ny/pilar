@@ -15,8 +15,10 @@ import { CompanyDataTab } from "./company/components/CompanyDataTab";
 import { CompanyUsersTab } from "./company/components/CompanyUsersTab";
 import { CompanyVisualTab } from "./company/components/CompanyVisualTab";
 import { LogoPreviewDialog, EditUserDialog, DeleteUserDialog } from "./company/components/CompanyDialogs";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 export default function Company() {
+  usePageTitle("Empresa");
   const { toast } = useToast();
   const [editingCompany, setEditingCompany] = useState(false);
   const [editingVisual, setEditingVisual] = useState(false);

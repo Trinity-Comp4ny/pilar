@@ -10,6 +10,7 @@ import { FeaturesSection } from "./landing/components/FeaturesSection";
 import { AboutSection } from "./landing/components/AboutSection";
 import { CTASection } from "./landing/components/CTASection";
 import { LandingFooter } from "./landing/components/LandingFooter";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 const features: Feature[] = [
   {
@@ -45,6 +46,7 @@ const features: Feature[] = [
 ];
 
 export default function Landing() {
+  usePageTitle();
   const navigate = useNavigate();
 
   useEffect(() => {

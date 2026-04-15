@@ -24,12 +24,14 @@ import { ManageDisciplinasDialog } from "@/pages/projetos/components/ManageDisci
 import { DisciplinasTab } from "@/pages/projetos/components/DisciplinasTab";
 import { useTemplates } from "@/hooks/useTemplates";
 import { cn } from "@/lib/utils";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 const statusConfig = PROJECT_STATUS_CONFIG;
 
 type Tab = "kanban" | "disciplinas";
 
 export default function ProjetosKanban() {
+  usePageTitle("Projetos");
   const { data: userRole } = useUserRole();
   const { toast } = useToast();
   const { data: templatesData = [] } = useTemplates();

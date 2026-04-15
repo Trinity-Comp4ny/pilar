@@ -7,6 +7,7 @@ import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { supabase } from "@/integrations/supabase/client";
 import { AlocacaoVsReal } from "./components/AlocacaoVsReal";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 interface PessoaCapacidade {
   id: string;
@@ -51,6 +52,7 @@ function getCellColor(pct: number): string {
 const NUM_WEEKS = 12;
 
 export default function Capacidade() {
+  usePageTitle("Capacidade");
   const [startMonday, setStartMonday] = useState(() => getMonday(new Date()));
 
   const weeks = useMemo(

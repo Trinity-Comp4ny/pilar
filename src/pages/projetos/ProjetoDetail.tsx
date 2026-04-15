@@ -24,6 +24,7 @@ import {
   Layers,
 } from "lucide-react";
 import { PageLayout } from "@/components/PageLayout";
+import { usePageTitle } from "@/hooks/usePageTitle";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -70,6 +71,7 @@ import { useProjetoRentabilidade } from "@/hooks/useRentabilidade";
 
 export default function ProjetoDetail() {
   const { id } = useParams<{ id: string }>();
+  usePageTitle("Projeto");
   const navigate = useNavigate();
   const { data: userRole } = useUserRole();
   const canEdit = userRole === "admin" || userRole === "operacional";

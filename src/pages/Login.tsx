@@ -6,8 +6,10 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Mail, Lock, ArrowLeft, Loader2, CheckCircle2 } from "lucide-react";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 export default function Login() {
+  usePageTitle("Login");
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
