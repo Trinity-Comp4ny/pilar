@@ -14,11 +14,13 @@ export function PrivateRoute() {
 
     const checkAuth = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
 
         if (!session) {
           // Check if there's a hash that might indicate an incoming auth redirect
-          if (window.location.hash && window.location.hash.includes('access_token')) {
+          if (window.location.hash && window.location.hash.includes("access_token")) {
             // Let onAuthStateChange handle it
             return;
           }
@@ -34,9 +36,9 @@ export function PrivateRoute() {
 
         // Check onboarding status
         const { data: profile, error } = await supabase
-          .from('profiles')
-          .select('*, empresas(*)')
-          .eq('id', session.user.id)
+          .from("profiles")
+          .select("*, empresas(*)")
+          .eq("id", session.user.id)
           .single();
 
         if (error) {
@@ -46,27 +48,27 @@ export function PrivateRoute() {
 
         if (profile && mounted) {
           const userProfile = profile;
-          const isCompanySetup = location.pathname === '/company-setup';
-          const isProfileSetup = location.pathname === '/profile-setup';
+          const isCompanySetup = location.pathname === "/company-setup";
+          const isProfileSetup = location.pathname === "/profile-setup";
 
           const profileDone = userProfile.onboarding_completed === true;
           const companyDone = userProfile.empresas?.onboarding_completed === true;
-          const isAdmin = userProfile.role === 'admin';
+          const isAdmin = userProfile.role === "admin";
 
           if (!profileDone) {
             if (!isProfileSetup) {
-              setRedirectPath('/profile-setup');
+              setRedirectPath("/profile-setup");
             } else {
               setRedirectPath(null);
             }
           } else if (isAdmin && !companyDone) {
             if (!isCompanySetup && !isProfileSetup) {
-              setRedirectPath('/company-setup');
+              setRedirectPath("/company-setup");
             } else {
               setRedirectPath(null);
             }
           } else if (isCompanySetup || isProfileSetup) {
-            setRedirectPath('/dashboard');
+            setRedirectPath("/dashboard");
           } else {
             setRedirectPath(null);
           }
@@ -80,7 +82,9 @@ export function PrivateRoute() {
 
     checkAuth();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
       if (mounted) {
         setIsAuthenticated(!!session);
         setIsLoading(false);
@@ -106,7 +110,7 @@ export function PrivateRoute() {
   }
 
   // If on setup pages, render WITHOUT Layout (sidebar etc)
-  if (location.pathname === '/company-setup' || location.pathname === '/profile-setup') {
+  if (location.pathname === "/company-setup" || location.pathname === "/profile-setup") {
     return <Outlet />;
   }
 

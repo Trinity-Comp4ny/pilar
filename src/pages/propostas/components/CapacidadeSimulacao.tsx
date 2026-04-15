@@ -32,9 +32,7 @@ export function CapacidadeSimulacao({ disciplinas, prazoEstimadoDias }: Capacida
   const { data: responsaveis = [], isLoading: loadingResp } = useQuery({
     queryKey: ["responsaveis-capacidade-sim"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("projetos_responsaveis")
-        .select("pessoa_id, disciplina");
+      const { data, error } = await supabase.from("projetos_responsaveis").select("pessoa_id, disciplina");
       if (error) throw error;
       return data || [];
     },
@@ -125,15 +123,20 @@ export function CapacidadeSimulacao({ disciplinas, prazoEstimadoDias }: Capacida
       <CardHeader className="pb-2">
         <CardTitle className="text-sm font-medium flex items-center gap-2">
           <Users className="h-4 w-4" /> Simulação de Capacidade
-          {temAlertas && <Badge variant="destructive" className="text-[10px]"><AlertTriangle className="h-3 w-3 mr-1" />Atenção</Badge>}
+          {temAlertas && (
+            <Badge variant="destructive" className="text-[10px]">
+              <AlertTriangle className="h-3 w-3 mr-1" />
+              Atenção
+            </Badge>
+          )}
         </CardTitle>
-        <p className="text-xs text-muted-foreground">
-          Disponibilidade da equipe nas próximas {semanas} semanas
-        </p>
+        <p className="text-xs text-muted-foreground">Disponibilidade da equipe nas próximas {semanas} semanas</p>
       </CardHeader>
       <CardContent>
         {isLoading ? (
-          <div className="flex justify-center py-4"><Loader2 className="h-4 w-4 animate-spin" /></div>
+          <div className="flex justify-center py-4">
+            <Loader2 className="h-4 w-4 animate-spin" />
+          </div>
         ) : simulacao.length === 0 ? (
           <p className="text-xs text-muted-foreground">Adicione disciplinas para ver a simulação.</p>
         ) : (

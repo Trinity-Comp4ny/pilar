@@ -74,9 +74,8 @@ export const useDashboardRentabilidade = () => {
       const comReceita = projetos.filter((p) => p.receitas_total > 0);
       const totalReceitas = projetos.reduce((s, p) => s + p.receitas_total, 0);
       const totalDespesas = projetos.reduce((s, p) => s + p.despesas_diretas, 0);
-      const margemMediaPct = comReceita.length > 0
-        ? comReceita.reduce((s, p) => s + p.margem_bruta_pct, 0) / comReceita.length
-        : 0;
+      const margemMediaPct =
+        comReceita.length > 0 ? comReceita.reduce((s, p) => s + p.margem_bruta_pct, 0) / comReceita.length : 0;
 
       const totalHorasOrcadas = projetos.reduce((s, p) => s + p.horas_orcadas, 0);
       const totalHorasConsumidas = projetos.reduce((s, p) => s + p.horas_consumidas, 0);
@@ -193,9 +192,7 @@ export const useProjetosDrenandoCaixa = () => {
       const rows = Array.isArray(data) ? data : [];
       const projetos = rows.map((p) => calcularMargens(p as RpcRentabilidadeRow));
 
-      return projetos
-        .filter((p) => p.margem_bruta < 0)
-        .sort((a, b) => a.margem_bruta - b.margem_bruta);
+      return projetos.filter((p) => p.margem_bruta < 0).sort((a, b) => a.margem_bruta - b.margem_bruta);
     },
     staleTime: 1000 * 60 * 5,
   });

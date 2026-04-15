@@ -41,7 +41,7 @@
 
     --chart-success: 142.1 76.2% 36.3%; /* Green 600 */
     --chart-danger: 346.8 77.2% 49.8%; /* Red 600 */
-    
+
     --radius: 0.75rem;
   }
 
@@ -89,7 +89,7 @@
   .reveal-up {
     @apply opacity-0 translate-y-8 transition-all duration-700 ease-out;
   }
-  
+
   .reveal-up.is-visible {
     @apply opacity-100 translate-y-0;
   }

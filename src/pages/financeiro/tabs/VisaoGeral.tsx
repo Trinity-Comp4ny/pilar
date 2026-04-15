@@ -1,6 +1,18 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowUpRight, ArrowDownRight, TrendingUp, TrendingDown, DollarSign, BarChart3, Loader2 } from "lucide-react";
-import { ResponsiveContainer, ComposedChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, Area, PieChart, Pie, Cell } from "recharts";
+import {
+  ResponsiveContainer,
+  ComposedChart,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+  Tooltip,
+  Legend,
+  Area,
+  PieChart,
+  Pie,
+  Cell,
+} from "recharts";
 import MetasSummary from "../components/MetasSummary";
 import { CustomTooltip } from "../components/CustomTooltip";
 import { useFinanceData } from "@/hooks/useFinanceData";
@@ -27,17 +39,15 @@ export default function VisaoGeral({ visualizacao, dateFrom, dateTo }: VisaoGera
     receitasMes: 0,
     despesasTotal: 0,
     despesasMes: 0,
-    saldo: 0
+    saldo: 0,
   };
 
-  const chartData = visualizacao === 'dia'
-    ? (dashboardData?.chartDataDiario || [])
-    : (dashboardData?.chartData || []);
+  const chartData = visualizacao === "dia" ? dashboardData?.chartDataDiario || [] : dashboardData?.chartData || [];
 
   const categoriaData = dashboardData?.categoriaData || [];
   const despesasCategoriaData = dashboardData?.despesasCategoriaData || [];
 
-  const hasChartData = chartData.some(item => item.receitas > 0 || item.despesas > 0);
+  const hasChartData = chartData.some((item) => item.receitas > 0 || item.despesas > 0);
   const hasReceitasData = categoriaData.length > 0;
   const hasDespesasData = despesasCategoriaData.length > 0;
 
@@ -54,7 +64,7 @@ export default function VisaoGeral({ visualizacao, dateFrom, dateTo }: VisaoGera
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-green-600">
-              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(stats.receitasTotal)}
+              {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(stats.receitasTotal)}
             </div>
             <p className="text-xs text-green-600 flex items-center gap-1 mt-1">
               <TrendingUp size={12} />
@@ -72,7 +82,7 @@ export default function VisaoGeral({ visualizacao, dateFrom, dateTo }: VisaoGera
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-red-600">
-              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(stats.despesasTotal)}
+              {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(stats.despesasTotal)}
             </div>
             <p className="text-xs text-green-600 flex items-center gap-1 mt-1">
               <TrendingDown size={12} />
@@ -90,7 +100,7 @@ export default function VisaoGeral({ visualizacao, dateFrom, dateTo }: VisaoGera
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-blue-600">
-              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(stats.saldo)}
+              {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(stats.saldo)}
             </div>
             <p className="text-xs text-black/50 mt-1">
               Margem de Lucro: {stats.receitasTotal > 0 ? ((stats.saldo / stats.receitasTotal) * 100).toFixed(1) : 0}%
@@ -108,7 +118,9 @@ export default function VisaoGeral({ visualizacao, dateFrom, dateTo }: VisaoGera
               <BarChart3 size={20} />
               Fluxo Financeiro
             </CardTitle>
-            <CardDescription>Comparativo de Receitas x Despesas ({visualizacao === 'dia' ? 'Diário' : 'Mensal'})</CardDescription>
+            <CardDescription>
+              Comparativo de Receitas x Despesas ({visualizacao === "dia" ? "Diário" : "Mensal"})
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="h-[350px] w-full relative">
@@ -131,7 +143,7 @@ export default function VisaoGeral({ visualizacao, dateFrom, dateTo }: VisaoGera
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
                   <XAxis
-                    dataKey={visualizacao === 'dia' ? 'dia' : 'mes'}
+                    dataKey={visualizacao === "dia" ? "dia" : "mes"}
                     stroke="#888"
                     fontSize={12}
                     tickLine={false}

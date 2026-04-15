@@ -5,9 +5,7 @@ export function CTASection() {
     <section className="py-24 bg-white relative overflow-hidden border-t border-slate-100">
       <div className="container mx-auto px-6 md:px-10 text-center relative z-10">
         <div className="reveal-up">
-          <h2 className="text-3xl md:text-5xl font-medium text-[#2E2E2E] mb-6">
-            Pronto para transformar sua gestão?
-          </h2>
+          <h2 className="text-3xl md:text-5xl font-medium text-[#2E2E2E] mb-6">Pronto para transformar sua gestão?</h2>
           <p className="text-slate-600 text-lg md:text-xl max-w-2xl mx-auto mb-10 font-light">
             Junte-se aos escritórios que já modernizaram seus processos com a Pilar. Comece hoje mesmo.
           </p>

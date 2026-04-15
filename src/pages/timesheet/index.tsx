@@ -48,9 +48,7 @@ export default function Timesheet() {
   const [activeTab, setActiveTab] = useState("meu-timesheet");
 
   // Pessoa selecionada: ou a que o admin escolheu, ou a do próprio usuário
-  const _pessoaId = activeTab === "aprovacao"
-    ? undefined
-    : (isAdmin && selectedPessoaId) || pessoaAtual?.id;
+  const _pessoaId = activeTab === "aprovacao" ? undefined : (isAdmin && selectedPessoaId) || pessoaAtual?.id;
 
   const weekDays = useMemo(() => {
     return Array.from({ length: 7 }, (_, i) => formatDateISO(addDays(currentMonday, i)));
@@ -69,10 +67,7 @@ export default function Timesheet() {
 
   return (
     <PageLayout>
-      <PageHeader
-        title="Timesheet"
-        description="Registre as horas trabalhadas por projeto e disciplina"
-      />
+      <PageHeader title="Timesheet" description="Registre as horas trabalhadas por projeto e disciplina" />
 
       {isAdmin ? (
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
@@ -83,11 +78,7 @@ export default function Timesheet() {
           </TabsList>
 
           <TabsContent value="meu-timesheet" className="space-y-4">
-            <WeekNavigator
-              currentMonday={currentMonday}
-              onNavigate={navegarSemana}
-              onToday={irParaHoje}
-            />
+            <WeekNavigator currentMonday={currentMonday} onNavigate={navegarSemana} onToday={irParaHoje} />
             {pessoaAtual?.id ? (
               <Card>
                 <CardContent className="p-4">
@@ -118,11 +109,7 @@ export default function Timesheet() {
                   ))}
                 </SelectContent>
               </Select>
-              <WeekNavigator
-                currentMonday={currentMonday}
-                onNavigate={navegarSemana}
-                onToday={irParaHoje}
-              />
+              <WeekNavigator currentMonday={currentMonday} onNavigate={navegarSemana} onToday={irParaHoje} />
             </div>
             {selectedPessoaId ? (
               <Card>
@@ -148,20 +135,11 @@ export default function Timesheet() {
         </Tabs>
       ) : (
         <div className="space-y-4">
-          <WeekNavigator
-            currentMonday={currentMonday}
-            onNavigate={navegarSemana}
-            onToday={irParaHoje}
-          />
+          <WeekNavigator currentMonday={currentMonday} onNavigate={navegarSemana} onToday={irParaHoje} />
           {pessoaAtual?.id ? (
             <Card>
               <CardContent className="p-4">
-                <TimesheetGrid
-                  pessoaId={pessoaAtual.id}
-                  weekStart={weekStart}
-                  weekEnd={weekEnd}
-                  weekDays={weekDays}
-                />
+                <TimesheetGrid pessoaId={pessoaAtual.id} weekStart={weekStart} weekEnd={weekEnd} weekDays={weekDays} />
               </CardContent>
             </Card>
           ) : (
@@ -182,17 +160,14 @@ function WeekNavigator({
   onNavigate: (dir: number) => void;
   onToday: () => void;
 }) {
-  const isCurrentWeek =
-    formatDateISO(getMonday(new Date())) === formatDateISO(currentMonday);
+  const isCurrentWeek = formatDateISO(getMonday(new Date())) === formatDateISO(currentMonday);
 
   return (
     <div className="flex items-center gap-2">
       <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => onNavigate(-1)}>
         <ChevronLeft className="h-4 w-4" />
       </Button>
-      <div className="text-sm font-medium min-w-[200px] text-center">
-        {formatWeekLabel(currentMonday)}
-      </div>
+      <div className="text-sm font-medium min-w-[200px] text-center">{formatWeekLabel(currentMonday)}</div>
       <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => onNavigate(1)}>
         <ChevronRight className="h-4 w-4" />
       </Button>

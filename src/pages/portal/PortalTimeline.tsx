@@ -7,11 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { PortalShell } from "./PortalShell";
 
 export default function PortalTimeline() {
-  return (
-    <PortalShell>
-      {(data) => <TimelineContent projetoId={data.projeto_id} />}
-    </PortalShell>
-  );
+  return <PortalShell>{(data) => <TimelineContent projetoId={data.projeto_id} />}</PortalShell>;
 }
 
 interface Disciplina {
@@ -40,13 +36,18 @@ function TimelineContent({ projetoId }: { projetoId: string }) {
     fetch();
   }, [projetoId]);
 
-  if (loading) return <div className="flex justify-center py-8"><Loader2 className="h-5 w-5 animate-spin" /></div>;
+  if (loading)
+    return (
+      <div className="flex justify-center py-8">
+        <Loader2 className="h-5 w-5 animate-spin" />
+      </div>
+    );
 
   const total = disciplinas.length;
   const concluidas = disciplinas.filter((d) => d.status === "Concluído").length;
   const progress = total > 0 ? Math.round((concluidas / total) * 100) : 0;
 
-  const formatDate = (d: string | undefined) => d ? new Date(d + "T00:00:00").toLocaleDateString("pt-BR") : "—";
+  const formatDate = (d: string | undefined) => (d ? new Date(d + "T00:00:00").toLocaleDateString("pt-BR") : "—");
 
   return (
     <div className="space-y-4">
@@ -54,7 +55,9 @@ function TimelineContent({ projetoId }: { projetoId: string }) {
         <CardContent className="p-6">
           <h3 className="text-sm font-semibold mb-3">Progresso Geral</h3>
           <Progress value={progress} className="h-3 mb-2" />
-          <p className="text-xs text-muted-foreground">{progress}% concluído — {concluidas} de {total} etapas</p>
+          <p className="text-xs text-muted-foreground">
+            {progress}% concluído — {concluidas} de {total} etapas
+          </p>
         </CardContent>
       </Card>
 
@@ -69,7 +72,9 @@ function TimelineContent({ projetoId }: { projetoId: string }) {
                 <div key={i} className="flex gap-4 mb-4 last:mb-0">
                   {/* Timeline line */}
                   <div className="flex flex-col items-center">
-                    <div className={`w-3 h-3 rounded-full ${isConcluido ? "bg-green-500" : isAndamento ? "bg-blue-500" : "bg-gray-300"}`} />
+                    <div
+                      className={`w-3 h-3 rounded-full ${isConcluido ? "bg-green-500" : isAndamento ? "bg-blue-500" : "bg-gray-300"}`}
+                    />
                     {i < disciplinas.length - 1 && <div className="w-0.5 flex-1 bg-gray-200 mt-1" />}
                   </div>
                   <div className="flex-1 pb-4">

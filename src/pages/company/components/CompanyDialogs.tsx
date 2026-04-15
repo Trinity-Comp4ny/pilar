@@ -1,8 +1,24 @@
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ROLES } from "../types";
 
@@ -23,7 +39,11 @@ export function LogoPreviewDialog({ open, onOpenChange, pendingLogoFile, logoUrl
         </DialogHeader>
         <div className="bg-black/5 border border-black/10 rounded-xl p-6 flex items-center justify-center min-h-[320px]">
           {pendingLogoFile ? (
-            <img src={URL.createObjectURL(pendingLogoFile)} alt="Logo (prévia)" className="max-h-[520px] w-full object-contain" />
+            <img
+              src={URL.createObjectURL(pendingLogoFile)}
+              alt="Logo (prévia)"
+              className="max-h-[520px] w-full object-contain"
+            />
           ) : logoUrl ? (
             <img src={logoUrl} alt="Logo" className="max-h-[520px] w-full object-contain" />
           ) : (
@@ -47,7 +67,17 @@ interface EditUserDialogProps {
   onSave: () => void;
 }
 
-export function EditUserDialog({ open, onOpenChange, name, contact, role, onNameChange, onContactChange, onRoleChange, onSave }: EditUserDialogProps) {
+export function EditUserDialog({
+  open,
+  onOpenChange,
+  name,
+  contact,
+  role,
+  onNameChange,
+  onContactChange,
+  onRoleChange,
+  onSave,
+}: EditUserDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
@@ -67,16 +97,26 @@ export function EditUserDialog({ open, onOpenChange, name, contact, role, onName
           <div className="space-y-2">
             <Label>Função</Label>
             <Select value={role} onValueChange={(v) => onRoleChange(v as (typeof ROLES)[number])}>
-              <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione" />
+              </SelectTrigger>
               <SelectContent>
-                {ROLES.map((r) => (<SelectItem key={r} value={r}>{r}</SelectItem>))}
+                {ROLES.map((r) => (
+                  <SelectItem key={r} value={r}>
+                    {r}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
         </div>
         <DialogFooter className="mt-4">
-          <Button variant="outline" onClick={() => onOpenChange(false)} className="rounded-full">Cancelar</Button>
-          <Button onClick={onSave} className="rounded-full bg-accent-orange hover:bg-accent-orange/90 text-white">Salvar</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)} className="rounded-full">
+            Cancelar
+          </Button>
+          <Button onClick={onSave} className="rounded-full bg-accent-orange hover:bg-accent-orange/90 text-white">
+            Salvar
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -101,7 +141,9 @@ export function DeleteUserDialog({ open, onOpenChange, onConfirm }: DeleteUserDi
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Cancelar</AlertDialogCancel>
-          <AlertDialogAction className="bg-red-600 hover:bg-red-700" onClick={onConfirm}>Remover</AlertDialogAction>
+          <AlertDialogAction className="bg-red-600 hover:bg-red-700" onClick={onConfirm}>
+            Remover
+          </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

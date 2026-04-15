@@ -53,9 +53,14 @@ export function HealthIndexCard() {
       </CardHeader>
       <CardContent>
         <div className="flex items-baseline gap-2 mb-3">
-          <span className="text-3xl font-bold" style={{ color: health.color }}>{health.score}</span>
+          <span className="text-3xl font-bold" style={{ color: health.color }}>
+            {health.score}
+          </span>
           <span className="text-sm text-muted-foreground">/ 100</span>
-          <span className="text-xs font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: `${health.color}20`, color: health.color }}>
+          <span
+            className="text-xs font-medium px-2 py-0.5 rounded-full"
+            style={{ backgroundColor: `${health.color}20`, color: health.color }}
+          >
             {health.label}
           </span>
         </div>

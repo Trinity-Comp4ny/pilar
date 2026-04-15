@@ -25,11 +25,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
 };
 
 export default function PortalEntregas() {
-  return (
-    <PortalShell>
-      {(data) => <EntregasContent projetoId={data.projeto_id} />}
-    </PortalShell>
-  );
+  return <PortalShell>{(data) => <EntregasContent projetoId={data.projeto_id} />}</PortalShell>;
 }
 
 function EntregasContent({ projetoId }: { projetoId: string }) {
@@ -49,7 +45,9 @@ function EntregasContent({ projetoId }: { projetoId: string }) {
     setLoading(false);
   };
 
-  useEffect(() => { fetchEntregas(); }, [projetoId]);
+  useEffect(() => {
+    fetchEntregas();
+  }, [projetoId]);
 
   const handleAprovar = async (id: string) => {
     setSaving(true);
@@ -66,7 +64,11 @@ function EntregasContent({ projetoId }: { projetoId: string }) {
     setSaving(true);
     await supabase
       .from("portal_entregas")
-      .update({ status: "revisao_solicitada", resposta_cliente: resposta.trim(), respondido_em: new Date().toISOString() })
+      .update({
+        status: "revisao_solicitada",
+        resposta_cliente: resposta.trim(),
+        respondido_em: new Date().toISOString(),
+      })
       .eq("id", id);
     setRespondingId(null);
     setResposta("");
@@ -74,7 +76,12 @@ function EntregasContent({ projetoId }: { projetoId: string }) {
     setSaving(false);
   };
 
-  if (loading) return <div className="flex justify-center py-8"><Loader2 className="h-5 w-5 animate-spin" /></div>;
+  if (loading)
+    return (
+      <div className="flex justify-center py-8">
+        <Loader2 className="h-5 w-5 animate-spin" />
+      </div>
+    );
 
   const pendentes = entregas.filter((e) => e.status === "pendente");
   const respondidas = entregas.filter((e) => e.status !== "pendente");
@@ -99,7 +106,11 @@ function EntregasContent({ projetoId }: { projetoId: string }) {
                       <p className="text-sm font-medium">{e.titulo}</p>
                       {e.descricao && <p className="text-xs text-muted-foreground mt-1">{e.descricao}</p>}
                       <div className="flex items-center gap-2 mt-2">
-                        {e.tipo && <Badge variant="secondary" className="text-[10px]">{e.tipo}</Badge>}
+                        {e.tipo && (
+                          <Badge variant="secondary" className="text-[10px]">
+                            {e.tipo}
+                          </Badge>
+                        )}
                         <span className="text-[10px] text-muted-foreground">{formatDate(e.created_at)}</span>
                       </div>
                     </div>
@@ -115,15 +126,34 @@ function EntregasContent({ projetoId }: { projetoId: string }) {
                         className="text-sm"
                       />
                       <div className="flex gap-2">
-                        <Button size="sm" variant="outline" onClick={() => { setRespondingId(null); setResposta(""); }}>Cancelar</Button>
-                        <Button size="sm" variant="destructive" onClick={() => handleSolicitarRevisao(e.id)} disabled={saving || !resposta.trim()}>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setRespondingId(null);
+                            setResposta("");
+                          }}
+                        >
+                          Cancelar
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => handleSolicitarRevisao(e.id)}
+                          disabled={saving || !resposta.trim()}
+                        >
                           <RotateCcw className="h-3 w-3 mr-1" /> Solicitar Revisão
                         </Button>
                       </div>
                     </div>
                   ) : (
                     <div className="flex gap-2 mt-3 pt-3 border-t">
-                      <Button size="sm" className="bg-green-600 hover:bg-green-700" onClick={() => handleAprovar(e.id)} disabled={saving}>
+                      <Button
+                        size="sm"
+                        className="bg-green-600 hover:bg-green-700"
+                        onClick={() => handleAprovar(e.id)}
+                        disabled={saving}
+                      >
                         <CheckCircle2 className="h-3 w-3 mr-1" /> Aprovar
                       </Button>
                       <Button size="sm" variant="outline" onClick={() => setRespondingId(e.id)}>
@@ -160,7 +190,9 @@ function EntregasContent({ projetoId }: { projetoId: string }) {
                       </div>
                       <div className="text-right">
                         <Badge className={`text-[10px] ${config.color}`}>{config.label}</Badge>
-                        {e.respondido_em && <p className="text-[10px] text-muted-foreground mt-1">{formatDate(e.respondido_em)}</p>}
+                        {e.respondido_em && (
+                          <p className="text-[10px] text-muted-foreground mt-1">{formatDate(e.respondido_em)}</p>
+                        )}
                       </div>
                     </div>
                   </CardContent>

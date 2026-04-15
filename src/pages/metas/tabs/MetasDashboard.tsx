@@ -24,7 +24,7 @@ export default function MetasDashboard() {
       const { data, error } = await supabase.from("metas").select("*").order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as Meta[];
-    }
+    },
   });
 
   if (isLoading) {
@@ -36,15 +36,17 @@ export default function MetasDashboard() {
   }
 
   const allMetas = metas ?? [];
-  const financeiras = allMetas.filter(m => (m.tipo ?? "financeira") === "financeira");
-  const pessoais = allMetas.filter(m => m.tipo === "pessoal");
-  const projetos = allMetas.filter(m => m.tipo === "projeto");
+  const financeiras = allMetas.filter((m) => (m.tipo ?? "financeira") === "financeira");
+  const pessoais = allMetas.filter((m) => m.tipo === "pessoal");
+  const projetos = allMetas.filter((m) => m.tipo === "projeto");
 
   const calcStats = (items: Meta[]) => {
     if (items.length === 0) return { total: 0, completed: 0, avgProgress: 0, overdue: 0 };
-    const completed = items.filter(m => m.atual >= m.alvo).length;
-    const avgProgress = Math.round(items.reduce((acc, m) => acc + Math.min((m.atual / m.alvo) * 100, 100), 0) / items.length);
-    const overdue = items.filter(m => m.prazo && new Date(m.prazo) < new Date() && m.atual < m.alvo).length;
+    const completed = items.filter((m) => m.atual >= m.alvo).length;
+    const avgProgress = Math.round(
+      items.reduce((acc, m) => acc + Math.min((m.atual / m.alvo) * 100, 100), 0) / items.length
+    );
+    const overdue = items.filter((m) => m.prazo && new Date(m.prazo) < new Date() && m.atual < m.alvo).length;
     return { total: items.length, completed, avgProgress, overdue };
   };
 
@@ -60,7 +62,13 @@ export default function MetasDashboard() {
   ];
 
   const summaryCards = [
-    { label: "Total de Metas", value: stats.total, icon: Target, color: "text-accent-orange", bg: "bg-accent-orange/10" },
+    {
+      label: "Total de Metas",
+      value: stats.total,
+      icon: Target,
+      color: "text-accent-orange",
+      bg: "bg-accent-orange/10",
+    },
     { label: "Concluídas", value: stats.completed, icon: CheckCircle2, color: "text-green-600", bg: "bg-green-50" },
     { label: "Progresso Médio", value: `${stats.avgProgress}%`, icon: Clock, color: "text-blue-600", bg: "bg-blue-50" },
     { label: "Atrasadas", value: stats.overdue, icon: AlertTriangle, color: "text-red-600", bg: "bg-red-50" },
@@ -133,17 +141,28 @@ export default function MetasDashboard() {
             ) : (
               topMetas.map((meta) => {
                 const percent = Math.min(Math.round((meta.atual / meta.alvo) * 100), 100);
-                const tipoLabel = (meta.tipo ?? "financeira") === "financeira" ? "Financeira" : meta.tipo === "pessoal" ? "Pessoal" : "Projeto";
+                const tipoLabel =
+                  (meta.tipo ?? "financeira") === "financeira"
+                    ? "Financeira"
+                    : meta.tipo === "pessoal"
+                      ? "Pessoal"
+                      : "Projeto";
                 return (
                   <div key={meta.id} className="space-y-1.5">
                     <div className="flex justify-between items-center">
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-medium">{meta.nome}</span>
-                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-600">{tipoLabel}</span>
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-600">
+                          {tipoLabel}
+                        </span>
                       </div>
                       <span className="text-sm font-bold">{percent}%</span>
                     </div>
-                    <Progress value={percent} className="h-2 bg-gray-100" indicatorClassName={percent >= 100 ? "bg-green-500" : "bg-accent-orange"} />
+                    <Progress
+                      value={percent}
+                      className="h-2 bg-gray-100"
+                      indicatorClassName={percent >= 100 ? "bg-green-500" : "bg-accent-orange"}
+                    />
                   </div>
                 );
               })

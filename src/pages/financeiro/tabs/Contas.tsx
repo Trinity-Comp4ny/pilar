@@ -3,7 +3,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { CreditCard, Wallet, Plus, Settings, Pencil, Trash2, TrendingUp, TrendingDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
@@ -64,22 +71,25 @@ export default function Configuracoes() {
   }, []);
 
   const fetchContas = async () => {
-    const { data } = await supabase.from('view_financas_resumo').select('*');
-    if (data) setContas(data.map(c => ({
-      id: c.conta_id,
-      nome: c.conta_nome,
-      banco: c.banco,
-      cor: c.cor,
-      empresa_id: c.empresa_id,
-      saldo_inicial: c.saldo_inicial,
-      saldo_atual: c.saldo_atual,
-      total_entradas: c.total_entradas,
-      total_saidas: c.total_saidas,
-    })));
+    const { data } = await supabase.from("view_financas_resumo").select("*");
+    if (data)
+      setContas(
+        data.map((c) => ({
+          id: c.conta_id,
+          nome: c.conta_nome,
+          banco: c.banco,
+          cor: c.cor,
+          empresa_id: c.empresa_id,
+          saldo_inicial: c.saldo_inicial,
+          saldo_atual: c.saldo_atual,
+          total_entradas: c.total_entradas,
+          total_saidas: c.total_saidas,
+        }))
+      );
   };
 
   const fetchCartoes = async () => {
-    const { data } = await supabase.from('view_cartao_resumo').select('*');
+    const { data } = await supabase.from("view_cartao_resumo").select("*");
     if (data) setCartoes(data);
   };
 
@@ -88,19 +98,21 @@ export default function Configuracoes() {
       toast({
         title: "Campos obrigatórios",
         description: "Preencha nome, banco e saldo inicial",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) {
         toast({ title: "Erro", description: "Usuário não autenticado", variant: "destructive" });
         return;
       }
 
-      const empresaIdResult = await supabase.rpc('get_user_empresa_id', {});
+      const empresaIdResult = await supabase.rpc("get_user_empresa_id", {});
       const empresaId = empresaIdResult.data;
 
       if (!empresaId) {
@@ -114,21 +126,24 @@ export default function Configuracoes() {
         banco,
         saldo_inicial: parseCurrencyString(saldoInicial),
         saldo_atual: parseCurrencyString(saldoInicial),
-        cor: '#888888'
+        cor: "#888888",
       };
 
       if (selectedConta) {
-        const { error } = await supabase.from('contas').update({
-          nome,
-          banco,
-          saldo_inicial: parseCurrencyString(saldoInicial)
-        }).eq('id', selectedConta.id);
+        const { error } = await supabase
+          .from("contas")
+          .update({
+            nome,
+            banco,
+            saldo_inicial: parseCurrencyString(saldoInicial),
+          })
+          .eq("id", selectedConta.id);
 
         if (error) {
           toast({
             title: "Erro ao atualizar",
             description: error.message,
-            variant: "destructive"
+            variant: "destructive",
           });
           return;
         }
@@ -138,13 +153,13 @@ export default function Configuracoes() {
         setIsNewContaOpen(false);
         setIsContaDetailOpen(false);
       } else {
-        const { error } = await supabase.from('contas').insert(payload);
+        const { error } = await supabase.from("contas").insert(payload);
 
         if (error) {
           toast({
             title: "Erro ao criar conta",
             description: error.message,
-            variant: "destructive"
+            variant: "destructive",
           });
           return;
         }
@@ -158,7 +173,7 @@ export default function Configuracoes() {
       toast({
         title: "Erro",
         description: getSafeErrorMessage(err),
-        variant: "destructive"
+        variant: "destructive",
       });
     }
   };
@@ -168,19 +183,21 @@ export default function Configuracoes() {
       toast({
         title: "Campos obrigatórios",
         description: "Preencha todos os campos do cartão",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) {
         toast({ title: "Erro", description: "Usuário não autenticado", variant: "destructive" });
         return;
       }
 
-      const empresaIdResult = await supabase.rpc('get_user_empresa_id', {});
+      const empresaIdResult = await supabase.rpc("get_user_empresa_id", {});
       const empresaId = empresaIdResult.data;
 
       if (!empresaId) {
@@ -199,19 +216,22 @@ export default function Configuracoes() {
       };
 
       if (selectedCartao) {
-        const { error } = await supabase.from('cartoes_credito').update({
-          nome,
-          dia_fechamento: parseInt(diaFechamento),
-          dia_vencimento: parseInt(diaVencimento),
-          limite: parseCurrencyString(limite),
-          conta_pagamento_id: contaPagamentoId || null,
-        }).eq('id', selectedCartao.id);
+        const { error } = await supabase
+          .from("cartoes_credito")
+          .update({
+            nome,
+            dia_fechamento: parseInt(diaFechamento),
+            dia_vencimento: parseInt(diaVencimento),
+            limite: parseCurrencyString(limite),
+            conta_pagamento_id: contaPagamentoId || null,
+          })
+          .eq("id", selectedCartao.id);
 
         if (error) {
           toast({
             title: "Erro ao atualizar",
             description: error.message,
-            variant: "destructive"
+            variant: "destructive",
           });
           return;
         }
@@ -221,13 +241,13 @@ export default function Configuracoes() {
         setIsNewCartaoOpen(false);
         setIsCartaoDetailOpen(false);
       } else {
-        const { error } = await supabase.from('cartoes_credito').insert(payload);
+        const { error } = await supabase.from("cartoes_credito").insert(payload);
 
         if (error) {
           toast({
             title: "Erro ao criar cartão",
             description: error.message,
-            variant: "destructive"
+            variant: "destructive",
           });
           return;
         }
@@ -241,13 +261,13 @@ export default function Configuracoes() {
       toast({
         title: "Erro",
         description: getSafeErrorMessage(err),
-        variant: "destructive"
+        variant: "destructive",
       });
     }
   };
 
   const handleDeleteConta = async (id: string) => {
-    const { error } = await supabase.from('contas').delete().eq('id', id);
+    const { error } = await supabase.from("contas").delete().eq("id", id);
     if (!error) {
       toast({ title: "Conta excluída" });
       fetchContas();
@@ -256,7 +276,7 @@ export default function Configuracoes() {
   };
 
   const handleDeleteCartao = async (id: string) => {
-    const { error } = await supabase.from('cartoes_credito').delete().eq('id', id);
+    const { error } = await supabase.from("cartoes_credito").delete().eq("id", id);
     if (!error) {
       toast({ title: "Cartão excluído" });
       fetchCartoes();
@@ -310,25 +330,25 @@ export default function Configuracoes() {
             <div className="p-4 bg-blue-50 rounded-lg border border-blue-100">
               <p className="text-xs text-blue-700 font-medium mb-1">Total em Contas</p>
               <p className="text-2xl font-bold text-blue-900">
-                R$ {contas.reduce((acc, c) => acc + (c.saldo_atual || 0), 0).toLocaleString('pt-BR')}
+                R$ {contas.reduce((acc, c) => acc + (c.saldo_atual || 0), 0).toLocaleString("pt-BR")}
               </p>
             </div>
             <div className="p-4 bg-green-50 rounded-lg border border-green-100">
               <p className="text-xs text-green-700 font-medium mb-1">Total Entradas</p>
               <p className="text-2xl font-bold text-green-900">
-                R$ {contas.reduce((acc, c) => acc + (c.total_entradas || 0), 0).toLocaleString('pt-BR')}
+                R$ {contas.reduce((acc, c) => acc + (c.total_entradas || 0), 0).toLocaleString("pt-BR")}
               </p>
             </div>
             <div className="p-4 bg-red-50 rounded-lg border border-red-100">
               <p className="text-xs text-red-700 font-medium mb-1">Total Saídas</p>
               <p className="text-2xl font-bold text-red-900">
-                R$ {contas.reduce((acc, c) => acc + (c.total_saidas || 0), 0).toLocaleString('pt-BR')}
+                R$ {contas.reduce((acc, c) => acc + (c.total_saidas || 0), 0).toLocaleString("pt-BR")}
               </p>
             </div>
             <div className="p-4 bg-accent-orange/10 rounded-lg border border-accent-orange/20">
               <p className="text-xs text-accent-orange font-medium mb-1">Usado em Cartões</p>
               <p className="text-2xl font-bold text-accent-orange">
-                R$ {cartoes.reduce((acc, c) => acc + (c.usado || 0), 0).toLocaleString('pt-BR')}
+                R$ {cartoes.reduce((acc, c) => acc + (c.usado || 0), 0).toLocaleString("pt-BR")}
               </p>
             </div>
           </div>
@@ -347,28 +367,39 @@ export default function Configuracoes() {
                 </CardTitle>
                 <CardDescription>Gerenciar saldos e movimentações</CardDescription>
               </div>
-              <Dialog open={isNewContaOpen} onOpenChange={(open) => {
-                setIsNewContaOpen(open);
-                if (!open) resetForm();
-              }}>
+              <Dialog
+                open={isNewContaOpen}
+                onOpenChange={(open) => {
+                  setIsNewContaOpen(open);
+                  if (!open) resetForm();
+                }}
+              >
                 <DialogTrigger asChild>
-                  <Button className="bg-accent-orange hover:bg-accent-orange/90 text-white rounded-full" size="sm" onClick={() => {
-                    resetForm();
-                    setIsNewContaOpen(true);
-                  }}>
+                  <Button
+                    className="bg-accent-orange hover:bg-accent-orange/90 text-white rounded-full"
+                    size="sm"
+                    onClick={() => {
+                      resetForm();
+                      setIsNewContaOpen(true);
+                    }}
+                  >
                     <Plus className="h-4 w-4 mr-2" />
                     Nova Conta
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-md">
                   <DialogHeader>
-                    <DialogTitle>{selectedConta ? 'Editar Conta' : 'Adicionar Conta Bancária'}</DialogTitle>
+                    <DialogTitle>{selectedConta ? "Editar Conta" : "Adicionar Conta Bancária"}</DialogTitle>
                     <DialogDescription>Configure sua conta para acompanhamento automático</DialogDescription>
                   </DialogHeader>
                   <div className="space-y-4 mt-4">
                     <div className="space-y-2">
                       <Label>Nome da Conta</Label>
-                      <Input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Ex: Nubank Conta Corrente" />
+                      <Input
+                        value={nome}
+                        onChange={(e) => setNome(e.target.value)}
+                        placeholder="Ex: Nubank Conta Corrente"
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label>Banco</Label>
@@ -390,10 +421,18 @@ export default function Configuracoes() {
                     </div>
                     <div className="space-y-2">
                       <Label>Saldo Inicial (R$)</Label>
-                      <Input type="text" value={saldoInicial} onChange={(e) => setSaldoInicial(formatCurrencyInput(e.target.value))} placeholder="R$ 5.000,00" />
+                      <Input
+                        type="text"
+                        value={saldoInicial}
+                        onChange={(e) => setSaldoInicial(formatCurrencyInput(e.target.value))}
+                        placeholder="R$ 5.000,00"
+                      />
                     </div>
-                    <Button className="w-full bg-accent-orange hover:bg-accent-orange/90 text-white rounded-full" onClick={handleSaveConta}>
-                      {selectedConta ? 'Atualizar Conta' : 'Salvar Conta'}
+                    <Button
+                      className="w-full bg-accent-orange hover:bg-accent-orange/90 text-white rounded-full"
+                      onClick={handleSaveConta}
+                    >
+                      {selectedConta ? "Atualizar Conta" : "Salvar Conta"}
                     </Button>
                   </div>
                 </DialogContent>
@@ -418,9 +457,9 @@ export default function Configuracoes() {
                       <div className="flex items-center gap-3">
                         <div
                           className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm"
-                          style={{ backgroundColor: conta.cor || '#888' }}
+                          style={{ backgroundColor: conta.cor || "#888" }}
                         >
-                          {conta.banco ? conta.banco.substring(0, 2).toUpperCase() : '??'}
+                          {conta.banco ? conta.banco.substring(0, 2).toUpperCase() : "??"}
                         </div>
                         <div>
                           <h4 className="font-medium text-sm">{conta.nome}</h4>
@@ -431,7 +470,12 @@ export default function Configuracoes() {
                         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEditConta(conta)}>
                           <Pencil className="h-3 w-3" />
                         </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600" onClick={() => handleDeleteConta(conta.id)}>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-red-600"
+                          onClick={() => handleDeleteConta(conta.id)}
+                        >
                           <Trash2 className="h-3 w-3" />
                         </Button>
                       </div>
@@ -439,16 +483,23 @@ export default function Configuracoes() {
                     <div className="space-y-2">
                       <div className="flex justify-between items-center">
                         <span className="text-xs text-gray-600">Saldo Atual</span>
-                        <span className="text-lg font-bold text-gray-900">R$ {conta.saldo_atual?.toLocaleString('pt-BR')}</span>
+                        <span className="text-lg font-bold text-gray-900">
+                          R$ {conta.saldo_atual?.toLocaleString("pt-BR")}
+                        </span>
                       </div>
                       <div className="flex justify-between items-center text-xs">
-                        <span className="text-gray-500">Saldo Inicial: R$ {conta.saldo_inicial?.toLocaleString('pt-BR')}</span>
-                        <span className={cn(
-                          "font-medium flex items-center gap-1",
-                          variacao >= 0 ? "text-green-600" : "text-red-600"
-                        )}>
+                        <span className="text-gray-500">
+                          Saldo Inicial: R$ {conta.saldo_inicial?.toLocaleString("pt-BR")}
+                        </span>
+                        <span
+                          className={cn(
+                            "font-medium flex items-center gap-1",
+                            variacao >= 0 ? "text-green-600" : "text-red-600"
+                          )}
+                        >
                           {variacao >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-                          {variacao >= 0 ? '+' : ''}{percentVariacao.toFixed(1)}%
+                          {variacao >= 0 ? "+" : ""}
+                          {percentVariacao.toFixed(1)}%
                         </span>
                       </div>
                     </div>
@@ -470,23 +521,32 @@ export default function Configuracoes() {
                 </CardTitle>
                 <CardDescription>Gerenciar datas de fechamento e vencimento</CardDescription>
               </div>
-              <Dialog open={isNewCartaoOpen} onOpenChange={(open) => {
-                setIsNewCartaoOpen(open);
-                if (!open) resetForm();
-              }}>
+              <Dialog
+                open={isNewCartaoOpen}
+                onOpenChange={(open) => {
+                  setIsNewCartaoOpen(open);
+                  if (!open) resetForm();
+                }}
+              >
                 <DialogTrigger asChild>
-                  <Button className="bg-accent-orange hover:bg-accent-orange/90 text-white rounded-full" size="sm" onClick={() => {
-                    resetForm();
-                    setIsNewCartaoOpen(true);
-                  }}>
+                  <Button
+                    className="bg-accent-orange hover:bg-accent-orange/90 text-white rounded-full"
+                    size="sm"
+                    onClick={() => {
+                      resetForm();
+                      setIsNewCartaoOpen(true);
+                    }}
+                  >
                     <Plus className="h-4 w-4 mr-2" />
                     Novo Cartão
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-md">
                   <DialogHeader>
-                    <DialogTitle>{selectedCartao ? 'Editar Cartão' : 'Adicionar Cartão de Crédito'}</DialogTitle>
-                    <DialogDescription>Configure as datas do seu cartão para melhor controle financeiro</DialogDescription>
+                    <DialogTitle>{selectedCartao ? "Editar Cartão" : "Adicionar Cartão de Crédito"}</DialogTitle>
+                    <DialogDescription>
+                      Configure as datas do seu cartão para melhor controle financeiro
+                    </DialogDescription>
                   </DialogHeader>
                   <div className="space-y-4 mt-4">
                     <div className="space-y-2">
@@ -496,16 +556,35 @@ export default function Configuracoes() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label>Dia de Fechamento</Label>
-                        <Input type="number" min="1" max="31" value={diaFechamento} onChange={(e) => setDiaFechamento(e.target.value)} placeholder="10" />
+                        <Input
+                          type="number"
+                          min="1"
+                          max="31"
+                          value={diaFechamento}
+                          onChange={(e) => setDiaFechamento(e.target.value)}
+                          placeholder="10"
+                        />
                       </div>
                       <div className="space-y-2">
                         <Label>Dia de Vencimento</Label>
-                        <Input type="number" min="1" max="31" value={diaVencimento} onChange={(e) => setDiaVencimento(e.target.value)} placeholder="20" />
+                        <Input
+                          type="number"
+                          min="1"
+                          max="31"
+                          value={diaVencimento}
+                          onChange={(e) => setDiaVencimento(e.target.value)}
+                          placeholder="20"
+                        />
                       </div>
                     </div>
                     <div className="space-y-2">
                       <Label>Limite (R$)</Label>
-                      <Input type="text" value={limite} onChange={(e) => setLimite(formatCurrencyInput(e.target.value))} placeholder="R$ 10.000,00" />
+                      <Input
+                        type="text"
+                        value={limite}
+                        onChange={(e) => setLimite(formatCurrencyInput(e.target.value))}
+                        placeholder="R$ 10.000,00"
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label>Conta para Pagamento de Faturas</Label>
@@ -524,8 +603,11 @@ export default function Configuracoes() {
                       </Select>
                       <p className="text-xs text-muted-foreground">Conta padrão usada ao pagar faturas deste cartão</p>
                     </div>
-                    <Button className="w-full bg-accent-orange hover:bg-accent-orange/90 text-white rounded-full" onClick={handleSaveCartao}>
-                      {selectedCartao ? 'Atualizar Cartão' : 'Salvar Cartão'}
+                    <Button
+                      className="w-full bg-accent-orange hover:bg-accent-orange/90 text-white rounded-full"
+                      onClick={handleSaveCartao}
+                    >
+                      {selectedCartao ? "Atualizar Cartão" : "Salvar Cartão"}
                     </Button>
                   </div>
                 </DialogContent>
@@ -557,15 +639,22 @@ export default function Configuracoes() {
                         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEditCartao(cartao)}>
                           <Pencil className="h-3 w-3" />
                         </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600" onClick={() => handleDeleteCartao(cartao.id)}>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-red-600"
+                          onClick={() => handleDeleteCartao(cartao.id)}
+                        >
                           <Trash2 className="h-3 w-3" />
                         </Button>
                       </div>
                     </div>
                     <div className="space-y-1">
                       <div className="flex justify-between text-xs">
-                        <span className="text-gray-600">Utilizado: R$ {cartao.usado?.toLocaleString('pt-BR') || '0,00'}</span>
-                        <span className="text-gray-600">Limite: R$ {cartao.limite.toLocaleString('pt-BR')}</span>
+                        <span className="text-gray-600">
+                          Utilizado: R$ {cartao.usado?.toLocaleString("pt-BR") || "0,00"}
+                        </span>
+                        <span className="text-gray-600">Limite: R$ {cartao.limite.toLocaleString("pt-BR")}</span>
                       </div>
                       <div className="w-full bg-gray-200 rounded-full h-2">
                         <div
@@ -610,19 +699,25 @@ export default function Configuracoes() {
                 </div>
                 <div>
                   <Label className="text-xs text-muted-foreground">Limite Total</Label>
-                  <p className="text-sm">R$ {selectedCartao.limite.toLocaleString('pt-BR')}</p>
+                  <p className="text-sm">R$ {selectedCartao.limite.toLocaleString("pt-BR")}</p>
                 </div>
                 <div>
                   <Label className="text-xs text-muted-foreground">Utilizado</Label>
-                  <p className="text-sm text-accent-orange font-medium">R$ {selectedCartao.usado?.toLocaleString('pt-BR')}</p>
+                  <p className="text-sm text-accent-orange font-medium">
+                    R$ {selectedCartao.usado?.toLocaleString("pt-BR")}
+                  </p>
                 </div>
                 <div className="col-span-2 pt-2 border-t">
                   <Label className="text-xs text-muted-foreground">Disponível</Label>
-                  <p className="text-lg font-bold text-green-600">R$ {selectedCartao.disponivel?.toLocaleString('pt-BR')}</p>
+                  <p className="text-lg font-bold text-green-600">
+                    R$ {selectedCartao.disponivel?.toLocaleString("pt-BR")}
+                  </p>
                 </div>
               </div>
               <div className="flex gap-2 mt-4 border-t pt-4">
-                <Button variant="outline" className="flex-1" onClick={() => setIsCartaoDetailOpen(false)}>Fechar</Button>
+                <Button variant="outline" className="flex-1" onClick={() => setIsCartaoDetailOpen(false)}>
+                  Fechar
+                </Button>
                 <Button variant="outline" className="flex-1" onClick={() => openEditCartao(selectedCartao)}>
                   <Pencil className="mr-2 h-4 w-4" /> Editar
                 </Button>
@@ -655,23 +750,29 @@ export default function Configuracoes() {
                 </div>
                 <div>
                   <Label className="text-xs text-muted-foreground">Saldo Inicial</Label>
-                  <p className="text-sm">R$ {selectedConta.saldo_inicial?.toLocaleString('pt-BR')}</p>
+                  <p className="text-sm">R$ {selectedConta.saldo_inicial?.toLocaleString("pt-BR")}</p>
                 </div>
                 <div>
                   <Label className="text-xs text-muted-foreground">Entradas (Recebidas)</Label>
-                  <p className="text-sm font-medium text-green-600">+ R$ {selectedConta.total_entradas?.toLocaleString('pt-BR')}</p>
+                  <p className="text-sm font-medium text-green-600">
+                    + R$ {selectedConta.total_entradas?.toLocaleString("pt-BR")}
+                  </p>
                 </div>
                 <div>
                   <Label className="text-xs text-muted-foreground">Saídas (Pagas)</Label>
-                  <p className="text-sm font-medium text-red-600">- R$ {selectedConta.total_saidas?.toLocaleString('pt-BR')}</p>
+                  <p className="text-sm font-medium text-red-600">
+                    - R$ {selectedConta.total_saidas?.toLocaleString("pt-BR")}
+                  </p>
                 </div>
                 <div className="col-span-2 pt-2 border-t">
                   <Label className="text-xs text-muted-foreground">Saldo Atual</Label>
-                  <p className="text-lg font-bold">R$ {selectedConta.saldo_atual?.toLocaleString('pt-BR')}</p>
+                  <p className="text-lg font-bold">R$ {selectedConta.saldo_atual?.toLocaleString("pt-BR")}</p>
                 </div>
               </div>
               <div className="flex gap-2 mt-4 border-t pt-4">
-                <Button variant="outline" className="flex-1" onClick={() => setIsContaDetailOpen(false)}>Fechar</Button>
+                <Button variant="outline" className="flex-1" onClick={() => setIsContaDetailOpen(false)}>
+                  Fechar
+                </Button>
                 <Button variant="outline" className="flex-1" onClick={() => openEditConta(selectedConta)}>
                   <Pencil className="mr-2 h-4 w-4" /> Editar
                 </Button>

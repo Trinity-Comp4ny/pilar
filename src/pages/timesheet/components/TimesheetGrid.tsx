@@ -13,7 +13,7 @@ import {
 interface TimesheetGridProps {
   pessoaId: string;
   weekStart: string; // YYYY-MM-DD (segunda-feira)
-  weekEnd: string;   // YYYY-MM-DD (domingo)
+  weekEnd: string; // YYYY-MM-DD (domingo)
   weekDays: string[]; // array de 7 datas YYYY-MM-DD
 }
 
@@ -83,9 +83,7 @@ export function TimesheetGrid({ pessoaId, weekStart, weekEnd, weekDays }: Timesh
 
   // Calcula totais por dia
   const totaisPorDia = weekDays.map((dia) =>
-    timesheets
-      .filter((t) => t.data === dia)
-      .reduce((sum, t) => sum + Number(t.horas), 0)
+    timesheets.filter((t) => t.data === dia).reduce((sum, t) => sum + Number(t.horas), 0)
   );
 
   const totalSemana = totaisPorDia.reduce((a, b) => a + b, 0);
@@ -138,22 +136,19 @@ export function TimesheetGrid({ pessoaId, weekStart, weekEnd, weekDays }: Timesh
                 </th>
               );
             })}
-            <th className="text-center py-2 px-2 font-medium text-muted-foreground w-[60px]">
-              Total
-            </th>
+            <th className="text-center py-2 px-2 font-medium text-muted-foreground w-[60px]">Total</th>
           </tr>
         </thead>
         <tbody>
           {linhas.map((linha) => {
-            const totalLinha = weekDays.reduce(
-              (sum, dia) => sum + getHoras(linha.projetoId, linha.disciplina, dia),
-              0
-            );
+            const totalLinha = weekDays.reduce((sum, dia) => sum + getHoras(linha.projetoId, linha.disciplina, dia), 0);
 
             return (
               <tr key={`${linha.projetoId}-${linha.disciplina}`} className="border-b hover:bg-muted/50">
                 <td className="py-2 px-3">
-                  <div className="font-medium text-xs truncate">{linha.projetoCodigo} - {linha.projetoNome}</div>
+                  <div className="font-medium text-xs truncate">
+                    {linha.projetoCodigo} - {linha.projetoNome}
+                  </div>
                   <div className="text-xs text-muted-foreground">{linha.disciplina}</div>
                   <HorasProgress projetoId={linha.projetoId} disciplina={linha.disciplina} horasMap={horasOrcadasMap} />
                 </td>
@@ -174,13 +169,13 @@ export function TimesheetGrid({ pessoaId, weekStart, weekEnd, weekDays }: Timesh
                         placeholder="—"
                         disabled={isApproved}
                         className={`h-8 w-[70px] text-center text-sm mx-auto ${
-                          isApproved ? "bg-green-50 border-green-200 text-green-700" :
-                          isRejected ? "bg-red-50 border-red-200 text-red-700" :
-                          ""
+                          isApproved
+                            ? "bg-green-50 border-green-200 text-green-700"
+                            : isRejected
+                              ? "bg-red-50 border-red-200 text-red-700"
+                              : ""
                         }`}
-                        onChange={(e) =>
-                          handleHorasChange(linha.projetoId, linha.disciplina, dia, e.target.value)
-                        }
+                        onChange={(e) => handleHorasChange(linha.projetoId, linha.disciplina, dia, e.target.value)}
                       />
                     </td>
                   );
@@ -232,13 +227,7 @@ function HorasProgress({
 
   const pct = Math.min((data.consumidas / data.orcadas) * 100, 100);
   const overflow = data.consumidas > data.orcadas;
-  const color = overflow
-    ? "bg-red-500"
-    : pct >= 90
-      ? "bg-red-400"
-      : pct >= 70
-        ? "bg-amber-400"
-        : "bg-emerald-400";
+  const color = overflow ? "bg-red-500" : pct >= 90 ? "bg-red-400" : pct >= 70 ? "bg-amber-400" : "bg-emerald-400";
 
   return (
     <div className="flex items-center gap-1.5 mt-1">

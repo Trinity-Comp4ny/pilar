@@ -10,7 +10,12 @@ import { MONTHS, getMonthLabel, buildYearRange } from "./folha-pagamento/types";
 import { FolhaSummaryCards } from "./folha-pagamento/components/FolhaSummaryCards";
 import { FolhaTable } from "./folha-pagamento/components/FolhaTable";
 import { FolhaHistory } from "./folha-pagamento/components/FolhaHistory";
-import { CloseMonthDialog, ConfirmPersonDialog, DetailEditDialog, HistoryDetailDialog } from "./folha-pagamento/components/FolhaDialogs";
+import {
+  CloseMonthDialog,
+  ConfirmPersonDialog,
+  DetailEditDialog,
+  HistoryDetailDialog,
+} from "./folha-pagamento/components/FolhaDialogs";
 
 export default function FolhaPagamento() {
   const [loading, setLoading] = useState(true);
@@ -91,7 +96,10 @@ export default function FolhaPagamento() {
       setTotalUniqueArea(uniqueArea);
 
       const { data: existingData, error: checkError } = await supabase
-        .from("folha_pagamento").select("*").eq("mes", selectedMonth).eq("ano", selectedYear);
+        .from("folha_pagamento")
+        .select("*")
+        .eq("mes", selectedMonth)
+        .eq("ano", selectedYear);
       if (checkError) throw checkError;
 
       if (existingData && existingData.length > 0) {
@@ -100,37 +108,59 @@ export default function FolhaPagamento() {
         const { data: peopleData } = await supabase.from("pessoas").select("id, nome, cargo").in("id", personIds);
         const peopleMap = new Map((peopleData || []).map((p) => [p.id, p]));
 
-        setData(existingData.map((item) => {
-          const salario_fixo = Number(item.salario_fixo ?? 0);
-          const valor_m2 = Number(item.valor_m2 ?? 0);
-          const soma_area = Number(item.total_area_projetada ?? 0);
-          const v_variavel = Number(item.adicional_variavel ?? soma_area * valor_m2);
-          const v_total = Number(item.total_receber ?? salario_fixo + v_variavel);
-          return {
-            p_id: item.pessoa_id, p_nome: peopleMap.get(item.pessoa_id)?.nome || "Desconhecido",
-            p_cargo: peopleMap.get(item.pessoa_id)?.cargo || "-", p_salario_fixo: salario_fixo,
-            p_valor_m2: valor_m2, soma_area, v_variavel, v_total, lista_projetos: [],
-            status: item.status, data_pagamento: item.data_pagamento, folha_id: item.id, edited_fields: [],
-          };
-        }));
+        setData(
+          existingData.map((item) => {
+            const salario_fixo = Number(item.salario_fixo ?? 0);
+            const valor_m2 = Number(item.valor_m2 ?? 0);
+            const soma_area = Number(item.total_area_projetada ?? 0);
+            const v_variavel = Number(item.adicional_variavel ?? soma_area * valor_m2);
+            const v_total = Number(item.total_receber ?? salario_fixo + v_variavel);
+            return {
+              p_id: item.pessoa_id,
+              p_nome: peopleMap.get(item.pessoa_id)?.nome || "Desconhecido",
+              p_cargo: peopleMap.get(item.pessoa_id)?.cargo || "-",
+              p_salario_fixo: salario_fixo,
+              p_valor_m2: valor_m2,
+              soma_area,
+              v_variavel,
+              v_total,
+              lista_projetos: [],
+              status: item.status,
+              data_pagamento: item.data_pagamento,
+              folha_id: item.id,
+              edited_fields: [],
+            };
+          })
+        );
       } else {
         setStatusFolha("preview");
-        const { data: previewData, error: rpcError } = await supabase.rpc("get_folha_preview", { p_mes: selectedMonth, p_ano: selectedYear });
+        const { data: previewData, error: rpcError } = await supabase.rpc("get_folha_preview", {
+          p_mes: selectedMonth,
+          p_ano: selectedYear,
+        });
         if (rpcError) throw rpcError;
 
-        setData((previewData || []).map((item: Record<string, unknown>) => {
-          const salario_fixo = Number(item.p_salario_fixo ?? item.salario_fixo ?? 0);
-          const valor_m2 = Number(item.p_valor_m2 ?? item.valor_m2 ?? 0);
-          const soma_area = Number(item.soma_area ?? item.total_area ?? 0);
-          const v_variavel = Number(item.v_variavel ?? item.total_variavel ?? soma_area * valor_m2);
-          const v_total = Number(item.v_total ?? item.total_receber ?? salario_fixo + v_variavel);
-          return {
-            p_id: item.p_id ?? item.pessoa_id ?? item.id, p_nome: item.p_nome ?? item.nome ?? "",
-            p_cargo: item.p_cargo ?? item.cargo ?? "", p_salario_fixo: salario_fixo,
-            p_valor_m2: valor_m2, soma_area, v_variavel, v_total,
-            lista_projetos: item.lista_projetos ?? item.projetos_nomes ?? [], edited_fields: [],
-          };
-        }));
+        setData(
+          (previewData || []).map((item: Record<string, unknown>) => {
+            const salario_fixo = Number(item.p_salario_fixo ?? item.salario_fixo ?? 0);
+            const valor_m2 = Number(item.p_valor_m2 ?? item.valor_m2 ?? 0);
+            const soma_area = Number(item.soma_area ?? item.total_area ?? 0);
+            const v_variavel = Number(item.v_variavel ?? item.total_variavel ?? soma_area * valor_m2);
+            const v_total = Number(item.v_total ?? item.total_receber ?? salario_fixo + v_variavel);
+            return {
+              p_id: item.p_id ?? item.pessoa_id ?? item.id,
+              p_nome: item.p_nome ?? item.nome ?? "",
+              p_cargo: item.p_cargo ?? item.cargo ?? "",
+              p_salario_fixo: salario_fixo,
+              p_valor_m2: valor_m2,
+              soma_area,
+              v_variavel,
+              v_total,
+              lista_projetos: item.lista_projetos ?? item.projetos_nomes ?? [],
+              edited_fields: [],
+            };
+          })
+        );
       }
     } catch (err: unknown) {
       toast({ title: "Erro ao carregar dados", description: getSafeErrorMessage(err), variant: "destructive" });
@@ -144,15 +174,24 @@ export default function FolhaPagamento() {
     try {
       const empresaId = (await supabase.rpc("get_user_empresa_id")).data;
       const payload = data.map((item) => ({
-        empresa_id: empresaId, pessoa_id: item.p_id, mes: selectedMonth, ano: selectedYear,
-        salario_fixo: item.p_salario_fixo, total_area_projetada: item.soma_area,
-        valor_m2: item.p_valor_m2, adicional_variavel: item.v_variavel,
-        total_receber: item.v_total, status: "pendente",
+        empresa_id: empresaId,
+        pessoa_id: item.p_id,
+        mes: selectedMonth,
+        ano: selectedYear,
+        salario_fixo: item.p_salario_fixo,
+        total_area_projetada: item.soma_area,
+        valor_m2: item.p_valor_m2,
+        adicional_variavel: item.v_variavel,
+        total_receber: item.v_total,
+        status: "pendente",
       }));
       const { error } = await supabase.from("folha_pagamento").insert(payload);
       if (error) throw error;
 
-      toast({ title: "Folha fechada com sucesso!", description: `Os registros para ${getMonthLabel(selectedMonth)}/${selectedYear} foram salvos.` });
+      toast({
+        title: "Folha fechada com sucesso!",
+        description: `Os registros para ${getMonthLabel(selectedMonth)}/${selectedYear} foram salvos.`,
+      });
       setConfirmDialogOpen(false);
       fetchData();
       fetchHistory();
@@ -192,7 +231,12 @@ export default function FolhaPagamento() {
 
   const startEditing = () => {
     if (!selectedPerson) return;
-    setEditForm({ p_salario_fixo: selectedPerson.p_salario_fixo, soma_area: selectedPerson.soma_area, v_variavel: selectedPerson.v_variavel, v_total: selectedPerson.v_total });
+    setEditForm({
+      p_salario_fixo: selectedPerson.p_salario_fixo,
+      soma_area: selectedPerson.soma_area,
+      v_variavel: selectedPerson.v_variavel,
+      v_total: selectedPerson.v_total,
+    });
     setIsEditingDetail(true);
   };
 
@@ -228,25 +272,40 @@ export default function FolhaPagamento() {
         const today = new Date();
         const dateStr = today.toISOString().slice(0, 10);
 
-        const { data: categorias } = await supabase.from("categorias_financeiras").select("id, nome").eq("tipo", "Despesa");
+        const { data: categorias } = await supabase
+          .from("categorias_financeiras")
+          .select("id, nome")
+          .eq("tipo", "Despesa");
         let categoriaFolhaPagamento = categorias?.find((c) => c.nome === "Folha de Pagamento");
 
         if (!categoriaFolhaPagamento) {
           const empresaId = (await supabase.rpc("get_user_empresa_id", {})).data;
           const { data: insertedCategory, error: insertCategoriaError } = await supabase
-            .from("categorias_financeiras").insert({ nome: "Folha de Pagamento", tipo: "Despesa", empresa_id: empresaId }).select("id, nome").single();
+            .from("categorias_financeiras")
+            .insert({ nome: "Folha de Pagamento", tipo: "Despesa", empresa_id: empresaId })
+            .select("id, nome")
+            .single();
           if (insertCategoriaError) throw insertCategoriaError;
           categoriaFolhaPagamento = insertedCategory;
         }
 
         const descricao = `Folha de Pagamento ${getMonthLabel(selectedMonth)}/${selectedYear} - ${currentItem.p_nome}`;
-        await supabase.from("despesas").insert([{
-          data_vencimento: dateStr, data_pagamento: dateStr, descricao,
-          categoria_id: categoriaFolhaPagamento ? categoriaFolhaPagamento.id : null,
-          valor: currentItem.v_total, fornecedor_id: null, projeto_id: null,
-          nota_fiscal: null, status: "Pago", conta_id: null, cartao_id: null,
-          observacao: "Lançamento automático de Folha de Pagamento",
-        }]);
+        await supabase.from("despesas").insert([
+          {
+            data_vencimento: dateStr,
+            data_pagamento: dateStr,
+            descricao,
+            categoria_id: categoriaFolhaPagamento ? categoriaFolhaPagamento.id : null,
+            valor: currentItem.v_total,
+            fornecedor_id: null,
+            projeto_id: null,
+            nota_fiscal: null,
+            status: "Pago",
+            conta_id: null,
+            cartao_id: null,
+            observacao: "Lançamento automático de Folha de Pagamento",
+          },
+        ]);
       }
 
       toast({ title: "Status atualizado", description: `O status foi alterado para ${newStatus}.` });
@@ -263,7 +322,10 @@ export default function FolhaPagamento() {
 
     try {
       const { data: existingData, error } = await supabase
-        .from("folha_pagamento").select("*").eq("mes", historyItem.mes).eq("ano", historyItem.ano);
+        .from("folha_pagamento")
+        .select("*")
+        .eq("mes", historyItem.mes)
+        .eq("ano", historyItem.ano);
       if (error) throw error;
 
       if (!existingData || existingData.length === 0) {
@@ -273,22 +335,36 @@ export default function FolhaPagamento() {
         const { data: peopleData } = await supabase.from("pessoas").select("id, nome, cargo").in("id", personIds);
         const peopleMap = new Map((peopleData || []).map((p) => [p.id, p]));
 
-        setHistoryDetailItems(existingData.map((item) => {
-          const salario_fixo = Number(item.salario_fixo ?? 0);
-          const valor_m2 = Number(item.valor_m2 ?? 0);
-          const soma_area = Number(item.total_area_projetada ?? 0);
-          const v_variavel = Number(item.adicional_variavel ?? soma_area * valor_m2);
-          const v_total = Number(item.total_receber ?? salario_fixo + v_variavel);
-          return {
-            p_id: item.pessoa_id, p_nome: peopleMap.get(item.pessoa_id)?.nome || "Desconhecido",
-            p_cargo: peopleMap.get(item.pessoa_id)?.cargo || "-", p_salario_fixo: salario_fixo,
-            p_valor_m2: valor_m2, soma_area, v_variavel, v_total, lista_projetos: [],
-            status: item.status, data_pagamento: item.data_pagamento, folha_id: item.id,
-          };
-        }));
+        setHistoryDetailItems(
+          existingData.map((item) => {
+            const salario_fixo = Number(item.salario_fixo ?? 0);
+            const valor_m2 = Number(item.valor_m2 ?? 0);
+            const soma_area = Number(item.total_area_projetada ?? 0);
+            const v_variavel = Number(item.adicional_variavel ?? soma_area * valor_m2);
+            const v_total = Number(item.total_receber ?? salario_fixo + v_variavel);
+            return {
+              p_id: item.pessoa_id,
+              p_nome: peopleMap.get(item.pessoa_id)?.nome || "Desconhecido",
+              p_cargo: peopleMap.get(item.pessoa_id)?.cargo || "-",
+              p_salario_fixo: salario_fixo,
+              p_valor_m2: valor_m2,
+              soma_area,
+              v_variavel,
+              v_total,
+              lista_projetos: [],
+              status: item.status,
+              data_pagamento: item.data_pagamento,
+              folha_id: item.id,
+            };
+          })
+        );
       }
     } catch {
-      toast({ title: "Erro ao carregar detalhes", description: "Não foi possível carregar os detalhes da folha selecionada.", variant: "destructive" });
+      toast({
+        title: "Erro ao carregar detalhes",
+        description: "Não foi possível carregar os detalhes da folha selecionada.",
+        variant: "destructive",
+      });
     } finally {
       setHistoryDetailLoading(false);
     }
@@ -308,15 +384,27 @@ export default function FolhaPagamento() {
               <span className="text-sm font-medium">Período:</span>
             </div>
             <Select value={selectedMonth.toString()} onValueChange={(v) => setSelectedMonth(parseInt(v))}>
-              <SelectTrigger className="w-[140px]"><SelectValue placeholder="Mês" /></SelectTrigger>
+              <SelectTrigger className="w-[140px]">
+                <SelectValue placeholder="Mês" />
+              </SelectTrigger>
               <SelectContent>
-                {MONTHS.map((m) => (<SelectItem key={m.value} value={m.value.toString()}>{m.label}</SelectItem>))}
+                {MONTHS.map((m) => (
+                  <SelectItem key={m.value} value={m.value.toString()}>
+                    {m.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
             <Select value={selectedYear.toString()} onValueChange={(v) => setSelectedYear(parseInt(v))}>
-              <SelectTrigger className="w-[100px]"><SelectValue placeholder="Ano" /></SelectTrigger>
+              <SelectTrigger className="w-[100px]">
+                <SelectValue placeholder="Ano" />
+              </SelectTrigger>
               <SelectContent>
-                {years.map((y) => (<SelectItem key={y} value={y.toString()}>{y}</SelectItem>))}
+                {years.map((y) => (
+                  <SelectItem key={y} value={y.toString()}>
+                    {y}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -324,14 +412,22 @@ export default function FolhaPagamento() {
           <div className="flex items-center gap-4">
             {statusFolha === "preview" && data.length > 0 && (
               <CloseMonthDialog
-                open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}
-                selectedMonth={selectedMonth} selectedYear={selectedYear}
-                peopleCount={data.length} totalFolha={totalFolha}
-                saving={saving} allConfirmed={allConfirmed} onConfirm={handleCloseMonth}
+                open={confirmDialogOpen}
+                onOpenChange={setConfirmDialogOpen}
+                selectedMonth={selectedMonth}
+                selectedYear={selectedYear}
+                peopleCount={data.length}
+                totalFolha={totalFolha}
+                saving={saving}
+                allConfirmed={allConfirmed}
+                onConfirm={handleCloseMonth}
               />
             )}
             {statusFolha === "closed" && (
-              <Badge variant="secondary" className="bg-green-100 text-green-800 px-3 py-1 text-sm flex gap-1 items-center">
+              <Badge
+                variant="secondary"
+                className="bg-green-100 text-green-800 px-3 py-1 text-sm flex gap-1 items-center"
+              >
                 <CheckCircle2 className="h-3 w-3" />
                 Folha Fechada
               </Badge>
@@ -342,27 +438,48 @@ export default function FolhaPagamento() {
         <FolhaSummaryCards totalFolha={totalFolha} peopleCount={data.length} totalUniqueArea={totalUniqueArea} />
 
         <FolhaTable
-          data={data} loading={loading} statusFolha={statusFolha}
-          confirmedUsers={confirmedUsers} onCheckboxChange={handleCheckboxChange}
-          onRowClick={openDetailDialog} onStatusChange={handleStatusChange}
+          data={data}
+          loading={loading}
+          statusFolha={statusFolha}
+          confirmedUsers={confirmedUsers}
+          onCheckboxChange={handleCheckboxChange}
+          onRowClick={openDetailDialog}
+          onStatusChange={handleStatusChange}
         />
       </div>
 
-      <FolhaHistory history={history} selectedMonth={selectedMonth} selectedYear={selectedYear} onOpenDetail={openHistoryDetail} />
+      <FolhaHistory
+        history={history}
+        selectedMonth={selectedMonth}
+        selectedYear={selectedYear}
+        onOpenDetail={openHistoryDetail}
+      />
 
-      <ConfirmPersonDialog open={personConfirmDialogOpen} onOpenChange={setPersonConfirmDialogOpen} person={selectedPerson} onConfirm={confirmPerson} />
+      <ConfirmPersonDialog
+        open={personConfirmDialogOpen}
+        onOpenChange={setPersonConfirmDialogOpen}
+        person={selectedPerson}
+        onConfirm={confirmPerson}
+      />
 
       <DetailEditDialog
-        open={detailDialogOpen} onOpenChange={setDetailDialogOpen}
-        person={selectedPerson} isEditing={isEditingDetail} editForm={editForm}
-        onStartEditing={startEditing} onCancelEditing={() => setIsEditingDetail(false)}
+        open={detailDialogOpen}
+        onOpenChange={setDetailDialogOpen}
+        person={selectedPerson}
+        isEditing={isEditingDetail}
+        editForm={editForm}
+        onStartEditing={startEditing}
+        onCancelEditing={() => setIsEditingDetail(false)}
         onSaveEditing={saveEditing}
         onEditFormChange={(field, value) => setEditForm((prev) => ({ ...prev, [field]: value }))}
       />
 
       <HistoryDetailDialog
-        open={historyDetailOpen} onOpenChange={setHistoryDetailOpen}
-        selectedHistory={selectedHistory} loading={historyDetailLoading} items={historyDetailItems}
+        open={historyDetailOpen}
+        onOpenChange={setHistoryDetailOpen}
+        selectedHistory={selectedHistory}
+        loading={historyDetailLoading}
+        items={historyDetailItems}
       />
     </div>
   );

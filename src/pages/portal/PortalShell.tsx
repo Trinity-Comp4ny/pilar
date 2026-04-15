@@ -42,11 +42,15 @@ export function PortalShell({ children }: { children: (data: PortalData, token: 
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <div>
             <p className="text-xs text-muted-foreground">{data.empresa_nome}</p>
-            <h1 className="text-lg font-semibold">{data.projeto_codigo} — {data.projeto_nome}</h1>
+            <h1 className="text-lg font-semibold">
+              {data.projeto_codigo} — {data.projeto_nome}
+            </h1>
           </div>
           <div className="text-right">
             <p className="text-xs text-muted-foreground">{data.cliente_nome}</p>
-            <Badge variant="secondary" className="text-xs mt-1">{data.projeto_status}</Badge>
+            <Badge variant="secondary" className="text-xs mt-1">
+              {data.projeto_status}
+            </Badge>
           </div>
         </div>
       </header>
@@ -60,7 +64,9 @@ export function PortalShell({ children }: { children: (data: PortalData, token: 
               end={item.end}
               className={({ isActive }) =>
                 `flex items-center gap-1.5 px-4 py-3 text-sm border-b-2 transition-colors ${
-                  isActive ? "border-primary text-primary font-medium" : "border-transparent text-muted-foreground hover:text-foreground"
+                  isActive
+                    ? "border-primary text-primary font-medium"
+                    : "border-transparent text-muted-foreground hover:text-foreground"
                 }`
               }
             >
@@ -71,9 +77,7 @@ export function PortalShell({ children }: { children: (data: PortalData, token: 
         </div>
       </nav>
 
-      <main className="max-w-4xl mx-auto px-6 py-6">
-        {children(data, token)}
-      </main>
+      <main className="max-w-4xl mx-auto px-6 py-6">{children(data, token)}</main>
     </div>
   );
 }

@@ -21,8 +21,15 @@ interface CompanyDataTabProps {
 }
 
 export function CompanyDataTab({
-  companyData, editing, isAdmin, isLoading,
-  onEdit, onCancel, onSave, onChange, onStatusChange,
+  companyData,
+  editing,
+  isAdmin,
+  isLoading,
+  onEdit,
+  onCancel,
+  onSave,
+  onChange,
+  onStatusChange,
 }: CompanyDataTabProps) {
   const inputClass = !editing
     ? "bg-black/5 border-black/10 text-black/80"
@@ -40,13 +47,21 @@ export function CompanyDataTab({
           <CardDescription className="mt-1">Informações gerais sobre a empresa</CardDescription>
         </div>
         {!editing ? (
-          <Button onClick={onEdit} className="rounded-full bg-accent-orange hover:bg-accent-orange/90 text-white" disabled={!isAdmin || isLoading}>
+          <Button
+            onClick={onEdit}
+            className="rounded-full bg-accent-orange hover:bg-accent-orange/90 text-white"
+            disabled={!isAdmin || isLoading}
+          >
             Editar
           </Button>
         ) : (
           <div className="flex gap-2">
-            <Button variant="outline" onClick={onCancel} className="rounded-full">Cancelar</Button>
-            <Button onClick={onSave} className="rounded-full bg-accent-orange hover:bg-accent-orange/90 text-white">Salvar</Button>
+            <Button variant="outline" onClick={onCancel} className="rounded-full">
+              Cancelar
+            </Button>
+            <Button onClick={onSave} className="rounded-full bg-accent-orange hover:bg-accent-orange/90 text-white">
+              Salvar
+            </Button>
           </div>
         )}
       </CardHeader>
@@ -54,19 +69,40 @@ export function CompanyDataTab({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label>Nome da Empresa</Label>
-            <Input value={companyData.nomeEmpresa} onChange={(e) => onChange("nomeEmpresa", e.target.value)} readOnly={!editing} className={inputClass} />
+            <Input
+              value={companyData.nomeEmpresa}
+              onChange={(e) => onChange("nomeEmpresa", e.target.value)}
+              readOnly={!editing}
+              className={inputClass}
+            />
           </div>
           <div className="space-y-2">
             <Label>CNPJ</Label>
-            <Input value={companyData.cnpj} onChange={(e) => onChange("cnpj", e.target.value)} readOnly={!editing} className={inputClass} />
+            <Input
+              value={companyData.cnpj}
+              onChange={(e) => onChange("cnpj", e.target.value)}
+              readOnly={!editing}
+              className={inputClass}
+            />
           </div>
           <div className="space-y-2">
             <Label>Email</Label>
-            <Input type="email" value={companyData.email} onChange={(e) => onChange("email", e.target.value)} readOnly={!editing} className={inputClass} />
+            <Input
+              type="email"
+              value={companyData.email}
+              onChange={(e) => onChange("email", e.target.value)}
+              readOnly={!editing}
+              className={inputClass}
+            />
           </div>
           <div className="space-y-2">
             <Label>Contato</Label>
-            <Input value={companyData.contato} onChange={(e) => onChange("contato", e.target.value)} readOnly={!editing} className={inputClass} />
+            <Input
+              value={companyData.contato}
+              onChange={(e) => onChange("contato", e.target.value)}
+              readOnly={!editing}
+              className={inputClass}
+            />
           </div>
           <div className="space-y-2 md:col-span-2">
             <Label>Status</Label>
@@ -77,7 +113,9 @@ export function CompanyDataTab({
                 </SelectTrigger>
                 <SelectContent>
                   {STATUS_OPTIONS.map((s) => (
-                    <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                    <SelectItem key={s.value} value={s.value}>
+                      {s.label}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -91,19 +129,40 @@ export function CompanyDataTab({
           </div>
           <div className="space-y-2 md:col-span-2">
             <Label>Endereço</Label>
-            <Input value={companyData.endereco} onChange={(e) => onChange("endereco", e.target.value)} readOnly={!editing} className={inputClass} />
+            <Input
+              value={companyData.endereco}
+              onChange={(e) => onChange("endereco", e.target.value)}
+              readOnly={!editing}
+              className={inputClass}
+            />
           </div>
           <div className="space-y-2">
             <Label>Cidade</Label>
-            <Input value={companyData.cidade} onChange={(e) => onChange("cidade", e.target.value)} readOnly={!editing} className={inputClass} />
+            <Input
+              value={companyData.cidade}
+              onChange={(e) => onChange("cidade", e.target.value)}
+              readOnly={!editing}
+              className={inputClass}
+            />
           </div>
           <div className="space-y-2">
             <Label>Estado</Label>
-            <Input value={companyData.estado} onChange={(e) => onChange("estado", e.target.value)} readOnly={!editing} className={inputClass} maxLength={2} />
+            <Input
+              value={companyData.estado}
+              onChange={(e) => onChange("estado", e.target.value)}
+              readOnly={!editing}
+              className={inputClass}
+              maxLength={2}
+            />
           </div>
           <div className="space-y-2">
             <Label>CEP</Label>
-            <Input value={companyData.cep} onChange={(e) => onChange("cep", e.target.value)} readOnly={!editing} className={inputClass} />
+            <Input
+              value={companyData.cep}
+              onChange={(e) => onChange("cep", e.target.value)}
+              readOnly={!editing}
+              className={inputClass}
+            />
           </div>
         </div>
       </CardContent>

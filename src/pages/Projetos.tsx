@@ -1,14 +1,21 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Settings2, Layers, Calendar as CalendarIcon } from "lucide-react";
+import { Plus, Settings2, Layers, Calendar as CalendarIcon, Filter } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
-import { PROJECT_STATUS, PROJECT_STATUS_CONFIG, PROJECT_PRIORITY, PROJECT_PRIORITY_CONFIG, type ProjectPriority } from "@/constants";
+import {
+  PROJECT_STATUS,
+  PROJECT_STATUS_CONFIG,
+  PROJECT_PRIORITY,
+  PROJECT_PRIORITY_CONFIG,
+  type ProjectPriority,
+} from "@/constants";
 import { type Projeto } from "@/pages/projetos/types";
 import { ProjectCard } from "@/pages/projetos/components/ProjectCard";
 import { ProjectDetailDialog } from "@/pages/projetos/components/ProjectDetailDialog";
@@ -40,6 +47,7 @@ export default function ProjetosKanban() {
   const [selectedProjeto, setSelectedProjeto] = useState<Projeto | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>("kanban");
+  const [filterPessoaId, setFilterPessoaId] = useState<string>("all");
 
   useEffect(() => {
     fetchData();
@@ -83,26 +91,24 @@ export default function ProjetosKanban() {
     if (error) return;
 
     if (data) {
-      const mappedProjetos: Projeto[] = data.map(
-        (p: Record<string, unknown> & { clientes?: { nome: string } }) => ({
-          id: p.id as string,
-          codigo_projeto: p.codigo_projeto as string,
-          nome: p.nome as string,
-          cliente_id: p.cliente_id as string,
-          cliente_nome: p.clientes?.nome,
-          localizacao: p.localizacao as string | undefined,
-          parcelas: p.parcelas as string | undefined,
-          area_m2: p.area_m2 as number | undefined,
-          data_inicio: p.data_inicio as string,
-          data_previsao: p.data_previsao as string,
-          data_final: p.data_final as string | undefined,
-          status: p.status as Projeto["status"],
-          prioridade: (p.prioridade as ProjectPriority) || PROJECT_PRIORITY.MEDIA,
-          valor_contrato: p.valor_contrato as number,
-          observacao: p.observacao as string,
-          disciplinas: Array.isArray(p.disciplinas) ? p.disciplinas : [],
-        })
-      );
+      const mappedProjetos: Projeto[] = data.map((p: Record<string, unknown> & { clientes?: { nome: string } }) => ({
+        id: p.id as string,
+        codigo_projeto: p.codigo_projeto as string,
+        nome: p.nome as string,
+        cliente_id: p.cliente_id as string,
+        cliente_nome: p.clientes?.nome,
+        localizacao: p.localizacao as string | undefined,
+        parcelas: p.parcelas as string | undefined,
+        area_m2: p.area_m2 as number | undefined,
+        data_inicio: p.data_inicio as string,
+        data_previsao: p.data_previsao as string,
+        data_final: p.data_final as string | undefined,
+        status: p.status as Projeto["status"],
+        prioridade: (p.prioridade as ProjectPriority) || PROJECT_PRIORITY.MEDIA,
+        valor_contrato: p.valor_contrato as number,
+        observacao: p.observacao as string,
+        disciplinas: Array.isArray(p.disciplinas) ? p.disciplinas : [],
+      }));
       setProjetos(mappedProjetos);
     }
   };
@@ -189,7 +195,15 @@ export default function ProjetosKanban() {
 
   const getProjetosByStatus = (status: string) => {
     return projetos
-      .filter((projeto) => projeto.status === status)
+      .filter((projeto) => {
+        if (projeto.status !== status) return false;
+        if (filterPessoaId === "all") return true;
+        return projeto.disciplinas?.some((d) => {
+          if (d.responsavel_id === filterPessoaId) return true;
+          if (d.responsaveis?.some((r) => r.responsavel_id === filterPessoaId)) return true;
+          return false;
+        });
+      })
       .sort((a, b) => {
         const wa = PROJECT_PRIORITY_CONFIG[a.prioridade as ProjectPriority]?.sortWeight ?? 1;
         const wb = PROJECT_PRIORITY_CONFIG[b.prioridade as ProjectPriority]?.sortWeight ?? 1;
@@ -211,13 +225,26 @@ export default function ProjetosKanban() {
           title="Projetos"
           description="Gerencie seus projetos"
           children={
-            <div className="flex gap-2">
+            <div className="flex gap-2 items-center">
+              <div className="flex items-center gap-1.5">
+                <Filter className="h-4 w-4 text-muted-foreground" />
+                <Select value={filterPessoaId} onValueChange={setFilterPessoaId}>
+                  <SelectTrigger className="w-[180px] h-9 text-xs rounded-full">
+                    <SelectValue placeholder="Filtrar por pessoa" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas as pessoas</SelectItem>
+                    {pessoas.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>
+                        {p.nome}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
               {canEdit && (
-                <Button
-                  variant="outline"
-                  className="rounded-full text-sm"
-                  onClick={() => setIsDisciplinasOpen(true)}
-                >
+                <Button variant="outline" className="rounded-full text-sm" onClick={() => setIsDisciplinasOpen(true)}>
                   <Settings2 className="mr-2 h-4 w-4" />
                   Disciplinas
                 </Button>
@@ -263,12 +290,9 @@ export default function ProjetosKanban() {
       {activeTab === "kanban" ? (
         <DragDropContext onDragEnd={onDragEnd}>
           <div className="flex-1 min-h-0">
-            <div
-              className="grid gap-3 w-full h-full min-h-0"
-              style={{ gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))" }}
-            >
+            <div className="flex gap-3 w-full h-full min-h-0 overflow-x-auto pb-2">
               {Object.entries(statusConfig).map(([status, config]) => (
-                <div key={status} className="flex flex-col min-w-[280px] min-h-0">
+                <div key={status} className="flex flex-col min-w-[280px] w-[280px] flex-shrink-0 min-h-0">
                   <div className={`${config.columnColor} rounded-t-lg p-3 border-b border-black/10`}>
                     <h3 className="font-medium text-sm flex items-center justify-between">
                       {config.label}
@@ -290,11 +314,7 @@ export default function ProjetosKanban() {
                         {getProjetosByStatus(status).map((projeto, index) => (
                           <Draggable key={projeto.id} draggableId={projeto.id} index={index}>
                             {(provided, snapshot) => (
-                              <div
-                                ref={provided.innerRef}
-                                {...provided.draggableProps}
-                                {...provided.dragHandleProps}
-                              >
+                              <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
                                 <ProjectCard
                                   projeto={projeto}
                                   onClick={handleCardClick}

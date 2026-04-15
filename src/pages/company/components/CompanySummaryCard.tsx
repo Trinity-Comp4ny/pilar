@@ -13,13 +13,23 @@ interface CompanySummaryCardProps {
   onLogoPreview: () => void;
 }
 
-export function CompanySummaryCard({ companyData, usersCount, editingCompany, pendingLogoFile, onLogoPreview }: CompanySummaryCardProps) {
+export function CompanySummaryCard({
+  companyData,
+  usersCount,
+  editingCompany,
+  pendingLogoFile,
+  onLogoPreview,
+}: CompanySummaryCardProps) {
   const openPreview = () => {
     if (pendingLogoFile || companyData.logoUrl) onLogoPreview();
   };
 
   return (
-    <Card className={"border border-black/5 lg:col-span-1 overflow-hidden " + (editingCompany ? "ring-1 ring-accent-orange/25" : "")}>
+    <Card
+      className={
+        "border border-black/5 lg:col-span-1 overflow-hidden " + (editingCompany ? "ring-1 ring-accent-orange/25" : "")
+      }
+    >
       <CardHeader className={editingCompany ? "bg-accent-orange/5" : ""}>
         <div className="flex flex-col items-center text-center space-y-4">
           <div
@@ -27,10 +37,16 @@ export function CompanySummaryCard({ companyData, usersCount, editingCompany, pe
             tabIndex={0}
             className="h-28 w-28 rounded-2xl bg-black/5 border border-black/10 flex items-center justify-center overflow-hidden cursor-pointer"
             onClick={openPreview}
-            onKeyDown={(e) => { if (e.key === "Enter") openPreview(); }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") openPreview();
+            }}
           >
             {pendingLogoFile ? (
-              <img src={URL.createObjectURL(pendingLogoFile)} alt="Logo (prévia)" className="w-full h-full object-contain p-4" />
+              <img
+                src={URL.createObjectURL(pendingLogoFile)}
+                alt="Logo (prévia)"
+                className="w-full h-full object-contain p-4"
+              />
             ) : companyData.logoUrl ? (
               <img src={companyData.logoUrl} alt="Logo" className="w-full h-full object-contain p-4" />
             ) : (

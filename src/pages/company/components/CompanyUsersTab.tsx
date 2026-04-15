@@ -26,10 +26,19 @@ interface CompanyUsersTabProps {
 }
 
 export function CompanyUsersTab({
-  users, isAdmin, currentUserId,
-  inviteName, inviteEmail, inviteRole, isInviting,
-  onInviteNameChange, onInviteEmailChange, onInviteRoleChange,
-  onAddUser, onEditUser, onDeleteUser,
+  users,
+  isAdmin,
+  currentUserId,
+  inviteName,
+  inviteEmail,
+  inviteRole,
+  isInviting,
+  onInviteNameChange,
+  onInviteEmailChange,
+  onInviteRoleChange,
+  onAddUser,
+  onEditUser,
+  onDeleteUser,
 }: CompanyUsersTabProps) {
   return (
     <Card className="border border-black/5">
@@ -46,27 +55,50 @@ export function CompanyUsersTab({
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="invite-name">Nome completo</Label>
-                <Input id="invite-name" value={inviteName} onChange={(e) => onInviteNameChange(e.target.value)} placeholder="Nome completo" />
+                <Input
+                  id="invite-name"
+                  value={inviteName}
+                  onChange={(e) => onInviteNameChange(e.target.value)}
+                  placeholder="Nome completo"
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="invite-email">Email</Label>
-                <Input id="invite-email" type="email" value={inviteEmail} onChange={(e) => onInviteEmailChange(e.target.value)} placeholder="email@empresa.com" />
+                <Input
+                  id="invite-email"
+                  type="email"
+                  value={inviteEmail}
+                  onChange={(e) => onInviteEmailChange(e.target.value)}
+                  placeholder="email@empresa.com"
+                />
               </div>
               <div className="space-y-2">
                 <Label>Função</Label>
                 <Select value={inviteRole} onValueChange={(v) => onInviteRoleChange(v as (typeof ROLES)[number])}>
-                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione" />
+                  </SelectTrigger>
                   <SelectContent>
-                    {ROLES.map((r) => (<SelectItem key={r} value={r}>{r}</SelectItem>))}
+                    {ROLES.map((r) => (
+                      <SelectItem key={r} value={r}>
+                        {r}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
             </div>
             <div className="flex items-center justify-between gap-3 flex-wrap">
-              <Button onClick={onAddUser} className="rounded-full bg-accent-orange hover:bg-accent-orange/90 text-white" disabled={isInviting || !inviteName.trim() || !inviteEmail.trim()}>
+              <Button
+                onClick={onAddUser}
+                className="rounded-full bg-accent-orange hover:bg-accent-orange/90 text-white"
+                disabled={isInviting || !inviteName.trim() || !inviteEmail.trim()}
+              >
                 {isInviting ? "Enviando convite..." : "Adicionar Usuário"}
               </Button>
-              <p className="text-xs text-black/50">O convite será enviado por email e o usuário aparecerá como pendente.</p>
+              <p className="text-xs text-black/50">
+                O convite será enviado por email e o usuário aparecerá como pendente.
+              </p>
             </div>
           </div>
         )}
@@ -85,7 +117,9 @@ export function CompanyUsersTab({
             <TableBody>
               {users.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-black/50">Nenhum usuário adicionado</TableCell>
+                  <TableCell colSpan={4} className="text-black/50">
+                    Nenhum usuário adicionado
+                  </TableCell>
                 </TableRow>
               ) : (
                 users.map((u) => (
@@ -104,7 +138,13 @@ export function CompanyUsersTab({
                           <Button variant="outline" size="sm" className="rounded-full" onClick={() => onEditUser(u)}>
                             <Pencil className="h-4 w-4" />
                           </Button>
-                          <Button variant="outline" size="sm" className="rounded-full text-red-600" onClick={() => onDeleteUser(u.id)} disabled={u.id === currentUserId}>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="rounded-full text-red-600"
+                            onClick={() => onDeleteUser(u.id)}
+                            disabled={u.id === currentUserId}
+                          >
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
@@ -138,8 +178,18 @@ export function CompanyUsersTab({
                     </div>
                     {isAdmin && !u.id.startsWith("pending-") ? (
                       <div className="flex flex-col gap-2">
-                        <Button variant="outline" size="sm" className="rounded-full" onClick={() => onEditUser(u)}>Editar</Button>
-                        <Button variant="outline" size="sm" className="rounded-full text-red-600" onClick={() => onDeleteUser(u.id)} disabled={u.id === currentUserId}>Remover</Button>
+                        <Button variant="outline" size="sm" className="rounded-full" onClick={() => onEditUser(u)}>
+                          Editar
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="rounded-full text-red-600"
+                          onClick={() => onDeleteUser(u.id)}
+                          disabled={u.id === currentUserId}
+                        >
+                          Remover
+                        </Button>
                       </div>
                     ) : null}
                   </div>

@@ -17,7 +17,9 @@ export default function Login() {
 
   useEffect(() => {
     const checkUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       if (session) {
         navigate("/dashboard");
       }
@@ -49,17 +51,19 @@ export default function Login() {
       description: "Bem-vindo de volta.",
     });
 
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (user) {
       const { data: profile } = await supabase
-        .from('profiles')
-        .select('onboarding_completed, role, empresas(onboarding_completed)')
-        .eq('id', user.id)
+        .from("profiles")
+        .select("onboarding_completed, role, empresas(onboarding_completed)")
+        .eq("id", user.id)
         .single();
 
       if (profile && !profile.onboarding_completed) {
         navigate("/profile-setup");
-      } else if (profile?.role === 'admin' && !profile.empresas?.onboarding_completed) {
+      } else if (profile?.role === "admin" && !profile.empresas?.onboarding_completed) {
         navigate("/company-setup");
       } else {
         navigate("/dashboard");
@@ -102,8 +106,8 @@ export default function Login() {
     <div className="min-h-screen w-full flex overflow-hidden bg-white">
       {/* Lado Esquerdo - Formulário de Login */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-8 lg:p-16 bg-white relative">
-        <Link 
-          to="/" 
+        <Link
+          to="/"
           className="absolute top-8 left-8 lg:left-12 flex items-center gap-2 text-slate-500 hover:text-accent-orange transition-colors font-medium text-sm group"
         >
           <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
@@ -113,20 +117,22 @@ export default function Login() {
         <div className="w-full max-w-[400px] space-y-8 animate-in fade-in slide-in-from-left-8 duration-700">
           <div className="text-center space-y-2">
             <div className="flex justify-center mb-6">
-                {/* <img src="/pilar-logo.svg" className="h-12 w-auto" alt="Pilar Logo" /> */}
-                <img src="/pilar-logo.svg" alt="Pilar" className="h-12 w-auto hover:rotate-12 transition-transform duration-300" />
+              {/* <img src="/pilar-logo.svg" className="h-12 w-auto" alt="Pilar Logo" /> */}
+              <img
+                src="/pilar-logo.svg"
+                alt="Pilar"
+                className="h-12 w-auto hover:rotate-12 transition-transform duration-300"
+              />
             </div>
-            <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-slate-900">
-              Bem-vindo
-            </h1>
-            <p className="text-sm text-slate-500">
-              Acesse sua conta
-            </p>
+            <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-slate-900">Bem-vindo</h1>
+            <p className="text-sm text-slate-500">Acesse sua conta</p>
           </div>
 
           <form onSubmit={handleLogin} className="space-y-5">
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-slate-700 font-medium">Email</Label>
+              <Label htmlFor="email" className="text-slate-700 font-medium">
+                Email
+              </Label>
               <div className="relative group">
                 <Mail className="absolute left-3 top-3 h-4 w-4 text-slate-400 group-focus-within:text-accent-orange transition-colors" />
                 <Input
@@ -143,7 +149,9 @@ export default function Login() {
 
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="password" className="text-slate-700 font-medium">Senha</Label>
+                <Label htmlFor="password" className="text-slate-700 font-medium">
+                  Senha
+                </Label>
                 <button
                   type="button"
                   onClick={handleResetPassword}
@@ -167,9 +175,9 @@ export default function Login() {
               </div>
             </div>
 
-            <Button 
-              className="w-full h-11 bg-accent-orange hover:bg-orange-600 text-white font-medium shadow-lg shadow-orange-500/20 hover:shadow-orange-500/30 transition-all active:scale-[0.98] text-sm" 
-              type="submit" 
+            <Button
+              className="w-full h-11 bg-accent-orange hover:bg-orange-600 text-white font-medium shadow-lg shadow-orange-500/20 hover:shadow-orange-500/30 transition-all active:scale-[0.98] text-sm"
+              type="submit"
               disabled={isLoading}
             >
               {isLoading ? (
@@ -187,18 +195,20 @@ export default function Login() {
               <span className="w-full border-t border-slate-100" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-white px-2 text-slate-400">
-                Ainda não tem conta?
-              </span>
+              <span className="bg-white px-2 text-slate-400">Ainda não tem conta?</span>
             </div>
           </div>
 
           <div className="text-center pt-2">
-             <Button variant="outline" className="w-full h-10 border-slate-200 text-slate-600 hover:text-accent-orange hover:border-accent-orange/50 hover:bg-orange-50/50 transition-all text-sm font-medium" asChild>
-                <a href="https://trnty.com.br" target="_blank" rel="noopener noreferrer">
-                  Fale com nossa equipe comercial
-                </a>
-             </Button>
+            <Button
+              variant="outline"
+              className="w-full h-10 border-slate-200 text-slate-600 hover:text-accent-orange hover:border-accent-orange/50 hover:bg-orange-50/50 transition-all text-sm font-medium"
+              asChild
+            >
+              <a href="https://trnty.com.br" target="_blank" rel="noopener noreferrer">
+                Fale com nossa equipe comercial
+              </a>
+            </Button>
           </div>
         </div>
       </div>
@@ -212,8 +222,8 @@ export default function Login() {
             loop
             muted
             playsInline
-            className="w-full h-full object-cover opacity-60 scale-105 animate-pulse-slow grayscale contrast-125" 
-            style={{ animationDuration: '20s' }}
+            className="w-full h-full object-cover opacity-60 scale-105 animate-pulse-slow grayscale contrast-125"
+            style={{ animationDuration: "20s" }}
           />
           {/* Overlay gradiente + tintura laranja */}
           <div className="absolute inset-0 bg-accent-orange/40 mix-blend-multiply" />
@@ -223,7 +233,11 @@ export default function Login() {
         <div className="relative z-10 flex flex-col justify-between h-full w-full p-16 text-white">
           <div className="animate-in fade-in slide-in-from-top-8 duration-700 flex justify-end">
             <div className="flex items-center gap-3 opacity-80">
-              <img src="/pilar-logo.svg" alt="Pilar" className="h-8 w-8 brightness-0 invert hover:rotate-12 transition-transform duration-300" />
+              <img
+                src="/pilar-logo.svg"
+                alt="Pilar"
+                className="h-8 w-8 brightness-0 invert hover:rotate-12 transition-transform duration-300"
+              />
               <span className="text-xl font-medium tracking-tight">Pilar</span>
             </div>
           </div>
@@ -234,11 +248,11 @@ export default function Login() {
                 Impulsionado por Trinity Company
               </span>
             </div>
-            
+
             <blockquote className="text-3xl font-light leading-snug">
               "A gestão eficiente é o alicerce onde grandes empresas constroem seu futuro."
             </blockquote>
-            
+
             <div className="flex flex-col items-end gap-3 pt-4 border-t border-white/20">
               <div className="flex items-center gap-2 text-sm font-medium text-white/80">
                 <span>Controle Financeiro Integrado</span>

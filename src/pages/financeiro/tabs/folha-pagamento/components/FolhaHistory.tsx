@@ -33,7 +33,9 @@ export function FolhaHistory({ history, selectedMonth, selectedYear, onOpenDetai
             >
               <CardContent className="p-4 flex items-center justify-between">
                 <div>
-                  <div className="font-semibold text-lg">{getMonthLabel(h.mes)} {h.ano}</div>
+                  <div className="font-semibold text-lg">
+                    {getMonthLabel(h.mes)} {h.ano}
+                  </div>
                   <div className="text-sm text-muted-foreground">{h.count} colaboradores</div>
                 </div>
                 <div className="text-right">

@@ -1,12 +1,12 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-//import { Badge } from "@/components/ui/badge";
-//import { Loader2, MapPin } from "lucide-react";
-//import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
-//import L from "leaflet";
-//import "leaflet/dist/leaflet.css";
-//import { PageLayout } from "@/components/PageLayout";
+import { Badge } from "@/components/ui/badge";
+import { Loader2, MapPin } from "lucide-react";
+import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { supabase } from "@/integrations/supabase/client";
 import { PROJECT_STATUS, PROJECT_STATUS_CONFIG, type ProjectStatus } from "@/constants";
@@ -98,7 +98,9 @@ export default function MapaObras() {
           <SelectContent>
             <SelectItem value="todos">Todos os status</SelectItem>
             {Object.values(PROJECT_STATUS).map((s) => (
-              <SelectItem key={s} value={s}>{s}</SelectItem>
+              <SelectItem key={s} value={s}>
+                {s}
+              </SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -112,9 +114,7 @@ export default function MapaObras() {
         <div className="text-center py-12 text-muted-foreground">
           <MapPin className="h-10 w-10 mx-auto mb-3 opacity-40" />
           <p className="text-sm">Nenhum projeto com localização geográfica encontrado.</p>
-          <p className="text-xs mt-1">
-            Projetos precisam ter endereço com coordenadas para aparecer no mapa.
-          </p>
+          <p className="text-xs mt-1">Projetos precisam ter endereço com coordenadas para aparecer no mapa.</p>
         </div>
       ) : (
         <div className="rounded-lg overflow-hidden border" style={{ height: "calc(100vh - 220px)" }}>
@@ -136,7 +136,9 @@ export default function MapaObras() {
               >
                 <Popup>
                   <div className="min-w-[200px]">
-                    <p className="font-semibold text-sm">{projeto.codigo_projeto} - {projeto.nome}</p>
+                    <p className="font-semibold text-sm">
+                      {projeto.codigo_projeto} - {projeto.nome}
+                    </p>
                     {projeto.cliente_nome && <p className="text-xs text-gray-600">{projeto.cliente_nome}</p>}
                     <div className="flex items-center gap-2 mt-1">
                       <Badge className={`text-[10px] ${PROJECT_STATUS_CONFIG[projeto.status]?.color || ""}`}>

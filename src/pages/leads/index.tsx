@@ -4,10 +4,19 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Mail, Phone, User, CheckCircle2, Loader2, AlertTriangle, UserPlus } from "lucide-react";
+import { Plus, Mail, Phone, User, CheckCircle2, Loader2, AlertTriangle, UserPlus, FileText } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { formatPhone } from "@/lib/maskUtils";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
@@ -28,13 +37,17 @@ interface Lead {
   convertido_em?: string;
 }
 
-const statusConfig: Record<string, { label: string, color: string, columnColor: string }> = {
-  "Novo": { label: "Novo", color: "bg-blue-100 text-blue-800", columnColor: "bg-blue-50" },
+const statusConfig: Record<string, { label: string; color: string; columnColor: string }> = {
+  Novo: { label: "Novo", color: "bg-blue-100 text-blue-800", columnColor: "bg-blue-50" },
   "Em contato": { label: "Em Contato", color: "bg-purple-100 text-purple-800", columnColor: "bg-purple-50" },
-  "Proposta": { label: "Proposta Enviada", color: "bg-yellow-100 text-yellow-800", columnColor: "bg-yellow-50" },
-  "Negociação": { label: "Em Negociação", color: "bg-accent-orange/10 text-accent-orange", columnColor: "bg-accent-orange/5" },
-  "Ganho": { label: "Ganho", color: "bg-green-100 text-green-800", columnColor: "bg-green-50" },
-  "Perdido": { label: "Perdido", color: "bg-red-100 text-red-800", columnColor: "bg-red-50" },
+  Proposta: { label: "Proposta Enviada", color: "bg-yellow-100 text-yellow-800", columnColor: "bg-yellow-50" },
+  Negociação: {
+    label: "Em Negociação",
+    color: "bg-accent-orange/10 text-accent-orange",
+    columnColor: "bg-accent-orange/5",
+  },
+  Ganho: { label: "Ganho", color: "bg-green-100 text-green-800", columnColor: "bg-green-50" },
+  Perdido: { label: "Perdido", color: "bg-red-100 text-red-800", columnColor: "bg-red-50" },
 };
 
 export default function Leads() {
@@ -51,21 +64,20 @@ export default function Leads() {
   });
   const [isSaving, setIsSaving] = useState(false);
   const [isConverting, setIsConverting] = useState(false);
+  const [isCreatingProposta, setIsCreatingProposta] = useState(false);
   const [pendingDrop, setPendingDrop] = useState<{ leadId: string; newStatus: string } | null>(null);
   const [isMotivoPerdasOpen, setIsMotivoPerdasOpen] = useState(false);
   const [motivoPerda, setMotivoPerda] = useState("");
   const [isAutoConvertOpen, setIsAutoConvertOpen] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchLeads();
   }, []);
 
   const fetchLeads = async () => {
-    const { data, error: _error } = await supabase
-      .from('leads')
-      .select('*')
-      .order('created_at', { ascending: false });
+    const { data, error: _error } = await supabase.from("leads").select("*").order("created_at", { ascending: false });
 
     if (data) {
       setLeads(data as Lead[]);
@@ -91,13 +103,13 @@ export default function Leads() {
 
     setIsSaving(true);
     try {
-      const { error } = await supabase.from('leads').insert({
+      const { error } = await supabase.from("leads").insert({
         nome: formData.nome,
         email: formData.email,
         contato: formData.contato,
         origem: formData.origem,
         status: "Novo",
-        empresa_id: (await supabase.rpc('get_user_empresa_id')).data
+        empresa_id: (await supabase.rpc("get_user_empresa_id")).data,
       });
 
       if (error) throw error;
@@ -160,9 +172,9 @@ export default function Leads() {
 
     try {
       const { error } = await supabase
-        .from('leads')
+        .from("leads")
         .update({ status: newStatus, ...extraFields })
-        .eq('id', leadId);
+        .eq("id", leadId);
 
       if (error) throw error;
 
@@ -174,7 +186,7 @@ export default function Leads() {
       toast({
         title: "Erro ao atualizar status",
         description: getSafeErrorMessage(error),
-        variant: "destructive"
+        variant: "destructive",
       });
       fetchLeads();
     }
@@ -197,7 +209,7 @@ export default function Leads() {
     setIsConverting(true);
 
     try {
-      const { data: _clienteId, error } = await supabase.rpc('rpc_converter_lead_cliente', {
+      const { data: _clienteId, error } = await supabase.rpc("rpc_converter_lead_cliente", {
         p_lead_id: pendingDrop.leadId,
       });
 
@@ -244,24 +256,28 @@ export default function Leads() {
 
     try {
       // 1. Create Client
-      const { data: clientData, error: clientError } = await supabase.from('clientes').insert({
-        nome: selectedLead.nome,
-        email: selectedLead.email,
-        contato: selectedLead.contato,
-        origem: selectedLead.origem,
-        empresa_id: (await supabase.rpc('get_user_empresa_id')).data
-      }).select().single();
+      const { data: clientData, error: clientError } = await supabase
+        .from("clientes")
+        .insert({
+          nome: selectedLead.nome,
+          email: selectedLead.email,
+          contato: selectedLead.contato,
+          origem: selectedLead.origem,
+          empresa_id: (await supabase.rpc("get_user_empresa_id")).data,
+        })
+        .select()
+        .single();
 
       if (clientError) throw clientError;
 
       // 2. Update Lead with status and cliente_id
       const { error: leadError } = await supabase
-        .from('leads')
+        .from("leads")
         .update({
-          status: 'Ganho',
-          cliente_id: clientData.id
+          status: "Ganho",
+          cliente_id: clientData.id,
         })
-        .eq('id', selectedLead.id);
+        .eq("id", selectedLead.id);
 
       if (leadError) throw leadError;
 
@@ -277,14 +293,52 @@ export default function Leads() {
       toast({
         title: "Erro na conversão",
         description: getSafeErrorMessage(err),
-        variant: "destructive"
+        variant: "destructive",
       });
     }
   };
 
+  const handleCriarProposta = async (lead: Lead) => {
+    setIsCreatingProposta(true);
+    try {
+      const { data: empresaId } = await supabase.rpc("get_user_empresa_id");
+      if (!empresaId) throw new Error("Empresa não encontrada");
+
+      const codigo = `PROP-${Date.now().toString(36).toUpperCase()}`;
+
+      const { data: proposta, error } = await supabase
+        .from("propostas")
+        .insert({
+          empresa_id: empresaId,
+          lead_id: lead.id,
+          titulo: `Proposta — ${lead.nome}`,
+          codigo,
+          status: "rascunho",
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Atualizar lead status para "Proposta"
+      await supabase.from("leads").update({ status: "Proposta" }).eq("id", lead.id);
+
+      toast({ title: "Proposta criada", description: "Redirecionando para edição..." });
+      setIsDetailOpen(false);
+      navigate(`/propostas?edit=${proposta.id}`);
+    } catch (err: unknown) {
+      toast({
+        variant: "destructive",
+        title: "Erro ao criar proposta",
+        description: err instanceof Error ? err.message : "Erro desconhecido",
+      });
+    } finally {
+      setIsCreatingProposta(false);
+    }
+  };
 
   const handleDelete = async (id: string) => {
-    const { error } = await supabase.from('leads').delete().eq('id', id);
+    const { error } = await supabase.from("leads").delete().eq("id", id);
     if (!error) {
       toast({ title: "Lead excluído" });
       setIsDetailOpen(false);
@@ -322,24 +376,57 @@ export default function Leads() {
 
                 <form onSubmit={handleSubmit} className="divide-y">
                   <div className="px-6 py-4 space-y-3">
-                    <Label className="text-[10px] uppercase text-muted-foreground tracking-wider">Informações do Lead</Label>
+                    <Label className="text-[10px] uppercase text-muted-foreground tracking-wider">
+                      Informações do Lead
+                    </Label>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <div className="space-y-1.5">
-                        <Label htmlFor="nome" className="text-xs">Nome *</Label>
-                        <Input id="nome" value={formData.nome} onChange={(e) => setFormData({ ...formData, nome: e.target.value })} placeholder="Nome completo" required />
+                        <Label htmlFor="nome" className="text-xs">
+                          Nome *
+                        </Label>
+                        <Input
+                          id="nome"
+                          value={formData.nome}
+                          onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
+                          placeholder="Nome completo"
+                          required
+                        />
                       </div>
                       <div className="space-y-1.5">
-                        <Label htmlFor="email" className="text-xs">Email</Label>
-                        <Input id="email" type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} placeholder="email@exemplo.com" />
+                        <Label htmlFor="email" className="text-xs">
+                          Email
+                        </Label>
+                        <Input
+                          id="email"
+                          type="email"
+                          value={formData.email}
+                          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                          placeholder="email@exemplo.com"
+                        />
                       </div>
                       <div className="space-y-1.5">
-                        <Label htmlFor="contato" className="text-xs">Celular</Label>
-                        <Input id="contato" value={formData.contato} onChange={(e) => setFormData({ ...formData, contato: formatPhone(e.target.value) })} maxLength={15} placeholder="(14) 99999-9999" />
+                        <Label htmlFor="contato" className="text-xs">
+                          Celular
+                        </Label>
+                        <Input
+                          id="contato"
+                          value={formData.contato}
+                          onChange={(e) => setFormData({ ...formData, contato: formatPhone(e.target.value) })}
+                          maxLength={15}
+                          placeholder="(14) 99999-9999"
+                        />
                       </div>
                       <div className="space-y-1.5">
-                        <Label htmlFor="origem" className="text-xs">Origem</Label>
-                        <Select value={formData.origem} onValueChange={(value) => setFormData({ ...formData, origem: value })}>
-                          <SelectTrigger><SelectValue placeholder="Como chegou até você?" /></SelectTrigger>
+                        <Label htmlFor="origem" className="text-xs">
+                          Origem
+                        </Label>
+                        <Select
+                          value={formData.origem}
+                          onValueChange={(value) => setFormData({ ...formData, origem: value })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Como chegou até você?" />
+                          </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="Instagram">Instagram</SelectItem>
                             <SelectItem value="Tráfego">Tráfego Pago</SelectItem>
@@ -354,9 +441,27 @@ export default function Leads() {
                   </div>
 
                   <div className="flex gap-2 px-6 py-4 bg-gray-50/30">
-                    <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)} className="flex-1" disabled={isSaving}>Cancelar</Button>
-                    <Button type="submit" className="flex-1 bg-accent-orange hover:bg-accent-orange/90 text-white" disabled={isSaving}>
-                      {isSaving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Salvando...</> : "Salvar"}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setIsDialogOpen(false)}
+                      className="flex-1"
+                      disabled={isSaving}
+                    >
+                      Cancelar
+                    </Button>
+                    <Button
+                      type="submit"
+                      className="flex-1 bg-accent-orange hover:bg-accent-orange/90 text-white"
+                      disabled={isSaving}
+                    >
+                      {isSaving ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Salvando...
+                        </>
+                      ) : (
+                        "Salvar"
+                      )}
                     </Button>
                   </div>
                 </form>
@@ -368,84 +473,89 @@ export default function Leads() {
     >
       <DragDropContext onDragEnd={onDragEnd}>
         <div className="flex-1 min-h-0">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 w-full h-full min-h-0">
+          <div className="flex gap-4 w-full h-full min-h-0 overflow-x-auto pb-2">
             {Object.entries(statusConfig).map(([status, config]) => (
-            <div key={status} className="flex flex-col min-h-0">
-              <div className={`${config.columnColor} rounded-t-lg p-3 border-b border-black/10`}>
-                <h3 className="font-medium text-sm flex items-center justify-between">
-                  {config.label}
-                  <Badge variant="secondary" className="ml-2">
-                    {getLeadsByStatus(status).length}
-                  </Badge>
-                </h3>
-              </div>
+              <div key={status} className="flex flex-col min-w-[260px] w-[260px] flex-shrink-0 min-h-0">
+                <div className={`${config.columnColor} rounded-t-lg p-3 border-b border-black/10`}>
+                  <h3 className="font-medium text-sm flex items-center justify-between">
+                    {config.label}
+                    <Badge variant="secondary" className="ml-2">
+                      {getLeadsByStatus(status).length}
+                    </Badge>
+                  </h3>
+                </div>
 
-              <Droppable droppableId={status}>
-                {(provided, snapshot) => (
-                  <div
-                    ref={provided.innerRef}
-                    {...provided.droppableProps}
-                    className={`flex-1 min-h-0 overflow-y-auto p-2 space-y-2 rounded-b-lg border border-t-0 ${snapshot.isDraggingOver ? "bg-blue-50" : "bg-gray-50"
+                <Droppable droppableId={status}>
+                  {(provided, snapshot) => (
+                    <div
+                      ref={provided.innerRef}
+                      {...provided.droppableProps}
+                      className={`flex-1 min-h-0 overflow-y-auto p-2 space-y-2 rounded-b-lg border border-t-0 ${
+                        snapshot.isDraggingOver ? "bg-blue-50" : "bg-gray-50"
                       }`}
-                  >
-                    {getLeadsByStatus(status).map((lead, index) => (
-                      <Draggable key={lead.id} draggableId={lead.id} index={index}>
-                        {(provided, snapshot) => (
-                          <Card
-                            ref={provided.innerRef}
-                            {...provided.draggableProps}
-                            {...provided.dragHandleProps}
-                            onClick={() => handleCardClick(lead)}
-                            className={`cursor-pointer hover:shadow-md transition-shadow w-full ${snapshot.isDragging ? "shadow-lg rotate-2" : ""
+                    >
+                      {getLeadsByStatus(status).map((lead, index) => (
+                        <Draggable key={lead.id} draggableId={lead.id} index={index}>
+                          {(provided, snapshot) => (
+                            <Card
+                              ref={provided.innerRef}
+                              {...provided.draggableProps}
+                              {...provided.dragHandleProps}
+                              onClick={() => handleCardClick(lead)}
+                              className={`cursor-pointer hover:shadow-md transition-shadow w-full ${
+                                snapshot.isDragging ? "shadow-lg rotate-2" : ""
                               }`}
-                          >
-                            <CardHeader className="p-3 pb-2">
-                              <div className="flex justify-between items-start">
-                                <CardTitle className="text-sm font-medium flex items-start gap-2">
-                                  <User size={14} className="mt-0.5 flex-shrink-0" />
-                                  <span className="line-clamp-1">{lead.nome}</span>
-                                </CardTitle>
-                                {lead.cliente_id && (
-                                  <Badge variant="outline" className="text-[10px] h-5 px-1.5 bg-green-50 text-green-700 border-green-200">
-                                    Cliente
-                                  </Badge>
+                            >
+                              <CardHeader className="p-3 pb-2">
+                                <div className="flex justify-between items-start">
+                                  <CardTitle className="text-sm font-medium flex items-start gap-2">
+                                    <User size={14} className="mt-0.5 flex-shrink-0" />
+                                    <span className="line-clamp-1">{lead.nome}</span>
+                                  </CardTitle>
+                                  {lead.cliente_id && (
+                                    <Badge
+                                      variant="outline"
+                                      className="text-[10px] h-5 px-1.5 bg-green-50 text-green-700 border-green-200"
+                                    >
+                                      Cliente
+                                    </Badge>
+                                  )}
+                                </div>
+                              </CardHeader>
+                              <CardContent className="p-3 pt-0 space-y-1.5">
+                                {lead.email && (
+                                  <div className="flex items-center gap-2 text-xs text-black/60">
+                                    <Mail size={12} className="flex-shrink-0" />
+                                    <span className="line-clamp-1">{lead.email}</span>
+                                  </div>
                                 )}
-                              </div>
-                            </CardHeader>
-                            <CardContent className="p-3 pt-0 space-y-1.5">
-                              {lead.email && (
-                                <div className="flex items-center gap-2 text-xs text-black/60">
-                                  <Mail size={12} className="flex-shrink-0" />
-                                  <span className="line-clamp-1">{lead.email}</span>
-                                </div>
-                              )}
-                              {lead.contato && (
-                                <div className="flex items-center gap-2 text-xs text-black/60">
-                                  <Phone size={12} className="flex-shrink-0" />
-                                  <span className="line-clamp-1">{lead.contato}</span>
-                                </div>
-                              )}
-                              {lead.origem && (
-                                <p className="text-xs text-black/50 line-clamp-1 mt-2 pt-2 border-t">
-                                  Origem: {lead.origem}
-                                </p>
-                              )}
-                              {lead.status === "Perdido" && lead.motivo_perda && (
-                                <p className="text-xs text-red-500/80 line-clamp-2 mt-1 pt-1 border-t border-red-100">
-                                  Motivo: {lead.motivo_perda}
-                                </p>
-                              )}
-                            </CardContent>
-                          </Card>
-                        )}
-                      </Draggable>
-                    ))}
-                    {provided.placeholder}
-                  </div>
-                )}
-              </Droppable>
-            </div>
-          ))}
+                                {lead.contato && (
+                                  <div className="flex items-center gap-2 text-xs text-black/60">
+                                    <Phone size={12} className="flex-shrink-0" />
+                                    <span className="line-clamp-1">{lead.contato}</span>
+                                  </div>
+                                )}
+                                {lead.origem && (
+                                  <p className="text-xs text-black/50 line-clamp-1 mt-2 pt-2 border-t">
+                                    Origem: {lead.origem}
+                                  </p>
+                                )}
+                                {lead.status === "Perdido" && lead.motivo_perda && (
+                                  <p className="text-xs text-red-500/80 line-clamp-2 mt-1 pt-1 border-t border-red-100">
+                                    Motivo: {lead.motivo_perda}
+                                  </p>
+                                )}
+                              </CardContent>
+                            </Card>
+                          )}
+                        </Draggable>
+                      ))}
+                      {provided.placeholder}
+                    </div>
+                  )}
+                </Droppable>
+              </div>
+            ))}
           </div>
         </div>
       </DragDropContext>
@@ -457,9 +567,7 @@ export default function Leads() {
             <>
               <DialogHeader>
                 <DialogTitle className="text-xl">Detalhes do Lead</DialogTitle>
-                <DialogDescription>
-                  Informações completas sobre o lead
-                </DialogDescription>
+                <DialogDescription>Informações completas sobre o lead</DialogDescription>
               </DialogHeader>
 
               <div className="space-y-6">
@@ -514,9 +622,7 @@ export default function Leads() {
                   {selectedLead.origem && (
                     <div className="space-y-2">
                       <Label className="text-xs text-black/60">Origem</Label>
-                      <p className="text-sm text-black/70 bg-black/5 p-3 rounded-lg">
-                        {selectedLead.origem}
-                      </p>
+                      <p className="text-sm text-black/70 bg-black/5 p-3 rounded-lg">{selectedLead.origem}</p>
                     </div>
                   )}
 
@@ -540,17 +646,32 @@ export default function Leads() {
                 </div>
 
                 {/* Ações */}
-                <div className="flex gap-2 pt-4">
-                  <Button
-                    variant="outline"
-                    className="flex-1"
-                    onClick={() => setIsDetailOpen(false)}
-                  >
-                    Fechar
-                  </Button>
-                  <Button variant="destructive" className="flex-1" onClick={() => handleDelete(selectedLead.id)}>
-                    Excluir
-                  </Button>
+                <div className="flex flex-col gap-2 pt-4">
+                  {selectedLead.status !== "Perdido" && selectedLead.status !== "Ganho" && (
+                    <Button
+                      className="w-full bg-accent-orange hover:bg-accent-orange/90 text-white"
+                      onClick={() => handleCriarProposta(selectedLead)}
+                      disabled={isCreatingProposta}
+                    >
+                      {isCreatingProposta ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Criando...
+                        </>
+                      ) : (
+                        <>
+                          <FileText className="mr-2 h-4 w-4" /> Criar Proposta
+                        </>
+                      )}
+                    </Button>
+                  )}
+                  <div className="flex gap-2">
+                    <Button variant="outline" className="flex-1" onClick={() => setIsDetailOpen(false)}>
+                      Fechar
+                    </Button>
+                    <Button variant="destructive" className="flex-1" onClick={() => handleDelete(selectedLead.id)}>
+                      Excluir
+                    </Button>
+                  </div>
                 </div>
               </div>
             </>
@@ -564,7 +685,8 @@ export default function Leads() {
           <DialogHeader>
             <DialogTitle>Confirmar Conversão</DialogTitle>
             <DialogDescription>
-              Deseja realmente transformar este lead em um cliente? Isso criará um novo registro na base de clientes e marcará o lead como Ganho.
+              Deseja realmente transformar este lead em um cliente? Isso criará um novo registro na base de clientes e
+              marcará o lead como Ganho.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="mt-4">
@@ -579,10 +701,16 @@ export default function Leads() {
       </Dialog>
 
       {/* Modal Motivo de Perda (drag para Perdido) */}
-      <Dialog open={isMotivoPerdasOpen} onOpenChange={(open) => {
-        if (!open) { setPendingDrop(null); setMotivoPerda(""); }
-        setIsMotivoPerdasOpen(open);
-      }}>
+      <Dialog
+        open={isMotivoPerdasOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            setPendingDrop(null);
+            setMotivoPerda("");
+          }
+          setIsMotivoPerdasOpen(open);
+        }}
+      >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -602,7 +730,13 @@ export default function Leads() {
             />
           </div>
           <DialogFooter className="mt-4">
-            <Button variant="outline" onClick={() => { setIsMotivoPerdasOpen(false); setPendingDrop(null); }}>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsMotivoPerdasOpen(false);
+                setPendingDrop(null);
+              }}
+            >
               Cancelar
             </Button>
             <Button onClick={handleConfirmMotivoPerdas} variant="destructive" disabled={!motivoPerda.trim()}>
@@ -613,10 +747,15 @@ export default function Leads() {
       </Dialog>
 
       {/* Modal Conversão Automática (drag para Ganho) */}
-      <Dialog open={isAutoConvertOpen} onOpenChange={(open) => {
-        if (!open) { setPendingDrop(null); }
-        setIsAutoConvertOpen(open);
-      }}>
+      <Dialog
+        open={isAutoConvertOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            setPendingDrop(null);
+          }
+          setIsAutoConvertOpen(open);
+        }}
+      >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -631,8 +770,18 @@ export default function Leads() {
             <Button variant="outline" onClick={handleSkipConvert}>
               Apenas marcar como Ganho
             </Button>
-            <Button onClick={handleAutoConvert} className="bg-green-600 hover:bg-green-700 text-white" disabled={isConverting}>
-              {isConverting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Convertendo...</> : "Criar Cliente"}
+            <Button
+              onClick={handleAutoConvert}
+              className="bg-green-600 hover:bg-green-700 text-white"
+              disabled={isConverting}
+            >
+              {isConverting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Convertendo...
+                </>
+              ) : (
+                "Criar Cliente"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
