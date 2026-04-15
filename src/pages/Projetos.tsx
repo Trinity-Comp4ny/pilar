@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Settings2, Layers, Calendar as CalendarIcon, Filter } from "lucide-react";
@@ -49,12 +49,7 @@ export default function ProjetosKanban() {
   const [activeTab, setActiveTab] = useState<Tab>("kanban");
   const [filterPessoaId, setFilterPessoaId] = useState<string>("all");
 
-  useEffect(() => {
-    fetchData();
-    fetchCurrentUser();
-  }, []);
-
-  const fetchCurrentUser = async () => {
+  const fetchCurrentUser = useCallback(async () => {
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -64,25 +59,14 @@ export default function ProjetosKanban() {
         email: user.email || "",
       });
     }
-  };
+  }, []);
 
-  const fetchData = async () => {
-    const { data: clientesData } = await supabase.from("clientes").select("id, nome").order("nome");
-    if (clientesData) setClientes(clientesData);
-
-    const { data: pessoasData } = await supabase.from("pessoas").select("id, nome").order("nome");
-    if (pessoasData) setPessoas(pessoasData);
-
-    fetchDisciplinas();
-    fetchProjetos();
-  };
-
-  const fetchDisciplinas = async () => {
+  const fetchDisciplinas = useCallback(async () => {
     const { data } = await supabase.from("disciplinas").select("id, nome").order("nome");
     if (data) setDisciplinas(data);
-  };
+  }, []);
 
-  const fetchProjetos = async () => {
+  const fetchProjetos = useCallback(async () => {
     const { data, error } = await supabase
       .from("projetos")
       .select(`*, clientes (nome)`)
@@ -111,7 +95,23 @@ export default function ProjetosKanban() {
       }));
       setProjetos(mappedProjetos);
     }
-  };
+  }, []);
+
+  const fetchData = useCallback(async () => {
+    const { data: clientesData } = await supabase.from("clientes").select("id, nome").order("nome");
+    if (clientesData) setClientes(clientesData);
+
+    const { data: pessoasData } = await supabase.from("pessoas").select("id, nome").order("nome");
+    if (pessoasData) setPessoas(pessoasData);
+
+    fetchDisciplinas();
+    fetchProjetos();
+  }, [fetchDisciplinas, fetchProjetos]);
+
+  useEffect(() => {
+    fetchData();
+    fetchCurrentUser();
+  }, [fetchData, fetchCurrentUser]);
 
   const handleCardClick = (projeto: Projeto) => {
     setSelectedProjeto(projeto);

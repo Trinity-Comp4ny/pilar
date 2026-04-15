@@ -36,6 +36,25 @@ import { useUserRole } from "@/hooks/useUserRole";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { getSafeErrorMessage } from "@/lib/safeError";
 
+const normalize = (value: string) =>
+  value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+
+const fuzzyMatch = (text: string, query: string) => {
+  const q = normalize(query);
+  if (!q) return true;
+  const t = normalize(text);
+  let ti = 0;
+  for (const qc of q) {
+    ti = t.indexOf(qc, ti);
+    if (ti === -1) return false;
+    ti++;
+  }
+  return true;
+};
+
 interface ContaBancaria {
   banco: string;
   agencia: string;
@@ -104,25 +123,6 @@ export default function Clientes() {
     if (digits.length === 11) return formatCpf(digits);
     if (digits.length === 14) return formatCnpj(digits);
     return value;
-  };
-
-  const normalize = (value: string) =>
-    value
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .toLowerCase();
-
-  const fuzzyMatch = (text: string, query: string) => {
-    const q = normalize(query);
-    if (!q) return true;
-    const t = normalize(text);
-    let ti = 0;
-    for (const qc of q) {
-      ti = t.indexOf(qc, ti);
-      if (ti === -1) return false;
-      ti++;
-    }
-    return true;
   };
 
   const [sortField, setSortField] = useState<keyof Cliente | null>(null);

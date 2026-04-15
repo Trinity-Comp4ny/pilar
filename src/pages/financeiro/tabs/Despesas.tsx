@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { despesaSchema, despesaDefaultValues, type DespesaFormData } from "@/schemas/despesaSchema";
@@ -87,7 +87,7 @@ export default function Despesas() {
   const [projetos, setProjetos] = useState<{ id: string; projetoID: string }[]>([]);
   const { toast } = useToast();
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       const [
         { data: categoriasData },
@@ -130,11 +130,11 @@ export default function Despesas() {
         variant: "destructive",
       });
     }
-  };
+  }, [toast]);
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [fetchData]);
 
   const despesas = useMemo(() => {
     return despesasRaw.map((d) => {
