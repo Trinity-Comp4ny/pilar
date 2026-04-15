@@ -256,31 +256,11 @@ export default function Leads() {
     }
 
     try {
-      // 1. Create Client
-      const { data: clientData, error: clientError } = await supabase
-        .from("clientes")
-        .insert({
-          nome: selectedLead.nome,
-          email: selectedLead.email,
-          contato: selectedLead.contato,
-          origem: selectedLead.origem,
-          empresa_id: (await supabase.rpc("get_user_empresa_id")).data,
-        })
-        .select()
-        .single();
+      const { error } = await supabase.rpc("rpc_converter_lead_cliente", {
+        p_lead_id: selectedLead.id,
+      });
 
-      if (clientError) throw clientError;
-
-      // 2. Update Lead with status and cliente_id
-      const { error: leadError } = await supabase
-        .from("leads")
-        .update({
-          status: "Ganho",
-          cliente_id: clientData.id,
-        })
-        .eq("id", selectedLead.id);
-
-      if (leadError) throw leadError;
+      if (error) throw error;
 
       toast({
         title: "Sucesso!",
