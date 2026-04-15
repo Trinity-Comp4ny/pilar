@@ -15,7 +15,6 @@ import {
   AlertTriangle,
   PauseCircle,
   ChevronDown,
-  ChevronRight,
   User,
   LayoutGrid,
   List,

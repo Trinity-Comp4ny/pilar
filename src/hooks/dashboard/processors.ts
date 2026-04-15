@@ -1,6 +1,6 @@
 import { differenceInDays } from "date-fns";
 import { getDisplayDate } from "@/lib/dateUtils";
-import { PROJECT_STATUS, LEAD_STATUS } from "@/constants";
+import { LEAD_STATUS } from "@/constants";
 import type {
   ProjetoWithCliente,
   LeadRow,
