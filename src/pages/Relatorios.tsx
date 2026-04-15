@@ -67,11 +67,14 @@ export default function Relatorios() {
       Tipo: tipo === "receitas" ? "Receita" : "Despesa",
       Descricao: item.descricao ?? "-",
       Valor: item.valor ?? 0,
-      "Data": formatDateDisplay(getDisplayDate(
-        tipo === "receitas" ? item.data_recebimento : item.data_pagamento,
-        item.data_vencimento,
-        item.status
-      )) || "-",
+      Data:
+        formatDateDisplay(
+          getDisplayDate(
+            tipo === "receitas" ? item.data_recebimento : item.data_pagamento,
+            item.data_vencimento,
+            item.status
+          )
+        ) || "-",
       Status: item.status ?? "-",
       "Nome do Projeto": item.projetos?.nome ?? "-",
       "Nome do Cliente": tipo === "receitas" ? (item.clientes?.nome ?? "-") : (item.fornecedores?.nome ?? "-"),
@@ -95,7 +98,7 @@ export default function Relatorios() {
       Object.values(row)
         .map((value) => {
           const str = value === null || value === undefined ? "" : String(value);
-          return str.includes(",") ? `"${str.replace(/\"/g, '""')}"` : str;
+          return str.includes(",") ? `"${str.replace(/"/g, '""')}"` : str;
         })
         .join(",")
     );
@@ -113,7 +116,7 @@ export default function Relatorios() {
     document.body.removeChild(link);
   };
 
-  const fetchFinancialData = async (tipo: 'receitas' | 'despesas') => {
+  const fetchFinancialData = async (tipo: "receitas" | "despesas") => {
     const pageLimit = 1000;
     let page = 0;
     const all: FinancialRecord[] = [];
@@ -126,7 +129,7 @@ export default function Relatorios() {
         contas (nome)
       `);
 
-      if (tipo === 'receitas') {
+      if (tipo === "receitas") {
         query = query.select(`
           *,
           projetos (nome),
@@ -147,11 +150,9 @@ export default function Relatorios() {
       // Para receitas: ordenar por data_recebimento (real) primeiro, depois data_vencimento (planejado)
       // Para despesas: ordenar por data_pagamento (real) primeiro, depois data_vencimento (planejado)
       if (tipo === "receitas") {
-        query = query.order("data_recebimento", { ascending: false })
-          .order("data_vencimento", { ascending: false });
+        query = query.order("data_recebimento", { ascending: false }).order("data_vencimento", { ascending: false });
       } else {
-        query = query.order("data_pagamento", { ascending: false })
-          .order("data_vencimento", { ascending: false });
+        query = query.order("data_pagamento", { ascending: false }).order("data_vencimento", { ascending: false });
       }
 
       // Filtros por período baseados na lógica de datas
@@ -260,37 +261,36 @@ export default function Relatorios() {
     try {
       let finalData: ReportRow[] = [];
 
-      if (tipoRelatorio === 'financeiro') {
+      if (tipoRelatorio === "financeiro") {
         const [receitas, despesas] = await Promise.all([
-          fetchFinancialData('receitas'),
-          fetchFinancialData('despesas')
+          fetchFinancialData("receitas"),
+          fetchFinancialData("despesas"),
         ]);
-        
-        const receitasProc = processData(receitas || [], 'receitas');
-        const despesasProc = processData(despesas || [], 'despesas');
+
+        const receitasProc = processData(receitas || [], "receitas");
+        const despesasProc = processData(despesas || [], "despesas");
         finalData = [...receitasProc, ...despesasProc];
-        
+
         // Ordenar por data correta (data real para pagos/recebidos, data planejada para pendentes)
         finalData.sort((a, b) => {
-           // Parse da data no formato dd/MM/yyyy para comparar
-           const parseDate = (str: string) => {
-             if(str === '-') return 0;
-             const [d, m, y] = str.split('/').map(Number);
-             return new Date(y, m-1, d).getTime();
-           };
-           return parseDate(b['Data']) - parseDate(a['Data']);
+          // Parse da data no formato dd/MM/yyyy para comparar
+          const parseDate = (str: string) => {
+            if (str === "-") return 0;
+            const [d, m, y] = str.split("/").map(Number);
+            return new Date(y, m - 1, d).getTime();
+          };
+          return parseDate(b["Data"]) - parseDate(a["Data"]);
         });
-
-      } else if (['receitas', 'despesas'].includes(tipoRelatorio)) {
-         const data = await fetchFinancialData(tipoRelatorio as 'receitas' | 'despesas');
-         finalData = processData(data || [], tipoRelatorio as 'receitas' | 'despesas');
+      } else if (["receitas", "despesas"].includes(tipoRelatorio)) {
+        const data = await fetchFinancialData(tipoRelatorio as "receitas" | "despesas");
+        finalData = processData(data || [], tipoRelatorio as "receitas" | "despesas");
       }
 
       if (finalData.length === 0) {
         toast({
           title: "Sem dados",
           description: "Não foram encontrados dados para os filtros selecionados.",
-          variant: "destructive"
+          variant: "destructive",
         });
         setIsLoading(false);
         setReportData([]);
@@ -399,12 +399,7 @@ export default function Relatorios() {
   return (
     <PageLayout
       containerClassName="h-full flex flex-col min-h-0"
-      header={
-        <PageHeader
-          title="Relatórios"
-          description="Monte, visualize e exporte relatórios em poucos cliques"
-        />
-      }
+      header={<PageHeader title="Relatórios" description="Monte, visualize e exporte relatórios em poucos cliques" />}
     >
       <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-5 gap-6">
         <div className="lg:col-span-2 flex flex-col gap-6 min-h-0 order-2 lg:order-1">
@@ -449,11 +444,21 @@ export default function Relatorios() {
               <div className="space-y-2">
                 <Label>Período</Label>
                 <div className="flex flex-wrap gap-2">
-                  <Button type="button" variant="outline" size="sm" onClick={() => applyPreset("7d")}>Últimos 7 dias</Button>
-                  <Button type="button" variant="outline" size="sm" onClick={() => applyPreset("30d")}>Últimos 30 dias</Button>
-                  <Button type="button" variant="outline" size="sm" onClick={() => applyPreset("this_month")}>Mês atual</Button>
-                  <Button type="button" variant="outline" size="sm" onClick={() => applyPreset("last_month")}>Mês anterior</Button>
-                  <Button type="button" variant="outline" size="sm" onClick={() => applyPreset("all")}>Sem filtro</Button>
+                  <Button type="button" variant="outline" size="sm" onClick={() => applyPreset("7d")}>
+                    Últimos 7 dias
+                  </Button>
+                  <Button type="button" variant="outline" size="sm" onClick={() => applyPreset("30d")}>
+                    Últimos 30 dias
+                  </Button>
+                  <Button type="button" variant="outline" size="sm" onClick={() => applyPreset("this_month")}>
+                    Mês atual
+                  </Button>
+                  <Button type="button" variant="outline" size="sm" onClick={() => applyPreset("last_month")}>
+                    Mês anterior
+                  </Button>
+                  <Button type="button" variant="outline" size="sm" onClick={() => applyPreset("all")}>
+                    Sem filtro
+                  </Button>
                 </div>
               </div>
 
@@ -491,10 +496,7 @@ export default function Relatorios() {
                     <PopoverTrigger asChild>
                       <Button
                         variant="outline"
-                        className={cn(
-                          "w-full justify-start text-left font-normal",
-                          !dateTo && "text-muted-foreground"
-                        )}
+                        className={cn("w-full justify-start text-left font-normal", !dateTo && "text-muted-foreground")}
                       >
                         <CalendarIcon className="mr-2 h-4 w-4" />
                         {dateTo ? format(dateTo, "dd/MM/yyyy") : "Selecionar"}
@@ -556,7 +558,9 @@ export default function Relatorios() {
                       <TableHeader>
                         <TableRow>
                           {Object.keys(reportData[0] || {}).map((key) => (
-                            <TableHead key={key} className="whitespace-nowrap">{key}</TableHead>
+                            <TableHead key={key} className="whitespace-nowrap">
+                              {key}
+                            </TableHead>
                           ))}
                         </TableRow>
                       </TableHeader>
