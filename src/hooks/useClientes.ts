@@ -139,17 +139,33 @@ export const useClientes = () => {
     },
   });
 
-  const fetchPortalCredentials = async (clienteId: string) => {
+  const resetPortalPasswordMutation = useMutation({
+    mutationFn: async (clienteId: string) => {
+      const { data, error: fnError } = await supabase.functions.invoke("reset-cliente-portal-password", {
+        body: { cliente_id: clienteId },
+      });
+
+      if (fnError) {
+        const body = fnError.context ? await fnError.context.json?.().catch(() => null) : null;
+        throw new Error(body?.error || fnError.message || "Erro desconhecido");
+      }
+      if (data?.error) throw new Error(data.error);
+
+      return { email: data.email as string, senha: data.senha as string };
+    },
+    onError: () => {
+      toast.error("Erro ao redefinir senha");
+    },
+  });
+
+  const fetchPortalEmail = async (clienteId: string) => {
     const { data } = await supabase
       .from("cliente_portal_accounts")
-      .select("email, senha")
+      .select("email")
       .eq("cliente_id", clienteId)
       .maybeSingle();
 
-    if (data) {
-      return { email: data.email ?? "", senha: data.senha ?? "" };
-    }
-    return null;
+    return data?.email ?? null;
   };
 
   return {
@@ -162,6 +178,8 @@ export const useClientes = () => {
     checkPortalAccess,
     invitePortal: invitePortalMutation.mutateAsync,
     isInvitingPortal: invitePortalMutation.isPending,
-    fetchPortalCredentials,
+    resetPortalPassword: resetPortalPasswordMutation.mutateAsync,
+    isResettingPortal: resetPortalPasswordMutation.isPending,
+    fetchPortalEmail,
   };
 };

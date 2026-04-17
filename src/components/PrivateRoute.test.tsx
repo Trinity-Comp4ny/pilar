@@ -1,30 +1,27 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
+import type { ProfileWithEmpresa } from "@/contexts/AuthContext";
 
-vi.mock("@/integrations/supabase/client", () => {
-  const mockSubscription = { unsubscribe: vi.fn() };
-  const mockSupabase = {
-    auth: {
-      getSession: vi.fn(),
-      onAuthStateChange: vi.fn(() => ({ data: { subscription: mockSubscription } })),
-    },
-    from: vi.fn(() => ({
-      select: vi.fn(() => ({
-        eq: vi.fn(() => ({
-          single: vi.fn().mockResolvedValue({ data: null, error: null }),
-        })),
-      })),
-    })),
-  };
-  return { supabase: mockSupabase };
-});
+const mockUseAuth = vi.fn<
+  () => {
+    isAuthenticated: boolean;
+    profile: ProfileWithEmpresa | null;
+    loading: boolean;
+    user: null;
+    signOut: () => Promise<void>;
+    refreshProfile: () => Promise<void>;
+  }
+>();
+
+vi.mock("@/contexts/AuthContext", () => ({
+  useAuth: () => mockUseAuth(),
+}));
 
 vi.mock("./Layout", () => ({
   default: () => <div data-testid="layout">Layout</div>,
 }));
 
-import { supabase } from "@/integrations/supabase/client";
 import { PrivateRoute } from "./PrivateRoute";
 
 function renderWithRouter(initialRoute = "/dashboard") {
@@ -42,25 +39,25 @@ function renderWithRouter(initialRoute = "/dashboard") {
   );
 }
 
+const baseAuth = {
+  user: null,
+  signOut: vi.fn(),
+  refreshProfile: vi.fn(),
+};
+
 describe("PrivateRoute", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    delete (window as unknown as { location?: Location }).location;
-    (window as unknown as { location: Partial<Location> }).location = { hash: "" };
   });
 
   it("shows loading state initially", () => {
-    vi.mocked(supabase.auth.getSession).mockImplementation(() => new Promise(() => {}));
+    mockUseAuth.mockReturnValue({ ...baseAuth, isAuthenticated: false, profile: null, loading: true });
     renderWithRouter();
     expect(screen.getByText("Carregando...")).toBeInTheDocument();
   });
 
   it("redirects to landing when not authenticated", async () => {
-    vi.mocked(supabase.auth.getSession).mockResolvedValue({
-      data: { session: null },
-      error: null,
-    } as Awaited<ReturnType<typeof supabase.auth.getSession>>);
-
+    mockUseAuth.mockReturnValue({ ...baseAuth, isAuthenticated: false, profile: null, loading: false });
     renderWithRouter();
 
     await waitFor(() => {
@@ -69,26 +66,20 @@ describe("PrivateRoute", () => {
   });
 
   it("renders layout when authenticated with complete profile", async () => {
-    vi.mocked(supabase.auth.getSession).mockResolvedValue({
-      data: { session: { user: { id: "user-123" } } },
-      error: null,
-    } as unknown as Awaited<ReturnType<typeof supabase.auth.getSession>>);
-
-    const mockSingle = vi.fn().mockResolvedValue({
-      data: {
+    mockUseAuth.mockReturnValue({
+      ...baseAuth,
+      isAuthenticated: true,
+      loading: false,
+      profile: {
         id: "user-123",
         nome: "João Silva",
         email: "joao@test.com",
         contato: "(11) 99999-9999",
         role: "user",
         onboarding_completed: true,
-        empresas: { nome: "Empresa Real", onboarding_completed: true },
-      },
-      error: null,
+        empresas: { onboarding_completed: true } as ProfileWithEmpresa["empresas"],
+      } as ProfileWithEmpresa,
     });
-    const mockEq = vi.fn(() => ({ single: mockSingle }));
-    const mockSelect = vi.fn(() => ({ eq: mockEq }));
-    vi.mocked(supabase.from).mockReturnValue({ select: mockSelect } as unknown as ReturnType<typeof supabase.from>);
 
     renderWithRouter();
 
@@ -98,26 +89,20 @@ describe("PrivateRoute", () => {
   });
 
   it("redirects to profile-setup when onboarding not completed", async () => {
-    vi.mocked(supabase.auth.getSession).mockResolvedValue({
-      data: { session: { user: { id: "user-123" } } },
-      error: null,
-    } as unknown as Awaited<ReturnType<typeof supabase.auth.getSession>>);
-
-    const mockSingle = vi.fn().mockResolvedValue({
-      data: {
+    mockUseAuth.mockReturnValue({
+      ...baseAuth,
+      isAuthenticated: true,
+      loading: false,
+      profile: {
         id: "user-123",
         nome: "test@email.com",
         email: "test@email.com",
         contato: null,
         role: "user",
         onboarding_completed: false,
-        empresas: { nome: "Empresa Real", onboarding_completed: true },
-      },
-      error: null,
+        empresas: { onboarding_completed: true } as ProfileWithEmpresa["empresas"],
+      } as ProfileWithEmpresa,
     });
-    const mockEq = vi.fn(() => ({ single: mockSingle }));
-    const mockSelect = vi.fn(() => ({ eq: mockEq }));
-    vi.mocked(supabase.from).mockReturnValue({ select: mockSelect } as unknown as ReturnType<typeof supabase.from>);
 
     renderWithRouter();
 
@@ -127,26 +112,20 @@ describe("PrivateRoute", () => {
   });
 
   it("redirects admin to company-setup when company onboarding not completed", async () => {
-    vi.mocked(supabase.auth.getSession).mockResolvedValue({
-      data: { session: { user: { id: "user-123" } } },
-      error: null,
-    } as unknown as Awaited<ReturnType<typeof supabase.auth.getSession>>);
-
-    const mockSingle = vi.fn().mockResolvedValue({
-      data: {
+    mockUseAuth.mockReturnValue({
+      ...baseAuth,
+      isAuthenticated: true,
+      loading: false,
+      profile: {
         id: "user-123",
         nome: "Admin User",
         email: "admin@test.com",
         contato: "(11) 99999-9999",
         role: "admin",
         onboarding_completed: true,
-        empresas: { nome: "Minha Empresa", onboarding_completed: false },
-      },
-      error: null,
+        empresas: { onboarding_completed: false } as ProfileWithEmpresa["empresas"],
+      } as ProfileWithEmpresa,
     });
-    const mockEq = vi.fn(() => ({ single: mockSingle }));
-    const mockSelect = vi.fn(() => ({ eq: mockEq }));
-    vi.mocked(supabase.from).mockReturnValue({ select: mockSelect } as unknown as ReturnType<typeof supabase.from>);
 
     renderWithRouter();
 
