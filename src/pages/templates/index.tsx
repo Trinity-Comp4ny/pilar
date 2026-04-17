@@ -7,7 +7,7 @@ import { Plus, FileText, Clock, Layers, Trash2, Pencil, Loader2 } from "lucide-r
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { useUserRole } from "@/hooks/useUserRole";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import {
   useTemplates,
@@ -23,7 +23,6 @@ import { usePageTitle } from "@/hooks/usePageTitle";
 export default function Templates() {
   usePageTitle("Templates");
   const { data: userRole } = useUserRole();
-  const { toast } = useToast();
   const { data: templates = [], isLoading } = useTemplates();
   const createTemplate = useCreateTemplate();
   const updateTemplate = useUpdateTemplate();
@@ -38,11 +37,11 @@ export default function Templates() {
   const handleCreate = (data: TemplateInsert) => {
     createTemplate.mutate(data, {
       onSuccess: () => {
-        toast({ title: "Template criado com sucesso" });
+        toast.success("Template criado com sucesso");
         setIsFormOpen(false);
       },
       onError: (error: Error) => {
-        toast({ variant: "destructive", title: "Erro", description: error.message });
+        toast.error("Erro");
       },
     });
   };
@@ -53,12 +52,12 @@ export default function Templates() {
       { id: editingTemplate.id, ...data },
       {
         onSuccess: () => {
-          toast({ title: "Template atualizado" });
+          toast.success("Template atualizado");
           setEditingTemplate(undefined);
           setIsFormOpen(false);
         },
         onError: (error: Error) => {
-          toast({ variant: "destructive", title: "Erro", description: error.message });
+          toast.error("Erro");
         },
       }
     );
@@ -68,11 +67,11 @@ export default function Templates() {
     if (!confirmDeleteId) return;
     deleteTemplate.mutate(confirmDeleteId, {
       onSuccess: () => {
-        toast({ title: "Template removido" });
+        toast.success("Template removido");
         setConfirmDeleteId(null);
       },
       onError: (error: Error) => {
-        toast({ variant: "destructive", title: "Erro", description: error.message });
+        toast.error("Erro");
       },
     });
   };

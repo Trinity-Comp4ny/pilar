@@ -6,14 +6,13 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Upload, FileText, Trash2, Loader2, Eye } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { usePropostaTemplates, useUploadTemplate, useDeleteTemplate } from "@/hooks/usePropostaTemplates";
 import { AUTO_VARIABLES } from "@/lib/docxUtils";
 import { VariaveisGuideButton } from "./VariaveisGuideDialog";
 
 export function TemplatesManager() {
-  const { toast } = useToast();
   const { data: templates = [], isLoading } = usePropostaTemplates();
   const uploadTemplate = useUploadTemplate();
   const deleteTemplate = useDeleteTemplate();
@@ -30,11 +29,11 @@ export function TemplatesManager() {
 
   const handleUpload = () => {
     if (!nome.trim()) {
-      toast({ variant: "destructive", title: "Nome é obrigatório" });
+      toast.error("Nome é obrigatório");
       return;
     }
     if (!selectedFile) {
-      toast({ variant: "destructive", title: "Selecione um arquivo DOCX" });
+      toast.error("Selecione um arquivo DOCX");
       return;
     }
 
@@ -42,14 +41,11 @@ export function TemplatesManager() {
       { file: selectedFile, nome: nome.trim(), descricao: descricao.trim() || undefined },
       {
         onSuccess: (data) => {
-          toast({
-            title: "Template salvo",
-            description: `${data.variaveis.length} variáveis detectadas`,
-          });
+          toast.success("Template salvo", { description: `${data.variaveis.length} variáveis detectadas` });
           resetForm();
         },
         onError: (err: Error) => {
-          toast({ variant: "destructive", title: "Erro", description: err.message });
+          toast.error("Erro");
         },
       }
     );
@@ -59,7 +55,7 @@ export function TemplatesManager() {
     if (!deleteId) return;
     deleteTemplate.mutate(deleteId, {
       onSuccess: () => {
-        toast({ title: "Template removido" });
+        toast.success("Template removido");
         setDeleteId(null);
       },
     });

@@ -18,7 +18,7 @@ import {
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
 import { User, DollarSign, Ruler, Trash2, Edit, MapPin, ExternalLink, AlertTriangle } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { PROJECT_STATUS_CONFIG, PROJECT_PRIORITY_CONFIG, type ProjectPriority } from "@/constants";
 import {
   type Projeto,
@@ -61,7 +61,6 @@ export function ProjectDetailDialog({
   onProjectUpdated,
 }: ProjectDetailDialogProps) {
   const navigate = useNavigate();
-  const { toast } = useToast();
   const [updatingDisc, setUpdatingDisc] = useState<number | null>(null);
   const [justificativaDialog, setJustificativaDialog] = useState<{ discIdx: number; newStatus: string } | null>(null);
   const [justificativaText, setJustificativaText] = useState("");
@@ -90,11 +89,11 @@ export function ProjectDetailDialog({
         data_fim_real:
           newStatus === "Concluído" && !dbDisc.data_fim_real ? new Date().toISOString().split("T")[0] : undefined,
       });
-      toast({ title: `${dbDisc.nome}: ${newStatus}` });
+      toast.success(`${dbDisc.nome}: ${newStatus}`);
       onProjectUpdated?.();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Erro desconhecido";
-      toast({ variant: "destructive", title: "Erro ao atualizar", description: message });
+      toast.error("Erro ao atualizar");
     }
     setUpdatingDisc(null);
   };

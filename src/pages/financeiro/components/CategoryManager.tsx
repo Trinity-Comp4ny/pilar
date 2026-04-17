@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Pencil, Trash2, Loader2 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { getSafeErrorMessage } from "@/lib/safeError";
 
@@ -50,7 +50,6 @@ export function CategoryManager({ title, description, type, onCategoryChange }: 
   const [newCategoryName, setNewCategoryName] = useState("");
   const [editCategory, setEditCategory] = useState<Category | null>(null);
   const [deleteCategory, setDeleteCategory] = useState<Category | null>(null);
-  const { toast } = useToast();
 
   // Fetch categories from Supabase
   const fetchCategories = useCallback(async () => {
@@ -69,11 +68,7 @@ export function CategoryManager({ title, description, type, onCategoryChange }: 
         onCategoryChange(mappedCategories);
       }
     } catch (err: unknown) {
-      toast({
-        title: "Erro ao carregar categorias",
-        description: getSafeErrorMessage(err),
-        variant: "destructive",
-      });
+      toast.error("Erro ao carregar categorias");
     }
   }, [type, onCategoryChange, toast]);
 
@@ -83,11 +78,7 @@ export function CategoryManager({ title, description, type, onCategoryChange }: 
 
   const handleAddCategory = async () => {
     if (!newCategoryName.trim()) {
-      toast({
-        title: "Campo obrigatório",
-        description: "O nome da categoria é obrigatório",
-        variant: "destructive",
-      });
+      toast.error("Campo obrigatório", { description: "O nome da categoria é obrigatório" });
       return;
     }
 
@@ -106,20 +97,13 @@ export function CategoryManager({ title, description, type, onCategoryChange }: 
 
       if (error) throw error;
 
-      toast({
-        title: "Categoria adicionada",
-        description: "A categoria foi adicionada com sucesso",
-      });
+      toast.success("Categoria adicionada", { description: "A categoria foi adicionada com sucesso" });
 
       setNewCategoryName("");
       setIsAddDialogOpen(false);
       fetchCategories();
     } catch (err: unknown) {
-      toast({
-        title: "Erro ao adicionar",
-        description: getSafeErrorMessage(err),
-        variant: "destructive",
-      });
+      toast.error("Erro ao adicionar");
     } finally {
       setIsSaving(false);
     }
@@ -127,11 +111,7 @@ export function CategoryManager({ title, description, type, onCategoryChange }: 
 
   const handleEditCategory = async () => {
     if (!editCategory || !editCategory.name.trim()) {
-      toast({
-        title: "Campo obrigatório",
-        description: "O nome da categoria é obrigatório",
-        variant: "destructive",
-      });
+      toast.error("Campo obrigatório", { description: "O nome da categoria é obrigatório" });
       return;
     }
 
@@ -144,20 +124,13 @@ export function CategoryManager({ title, description, type, onCategoryChange }: 
 
       if (error) throw error;
 
-      toast({
-        title: "Categoria atualizada",
-        description: "A categoria foi atualizada com sucesso",
-      });
+      toast.success("Categoria atualizada", { description: "A categoria foi atualizada com sucesso" });
 
       setEditCategory(null);
       setIsEditDialogOpen(false);
       fetchCategories();
     } catch (err: unknown) {
-      toast({
-        title: "Erro ao atualizar",
-        description: getSafeErrorMessage(err),
-        variant: "destructive",
-      });
+      toast.error("Erro ao atualizar");
     } finally {
       setIsSaving(false);
     }
@@ -172,20 +145,13 @@ export function CategoryManager({ title, description, type, onCategoryChange }: 
 
       if (error) throw error;
 
-      toast({
-        title: "Categoria removida",
-        description: "A categoria foi removida com sucesso",
-      });
+      toast.success("Categoria removida", { description: "A categoria foi removida com sucesso" });
 
       setDeleteCategory(null);
       setIsDeleteDialogOpen(false);
       fetchCategories();
     } catch (err: unknown) {
-      toast({
-        title: "Erro ao remover",
-        description: getSafeErrorMessage(err),
-        variant: "destructive",
-      });
+      toast.error("Erro ao remover");
     } finally {
       setIsDeleting(false);
     }

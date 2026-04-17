@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Loader2, RefreshCw, TrendingUp, TrendingDown, ArrowRight } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 const formatCurrency = (v: number) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 }).format(v);
@@ -26,7 +26,6 @@ interface WipSnapshot {
 }
 
 export default function WIP() {
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   const now = new Date();
   const [mes, setMes] = useState(now.getMonth() + 1);
@@ -55,9 +54,9 @@ export default function WIP() {
     },
     onSuccess: (count) => {
       queryClient.invalidateQueries({ queryKey: ["wip-snapshots"] });
-      toast({ title: `WIP calculado para ${count} projeto(s)` });
+      toast.success(`WIP calculado para ${count} projeto(s)`);
     },
-    onError: (err: Error) => toast({ variant: "destructive", title: "Erro", description: err.message }),
+    onError: (err: Error) => toast.error("Erro"),
   });
 
   const totalCusto = snapshots.reduce((s, w) => s + (Number(w.custo_realizado) || 0), 0);

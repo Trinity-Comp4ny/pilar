@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { User, Mail, Phone, Building2 } from "lucide-react";
 import { formatPhone } from "@/lib/maskUtils";
 import { getSafeErrorMessage } from "@/lib/safeError";
@@ -15,7 +15,6 @@ import { usePageTitle } from "@/hooks/usePageTitle";
 export default function Profile() {
   usePageTitle("Perfil");
   const [editing, setEditing] = useState(false);
-  const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
   const [companyName, setCompanyName] = useState<string>("");
   const [email, setEmail] = useState<string>("");
@@ -49,11 +48,7 @@ export default function Profile() {
         setContact(profile?.contato || "");
         setCompanyName(profile?.empresas?.nome || "");
       } catch (err: unknown) {
-        toast({
-          variant: "destructive",
-          title: "Erro ao carregar perfil",
-          description: getSafeErrorMessage(err),
-        });
+        toast.error("Erro ao carregar perfil");
       } finally {
         setIsLoading(false);
       }
@@ -80,16 +75,9 @@ export default function Profile() {
       if (error) throw error;
 
       setEditing(false);
-      toast({
-        title: "Perfil atualizado",
-        description: "Suas informações foram salvas com sucesso",
-      });
+      toast.success("Perfil atualizado", { description: "Suas informações foram salvas com sucesso" });
     } catch (err: unknown) {
-      toast({
-        variant: "destructive",
-        title: "Erro ao salvar",
-        description: getSafeErrorMessage(err),
-      });
+      toast.error("Erro ao salvar");
     }
   };
 

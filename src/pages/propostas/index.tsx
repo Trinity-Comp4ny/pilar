@@ -27,7 +27,7 @@ import { useNavigate } from "react-router-dom";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { useUserRole } from "@/hooks/useUserRole";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import {
   usePropostas,
@@ -58,7 +58,6 @@ import { usePageTitle } from "@/hooks/usePageTitle";
 export default function Propostas() {
   usePageTitle("Propostas");
   const { data: userRole } = useUserRole();
-  const { toast } = useToast();
   const { data: propostas = [], isLoading } = usePropostas();
   const createProposta = useCreateProposta();
   const updateProposta = useUpdateProposta();
@@ -120,7 +119,7 @@ export default function Propostas() {
 
   const handleCreate = () => {
     if (!form.titulo.trim()) {
-      toast({ variant: "destructive", title: "Título é obrigatório" });
+      toast.error("Título é obrigatório");
       return;
     }
 
@@ -129,11 +128,11 @@ export default function Propostas() {
       { ...form, valor_proposto: valorProposto || undefined },
       {
         onSuccess: () => {
-          toast({ title: "Proposta criada" });
+          toast.success("Proposta criada");
           setIsFormOpen(false);
           resetForm();
         },
-        onError: (err: Error) => toast({ variant: "destructive", title: "Erro", description: err.message }),
+        onError: (err: Error) => toast.error("Erro"),
       }
     );
   };
@@ -142,8 +141,8 @@ export default function Propostas() {
     updateProposta.mutate(
       { id, status },
       {
-        onSuccess: () => toast({ title: `Proposta ${PROPOSTA_STATUS_CONFIG[status]?.label || status}` }),
-        onError: (err: Error) => toast({ variant: "destructive", title: "Erro", description: err.message }),
+        onSuccess: () => toast.success(`Proposta ${PROPOSTA_STATUS_CONFIG[status]?.label || status}`),
+        onError: (err: Error) => toast.error("Erro"),
       }
     );
   };
@@ -152,10 +151,10 @@ export default function Propostas() {
     if (!confirmDeleteId) return;
     deleteProposta.mutate(confirmDeleteId, {
       onSuccess: () => {
-        toast({ title: "Proposta removida" });
+        toast.success("Proposta removida");
         setConfirmDeleteId(null);
       },
-      onError: (err: Error) => toast({ variant: "destructive", title: "Erro", description: err.message }),
+      onError: (err: Error) => toast.error("Erro"),
     });
   };
 
@@ -163,14 +162,13 @@ export default function Propostas() {
     if (!convertPropostaId) return;
     converterProposta.mutate(convertPropostaId, {
       onSuccess: (projetoId) => {
-        toast({
-          title: "Projeto criado!",
+        toast.success("Projeto criado!", {
           description: "A proposta foi convertida em projeto com orçamento pré-preenchido.",
         });
         setConvertPropostaId(null);
         navigate(`/projetos/${projetoId}`);
       },
-      onError: (err: Error) => toast({ variant: "destructive", title: "Erro na conversão", description: err.message }),
+      onError: (err: Error) => toast.error("Erro na conversão"),
     });
   };
 

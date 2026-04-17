@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { useFluxosDisciplinas, useCreateFluxo, useUpdateFluxo, useDeleteFluxo } from "@/hooks/useFluxosDisciplinas";
 import type { FluxoDisciplinas, FluxoEtapa, FluxoEtapaDisciplina } from "@/types/fluxoDisciplinas";
 import { Plus, Trash2, Edit, ArrowUp, ArrowDown, X, ArrowLeft, GitBranch, Layers, User } from "lucide-react";
@@ -27,7 +27,6 @@ interface FluxoFormState {
 const emptyForm: FluxoFormState = { nome: "", descricao: "", etapas: [] };
 
 export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoas }: FluxoDisciplinasDialogProps) {
-  const { toast } = useToast();
   const { data: fluxos = [] } = useFluxosDisciplinas();
   const createFluxo = useCreateFluxo();
   const updateFluxo = useUpdateFluxo();
@@ -67,25 +66,25 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
     if (!confirmDeleteId) return;
     try {
       await deleteFluxo.mutateAsync(confirmDeleteId);
-      toast({ title: "Fluxo excluído" });
+      toast.success("Fluxo excluído");
     } catch {
-      toast({ title: "Erro ao excluir fluxo", variant: "destructive" });
+      toast.error("Erro ao excluir fluxo");
     }
     setConfirmDeleteId(null);
   };
 
   const handleSave = async () => {
     if (!form.nome.trim()) {
-      toast({ title: "Nome do fluxo é obrigatório", variant: "destructive" });
+      toast.error("Nome do fluxo é obrigatório");
       return;
     }
     if (form.etapas.length === 0) {
-      toast({ title: "Adicione pelo menos uma etapa", variant: "destructive" });
+      toast.error("Adicione pelo menos uma etapa");
       return;
     }
     const etapaVazia = form.etapas.find((e) => e.disciplinas.length === 0);
     if (etapaVazia) {
-      toast({ title: `Etapa "${etapaVazia.nome}" não tem disciplinas`, variant: "destructive" });
+      toast.error(`Etapa "${etapaVazia.nome}" não tem disciplinas`);
       return;
     }
 
@@ -98,14 +97,14 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
     try {
       if (editingId) {
         await updateFluxo.mutateAsync({ id: editingId, ...payload });
-        toast({ title: "Fluxo atualizado" });
+        toast.success("Fluxo atualizado");
       } else {
         await createFluxo.mutateAsync(payload);
-        toast({ title: "Fluxo criado" });
+        toast.success("Fluxo criado");
       }
       resetToList();
     } catch {
-      toast({ title: "Erro ao salvar fluxo", variant: "destructive" });
+      toast.error("Erro ao salvar fluxo");
     }
   };
 

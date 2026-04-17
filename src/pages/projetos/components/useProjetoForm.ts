@@ -13,7 +13,7 @@ import {
 } from "@/pages/projetos/types";
 import { type TemplateProjeto } from "@/hooks/useTemplates";
 import type { FluxoDisciplinas } from "@/types/fluxoDisciplinas";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { useBulkSaveDisciplinas } from "@/hooks/useProjetoDisciplinas";
 
 export const ESTADOS_BR = [
@@ -143,7 +143,6 @@ export function useProjetoForm({
   currentUser,
   onSaved,
 }: UseProjetoFormProps) {
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   const bulkSaveDisciplinas = useBulkSaveDisciplinas();
   const isEditMode = editProjeto !== null;
@@ -176,7 +175,7 @@ export function useProjetoForm({
         const res = await fetch(`https://viacep.com.br/ws/${digits}/json/`);
         const data = await res.json();
         if (data.erro) {
-          toast({ title: "CEP não encontrado", variant: "destructive" });
+          toast.error("CEP não encontrado");
           return;
         }
         setFormData((prev) => ({
@@ -187,7 +186,7 @@ export function useProjetoForm({
           loc_estado: data.uf || prev.loc_estado,
         }));
       } catch {
-        toast({ title: "Erro ao buscar CEP", variant: "destructive" });
+        toast.error("Erro ao buscar CEP");
       } finally {
         setIsFetchingCep(false);
       }
@@ -329,7 +328,7 @@ export function useProjetoForm({
     const currentResps = getResponsaveisList(disc);
 
     if (currentResps.some((r) => r.responsavel_id === newFormResp.responsavel_id)) {
-      toast({ variant: "destructive", title: "Responsável já adicionado nesta disciplina" });
+      toast.error("Responsável já adicionado nesta disciplina");
       return;
     }
 
@@ -353,7 +352,7 @@ export function useProjetoForm({
     const disc = updated[discIdx];
     const resps = getResponsaveisList(disc);
     if (resps.length <= 1) {
-      toast({ variant: "destructive", title: "A disciplina precisa ter ao menos um responsável" });
+      toast.error("A disciplina precisa ter ao menos um responsável");
       return;
     }
     const newResps = resps.filter((_, i) => i !== respIdx);
@@ -390,8 +389,7 @@ export function useProjetoForm({
     );
 
     setProjetosDisciplinas(novasDisciplinas);
-    toast({
-      title: "Template aplicado",
+    toast.success("Template aplicado", {
       description: `${novasDisciplinas.length} disciplina(s) adicionadas de "${template.nome}"`,
     });
   };
@@ -419,8 +417,7 @@ export function useProjetoForm({
     );
 
     setProjetosDisciplinas(novasDisciplinas);
-    toast({
-      title: "Fluxo aplicado",
+    toast.success("Fluxo aplicado", {
       description: `${novasDisciplinas.length} disciplina(s) em ${fluxo.etapas.length} etapa(s) de "${fluxo.nome}"`,
     });
   };
@@ -429,11 +426,7 @@ export function useProjetoForm({
     e.preventDefault();
 
     if (!formData.codigo_projeto || !formData.cliente_id || !formData.nome) {
-      toast({
-        title: "Campos obrigatórios",
-        description: "Preencha Código, Nome e Cliente",
-        variant: "destructive",
-      });
+      toast.error("Campos obrigatórios", { description: "Preencha Código, Nome e Cliente" });
       return;
     }
 
@@ -481,7 +474,7 @@ export function useProjetoForm({
           disciplinas: discsForBulk,
         });
 
-        toast({ title: "Projeto atualizado", description: "Projeto foi atualizado com sucesso" });
+        toast.success("Projeto atualizado", { description: "Projeto foi atualizado com sucesso" });
       } else {
         const { data: newProjetoId, error } = await supabase.rpc("create_projeto_completo", {
           p_codigo: formData.codigo_projeto,
@@ -522,7 +515,7 @@ export function useProjetoForm({
           });
         }
 
-        toast({ title: "Projeto cadastrado", description: "Novo projeto foi adicionado com sucesso" });
+        toast.success("Projeto cadastrado", { description: "Novo projeto foi adicionado com sucesso" });
       }
 
       onOpenChange(false);
@@ -590,22 +583,19 @@ export function useProjetoForm({
                   if (fallbackCoords) {
                     saveCoords(fallbackCoords.lat, fallbackCoords.lng);
                   } else {
-                    toast({
-                      title: "Endereço não localizado",
+                    toast.success("Endereço não localizado", {
                       description: "Não foi possível encontrar as coordenadas. O projeto não aparecerá no mapa.",
                     });
                   }
                 });
             }
-            toast({
-              title: "Endereço não localizado",
+            toast.success("Endereço não localizado", {
               description: "Não foi possível encontrar as coordenadas do endereço. O projeto não aparecerá no mapa.",
             });
           })
           .catch((err: unknown) => {
             if (err instanceof DOMException && err.name === "AbortError") return;
-            toast({
-              title: "Geocodificação falhou",
+            toast.success("Geocodificação falhou", {
               description: "Não foi possível obter coordenadas do endereço. O projeto não aparecerá no mapa.",
             });
           });
@@ -617,7 +607,7 @@ export function useProjetoForm({
           .then(() => onSaved());
       }
     } catch (err: unknown) {
-      toast({ title: "Erro ao salvar", description: getSafeErrorMessage(err), variant: "destructive" });
+      toast.error("Erro ao salvar");
     } finally {
       setIsSaving(false);
     }

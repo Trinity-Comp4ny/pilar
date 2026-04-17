@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Calendar as CalendarIcon, CheckCircle2 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { getSafeErrorMessage } from "@/lib/safeError";
@@ -42,7 +42,6 @@ export default function FolhaPagamento() {
   const currentDate = new Date();
   const [selectedMonth, setSelectedMonth] = useState(currentDate.getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear());
-  const { toast } = useToast();
   const years = buildYearRange(currentDate.getFullYear());
 
   useEffect(() => {
@@ -73,7 +72,7 @@ export default function FolhaPagamento() {
       });
       setHistory(Array.from(grouped.values()));
     } catch {
-      toast({ title: "Erro ao gerar folha de pagamento", variant: "destructive" });
+      toast.error("Erro ao gerar folha de pagamento");
     }
   };
 
@@ -163,7 +162,7 @@ export default function FolhaPagamento() {
         );
       }
     } catch (err: unknown) {
-      toast({ title: "Erro ao carregar dados", description: getSafeErrorMessage(err), variant: "destructive" });
+      toast.error("Erro ao carregar dados");
     } finally {
       setLoading(false);
     }
@@ -188,15 +187,14 @@ export default function FolhaPagamento() {
       const { error } = await supabase.from("folha_pagamento").insert(payload);
       if (error) throw error;
 
-      toast({
-        title: "Folha fechada com sucesso!",
+      toast.success("Folha fechada com sucesso!", {
         description: `Os registros para ${getMonthLabel(selectedMonth)}/${selectedYear} foram salvos.`,
       });
       setConfirmDialogOpen(false);
       fetchData();
       fetchHistory();
     } catch (err: unknown) {
-      toast({ title: "Erro ao fechar folha", description: getSafeErrorMessage(err), variant: "destructive" });
+      toast.error("Erro ao fechar folha");
     } finally {
       setSaving(false);
     }
@@ -253,7 +251,7 @@ export default function FolhaPagamento() {
     setIsEditingDetail(false);
     setDetailDialogOpen(false);
     setSelectedPerson(null);
-    toast({ title: "Alterações salvas no preview" });
+    toast.success("Alterações salvas no preview");
   };
 
   const handleStatusChange = async (folhaId: string | undefined, newStatus: string) => {
@@ -317,10 +315,10 @@ export default function FolhaPagamento() {
         }
       }
 
-      toast({ title: "Status atualizado", description: `O status foi alterado para ${newStatus}.` });
+      toast.success("Status atualizado", { description: `O status foi alterado para ${newStatus}.` });
       fetchHistory();
     } catch (err: unknown) {
-      toast({ title: "Erro ao atualizar status", description: getSafeErrorMessage(err), variant: "destructive" });
+      toast.error("Erro ao atualizar status");
     }
   };
 
@@ -369,10 +367,8 @@ export default function FolhaPagamento() {
         );
       }
     } catch {
-      toast({
-        title: "Erro ao carregar detalhes",
+      toast.error("Erro ao carregar detalhes", {
         description: "Não foi possível carregar os detalhes da folha selecionada.",
-        variant: "destructive",
       });
     } finally {
       setHistoryDetailLoading(false);

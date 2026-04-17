@@ -16,27 +16,21 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Plus, Mail, Phone, User, CheckCircle2, Loader2, AlertTriangle, UserPlus, FileText } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { formatPhone } from "@/lib/maskUtils";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
-import { supabase } from "@/integrations/supabase/client";
-import { getSafeErrorMessage } from "@/lib/safeError";
 import { usePageTitle } from "@/hooks/usePageTitle";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-
-interface Lead {
-  id: string;
-  nome: string;
-  email?: string;
-  contato?: string;
-  status: "Novo" | "Em contato" | "Proposta" | "Negociação" | "Ganho" | "Perdido";
-  origem?: string;
-  cliente_id?: string;
-  motivo_perda?: string;
-  convertido_em?: string;
-}
+import {
+  useLeads,
+  useCreateLead,
+  useUpdateLeadStatus,
+  useConvertLeadToClient,
+  useDeleteLead,
+  useCreatePropostaFromLead,
+  type Lead,
+} from "@/hooks/useLeads";
 
 const statusConfig: Record<string, { label: string; color: string; columnColor: string }> = {
   Novo: { label: "Novo", color: "bg-blue-100 text-blue-800", columnColor: "bg-blue-50" },
@@ -53,19 +47,13 @@ const statusConfig: Record<string, { label: string; color: string; columnColor: 
 
 export default function Leads() {
   usePageTitle("Leads");
-  const queryClient = useQueryClient();
-  const { data: leads = [], isLoading: _isLoading } = useQuery({
-    queryKey: ["leads"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("leads")
-        .select("*")
-        .is("deleted_at", null)
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return (data || []) as Lead[];
-    },
-  });
+  const { data: leads = [] } = useLeads();
+  const createLead = useCreateLead();
+  const updateStatus = useUpdateLeadStatus();
+  const convertToClient = useConvertLeadToClient();
+  const deleteLead = useDeleteLead();
+  const createProposta = useCreatePropostaFromLead();
+
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
@@ -76,14 +64,10 @@ export default function Leads() {
     contato: "",
     origem: "",
   });
-  const [isSaving, setIsSaving] = useState(false);
-  const [isConverting, setIsConverting] = useState(false);
-  const [isCreatingProposta, setIsCreatingProposta] = useState(false);
   const [pendingDrop, setPendingDrop] = useState<{ leadId: string; newStatus: string } | null>(null);
   const [isMotivoPerdasOpen, setIsMotivoPerdasOpen] = useState(false);
   const [motivoPerda, setMotivoPerda] = useState("");
   const [isAutoConvertOpen, setIsAutoConvertOpen] = useState(false);
-  const { toast } = useToast();
   const navigate = useNavigate();
 
   const handleCardClick = (lead: Lead) => {
@@ -95,44 +79,26 @@ export default function Leads() {
     e.preventDefault();
 
     if (!formData.nome) {
-      toast({
-        title: "Campo obrigatório",
+      toast.error("Campo obrigatório", {
         description: "O nome do lead é obrigatório",
-        variant: "destructive",
       });
       return;
     }
 
-    setIsSaving(true);
-    try {
-      const { error } = await supabase.from("leads").insert({
+    createLead.mutate(
+      {
         nome: formData.nome,
         email: formData.email,
         contato: formData.contato,
         origem: formData.origem,
-        status: "Novo",
-        empresa_id: (await supabase.rpc("get_user_empresa_id")).data,
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: "Lead cadastrado",
-        description: "Novo lead foi adicionado com sucesso",
-      });
-
-      setFormData({ nome: "", email: "", contato: "", origem: "" });
-      setIsDialogOpen(false);
-      queryClient.invalidateQueries({ queryKey: ["leads"] });
-    } catch (err: unknown) {
-      toast({
-        title: "Erro ao salvar",
-        description: getSafeErrorMessage(err),
-        variant: "destructive",
-      });
-    } finally {
-      setIsSaving(false);
-    }
+      },
+      {
+        onSuccess: () => {
+          setFormData({ nome: "", email: "", contato: "", origem: "" });
+          setIsDialogOpen(false);
+        },
+      }
+    );
   };
 
   const onDragEnd = async (result: DropResult) => {
@@ -162,171 +128,88 @@ export default function Leads() {
     }
 
     // Para outros status, fluxo normal
-    await updateLeadStatus(draggableId, newStatus);
-  };
-
-  const updateLeadStatus = async (leadId: string, newStatus: string, extraFields?: Record<string, unknown>) => {
-    // Optimistic update
-    queryClient.setQueryData(["leads"], (old: Lead[] | undefined) =>
-      (old || []).map((lead) =>
-        lead.id === leadId ? { ...lead, status: newStatus as Lead["status"], ...extraFields } : lead
-      )
-    );
-
-    try {
-      const { error } = await supabase
-        .from("leads")
-        .update({ status: newStatus, ...extraFields })
-        .eq("id", leadId);
-
-      if (error) throw error;
-
-      toast({
-        title: "Status atualizado",
-        description: `Lead movido para ${newStatus}`,
-      });
-    } catch (error: unknown) {
-      toast({
-        title: "Erro ao atualizar status",
-        description: getSafeErrorMessage(error),
-        variant: "destructive",
-      });
-      queryClient.invalidateQueries({ queryKey: ["leads"] });
-    }
+    updateStatus.mutate({ leadId: draggableId, newStatus });
   };
 
   const handleConfirmMotivoPerdas = async () => {
     if (!pendingDrop || !motivoPerda.trim()) {
-      toast({ title: "Motivo obrigatório", description: "Informe o motivo da perda do lead.", variant: "destructive" });
+      toast.error("Motivo obrigatório", { description: "Informe o motivo da perda do lead." });
       return;
     }
 
-    await updateLeadStatus(pendingDrop.leadId, "Perdido", { motivo_perda: motivoPerda.trim() });
-    setIsMotivoPerdasOpen(false);
-    setPendingDrop(null);
-    setMotivoPerda("");
+    updateStatus.mutate(
+      { leadId: pendingDrop.leadId, newStatus: "Perdido", extraFields: { motivo_perda: motivoPerda.trim() } },
+      {
+        onSuccess: () => {
+          setIsMotivoPerdasOpen(false);
+          setPendingDrop(null);
+          setMotivoPerda("");
+        },
+      }
+    );
   };
 
   const handleAutoConvert = async () => {
     if (!pendingDrop) return;
-    setIsConverting(true);
 
-    try {
-      const { data: _clienteId, error } = await supabase.rpc("rpc_converter_lead_cliente", {
-        p_lead_id: pendingDrop.leadId,
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: "Lead convertido!",
-        description: "Cliente criado automaticamente a partir do lead.",
-      });
-
-      setIsAutoConvertOpen(false);
-      setPendingDrop(null);
-      queryClient.invalidateQueries({ queryKey: ["leads"] });
-    } catch (err: unknown) {
-      toast({
-        title: "Erro na conversão",
-        description: getSafeErrorMessage(err),
-        variant: "destructive",
-      });
-    } finally {
-      setIsConverting(false);
-    }
+    convertToClient.mutate(pendingDrop.leadId, {
+      onSuccess: () => {
+        setIsAutoConvertOpen(false);
+        setPendingDrop(null);
+      },
+    });
   };
 
   const handleSkipConvert = async () => {
     if (!pendingDrop) return;
-    await updateLeadStatus(pendingDrop.leadId, "Ganho");
-    setIsAutoConvertOpen(false);
-    setPendingDrop(null);
+    updateStatus.mutate(
+      { leadId: pendingDrop.leadId, newStatus: "Ganho" },
+      {
+        onSuccess: () => {
+          setIsAutoConvertOpen(false);
+          setPendingDrop(null);
+        },
+      }
+    );
   };
 
   const handleConvertToClient = async () => {
     if (!selectedLead) return;
 
     if (selectedLead.cliente_id) {
-      toast({
-        title: "Já convertido",
+      toast.error("Já convertido", {
         description: "Este lead já foi convertido em cliente.",
-        variant: "destructive",
       });
       setIsConvertOpen(false);
       return;
     }
 
-    try {
-      const { error } = await supabase.rpc("rpc_converter_lead_cliente", {
-        p_lead_id: selectedLead.id,
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: "Sucesso!",
-        description: `${selectedLead.nome} foi convertido em cliente.`,
-      });
-
-      setIsConvertOpen(false);
-      setIsDetailOpen(false);
-      queryClient.invalidateQueries({ queryKey: ["leads"] });
-    } catch (err: unknown) {
-      toast({
-        title: "Erro na conversão",
-        description: getSafeErrorMessage(err),
-        variant: "destructive",
-      });
-    }
+    convertToClient.mutate(selectedLead.id, {
+      onSuccess: () => {
+        toast.success("Sucesso!", {
+          description: `${selectedLead.nome} foi convertido em cliente.`,
+        });
+        setIsConvertOpen(false);
+        setIsDetailOpen(false);
+      },
+    });
   };
 
   const handleCriarProposta = async (lead: Lead) => {
-    setIsCreatingProposta(true);
-    try {
-      const { data: empresaId } = await supabase.rpc("get_user_empresa_id");
-      if (!empresaId) throw new Error("Empresa não encontrada");
-
-      const codigo = `PROP-${Date.now().toString(36).toUpperCase()}`;
-
-      const { data: proposta, error } = await supabase
-        .from("propostas")
-        .insert({
-          empresa_id: empresaId,
-          lead_id: lead.id,
-          titulo: `Proposta — ${lead.nome}`,
-          codigo,
-          status: "rascunho",
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      // Atualizar lead status para "Proposta"
-      await supabase.from("leads").update({ status: "Proposta" }).eq("id", lead.id);
-
-      toast({ title: "Proposta criada", description: "Redirecionando para edição..." });
-      setIsDetailOpen(false);
-      navigate(`/propostas?edit=${proposta.id}`);
-    } catch (err: unknown) {
-      toast({
-        variant: "destructive",
-        title: "Erro ao criar proposta",
-        description: err instanceof Error ? err.message : "Erro desconhecido",
-      });
-    } finally {
-      setIsCreatingProposta(false);
-    }
+    createProposta.mutate(lead, {
+      onSuccess: (proposta) => {
+        setIsDetailOpen(false);
+        navigate(`/propostas?edit=${proposta.id}`);
+      },
+    });
   };
 
   const handleDelete = async (id: string) => {
-    const { error } = await supabase.from("leads").update({ deleted_at: new Date().toISOString() }).eq("id", id);
-    if (!error) {
-      toast({ title: "Lead excluído" });
-      setIsDetailOpen(false);
-      queryClient.invalidateQueries({ queryKey: ["leads"] });
-    }
+    deleteLead.mutate(id, {
+      onSuccess: () => {
+        setIsDetailOpen(false);
+      },
+    });
   };
 
   const getLeadsByStatus = (status: string) => {
@@ -419,16 +302,16 @@ export default function Leads() {
                       variant="outline"
                       onClick={() => setIsDialogOpen(false)}
                       className="flex-1"
-                      disabled={isSaving}
+                      disabled={createLead.isPending}
                     >
                       Cancelar
                     </Button>
                     <Button
                       type="submit"
                       className="flex-1 bg-accent-orange hover:bg-accent-orange/90 text-white"
-                      disabled={isSaving}
+                      disabled={createLead.isPending}
                     >
-                      {isSaving ? (
+                      {createLead.isPending ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Salvando...
                         </>
@@ -624,9 +507,9 @@ export default function Leads() {
                     <Button
                       className="w-full bg-accent-orange hover:bg-accent-orange/90 text-white"
                       onClick={() => handleCriarProposta(selectedLead)}
-                      disabled={isCreatingProposta}
+                      disabled={createProposta.isPending}
                     >
-                      {isCreatingProposta ? (
+                      {createProposta.isPending ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Criando...
                         </>
@@ -746,9 +629,9 @@ export default function Leads() {
             <Button
               onClick={handleAutoConvert}
               className="bg-green-600 hover:bg-green-700 text-white"
-              disabled={isConverting}
+              disabled={convertToClient.isPending}
             >
-              {isConverting ? (
+              {convertToClient.isPending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Convertendo...
                 </>

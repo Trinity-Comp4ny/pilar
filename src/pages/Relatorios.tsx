@@ -23,7 +23,7 @@ import { format, startOfDay, endOfDay, subDays, startOfMonth, endOfMonth, subMon
 import { ptBR } from "date-fns/locale";
 import { getDisplayDate, formatDateDisplay } from "@/lib/dateUtils";
 import { cn } from "@/lib/utils";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { supabase } from "@/integrations/supabase/client";
@@ -103,7 +103,6 @@ export default function Relatorios() {
   const [dateFrom, setDateFrom] = useState<Date>();
   const [dateTo, setDateTo] = useState<Date>();
   const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
   const [reportData, setReportData] = useState<ReportRow[]>([]);
   const [reportTitle, setReportTitle] = useState<string>("");
 
@@ -233,11 +232,7 @@ export default function Relatorios() {
 
   const generateCSV = (data: ReportRow[], filename: string) => {
     if (!data.length) {
-      toast({
-        title: "Sem dados",
-        description: "Não há dados para exportar.",
-        variant: "destructive",
-      });
+      toast.error("Sem dados", { description: "Não há dados para exportar." });
       return;
     }
 
@@ -430,11 +425,7 @@ export default function Relatorios() {
 
   const handleGerarRelatorio = async () => {
     if (!tipoRelatorio) {
-      toast({
-        title: "Campos obrigatórios",
-        description: "Selecione o tipo de relatório",
-        variant: "destructive",
-      });
+      toast.error("Campos obrigatórios", { description: "Selecione o tipo de relatório" });
       return;
     }
 
@@ -465,11 +456,7 @@ export default function Relatorios() {
       }
 
       if (finalData.length === 0) {
-        toast({
-          title: "Sem dados",
-          description: "Não foram encontrados dados para os filtros selecionados.",
-          variant: "destructive",
-        });
+        toast.error("Sem dados", { description: "Não foram encontrados dados para os filtros selecionados." });
         setIsLoading(false);
         setReportData([]);
         setReportTitle("");
@@ -480,16 +467,11 @@ export default function Relatorios() {
       setReportTitle(title);
       setReportData(finalData);
 
-      toast({
-        title: "Relatório gerado",
+      toast.success("Relatório gerado", {
         description: `${finalData.length} registros carregados. Exporte em CSV ou PDF.`,
       });
     } catch (err: unknown) {
-      toast({
-        title: "Erro ao gerar",
-        description: getSafeErrorMessage(err),
-        variant: "destructive",
-      });
+      toast.error("Erro ao gerar");
     } finally {
       setIsLoading(false);
     }
@@ -526,11 +508,7 @@ export default function Relatorios() {
 
   const handleExport = async (formatType: "csv" | "pdf") => {
     if (!filteredData.length) {
-      toast({
-        title: "Sem dados",
-        description: "Gere um relatório antes de exportar.",
-        variant: "destructive",
-      });
+      toast.error("Sem dados", { description: "Gere um relatório antes de exportar." });
       return;
     }
 
@@ -545,16 +523,9 @@ export default function Relatorios() {
         generatePDF(filteredData, titleForPdf, filename);
       }
 
-      toast({
-        title: "Exportação iniciada",
-        description: "O download deve iniciar automaticamente.",
-      });
+      toast.success("Exportação iniciada", { description: "O download deve iniciar automaticamente." });
     } catch (e: unknown) {
-      toast({
-        title: "Erro ao exportar",
-        description: getSafeErrorMessage(e),
-        variant: "destructive",
-      });
+      toast.error("Erro ao exportar");
     } finally {
       setIsLoading(false);
     }

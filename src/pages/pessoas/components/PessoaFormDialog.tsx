@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Trash2, Landmark, Loader2 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { formatCurrencyInput, parseCurrencyString } from "@/lib/currencyUtils";
 import { formatCPF, formatPhone, formatAgency, formatBankAccount } from "@/lib/maskUtils";
 import { supabase } from "@/integrations/supabase/client";
@@ -24,7 +24,6 @@ interface PessoaFormDialogProps {
 }
 
 export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: PessoaFormDialogProps) {
-  const { toast } = useToast();
   const isEditMode = editPessoa !== null;
   const [isSaving, setIsSaving] = useState(false);
 
@@ -66,7 +65,7 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
 
   const handleAddConta = () => {
     if (!newConta.banco || !newConta.agencia || !newConta.conta) {
-      toast({ title: "Dados incompletos", description: "Preencha banco, agência e conta", variant: "destructive" });
+      toast.error("Dados incompletos", { description: "Preencha banco, agência e conta" });
       return;
     }
     const isFirst = contasBancarias.length === 0;
@@ -107,20 +106,20 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
       if (isEditMode && editPessoa) {
         const { error } = await supabase.from("pessoas").update(payload).eq("id", editPessoa.id);
         if (error) throw error;
-        toast({ title: "Pessoa atualizada", description: "Dados atualizados com sucesso" });
+        toast.success("Pessoa atualizada", { description: "Dados atualizados com sucesso" });
       } else {
         const { error } = await supabase.from("pessoas").insert({
           ...payload,
           empresa_id: (await supabase.rpc("get_user_empresa_id", {})).data,
         });
         if (error) throw error;
-        toast({ title: "Pessoa cadastrada", description: "Nova pessoa adicionada com sucesso" });
+        toast.success("Pessoa cadastrada", { description: "Nova pessoa adicionada com sucesso" });
       }
 
       onOpenChange(false);
       onSaved();
     } catch (err: unknown) {
-      toast({ title: "Erro ao salvar", description: getSafeErrorMessage(err), variant: "destructive" });
+      toast.error("Erro ao salvar", { description: getSafeErrorMessage(err) });
     } finally {
       setIsSaving(false);
     }

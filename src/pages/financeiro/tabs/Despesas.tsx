@@ -21,7 +21,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { CalendarIcon, Plus, Settings, Pencil, Trash2, Loader2 } from "lucide-react";
 import { format, addMonths } from "date-fns";
 import { cn } from "@/lib/utils";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CategoryManager } from "../components/CategoryManager";
 import { SupplierManager } from "../components/SupplierManager";
@@ -90,7 +90,6 @@ export default function Despesas() {
   const [categorias, setCategorias] = useState<{ id: string; name: string }[]>([]);
   const [fornecedores, setFornecedores] = useState<{ id: string; name: string }[]>([]);
   const [projetos, setProjetos] = useState<{ id: string; projetoID: string }[]>([]);
-  const { toast } = useToast();
 
   const fetchData = useCallback(async () => {
     try {
@@ -131,11 +130,7 @@ export default function Despesas() {
         setDespesasRaw(despesasData);
       }
     } catch {
-      toast({
-        title: "Erro ao carregar dados",
-        description: "Não foi possível carregar as informações financeiras.",
-        variant: "destructive",
-      });
+      toast.error("Erro ao carregar dados", { description: "Não foi possível carregar as informações financeiras." });
     }
   }, [toast]);
 
@@ -320,8 +315,7 @@ export default function Despesas() {
         }
       }
 
-      toast({
-        title: selectedDespesa ? "Despesa atualizada" : "Despesa cadastrada",
+      toast.success(selectedDespesa ? "Despesa atualizada" : "Despesa cadastrada", {
         description: selectedDespesa
           ? "1 registro atualizado com sucesso"
           : `${numParcelas} registro(s) criado(s) com sucesso`,
@@ -331,11 +325,7 @@ export default function Despesas() {
       fetchData();
       resetForm();
     } catch (err: unknown) {
-      toast({
-        title: "Erro ao salvar",
-        description: getSafeErrorMessage(err),
-        variant: "destructive",
-      });
+      toast.error("Erro ao salvar");
     } finally {
       setIsSaving(false);
     }
@@ -368,7 +358,7 @@ export default function Despesas() {
         return;
       }
     } catch {
-      toast({ title: "Erro ao excluir despesa", variant: "destructive" });
+      toast.error("Erro ao excluir despesa");
     } finally {
       if (!showDuplicateWarning) setIsSaving(false);
     }
@@ -385,7 +375,7 @@ export default function Despesas() {
 
     const { error } = await supabase.from("despesas").update({ deleted_at: new Date().toISOString() }).eq("id", id);
     if (!error) {
-      toast({ title: "Despesa excluída" });
+      toast.success("Despesa excluída");
       fetchData();
     }
   };

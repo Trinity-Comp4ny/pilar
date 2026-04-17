@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Save, Trash2, Loader2 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { type DisciplinaResponsavel } from "@/pages/projetos/types";
 import { formatCurrency } from "@/lib/currencyUtils";
@@ -28,7 +28,6 @@ interface OrcamentoFase {
 }
 
 export function ProjectBudgetTab({ projetoId, canEdit, disciplinas }: ProjectBudgetTabProps) {
-  const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const { data: orcamentos = [], isLoading } = useQuery({
@@ -82,11 +81,11 @@ export function ProjectBudgetTab({ projetoId, canEdit, disciplinas }: ProjectBud
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["orcamento-fases", projetoId] });
-      toast({ title: "Orçamento salvo" });
+      toast.success("Orçamento salvo");
       setEditRow({});
       setIsEditing(false);
     },
-    onError: (err: Error) => toast({ variant: "destructive", title: "Erro", description: err.message }),
+    onError: (err: Error) => toast.error("Erro"),
   });
 
   const deleteMutation = useMutation({
@@ -96,7 +95,7 @@ export function ProjectBudgetTab({ projetoId, canEdit, disciplinas }: ProjectBud
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["orcamento-fases", projetoId] });
-      toast({ title: "Linha removida" });
+      toast.success("Linha removida");
     },
   });
 

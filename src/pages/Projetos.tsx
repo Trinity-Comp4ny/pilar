@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Settings2, Layers, Calendar as CalendarIcon, Filter, GitBranch } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
@@ -36,7 +36,6 @@ type Tab = "kanban" | "disciplinas";
 export default function ProjetosKanban() {
   usePageTitle("Projetos");
   const { data: userRole } = useUserRole();
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   const { data: templatesData = [] } = useTemplates();
   const { data: fluxosData = [] } = useFluxosDisciplinas();
@@ -208,14 +207,12 @@ export default function ProjetosKanban() {
   const handleDelete = async (id: string) => {
     const { error } = await supabase.from("projetos").update({ deleted_at: new Date().toISOString() }).eq("id", id);
     if (!error) {
-      toast({ title: "Projeto excluído" });
+      toast.success("Projeto excluído");
       setIsDetailOpen(false);
       queryClient.invalidateQueries({ queryKey: ["projetos"] });
     } else {
-      toast({
-        title: "Erro ao excluir",
+      toast.error("Erro ao excluir", {
         description: "Verifique se existem registros vinculados.",
-        variant: "destructive",
       });
     }
   };
@@ -253,18 +250,15 @@ export default function ProjetosKanban() {
 
       if (error) throw error;
 
-      toast({
-        title: "Status atualizado",
+      toast.success("Status atualizado", {
         description: `Projeto movido para ${statusConfig[newStatus].label}`,
       });
 
       queryClient.invalidateQueries({ queryKey: ["projetos"] });
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Erro desconhecido";
-      toast({
-        title: "Erro ao atualizar status",
+      toast.error("Erro ao atualizar status", {
         description: message,
-        variant: "destructive",
       });
       queryClient.invalidateQueries({ queryKey: ["projetos"] });
     }

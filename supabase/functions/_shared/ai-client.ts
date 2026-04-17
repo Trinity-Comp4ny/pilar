@@ -2,7 +2,7 @@ import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-
 
 const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY") || "";
 const GEMINI_MODEL = "gemini-2.0-flash";
-const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
+const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 
 export interface AiRequest {
   systemPrompt: string;
@@ -107,7 +107,10 @@ export async function callGemini(request: AiRequest): Promise<AiResponse> {
 
   const response = await fetch(GEMINI_API_URL, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      "x-goog-api-key": GEMINI_API_KEY,
+    },
     body: JSON.stringify(body),
   });
 
@@ -193,16 +196,14 @@ export async function saveInsight(
       })
       .eq("id", existing.id);
   } else {
-    await supabaseAdmin
-      .from("ai_usage")
-      .insert({
-        empresa_id: request.empresaId,
-        mes,
-        ano,
-        total_requests: 1,
-        total_tokens_entrada: aiResponse.tokensEntrada,
-        total_tokens_saida: aiResponse.tokensSaida,
-      });
+    await supabaseAdmin.from("ai_usage").insert({
+      empresa_id: request.empresaId,
+      mes,
+      ano,
+      total_requests: 1,
+      total_tokens_entrada: aiResponse.tokensEntrada,
+      total_tokens_saida: aiResponse.tokensSaida,
+    });
   }
 
   return insight as AiInsightRow;
@@ -212,19 +213,14 @@ export async function saveInsight(
  * Cria um Supabase client admin (com service role key)
  */
 export function createAdminClient() {
-  return createClient(
-    Deno.env.get("SUPABASE_URL") ?? "",
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-  );
+  return createClient(Deno.env.get("SUPABASE_URL") ?? "", Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "");
 }
 
 /**
  * Cria um Supabase client autenticado (com token do request)
  */
 export function createAuthClient(req: Request) {
-  return createClient(
-    Deno.env.get("SUPABASE_URL") ?? "",
-    Deno.env.get("SUPABASE_ANON_KEY") ?? "",
-    { global: { headers: { Authorization: req.headers.get("Authorization")! } } }
-  );
+  return createClient(Deno.env.get("SUPABASE_URL") ?? "", Deno.env.get("SUPABASE_ANON_KEY") ?? "", {
+    global: { headers: { Authorization: req.headers.get("Authorization")! } },
+  });
 }

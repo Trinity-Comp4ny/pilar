@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { BookOpen, Copy, Check } from "lucide-react";
 import { AUTO_VARIABLES } from "@/lib/docxUtils";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 const VARIABLE_EXAMPLES: Record<string, string> = {
   CLIENTE_NOME: "João da Silva",
@@ -29,13 +29,12 @@ interface VariaveisGuideDialogProps {
 }
 
 export function VariaveisGuideDialog({ open, onOpenChange }: VariaveisGuideDialogProps) {
-  const { toast } = useToast();
   const [copiedVar, setCopiedVar] = useState<string | null>(null);
 
   const handleCopy = async (varName: string) => {
     await navigator.clipboard.writeText(`{{${varName}}}`);
     setCopiedVar(varName);
-    toast({ title: `{{${varName}}} copiado` });
+    toast.success(`{{${varName}}} copiado`);
     setTimeout(() => setCopiedVar(null), 1500);
   };
 

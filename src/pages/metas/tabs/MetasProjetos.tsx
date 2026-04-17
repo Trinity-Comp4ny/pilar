@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
   AlertDialog,
@@ -43,7 +43,6 @@ interface MetaProjeto {
 }
 
 export default function MetasProjetos() {
-  const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -101,10 +100,10 @@ export default function MetasProjetos() {
         descricao: "",
         unidade: "percentage",
       });
-      toast({ title: "Meta criada", description: "Meta de projeto criada com sucesso." });
+      toast.success("Meta criada", { description: "Meta de projeto criada com sucesso." });
     },
     onError: (error: Error) => {
-      toast({ title: "Erro ao criar meta", description: error.message, variant: "destructive" });
+      toast.error("Erro ao criar meta");
     },
   });
 
@@ -129,10 +128,10 @@ export default function MetasProjetos() {
       queryClient.invalidateQueries({ queryKey: ["metas"] });
       setIsEditDialogOpen(false);
       setEditingMeta(null);
-      toast({ title: "Meta atualizada", description: "Meta de projeto atualizada com sucesso." });
+      toast.success("Meta atualizada", { description: "Meta de projeto atualizada com sucesso." });
     },
     onError: (error: Error) => {
-      toast({ title: "Erro ao atualizar", description: error.message, variant: "destructive" });
+      toast.error("Erro ao atualizar");
     },
   });
 
@@ -145,10 +144,10 @@ export default function MetasProjetos() {
       queryClient.invalidateQueries({ queryKey: ["metas"] });
       setDeleteAlertOpen(false);
       setMetaToDelete(null);
-      toast({ title: "Meta excluída", description: "Meta de projeto removida." });
+      toast.success("Meta excluída", { description: "Meta de projeto removida." });
     },
     onError: (error: Error) => {
-      toast({ title: "Erro ao excluir", description: error.message, variant: "destructive" });
+      toast.error("Erro ao excluir");
     },
   });
 

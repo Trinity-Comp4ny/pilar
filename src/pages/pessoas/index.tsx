@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,7 +18,6 @@ export default function Pessoas() {
   usePageTitle("Pessoas");
   const { data: userRole } = useUserRole();
   const isAdmin = userRole === "admin";
-  const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const {
@@ -36,13 +35,11 @@ export default function Pessoas() {
 
   useEffect(() => {
     if (fetchError) {
-      toast({
-        title: "Erro ao carregar pessoas",
+      toast.error("Erro ao carregar pessoas", {
         description: fetchError.message,
-        variant: "destructive",
       });
     }
-  }, [fetchError, toast]);
+  }, [fetchError]);
 
   const [isFormDialogOpen, setIsFormDialogOpen] = useState(false);
   const [editingPessoa, setEditingPessoa] = useState<Pessoa | null>(null);
@@ -81,7 +78,7 @@ export default function Pessoas() {
       .update({ deleted_at: new Date().toISOString() })
       .eq("id", pessoaToDelete);
     if (!error) {
-      toast({ title: "Pessoa excluída" });
+      toast.success("Pessoa excluída");
       setIsDetailOpen(false);
       queryClient.invalidateQueries({ queryKey: ["pessoas"] });
     }
