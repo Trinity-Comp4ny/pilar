@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Mail, Lock, ArrowLeft, Loader2, CheckCircle2 } from "lucide-react";
+import { Mail, Lock, ArrowLeft, Loader2, CheckCircle2, Eye, EyeOff } from "lucide-react";
 import { usePageTitle } from "@/hooks/usePageTitle";
 
 export default function Login() {
@@ -16,6 +16,7 @@ export default function Login() {
   const [isResetting, setIsResetting] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     const checkUser = async () => {
@@ -48,31 +49,14 @@ export default function Login() {
       return;
     }
 
+    // Navega direto para /dashboard — o PrivateRoute cuida dos redirects de
+    // onboarding via AuthContext, que já busca o profile no onAuthStateChange.
+    // Remover getUser() + fetch de profile evita hang por sessão corrompida.
     toast({
       title: "Login realizado com sucesso!",
       description: "Bem-vindo de volta.",
     });
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (user) {
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("onboarding_completed, role, empresas(onboarding_completed)")
-        .eq("id", user.id)
-        .single();
-
-      if (profile && !profile.onboarding_completed) {
-        navigate("/profile-setup");
-      } else if (profile?.role === "admin" && !profile.empresas?.onboarding_completed) {
-        navigate("/company-setup");
-      } else {
-        navigate("/dashboard");
-      }
-    } else {
-      navigate("/dashboard");
-    }
+    navigate("/dashboard");
     setIsLoading(false);
   };
 
@@ -167,13 +151,22 @@ export default function Login() {
                 <Lock className="absolute left-3 top-3 h-4 w-4 text-slate-400 group-focus-within:text-accent-orange transition-colors" />
                 <Input
                   id="password"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
-                  className="pl-10 h-11 bg-slate-50 border-slate-200 focus:border-accent-orange focus:ring-accent-orange/20 transition-all"
+                  className="pl-10 pr-10 h-11 bg-slate-50 border-slate-200 focus:border-accent-orange focus:ring-accent-orange/20 transition-all"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  className="absolute right-3 top-3 text-slate-400 hover:text-accent-orange transition-colors"
+                  tabIndex={-1}
+                  aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
               </div>
             </div>
 

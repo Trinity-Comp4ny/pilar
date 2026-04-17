@@ -2,6 +2,7 @@ import { Outlet } from "react-router-dom";
 import { SidebarProvider, useSidebar } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { AlertsBell } from "@/components/AlertsBell";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 function LayoutContent() {
   const { state, isMobile } = useSidebar();
@@ -15,7 +16,9 @@ function LayoutContent() {
           <AlertsBell />
         </div>
         <main className="md:px-10 md:pb-10 md:pt-4">
-          <Outlet />
+          <ErrorBoundary>
+            <Outlet />
+          </ErrorBoundary>
         </main>
       </div>
     </div>
