@@ -1,6 +1,5 @@
--- ==============================================================================
--- CORREÇÕES CRÍTICAS: Lógica Financeira + Projetos
--- ==============================================================================
+-- Migration 006: Triggers e RPCs Financeiros
+-- Consolidação de: fix_financial_project_logic, alertas_pagamentos_projeto
 
 -- ============================================================
 -- 1. AUTO-MARCAR RECEITAS/DESPESAS COMO ATRASADAS
@@ -97,50 +96,7 @@ CREATE TRIGGER despesa_enforce_data
   FOR EACH ROW EXECUTE FUNCTION public.enforce_despesa_data_pagamento();
 
 -- ============================================================
--- 4. AUTO-COMPLETAR DISCIPLINAS AO CONCLUIR PROJETO
--- ============================================================
-
-CREATE OR REPLACE FUNCTION public.auto_complete_disciplinas()
-RETURNS TRIGGER
-LANGUAGE plpgsql
-AS $$
-DECLARE
-  disciplina JSONB;
-  updated_disciplinas JSONB := '[]'::jsonb;
-BEGIN
-  -- Só roda quando status muda para Concluído
-  IF NEW.status = 'Concluído' AND (OLD.status IS NULL OR OLD.status != 'Concluído') THEN
-    -- Marcar todas as disciplinas como Concluído
-    IF NEW.disciplinas IS NOT NULL AND jsonb_array_length(NEW.disciplinas) > 0 THEN
-      FOR disciplina IN SELECT * FROM jsonb_array_elements(NEW.disciplinas)
-      LOOP
-        updated_disciplinas := updated_disciplinas || jsonb_build_array(
-          disciplina || jsonb_build_object(
-            'status', 'Concluído',
-            'data_final', COALESCE(disciplina->>'data_final', to_char(CURRENT_DATE, 'YYYY-MM-DD'))
-          )
-        );
-      END LOOP;
-      NEW.disciplinas := updated_disciplinas;
-    END IF;
-
-    -- Garantir data_final
-    IF NEW.data_final IS NULL THEN
-      NEW.data_final := CURRENT_DATE;
-    END IF;
-  END IF;
-
-  RETURN NEW;
-END;
-$$;
-
-DROP TRIGGER IF EXISTS projeto_auto_complete ON public.projetos;
-CREATE TRIGGER projeto_auto_complete
-  BEFORE UPDATE ON public.projetos
-  FOR EACH ROW EXECUTE FUNCTION public.auto_complete_disciplinas();
-
--- ============================================================
--- 5. GERAR RECEITA AUTOMÁTICA AO FATURAR MARCO
+-- 4. GERAR RECEITA AUTOMÁTICA AO FATURAR MARCO
 -- ============================================================
 
 CREATE OR REPLACE FUNCTION public.auto_gerar_receita_from_marco()
@@ -192,7 +148,7 @@ CREATE TRIGGER marco_auto_receita
   FOR EACH ROW EXECUTE FUNCTION public.auto_gerar_receita_from_marco();
 
 -- ============================================================
--- 6. ADITIVO APROVADO: Atualizar prazo do projeto + gerar receita
+-- 5. ADITIVO APROVADO: Atualizar prazo do projeto + gerar receita
 -- ============================================================
 
 CREATE OR REPLACE FUNCTION public.aditivo_aprovado_handler()
@@ -242,7 +198,7 @@ CREATE TRIGGER escopo_aditivo_aprovado
   FOR EACH ROW EXECUTE FUNCTION public.aditivo_aprovado_handler();
 
 -- ============================================================
--- 7. RPC: Gerar parcelas de receita a partir de projeto
+-- 6. RPC: Gerar parcelas de receita a partir de projeto
 -- ============================================================
 
 CREATE OR REPLACE FUNCTION public.rpc_gerar_parcelas_projeto(
@@ -311,6 +267,162 @@ END;
 $$;
 
 -- ============================================================
+-- 7. RPC: Gerar alertas financeiros por empresa
+-- Versão final com p_empresa_id parameter
+-- Detecta: horas excedidas, pagamento atrasado, vencimento próximo,
+--          marco próximo, recebimento baixo vs progresso
+-- ============================================================
+
+CREATE OR REPLACE FUNCTION public.rpc_gerar_alertas(p_empresa_id UUID)
+RETURNS INTEGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  alert_count INTEGER := 0;
+  r RECORD;
+BEGIN
+  -- 1. Projetos com horas consumidas > 80% e faturamento < 50%
+  FOR r IN
+    SELECT p.id, p.nome,
+      COALESCE(SUM(t.horas), 0) AS horas_consumidas,
+      COALESCE(SUM(o.horas_estimadas), 0) AS horas_orcadas,
+      COALESCE((SELECT SUM(rv.valor) FROM receitas rv WHERE rv.projeto_id = p.id AND rv.deleted_at IS NULL AND rv.status = 'Recebido'), 0) AS recebido,
+      COALESCE(p.valor_contrato, 0) AS valor_contrato
+    FROM projetos p
+    LEFT JOIN timesheets t ON t.projeto_id = p.id AND t.deleted_at IS NULL AND t.status = 'aprovado'
+    LEFT JOIN projeto_orcamento_fases o ON o.projeto_id = p.id AND o.deleted_at IS NULL
+    WHERE p.empresa_id = p_empresa_id AND p.deleted_at IS NULL AND p.status = 'Em andamento'
+    GROUP BY p.id, p.nome, p.valor_contrato
+    HAVING COALESCE(SUM(o.horas_estimadas), 0) > 0
+  LOOP
+    IF r.horas_orcadas > 0 AND (r.horas_consumidas / r.horas_orcadas) > 0.8
+       AND r.valor_contrato > 0 AND (r.recebido / r.valor_contrato) < 0.5 THEN
+      IF NOT EXISTS (
+        SELECT 1 FROM alertas a
+        WHERE a.empresa_id = p_empresa_id AND a.tipo = 'horas_excedidas'
+          AND a.referencia_id = r.id AND a.created_at > NOW() - INTERVAL '7 days'
+      ) THEN
+        INSERT INTO alertas (empresa_id, tipo, severidade, titulo, mensagem, referencia_tipo, referencia_id)
+        VALUES (p_empresa_id, 'horas_excedidas', 'high',
+          'Horas excedidas: ' || r.nome,
+          'Projeto consumiu ' || ROUND((r.horas_consumidas / r.horas_orcadas * 100)::numeric, 0) || '% das horas mas faturou apenas ' || ROUND((r.recebido / NULLIF(r.valor_contrato, 0) * 100)::numeric, 0) || '%',
+          'projeto', r.id);
+        alert_count := alert_count + 1;
+      END IF;
+    END IF;
+  END LOOP;
+
+  -- 2. Receitas atrasadas > 15 dias
+  FOR r IN
+    SELECT rv.id, rv.descricao, rv.data_vencimento, rv.valor,
+      c.nome AS cliente_nome, rv.projeto_id
+    FROM receitas rv
+    LEFT JOIN clientes c ON c.id = rv.cliente_id
+    WHERE rv.empresa_id = p_empresa_id AND rv.deleted_at IS NULL
+      AND rv.status = 'Pendente'
+      AND rv.data_vencimento < CURRENT_DATE - INTERVAL '15 days'
+  LOOP
+    IF NOT EXISTS (
+      SELECT 1 FROM alertas a
+      WHERE a.empresa_id = p_empresa_id AND a.tipo = 'pagamento_atrasado'
+        AND a.referencia_id = r.id AND a.created_at > NOW() - INTERVAL '7 days'
+    ) THEN
+      INSERT INTO alertas (empresa_id, tipo, severidade, titulo, mensagem, referencia_tipo, referencia_id)
+      VALUES (p_empresa_id, 'pagamento_atrasado', 'high',
+        'Pagamento atrasado: ' || COALESCE(r.cliente_nome, r.descricao),
+        'Receita de R$ ' || TO_CHAR(r.valor, 'FM999G999D00') || ' vencida em ' || TO_CHAR(r.data_vencimento, 'DD/MM/YYYY'),
+        'receita', r.id);
+      alert_count := alert_count + 1;
+    END IF;
+  END LOOP;
+
+  -- 3. Receitas vencendo nos próximos 7 dias (alerta preventivo)
+  FOR r IN
+    SELECT rv.id, rv.descricao, rv.data_vencimento, rv.valor,
+      c.nome AS cliente_nome, p.nome AS projeto_nome
+    FROM receitas rv
+    LEFT JOIN clientes c ON c.id = rv.cliente_id
+    LEFT JOIN projetos p ON p.id = rv.projeto_id
+    WHERE rv.empresa_id = p_empresa_id AND rv.deleted_at IS NULL
+      AND rv.status = 'Pendente'
+      AND rv.data_vencimento BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '7 days'
+  LOOP
+    IF NOT EXISTS (
+      SELECT 1 FROM alertas a
+      WHERE a.empresa_id = p_empresa_id AND a.tipo = 'vencimento_proximo'
+        AND a.referencia_id = r.id AND a.created_at > NOW() - INTERVAL '7 days'
+    ) THEN
+      INSERT INTO alertas (empresa_id, tipo, severidade, titulo, mensagem, referencia_tipo, referencia_id)
+      VALUES (p_empresa_id, 'vencimento_proximo', 'medium',
+        'Vencimento próximo: ' || COALESCE(r.projeto_nome, r.descricao),
+        'Receita "' || r.descricao || '" de R$ ' || TO_CHAR(r.valor, 'FM999G999D00') || ' vence em ' || TO_CHAR(r.data_vencimento, 'DD/MM/YYYY'),
+        'receita', r.id);
+      alert_count := alert_count + 1;
+    END IF;
+  END LOOP;
+
+  -- 4. Marcos de faturamento pendentes com data prevista nos próximos 7 dias
+  FOR r IN
+    SELECT mf.id, mf.nome, mf.data_prevista, mf.valor,
+      p.nome AS projeto_nome
+    FROM marcos_faturamento mf
+    JOIN projetos p ON p.id = mf.projeto_id
+    WHERE p.empresa_id = p_empresa_id AND mf.deleted_at IS NULL
+      AND mf.status = 'pendente'
+      AND mf.data_prevista BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '7 days'
+  LOOP
+    IF NOT EXISTS (
+      SELECT 1 FROM alertas a
+      WHERE a.empresa_id = p_empresa_id AND a.tipo = 'marco_proximo'
+        AND a.referencia_id = r.id AND a.created_at > NOW() - INTERVAL '7 days'
+    ) THEN
+      INSERT INTO alertas (empresa_id, tipo, severidade, titulo, mensagem, referencia_tipo, referencia_id)
+      VALUES (p_empresa_id, 'marco_proximo', 'medium',
+        'Marco próximo: ' || r.projeto_nome,
+        'Marco "' || r.nome || '" de R$ ' || TO_CHAR(r.valor, 'FM999G999D00') || ' previsto para ' || TO_CHAR(r.data_prevista, 'DD/MM/YYYY'),
+        'marco', r.id);
+      alert_count := alert_count + 1;
+    END IF;
+  END LOOP;
+
+  -- 5. Projetos com recebimento baixo vs progresso das disciplinas
+  FOR r IN
+    SELECT p.id, p.nome, p.valor_contrato,
+      COALESCE((SELECT SUM(rv.valor) FROM receitas rv WHERE rv.projeto_id = p.id AND rv.deleted_at IS NULL AND rv.status IN ('Recebido', 'Pago')), 0) AS recebido,
+      COALESCE(p.valor_contrato, 0) AS contrato,
+      (SELECT COUNT(*) FILTER (WHERE d.elem->>'status' = 'Concluído') * 100.0 / NULLIF(COUNT(*), 0)
+       FROM jsonb_array_elements(p.disciplinas::jsonb) AS d(elem)) AS progresso_pct
+    FROM projetos p
+    WHERE p.empresa_id = p_empresa_id AND p.deleted_at IS NULL
+      AND p.status = 'Em andamento'
+      AND p.valor_contrato > 0
+      AND jsonb_array_length(COALESCE(p.disciplinas::jsonb, '[]'::jsonb)) > 0
+  LOOP
+    -- Se progresso > 60% mas recebimento < 30%, alerta
+    IF r.progresso_pct IS NOT NULL AND r.progresso_pct > 60
+       AND r.contrato > 0 AND (r.recebido / r.contrato) < 0.3 THEN
+      IF NOT EXISTS (
+        SELECT 1 FROM alertas a
+        WHERE a.empresa_id = p_empresa_id AND a.tipo = 'recebimento_baixo'
+          AND a.referencia_id = r.id AND a.created_at > NOW() - INTERVAL '14 days'
+      ) THEN
+        INSERT INTO alertas (empresa_id, tipo, severidade, titulo, mensagem, referencia_tipo, referencia_id)
+        VALUES (p_empresa_id, 'recebimento_baixo', 'critical',
+          'Recebimento baixo: ' || r.nome,
+          'Projeto ' || ROUND(r.progresso_pct::numeric, 0) || '% concluído mas apenas ' || ROUND((r.recebido / r.contrato * 100)::numeric, 0) || '% recebido (R$ ' || TO_CHAR(r.recebido, 'FM999G999D00') || ' de R$ ' || TO_CHAR(r.contrato, 'FM999G999D00') || ')',
+          'projeto', r.id);
+        alert_count := alert_count + 1;
+      END IF;
+    END IF;
+  END LOOP;
+
+  RETURN alert_count;
+END;
+$$;
+
+-- ============================================================
 -- 8. RPC: Job diário unificado (alertas + status atrasados)
 -- ============================================================
 
@@ -332,7 +444,7 @@ BEGIN
 
   SELECT rpc_atualizar_status_atrasados() INTO v_atrasados;
 
-  SELECT rpc_gerar_alertas() INTO v_alertas;
+  SELECT rpc_gerar_alertas(v_empresa_id) INTO v_alertas;
 
   UPDATE projetos
   SET updated_at = NOW()
@@ -348,13 +460,7 @@ END;
 $$;
 
 -- ============================================================
--- 9. VALIDAÇÃO: Limite de parcelas (max 60)
--- ============================================================
-
--- Já implementado na RPC rpc_gerar_parcelas_projeto acima
-
--- ============================================================
--- 10. INDEX para consultas comuns que faltavam
+-- 9. INDEXES para consultas financeiras comuns
 -- ============================================================
 
 CREATE INDEX IF NOT EXISTS idx_receitas_status ON public.receitas(empresa_id, status) WHERE deleted_at IS NULL;

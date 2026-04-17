@@ -24,6 +24,10 @@ supabase/.temp
 *.sw?
 .env
 .env.*
+!.env.example
 coverage
 .eslintcache
 *.tsbuildinfo
+
+# Supabase generated
+supabase/schema.sql
