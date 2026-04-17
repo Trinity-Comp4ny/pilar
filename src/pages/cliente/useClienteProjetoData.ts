@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getPortalToken } from "./useClienteAuth";
 
+// TODO: Update get_cliente_projeto_detail RPC to read from projeto_disciplinas table
+// instead of the deprecated projetos.disciplinas JSONB column.
 export interface ClienteProjetoData {
   projeto_id: string;
   cliente_id: string;
