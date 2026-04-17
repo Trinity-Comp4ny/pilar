@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Trash2 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
 interface ManageDisciplinasDialogProps {
@@ -19,7 +19,6 @@ export function ManageDisciplinasDialog({
   disciplinas,
   onDisciplinasChanged,
 }: ManageDisciplinasDialogProps) {
-  const { toast } = useToast();
   const [newDisciplina, setNewDisciplina] = useState("");
 
   const handleAdd = async () => {
@@ -28,9 +27,9 @@ export function ManageDisciplinasDialog({
     const { error } = await supabase.from("disciplinas").insert({ nome: newDisciplina });
 
     if (error) {
-      toast({ title: "Erro ao adicionar disciplina", variant: "destructive" });
+      toast.error("Erro ao adicionar disciplina");
     } else {
-      toast({ title: "Disciplina adicionada" });
+      toast.success("Disciplina adicionada");
       setNewDisciplina("");
       onDisciplinasChanged();
     }

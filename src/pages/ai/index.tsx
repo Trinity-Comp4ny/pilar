@@ -26,7 +26,7 @@ import {
 } from "lucide-react";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import {
@@ -64,7 +64,6 @@ function formatTimeAgo(dateStr: string): string {
 
 export default function AiHub() {
   usePageTitle("IA");
-  const { toast } = useToast();
   const { data: insights = [], isLoading: loadingInsights } = useAiInsights(undefined, 20);
   const { data: usage } = useAiUsage();
   const generateInsight = useGenerateInsight();
@@ -147,12 +146,12 @@ export default function AiHub() {
       { tipo, params },
       {
         onSuccess: (data) => {
-          toast({ title: `${AI_TIPOS[tipo].label} gerado com sucesso` });
+          toast.success(`${AI_TIPOS[tipo].label} gerado com sucesso`);
           setActiveGenerator(null);
           setSelectedInsight(data);
         },
         onError: (err: Error) => {
-          toast({ variant: "destructive", title: "Erro na IA", description: err.message });
+          toast.error("Erro na IA");
         },
       }
     );

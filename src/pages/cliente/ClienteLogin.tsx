@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Mail, Lock, Loader2 } from "lucide-react";
 import { getPortalToken, setPortalToken } from "./useClienteAuth";
@@ -12,7 +12,6 @@ import { usePageTitle } from "@/hooks/usePageTitle";
 export default function ClienteLogin() {
   usePageTitle("Portal | Login");
   const navigate = useNavigate();
-  const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -43,18 +42,11 @@ export default function ClienteLogin() {
       const result = data as unknown as { token: string; nome: string };
       setPortalToken(result.token);
 
-      toast({
-        title: "Login realizado!",
-        description: `Bem-vindo, ${result.nome}.`,
-      });
+      toast.success("Login realizado!", { description: `Bem-vindo, ${result.nome}.` });
 
       navigate("/cliente/dashboard");
     } catch {
-      toast({
-        title: "Erro ao fazer login",
-        description: "Email ou senha inválidos.",
-        variant: "destructive",
-      });
+      toast.error("Erro ao fazer login", { description: "Email ou senha inválidos." });
     } finally {
       setIsLoading(false);
     }

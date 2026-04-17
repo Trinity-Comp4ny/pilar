@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Loader2 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import {
   useTimesheetsByWeek,
   useProjetosAtribuidos,
@@ -18,7 +18,6 @@ interface TimesheetGridProps {
 }
 
 export function TimesheetGrid({ pessoaId, weekStart, weekEnd, weekDays }: TimesheetGridProps) {
-  const { toast } = useToast();
   const { data: timesheets = [], isLoading: loadingTimesheets } = useTimesheetsByWeek(pessoaId, weekStart, weekEnd);
   const { data: projetos = [], isLoading: loadingProjetos } = useProjetosAtribuidos(pessoaId);
   const upsert = useUpsertTimesheet();
@@ -87,11 +86,7 @@ export function TimesheetGrid({ pessoaId, weekStart, weekEnd, weekDays }: Timesh
             { pessoa_id: pessoaId, projeto_id: projetoId, disciplina, data, horas },
             {
               onError: (error: Error) => {
-                toast({
-                  variant: "destructive",
-                  title: "Erro ao salvar",
-                  description: error.message,
-                });
+                toast.error("Erro ao salvar");
               },
             }
           );

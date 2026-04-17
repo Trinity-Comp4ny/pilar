@@ -10,7 +10,7 @@ import { CreditCard, Receipt, Calendar, DollarSign, ChevronRight, AlertCircle } 
 import { cn } from "@/lib/utils";
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { getSafeErrorMessage } from "@/lib/safeError";
 import { format } from "date-fns";
 
@@ -103,8 +103,6 @@ export default function Faturas() {
   const [valorPagamento, setValorPagamento] = useState("");
   const [isPaying, setIsPaying] = useState(false);
 
-  const { toast } = useToast();
-
   const fetchCartoes = useCallback(async () => {
     const { data } = await supabase.from("view_cartao_resumo").select("*");
     if (data) {
@@ -132,7 +130,7 @@ export default function Faturas() {
           p_ano: d.getFullYear(),
         });
       } catch {
-        toast({ title: "Erro ao pagar fatura", variant: "destructive" });
+        toast.error("Erro ao pagar fatura");
       }
     }
   }, []);
@@ -212,7 +210,7 @@ export default function Faturas() {
 
   const handlePagar = async () => {
     if (!selectedFatura || !contaPagamentoId) {
-      toast({ title: "Selecione a conta bancária", variant: "destructive" });
+      toast.error("Selecione a conta bancária");
       return;
     }
 
@@ -227,17 +225,13 @@ export default function Faturas() {
 
       if (error) throw error;
 
-      toast({ title: "Fatura paga com sucesso!" });
+      toast.success("Fatura paga com sucesso!");
       setIsPagamentoOpen(false);
       setIsDetailOpen(false);
       fetchFaturas(selectedCartaoId);
       fetchCartoes();
     } catch (err: unknown) {
-      toast({
-        title: "Erro ao pagar fatura",
-        description: getSafeErrorMessage(err),
-        variant: "destructive",
-      });
+      toast.error("Erro ao pagar fatura");
     } finally {
       setIsPaying(false);
     }

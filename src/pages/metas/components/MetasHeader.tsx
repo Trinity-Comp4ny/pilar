@@ -4,14 +4,13 @@ import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 import { RefreshCw, Loader2 } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 const tabTriggerClass =
   "rounded-none border-b-2 border-transparent data-[state=active]:border-[#FF4000] data-[state=active]:bg-white data-[state=active]:text-[#FF4000] py-3 px-4 min-w-max whitespace-nowrap text-sm";
 
 export function MetasHeader() {
   const { isMobile } = useSidebar();
-  const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const syncMutation = useMutation({
@@ -22,9 +21,9 @@ export function MetasHeader() {
     },
     onSuccess: (count) => {
       queryClient.invalidateQueries({ queryKey: ["metas"] });
-      toast({ title: `${count} meta(s) sincronizada(s)` });
+      toast.success(`${count} meta(s) sincronizada(s)`);
     },
-    onError: (err: Error) => toast({ variant: "destructive", title: "Erro", description: err.message }),
+    onError: (err: Error) => toast.error("Erro"),
   });
 
   return (

@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Plus, Trash2, Loader2, FileText, CheckCircle2, XCircle, Clock, ChevronDown } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { formatCurrency } from "@/lib/currencyUtils";
 
@@ -48,7 +48,6 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; icon: typeof
 };
 
 export function EscopoTab({ projetoId, canEdit }: EscopoTabProps) {
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -143,10 +142,10 @@ export function EscopoTab({ projetoId, canEdit }: EscopoTabProps) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["escopos", projetoId] });
       queryClient.invalidateQueries({ queryKey: ["escopo-itens", projetoId] });
-      toast({ title: formTipo === "original" ? "Escopo original definido" : "Aditivo criado" });
+      toast.success(formTipo === "original" ? "Escopo original definido" : "Aditivo criado");
       resetForm();
     },
-    onError: (err: Error) => toast({ variant: "destructive", title: "Erro", description: err.message }),
+    onError: (err: Error) => toast.error("Erro"),
   });
 
   const updateStatusMutation = useMutation({
@@ -176,9 +175,9 @@ export function EscopoTab({ projetoId, canEdit }: EscopoTabProps) {
         queryClient.invalidateQueries({ queryKey: ["projeto-orcamento"] });
         queryClient.invalidateQueries({ queryKey: ["projetos"] });
         queryClient.invalidateQueries({ queryKey: ["projeto-rentabilidade"] });
-        toast({ title: "Aditivo aprovado!", description: "Orçamento do projeto atualizado automaticamente." });
+        toast.success("Aditivo aprovado!", { description: "Orçamento do projeto atualizado automaticamente." });
       } else {
-        toast({ title: "Status atualizado" });
+        toast.success("Status atualizado");
       }
     },
   });

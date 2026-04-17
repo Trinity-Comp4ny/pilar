@@ -18,7 +18,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { CalendarIcon, Plus, Settings, Pencil, Trash2, Loader2 } from "lucide-react";
 import { format, addMonths } from "date-fns";
 import { cn } from "@/lib/utils";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CategoryManager } from "../components/CategoryManager";
 import { Badge } from "@/components/ui/badge";
@@ -93,7 +93,6 @@ export default function Receitas() {
   const [categorias, setCategorias] = useState<{ id: string; name: string }[]>([]);
   const [projetos, setProjetos] = useState<{ id: string; projetoID: string }[]>([]);
   const [clientes, setClientes] = useState<{ id: string; nome: string }[]>([]);
-  const { toast } = useToast();
 
   const receitasFiltradas = useMemo(() => {
     return receitas.filter((r) => {
@@ -265,8 +264,7 @@ export default function Receitas() {
 
       if (error) throw error;
 
-      toast({
-        title: selectedReceita ? "Receita atualizada" : "Receita cadastrada",
+      toast.success(selectedReceita ? "Receita atualizada" : "Receita cadastrada", {
         description: selectedReceita
           ? `1 registro atualizado com sucesso`
           : `${numParcelas} registro(s) criado(s) com sucesso`,
@@ -276,11 +274,7 @@ export default function Receitas() {
       fetchReceitas();
       resetForm();
     } catch (err: unknown) {
-      toast({
-        title: "Erro ao salvar",
-        description: getSafeErrorMessage(err),
-        variant: "destructive",
-      });
+      toast.error("Erro ao salvar");
     } finally {
       setIsSaving(false);
     }
@@ -313,7 +307,7 @@ export default function Receitas() {
         return;
       }
     } catch {
-      toast({ title: "Erro ao salvar receita", variant: "destructive" });
+      toast.error("Erro ao salvar receita");
     } finally {
       if (!showDuplicateWarning) setIsSaving(false);
     }
@@ -331,7 +325,7 @@ export default function Receitas() {
 
     const { error } = await supabase.from("receitas").update({ deleted_at: new Date().toISOString() }).eq("id", id);
     if (!error) {
-      toast({ title: "Receita excluída" });
+      toast.success("Receita excluída");
       fetchReceitas();
     }
   };

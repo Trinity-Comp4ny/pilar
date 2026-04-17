@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Plus, Trash2, Loader2, CheckCircle2, Clock, XCircle, Banknote } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { formatCurrencyInput, parseCurrencyString, formatCurrency } from "@/lib/currencyUtils";
 
@@ -35,7 +35,6 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; icon: typeof
 };
 
 export function BillingMilestonesTab({ projetoId, canEdit }: BillingMilestonesTabProps) {
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [formNome, setFormNome] = useState("");
@@ -72,14 +71,14 @@ export function BillingMilestonesTab({ projetoId, canEdit }: BillingMilestonesTa
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["marcos-faturamento", projetoId] });
-      toast({ title: "Marco criado" });
+      toast.success("Marco criado");
       setIsFormOpen(false);
       setFormNome("");
       setFormValor("");
       setFormData("");
       setFormPercentual("");
     },
-    onError: (err: Error) => toast({ variant: "destructive", title: "Erro", description: err.message }),
+    onError: (err: Error) => toast.error("Erro"),
   });
 
   const updateStatusMutation = useMutation({
@@ -91,7 +90,7 @@ export function BillingMilestonesTab({ projetoId, canEdit }: BillingMilestonesTa
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["marcos-faturamento", projetoId] });
-      toast({ title: "Status atualizado" });
+      toast.success("Status atualizado");
     },
   });
 
@@ -104,9 +103,9 @@ export function BillingMilestonesTab({ projetoId, canEdit }: BillingMilestonesTa
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["marcos-faturamento", projetoId] });
       queryClient.invalidateQueries({ queryKey: ["receitas"] });
-      toast({ title: "Marco faturado!", description: "Receita criada automaticamente." });
+      toast.success("Marco faturado!", { description: "Receita criada automaticamente." });
     },
-    onError: (err: Error) => toast({ variant: "destructive", title: "Erro ao faturar", description: err.message }),
+    onError: (err: Error) => toast.error("Erro ao faturar"),
   });
 
   const deleteMutation = useMutation({
@@ -116,7 +115,7 @@ export function BillingMilestonesTab({ projetoId, canEdit }: BillingMilestonesTa
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["marcos-faturamento", projetoId] });
-      toast({ title: "Marco removido" });
+      toast.success("Marco removido");
     },
   });
 
@@ -131,9 +130,9 @@ export function BillingMilestonesTab({ projetoId, canEdit }: BillingMilestonesTa
       return data as number;
     },
     onSuccess: (count) => {
-      toast({ title: `${count} parcela(s) gerada(s) como receitas` });
+      toast.success(`${count} parcela(s) gerada(s) como receitas`);
     },
-    onError: (err: Error) => toast({ variant: "destructive", title: "Erro", description: err.message }),
+    onError: (err: Error) => toast.error("Erro"),
   });
 
   const formatDate = (d: string | null) => (d ? new Date(d + "T00:00:00").toLocaleDateString("pt-BR") : "—");

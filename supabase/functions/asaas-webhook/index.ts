@@ -55,32 +55,32 @@ serve(async (req) => {
     .eq("asaas_payment_id", payment.id)
     .maybeSingle();
 
-  // Validação do token por empresa (multi-tenant)
-  // Feita após lookup da receita para identificar qual empresa está sendo notificada.
-  // Em dev, o env var ASAAS_WEBHOOK_TOKEN serve como fallback global.
+  // Token obrigatório — sem header = rejeita imediatamente
   const receivedToken = req.headers.get("asaas-access-token");
-  if (receivedToken) {
-    let tokenValido = false;
+  if (!receivedToken) {
+    return new Response("Unauthorized", { status: 401 });
+  }
 
-    if (receita?.empresa_id) {
-      const { data: config } = await adminClient
-        .from("asaas_config")
-        .select("webhook_token")
-        .eq("empresa_id", receita.empresa_id)
-        .maybeSingle();
+  let tokenValido = false;
 
-      tokenValido = !!config?.webhook_token && receivedToken === config.webhook_token;
-    }
+  if (receita?.empresa_id) {
+    const { data: config } = await adminClient
+      .from("asaas_config")
+      .select("webhook_token")
+      .eq("empresa_id", receita.empresa_id)
+      .maybeSingle();
 
-    // Fallback para env var global (dev/staging)
-    if (!tokenValido) {
-      const globalToken = Deno.env.get("ASAAS_WEBHOOK_TOKEN");
-      tokenValido = !!globalToken && receivedToken === globalToken;
-    }
+    tokenValido = !!config?.webhook_token && receivedToken === config.webhook_token;
+  }
 
-    if (!tokenValido) {
-      return new Response("Unauthorized", { status: 401 });
-    }
+  // Fallback para env var global (dev/staging)
+  if (!tokenValido) {
+    const globalToken = Deno.env.get("ASAAS_WEBHOOK_TOKEN");
+    tokenValido = !!globalToken && receivedToken === globalToken;
+  }
+
+  if (!tokenValido) {
+    return new Response("Unauthorized", { status: 401 });
   }
 
   // Registrar log (mesmo sem receita encontrada, para auditoria)

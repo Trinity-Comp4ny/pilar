@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { Building2, Users as UsersIcon, Palette } from "lucide-react";
 import { formatCNPJ, formatPhone, onlyDigits } from "@/lib/maskUtils";
 import { getSafeErrorMessage } from "@/lib/safeError";
@@ -19,7 +19,6 @@ import { usePageTitle } from "@/hooks/usePageTitle";
 
 export default function Company() {
   usePageTitle("Empresa");
-  const { toast } = useToast();
   const [editingCompany, setEditingCompany] = useState(false);
   const [editingVisual, setEditingVisual] = useState(false);
   const [isInviting, setIsInviting] = useState(false);
@@ -106,9 +105,7 @@ export default function Company() {
     };
 
     fetchData()
-      .catch((e: unknown) =>
-        toast({ variant: "destructive", title: "Erro ao carregar", description: getSafeErrorMessage(e) })
-      )
+      .catch((e: unknown) => toast.error("Erro ao carregar"))
       .finally(() => setIsLoading(false));
   }, [toast]);
 
@@ -155,9 +152,9 @@ export default function Company() {
       if (error) throw error;
 
       setEditingCompany(false);
-      toast({ title: "Dados salvos", description: "Informações da empresa atualizadas com sucesso" });
+      toast.success("Dados salvos", { description: "Informações da empresa atualizadas com sucesso" });
     } catch (err: unknown) {
-      toast({ variant: "destructive", title: "Erro ao salvar", description: getSafeErrorMessage(err) });
+      toast.error("Erro ao salvar");
     }
   };
 
@@ -170,7 +167,7 @@ export default function Company() {
       });
       if (error) throw error;
 
-      toast({ title: "Convite enviado", description: `Um email foi enviado para ${inviteEmail}` });
+      toast.success("Convite enviado", { description: `Um email foi enviado para ${inviteEmail}` });
       setUsers([
         ...users,
         { id: "pending-" + Date.now(), name: inviteName.trim(), email: inviteEmail.trim(), role: inviteRole },
@@ -179,9 +176,7 @@ export default function Company() {
       setInviteEmail("");
       setInviteRole("user");
     } catch {
-      toast({
-        variant: "destructive",
-        title: "Erro ao convidar",
+      toast.error("Erro ao convidar", {
         description: "Verifique se a função 'invite-user' está implantada ou tente novamente.",
       });
     } finally {
@@ -211,9 +206,9 @@ export default function Company() {
         )
       );
       setIsEditUserOpen(false);
-      toast({ title: "Usuário atualizado" });
+      toast.success("Usuário atualizado");
     } catch (e: unknown) {
-      toast({ variant: "destructive", title: "Erro ao atualizar usuário", description: getSafeErrorMessage(e) });
+      toast.error("Erro ao atualizar usuário");
     }
   };
 
@@ -225,9 +220,9 @@ export default function Company() {
       setUsers((prev) => prev.filter((u) => u.id !== deleteUserId));
       setIsDeleteUserOpen(false);
       setDeleteUserId(null);
-      toast({ title: "Usuário removido" });
+      toast.success("Usuário removido");
     } catch (e: unknown) {
-      toast({ variant: "destructive", title: "Erro ao remover usuário", description: getSafeErrorMessage(e) });
+      toast.error("Erro ao remover usuário");
     }
   };
 
@@ -239,12 +234,12 @@ export default function Company() {
     if (!file) return;
 
     if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
-      toast({ variant: "destructive", title: "Formato inválido", description: "Use PNG, JPG, WebP ou SVG." });
+      toast.error("Formato inválido", { description: "Use PNG, JPG, WebP ou SVG." });
       e.target.value = "";
       return;
     }
     if (file.size > MAX_LOGO_SIZE) {
-      toast({ variant: "destructive", title: "Arquivo muito grande", description: "O logo deve ter no máximo 2MB." });
+      toast.error("Arquivo muito grande", { description: "O logo deve ter no máximo 2MB." });
       e.target.value = "";
       return;
     }
@@ -277,9 +272,9 @@ export default function Company() {
     try {
       await uploadCompanyLogo();
       setEditingVisual(false);
-      toast({ title: "Configuração salva", description: "Visual da empresa atualizado com sucesso" });
+      toast.success("Configuração salva", { description: "Visual da empresa atualizado com sucesso" });
     } catch (e: unknown) {
-      toast({ variant: "destructive", title: "Erro ao salvar logo", description: getSafeErrorMessage(e) });
+      toast.error("Erro ao salvar logo");
     }
   };
 

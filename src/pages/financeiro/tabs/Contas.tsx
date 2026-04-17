@@ -15,7 +15,7 @@ import { CreditCard, Wallet, Plus, Settings, Pencil, Trash2, TrendingUp, Trendin
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { getSafeErrorMessage } from "@/lib/safeError";
 import { formatCurrencyInput, parseCurrencyString } from "@/lib/currencyUtils";
 
@@ -63,8 +63,6 @@ export default function Configuracoes() {
   const [limite, setLimite] = useState("");
   const [contaPagamentoId, setContaPagamentoId] = useState("");
 
-  const { toast } = useToast();
-
   useEffect(() => {
     fetchContas();
     fetchCartoes();
@@ -95,11 +93,7 @@ export default function Configuracoes() {
 
   const handleSaveConta = async () => {
     if (!nome || !banco || !saldoInicial) {
-      toast({
-        title: "Campos obrigatórios",
-        description: "Preencha nome, banco e saldo inicial",
-        variant: "destructive",
-      });
+      toast.error("Campos obrigatórios", { description: "Preencha nome, banco e saldo inicial" });
       return;
     }
 
@@ -108,7 +102,7 @@ export default function Configuracoes() {
         data: { user },
       } = await supabase.auth.getUser();
       if (!user) {
-        toast({ title: "Erro", description: "Usuário não autenticado", variant: "destructive" });
+        toast.error("Erro", { description: "Usuário não autenticado" });
         return;
       }
 
@@ -116,7 +110,7 @@ export default function Configuracoes() {
       const empresaId = empresaIdResult.data;
 
       if (!empresaId) {
-        toast({ title: "Erro", description: "Empresa não encontrada", variant: "destructive" });
+        toast.error("Erro", { description: "Empresa não encontrada" });
         return;
       }
 
@@ -140,15 +134,11 @@ export default function Configuracoes() {
           .eq("id", selectedConta.id);
 
         if (error) {
-          toast({
-            title: "Erro ao atualizar",
-            description: error.message,
-            variant: "destructive",
-          });
+          toast.error("Erro ao atualizar");
           return;
         }
 
-        toast({ title: "Conta atualizada" });
+        toast.success("Conta atualizada");
         fetchContas();
         setIsNewContaOpen(false);
         setIsContaDetailOpen(false);
@@ -156,35 +146,23 @@ export default function Configuracoes() {
         const { error } = await supabase.from("contas").insert(payload);
 
         if (error) {
-          toast({
-            title: "Erro ao criar conta",
-            description: error.message,
-            variant: "destructive",
-          });
+          toast.error("Erro ao criar conta");
           return;
         }
 
-        toast({ title: "Conta criada" });
+        toast.success("Conta criada");
         fetchContas();
         setIsNewContaOpen(false);
       }
       resetForm();
     } catch (err: unknown) {
-      toast({
-        title: "Erro",
-        description: getSafeErrorMessage(err),
-        variant: "destructive",
-      });
+      toast.error("Erro");
     }
   };
 
   const handleSaveCartao = async () => {
     if (!nome || !diaFechamento || !diaVencimento || !limite) {
-      toast({
-        title: "Campos obrigatórios",
-        description: "Preencha todos os campos do cartão",
-        variant: "destructive",
-      });
+      toast.error("Campos obrigatórios", { description: "Preencha todos os campos do cartão" });
       return;
     }
 
@@ -193,7 +171,7 @@ export default function Configuracoes() {
         data: { user },
       } = await supabase.auth.getUser();
       if (!user) {
-        toast({ title: "Erro", description: "Usuário não autenticado", variant: "destructive" });
+        toast.error("Erro", { description: "Usuário não autenticado" });
         return;
       }
 
@@ -201,7 +179,7 @@ export default function Configuracoes() {
       const empresaId = empresaIdResult.data;
 
       if (!empresaId) {
-        toast({ title: "Erro", description: "Empresa não encontrada", variant: "destructive" });
+        toast.error("Erro", { description: "Empresa não encontrada" });
         return;
       }
 
@@ -228,15 +206,11 @@ export default function Configuracoes() {
           .eq("id", selectedCartao.id);
 
         if (error) {
-          toast({
-            title: "Erro ao atualizar",
-            description: error.message,
-            variant: "destructive",
-          });
+          toast.error("Erro ao atualizar");
           return;
         }
 
-        toast({ title: "Cartão atualizado" });
+        toast.success("Cartão atualizado");
         fetchCartoes();
         setIsNewCartaoOpen(false);
         setIsCartaoDetailOpen(false);
@@ -244,32 +218,24 @@ export default function Configuracoes() {
         const { error } = await supabase.from("cartoes_credito").insert(payload);
 
         if (error) {
-          toast({
-            title: "Erro ao criar cartão",
-            description: error.message,
-            variant: "destructive",
-          });
+          toast.error("Erro ao criar cartão");
           return;
         }
 
-        toast({ title: "Cartão criado" });
+        toast.success("Cartão criado");
         fetchCartoes();
         setIsNewCartaoOpen(false);
       }
       resetForm();
     } catch (err: unknown) {
-      toast({
-        title: "Erro",
-        description: getSafeErrorMessage(err),
-        variant: "destructive",
-      });
+      toast.error("Erro");
     }
   };
 
   const handleDeleteConta = async (id: string) => {
     const { error } = await supabase.from("contas").delete().eq("id", id);
     if (!error) {
-      toast({ title: "Conta excluída" });
+      toast.success("Conta excluída");
       fetchContas();
       setIsContaDetailOpen(false);
     }
@@ -278,7 +244,7 @@ export default function Configuracoes() {
   const handleDeleteCartao = async (id: string) => {
     const { error } = await supabase.from("cartoes_credito").delete().eq("id", id);
     if (!error) {
-      toast({ title: "Cartão excluído" });
+      toast.success("Cartão excluído");
       fetchCartoes();
       setIsCartaoDetailOpen(false);
     }

@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
   AlertDialog,
@@ -39,7 +39,6 @@ interface Meta {
 }
 
 export default function Metas() {
-  const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -76,10 +75,10 @@ export default function Metas() {
       queryClient.invalidateQueries({ queryKey: ["metas"] });
       setIsDialogOpen(false);
       setNovaMeta({ nome: "", alvo: "", atual: "", prazo: "", categoria: "receita" });
-      toast({ title: "Meta criada", description: "Nova meta financeira estabelecida com sucesso." });
+      toast.success("Meta criada", { description: "Nova meta financeira estabelecida com sucesso." });
     },
     onError: (error: Error) => {
-      toast({ title: "Erro ao criar meta", description: error.message, variant: "destructive" });
+      toast.error("Erro ao criar meta");
     },
   });
 
@@ -102,10 +101,10 @@ export default function Metas() {
       queryClient.invalidateQueries({ queryKey: ["metas"] });
       setIsEditDialogOpen(false);
       setEditingMeta(null);
-      toast({ title: "Meta atualizada", description: "Meta financeira foi atualizada com sucesso." });
+      toast.success("Meta atualizada", { description: "Meta financeira foi atualizada com sucesso." });
     },
     onError: (error: Error) => {
-      toast({ title: "Erro ao atualizar meta", description: error.message, variant: "destructive" });
+      toast.error("Erro ao atualizar meta");
     },
   });
 
@@ -119,10 +118,10 @@ export default function Metas() {
       queryClient.invalidateQueries({ queryKey: ["metas"] });
       setDeleteAlertOpen(false);
       setMetaToDelete(null);
-      toast({ title: "Meta excluída", description: "Meta financeira foi removida com sucesso." });
+      toast.success("Meta excluída", { description: "Meta financeira foi removida com sucesso." });
     },
     onError: (error: Error) => {
-      toast({ title: "Erro ao excluir meta", description: error.message, variant: "destructive" });
+      toast.error("Erro ao excluir meta");
     },
   });
 

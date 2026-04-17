@@ -3,7 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Mail, Lock, ArrowLeft, Loader2, CheckCircle2, Eye, EyeOff } from "lucide-react";
 import { usePageTitle } from "@/hooks/usePageTitle";
@@ -11,7 +11,6 @@ import { usePageTitle } from "@/hooks/usePageTitle";
 export default function Login() {
   usePageTitle("Login");
   const navigate = useNavigate();
-  const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
   const [email, setEmail] = useState("");
@@ -40,10 +39,8 @@ export default function Login() {
     });
 
     if (error) {
-      toast({
-        title: "Erro ao fazer login",
+      toast.error("Erro ao fazer login", {
         description: "Verifique suas credenciais e tente novamente.",
-        variant: "destructive",
       });
       setIsLoading(false);
       return;
@@ -52,8 +49,7 @@ export default function Login() {
     // Navega direto para /dashboard — o PrivateRoute cuida dos redirects de
     // onboarding via AuthContext, que já busca o profile no onAuthStateChange.
     // Remover getUser() + fetch de profile evita hang por sessão corrompida.
-    toast({
-      title: "Login realizado com sucesso!",
+    toast.success("Login realizado com sucesso!", {
       description: "Bem-vindo de volta.",
     });
     navigate("/dashboard");
@@ -62,10 +58,8 @@ export default function Login() {
 
   const handleResetPassword = async () => {
     if (!email.trim()) {
-      toast({
-        title: "Informe o email",
+      toast.error("Informe o email", {
         description: "Digite seu email no campo acima para receber o link de redefinição.",
-        variant: "destructive",
       });
       return;
     }
@@ -74,14 +68,11 @@ export default function Login() {
       redirectTo: `${window.location.origin}/profile-setup`,
     });
     if (error) {
-      toast({
-        title: "Erro ao enviar",
+      toast.error("Erro ao enviar", {
         description: "Tente novamente em alguns instantes.",
-        variant: "destructive",
       });
     } else {
-      toast({
-        title: "Email enviado!",
+      toast.success("Email enviado!", {
         description: "Verifique sua caixa de entrada para redefinir a senha.",
       });
     }

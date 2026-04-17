@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { getSafeErrorMessage } from "@/lib/safeError";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -19,7 +19,6 @@ export default function ProfileSetup() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [progressValue, setProgressValue] = useState(0);
-  const { toast } = useToast();
   const navigate = useNavigate();
   const { refreshProfile } = useAuth();
 
@@ -67,11 +66,7 @@ export default function ProfileSetup() {
     e.preventDefault();
 
     if (password && password !== confirmPassword) {
-      toast({
-        variant: "destructive",
-        title: "Senhas não conferem",
-        description: "Por favor, digite a mesma senha nos dois campos.",
-      });
+      toast.error("Senhas não conferem", { description: "Por favor, digite a mesma senha nos dois campos." });
       return;
     }
 
@@ -107,10 +102,7 @@ export default function ProfileSetup() {
       // 3. Forçar refresh do contexto para garantir que PrivateRoute leia onboarding_completed: true
       await refreshProfile();
 
-      toast({
-        title: "Perfil atualizado!",
-        description: "Você já pode acessar o sistema.",
-      });
+      toast.success("Perfil atualizado!", { description: "Você já pode acessar o sistema." });
 
       const { data: updatedProfile } = await supabase
         .from("profiles")
@@ -123,11 +115,7 @@ export default function ProfileSetup() {
 
       navigate(needsCompanySetup ? "/company-setup" : "/dashboard");
     } catch (err: unknown) {
-      toast({
-        variant: "destructive",
-        title: "Erro ao salvar",
-        description: getSafeErrorMessage(err),
-      });
+      toast.error("Erro ao salvar");
     } finally {
       setIsLoading(false);
     }

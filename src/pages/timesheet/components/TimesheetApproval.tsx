@@ -4,11 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { CheckCircle2, XCircle, Loader2 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { useTimesheetsPendentes, useAprovarTimesheet, type TimesheetWithDetails } from "@/hooks/useTimesheets";
 
 export function TimesheetApproval() {
-  const { toast } = useToast();
   const { data: pendentes = [], isLoading } = useTimesheetsPendentes();
   const aprovar = useAprovarTimesheet();
   const [processingId, setProcessingId] = useState<string | null>(null);
@@ -20,17 +19,11 @@ export function TimesheetApproval() {
       { id, status },
       {
         onSuccess: () => {
-          toast({
-            title: status === "aprovado" ? "Timesheet aprovado" : "Timesheet rejeitado",
-          });
+          toast.success(status === "aprovado" ? "Timesheet aprovado" : "Timesheet rejeitado");
           setProcessingId(null);
         },
         onError: (error: Error) => {
-          toast({
-            variant: "destructive",
-            title: "Erro",
-            description: error.message,
-          });
+          toast.error("Erro");
           setProcessingId(null);
         },
       }
@@ -45,12 +38,9 @@ export function TimesheetApproval() {
     const succeeded = results.filter((r) => r.status === "fulfilled").length;
     const failed = results.filter((r) => r.status === "rejected").length;
     if (failed > 0) {
-      toast({
-        title: `${succeeded} aprovados, ${failed} falharam`,
-        variant: "destructive",
-      });
+      toast.error(`${succeeded} aprovados, ${failed} falharam`);
     } else {
-      toast({ title: `${succeeded} timesheets aprovados` });
+      toast.success(`${succeeded} timesheets aprovados`);
     }
     setApprovingAll(false);
   };

@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { getSafeErrorMessage } from "@/lib/safeError";
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, ArrowRight, Building2, Hash, Loader2 } from "lucide-react";
@@ -17,7 +17,6 @@ export default function CompanySetup() {
   const [name, setName] = useState("");
   const [cnpj, setCnpj] = useState("");
   const [progressValue, setProgressValue] = useState(0);
-  const { toast } = useToast();
   const navigate = useNavigate();
   const { refreshProfile } = useAuth();
 
@@ -58,16 +57,13 @@ export default function CompanySetup() {
       // Atualiza o contexto antes de navegar para evitar loop no PrivateRoute
       await refreshProfile();
 
-      toast({
-        title: "Empresa configurada!",
+      toast.success("Empresa configurada!", {
         description: "Bem-vindo ao sistema Pilar.",
       });
 
       navigate("/dashboard");
     } catch (err: unknown) {
-      toast({
-        variant: "destructive",
-        title: "Erro ao salvar",
+      toast.error("Erro ao salvar", {
         description: getSafeErrorMessage(err),
       });
     } finally {

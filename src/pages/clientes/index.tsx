@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,15 +30,14 @@ import {
   Eye,
   EyeOff,
 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { formatPhone, formatDocument, formatAgency, formatBankAccount } from "@/lib/maskUtils";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
-import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
-import { getSafeErrorMessage } from "@/lib/safeError";
 import { usePageTitle } from "@/hooks/usePageTitle";
+import { useClientes, type Cliente, type ContaBancaria } from "@/hooks/useClientes";
 
 const normalize = (value: string) =>
   value
@@ -59,32 +58,21 @@ const fuzzyMatch = (text: string, query: string) => {
   return true;
 };
 
-interface ContaBancaria {
-  banco: string;
-  agencia: string;
-  conta: string;
-  tipo: string;
-  is_primary?: boolean;
-}
-
-interface Cliente {
-  id: string;
-  nome: string;
-  cpf_cnpj: string;
-  endereco: string;
-  contato: string;
-  email: string;
-  tipo_nf?: string;
-  origem?: string;
-  contas_bancarias?: ContaBancaria[];
-}
-
 export default function Clientes() {
   usePageTitle("Clientes");
   const { data: userRole } = useUserRole();
   const isAdmin = userRole === "admin";
 
-  const [clientes, setClientes] = useState<Cliente[]>([]);
+  const {
+    clientes,
+    upsertCliente,
+    isSaving,
+    deleteCliente,
+    checkPortalAccess,
+    invitePortal,
+    isInvitingPortal,
+    fetchPortalCredentials,
+  } = useClientes();
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
@@ -105,11 +93,9 @@ export default function Clientes() {
   const [currentId, setCurrentId] = useState<string | null>(null);
 
   const [searchTerm, setSearchTerm] = useState("");
-  const [isSaving, setIsSaving] = useState(false);
 
   // Portal do Cliente
   const [portalStatus, setPortalStatus] = useState<"idle" | "loading" | "exists" | "none">("idle");
-  const [isInvitingPortal, setIsInvitingPortal] = useState(false);
   const [portalCredentials, setPortalCredentials] = useState<{ email: string; senha: string } | null>(null);
   const [portalAccount, setPortalAccount] = useState<{ email: string; senha: string } | null>(null);
   const [showPortalInfo, setShowPortalInfo] = useState(false);
@@ -139,19 +125,6 @@ export default function Clientes() {
 
   const [sortField, setSortField] = useState<keyof Cliente | null>(null);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
-  const { toast } = useToast();
-
-  useEffect(() => {
-    fetchClientes();
-  }, []);
-
-  const fetchClientes = async () => {
-    const { data, error: _error } = await supabase.from("clientes").select("*").order("nome");
-
-    if (data) {
-      setClientes(data as Cliente[]);
-    }
-  };
 
   const resetForm = () => {
     setNome("");
@@ -191,11 +164,7 @@ export default function Clientes() {
 
   const handleAddConta = () => {
     if (!newConta.banco || !newConta.agencia || !newConta.conta) {
-      toast({
-        title: "Dados incompletos",
-        description: "Preencha banco, agência e conta antes de adicionar",
-        variant: "destructive",
-      });
+      toast.error("Dados incompletos", { description: "Preencha banco, agência e conta antes de adicionar" });
       return;
     }
 
@@ -227,36 +196,14 @@ export default function Clientes() {
     e.preventDefault();
 
     if (!nome || !cpfCnpj) {
-      toast({
-        title: "Campos obrigatórios",
-        description: "Preencha pelo menos nome e CPF/CNPJ",
-        variant: "destructive",
-      });
+      toast.error("Campos obrigatórios", { description: "Preencha pelo menos nome e CPF/CNPJ" });
       return;
     }
 
-    setIsSaving(true);
     try {
-      if (isEditMode && currentId) {
-        const { error } = await supabase
-          .from("clientes")
-          .update({
-            nome,
-            cpf_cnpj: cpfCnpj,
-            endereco,
-            contato,
-            email,
-            tipo_nf: tipoNf,
-            origem,
-            contas_bancarias: contasBancarias,
-          })
-          .eq("id", currentId);
-
-        if (error) throw error;
-
-        toast({ title: "Cliente atualizado", description: "Dados do cliente atualizados com sucesso" });
-      } else {
-        const { error } = await supabase.from("clientes").insert({
+      await upsertCliente({
+        id: isEditMode && currentId ? currentId : undefined,
+        data: {
           nome,
           cpf_cnpj: cpfCnpj,
           endereco,
@@ -265,40 +212,13 @@ export default function Clientes() {
           tipo_nf: tipoNf,
           origem,
           contas_bancarias: contasBancarias,
-          empresa_id: (await supabase.rpc("get_user_empresa_id")).data,
-        });
-
-        if (error) throw error;
-
-        toast({ title: "Cliente cadastrado", description: "Novo cliente foi adicionado com sucesso" });
-      }
+        },
+      });
 
       resetForm();
       setIsDialogOpen(false);
-      fetchClientes();
-    } catch (err: unknown) {
-      toast({
-        title: "Erro ao salvar",
-        description: getSafeErrorMessage(err),
-        variant: "destructive",
-      });
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleDelete = async (id: string) => {
-    const { error } = await supabase.from("clientes").delete().eq("id", id);
-    if (!error) {
-      toast({ title: "Cliente excluído" });
-      setIsDetailOpen(false);
-      fetchClientes();
-    } else {
-      toast({
-        title: "Erro ao excluir",
-        description: "Verifique se existem registros vinculados.",
-        variant: "destructive",
-      });
+    } catch {
+      // toast is handled inside the hook
     }
   };
 
@@ -310,7 +230,12 @@ export default function Clientes() {
 
   const handleDeleteConfirm = async () => {
     if (!clienteToDelete) return;
-    await handleDelete(clienteToDelete);
+    try {
+      await deleteCliente(clienteToDelete);
+      setIsDetailOpen(false);
+    } catch {
+      // toast is handled inside the hook
+    }
     setConfirmDeleteOpen(false);
     setClienteToDelete(null);
   };
@@ -332,40 +257,22 @@ export default function Clientes() {
     setShowPortalInfo(false);
     // Verifica se já tem acesso ao portal
     setPortalStatus("loading");
-    supabase
-      .from("cliente_portal_accounts")
-      .select("id")
-      .eq("cliente_id", cliente.id)
-      .maybeSingle()
-      .then(({ data }) => {
-        setPortalStatus(data ? "exists" : "none");
-      })
+    checkPortalAccess(cliente.id)
+      .then((exists) => setPortalStatus(exists ? "exists" : "none"))
       .catch(() => setPortalStatus("none"));
   };
 
   const handleInvitePortal = async () => {
     if (!selectedCliente?.email) return;
-    setIsInvitingPortal(true);
     try {
-      const { data, error: fnError } = await supabase.functions.invoke("invite-cliente-portal", {
-        body: { cliente_id: selectedCliente.id, email: selectedCliente.email },
+      const credentials = await invitePortal({
+        clienteId: selectedCliente.id,
+        email: selectedCliente.email,
       });
-      if (fnError) {
-        const body = fnError.context ? await fnError.context.json?.().catch(() => null) : null;
-        throw new Error(body?.error || fnError.message || "Erro desconhecido");
-      }
-      if (data?.error) throw new Error(data.error);
-      setPortalCredentials({ email: data.email, senha: data.senha });
+      setPortalCredentials(credentials);
       setPortalStatus("exists");
-    } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : "Erro desconhecido";
-      toast({
-        title: "Erro ao criar acesso",
-        description: msg,
-        variant: "destructive",
-      });
-    } finally {
-      setIsInvitingPortal(false);
+    } catch {
+      // toast is handled inside the hook
     }
   };
 
@@ -379,13 +286,9 @@ export default function Clientes() {
       return;
     }
     if (!selectedCliente) return;
-    const { data } = await supabase
-      .from("cliente_portal_accounts")
-      .select("email, senha")
-      .eq("cliente_id", selectedCliente.id)
-      .maybeSingle();
-    if (data) {
-      setPortalAccount({ email: data.email ?? "", senha: data.senha ?? "" });
+    const account = await fetchPortalCredentials(selectedCliente.id);
+    if (account) {
+      setPortalAccount(account);
       setShowPortalInfo(true);
     }
   };
@@ -873,8 +776,7 @@ export default function Clientes() {
                               onClick={() => {
                                 const text = `Portal do Cliente Pilar\n\nEmail: ${portalAccount.email}\nSenha: ${portalAccount.senha}\nLink: ${window.location.origin}/cliente/login`;
                                 navigator.clipboard.writeText(text);
-                                toast({
-                                  title: "Copiado!",
+                                toast.success("Copiado!", {
                                   description: "Credenciais copiadas para a área de transferência.",
                                 });
                               }}
@@ -910,8 +812,7 @@ export default function Clientes() {
                           onClick={() => {
                             const text = `Portal do Cliente Pilar\n\nEmail: ${portalCredentials.email}\nSenha: ${portalCredentials.senha}\nLink: ${window.location.origin}/cliente/login`;
                             navigator.clipboard.writeText(text);
-                            toast({
-                              title: "Copiado!",
+                            toast.success("Copiado!", {
                               description: "Credenciais copiadas para a área de transferência.",
                             });
                           }}

@@ -14,7 +14,7 @@ import {
   TrendingUp,
   CalendarClock,
 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import {
   usePagamentosProjeto,
   useMarcarRecebido,
@@ -108,7 +108,6 @@ function SummaryCard({
 }
 
 export function PagamentosTab({ projetoId, canEdit }: PagamentosTabProps) {
-  const { toast } = useToast();
   const [filtro, setFiltro] = useState<FiltroStatus>("todos");
   const { data, isLoading } = usePagamentosProjeto(projetoId);
   const marcarRecebido = useMarcarRecebido();
@@ -128,8 +127,8 @@ export function PagamentosTab({ projetoId, canEdit }: PagamentosTabProps) {
     marcarRecebido.mutate(
       { receitaId },
       {
-        onSuccess: () => toast({ title: "Pagamento marcado como recebido" }),
-        onError: (err: Error) => toast({ variant: "destructive", title: "Erro", description: err.message }),
+        onSuccess: () => toast.success("Pagamento marcado como recebido"),
+        onError: (err: Error) => toast.error("Erro"),
       }
     );
   };

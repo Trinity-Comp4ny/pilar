@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
-import { toast as sonnerToast } from "sonner";
+import { toast } from "sonner";
 
 export type BillingType = "PIX" | "BOLETO";
 export type AsaasAmbiente = "sandbox" | "producao";
@@ -21,7 +20,6 @@ export interface AsaasCobrancaResult {
 
 export function useAsaasCriarCobranca(onSuccess?: () => void) {
   const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
 
   const criarCobranca = async (receitaId: string, billingType: BillingType): Promise<AsaasCobrancaResult | null> => {
     setIsLoading(true);
@@ -46,8 +44,7 @@ export function useAsaasCriarCobranca(onSuccess?: () => void) {
       const result = data as AsaasCobrancaResult & { error?: string };
       if (result.error) throw new Error(result.error);
 
-      toast({
-        title: "Cobrança criada no Asaas",
+      toast.success("Cobrança criada no Asaas", {
         description: `${billingType === "PIX" ? "Pix" : "Boleto"} gerado com sucesso`,
       });
 
@@ -55,7 +52,7 @@ export function useAsaasCriarCobranca(onSuccess?: () => void) {
       return result;
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Erro ao criar cobrança";
-      toast({ title: "Erro Asaas", description: message, variant: "destructive" });
+      toast.error("Erro Asaas", { description: message });
       return null;
     } finally {
       setIsLoading(false);
@@ -69,7 +66,6 @@ export function useAsaasConfig() {
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isRegenerando, setIsRegenerando] = useState(false);
-  const { toast } = useToast();
 
   const carregarConfig = async (): Promise<AsaasConfig | null> => {
     setIsLoading(true);
@@ -89,7 +85,7 @@ export function useAsaasConfig() {
           }
         : null;
     } catch {
-      sonnerToast.error("Erro ao carregar configuração Asaas");
+      toast.error("Erro ao carregar configuração Asaas");
       return null;
     } finally {
       setIsLoading(false);
@@ -108,11 +104,11 @@ export function useAsaasConfig() {
       const result = data as { success?: boolean; error?: string; data?: AsaasConfig };
       if (result?.error) throw new Error(result.error);
 
-      toast({ title: "Configuração Asaas salva" });
+      toast.success("Configuração Asaas salva");
       return result.data ?? null;
     } catch (err) {
       const message = err instanceof Error ? err.message : "Erro ao salvar";
-      toast({ title: "Erro ao salvar", description: message, variant: "destructive" });
+      toast.error("Erro ao salvar", { description: message });
       return null;
     } finally {
       setIsSaving(false);
@@ -131,11 +127,11 @@ export function useAsaasConfig() {
       const result = data as { success?: boolean; webhook_token?: string; error?: string };
       if (result?.error) throw new Error(result.error);
 
-      toast({ title: "Token regenerado", description: "Atualize o token no painel Asaas" });
+      toast.success("Token regenerado", { description: "Atualize o token no painel Asaas" });
       return result.webhook_token ?? null;
     } catch (err) {
       const message = err instanceof Error ? err.message : "Erro ao regenerar token";
-      toast({ title: "Erro", description: message, variant: "destructive" });
+      toast.error("Erro", { description: message });
       return null;
     } finally {
       setIsRegenerando(false);

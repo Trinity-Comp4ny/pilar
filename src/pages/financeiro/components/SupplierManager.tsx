@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Pencil, Trash2, Loader2 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { getSafeErrorMessage } from "@/lib/safeError";
 
@@ -59,7 +59,6 @@ export function SupplierManager({ onSupplierChange }: SupplierManagerProps) {
   });
   const [editSupplier, setEditSupplier] = useState<Supplier | null>(null);
   const [deleteSupplier, setDeleteSupplier] = useState<Supplier | null>(null);
-  const { toast } = useToast();
 
   const fetchSuppliers = useCallback(async () => {
     try {
@@ -80,11 +79,7 @@ export function SupplierManager({ onSupplierChange }: SupplierManagerProps) {
         onSupplierChange(mappedSuppliers);
       }
     } catch (err: unknown) {
-      toast({
-        title: "Erro ao carregar fornecedores",
-        description: getSafeErrorMessage(err),
-        variant: "destructive",
-      });
+      toast.error("Erro ao carregar fornecedores");
     }
   }, [onSupplierChange, toast]);
 
@@ -94,11 +89,7 @@ export function SupplierManager({ onSupplierChange }: SupplierManagerProps) {
 
   const handleAddSupplier = async () => {
     if (!newSupplier.name.trim()) {
-      toast({
-        title: "Campo obrigatório",
-        description: "O nome do fornecedor é obrigatório",
-        variant: "destructive",
-      });
+      toast.error("Campo obrigatório", { description: "O nome do fornecedor é obrigatório" });
       return;
     }
 
@@ -114,20 +105,13 @@ export function SupplierManager({ onSupplierChange }: SupplierManagerProps) {
 
       if (error) throw error;
 
-      toast({
-        title: "Fornecedor adicionado",
-        description: "O fornecedor foi adicionado com sucesso",
-      });
+      toast.success("Fornecedor adicionado", { description: "O fornecedor foi adicionado com sucesso" });
 
       setNewSupplier({ name: "", contact: "", email: "", cnpj: "" });
       setIsAddDialogOpen(false);
       fetchSuppliers();
     } catch (err: unknown) {
-      toast({
-        title: "Erro ao adicionar",
-        description: getSafeErrorMessage(err),
-        variant: "destructive",
-      });
+      toast.error("Erro ao adicionar");
     } finally {
       setIsSaving(false);
     }
@@ -135,11 +119,7 @@ export function SupplierManager({ onSupplierChange }: SupplierManagerProps) {
 
   const handleEditSupplier = async () => {
     if (!editSupplier || !editSupplier.name.trim()) {
-      toast({
-        title: "Campo obrigatório",
-        description: "O nome do fornecedor é obrigatório",
-        variant: "destructive",
-      });
+      toast.error("Campo obrigatório", { description: "O nome do fornecedor é obrigatório" });
       return;
     }
 
@@ -157,20 +137,13 @@ export function SupplierManager({ onSupplierChange }: SupplierManagerProps) {
 
       if (error) throw error;
 
-      toast({
-        title: "Fornecedor atualizado",
-        description: "O fornecedor foi atualizado com sucesso",
-      });
+      toast.success("Fornecedor atualizado", { description: "O fornecedor foi atualizado com sucesso" });
 
       setEditSupplier(null);
       setIsEditDialogOpen(false);
       fetchSuppliers();
     } catch (err: unknown) {
-      toast({
-        title: "Erro ao atualizar",
-        description: getSafeErrorMessage(err),
-        variant: "destructive",
-      });
+      toast.error("Erro ao atualizar");
     } finally {
       setIsSaving(false);
     }
@@ -185,20 +158,13 @@ export function SupplierManager({ onSupplierChange }: SupplierManagerProps) {
 
       if (error) throw error;
 
-      toast({
-        title: "Fornecedor removido",
-        description: "O fornecedor foi removido com sucesso",
-      });
+      toast.success("Fornecedor removido", { description: "O fornecedor foi removido com sucesso" });
 
       setDeleteSupplier(null);
       setIsDeleteDialogOpen(false);
       fetchSuppliers();
     } catch (err: unknown) {
-      toast({
-        title: "Erro ao remover",
-        description: getSafeErrorMessage(err),
-        variant: "destructive",
-      });
+      toast.error("Erro ao remover");
     } finally {
       setIsDeleting(false);
     }

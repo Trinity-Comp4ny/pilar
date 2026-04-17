@@ -13,7 +13,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Download, Loader2, FileText, Check } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { saveAs } from "file-saver";
 import { usePropostaTemplates, downloadTemplateFile } from "@/hooks/usePropostaTemplates";
 import { AUTO_VARIABLES, buildVariableData, generateDocx } from "@/lib/docxUtils";
@@ -41,7 +41,6 @@ interface GerarPropostaDialogProps {
 }
 
 export function GerarPropostaDialog({ open, onOpenChange, proposta, disciplinas = [] }: GerarPropostaDialogProps) {
-  const { toast } = useToast();
   const { data: templates = [] } = usePropostaTemplates();
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>("");
   const [manualFields, setManualFields] = useState<Record<string, string>>({});
@@ -134,11 +133,11 @@ export function GerarPropostaDialog({ open, onOpenChange, proposta, disciplinas 
       const fileName = `Proposta_${proposta.codigo || proposta.titulo.replace(/\s+/g, "_")}.docx`;
       saveAs(blob, fileName);
 
-      toast({ title: "DOCX gerado", description: `Arquivo ${fileName} baixado com sucesso` });
+      toast.success("DOCX gerado", { description: `Arquivo ${fileName} baixado com sucesso` });
       onOpenChange(false);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Erro desconhecido";
-      toast({ variant: "destructive", title: "Erro ao gerar DOCX", description: message });
+      toast.error("Erro ao gerar DOCX");
     } finally {
       setIsGenerating(false);
     }
