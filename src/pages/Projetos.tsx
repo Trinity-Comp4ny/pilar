@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Settings2, Layers, Calendar as CalendarIcon, Filter } from "lucide-react";
+import { Plus, Settings2, Layers, Calendar as CalendarIcon, Filter, GitBranch } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
@@ -16,15 +16,18 @@ import {
   PROJECT_PRIORITY_CONFIG,
   type ProjectPriority,
 } from "@/constants";
-import { type Projeto } from "@/pages/projetos/types";
+import { type Projeto, type ProjetoDisciplinaDB, dbDisciplinaToLegacy } from "@/pages/projetos/types";
 import { ProjectCard } from "@/pages/projetos/components/ProjectCard";
 import { ProjectDetailDialog } from "@/pages/projetos/components/ProjectDetailDialog";
 import { ProjetoFormDialog } from "@/pages/projetos/components/ProjetoFormDialog";
 import { ManageDisciplinasDialog } from "@/pages/projetos/components/ManageDisciplinasDialog";
+import { FluxoDisciplinasDialog } from "@/pages/projetos/components/FluxoDisciplinasDialog";
 import { DisciplinasTab } from "@/pages/projetos/components/DisciplinasTab";
 import { useTemplates } from "@/hooks/useTemplates";
+import { useFluxosDisciplinas } from "@/hooks/useFluxosDisciplinas";
 import { cn } from "@/lib/utils";
 import { usePageTitle } from "@/hooks/usePageTitle";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 const statusConfig = PROJECT_STATUS_CONFIG;
 
@@ -34,14 +37,10 @@ export default function ProjetosKanban() {
   usePageTitle("Projetos");
   const { data: userRole } = useUserRole();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const { data: templatesData = [] } = useTemplates();
+  const { data: fluxosData = [] } = useFluxosDisciplinas();
   const canEdit = userRole === "admin" || userRole === "operacional";
-
-  const [currentUser, setCurrentUser] = useState<{ name: string; email: string } | null>(null);
-  const [projetos, setProjetos] = useState<Projeto[]>([]);
-  const [clientes, setClientes] = useState<{ id: string; nome: string }[]>([]);
-  const [pessoas, setPessoas] = useState<{ id: string; nome: string }[]>([]);
-  const [disciplinas, setDisciplinas] = useState<{ id: string; nome: string }[]>([]);
 
   const [isFormDialogOpen, setIsFormDialogOpen] = useState(false);
   const [editingProjeto, setEditingProjeto] = useState<Projeto | null>(null);
@@ -50,70 +49,145 @@ export default function ProjetosKanban() {
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>("kanban");
   const [filterPessoaId, setFilterPessoaId] = useState<string>("all");
+  const [isFluxosOpen, setIsFluxosOpen] = useState(false);
 
-  const fetchCurrentUser = useCallback(async () => {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (user) {
-      setCurrentUser({
+  const { data: currentUser = null } = useQuery({
+    queryKey: ["currentUser"],
+    queryFn: async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return null;
+      return {
         name: user.user_metadata?.full_name || user.email?.split("@")[0] || "Usuário",
         email: user.email || "",
-      });
-    }
-  }, []);
+      };
+    },
+  });
 
-  const fetchDisciplinas = useCallback(async () => {
-    const { data } = await supabase.from("disciplinas").select("id, nome").order("nome");
-    if (data) setDisciplinas(data);
-  }, []);
+  const { data: projetos = [] } = useQuery({
+    queryKey: ["projetos"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("projetos")
+        .select(
+          `
+          *,
+          clientes (nome),
+          projeto_disciplinas (
+            id, nome, status, data_inicio, data_fim, data_fim_real,
+            prioridade, justificativa_atraso, horas_estimadas, custo_hora,
+            observacoes, created_at, updated_at, projeto_id,
+            projeto_disciplina_responsaveis (
+              pessoa_id,
+              pessoas ( id, nome )
+            )
+          )
+        `
+        )
+        .order("created_at", { ascending: false });
 
-  const fetchProjetos = useCallback(async () => {
-    const { data, error } = await supabase
-      .from("projetos")
-      .select(`*, clientes (nome)`)
-      .order("created_at", { ascending: false });
+      if (error) throw error;
 
-    if (error) return;
+      return (data || []).map(
+        (
+          p: Record<string, unknown> & {
+            clientes?: { nome: string };
+            projeto_disciplinas?: Array<Record<string, unknown>>;
+          }
+        ) => {
+          const rawDiscs = (p.projeto_disciplinas || []) as Array<{
+            id: string;
+            projeto_id: string;
+            nome: string;
+            status: string;
+            data_inicio: string | null;
+            data_fim: string | null;
+            data_fim_real: string | null;
+            observacoes: string | null;
+            prioridade: string | null;
+            justificativa_atraso: string | null;
+            horas_estimadas: number;
+            custo_hora: number;
+            created_at: string;
+            updated_at: string;
+            projeto_disciplina_responsaveis: Array<{
+              pessoa_id: string;
+              pessoas: { id: string; nome: string };
+            }>;
+          }>;
 
-    if (data) {
-      const mappedProjetos: Projeto[] = data.map((p: Record<string, unknown> & { clientes?: { nome: string } }) => ({
-        id: p.id as string,
-        codigo_projeto: p.codigo_projeto as string,
-        nome: p.nome as string,
-        cliente_id: p.cliente_id as string,
-        cliente_nome: p.clientes?.nome,
-        localizacao: p.localizacao as string | undefined,
-        parcelas: p.parcelas as string | undefined,
-        area_m2: p.area_m2 as number | undefined,
-        data_inicio: p.data_inicio as string,
-        data_previsao: p.data_previsao as string,
-        data_final: p.data_final as string | undefined,
-        status: p.status as Projeto["status"],
-        prioridade: (p.prioridade as ProjectPriority) || PROJECT_PRIORITY.MEDIA,
-        valor_contrato: p.valor_contrato as number,
-        observacao: p.observacao as string,
-        disciplinas: Array.isArray(p.disciplinas) ? p.disciplinas : [],
-      }));
-      setProjetos(mappedProjetos);
-    }
-  }, []);
+          const dbDiscs: ProjetoDisciplinaDB[] = rawDiscs.map((d) => ({
+            id: d.id,
+            projeto_id: d.projeto_id,
+            nome: d.nome,
+            status: d.status,
+            data_inicio: d.data_inicio,
+            data_fim: d.data_fim,
+            data_fim_real: d.data_fim_real,
+            observacoes: d.observacoes,
+            prioridade: d.prioridade,
+            justificativa_atraso: d.justificativa_atraso,
+            horas_estimadas: d.horas_estimadas,
+            custo_hora: d.custo_hora,
+            created_at: d.created_at,
+            updated_at: d.updated_at,
+            responsaveis:
+              d.projeto_disciplina_responsaveis?.map((r) => ({
+                id: r.pessoas.id,
+                nome: r.pessoas.nome,
+              })) || [],
+          }));
 
-  const fetchData = useCallback(async () => {
-    const { data: clientesData } = await supabase.from("clientes").select("id, nome").order("nome");
-    if (clientesData) setClientes(clientesData);
+          return {
+            id: p.id as string,
+            codigo_projeto: p.codigo_projeto as string,
+            nome: p.nome as string,
+            cliente_id: p.cliente_id as string,
+            cliente_nome: p.clientes?.nome,
+            localizacao: p.localizacao as string | undefined,
+            parcelas: p.parcelas as string | undefined,
+            area_m2: p.area_m2 as number | undefined,
+            data_inicio: p.data_inicio as string,
+            data_previsao: p.data_previsao as string,
+            data_final: p.data_final as string | undefined,
+            status: p.status as Projeto["status"],
+            prioridade: (p.prioridade as ProjectPriority) || PROJECT_PRIORITY.MEDIA,
+            valor_contrato: p.valor_contrato as number,
+            observacao: p.observacao as string,
+            disciplinas: dbDiscs.map(dbDisciplinaToLegacy),
+          };
+        }
+      ) as Projeto[];
+    },
+  });
 
-    const { data: pessoasData } = await supabase.from("pessoas").select("id, nome").order("nome");
-    if (pessoasData) setPessoas(pessoasData);
+  const { data: clientes = [] } = useQuery({
+    queryKey: ["clientes"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("clientes").select("id, nome").order("nome");
+      if (error) throw error;
+      return data || [];
+    },
+  });
 
-    fetchDisciplinas();
-    fetchProjetos();
-  }, [fetchDisciplinas, fetchProjetos]);
+  const { data: pessoas = [] } = useQuery({
+    queryKey: ["pessoas-select"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("pessoas").select("id, nome").order("nome");
+      if (error) throw error;
+      return data || [];
+    },
+  });
 
-  useEffect(() => {
-    fetchData();
-    fetchCurrentUser();
-  }, [fetchData, fetchCurrentUser]);
+  const { data: disciplinas = [] } = useQuery({
+    queryKey: ["disciplinas"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("disciplinas").select("id, nome").order("nome");
+      if (error) throw error;
+      return data || [];
+    },
+  });
 
   const handleCardClick = (projeto: Projeto) => {
     setSelectedProjeto(projeto);
@@ -132,11 +206,11 @@ export default function ProjetosKanban() {
   };
 
   const handleDelete = async (id: string) => {
-    const { error } = await supabase.from("projetos").delete().eq("id", id);
+    const { error } = await supabase.from("projetos").update({ deleted_at: new Date().toISOString() }).eq("id", id);
     if (!error) {
       toast({ title: "Projeto excluído" });
       setIsDetailOpen(false);
-      fetchProjetos();
+      queryClient.invalidateQueries({ queryKey: ["projetos"] });
     } else {
       toast({
         title: "Erro ao excluir",
@@ -156,8 +230,9 @@ export default function ProjetosKanban() {
     const newStatus = destination.droppableId as Projeto["status"];
     const todayStr = new Date().toISOString().slice(0, 10);
 
-    setProjetos((prevProjetos) =>
-      prevProjetos.map((projeto) =>
+    // Optimistic update via queryClient
+    queryClient.setQueryData(["projetos"], (old: Projeto[] | undefined) =>
+      (old || []).map((projeto) =>
         projeto.id === draggableId
           ? {
               ...projeto,
@@ -183,7 +258,7 @@ export default function ProjetosKanban() {
         description: `Projeto movido para ${statusConfig[newStatus].label}`,
       });
 
-      fetchProjetos();
+      queryClient.invalidateQueries({ queryKey: ["projetos"] });
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Erro desconhecido";
       toast({
@@ -191,7 +266,7 @@ export default function ProjetosKanban() {
         description: message,
         variant: "destructive",
       });
-      fetchProjetos();
+      queryClient.invalidateQueries({ queryKey: ["projetos"] });
     }
   };
 
@@ -249,6 +324,13 @@ export default function ProjetosKanban() {
                 <Button variant="outline" className="rounded-full text-sm" onClick={() => setIsDisciplinasOpen(true)}>
                   <Settings2 className="mr-2 h-4 w-4" />
                   Disciplinas
+                </Button>
+              )}
+
+              {canEdit && (
+                <Button variant="outline" className="rounded-full text-sm" onClick={() => setIsFluxosOpen(true)}>
+                  <GitBranch className="mr-2 h-4 w-4" />
+                  Fluxos
                 </Button>
               )}
 
@@ -346,7 +428,7 @@ export default function ProjetosKanban() {
         canEdit={canEdit}
         onEdit={handleEditClick}
         onDelete={handleDelete}
-        onProjectUpdated={fetchProjetos}
+        onProjectUpdated={() => queryClient.invalidateQueries({ queryKey: ["projetos"] })}
       />
 
       <ProjetoFormDialog
@@ -357,15 +439,23 @@ export default function ProjetosKanban() {
         pessoas={pessoas}
         disciplinas={disciplinas}
         templatesData={templatesData}
+        fluxosData={fluxosData}
         currentUser={currentUser}
-        onSaved={fetchProjetos}
+        onSaved={() => queryClient.invalidateQueries({ queryKey: ["projetos"] })}
       />
 
       <ManageDisciplinasDialog
         open={isDisciplinasOpen}
         onOpenChange={setIsDisciplinasOpen}
         disciplinas={disciplinas}
-        onDisciplinasChanged={fetchDisciplinas}
+        onDisciplinasChanged={() => queryClient.invalidateQueries({ queryKey: ["disciplinas"] })}
+      />
+
+      <FluxoDisciplinasDialog
+        open={isFluxosOpen}
+        onOpenChange={setIsFluxosOpen}
+        disciplinas={disciplinas}
+        pessoas={pessoas}
       />
     </PageLayout>
   );
