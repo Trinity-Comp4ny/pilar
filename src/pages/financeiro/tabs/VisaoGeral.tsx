@@ -84,8 +84,10 @@ export default function VisaoGeral({ visualizacao, dateFrom, dateTo }: VisaoGera
             <div className="text-3xl font-bold text-red-600">
               {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(stats.despesasTotal)}
             </div>
-            <p className="text-xs text-green-600 flex items-center gap-1 mt-1">
-              <TrendingDown size={12} />
+            <p
+              className={`text-xs flex items-center gap-1 mt-1 ${Number(stats.despesasMes) > 0 ? "text-red-600" : "text-green-600"}`}
+            >
+              {Number(stats.despesasMes) > 0 ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
               {stats.despesasMes}% vs período anterior
             </p>
           </CardContent>

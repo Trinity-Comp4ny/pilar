@@ -59,51 +59,53 @@ export default function Financeiro() {
         <div className="flex-1 overflow-y-auto w-full bg-gray-50/50 p-6 md:p-8">
           <div className="w-full mx-auto space-y-6">
             <TabsContent value="visao-geral" className="mt-0 w-full focus-visible:ring-0">
-              <VisaoGeral visualizacao={visualizacao} dateFrom={dateFrom} dateTo={dateTo} />
+              {activeTab === "visao-geral" && (
+                <VisaoGeral visualizacao={visualizacao} dateFrom={dateFrom} dateTo={dateTo} />
+              )}
             </TabsContent>
 
             <TabsContent value="fluxo-caixa" className="mt-0 w-full focus-visible:ring-0">
-              <FluxoCaixa dateFrom={dateFrom} dateTo={dateTo} />
+              {activeTab === "fluxo-caixa" && <FluxoCaixa dateFrom={dateFrom} dateTo={dateTo} />}
             </TabsContent>
 
             <TabsContent value="lancamentos" className="mt-0 w-full focus-visible:ring-0">
-              <Lancamentos />
+              {activeTab === "lancamentos" && <Lancamentos />}
             </TabsContent>
 
             <TabsContent value="mensal" className="mt-0 w-full focus-visible:ring-0">
-              <ResumoMensal dateFrom={dateFrom} dateTo={dateTo} />
+              {activeTab === "mensal" && <ResumoMensal dateFrom={dateFrom} dateTo={dateTo} />}
             </TabsContent>
 
             <TabsContent value="folha-pagamento" className="mt-0 w-full focus-visible:ring-0">
-              <FolhaPagamento />
+              {activeTab === "folha-pagamento" && <FolhaPagamento />}
             </TabsContent>
 
             <TabsContent value="faturas" className="mt-0 w-full focus-visible:ring-0">
-              <Faturas />
+              {activeTab === "faturas" && <Faturas />}
             </TabsContent>
 
             <TabsContent value="contas" className="mt-0 w-full focus-visible:ring-0">
-              <Contas />
+              {activeTab === "contas" && <Contas />}
             </TabsContent>
 
             <TabsContent value="projecao" className="mt-0 w-full focus-visible:ring-0">
-              <ProjecaoFluxoCaixa />
+              {activeTab === "projecao" && <ProjecaoFluxoCaixa />}
             </TabsContent>
 
             <TabsContent value="aging" className="mt-0 w-full focus-visible:ring-0">
-              <AgingRecebiveis />
+              {activeTab === "aging" && <AgingRecebiveis />}
             </TabsContent>
 
             <TabsContent value="dre" className="mt-0 w-full focus-visible:ring-0">
-              <DRE />
+              {activeTab === "dre" && <DRE />}
             </TabsContent>
 
             <TabsContent value="wip" className="mt-0 w-full focus-visible:ring-0">
-              <WIP />
+              {activeTab === "wip" && <WIP />}
             </TabsContent>
 
             <TabsContent value="rentabilidade" className="mt-0 w-full focus-visible:ring-0">
-              <Rentabilidade />
+              {activeTab === "rentabilidade" && <Rentabilidade />}
             </TabsContent>
           </div>
         </div>
