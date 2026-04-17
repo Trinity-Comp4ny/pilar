@@ -1,5 +1,5 @@
 import { Navigate, Outlet } from "react-router-dom";
-import { useClienteAuth } from "@/pages/cliente/useClienteAuth";
+import { useClienteAuth } from "@/hooks/useClienteAuth";
 import { Loader2 } from "lucide-react";
 
 export function ClientePrivateRoute() {

@@ -125,8 +125,6 @@ export const useFinanceData = (dateFrom?: Date, dateTo?: Date) => {
       const categoriaData = processCategoryData(receitasMain, "receitas");
       const despesasCategoriaData = processCategoryData(despesasMain, "despesas");
 
-      const formattedProjects: never[] = [];
-
       return {
         stats: {
           receitasTotal,
@@ -135,14 +133,11 @@ export const useFinanceData = (dateFrom?: Date, dateTo?: Date) => {
           despesasTotalGeral,
           receitasMes: receitasGrowth.toFixed(1),
           despesasMes: despesasGrowth.toFixed(1),
-          leadsTotal: 0,
-          projectsActive: 0,
           saldo: receitasTotal - despesasTotal,
           saldoGeral: receitasTotalGeral - despesasTotalGeral,
         },
         chartData,
         chartDataDiario,
-        recentProjects: formattedProjects,
         categoriaData,
         despesasCategoriaData,
       };
@@ -257,7 +252,7 @@ const processCategoryData = (
 
     if (!categoryMap.has(categoryName)) {
       const colorIndex = categoryMap.size % colors.length;
-      const categoryColor = item.categorias_financeiras?.cor || colors[colorIndex];
+      const categoryColor = colors[colorIndex];
       categoryMap.set(categoryName, { name: categoryName, value: 0, color: categoryColor });
     }
 

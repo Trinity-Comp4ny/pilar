@@ -368,7 +368,7 @@ export default function Despesas() {
         return;
       }
     } catch {
-      // Se a checagem falhar, prossegue com o salvamento
+      toast({ title: "Erro ao excluir despesa", variant: "destructive" });
     } finally {
       if (!showDuplicateWarning) setIsSaving(false);
     }
