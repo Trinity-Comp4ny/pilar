@@ -1,0 +1,55 @@
+name: Automação Extrato Bradesco
+
+on:
+  schedule:
+    - cron: "0 4 * * *"
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    environment: bradesco-vrz
+
+    env:
+      BRADESCO_CLIENT_ID: ${{ secrets.BRADESCO_CLIENT_ID }}
+      BRADESCO_CLIENT_SECRET: ${{ secrets.BRADESCO_CLIENT_SECRET }}
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+      CONTA: ${{ secrets.CONTA }}
+      AGENCIA: ${{ secrets.AGENCIA }}
+      EMPRESA_ID: ${{ secrets.EMPRESA_ID }}
+      CONTA_UUID_SUPABASE: ${{ secrets.CONTA_UUID_SUPABASE }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Instalar dependências
+        run: pip install -r scripts/bank-sync/requirements.txt
+
+      - name: Decodificar certificados mTLS
+        env:
+          CERT_CRT_B64: ${{ secrets.CERT_CRT_B64 }}
+          CERT_KEY_B64: ${{ secrets.CERT_KEY_B64 }}
+        run: |
+          python - << 'EOF'
+          import base64, os, pathlib
+
+          pathlib.Path("cert").mkdir(exist_ok=True)
+
+          with open("cert/VRZENGENHARIA.crt", "wb") as f:
+              f.write(base64.b64decode(os.environ["CERT_CRT_B64"]))
+
+          with open("cert/VRZENGENHARIA.key", "wb") as f:
+              f.write(base64.b64decode(os.environ["CERT_KEY_B64"]))
+
+          print("Certificados gerados com sucesso")
+          EOF
+
+      - name: Executar sincronização
+        run: python scripts/bank-sync/bradesco.py
