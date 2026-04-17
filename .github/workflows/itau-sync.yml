@@ -1,0 +1,55 @@
+name: Automação Extrato Itaú
+
+on:
+  schedule:
+    - cron: "0 4 * * *"
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    environment: itau-vrz
+
+    env:
+      ITAU_CLIENT_ID: ${{ secrets.ITAU_CLIENT_ID }}
+      ITAU_CLIENT_SECRET: ${{ secrets.ITAU_CLIENT_SECRET }}
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+      ITAU_CONTA: ${{ secrets.ITAU_CONTA }}
+      ITAU_AGENCIA: ${{ secrets.ITAU_AGENCIA }}
+      EMPRESA_ID: ${{ secrets.EMPRESA_ID }}
+      ITAU_CONTA_UUID_SUPABASE: ${{ secrets.ITAU_CONTA_UUID_SUPABASE }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Instalar dependências
+        run: pip install -r scripts/bank-sync/requirements.txt
+
+      - name: Decodificar certificados mTLS
+        env:
+          ITAU_CERT_CRT_B64: ${{ secrets.ITAU_CERT_CRT_B64 }}
+          ITAU_CERT_KEY_B64: ${{ secrets.ITAU_CERT_KEY_B64 }}
+        run: |
+          python - << 'EOF'
+          import base64, os, pathlib
+
+          pathlib.Path("cert").mkdir(exist_ok=True)
+
+          with open("cert/ITAU.crt", "wb") as f:
+              f.write(base64.b64decode(os.environ["ITAU_CERT_CRT_B64"]))
+
+          with open("cert/ITAU.key", "wb") as f:
+              f.write(base64.b64decode(os.environ["ITAU_CERT_KEY_B64"]))
+
+          print("Certificados Itaú gerados com sucesso")
+          EOF
+
+      - name: Executar sincronização
+        run: python scripts/bank-sync/itau.py
