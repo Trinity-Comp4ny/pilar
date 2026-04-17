@@ -9,6 +9,7 @@ import { formatCurrencyInput } from "@/lib/currencyUtils";
 import { PROJECT_PRIORITY, PRIORITY_OPTIONS, PROJECT_PRIORITY_CONFIG } from "@/constants";
 import { type Projeto } from "@/pages/projetos/types";
 import { type TemplateProjeto } from "@/hooks/useTemplates";
+import type { FluxoDisciplinas } from "@/types/fluxoDisciplinas";
 import { useProjetoForm, ESTADOS_BR } from "./useProjetoForm";
 import { DisciplinasSection } from "./DisciplinasSection";
 import { DisciplinaDetailDialog } from "./DisciplinaDetailDialog";
@@ -21,6 +22,7 @@ interface ProjetoFormDialogProps {
   pessoas: { id: string; nome: string }[];
   disciplinas: { id: string; nome: string }[];
   templatesData: TemplateProjeto[];
+  fluxosData?: FluxoDisciplinas[];
   currentUser: { name: string; email: string } | null;
   onSaved: () => void;
 }
@@ -33,6 +35,7 @@ export function ProjetoFormDialog({
   pessoas,
   disciplinas,
   templatesData,
+  fluxosData = [],
   currentUser,
   onSaved,
 }: ProjetoFormDialogProps) {
@@ -42,6 +45,7 @@ export function ProjetoFormDialog({
     editProjeto,
     pessoas,
     templatesData,
+    fluxosData,
     currentUser,
     onSaved,
   });
@@ -337,6 +341,8 @@ export function ProjetoFormDialog({
           <DisciplinasSection
             disciplinas={disciplinas}
             pessoas={pessoas}
+            fluxosData={fluxosData}
+            onApplyFluxo={form.applyFluxo}
             projetosDisciplinas={form.projetosDisciplinas}
             tempDisciplina={form.tempDisciplina}
             onTempDisciplinaChange={form.setTempDisciplina}

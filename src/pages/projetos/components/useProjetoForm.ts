@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { formatCurrencyInput, parseCurrencyString } from "@/lib/currencyUtils";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,7 +12,9 @@ import {
   getResponsaveisList,
 } from "@/pages/projetos/types";
 import { type TemplateProjeto } from "@/hooks/useTemplates";
+import type { FluxoDisciplinas } from "@/types/fluxoDisciplinas";
 import { useToast } from "@/hooks/use-toast";
+import { useBulkSaveDisciplinas } from "@/hooks/useProjetoDisciplinas";
 
 export const ESTADOS_BR = [
   "AC",
@@ -126,6 +128,7 @@ interface UseProjetoFormProps {
   editProjeto: Projeto | null;
   pessoas: { id: string; nome: string }[];
   templatesData: TemplateProjeto[];
+  fluxosData?: FluxoDisciplinas[];
   currentUser: { name: string; email: string } | null;
   onSaved: () => void;
 }
@@ -136,14 +139,17 @@ export function useProjetoForm({
   editProjeto,
   pessoas,
   templatesData,
+  fluxosData = [],
   currentUser,
   onSaved,
 }: UseProjetoFormProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const bulkSaveDisciplinas = useBulkSaveDisciplinas();
   const isEditMode = editProjeto !== null;
   const [isSaving, setIsSaving] = useState(false);
   const [isFetchingCep, setIsFetchingCep] = useState(false);
+  const geocodeAbortRef = useRef<AbortController | null>(null);
 
   const [formData, setFormData] = useState(EMPTY_FORM);
   const [projetosDisciplinas, setProjetosDisciplinas] = useState<DisciplinaResponsavel[]>([]);
@@ -390,6 +396,35 @@ export function useProjetoForm({
     });
   };
 
+  const applyFluxo = (fluxoId: string | null) => {
+    if (!fluxoId) {
+      setProjetosDisciplinas([]);
+      return;
+    }
+    const fluxo = fluxosData.find((f) => f.id === fluxoId);
+    if (!fluxo) return;
+
+    const novasDisciplinas: DisciplinaResponsavel[] = fluxo.etapas.flatMap((etapa) =>
+      etapa.disciplinas.map((d) => ({
+        disciplina: d.nome,
+        responsavel_id: d.responsavel_id || "",
+        responsavel_nome: d.responsavel_nome || "",
+        status: "Não Iniciado",
+        etapa: etapa.ordem,
+        observacoes: [],
+        responsaveis: d.responsavel_id
+          ? [{ responsavel_id: d.responsavel_id, responsavel_nome: d.responsavel_nome || "", status: "Não Iniciado" }]
+          : [],
+      }))
+    );
+
+    setProjetosDisciplinas(novasDisciplinas);
+    toast({
+      title: "Fluxo aplicado",
+      description: `${novasDisciplinas.length} disciplina(s) em ${fluxo.etapas.length} etapa(s) de "${fluxo.nome}"`,
+    });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -426,9 +461,29 @@ export function useProjetoForm({
         });
 
         if (error) throw error;
+
+        // Sync disciplinas to relational table
+        const discsForBulk = projetosDisciplinas.map((d) => {
+          const resps = getResponsaveisList(d);
+          return {
+            nome: d.disciplina,
+            status: d.status || "Não Iniciado",
+            data_inicio: d.data_inicio || null,
+            data_fim: d.data_previsao || null,
+            data_fim_real: d.data_final || null,
+            prioridade: d.prioridade || null,
+            justificativa_atraso: d.justificativa_atraso || null,
+            responsavel_ids: resps.map((r) => r.responsavel_id).filter(Boolean),
+          };
+        });
+        await bulkSaveDisciplinas.mutateAsync({
+          projetoId: editProjeto.id,
+          disciplinas: discsForBulk,
+        });
+
         toast({ title: "Projeto atualizado", description: "Projeto foi atualizado com sucesso" });
       } else {
-        const { error } = await supabase.rpc("create_projeto_completo", {
+        const { data: newProjetoId, error } = await supabase.rpc("create_projeto_completo", {
           p_codigo: formData.codigo_projeto,
           p_nome: formData.nome,
           p_cliente_id: formData.cliente_id,
@@ -445,6 +500,28 @@ export function useProjetoForm({
         });
 
         if (error) throw error;
+
+        // Sync disciplinas to relational table for new project
+        if (newProjetoId && projetosDisciplinas.length > 0) {
+          const discsForBulk = projetosDisciplinas.map((d) => {
+            const resps = getResponsaveisList(d);
+            return {
+              nome: d.disciplina,
+              status: d.status || "Não Iniciado",
+              data_inicio: d.data_inicio || null,
+              data_fim: d.data_previsao || null,
+              data_fim_real: d.data_final || null,
+              prioridade: d.prioridade || null,
+              justificativa_atraso: d.justificativa_atraso || null,
+              responsavel_ids: resps.map((r) => r.responsavel_id).filter(Boolean),
+            };
+          });
+          await bulkSaveDisciplinas.mutateAsync({
+            projetoId: newProjetoId as string,
+            disciplinas: discsForBulk,
+          });
+        }
+
         toast({ title: "Projeto cadastrado", description: "Novo projeto foi adicionado com sucesso" });
       }
 
@@ -452,6 +529,12 @@ export function useProjetoForm({
       onSaved();
 
       if (localizacaoComposta.trim()) {
+        // Cancela geocodificação anterior se ainda estiver em andamento
+        geocodeAbortRef.current?.abort();
+        const abortController = new AbortController();
+        geocodeAbortRef.current = abortController;
+        const { signal } = abortController;
+
         const nominatimBase = "https://nominatim.openstreetmap.org/search";
         const headers = { Accept: "application/json" };
         const street = [formData.loc_logradouro, formData.loc_numero].filter(Boolean).join(" ");
@@ -466,6 +549,7 @@ export function useProjetoForm({
         if (postalcode) params.set("postalcode", postalcode);
 
         const saveCoords = (lat: number, lng: number) => {
+          if (signal.aborted) return;
           const query =
             isEditMode && editProjeto
               ? supabase.from("projetos").update({ latitude: lat, longitude: lng }).eq("id", editProjeto.id)
@@ -486,7 +570,7 @@ export function useProjetoForm({
           return !isNaN(lat) && !isNaN(lng) ? { lat, lng } : null;
         };
 
-        fetch(`${nominatimBase}?${params}`, { headers })
+        fetch(`${nominatimBase}?${params}`, { headers, signal })
           .then((res) => res.json())
           .then((results) => {
             const coords = extractCoords(results);
@@ -499,7 +583,7 @@ export function useProjetoForm({
               const fallback = new URLSearchParams({ format: "json", limit: "1", country: "Brazil" });
               fallback.set("city", formData.loc_cidade);
               if (formData.loc_estado) fallback.set("state", formData.loc_estado);
-              return fetch(`${nominatimBase}?${fallback}`, { headers })
+              return fetch(`${nominatimBase}?${fallback}`, { headers, signal })
                 .then((res) => res.json())
                 .then((fallbackResults) => {
                   const fallbackCoords = extractCoords(fallbackResults);
@@ -518,7 +602,8 @@ export function useProjetoForm({
               description: "Não foi possível encontrar as coordenadas do endereço. O projeto não aparecerá no mapa.",
             });
           })
-          .catch(() => {
+          .catch((err: unknown) => {
+            if (err instanceof DOMException && err.name === "AbortError") return;
             toast({
               title: "Geocodificação falhou",
               description: "Não foi possível obter coordenadas do endereço. O projeto não aparecerá no mapa.",
@@ -570,8 +655,9 @@ export function useProjetoForm({
     newObservation,
     setNewObservation,
     handleAddObservation,
-    // Template & submit
+    // Template, Fluxo & submit
     applyTemplate,
+    applyFluxo,
     handleSubmit,
   };
 }
