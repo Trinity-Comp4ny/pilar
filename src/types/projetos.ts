@@ -107,6 +107,7 @@ export interface Projeto {
   nome: string;
   cliente_id: string;
   cliente_nome?: string;
+  cliente_email?: string;
   data_inicio: string;
   data_previsao: string;
   data_final?: string;
