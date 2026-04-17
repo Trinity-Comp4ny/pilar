@@ -73,7 +73,7 @@ export default function FolhaPagamento() {
       });
       setHistory(Array.from(grouped.values()));
     } catch {
-      // silent
+      toast({ title: "Erro ao gerar folha de pagamento", variant: "destructive" });
     }
   };
 

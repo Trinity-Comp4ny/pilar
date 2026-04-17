@@ -313,7 +313,7 @@ export default function Receitas() {
         return;
       }
     } catch {
-      // Se a checagem falhar, prossegue com o salvamento
+      toast({ title: "Erro ao salvar receita", variant: "destructive" });
     } finally {
       if (!showDuplicateWarning) setIsSaving(false);
     }

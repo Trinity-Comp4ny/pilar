@@ -132,7 +132,7 @@ export default function Faturas() {
           p_ano: d.getFullYear(),
         });
       } catch {
-        // Ignora erros silenciosamente (pode não ter despesas)
+        toast({ title: "Erro ao pagar fatura", variant: "destructive" });
       }
     }
   }, []);
