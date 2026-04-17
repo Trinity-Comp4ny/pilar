@@ -4,6 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider } from "@/contexts/AuthContext";
 import { PrivateRoute } from "./components/PrivateRoute";
 import { ClientePrivateRoute } from "./components/ClientePrivateRoute";
 
@@ -54,111 +55,58 @@ const App = () => {
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <Suspense
-            fallback={
-              <div className="min-h-screen flex items-center justify-center text-sm text-gray-500">Carregando...</div>
-            }
-          >
-            <Routes>
-              <Route path="/" element={<Landing />} />
-              <Route path="/login" element={<Login />} />
+          <AuthProvider>
+            <Suspense
+              fallback={
+                <div className="min-h-screen flex items-center justify-center text-sm text-gray-500">Carregando...</div>
+              }
+            >
+              <Routes>
+                <Route path="/" element={<Landing />} />
+                <Route path="/login" element={<Login />} />
 
-              {/* Rotas Protegidas */}
-              <Route path="/dashboard" element={<PrivateRoute />}>
-                <Route index element={<Dashboard />} />
-              </Route>
+                <Route element={<PrivateRoute />}>
+                  <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/leads" element={<Leads />} />
+                  <Route path="/financeiro" element={<Financeiro />} />
+                  <Route path="/projetos" element={<Projetos />} />
+                  <Route path="/projetos/:id" element={<ProjetoDetail />} />
+                  <Route path="/clientes" element={<Clientes />} />
+                  <Route path="/pessoas" element={<Pessoas />} />
+                  <Route path="/relatorios" element={<Relatorios />} />
+                  <Route path="/timesheet" element={<Timesheet />} />
+                  <Route path="/templates" element={<Templates />} />
+                  <Route path="/mapa" element={<MapaObras />} />
+                  <Route path="/propostas" element={<Propostas />} />
+                  <Route path="/capacidade" element={<Capacidade />} />
+                  <Route path="/metas" element={<MetasPage />} />
+                  <Route path="/ai" element={<AiHub />} />
+                  <Route path="/profile" element={<Profile />} />
+                  <Route path="/company" element={<Company />} />
+                  <Route path="/company-setup" element={<CompanySetup />} />
+                  <Route path="/profile-setup" element={<ProfileSetup />} />
+                </Route>
 
-              <Route path="/leads" element={<PrivateRoute />}>
-                <Route index element={<Leads />} />
-              </Route>
+                <Route path="/rentabilidade" element={<Navigate to="/financeiro?tab=rentabilidade" replace />} />
 
-              <Route path="/financeiro" element={<PrivateRoute />}>
-                <Route index element={<Financeiro />} />
-              </Route>
+                {/* Portal do Cliente — Token (rota publica legada) */}
+                <Route path="/portal/:token" element={<Portal />} />
+                <Route path="/portal/:token/financeiro" element={<PortalFinanceiro />} />
+                <Route path="/portal/:token/entregas" element={<PortalEntregas />} />
 
-              <Route path="/projetos" element={<PrivateRoute />}>
-                <Route index element={<Projetos />} />
-              </Route>
+                {/* Portal do Cliente — Autenticado */}
+                <Route path="/cliente/login" element={<ClienteLogin />} />
+                <Route path="/cliente" element={<ClientePrivateRoute />}>
+                  <Route path="dashboard" element={<ClienteDashboard />} />
+                  <Route path="projeto/:id" element={<ClienteProjetoDetail />} />
+                  <Route path="projeto/:id/financeiro" element={<ClienteProjetoDetail />} />
+                  <Route path="projeto/:id/entregas" element={<ClienteProjetoDetail />} />
+                </Route>
 
-              <Route path="/projetos/:id" element={<PrivateRoute />}>
-                <Route index element={<ProjetoDetail />} />
-              </Route>
-
-              <Route path="/clientes" element={<PrivateRoute />}>
-                <Route index element={<Clientes />} />
-              </Route>
-
-              <Route path="/pessoas" element={<PrivateRoute />}>
-                <Route index element={<Pessoas />} />
-              </Route>
-
-              <Route path="/relatorios" element={<PrivateRoute />}>
-                <Route index element={<Relatorios />} />
-              </Route>
-
-              <Route path="/timesheet" element={<PrivateRoute />}>
-                <Route index element={<Timesheet />} />
-              </Route>
-
-              <Route path="/templates" element={<PrivateRoute />}>
-                <Route index element={<Templates />} />
-              </Route>
-
-              <Route path="/rentabilidade" element={<Navigate to="/financeiro?tab=rentabilidade" replace />} />
-
-              <Route path="/mapa" element={<PrivateRoute />}>
-                <Route index element={<MapaObras />} />
-              </Route>
-
-              <Route path="/propostas" element={<PrivateRoute />}>
-                <Route index element={<Propostas />} />
-              </Route>
-
-              <Route path="/capacidade" element={<PrivateRoute />}>
-                <Route index element={<Capacidade />} />
-              </Route>
-
-              <Route path="/metas" element={<PrivateRoute />}>
-                <Route index element={<MetasPage />} />
-              </Route>
-
-              {/* Portal do Cliente — Token (rota pública legada) */}
-              <Route path="/portal/:token" element={<Portal />} />
-              <Route path="/portal/:token/financeiro" element={<PortalFinanceiro />} />
-              <Route path="/portal/:token/entregas" element={<PortalEntregas />} />
-
-              {/* Portal do Cliente — Autenticado */}
-              <Route path="/cliente/login" element={<ClienteLogin />} />
-              <Route path="/cliente" element={<ClientePrivateRoute />}>
-                <Route path="dashboard" element={<ClienteDashboard />} />
-                <Route path="projeto/:id" element={<ClienteProjetoDetail />} />
-                <Route path="projeto/:id/financeiro" element={<ClienteProjetoDetail />} />
-                <Route path="projeto/:id/entregas" element={<ClienteProjetoDetail />} />
-              </Route>
-
-              <Route path="/ai" element={<PrivateRoute />}>
-                <Route index element={<AiHub />} />
-              </Route>
-
-              <Route path="/profile" element={<PrivateRoute />}>
-                <Route index element={<Profile />} />
-              </Route>
-
-              <Route path="/company" element={<PrivateRoute />}>
-                <Route index element={<Company />} />
-              </Route>
-
-              <Route path="/company-setup" element={<PrivateRoute />}>
-                <Route index element={<CompanySetup />} />
-              </Route>
-
-              <Route path="/profile-setup" element={<PrivateRoute />}>
-                <Route index element={<ProfileSetup />} />
-              </Route>
-
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </Suspense>
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Suspense>
+          </AuthProvider>
         </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>

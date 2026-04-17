@@ -9,6 +9,7 @@ import { getSafeErrorMessage } from "@/lib/safeError";
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, ArrowRight, Building2, Hash, Loader2 } from "lucide-react";
 import { usePageTitle } from "@/hooks/usePageTitle";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function CompanySetup() {
   usePageTitle("Configuração da Empresa");
@@ -18,6 +19,7 @@ export default function CompanySetup() {
   const [progressValue, setProgressValue] = useState(0);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { refreshProfile } = useAuth();
 
   const targetProgress = useMemo(() => {
     const step = 2;
@@ -52,6 +54,9 @@ export default function CompanySetup() {
         .eq("id", profile.empresa_id);
 
       if (error) throw error;
+
+      // Atualiza o contexto antes de navegar para evitar loop no PrivateRoute
+      await refreshProfile();
 
       toast({
         title: "Empresa configurada!",

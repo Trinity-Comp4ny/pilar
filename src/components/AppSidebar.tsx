@@ -2,14 +2,9 @@ import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
   BarChart,
   Calendar,
-  Clock,
-  Copy,
   FileText,
   Home,
-  LayoutGrid,
   MapPin,
-  Sparkles,
-  Target,
   Users,
   User,
   UserCircle,
@@ -31,7 +26,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 const items = [
   { title: "Dashboard", url: "/dashboard", icon: Home },
@@ -40,80 +35,31 @@ const items = [
   { title: "Leads", url: "/leads", icon: UserPlus },
   { title: "Clientes", url: "/clientes", icon: Building2 },
   { title: "Financeiro", url: "/financeiro", icon: Wallet },
-  { title: "Metas", url: "/metas", icon: Target, disabled: true },
-  { title: "Timesheet", url: "/timesheet", icon: Clock, disabled: true },
   { title: "Pessoas", url: "/pessoas", icon: Users },
   { title: "Mapa", url: "/mapa", icon: MapPin },
-  { title: "Capacidade", url: "/capacidade", icon: LayoutGrid, disabled: true },
   { title: "Relatórios", url: "/relatorios", icon: BarChart },
-  { title: "Templates", url: "/templates", icon: Copy, disabled: true },
-  { title: "IA Pilar", url: "/ai", icon: Sparkles, disabled: true },
 ];
 
 export function AppSidebar() {
   const { state, isMobile, openMobile, setOpenMobile } = useSidebar();
   const location = useLocation();
   const navigate = useNavigate();
+  const { user, profile, signOut } = useAuth();
   const currentPath = location.pathname;
   const [sidebarWidth, setSidebarWidth] = useState(state === "collapsed" ? "64px" : "240px");
-  const [userName, setUserName] = useState("Usuário");
-  const [userEmail, setUserEmail] = useState<string | null>(null);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+
+  const userName =
+    profile?.nome || (user?.user_metadata as { nome?: string } | null | undefined)?.nome || user?.email || "Usuário";
+
+  const userEmail = user?.email ?? null;
 
   useEffect(() => {
     setSidebarWidth(state === "collapsed" ? "64px" : "240px");
   }, [state]);
 
-  useEffect(() => {
-    let active = true;
-
-    const loadUserData = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!active) return;
-
-      if (!user) {
-        const storedName = localStorage.getItem("pilar-user-name");
-        if (storedName) setUserName(storedName);
-        return;
-      }
-
-      setUserEmail(user.email ?? null);
-
-      const { data: profile } = await supabase.from("profiles").select("nome").eq("id", user.id).single();
-
-      if (!active) return;
-
-      const resolvedName =
-        profile?.nome ||
-        (user.user_metadata as { nome?: string } | null | undefined)?.nome ||
-        localStorage.getItem("pilar-user-name") ||
-        user.email ||
-        "Usuário";
-
-      setUserName(resolvedName);
-      if (resolvedName && resolvedName !== "Usuário") {
-        localStorage.setItem("pilar-user-name", resolvedName);
-      }
-    };
-
-    loadUserData();
-
-    const { data: authListener } = supabase.auth.onAuthStateChange(() => {
-      loadUserData();
-    });
-
-    return () => {
-      active = false;
-      authListener?.subscription?.unsubscribe();
-    };
-  }, []);
-
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    localStorage.removeItem("pilar-auth");
-    localStorage.removeItem("pilar-user-name");
+    await signOut();
     navigate("/login");
   };
 

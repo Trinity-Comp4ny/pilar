@@ -7,6 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { getSafeErrorMessage } from "@/lib/safeError";
 import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import { ArrowLeft, ArrowRight, Loader2, Lock, Phone, User } from "lucide-react";
 import { usePageTitle } from "@/hooks/usePageTitle";
 
@@ -20,6 +21,7 @@ export default function ProfileSetup() {
   const [progressValue, setProgressValue] = useState(0);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { refreshProfile } = useAuth();
 
   const targetProgress = useMemo(() => {
     const step = 1;
@@ -81,15 +83,8 @@ export default function ProfileSetup() {
       } = await supabase.auth.getUser();
       if (!user) throw new Error("Usuário não logado");
 
-      // 1. Atualizar senha se fornecida
-      if (password) {
-        const { error: pwdError } = await supabase.auth.updateUser({
-          password: password,
-        });
-        if (pwdError) throw pwdError;
-      }
-
-      // 2. Atualizar perfil e marcar onboarding como completo
+      // 1. Atualizar perfil PRIMEIRO — assim o onAuthStateChange que dispara
+      //    depois (pelo updateUser de senha) já lê onboarding_completed: true do banco.
       const { error } = await supabase
         .from("profiles")
         .update({
@@ -100,6 +95,17 @@ export default function ProfileSetup() {
         .eq("id", user.id);
 
       if (error) throw error;
+
+      // 2. Atualizar senha após o perfil — o onAuthStateChange lerá o perfil já atualizado
+      if (password) {
+        const { error: pwdError } = await supabase.auth.updateUser({
+          password: password,
+        });
+        if (pwdError) throw pwdError;
+      }
+
+      // 3. Forçar refresh do contexto para garantir que PrivateRoute leia onboarding_completed: true
+      await refreshProfile();
 
       toast({
         title: "Perfil atualizado!",
