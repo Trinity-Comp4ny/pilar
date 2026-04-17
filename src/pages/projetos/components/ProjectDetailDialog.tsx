@@ -30,8 +30,9 @@ import {
   getProjectProgress,
   getResponsaveisList,
   isDiscAtrasada,
+  dbDisciplinaToLegacy,
 } from "@/pages/projetos/types";
-import { supabase } from "@/integrations/supabase/client";
+import { useProjetoDisciplinas, useUpdateDisciplinaStatus } from "@/hooks/useProjetoDisciplinas";
 
 interface ProjectDetailDialogProps {
   open: boolean;
@@ -65,38 +66,41 @@ export function ProjectDetailDialog({
   const [justificativaDialog, setJustificativaDialog] = useState<{ discIdx: number; newStatus: string } | null>(null);
   const [justificativaText, setJustificativaText] = useState("");
 
+  // Fetch disciplinas from the relational table
+  const { data: dbDisciplinas = [] } = useProjetoDisciplinas(projeto?.id);
+  const updateStatusMut = useUpdateDisciplinaStatus();
+  const disciplinasLegacy = dbDisciplinas.map(dbDisciplinaToLegacy);
+
   if (!projeto) return null;
 
   const deadline = getDeadlineStatus(projeto);
-  const progress = getProjectProgress(projeto.disciplinas);
+  const progress = getProjectProgress(disciplinasLegacy);
   const statusConfig = PROJECT_STATUS_CONFIG[projeto.status];
 
   const applyDisciplineStatusChange = async (index: number, newStatus: string, justificativa?: string) => {
+    const dbDisc = dbDisciplinas[index];
+    if (!dbDisc) return;
     setUpdatingDisc(index);
-    const updatedDisciplinas = [...projeto.disciplinas];
-    updatedDisciplinas[index] = {
-      ...updatedDisciplinas[index],
-      status: newStatus,
-      ...(newStatus === "Concluído" && !updatedDisciplinas[index].data_final
-        ? { data_final: new Date().toISOString().split("T")[0] }
-        : {}),
-      ...(justificativa !== undefined ? { justificativa_atraso: justificativa } : {}),
-    };
-
-    const { error } = await supabase.from("projetos").update({ disciplinas: updatedDisciplinas }).eq("id", projeto.id);
-
-    if (error) {
-      toast({ variant: "destructive", title: "Erro ao atualizar", description: error.message });
-    } else {
-      projeto.disciplinas = updatedDisciplinas;
-      toast({ title: `${updatedDisciplinas[index].disciplina}: ${newStatus}` });
+    try {
+      await updateStatusMut.mutateAsync({
+        id: dbDisc.id,
+        projetoId: projeto.id,
+        status: newStatus,
+        justificativa_atraso: justificativa,
+        data_fim_real:
+          newStatus === "Concluído" && !dbDisc.data_fim_real ? new Date().toISOString().split("T")[0] : undefined,
+      });
+      toast({ title: `${dbDisc.nome}: ${newStatus}` });
       onProjectUpdated?.();
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Erro desconhecido";
+      toast({ variant: "destructive", title: "Erro ao atualizar", description: message });
     }
     setUpdatingDisc(null);
   };
 
   const handleDisciplineStatusChange = async (index: number, newStatus: string) => {
-    const disc = projeto.disciplinas[index];
+    const disc = disciplinasLegacy[index];
     if (isDiscAtrasada(disc) && newStatus !== "Concluído" && !disc.justificativa_atraso) {
       setJustificativaDialog({ discIdx: index, newStatus });
       setJustificativaText("");
@@ -186,15 +190,15 @@ export function ProjectDetailDialog({
             <div className="md:col-span-3 p-5">
               <div className="flex items-center justify-between mb-3">
                 <Label className="text-xs font-semibold uppercase text-muted-foreground">
-                  Disciplinas ({projeto.disciplinas.length})
+                  Disciplinas ({disciplinasLegacy.length})
                 </Label>
               </div>
 
-              {projeto.disciplinas.length === 0 ? (
+              {disciplinasLegacy.length === 0 ? (
                 <p className="text-xs text-muted-foreground text-center py-6">Nenhuma disciplina definida.</p>
               ) : (
                 <div className="space-y-2">
-                  {projeto.disciplinas.map((disc, idx) => {
+                  {disciplinasLegacy.map((disc, idx) => {
                     const statusColor =
                       DISC_STATUS_COLORS[disc.status || "Não Iniciado"] || DISC_STATUS_COLORS["Não Iniciado"];
                     const resps = getResponsaveisList(disc);
@@ -345,7 +349,7 @@ export function ProjectDetailDialog({
             <AlertDialogDescription>
               A disciplina{" "}
               <strong>
-                {justificativaDialog !== null && projeto?.disciplinas[justificativaDialog.discIdx]?.disciplina}
+                {justificativaDialog !== null && disciplinasLegacy[justificativaDialog.discIdx]?.disciplina}
               </strong>{" "}
               está atrasada. É necessário informar uma justificativa para continuar.
             </AlertDialogDescription>

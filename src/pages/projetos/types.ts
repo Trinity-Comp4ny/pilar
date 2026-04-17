@@ -28,6 +28,7 @@ export interface DisciplinaResponsavel {
   observacoes?: DisciplinaObservacao[];
   responsaveis?: ResponsavelDatas[];
   justificativa_atraso?: string;
+  etapa?: number;
 }
 
 export function isDiscAtrasada(disc: DisciplinaResponsavel): boolean {
@@ -117,6 +118,50 @@ export interface Projeto {
   valor_contrato: number;
   observacao: string;
   disciplinas: DisciplinaResponsavel[];
+}
+
+export interface ProjetoDisciplinaDB {
+  id: string;
+  projeto_id: string;
+  nome: string;
+  status: string;
+  data_inicio: string | null;
+  data_fim: string | null;
+  data_fim_real: string | null;
+  observacoes: string | null;
+  prioridade: string | null;
+  justificativa_atraso: string | null;
+  horas_estimadas: number;
+  custo_hora: number;
+  created_at?: string;
+  updated_at?: string;
+  responsaveis?: Array<{ id: string; nome: string }>;
+}
+
+/** Convert relational DB disciplina to the legacy JSONB shape used by UI components */
+export function dbDisciplinaToLegacy(d: ProjetoDisciplinaDB): DisciplinaResponsavel {
+  const resps: ResponsavelDatas[] = (d.responsaveis || []).map((r) => ({
+    responsavel_id: r.id,
+    responsavel_nome: r.nome,
+    data_inicio: d.data_inicio || undefined,
+    data_previsao: d.data_fim || undefined,
+    data_final: d.data_fim_real || undefined,
+    status: d.status,
+  }));
+
+  return {
+    disciplina: d.nome,
+    responsavel_id: resps[0]?.responsavel_id || "",
+    responsavel_nome: resps[0]?.responsavel_nome || "",
+    data_inicio: d.data_inicio || undefined,
+    data_previsao: d.data_fim || undefined,
+    data_final: d.data_fim_real || undefined,
+    status: d.status,
+    prioridade: (d.prioridade as ProjectPriority) || undefined,
+    justificativa_atraso: d.justificativa_atraso || undefined,
+    responsaveis: resps,
+    observacoes: [],
+  };
 }
 
 export const disciplinaStatusOptions = ["Não Iniciado", "Em Andamento", "Concluído", "Pendente"];

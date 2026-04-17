@@ -12,6 +12,7 @@ export function TimesheetApproval() {
   const { data: pendentes = [], isLoading } = useTimesheetsPendentes();
   const aprovar = useAprovarTimesheet();
   const [processingId, setProcessingId] = useState<string | null>(null);
+  const [approvingAll, setApprovingAll] = useState(false);
 
   const handleAprovar = (id: string, status: "aprovado" | "rejeitado") => {
     setProcessingId(id);
@@ -36,11 +37,22 @@ export function TimesheetApproval() {
     );
   };
 
-  const handleAprovarTodos = () => {
-    pendentes.forEach((t) => {
-      aprovar.mutate({ id: t.id, status: "aprovado" });
-    });
-    toast({ title: `${pendentes.length} timesheets aprovados` });
+  const handleAprovarTodos = async () => {
+    setApprovingAll(true);
+    const results = await Promise.allSettled(
+      pendentes.map((t) => aprovar.mutateAsync({ id: t.id, status: "aprovado" }))
+    );
+    const succeeded = results.filter((r) => r.status === "fulfilled").length;
+    const failed = results.filter((r) => r.status === "rejected").length;
+    if (failed > 0) {
+      toast({
+        title: `${succeeded} aprovados, ${failed} falharam`,
+        variant: "destructive",
+      });
+    } else {
+      toast({ title: `${succeeded} timesheets aprovados` });
+    }
+    setApprovingAll(false);
   };
 
   // Agrupa por pessoa
@@ -79,8 +91,8 @@ export function TimesheetApproval() {
         <p className="text-sm text-muted-foreground">
           {pendentes.length} registro{pendentes.length !== 1 ? "s" : ""} pendente{pendentes.length !== 1 ? "s" : ""}
         </p>
-        <Button size="sm" onClick={handleAprovarTodos} disabled={aprovar.isPending}>
-          <CheckCircle2 className="h-4 w-4 mr-1" />
+        <Button size="sm" onClick={handleAprovarTodos} disabled={approvingAll || aprovar.isPending}>
+          {approvingAll ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <CheckCircle2 className="h-4 w-4 mr-1" />}
           Aprovar Todos
         </Button>
       </div>

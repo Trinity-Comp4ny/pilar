@@ -39,8 +39,8 @@ import {
 import {
   type Projeto,
   type DisciplinaResponsavel,
-  type DisciplinaObservacao,
   type ResponsavelDatas,
+  type ProjetoDisciplinaDB,
   disciplinaStatusOptions,
   formatCurrency,
   formatDate,
@@ -49,7 +49,14 @@ import {
   getProjectProgress,
   getResponsaveisList,
   isDiscAtrasada,
+  dbDisciplinaToLegacy,
 } from "./types";
+import {
+  useProjetoDisciplinas,
+  useUpsertDisciplina,
+  useDeleteDisciplina,
+  useUpdateDisciplinaStatus,
+} from "@/hooks/useProjetoDisciplinas";
 import { Textarea } from "@/components/ui/textarea";
 import {
   AlertDialog,
@@ -83,6 +90,15 @@ export default function ProjetoDetail() {
   const [projeto, setProjeto] = useState<Projeto | null>(null);
   const [loading, setLoading] = useState(true);
   const { data: rentabilidade } = useProjetoRentabilidade(id);
+
+  // Relational disciplinas from the new table
+  const { data: dbDisciplinas = [] } = useProjetoDisciplinas(id);
+  const upsertDisciplina = useUpsertDisciplina();
+  const deleteDisciplinaMut = useDeleteDisciplina();
+  const updateStatusMut = useUpdateDisciplinaStatus();
+
+  // Convert DB disciplinas to legacy shape for UI compatibility
+  const disciplinasLegacy: DisciplinaResponsavel[] = dbDisciplinas.map(dbDisciplinaToLegacy);
 
   const [disciplinasCatalog, setDisciplinasCatalog] = useState<{ id: string; nome: string }[]>([]);
   const [pessoas, setPessoas] = useState<{ id: string; nome: string }[]>([]);
@@ -129,7 +145,7 @@ export default function ProjetoDetail() {
         prioridade: (data.prioridade as ProjectPriority) || PROJECT_PRIORITY.MEDIA,
         valor_contrato: data.valor_contrato,
         observacao: data.observacao,
-        disciplinas: Array.isArray(data.disciplinas) ? data.disciplinas : [],
+        disciplinas: [], // Disciplinas now come from useProjetoDisciplinas hook
       });
       setLoading(false);
     };
@@ -157,21 +173,12 @@ export default function ProjetoDetail() {
     });
   }, [canEdit]);
 
-  const saveDisciplinas = async (newDiscs: DisciplinaResponsavel[]) => {
-    if (!projeto) return false;
-    const { error } = await supabase.from("projetos").update({ disciplinas: newDiscs }).eq("id", projeto.id);
-    if (error) {
-      toast({ variant: "destructive", title: "Erro ao atualizar", description: error.message });
-      return false;
-    }
-    setProjeto((prev) => (prev ? { ...prev, disciplinas: newDiscs } : prev));
-    return true;
-  };
+  // Helper to get the DB disciplina by index in the legacy array
+  const getDbDisc = (idx: number): ProjetoDisciplinaDB | undefined => dbDisciplinas[idx];
 
   const handleDiscStatusChange = async (idx: number, newStatus: string) => {
     if (!projeto) return;
-    const disc = projeto.disciplinas[idx];
-    // Se a disciplina está atrasada e o novo status NÃO é "Concluído", exigir justificativa
+    const disc = disciplinasLegacy[idx];
     if (isDiscAtrasada(disc) && newStatus !== "Concluído" && !disc.justificativa_atraso) {
       setJustificativaDialog({ discIdx: idx, newStatus });
       setJustificativaText("");
@@ -182,18 +189,23 @@ export default function ProjetoDetail() {
 
   const applyDiscStatusChange = async (idx: number, newStatus: string, justificativa?: string) => {
     if (!projeto) return;
+    const dbDisc = getDbDisc(idx);
+    if (!dbDisc) return;
     setUpdatingDisc(idx);
-    const updated = [...projeto.disciplinas];
-    updated[idx] = {
-      ...updated[idx],
-      status: newStatus,
-      ...(newStatus === "Concluído" && !updated[idx].data_final
-        ? { data_final: new Date().toISOString().split("T")[0] }
-        : {}),
-      ...(justificativa !== undefined ? { justificativa_atraso: justificativa } : {}),
-    };
-    const ok = await saveDisciplinas(updated);
-    if (ok) toast({ title: `${updated[idx].disciplina}: ${newStatus}` });
+    try {
+      await updateStatusMut.mutateAsync({
+        id: dbDisc.id,
+        projetoId: projeto.id,
+        status: newStatus,
+        justificativa_atraso: justificativa,
+        data_fim_real:
+          newStatus === "Concluído" && !dbDisc.data_fim_real ? new Date().toISOString().split("T")[0] : undefined,
+      });
+      toast({ title: `${dbDisc.nome}: ${newStatus}` });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Erro desconhecido";
+      toast({ variant: "destructive", title: "Erro ao atualizar", description: message });
+    }
     setUpdatingDisc(null);
   };
 
@@ -204,161 +216,174 @@ export default function ProjetoDetail() {
     setJustificativaText("");
   };
 
+  // Local editing state for the disc edit dialog
+  const [editingDiscLocal, setEditingDiscLocal] = useState<ProjetoDisciplinaDB | null>(null);
+
   const handleDiscFieldUpdate = (field: keyof DisciplinaResponsavel, value: string) => {
-    if (editingDiscIdx === null || !projeto) return;
-    const updated = [...projeto.disciplinas];
-    if (field === "responsavel_id") {
-      const pessoa = pessoas.find((p) => p.id === value);
-      updated[editingDiscIdx] = {
-        ...updated[editingDiscIdx],
-        responsavel_id: value,
-        responsavel_nome: pessoa?.nome || "",
-      };
-    } else {
-      updated[editingDiscIdx] = { ...updated[editingDiscIdx], [field]: value };
-    }
-    setProjeto((prev) => (prev ? { ...prev, disciplinas: updated } : prev));
+    if (!editingDiscLocal) return;
+    const fieldMap: Record<string, string> = {
+      disciplina: "nome",
+      data_previsao: "data_fim",
+      data_final: "data_fim_real",
+    };
+    const dbField = fieldMap[field] || field;
+    setEditingDiscLocal((prev) => (prev ? { ...prev, [dbField]: value } : prev));
   };
 
   const handleAddObservation = () => {
-    if (!newObservation.trim() || editingDiscIdx === null || !projeto) return;
-    const updated = [...projeto.disciplinas];
-    const disc = updated[editingDiscIdx];
-    const newObs: DisciplinaObservacao = {
-      id: crypto.randomUUID(),
-      texto: newObservation,
-      usuario: "Usuário",
-      data: new Date().toISOString(),
-    };
-    updated[editingDiscIdx] = {
-      ...disc,
-      observacoes: [...(disc.observacoes || []), newObs],
-    };
-    setProjeto((prev) => (prev ? { ...prev, disciplinas: updated } : prev));
+    // TODO: Observacoes need their own relational table in a future migration.
+    // For now, we store in the observacoes text field as a simple append.
+    if (!newObservation.trim() || !editingDiscLocal) return;
+    const existing = editingDiscLocal.observacoes || "";
+    const timestamp = new Date().toLocaleString();
+    const entry = `[${timestamp}] ${newObservation.trim()}`;
+    setEditingDiscLocal((prev) => (prev ? { ...prev, observacoes: existing ? `${existing}\n${entry}` : entry } : prev));
     setNewObservation("");
   };
 
   const handleSaveDiscChanges = async () => {
-    if (!projeto) return;
-    const ok = await saveDisciplinas(projeto.disciplinas);
-    if (ok) {
+    if (!projeto || !editingDiscLocal) return;
+    try {
+      const responsavelIds = (editingDiscLocal.responsaveis || []).map((r) => r.id);
+      await upsertDisciplina.mutateAsync({
+        id: editingDiscLocal.id,
+        projeto_id: projeto.id,
+        nome: editingDiscLocal.nome,
+        status: editingDiscLocal.status,
+        data_inicio: editingDiscLocal.data_inicio,
+        data_fim: editingDiscLocal.data_fim,
+        data_fim_real: editingDiscLocal.data_fim_real,
+        observacoes: editingDiscLocal.observacoes,
+        prioridade: editingDiscLocal.prioridade,
+        justificativa_atraso: editingDiscLocal.justificativa_atraso,
+        horas_estimadas: editingDiscLocal.horas_estimadas,
+        custo_hora: editingDiscLocal.custo_hora,
+        responsavel_ids: responsavelIds,
+      });
       toast({ title: "Disciplina atualizada" });
       setIsDiscDialogOpen(false);
       setEditingDiscIdx(null);
+      setEditingDiscLocal(null);
       setNewObservation("");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Erro desconhecido";
+      toast({ variant: "destructive", title: "Erro ao salvar", description: message });
     }
   };
 
   const handleRemoveDisc = async (idx: number) => {
     if (!projeto) return;
-    const updated = projeto.disciplinas.filter((_, i) => i !== idx);
-    const ok = await saveDisciplinas(updated);
-    if (ok) toast({ title: "Disciplina removida" });
+    const dbDisc = getDbDisc(idx);
+    if (!dbDisc) return;
+    try {
+      await deleteDisciplinaMut.mutateAsync({ id: dbDisc.id, projetoId: projeto.id });
+      toast({ title: "Disciplina removida" });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Erro desconhecido";
+      toast({ variant: "destructive", title: "Erro ao remover", description: message });
+    }
   };
 
   const handleAddDisc = async () => {
     if (!projeto || !newDisc.disciplina || !newDisc.responsavel_id) return;
-    const pessoa = pessoas.find((p) => p.id === newDisc.responsavel_id);
-    const nova: DisciplinaResponsavel = {
-      disciplina: newDisc.disciplina,
-      responsavel_id: newDisc.responsavel_id,
-      responsavel_nome: pessoa?.nome || "",
-      status: "Não Iniciado",
-      observacoes: [],
-      responsaveis: [
-        {
-          responsavel_id: newDisc.responsavel_id,
-          responsavel_nome: pessoa?.nome || "",
-          status: "Não Iniciado",
-        },
-      ],
-    };
-    const updated = [...projeto.disciplinas, nova];
-    const ok = await saveDisciplinas(updated);
-    if (ok) {
+    try {
+      await upsertDisciplina.mutateAsync({
+        projeto_id: projeto.id,
+        nome: newDisc.disciplina,
+        status: "Não Iniciado",
+        responsavel_ids: [newDisc.responsavel_id],
+      });
       toast({ title: "Disciplina adicionada" });
       setNewDisc({ disciplina: "", responsavel_id: "" });
       setIsAddingDisc(false);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Erro desconhecido";
+      toast({ variant: "destructive", title: "Erro ao adicionar", description: message });
     }
   };
 
   const handleAddResponsavel = async (discIdx: number) => {
     if (!projeto || !newResp.responsavel_id) return;
+    const dbDisc = getDbDisc(discIdx);
+    if (!dbDisc) return;
     const pessoa = pessoas.find((p) => p.id === newResp.responsavel_id);
-    const updated = [...projeto.disciplinas];
-    const disc = updated[discIdx];
-    const currentResps = getResponsaveisList(disc);
+    const currentIds = (dbDisc.responsaveis || []).map((r) => r.id);
 
-    if (currentResps.some((r) => r.responsavel_id === newResp.responsavel_id)) {
+    if (currentIds.includes(newResp.responsavel_id)) {
       toast({ variant: "destructive", title: "Responsável já adicionado nesta disciplina" });
       return;
     }
 
-    const novoResp: ResponsavelDatas = {
-      responsavel_id: newResp.responsavel_id,
-      responsavel_nome: pessoa?.nome || "",
-      data_inicio: newResp.data_inicio || undefined,
-      data_previsao: newResp.data_previsao || undefined,
-      data_final: newResp.data_final || undefined,
-      status: "Não Iniciado",
-    };
-
-    updated[discIdx] = {
-      ...disc,
-      responsaveis: [...currentResps, novoResp],
-    };
-
-    const ok = await saveDisciplinas(updated);
-    if (ok) {
-      toast({ title: `${pessoa?.nome} adicionado(a) a ${disc.disciplina}` });
+    try {
+      await upsertDisciplina.mutateAsync({
+        id: dbDisc.id,
+        projeto_id: projeto.id,
+        nome: dbDisc.nome,
+        status: dbDisc.status,
+        data_inicio: dbDisc.data_inicio,
+        data_fim: dbDisc.data_fim,
+        data_fim_real: dbDisc.data_fim_real,
+        prioridade: dbDisc.prioridade,
+        justificativa_atraso: dbDisc.justificativa_atraso,
+        horas_estimadas: dbDisc.horas_estimadas,
+        custo_hora: dbDisc.custo_hora,
+        responsavel_ids: [...currentIds, newResp.responsavel_id],
+      });
+      toast({ title: `${pessoa?.nome} adicionado(a) a ${dbDisc.nome}` });
       setNewResp({ responsavel_id: "", data_inicio: "", data_previsao: "", data_final: "" });
       setAddingResponsavelToDisc(null);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Erro desconhecido";
+      toast({ variant: "destructive", title: "Erro ao adicionar responsável", description: message });
     }
   };
 
   const handleRemoveResponsavel = async (discIdx: number, respIdx: number) => {
     if (!projeto) return;
-    const updated = [...projeto.disciplinas];
-    const disc = updated[discIdx];
-    const resps = getResponsaveisList(disc);
+    const dbDisc = getDbDisc(discIdx);
+    if (!dbDisc) return;
+    const currentIds = (dbDisc.responsaveis || []).map((r) => r.id);
 
-    if (resps.length <= 1) {
+    if (currentIds.length <= 1) {
       toast({ variant: "destructive", title: "A disciplina precisa ter ao menos um responsável" });
       return;
     }
 
-    const newResps = resps.filter((_, i) => i !== respIdx);
-    updated[discIdx] = {
-      ...disc,
-      responsaveis: newResps,
-      responsavel_id: newResps[0].responsavel_id,
-      responsavel_nome: newResps[0].responsavel_nome,
-    };
-
-    const ok = await saveDisciplinas(updated);
-    if (ok) toast({ title: "Responsável removido" });
+    const newIds = currentIds.filter((_, i) => i !== respIdx);
+    try {
+      await upsertDisciplina.mutateAsync({
+        id: dbDisc.id,
+        projeto_id: projeto.id,
+        nome: dbDisc.nome,
+        status: dbDisc.status,
+        data_inicio: dbDisc.data_inicio,
+        data_fim: dbDisc.data_fim,
+        data_fim_real: dbDisc.data_fim_real,
+        prioridade: dbDisc.prioridade,
+        justificativa_atraso: dbDisc.justificativa_atraso,
+        horas_estimadas: dbDisc.horas_estimadas,
+        custo_hora: dbDisc.custo_hora,
+        responsavel_ids: newIds,
+      });
+      toast({ title: "Responsável removido" });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Erro desconhecido";
+      toast({ variant: "destructive", title: "Erro ao remover responsável", description: message });
+    }
   };
 
   const handleUpdateResponsavelDatas = async (
-    discIdx: number,
-    respIdx: number,
-    field: keyof ResponsavelDatas,
-    value: string
+    _discIdx: number,
+    _respIdx: number,
+    _field: keyof ResponsavelDatas,
+    _value: string
   ) => {
-    if (!projeto) return;
-    const updated = [...projeto.disciplinas];
-    const disc = updated[discIdx];
-    const resps = [...getResponsaveisList(disc)];
-
-    resps[respIdx] = { ...resps[respIdx], [field]: value };
-    updated[discIdx] = { ...disc, responsaveis: resps };
-    setProjeto((prev) => (prev ? { ...prev, disciplinas: updated } : prev));
+    // TODO: Per-responsavel dates require schema changes to projeto_disciplina_responsaveis.
+    // For now this is a no-op; the dates are stored at the disciplina level.
   };
 
   const handleSaveResponsavelDatas = async () => {
-    if (!projeto) return;
-    const ok = await saveDisciplinas(projeto.disciplinas);
-    if (ok) toast({ title: "Datas atualizadas" });
+    // TODO: Per-responsavel dates are not yet supported in the relational schema.
   };
 
   if (loading || !projeto) {
@@ -372,7 +397,7 @@ export default function ProjetoDetail() {
   }
 
   const deadline = getDeadlineStatus(projeto);
-  const progress = getProjectProgress(projeto.disciplinas);
+  const progress = getProjectProgress(disciplinasLegacy);
 
   const margemBrutaPct = rentabilidade?.margem_bruta_pct ?? null;
 
@@ -568,7 +593,7 @@ export default function ProjetoDetail() {
                 </div>
               )}
 
-              {projeto.disciplinas.length === 0 && !isAddingDisc ? (
+              {disciplinasLegacy.length === 0 && !isAddingDisc ? (
                 <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
                   <Layers className="h-10 w-10 mb-3 opacity-30" />
                   <p className="text-sm font-medium">Nenhuma disciplina definida</p>
@@ -581,7 +606,7 @@ export default function ProjetoDetail() {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {projeto.disciplinas.map((d, i) => {
+                  {disciplinasLegacy.map((d, i) => {
                     const dpc = d.prioridade ? PROJECT_PRIORITY_CONFIG[d.prioridade as ProjectPriority] : null;
                     const DISC_STATUS_COLORS: Record<string, string> = {
                       Concluído: "bg-green-50 text-green-800 border-green-200",
@@ -667,6 +692,8 @@ export default function ProjetoDetail() {
                                   className="h-7 w-7 text-muted-foreground hover:text-foreground"
                                   onClick={() => {
                                     setEditingDiscIdx(i);
+                                    const dbD = getDbDisc(i);
+                                    if (dbD) setEditingDiscLocal({ ...dbD });
                                     setIsDiscDialogOpen(true);
                                   }}
                                 >
@@ -922,6 +949,7 @@ export default function ProjetoDetail() {
               if (!open) {
                 setIsDiscDialogOpen(false);
                 setEditingDiscIdx(null);
+                setEditingDiscLocal(null);
                 setNewObservation("");
               }
             }}
@@ -937,7 +965,7 @@ export default function ProjetoDetail() {
                 </DialogDescription>
               </DialogHeader>
 
-              {editingDiscIdx !== null && projeto.disciplinas[editingDiscIdx] && (
+              {editingDiscLocal && (
                 <div className="space-y-5 mt-2">
                   {/* Seção: Dados básicos */}
                   <div className="space-y-3">
@@ -946,7 +974,7 @@ export default function ProjetoDetail() {
                       <div className="space-y-1.5">
                         <Label className="text-xs">Disciplina</Label>
                         <Select
-                          value={projeto.disciplinas[editingDiscIdx].disciplina}
+                          value={editingDiscLocal.nome}
                           onValueChange={(val) => handleDiscFieldUpdate("disciplina", val)}
                         >
                           <SelectTrigger className="h-9">
@@ -964,7 +992,7 @@ export default function ProjetoDetail() {
                       <div className="space-y-1.5">
                         <Label className="text-xs">Prioridade</Label>
                         <Select
-                          value={projeto.disciplinas[editingDiscIdx].prioridade || PROJECT_PRIORITY.MEDIA}
+                          value={editingDiscLocal.prioridade || PROJECT_PRIORITY.MEDIA}
                           onValueChange={(val) => handleDiscFieldUpdate("prioridade", val)}
                         >
                           <SelectTrigger className="h-9">
@@ -996,7 +1024,7 @@ export default function ProjetoDetail() {
                     <div className="space-y-1.5">
                       <Label className="text-xs">Status</Label>
                       <Select
-                        value={projeto.disciplinas[editingDiscIdx].status || "Não Iniciado"}
+                        value={editingDiscLocal.status || "Não Iniciado"}
                         onValueChange={(val) => handleDiscFieldUpdate("status", val)}
                       >
                         <SelectTrigger className="h-9">
@@ -1022,7 +1050,7 @@ export default function ProjetoDetail() {
                         <Input
                           type="date"
                           className="h-9 text-xs"
-                          value={projeto.disciplinas[editingDiscIdx].data_inicio || ""}
+                          value={editingDiscLocal.data_inicio || ""}
                           onChange={(e) => handleDiscFieldUpdate("data_inicio", e.target.value)}
                         />
                       </div>
@@ -1031,7 +1059,7 @@ export default function ProjetoDetail() {
                         <Input
                           type="date"
                           className="h-9 text-xs"
-                          value={projeto.disciplinas[editingDiscIdx].data_previsao || ""}
+                          value={editingDiscLocal.data_fim || ""}
                           onChange={(e) => handleDiscFieldUpdate("data_previsao", e.target.value)}
                         />
                       </div>
@@ -1040,7 +1068,7 @@ export default function ProjetoDetail() {
                         <Input
                           type="date"
                           className="h-9 text-xs"
-                          value={projeto.disciplinas[editingDiscIdx].data_final || ""}
+                          value={editingDiscLocal.data_fim_real || ""}
                           onChange={(e) => handleDiscFieldUpdate("data_final", e.target.value)}
                         />
                       </div>
@@ -1054,20 +1082,11 @@ export default function ProjetoDetail() {
                     </p>
 
                     <div className="rounded-lg border max-h-48 overflow-y-auto">
-                      {!projeto.disciplinas[editingDiscIdx].observacoes ||
-                      projeto.disciplinas[editingDiscIdx].observacoes!.length === 0 ? (
+                      {!editingDiscLocal.observacoes ? (
                         <p className="text-xs text-center text-muted-foreground py-6">Nenhuma observação registrada</p>
                       ) : (
-                        <div className="divide-y">
-                          {projeto.disciplinas[editingDiscIdx].observacoes!.map((obs, oi) => (
-                            <div key={oi} className="px-3 py-2.5">
-                              <p className="text-sm text-foreground">{obs.texto}</p>
-                              <div className="flex justify-between items-center mt-1.5 text-[10px] text-muted-foreground">
-                                <span className="font-medium">{obs.usuario}</span>
-                                <span>{new Date(obs.data).toLocaleString()}</span>
-                              </div>
-                            </div>
-                          ))}
+                        <div className="px-3 py-2.5">
+                          <p className="text-sm text-foreground whitespace-pre-line">{editingDiscLocal.observacoes}</p>
                         </div>
                       )}
                     </div>
@@ -1122,7 +1141,7 @@ export default function ProjetoDetail() {
 
         <TabsContent value="cronograma">
           <CronogramaTab
-            disciplinas={projeto.disciplinas}
+            disciplinas={disciplinasLegacy}
             projetoDataInicio={projeto.data_inicio}
             projetoDataPrevisao={projeto.data_previsao}
           />
@@ -1133,7 +1152,7 @@ export default function ProjetoDetail() {
         </TabsContent>
 
         <TabsContent value="orcamento">
-          <ProjectBudgetTab projetoId={projeto.id} canEdit={canEdit} disciplinas={projeto.disciplinas} />
+          <ProjectBudgetTab projetoId={projeto.id} canEdit={canEdit} disciplinas={disciplinasLegacy} />
         </TabsContent>
 
         <TabsContent value="marcos">
@@ -1177,7 +1196,7 @@ export default function ProjetoDetail() {
               prioridade: (data.prioridade as ProjectPriority) || PROJECT_PRIORITY.MEDIA,
               valor_contrato: data.valor_contrato,
               observacao: data.observacao,
-              disciplinas: Array.isArray(data.disciplinas) ? data.disciplinas : [],
+              disciplinas: [], // Disciplinas now come from useProjetoDisciplinas hook
             });
           }
         }}
@@ -1202,7 +1221,7 @@ export default function ProjetoDetail() {
             <AlertDialogDescription>
               A disciplina{" "}
               <strong>
-                {justificativaDialog !== null && projeto?.disciplinas[justificativaDialog.discIdx]?.disciplina}
+                {justificativaDialog !== null && disciplinasLegacy[justificativaDialog.discIdx]?.disciplina}
               </strong>{" "}
               está atrasada. É necessário informar uma justificativa para continuar.
             </AlertDialogDescription>

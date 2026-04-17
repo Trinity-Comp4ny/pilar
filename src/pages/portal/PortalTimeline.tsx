@@ -28,11 +28,36 @@ export function TimelineContent({ projetoId }: { projetoId: string }) {
   useEffect(() => {
     const fetch = async () => {
       const { data } = await supabase
-        .from("projetos")
-        .select("disciplinas, data_inicio, data_previsao")
-        .eq("id", projetoId)
-        .single();
-      if (data) setDisciplinas(Array.isArray(data.disciplinas) ? data.disciplinas : []);
+        .from("projeto_disciplinas")
+        .select(
+          `
+          nome, status, data_inicio, data_fim, data_fim_real,
+          projeto_disciplina_responsaveis (
+            pessoas ( nome )
+          )
+        `
+        )
+        .eq("projeto_id", projetoId)
+        .order("created_at");
+      if (data) {
+        setDisciplinas(
+          data.map((d: Record<string, unknown>) => {
+            const resps = (d.projeto_disciplina_responsaveis as Array<{ pessoas: { nome: string } }>) || [];
+            return {
+              disciplina: d.nome as string,
+              status: d.status as string | undefined,
+              data_inicio: d.data_inicio as string | undefined,
+              data_previsao: d.data_fim as string | undefined,
+              data_final: d.data_fim_real as string | undefined,
+              responsavel_nome:
+                resps
+                  .map((r) => r.pessoas?.nome)
+                  .filter(Boolean)
+                  .join(", ") || undefined,
+            };
+          })
+        );
+      }
       setLoading(false);
     };
     fetch();

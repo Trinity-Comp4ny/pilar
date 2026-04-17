@@ -68,40 +68,51 @@ export const useProjetosAtribuidos = (pessoaId: string | undefined) => {
     queryFn: async () => {
       if (!pessoaId) return [];
 
-      // Busca projetos ativos que tenham esta pessoa em alguma disciplina
-      const { data: projetos, error } = await supabase
-        .from("projetos")
-        .select("id, codigo_projeto, nome, disciplinas, status")
-        .is("deleted_at", null)
-        .in("status", ["Planejamento", "Em andamento"]);
+      // Query disciplinas where this person is a responsavel, joining project info
+      const { data, error } = await supabase
+        .from("projeto_disciplina_responsaveis")
+        .select(
+          `
+          pessoa_id,
+          projeto_disciplinas (
+            nome,
+            projeto_id,
+            projetos (
+              id, codigo_projeto, nome, status, deleted_at
+            )
+          )
+        `
+        )
+        .eq("pessoa_id", pessoaId);
 
       if (error) throw error;
 
-      // Filtra projetos onde a pessoa é responsável por alguma disciplina
-      const projetosAtribuidos = (projetos || [])
-        .map((p) => {
-          const disciplinas = (p.disciplinas || []) as Array<{
-            disciplina: string;
-            responsavel_id: string;
-            responsavel_nome: string;
-          }>;
-          const minhasDisciplinas = disciplinas.filter((d) => d.responsavel_id === pessoaId);
-          if (minhasDisciplinas.length === 0) return null;
-          return {
+      // Group by project
+      const projetoMap = new Map<string, { id: string; codigo_projeto: string; nome: string; disciplinas: string[] }>();
+
+      for (const row of data || []) {
+        const disc = row.projeto_disciplinas as unknown as {
+          nome: string;
+          projeto_id: string;
+          projetos: { id: string; codigo_projeto: string; nome: string; status: string; deleted_at: string | null };
+        };
+        if (!disc?.projetos) continue;
+        const p = disc.projetos;
+        if (p.deleted_at) continue;
+        if (!["Planejamento", "Em andamento"].includes(p.status)) continue;
+
+        if (!projetoMap.has(p.id)) {
+          projetoMap.set(p.id, {
             id: p.id,
             codigo_projeto: p.codigo_projeto,
             nome: p.nome,
-            disciplinas: minhasDisciplinas.map((d) => d.disciplina),
-          };
-        })
-        .filter(Boolean);
+            disciplinas: [],
+          });
+        }
+        projetoMap.get(p.id)!.disciplinas.push(disc.nome);
+      }
 
-      return projetosAtribuidos as Array<{
-        id: string;
-        codigo_projeto: string;
-        nome: string;
-        disciplinas: string[];
-      }>;
+      return Array.from(projetoMap.values());
     },
     enabled: !!pessoaId,
     staleTime: 1000 * 60 * 5,

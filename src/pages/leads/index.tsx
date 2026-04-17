@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,6 +24,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { supabase } from "@/integrations/supabase/client";
 import { getSafeErrorMessage } from "@/lib/safeError";
 import { usePageTitle } from "@/hooks/usePageTitle";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 interface Lead {
   id: string;
@@ -52,7 +53,19 @@ const statusConfig: Record<string, { label: string; color: string; columnColor: 
 
 export default function Leads() {
   usePageTitle("Leads");
-  const [leads, setLeads] = useState<Lead[]>([]);
+  const queryClient = useQueryClient();
+  const { data: leads = [], isLoading: _isLoading } = useQuery({
+    queryKey: ["leads"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("leads")
+        .select("*")
+        .is("deleted_at", null)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data || []) as Lead[];
+    },
+  });
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
@@ -72,18 +85,6 @@ export default function Leads() {
   const [isAutoConvertOpen, setIsAutoConvertOpen] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    fetchLeads();
-  }, []);
-
-  const fetchLeads = async () => {
-    const { data, error: _error } = await supabase.from("leads").select("*").order("created_at", { ascending: false });
-
-    if (data) {
-      setLeads(data as Lead[]);
-    }
-  };
 
   const handleCardClick = (lead: Lead) => {
     setSelectedLead(lead);
@@ -122,7 +123,7 @@ export default function Leads() {
 
       setFormData({ nome: "", email: "", contato: "", origem: "" });
       setIsDialogOpen(false);
-      fetchLeads();
+      queryClient.invalidateQueries({ queryKey: ["leads"] });
     } catch (err: unknown) {
       toast({
         title: "Erro ao salvar",
@@ -166,10 +167,11 @@ export default function Leads() {
 
   const updateLeadStatus = async (leadId: string, newStatus: string, extraFields?: Record<string, unknown>) => {
     // Optimistic update
-    const updatedLeads = leads.map((lead) =>
-      lead.id === leadId ? { ...lead, status: newStatus as Lead["status"], ...extraFields } : lead
+    queryClient.setQueryData(["leads"], (old: Lead[] | undefined) =>
+      (old || []).map((lead) =>
+        lead.id === leadId ? { ...lead, status: newStatus as Lead["status"], ...extraFields } : lead
+      )
     );
-    setLeads(updatedLeads);
 
     try {
       const { error } = await supabase
@@ -189,7 +191,7 @@ export default function Leads() {
         description: getSafeErrorMessage(error),
         variant: "destructive",
       });
-      fetchLeads();
+      queryClient.invalidateQueries({ queryKey: ["leads"] });
     }
   };
 
@@ -223,7 +225,7 @@ export default function Leads() {
 
       setIsAutoConvertOpen(false);
       setPendingDrop(null);
-      fetchLeads();
+      queryClient.invalidateQueries({ queryKey: ["leads"] });
     } catch (err: unknown) {
       toast({
         title: "Erro na conversão",
@@ -269,7 +271,7 @@ export default function Leads() {
 
       setIsConvertOpen(false);
       setIsDetailOpen(false);
-      fetchLeads();
+      queryClient.invalidateQueries({ queryKey: ["leads"] });
     } catch (err: unknown) {
       toast({
         title: "Erro na conversão",
@@ -319,11 +321,11 @@ export default function Leads() {
   };
 
   const handleDelete = async (id: string) => {
-    const { error } = await supabase.from("leads").delete().eq("id", id);
+    const { error } = await supabase.from("leads").update({ deleted_at: new Date().toISOString() }).eq("id", id);
     if (!error) {
       toast({ title: "Lead excluído" });
       setIsDetailOpen(false);
-      fetchLeads();
+      queryClient.invalidateQueries({ queryKey: ["leads"] });
     }
   };
 

@@ -1,4 +1,4 @@
-import { useCallback, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Loader2 } from "lucide-react";
@@ -27,6 +27,27 @@ export function TimesheetGrid({ pessoaId, weekStart, weekEnd, weekDays }: Timesh
   const { data: horasOrcadasMap = new Map() } = useHorasOrcadasPorProjeto(projetoIds);
 
   const debounceTimers = useRef<Map<string, NodeJS.Timeout>>(new Map());
+  const [localValues, setLocalValues] = useState<Record<string, string>>({});
+
+  // Cancela timers pendentes e reseta estado quando a semana muda
+  // (evita salvar dados de uma semana em outra)
+  useEffect(() => {
+    debounceTimers.current.forEach((timer) => clearTimeout(timer));
+    debounceTimers.current.clear();
+    setLocalValues({});
+  }, [weekStart, weekEnd]);
+
+  // Reseta valores locais quando dados chegam do servidor (pós-save)
+  useEffect(() => {
+    setLocalValues({});
+  }, [timesheets]);
+
+  // Cancela timers no unmount
+  useEffect(() => {
+    return () => {
+      debounceTimers.current.forEach((timer) => clearTimeout(timer));
+    };
+  }, []);
 
   const getHoras = useCallback(
     (projetoId: string, disciplina: string, data: string): number => {
@@ -50,10 +71,12 @@ export function TimesheetGrid({ pessoaId, weekStart, weekEnd, weekDays }: Timesh
 
   const handleHorasChange = useCallback(
     (projetoId: string, disciplina: string, data: string, value: string) => {
+      const key = `${projetoId}-${disciplina}-${data}`;
+      setLocalValues((prev) => ({ ...prev, [key]: value }));
+
       const horas = parseFloat(value) || 0;
       if (horas < 0 || horas > 24) return;
 
-      const key = `${projetoId}-${disciplina}-${data}`;
       const existing = debounceTimers.current.get(key);
       if (existing) clearTimeout(existing);
 
@@ -157,6 +180,8 @@ export function TimesheetGrid({ pessoaId, weekStart, weekEnd, weekDays }: Timesh
                   const isApproved = status === "aprovado";
                   const isRejected = status === "rejeitado";
                   const currentHoras = getHoras(linha.projetoId, linha.disciplina, dia);
+                  const cellKey = `${linha.projetoId}-${linha.disciplina}-${dia}`;
+                  const displayValue = localValues[cellKey] ?? (currentHoras ? currentHoras.toString() : "");
 
                   return (
                     <td key={dia} className="py-1 px-1 text-center">
@@ -165,7 +190,7 @@ export function TimesheetGrid({ pessoaId, weekStart, weekEnd, weekDays }: Timesh
                         min={0}
                         max={24}
                         step={0.5}
-                        defaultValue={currentHoras || ""}
+                        value={displayValue}
                         placeholder="—"
                         disabled={isApproved}
                         className={`h-8 w-[70px] text-center text-sm mx-auto ${

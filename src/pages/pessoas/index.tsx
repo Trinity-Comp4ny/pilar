@@ -12,15 +12,37 @@ import type { Pessoa } from "./types";
 import { PessoaFormDialog } from "./components/PessoaFormDialog";
 import { PessoaDetailDialog } from "./components/PessoaDetailDialog";
 import { PessoaTable } from "./components/PessoaTable";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 export default function Pessoas() {
   usePageTitle("Pessoas");
   const { data: userRole } = useUserRole();
   const isAdmin = userRole === "admin";
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  const [pessoas, setPessoas] = useState<Pessoa[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const {
+    data: pessoas = [],
+    isLoading,
+    error: fetchError,
+  } = useQuery({
+    queryKey: ["pessoas"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("pessoas").select("*").is("deleted_at", null).order("nome");
+      if (error) throw error;
+      return (data || []) as Pessoa[];
+    },
+  });
+
+  useEffect(() => {
+    if (fetchError) {
+      toast({
+        title: "Erro ao carregar pessoas",
+        description: fetchError.message,
+        variant: "destructive",
+      });
+    }
+  }, [fetchError, toast]);
 
   const [isFormDialogOpen, setIsFormDialogOpen] = useState(false);
   const [editingPessoa, setEditingPessoa] = useState<Pessoa | null>(null);
@@ -28,19 +50,6 @@ export default function Pessoas() {
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [pessoaToDelete, setPessoaToDelete] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetchPessoas();
-  }, []);
-
-  const fetchPessoas = async () => {
-    setIsLoading(true);
-    const { data } = await supabase.from("pessoas").select("*").order("nome");
-    if (data) {
-      setPessoas(data as unknown as Pessoa[]);
-    }
-    setIsLoading(false);
-  };
 
   const handleNewPessoa = () => {
     setEditingPessoa(null);
@@ -67,11 +76,14 @@ export default function Pessoas() {
   const handleDeleteConfirm = async () => {
     if (!pessoaToDelete) return;
 
-    const { error } = await supabase.from("pessoas").delete().eq("id", pessoaToDelete);
+    const { error } = await supabase
+      .from("pessoas")
+      .update({ deleted_at: new Date().toISOString() })
+      .eq("id", pessoaToDelete);
     if (!error) {
       toast({ title: "Pessoa excluída" });
       setIsDetailOpen(false);
-      fetchPessoas();
+      queryClient.invalidateQueries({ queryKey: ["pessoas"] });
     }
     setConfirmDeleteOpen(false);
     setPessoaToDelete(null);
@@ -121,7 +133,7 @@ export default function Pessoas() {
         open={isFormDialogOpen}
         onOpenChange={setIsFormDialogOpen}
         editPessoa={editingPessoa}
-        onSaved={fetchPessoas}
+        onSaved={() => queryClient.invalidateQueries({ queryKey: ["pessoas"] })}
       />
 
       <ConfirmDialog

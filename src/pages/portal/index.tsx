@@ -172,15 +172,47 @@ function PortalDashboard({ data, token: _token }: { data: PortalData; token: str
     const fetchData = async () => {
       const { data: proj } = await supabase
         .from("projetos")
-        .select("disciplinas, data_inicio, data_previsao, valor_contrato")
+        .select("data_inicio, data_previsao, valor_contrato")
         .eq("id", data.projeto_id)
         .single();
 
       if (proj) {
-        const raw = Array.isArray(proj.disciplinas) ? proj.disciplinas : [];
-        setDisciplinas(raw as PortalDisciplina[]);
         setDataInicio(proj.data_inicio);
         setDataPrevisao(proj.data_previsao);
+      }
+
+      // Fetch disciplinas from relational table
+      const { data: discData } = await supabase
+        .from("projeto_disciplinas")
+        .select(
+          `
+          nome, status, data_inicio, data_fim, data_fim_real,
+          projeto_disciplina_responsaveis (
+            pessoas ( nome )
+          )
+        `
+        )
+        .eq("projeto_id", data.projeto_id)
+        .order("created_at");
+
+      if (discData) {
+        setDisciplinas(
+          discData.map((d: Record<string, unknown>) => {
+            const resps = (d.projeto_disciplina_responsaveis as Array<{ pessoas: { nome: string } }>) || [];
+            return {
+              disciplina: d.nome as string,
+              status: d.status as string | undefined,
+              data_inicio: d.data_inicio as string | undefined,
+              data_previsao: d.data_fim as string | undefined,
+              data_final: d.data_fim_real as string | undefined,
+              responsavel_nome:
+                resps
+                  .map((r) => r.pessoas?.nome)
+                  .filter(Boolean)
+                  .join(", ") || undefined,
+            } as PortalDisciplina;
+          })
+        );
       }
 
       const { data: entregasData } = await supabase
