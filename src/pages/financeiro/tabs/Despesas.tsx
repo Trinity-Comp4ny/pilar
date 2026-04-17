@@ -117,6 +117,7 @@ export default function Despesas() {
         `
           )
           .eq("is_fatura_payment", false)
+          .is("deleted_at", null)
           .order("data_pagamento", { ascending: false })
           .order("data_vencimento", { ascending: false }),
       ]);
@@ -380,7 +381,9 @@ export default function Despesas() {
   };
 
   const handleDelete = async (id: string) => {
-    const { error } = await supabase.from("despesas").delete().eq("id", id);
+    if (!window.confirm("Tem certeza que deseja excluir esta despesa?")) return;
+
+    const { error } = await supabase.from("despesas").update({ deleted_at: new Date().toISOString() }).eq("id", id);
     if (!error) {
       toast({ title: "Despesa excluída" });
       fetchData();

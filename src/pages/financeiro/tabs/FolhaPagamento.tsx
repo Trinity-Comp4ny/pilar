@@ -290,22 +290,31 @@ export default function FolhaPagamento() {
         }
 
         const descricao = `Folha de Pagamento ${getMonthLabel(selectedMonth)}/${selectedYear} - ${currentItem.p_nome}`;
-        await supabase.from("despesas").insert([
-          {
-            data_vencimento: dateStr,
-            data_pagamento: dateStr,
-            descricao,
-            categoria_id: categoriaFolhaPagamento ? categoriaFolhaPagamento.id : null,
-            valor: currentItem.v_total,
-            fornecedor_id: null,
-            projeto_id: null,
-            nota_fiscal: null,
-            status: "Pago",
-            conta_id: null,
-            cartao_id: null,
-            observacao: "Lançamento automático de Folha de Pagamento",
-          },
-        ]);
+        const { data: existingDespesa } = await supabase
+          .from("despesas")
+          .select("id")
+          .eq("descricao", descricao)
+          .eq("valor", currentItem.v_total)
+          .maybeSingle();
+
+        if (!existingDespesa) {
+          await supabase.from("despesas").insert([
+            {
+              data_vencimento: dateStr,
+              data_pagamento: dateStr,
+              descricao,
+              categoria_id: categoriaFolhaPagamento ? categoriaFolhaPagamento.id : null,
+              valor: currentItem.v_total,
+              fornecedor_id: null,
+              projeto_id: null,
+              nota_fiscal: null,
+              status: "Pago",
+              conta_id: null,
+              cartao_id: null,
+              observacao: "Lançamento automático de Folha de Pagamento",
+            },
+          ]);
+        }
       }
 
       toast({ title: "Status atualizado", description: `O status foi alterado para ${newStatus}.` });

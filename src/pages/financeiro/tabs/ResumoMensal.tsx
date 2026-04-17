@@ -125,12 +125,22 @@ export default function ResumoMensal({ dateFrom, dateTo }: ResumoMensalProps) {
             <CardTitle className="text-sm font-medium text-black/60">Projeção Final</CardTitle>
           </CardHeader>
           <CardContent>
-            {/* Simple projection: Current Saldo * (30 / Day of Month) */}
-            <div className="text-2xl font-bold text-black/80">
-              {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(
-                (stats.saldo / Math.max(1, new Date().getDate())) * 30
-              )}
-            </div>
+            {(() => {
+              const today = new Date();
+              const start = dateFrom || startOfMonth(today);
+              const end = dateTo || endOfMonth(today);
+              const totalDays = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1);
+              const elapsedDays = Math.min(
+                totalDays,
+                Math.max(1, Math.ceil((today.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1)
+              );
+              const projection = (stats.saldo / elapsedDays) * totalDays;
+              return (
+                <div className="text-2xl font-bold text-black/80">
+                  {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(projection)}
+                </div>
+              );
+            })()}
             <p className="text-xs text-black/50 mt-1">Baseado na média diária</p>
           </CardContent>
         </Card>

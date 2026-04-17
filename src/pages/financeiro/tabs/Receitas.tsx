@@ -32,6 +32,8 @@ import { receitaSchema, receitaDefaultValues, type ReceitaFormData } from "@/sch
 import { getSafeErrorMessage } from "@/lib/safeError";
 import { checkDuplicates, type DuplicateMatch } from "@/lib/duplicateCheck";
 import { DuplicateWarningDialog } from "@/components/DuplicateWarningDialog";
+import { AsaasCobrancaButton } from "@/components/asaas/AsaasCobrancaButton";
+import { AsaasConfigForm } from "@/components/asaas/AsaasConfigForm";
 
 /**
  * Função para obter a data de exibição correta baseada no status
@@ -62,6 +64,10 @@ interface Receita {
   grupo_parcela?: string | null;
   parcela_numero?: number | null;
   parcela_total?: number | null;
+  asaas_payment_id?: string | null;
+  asaas_payment_url?: string | null;
+  asaas_payment_status?: string | null;
+  asaas_billing_type?: string | null;
 }
 
 export default function Receitas() {
@@ -147,8 +153,9 @@ export default function Receitas() {
         projetos (codigo_projeto)
       `
       )
-      .order("data_recebimento", { ascending: false }) // Ordena por data_recebimento (automação Bradesco)
-      .order("data_vencimento", { ascending: false }); // Fallback para data_vencimento (manual)
+      .is("deleted_at", null)
+      .order("data_recebimento", { ascending: false })
+      .order("data_vencimento", { ascending: false });
 
     if (error) {
       // Error will be visible through empty data state
@@ -320,7 +327,9 @@ export default function Receitas() {
   };
 
   const handleDelete = async (id: string) => {
-    const { error } = await supabase.from("receitas").delete().eq("id", id);
+    if (!window.confirm("Tem certeza que deseja excluir esta receita?")) return;
+
+    const { error } = await supabase.from("receitas").update({ deleted_at: new Date().toISOString() }).eq("id", id);
     if (!error) {
       toast({ title: "Receita excluída" });
       fetchReceitas();
@@ -352,8 +361,9 @@ export default function Receitas() {
                 </DialogHeader>
 
                 <Tabs defaultValue="categorias" className="mt-4">
-                  <TabsList className="grid w-full grid-cols-1">
+                  <TabsList className="grid w-full grid-cols-2">
                     <TabsTrigger value="categorias">Categorias</TabsTrigger>
+                    <TabsTrigger value="asaas">Asaas</TabsTrigger>
                   </TabsList>
                   <TabsContent value="categorias" className="mt-4">
                     <CategoryManager
@@ -362,6 +372,9 @@ export default function Receitas() {
                       type="Receita"
                       onCategoryChange={handleCategoryChange}
                     />
+                  </TabsContent>
+                  <TabsContent value="asaas" className="mt-4">
+                    <AsaasConfigForm />
                   </TabsContent>
                 </Tabs>
               </DialogContent>
@@ -815,6 +828,21 @@ export default function Receitas() {
                       : "1/1"}
                   </p>
                 </div>
+                {selectedReceita.status !== "Recebido" && (
+                  <div className="col-span-2 pt-1">
+                    <Label className="text-xs text-muted-foreground mb-2 block">Cobrança</Label>
+                    <AsaasCobrancaButton
+                      receitaId={selectedReceita.id}
+                      asaasPaymentUrl={selectedReceita.asaas_payment_url}
+                      asaasPaymentStatus={selectedReceita.asaas_payment_status}
+                      asaasBillingType={selectedReceita.asaas_billing_type}
+                      onSuccess={() => {
+                        fetchReceitas();
+                        setIsDetailOpen(false);
+                      }}
+                    />
+                  </div>
+                )}
                 <div className="col-span-2">
                   <Button variant="outline" className="flex-1" onClick={() => openEditReceita(selectedReceita)}>
                     <Pencil className="mr-2 h-4 w-4" />

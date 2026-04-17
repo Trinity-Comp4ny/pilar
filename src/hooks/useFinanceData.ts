@@ -24,17 +24,24 @@ export const useFinanceData = (dateFrom?: Date, dateTo?: Date) => {
 
       const previousStart = subMonths(start, 1);
 
+      const prevFromStr = previousStart.toISOString().split("T")[0];
+      const dateToStr = end.toISOString().split("T")[0];
+
       const [categoriesRes, receitasRes, despesasRes] = await Promise.all([
         supabase.from("categorias_financeiras").select("id, nome, tipo"),
         supabase
           .from("receitas")
           .select("*")
+          .gte("data_vencimento", prevFromStr)
+          .lte("data_vencimento", dateToStr)
           .order("data_recebimento", { ascending: false })
           .order("data_vencimento", { ascending: false }),
         supabase
           .from("despesas")
           .select("*")
           .eq("is_fatura_payment", false)
+          .gte("data_vencimento", prevFromStr)
+          .lte("data_vencimento", dateToStr)
           .order("data_vencimento", { ascending: true }),
       ]);
 
