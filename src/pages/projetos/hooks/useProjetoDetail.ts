@@ -33,7 +33,7 @@ export function useProjetoDetail(id: string | undefined) {
     queryKey: ["projeto-detail", id],
     queryFn: async () => {
       if (!id) return null;
-      const { data, error } = await supabase.from("projetos").select("*, clientes(nome)").eq("id", id).single();
+      const { data, error } = await supabase.from("projetos").select("*, clientes(nome, email)").eq("id", id).single();
 
       if (error || !data) {
         navigate("/projetos");
@@ -46,6 +46,7 @@ export function useProjetoDetail(id: string | undefined) {
         nome: data.nome,
         cliente_id: data.cliente_id,
         cliente_nome: (data as unknown as { clientes?: { nome?: string } }).clientes?.nome,
+        cliente_email: (data as unknown as { clientes?: { email?: string } }).clientes?.email,
         localizacao: data.localizacao || undefined,
         parcelas: data.parcelas || undefined,
         area_m2: data.area_m2 || undefined,
@@ -111,6 +112,9 @@ export function useProjetoDetail(id: string | undefined) {
       if (!projeto) return;
       const dbDisc = dbDisciplinas[idx];
       if (!dbDisc) return;
+
+      const isFinished = newStatus === "Concluído" && dbDisc.status !== "Concluído";
+
       try {
         await updateStatusMut.mutateAsync({
           id: dbDisc.id,
@@ -121,6 +125,8 @@ export function useProjetoDetail(id: string | undefined) {
             newStatus === "Concluído" && !dbDisc.data_fim_real ? new Date().toISOString().split("T")[0] : undefined,
         });
         toast.success(`${dbDisc.nome}: ${newStatus}`);
+
+        if (isFinished) await sendDisciplinaEmail(dbDisc.nome);
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : "Erro desconhecido";
         toast.error("Erro ao atualizar");
@@ -128,6 +134,27 @@ export function useProjetoDetail(id: string | undefined) {
     },
     [projeto, dbDisciplinas, updateStatusMut, toast]
   );
+
+  const sendDisciplinaEmail = async (disc: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke("send-completed-subjects-email", {
+        body: {
+          email: projeto?.cliente_email,
+          disciplina: disc,
+        },
+      });
+
+      if (error) {
+        toast.error(`Erro ao enviar email para o cliente ${projeto?.cliente_nome}.`);
+        console.error("Erro na função:", error);
+        return;
+      }
+
+      toast.success(`Email enviado com sucesso para o cliente ${projeto?.cliente_nome}.`);
+    } catch (err) {
+      console.error("Erro desconhecido:", err);
+    }
+  };
 
   const handleRemoveDisc = useCallback(
     async (idx: number) => {
