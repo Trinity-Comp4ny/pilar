@@ -1,8 +1,10 @@
 import { useState, useMemo } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   Dialog,
@@ -98,6 +100,46 @@ export default function Clientes() {
   const [portalStatus, setPortalStatus] = useState<"idle" | "loading" | "exists" | "none">("idle");
   const [portalCredentials, setPortalCredentials] = useState<{ email: string; senha: string } | null>(null);
   const [resetCredentials, setResetCredentials] = useState<{ email: string; senha: string } | null>(null);
+
+  // Message modal
+  const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);
+  const [selectedClienteForMessage, setSelectedClienteForMessage] = useState<Cliente | null>(null);
+  const [messageText, setMessageText] = useState("");
+  const [subjectText, setSubjectText] = useState("");
+
+  // Send message handler
+  const handleSendMessage = async () => {
+    if (!selectedClienteForMessage || !messageText || !subjectText) return;
+
+    try {
+      const { data, error } = await supabase.functions.invoke("send-manual-client-email", {
+        body: {
+          email: selectedClienteForMessage?.email,
+          subject: subjectText,
+          message: messageText,
+        }
+      });
+
+      if (error) {
+        resetMessageModal();
+        toast.error(`Erro ao enviar mensagem para ${selectedClienteForMessage?.nome}`);
+        console.error(`Erro na função: ${error.message}`);
+      }
+
+      resetMessageModal();
+      toast.success(`Mensagem enviada com sucesso para o cliente ${selectedClienteForMessage?.nome}.`);
+    } catch (error) {
+      console.error("Erro desconhecido:", error);
+    }
+  };
+
+  //Reset message modal
+  const resetMessageModal = () => {
+    setIsMessageModalOpen(false);
+    setMessageText("");
+    setSubjectText("");
+    setSelectedClienteForMessage(null);
+  }
 
   const formatCpf = (digits: string) => {
     return digits
@@ -648,6 +690,18 @@ export default function Clientes() {
                               variant="ghost"
                               size="icon"
                               className="h-8 w-8"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedClienteForMessage(cliente);
+                                setIsMessageModalOpen(true);
+                              }}
+                            >
+                              <Mail className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
                               onClick={(e) => handleEditClick(cliente, e)}
                             >
                               <Pencil className="h-4 w-4" />
@@ -917,6 +971,62 @@ export default function Clientes() {
               </div>
             </>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de Enviar Mensagem */}
+      <Dialog open={isMessageModalOpen} onOpenChange={setIsMessageModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Enviar Mensagem</DialogTitle>
+            <DialogDescription>
+              Enviar mensagem para {selectedClienteForMessage?.nome}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="subject">Assunto</Label>
+              <Input
+                id="subject"
+                value={subjectText}
+                onChange={(e) => setSubjectText(e.target.value)}
+                placeholder="Assunto"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="message">Mensagem</Label>
+              <Textarea
+                id="message"
+                value={messageText}
+                onChange={(e) => setMessageText(e.target.value)}
+                placeholder="Digite sua mensagem aqui..."
+                rows={4}
+              />
+            </div>
+          </div>
+
+          <div className="flex gap-2 pt-4">
+            <Button
+              variant="outline"
+              onClick={() => {
+                resetMessageModal();
+              }}
+              className="flex-1"
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={() => {handleSendMessage();}}
+              className="flex-1 bg-accent-orange hover:bg-accent-orange/90 text-white"
+              disabled={!messageText || !subjectText || !selectedClienteForMessage}
+            >
+              Enviar
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
 
