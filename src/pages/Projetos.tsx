@@ -255,12 +255,33 @@ export default function ProjetosKanban() {
       });
 
       queryClient.invalidateQueries({ queryKey: ["projetos"] });
+      await notifyProjectStatusChange(draggableId, newStatus);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Erro desconhecido";
       toast.error("Erro ao atualizar status", {
         description: message,
       });
       queryClient.invalidateQueries({ queryKey: ["projetos"] });
+    }
+  };
+
+  const notifyProjectStatusChange = async (draggableId: string, newStatus: string) => {
+    try {
+      const { error } = await supabase.functions.invoke("notify-project-people", {
+        body: {
+          projetoId: draggableId,
+          novoStatus: newStatus,
+        },
+      });
+
+      if (error) {
+        toast.error("Erro ao enviar notificação por email");
+        console.error("Erro ao enviar notificação por email:", error);
+      }
+
+      toast.success("Notificação por email enviada");
+    } catch (err) {
+      console.error("Erro ao notificar mudança de status do projeto:", err);
     }
   };
 
