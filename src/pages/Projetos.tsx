@@ -72,7 +72,7 @@ export default function ProjetosKanban() {
         .select(
           `
           *,
-          clientes (nome),
+          clientes (nome, email),
           projeto_disciplinas (
             id, nome, status, data_inicio, data_fim, data_fim_real,
             prioridade, justificativa_atraso, horas_estimadas, custo_hora,
@@ -91,7 +91,7 @@ export default function ProjetosKanban() {
       return (data || []).map(
         (
           p: Record<string, unknown> & {
-            clientes?: { nome: string };
+            clientes?: { nome: string; email: string };
             projeto_disciplinas?: Array<Record<string, unknown>>;
           }
         ) => {
@@ -144,6 +144,7 @@ export default function ProjetosKanban() {
             nome: p.nome as string,
             cliente_id: p.cliente_id as string,
             cliente_nome: p.clientes?.nome,
+            cliente_email: p.clientes?.email,
             localizacao: p.localizacao as string | undefined,
             parcelas: p.parcelas as string | undefined,
             area_m2: p.area_m2 as number | undefined,
@@ -256,6 +257,11 @@ export default function ProjetosKanban() {
 
       queryClient.invalidateQueries({ queryKey: ["projetos"] });
       await notifyProjectStatusChange(draggableId, newStatus);
+
+      const projeto = projetos.find((p) => p.id === draggableId);
+
+      if (projeto?.cliente_email && newStatus === "Concluído")
+        await sendClientEmail(projeto.cliente_email, projeto.nome);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Erro desconhecido";
       toast.error("Erro ao atualizar status", {
@@ -282,6 +288,26 @@ export default function ProjetosKanban() {
       toast.success("Notificação por email enviada");
     } catch (err) {
       console.error("Erro ao notificar mudança de status do projeto:", err);
+    }
+  };
+
+  const sendClientEmail = async (client: string, project: string) => {
+    try {
+      const { error } = await supabase.functions.invoke("send-completed-project-email", {
+        body: {
+          email: client,
+          project: project,
+        },
+      });
+
+      if (error) {
+        toast.error("Erro ao notificar cliente por email");
+        console.error("Erro ao notificar cliente por email:", error);
+      }
+
+      toast.success("Email de conclusão enviado para o cliente");
+    } catch (err) {
+      console.error("Erro ao enviar email para o cliente:", err);
     }
   };
 
