@@ -10,6 +10,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { ArrowLeft, ArrowRight, Loader2, Lock, Phone, User } from "lucide-react";
 import { usePageTitle } from "@/hooks/usePageTitle";
+import { passwordSchema } from "@/lib/passwordPolicy";
+import { PasswordStrengthIndicator } from "@/components/PasswordStrengthIndicator";
 
 export default function ProfileSetup() {
   usePageTitle("Configuração do Perfil");
@@ -70,6 +72,14 @@ export default function ProfileSetup() {
       return;
     }
 
+    if (password) {
+      const parsed = passwordSchema.safeParse(password);
+      if (!parsed.success) {
+        toast.error("Senha fraca", { description: parsed.error.issues[0]?.message });
+        return;
+      }
+    }
+
     setIsLoading(true);
 
     try {
@@ -122,11 +132,15 @@ export default function ProfileSetup() {
   };
 
   return (
-    <div className="min-h-screen w-full flex overflow-hidden bg-white">
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 lg:p-16 bg-white relative">
+    <div className="landing-grain min-h-screen w-full flex overflow-hidden bg-paper">
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 lg:p-16 bg-paper relative overflow-hidden">
+        {/* Aurora sutil */}
+        <div className="absolute inset-0 -z-10 pointer-events-none">
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-accent-orange/6 rounded-full blur-[100px] animate-aurora" />
+        </div>
         <Link
           to="/dashboard"
-          className="absolute top-8 left-8 lg:left-12 flex items-center gap-2 text-slate-500 hover:text-accent-orange transition-colors font-medium text-sm group"
+          className="absolute top-8 left-8 lg:left-12 flex items-center gap-2 text-ink-soft hover:text-accent-orange transition-colors font-medium text-sm group"
         >
           <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
           Voltar
@@ -142,40 +156,42 @@ export default function ProfileSetup() {
                   className="h-10 w-auto hover:rotate-12 transition-transform duration-300"
                 />
                 <div className="leading-tight">
-                  <div className="text-sm font-medium text-slate-900">Configuração inicial</div>
-                  <div className="text-xs text-slate-500">Etapa 1 de 2</div>
+                  <div className="text-sm font-semibold text-ink">
+                    Pilar<sup className="text-[8px] font-normal text-slate-400 ml-0.5 relative -top-1.5">®</sup>
+                  </div>
+                  <div className="text-xs text-ink-soft">Configuração inicial · Etapa 1 de 2</div>
                 </div>
               </div>
 
               <div className="flex items-center gap-2">
-                <div className="h-2.5 w-2.5 rounded-full bg-accent-orange shadow-sm shadow-orange-500/30" />
+                <div className="h-2.5 w-2.5 rounded-full bg-accent-orange shadow-sm shadow-accent-orange/30" />
                 <div className="h-2.5 w-2.5 rounded-full bg-slate-200" />
               </div>
             </div>
 
             <Progress
               value={progressValue}
-              className="h-2 bg-slate-100"
+              className="h-2 bg-paper-border"
               indicatorClassName="bg-gradient-to-r from-accent-orange via-orange-500 to-yellow-400 transition-all duration-700 ease-out"
             />
           </div>
 
           <div className="space-y-2">
-            <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-slate-900">Seu perfil</h1>
-            <p className="text-sm text-slate-500">Confirme seus dados e defina uma senha para continuar.</p>
+            <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-ink">Seu perfil</h1>
+            <p className="text-sm text-ink-soft">Confirme seus dados e defina uma senha para continuar.</p>
           </div>
 
           <form onSubmit={handleUpdate} className="space-y-5">
             <div className="space-y-2">
-              <Label htmlFor="name" className="text-slate-700 font-medium">
+              <Label htmlFor="name" className="text-ink-soft font-medium">
                 Seu nome completo
               </Label>
               <div className="relative group">
-                <User className="absolute left-3 top-3 h-4 w-4 text-slate-400 group-focus-within:text-accent-orange transition-colors" />
+                <User className="absolute left-3 top-3 h-4 w-4 text-ink/40 group-focus-within:text-accent-orange transition-colors" />
                 <Input
                   id="name"
                   placeholder="Ex: Maria Souza"
-                  className="pl-10 h-11 bg-slate-50 border-slate-200 focus:border-accent-orange focus:ring-accent-orange/20 transition-all"
+                  className="pl-10 h-11 bg-paper-alt border-paper-border focus:border-accent-orange focus:ring-accent-orange/20 transition-all"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   required
@@ -184,16 +200,16 @@ export default function ProfileSetup() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="phone" className="text-slate-700 font-medium">
+              <Label htmlFor="phone" className="text-ink-soft font-medium">
                 Telefone
               </Label>
               <div className="relative group">
-                <Phone className="absolute left-3 top-3 h-4 w-4 text-slate-400 group-focus-within:text-accent-orange transition-colors" />
+                <Phone className="absolute left-3 top-3 h-4 w-4 text-ink/40 group-focus-within:text-accent-orange transition-colors" />
                 <Input
                   id="phone"
                   type="tel"
                   placeholder="(00) 00000-0000"
-                  className="pl-10 h-11 bg-slate-50 border-slate-200 focus:border-accent-orange focus:ring-accent-orange/20 transition-all"
+                  className="pl-10 h-11 bg-paper-alt border-paper-border focus:border-accent-orange focus:ring-accent-orange/20 transition-all"
                   value={phone}
                   onChange={(e) => {
                     const value = e.target.value.replace(/\D/g, "");
@@ -209,36 +225,37 @@ export default function ProfileSetup() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-slate-700 font-medium">
+              <Label htmlFor="password" className="text-ink-soft font-medium">
                 Nova senha
               </Label>
               <div className="relative group">
-                <Lock className="absolute left-3 top-3 h-4 w-4 text-slate-400 group-focus-within:text-accent-orange transition-colors" />
+                <Lock className="absolute left-3 top-3 h-4 w-4 text-ink/40 group-focus-within:text-accent-orange transition-colors" />
                 <Input
                   id="password"
                   type="password"
                   placeholder="••••••••"
-                  className="pl-10 h-11 bg-slate-50 border-slate-200 focus:border-accent-orange focus:ring-accent-orange/20 transition-all"
+                  className="pl-10 h-11 bg-paper-alt border-paper-border focus:border-accent-orange focus:ring-accent-orange/20 transition-all"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  minLength={6}
+                  minLength={12}
                 />
               </div>
-              <p className="text-xs text-slate-500">Mínimo de 6 caracteres.</p>
+              {password && <PasswordStrengthIndicator password={password} />}
+              <p className="text-xs text-ink-soft">Mínimo 12 caracteres, com maiúscula, minúscula, número e símbolo.</p>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword" className="text-slate-700 font-medium">
+              <Label htmlFor="confirmPassword" className="text-ink-soft font-medium">
                 Confirmar senha
               </Label>
               <div className="relative group">
-                <Lock className="absolute left-3 top-3 h-4 w-4 text-slate-400 group-focus-within:text-accent-orange transition-colors" />
+                <Lock className="absolute left-3 top-3 h-4 w-4 text-ink/40 group-focus-within:text-accent-orange transition-colors" />
                 <Input
                   id="confirmPassword"
                   type="password"
                   placeholder="••••••••"
-                  className="pl-10 h-11 bg-slate-50 border-slate-200 focus:border-accent-orange focus:ring-accent-orange/20 transition-all"
+                  className="pl-10 h-11 bg-paper-alt border-paper-border focus:border-accent-orange focus:ring-accent-orange/20 transition-all"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
@@ -248,7 +265,7 @@ export default function ProfileSetup() {
             </div>
 
             <Button
-              className="w-full h-11 bg-accent-orange hover:bg-orange-600 text-white font-medium shadow-lg shadow-orange-500/20 hover:shadow-orange-500/30 transition-all active:scale-[0.98] text-sm"
+              className="w-full h-11 bg-accent-orange hover:bg-accent-orange/90 text-ink font-medium shadow-lg shadow-accent-orange/20 hover:shadow-accent-orange/30 transition-all active:scale-[0.98] text-sm"
               type="submit"
               disabled={isLoading}
             >
@@ -265,7 +282,7 @@ export default function ProfileSetup() {
             </Button>
           </form>
 
-          <div className="text-xs text-slate-400">
+          <div className="text-xs text-ink/40">
             Ao continuar, você confirma que as informações acima estão corretas.
           </div>
         </div>
@@ -279,10 +296,10 @@ export default function ProfileSetup() {
             loop
             muted
             playsInline
-            className="w-full h-full object-cover opacity-60 scale-105 animate-pulse-slow grayscale contrast-125"
+            className="w-full h-full object-cover opacity-70 scale-105 animate-pulse-slow grayscale"
             style={{ animationDuration: "20s" }}
           />
-          <div className="absolute inset-0 bg-accent-orange/40 mix-blend-multiply" />
+          <div className="absolute inset-0 bg-black/20" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/10" />
         </div>
 
@@ -294,7 +311,9 @@ export default function ProfileSetup() {
                 alt="Pilar"
                 className="h-8 w-8 brightness-0 invert hover:rotate-12 transition-transform duration-300"
               />
-              <span className="text-xl font-medium tracking-tight">Pilar</span>
+              <span className="text-xl font-medium tracking-tight">
+                Pilar<sup className="text-[9px] font-normal text-white/50 ml-0.5 relative -top-2">®</sup>
+              </span>
             </div>
           </div>
 
