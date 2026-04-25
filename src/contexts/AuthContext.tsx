@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, useCallback, type React
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
+import { monitoring } from "@/lib/monitoring";
 
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 type Empresa = Database["public"]["Tables"]["empresas"]["Row"];
@@ -10,13 +11,20 @@ export type ProfileWithEmpresa = Profile & {
   empresas: Empresa | null;
 };
 
+export type MfaLevel = "aal1" | "aal2";
+
 interface AuthContextValue {
   user: User | null;
   profile: ProfileWithEmpresa | null;
   loading: boolean;
   isAuthenticated: boolean;
+  mfaCurrentLevel: MfaLevel;
+  mfaNextLevel: MfaLevel;
+  mfaChallengeRequired: boolean;
+  hasVerifiedMfaFactor: boolean;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
+  refreshMfaLevel: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -33,16 +41,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<ProfileWithEmpresa | null>(null);
   const [loading, setLoading] = useState(true);
+  const [mfaCurrentLevel, setMfaCurrentLevel] = useState<MfaLevel>("aal1");
+  const [mfaNextLevel, setMfaNextLevel] = useState<MfaLevel>("aal1");
+  const [hasVerifiedMfaFactor, setHasVerifiedMfaFactor] = useState(false);
 
   const fetchProfile = useCallback(async (userId: string) => {
     const { data, error } = await supabase.from("profiles").select("*, empresas(*)").eq("id", userId).single();
-
     if (error) {
       setProfile(null);
+      monitoring.setUser(null);
       return;
     }
+    const p = data as ProfileWithEmpresa;
+    setProfile(p);
+    monitoring.setUser({
+      id: p.id,
+      email: p.email ?? undefined,
+      empresa_id: p.empresa_id ?? undefined,
+      role: p.role ?? undefined,
+    });
+  }, []);
 
-    setProfile(data as ProfileWithEmpresa);
+  const refreshMfaLevel = useCallback(async () => {
+    const { data } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+    setMfaCurrentLevel((data?.currentLevel as MfaLevel) ?? "aal1");
+    setMfaNextLevel((data?.nextLevel as MfaLevel) ?? "aal1");
+
+    const { data: factorsData } = await supabase.auth.mfa.listFactors();
+    setHasVerifiedMfaFactor(!!factorsData?.totp?.some((f) => f.status === "verified"));
   }, []);
 
   const refreshProfile = useCallback(async () => {
@@ -56,6 +82,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem("pilar-user-name");
     setUser(null);
     setProfile(null);
+    setMfaCurrentLevel("aal1");
+    setMfaNextLevel("aal1");
+    setHasVerifiedMfaFactor(false);
+    monitoring.setUser(null);
   }, []);
 
   useEffect(() => {
@@ -77,6 +107,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         setUser(session.user);
         await fetchProfile(session.user.id);
+        // refreshMfaLevel é seguro aqui: initializePromise já resolveu
+        await refreshMfaLevel();
       } catch {
         if (mounted) {
           setUser(null);
@@ -97,28 +129,56 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!session) {
         setUser(null);
         setProfile(null);
+        setMfaCurrentLevel("aal1");
+        setMfaNextLevel("aal1");
+        setHasVerifiedMfaFactor(false);
         setLoading(false);
         return;
       }
 
-      // NÃO usar async/await aqui — o Supabase aguarda os handlers antes de
-      // resolver signInWithPassword, causando travamento no botão de login.
       setUser(session.user);
-      fetchProfile(session.user.id).finally(() => {
-        if (mounted) setLoading(false);
-      });
+      // _notifyAllSubscribers awaita este callback de dentro do lock de
+      // initializePromise. Qualquer supabase.from() ou supabase.auth.* aqui
+      // chama getSession() → tenta o mesmo lock → deadlock infinito.
+      // setTimeout(0) escapa para a macrotask queue, após o lock ser liberado.
+      setTimeout(() => {
+        if (!mounted) return;
+        fetchProfile(session.user.id)
+          .then(() => refreshMfaLevel())
+          .catch(() => {
+            /* silencia erros de rede */
+          })
+          .finally(() => {
+            if (mounted) setLoading(false);
+          });
+      }, 0);
     });
 
     return () => {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, [fetchProfile]);
+  }, [fetchProfile, refreshMfaLevel]);
 
   const isAuthenticated = !!user;
+  const mfaChallengeRequired = mfaNextLevel === "aal2" && mfaCurrentLevel === "aal1";
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, isAuthenticated, signOut, refreshProfile }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        profile,
+        loading,
+        isAuthenticated,
+        mfaCurrentLevel,
+        mfaNextLevel,
+        mfaChallengeRequired,
+        hasVerifiedMfaFactor,
+        signOut,
+        refreshProfile,
+        refreshMfaLevel,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
