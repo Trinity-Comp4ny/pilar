@@ -35,10 +35,14 @@ import { toast } from "sonner";
 import { formatPhone, formatDocument, formatAgency, formatBankAccount } from "@/lib/maskUtils";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
-import { useUserRole } from "@/hooks/useUserRole";
+import { usePermissions } from "@/hooks/usePermissions";
+import { Can } from "@/components/Can";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useClientes, type Cliente, type ContaBancaria } from "@/hooks/useClientes";
+import { useRequireAal2 } from "@/hooks/useRequireAal2";
+import { ClienteMessageDialog } from "./ClienteMessageDialog";
+import { ClienteDetailDialog } from "./ClienteDetailDialog";
 
 const normalize = (value: string) =>
   value
@@ -61,8 +65,9 @@ const fuzzyMatch = (text: string, query: string) => {
 
 export default function Clientes() {
   usePageTitle("Clientes");
-  const { data: userRole } = useUserRole();
-  const isAdmin = userRole === "admin";
+  const { can, isAdmin } = usePermissions();
+  const canShowActions = can("clientes", "edit");
+  const requireAal2 = useRequireAal2();
 
   const {
     clientes,
@@ -117,7 +122,7 @@ export default function Clientes() {
           email: selectedClienteForMessage?.email,
           subject: subjectText,
           message: messageText,
-        }
+        },
       });
 
       if (error) {
@@ -139,29 +144,6 @@ export default function Clientes() {
     setMessageText("");
     setSubjectText("");
     setSelectedClienteForMessage(null);
-  }
-
-  const formatCpf = (digits: string) => {
-    return digits
-      .replace(/(\d{3})(\d)/, "$1.$2")
-      .replace(/(\d{3})(\d)/, "$1.$2")
-      .replace(/(\d{3})(\d{1,2})/, "$1-$2");
-  };
-
-  const formatCnpj = (digits: string) => {
-    return digits
-      .replace(/(\d{2})(\d)/, "$1.$2")
-      .replace(/(\d{3})(\d)/, "$1.$2")
-      .replace(/(\d{3})(\d)/, "$1/$2")
-      .replace(/(\d{4})(\d{1,2})/, "$1-$2");
-  };
-
-  const formatCpfCnpj = (value: string) => {
-    if (!value) return "";
-    const digits = value.replace(/\D/g, "");
-    if (digits.length === 11) return formatCpf(digits);
-    if (digits.length === 14) return formatCnpj(digits);
-    return value;
   };
 
   const [sortField, setSortField] = useState<keyof Cliente | null>(null);
@@ -258,8 +240,8 @@ export default function Clientes() {
 
       resetForm();
       setIsDialogOpen(false);
-    } catch {
-      // toast is handled inside the hook
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -274,8 +256,8 @@ export default function Clientes() {
     try {
       await deleteCliente(clienteToDelete);
       setIsDetailOpen(false);
-    } catch {
-      // toast is handled inside the hook
+    } catch (err) {
+      console.error(err);
     }
     setConfirmDeleteOpen(false);
     setClienteToDelete(null);
@@ -304,6 +286,7 @@ export default function Clientes() {
 
   const handleInvitePortal = async () => {
     if (!selectedCliente?.email) return;
+    if (!(await requireAal2())) return;
     try {
       const credentials = await invitePortal({
         clienteId: selectedCliente.id,
@@ -311,18 +294,19 @@ export default function Clientes() {
       });
       setPortalCredentials(credentials);
       setPortalStatus("exists");
-    } catch {
-      // toast is handled inside the hook
+    } catch (err) {
+      console.error(err);
     }
   };
 
   const handleResetPortalPassword = async () => {
     if (!selectedCliente) return;
+    if (!(await requireAal2())) return;
     try {
       const credentials = await resetPortalPassword(selectedCliente.id);
       setResetCredentials(credentials);
-    } catch {
-      // toast is handled inside the hook
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -358,15 +342,17 @@ export default function Clientes() {
           description="Gerencie seus clientes"
           children={
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogTrigger asChild>
-                <Button
-                  className="rounded-full bg-accent-orange hover:bg-accent-orange/90 text-white transition-colors px-5 py-2.5 text-sm"
-                  onClick={handleOpenDialog}
-                >
-                  <Plus className="mr-2 h-4 w-4" />
-                  Novo Cliente
-                </Button>
-              </DialogTrigger>
+              <Can feature="clientes" action="create">
+                <DialogTrigger asChild>
+                  <Button
+                    className="rounded-full bg-accent-orange hover:bg-accent-orange/90 text-ink transition-colors px-5 py-2.5 text-sm"
+                    onClick={handleOpenDialog}
+                  >
+                    <Plus className="mr-2 h-4 w-4" />
+                    Novo Cliente
+                  </Button>
+                </DialogTrigger>
+              </Can>
               <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto p-0">
                 <div className="px-6 pt-6 pb-4 border-b">
                   <DialogHeader>
@@ -592,7 +578,7 @@ export default function Clientes() {
                     </Button>
                     <Button
                       type="submit"
-                      className="flex-1 bg-accent-orange hover:bg-accent-orange/90 text-white"
+                      className="flex-1 bg-accent-orange hover:bg-accent-orange/90 text-ink"
                       disabled={isSaving}
                     >
                       {isSaving ? (
@@ -662,13 +648,13 @@ export default function Clientes() {
                   </TableHead>
                   <TableHead className="hidden md:table-cell">Email</TableHead>
                   <TableHead className="hidden lg:table-cell">Contato</TableHead>
-                  {isAdmin && <TableHead className="text-right">Ações</TableHead>}
+                  {canShowActions && <TableHead className="text-right">Ações</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredAndSortedClientes.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={isAdmin ? 5 : 4} className="text-center text-black/50 py-8">
+                    <TableCell colSpan={canShowActions ? 5 : 4} className="text-center text-black/50 py-8">
                       Nenhum cliente encontrado
                     </TableCell>
                   </TableRow>
@@ -680,10 +666,10 @@ export default function Clientes() {
                       onClick={() => handleRowClick(cliente)}
                     >
                       <TableCell className="font-medium">{cliente.nome}</TableCell>
-                      <TableCell>{formatCpfCnpj(cliente.cpf_cnpj)}</TableCell>
+                      <TableCell>{formatDocument(cliente.cpf_cnpj)}</TableCell>
                       <TableCell className="hidden md:table-cell text-sm text-black/70">{cliente.email}</TableCell>
                       <TableCell className="hidden lg:table-cell">{cliente.contato}</TableCell>
-                      {isAdmin && (
+                      {canShowActions && (
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
                             <Button
@@ -706,14 +692,16 @@ export default function Clientes() {
                             >
                               <Pencil className="h-4 w-4" />
                             </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-red-500"
-                              onClick={(e) => handleDeleteClick(cliente.id, e)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
+                            <Can feature="clientes" action="delete">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-red-500"
+                                onClick={(e) => handleDeleteClick(cliente.id, e)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </Can>
                           </div>
                         </TableCell>
                       )}
@@ -726,309 +714,34 @@ export default function Clientes() {
         </CardContent>
       </Card>
 
-      {/* Modal de Detalhes */}
-      <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
-        <DialogContent className="sm:max-w-lg">
-          {selectedCliente && (
-            <>
-              <DialogHeader>
-                <DialogTitle className="flex items-center gap-2">{selectedCliente.nome}</DialogTitle>
-                <DialogDescription>Detalhes do cliente</DialogDescription>
-              </DialogHeader>
+      <ClienteDetailDialog
+        open={isDetailOpen}
+        onOpenChange={setIsDetailOpen}
+        cliente={selectedCliente}
+        isAdmin={isAdmin}
+        portalStatus={portalStatus}
+        portalCredentials={portalCredentials}
+        resetCredentials={resetCredentials}
+        isInvitingPortal={isInvitingPortal}
+        isResettingPortal={isResettingPortal}
+        onInvitePortal={handleInvitePortal}
+        onResetPortalPassword={handleResetPortalPassword}
+        onEdit={handleEditClick}
+        onDelete={handleDeleteClick}
+        onClose={() => setIsDetailOpen(false)}
+      />
 
-              <div className="space-y-6 mt-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label className="text-xs text-muted-foreground">CPF/CNPJ</Label>
-                    <p className="font-medium">{formatCpfCnpj(selectedCliente.cpf_cnpj)}</p>
-                  </div>
-                  <div>
-                    <Label className="text-xs text-muted-foreground">Origem</Label>
-                    <p className="font-medium">{selectedCliente.origem || "-"}</p>
-                  </div>
-                  <div>
-                    <Label className="text-xs text-muted-foreground">Tipo NF</Label>
-                    <p className="font-medium">{selectedCliente.tipo_nf || "-"}</p>
-                  </div>
-                </div>
-
-                <div className="bg-gray-50 p-4 rounded-lg space-y-3">
-                  <h4 className="font-medium text-sm flex items-center gap-2">
-                    <User size={14} /> Contato
-                  </h4>
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-sm">
-                      <Mail size={14} className="text-muted-foreground" />
-                      {selectedCliente.email || "Não informado"}
-                    </div>
-                    <div className="flex items-center gap-2 text-sm">
-                      <Phone size={14} className="text-muted-foreground" />
-                      {selectedCliente.contato || "Não informado"}
-                    </div>
-                    <div className="flex items-center gap-2 text-sm">
-                      <MapPin size={14} className="text-muted-foreground" />
-                      {selectedCliente.endereco || "Não informado"}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Acesso ao Portal do Cliente */}
-                {isAdmin && (
-                  <div className="space-y-3 mt-4 pt-4 border-t">
-                    <Label className="text-sm font-medium flex items-center gap-2">
-                      <Globe size={14} /> Portal do Cliente
-                    </Label>
-                    {portalStatus === "loading" && (
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Loader2 size={14} className="animate-spin" /> Verificando...
-                      </div>
-                    )}
-                    {portalStatus === "exists" && !portalCredentials && (
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-2 bg-green-50 border border-green-200 rounded-lg px-3 py-2 text-sm text-green-800">
-                          <Globe size={14} />
-                          <span className="flex-1">Cliente possui acesso ao portal</span>
-                        </div>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={handleResetPortalPassword}
-                          disabled={isResettingPortal}
-                          className="w-full"
-                        >
-                          {isResettingPortal ? (
-                            <Loader2 size={14} className="animate-spin mr-1.5" />
-                          ) : (
-                            <KeyRound size={14} className="mr-1.5" />
-                          )}
-                          {isResettingPortal ? "Redefinindo..." : "Redefinir senha"}
-                        </Button>
-                        {resetCredentials && (
-                          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 space-y-3">
-                            <p className="text-sm font-medium text-amber-800">Senha redefinida!</p>
-                            <p className="text-xs text-amber-700">
-                              Envie as novas credenciais ao cliente. A senha não será exibida novamente:
-                            </p>
-                            <div className="bg-white rounded border p-3 space-y-1.5 font-mono text-sm">
-                              <div className="flex items-center justify-between">
-                                <span className="text-muted-foreground">Email:</span>
-                                <span className="font-medium">{resetCredentials.email}</span>
-                              </div>
-                              <div className="flex items-center justify-between">
-                                <span className="text-muted-foreground">Senha:</span>
-                                <span className="font-medium">{resetCredentials.senha}</span>
-                              </div>
-                              <div className="flex items-center justify-between">
-                                <span className="text-muted-foreground">Link:</span>
-                                <span className="font-medium text-xs">{window.location.origin}/cliente/login</span>
-                              </div>
-                            </div>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="w-full"
-                              onClick={() => {
-                                const text = `Portal do Cliente Pilar\n\nEmail: ${resetCredentials.email}\nSenha: ${resetCredentials.senha}\nLink: ${window.location.origin}/cliente/login`;
-                                navigator.clipboard.writeText(text);
-                                toast.success("Copiado!", {
-                                  description: "Credenciais copiadas para a área de transferência.",
-                                });
-                              }}
-                            >
-                              Copiar credenciais
-                            </Button>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                    {portalCredentials && (
-                      <div className="space-y-3 bg-green-50 border border-green-200 rounded-lg p-4">
-                        <p className="text-sm font-medium text-green-800">Acesso criado com sucesso!</p>
-                        <p className="text-xs text-green-700">Envie as credenciais abaixo para o cliente:</p>
-                        <div className="bg-white rounded border p-3 space-y-1.5 font-mono text-sm">
-                          <div className="flex items-center justify-between">
-                            <span className="text-muted-foreground">Email:</span>
-                            <span className="font-medium">{portalCredentials.email}</span>
-                          </div>
-                          <div className="flex items-center justify-between">
-                            <span className="text-muted-foreground">Senha:</span>
-                            <span className="font-medium">{portalCredentials.senha}</span>
-                          </div>
-                          <div className="flex items-center justify-between">
-                            <span className="text-muted-foreground">Link:</span>
-                            <span className="font-medium text-xs">{window.location.origin}/cliente/login</span>
-                          </div>
-                        </div>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="w-full"
-                          onClick={() => {
-                            const text = `Portal do Cliente Pilar\n\nEmail: ${portalCredentials.email}\nSenha: ${portalCredentials.senha}\nLink: ${window.location.origin}/cliente/login`;
-                            navigator.clipboard.writeText(text);
-                            toast.success("Copiado!", {
-                              description: "Credenciais copiadas para a área de transferência.",
-                            });
-                          }}
-                        >
-                          Copiar credenciais
-                        </Button>
-                      </div>
-                    )}
-                    {portalStatus === "none" && !portalCredentials && (
-                      <div className="space-y-2">
-                        {selectedCliente.email ? (
-                          <>
-                            <p className="text-xs text-muted-foreground">
-                              Criar acesso ao portal para{" "}
-                              <span className="font-medium text-foreground">{selectedCliente.email}</span>
-                            </p>
-                            <Button
-                              size="sm"
-                              onClick={handleInvitePortal}
-                              disabled={isInvitingPortal}
-                              className="bg-accent-orange hover:bg-orange-600 text-white"
-                            >
-                              {isInvitingPortal ? (
-                                <Loader2 size={14} className="animate-spin mr-1.5" />
-                              ) : (
-                                <Globe size={14} className="mr-1.5" />
-                              )}
-                              {isInvitingPortal ? "Criando..." : "Criar acesso ao portal"}
-                            </Button>
-                          </>
-                        ) : (
-                          <p className="text-xs text-muted-foreground italic">
-                            Cadastre um email para este cliente antes de criar o acesso ao portal.
-                          </p>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Seção de Contas Bancárias */}
-                <div className="space-y-2 mt-4 pt-4 border-t">
-                  <Label className="text-sm font-medium">Contas Bancárias</Label>
-                  {selectedCliente.contas_bancarias && selectedCliente.contas_bancarias.length > 0 ? (
-                    <div className="space-y-2">
-                      {selectedCliente.contas_bancarias.map((conta, index) => (
-                        <div
-                          key={index}
-                          className={`flex items-center justify-between gap-3 bg-gray-50 border rounded-lg px-3 py-2 text-sm ${conta.is_primary ? "border-accent-orange/50 bg-accent-orange/5" : "border-gray-200"}`}
-                        >
-                          <div className="flex items-center gap-3 flex-1 min-w-0">
-                            <div className="p-1.5 rounded-full bg-white border border-gray-100 text-gray-500">
-                              <Landmark size={14} />
-                            </div>
-                            <div className="flex flex-col min-w-0">
-                              <div className="flex items-center gap-2">
-                                <span className="font-medium truncate">{conta.banco}</span>
-                                {conta.is_primary && (
-                                  <span className="text-[10px] bg-accent-orange/10 text-accent-orange px-1.5 py-0.5 rounded font-medium">
-                                    Principal
-                                  </span>
-                                )}
-                              </div>
-                              <div className="flex items-center gap-2 text-xs text-black/60">
-                                <span>Ag: {conta.agencia}</span>
-                                <span className="text-gray-300">|</span>
-                                <span>Cc: {conta.conta}</span>
-                                <span className="text-gray-300">|</span>
-                                <span className="capitalize">{conta.tipo}</span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-sm text-muted-foreground italic">Nenhuma conta bancária cadastrada.</p>
-                  )}
-                </div>
-
-                <div className="flex gap-2 pt-4">
-                  <Button variant="outline" onClick={() => setIsDetailOpen(false)} className="flex-1">
-                    Fechar
-                  </Button>
-                  {isAdmin && (
-                    <>
-                      <Button variant="secondary" onClick={() => handleEditClick(selectedCliente)} className="flex-1">
-                        <Pencil className="mr-2 h-4 w-4" />
-                        Editar
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        onClick={() => selectedCliente && handleDeleteClick(selectedCliente.id)}
-                        className="flex-1"
-                      >
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        Excluir
-                      </Button>
-                    </>
-                  )}
-                </div>
-              </div>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      {/* Modal de Enviar Mensagem */}
-      <Dialog open={isMessageModalOpen} onOpenChange={setIsMessageModalOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Enviar Mensagem</DialogTitle>
-            <DialogDescription>
-              Enviar mensagem para {selectedClienteForMessage?.nome}
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="subject">Assunto</Label>
-              <Input
-                id="subject"
-                value={subjectText}
-                onChange={(e) => setSubjectText(e.target.value)}
-                placeholder="Assunto"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="message">Mensagem</Label>
-              <Textarea
-                id="message"
-                value={messageText}
-                onChange={(e) => setMessageText(e.target.value)}
-                placeholder="Digite sua mensagem aqui..."
-                rows={4}
-              />
-            </div>
-          </div>
-
-          <div className="flex gap-2 pt-4">
-            <Button
-              variant="outline"
-              onClick={() => {
-                resetMessageModal();
-              }}
-              className="flex-1"
-            >
-              Cancelar
-            </Button>
-            <Button
-              onClick={() => {handleSendMessage();}}
-              className="flex-1 bg-accent-orange hover:bg-accent-orange/90 text-white"
-              disabled={!messageText || !subjectText || !selectedClienteForMessage}
-            >
-              Enviar
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <ClienteMessageDialog
+        open={isMessageModalOpen}
+        cliente={selectedClienteForMessage}
+        subject={subjectText}
+        message={messageText}
+        onSubjectChange={setSubjectText}
+        onMessageChange={setMessageText}
+        onCancel={resetMessageModal}
+        onSend={handleSendMessage}
+        onOpenChange={setIsMessageModalOpen}
+      />
 
       <ConfirmDialog
         open={confirmDeleteOpen}

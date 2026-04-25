@@ -5,10 +5,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Upload, FileText, Trash2, Loader2, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
-import { usePropostaTemplates, useUploadTemplate, useDeleteTemplate } from "@/hooks/usePropostaTemplates";
+import {
+  usePropostaTemplates,
+  useUploadTemplate,
+  useDeleteTemplate,
+  type TemplateTipo,
+} from "@/hooks/usePropostaTemplates";
 import { AUTO_VARIABLES } from "@/lib/docxUtils";
 import { VariaveisGuideButton } from "./VariaveisGuideDialog";
 
@@ -20,6 +26,7 @@ export function TemplatesManager() {
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [nome, setNome] = useState("");
   const [descricao, setDescricao] = useState("");
+  const [tipo, setTipo] = useState<TemplateTipo>("proposta");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [viewVarsId, setViewVarsId] = useState<string | null>(null);
@@ -38,14 +45,14 @@ export function TemplatesManager() {
     }
 
     uploadTemplate.mutate(
-      { file: selectedFile, nome: nome.trim(), descricao: descricao.trim() || undefined },
+      { file: selectedFile, nome: nome.trim(), descricao: descricao.trim() || undefined, tipo },
       {
         onSuccess: (data) => {
           toast.success("Template salvo", { description: `${data.variaveis.length} variáveis detectadas` });
           resetForm();
         },
         onError: (err: Error) => {
-          toast.error("Erro");
+          toast.error("Erro", { description: err.message });
         },
       }
     );
@@ -64,6 +71,7 @@ export function TemplatesManager() {
   const resetForm = () => {
     setNome("");
     setDescricao("");
+    setTipo("proposta");
     setSelectedFile(null);
     setIsUploadOpen(false);
     if (fileInputRef.current) fileInputRef.current.value = "";
@@ -88,10 +96,7 @@ export function TemplatesManager() {
         </div>
         <div className="flex items-center gap-2">
           <VariaveisGuideButton />
-          <Button
-            onClick={() => setIsUploadOpen(true)}
-            className="bg-accent-orange hover:bg-accent-orange/90 text-white"
-          >
+          <Button onClick={() => setIsUploadOpen(true)} className="bg-accent-orange hover:bg-accent-orange/90 text-ink">
             <Upload className="h-4 w-4 mr-2" />
             Upload Template
           </Button>
@@ -117,7 +122,15 @@ export function TemplatesManager() {
                   <div className="flex items-center gap-2">
                     <FileText className="h-5 w-5 text-accent-orange flex-shrink-0" />
                     <div>
-                      <p className="text-sm font-medium">{t.nome}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-medium">{t.nome}</p>
+                        <Badge
+                          variant="secondary"
+                          className={`text-[10px] ${t.tipo === "contrato" ? "bg-purple-50 text-purple-700" : "bg-blue-50 text-blue-700"}`}
+                        >
+                          {t.tipo === "contrato" ? "Contrato" : "Proposta"}
+                        </Badge>
+                      </div>
                       {t.descricao && <p className="text-xs text-muted-foreground">{t.descricao}</p>}
                     </div>
                   </div>
@@ -177,6 +190,21 @@ export function TemplatesManager() {
           </DialogHeader>
           <div className="space-y-4 mt-2">
             <div className="space-y-2">
+              <Label>Tipo *</Label>
+              <Select value={tipo} onValueChange={(v) => setTipo(v as TemplateTipo)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="proposta">Proposta</SelectItem>
+                  <SelectItem value="contrato">Contrato</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-[10px] text-muted-foreground">
+                Templates de contrato aparecem só quando você clica em "Gerar contrato" em uma proposta aceita.
+              </p>
+            </div>
+            <div className="space-y-2">
               <Label>Nome do Template *</Label>
               <Input
                 value={nome}
@@ -212,7 +240,7 @@ export function TemplatesManager() {
             <Button
               onClick={handleUpload}
               disabled={uploadTemplate.isPending}
-              className="bg-accent-orange hover:bg-accent-orange/90 text-white"
+              className="bg-accent-orange hover:bg-accent-orange/90 text-ink"
             >
               {uploadTemplate.isPending ? (
                 <>

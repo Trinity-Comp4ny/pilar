@@ -17,6 +17,8 @@ export type CompanyData = {
   cep: string;
   status: string;
   logoUrl?: string;
+  pixChave?: string;
+  pixInstrucoes?: string;
 };
 
 export const ROLES = ["admin", "financeiro", "marketing", "operacional", "user"] as const;

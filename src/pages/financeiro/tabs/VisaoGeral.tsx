@@ -143,16 +143,16 @@ export default function VisaoGeral({ visualizacao, dateFrom, dateTo }: VisaoGera
                       <stop offset="95%" stopColor="hsl(var(--chart-danger))" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--chart-grid))" vertical={false} />
                   <XAxis
                     dataKey={visualizacao === "dia" ? "dia" : "mes"}
-                    stroke="#888"
+                    stroke="hsl(var(--chart-neutral))"
                     fontSize={12}
                     tickLine={false}
                     axisLine={false}
                   />
                   <YAxis
-                    stroke="#888"
+                    stroke="hsl(var(--chart-neutral))"
                     fontSize={12}
                     tickLine={false}
                     axisLine={false}

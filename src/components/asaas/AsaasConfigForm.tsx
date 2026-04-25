@@ -94,7 +94,7 @@ export function AsaasConfigForm() {
       <Button
         onClick={handleSalvar}
         disabled={isSaving || (!jaConfigurado && !apiKey.trim())}
-        className="bg-accent-orange hover:bg-accent-orange/90 text-white"
+        className="bg-accent-orange hover:bg-accent-orange/90 text-ink"
       >
         {isSaving ? (
           <>

@@ -33,6 +33,8 @@ import {
 } from "@/hooks/useDashboardData";
 import { PROJECT_STATUS_CONFIG, PROJECT_PRIORITY_CONFIG, type ProjectStatus, type ProjectPriority } from "@/constants";
 import { usePageTitle } from "@/hooks/usePageTitle";
+import { usePermissions } from "@/hooks/usePermissions";
+import { cn } from "@/lib/utils";
 
 const fmt = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 const fmtCompact = new Intl.NumberFormat("pt-BR", {
@@ -270,6 +272,13 @@ export default function Dashboard() {
   usePageTitle("Dashboard");
   const navigate = useNavigate();
   const { data, isLoading, error } = useDashboardData();
+  const { can } = usePermissions();
+
+  const canFin = can("financeiro", "view");
+  const canProj = can("projetos", "view");
+  const canProjCreate = can("projetos", "create");
+  const canLeads = can("leads", "view");
+  const canRel = can("relatorios", "view");
 
   const mesAtual = new Date().toLocaleString("pt-BR", { month: "long" });
 
@@ -279,16 +288,20 @@ export default function Dashboard() {
       description={`Visão geral — ${mesAtual.charAt(0).toUpperCase() + mesAtual.slice(1)} ${new Date().getFullYear()}`}
     >
       <div className="flex items-center gap-2">
-        <Button variant="outline" size="sm" className="text-xs" onClick={() => navigate("/financeiro")}>
-          <DollarSign size={14} className="mr-1" /> Financeiro
-        </Button>
-        <Button
-          size="sm"
-          className="text-xs bg-accent-orange hover:bg-accent-orange/90 text-white"
-          onClick={() => navigate("/projetos")}
-        >
-          <Plus size={14} className="mr-1" /> Novo Projeto
-        </Button>
+        {canFin && (
+          <Button variant="outline" size="sm" className="text-xs" onClick={() => navigate("/financeiro")}>
+            <DollarSign size={14} className="mr-1" /> Financeiro
+          </Button>
+        )}
+        {canProjCreate && (
+          <Button
+            size="sm"
+            className="text-xs bg-accent-orange hover:bg-accent-orange/90 text-white"
+            onClick={() => navigate("/projetos")}
+          >
+            <Plus size={14} className="mr-1" /> Novo Projeto
+          </Button>
+        )}
       </div>
     </PageHeader>
   );
@@ -316,199 +329,266 @@ export default function Dashboard() {
 
   const { kpis, projetos, proximosVencimentos, leadsPipeline, leadsTotal, alertas, alertasNaoLidos, chartData } = data;
 
+  const showMiniKpis = canFin || canProj || canLeads;
+
+  const atalhos = [
+    canProjCreate && {
+      label: "Novo Projeto",
+      icon: Briefcase,
+      path: "/projetos",
+      color: "hover:border-orange-300 hover:bg-orange-50/50",
+    },
+    canLeads && {
+      label: "Novo Lead",
+      icon: Users,
+      path: "/leads",
+      color: "hover:border-purple-300 hover:bg-purple-50/50",
+    },
+    canFin && {
+      label: "Lançamento",
+      icon: DollarSign,
+      path: "/financeiro",
+      color: "hover:border-green-300 hover:bg-green-50/50",
+    },
+    canRel && {
+      label: "Relatórios",
+      icon: FileText,
+      path: "/relatorios",
+      color: "hover:border-blue-300 hover:bg-blue-50/50",
+    },
+  ].filter(Boolean) as { label: string; icon: typeof Briefcase; path: string; color: string }[];
+
+  const nothingVisible = !canFin && !canProj && !canLeads && !canRel;
+
+  if (nothingVisible) {
+    return (
+      <PageLayout header={header}>
+        <div className="flex flex-col items-center justify-center text-center py-20 px-6">
+          <div className="p-4 rounded-2xl bg-gray-50 mb-4">
+            <AlertTriangle size={32} className="text-gray-400" />
+          </div>
+          <h2 className="text-lg font-semibold text-gray-800 mb-1">Sem módulos disponíveis</h2>
+          <p className="text-sm text-gray-500 max-w-md">
+            Seu usuário ainda não tem acesso a módulos do dashboard. Peça ao administrador da empresa para liberar
+            permissões.
+          </p>
+        </div>
+      </PageLayout>
+    );
+  }
+
   return (
     <PageLayout header={header}>
       <div className="space-y-6 w-full max-w-none">
-        {/* KPIs */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <KPICard
-            title="Receita do Mês"
-            value={fmt.format(kpis.receitaMes)}
-            icon={ArrowUpRight}
-            iconBg="bg-green-50"
-            iconColor="text-green-600"
-            variacao={kpis.receitaVariacao}
-            subtitle="vs. mês anterior"
-          />
-          <KPICard
-            title="Despesa do Mês"
-            value={fmt.format(kpis.despesaMes)}
-            icon={ArrowDownRight}
-            iconBg="bg-red-50"
-            iconColor="text-red-600"
-            variacao={kpis.despesaVariacao}
-            subtitle="vs. mês anterior"
-          />
-          <KPICard
-            title="A Receber"
-            value={fmt.format(kpis.aReceber)}
-            icon={CalendarClock}
-            iconBg="bg-blue-50"
-            iconColor="text-blue-600"
-            subtitle="pendente"
-          />
-          <KPICard
-            title="A Pagar"
-            value={fmt.format(kpis.aPagar)}
-            icon={Clock}
-            iconBg="bg-amber-50"
-            iconColor="text-amber-600"
-            subtitle="pendente"
-          />
-        </div>
+        {canFin && (
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <KPICard
+              title="Receita do Mês"
+              value={fmt.format(kpis.receitaMes)}
+              icon={ArrowUpRight}
+              iconBg="bg-green-50"
+              iconColor="text-green-600"
+              variacao={kpis.receitaVariacao}
+              subtitle="vs. mês anterior"
+            />
+            <KPICard
+              title="Despesa do Mês"
+              value={fmt.format(kpis.despesaMes)}
+              icon={ArrowDownRight}
+              iconBg="bg-red-50"
+              iconColor="text-red-600"
+              variacao={kpis.despesaVariacao}
+              subtitle="vs. mês anterior"
+            />
+            <KPICard
+              title="A Receber"
+              value={fmt.format(kpis.aReceber)}
+              icon={CalendarClock}
+              iconBg="bg-blue-50"
+              iconColor="text-blue-600"
+              subtitle="pendente"
+            />
+            <KPICard
+              title="A Pagar"
+              value={fmt.format(kpis.aPagar)}
+              icon={Clock}
+              iconBg="bg-amber-50"
+              iconColor="text-amber-600"
+              subtitle="pendente"
+            />
+          </div>
+        )}
 
-        {/* Saldo + Projetos Ativos (mini KPIs) */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card className="col-span-2">
-            <CardContent className="p-4 flex items-center gap-4">
-              <div className={`p-2.5 rounded-xl ${kpis.saldoMes >= 0 ? "bg-green-50" : "bg-red-50"}`}>
-                <DollarSign size={20} className={kpis.saldoMes >= 0 ? "text-green-600" : "text-red-600"} />
-              </div>
-              <div>
-                <span className="text-xs font-medium text-gray-500">Saldo do Mês</span>
-                <p className={`text-2xl font-bold ${kpis.saldoMes >= 0 ? "text-green-600" : "text-red-600"}`}>
-                  {fmt.format(kpis.saldoMes)}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate("/projetos")}>
-            <CardContent className="p-4 flex items-center gap-4">
-              <div className="p-2.5 rounded-xl bg-accent-orange/10">
-                <Briefcase size={20} className="text-accent-orange" />
-              </div>
-              <div>
-                <span className="text-xs font-medium text-gray-500">Projetos Ativos</span>
-                <p className="text-2xl font-bold text-accent-orange">{kpis.projetosAtivos}</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate("/leads")}>
-            <CardContent className="p-4 flex items-center gap-4">
-              <div className="p-2.5 rounded-xl bg-purple-50">
-                <Target size={20} className="text-purple-600" />
-              </div>
-              <div>
-                <span className="text-xs font-medium text-gray-500">Leads</span>
-                <p className="text-2xl font-bold text-purple-600">{leadsTotal}</p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        {showMiniKpis && (
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            {canFin && (
+              <Card className="col-span-2">
+                <CardContent className="p-4 flex items-center gap-4">
+                  <div className={`p-2.5 rounded-xl ${kpis.saldoMes >= 0 ? "bg-green-50" : "bg-red-50"}`}>
+                    <DollarSign size={20} className={kpis.saldoMes >= 0 ? "text-green-600" : "text-red-600"} />
+                  </div>
+                  <div>
+                    <span className="text-xs font-medium text-gray-500">Saldo do Mês</span>
+                    <p className={`text-2xl font-bold ${kpis.saldoMes >= 0 ? "text-green-600" : "text-red-600"}`}>
+                      {fmt.format(kpis.saldoMes)}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+            {canProj && (
+              <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate("/projetos")}>
+                <CardContent className="p-4 flex items-center gap-4">
+                  <div className="p-2.5 rounded-xl bg-accent-orange/10">
+                    <Briefcase size={20} className="text-accent-orange" />
+                  </div>
+                  <div>
+                    <span className="text-xs font-medium text-gray-500">Projetos Ativos</span>
+                    <p className="text-2xl font-bold text-accent-orange">{kpis.projetosAtivos}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+            {canLeads && (
+              <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate("/leads")}>
+                <CardContent className="p-4 flex items-center gap-4">
+                  <div className="p-2.5 rounded-xl bg-purple-50">
+                    <Target size={20} className="text-purple-600" />
+                  </div>
+                  <div>
+                    <span className="text-xs font-medium text-gray-500">Leads</span>
+                    <p className="text-2xl font-bold text-purple-600">{leadsTotal}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        )}
 
         {/* Gráfico Financeiro */}
-        <div className="grid grid-cols-1 gap-6">
-          <Card>
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2 text-base font-semibold">
-                  <BarChart3 size={18} className="text-gray-500" />
-                  Fluxo Financeiro
-                </CardTitle>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-xs text-gray-500"
-                  onClick={() => navigate("/financeiro")}
-                >
-                  Ver detalhes <ChevronRight size={14} />
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="h-[280px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <ComposedChart data={chartData} margin={{ top: 5, right: 5, left: -15, bottom: 0 }}>
-                    <defs>
-                      <linearGradient id="gReceitas" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#22c55e" stopOpacity={0.15} />
-                        <stop offset="95%" stopColor="#22c55e" stopOpacity={0} />
-                      </linearGradient>
-                      <linearGradient id="gDespesas" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#ef4444" stopOpacity={0.15} />
-                        <stop offset="95%" stopColor="#ef4444" stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" vertical={false} />
-                    <XAxis dataKey="mes" stroke="#9ca3af" fontSize={11} tickLine={false} axisLine={false} />
-                    <YAxis
-                      stroke="#9ca3af"
-                      fontSize={11}
-                      tickLine={false}
-                      axisLine={false}
-                      tickFormatter={(v) => fmtCompact.format(v)}
-                    />
-                    <Tooltip content={<CustomTooltip />} />
-                    <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 11 }} />
-                    <Area
-                      type="monotone"
-                      dataKey="receitas"
-                      name="Receitas"
-                      stroke="#22c55e"
-                      fill="url(#gReceitas)"
-                      strokeWidth={2}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="despesas"
-                      name="Despesas"
-                      stroke="#ef4444"
-                      fill="url(#gDespesas)"
-                      strokeWidth={2}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="saldo"
-                      name="Saldo"
-                      stroke="#6366f1"
-                      strokeWidth={1.5}
-                      strokeDasharray="4 4"
-                      dot={false}
-                    />
-                  </ComposedChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Projetos + Alertas */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <Card className="lg:col-span-2">
-            <CardHeader className="pb-1">
-              <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2 text-base font-semibold">
-                  <Briefcase size={18} className="text-gray-500" />
-                  Projetos
-                </CardTitle>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-xs text-gray-500"
-                  onClick={() => navigate("/projetos")}
-                >
-                  Ver todos <ChevronRight size={14} />
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent className="pt-0">
-              {projetos.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-10 text-gray-400">
-                  <Briefcase size={28} className="mb-2" />
-                  <p className="text-sm">Nenhum projeto ativo</p>
-                  <Button variant="outline" size="sm" className="mt-3 text-xs" onClick={() => navigate("/projetos")}>
-                    Criar Projeto
+        {canFin && (
+          <div className="grid grid-cols-1 gap-6">
+            <Card>
+              <CardHeader className="pb-2">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2 text-base font-semibold">
+                    <BarChart3 size={18} className="text-gray-500" />
+                    Fluxo Financeiro
+                  </CardTitle>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-xs text-gray-500"
+                    onClick={() => navigate("/financeiro")}
+                  >
+                    Ver detalhes <ChevronRight size={14} />
                   </Button>
                 </div>
-              ) : (
-                <div className="divide-y divide-gray-50">
-                  {projetos.map((p) => (
-                    <ProjectRow key={p.id} project={p} onClick={() => navigate(`/projetos/${p.id}`)} />
-                  ))}
+              </CardHeader>
+              <CardContent>
+                <div className="h-[280px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <ComposedChart data={chartData} margin={{ top: 5, right: 5, left: -15, bottom: 0 }}>
+                      <defs>
+                        <linearGradient id="gReceitas" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#22c55e" stopOpacity={0.15} />
+                          <stop offset="95%" stopColor="#22c55e" stopOpacity={0} />
+                        </linearGradient>
+                        <linearGradient id="gDespesas" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#ef4444" stopOpacity={0.15} />
+                          <stop offset="95%" stopColor="#ef4444" stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" vertical={false} />
+                      <XAxis dataKey="mes" stroke="#9ca3af" fontSize={11} tickLine={false} axisLine={false} />
+                      <YAxis
+                        stroke="#9ca3af"
+                        fontSize={11}
+                        tickLine={false}
+                        axisLine={false}
+                        tickFormatter={(v) => fmtCompact.format(v)}
+                      />
+                      <Tooltip content={<CustomTooltip />} />
+                      <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 11 }} />
+                      <Area
+                        type="monotone"
+                        dataKey="receitas"
+                        name="Receitas"
+                        stroke="#22c55e"
+                        fill="url(#gReceitas)"
+                        strokeWidth={2}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="despesas"
+                        name="Despesas"
+                        stroke="#ef4444"
+                        fill="url(#gDespesas)"
+                        strokeWidth={2}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="saldo"
+                        name="Saldo"
+                        stroke="#6366f1"
+                        strokeWidth={1.5}
+                        strokeDasharray="4 4"
+                        dot={false}
+                      />
+                    </ComposedChart>
+                  </ResponsiveContainer>
                 </div>
-              )}
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Projetos + Alertas */}
+        <div className={cn("grid grid-cols-1 gap-6", canProj && "lg:grid-cols-3")}>
+          {canProj && (
+            <Card className="lg:col-span-2">
+              <CardHeader className="pb-1">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2 text-base font-semibold">
+                    <Briefcase size={18} className="text-gray-500" />
+                    Projetos
+                  </CardTitle>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-xs text-gray-500"
+                    onClick={() => navigate("/projetos")}
+                  >
+                    Ver todos <ChevronRight size={14} />
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent className="pt-0">
+                {projetos.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-10 text-gray-400">
+                    <Briefcase size={28} className="mb-2" />
+                    <p className="text-sm">Nenhum projeto ativo</p>
+                    {canProjCreate && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="mt-3 text-xs"
+                        onClick={() => navigate("/projetos")}
+                      >
+                        Criar Projeto
+                      </Button>
+                    )}
+                  </div>
+                ) : (
+                  <div className="divide-y divide-gray-50">
+                    {projetos.map((p) => (
+                      <ProjectRow key={p.id} project={p} onClick={() => navigate(`/projetos/${p.id}`)} />
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
 
           {/* Alertas */}
           <Card>
@@ -543,91 +623,92 @@ export default function Dashboard() {
         </div>
 
         {/* Próximos Vencimentos + Pipeline de Leads */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <Card className="lg:col-span-2">
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2 text-base font-semibold">
-                  <CalendarClock size={18} className="text-gray-500" />
-                  Próximos Vencimentos
-                </CardTitle>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-xs text-gray-500"
-                  onClick={() => navigate("/financeiro")}
-                >
-                  Ver todos <ChevronRight size={14} />
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent className="pt-0">
-              {proximosVencimentos.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-8 text-gray-400">
-                  <CalendarClock size={24} className="mb-2" />
-                  <p className="text-sm">Sem vencimentos próximos</p>
-                </div>
-              ) : (
-                <div>
-                  {proximosVencimentos.map((v) => (
-                    <VencimentoRow key={v.id} item={v} />
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+        {(canFin || canLeads) && (
+          <div className={cn("grid grid-cols-1 gap-6", canFin && canLeads && "lg:grid-cols-3")}>
+            {canFin && (
+              <Card className={cn(canFin && canLeads && "lg:col-span-2")}>
+                <CardHeader className="pb-2">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="flex items-center gap-2 text-base font-semibold">
+                      <CalendarClock size={18} className="text-gray-500" />
+                      Próximos Vencimentos
+                    </CardTitle>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-xs text-gray-500"
+                      onClick={() => navigate("/financeiro")}
+                    >
+                      Ver todos <ChevronRight size={14} />
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  {proximosVencimentos.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-8 text-gray-400">
+                      <CalendarClock size={24} className="mb-2" />
+                      <p className="text-sm">Sem vencimentos próximos</p>
+                    </div>
+                  ) : (
+                    <div>
+                      {proximosVencimentos.map((v) => (
+                        <VencimentoRow key={v.id} item={v} />
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
 
-          <Card>
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2 text-base font-semibold">
-                  <Target size={18} className="text-gray-500" />
-                  Pipeline de Leads
-                </CardTitle>
-                <Button variant="ghost" size="sm" className="text-xs text-gray-500" onClick={() => navigate("/leads")}>
-                  Ver todos <ChevronRight size={14} />
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <LeadsFunnel pipeline={leadsPipeline} total={leadsTotal} />
-            </CardContent>
-          </Card>
-        </div>
+            {canLeads && (
+              <Card>
+                <CardHeader className="pb-2">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="flex items-center gap-2 text-base font-semibold">
+                      <Target size={18} className="text-gray-500" />
+                      Pipeline de Leads
+                    </CardTitle>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-xs text-gray-500"
+                      onClick={() => navigate("/leads")}
+                    >
+                      Ver todos <ChevronRight size={14} />
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <LeadsFunnel pipeline={leadsPipeline} total={leadsTotal} />
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        )}
 
         {/* Atalhos rápidos */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {[
-            {
-              label: "Novo Projeto",
-              icon: Briefcase,
-              path: "/projetos",
-              color: "hover:border-orange-300 hover:bg-orange-50/50",
-            },
-            { label: "Novo Lead", icon: Users, path: "/leads", color: "hover:border-purple-300 hover:bg-purple-50/50" },
-            {
-              label: "Lançamento",
-              icon: DollarSign,
-              path: "/financeiro",
-              color: "hover:border-green-300 hover:bg-green-50/50",
-            },
-            {
-              label: "Relatórios",
-              icon: FileText,
-              path: "/relatorios",
-              color: "hover:border-blue-300 hover:bg-blue-50/50",
-            },
-          ].map((atalho) => (
-            <button
-              key={atalho.label}
-              onClick={() => navigate(atalho.path)}
-              className={`flex items-center gap-3 p-4 rounded-xl border border-gray-100 bg-white text-left transition-all shadow-sm hover:shadow-md ${atalho.color}`}
-            >
-              <atalho.icon size={18} className="text-gray-500" />
-              <span className="text-sm font-medium text-gray-700">{atalho.label}</span>
-            </button>
-          ))}
-        </div>
+        {atalhos.length > 0 && (
+          <div
+            className={cn(
+              "grid gap-3",
+              atalhos.length === 1 && "grid-cols-1",
+              atalhos.length === 2 && "grid-cols-2",
+              atalhos.length === 3 && "grid-cols-2 sm:grid-cols-3",
+              atalhos.length === 4 && "grid-cols-2 sm:grid-cols-4"
+            )}
+          >
+            {atalhos.map((atalho) => (
+              <button
+                key={atalho.label}
+                onClick={() => navigate(atalho.path)}
+                className={`flex items-center gap-3 p-4 rounded-xl border border-gray-100 bg-white text-left transition-all shadow-sm hover:shadow-md ${atalho.color}`}
+              >
+                <atalho.icon size={18} className="text-gray-500" />
+                <span className="text-sm font-medium text-gray-700">{atalho.label}</span>
+              </button>
+            ))}
+          </div>
+        )}
       </div>
     </PageLayout>
   );

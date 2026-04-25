@@ -25,14 +25,17 @@ import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CategoryManager } from "../components/CategoryManager";
 import { SupplierManager } from "../components/SupplierManager";
+import { Can } from "@/components/Can";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
-import { useUserRole } from "@/hooks/useUserRole";
+import { usePermissions } from "@/hooks/usePermissions";
 import { formatCurrencyInput, parseCurrencyString } from "@/lib/currencyUtils";
 import { getDisplayDate, formatDateDisplay } from "@/lib/dateUtils";
 import { getSafeErrorMessage } from "@/lib/safeError";
 import { checkDuplicates, type DuplicateMatch } from "@/lib/duplicateCheck";
 import { DuplicateWarningDialog } from "@/components/DuplicateWarningDialog";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { DespesaDetailDialog } from "./DespesaDetailDialog";
 
 /**
  * Função para obter a data de exibição correta baseada no status para despesas
@@ -76,8 +79,7 @@ export default function Despesas() {
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [selectedDespesa, setSelectedDespesa] = useState<Despesa | null>(null);
 
-  const { data: userRole } = useUserRole();
-  const isAdmin = userRole === "admin";
+  const { isAdmin } = usePermissions();
 
   const form = useForm<DespesaFormData>({
     resolver: zodResolver(despesaSchema),
@@ -370,13 +372,23 @@ export default function Despesas() {
     form.reset(despesaDefaultValues);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm("Tem certeza que deseja excluir esta despesa?")) return;
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
-    const { error } = await supabase.from("despesas").update({ deleted_at: new Date().toISOString() }).eq("id", id);
-    if (!error) {
+  const handleDelete = (id: string) => setDeleteId(id);
+
+  const confirmDelete = async () => {
+    if (!deleteId) return;
+    const id = deleteId;
+    setDeleteId(null);
+    try {
+      const { error } = await supabase.from("despesas").update({ deleted_at: new Date().toISOString() }).eq("id", id);
+      if (error) throw error;
       toast.success("Despesa excluída");
-      fetchData();
+      await fetchData();
+    } catch (err) {
+      toast.error("Falha ao excluir despesa", {
+        description: err instanceof Error ? err.message : "Tente novamente",
+      });
     }
   };
 
@@ -425,12 +437,14 @@ export default function Despesas() {
             </Dialog>
 
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogTrigger asChild>
-                <Button className="rounded-full bg-accent-orange hover:bg-accent-orange/90 text-white transition-colors px-5 py-2.5 text-sm">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Nova Despesa
-                </Button>
-              </DialogTrigger>
+              <Can feature="financeiro" action="create">
+                <DialogTrigger asChild>
+                  <Button className="rounded-full bg-accent-orange hover:bg-accent-orange/90 text-ink transition-colors px-5 py-2.5 text-sm">
+                    <Plus className="mr-2 h-4 w-4" />
+                    Nova Despesa
+                  </Button>
+                </DialogTrigger>
+              </Can>
               <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto p-0">
                 <div className="px-6 pt-6 pb-4 border-b">
                   <DialogHeader>
@@ -732,7 +746,7 @@ export default function Despesas() {
                     </Button>
                     <Button
                       type="submit"
-                      className="flex-1 bg-accent-orange hover:bg-accent-orange/90 text-white"
+                      className="flex-1 bg-accent-orange hover:bg-accent-orange/90 text-ink"
                       disabled={isSaving}
                     >
                       {isSaving ? (
@@ -835,7 +849,7 @@ export default function Despesas() {
                     </TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()}>
                       <div className="flex gap-1 justify-end">
-                        {isAdmin && (
+                        <Can feature="financeiro" action="edit">
                           <Button
                             variant="ghost"
                             size="icon"
@@ -844,15 +858,17 @@ export default function Despesas() {
                           >
                             <Pencil className="h-4 w-4" />
                           </Button>
-                        )}
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
-                          onClick={() => handleDelete(despesa.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        </Can>
+                        <Can feature="financeiro" action="delete">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                            onClick={() => handleDelete(despesa.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </Can>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -863,116 +879,16 @@ export default function Despesas() {
         </CardContent>
       </Card>
 
-      {/* Modal de Detalhes */}
-      <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Detalhes da Despesa</DialogTitle>
-            <DialogDescription>Informações completas da despesa selecionada</DialogDescription>
-          </DialogHeader>
-
-          {selectedDespesa && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-xs text-muted-foreground">Data Vencimento</Label>
-                  <p className="text-sm font-medium">{formatDateDisplay(selectedDespesa.data_vencimento)}</p>
-                </div>
-                {selectedDespesa.data_pagamento &&
-                  selectedDespesa.data_pagamento !== selectedDespesa.data_vencimento && (
-                    <div>
-                      <Label className="text-xs text-muted-foreground">Data Pagamento</Label>
-                      <p className="text-sm font-medium text-green-600">
-                        {formatDateDisplay(selectedDespesa.data_pagamento)}
-                      </p>
-                    </div>
-                  )}
-                <div>
-                  <Label className="text-xs text-muted-foreground">Valor</Label>
-                  <p className="text-sm font-bold text-red-600">
-                    R$ {selectedDespesa.valor.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                  </p>
-                </div>
-                <div className="col-span-2">
-                  <Label className="text-xs text-muted-foreground">Descrição</Label>
-                  <p className="text-sm font-medium">{selectedDespesa.descricao}</p>
-                </div>
-                <div>
-                  <Label className="text-xs text-muted-foreground">Status</Label>
-                  <p className="text-sm">{selectedDespesa.status}</p>
-                </div>
-                <div>
-                  <Label className="text-xs text-muted-foreground">Categoria</Label>
-                  <p className="text-sm">{selectedDespesa.categoria_nome || "-"}</p>
-                </div>
-                <div>
-                  <Label className="text-xs text-muted-foreground">Fornecedor</Label>
-                  <p className="text-sm">{selectedDespesa.fornecedor_nome || "-"}</p>
-                </div>
-                <div>
-                  <Label className="text-xs text-muted-foreground">Projeto</Label>
-                  <p className="text-sm">{selectedDespesa.projeto_codigo || "-"}</p>
-                </div>
-                <div>
-                  <Label className="text-xs text-muted-foreground">Forma de Pagamento</Label>
-                  <p className="text-sm">{selectedDespesa.forma_pagamento || "-"}</p>
-                </div>
-                <div>
-                  <Label className="text-xs text-muted-foreground">Conta / Cartão</Label>
-                  <p className="text-sm">
-                    {selectedDespesa.conta_id
-                      ? contas.find((c) => c.id === selectedDespesa.conta_id)?.nome
-                      : selectedDespesa.cartao_id
-                        ? cartoes.find((c) => c.id === selectedDespesa.cartao_id)?.nome
-                        : "-"}
-                  </p>
-                </div>
-                <div>
-                  <Label className="text-xs text-muted-foreground">Nota Fiscal</Label>
-                  <p className="text-sm">{selectedDespesa.nota_fiscal || "-"}</p>
-                </div>
-                <div>
-                  <Label className="text-xs text-muted-foreground">Parcela</Label>
-                  <p className="text-sm">
-                    {selectedDespesa.parcela_numero && selectedDespesa.parcela_total
-                      ? `${selectedDespesa.parcela_numero}/${selectedDespesa.parcela_total}`
-                      : "1/1"}
-                  </p>
-                </div>
-                <div className="col-span-2">
-                  <Label className="text-xs text-muted-foreground">Observação</Label>
-                  <p className="text-sm">{selectedDespesa.observacao || "-"}</p>
-                </div>
-              </div>
-
-              <div className="flex gap-2 pt-4 mt-4 border-t">
-                <Button variant="outline" className="flex-1" onClick={() => setIsDetailOpen(false)}>
-                  Fechar
-                </Button>
-                {isAdmin && (
-                  <>
-                    <Button variant="outline" className="flex-1" onClick={() => openEditDespesa(selectedDespesa)}>
-                      <Pencil className="mr-2 h-4 w-4" />
-                      Editar
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      className="flex-1"
-                      onClick={() => {
-                        handleDelete(selectedDespesa.id);
-                        setIsDetailOpen(false);
-                      }}
-                    >
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      Excluir
-                    </Button>
-                  </>
-                )}
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      <DespesaDetailDialog
+        open={isDetailOpen}
+        onOpenChange={setIsDetailOpen}
+        despesa={selectedDespesa}
+        contas={contas}
+        cartoes={cartoes}
+        isAdmin={isAdmin}
+        onEdit={openEditDespesa}
+        onDelete={handleDelete}
+      />
 
       <DuplicateWarningDialog
         open={showDuplicateWarning}
@@ -988,6 +904,18 @@ export default function Despesas() {
             setPendingFormData(null);
           }
         }}
+      />
+
+      <ConfirmDialog
+        open={deleteId !== null}
+        onOpenChange={(v) => {
+          if (!v) setDeleteId(null);
+        }}
+        onConfirm={confirmDelete}
+        title="Excluir despesa?"
+        description="Esta ação não pode ser desfeita."
+        confirmText="Excluir"
+        variant="destructive"
       />
     </div>
   );

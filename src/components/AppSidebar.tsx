@@ -2,9 +2,13 @@ import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
   BarChart,
   Calendar,
+  Clock,
   FileText,
+  Gauge,
   Home,
   MapPin,
+  ShieldCheck,
+  Target,
   Users,
   User,
   UserCircle,
@@ -12,7 +16,9 @@ import {
   LogOut,
   ChevronDown,
   Wallet,
+  CreditCard,
   UserPlus,
+  type LucideIcon,
 } from "lucide-react";
 import { useSidebar, SidebarTrigger } from "@/components/ui/sidebar";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
@@ -25,19 +31,61 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePermissions } from "@/hooks/usePermissions";
+import type { Feature } from "@/lib/permissions";
+import { ImpersonationPicker } from "@/components/ImpersonationPicker";
 
-const items = [
-  { title: "Dashboard", url: "/dashboard", icon: Home },
-  { title: "Projetos", url: "/projetos", icon: Calendar },
-  { title: "Propostas", url: "/propostas", icon: FileText },
-  { title: "Leads", url: "/leads", icon: UserPlus },
-  { title: "Clientes", url: "/clientes", icon: Building2 },
-  { title: "Financeiro", url: "/financeiro", icon: Wallet },
-  { title: "Pessoas", url: "/pessoas", icon: Users },
-  { title: "Mapa", url: "/mapa", icon: MapPin },
-  { title: "Relatórios", url: "/relatorios", icon: BarChart },
+type MenuItem = {
+  title: string;
+  url: string;
+  icon: LucideIcon;
+  feature: Feature;
+  badge?: "novo";
+};
+
+type MenuGroup = {
+  label: string;
+  items: MenuItem[];
+};
+
+const menu: MenuGroup[] = [
+  {
+    label: "Visão",
+    items: [
+      { title: "Dashboard", url: "/dashboard", icon: Home, feature: "dashboard" },
+      { title: "Relatórios", url: "/relatorios", icon: BarChart, feature: "relatorios" },
+    ],
+  },
+  {
+    label: "Comercial",
+    items: [
+      { title: "Leads", url: "/leads", icon: UserPlus, feature: "leads" },
+      { title: "Propostas", url: "/propostas", icon: FileText, feature: "propostas" },
+      { title: "Clientes", url: "/clientes", icon: Building2, feature: "clientes" },
+    ],
+  },
+  {
+    label: "Operação",
+    items: [
+      { title: "Projetos", url: "/projetos", icon: Calendar, feature: "projetos" },
+      { title: "Planejamento", url: "/planejamento", icon: Gauge, feature: "planejamento", badge: "novo" },
+      { title: "Timesheet", url: "/timesheet", icon: Clock, feature: "timesheet", badge: "novo" },
+      { title: "Mapa", url: "/mapa", icon: MapPin, feature: "mapa" },
+    ],
+  },
+  {
+    label: "Financeiro",
+    items: [{ title: "Financeiro", url: "/financeiro", icon: Wallet, feature: "financeiro" }],
+  },
+  {
+    label: "Equipe",
+    items: [
+      { title: "Equipe", url: "/pessoas", icon: Users, feature: "pessoas" },
+      { title: "Metas", url: "/metas", icon: Target, feature: "metas", badge: "novo" },
+    ],
+  },
 ];
 
 export function AppSidebar() {
@@ -45,6 +93,7 @@ export function AppSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, profile, signOut } = useAuth();
+  const { getNavItemProps, isAdmin } = usePermissions();
   const currentPath = location.pathname;
   const [sidebarWidth, setSidebarWidth] = useState(state === "collapsed" ? "64px" : "240px");
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -53,10 +102,11 @@ export function AppSidebar() {
     profile?.nome || (user?.user_metadata as { nome?: string } | null | undefined)?.nome || user?.email || "Usuário";
 
   const userEmail = user?.email ?? null;
+  const collapsed = state === "collapsed";
 
   useEffect(() => {
-    setSidebarWidth(state === "collapsed" ? "64px" : "240px");
-  }, [state]);
+    setSidebarWidth(collapsed ? "64px" : "240px");
+  }, [collapsed]);
 
   const handleLogout = async () => {
     await signOut();
@@ -71,21 +121,108 @@ export function AppSidebar() {
     navigate("/company");
   };
 
+  const handleAdmin = () => {
+    navigate("/admin");
+  };
+
+  const handleBilling = () => {
+    navigate("/billing");
+  };
+
   const handleNavClick = () => {
     if (isMobile) {
       setOpenMobile(false);
     }
   };
 
+  const visibleGroups = useMemo(
+    () =>
+      menu
+        .map((group) => ({
+          ...group,
+          items: group.items.map((item) => ({ item, nav: getNavItemProps(item.feature) })),
+        }))
+        .filter((group) => group.items.some(({ nav }) => !nav.disabled)),
+    [getNavItemProps]
+  );
+
+  const renderItem = (item: MenuItem, navProps: { disabled: boolean; title: string }) => {
+    const isActive = currentPath === item.url;
+    const Icon = item.icon;
+
+    if (navProps.disabled) {
+      const tooltip = navProps.title || item.title;
+      return (
+        <span
+          key={item.title}
+          className={cn(
+            "flex items-center gap-3 px-3 py-2 rounded-full text-sm group relative cursor-not-allowed opacity-40",
+            collapsed && "justify-center"
+          )}
+          title={tooltip}
+          aria-disabled
+        >
+          <Icon size={18} strokeWidth={1.5} className="w-[18px] h-[18px] flex-shrink-0" />
+          {!collapsed && <span className="tracking-tight">{item.title}</span>}
+          {collapsed && (
+            <span className="absolute left-full ml-3 bg-black text-white text-xs py-1.5 px-3 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50 shadow-lg">
+              {tooltip}
+            </span>
+          )}
+        </span>
+      );
+    }
+
+    return (
+      <NavLink
+        key={item.title}
+        to={item.url}
+        end={item.url === "/dashboard"}
+        onClick={handleNavClick}
+        className={cn(
+          "flex items-center gap-3 px-3 py-2 rounded-full text-sm transition-all duration-200 group relative",
+          collapsed && "justify-center",
+          isActive ? "bg-accent-orange/30 text-black/70 font-medium" : "text-black/70 hover:bg-accent-orange/15"
+        )}
+        title={collapsed ? item.title : ""}
+      >
+        <Icon size={18} strokeWidth={1.5} className="w-[18px] h-[18px] flex-shrink-0" />
+        {!collapsed && (
+          <>
+            <span className="tracking-tight flex-1">{item.title}</span>
+            {item.badge === "novo" && (
+              <span className="text-[10px] font-medium tracking-wide uppercase px-1.5 py-0.5 rounded-full bg-accent-orange/10 text-accent-orange">
+                Novo
+              </span>
+            )}
+          </>
+        )}
+
+        {collapsed && (
+          <>
+            {item.badge === "novo" && (
+              <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-accent-orange" />
+            )}
+            <span className="absolute left-full ml-3 bg-black text-white text-xs py-1.5 px-3 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50 shadow-lg">
+              {item.title}
+            </span>
+          </>
+        )}
+      </NavLink>
+    );
+  };
+
   const sidebarInner = (
     <div className="flex flex-col h-full">
       {/* Logo Header com Toggle Button */}
       <div className="flex items-center justify-between h-16 px-4 border-b border-black/5 group">
-        {state !== "collapsed" ? (
+        {!collapsed ? (
           <>
             <div className="flex items-center gap-3">
               <img src="/pilar-logo.svg" alt="Pilar" className="h-7 w-7" />
-              <span className="text-base font-normal tracking-tight">Pilar</span>
+              <span className="text-base font-normal tracking-tight">
+                Pilar<sup className="text-[8px] font-normal text-slate-400 ml-0.5 relative -top-2">®</sup>
+              </span>
             </div>
             <SidebarTrigger className="text-black/70 hover:text-accent-orange hover:bg-accent-orange/5 transition-colors rounded-full h-8 w-8" />
           </>
@@ -102,59 +239,17 @@ export function AppSidebar() {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-3 space-y-1">
-        {items.map((item) => {
-          const isActive = currentPath === item.url;
-          const Icon = item.icon;
-
-          if (item.disabled) {
-            return (
-              <span
-                key={item.title}
-                className={cn(
-                  "flex items-center gap-3 px-3 py-2 rounded-full text-sm group relative cursor-not-allowed opacity-40",
-                  state === "collapsed" && "justify-center"
-                )}
-                title={state === "collapsed" ? item.title : ""}
-              >
-                <Icon size={18} strokeWidth={1.5} className="w-[18px] h-[18px] flex-shrink-0" />
-                {state !== "collapsed" && <span className="tracking-tight">{item.title}</span>}
-                {state === "collapsed" && (
-                  <span className="absolute left-full ml-3 bg-black text-white text-xs py-1.5 px-3 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50 shadow-lg">
-                    {item.title}
-                  </span>
-                )}
-              </span>
-            );
-          }
-
-          return (
-            <NavLink
-              key={item.title}
-              to={item.url}
-              end={item.url === "/dashboard"}
-              onClick={handleNavClick}
-              className={cn(
-                "flex items-center gap-3 px-3 py-2 rounded-full text-sm transition-all duration-200 group relative",
-                state === "collapsed" && "justify-center",
-                isActive
-                  ? "bg-accent-orange/10 text-accent-orange font-medium"
-                  : "text-black/70 hover:bg-accent-orange/5 hover:text-accent-orange"
-              )}
-              title={state === "collapsed" ? item.title : ""}
-            >
-              <Icon size={18} strokeWidth={1.5} className="w-[18px] h-[18px] flex-shrink-0" />
-              {state !== "collapsed" && <span className="tracking-tight">{item.title}</span>}
-
-              {/* Tooltip para sidebar minimizada */}
-              {state === "collapsed" && (
-                <span className="absolute left-full ml-3 bg-black text-white text-xs py-1.5 px-3 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50 shadow-lg">
-                  {item.title}
-                </span>
-              )}
-            </NavLink>
-          );
-        })}
+      <nav className="flex-1 p-3 overflow-y-auto">
+        {visibleGroups.map((group, groupIdx) => (
+          <div key={group.label} className={cn(groupIdx > 0 && (collapsed ? "mt-3" : "mt-5"))}>
+            {!collapsed && (
+              <div className="px-3 mb-1.5 text-[10px] font-medium tracking-[0.08em] uppercase text-black/40">
+                {group.label}
+              </div>
+            )}
+            <div className="space-y-1">{group.items.map(({ item, nav }) => renderItem(item, nav))}</div>
+          </div>
+        ))}
       </nav>
 
       {/* User Menu */}
@@ -164,14 +259,14 @@ export function AppSidebar() {
             <button
               className={cn(
                 "group w-full flex items-center gap-3 px-3 py-2 rounded-full text-sm transition-all duration-200 hover:bg-black/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/10",
-                state === "collapsed" && "justify-center"
+                collapsed && "justify-center"
               )}
               type="button"
               aria-label="Menu do usuário"
-              title={state === "collapsed" ? userName : ""}
+              title={collapsed ? userName : ""}
             >
               <UserCircle size={18} strokeWidth={1.5} className="text-black/70 w-[18px] h-[18px] flex-shrink-0" />
-              {state !== "collapsed" && (
+              {!collapsed && (
                 <>
                   <span className="flex-1 text-left text-black/70 tracking-tight">{userName}</span>
                   <ChevronDown
@@ -198,6 +293,19 @@ export function AppSidebar() {
               <Building2 size={14} className="mr-2" />
               Empresa
             </DropdownMenuItem>
+            {isAdmin && (
+              <DropdownMenuItem onClick={handleBilling}>
+                <CreditCard size={14} className="mr-2" />
+                Assinatura
+              </DropdownMenuItem>
+            )}
+            {isAdmin && (
+              <DropdownMenuItem onClick={handleAdmin}>
+                <ShieldCheck size={14} className="mr-2" />
+                Admin Portal
+              </DropdownMenuItem>
+            )}
+            <ImpersonationPicker />
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout} className="text-red-600 focus:text-red-600">
               <LogOut size={14} className="mr-2" />

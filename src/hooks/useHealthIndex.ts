@@ -55,11 +55,11 @@ const PESOS = {
 };
 
 function getLabel(score: number): { label: string; color: string } {
-  if (score >= 80) return { label: "Excelente", color: "#22c55e" };
-  if (score >= 60) return { label: "Bom", color: "#84cc16" };
-  if (score >= 40) return { label: "Atenção", color: "#eab308" };
-  if (score >= 20) return { label: "Crítico", color: "#f97316" };
-  return { label: "Emergência", color: "#ef4444" };
+  if (score >= 80) return { label: "Excelente", color: "hsl(var(--chart-success))" };
+  if (score >= 60) return { label: "Bom", color: "hsl(var(--c-lime-500))" };
+  if (score >= 40) return { label: "Atenção", color: "hsl(var(--chart-warning))" };
+  if (score >= 20) return { label: "Crítico", color: "hsl(var(--c-orange-500))" };
+  return { label: "Emergência", color: "hsl(var(--chart-danger))" };
 }
 
 /**

@@ -139,7 +139,7 @@ export default function Rentabilidade() {
                       <Tooltip formatter={(v: number) => `${v.toFixed(1)}%`} />
                       <Bar dataKey="margem" radius={[0, 4, 4, 0]}>
                         {chartData.map((_, i) => (
-                          <Cell key={i} fill="#22c55e" />
+                          <Cell key={i} fill="hsl(var(--chart-success))" />
                         ))}
                       </Bar>
                     </BarChart>
@@ -165,7 +165,10 @@ export default function Rentabilidade() {
                       <Tooltip formatter={(v: number) => `${v.toFixed(1)}%`} />
                       <Bar dataKey="margem" radius={[0, 4, 4, 0]}>
                         {chartDataMenos.map((entry, i) => (
-                          <Cell key={i} fill={entry.margem < 0 ? "#ef4444" : "#f97316"} />
+                          <Cell
+                            key={i}
+                            fill={entry.margem < 0 ? "hsl(var(--chart-danger))" : "hsl(var(--c-orange-500))"}
+                          />
                         ))}
                       </Bar>
                     </BarChart>
@@ -267,7 +270,16 @@ function RentabilidadePorClienteTab() {
 
   const { clientes = [] } = data || {};
 
-  const COLORS = ["#10b981", "#3b82f6", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899", "#06b6d4", "#84cc16"];
+  const COLORS = [
+    "hsl(var(--chart-success-alt))",
+    "hsl(var(--chart-info))",
+    "hsl(var(--chart-warning-alt))",
+    "hsl(var(--chart-danger))",
+    "hsl(var(--c-violet-500))",
+    "hsl(var(--c-pink-500))",
+    "hsl(var(--c-cyan-500))",
+    "hsl(var(--c-lime-500))",
+  ];
 
   const pieData = clientes.slice(0, 8).map((c, i) => ({
     name: c.cliente_nome,
@@ -352,7 +364,10 @@ function RentabilidadePorClienteTab() {
                   <Tooltip formatter={(v: number) => `${v.toFixed(1)}%`} />
                   <Bar dataKey="margem_bruta_pct" radius={[0, 4, 4, 0]}>
                     {clientes.slice(0, 8).map((c, i) => (
-                      <Cell key={i} fill={c.margem_bruta_pct >= 0 ? "#22c55e" : "#ef4444"} />
+                      <Cell
+                        key={i}
+                        fill={c.margem_bruta_pct >= 0 ? "hsl(var(--chart-success))" : "hsl(var(--chart-danger))"}
+                      />
                     ))}
                   </Bar>
                 </BarChart>

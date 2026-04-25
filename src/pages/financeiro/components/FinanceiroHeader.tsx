@@ -136,31 +136,31 @@ export function FinanceiroHeader({
         <TabsList className="rounded-none bg-transparent border-none h-auto p-0 flex flex-nowrap gap-0 min-w-max w-full">
           <TabsTrigger
             value="visao-geral"
-            className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#FF4000] data-[state=active]:bg-white data-[state=active]:text-[#FF4000] py-3 px-4 min-w-max whitespace-nowrap text-sm"
+            className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent-orange data-[state=active]:bg-white data-[state=active]:text-accent-orange py-3 px-4 min-w-max whitespace-nowrap text-sm"
           >
             Visão Geral
           </TabsTrigger>
           <TabsTrigger
             value="fluxo-caixa"
-            className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#FF4000] data-[state=active]:bg-white data-[state=active]:text-[#FF4000] py-3 px-4 min-w-max whitespace-nowrap text-sm"
+            className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent-orange data-[state=active]:bg-white data-[state=active]:text-accent-orange py-3 px-4 min-w-max whitespace-nowrap text-sm"
           >
             Fluxo de Caixa
           </TabsTrigger>
           <TabsTrigger
             value="lancamentos"
-            className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#FF4000] data-[state=active]:bg-white data-[state=active]:text-[#FF4000] py-3 px-4 min-w-max whitespace-nowrap text-sm"
+            className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent-orange data-[state=active]:bg-white data-[state=active]:text-accent-orange py-3 px-4 min-w-max whitespace-nowrap text-sm"
           >
             Lançamentos
           </TabsTrigger>
           <TabsTrigger
             value="mensal"
-            className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#FF4000] data-[state=active]:bg-white data-[state=active]:text-[#FF4000] py-3 px-4 min-w-max whitespace-nowrap text-sm"
+            className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent-orange data-[state=active]:bg-white data-[state=active]:text-accent-orange py-3 px-4 min-w-max whitespace-nowrap text-sm"
           >
             Resumo Mensal
           </TabsTrigger>
           <TabsTrigger
             value="folha-pagamento"
-            className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#FF4000] data-[state=active]:bg-white data-[state=active]:text-[#FF4000] py-3 px-4 min-w-max whitespace-nowrap text-sm"
+            className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent-orange data-[state=active]:bg-white data-[state=active]:text-accent-orange py-3 px-4 min-w-max whitespace-nowrap text-sm"
           >
             Folha de Pagamento
           </TabsTrigger>
@@ -173,7 +173,7 @@ export function FinanceiroHeader({
           </TabsTrigger>
           <TabsTrigger
             value="contas"
-            className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#FF4000] data-[state=active]:bg-white data-[state=active]:text-[#FF4000] py-3 px-4 min-w-max whitespace-nowrap text-sm"
+            className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent-orange data-[state=active]:bg-white data-[state=active]:text-accent-orange py-3 px-4 min-w-max whitespace-nowrap text-sm"
           >
             Contas
           </TabsTrigger>
@@ -200,14 +200,13 @@ export function FinanceiroHeader({
           </TabsTrigger>
           <TabsTrigger
             value="wip"
-            disabled
-            className="rounded-none border-b-2 border-transparent py-3 px-4 min-w-max whitespace-nowrap text-sm opacity-40 cursor-not-allowed"
+            className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent-orange data-[state=active]:bg-white data-[state=active]:text-accent-orange py-3 px-4 min-w-max whitespace-nowrap text-sm"
           >
             WIP
           </TabsTrigger>
           <TabsTrigger
             value="rentabilidade"
-            className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#FF4000] data-[state=active]:bg-white data-[state=active]:text-[#FF4000] py-3 px-4 min-w-max whitespace-nowrap text-sm"
+            className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent-orange data-[state=active]:bg-white data-[state=active]:text-accent-orange py-3 px-4 min-w-max whitespace-nowrap text-sm"
           >
             Rentabilidade
           </TabsTrigger>

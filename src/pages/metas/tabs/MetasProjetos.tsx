@@ -293,7 +293,7 @@ export default function MetasProjetos() {
             </div>
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="bg-accent-orange hover:bg-accent-orange/90 text-white rounded-full">
+                <Button className="bg-accent-orange hover:bg-accent-orange/90 text-ink rounded-full">
                   <Plus className="mr-2 h-4 w-4" />
                   Nova Meta
                 </Button>
@@ -307,7 +307,7 @@ export default function MetasProjetos() {
                   {metaFormFields(novaMeta, (field, value) => setNovaMeta({ ...novaMeta, [field]: value }))}
                   <Button
                     type="submit"
-                    className="w-full bg-accent-orange hover:bg-accent-orange/90 text-white rounded-full"
+                    className="w-full bg-accent-orange hover:bg-accent-orange/90 text-ink rounded-full"
                     disabled={createMutation.isPending}
                   >
                     {createMutation.isPending ? "Salvando..." : "Salvar Meta"}
@@ -334,7 +334,7 @@ export default function MetasProjetos() {
                   )}
                   <Button
                     type="submit"
-                    className="w-full bg-accent-orange hover:bg-accent-orange/90 text-white rounded-full"
+                    className="w-full bg-accent-orange hover:bg-accent-orange/90 text-ink rounded-full"
                     disabled={updateMutation.isPending}
                   >
                     {updateMutation.isPending ? "Atualizando..." : "Atualizar Meta"}

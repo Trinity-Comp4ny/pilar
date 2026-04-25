@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import type { Json } from "@/integrations/supabase/types";
 
 export interface ContaBancaria {
   banco: string;
@@ -8,6 +9,7 @@ export interface ContaBancaria {
   conta: string;
   tipo: string;
   is_primary?: boolean;
+  [key: string]: Json | undefined;
 }
 
 export interface Cliente {
@@ -42,42 +44,33 @@ export const useClientes = () => {
       const { data, error } = await supabase.from("clientes").select("*").order("nome");
 
       if (error) throw error;
-      return (data ?? []) as Cliente[];
+      return (data ?? []) as unknown as Cliente[];
     },
     staleTime: 1000 * 60 * 3,
   });
 
   const upsertMutation = useMutation({
     mutationFn: async ({ id, data }: { id?: string; data: ClienteFormData }) => {
-      if (id) {
-        const { error } = await supabase
-          .from("clientes")
-          .update({
-            nome: data.nome,
-            cpf_cnpj: data.cpf_cnpj,
-            endereco: data.endereco,
-            contato: data.contato,
-            email: data.email,
-            tipo_nf: data.tipo_nf,
-            origem: data.origem,
-            contas_bancarias: data.contas_bancarias,
-          })
-          .eq("id", id);
+      const payload = {
+        nome: data.nome,
+        cpf_cnpj: data.cpf_cnpj,
+        endereco: data.endereco,
+        contato: data.contato,
+        email: data.email,
+        tipo_nf: data.tipo_nf,
+        origem: data.origem,
+        contas_bancarias: data.contas_bancarias as unknown as Json,
+      };
 
+      if (id) {
+        const { error } = await supabase.from("clientes").update(payload).eq("id", id);
         if (error) throw error;
       } else {
+        const { data: empresaData } = await supabase.rpc("get_user_empresa_id");
         const { error } = await supabase.from("clientes").insert({
-          nome: data.nome,
-          cpf_cnpj: data.cpf_cnpj,
-          endereco: data.endereco,
-          contato: data.contato,
-          email: data.email,
-          tipo_nf: data.tipo_nf,
-          origem: data.origem,
-          contas_bancarias: data.contas_bancarias,
-          empresa_id: (await supabase.rpc("get_user_empresa_id")).data,
+          ...payload,
+          empresa_id: empresaData as string,
         });
-
         if (error) throw error;
       }
     },
@@ -134,8 +127,8 @@ export const useClientes = () => {
 
       return { email: data.email as string, senha: data.senha as string };
     },
-    onError: () => {
-      toast.error("Erro ao criar acesso");
+    onError: (error: Error) => {
+      toast.error(error.message || "Erro ao criar acesso");
     },
   });
 
@@ -153,8 +146,8 @@ export const useClientes = () => {
 
       return { email: data.email as string, senha: data.senha as string };
     },
-    onError: () => {
-      toast.error("Erro ao redefinir senha");
+    onError: (error: Error) => {
+      toast.error(error.message || "Erro ao redefinir senha");
     },
   });
 

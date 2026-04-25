@@ -145,10 +145,10 @@ export default function AgingRecebiveis() {
                 <YAxis type="category" dataKey="nome" width={100} fontSize={10} />
                 <Tooltip formatter={(v: number) => formatCurrency(v)} />
                 <Legend fontSize={11} />
-                <Bar dataKey="0-30d" stackId="aging" fill="#22c55e" name="0-30 dias" />
-                <Bar dataKey="31-60d" stackId="aging" fill="#f59e0b" name="31-60 dias" />
-                <Bar dataKey="61-90d" stackId="aging" fill="#f97316" name="61-90 dias" />
-                <Bar dataKey="90+d" stackId="aging" fill="#ef4444" name="90+ dias" />
+                <Bar dataKey="0-30d" stackId="aging" fill="hsl(var(--chart-success))" name="0-30 dias" />
+                <Bar dataKey="31-60d" stackId="aging" fill="hsl(var(--chart-warning-alt))" name="31-60 dias" />
+                <Bar dataKey="61-90d" stackId="aging" fill="hsl(var(--c-orange-500))" name="61-90 dias" />
+                <Bar dataKey="90+d" stackId="aging" fill="hsl(var(--chart-danger))" name="90+ dias" />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>

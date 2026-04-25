@@ -149,8 +149,8 @@ interface ChartItem {
   valor: number;
   data_recebimento?: string | null;
   data_pagamento?: string | null;
-  data_vencimento: string;
-  status?: string;
+  data_vencimento: string | null;
+  status?: string | null;
 }
 
 const processChartData = (receitas: ReceitaChartItem[], despesas: DespesaChartItem[]) => {
@@ -242,8 +242,26 @@ const processCategoryData = (
 ) => {
   const categoryMap = new Map<string, { name: string; value: number; color: string }>();
 
-  const greenShades = ["#16a34a", "#22c55e", "#4ade80", "#15803d", "#14532d", "#86efac", "#bbf7d0", "#86efac"];
-  const redShades = ["#dc2626", "#ef4444", "#f87171", "#b91c1c", "#7f1d1d", "#fca5a5", "#fecaca", "#fee2e2"];
+  const greenShades = [
+    "hsl(var(--c-green-600))",
+    "hsl(var(--c-green-500))",
+    "hsl(var(--c-green-400))",
+    "hsl(var(--c-green-700))",
+    "hsl(var(--c-green-900))",
+    "hsl(var(--c-green-200))",
+    "hsl(var(--c-green-100))",
+    "hsl(var(--c-green-200))",
+  ];
+  const redShades = [
+    "hsl(var(--c-red-600))",
+    "hsl(var(--c-red-500))",
+    "hsl(var(--c-red-400))",
+    "hsl(var(--c-red-700))",
+    "hsl(var(--c-red-900))",
+    "hsl(var(--c-red-200))",
+    "hsl(var(--c-red-100))",
+    "hsl(var(--c-red-50))",
+  ];
 
   const colors = type === "receitas" ? greenShades : redShades;
 
