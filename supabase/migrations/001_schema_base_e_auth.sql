@@ -28,8 +28,12 @@ END $$;
 -- Projetos
 ALTER TABLE public.projetos ADD COLUMN IF NOT EXISTS parcelas TEXT;
 
--- Projetos Responsáveis
-ALTER TABLE public.projetos_responsaveis ADD COLUMN IF NOT EXISTS responsabilidade TEXT;
+-- Projetos Responsáveis (tabela removida em produção — skipped)
+DO $$ BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'projetos_responsaveis') THEN
+    ALTER TABLE public.projetos_responsaveis ADD COLUMN IF NOT EXISTS responsabilidade TEXT;
+  END IF;
+END $$;
 
 -- Profiles (auth hardening)
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS onboarding_completed BOOLEAN DEFAULT FALSE;
