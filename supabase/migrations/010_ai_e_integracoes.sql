@@ -111,6 +111,8 @@ CREATE TABLE IF NOT EXISTS public.asaas_config (
   UNIQUE (empresa_id)
 );
 
+ALTER TABLE public.asaas_config ADD COLUMN IF NOT EXISTS webhook_token TEXT NOT NULL DEFAULT encode(gen_random_bytes(32), 'hex');
+
 ALTER TABLE public.asaas_config ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "asaas_config_empresa_select" ON public.asaas_config;
