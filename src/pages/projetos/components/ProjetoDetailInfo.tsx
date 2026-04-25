@@ -1,8 +1,8 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { User, DollarSign, Calendar, Ruler } from "lucide-react";
-import type { Projeto } from "../types";
-import { formatCurrency, formatDate } from "../types";
+import type { Projeto } from "@/types/projetos";
+import { formatCurrency, formatDate } from "@/types/projetos";
 
 interface ProjetoDetailInfoProps {
   projeto: Projeto;
