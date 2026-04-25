@@ -46,9 +46,18 @@ export default function Login() {
       return;
     }
 
-    // Navega direto para /dashboard — o PrivateRoute cuida dos redirects de
-    // onboarding via AuthContext, que já busca o profile no onAuthStateChange.
-    // Remover getUser() + fetch de profile evita hang por sessão corrompida.
+    // Se MFA (aal2) é requerido, vai pro challenge sem toast de sucesso.
+    // Toast só aparece quando login está de fato concluído (MfaChallenge dispara
+    // "MFA verificado" após passar). PrivateRoute cuida dos redirects de onboarding.
+    const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+    const mfaRequired = aal?.nextLevel === "aal2" && aal?.currentLevel === "aal1";
+
+    if (mfaRequired) {
+      navigate("/mfa");
+      setIsLoading(false);
+      return;
+    }
+
     toast.success("Login realizado com sucesso!", {
       description: "Bem-vindo de volta.",
     });
