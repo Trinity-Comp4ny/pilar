@@ -114,7 +114,7 @@ export function EditUserDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)} className="rounded-full">
             Cancelar
           </Button>
-          <Button onClick={onSave} className="rounded-full bg-accent-orange hover:bg-accent-orange/90 text-white">
+          <Button onClick={onSave} className="rounded-full bg-accent-orange hover:bg-accent-orange/90 text-ink">
             Salvar
           </Button>
         </DialogFooter>

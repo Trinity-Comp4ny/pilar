@@ -48,7 +48,10 @@ export function AsaasCobrancaButton({
         variant="outline"
         size="sm"
         className="gap-1.5 text-xs h-8 border-blue-200 text-blue-700 hover:bg-blue-50"
-        onClick={() => window.open(asaasPaymentUrl, "_blank")}
+        onClick={() => {
+          const w = window.open(asaasPaymentUrl, "_blank", "noopener,noreferrer");
+          if (w) w.opener = null;
+        }}
       >
         <ExternalLink className="h-3 w-3" />
         {asaasBillingType === "PIX" ? "Pix" : "Boleto"} Asaas

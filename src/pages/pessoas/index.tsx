@@ -97,7 +97,7 @@ export default function Pessoas() {
           children={
             isAdmin ? (
               <Button
-                className="rounded-full bg-accent-orange hover:bg-accent-orange/90 text-white transition-colors px-5 py-2.5 text-sm"
+                className="rounded-full bg-accent-orange hover:bg-accent-orange/90 text-ink transition-colors px-5 py-2.5 text-sm"
                 onClick={handleNewPessoa}
               >
                 <Plus className="mr-2 h-4 w-4" />

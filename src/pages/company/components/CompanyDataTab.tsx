@@ -4,7 +4,8 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Building2 } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Building2, QrCode } from "lucide-react";
 import type { CompanyData } from "../types";
 import { STATUS_OPTIONS, getStatusBadge } from "../types";
 
@@ -49,7 +50,7 @@ export function CompanyDataTab({
         {!editing ? (
           <Button
             onClick={onEdit}
-            className="rounded-full bg-accent-orange hover:bg-accent-orange/90 text-white"
+            className="rounded-full bg-accent-orange hover:bg-accent-orange/90 text-ink"
             disabled={!isAdmin || isLoading}
           >
             Editar
@@ -59,7 +60,7 @@ export function CompanyDataTab({
             <Button variant="outline" onClick={onCancel} className="rounded-full">
               Cancelar
             </Button>
-            <Button onClick={onSave} className="rounded-full bg-accent-orange hover:bg-accent-orange/90 text-white">
+            <Button onClick={onSave} className="rounded-full bg-accent-orange hover:bg-accent-orange/90 text-ink">
               Salvar
             </Button>
           </div>
@@ -163,6 +164,39 @@ export function CompanyDataTab({
               readOnly={!editing}
               className={inputClass}
             />
+          </div>
+        </div>
+
+        <div className="mt-6 pt-6 border-t">
+          <div className="flex items-center gap-2 mb-3">
+            <QrCode size={16} className="text-accent-orange" />
+            <Label className="text-sm font-semibold">Cobrança direta (sem Asaas)</Label>
+          </div>
+          <p className="text-xs text-muted-foreground mb-4">
+            Dados enviados nos emails de cobrança manual. Mantém seu 100% — zero taxa de gateway.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Chave Pix</Label>
+              <Input
+                value={companyData.pixChave || ""}
+                onChange={(e) => onChange("pixChave", e.target.value)}
+                readOnly={!editing}
+                className={inputClass}
+                placeholder="CPF, CNPJ, email, telefone ou aleatória"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Instruções (opcional)</Label>
+              <Textarea
+                value={companyData.pixInstrucoes || ""}
+                onChange={(e) => onChange("pixInstrucoes", e.target.value)}
+                readOnly={!editing}
+                className={inputClass}
+                placeholder="Ex: Titular João Silva, Itaú"
+                rows={2}
+              />
+            </div>
           </div>
         </div>
       </CardContent>

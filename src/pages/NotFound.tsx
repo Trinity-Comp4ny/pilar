@@ -44,7 +44,9 @@ const NotFound = () => {
       <div className="w-full max-w-2xl">
         <div className="mb-6 flex items-center justify-center gap-3">
           <img src="/pilar-logo.svg" alt="Pilar" className="h-10 w-10" />
-          <span className="text-lg font-medium tracking-tight text-slate-900">Pilar</span>
+          <span className="text-lg font-medium tracking-tight text-slate-900">
+            Pilar<sup className="text-[9px] font-normal text-slate-400 ml-0.5 relative -top-2">®</sup>
+          </span>
         </div>
 
         <Card className="border-slate-200/70 shadow-sm">

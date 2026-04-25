@@ -32,8 +32,10 @@ import { receitaSchema, receitaDefaultValues, type ReceitaFormData } from "@/sch
 import { getSafeErrorMessage } from "@/lib/safeError";
 import { checkDuplicates, type DuplicateMatch } from "@/lib/duplicateCheck";
 import { DuplicateWarningDialog } from "@/components/DuplicateWarningDialog";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { AsaasCobrancaButton } from "@/components/asaas/AsaasCobrancaButton";
 import { AsaasConfigForm } from "@/components/asaas/AsaasConfigForm";
+import { CobrarPorEmailButton } from "@/components/CobrarPorEmailButton";
 
 /**
  * Função para obter a data de exibição correta baseada no status
@@ -320,13 +322,23 @@ export default function Receitas() {
     setSelectedReceita(null);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm("Tem certeza que deseja excluir esta receita?")) return;
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
-    const { error } = await supabase.from("receitas").update({ deleted_at: new Date().toISOString() }).eq("id", id);
-    if (!error) {
+  const handleDelete = (id: string) => setDeleteId(id);
+
+  const confirmDelete = async () => {
+    if (!deleteId) return;
+    const id = deleteId;
+    setDeleteId(null);
+    try {
+      const { error } = await supabase.from("receitas").update({ deleted_at: new Date().toISOString() }).eq("id", id);
+      if (error) throw error;
       toast.success("Receita excluída");
-      fetchReceitas();
+      await fetchReceitas();
+    } catch (err) {
+      toast.error("Falha ao excluir receita", {
+        description: err instanceof Error ? err.message : "Tente novamente",
+      });
     }
   };
 
@@ -385,7 +397,7 @@ export default function Receitas() {
               }}
             >
               <DialogTrigger asChild>
-                <Button className="rounded-full bg-accent-orange hover:bg-accent-orange/90 text-white transition-colors px-5 py-2.5 text-sm">
+                <Button className="rounded-full bg-accent-orange hover:bg-accent-orange/90 text-ink transition-colors px-5 py-2.5 text-sm">
                   <Plus className="mr-2 h-4 w-4" />
                   Nova Receita
                 </Button>
@@ -624,7 +636,7 @@ export default function Receitas() {
                     </Button>
                     <Button
                       type="submit"
-                      className="flex-1 bg-accent-orange hover:bg-accent-orange/90 text-white"
+                      className="flex-1 bg-accent-orange hover:bg-accent-orange/90 text-ink"
                       disabled={isSaving}
                     >
                       {isSaving ? (
@@ -825,16 +837,28 @@ export default function Receitas() {
                 {selectedReceita.status !== "Recebido" && (
                   <div className="col-span-2 pt-1">
                     <Label className="text-xs text-muted-foreground mb-2 block">Cobrança</Label>
-                    <AsaasCobrancaButton
-                      receitaId={selectedReceita.id}
-                      asaasPaymentUrl={selectedReceita.asaas_payment_url}
-                      asaasPaymentStatus={selectedReceita.asaas_payment_status}
-                      asaasBillingType={selectedReceita.asaas_billing_type}
-                      onSuccess={() => {
-                        fetchReceitas();
-                        setIsDetailOpen(false);
-                      }}
-                    />
+                    <div className="flex flex-wrap gap-2">
+                      <CobrarPorEmailButton
+                        receitaId={selectedReceita.id}
+                        onSuccess={() => {
+                          fetchReceitas();
+                        }}
+                      />
+                      <AsaasCobrancaButton
+                        receitaId={selectedReceita.id}
+                        asaasPaymentUrl={selectedReceita.asaas_payment_url}
+                        asaasPaymentStatus={selectedReceita.asaas_payment_status}
+                        asaasBillingType={selectedReceita.asaas_billing_type}
+                        onSuccess={() => {
+                          fetchReceitas();
+                          setIsDetailOpen(false);
+                        }}
+                      />
+                    </div>
+                    <p className="text-[10px] text-muted-foreground mt-2">
+                      <strong>Email:</strong> cobrança direta pela Pilar (sem taxa). <strong>Asaas:</strong> gera
+                      Pix/boleto (com taxa).
+                    </p>
                   </div>
                 )}
                 <div className="col-span-2">
@@ -874,6 +898,18 @@ export default function Receitas() {
             setPendingFormData(null);
           }
         }}
+      />
+
+      <ConfirmDialog
+        open={deleteId !== null}
+        onOpenChange={(v) => {
+          if (!v) setDeleteId(null);
+        }}
+        onConfirm={confirmDelete}
+        title="Excluir receita?"
+        description="Esta ação não pode ser desfeita."
+        confirmText="Excluir"
+        variant="destructive"
       />
     </div>
   );

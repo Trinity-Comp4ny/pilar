@@ -47,7 +47,7 @@ export function CompanyVisualTab({
         {!editing ? (
           <Button
             onClick={onEdit}
-            className="rounded-full bg-accent-orange hover:bg-accent-orange/90 text-white"
+            className="rounded-full bg-accent-orange hover:bg-accent-orange/90 text-ink"
             disabled={!isAdmin || isLoading}
           >
             Editar
@@ -57,7 +57,7 @@ export function CompanyVisualTab({
             <Button variant="outline" onClick={onCancel} className="rounded-full">
               Cancelar
             </Button>
-            <Button onClick={onSave} className="rounded-full bg-accent-orange hover:bg-accent-orange/90 text-white">
+            <Button onClick={onSave} className="rounded-full bg-accent-orange hover:bg-accent-orange/90 text-ink">
               Salvar
             </Button>
           </div>
