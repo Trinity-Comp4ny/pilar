@@ -166,9 +166,9 @@ export default function ResumoMensal({ dateFrom, dateTo }: ResumoMensalProps) {
                     <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                <XAxis dataKey="dia" stroke="#888" axisLine={false} tickLine={false} />
-                <YAxis stroke="#888" axisLine={false} tickLine={false} />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--chart-grid))" />
+                <XAxis dataKey="dia" stroke="hsl(var(--chart-neutral))" axisLine={false} tickLine={false} />
+                <YAxis stroke="hsl(var(--chart-neutral))" axisLine={false} tickLine={false} />
                 <Tooltip content={<CustomTooltip />} />
                 <Area
                   type="monotone"

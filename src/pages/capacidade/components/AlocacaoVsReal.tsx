@@ -124,8 +124,14 @@ export function AlocacaoVsReal({ weekStart, weekEnd }: AlocacaoVsRealProps) {
               <YAxis type="category" dataKey="nome" width={110} tick={{ fontSize: 10 }} />
               <Tooltip formatter={(v: number) => `${v}h`} />
               <Legend fontSize={11} />
-              <Bar dataKey="planejado" name="Planejado" fill="#94a3b8" barSize={14} radius={[0, 3, 3, 0]} />
-              <Bar dataKey="real" name="Real" fill="#3b82f6" barSize={14} radius={[0, 3, 3, 0]} />
+              <Bar
+                dataKey="planejado"
+                name="Planejado"
+                fill="hsl(var(--chart-neutral))"
+                barSize={14}
+                radius={[0, 3, 3, 0]}
+              />
+              <Bar dataKey="real" name="Real" fill="hsl(var(--chart-info))" barSize={14} radius={[0, 3, 3, 0]} />
             </BarChart>
           </ResponsiveContainer>
         )}

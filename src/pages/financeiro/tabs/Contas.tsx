@@ -120,7 +120,7 @@ export default function Configuracoes() {
         nome,
         banco,
         saldo_inicial: parseCurrencyString(saldoInicial),
-        cor: "#888888",
+        cor: "hsl(var(--chart-neutral))",
       };
 
       if (selectedConta) {
@@ -342,7 +342,7 @@ export default function Configuracoes() {
               >
                 <DialogTrigger asChild>
                   <Button
-                    className="bg-accent-orange hover:bg-accent-orange/90 text-white rounded-full"
+                    className="bg-accent-orange hover:bg-accent-orange/90 text-ink rounded-full"
                     size="sm"
                     onClick={() => {
                       resetForm();
@@ -385,7 +385,7 @@ export default function Configuracoes() {
                       />
                     </div>
                     <Button
-                      className="w-full bg-accent-orange hover:bg-accent-orange/90 text-white rounded-full"
+                      className="w-full bg-accent-orange hover:bg-accent-orange/90 text-ink rounded-full"
                       onClick={handleSaveConta}
                     >
                       {selectedConta ? "Atualizar Conta" : "Salvar Conta"}
@@ -413,7 +413,7 @@ export default function Configuracoes() {
                       <div className="flex items-center gap-3">
                         <div
                           className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm"
-                          style={{ backgroundColor: conta.cor || "#888" }}
+                          style={{ backgroundColor: conta.cor || "hsl(var(--chart-neutral))" }}
                         >
                           {conta.banco ? conta.banco.substring(0, 2).toUpperCase() : "??"}
                         </div>
@@ -486,7 +486,7 @@ export default function Configuracoes() {
               >
                 <DialogTrigger asChild>
                   <Button
-                    className="bg-accent-orange hover:bg-accent-orange/90 text-white rounded-full"
+                    className="bg-accent-orange hover:bg-accent-orange/90 text-ink rounded-full"
                     size="sm"
                     onClick={() => {
                       resetForm();
@@ -560,7 +560,7 @@ export default function Configuracoes() {
                       <p className="text-xs text-muted-foreground">Conta padrão usada ao pagar faturas deste cartão</p>
                     </div>
                     <Button
-                      className="w-full bg-accent-orange hover:bg-accent-orange/90 text-white rounded-full"
+                      className="w-full bg-accent-orange hover:bg-accent-orange/90 text-ink rounded-full"
                       onClick={handleSaveCartao}
                     >
                       {selectedCartao ? "Atualizar Cartão" : "Salvar Cartão"}

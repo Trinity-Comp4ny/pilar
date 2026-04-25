@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import {
   Plus,
   FileText,
+  FileSignature,
   Loader2,
   Trash2,
   Send,
@@ -72,10 +73,13 @@ export default function Propostas() {
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [convertPropostaId, setConvertPropostaId] = useState<string | null>(null);
   const [gerarDocxPropostaId, setGerarDocxPropostaId] = useState<string | null>(null);
+  const [gerarContratoPropostaId, setGerarContratoPropostaId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("propostas");
 
   const gerarDocxProposta = propostas.find((p) => p.id === gerarDocxPropostaId);
   const { data: gerarDocxDisciplinas = [] } = usePropostaDisciplinas(gerarDocxPropostaId);
+  const gerarContratoProposta = propostas.find((p) => p.id === gerarContratoPropostaId);
+  const { data: gerarContratoDisciplinas = [] } = usePropostaDisciplinas(gerarContratoPropostaId);
 
   const convertProposta = propostas.find((p) => p.id === convertPropostaId);
   const { data: convertDisciplinas = [] } = usePropostaDisciplinas(convertPropostaId);
@@ -212,7 +216,7 @@ export default function Propostas() {
                 resetForm();
                 setIsFormOpen(true);
               }}
-              className="bg-accent-orange hover:bg-accent-orange/90 text-white"
+              className="bg-accent-orange hover:bg-accent-orange/90 text-ink"
             >
               <Plus className="h-4 w-4 mr-1" /> Nova Proposta
             </Button>
@@ -405,6 +409,21 @@ export default function Propostas() {
                                       </Button>
                                     </TooltipTrigger>
                                     <TooltipContent>Criar projeto</TooltipContent>
+                                  </Tooltip>
+                                )}
+                                {p.status === "aceita" && (
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-7 w-7 text-purple-600"
+                                        onClick={() => setGerarContratoPropostaId(p.id)}
+                                      >
+                                        <FileSignature className="h-3.5 w-3.5" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>Gerar contrato</TooltipContent>
                                   </Tooltip>
                                 )}
                                 {p.status === "recusada" && (
@@ -734,6 +753,23 @@ export default function Propostas() {
           }}
           proposta={gerarDocxProposta}
           disciplinas={gerarDocxDisciplinas.map((d: PropostaDisciplina) => ({
+            disciplina: d.disciplina,
+            horas_estimadas: Number(d.horas_estimadas),
+            custo_hora: Number(d.custo_hora),
+          }))}
+        />
+      )}
+
+      {/* Dialog Gerar Contrato */}
+      {gerarContratoProposta && (
+        <GerarPropostaDialog
+          open={!!gerarContratoPropostaId}
+          onOpenChange={(open) => {
+            if (!open) setGerarContratoPropostaId(null);
+          }}
+          mode="contrato"
+          proposta={gerarContratoProposta}
+          disciplinas={gerarContratoDisciplinas.map((d: PropostaDisciplina) => ({
             disciplina: d.disciplina,
             horas_estimadas: Number(d.horas_estimadas),
             custo_hora: Number(d.custo_hora),

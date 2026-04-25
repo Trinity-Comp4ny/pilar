@@ -2,6 +2,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { extractVariablesFromDocx } from "@/lib/docxUtils";
 
+export type TemplateTipo = "proposta" | "contrato";
+
 export interface PropostaTemplate {
   id: string;
   empresa_id: string;
@@ -9,21 +11,23 @@ export interface PropostaTemplate {
   descricao: string | null;
   arquivo_path: string;
   variaveis: string[];
+  tipo: TemplateTipo;
   created_at: string;
 }
 
-export const usePropostaTemplates = () => {
+export const usePropostaTemplates = (tipo?: TemplateTipo) => {
   return useQuery({
-    queryKey: ["proposta-templates"],
+    queryKey: ["proposta-templates", tipo ?? "all"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("proposta_templates")
-        .select("*")
-        .is("deleted_at", null)
-        .order("created_at", { ascending: false });
+      let query = supabase.from("proposta_templates").select("*").is("deleted_at", null);
+      if (tipo) query = query.eq("tipo", tipo);
+      const { data, error } = await query.order("created_at", { ascending: false });
 
       if (error) throw error;
-      return (data || []) as PropostaTemplate[];
+      return ((data || []) as unknown as PropostaTemplate[]).map((t) => ({
+        ...t,
+        tipo: (t.tipo as TemplateTipo) || "proposta",
+      }));
     },
     staleTime: 1000 * 60 * 5,
   });
@@ -33,7 +37,17 @@ export const useUploadTemplate = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ file, nome, descricao }: { file: File; nome: string; descricao?: string }) => {
+    mutationFn: async ({
+      file,
+      nome,
+      descricao,
+      tipo = "proposta",
+    }: {
+      file: File;
+      nome: string;
+      descricao?: string;
+      tipo?: TemplateTipo;
+    }) => {
       // Validação de segurança do arquivo
       const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
       const ALLOWED_EXTENSIONS = [".docx"];
@@ -73,12 +87,13 @@ export const useUploadTemplate = () => {
           descricao: descricao || null,
           arquivo_path: filePath,
           variaveis,
-        })
+          tipo,
+        } as never)
         .select()
         .single();
 
       if (error) throw error;
-      return data as PropostaTemplate;
+      return data as unknown as PropostaTemplate;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["proposta-templates"] });

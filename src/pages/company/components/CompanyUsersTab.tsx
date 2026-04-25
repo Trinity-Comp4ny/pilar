@@ -91,7 +91,7 @@ export function CompanyUsersTab({
             <div className="flex items-center justify-between gap-3 flex-wrap">
               <Button
                 onClick={onAddUser}
-                className="rounded-full bg-accent-orange hover:bg-accent-orange/90 text-white"
+                className="rounded-full bg-accent-orange hover:bg-accent-orange/90 text-ink"
                 disabled={isInviting || !inviteName.trim() || !inviteEmail.trim()}
               >
                 {isInviting ? "Enviando convite..." : "Adicionar Usuário"}
