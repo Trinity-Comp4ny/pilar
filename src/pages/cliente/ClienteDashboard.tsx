@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, FolderKanban, ArrowRight } from "lucide-react";
 import { ClienteShell } from "./ClienteShell";
 import { useClienteProjetos, type ClienteProjeto } from "./useClienteProjetos";
-import type { ClienteAccount } from "./useClienteAuth";
+import type { ClienteAccount } from "@/hooks/useClienteAuth";
 import { usePageTitle } from "@/hooks/usePageTitle";
 
 const STATUS_COLORS: Record<string, string> = {

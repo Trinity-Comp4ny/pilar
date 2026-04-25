@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Mail, Lock, Loader2 } from "lucide-react";
-import { getPortalToken, setPortalToken } from "./useClienteAuth";
+import { getPortalToken, setPortalToken } from "@/hooks/useClienteAuth";
 import { usePageTitle } from "@/hooks/usePageTitle";
 
 export default function ClienteLogin() {
@@ -53,30 +53,40 @@ export default function ClienteLogin() {
   };
 
   return (
-    <div className="min-h-screen w-full flex overflow-hidden bg-white">
+    <div className="landing-grain min-h-screen w-full flex overflow-hidden bg-paper">
       {/* Lado Esquerdo — Formulário */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 lg:p-16 bg-white">
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 lg:p-16 bg-paper relative overflow-hidden">
+        <div className="absolute inset-0 -z-10 pointer-events-none">
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-accent-orange/6 rounded-full blur-[100px] animate-aurora" />
+        </div>
         <div className="w-full max-w-[400px] space-y-8 animate-in fade-in slide-in-from-left-8 duration-700">
           <div className="text-center space-y-2">
-            <div className="flex justify-center mb-6">
-              <img src="/pilar-logo.svg" alt="Pilar" className="h-12 w-auto" />
+            <div className="flex justify-center items-center gap-2 mb-6">
+              <img
+                src="/pilar-logo.svg"
+                alt="Pilar"
+                className="h-10 w-auto hover:rotate-12 transition-transform duration-300"
+              />
+              <span className="text-2xl font-medium tracking-tight text-ink">
+                Pilar<sup className="text-[10px] font-normal text-slate-400 ml-0.5 relative -top-2.5">®</sup>
+              </span>
             </div>
-            <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-slate-900">Portal do Cliente</h1>
-            <p className="text-sm text-slate-500">Acompanhe seus projetos em tempo real</p>
+            <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-ink">Portal do Cliente</h1>
+            <p className="text-sm text-ink-soft">Acompanhe seus projetos em tempo real</p>
           </div>
 
           <form onSubmit={handleLogin} className="space-y-5">
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-slate-700 font-medium">
+              <Label htmlFor="email" className="text-ink-soft font-medium">
                 Email
               </Label>
               <div className="relative group">
-                <Mail className="absolute left-3 top-3 h-4 w-4 text-slate-400 group-focus-within:text-accent-orange transition-colors" />
+                <Mail className="absolute left-3 top-3 h-4 w-4 text-ink/40 group-focus-within:text-accent-orange transition-colors" />
                 <Input
                   id="email"
                   type="email"
                   placeholder="seu@email.com"
-                  className="pl-10 h-11 bg-slate-50 border-slate-200 focus:border-accent-orange focus:ring-accent-orange/20 transition-all"
+                  className="pl-10 h-11 bg-paper-alt border-paper-border focus:border-accent-orange focus:ring-accent-orange/20 transition-all"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -85,16 +95,16 @@ export default function ClienteLogin() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-slate-700 font-medium">
+              <Label htmlFor="password" className="text-ink-soft font-medium">
                 Senha
               </Label>
               <div className="relative group">
-                <Lock className="absolute left-3 top-3 h-4 w-4 text-slate-400 group-focus-within:text-accent-orange transition-colors" />
+                <Lock className="absolute left-3 top-3 h-4 w-4 text-ink/40 group-focus-within:text-accent-orange transition-colors" />
                 <Input
                   id="password"
                   type="password"
                   placeholder="••••••••"
-                  className="pl-10 h-11 bg-slate-50 border-slate-200 focus:border-accent-orange focus:ring-accent-orange/20 transition-all"
+                  className="pl-10 h-11 bg-paper-alt border-paper-border focus:border-accent-orange focus:ring-accent-orange/20 transition-all"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
@@ -103,7 +113,7 @@ export default function ClienteLogin() {
             </div>
 
             <Button
-              className="w-full h-11 bg-accent-orange hover:bg-orange-600 text-white font-medium shadow-lg shadow-orange-500/20 hover:shadow-orange-500/30 transition-all active:scale-[0.98] text-sm"
+              className="w-full h-11 bg-accent-orange hover:bg-accent-orange/90 text-ink font-medium shadow-lg shadow-accent-orange/20 hover:shadow-accent-orange/30 transition-all active:scale-[0.98] text-sm"
               type="submit"
               disabled={isLoading}
             >
@@ -118,22 +128,38 @@ export default function ClienteLogin() {
           </form>
 
           <div className="text-center">
-            <p className="text-xs text-slate-400">Acesso exclusivo para clientes convidados pelo escritório.</p>
+            <p className="text-xs text-ink/40">Acesso exclusivo para clientes convidados pelo escritório.</p>
           </div>
         </div>
       </div>
 
       {/* Lado Direito — Visual Branding */}
-      <div className="hidden lg:flex w-1/2 relative bg-slate-900 items-center justify-center overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-accent-orange/20 via-slate-900 to-slate-900" />
-        <div className="absolute top-0 right-0 w-96 h-96 bg-accent-orange/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-        <div className="absolute bottom-0 left-0 w-72 h-72 bg-accent-orange/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
+      <div className="hidden lg:flex w-1/2 relative bg-black items-center justify-center overflow-hidden">
+        <div className="absolute inset-0 z-0">
+          <video
+            src="/video-login.mp4"
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="w-full h-full object-cover opacity-70 scale-105 animate-pulse-slow grayscale"
+            style={{ animationDuration: "20s" }}
+          />
+          <div className="absolute inset-0 bg-black/20" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/10" />
+        </div>
 
         <div className="relative z-10 flex flex-col justify-between h-full w-full p-16 text-white">
           <div className="flex justify-end animate-in fade-in slide-in-from-top-8 duration-700">
             <div className="flex items-center gap-3 opacity-80">
-              <img src="/pilar-logo.svg" alt="Pilar" className="h-8 w-8 brightness-0 invert" />
-              <span className="text-xl font-medium tracking-tight">Pilar</span>
+              <img
+                src="/pilar-logo.svg"
+                alt="Pilar"
+                className="h-8 w-8 brightness-0 invert hover:rotate-12 transition-transform duration-300"
+              />
+              <span className="text-xl font-medium tracking-tight">
+                Pilar<sup className="text-[9px] font-normal text-white/50 ml-0.5 relative -top-2">®</sup>
+              </span>
             </div>
           </div>
 
