@@ -11,7 +11,7 @@ export function LandingHeader({ onScrollToTop }: LandingHeaderProps) {
 
   return (
     <>
-      <div className="fixed top-0 inset-x-0 z-[100] bg-[#2E2E2E] text-white text-[10px] md:text-xs py-2 flex justify-end px-6 md:px-10 border-b border-white/5 shadow-sm">
+      <div className="fixed top-0 inset-x-0 z-[100] bg-ink-soft text-white text-[10px] md:text-xs py-2 flex justify-end px-6 md:px-10 border-b border-white/5">
         <span className="opacity-80 font-light tracking-wide">Impulsionado por </span>
         <a
           href="https://trnty.com.br"
@@ -23,55 +23,68 @@ export function LandingHeader({ onScrollToTop }: LandingHeaderProps) {
         </a>
       </div>
 
-      <header className="fixed top-[32px] inset-x-0 z-50 bg-white border-b border-gray-100 py-4 shadow-sm transition-all duration-300">
-        <div className="container mx-auto px-6 md:px-10 flex items-center justify-between">
-          <a href="#" onClick={onScrollToTop} className="flex items-center gap-3 group">
+      <header className="fixed top-[32px] inset-x-0 z-50 bg-paper border-b border-paper-border py-5 transition-all duration-300">
+        <div className="container mx-auto px-6 md:px-10 grid md:grid-cols-3 items-center">
+          <a href="#" onClick={onScrollToTop} className="flex items-center gap-2.5 group">
             <img
               src="/pilar-logo.svg"
               alt="Pilar"
-              className="h-8 w-8 transition-transform duration-500 group-hover:rotate-12"
+              className="h-10 w-auto transition-transform duration-500 group-hover:rotate-12"
             />
-            <span className="text-xl font-medium tracking-tight text-[#2E2E2E]">Pilar</span>
+            <span className="text-[2rem] font-medium tracking-tight text-ink-soft">
+              Pilar<sup className="text-[10px] font-normal text-slate-400 ml-0.5 relative -top-3">®</sup>
+            </span>
           </a>
 
-          <nav className="hidden md:flex items-center gap-8 text-sm font-normal">
+          <nav className="hidden md:flex items-center justify-center gap-10">
             <a
-              href="#funcionalidades"
-              className="text-slate-600 hover:text-accent-orange transition-colors duration-300 hover:-translate-y-0.5"
+              href="#prova"
+              className="text-[11px] font-medium uppercase tracking-[0.18em] text-slate-500 relative after:absolute after:bottom-[-3px] after:left-0 after:h-px after:w-0 after:bg-accent-orange hover:after:w-full after:transition-all after:duration-300"
             >
-              Funcionalidades
+              Por que Pilar
             </a>
             <a
-              href="#sobre"
-              className="text-slate-600 hover:text-accent-orange transition-colors duration-300 hover:-translate-y-0.5"
+              href="#modulos"
+              className="text-[11px] font-medium uppercase tracking-[0.18em] text-slate-500 relative after:absolute after:bottom-[-3px] after:left-0 after:h-px after:w-0 after:bg-accent-orange hover:after:w-full after:transition-all after:duration-300"
             >
-              Sobre
+              Módulos
             </a>
             <Link
-              to="/login"
-              className="px-6 py-2.5 bg-accent-orange text-white rounded-full hover:bg-orange-600 transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 duration-200 font-medium text-xs"
+              to="/planos"
+              className="text-[11px] font-medium uppercase tracking-[0.18em] text-slate-500 relative after:absolute after:bottom-[-3px] after:left-0 after:h-px after:w-0 after:bg-accent-orange hover:after:w-full after:transition-all after:duration-300"
             >
-              Acessar Sistema
+              Preços
             </Link>
           </nav>
 
-          <button className="md:hidden p-2 text-slate-600" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+          <div className="hidden md:flex justify-end">
+            <Link
+              to="/login"
+              className="px-6 py-2.5 bg-accent-orange text-ink rounded-full hover:bg-accent-orange/90 transition-all hover:-translate-y-0.5 active:translate-y-0 duration-200 font-medium text-[11px] uppercase tracking-[0.12em]"
+            >
+              Acessar Sistema
+            </Link>
+          </div>
+
+          <button
+            className="md:hidden p-2 text-slate-600 col-start-3 justify-self-end"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          >
             {mobileMenuOpen ? <X /> : <Menu />}
           </button>
         </div>
 
         {mobileMenuOpen && (
-          <div className="md:hidden absolute top-full left-0 right-0 bg-white border-b border-black/5 p-6 flex flex-col gap-4 shadow-xl animate-in slide-in-from-top-5">
-            <a
-              href="#funcionalidades"
-              className="text-lg font-medium text-slate-600"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Funcionalidades
+          <div className="md:hidden absolute top-full left-0 right-0 bg-paper border-b border-paper-border p-6 flex flex-col gap-4 shadow-xl animate-in slide-in-from-top-5">
+            <a href="#prova" className="text-lg font-medium text-slate-600" onClick={() => setMobileMenuOpen(false)}>
+              Por que Pilar
             </a>
-            <a href="#sobre" className="text-lg font-medium text-slate-600" onClick={() => setMobileMenuOpen(false)}>
-              Sobre
+            <a href="#modulos" className="text-lg font-medium text-slate-600" onClick={() => setMobileMenuOpen(false)}>
+              Módulos
             </a>
+            <Link to="/planos" className="text-lg font-medium text-slate-600" onClick={() => setMobileMenuOpen(false)}>
+              Preços
+            </Link>
             <Link
               to="/login"
               className="text-lg font-medium text-accent-orange"

@@ -3,40 +3,57 @@ import { ArrowRight } from "lucide-react";
 
 export function HeroSection() {
   return (
-    <div className="container mx-auto px-6 md:px-10 text-center">
-      <div className="reveal-up">
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-accent-orange/10 text-accent-orange text-xs md:text-sm font-medium tracking-wide mb-8 hover:scale-105 transition-all duration-300 cursor-default animate-fade-in shadow-sm border border-accent-orange/20 ring-4 ring-accent-orange/5">
-          <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent-orange opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-accent-orange"></span>
-          </span>
-          Gestão para Engenharia e Arquitetura
+    <div className="container mx-auto px-6 md:px-10">
+      <div className="text-center">
+        <div className="flex items-center justify-center gap-3 mb-8 animate-fade-up" style={{ animationDelay: "0ms" }}>
+          <span className="w-6 h-px bg-slate-300" />
+          <div className="flex items-center gap-2.5">
+            <span className="relative flex h-1.5 w-1.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent-orange opacity-60" />
+              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-accent-orange" />
+            </span>
+            <span className="text-[11px] font-medium uppercase tracking-[0.32em] text-slate-500">
+              Pilar® — Gestão para engenharia e arquitetura
+            </span>
+          </div>
+          <span className="w-6 h-px bg-slate-300" />
         </div>
 
-        <h1 className="text-5xl md:text-7xl font-medium tracking-tight text-[#2E2E2E] mb-8 leading-[1.1]">
-          O pilar fundamental da <br className="hidden md:block" />
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-accent-orange to-orange-600 animate-gradient-x">
-            sua gestão.
+        <h1 className="text-[clamp(48px,7vw,96px)] font-light tracking-[-0.02em] text-ink mb-6 leading-[1.1]">
+          <span className="block animate-fade-up" style={{ animationDelay: "80ms" }}>
+            Pare de trabalhar no caos.
           </span>
+          <em className="hero-italic-highlight animate-fade-up" style={{ animationDelay: "210ms" }}>
+            Lidere seus projetos.
+          </em>
         </h1>
 
-        <p className="text-lg md:text-xl text-slate-600 max-w-2xl mx-auto mb-10 leading-relaxed font-light">
-          Simplifique o controle financeiro, gestão de projetos e operação da sua empresa em uma única plataforma.
+        <p
+          className="text-base md:text-lg text-slate-600 max-w-xl mx-auto mb-10 leading-relaxed font-light animate-fade-up"
+          style={{ animationDelay: "340ms" }}
+        >
+          Único fluxo — proposta, projeto, cobrança e portal do cliente conectados no mesmo sistema.
         </p>
 
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-20">
+        <div
+          className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-16 animate-fade-up"
+          style={{ animationDelay: "520ms" }}
+        >
           <Link
             to="/login"
-            className="w-full sm:w-auto px-8 py-4 bg-accent-orange text-white rounded-full font-medium hover:bg-orange-600 transition-all shadow-xl hover:shadow-2xl hover:-translate-y-1 flex items-center justify-center gap-2 group text-sm"
+            className="relative w-full sm:w-auto px-7 py-3.5 bg-ink-soft text-white rounded-full font-medium text-sm hover:bg-ink transition-colors flex items-center justify-center gap-2 group overflow-hidden"
           >
-            Começar
-            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            <span className="absolute inset-0 -skew-x-12 translate-x-[-160%] group-hover:translate-x-[200%] transition-transform duration-700 bg-white/10 pointer-events-none" />
+            Testar grátis por 14 dias
+            <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
           </Link>
           <a
-            href="#funcionalidades"
-            className="w-full sm:w-auto px-8 py-4 bg-white text-[#2E2E2E] border border-slate-200 rounded-full font-medium hover:bg-slate-50 transition-all hover:border-slate-300 text-sm"
+            href="https://wa.me/5514998721100"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full sm:w-auto px-6 py-3 text-slate-600 rounded-full font-medium text-sm hover:text-ink-soft hover:bg-slate-50 transition-colors"
           >
-            Conhecer Recursos
+            Agende uma demo →
           </a>
         </div>
       </div>

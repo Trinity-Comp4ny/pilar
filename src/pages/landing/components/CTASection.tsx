@@ -1,20 +1,32 @@
 import { Link } from "react-router-dom";
+import { ArrowRight } from "lucide-react";
 
 export function CTASection() {
   return (
-    <section className="py-24 bg-white relative overflow-hidden border-t border-slate-100">
-      <div className="container mx-auto px-6 md:px-10 text-center relative z-10">
-        <div className="reveal-up">
-          <h2 className="text-3xl md:text-5xl font-medium text-[#2E2E2E] mb-6">Pronto para transformar sua gestão?</h2>
-          <p className="text-slate-600 text-lg md:text-xl max-w-2xl mx-auto mb-10 font-light">
-            Junte-se aos escritórios que já modernizaram seus processos com a Pilar. Comece hoje mesmo.
+    <section className="py-28 md:py-36 bg-paper">
+      <div className="container mx-auto px-6 md:px-10">
+        <div className="max-w-4xl mx-auto text-center reveal-up">
+          <h2 className="text-4xl md:text-6xl font-medium text-ink leading-[1.05] tracking-tight mb-8">
+            Comece hoje. <em className="landing-highlight">Tenha total controle do seu escritório.</em>
+          </h2>
+          <p className="text-slate-500 text-lg max-w-xl mx-auto mb-4 font-light leading-relaxed">
+            14 dias grátis. Sem cartão. Sem contrato. O escritório todo num lugar só.
           </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+          <p className="text-xs text-ink/40 font-light mb-12">Cancele quando quiser · Migração assistida disponível</p>
+
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link
               to="/login"
-              className="w-full sm:w-auto px-10 py-4 bg-accent-orange text-white rounded-full font-medium text-sm hover:bg-orange-600 transition-all shadow-lg hover:shadow-orange-500/25 hover:-translate-y-1"
+              className="w-full sm:w-auto px-7 py-3.5 bg-accent-orange text-ink rounded-full font-medium text-sm hover:bg-accent-orange/80 transition-colors flex items-center justify-center gap-2 group"
             >
-              Acessar Sistema
+              Testar grátis por 14 dias
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+            </Link>
+            <Link
+              to="/planos"
+              className="w-full sm:w-auto px-6 py-3 text-ink-soft rounded-full font-medium text-sm hover:text-ink hover:bg-slate-50 transition-colors underline decoration-accent-orange underline-offset-4"
+            >
+              Ver planos
             </Link>
           </div>
         </div>

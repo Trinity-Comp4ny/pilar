@@ -1,0 +1,137 @@
+/**
+ * Pilar Design Tokens — fonte única de verdade.
+ *
+ * Formato: HSL triplet (ex: "44 26% 93%"), mesmo padrão do shadcn/ui.
+ *
+ * Uso:
+ *   Tailwind  → expõe via `hsl(var(--x) / <alpha-value>)` em tailwind.config.ts.
+ *               Suporta opacity modifier (ex: bg-paper/90).
+ *   Inline    → `hsl(var(--x))` em SVG/JS/CSS (ex: stroke="hsl(var(--chart-success))").
+ *   shadcn/ui → vars como --background, --border etc. apontam para cá (index.css).
+ *
+ * Arquitetura:
+ *   PRIMITIVES — paleta bruta. Nunca usar direto em componentes.
+ *   SEMANTIC   — intenção de uso. É o que o código consome.
+ *
+ * Regra: troca em 1 lugar = propaga em todo lugar.
+ */
+
+:root {
+  /* ============================================================
+   * PRIMITIVES
+   * ============================================================ */
+
+  /* Paper — escala neutra quase-branco (base da landing e do app) */
+  --c-paper-0: 0 0% 100%; /* branco puro — cards elevados */
+  --c-paper-50: 0 0% 99%; /* fundo do app shell */
+  --c-paper-100: 0 0% 97%; /* fundo da landing / sidebar */
+  --c-paper-200: 0 0% 93%; /* superfícies secundárias / muted */
+  --c-paper-300: 0 0% 85%; /* bordas sutis */
+
+  /* Ink — escala de texto */
+  --c-ink-900: 0 0% 10%; /* #1A1A1A — títulos */
+  --c-ink-800: 0 0% 24%; /* #3C3C3C — corpo */
+
+  /* Brand — verde claro (prototype 02 "Alto Grain") */
+  --c-brand-500: 102 73% 73%; /* #A4EC86 */
+
+  /* Greens */
+  --c-green-100: 141 79% 85%;
+  --c-green-200: 141 74% 73%;
+  --c-green-400: 142 69% 58%;
+  --c-green-500: 142 71% 45%;
+  --c-green-600: 142 76% 36%;
+  --c-green-700: 142 72% 29%;
+  --c-green-900: 142 61% 21%;
+
+  /* Reds */
+  --c-red-50: 0 93% 94%;
+  --c-red-100: 0 96% 89%;
+  --c-red-200: 0 94% 82%;
+  --c-red-400: 0 91% 71%;
+  --c-red-500: 0 84% 60%;
+  --c-red-600: 0 74% 50%;
+  --c-red-700: 0 74% 42%;
+  --c-red-900: 0 63% 31%;
+
+  /* Outras cores de gráfico */
+  --c-emerald-500: 160 84% 39%;
+  --c-lime-500: 85 85% 45%;
+  --c-amber-500: 48 96% 47%;
+  --c-amber-600: 38 92% 50%;
+  --c-orange-500: 25 95% 53%;
+  --c-blue-500: 217 91% 60%;
+  --c-indigo-500: 239 84% 67%;
+  --c-violet-500: 262 83% 67%;
+  --c-purple-500: 271 91% 65%;
+  --c-pink-500: 330 81% 60%;
+  --c-cyan-500: 189 94% 43%;
+
+  /* Neutros */
+  --c-gray-200: 220 13% 91%;
+  --c-gray-300: 216 12% 84%;
+  --c-gray-400: 220 9% 65%;
+  --c-gray-500: 220 9% 46%;
+
+  /* ============================================================
+   * SEMANTIC — aliases apontando para primitives
+   * ============================================================ */
+
+  /* ── Superfícies ──────────────────────────────────────────── */
+
+  /* Landing */
+  --surface-landing: var(--c-paper-100);
+  --surface-landing-alt: var(--c-paper-200);
+  --border-landing: var(--c-paper-300);
+
+  /* App shell — consumidas via shadcn/ui (ver index.css) */
+  --surface-app: var(--c-paper-50); /* fundo base */
+  --surface-card: var(--c-paper-0); /* cards / modais */
+  --surface-sidebar: var(--c-paper-100); /* sidebar */
+  --surface-muted: var(--c-paper-200); /* hover / muted bg */
+
+  /* ── Bordas ───────────────────────────────────────────────── */
+  --border-default: var(--c-gray-200); /* separadores gerais */
+  --border-subtle: var(--c-paper-300); /* bordas muito leves */
+  --border-strong: var(--c-gray-300); /* ênfase */
+
+  /* ── Texto ────────────────────────────────────────────────── */
+  --text-ink: var(--c-ink-900); /* títulos / primário */
+  --text-ink-soft: var(--c-ink-800); /* corpo / secundário */
+  --text-muted: var(--c-gray-500); /* placeholders / labels */
+  --text-disabled: var(--c-gray-400); /* estado desabilitado */
+  --text-on-brand: var(--c-ink-900); /* texto sobre brand verde */
+
+  /* ── Brand ────────────────────────────────────────────────── */
+  --brand-accent: var(--c-brand-500);
+
+  /* ── Gradientes ───────────────────────────────────────────── */
+  --gradient-primary: linear-gradient(135deg, hsl(var(--c-ink-900)), hsl(var(--c-ink-800)));
+  --gradient-subtle: linear-gradient(180deg, hsl(var(--c-paper-50)), hsl(var(--c-paper-200)));
+  --gradient-brand: linear-gradient(135deg, hsl(var(--c-brand-500)), hsl(var(--c-lime-500)));
+
+  /* ── Sombras ──────────────────────────────────────────────── */
+  --shadow-card: 0 1px 3px 0 hsl(var(--c-ink-900) / 0.06), 0 1px 2px -1px hsl(var(--c-ink-900) / 0.06);
+  --shadow-elegant: 0 4px 24px -4px hsl(var(--c-ink-900) / 0.1);
+  --shadow-popover: 0 8px 32px -4px hsl(var(--c-ink-900) / 0.12);
+
+  /* ── Charts ───────────────────────────────────────────────── */
+  --chart-success: var(--c-green-500);
+  --chart-success-alt: var(--c-emerald-500);
+  --chart-danger: var(--c-red-500);
+  --chart-warning: var(--c-amber-500);
+  --chart-warning-alt: var(--c-amber-600);
+  --chart-info: var(--c-blue-500);
+  --chart-info-alt: var(--c-indigo-500);
+  --chart-neutral: var(--c-gray-400);
+  --chart-grid: var(--c-gray-200);
+
+  /* ── Status markers (mapa / projetos) ─────────────────────── */
+  --status-planning: var(--c-amber-500);
+  --status-progress: var(--c-blue-500);
+  --status-review: var(--c-purple-500);
+  --status-done: var(--c-green-500);
+  --status-paused: var(--c-orange-500);
+  --status-cancelled: var(--c-red-500);
+  --status-unknown: var(--c-gray-500);
+}
