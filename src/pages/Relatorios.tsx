@@ -8,17 +8,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import {
-  CalendarIcon,
-  Download,
-  Plus,
-  TrendingUp,
-  TrendingDown,
-  DollarSign,
-  FileBarChart,
-  Filter,
-  X,
-} from "lucide-react";
+import { CalendarIcon, Download, Plus, FileBarChart, Filter, X } from "lucide-react";
 import { format, startOfDay, endOfDay, subDays, startOfMonth, endOfMonth, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { getDisplayDate, formatDateDisplay } from "@/lib/dateUtils";
@@ -27,11 +17,11 @@ import { toast } from "sonner";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { supabase } from "@/integrations/supabase/client";
-import { getSafeErrorMessage } from "@/lib/safeError";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from "recharts";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { usePageTitle } from "@/hooks/usePageTitle";
+import { RelatoriosSummary } from "./relatorios/RelatoriosSummary";
 
 interface ReportRow {
   Tipo: string;
@@ -544,52 +534,7 @@ export default function Relatorios() {
       tipoRelatorio === "financeiro" ||
       (reportData.some((r) => r.Tipo === "Receita") && reportData.some((r) => r.Tipo === "Despesa"));
 
-    return (
-      <div className="flex flex-col gap-3">
-        {tipoRelatorio !== "despesas" && (
-          <div className="flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
-            <div className="rounded-lg bg-emerald-100 p-2">
-              <TrendingUp size={18} className="text-emerald-600" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-xs text-emerald-600 font-medium">Receitas</p>
-              <p className="text-lg font-bold text-emerald-700 truncate">{toCurrency(summary.totalReceitas)}</p>
-            </div>
-          </div>
-        )}
-        {tipoRelatorio !== "receitas" && (
-          <div className="flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
-            <div className="rounded-lg bg-red-100 p-2">
-              <TrendingDown size={18} className="text-red-600" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-xs text-red-600 font-medium">Despesas</p>
-              <p className="text-lg font-bold text-red-700 truncate">{toCurrency(summary.totalDespesas)}</p>
-            </div>
-          </div>
-        )}
-        {showBoth && (
-          <div
-            className={cn(
-              "flex items-center gap-3 rounded-xl border px-4 py-3",
-              summary.saldo >= 0 ? "border-blue-200 bg-blue-50" : "border-orange-200 bg-orange-50"
-            )}
-          >
-            <div className={cn("rounded-lg p-2", summary.saldo >= 0 ? "bg-blue-100" : "bg-orange-100")}>
-              <DollarSign size={18} className={summary.saldo >= 0 ? "text-blue-600" : "text-orange-600"} />
-            </div>
-            <div className="min-w-0">
-              <p className={cn("text-xs font-medium", summary.saldo >= 0 ? "text-blue-600" : "text-orange-600")}>
-                Saldo
-              </p>
-              <p className={cn("text-lg font-bold truncate", summary.saldo >= 0 ? "text-blue-700" : "text-orange-700")}>
-                {toCurrency(summary.saldo)}
-              </p>
-            </div>
-          </div>
-        )}
-      </div>
-    );
+    return <RelatoriosSummary summary={summary} tipoRelatorio={tipoRelatorio} showBoth={showBoth} />;
   };
 
   const renderChart = () => {
@@ -602,7 +547,7 @@ export default function Relatorios() {
         <p className="text-sm font-medium text-black/70 mb-3">Evolução mensal</p>
         <ResponsiveContainer width="100%" height={220}>
           <BarChart data={chartData} barGap={4}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--chart-grid))" />
             <XAxis dataKey="mes" tick={{ fontSize: 12 }} />
             <YAxis
               tick={{ fontSize: 11 }}
@@ -612,10 +557,14 @@ export default function Relatorios() {
             />
             <Tooltip
               formatter={(value: number) => toCurrency(value)}
-              contentStyle={{ borderRadius: 12, border: "1px solid #e5e7eb" }}
+              contentStyle={{ borderRadius: 12, border: "1px solid hsl(var(--chart-grid))" }}
             />
-            {tipoRelatorio !== "despesas" && <Bar dataKey="Receitas" fill="#10b981" radius={[4, 4, 0, 0]} />}
-            {tipoRelatorio !== "receitas" && <Bar dataKey="Despesas" fill="#ef4444" radius={[4, 4, 0, 0]} />}
+            {tipoRelatorio !== "despesas" && (
+              <Bar dataKey="Receitas" fill="hsl(var(--chart-success-alt))" radius={[4, 4, 0, 0]} />
+            )}
+            {tipoRelatorio !== "receitas" && (
+              <Bar dataKey="Despesas" fill="hsl(var(--chart-danger))" radius={[4, 4, 0, 0]} />
+            )}
             {hasBoth && <Legend />}
           </BarChart>
         </ResponsiveContainer>
@@ -806,7 +755,7 @@ export default function Relatorios() {
               {/* Botão gerar */}
               <Button
                 onClick={handleGerarRelatorio}
-                className="h-9 px-5 bg-accent-orange hover:bg-accent-orange/90 text-white shrink-0"
+                className="h-9 px-5 bg-accent-orange hover:bg-accent-orange/90 text-ink shrink-0"
                 disabled={isLoading}
               >
                 <Plus className="mr-1.5 h-4 w-4" />
@@ -880,7 +829,7 @@ export default function Relatorios() {
                   </Button>
                   <Button
                     size="sm"
-                    className="h-8 text-xs gap-1.5 bg-accent-orange text-white hover:bg-accent-orange/90"
+                    className="h-8 text-xs gap-1.5 bg-accent-orange text-ink hover:bg-accent-orange/90"
                     onClick={() => handleExport("pdf")}
                     disabled={!filteredData.length}
                   >
