@@ -23,7 +23,7 @@ export const isInvalidDate = (dateString: string | null | undefined): boolean =>
 export const getDisplayDate = (
   dataRecebimento: string | null | undefined,
   dataVencimento: string | null | undefined,
-  status?: string
+  status?: string | null
 ): string | null => {
   // Se for recebido, prioriza data_recebimento (data real do pagamento)
   if (status === "Recebido" || status === "Recebida") {

@@ -190,11 +190,11 @@ export default function ProjecaoFluxoCaixa() {
               <AreaChart data={projecao} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                 <defs>
                   <linearGradient id="gradientSaldo" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                    <stop offset="5%" stopColor="hsl(var(--chart-success-alt))" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="hsl(var(--chart-success-alt))" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--chart-grid))" />
                 <XAxis dataKey="label" tick={{ fontSize: 11 }} />
                 <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
                 <Tooltip
@@ -204,8 +204,14 @@ export default function ProjecaoFluxoCaixa() {
                   ]}
                   labelStyle={{ fontWeight: 600 }}
                 />
-                <ReferenceLine y={0} stroke="#ef4444" strokeDasharray="5 5" strokeWidth={1.5} />
-                <Area type="monotone" dataKey="saldo" stroke="#10b981" fill="url(#gradientSaldo)" strokeWidth={2} />
+                <ReferenceLine y={0} stroke="hsl(var(--chart-danger))" strokeDasharray="5 5" strokeWidth={1.5} />
+                <Area
+                  type="monotone"
+                  dataKey="saldo"
+                  stroke="hsl(var(--chart-success-alt))"
+                  fill="url(#gradientSaldo)"
+                  strokeWidth={2}
+                />
               </AreaChart>
             </ResponsiveContainer>
           )}

@@ -16,9 +16,11 @@ import { CompanyUsersTab } from "./company/components/CompanyUsersTab";
 import { CompanyVisualTab } from "./company/components/CompanyVisualTab";
 import { LogoPreviewDialog, EditUserDialog, DeleteUserDialog } from "./company/components/CompanyDialogs";
 import { usePageTitle } from "@/hooks/usePageTitle";
+import { useRequireAal2 } from "@/hooks/useRequireAal2";
 
 export default function Company() {
   usePageTitle("Empresa");
+  const requireAal2 = useRequireAal2();
   const [editingCompany, setEditingCompany] = useState(false);
   const [editingVisual, setEditingVisual] = useState(false);
   const [isInviting, setIsInviting] = useState(false);
@@ -67,7 +69,7 @@ export default function Company() {
       const { data: profile } = await supabase
         .from("profiles")
         .select(
-          "id, empresa_id, role, empresas(id, nome, cnpj, status, email, contato, endereco, cidade, estado, cep, logo_url)"
+          "id, empresa_id, role, empresas(id, nome, cnpj, status, email, contato, endereco, cidade, estado, cep, logo_url, pix_chave, pix_instrucoes)"
         )
         .eq("id", user.id)
         .single();
@@ -76,7 +78,20 @@ export default function Company() {
       if (profile?.empresa_id) setCompanyId(profile.empresa_id);
 
       if (profile?.empresas) {
-        const emp = profile.empresas;
+        const emp = profile.empresas as unknown as {
+          nome?: string;
+          cnpj?: string;
+          email?: string;
+          contato?: string;
+          endereco?: string;
+          cidade?: string;
+          estado?: string;
+          cep?: string;
+          status?: string;
+          logo_url?: string;
+          pix_chave?: string;
+          pix_instrucoes?: string;
+        };
         setCompanyData({
           nomeEmpresa: emp.nome || "",
           cnpj: emp.cnpj || "",
@@ -88,6 +103,8 @@ export default function Company() {
           cep: emp.cep || "",
           status: emp.status || "active",
           logoUrl: emp.logo_url || "",
+          pixChave: emp.pix_chave || "",
+          pixInstrucoes: emp.pix_instrucoes || "",
         });
       }
 
@@ -147,7 +164,9 @@ export default function Company() {
           cidade: companyData.cidade,
           estado: companyData.estado,
           cep: companyData.cep,
-        })
+          pix_chave: companyData.pixChave || null,
+          pix_instrucoes: companyData.pixInstrucoes || null,
+        } as never)
         .eq("id", profile.empresa_id);
       if (error) throw error;
 
@@ -160,6 +179,7 @@ export default function Company() {
 
   const addUser = async () => {
     if (!inviteName.trim() || !inviteEmail.trim()) return;
+    if (!(await requireAal2())) return;
     setIsInviting(true);
     try {
       const { error } = await supabase.functions.invoke("invite-user", {
@@ -194,6 +214,7 @@ export default function Company() {
 
   const handleSaveUser = async () => {
     if (!editUserId) return;
+    if (!(await requireAal2())) return;
     try {
       const { error } = await supabase
         .from("profiles")
@@ -214,6 +235,7 @@ export default function Company() {
 
   const confirmDeleteUser = async () => {
     if (!deleteUserId) return;
+    if (!(await requireAal2())) return;
     try {
       const { error } = await supabase.from("profiles").delete().eq("id", deleteUserId);
       if (error) throw error;

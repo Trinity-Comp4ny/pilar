@@ -1,4 +1,5 @@
 import { Component, type ErrorInfo, type ReactNode } from "react";
+import { monitoring } from "@/lib/monitoring";
 
 interface Props {
   children: ReactNode;
@@ -19,6 +20,7 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
+    monitoring.captureException(error, { componentStack: errorInfo.componentStack });
     console.error("[ErrorBoundary]", error, errorInfo);
   }
 
@@ -39,7 +41,7 @@ export class ErrorBoundary extends Component<Props, State> {
           <button
             type="button"
             onClick={this.handleReload}
-            className="inline-flex items-center px-4 py-2 rounded-md bg-black text-white text-sm font-medium hover:bg-black/90 transition-colors"
+            className="inline-flex items-center px-4 py-2 rounded-full bg-black text-white text-sm font-medium hover:bg-black/90 transition-colors"
           >
             Recarregar página
           </button>

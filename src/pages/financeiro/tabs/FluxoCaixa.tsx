@@ -39,9 +39,9 @@ export default function FluxoCaixa({ dateFrom, dateTo }: FluxoCaixaProps) {
             )}
             <ResponsiveContainer width="100%" height="100%">
               <ComposedChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
-                <XAxis dataKey="mes" stroke="#888" axisLine={false} tickLine={false} />
-                <YAxis stroke="#888" axisLine={false} tickLine={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--chart-grid))" vertical={false} />
+                <XAxis dataKey="mes" stroke="hsl(var(--chart-neutral))" axisLine={false} tickLine={false} />
+                <YAxis stroke="hsl(var(--chart-neutral))" axisLine={false} tickLine={false} />
                 <Tooltip content={<CustomTooltip />} />
                 <Legend />
                 <Bar

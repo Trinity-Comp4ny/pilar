@@ -25,12 +25,12 @@ L.Icon.Default.mergeOptions({
 });
 
 const STATUS_MARKER_COLORS: Record<string, string> = {
-  Planejamento: "#eab308",
-  "Em andamento": "#3b82f6",
-  Revisão: "#a855f7",
-  Concluído: "#22c55e",
-  Paralisado: "#f97316",
-  Cancelado: "#ef4444",
+  Planejamento: "hsl(var(--status-planning))",
+  "Em andamento": "hsl(var(--status-progress))",
+  Revisão: "hsl(var(--status-review))",
+  Concluído: "hsl(var(--status-done))",
+  Paralisado: "hsl(var(--status-paused))",
+  Cancelado: "hsl(var(--status-cancelled))",
 };
 
 function createColoredIcon(color: string) {
@@ -47,7 +47,7 @@ function createClusterIcon(cluster: L.MarkerCluster) {
   const count = cluster.getChildCount();
   const size = count < 10 ? 36 : count < 50 ? 44 : 52;
   return L.divIcon({
-    html: `<div style="background:#3b82f6;color:white;width:${size}px;height:${size}px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:${size < 40 ? 13 : 14}px;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.3);">${count}</div>`,
+    html: `<div style="background:hsl(var(--chart-info));color:white;width:${size}px;height:${size}px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:${size < 40 ? 13 : 14}px;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.3);">${count}</div>`,
     className: "custom-cluster-icon",
     iconSize: L.point(size, size),
   });
@@ -195,7 +195,7 @@ export default function MapaObras() {
                       >
                         <div
                           className="w-2.5 h-2.5 rounded-full shrink-0"
-                          style={{ background: STATUS_MARKER_COLORS[p.status] || "#6b7280" }}
+                          style={{ background: STATUS_MARKER_COLORS[p.status] || "hsl(var(--status-unknown))" }}
                         />
                         <span className="truncate">
                           {p.codigo_projeto} - {p.nome}
@@ -260,7 +260,7 @@ export default function MapaObras() {
                 <Marker
                   key={projeto.id}
                   position={[projeto.latitude, projeto.longitude]}
-                  icon={createColoredIcon(STATUS_MARKER_COLORS[projeto.status] || "#6b7280")}
+                  icon={createColoredIcon(STATUS_MARKER_COLORS[projeto.status] || "hsl(var(--status-unknown))")}
                   ref={(ref) => {
                     if (ref) markerRefs.current[projeto.id] = ref;
                   }}

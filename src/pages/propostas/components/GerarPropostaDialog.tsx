@@ -23,6 +23,7 @@ import { useQuery } from "@tanstack/react-query";
 interface GerarPropostaDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  mode?: "proposta" | "contrato";
   proposta: {
     id: string;
     codigo?: string | null;
@@ -40,8 +41,15 @@ interface GerarPropostaDialogProps {
   disciplinas?: { disciplina: string; horas_estimadas: number; custo_hora: number; valor_venda?: number }[];
 }
 
-export function GerarPropostaDialog({ open, onOpenChange, proposta, disciplinas = [] }: GerarPropostaDialogProps) {
-  const { data: templates = [] } = usePropostaTemplates();
+export function GerarPropostaDialog({
+  open,
+  onOpenChange,
+  mode = "proposta",
+  proposta,
+  disciplinas = [],
+}: GerarPropostaDialogProps) {
+  const { data: templates = [] } = usePropostaTemplates(mode);
+  const label = mode === "contrato" ? "Contrato" : "Proposta";
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>("");
   const [manualFields, setManualFields] = useState<Record<string, string>>({});
   const [isGenerating, setIsGenerating] = useState(false);
@@ -120,24 +128,27 @@ export function GerarPropostaDialog({ open, onOpenChange, proposta, disciplinas 
       // 3. Generate DOCX
       const blob = generateDocx(templateBuffer, allData);
 
-      // 4. Save campos_extras na proposta
-      await supabase
-        .from("propostas")
-        .update({
-          template_id: selectedTemplate.id,
-          campos_extras: manualFields,
-        })
-        .eq("id", proposta.id);
+      // 4. Save campos_extras na proposta (apenas em modo proposta pra não sobrescrever template_id)
+      if (mode === "proposta") {
+        await supabase
+          .from("propostas")
+          .update({
+            template_id: selectedTemplate.id,
+            campos_extras: manualFields,
+          })
+          .eq("id", proposta.id);
+      }
 
       // 5. Download
-      const fileName = `Proposta_${proposta.codigo || proposta.titulo.replace(/\s+/g, "_")}.docx`;
+      const fileName = `${label}_${proposta.codigo || proposta.titulo.replace(/\s+/g, "_")}.docx`;
       saveAs(blob, fileName);
 
       toast.success("DOCX gerado", { description: `Arquivo ${fileName} baixado com sucesso` });
       onOpenChange(false);
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Erro desconhecido";
-      toast.error("Erro ao gerar DOCX");
+      toast.error(`Erro ao gerar ${label.toLowerCase()}`, {
+        description: err instanceof Error ? err.message : undefined,
+      });
     } finally {
       setIsGenerating(false);
     }
@@ -149,9 +160,11 @@ export function GerarPropostaDialog({ open, onOpenChange, proposta, disciplinas 
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5 text-accent-orange" />
-            Gerar Documento da Proposta
+            Gerar {label}
           </DialogTitle>
-          <DialogDescription>Selecione um template e preencha os campos extras para gerar o DOCX</DialogDescription>
+          <DialogDescription>
+            Selecione um template do tipo <strong>{mode}</strong> e preencha os campos extras para gerar o DOCX
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-5 mt-2">
@@ -160,7 +173,8 @@ export function GerarPropostaDialog({ open, onOpenChange, proposta, disciplinas 
             <Label>Template *</Label>
             {templates.length === 0 ? (
               <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm text-amber-700">
-                Nenhum template cadastrado. Vá em Propostas → Templates para fazer upload de um modelo DOCX.
+                Nenhum template do tipo <strong>{mode}</strong> cadastrado. Vá em Propostas → Templates para fazer
+                upload.
               </div>
             ) : (
               <Select value={selectedTemplateId} onValueChange={setSelectedTemplateId}>
@@ -235,7 +249,7 @@ export function GerarPropostaDialog({ open, onOpenChange, proposta, disciplinas 
           <Button
             onClick={handleGenerate}
             disabled={!selectedTemplateId || isGenerating}
-            className="bg-accent-orange hover:bg-accent-orange/90 text-white"
+            className="bg-accent-orange hover:bg-accent-orange/90 text-ink"
           >
             {isGenerating ? (
               <>
@@ -243,7 +257,7 @@ export function GerarPropostaDialog({ open, onOpenChange, proposta, disciplinas 
               </>
             ) : (
               <>
-                <Download className="mr-2 h-4 w-4" /> Gerar DOCX
+                <Download className="mr-2 h-4 w-4" /> Gerar {label}
               </>
             )}
           </Button>

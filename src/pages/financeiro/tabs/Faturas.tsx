@@ -267,7 +267,10 @@ export default function Faturas() {
                   )}
                 >
                   <div className="flex items-center gap-2 mb-2">
-                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: cartao.cor || "#888" }} />
+                    <div
+                      className="w-3 h-3 rounded-full"
+                      style={{ backgroundColor: cartao.cor || "hsl(var(--chart-neutral))" }}
+                    />
                     <span className="font-medium text-sm">{cartao.nome}</span>
                   </div>
                   <div className="text-xs text-gray-500">
@@ -345,7 +348,7 @@ export default function Faturas() {
                           {isPagavel && (
                             <Button
                               size="sm"
-                              className="bg-accent-orange hover:bg-accent-orange/90 text-white rounded-full"
+                              className="bg-accent-orange hover:bg-accent-orange/90 text-ink rounded-full"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleOpenPagamento(fatura);
@@ -465,7 +468,7 @@ export default function Faturas() {
                         </p>
                       </div>
                       <Button
-                        className="bg-accent-orange hover:bg-accent-orange/90 text-white rounded-full"
+                        className="bg-accent-orange hover:bg-accent-orange/90 text-ink rounded-full"
                         onClick={() => handleOpenPagamento(selectedFatura)}
                       >
                         <DollarSign className="h-4 w-4 mr-2" />
@@ -557,7 +560,7 @@ export default function Faturas() {
               )}
 
               <Button
-                className="w-full bg-accent-orange hover:bg-accent-orange/90 text-white rounded-full"
+                className="w-full bg-accent-orange hover:bg-accent-orange/90 text-ink rounded-full"
                 onClick={handlePagar}
                 disabled={isPaying || !contaPagamentoId}
               >

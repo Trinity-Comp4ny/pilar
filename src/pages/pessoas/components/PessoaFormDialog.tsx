@@ -375,7 +375,7 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
             </Button>
             <Button
               type="submit"
-              className="flex-1 bg-accent-orange hover:bg-accent-orange/90 text-white"
+              className="flex-1 bg-accent-orange hover:bg-accent-orange/90 text-ink"
               disabled={isSaving}
             >
               {isSaving ? (

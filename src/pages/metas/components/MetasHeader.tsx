@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 const tabTriggerClass =
-  "rounded-none border-b-2 border-transparent data-[state=active]:border-[#FF4000] data-[state=active]:bg-white data-[state=active]:text-[#FF4000] py-3 px-4 min-w-max whitespace-nowrap text-sm";
+  "rounded-none border-b-2 border-transparent data-[state=active]:border-accent-orange data-[state=active]:bg-white data-[state=active]:text-accent-orange py-3 px-4 min-w-max whitespace-nowrap text-sm";
 
 export function MetasHeader() {
   const { isMobile } = useSidebar();

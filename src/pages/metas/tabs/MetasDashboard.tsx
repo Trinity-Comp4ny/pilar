@@ -117,12 +117,17 @@ export default function MetasDashboard() {
             <div className="h-[250px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData} barGap={8}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--chart-grid))" />
                   <XAxis dataKey="name" tick={{ fontSize: 12 }} />
                   <YAxis tick={{ fontSize: 12 }} />
                   <Tooltip />
-                  <Bar dataKey="total" name="Total" fill="#FF4000" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="concluidas" name="Concluídas" fill="#10b981" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="total" name="Total" fill="hsl(var(--brand-accent))" radius={[4, 4, 0, 0]} />
+                  <Bar
+                    dataKey="concluidas"
+                    name="Concluídas"
+                    fill="hsl(var(--chart-success-alt))"
+                    radius={[4, 4, 0, 0]}
+                  />
                 </BarChart>
               </ResponsiveContainer>
             </div>

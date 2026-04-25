@@ -227,7 +227,7 @@ export default function Leads() {
           children={
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="rounded-full bg-accent-orange hover:bg-accent-orange/90 text-white transition-colors px-5 py-2.5 text-sm">
+                <Button className="rounded-full bg-accent-orange hover:bg-accent-orange/90 text-ink transition-colors px-5 py-2.5 text-sm">
                   <Plus className="mr-2 h-4 w-4" />
                   Novo Lead
                 </Button>
@@ -308,7 +308,7 @@ export default function Leads() {
                     </Button>
                     <Button
                       type="submit"
-                      className="flex-1 bg-accent-orange hover:bg-accent-orange/90 text-white"
+                      className="flex-1 bg-accent-orange hover:bg-accent-orange/90 text-ink"
                       disabled={createLead.isPending}
                     >
                       {createLead.isPending ? (
@@ -505,7 +505,7 @@ export default function Leads() {
                 <div className="flex flex-col gap-2 pt-4">
                   {selectedLead.status !== "Perdido" && selectedLead.status !== "Ganho" && (
                     <Button
-                      className="w-full bg-accent-orange hover:bg-accent-orange/90 text-white"
+                      className="w-full bg-accent-orange hover:bg-accent-orange/90 text-ink"
                       onClick={() => handleCriarProposta(selectedLead)}
                       disabled={createProposta.isPending}
                     >
