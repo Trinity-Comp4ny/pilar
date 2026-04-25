@@ -45,24 +45,27 @@ WHERE status::text SIMILAR TO '%(em|Em)%(andamento|Andamento)%'
 -- 4. MIGRACAO LEGADO: projetos_responsaveis -> coluna JSONB disciplinas
 -- ==============================================================================
 
-UPDATE public.projetos p
-SET disciplinas = (
-  SELECT COALESCE(jsonb_agg(
-    jsonb_build_object(
-      'disciplina', pr.disciplina,
-      'responsavel_id', pr.pessoa_id,
-      'responsavel_nome', pes.nome
+DO $$ BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'projetos_responsaveis') THEN
+    UPDATE public.projetos p
+    SET disciplinas = (
+      SELECT COALESCE(jsonb_agg(
+        jsonb_build_object(
+          'disciplina', pr.disciplina,
+          'responsavel_id', pr.pessoa_id,
+          'responsavel_nome', pes.nome
+        )
+      ), '[]'::jsonb)
+      FROM public.projetos_responsaveis pr
+      LEFT JOIN public.pessoas pes ON pes.id = pr.pessoa_id
+      WHERE pr.projeto_id = p.id
     )
-  ), '[]'::jsonb)
-  FROM public.projetos_responsaveis pr
-  LEFT JOIN public.pessoas pes ON pes.id = pr.pessoa_id
-  WHERE pr.projeto_id = p.id
-)
-WHERE EXISTS (
-  SELECT 1 FROM public.projetos_responsaveis pr WHERE pr.projeto_id = p.id
-);
-
-DROP TABLE IF EXISTS public.projetos_responsaveis;
+    WHERE EXISTS (
+      SELECT 1 FROM public.projetos_responsaveis pr WHERE pr.projeto_id = p.id
+    );
+    DROP TABLE public.projetos_responsaveis;
+  END IF;
+END $$;
 
 -- ==============================================================================
 -- 5. TABELA: templates_projeto
