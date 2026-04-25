@@ -7,10 +7,11 @@ import { Input } from "@/components/ui/input";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { toast } from "sonner";
-import { User, Mail, Phone, Building2 } from "lucide-react";
+import { User, Mail, Phone, Building2, ShieldCheck } from "lucide-react";
 import { formatPhone } from "@/lib/maskUtils";
 import { getSafeErrorMessage } from "@/lib/safeError";
 import { usePageTitle } from "@/hooks/usePageTitle";
+import { MfaSetup } from "@/components/MfaSetup";
 
 export default function Profile() {
   usePageTitle("Perfil");
@@ -93,7 +94,7 @@ export default function Profile() {
           {!editing ? (
             <Button
               onClick={() => setEditing(true)}
-              className="rounded-full bg-accent-orange hover:bg-accent-orange/90 text-white"
+              className="rounded-full bg-accent-orange hover:bg-accent-orange/90 text-ink"
               disabled={isLoading}
             >
               Editar Perfil
@@ -103,10 +104,7 @@ export default function Profile() {
               <Button variant="outline" onClick={() => setEditing(false)} className="rounded-full">
                 Cancelar
               </Button>
-              <Button
-                onClick={handleSave}
-                className="rounded-full bg-accent-orange hover:bg-accent-orange/90 text-white"
-              >
+              <Button onClick={handleSave} className="rounded-full bg-accent-orange hover:bg-accent-orange/90 text-ink">
                 Salvar Alterações
               </Button>
             </div>
@@ -199,6 +197,19 @@ export default function Profile() {
                   />
                 </div>
               </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ShieldCheck className="h-5 w-5" />
+                Segurança
+              </CardTitle>
+              <CardDescription>Autenticação de dois fatores (TOTP)</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <MfaSetup />
             </CardContent>
           </Card>
         </div>
