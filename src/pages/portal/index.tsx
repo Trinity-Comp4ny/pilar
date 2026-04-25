@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, Building2, FolderKanban, FileCheck, DollarSign } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { usePageTitle } from "@/hooks/usePageTitle";
+import { PendenciasCard } from "./PendenciasCard";
 
 interface PortalData {
   projeto_id: string;
@@ -161,7 +162,7 @@ function formatPortalDate(d: string | null | undefined): string {
   return new Date(d + "T00:00:00").toLocaleDateString("pt-BR");
 }
 
-function PortalDashboard({ data, token: _token }: { data: PortalData; token: string }) {
+function PortalDashboard({ data, token }: { data: PortalData; token: string }) {
   const [disciplinas, setDisciplinas] = useState<PortalDisciplina[]>([]);
   const [dataInicio, setDataInicio] = useState<string | null>(null);
   const [dataPrevisao, setDataPrevisao] = useState<string | null>(null);
@@ -243,6 +244,8 @@ function PortalDashboard({ data, token: _token }: { data: PortalData; token: str
 
   return (
     <div className="space-y-6">
+      <PendenciasCard projetoId={data.projeto_id} baseUrl={`/portal/${token}`} />
+
       {/* Prazos do projeto */}
       <div className="grid grid-cols-2 gap-4">
         <Card>
