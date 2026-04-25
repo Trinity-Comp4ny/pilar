@@ -12,7 +12,7 @@ import {
   getDiscDeadlineStatus,
   getResponsaveisList,
   getProjectProgress,
-} from "../types";
+} from "@/types/projetos";
 
 interface CronogramaTabProps {
   disciplinas: DisciplinaResponsavel[];
