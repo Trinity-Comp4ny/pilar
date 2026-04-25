@@ -5,7 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Plus, MessageSquare } from "lucide-react";
 import { PROJECT_PRIORITY, PRIORITY_OPTIONS, PROJECT_PRIORITY_CONFIG, type ProjectPriority } from "@/constants";
-import { type DisciplinaResponsavel, disciplinaStatusOptions } from "@/pages/projetos/types";
+import { type DisciplinaResponsavel, disciplinaStatusOptions } from "@/types/projetos";
 
 interface DisciplinaDetailDialogProps {
   open: boolean;

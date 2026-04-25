@@ -42,21 +42,21 @@ export function useProjetoDetail(id: string | undefined) {
 
       return {
         id: data.id,
-        codigo_projeto: data.codigo_projeto,
+        codigo_projeto: data.codigo_projeto ?? "",
         nome: data.nome,
-        cliente_id: data.cliente_id,
+        cliente_id: data.cliente_id ?? "",
         cliente_nome: (data as unknown as { clientes?: { nome?: string } }).clientes?.nome,
         cliente_email: (data as unknown as { clientes?: { email?: string } }).clientes?.email,
         localizacao: data.localizacao || undefined,
         parcelas: data.parcelas || undefined,
         area_m2: data.area_m2 || undefined,
-        data_inicio: data.data_inicio,
-        data_previsao: data.data_previsao,
+        data_inicio: data.data_inicio ?? "",
+        data_previsao: data.data_previsao ?? "",
         data_final: data.data_final || undefined,
         status: data.status as Projeto["status"],
         prioridade: (data.prioridade as ProjectPriority) || PROJECT_PRIORITY.MEDIA,
-        valor_contrato: data.valor_contrato,
-        observacao: data.observacao,
+        valor_contrato: data.valor_contrato ?? 0,
+        observacao: data.observacao ?? "",
         disciplinas: [] as DisciplinaResponsavel[],
       } satisfies Projeto;
     },
@@ -126,21 +126,43 @@ export function useProjetoDetail(id: string | undefined) {
         });
         toast.success(`${dbDisc.nome}: ${newStatus}`);
 
-        if (isFinished) await sendDisciplinaEmail(dbDisc.nome);
+        if (isFinished) {
+          void sendDisciplinaEmail(dbDisc.nome);
+          void notifyNextStage(dbDisc.id);
+        }
       } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : "Erro desconhecido";
+        console.error(err);
         toast.error("Erro ao atualizar");
       }
     },
     [projeto, dbDisciplinas, updateStatusMut, toast]
   );
 
+  const notifyNextStage = async (disciplinaId: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke("notify-next-stage", {
+        body: { disciplina_id: disciplinaId },
+      });
+      if (error) {
+        console.error("notify-next-stage error", error);
+        return;
+      }
+      const result = data as { notificados?: number; skipped?: string };
+      if (result?.notificados && result.notificados > 0) {
+        toast.success(`${result.notificados} responsável(is) da próxima etapa notificado(s)`);
+      }
+    } catch (err) {
+      console.error("notify-next-stage unexpected", err);
+    }
+  };
+
   const sendDisciplinaEmail = async (disc: string) => {
     try {
-      const { data, error } = await supabase.functions.invoke("send-completed-subjects-email", {
+      const { error } = await supabase.functions.invoke("send-completion-email", {
         body: {
           email: projeto?.cliente_email,
-          disciplina: disc,
+          name: disc,
+          type: "subject",
         },
       });
 
@@ -165,7 +187,6 @@ export function useProjetoDetail(id: string | undefined) {
         await deleteDisciplinaMut.mutateAsync({ id: dbDisc.id, projetoId: projeto.id });
         toast.success("Disciplina removida");
       } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : "Erro desconhecido";
         toast.error("Erro ao remover");
       }
     },
@@ -184,7 +205,6 @@ export function useProjetoDetail(id: string | undefined) {
         });
         toast.success("Disciplina adicionada");
       } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : "Erro desconhecido";
         toast.error("Erro ao adicionar");
       }
     },
@@ -213,7 +233,6 @@ export function useProjetoDetail(id: string | undefined) {
         });
         toast.success("Disciplina atualizada");
       } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : "Erro desconhecido";
         toast.error("Erro ao salvar");
       }
     },
@@ -250,7 +269,6 @@ export function useProjetoDetail(id: string | undefined) {
         });
         toast.success(`${pessoa?.nome} adicionado(a) a ${dbDisc.nome}`);
       } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : "Erro desconhecido";
         toast.error("Erro ao adicionar responsável");
       }
     },
@@ -287,7 +305,6 @@ export function useProjetoDetail(id: string | undefined) {
         });
         toast.success("Responsável removido");
       } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : "Erro desconhecido";
         toast.error("Erro ao remover responsável");
       }
     },
