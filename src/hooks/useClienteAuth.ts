@@ -11,6 +11,10 @@ export interface ClienteAccount {
   email: string;
 }
 
+interface VerifySessionResponse extends ClienteAccount {
+  new_token?: string;
+}
+
 export function getPortalToken(): string | null {
   return localStorage.getItem(TOKEN_KEY);
 }
@@ -21,6 +25,18 @@ export function setPortalToken(token: string) {
 
 export function clearPortalToken() {
   localStorage.removeItem(TOKEN_KEY);
+}
+
+export async function portalLogout() {
+  const token = getPortalToken();
+  if (token) {
+    try {
+      await supabase.rpc("portal_logout", { p_token: token });
+    } catch {
+      // Falha no logout server-side é tolerável — o importante é limpar cliente
+    }
+  }
+  clearPortalToken();
 }
 
 export function useClienteAuth() {
@@ -50,7 +66,14 @@ export function useClienteAuth() {
         return;
       }
 
-      setAccount(data as unknown as ClienteAccount);
+      const response = data as unknown as VerifySessionResponse;
+
+      if (response.new_token) {
+        setPortalToken(response.new_token);
+      }
+
+      const { new_token: _newToken, ...accountData } = response;
+      setAccount(accountData);
     } catch {
       clearPortalToken();
       setError("session_expired");

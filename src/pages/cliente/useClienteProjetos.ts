@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { getPortalToken } from "./useClienteAuth";
+import { getPortalToken } from "@/hooks/useClienteAuth";
 
 export interface ClienteProjeto {
   projeto_id: string;

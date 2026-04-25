@@ -1,7 +1,7 @@
 import { useNavigate, NavLink } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { LogOut, ArrowLeft, FolderKanban, DollarSign, FileCheck } from "lucide-react";
-import { clearPortalToken, type ClienteAccount } from "./useClienteAuth";
+import { portalLogout, type ClienteAccount } from "@/hooks/useClienteAuth";
 
 interface ClienteShellProps {
   account: ClienteAccount;
@@ -20,8 +20,8 @@ const projetoNavItems = [
 export function ClienteShell({ account, children, projetoId, projetoNome, projetoCodigo }: ClienteShellProps) {
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    clearPortalToken();
+  const handleLogout = async () => {
+    await portalLogout();
     navigate("/cliente/login");
   };
 
@@ -33,7 +33,9 @@ export function ClienteShell({ account, children, projetoId, projetoNome, projet
           <div className="flex items-center gap-3">
             <img src="/pilar-logo.svg" alt="Pilar" className="h-8 w-8" />
             <div>
-              <span className="text-lg font-semibold tracking-tight text-slate-900">Pilar</span>
+              <span className="text-lg font-semibold tracking-tight text-slate-900">
+                Pilar<sup className="text-[9px] font-normal text-slate-400 ml-0.5 relative -top-2">®</sup>
+              </span>
               <span className="text-xs text-muted-foreground ml-2">Portal do Cliente</span>
             </div>
           </div>
