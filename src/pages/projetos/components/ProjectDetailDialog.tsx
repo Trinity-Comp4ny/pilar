@@ -17,7 +17,23 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
-import { User, DollarSign, Ruler, Trash2, Edit, MapPin, ExternalLink, AlertTriangle } from "lucide-react";
+import {
+  User,
+  DollarSign,
+  Ruler,
+  Trash2,
+  Edit,
+  MapPin,
+  ExternalLink,
+  AlertTriangle,
+  Layers,
+  Calendar,
+  FileText,
+  Calculator,
+  Flag,
+  FileCheck,
+  TrendingUp,
+} from "lucide-react";
 import { toast } from "sonner";
 import { PROJECT_STATUS_CONFIG, PROJECT_PRIORITY_CONFIG, type ProjectPriority } from "@/constants";
 import {
@@ -31,7 +47,7 @@ import {
   getResponsaveisList,
   isDiscAtrasada,
   dbDisciplinaToLegacy,
-} from "@/pages/projetos/types";
+} from "@/types/projetos";
 import { useProjetoDisciplinas, useUpdateDisciplinaStatus } from "@/hooks/useProjetoDisciplinas";
 
 interface ProjectDetailDialogProps {
@@ -43,6 +59,17 @@ interface ProjectDetailDialogProps {
   onDelete: (id: string) => void;
   onProjectUpdated?: () => void;
 }
+
+const SHORTCUTS: { tab: string; label: string; icon: typeof Layers }[] = [
+  { tab: "disciplinas", label: "Disciplinas", icon: Layers },
+  { tab: "cronograma", label: "Cronograma", icon: Calendar },
+  { tab: "pagamentos", label: "Pagamentos", icon: DollarSign },
+  { tab: "escopo", label: "Escopo", icon: FileText },
+  { tab: "orcamento", label: "Orçamento", icon: Calculator },
+  { tab: "marcos", label: "Marcos", icon: Flag },
+  { tab: "entregaveis", label: "Entregáveis", icon: FileCheck },
+  { tab: "burn-rate", label: "Burn Rate", icon: TrendingUp },
+];
 
 const DISC_STATUS_COLORS: Record<string, string> = {
   Concluído: "bg-green-100 text-green-800 border-green-200",
@@ -294,33 +321,61 @@ export function ProjectDetailDialog({
             </div>
           </div>
 
+          {/* Atalhos para abas da página completa */}
+          <div className="px-6 pt-4 pb-3 border-t bg-muted/20">
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2 font-medium">
+              Abrir seção do projeto
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {SHORTCUTS.map((s) => {
+                const Icon = s.icon;
+                return (
+                  <Button
+                    key={s.tab}
+                    variant="outline"
+                    size="sm"
+                    className="h-8 text-xs"
+                    onClick={() => {
+                      onOpenChange(false);
+                      navigate(`/projetos/${projeto.id}#${s.tab}`);
+                    }}
+                  >
+                    <Icon className="h-3.5 w-3.5 mr-1.5" />
+                    {s.label}
+                  </Button>
+                );
+              })}
+            </div>
+          </div>
+
           {/* Footer com ações */}
           <div className="flex items-center gap-2 px-6 py-4 border-t bg-gray-50/30">
             <Button
-              variant="outline"
               size="sm"
               onClick={() => {
                 onOpenChange(false);
                 navigate(`/projetos/${projeto.id}`);
               }}
+              className="bg-accent-orange hover:bg-accent-orange/90 text-ink"
             >
               <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
-              Página Completa
+              Abrir projeto completo
             </Button>
 
             <div className="flex-1" />
 
             {canEdit && (
               <>
-                <Button
-                  size="sm"
-                  onClick={() => onEdit(projeto)}
-                  className="bg-accent-orange hover:bg-accent-orange/90 text-white"
-                >
+                <Button variant="outline" size="sm" onClick={() => onEdit(projeto)}>
                   <Edit className="h-3.5 w-3.5 mr-1.5" />
-                  Editar Projeto
+                  Editar dados
                 </Button>
-                <Button variant="destructive" size="sm" onClick={() => onDelete(projeto.id)}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                  onClick={() => onDelete(projeto.id)}
+                >
                   <Trash2 className="h-3.5 w-3.5" />
                 </Button>
               </>

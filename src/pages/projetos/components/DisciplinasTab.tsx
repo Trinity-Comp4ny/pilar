@@ -28,7 +28,7 @@ import {
   formatDateShort,
   getResponsaveisList,
   getDiscDeadlineStatus,
-} from "@/pages/projetos/types";
+} from "@/types/projetos";
 import { PROJECT_STATUS_CONFIG } from "@/constants";
 import { cn } from "@/lib/utils";
 

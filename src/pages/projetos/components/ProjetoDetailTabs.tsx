@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -36,6 +37,7 @@ import { ProjectBudgetTab } from "./ProjectBudgetTab";
 import { BillingMilestonesTab } from "./BillingMilestonesTab";
 import { EscopoTab } from "./EscopoTab";
 import { BurnRateChart } from "./BurnRateChart";
+import { EntregaveisTab } from "./EntregaveisTab";
 
 interface ProjetoDetailTabsProps {
   projeto: Projeto;
@@ -150,32 +152,53 @@ export function ProjetoDetailTabs({
   };
 
   const handleUpdateResponsavelDatas = async (_discIdx: number, _respIdx: number, _field: string, _value: string) => {
-    // TODO: Per-responsavel dates require schema changes to projeto_disciplina_responsaveis.
+    // Backlog (2026-04-23): per-responsavel dates exigem migração da tabela projeto_disciplina_responsaveis.
   };
 
   const handleSaveResponsavelDatas = async () => {
-    // TODO: Per-responsavel dates are not yet supported in the relational schema.
+    // Backlog (2026-04-23): mesma migração do handleUpdateResponsavelDatas.
+  };
+
+  const VALID_TABS = [
+    "disciplinas",
+    "cronograma",
+    "pagamentos",
+    "escopo",
+    "orcamento",
+    "marcos",
+    "entregaveis",
+    "burn-rate",
+  ];
+  const location = useLocation();
+  const navigate = useNavigate();
+  const initialTab = (() => {
+    const h = location.hash.replace("#", "");
+    return VALID_TABS.includes(h) ? h : "disciplinas";
+  })();
+  const [activeTab, setActiveTab] = useState(initialTab);
+
+  useEffect(() => {
+    const h = location.hash.replace("#", "");
+    if (VALID_TABS.includes(h) && h !== activeTab) setActiveTab(h);
+  }, [location.hash]);
+
+  const handleTabChange = (v: string) => {
+    setActiveTab(v);
+    navigate(`#${v}`, { replace: true });
   };
 
   return (
     <>
-      <Tabs defaultValue="disciplinas" className="space-y-4">
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4">
         <TabsList className="flex-wrap">
           <TabsTrigger value="disciplinas">Disciplinas</TabsTrigger>
           <TabsTrigger value="cronograma">Cronograma</TabsTrigger>
           <TabsTrigger value="pagamentos">Pagamentos</TabsTrigger>
-          <TabsTrigger value="orcamento" disabled className="cursor-not-allowed opacity-40">
-            Orçamento
-          </TabsTrigger>
-          <TabsTrigger value="marcos" disabled className="cursor-not-allowed opacity-40">
-            Marcos
-          </TabsTrigger>
-          <TabsTrigger value="escopo" disabled className="cursor-not-allowed opacity-40">
-            Escopo & Aditivos
-          </TabsTrigger>
-          <TabsTrigger value="burn-rate" disabled className="cursor-not-allowed opacity-40">
-            Burn Rate
-          </TabsTrigger>
+          <TabsTrigger value="escopo">Escopo & Aditivos</TabsTrigger>
+          <TabsTrigger value="orcamento">Orçamento</TabsTrigger>
+          <TabsTrigger value="marcos">Marcos</TabsTrigger>
+          <TabsTrigger value="entregaveis">Entregáveis</TabsTrigger>
+          <TabsTrigger value="burn-rate">Burn Rate</TabsTrigger>
         </TabsList>
 
         <TabsContent value="disciplinas">
@@ -822,6 +845,14 @@ export function ProjetoDetailTabs({
 
         <TabsContent value="escopo">
           <EscopoTab projetoId={projeto.id} canEdit={canEdit} />
+        </TabsContent>
+
+        <TabsContent value="entregaveis">
+          <EntregaveisTab
+            projetoId={projeto.id}
+            canEdit={canEdit}
+            disciplinas={disciplinasLegacy.map((d) => ({ disciplina: d.disciplina }))}
+          />
         </TabsContent>
 
         <TabsContent value="burn-rate">

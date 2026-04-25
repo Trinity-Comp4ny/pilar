@@ -2,13 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Calendar, DollarSign, HardHat, Ruler } from "lucide-react";
-import {
-  type Projeto,
-  formatCurrency,
-  formatDateShort,
-  getDeadlineStatus,
-  getProjectProgress,
-} from "@/pages/projetos/types";
+import { type Projeto, formatCurrency, formatDateShort, getDeadlineStatus, getProjectProgress } from "@/types/projetos";
 import { PROJECT_PRIORITY_CONFIG, type ProjectPriority } from "@/constants";
 
 interface ProjectCardProps {

@@ -11,7 +11,7 @@ import {
   type ResponsavelDatas,
   getResponsaveisList,
   getDiscDeadlineStatus,
-} from "@/pages/projetos/types";
+} from "@/types/projetos";
 import type { FluxoDisciplinas } from "@/types/fluxoDisciplinas";
 import { groupByEtapa } from "./FluxoPipeline";
 

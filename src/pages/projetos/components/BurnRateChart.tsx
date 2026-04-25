@@ -174,22 +174,22 @@ export function BurnRateChart({ projetoId }: BurnRateChartProps) {
         ) : (
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={serie} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--chart-grid))" />
               <XAxis dataKey="mes" tick={{ fontSize: 11 }} />
               <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
               <Tooltip formatter={(v: number) => formatCurrency(v)} />
               <Legend fontSize={11} />
               <ReferenceLine
                 y={orcamentoTotal}
-                stroke="#94a3b8"
+                stroke="hsl(var(--chart-neutral))"
                 strokeDasharray="5 5"
-                label={{ value: "Orçamento", fontSize: 10, fill: "#94a3b8" }}
+                label={{ value: "Orçamento", fontSize: 10, fill: "hsl(var(--chart-neutral))" }}
               />
               <Line
                 type="monotone"
                 dataKey="custo_acumulado"
                 name="Custo Acum."
-                stroke="#ef4444"
+                stroke="hsl(var(--chart-danger))"
                 strokeWidth={2}
                 dot={{ r: 3 }}
               />
@@ -197,7 +197,7 @@ export function BurnRateChart({ projetoId }: BurnRateChartProps) {
                 type="monotone"
                 dataKey="receita_acumulada"
                 name="Receita Acum."
-                stroke="#10b981"
+                stroke="hsl(var(--chart-success-alt))"
                 strokeWidth={2}
                 dot={{ r: 3 }}
               />
