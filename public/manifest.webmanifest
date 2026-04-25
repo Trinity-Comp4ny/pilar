@@ -1,0 +1,38 @@
+{
+  "name": "Pilar",
+  "short_name": "Pilar",
+  "description": "Sistema operacional para escritórios de engenharia e arquitetura",
+  "start_url": "/dashboard",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#ffffff",
+  "theme_color": "#FF4000",
+  "lang": "pt-BR",
+  "dir": "ltr",
+  "categories": ["productivity", "business"],
+  "icons": [
+    {
+      "src": "/pilar-logo.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Timesheet",
+      "short_name": "Horas",
+      "description": "Lançar horas rapidamente",
+      "url": "/timesheet",
+      "icons": [{ "src": "/pilar-logo.svg", "sizes": "any" }]
+    },
+    {
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "description": "Visão geral do escritório",
+      "url": "/dashboard",
+      "icons": [{ "src": "/pilar-logo.svg", "sizes": "any" }]
+    }
+  ]
+}

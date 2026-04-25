@@ -1,0 +1,31 @@
+# Arquivos que Claude não precisa ler para trabalhar no projeto
+
+# Protótipos e docs de estratégia (não são código de produção)
+prototypes/
+PRODUCT_STRATEGY.md
+STRATEGY_V2.md
+
+# Build output
+dist/
+.vite/
+
+# Service worker e manifest (gerados/estáticos)
+public/sw.js
+public/manifest.webmanifest
+
+# Locks e configs de ferramentas (raramente úteis)
+package-lock.json
+.eslintcache
+
+# Edge functions dormentes (não ativas em produção)
+supabase/functions/ai-aditivo-copilot/
+supabase/functions/ai-diagnostico-precificacao/
+supabase/functions/ai-documentos/
+supabase/functions/ai-fechamento-mensal/
+supabase/functions/ai-pauta-reuniao/
+supabase/functions/ai-planejador-contratacao/
+supabase/functions/ai-previsao-atraso/
+supabase/functions/ai-proposta-copilot/
+supabase/functions/ai-radar-cliente/
+supabase/functions/ai-relatorio-executivo/
+supabase/functions/ai-simulacao-impacto/
