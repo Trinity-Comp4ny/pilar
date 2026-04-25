@@ -20,7 +20,7 @@ import {
   dbDisciplinaToLegacy,
   getDeadlineStatus,
   getProjectProgress,
-} from "../types";
+} from "@/types/projetos";
 
 export function useProjetoDetail(id: string | undefined) {
   const navigate = useNavigate();

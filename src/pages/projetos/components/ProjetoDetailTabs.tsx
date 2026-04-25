@@ -30,7 +30,7 @@ import {
   formatDateShort,
   getResponsaveisList,
   isDiscAtrasada,
-} from "../types";
+} from "@/types/projetos";
 import { CronogramaTab } from "./CronogramaTab";
 import { PagamentosTab } from "./PagamentosTab";
 import { ProjectBudgetTab } from "./ProjectBudgetTab";
