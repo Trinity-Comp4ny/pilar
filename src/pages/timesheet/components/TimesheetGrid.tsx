@@ -9,6 +9,7 @@ import {
   useUpsertTimesheet,
   useHorasOrcadasPorProjeto,
 } from "@/hooks/useTimesheets";
+import { TimesheetGridMobile } from "./TimesheetGridMobile";
 
 interface TimesheetGridProps {
   pessoaId: string;
@@ -17,7 +18,20 @@ interface TimesheetGridProps {
   weekDays: string[]; // array de 7 datas YYYY-MM-DD
 }
 
-export function TimesheetGrid({ pessoaId, weekStart, weekEnd, weekDays }: TimesheetGridProps) {
+export function TimesheetGrid(props: TimesheetGridProps) {
+  return (
+    <>
+      <div className="hidden md:block">
+        <TimesheetGridDesktop {...props} />
+      </div>
+      <div className="md:hidden">
+        <TimesheetGridMobile {...props} />
+      </div>
+    </>
+  );
+}
+
+function TimesheetGridDesktop({ pessoaId, weekStart, weekEnd, weekDays }: TimesheetGridProps) {
   const { data: timesheets = [], isLoading: loadingTimesheets } = useTimesheetsByWeek(pessoaId, weekStart, weekEnd);
   const { data: projetos = [], isLoading: loadingProjetos } = useProjetosAtribuidos(pessoaId);
   const upsert = useUpsertTimesheet();
