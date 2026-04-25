@@ -1,89 +1,119 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-import { corsHeaders } from "../_shared/cors.ts";
+import {
+  authenticateUser,
+  getTrustedOrigin,
+  jsonResponse,
+  optionsResponse,
+  safeErrorResponse,
+} from "../_shared/cors.ts";
+import { EMAIL_RE } from "../_shared/validators.ts";
+
+// Apenas admin/user via UI. ultra_admin é exclusivo via SQL direto.
+// Roles legados (financeiro/marketing/operacional) caem no fallback 'user'.
+const ASSIGNABLE_ROLES = ["admin", "user"] as const;
+type AssignableRole = (typeof ASSIGNABLE_ROLES)[number];
+
+const FEATURE_KEYS = new Set([
+  "dashboard",
+  "relatorios",
+  "leads",
+  "propostas",
+  "clientes",
+  "projetos",
+  "planejamento",
+  "timesheet",
+  "mapa",
+  "financeiro",
+  "pessoas",
+  "metas",
+  "portal_cliente",
+  "ai_hub",
+  "capacidade",
+  "templates",
+]);
+
+const VALID_LEVELS = new Set(["viewer", "editor"]);
+
+function sanitizeFeatures(raw: unknown): Record<string, "viewer" | "editor"> {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return {};
+  const result: Record<string, "viewer" | "editor"> = {};
+  for (const [key, value] of Object.entries(raw as Record<string, unknown>)) {
+    if (!FEATURE_KEYS.has(key)) continue;
+    if (typeof value !== "string" || !VALID_LEVELS.has(value)) continue;
+    result[key] = value as "viewer" | "editor";
+  }
+  return result;
+}
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
-  }
+  if (req.method === "OPTIONS") return optionsResponse(req);
+  if (req.method !== "POST") return safeErrorResponse(405, "Method not allowed", req);
+
+  const auth = await authenticateUser(req);
+  if (auth.error) return auth.error;
+  const { supabase: supabaseClient, user } = auth;
 
   try {
-    const supabaseClient = createClient(Deno.env.get("SUPABASE_URL") ?? "", Deno.env.get("SUPABASE_ANON_KEY") ?? "", {
-      global: { headers: { Authorization: req.headers.get("Authorization")! } },
-    });
-
-    // 1. Get the user making the request
-    const {
-      data: { user },
-      error: userError,
-    } = await supabaseClient.auth.getUser();
-    if (userError || !user) throw new Error("Unauthorized");
-
-    // 2. Get inviter's profile to check permissions and get company ID
     const { data: profile, error: profileError } = await supabaseClient
       .from("profiles")
       .select("empresa_id, role")
       .eq("id", user.id)
       .single();
 
-    if (profileError || !profile) throw new Error("Profile not found");
+    if (profileError || !profile) return safeErrorResponse(403, "Profile not found", req);
+    if (profile.role !== "admin" && profile.role !== "ultra_admin") {
+      return safeErrorResponse(403, "Only admins can invite users", req);
+    }
+    if (!profile.empresa_id) return safeErrorResponse(403, "You must belong to a company to invite users", req);
 
-    if (profile.role !== "admin") {
-      throw new Error("Only admins can invite users");
+    const body = await req.json();
+    const { email, nome, role, features: rawFeatures } = body ?? {};
+
+    if (!email || !EMAIL_RE.test(String(email))) {
+      return safeErrorResponse(400, "Invalid email format", req);
     }
 
-    if (!profile.empresa_id) {
-      throw new Error("You must belong to a company to invite users");
+    const safeRole: AssignableRole = ASSIGNABLE_ROLES.includes(role) ? role : "user";
+    const safeFeatures = safeRole === "admin" ? {} : sanitizeFeatures(rawFeatures);
+
+    const redirectOrigin = getTrustedOrigin(req);
+    if (!redirectOrigin) return safeErrorResponse(500, "Server CORS misconfigured", req);
+
+    const { data: token, error: conviteError } = await supabaseClient.rpc("create_convite", {
+      p_email: email,
+      p_cargo: safeRole,
+      p_nome: nome || null,
+      p_features: safeFeatures,
+    });
+
+    if (conviteError || !token) {
+      console.error("[invite-user] create_convite failed", conviteError?.message);
+      return safeErrorResponse(400, conviteError?.message ?? "Falha ao criar convite", req);
     }
 
-    // 3. Get and validate request body
-    const { email, nome, role } = await req.json();
-
-    if (!email) throw new Error("Email is required");
-
-    const VALID_ROLES = ["admin", "financeiro", "marketing", "operacional", "user"];
-    const safeRole = VALID_ROLES.includes(role) ? role : "user";
-
-    const ALLOWED_ORIGINS = [
-      "https://pilarsoft.com.br",
-      "https://app.pilarsoft.com.br",
-      "http://localhost:5173",
-      "http://localhost:4173",
-    ];
-
-    let origin = req.headers.get("origin") || "";
-    if (origin.endsWith("/")) origin = origin.slice(0, -1);
-    if (!ALLOWED_ORIGINS.includes(origin)) {
-      origin = ALLOWED_ORIGINS[0];
-    }
-
-    // 4. Invite user using Service Role Key (Admin)
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    const { data: _invitation, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
-      redirectTo: `${origin}/profile-setup`,
+    const { error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
+      redirectTo: `${redirectOrigin}/profile-setup`,
       data: {
-        empresa_id_convite: profile.empresa_id,
-        cargo_convite: safeRole,
+        invite_token: token,
         nome: nome || "",
       },
     });
 
-    if (inviteError) throw inviteError;
+    if (inviteError) {
+      console.error("[invite-user] inviteUserByEmail failed", inviteError.message);
+      return safeErrorResponse(400, "Falha ao enviar convite", req);
+    }
 
-    return new Response(JSON.stringify({ success: true, email }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 200,
-    });
+    return jsonResponse({ success: true, email }, 200, req);
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Internal error";
-    return new Response(JSON.stringify({ error: message }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 400,
-    });
+    console.error("[invite-user] unexpected error", error);
+    return safeErrorResponse(400, "Invalid request", req);
   }
 });
