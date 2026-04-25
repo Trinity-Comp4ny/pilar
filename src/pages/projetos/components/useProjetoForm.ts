@@ -3,6 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { formatCurrencyInput, parseCurrencyString } from "@/lib/currencyUtils";
 import { supabase } from "@/integrations/supabase/client";
 import { getSafeErrorMessage } from "@/lib/safeError";
+import { addBusinessDays, formatDateLocal, parseDateLocal } from "@/lib/businessDays";
 import { PROJECT_STATUS, PROJECT_PRIORITY, type ProjectPriority } from "@/constants";
 import {
   type Projeto,
@@ -10,7 +11,7 @@ import {
   type DisciplinaObservacao,
   type ResponsavelDatas,
   getResponsaveisList,
-} from "@/pages/projetos/types";
+} from "@/types/projetos";
 import { type TemplateProjeto } from "@/hooks/useTemplates";
 import type { FluxoDisciplinas } from "@/types/fluxoDisciplinas";
 import { toast } from "sonner";
@@ -66,6 +67,8 @@ const EMPTY_FORM = {
   observacao: "",
   status: PROJECT_STATUS.PLANEJAMENTO as Projeto["status"],
   prioridade: PROJECT_PRIORITY.MEDIA as ProjectPriority,
+  prazo_dias_uteis: "",
+  dia_pagamento: "",
 };
 
 function composeLocalizacao(form: typeof EMPTY_FORM): string {
@@ -218,6 +221,8 @@ export function useProjetoForm({
         observacao: editProjeto.observacao || "",
         status: editProjeto.status,
         prioridade: editProjeto.prioridade || PROJECT_PRIORITY.MEDIA,
+        prazo_dias_uteis: "",
+        dia_pagamento: "",
       });
       setProjetosDisciplinas(editProjeto.disciplinas || []);
     } else {
@@ -233,7 +238,26 @@ export function useProjetoForm({
   }, [open, editProjeto]);
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+    setFormData((prev) => {
+      const next = { ...prev, [field]: value };
+
+      if (field === "prazo_dias_uteis" || field === "data_inicio") {
+        const prazo = field === "prazo_dias_uteis" ? value : prev.prazo_dias_uteis;
+        const inicio = field === "data_inicio" ? value : prev.data_inicio;
+        const prazoNum = parseInt(prazo, 10);
+        if (inicio && prazoNum > 0 && prazoNum <= 999) {
+          try {
+            const startDate = parseDateLocal(inicio);
+            const endDate = addBusinessDays(startDate, prazoNum);
+            next.data_previsao = formatDateLocal(endDate);
+          } catch {
+            // ignore parse errors
+          }
+        }
+      }
+
+      return next;
+    });
   };
 
   const handleOpenDisciplinaDetail = (index: number) => {
@@ -466,6 +490,7 @@ export function useProjetoForm({
             data_fim_real: d.data_final || null,
             prioridade: d.prioridade || null,
             justificativa_atraso: d.justificativa_atraso || null,
+            ordem_etapa: typeof d.etapa === "number" ? d.etapa : null,
             responsavel_ids: resps.map((r) => r.responsavel_id).filter(Boolean),
           };
         });
@@ -513,6 +538,28 @@ export function useProjetoForm({
             projetoId: newProjetoId as string,
             disciplinas: discsForBulk,
           });
+        }
+
+        const numParcelas = parseInt(formData.parcelas || "0", 10);
+        const diaFixo = parseInt(formData.dia_pagamento || "0", 10);
+        if (newProjetoId && numParcelas > 0 && diaFixo >= 1 && diaFixo <= 31) {
+          const { error: parcelasError } = await (
+            supabase.rpc as unknown as (
+              name: "rpc_gerar_parcelas_dia_fixo",
+              args: { p_projeto_id: string; p_num_parcelas: number; p_dia_fixo: number }
+            ) => Promise<{ error: { message: string } | null }>
+          )("rpc_gerar_parcelas_dia_fixo", {
+            p_projeto_id: newProjetoId as string,
+            p_num_parcelas: numParcelas,
+            p_dia_fixo: diaFixo,
+          });
+          if (parcelasError) {
+            toast.error("Projeto salvo, mas falhou ao gerar parcelas", { description: parcelasError.message });
+          } else {
+            toast.success(`${numParcelas} parcela(s) geradas`, {
+              description: `Vencimento dia ${diaFixo} de cada mês`,
+            });
+          }
         }
 
         toast.success("Projeto cadastrado", { description: "Novo projeto foi adicionado com sucesso" });
@@ -583,19 +630,19 @@ export function useProjetoForm({
                   if (fallbackCoords) {
                     saveCoords(fallbackCoords.lat, fallbackCoords.lng);
                   } else {
-                    toast.success("Endereço não localizado", {
+                    toast.warning("Endereço não localizado", {
                       description: "Não foi possível encontrar as coordenadas. O projeto não aparecerá no mapa.",
                     });
                   }
                 });
             }
-            toast.success("Endereço não localizado", {
+            toast.warning("Endereço não localizado", {
               description: "Não foi possível encontrar as coordenadas do endereço. O projeto não aparecerá no mapa.",
             });
           })
           .catch((err: unknown) => {
             if (err instanceof DOMException && err.name === "AbortError") return;
-            toast.success("Geocodificação falhou", {
+            toast.warning("Geocodificação falhou", {
               description: "Não foi possível obter coordenadas do endereço. O projeto não aparecerá no mapa.",
             });
           });

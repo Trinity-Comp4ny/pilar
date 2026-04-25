@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { CheckCircle2, Clock, AlertTriangle, PauseCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { type DisciplinaResponsavel, getDiscDeadlineStatus } from "@/pages/projetos/types";
+import { type DisciplinaResponsavel, getDiscDeadlineStatus } from "@/types/projetos";
 
 interface EtapaGroup {
   etapa: number;
