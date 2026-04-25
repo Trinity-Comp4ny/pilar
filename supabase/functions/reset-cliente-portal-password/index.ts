@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-import { getCorsHeaders } from "../_shared/cors.ts";
+import { authenticateUser, isUUID, jsonResponse, optionsResponse, safeErrorResponse } from "../_shared/cors.ts";
 
 function generatePassword(length = 10): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
@@ -11,42 +11,33 @@ function generatePassword(length = 10): string {
 }
 
 serve(async (req) => {
-  const corsHeaders = getCorsHeaders(req);
+  if (req.method === "OPTIONS") return optionsResponse(req);
+  if (req.method !== "POST") return safeErrorResponse(405, "Method not allowed", req);
 
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
-  }
+  const auth = await authenticateUser(req);
+  if (auth.error) return auth.error;
+  const { supabase: supabaseClient, user } = auth;
 
   try {
-    const supabaseClient = createClient(Deno.env.get("SUPABASE_URL") ?? "", Deno.env.get("SUPABASE_ANON_KEY") ?? "", {
-      global: { headers: { Authorization: req.headers.get("Authorization")! } },
-    });
-
-    const supabaseAdmin = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-    );
-
-    const {
-      data: { user },
-      error: userError,
-    } = await supabaseClient.auth.getUser();
-    if (userError || !user) throw new Error("Unauthorized");
-
     const { data: profile, error: profileError } = await supabaseClient
       .from("profiles")
       .select("empresa_id, role")
       .eq("id", user.id)
       .single();
 
-    if (profileError || !profile) throw new Error("Profile not found");
+    if (profileError || !profile) return safeErrorResponse(403, "Profile not found", req);
     if (profile.role !== "admin" && profile.role !== "operacional") {
-      throw new Error("Apenas admin ou operacional podem redefinir senhas do portal");
+      return safeErrorResponse(403, "Apenas admin ou operacional podem redefinir senhas do portal", req);
     }
-    if (!profile.empresa_id) throw new Error("Você precisa pertencer a uma empresa");
+    if (!profile.empresa_id) return safeErrorResponse(403, "Você precisa pertencer a uma empresa", req);
 
     const { cliente_id } = await req.json();
-    if (!cliente_id) throw new Error("cliente_id é obrigatório");
+    if (!isUUID(cliente_id)) return safeErrorResponse(400, "cliente_id inválido", req);
+
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+    );
 
     const { data: account, error: accountError } = await supabaseAdmin
       .from("cliente_portal_accounts")
@@ -55,7 +46,7 @@ serve(async (req) => {
       .eq("empresa_id", profile.empresa_id)
       .single();
 
-    if (accountError || !account) throw new Error("Conta do portal não encontrada");
+    if (accountError || !account) return safeErrorResponse(404, "Conta do portal não encontrada", req);
 
     const novaSenha = generatePassword(10);
 
@@ -64,17 +55,14 @@ serve(async (req) => {
       p_nova_senha: novaSenha,
     });
 
-    if (resetError) throw resetError;
+    if (resetError) {
+      console.error("[reset-cliente-portal-password] _portal_reset_password failed", resetError.message);
+      return safeErrorResponse(400, `Falha ao redefinir senha: ${resetError.message}`, req);
+    }
 
-    return new Response(JSON.stringify({ success: true, email: account.email, senha: novaSenha }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 200,
-    });
+    return jsonResponse({ success: true, email: account.email, senha: novaSenha }, 200, req);
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Erro interno";
-    return new Response(JSON.stringify({ error: message }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 400,
-    });
+    console.error("[reset-cliente-portal-password] unexpected error", error);
+    return safeErrorResponse(400, "Invalid request", req);
   }
 });

@@ -1,7 +1,8 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-import { getCorsHeaders } from "../_shared/cors.ts";
+import { authenticateUser, isUUID, jsonResponse, optionsResponse, safeErrorResponse } from "../_shared/cors.ts";
+import { EMAIL_RE } from "../_shared/validators.ts";
 
 function generatePassword(length = 8): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
@@ -11,54 +12,35 @@ function generatePassword(length = 8): string {
 }
 
 serve(async (req) => {
-  const corsHeaders = getCorsHeaders(req);
+  if (req.method === "OPTIONS") return optionsResponse(req);
+  if (req.method !== "POST") return safeErrorResponse(405, "Method not allowed", req);
 
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
-  }
+  const auth = await authenticateUser(req);
+  if (auth.error) return auth.error;
+  const { supabase: supabaseClient, user } = auth;
 
   try {
-    const supabaseClient = createClient(Deno.env.get("SUPABASE_URL") ?? "", Deno.env.get("SUPABASE_ANON_KEY") ?? "", {
-      global: {
-        headers: { Authorization: req.headers.get("Authorization")! },
-      },
-    });
-
-    const supabaseAdmin = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-    );
-
-    // 1. Valida o usuário chamador
-    const {
-      data: { user },
-      error: userError,
-    } = await supabaseClient.auth.getUser();
-    if (userError || !user) throw new Error("Unauthorized");
-
-    // 2. Verifica permissões (admin ou operacional)
     const { data: profile, error: profileError } = await supabaseClient
       .from("profiles")
       .select("empresa_id, role")
       .eq("id", user.id)
       .single();
 
-    if (profileError || !profile) throw new Error("Profile not found");
-
+    if (profileError || !profile) return safeErrorResponse(403, "Profile not found", req);
     if (profile.role !== "admin" && profile.role !== "operacional") {
-      throw new Error("Apenas admin ou operacional podem criar acesso ao portal");
+      return safeErrorResponse(403, "Apenas admin ou operacional podem criar acesso ao portal", req);
     }
+    if (!profile.empresa_id) return safeErrorResponse(403, "Você precisa pertencer a uma empresa", req);
 
-    if (!profile.empresa_id) {
-      throw new Error("Você precisa pertencer a uma empresa");
-    }
-
-    // 3. Valida body
     const { cliente_id, email } = await req.json();
-    if (!cliente_id) throw new Error("cliente_id é obrigatório");
-    if (!email) throw new Error("email é obrigatório");
+    if (!isUUID(cliente_id)) return safeErrorResponse(400, "cliente_id inválido", req);
+    if (!email || !EMAIL_RE.test(String(email))) return safeErrorResponse(400, "email inválido", req);
 
-    // 4. Busca dados do cliente
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+    );
+
     const { data: cliente, error: clienteError } = await supabaseAdmin
       .from("clientes")
       .select("id, nome, empresa_id")
@@ -66,9 +48,8 @@ serve(async (req) => {
       .eq("empresa_id", profile.empresa_id)
       .single();
 
-    if (clienteError || !cliente) throw new Error("Cliente não encontrado");
+    if (clienteError || !cliente) return safeErrorResponse(404, "Cliente não encontrado", req);
 
-    // 5. Verifica se já existe conta portal
     const { data: existingAccount } = await supabaseAdmin
       .from("cliente_portal_accounts")
       .select("id")
@@ -76,39 +57,27 @@ serve(async (req) => {
       .eq("empresa_id", profile.empresa_id)
       .maybeSingle();
 
-    if (existingAccount) {
-      throw new Error("Este cliente já possui acesso ao portal");
-    }
+    if (existingAccount) return safeErrorResponse(409, "Este cliente já possui acesso ao portal", req);
 
-    // 6. Gera senha aleatória
     const senha = generatePassword(8);
 
-    // 7. Insere com hash via pgcrypto (SQL direto)
     const { error: insertError } = await supabaseAdmin.rpc("_portal_create_account", {
       p_cliente_id: cliente.id,
       p_empresa_id: profile.empresa_id,
       p_nome: cliente.nome,
-      p_email: email.toLowerCase().trim(),
+      p_email: String(email).toLowerCase().trim(),
       p_senha: senha,
       p_created_by: user.id,
     });
 
-    if (insertError) throw insertError;
+    if (insertError) {
+      console.error("[invite-cliente-portal] _portal_create_account failed", insertError.message);
+      return safeErrorResponse(400, `Falha ao criar conta do portal: ${insertError.message}`, req);
+    }
 
-    return new Response(JSON.stringify({ success: true, email: email.toLowerCase().trim(), senha }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 200,
-    });
+    return jsonResponse({ success: true, email: String(email).toLowerCase().trim(), senha }, 200, req);
   } catch (error: unknown) {
-    const message =
-      error instanceof Error
-        ? error.message
-        : typeof error === "object" && error !== null && "message" in error
-          ? String((error as { message: unknown }).message)
-          : "Erro interno";
-    return new Response(JSON.stringify({ error: message }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 400,
-    });
+    console.error("[invite-cliente-portal] unexpected error", error);
+    return safeErrorResponse(400, "Invalid request", req);
   }
 });
