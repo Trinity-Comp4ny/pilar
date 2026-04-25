@@ -8,7 +8,7 @@ import { Plus, Save, Trash2, Loader2 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { type DisciplinaResponsavel } from "@/pages/projetos/types";
+import { type DisciplinaResponsavel } from "@/types/projetos";
 import { formatCurrency } from "@/lib/currencyUtils";
 
 interface ProjectBudgetTabProps {

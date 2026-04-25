@@ -7,8 +7,9 @@ import { toast } from "sonner";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
+import { Can } from "@/components/Can";
 import { supabase } from "@/integrations/supabase/client";
-import { useUserRole } from "@/hooks/useUserRole";
+import { usePermissions } from "@/hooks/usePermissions";
 import {
   PROJECT_STATUS,
   PROJECT_STATUS_CONFIG,
@@ -16,13 +17,14 @@ import {
   PROJECT_PRIORITY_CONFIG,
   type ProjectPriority,
 } from "@/constants";
-import { type Projeto, type ProjetoDisciplinaDB, dbDisciplinaToLegacy } from "@/pages/projetos/types";
+import { type Projeto, type ProjetoDisciplinaDB, dbDisciplinaToLegacy } from "@/types/projetos";
 import { ProjectCard } from "@/pages/projetos/components/ProjectCard";
 import { ProjectDetailDialog } from "@/pages/projetos/components/ProjectDetailDialog";
 import { ProjetoFormDialog } from "@/pages/projetos/components/ProjetoFormDialog";
 import { ManageDisciplinasDialog } from "@/pages/projetos/components/ManageDisciplinasDialog";
 import { FluxoDisciplinasDialog } from "@/pages/projetos/components/FluxoDisciplinasDialog";
 import { DisciplinasTab } from "@/pages/projetos/components/DisciplinasTab";
+import { CalendarioPrazosTab } from "@/pages/projetos/components/CalendarioPrazosTab";
 import { useTemplates } from "@/hooks/useTemplates";
 import { useFluxosDisciplinas } from "@/hooks/useFluxosDisciplinas";
 import { cn } from "@/lib/utils";
@@ -31,15 +33,15 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 const statusConfig = PROJECT_STATUS_CONFIG;
 
-type Tab = "kanban" | "disciplinas";
+type Tab = "kanban" | "disciplinas" | "calendario";
 
 export default function ProjetosKanban() {
   usePageTitle("Projetos");
-  const { data: userRole } = useUserRole();
+  const { can } = usePermissions();
   const queryClient = useQueryClient();
   const { data: templatesData = [] } = useTemplates();
   const { data: fluxosData = [] } = useFluxosDisciplinas();
-  const canEdit = userRole === "admin" || userRole === "operacional";
+  const canEdit = can("projetos", "create");
 
   const [isFormDialogOpen, setIsFormDialogOpen] = useState(false);
   const [editingProjeto, setEditingProjeto] = useState<Projeto | null>(null);
@@ -283,6 +285,7 @@ export default function ProjetosKanban() {
       if (error) {
         toast.error("Erro ao enviar notificação por email");
         console.error("Erro ao enviar notificação por email:", error);
+        return;
       }
 
       toast.success("Notificação por email enviada");
@@ -293,16 +296,18 @@ export default function ProjetosKanban() {
 
   const sendClientEmail = async (client: string, project: string) => {
     try {
-      const { error } = await supabase.functions.invoke("send-completed-project-email", {
+      const { error } = await supabase.functions.invoke("send-completion-email", {
         body: {
           email: client,
-          project: project,
+          name: project,
+          type: "project",
         },
       });
 
       if (error) {
         toast.error("Erro ao notificar cliente por email");
         console.error("Erro ao notificar cliente por email:", error);
+        return;
       }
 
       toast.success("Email de conclusão enviado para o cliente");
@@ -332,6 +337,7 @@ export default function ProjetosKanban() {
   const tabs: { id: Tab; label: string; icon: typeof CalendarIcon }[] = [
     { id: "kanban", label: "Quadro", icon: CalendarIcon },
     { id: "disciplinas", label: "Disciplinas", icon: Layers },
+    { id: "calendario", label: "Calendário", icon: CalendarIcon },
   ];
 
   return (
@@ -361,29 +367,29 @@ export default function ProjetosKanban() {
                 </Select>
               </div>
 
-              {canEdit && (
+              <Can feature="projetos" action="edit">
                 <Button variant="outline" className="rounded-full text-sm" onClick={() => setIsDisciplinasOpen(true)}>
                   <Settings2 className="mr-2 h-4 w-4" />
                   Disciplinas
                 </Button>
-              )}
+              </Can>
 
-              {canEdit && (
+              <Can feature="projetos" action="edit">
                 <Button variant="outline" className="rounded-full text-sm" onClick={() => setIsFluxosOpen(true)}>
                   <GitBranch className="mr-2 h-4 w-4" />
                   Fluxos
                 </Button>
-              )}
+              </Can>
 
-              {canEdit && (
+              <Can feature="projetos" action="create">
                 <Button
-                  className="rounded-full bg-accent-orange hover:bg-accent-orange/90 text-white transition-colors px-5 py-2.5 text-sm"
+                  className="rounded-full bg-accent-orange hover:bg-accent-orange/90 text-ink transition-colors px-5 py-2.5 text-sm"
                   onClick={handleNewProjeto}
                 >
                   <Plus className="mr-2 h-4 w-4" />
                   Novo Projeto
                 </Button>
-              )}
+              </Can>
             </div>
           }
         />
@@ -458,8 +464,10 @@ export default function ProjetosKanban() {
             </div>
           </div>
         </DragDropContext>
-      ) : (
+      ) : activeTab === "disciplinas" ? (
         <DisciplinasTab projetos={projetos} />
+      ) : (
+        <CalendarioPrazosTab projetos={projetos} />
       )}
 
       <ProjectDetailDialog

@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Calendar, DollarSign, Loader2, MapPin } from "lucide-react";
 import { formatCurrencyInput } from "@/lib/currencyUtils";
 import { PROJECT_PRIORITY, PRIORITY_OPTIONS, PROJECT_PRIORITY_CONFIG } from "@/constants";
-import { type Projeto } from "@/pages/projetos/types";
+import { type Projeto } from "@/types/projetos";
 import { type TemplateProjeto } from "@/hooks/useTemplates";
 import type { FluxoDisciplinas } from "@/types/fluxoDisciplinas";
 import { useProjetoForm, ESTADOS_BR } from "./useProjetoForm";
@@ -288,6 +288,25 @@ export function ProjetoFormDialog({
                   />
                 </div>
               </div>
+              {!form.isEditMode && (
+                <div className="space-y-1.5">
+                  <Label htmlFor="diaPagamento" className="text-xs">
+                    Dia fixo de pagamento (opcional)
+                  </Label>
+                  <Input
+                    id="diaPagamento"
+                    type="number"
+                    min="1"
+                    max="31"
+                    value={form.formData.dia_pagamento}
+                    onChange={(e) => form.handleInputChange("dia_pagamento", e.target.value)}
+                    placeholder="Ex: 25"
+                  />
+                  <p className="text-[10px] text-muted-foreground">
+                    Gera parcelas automáticas vencendo neste dia de cada mês. Pula fim de semana.
+                  </p>
+                </div>
+              )}
             </div>
 
             <div className="space-y-3">
@@ -309,6 +328,23 @@ export function ProjetoFormDialog({
                     />
                   </div>
                   <div className="space-y-1.5">
+                    <Label htmlFor="prazoDiasUteis" className="text-xs">
+                      Prazo (dias úteis)
+                    </Label>
+                    <Input
+                      id="prazoDiasUteis"
+                      type="number"
+                      min="1"
+                      max="999"
+                      value={form.formData.prazo_dias_uteis}
+                      onChange={(e) => form.handleInputChange("prazo_dias_uteis", e.target.value)}
+                      placeholder="60"
+                      className="h-9"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
                     <Label htmlFor="dataPrevisao" className="text-xs">
                       Previsão
                     </Label>
@@ -320,18 +356,18 @@ export function ProjetoFormDialog({
                       className="h-9"
                     />
                   </div>
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="dataFinal" className="text-xs">
-                    Final Real
-                  </Label>
-                  <Input
-                    id="dataFinal"
-                    type="date"
-                    value={form.formData.data_final}
-                    onChange={(e) => form.handleInputChange("data_final", e.target.value)}
-                    className="h-9"
-                  />
+                  <div className="space-y-1.5">
+                    <Label htmlFor="dataFinal" className="text-xs">
+                      Final Real
+                    </Label>
+                    <Input
+                      id="dataFinal"
+                      type="date"
+                      value={form.formData.data_final}
+                      onChange={(e) => form.handleInputChange("data_final", e.target.value)}
+                      className="h-9"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
@@ -398,7 +434,7 @@ export function ProjetoFormDialog({
             </Button>
             <Button
               type="submit"
-              className="flex-1 bg-accent-orange hover:bg-accent-orange/90 text-white"
+              className="flex-1 bg-accent-orange hover:bg-accent-orange/90 text-ink"
               disabled={form.isSaving}
             >
               {form.isSaving ? (

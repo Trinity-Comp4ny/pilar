@@ -89,6 +89,7 @@ interface UpsertDisciplinaInput {
   justificativa_atraso?: string | null;
   horas_estimadas?: number;
   custo_hora?: number;
+  ordem_etapa?: number | null;
   responsavel_ids?: string[];
 }
 
@@ -110,6 +111,7 @@ export function useUpsertDisciplina() {
         justificativa_atraso,
         horas_estimadas = 0,
         custo_hora = 0,
+        ordem_etapa = null,
         responsavel_ids = [],
       } = input;
 
@@ -129,8 +131,9 @@ export function useUpsertDisciplina() {
             justificativa_atraso: justificativa_atraso || null,
             horas_estimadas,
             custo_hora,
+            ...(ordem_etapa !== null && ordem_etapa !== undefined ? { ordem_etapa } : {}),
             updated_at: new Date().toISOString(),
-          })
+          } as never)
           .eq("id", disciplinaId);
 
         if (error) throw error;
@@ -149,7 +152,8 @@ export function useUpsertDisciplina() {
             justificativa_atraso: justificativa_atraso || null,
             horas_estimadas,
             custo_hora,
-          })
+            ...(ordem_etapa !== null && ordem_etapa !== undefined ? { ordem_etapa } : {}),
+          } as never)
           .select("id")
           .single();
 
@@ -272,6 +276,7 @@ export function useBulkSaveDisciplinas() {
         justificativa_atraso?: string | null;
         horas_estimadas?: number;
         custo_hora?: number;
+        ordem_etapa?: number | null;
         responsavel_ids: string[];
       }>;
     }) => {
@@ -292,6 +297,9 @@ export function useBulkSaveDisciplinas() {
       for (const disc of disciplinas) {
         let discId = disc.id;
 
+        const ordemEtapaPatch =
+          disc.ordem_etapa !== null && disc.ordem_etapa !== undefined ? { ordem_etapa: disc.ordem_etapa } : {};
+
         if (discId && existingIds.has(discId)) {
           const { error } = await supabase
             .from("projeto_disciplinas")
@@ -305,8 +313,9 @@ export function useBulkSaveDisciplinas() {
               justificativa_atraso: disc.justificativa_atraso || null,
               horas_estimadas: disc.horas_estimadas || 0,
               custo_hora: disc.custo_hora || 0,
+              ...ordemEtapaPatch,
               updated_at: new Date().toISOString(),
-            })
+            } as never)
             .eq("id", discId);
           if (error) throw error;
         } else {
@@ -323,7 +332,8 @@ export function useBulkSaveDisciplinas() {
               justificativa_atraso: disc.justificativa_atraso || null,
               horas_estimadas: disc.horas_estimadas || 0,
               custo_hora: disc.custo_hora || 0,
-            })
+              ...ordemEtapaPatch,
+            } as never)
             .select("id")
             .single();
           if (error) throw error;
