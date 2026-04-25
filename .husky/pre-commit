@@ -1,1 +1,17 @@
-npx tsc --noEmit --pretty && npx lint-staged
+#!/usr/bin/env sh
+
+# 1. Scan de secrets (usa gitleaks se instalado localmente)
+if command -v gitleaks >/dev/null 2>&1; then
+  gitleaks protect --staged --no-banner || {
+    echo "❌ gitleaks detectou possível segredo commitado. Revise antes de continuar."
+    exit 1
+  }
+else
+  echo "⚠️  gitleaks não instalado — \`brew install gitleaks\` pra scan local. CI cobre."
+fi
+
+# 2. Typecheck
+npx tsc --noEmit --pretty
+
+# 3. Lint + format staged
+npx lint-staged
