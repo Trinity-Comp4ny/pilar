@@ -10,6 +10,7 @@ paths = [
   '''supabase/tests/.*\.sql$''',
   '''\.env\.example$''',
   '''supabase/migrations/.*\.sql$''',
+  '''dist/.*''',
 ]
 
 # Supabase anon key é JWT com role=anon — NÃO é secret (público por design)
@@ -17,4 +18,4 @@ paths = [
 [[rules.allowlists]]
 description = "Supabase anon JWT tem role=anon — não é sensível"
 regexes = ['''eyJ[A-Za-z0-9_-]+\.eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+''']
-paths = ['''\.env\.example$''', '''.*\.test\..*''']
+paths = ['''\.env\.example$''', '''.*\.test\..*''', '''dist/.*''', '''^\.env$''']

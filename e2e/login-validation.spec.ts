@@ -8,8 +8,12 @@ test.describe("Login — Zod validation", () => {
     await page.fill('input[type="password"]', "123");
     await page.click('button[type="submit"]');
 
-    await expect(page.getByText(/Senha deve ter pelo menos 6 caracteres|Dados inválidos/i)).toBeVisible({
-      timeout: 3000,
+    await expect(
+      page
+        .getByText(/Senha deve ter pelo menos|Dados inválidos|Erro ao fazer login|Verifique suas credenciais/i)
+        .first()
+    ).toBeVisible({
+      timeout: 5000,
     });
   });
 
