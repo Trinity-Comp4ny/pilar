@@ -18,8 +18,6 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { PortalShell } from "./PortalShell";
-import { usePageTitle } from "@/hooks/usePageTitle";
 import { getPortalToken } from "@/hooks/useClienteAuth";
 
 interface Entrega {
@@ -46,11 +44,6 @@ const STATUS_CONFIG: Record<Entrega["status"], { label: string; color: string; i
   aprovado: { label: "Aprovado", color: "bg-green-100 text-green-800", icon: CheckCircle2 },
   revisao_solicitada: { label: "Revisão solicitada", color: "bg-orange-100 text-orange-800", icon: RotateCcw },
 };
-
-export default function PortalEntregas() {
-  usePageTitle("Portal | Entregas");
-  return <PortalShell>{(data, token) => <EntregasContent projetoId={data.projeto_id} token={token} />}</PortalShell>;
-}
 
 export function EntregasContent({ projetoId, token }: { projetoId: string; token?: string }) {
   const [entregas, setEntregas] = useState<Entrega[]>([]);
