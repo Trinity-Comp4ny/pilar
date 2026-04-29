@@ -27,7 +27,8 @@ export const parseCurrencyString = (value: string): number => {
     const [int, dec = ""] = normalized.split(",");
     return parseFloat(`${int || "0"}.${dec.slice(0, 2).padEnd(2, "0")}`);
   }
-  return parseInt(normalized) || 0;
+  // Sem vírgula: dígitos = centavos (últimos 2 são decimais)
+  return (parseInt(normalized) || 0) / 100;
 };
 
 // Formata um número (reais) para exibição no campo de texto
@@ -35,25 +36,15 @@ export const formatValorToInput = (valor: number): string => {
   return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(valor);
 };
 
-// Formata entrada do usuário em tempo real.
-// Trata vírgula como separador decimal; dígitos sem vírgula = reais inteiros.
+// Formata entrada do usuário em tempo real (máscara de moeda).
+// Dígitos sem vírgula = centavos (últimos 2 são decimais).
 export const formatCurrencyInput = (value: string): string => {
   if (!value) return "R$ 0,00";
 
-  // Preserva vírgula, remove R$, espaços e pontos (milhar)
-  const stripped = value.replace(/[R$\s.]/g, "");
-  if (!stripped) return "R$ 0,00";
+  const digits = removeNonNumeric(value);
+  if (!digits) return "R$ 0,00";
 
-  if (stripped.includes(",")) {
-    const [int, dec = ""] = stripped.split(",");
-    const intNum = parseInt(int.replace(/\D/g, "") || "0");
-    const decStr = dec.replace(/\D/g, "").slice(0, 2);
-    const num = parseFloat(`${intNum}.${decStr.padEnd(2, "0")}`);
-    return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(num);
-  }
-
-  // Sem vírgula — dígitos representam reais inteiros
-  const digits = stripped.replace(/\D/g, "");
-  const num = parseInt(digits) || 0;
-  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(num);
+  const cents = parseInt(digits) || 0;
+  const reais = cents / 100;
+  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(reais);
 };
