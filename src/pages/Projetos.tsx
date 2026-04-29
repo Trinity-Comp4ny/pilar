@@ -61,7 +61,13 @@ export default function ProjetosKanban() {
   const [activeTab, setActiveTab] = useState<Tab>("kanban");
   const [filterPessoaId, setFilterPessoaId] = useState<string>("all");
   const [isFluxosOpen, setIsFluxosOpen] = useState(false);
-  const [pendingDrag, setPendingDrag] = useState<{ projetoId: string; newStatus: string } | null>(null);
+  const [pendingDrag, setPendingDrag] = useState<{
+    projetoId: string;
+    newStatus: string;
+    clienteEmail?: string;
+    clienteNome?: string;
+    projetoNome?: string;
+  } | null>(null);
 
   const { data: currentUser = null } = useQuery({
     queryKey: ["currentUser"],
@@ -268,14 +274,15 @@ export default function ProjetosKanban() {
       queryClient.invalidateQueries({ queryKey: ["projetos"] });
       const projeto = projetos.find((p) => p.id === draggableId);
 
-      if (newStatus === PROJECT_STATUS.CONCLUIDO) {
-        setPendingDrag({ projetoId: draggableId, newStatus });
-      } else {
-        await notifyProjectStatusChange(draggableId, newStatus);
+      if (newStatus !== PROJECT_STATUS.CANCELADO) {
+        setPendingDrag({
+          projetoId: draggableId,
+          newStatus,
+          clienteEmail: projeto?.cliente_email ?? undefined,
+          clienteNome: projeto?.cliente_nome ?? undefined,
+          projetoNome: projeto?.nome ?? undefined,
+        });
       }
-
-      if (projeto?.cliente_email && newStatus === "Concluído")
-        await sendClientEmail(projeto.cliente_email, projeto.nome);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Erro desconhecido";
       toast.error("Erro ao atualizar status", {
@@ -522,10 +529,23 @@ export default function ProjetosKanban() {
       <AlertDialog open={!!pendingDrag} onOpenChange={(open) => !open && setPendingDrag(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Notificar equipe por e-mail?</AlertDialogTitle>
+            <AlertDialogTitle>Notificar sobre a mudança de status?</AlertDialogTitle>
             <AlertDialogDescription>
-              Mover o projeto para <strong>Concluído</strong> enviará um e-mail para todos os membros alocados.
-              Confirma?
+              Mover o projeto para{" "}
+              <strong>
+                {pendingDrag
+                  ? (statusConfig[pendingDrag.newStatus as keyof typeof statusConfig]?.label ?? pendingDrag.newStatus)
+                  : ""}
+              </strong>{" "}
+              enviará e-mails para:
+              <ul className="mt-2 list-disc pl-4 text-sm">
+                <li>Todos os membros alocados no projeto</li>
+                {pendingDrag?.newStatus === PROJECT_STATUS.CONCLUIDO && pendingDrag.clienteEmail && (
+                  <li>
+                    Cliente{pendingDrag.clienteNome ? ` ${pendingDrag.clienteNome}` : ""} ({pendingDrag.clienteEmail})
+                  </li>
+                )}
+              </ul>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -535,6 +555,13 @@ export default function ProjetosKanban() {
               onClick={async () => {
                 if (pendingDrag) {
                   await notifyProjectStatusChange(pendingDrag.projetoId, pendingDrag.newStatus);
+                  if (
+                    pendingDrag.newStatus === PROJECT_STATUS.CONCLUIDO &&
+                    pendingDrag.clienteEmail &&
+                    pendingDrag.projetoNome
+                  ) {
+                    await sendClientEmail(pendingDrag.clienteEmail, pendingDrag.projetoNome);
+                  }
                   setPendingDrag(null);
                 }
               }}
