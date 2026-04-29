@@ -118,7 +118,7 @@ export default function ProfileSetup() {
         .eq("id", user.id)
         .single();
 
-      const isAdmin = updatedProfile?.role === "admin";
+      const isAdmin = updatedProfile?.role === "admin" || updatedProfile?.role === "ultra_admin";
       const needsCompanySetup = isAdmin && !updatedProfile?.empresas?.onboarding_completed;
 
       navigate(needsCompanySetup ? "/company-setup" : "/dashboard");
