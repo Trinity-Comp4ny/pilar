@@ -33,6 +33,17 @@ export default function Login() {
     e.preventDefault();
     setIsLoading(true);
 
+    // guard_login_attempt não está nos tipos gerados ainda — usar cast seguro
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: loginAllowed } = await (supabase.rpc as any)("guard_login_attempt", { p_email: email });
+    if (loginAllowed === false) {
+      toast.error("Muitas tentativas", {
+        description: "Aguarde 15 minutos antes de tentar novamente.",
+      });
+      setIsLoading(false);
+      return;
+    }
+
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,

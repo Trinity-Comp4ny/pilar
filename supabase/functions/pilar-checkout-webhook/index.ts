@@ -270,7 +270,9 @@ serve(async (req) => {
     if (logId) {
       await admin.from("pilar_checkout_webhook_logs").update({ processed: false, error: msg }).eq("id", logId);
     }
-    // Retorna 200 mesmo em erro interno — Asaas fica retentando senão
-    return new Response("OK", { status: 200 });
+    return new Response(JSON.stringify({ error: msg }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 });
