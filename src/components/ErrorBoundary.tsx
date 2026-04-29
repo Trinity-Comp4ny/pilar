@@ -51,7 +51,7 @@ export class ErrorBoundary extends Component<Props, State> {
     const message = error?.message ?? "Erro desconhecido";
 
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+      <div className="min-h-[calc(100vh-8rem)] flex items-center justify-center bg-gray-50 px-4">
         <div className="w-full max-w-lg">
           <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm">
             <div className="flex items-center gap-3 mb-4">
