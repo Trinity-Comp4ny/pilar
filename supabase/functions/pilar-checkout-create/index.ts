@@ -102,12 +102,53 @@ serve(async (req) => {
     }
   }
 
+  // --- Rate limit por IP ---
+  const clientIp =
+    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? req.headers.get("x-real-ip") ?? "unknown";
+  try {
+    const { data: rlAllowed } = await admin.rpc("check_rate_limit", {
+      p_action: "checkout_create",
+      p_key: clientIp,
+      p_max_attempts: 5,
+      p_window_seconds: 3600,
+    });
+    if (rlAllowed === false) {
+      return jsonResponse({ error: "Muitas tentativas. Aguarde antes de tentar novamente." }, 429, req);
+    }
+  } catch {
+    // falha no rate limit não bloqueia — log e segue
+    console.warn("[pilar-checkout-create] rate limit check failed");
+  }
+
   // --- Email já existe? ---
   try {
     const { data: existing } = await admin.from("profiles").select("id").eq("email", email).maybeSingle();
 
     if (existing) {
       return jsonResponse({ error: "Já existe uma conta com esse email. Faça login em /login." }, 409, req);
+    }
+  } catch {
+    // segue
+  }
+
+  // --- Signup pendente duplicado? ---
+  try {
+    const { data: pendingSignup } = await admin
+      .from("pilar_pending_signups")
+      .select("id, payment_status")
+      .eq("email", email)
+      .eq("payment_status", "pending")
+      .maybeSingle();
+
+    if (pendingSignup) {
+      return jsonResponse(
+        {
+          error:
+            "Já existe um checkout em andamento com esse email. Verifique sua caixa de entrada ou aguarde alguns minutos.",
+        },
+        409,
+        req
+      );
     }
   } catch {
     // segue
