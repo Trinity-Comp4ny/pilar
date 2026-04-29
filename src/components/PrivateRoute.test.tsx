@@ -43,6 +43,8 @@ const baseAuth = {
   user: null,
   signOut: vi.fn(),
   refreshProfile: vi.fn(),
+  mfaChallengeRequired: false,
+  hasVerifiedMfaFactor: true,
 };
 
 describe("PrivateRoute", () => {
