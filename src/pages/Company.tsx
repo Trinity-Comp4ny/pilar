@@ -27,7 +27,7 @@ export default function Company() {
   const [companyId, setCompanyId] = useState<string | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [currentRole, setCurrentRole] = useState<string>("user");
-  const isAdmin = currentRole === "admin";
+  const isAdmin = currentRole === "admin" || currentRole === "ultra_admin";
   const [isLogoPreviewOpen, setIsLogoPreviewOpen] = useState(false);
 
   const [companyData, setCompanyData] = useState<CompanyData>({

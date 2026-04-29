@@ -48,7 +48,8 @@ serve(async (req) => {
 
   const { data: profile } = await admin.from("profiles").select("empresa_id, role").eq("id", user.id).maybeSingle();
 
-  if (!profile?.empresa_id || profile.role !== "admin") {
+  const isAdmin = profile?.role === "admin" || profile?.role === "ultra_admin";
+  if (!profile?.empresa_id || !isAdmin) {
     return jsonResponse({ error: "Apenas admin da empresa pode gerenciar a assinatura" }, 403, req);
   }
 
