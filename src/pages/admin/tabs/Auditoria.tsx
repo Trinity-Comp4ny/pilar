@@ -105,7 +105,6 @@ const SENSITIVE_TABLES = [
   "profiles",
   "empresas",
   "cliente_portal_accounts",
-  "portal_tokens",
   "convites",
 ];
 

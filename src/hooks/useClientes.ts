@@ -163,7 +163,10 @@ export const useClientes = () => {
 
   const revokePortalMutation = useMutation({
     mutationFn: async (clienteId: string) => {
-      const { error } = await supabase.from("portal_tokens").update({ ativo: false }).eq("cliente_id", clienteId);
+      const { error } = await supabase
+        .from("cliente_portal_accounts")
+        .update({ ativo: false })
+        .eq("cliente_id", clienteId);
       if (error) throw error;
     },
     onSuccess: () => {
