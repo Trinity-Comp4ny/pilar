@@ -140,7 +140,10 @@ export function CategoryManager({ title, description, type, onCategoryChange }: 
 
     setIsDeleting(true);
     try {
-      const { error } = await supabase.from("categorias_financeiras").delete().eq("id", deleteCategory.id);
+      const { error } = await supabase
+        .from("categorias_financeiras")
+        .update({ deleted_at: new Date().toISOString() } as never)
+        .eq("id", deleteCategory.id);
 
       if (error) throw error;
 
