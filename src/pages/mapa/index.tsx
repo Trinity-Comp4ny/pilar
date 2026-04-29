@@ -6,12 +6,13 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import {
   Loader2,
   MapPin,
   ExternalLink,
   Search,
-  Map,
+  Map as MapIcon,
   Satellite,
   Sun,
   Moon,
@@ -19,12 +20,16 @@ import {
   Crosshair,
   Maximize,
   Minimize,
+  AlertCircle,
+  Building2,
+  Calendar,
+  DollarSign,
 } from "lucide-react";
 
 const TILE_LAYERS = {
   rua: {
     label: "Rua",
-    icon: Map,
+    icon: MapIcon,
     url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
   },
@@ -52,7 +57,7 @@ const TILE_LAYERS = {
 } as const;
 
 type TileLayerKey = keyof typeof TILE_LAYERS;
-import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Tooltip, useMap } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-cluster";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -78,14 +83,29 @@ const STATUS_MARKER_COLORS: Record<string, string> = {
   Cancelado: "hsl(var(--status-cancelled))",
 };
 
-function createColoredIcon(color: string) {
-  return L.divIcon({
-    className: "custom-marker",
-    html: `<div style="background:${color};width:24px;height:24px;border-radius:50%;border:3px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.3);"></div>`,
-    iconSize: [24, 24],
-    iconAnchor: [12, 12],
-    popupAnchor: [0, -12],
-  });
+const STATUS_ICONS: Record<string, L.DivIcon> = Object.fromEntries(
+  Object.entries(STATUS_MARKER_COLORS).map(([status, color]) => [
+    status,
+    L.divIcon({
+      className: "custom-marker",
+      html: `<div style="background:${color};width:24px;height:24px;border-radius:50%;border:3px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.3);"></div>`,
+      iconSize: [24, 24],
+      iconAnchor: [12, 12],
+      popupAnchor: [0, -12],
+    }),
+  ])
+);
+
+const FALLBACK_ICON = L.divIcon({
+  className: "custom-marker",
+  html: `<div style="background:hsl(var(--status-unknown));width:24px;height:24px;border-radius:50%;border:3px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.3);"></div>`,
+  iconSize: [24, 24],
+  iconAnchor: [12, 12],
+  popupAnchor: [0, -12],
+});
+
+function getStatusIcon(status: string): L.DivIcon {
+  return STATUS_ICONS[status] ?? FALLBACK_ICON;
 }
 
 function createClusterIcon(cluster: { getChildCount: () => number }) {
@@ -108,9 +128,13 @@ interface ProjetoMapa {
   longitude: number;
   valor_contrato: number | null;
   cliente_nome: string | null;
+  cliente_id: string | null;
+  data_inicio: string | null;
+  data_previsao: string | null;
+  area_m2: number | null;
+  prioridade: string | null;
 }
 
-/* ── Expõe instância do mapa via ref externo ── */
 function MapController({ mapRef }: { mapRef: React.MutableRefObject<L.Map | null> }) {
   const map = useMap();
   useEffect(() => {
@@ -119,50 +143,53 @@ function MapController({ mapRef }: { mapRef: React.MutableRefObject<L.Map | null
   return null;
 }
 
-/* ── Auto-fit: ajusta o mapa para enquadrar todos os marcadores ── */
 function FitBounds({ projetos }: { projetos: ProjetoMapa[] }) {
   const map = useMap();
-
   useEffect(() => {
     if (projetos.length === 0) return;
     const bounds = L.latLngBounds(projetos.map((p) => [p.latitude, p.longitude]));
     map.fitBounds(bounds, { padding: [40, 40], maxZoom: 14 });
   }, [map, projetos]);
-
   return null;
 }
 
-/* ── FlyTo: voa até um projeto específico e abre o popup ── */
 function FlyToProject({
   projeto,
-  markerRefs,
+  onMarkerClick,
 }: {
   projeto: ProjetoMapa | null;
-  markerRefs: React.MutableRefObject<Record<string, L.Marker>>;
+  onMarkerClick: (p: ProjetoMapa) => void;
 }) {
   const map = useMap();
-
   useEffect(() => {
     if (!projeto) return;
     map.flyTo([projeto.latitude, projeto.longitude], 16, { duration: 1.2 });
     const timer = setTimeout(() => {
-      markerRefs.current[projeto.id]?.openPopup();
+      onMarkerClick(projeto);
     }, 1300);
     return () => clearTimeout(timer);
-  }, [map, projeto, markerRefs]);
-
+  }, [map, projeto, onMarkerClick]);
   return null;
 }
 
+function formatCurrency(v: number | null) {
+  return v ? new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v) : null;
+}
+
+function formatDate(d: string | null) {
+  if (!d) return null;
+  return new Date(d).toLocaleDateString("pt-BR");
+}
+
 export default function MapaObras() {
-  usePageTitle("Mapa de Obras");
+  usePageTitle("Mapa");
   const navigate = useNavigate();
   const [statusFilter, setStatusFilter] = useState<string>("todos");
   const [searchOpen, setSearchOpen] = useState(false);
   const [selectedProjeto, setSelectedProjeto] = useState<ProjetoMapa | null>(null);
+  const [sheetProjeto, setSheetProjeto] = useState<ProjetoMapa | null>(null);
   const [tileKey, setTileKey] = useState<TileLayerKey>("rua");
   const [tileMenuOpen, setTileMenuOpen] = useState(false);
-  const markerRefs = useRef<Record<string, L.Marker>>({});
   const mapRef = useRef<L.Map | null>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -181,34 +208,50 @@ export default function MapaObras() {
     }
   }, []);
 
-  const { data: projetos = [], isLoading } = useQuery({
+  const { data: todosOsProjetos = [], isLoading } = useQuery({
     queryKey: ["projetos-mapa"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("projetos")
-        .select("id, nome, codigo_projeto, status, localizacao, latitude, longitude, valor_contrato, clientes(nome)")
-        .is("deleted_at", null)
-        .not("latitude", "is", null)
-        .not("longitude", "is", null);
+        .select(
+          "id, nome, codigo_projeto, status, localizacao, latitude, longitude, valor_contrato, area_m2, prioridade, data_inicio, data_previsao, cliente_id, clientes(nome)"
+        )
+        .is("deleted_at", null);
 
       if (error) throw error;
 
-      return (data || [])
-        .filter((p) => typeof p.latitude === "number" && typeof p.longitude === "number")
-        .map((p) => ({
-          id: p.id,
-          nome: p.nome,
-          codigo_projeto: p.codigo_projeto ?? "—",
-          status: p.status as ProjectStatus,
-          localizacao: p.localizacao,
-          latitude: p.latitude as number,
-          longitude: p.longitude as number,
-          valor_contrato: p.valor_contrato,
-          cliente_nome: p.clientes?.nome ?? null,
-        })) as ProjetoMapa[];
+      return (data || []).map((p) => ({
+        id: p.id,
+        nome: p.nome,
+        codigo_projeto: p.codigo_projeto ?? "—",
+        status: p.status as ProjectStatus,
+        localizacao: p.localizacao,
+        latitude: p.latitude,
+        longitude: p.longitude,
+        valor_contrato: p.valor_contrato,
+        cliente_nome: p.clientes?.nome ?? null,
+        cliente_id: p.cliente_id,
+        data_inicio: p.data_inicio,
+        data_previsao: p.data_previsao,
+        area_m2: p.area_m2,
+        prioridade: p.prioridade,
+      }));
     },
     staleTime: 1000 * 60 * 5,
   });
+
+  const { projetos, semCoordenadas } = useMemo(() => {
+    const com: ProjetoMapa[] = [];
+    const sem: typeof todosOsProjetos = [];
+    for (const p of todosOsProjetos) {
+      if (typeof p.latitude === "number" && typeof p.longitude === "number") {
+        com.push(p as ProjetoMapa);
+      } else {
+        sem.push(p);
+      }
+    }
+    return { projetos: com, semCoordenadas: sem };
+  }, [todosOsProjetos]);
 
   const filtrados = useMemo(() => {
     if (statusFilter === "todos") return projetos;
@@ -223,8 +266,16 @@ export default function MapaObras() {
     return counts;
   }, [filtrados]);
 
-  const formatCurrency = (v: number | null) =>
-    v ? new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v) : "—";
+  const clientesAgrupados = useMemo(() => {
+    type ClienteEntry = { id: string | null; nome: string; projetos: ProjetoMapa[] };
+    const acc: Record<string, ClienteEntry> = {};
+    for (const p of projetos) {
+      const key = p.cliente_id ?? "__sem_cliente__";
+      if (!acc[key]) acc[key] = { id: p.cliente_id, nome: p.cliente_nome ?? "Sem cliente", projetos: [] };
+      acc[key].projetos.push(p);
+    }
+    return Object.values(acc).sort((a, b) => a.nome.localeCompare(b.nome));
+  }, [projetos]);
 
   const handleLegendClick = useCallback((status: string) => {
     setStatusFilter((prev) => (prev === status ? "todos" : status));
@@ -247,6 +298,22 @@ export default function MapaObras() {
     [projetos]
   );
 
+  const handleClienteSelect = useCallback(
+    (clienteId: string | null) => {
+      const key = clienteId ?? "__sem_cliente__";
+      const clienteProjetos = clientesAgrupados.find((c) => (c.id ?? "__sem_cliente__") === key)?.projetos ?? [];
+      setSearchOpen(false);
+      if (!mapRef.current || clienteProjetos.length === 0) return;
+      const bounds = L.latLngBounds(clienteProjetos.map((p) => [p.latitude, p.longitude]));
+      mapRef.current.flyToBounds(bounds, { padding: [60, 60], maxZoom: 14, duration: 1 });
+    },
+    [clientesAgrupados]
+  );
+
+  const handleMarkerClick = useCallback((p: ProjetoMapa) => {
+    setSheetProjeto(p);
+  }, []);
+
   return (
     <PageLayout
       header={
@@ -257,14 +324,19 @@ export default function MapaObras() {
                 <Button variant="outline" size="sm" className="gap-1.5">
                   <Search className="h-3.5 w-3.5" />
                   Localizar
+                  {filtrados.length > 0 && (
+                    <span className="ml-0.5 rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground leading-none">
+                      {filtrados.length}
+                    </span>
+                  )}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-[280px] p-0" align="end">
+              <PopoverContent className="w-[300px] p-0" align="end">
                 <Command>
-                  <CommandInput placeholder="Buscar projeto..." />
+                  <CommandInput placeholder="Buscar projeto ou cliente..." />
                   <CommandList>
-                    <CommandEmpty>Nenhum projeto encontrado.</CommandEmpty>
-                    <CommandGroup>
+                    <CommandEmpty>Nenhum resultado encontrado.</CommandEmpty>
+                    <CommandGroup heading="Projetos">
                       {projetos.map((p) => (
                         <CommandItem
                           key={p.id}
@@ -278,6 +350,22 @@ export default function MapaObras() {
                           />
                           <span className="truncate">
                             {p.codigo_projeto} - {p.nome}
+                          </span>
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                    <CommandGroup heading="Clientes">
+                      {clientesAgrupados.map((c) => (
+                        <CommandItem
+                          key={c.id ?? "__sem_cliente__"}
+                          value={`cliente ${c.nome}`}
+                          onSelect={() => handleClienteSelect(c.id)}
+                          className="gap-2"
+                        >
+                          <Building2 className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                          <span className="truncate">{c.nome}</span>
+                          <span className="ml-auto text-[10px] text-muted-foreground shrink-0">
+                            {c.projetos.length}p
                           </span>
                         </CommandItem>
                       ))}
@@ -308,7 +396,7 @@ export default function MapaObras() {
         <div className="flex items-center justify-center py-12">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
-      ) : filtrados.length === 0 ? (
+      ) : projetos.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">
           <MapPin className="h-10 w-10 mx-auto mb-3 opacity-40" />
           <p className="text-sm">Nenhum projeto com localização geográfica encontrado.</p>
@@ -316,6 +404,17 @@ export default function MapaObras() {
         </div>
       ) : (
         <>
+          {semCoordenadas.length > 0 && (
+            <div className="flex items-center gap-2 mb-3 px-3 py-2 rounded-md bg-muted/50 border text-xs text-muted-foreground">
+              <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+              <span>
+                <span className="font-medium text-foreground">{semCoordenadas.length}</span>{" "}
+                {semCoordenadas.length === 1 ? "projeto não aparece" : "projetos não aparecem"} no mapa por falta de
+                coordenadas geográficas.
+              </span>
+            </div>
+          )}
+
           {/* Legenda clicável com contagem por status */}
           <div className="flex items-center gap-4 mb-3 flex-wrap">
             {Object.entries(STATUS_MARKER_COLORS).map(([status, color]) => {
@@ -354,7 +453,7 @@ export default function MapaObras() {
             className="rounded-lg overflow-hidden border relative"
             style={{ height: isFullscreen ? "100dvh" : "calc(100vh - 260px)" }}
           >
-            {/* Seletor de camada — minimizado, expande ao clicar */}
+            {/* Seletor de camada */}
             <div className="absolute bottom-8 left-3 z-[1000]">
               {tileMenuOpen && (
                 <div className="mb-1 flex flex-col gap-1 bg-background/95 backdrop-blur-sm rounded-lg border shadow-md p-1">
@@ -398,7 +497,7 @@ export default function MapaObras() {
               </button>
             </div>
 
-            {/* Botões de controle — canto inferior direito */}
+            {/* Botões de controle */}
             <div className="absolute bottom-8 right-3 z-[1000] flex flex-col gap-1">
               <button
                 type="button"
@@ -418,6 +517,16 @@ export default function MapaObras() {
               </button>
             </div>
 
+            {filtrados.length === 0 && (
+              <div className="absolute inset-0 z-[999] flex items-center justify-center pointer-events-none">
+                <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-5 py-4 text-center shadow-md">
+                  <MapPin className="h-8 w-8 mx-auto mb-2 opacity-40 text-muted-foreground" />
+                  <p className="text-sm font-medium">Nenhum projeto com este status</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">Altere o filtro para ver projetos no mapa.</p>
+                </div>
+              </div>
+            )}
+
             <MapContainer
               center={[-15.78, -47.93]}
               zoom={4}
@@ -427,7 +536,7 @@ export default function MapaObras() {
               <MapController mapRef={mapRef} />
               <TileLayer key={tileKey} attribution={TILE_LAYERS[tileKey].attribution} url={TILE_LAYERS[tileKey].url} />
               <FitBounds projetos={filtrados} />
-              <FlyToProject projeto={selectedProjeto} markerRefs={markerRefs} />
+              <FlyToProject projeto={selectedProjeto} onMarkerClick={handleMarkerClick} />
               <MarkerClusterGroup
                 chunkedLoading
                 iconCreateFunction={createClusterIcon}
@@ -439,35 +548,14 @@ export default function MapaObras() {
                   <Marker
                     key={projeto.id}
                     position={[projeto.latitude, projeto.longitude]}
-                    icon={createColoredIcon(STATUS_MARKER_COLORS[projeto.status] || "hsl(var(--status-unknown))")}
-                    ref={(ref) => {
-                      if (ref) markerRefs.current[projeto.id] = ref;
-                    }}
+                    icon={getStatusIcon(projeto.status)}
+                    eventHandlers={{ click: () => handleMarkerClick(projeto) }}
                   >
-                    <Popup>
-                      <div className="min-w-[200px]">
-                        <p className="font-semibold text-sm">
-                          {projeto.codigo_projeto} - {projeto.nome}
-                        </p>
-                        {projeto.cliente_nome && <p className="text-xs text-gray-600">{projeto.cliente_nome}</p>}
-                        <div className="flex items-center gap-2 mt-1">
-                          <Badge className={`text-[10px] ${PROJECT_STATUS_CONFIG[projeto.status]?.color || ""}`}>
-                            {projeto.status}
-                          </Badge>
-                          <span className="text-xs">{formatCurrency(projeto.valor_contrato)}</span>
-                        </div>
-                        {projeto.localizacao && <p className="text-[11px] text-gray-500 mt-1">{projeto.localizacao}</p>}
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="w-full mt-2 h-7 text-xs gap-1"
-                          onClick={() => navigate(`/projetos/${projeto.id}`)}
-                        >
-                          <ExternalLink className="h-3 w-3" />
-                          Abrir Projeto
-                        </Button>
-                      </div>
-                    </Popup>
+                    <Tooltip direction="top" offset={[0, -14]} opacity={0.95}>
+                      <span className="text-xs font-medium">
+                        {projeto.codigo_projeto} — {projeto.nome}
+                      </span>
+                    </Tooltip>
                   </Marker>
                 ))}
               </MarkerClusterGroup>
@@ -475,6 +563,110 @@ export default function MapaObras() {
           </div>
         </>
       )}
+
+      {/* Painel lateral de detalhes do projeto */}
+      <Sheet open={!!sheetProjeto} onOpenChange={(open) => !open && setSheetProjeto(null)}>
+        <SheetContent side="right" className="w-[340px] sm:w-[400px] overflow-y-auto">
+          {sheetProjeto && (
+            <>
+              <SheetHeader className="pb-4">
+                <div className="flex items-start gap-3">
+                  <div
+                    className="w-3.5 h-3.5 rounded-full mt-1 shrink-0"
+                    style={{
+                      background: STATUS_MARKER_COLORS[sheetProjeto.status] || "hsl(var(--status-unknown))",
+                    }}
+                  />
+                  <div>
+                    <p className="text-xs text-muted-foreground font-mono">{sheetProjeto.codigo_projeto}</p>
+                    <SheetTitle className="text-base leading-snug mt-0.5">{sheetProjeto.nome}</SheetTitle>
+                  </div>
+                </div>
+              </SheetHeader>
+
+              <div className="space-y-4">
+                <div className="flex flex-wrap gap-2">
+                  <Badge className={PROJECT_STATUS_CONFIG[sheetProjeto.status]?.color || ""}>
+                    {sheetProjeto.status}
+                  </Badge>
+                  {sheetProjeto.prioridade && (
+                    <Badge variant="outline" className="text-xs">
+                      {sheetProjeto.prioridade}
+                    </Badge>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 gap-3">
+                  {sheetProjeto.cliente_nome && (
+                    <div className="flex items-start gap-2.5">
+                      <Building2 className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                      <div>
+                        <p className="text-[11px] text-muted-foreground uppercase tracking-wide">Cliente</p>
+                        <p className="text-sm">{sheetProjeto.cliente_nome}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {sheetProjeto.valor_contrato && (
+                    <div className="flex items-start gap-2.5">
+                      <DollarSign className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                      <div>
+                        <p className="text-[11px] text-muted-foreground uppercase tracking-wide">Valor do contrato</p>
+                        <p className="text-sm font-medium">{formatCurrency(sheetProjeto.valor_contrato)}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {(sheetProjeto.data_inicio || sheetProjeto.data_previsao) && (
+                    <div className="flex items-start gap-2.5">
+                      <Calendar className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                      <div>
+                        <p className="text-[11px] text-muted-foreground uppercase tracking-wide">Período</p>
+                        <p className="text-sm">
+                          {formatDate(sheetProjeto.data_inicio) ?? "—"}
+                          {" → "}
+                          {formatDate(sheetProjeto.data_previsao) ?? "—"}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {sheetProjeto.area_m2 && (
+                    <div className="flex items-start gap-2.5">
+                      <MapPin className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                      <div>
+                        <p className="text-[11px] text-muted-foreground uppercase tracking-wide">Área</p>
+                        <p className="text-sm">{sheetProjeto.area_m2.toLocaleString("pt-BR")} m²</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {sheetProjeto.localizacao && (
+                    <div className="flex items-start gap-2.5">
+                      <MapPin className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                      <div>
+                        <p className="text-[11px] text-muted-foreground uppercase tracking-wide">Endereço</p>
+                        <p className="text-sm text-muted-foreground">{sheetProjeto.localizacao}</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <Button
+                  className="w-full gap-2"
+                  onClick={() => {
+                    navigate(`/projetos/${sheetProjeto.id}`);
+                    setSheetProjeto(null);
+                  }}
+                >
+                  <ExternalLink className="h-4 w-4" />
+                  Abrir Projeto
+                </Button>
+              </div>
+            </>
+          )}
+        </SheetContent>
+      </Sheet>
     </PageLayout>
   );
 }
