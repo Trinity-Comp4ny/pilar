@@ -36,7 +36,7 @@ export default function Billing() {
   usePageTitle("Assinatura");
   const navigate = useNavigate();
   const { data: role } = useUserRole();
-  const isAdmin = role === "admin";
+  const isAdmin = role === "admin" || role === "ultra_admin";
 
   const { data: subscription, isLoading, error } = useMySubscription();
   const [changeOpen, setChangeOpen] = useState(false);
