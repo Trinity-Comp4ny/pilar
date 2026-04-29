@@ -1,10 +1,93 @@
-import { Navigate, useLocation, Outlet } from "react-router-dom";
+import { Navigate, useLocation, Outlet, Link } from "react-router-dom";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import Layout from "./Layout";
+import { AlertTriangle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+
+type SubStatus = "active" | "trialing" | "overdue" | "canceled" | "expired" | null;
+
+const SUB_CACHE_KEY = "pilar-sub-status";
+const SUB_CACHE_TTL = 5 * 60 * 1000; // 5 min
+
+function readCachedStatus(): SubStatus | undefined {
+  try {
+    const raw = sessionStorage.getItem(SUB_CACHE_KEY);
+    if (!raw) return undefined;
+    const { status, ts } = JSON.parse(raw) as { status: SubStatus; ts: number };
+    if (Date.now() - ts > SUB_CACHE_TTL) return undefined;
+    return status;
+  } catch {
+    return undefined;
+  }
+}
+
+function writeCachedStatus(status: SubStatus) {
+  try {
+    sessionStorage.setItem(SUB_CACHE_KEY, JSON.stringify({ status, ts: Date.now() }));
+  } catch {
+    // ignore
+  }
+}
+
+function SubscriptionSuspendedScreen() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-8">
+      <div className="max-w-md text-center space-y-6">
+        <div className="flex justify-center">
+          <div className="p-4 rounded-full bg-amber-100">
+            <AlertTriangle className="h-10 w-10 text-amber-600" />
+          </div>
+        </div>
+        <div className="space-y-2">
+          <h1 className="text-2xl font-semibold text-slate-900">Acesso suspenso</h1>
+          <p className="text-slate-500 text-sm leading-relaxed">
+            Sua assinatura está suspensa ou cancelada. Regularize o pagamento para retomar o acesso à plataforma.
+          </p>
+        </div>
+        <div className="flex flex-col gap-3">
+          <Button asChild className="bg-accent-orange hover:bg-accent-orange/90 text-ink">
+            <Link to="/billing">Ver assinatura</Link>
+          </Button>
+          <Button variant="ghost" asChild className="text-slate-500">
+            <Link to="/" onClick={() => supabase.auth.signOut()}>
+              Sair da conta
+            </Link>
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export function PrivateRoute() {
   const { isAuthenticated, profile, loading, mfaChallengeRequired, hasVerifiedMfaFactor } = useAuth();
   const location = useLocation();
+  const [subStatus, setSubStatus] = useState<SubStatus | undefined>(readCachedStatus());
+
+  useEffect(() => {
+    if (!isAuthenticated || subStatus !== undefined) return;
+
+    const check = async () => {
+      try {
+        const { data } = await (supabase
+          .from("pilar_subscriptions" as never)
+          .select("status")
+          .maybeSingle() as unknown as Promise<{
+          data: { status: SubStatus } | null;
+          error: unknown;
+        }>);
+        const s = data?.status ?? null;
+        setSubStatus(s);
+        writeCachedStatus(s);
+      } catch {
+        setSubStatus(null);
+        writeCachedStatus(null);
+      }
+    };
+    check();
+  }, [isAuthenticated, subStatus]);
 
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center">Carregando...</div>;
@@ -25,7 +108,7 @@ export function PrivateRoute() {
     const isMfaSetup = location.pathname === "/mfa/setup";
     const profileDone = profile.onboarding_completed === true;
     const companyDone = profile.empresas?.onboarding_completed === true;
-    const isAdmin = profile.role === "admin";
+    const isAdmin = profile.role === "admin" || profile.role === "ultra_admin";
 
     if (isMfaChallenge || isMfaSetup) {
       return <Outlet />;
@@ -56,6 +139,12 @@ export function PrivateRoute() {
     location.pathname === "/mfa/setup"
   ) {
     return <Outlet />;
+  }
+
+  const suspended = subStatus === "canceled" || subStatus === "expired";
+  const isBillingPath = location.pathname.startsWith("/billing");
+  if (suspended && !isBillingPath) {
+    return <SubscriptionSuspendedScreen />;
   }
 
   return <Layout />;
