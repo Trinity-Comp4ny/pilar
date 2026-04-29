@@ -25,6 +25,7 @@ type RawUser = {
   role: string | null;
   features?: unknown;
   contato?: string | null;
+  isPending?: boolean;
 };
 
 const VALID_TABS = ["usuarios", "features", "empresa", "parametros", "automacoes", "auditoria", "plano"] as const;
@@ -138,22 +139,40 @@ export default function Admin() {
             }
           }
 
-          const { data: companyUsers } = await supabase
-            .from("profiles")
-            .select("id, nome, email, role, contato")
-            .eq("empresa_id", profile.empresa_id);
-          if (companyUsers) {
-            setUsers(
-              (companyUsers as RawUser[]).map((u) => ({
-                id: u.id,
-                nome: u.nome,
-                email: u.email,
-                role: u.role,
-                features: (u as RawUser).features,
-                contato: u.contato,
-              }))
-            );
-          }
+          const [{ data: companyUsers }, { data: pendingConvites }] = await Promise.all([
+            supabase
+              .from("profiles")
+              .select("id, nome, email, role, features, contato")
+              .eq("empresa_id", profile.empresa_id),
+            supabase
+              .from("convites")
+              .select("id, nome, email, cargo, features")
+              .eq("empresa_id", profile.empresa_id)
+              .is("usado_em", null)
+              .gt("expira_em", new Date().toISOString()),
+          ]);
+
+          const profileList: RawUser[] = (companyUsers ?? []).map((u) => ({
+            id: u.id,
+            nome: u.nome,
+            email: u.email,
+            role: u.role,
+            features: u.features,
+            contato: (u as { contato?: string | null }).contato,
+          }));
+
+          const pendingList: RawUser[] = (pendingConvites ?? []).map((c) => ({
+            id: `pending-${c.id}`,
+            nome: c.nome ?? c.email,
+            email: c.email,
+            role: c.cargo,
+            features: c.features,
+            isPending: true,
+          }));
+
+          // Remove pending se o email já tem perfil (convite aceito mas expirado não removido)
+          const profileEmails = new Set(profileList.map((u) => u.email.toLowerCase()));
+          setUsers([...profileList, ...pendingList.filter((p) => !profileEmails.has(p.email.toLowerCase()))]);
         }
       } catch {
         toast.error("Erro ao carregar admin");

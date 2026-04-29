@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,6 +23,7 @@ import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { usePageTitle } from "@/hooks/usePageTitle";
+import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import {
   useLeads,
   useCreateLead,
@@ -68,6 +70,8 @@ export default function Leads() {
   const [isMotivoPerdasOpen, setIsMotivoPerdasOpen] = useState(false);
   const [motivoPerda, setMotivoPerda] = useState("");
   const [isAutoConvertOpen, setIsAutoConvertOpen] = useState(false);
+  const queryClient = useQueryClient();
+  const { canEdit } = useFeatureAccess("leads");
   const navigate = useNavigate();
 
   const handleCardClick = (lead: Lead) => {
@@ -226,12 +230,14 @@ export default function Leads() {
           description="Gerencie seus leads"
           children={
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogTrigger asChild>
-                <Button className="rounded-full bg-accent-orange hover:bg-accent-orange/90 text-ink transition-colors px-5 py-2.5 text-sm">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Novo Lead
-                </Button>
-              </DialogTrigger>
+              {canEdit && (
+                <DialogTrigger asChild>
+                  <Button className="rounded-full bg-accent-orange hover:bg-accent-orange/90 text-ink transition-colors px-5 py-2.5 text-sm">
+                    <Plus className="mr-2 h-4 w-4" />
+                    Novo Lead
+                  </Button>
+                </DialogTrigger>
+              )}
               <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto p-0">
                 <div className="px-6 pt-6 pb-4">
                   <DialogHeader>
@@ -524,9 +530,11 @@ export default function Leads() {
                     <Button variant="outline" className="flex-1" onClick={() => setIsDetailOpen(false)}>
                       Fechar
                     </Button>
-                    <Button variant="destructive" className="flex-1" onClick={() => handleDelete(selectedLead.id)}>
-                      Excluir
-                    </Button>
+                    {canEdit && (
+                      <Button variant="destructive" className="flex-1" onClick={() => handleDelete(selectedLead.id)}>
+                        Excluir
+                      </Button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -606,7 +614,8 @@ export default function Leads() {
       <Dialog
         open={isAutoConvertOpen}
         onOpenChange={(open) => {
-          if (!open) {
+          if (!open && pendingDrop) {
+            queryClient.invalidateQueries({ queryKey: ["leads"] });
             setPendingDrop(null);
           }
           setIsAutoConvertOpen(open);

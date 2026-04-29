@@ -17,7 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { PROJECT_STATUS, PROJECT_STATUS_CONFIG, type ProjectStatus } from "@/constants";
 import { usePageTitle } from "@/hooks/usePageTitle";
 
-delete (L.Icon.Default.prototype as Record<string, unknown>)._getIconUrl;
+delete (L.Icon.Default.prototype as unknown as Record<string, unknown>)._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png",
   iconUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png",
@@ -43,7 +43,7 @@ function createColoredIcon(color: string) {
   });
 }
 
-function createClusterIcon(cluster: L.MarkerCluster) {
+function createClusterIcon(cluster: { getChildCount: () => number }) {
   const count = cluster.getChildCount();
   const size = count < 10 ? 36 : count < 50 ? 44 : 52;
   return L.divIcon({

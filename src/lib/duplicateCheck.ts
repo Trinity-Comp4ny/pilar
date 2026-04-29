@@ -5,8 +5,8 @@ export interface DuplicateMatch {
   id: string;
   descricao: string;
   valor: number;
-  data_vencimento: string;
-  status: string;
+  data_vencimento: string | null;
+  status: string | null;
 }
 
 interface DuplicateCheckParams {

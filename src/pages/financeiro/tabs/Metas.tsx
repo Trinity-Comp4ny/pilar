@@ -27,7 +27,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { formatCurrencyInput, parseCurrencyString } from "@/lib/currencyUtils";
+import { formatCurrencyInput, formatValorToInput, parseCurrencyString } from "@/lib/currencyUtils";
 
 interface Meta {
   id: string;
@@ -38,6 +38,8 @@ interface Meta {
   categoria: "receita" | "lucro" | "economia" | "investimento";
 }
 
+type EditingMeta = Omit<Meta, "alvo" | "atual"> & { alvo: string; atual: string };
+
 export default function Metas() {
   const queryClient = useQueryClient();
 
@@ -45,7 +47,7 @@ export default function Metas() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [deleteAlertOpen, setDeleteAlertOpen] = useState(false);
   const [metaToDelete, setMetaToDelete] = useState<string | null>(null);
-  const [editingMeta, setEditingMeta] = useState<Meta | null>(null);
+  const [editingMeta, setEditingMeta] = useState<EditingMeta | null>(null);
 
   const [novaMeta, setNovaMeta] = useState({
     nome: "",
@@ -77,7 +79,7 @@ export default function Metas() {
       setNovaMeta({ nome: "", alvo: "", atual: "", prazo: "", categoria: "receita" });
       toast.success("Meta criada", { description: "Nova meta financeira estabelecida com sucesso." });
     },
-    onError: (error: Error) => {
+    onError: () => {
       toast.error("Erro ao criar meta");
     },
   });
@@ -103,7 +105,7 @@ export default function Metas() {
       setEditingMeta(null);
       toast.success("Meta atualizada", { description: "Meta financeira foi atualizada com sucesso." });
     },
-    onError: (error: Error) => {
+    onError: () => {
       toast.error("Erro ao atualizar meta");
     },
   });
@@ -120,7 +122,7 @@ export default function Metas() {
       setMetaToDelete(null);
       toast.success("Meta excluída", { description: "Meta financeira foi removida com sucesso." });
     },
-    onError: (error: Error) => {
+    onError: () => {
       toast.error("Erro ao excluir meta");
     },
   });
@@ -139,8 +141,9 @@ export default function Metas() {
   const handleEdit = (meta: Meta) => {
     setEditingMeta({
       ...meta,
-      alvo: formatCurrencyInput((meta.alvo * 100).toString()),
-      atual: formatCurrencyInput((meta.atual * 100).toString()),
+      prazo: meta.prazo ? meta.prazo.slice(0, 10) : "",
+      alvo: formatValorToInput(meta.alvo),
+      atual: formatValorToInput(meta.atual),
     });
     setIsEditDialogOpen(true);
   };
@@ -148,7 +151,11 @@ export default function Metas() {
   const handleEditSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingMeta) return;
-    updateMetaMutation.mutate(editingMeta);
+    updateMetaMutation.mutate({
+      ...editingMeta,
+      alvo: parseCurrencyString(editingMeta.alvo),
+      atual: parseCurrencyString(editingMeta.atual),
+    });
   };
 
   const handleDeleteClick = (id: string) => {

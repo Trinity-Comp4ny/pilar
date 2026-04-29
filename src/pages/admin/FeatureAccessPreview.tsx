@@ -20,8 +20,6 @@ const INITIAL_COMPANY_FEATURES: CompanyFeatures = {
   propostas: true,
   clientes: true,
   projetos: true,
-  planejamento: true,
-  timesheet: true,
   mapa: true,
   financeiro: true,
   pessoas: true,

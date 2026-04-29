@@ -40,7 +40,7 @@ export default function Templates() {
         toast.success("Template criado com sucesso");
         setIsFormOpen(false);
       },
-      onError: (error: Error) => {
+      onError: () => {
         toast.error("Erro");
       },
     });
@@ -56,7 +56,7 @@ export default function Templates() {
           setEditingTemplate(undefined);
           setIsFormOpen(false);
         },
-        onError: (error: Error) => {
+        onError: () => {
           toast.error("Erro");
         },
       }
@@ -70,7 +70,7 @@ export default function Templates() {
         toast.success("Template removido");
         setConfirmDeleteId(null);
       },
-      onError: (error: Error) => {
+      onError: () => {
         toast.error("Erro");
       },
     });

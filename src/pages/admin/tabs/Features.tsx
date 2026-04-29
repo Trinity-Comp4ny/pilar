@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -26,6 +26,11 @@ export function FeaturesEmpresaTab({ companyFeatures, setCompanyFeatures, curren
   const requireAal2 = useRequireAal2();
   const [draft, setDraft] = useState<CompanyFeatures>(companyFeatures);
   const [isSaving, setIsSaving] = useState(false);
+
+  // Sincroniza draft quando companyFeatures carrega do banco (prop chega vazia inicialmente)
+  useEffect(() => {
+    setDraft(companyFeatures);
+  }, [companyFeatures]);
 
   const usersByFeature = useMemo(() => {
     const counts: Partial<Record<FeatureKey, number>> = {};

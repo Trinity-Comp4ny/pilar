@@ -75,7 +75,7 @@ export function ProjectBudgetTab({ projetoId, canEdit, disciplinas }: ProjectBud
           custo_hora: row.custo_hora,
           margem_alvo_pct: row.margem_alvo_pct,
           valor_venda: row.valor_venda,
-        });
+        } as never);
         if (error) throw error;
       }
     },
@@ -85,7 +85,7 @@ export function ProjectBudgetTab({ projetoId, canEdit, disciplinas }: ProjectBud
       setEditRow({});
       setIsEditing(false);
     },
-    onError: (err: Error) => toast.error("Erro"),
+    onError: () => toast.error("Erro"),
   });
 
   const deleteMutation = useMutation({

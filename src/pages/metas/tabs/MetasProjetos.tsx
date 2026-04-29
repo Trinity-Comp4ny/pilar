@@ -84,7 +84,7 @@ export default function MetasProjetos() {
 
   const createMutation = useMutation({
     mutationFn: async (newMeta: Record<string, unknown>) => {
-      const { error } = await supabase.from("metas").insert(newMeta);
+      const { error } = await supabase.from("metas").insert(newMeta as never);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -102,7 +102,7 @@ export default function MetasProjetos() {
       });
       toast.success("Meta criada", { description: "Meta de projeto criada com sucesso." });
     },
-    onError: (error: Error) => {
+    onError: () => {
       toast.error("Erro ao criar meta");
     },
   });
@@ -130,7 +130,7 @@ export default function MetasProjetos() {
       setEditingMeta(null);
       toast.success("Meta atualizada", { description: "Meta de projeto atualizada com sucesso." });
     },
-    onError: (error: Error) => {
+    onError: () => {
       toast.error("Erro ao atualizar");
     },
   });
@@ -146,7 +146,7 @@ export default function MetasProjetos() {
       setMetaToDelete(null);
       toast.success("Meta excluída", { description: "Meta de projeto removida." });
     },
-    onError: (error: Error) => {
+    onError: () => {
       toast.error("Erro ao excluir");
     },
   });
@@ -224,7 +224,7 @@ export default function MetasProjetos() {
       <div className="space-y-2">
         <Label>Nome da Meta</Label>
         <Input
-          value={values.nome}
+          value={(values.nome as string | number) ?? ""}
           onChange={(e) => onChange("nome", e.target.value)}
           placeholder="Ex: Conclusão no prazo"
           required
@@ -253,11 +253,21 @@ export default function MetasProjetos() {
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label>Alvo</Label>
-          <Input type="number" value={values.alvo} onChange={(e) => onChange("alvo", e.target.value)} required />
+          <Input
+            type="number"
+            value={(values.alvo as string | number) ?? 0}
+            onChange={(e) => onChange("alvo", e.target.value)}
+            required
+          />
         </div>
         <div className="space-y-2">
           <Label>Atual</Label>
-          <Input type="number" value={values.atual} onChange={(e) => onChange("atual", e.target.value)} required />
+          <Input
+            type="number"
+            value={(values.atual as string | number) ?? 0}
+            onChange={(e) => onChange("atual", e.target.value)}
+            required
+          />
         </div>
       </div>
       <div className="grid grid-cols-2 gap-4">
@@ -326,11 +336,11 @@ export default function MetasProjetos() {
               </DialogHeader>
               {editingMeta && (
                 <form onSubmit={handleEditSubmit} className="space-y-4 mt-4">
-                  {metaFormFields(editingMeta, (field, value) =>
+                  {metaFormFields(editingMeta as unknown as Record<string, string | number | null>, (field, value) =>
                     setEditingMeta({
                       ...editingMeta,
                       [field]: field === "alvo" || field === "atual" ? Number(value) : value,
-                    })
+                    } as MetaProjeto)
                   )}
                   <Button
                     type="submit"

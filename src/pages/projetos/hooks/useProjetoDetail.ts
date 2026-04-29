@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useUserRole } from "@/hooks/useUserRole";
+import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import { toast } from "sonner";
 import { useProjetoRentabilidade } from "@/hooks/useRentabilidade";
 import { useTemplates } from "@/hooks/useTemplates";
@@ -24,8 +24,7 @@ import {
 
 export function useProjetoDetail(id: string | undefined) {
   const navigate = useNavigate();
-  const { data: userRole } = useUserRole();
-  const canEdit = userRole === "admin" || userRole === "operacional";
+  const { canEdit } = useFeatureAccess("projetos");
   const queryClient = useQueryClient();
 
   // ---- Project data via React Query ----

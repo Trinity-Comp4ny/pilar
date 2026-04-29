@@ -59,7 +59,7 @@ export function ProjetoDetailTabs({
   projeto,
   canEdit,
   disciplinasLegacy,
-  dbDisciplinas,
+  dbDisciplinas: _dbDisciplinas,
   disciplinasCatalog,
   pessoas,
   getDbDisc,
@@ -80,7 +80,7 @@ export function ProjetoDetailTabs({
 
   // ---- Disciplina edit dialog state ----
   const [isDiscDialogOpen, setIsDiscDialogOpen] = useState(false);
-  const [editingDiscIdx, setEditingDiscIdx] = useState<number | null>(null);
+  const [_editingDiscIdx, setEditingDiscIdx] = useState<number | null>(null);
   const [editingDiscLocal, setEditingDiscLocal] = useState<ProjetoDisciplinaDB | null>(null);
   const [newObservation, setNewObservation] = useState("");
 

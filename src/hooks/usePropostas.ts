@@ -156,9 +156,7 @@ export const usePropostaDisciplinas = (propostaId: string | null) => {
       if (!propostaId) return [];
       const { data, error } = await supabase
         .from("proposta_disciplinas")
-        .select(
-          "id, proposta_id, disciplina, horas_estimadas, valor_unitario, valor_total, descricao, custo_hora, valor_venda"
-        )
+        .select("id, proposta_id, disciplina, horas_estimadas, custo_hora, valor_venda")
         .eq("proposta_id", propostaId);
       if (error) throw error;
       return data || [];

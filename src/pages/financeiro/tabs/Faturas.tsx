@@ -11,7 +11,6 @@ import { cn } from "@/lib/utils";
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { getSafeErrorMessage } from "@/lib/safeError";
 import { format } from "date-fns";
 
 interface Cartao {
@@ -108,7 +107,7 @@ export default function Faturas() {
     if (data) {
       setCartoes(data as Cartao[]);
       if (data.length > 0 && !selectedCartaoId) {
-        setSelectedCartaoId(data[0].id);
+        setSelectedCartaoId(data[0].id ?? "");
       }
     }
   }, [selectedCartaoId]);
@@ -153,8 +152,8 @@ export default function Faturas() {
           // Determinar status real baseado na data
           const today = new Date();
           setFaturas(
-            data
-              .filter((f) => f.valor_total > 0 || f.status !== "Aberta")
+            (data as unknown as Fatura[])
+              .filter((f) => (f.valor_total ?? 0) > 0 || f.status !== "Aberta")
               .map((f) => {
                 let status = f.status;
                 if (status === "Aberta" && new Date(f.data_fim) < today) {

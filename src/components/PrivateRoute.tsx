@@ -43,7 +43,8 @@ export function PrivateRoute() {
       return <Navigate to="/dashboard" replace />;
     }
 
-    if (isAdmin && profileDone && companyDone && !hasVerifiedMfaFactor && !isMfaSetup) {
+    const onboardingComplete = profileDone && (!isAdmin || companyDone);
+    if (onboardingComplete && !hasVerifiedMfaFactor && !isMfaSetup) {
       return <Navigate to="/mfa/setup" replace />;
     }
   }
