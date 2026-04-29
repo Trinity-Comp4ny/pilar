@@ -136,6 +136,7 @@ export type PaymentMethod = (typeof PAYMENT_METHODS)[keyof typeof PAYMENT_METHOD
 
 // User Roles
 export const USER_ROLES = {
+  ULTRA_ADMIN: "ultra_admin",
   ADMIN: "admin",
   FINANCEIRO: "financeiro",
   MARKETING: "marketing",
