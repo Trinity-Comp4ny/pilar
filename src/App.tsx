@@ -35,14 +35,9 @@ const Templates = lazy(() => import("./pages/templates"));
 const MapaObras = lazy(() => import("./pages/mapa"));
 const Propostas = lazy(() => import("./pages/propostas"));
 const Capacidade = lazy(() => import("./pages/capacidade"));
-const Portal = lazy(() => import("./pages/portal"));
 const MetasPage = lazy(() => import("./pages/metas"));
 const AiHub = lazy(() => import("./pages/ai"));
 const ProjetoDetail = lazy(() => import("./pages/projetos/ProjetoDetail"));
-const PortalFinanceiro = lazy(() => import("./pages/portal/PortalFinanceiro"));
-const PortalEntregas = lazy(() => import("./pages/portal/PortalEntregas"));
-const PortalPropostas = lazy(() => import("./pages/portal/PortalPropostas"));
-const PortalTokenCapture = lazy(() => import("./pages/portal/PortalTokenCapture"));
 const ClienteLogin = lazy(() => import("./pages/cliente/ClienteLogin"));
 const ClienteDashboard = lazy(() => import("./pages/cliente/ClienteDashboard"));
 const ClienteProjetoDetail = lazy(() => import("./pages/cliente/ClienteProjetoDetail"));
@@ -170,18 +165,6 @@ const App = () => {
                     </Route>
 
                     <Route path="/rentabilidade" element={<Navigate to="/financeiro?tab=rentabilidade" replace />} />
-
-                    {/* Portal do Cliente — captura token da URL e redireciona para rota limpa */}
-                    <Route path="/portal/:token" element={<PortalTokenCapture />} />
-                    <Route path="/portal/:token/financeiro" element={<PortalTokenCapture subpath="/financeiro" />} />
-                    <Route path="/portal/:token/entregas" element={<PortalTokenCapture subpath="/entregas" />} />
-                    <Route path="/portal/:token/propostas" element={<PortalTokenCapture subpath="/propostas" />} />
-
-                    {/* Portal do Cliente — rotas limpas (token em sessionStorage) */}
-                    <Route path="/portal" element={<Portal />} />
-                    <Route path="/portal/financeiro" element={<PortalFinanceiro />} />
-                    <Route path="/portal/entregas" element={<PortalEntregas />} />
-                    <Route path="/portal/propostas" element={<PortalPropostas />} />
 
                     {/* Portal do Cliente — Autenticado */}
                     <Route path="/cliente/login" element={<ClienteLogin />} />
