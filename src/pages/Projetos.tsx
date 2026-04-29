@@ -1,4 +1,14 @@
 import { useState } from "react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Settings2, Layers, Calendar as CalendarIcon, Filter, GitBranch } from "lucide-react";
@@ -51,6 +61,7 @@ export default function ProjetosKanban() {
   const [activeTab, setActiveTab] = useState<Tab>("kanban");
   const [filterPessoaId, setFilterPessoaId] = useState<string>("all");
   const [isFluxosOpen, setIsFluxosOpen] = useState(false);
+  const [pendingDrag, setPendingDrag] = useState<{ projetoId: string; newStatus: string } | null>(null);
 
   const { data: currentUser = null } = useQuery({
     queryKey: ["currentUser"],
@@ -255,9 +266,13 @@ export default function ProjetosKanban() {
       });
 
       queryClient.invalidateQueries({ queryKey: ["projetos"] });
-      await notifyProjectStatusChange(draggableId, newStatus);
-
       const projeto = projetos.find((p) => p.id === draggableId);
+
+      if (newStatus === PROJECT_STATUS.CONCLUIDO) {
+        setPendingDrag({ projetoId: draggableId, newStatus });
+      } else {
+        await notifyProjectStatusChange(draggableId, newStatus);
+      }
 
       if (projeto?.cliente_email && newStatus === "Concluído")
         await sendClientEmail(projeto.cliente_email, projeto.nome);
@@ -503,6 +518,32 @@ export default function ProjetosKanban() {
         disciplinas={disciplinas}
         pessoas={pessoas}
       />
+
+      <AlertDialog open={!!pendingDrag} onOpenChange={(open) => !open && setPendingDrag(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Notificar equipe por e-mail?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Mover o projeto para <strong>Concluído</strong> enviará um e-mail para todos os membros alocados.
+              Confirma?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setPendingDrag(null)}>Não notificar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-accent-orange hover:bg-accent-orange/90 text-ink"
+              onClick={async () => {
+                if (pendingDrag) {
+                  await notifyProjectStatusChange(pendingDrag.projetoId, pendingDrag.newStatus);
+                  setPendingDrag(null);
+                }
+              }}
+            >
+              Sim, enviar e-mails
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </PageLayout>
   );
 }

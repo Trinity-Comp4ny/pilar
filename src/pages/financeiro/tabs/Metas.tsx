@@ -113,7 +113,10 @@ export default function Metas() {
   // Delete Meta
   const deleteMetaMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("metas").delete().eq("id", id);
+      const { error } = await supabase
+        .from("metas")
+        .update({ deleted_at: new Date().toISOString() } as never)
+        .eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
