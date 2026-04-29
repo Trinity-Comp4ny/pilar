@@ -10,7 +10,7 @@ import { useImpersonation } from "@/contexts/ImpersonationContext";
 import { usePermissions } from "@/hooks/usePermissions";
 import { ROLE_LABEL, type UserRole } from "@/lib/permissions";
 
-const IMPERSONATABLE: UserRole[] = ["financeiro", "marketing", "operacional", "user"];
+const IMPERSONATABLE: UserRole[] = ["user"];
 
 export function ImpersonationPicker() {
   const { realRole } = usePermissions();

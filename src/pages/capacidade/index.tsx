@@ -79,15 +79,8 @@ export default function Capacidade() {
 
   const { data: alocacoes = [], isLoading: loadingAlocacoes } = useQuery({
     queryKey: ["alocacoes", weeks[0], weeks[weeks.length - 1]],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("alocacoes")
-        .select("pessoa_id, semana_inicio, horas_alocadas")
-        .gte("semana_inicio", weeks[0])
-        .lte("semana_inicio", weeks[weeks.length - 1]);
-      if (error) throw error;
-      return (data || []) as Alocacao[];
-    },
+    queryFn: async (): Promise<Alocacao[]> => [],
+    // Módulo Capacidade dormente — tabela alocacoes removida
     enabled: weeks.length > 0,
     staleTime: 1000 * 60 * 3,
   });

@@ -3,6 +3,7 @@ import { SidebarProvider, useSidebar } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { AlertsBell } from "@/components/AlertsBell";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { UltraAdminPlatformBanner } from "@/components/UltraAdminPlatformBanner";
 
 function LayoutContent() {
   const { state, isMobile } = useSidebar();
@@ -12,6 +13,7 @@ function LayoutContent() {
     <div className="min-h-screen bg-white">
       <AppSidebar />
       <div className={`${marginLeft}`}>
+        <UltraAdminPlatformBanner />
         <div className="flex justify-end items-center px-6 pt-4 md:px-10">
           <AlertsBell />
         </div>

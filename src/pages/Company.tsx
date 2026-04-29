@@ -110,13 +110,19 @@ export default function Company() {
       if (profile?.empresa_id) {
         const { data: companyUsers } = await supabase
           .from("profiles")
-          .select("id, nome, email, role, contato")
+          .select("id, first_name, last_name, email, role, contato")
           .eq("empresa_id", profile.empresa_id);
         if (companyUsers) {
           setUsers(
             companyUsers.map((u) => ({
               id: u.id,
-              name: u.nome ?? "",
+              name:
+                [(u as { first_name?: string }).first_name, (u as { last_name?: string }).last_name]
+                  .filter(Boolean)
+                  .join(" ")
+                  .trim() ||
+                u.email ||
+                "",
               email: u.email ?? "",
               role: u.role ?? "user",
               contato: u.contato ?? undefined,

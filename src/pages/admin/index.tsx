@@ -142,7 +142,7 @@ export default function Admin() {
           const [{ data: companyUsers }, { data: pendingConvites }] = await Promise.all([
             supabase
               .from("profiles")
-              .select("id, nome, email, role, features, contato")
+              .select("id, first_name, last_name, email, role, features, contato")
               .eq("empresa_id", profile.empresa_id),
             supabase
               .from("convites")
@@ -154,7 +154,11 @@ export default function Admin() {
 
           const profileList: RawUser[] = (companyUsers ?? []).map((u) => ({
             id: u.id,
-            nome: u.nome,
+            nome:
+              [(u as { first_name?: string }).first_name, (u as { last_name?: string }).last_name]
+                .filter(Boolean)
+                .join(" ")
+                .trim() || u.email,
             email: u.email,
             role: u.role,
             features: u.features,

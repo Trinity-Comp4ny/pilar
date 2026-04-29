@@ -32,19 +32,14 @@ export default function Profile() {
 
         const { data: profile, error } = await supabase
           .from("profiles")
-          .select("nome, contato, empresas(nome)")
+          .select("first_name, last_name, contato, empresas(nome)")
           .eq("id", auth.user.id)
           .single();
 
         if (error) throw error;
 
-        const fullName = profile?.nome || "";
-        const parts = fullName.trim().split(/\s+/).filter(Boolean);
-        const first = parts[0] || "";
-        const last = parts.slice(1).join(" ");
-
-        setFirstName(first);
-        setLastName(last);
+        setFirstName(profile?.first_name || "");
+        setLastName(profile?.last_name || "");
         setContact(profile?.contato || "");
         setCompanyName(profile?.empresas?.nome || "");
       } catch (err: unknown) {
@@ -62,12 +57,11 @@ export default function Profile() {
       const { data: auth } = await supabase.auth.getUser();
       if (!auth?.user) return;
 
-      const nome = [firstName, lastName].filter(Boolean).join(" ").trim();
-
       const { error } = await supabase
         .from("profiles")
         .update({
-          nome,
+          first_name: firstName.trim(),
+          last_name: lastName.trim(),
           contato: contact,
         })
         .eq("id", auth.user.id);
