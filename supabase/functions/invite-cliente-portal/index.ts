@@ -28,7 +28,7 @@ serve(async (req) => {
       .single();
 
     if (profileError || !profile) return safeErrorResponse(403, "Profile not found", req);
-    if (profile.role !== "admin") {
+    if (profile.role !== "admin" && profile.role !== "ultra_admin") {
       return safeErrorResponse(403, "Apenas admin pode criar acesso ao portal", req);
     }
     if (!profile.empresa_id) return safeErrorResponse(403, "Você precisa pertencer a uma empresa", req);
