@@ -31,7 +31,8 @@ export async function portalLogout() {
   const token = getPortalToken();
   if (token) {
     try {
-      await supabase.rpc("portal_logout", { p_token: token });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (supabase.rpc as any)("portal_logout", { p_token: token });
     } catch {
       // Falha no logout server-side é tolerável — o importante é limpar cliente
     }

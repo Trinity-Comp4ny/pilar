@@ -14,7 +14,8 @@ export function MfaBackupCodes() {
   const [confirmOpen, setConfirmOpen] = useState(false);
 
   const fetchRemaining = async () => {
-    const { data, error } = await supabase.rpc("mfa_backup_codes_remaining");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (supabase.rpc as any)("mfa_backup_codes_remaining");
     if (!error) setRemaining((data as number | null) ?? 0);
     setLoading(false);
   };
@@ -27,7 +28,8 @@ export function MfaBackupCodes() {
     setConfirmOpen(false);
     setGenerating(true);
     try {
-      const { data, error } = await supabase.rpc("mfa_generate_backup_codes");
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase.rpc as any)("mfa_generate_backup_codes");
       if (error) throw error;
       setGeneratedCodes((data as unknown as string[]) ?? []);
       await fetchRemaining();

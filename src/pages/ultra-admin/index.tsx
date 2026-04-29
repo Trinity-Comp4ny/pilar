@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Building2, CircleOff, Loader2, RefreshCw, Search, Users2, Layers } from "lucide-react";
+import { ArrowLeft, Building2, CircleOff, Loader2, Search, Users2, Layers } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -370,12 +370,10 @@ export default function UltraAdmin() {
   return (
     <PageLayout
       header={
-        <PageHeader title="Gestão Pilar" description="Visão cross-empresa. Apenas ultra admins têm acesso.">
-          <Button variant="outline" size="sm" onClick={fetchEmpresas} disabled={loading}>
-            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-            Atualizar
-          </Button>
-        </PageHeader>
+        <PageHeader
+          title="Gestão Pilar"
+          description="Visão cross-empresa. Apenas ultra admins têm acesso."
+        ></PageHeader>
       }
     >
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">

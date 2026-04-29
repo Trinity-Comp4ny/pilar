@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from "react";
+import { toast } from "sonner";
 import { CreditCard, QrCode, FileText, Loader2, Lock } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,6 +25,27 @@ function formatBRL(value: number): string {
 
 function onlyDigits(value: string): string {
   return value.replace(/\D/g, "");
+}
+
+function validCnpj(value: string): boolean {
+  const d = value.replace(/\D/g, "");
+  if (d.length !== 14 || /^(\d)\1+$/.test(d)) return false;
+  const calc = (digits: string, weights: number[]) =>
+    digits.split("").reduce((sum, n, i) => sum + parseInt(n) * weights[i], 0);
+  const w1 = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+  const w2 = [6, ...w1];
+  const r1 = calc(d.slice(0, 12), w1) % 11;
+  const r2 = calc(d.slice(0, 13), w2) % 11;
+  return parseInt(d[12]) === (r1 < 2 ? 0 : 11 - r1) && parseInt(d[13]) === (r2 < 2 ? 0 : 11 - r2);
+}
+
+function validCpf(value: string): boolean {
+  const d = value.replace(/\D/g, "");
+  if (d.length !== 11 || /^(\d)\1+$/.test(d)) return false;
+  const sum = (digits: string, mult: number) => digits.split("").reduce((s, n, i) => s + parseInt(n) * (mult - i), 0);
+  const r1 = sum(d.slice(0, 9), 10) % 11;
+  const r2 = sum(d.slice(0, 10), 11) % 11;
+  return parseInt(d[9]) === (r1 < 2 ? 0 : 11 - r1) && parseInt(d[10]) === (r2 < 2 ? 0 : 11 - r2);
 }
 
 export function CheckoutForm({
@@ -56,6 +78,13 @@ export function CheckoutForm({
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    const digits = onlyDigits(cpfCnpj);
+    const cpfCnpjValid = digits.length === 11 ? validCpf(digits) : digits.length === 14 ? validCnpj(digits) : false;
+    if (!cpfCnpjValid) {
+      toast.error("CPF/CNPJ inválido", { description: "Verifique o número informado." });
+      return;
+    }
 
     const payload: CheckoutPayload = {
       nome: nome.trim(),

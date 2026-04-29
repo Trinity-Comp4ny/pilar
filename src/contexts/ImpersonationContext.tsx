@@ -25,7 +25,7 @@ function readStored(): UserRole | null {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
-    const valid: UserRole[] = ["admin", "financeiro", "marketing", "operacional", "user"];
+    const valid: UserRole[] = ["admin", "ultra_admin", "user"];
     return (valid as string[]).includes(raw) ? (raw as UserRole) : null;
   } catch {
     return null;
