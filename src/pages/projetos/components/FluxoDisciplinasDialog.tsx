@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { toast } from "sonner";
 import { useFluxosDisciplinas, useCreateFluxo, useUpdateFluxo, useDeleteFluxo } from "@/hooks/useFluxosDisciplinas";
-import type { FluxoDisciplinas, FluxoEtapa, FluxoEtapaDisciplina } from "@/types/fluxoDisciplinas";
+import type { FluxoDisciplinas, FluxoEtapa } from "@/types/fluxoDisciplinas";
 import { Plus, Trash2, Edit, ArrowUp, ArrowDown, X, ArrowLeft, GitBranch, Layers, User } from "lucide-react";
 
 interface FluxoDisciplinasDialogProps {

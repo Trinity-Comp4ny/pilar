@@ -23,16 +23,25 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CategoryManager } from "../components/CategoryManager";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
-import { useUserRole } from "@/hooks/useUserRole";
+import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import { getDisplayDate, formatDateDisplay } from "@/lib/dateUtils";
-import { formatCurrencyInput, parseCurrencyString } from "@/lib/currencyUtils";
+import { formatCurrencyInput, formatValorToInput, parseCurrencyString } from "@/lib/currencyUtils";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { receitaSchema, receitaDefaultValues, type ReceitaFormData } from "@/schemas/receitaSchema";
-import { getSafeErrorMessage } from "@/lib/safeError";
 import { checkDuplicates, type DuplicateMatch } from "@/lib/duplicateCheck";
 import { DuplicateWarningDialog } from "@/components/DuplicateWarningDialog";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { AsaasCobrancaButton } from "@/components/asaas/AsaasCobrancaButton";
 import { AsaasConfigForm } from "@/components/asaas/AsaasConfigForm";
 import { CobrarPorEmailButton } from "@/components/CobrarPorEmailButton";
@@ -81,8 +90,7 @@ export default function Receitas() {
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [selectedReceita, setSelectedReceita] = useState<Receita | null>(null);
 
-  const { data: userRole } = useUserRole();
-  const isAdmin = userRole === "admin";
+  const { canEdit } = useFeatureAccess("financeiro");
 
   const form = useForm<ReceitaFormData>({
     resolver: zodResolver(receitaSchema),
@@ -134,7 +142,7 @@ export default function Receitas() {
     // Fetch Projetos
     const { data: projetosData } = await supabase.from("projetos").select("id, nome, codigo_projeto").order("nome");
 
-    setProjetos((projetosData ?? []).map((p) => ({ id: p.id, projetoID: p.codigo_projeto })));
+    setProjetos((projetosData ?? []).map((p) => ({ id: p.id, projetoID: p.codigo_projeto ?? "" })));
   };
 
   // Fetch Initial Data
@@ -169,7 +177,7 @@ export default function Receitas() {
       projeto_codigo: d.projetos?.codigo_projeto,
       data_recebimento: d.data_recebimento || d.data_vencimento,
     }));
-    setReceitas(formattedData);
+    setReceitas(formattedData as unknown as Receita[]);
   };
 
   const handleCategoryChange = () => {
@@ -188,7 +196,7 @@ export default function Receitas() {
     form.reset({
       dataVencimento: receita.data_vencimento ? new Date(receita.data_vencimento) : new Date(),
       descricao: receita.descricao,
-      valorTotal: formatCurrencyInput((receita.valor * 100).toString()),
+      valorTotal: formatValorToInput(receita.valor),
       status: receita.status === "Recebido" ? "Recebida" : "Pendente",
       categoriaId: receita.categoria_id || "",
       projetoID: receita.projeto_id || "",
@@ -250,18 +258,25 @@ export default function Receitas() {
           cliente_id: formData.clienteId || null,
           observacao: formData.observacao || null,
           empresa_id: empresaId,
-          grupo_parcela: grupoParcela,
-          parcela_numero: numParcelas > 1 ? i + 1 : null,
-          parcela_total: numParcelas > 1 ? numParcelas : null,
+          grupo_parcela: selectedReceita ? (selectedReceita.grupo_parcela ?? null) : grupoParcela,
+          parcela_numero: selectedReceita ? (selectedReceita.parcela_numero ?? null) : numParcelas > 1 ? i + 1 : null,
+          parcela_total: selectedReceita
+            ? (selectedReceita.parcela_total ?? null)
+            : numParcelas > 1
+              ? numParcelas
+              : null,
         });
       }
 
       let error = null;
 
       if (selectedReceita) {
-        ({ error } = await supabase.from("receitas").update(receitasToInsert[0]).eq("id", selectedReceita.id));
+        ({ error } = await supabase
+          .from("receitas")
+          .update(receitasToInsert[0] as never)
+          .eq("id", selectedReceita.id));
       } else {
-        ({ error } = await supabase.from("receitas").insert(receitasToInsert));
+        ({ error } = await supabase.from("receitas").insert(receitasToInsert as never));
       }
 
       if (error) throw error;
@@ -323,8 +338,23 @@ export default function Receitas() {
   };
 
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deleteGroupTarget, setDeleteGroupTarget] = useState<{ id: string; grupoId: string; label: string } | null>(
+    null
+  );
 
-  const handleDelete = (id: string) => setDeleteId(id);
+  const handleDelete = (id: string) => {
+    const receita = receitas.find((r) => r.id === id);
+    if (receita?.grupo_parcela) {
+      const total = receita.parcela_total ?? receitas.filter((r) => r.grupo_parcela === receita.grupo_parcela).length;
+      setDeleteGroupTarget({
+        id,
+        grupoId: receita.grupo_parcela,
+        label: `parcela ${receita.parcela_numero ?? "?"} de ${total}`,
+      });
+    } else {
+      setDeleteId(id);
+    }
+  };
 
   const confirmDelete = async () => {
     if (!deleteId) return;
@@ -339,6 +369,32 @@ export default function Receitas() {
       toast.error("Falha ao excluir receita", {
         description: err instanceof Error ? err.message : "Tente novamente",
       });
+    }
+  };
+
+  const confirmDeleteGroup = async (mode: "single" | "all") => {
+    if (!deleteGroupTarget) return;
+    const { id, grupoId } = deleteGroupTarget;
+    setDeleteGroupTarget(null);
+    setIsDetailOpen(false);
+    const now = new Date().toISOString();
+    try {
+      if (mode === "all") {
+        const { error } = await supabase
+          .from("receitas")
+          .update({ deleted_at: now })
+          .eq("grupo_parcela", grupoId)
+          .is("deleted_at", null);
+        if (error) throw error;
+        toast.success("Grupo de parcelas excluído");
+      } else {
+        const { error } = await supabase.from("receitas").update({ deleted_at: now }).eq("id", id);
+        if (error) throw error;
+        toast.success("Parcela excluída");
+      }
+      await fetchReceitas();
+    } catch (err) {
+      toast.error("Falha ao excluir", { description: err instanceof Error ? err.message : "Tente novamente" });
     }
   };
 
@@ -396,12 +452,14 @@ export default function Receitas() {
                 }
               }}
             >
-              <DialogTrigger asChild>
-                <Button className="rounded-full bg-accent-orange hover:bg-accent-orange/90 text-ink transition-colors px-5 py-2.5 text-sm">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Nova Receita
-                </Button>
-              </DialogTrigger>
+              {canEdit && (
+                <DialogTrigger asChild>
+                  <Button className="rounded-full bg-accent-orange hover:bg-accent-orange/90 text-ink transition-colors px-5 py-2.5 text-sm">
+                    <Plus className="mr-2 h-4 w-4" />
+                    Nova Receita
+                  </Button>
+                </DialogTrigger>
+              )}
               <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto p-0">
                 <div className="px-6 pt-6 pb-4 border-b">
                   <DialogHeader>
@@ -413,6 +471,18 @@ export default function Receitas() {
                 </div>
 
                 <form onSubmit={handleSubmit} className="divide-y">
+                  {selectedReceita?.grupo_parcela && (
+                    <div className="px-6 pt-4 pb-0">
+                      <div className="flex items-center gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                        <span className="font-medium">
+                          Parcela {selectedReceita.parcela_numero ?? "?"} de {selectedReceita.parcela_total ?? "?"}
+                        </span>
+                        <span className="text-amber-600">
+                          — faz parte de um grupo. Editar aqui altera só esta parcela.
+                        </span>
+                      </div>
+                    </div>
+                  )}
                   <div className="px-6 py-4 space-y-3">
                     <Label className="text-[10px] uppercase text-muted-foreground tracking-wider">Descrição</Label>
                     <Input
@@ -572,9 +642,12 @@ export default function Receitas() {
                         </Select>
                       </div>
                       <div className="space-y-1.5">
-                        <Label className="text-xs">Conta de Recebimento</Label>
+                        <Label className="text-xs">
+                          Conta de Recebimento
+                          {form.watch("status") === "Recebida" && <span className="text-red-500 ml-0.5">*</span>}
+                        </Label>
                         <Select value={form.watch("contaId")} onValueChange={(v) => form.setValue("contaId", v)}>
-                          <SelectTrigger className="h-9">
+                          <SelectTrigger className={`h-9 ${form.formState.errors.contaId ? "border-red-500" : ""}`}>
                             <SelectValue placeholder="Selecione" />
                           </SelectTrigger>
                           <SelectContent>
@@ -585,6 +658,9 @@ export default function Receitas() {
                             ))}
                           </SelectContent>
                         </Select>
+                        {form.formState.errors.contaId && (
+                          <p className="text-xs text-red-500">{form.formState.errors.contaId.message}</p>
+                        )}
                       </div>
                       <div className="space-y-1.5">
                         <Label className="text-xs">Categoria</Label>
@@ -707,7 +783,28 @@ export default function Receitas() {
                     }}
                   >
                     <TableCell>{getReceitaDisplayDate(receita)}</TableCell>
-                    <TableCell className="font-medium">{receita.descricao}</TableCell>
+                    <TableCell className="font-medium">
+                      <div className="flex items-center gap-2">
+                        {receita.descricao}
+                        {receita.asaas_payment_status && (
+                          <Badge
+                            variant="outline"
+                            className={
+                              receita.asaas_payment_status === "RECEIVED" ||
+                              receita.asaas_payment_status === "CONFIRMED"
+                                ? "border-green-500 text-green-700 text-[10px] px-1 py-0"
+                                : receita.asaas_payment_status === "PENDING"
+                                  ? "border-yellow-500 text-yellow-700 text-[10px] px-1 py-0"
+                                  : receita.asaas_payment_status === "OVERDUE"
+                                    ? "border-red-500 text-red-700 text-[10px] px-1 py-0"
+                                    : "border-gray-400 text-gray-600 text-[10px] px-1 py-0"
+                            }
+                          >
+                            Asaas
+                          </Badge>
+                        )}
+                      </div>
+                    </TableCell>
                     <TableCell>{receita.cliente_nome || "-"}</TableCell>
                     <TableCell>{receita.projeto_codigo || "-"}</TableCell>
                     <TableCell>{receita.categoria_nome || "-"}</TableCell>
@@ -736,24 +833,26 @@ export default function Receitas() {
                     </TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()}>
                       <div className="flex gap-1 justify-end">
-                        {isAdmin && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                            onClick={() => openEditReceita(receita)}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
+                        {canEdit && (
+                          <>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                              onClick={() => openEditReceita(receita)}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                              onClick={() => handleDelete(receita.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </>
                         )}
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
-                          onClick={() => handleDelete(receita.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -861,23 +960,25 @@ export default function Receitas() {
                     </p>
                   </div>
                 )}
-                <div className="col-span-2">
-                  <Button variant="outline" className="flex-1" onClick={() => openEditReceita(selectedReceita)}>
-                    <Pencil className="mr-2 h-4 w-4" />
-                    Editar
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    className="flex-1"
-                    onClick={() => {
-                      handleDelete(selectedReceita.id);
-                      setIsDetailOpen(false);
-                    }}
-                  >
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    Excluir
-                  </Button>
-                </div>
+                {canEdit && (
+                  <div className="col-span-2">
+                    <Button variant="outline" className="flex-1" onClick={() => openEditReceita(selectedReceita)}>
+                      <Pencil className="mr-2 h-4 w-4" />
+                      Editar
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      className="flex-1"
+                      onClick={() => {
+                        handleDelete(selectedReceita.id);
+                        setIsDetailOpen(false);
+                      }}
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Excluir
+                    </Button>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -911,6 +1012,37 @@ export default function Receitas() {
         confirmText="Excluir"
         variant="destructive"
       />
+
+      <AlertDialog
+        open={!!deleteGroupTarget}
+        onOpenChange={(open) => {
+          if (!open) setDeleteGroupTarget(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir parcela do grupo?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta é a {deleteGroupTarget?.label}. Deseja excluir apenas esta parcela ou todas as parcelas do grupo?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-orange-500 hover:bg-orange-600 text-white"
+              onClick={() => confirmDeleteGroup("single")}
+            >
+              Só esta parcela
+            </AlertDialogAction>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700 text-white"
+              onClick={() => confirmDeleteGroup("all")}
+            >
+              Todo o grupo
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

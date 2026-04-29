@@ -134,7 +134,7 @@ export function OnboardingChecklist() {
       {
         key: "time",
         title: "Convide alguém do seu time",
-        description: "Colaboração e timesheet só funcionam com mais de um usuário",
+        description: "Colaboração só funciona com mais de um usuário",
         cta: "Abrir Admin Portal",
         ctaPath: "/admin?tab=usuarios",
         count: c.usuarios > 1 ? 1 : 0,

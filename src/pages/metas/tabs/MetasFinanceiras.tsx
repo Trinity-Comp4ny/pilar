@@ -81,7 +81,7 @@ export default function MetasFinanceiras() {
       setNovaMeta({ nome: "", alvo: "", atual: "", prazo: "", categoria: "receita", auto_sync: false, sync_fonte: "" });
       toast.success("Meta criada", { description: "Nova meta financeira criada com sucesso." });
     },
-    onError: (error: Error) => {
+    onError: () => {
       toast.error("Erro ao criar meta");
     },
   });
@@ -100,7 +100,7 @@ export default function MetasFinanceiras() {
       setEditingMeta(null);
       toast.success("Meta atualizada", { description: "Meta financeira atualizada com sucesso." });
     },
-    onError: (error: Error) => {
+    onError: () => {
       toast.error("Erro ao atualizar");
     },
   });
@@ -116,7 +116,7 @@ export default function MetasFinanceiras() {
       setMetaToDelete(null);
       toast.success("Meta excluída", { description: "Meta financeira removida." });
     },
-    onError: (error: Error) => {
+    onError: () => {
       toast.error("Erro ao excluir");
     },
   });
@@ -126,11 +126,9 @@ export default function MetasFinanceiras() {
     createMetaMutation.mutate({
       nome: novaMeta.nome,
       alvo: Number(novaMeta.alvo),
-      atual: novaMeta.auto_sync ? 0 : Number(novaMeta.atual),
+      atual: Number(novaMeta.atual),
       prazo: novaMeta.prazo,
       categoria: novaMeta.categoria as Meta["categoria"],
-      auto_sync: novaMeta.auto_sync,
-      sync_fonte: novaMeta.auto_sync ? novaMeta.sync_fonte : null,
     });
   };
 

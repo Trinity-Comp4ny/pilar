@@ -150,7 +150,7 @@ export default function AiHub() {
           setActiveGenerator(null);
           setSelectedInsight(data);
         },
-        onError: (err: Error) => {
+        onError: () => {
           toast.error("Erro na IA");
         },
       }

@@ -90,77 +90,74 @@ export default function ProjetosKanban() {
 
       if (error) throw error;
 
-      return (data || []).map(
-        (
-          p: Record<string, unknown> & {
-            clientes?: { nome: string; email: string };
-            projeto_disciplinas?: Array<Record<string, unknown>>;
-          }
-        ) => {
-          const rawDiscs = (p.projeto_disciplinas || []) as Array<{
-            id: string;
-            projeto_id: string;
-            nome: string;
-            status: string;
-            data_inicio: string | null;
-            data_fim: string | null;
-            data_fim_real: string | null;
-            observacoes: string | null;
-            prioridade: string | null;
-            justificativa_atraso: string | null;
-            horas_estimadas: number;
-            custo_hora: number;
-            created_at: string;
-            updated_at: string;
-            projeto_disciplina_responsaveis: Array<{
-              pessoa_id: string;
-              pessoas: { id: string; nome: string };
-            }>;
+      return (data || []).map((p) => {
+        const proj = p as Record<string, unknown> & {
+          clientes?: { nome: string; email: string };
+          projeto_disciplinas?: Array<Record<string, unknown>>;
+        };
+        const rawDiscs = (proj.projeto_disciplinas || []) as Array<{
+          id: string;
+          projeto_id: string;
+          nome: string;
+          status: string;
+          data_inicio: string | null;
+          data_fim: string | null;
+          data_fim_real: string | null;
+          observacoes: string | null;
+          prioridade: string | null;
+          justificativa_atraso: string | null;
+          horas_estimadas: number;
+          custo_hora: number;
+          created_at: string;
+          updated_at: string;
+          projeto_disciplina_responsaveis: Array<{
+            pessoa_id: string;
+            pessoas: { id: string; nome: string };
           }>;
+        }>;
 
-          const dbDiscs: ProjetoDisciplinaDB[] = rawDiscs.map((d) => ({
-            id: d.id,
-            projeto_id: d.projeto_id,
-            nome: d.nome,
-            status: d.status,
-            data_inicio: d.data_inicio,
-            data_fim: d.data_fim,
-            data_fim_real: d.data_fim_real,
-            observacoes: d.observacoes,
-            prioridade: d.prioridade,
-            justificativa_atraso: d.justificativa_atraso,
-            horas_estimadas: d.horas_estimadas,
-            custo_hora: d.custo_hora,
-            created_at: d.created_at,
-            updated_at: d.updated_at,
-            responsaveis:
-              d.projeto_disciplina_responsaveis?.map((r) => ({
-                id: r.pessoas.id,
-                nome: r.pessoas.nome,
-              })) || [],
-          }));
+        const dbDiscs: ProjetoDisciplinaDB[] = rawDiscs.map((d) => ({
+          id: d.id,
+          projeto_id: d.projeto_id,
+          nome: d.nome,
+          status: d.status,
+          data_inicio: d.data_inicio,
+          data_fim: d.data_fim,
+          data_fim_real: d.data_fim_real,
+          observacoes: d.observacoes,
+          prioridade: d.prioridade,
+          justificativa_atraso: d.justificativa_atraso,
+          horas_estimadas: d.horas_estimadas,
+          custo_hora: d.custo_hora,
+          created_at: d.created_at,
+          updated_at: d.updated_at,
+          responsaveis:
+            d.projeto_disciplina_responsaveis?.map((r) => ({
+              id: r.pessoas.id,
+              nome: r.pessoas.nome,
+            })) || [],
+        }));
 
-          return {
-            id: p.id as string,
-            codigo_projeto: p.codigo_projeto as string,
-            nome: p.nome as string,
-            cliente_id: p.cliente_id as string,
-            cliente_nome: p.clientes?.nome,
-            cliente_email: p.clientes?.email,
-            localizacao: p.localizacao as string | undefined,
-            parcelas: p.parcelas as string | undefined,
-            area_m2: p.area_m2 as number | undefined,
-            data_inicio: p.data_inicio as string,
-            data_previsao: p.data_previsao as string,
-            data_final: p.data_final as string | undefined,
-            status: p.status as Projeto["status"],
-            prioridade: (p.prioridade as ProjectPriority) || PROJECT_PRIORITY.MEDIA,
-            valor_contrato: p.valor_contrato as number,
-            observacao: p.observacao as string,
-            disciplinas: dbDiscs.map(dbDisciplinaToLegacy),
-          };
-        }
-      ) as Projeto[];
+        return {
+          id: proj.id as string,
+          codigo_projeto: proj.codigo_projeto as string,
+          nome: proj.nome as string,
+          cliente_id: proj.cliente_id as string,
+          cliente_nome: proj.clientes?.nome,
+          cliente_email: proj.clientes?.email,
+          localizacao: proj.localizacao as string | undefined,
+          parcelas: proj.parcelas as string | undefined,
+          area_m2: proj.area_m2 as number | undefined,
+          data_inicio: proj.data_inicio as string,
+          data_previsao: proj.data_previsao as string,
+          data_final: proj.data_final as string | undefined,
+          status: proj.status as Projeto["status"],
+          prioridade: (proj.prioridade as ProjectPriority) || PROJECT_PRIORITY.MEDIA,
+          valor_contrato: proj.valor_contrato as number,
+          observacao: proj.observacao as string,
+          disciplinas: dbDiscs.map(dbDisciplinaToLegacy),
+        };
+      }) as Projeto[];
     },
   });
 

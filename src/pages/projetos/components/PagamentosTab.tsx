@@ -128,7 +128,7 @@ export function PagamentosTab({ projetoId, canEdit }: PagamentosTabProps) {
       { receitaId },
       {
         onSuccess: () => toast.success("Pagamento marcado como recebido"),
-        onError: (err: Error) => toast.error("Erro"),
+        onError: () => toast.error("Erro"),
       }
     );
   };

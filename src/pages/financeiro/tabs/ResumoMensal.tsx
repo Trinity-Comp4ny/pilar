@@ -212,7 +212,7 @@ export default function ResumoMensal({ dateFrom, dateTo }: ResumoMensalProps) {
                   <div className="flex-1">
                     <p className="text-sm font-medium text-gray-900">{item.descricao}</p>
                     <p className="text-xs text-gray-500 mt-0.5">
-                      {new Date(item.data_recebimento).toLocaleDateString("pt-BR")}
+                      {item.data_recebimento ? new Date(item.data_recebimento).toLocaleDateString("pt-BR") : "—"}
                     </p>
                   </div>
                   <span className="text-sm font-bold text-green-700">{formatCurrency(item.valor)}</span>
@@ -249,7 +249,7 @@ export default function ResumoMensal({ dateFrom, dateTo }: ResumoMensalProps) {
                   <div className="flex-1">
                     <p className="text-sm font-medium text-gray-900">{item.descricao}</p>
                     <p className="text-xs text-gray-500 mt-0.5">
-                      {new Date(item.data_pagamento).toLocaleDateString("pt-BR")} •{" "}
+                      {item.data_pagamento ? new Date(item.data_pagamento).toLocaleDateString("pt-BR") : "—"} •{" "}
                       {item.categorias_financeiras?.nome || "Outros"}
                     </p>
                   </div>

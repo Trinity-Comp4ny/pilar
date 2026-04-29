@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Calendar, ChevronLeft, ChevronRight, User, AlertTriangle, Layers, ZoomIn, ZoomOut } from "lucide-react";
+import { Calendar, User, AlertTriangle, Layers, ZoomIn, ZoomOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   type DisciplinaResponsavel,

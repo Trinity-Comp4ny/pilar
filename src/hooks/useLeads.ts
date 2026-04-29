@@ -47,13 +47,13 @@ export const useCreateLead = () => {
       const { data, error } = await supabase
         .from("leads")
         .insert({
-          nome: lead.nome,
+          nome: lead.nome ?? "",
           email: lead.email,
           contato: lead.contato,
           origem: lead.origem,
           status: "Novo",
           empresa_id: empresaId,
-        })
+        } as never)
         .select()
         .single();
 

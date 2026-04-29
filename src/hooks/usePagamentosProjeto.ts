@@ -7,7 +7,7 @@ export interface PagamentoProjeto {
   id: string;
   descricao: string;
   valor: number;
-  data_vencimento: string;
+  data_vencimento: string | null;
   data_recebimento: string | null;
   status: StatusFinanceiro;
   cliente_id: string | null;
@@ -39,7 +39,8 @@ const hoje = () => {
   return d;
 };
 
-const calcDiasAtraso = (dataVencimento: string): number => {
+const calcDiasAtraso = (dataVencimento: string | null): number => {
+  if (!dataVencimento) return 0;
   const venc = new Date(dataVencimento + "T00:00:00");
   const diff = hoje().getTime() - venc.getTime();
   return Math.floor(diff / (1000 * 60 * 60 * 24));
@@ -89,7 +90,7 @@ export const usePagamentosProjeto = (projetoId: string | undefined) => {
         parcela_total: r.parcela_total,
         grupo_parcela: r.grupo_parcela,
         observacao: r.observacao,
-        created_at: r.created_at,
+        created_at: r.created_at ?? "",
       }));
 
       // Buscar valor_contrato do projeto
@@ -109,7 +110,7 @@ export const usePagamentosProjeto = (projetoId: string | undefined) => {
 
       const proximosPendentes = pendentes
         .filter((p) => calcDiasAtraso(p.data_vencimento) <= 0)
-        .sort((a, b) => a.data_vencimento.localeCompare(b.data_vencimento));
+        .sort((a, b) => (a.data_vencimento ?? "").localeCompare(b.data_vencimento ?? ""));
 
       const resumo: ResumoPagamentos = {
         totalContrato,

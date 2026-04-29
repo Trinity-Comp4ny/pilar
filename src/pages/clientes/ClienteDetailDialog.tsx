@@ -1,8 +1,7 @@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { User, Mail, Phone, MapPin, Landmark, Globe, KeyRound, Loader2, Pencil, Trash2 } from "lucide-react";
-import { toast } from "sonner";
+import { User, Mail, Phone, MapPin, Landmark, Globe, KeyRound, Loader2, Pencil, Trash2, ShieldOff } from "lucide-react";
 import { formatDocument } from "@/lib/maskUtils";
 import type { Cliente } from "@/hooks/useClientes";
 
@@ -10,7 +9,6 @@ type PortalStatus = "idle" | "loading" | "exists" | "none";
 
 interface PortalCredentials {
   email: string;
-  senha: string;
 }
 
 interface ClienteDetailDialogProps {
@@ -24,53 +22,30 @@ interface ClienteDetailDialogProps {
   resetCredentials: PortalCredentials | null;
   isInvitingPortal: boolean;
   isResettingPortal: boolean;
+  isRevokingPortal: boolean;
 
   onInvitePortal: () => void;
   onResetPortalPassword: () => void;
+  onRevokePortal: () => void;
   onEdit: (cliente: Cliente) => void;
   onDelete: (id: string) => void;
   onClose: () => void;
 }
 
 function CredentialsBox({ credentials, variant }: { credentials: PortalCredentials; variant: "success" | "reset" }) {
-  const copyText = () => {
-    const text = `Portal do Cliente Pilar\n\nEmail: ${credentials.email}\nSenha: ${credentials.senha}\nLink: ${window.location.origin}/cliente/login`;
-    navigator.clipboard.writeText(text);
-    toast.success("Copiado!", { description: "Credenciais copiadas para a área de transferência." });
-  };
-
   const styles =
     variant === "success"
       ? { box: "bg-green-50 border-green-200", title: "text-green-800", desc: "text-green-700" }
       : { box: "bg-amber-50 border-amber-200", title: "text-amber-800", desc: "text-amber-700" };
 
   return (
-    <div className={`space-y-3 border rounded-lg p-4 ${styles.box}`}>
+    <div className={`space-y-2 border rounded-lg p-4 ${styles.box}`}>
       <p className={`text-sm font-medium ${styles.title}`}>
         {variant === "success" ? "Acesso criado com sucesso!" : "Senha redefinida!"}
       </p>
       <p className={`text-xs ${styles.desc}`}>
-        {variant === "success"
-          ? "Envie as credenciais abaixo para o cliente:"
-          : "Envie as novas credenciais ao cliente. A senha não será exibida novamente:"}
+        As credenciais foram enviadas para <strong>{credentials.email}</strong> por email.
       </p>
-      <div className="bg-white rounded border p-3 space-y-1.5 font-mono text-sm">
-        <div className="flex items-center justify-between">
-          <span className="text-muted-foreground">Email:</span>
-          <span className="font-medium">{credentials.email}</span>
-        </div>
-        <div className="flex items-center justify-between">
-          <span className="text-muted-foreground">Senha:</span>
-          <span className="font-medium">{credentials.senha}</span>
-        </div>
-        <div className="flex items-center justify-between">
-          <span className="text-muted-foreground">Link:</span>
-          <span className="font-medium text-xs">{window.location.origin}/cliente/login</span>
-        </div>
-      </div>
-      <Button size="sm" variant="outline" className="w-full" onClick={copyText}>
-        Copiar credenciais
-      </Button>
     </div>
   );
 }
@@ -85,8 +60,10 @@ export function ClienteDetailDialog({
   resetCredentials,
   isInvitingPortal,
   isResettingPortal,
+  isRevokingPortal,
   onInvitePortal,
   onResetPortalPassword,
+  onRevokePortal,
   onEdit,
   onDelete,
   onClose,
@@ -161,20 +138,36 @@ export function ClienteDetailDialog({
                     <Globe size={14} />
                     <span className="flex-1">Cliente possui acesso ao portal</span>
                   </div>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={onResetPortalPassword}
-                    disabled={isResettingPortal}
-                    className="w-full"
-                  >
-                    {isResettingPortal ? (
-                      <Loader2 size={14} className="animate-spin mr-1.5" />
-                    ) : (
-                      <KeyRound size={14} className="mr-1.5" />
-                    )}
-                    {isResettingPortal ? "Redefinindo..." : "Redefinir senha"}
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={onResetPortalPassword}
+                      disabled={isResettingPortal || isRevokingPortal}
+                      className="flex-1"
+                    >
+                      {isResettingPortal ? (
+                        <Loader2 size={14} className="animate-spin mr-1.5" />
+                      ) : (
+                        <KeyRound size={14} className="mr-1.5" />
+                      )}
+                      {isResettingPortal ? "Redefinindo..." : "Redefinir senha"}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={onRevokePortal}
+                      disabled={isRevokingPortal || isResettingPortal}
+                      className="border-red-200 text-red-700 hover:bg-red-50"
+                    >
+                      {isRevokingPortal ? (
+                        <Loader2 size={14} className="animate-spin mr-1.5" />
+                      ) : (
+                        <ShieldOff size={14} className="mr-1.5" />
+                      )}
+                      {isRevokingPortal ? "Revogando..." : "Revogar"}
+                    </Button>
+                  </div>
                   {resetCredentials && <CredentialsBox credentials={resetCredentials} variant="reset" />}
                 </div>
               )}

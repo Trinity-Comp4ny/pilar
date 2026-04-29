@@ -6,14 +6,13 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Trash2, Landmark, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { formatCurrencyInput, parseCurrencyString } from "@/lib/currencyUtils";
+import { formatCurrencyInput, formatValorToInput, parseCurrencyString } from "@/lib/currencyUtils";
 import { formatCPF, formatPhone, formatAgency, formatBankAccount } from "@/lib/maskUtils";
 import { supabase } from "@/integrations/supabase/client";
 import { CONTRACT_TYPES, CONTRACT_TYPE_LABELS } from "@/constants";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { pessoaSchema, pessoaDefaultValues, type PessoaFormData } from "@/schemas";
-import { getSafeErrorMessage } from "@/lib/safeError";
 import type { Pessoa, ContaBancaria } from "../types";
 
 interface PessoaFormDialogProps {
@@ -49,9 +48,8 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
         endereco: editPessoa.endereco || "",
         data_admissao: editPessoa.data_admissao || "",
         data_demissao: editPessoa.data_demissao || "",
-        salario_fixo:
-          editPessoa.salario_fixo != null ? formatCurrencyInput((editPessoa.salario_fixo * 100).toString()) : "",
-        valor_m2: editPessoa.valor_m2 != null ? formatCurrencyInput((editPessoa.valor_m2 * 100).toString()) : "",
+        salario_fixo: editPessoa.salario_fixo != null ? formatValorToInput(editPessoa.salario_fixo) : "",
+        valor_m2: editPessoa.valor_m2 != null ? formatValorToInput(editPessoa.valor_m2) : "",
       });
       setContasBancarias(Array.isArray(editPessoa.contas_bancarias) ? editPessoa.contas_bancarias : []);
     } else {
@@ -104,22 +102,25 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
       };
 
       if (isEditMode && editPessoa) {
-        const { error } = await supabase.from("pessoas").update(payload).eq("id", editPessoa.id);
+        const { error } = await supabase
+          .from("pessoas")
+          .update(payload as never)
+          .eq("id", editPessoa.id);
         if (error) throw error;
         toast.success("Pessoa atualizada", { description: "Dados atualizados com sucesso" });
       } else {
         const { error } = await supabase.from("pessoas").insert({
           ...payload,
-          empresa_id: (await supabase.rpc("get_user_empresa_id", {})).data,
-        });
+          empresa_id: (await supabase.rpc("get_user_empresa_id")).data,
+        } as never);
         if (error) throw error;
         toast.success("Pessoa cadastrada", { description: "Nova pessoa adicionada com sucesso" });
       }
 
       onOpenChange(false);
       onSaved();
-    } catch (err: unknown) {
-      toast.error("Erro ao salvar", { description: getSafeErrorMessage(err) });
+    } catch {
+      toast.error("Erro ao salvar");
     } finally {
       setIsSaving(false);
     }

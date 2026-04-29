@@ -9,7 +9,6 @@ import { PageHeader } from "@/components/PageHeader";
 import { toast } from "sonner";
 import { User, Mail, Phone, Building2, ShieldCheck } from "lucide-react";
 import { formatPhone } from "@/lib/maskUtils";
-import { getSafeErrorMessage } from "@/lib/safeError";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { MfaSetup } from "@/components/MfaSetup";
 

@@ -394,8 +394,9 @@ RETURNS TRIGGER
 LANGUAGE plpgsql
 AS $$
 BEGIN
-  -- Service role e postgres bypassam (SQL direto)
-  IF current_setting('role', true) IN ('service_role', 'postgres') THEN
+  -- Bypass: conexão direta (postgres/supabase_admin) OU service_role via JWT
+  IF current_user IN ('postgres', 'supabase_admin')
+     OR current_setting('role', true) = 'service_role' THEN
     RETURN NEW;
   END IF;
 

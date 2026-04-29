@@ -2,7 +2,7 @@
  * Tools for masks and CPF/CNPJ validation
  */
 
-export const onlyDigits = (v: string): string => v.replace(/\D/g, "");
+export const onlyDigits = (v: string | null | undefined): string => (v ?? "").replace(/\D/g, "");
 
 export const formatCPF = (value: string): string => {
   const d = onlyDigits(value).slice(0, 11);

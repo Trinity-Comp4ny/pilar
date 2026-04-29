@@ -1,5 +1,3 @@
-import React from "react";
-
 interface TooltipPayloadEntry {
   color: string;
   name: string;

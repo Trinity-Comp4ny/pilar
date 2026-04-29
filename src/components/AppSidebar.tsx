@@ -2,12 +2,11 @@ import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
   BarChart,
   Calendar,
-  Clock,
   FileText,
-  Gauge,
   Home,
   MapPin,
   ShieldCheck,
+  Zap,
   Target,
   Users,
   User,
@@ -70,8 +69,6 @@ const menu: MenuGroup[] = [
     label: "Operação",
     items: [
       { title: "Projetos", url: "/projetos", icon: Calendar, feature: "projetos" },
-      { title: "Planejamento", url: "/planejamento", icon: Gauge, feature: "planejamento", badge: "novo" },
-      { title: "Timesheet", url: "/timesheet", icon: Clock, feature: "timesheet", badge: "novo" },
       { title: "Mapa", url: "/mapa", icon: MapPin, feature: "mapa" },
     ],
   },
@@ -83,7 +80,7 @@ const menu: MenuGroup[] = [
     label: "Equipe",
     items: [
       { title: "Equipe", url: "/pessoas", icon: Users, feature: "pessoas" },
-      { title: "Metas", url: "/metas", icon: Target, feature: "metas", badge: "novo" },
+      { title: "Metas", url: "/metas", icon: Target, feature: "metas" },
     ],
   },
 ];
@@ -93,7 +90,7 @@ export function AppSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, profile, signOut } = useAuth();
-  const { getNavItemProps, isAdmin } = usePermissions();
+  const { getNavItemProps, isAdmin, isUltraAdmin } = usePermissions();
   const currentPath = location.pathname;
   const [sidebarWidth, setSidebarWidth] = useState(state === "collapsed" ? "64px" : "240px");
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -123,6 +120,10 @@ export function AppSidebar() {
 
   const handleAdmin = () => {
     navigate("/admin");
+  };
+
+  const handleUltraAdmin = () => {
+    navigate("/ultra-admin");
   };
 
   const handleBilling = () => {
@@ -299,11 +300,23 @@ export function AppSidebar() {
                 Assinatura
               </DropdownMenuItem>
             )}
-            {isAdmin && (
+            {isAdmin && !isUltraAdmin && (
               <DropdownMenuItem onClick={handleAdmin}>
                 <ShieldCheck size={14} className="mr-2" />
                 Admin Portal
               </DropdownMenuItem>
+            )}
+            {isUltraAdmin && (
+              <>
+                <DropdownMenuItem onClick={handleAdmin}>
+                  <ShieldCheck size={14} className="mr-2" />
+                  Admin Portal
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleUltraAdmin}>
+                  <Zap size={14} className="mr-2" />
+                  Gestão Pilar
+                </DropdownMenuItem>
+              </>
             )}
             <ImpersonationPicker />
             <DropdownMenuSeparator />

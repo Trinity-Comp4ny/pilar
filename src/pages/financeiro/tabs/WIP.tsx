@@ -56,7 +56,7 @@ export default function WIP() {
       queryClient.invalidateQueries({ queryKey: ["wip-snapshots"] });
       toast.success(`WIP calculado para ${count} projeto(s)`);
     },
-    onError: (err: Error) => toast.error("Erro"),
+    onError: () => toast.error("Erro"),
   });
 
   const totalCusto = snapshots.reduce((s, w) => s + (Number(w.custo_realizado) || 0), 0);

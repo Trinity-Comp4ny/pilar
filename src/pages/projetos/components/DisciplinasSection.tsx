@@ -4,7 +4,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState } from "react";
-import { Plus, Trash2, Edit, User, ChevronDown, AlertTriangle, Clock, CheckCircle, GitBranch, X } from "lucide-react";
+import { Plus, Trash2, Edit, User, ChevronDown, AlertTriangle, Clock, GitBranch, X } from "lucide-react";
 import { PROJECT_PRIORITY, PRIORITY_OPTIONS, PROJECT_PRIORITY_CONFIG, type ProjectPriority } from "@/constants";
 import {
   type DisciplinaResponsavel,
@@ -201,7 +201,7 @@ export function DisciplinasSection({
             <Label className="text-xs">Início</Label>
             <Input
               type="date"
-              value={tempDisciplina.data_inicio}
+              value={(tempDisciplina.data_inicio || "").slice(0, 10)}
               onChange={(e) => onTempDisciplinaChange({ ...tempDisciplina, data_inicio: e.target.value })}
               className="h-8 text-xs"
             />
@@ -210,7 +210,7 @@ export function DisciplinasSection({
             <Label className="text-xs">Previsão</Label>
             <Input
               type="date"
-              value={tempDisciplina.data_previsao}
+              value={(tempDisciplina.data_previsao || "").slice(0, 10)}
               onChange={(e) => onTempDisciplinaChange({ ...tempDisciplina, data_previsao: e.target.value })}
               className="h-8 text-xs"
             />
@@ -219,7 +219,7 @@ export function DisciplinasSection({
             <Label className="text-xs">Final</Label>
             <Input
               type="date"
-              value={tempDisciplina.data_final}
+              value={(tempDisciplina.data_final || "").slice(0, 10)}
               onChange={(e) => onTempDisciplinaChange({ ...tempDisciplina, data_final: e.target.value })}
               className="h-8 text-xs"
             />

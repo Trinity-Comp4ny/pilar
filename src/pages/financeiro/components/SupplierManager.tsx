@@ -24,7 +24,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Plus, Pencil, Trash2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { getSafeErrorMessage } from "@/lib/safeError";
 
 interface Supplier {
   id: string;
@@ -69,9 +68,9 @@ export function SupplierManager({ onSupplierChange }: SupplierManagerProps) {
       const mappedSuppliers = (data || []).map((sup) => ({
         id: sup.id,
         name: sup.nome,
-        contact: sup.contato,
-        email: sup.email,
-        cnpj: sup.cnpj,
+        contact: sup.contato ?? undefined,
+        email: sup.email ?? undefined,
+        cnpj: sup.cnpj ?? undefined,
       }));
 
       setSuppliers(mappedSuppliers);
@@ -100,8 +99,8 @@ export function SupplierManager({ onSupplierChange }: SupplierManagerProps) {
         contato: newSupplier.contact?.trim(),
         email: newSupplier.email?.trim(),
         cnpj: newSupplier.cnpj?.trim(),
-        empresa_id: (await supabase.rpc("get_user_empresa_id", {})).data,
-      });
+        empresa_id: (await supabase.rpc("get_user_empresa_id")).data,
+      } as never);
 
       if (error) throw error;
 

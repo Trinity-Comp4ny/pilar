@@ -1,8 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { formatCurrencyInput, parseCurrencyString } from "@/lib/currencyUtils";
+import { formatValorToInput, parseCurrencyString } from "@/lib/currencyUtils";
 import { supabase } from "@/integrations/supabase/client";
-import { getSafeErrorMessage } from "@/lib/safeError";
 import { addBusinessDays, formatDateLocal, parseDateLocal } from "@/lib/businessDays";
 import { PROJECT_STATUS, PROJECT_PRIORITY, type ProjectPriority } from "@/constants";
 import {
@@ -207,17 +206,13 @@ export function useProjetoForm({
         nome: editProjeto.nome,
         cliente_id: editProjeto.cliente_id,
         localizacao: editProjeto.localizacao || "",
-        loc_cep: "",
         ...parsed,
         parcelas: editProjeto.parcelas || "",
         area_m2: editProjeto.area_m2?.toString() || "",
         data_inicio: editProjeto.data_inicio || "",
         data_previsao: editProjeto.data_previsao || "",
         data_final: editProjeto.data_final || "",
-        valor_contrato:
-          editProjeto.valor_contrato !== undefined
-            ? formatCurrencyInput((editProjeto.valor_contrato * 100).toString())
-            : "",
+        valor_contrato: editProjeto.valor_contrato !== undefined ? formatValorToInput(editProjeto.valor_contrato) : "",
         observacao: editProjeto.observacao || "",
         status: editProjeto.status,
         prioridade: editProjeto.prioridade || PROJECT_PRIORITY.MEDIA,
@@ -464,15 +459,15 @@ export function useProjetoForm({
           p_codigo: formData.codigo_projeto,
           p_nome: formData.nome,
           p_cliente_id: formData.cliente_id,
-          p_data_inicio: formData.data_inicio || null,
-          p_data_previsao: formData.data_previsao || null,
-          p_data_final: formData.data_final || null,
+          p_data_inicio: formData.data_inicio || undefined,
+          p_data_previsao: formData.data_previsao || undefined,
+          p_data_final: formData.data_final || undefined,
           p_valor_contrato: parseCurrencyString(formData.valor_contrato) || 0,
           p_observacao: formData.observacao,
           p_localizacao: localizacaoComposta,
-          p_parcelas: formData.parcelas || null,
+          p_parcelas: formData.parcelas || undefined,
           p_area_m2: parseFloat(formData.area_m2) || 0,
-          p_disciplinas: projetosDisciplinas,
+          p_disciplinas: projetosDisciplinas as unknown as never,
           p_status: formData.status,
           p_prioridade: formData.prioridade,
         });
@@ -505,15 +500,15 @@ export function useProjetoForm({
           p_codigo: formData.codigo_projeto,
           p_nome: formData.nome,
           p_cliente_id: formData.cliente_id,
-          p_data_inicio: formData.data_inicio || null,
-          p_data_previsao: formData.data_previsao || null,
-          p_data_final: formData.data_final || null,
+          p_data_inicio: formData.data_inicio || undefined,
+          p_data_previsao: formData.data_previsao || undefined,
+          p_data_final: formData.data_final || undefined,
           p_valor_contrato: parseCurrencyString(formData.valor_contrato) || 0,
           p_observacao: formData.observacao,
           p_localizacao: localizacaoComposta,
-          p_parcelas: formData.parcelas || null,
+          p_parcelas: formData.parcelas || undefined,
           p_area_m2: parseFloat(formData.area_m2) || 0,
-          p_disciplinas: projetosDisciplinas,
+          p_disciplinas: projetosDisciplinas as unknown as never,
           p_prioridade: formData.prioridade,
         });
 

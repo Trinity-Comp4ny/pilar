@@ -12,6 +12,7 @@ import { PrivateRoute } from "./components/PrivateRoute";
 import { ClientePrivateRoute } from "./components/ClientePrivateRoute";
 import { AdminRoute } from "./components/AdminRoute";
 import { UltraAdminRoute } from "./components/UltraAdminRoute";
+import { FeatureRoute } from "./components/FeatureRoute";
 import { ImpersonationBanner } from "./components/ImpersonationBanner";
 
 const Landing = lazy(() => import("./pages/Landing"));
@@ -30,7 +31,6 @@ const Profile = lazy(() => import("./pages/Profile"));
 const Company = lazy(() => import("./pages/Company"));
 const CompanySetup = lazy(() => import("./pages/CompanySetup"));
 const ProfileSetup = lazy(() => import("./pages/ProfileSetup"));
-const Timesheet = lazy(() => import("./pages/timesheet"));
 const Templates = lazy(() => import("./pages/templates"));
 const MapaObras = lazy(() => import("./pages/mapa"));
 const Propostas = lazy(() => import("./pages/propostas"));
@@ -41,6 +41,7 @@ const AiHub = lazy(() => import("./pages/ai"));
 const ProjetoDetail = lazy(() => import("./pages/projetos/ProjetoDetail"));
 const PortalFinanceiro = lazy(() => import("./pages/portal/PortalFinanceiro"));
 const PortalEntregas = lazy(() => import("./pages/portal/PortalEntregas"));
+const PortalPropostas = lazy(() => import("./pages/portal/PortalPropostas"));
 const ClienteLogin = lazy(() => import("./pages/cliente/ClienteLogin"));
 const ClienteDashboard = lazy(() => import("./pages/cliente/ClienteDashboard"));
 const ClienteProjetoDetail = lazy(() => import("./pages/cliente/ClienteProjetoDetail"));
@@ -48,7 +49,6 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 const Admin = lazy(() => import("./pages/admin"));
 const FeatureAccessPreview = lazy(() => import("./pages/admin/FeatureAccessPreview"));
 const UltraAdmin = lazy(() => import("./pages/ultra-admin"));
-const Planejamento = lazy(() => import("./pages/planejamento"));
 const MfaChallengePage = lazy(() => import("./pages/MfaChallengePage"));
 const MfaSetupPage = lazy(() => import("./pages/MfaSetupPage"));
 const PasswordReset = lazy(() => import("./pages/PasswordReset"));
@@ -100,21 +100,55 @@ const App = () => {
 
                     <Route element={<PrivateRoute />}>
                       <Route path="/dashboard" element={<Dashboard />} />
-                      <Route path="/leads" element={<Leads />} />
-                      <Route path="/financeiro" element={<Financeiro />} />
-                      <Route path="/projetos" element={<Projetos />} />
-                      <Route path="/projetos/:id" element={<ProjetoDetail />} />
-                      <Route path="/clientes" element={<Clientes />} />
-                      <Route path="/pessoas" element={<Pessoas />} />
-                      <Route path="/relatorios" element={<Relatorios />} />
-                      <Route path="/timesheet" element={<Timesheet />} />
-                      <Route path="/templates" element={<Templates />} />
-                      <Route path="/mapa" element={<MapaObras />} />
-                      <Route path="/propostas" element={<Propostas />} />
-                      <Route path="/capacidade" element={<Capacidade />} />
-                      <Route path="/planejamento" element={<Planejamento />} />
-                      <Route path="/metas" element={<MetasPage />} />
-                      <Route path="/ai" element={<AiHub />} />
+
+                      <Route element={<FeatureRoute feature="leads" />}>
+                        <Route path="/leads" element={<Leads />} />
+                      </Route>
+
+                      <Route element={<FeatureRoute feature="financeiro" />}>
+                        <Route path="/financeiro" element={<Financeiro />} />
+                      </Route>
+
+                      <Route element={<FeatureRoute feature="projetos" />}>
+                        <Route path="/projetos" element={<Projetos />} />
+                        <Route path="/projetos/:id" element={<ProjetoDetail />} />
+                      </Route>
+
+                      <Route element={<FeatureRoute feature="clientes" />}>
+                        <Route path="/clientes" element={<Clientes />} />
+                      </Route>
+
+                      <Route element={<FeatureRoute feature="pessoas" />}>
+                        <Route path="/pessoas" element={<Pessoas />} />
+                      </Route>
+
+                      <Route element={<FeatureRoute feature="relatorios" />}>
+                        <Route path="/relatorios" element={<Relatorios />} />
+                      </Route>
+
+                      <Route element={<FeatureRoute feature="templates" />}>
+                        <Route path="/templates" element={<Templates />} />
+                      </Route>
+
+                      <Route element={<FeatureRoute feature="mapa" />}>
+                        <Route path="/mapa" element={<MapaObras />} />
+                      </Route>
+
+                      <Route element={<FeatureRoute feature="propostas" />}>
+                        <Route path="/propostas" element={<Propostas />} />
+                      </Route>
+
+                      <Route element={<FeatureRoute feature="capacidade" />}>
+                        <Route path="/capacidade" element={<Capacidade />} />
+                      </Route>
+
+                      <Route element={<FeatureRoute feature="metas" />}>
+                        <Route path="/metas" element={<MetasPage />} />
+                      </Route>
+
+                      <Route element={<FeatureRoute feature="ai_hub" />}>
+                        <Route path="/ai" element={<AiHub />} />
+                      </Route>
                       <Route path="/profile" element={<Profile />} />
                       <Route path="/company" element={<Company />} />
                       <Route path="/company-setup" element={<CompanySetup />} />
@@ -140,6 +174,7 @@ const App = () => {
                     <Route path="/portal/:token" element={<Portal />} />
                     <Route path="/portal/:token/financeiro" element={<PortalFinanceiro />} />
                     <Route path="/portal/:token/entregas" element={<PortalEntregas />} />
+                    <Route path="/portal/:token/propostas" element={<PortalPropostas />} />
 
                     {/* Portal do Cliente — Autenticado */}
                     <Route path="/cliente/login" element={<ClienteLogin />} />
