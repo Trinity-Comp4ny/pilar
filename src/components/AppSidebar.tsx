@@ -94,6 +94,9 @@ export function AppSidebar() {
   const [sidebarWidth, setSidebarWidth] = useState(state === "collapsed" ? "64px" : "240px");
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
+  const USER_ROUTES = ["/profile", "/company", "/admin", "/ultra-admin", "/billing"];
+  const isUserRouteActive = USER_ROUTES.some((r) => currentPath.startsWith(r));
+
   const userName = profile
     ? [profile.first_name, profile.last_name].filter(Boolean).join(" ").trim() || user?.email || "Usuário"
     : (user?.user_metadata as { nome?: string } | null | undefined)?.nome || user?.email || "Usuário";
@@ -175,7 +178,7 @@ export function AppSidebar() {
         className={cn(
           "flex items-center gap-3 px-3 py-2 rounded-full text-sm transition-all duration-200 group relative",
           collapsed && "justify-center",
-          isActive ? "bg-accent-orange/30 text-black/70 font-medium" : "text-black/70 hover:bg-accent-orange/15"
+          isActive ? "bg-brand text-black/80 font-medium" : "text-black/70 hover:bg-brand/30"
         )}
         title={collapsed ? item.title : ""}
       >
@@ -251,8 +254,9 @@ export function AppSidebar() {
           <DropdownMenuTrigger asChild>
             <button
               className={cn(
-                "group w-full flex items-center gap-3 px-3 py-2 rounded-full text-sm transition-all duration-200 hover:bg-black/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/10",
-                collapsed && "justify-center"
+                "group w-full flex items-center gap-3 px-3 py-2 rounded-full text-sm transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/10",
+                collapsed && "justify-center",
+                isUserRouteActive ? "bg-brand text-black/80 font-medium" : "hover:bg-brand/30"
               )}
               type="button"
               aria-label="Menu do usuário"

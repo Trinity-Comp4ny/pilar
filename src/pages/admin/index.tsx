@@ -5,8 +5,8 @@ import { toast } from "sonner";
 import { Building2, CreditCard, ShieldCheck, SlidersHorizontal, Sparkles, Users, Zap } from "lucide-react";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
+import { SecondSidebar, type SecondSidebarTab } from "@/components/SecondSidebar";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import type { CompanyData } from "@/pages/company/types";
 import { parseCompanyFeatures, type CompanyFeatures, type SubscriptionPlanSlug } from "@/lib/features";
@@ -30,6 +30,16 @@ type RawUser = {
 
 const VALID_TABS = ["usuarios", "features", "empresa", "parametros", "automacoes", "auditoria", "plano"] as const;
 type AdminTab = (typeof VALID_TABS)[number];
+
+const ADMIN_TABS: SecondSidebarTab[] = [
+  { id: "usuarios", label: "Usuários", icon: Users },
+  { id: "features", label: "Features", icon: Sparkles },
+  { id: "empresa", label: "Empresa", icon: Building2 },
+  { id: "parametros", label: "Parâmetros", icon: SlidersHorizontal },
+  { id: "automacoes", label: "Automações", icon: Zap },
+  { id: "auditoria", label: "Auditoria", icon: ShieldCheck },
+  { id: "plano", label: "Plano", icon: CreditCard },
+];
 
 export default function Admin() {
   usePageTitle("Admin");
@@ -194,39 +204,17 @@ export default function Admin() {
     setSearchParams({ tab: next }, { replace: true });
   };
 
+  const adminSidebarTabs: SecondSidebarTab[] = ADMIN_TABS.map((t) =>
+    t.id === "usuarios" ? { ...t, badge: users.length } : t
+  );
+
   return (
     <PageLayout
       header={<PageHeader title="Admin Portal" description="Governança, configuração e observabilidade da firma" />}
+      sidebar={<SecondSidebar tabs={adminSidebarTabs} value={activeTab} onValueChange={handleTabChange} />}
       containerClassName="max-w-6xl"
     >
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-        <TabsList className="flex flex-wrap gap-1 h-auto p-1">
-          <TabsTrigger value="usuarios" className="gap-2">
-            <Users size={14} /> Usuários
-            <Badge variant="secondary" className="ml-1">
-              {users.length}
-            </Badge>
-          </TabsTrigger>
-          <TabsTrigger value="features" className="gap-2">
-            <Sparkles size={14} /> Features
-          </TabsTrigger>
-          <TabsTrigger value="empresa" className="gap-2">
-            <Building2 size={14} /> Empresa
-          </TabsTrigger>
-          <TabsTrigger value="parametros" className="gap-2">
-            <SlidersHorizontal size={14} /> Parâmetros
-          </TabsTrigger>
-          <TabsTrigger value="automacoes" className="gap-2">
-            <Zap size={14} /> Automações
-          </TabsTrigger>
-          <TabsTrigger value="auditoria" className="gap-2">
-            <ShieldCheck size={14} /> Auditoria
-          </TabsTrigger>
-          <TabsTrigger value="plano" className="gap-2">
-            <CreditCard size={14} /> Plano
-          </TabsTrigger>
-        </TabsList>
-
         <TabsContent value="usuarios" className="mt-6">
           <UsuariosTab
             users={users}

@@ -4,11 +4,12 @@ import { cn } from "@/lib/utils";
 interface PageLayoutProps {
   children: React.ReactNode;
   header?: React.ReactNode;
+  sidebar?: React.ReactNode;
   className?: string;
   containerClassName?: string;
 }
 
-export function PageLayout({ children, header, className, containerClassName }: PageLayoutProps) {
+export function PageLayout({ children, header, sidebar, className, containerClassName }: PageLayoutProps) {
   const { state, isMobile } = useSidebar();
 
   return (
@@ -18,8 +19,11 @@ export function PageLayout({ children, header, className, containerClassName }: 
     >
       {header && <div className="sticky top-0 z-20 w-full bg-white border-b">{header}</div>}
 
-      <div className={cn("flex-1 overflow-y-auto w-full bg-gray-50/50 p-6 md:p-8 xl:p-10 2xl:p-12", className)}>
-        <div className={cn("w-full mx-auto space-y-6", containerClassName)}>{children}</div>
+      <div className="flex flex-1 overflow-hidden">
+        {sidebar}
+        <div className={cn("flex-1 overflow-y-auto w-full bg-gray-50/50 p-6 md:p-8 xl:p-10 2xl:p-12", className)}>
+          <div className={cn("w-full mx-auto space-y-6", containerClassName)}>{children}</div>
+        </div>
       </div>
     </div>
   );

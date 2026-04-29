@@ -5,7 +5,6 @@ import { Calendar as CalendarIcon, CalendarDays } from "lucide-react";
 import { format, startOfMonth, endOfMonth, subMonths, startOfYear, endOfYear } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Dispatch, SetStateAction, useState, useEffect } from "react";
-import { TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -129,88 +128,6 @@ export function FinanceiroHeader({
             </div>
           </div>
         </div>
-      </div>
-
-      {/* Tabs Navigation */}
-      <div className="w-full bg-white border-t overflow-x-auto">
-        <TabsList className="rounded-none bg-transparent border-none h-auto p-0 flex flex-nowrap gap-0 min-w-max w-full">
-          <TabsTrigger
-            value="visao-geral"
-            className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent-orange data-[state=active]:bg-white data-[state=active]:text-accent-orange py-3 px-4 min-w-max whitespace-nowrap text-sm"
-          >
-            Visão Geral
-          </TabsTrigger>
-          <TabsTrigger
-            value="fluxo-caixa"
-            className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent-orange data-[state=active]:bg-white data-[state=active]:text-accent-orange py-3 px-4 min-w-max whitespace-nowrap text-sm"
-          >
-            Fluxo de Caixa
-          </TabsTrigger>
-          <TabsTrigger
-            value="lancamentos"
-            className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent-orange data-[state=active]:bg-white data-[state=active]:text-accent-orange py-3 px-4 min-w-max whitespace-nowrap text-sm"
-          >
-            Lançamentos
-          </TabsTrigger>
-          <TabsTrigger
-            value="mensal"
-            className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent-orange data-[state=active]:bg-white data-[state=active]:text-accent-orange py-3 px-4 min-w-max whitespace-nowrap text-sm"
-          >
-            Resumo Mensal
-          </TabsTrigger>
-          <TabsTrigger
-            value="folha-pagamento"
-            className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent-orange data-[state=active]:bg-white data-[state=active]:text-accent-orange py-3 px-4 min-w-max whitespace-nowrap text-sm"
-          >
-            Folha de Pagamento
-          </TabsTrigger>
-          <TabsTrigger
-            value="faturas"
-            disabled
-            className="rounded-none border-b-2 border-transparent py-3 px-4 min-w-max whitespace-nowrap text-sm opacity-40 cursor-not-allowed"
-          >
-            Faturas
-          </TabsTrigger>
-          <TabsTrigger
-            value="contas"
-            className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent-orange data-[state=active]:bg-white data-[state=active]:text-accent-orange py-3 px-4 min-w-max whitespace-nowrap text-sm"
-          >
-            Contas
-          </TabsTrigger>
-          <TabsTrigger
-            value="projecao"
-            disabled
-            className="rounded-none border-b-2 border-transparent py-3 px-4 min-w-max whitespace-nowrap text-sm opacity-40 cursor-not-allowed"
-          >
-            Projeção
-          </TabsTrigger>
-          <TabsTrigger
-            value="aging"
-            disabled
-            className="rounded-none border-b-2 border-transparent py-3 px-4 min-w-max whitespace-nowrap text-sm opacity-40 cursor-not-allowed"
-          >
-            Aging
-          </TabsTrigger>
-          <TabsTrigger
-            value="dre"
-            disabled
-            className="rounded-none border-b-2 border-transparent py-3 px-4 min-w-max whitespace-nowrap text-sm opacity-40 cursor-not-allowed"
-          >
-            DRE
-          </TabsTrigger>
-          <TabsTrigger
-            value="wip"
-            className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent-orange data-[state=active]:bg-white data-[state=active]:text-accent-orange py-3 px-4 min-w-max whitespace-nowrap text-sm"
-          >
-            WIP
-          </TabsTrigger>
-          <TabsTrigger
-            value="rentabilidade"
-            className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent-orange data-[state=active]:bg-white data-[state=active]:text-accent-orange py-3 px-4 min-w-max whitespace-nowrap text-sm"
-          >
-            Rentabilidade
-          </TabsTrigger>
-        </TabsList>
       </div>
     </div>
   );
