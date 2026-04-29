@@ -22,6 +22,15 @@ vi.mock("./Layout", () => ({
   default: () => <div data-testid="layout">Layout</div>,
 }));
 
+vi.mock("@/integrations/supabase/client", () => ({
+  supabase: {
+    auth: { signOut: vi.fn() },
+    from: vi.fn(() => ({
+      select: vi.fn(() => ({ maybeSingle: vi.fn(() => Promise.resolve({ data: null })) })),
+    })),
+  },
+}));
+
 import { PrivateRoute } from "./PrivateRoute";
 
 function renderWithRouter(initialRoute = "/dashboard") {
