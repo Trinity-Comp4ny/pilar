@@ -74,7 +74,7 @@ export default function Login() {
     }
     setIsResetting(true);
     const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-      redirectTo: `${window.location.origin}/profile-setup`,
+      redirectTo: `${window.location.origin}/reset-password`,
     });
     if (error) {
       toast.error("Erro ao enviar", {
@@ -142,7 +142,7 @@ export default function Login() {
                   type="button"
                   onClick={handleResetPassword}
                   disabled={isResetting}
-                  className="text-xs font-medium text-accent-orange hover:text-orange-700 hover:underline disabled:opacity-50"
+                  className="text-xs font-medium text-accent-orange hover:text-green-600 hover:underline disabled:opacity-50"
                 >
                   {isResetting ? "Enviando..." : "Esqueceu a senha?"}
                 </button>
@@ -171,7 +171,7 @@ export default function Login() {
             </div>
 
             <Button
-              className="w-full h-11 bg-accent-orange hover:bg-orange-600 text-white font-medium shadow-lg shadow-orange-500/20 hover:shadow-orange-500/30 transition-all active:scale-[0.98] text-sm"
+              className="w-full h-11 bg-accent-orange hover:bg-accent-orange/80 text-ink font-medium shadow-lg shadow-accent-orange/20 hover:shadow-accent-orange/30 transition-all active:scale-[0.98] text-sm"
               type="submit"
               disabled={isLoading}
             >
@@ -197,7 +197,7 @@ export default function Login() {
           <div className="text-center pt-2">
             <Button
               variant="outline"
-              className="w-full h-10 border-slate-200 text-slate-600 hover:text-accent-orange hover:border-accent-orange/50 hover:bg-orange-50/50 transition-all text-sm font-medium"
+              className="w-full h-10 border-slate-200 text-slate-600 hover:text-accent-orange hover:border-accent-orange/50 hover:bg-accent-orange/10 transition-all text-sm font-medium"
               asChild
             >
               <a href="https://trnty.com.br" target="_blank" rel="noopener noreferrer">

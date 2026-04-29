@@ -96,8 +96,10 @@ export function GerarPropostaDialog({
   useEffect(() => {
     const data = buildVariableData({
       proposta,
-      lead,
-      cliente,
+      lead: lead ? { nome: lead.nome, email: lead.email ?? undefined, contato: lead.contato ?? undefined } : null,
+      cliente: cliente
+        ? { nome: cliente.nome, email: cliente.email ?? undefined, contato: cliente.contato ?? undefined }
+        : null,
       empresaNome: empresa?.nome,
       disciplinas,
     });

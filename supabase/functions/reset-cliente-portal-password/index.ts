@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 import { authenticateUser, isUUID, jsonResponse, optionsResponse, safeErrorResponse } from "../_shared/cors.ts";
+import { sendEmail, templateAcessoPortalCliente } from "../_shared/email.ts";
 
 function generatePassword(length = 10): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
@@ -31,7 +32,7 @@ serve(async (req) => {
     }
     if (!profile.empresa_id) return safeErrorResponse(403, "Você precisa pertencer a uma empresa", req);
 
-    const { cliente_id } = await req.json();
+    const { cliente_id, nome_cliente } = await req.json();
     if (!isUUID(cliente_id)) return safeErrorResponse(400, "cliente_id inválido", req);
 
     const supabaseAdmin = createClient(
@@ -60,7 +61,25 @@ serve(async (req) => {
       return safeErrorResponse(400, `Falha ao redefinir senha: ${resetError.message}`, req);
     }
 
-    return jsonResponse({ success: true, email: account.email, senha: novaSenha }, 200, req);
+    const loginUrl = `${Deno.env.get("PUBLIC_SITE_URL") ?? ""}/portal/login`;
+
+    try {
+      await sendEmail({
+        to: account.email,
+        subject: "Sua senha do Portal do Cliente foi redefinida",
+        html: templateAcessoPortalCliente({
+          nomeCliente: nome_cliente ?? "Cliente",
+          email: account.email,
+          senha: novaSenha,
+          loginUrl,
+          isReset: true,
+        }),
+      });
+    } catch (emailErr) {
+      console.error("[reset-cliente-portal-password] sendEmail failed", emailErr);
+    }
+
+    return jsonResponse({ success: true, email: account.email }, 200, req);
   } catch (error: unknown) {
     console.error("[reset-cliente-portal-password] unexpected error", error);
     return safeErrorResponse(400, "Invalid request", req);

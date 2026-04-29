@@ -23,7 +23,7 @@ export function MetasHeader() {
       queryClient.invalidateQueries({ queryKey: ["metas"] });
       toast.success(`${count} meta(s) sincronizada(s)`);
     },
-    onError: (err: Error) => toast.error("Erro"),
+    onError: () => toast.error("Erro"),
   });
 
   return (

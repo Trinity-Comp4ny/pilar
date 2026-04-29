@@ -32,9 +32,9 @@ export function CapacidadeSimulacao({ disciplinas, prazoEstimadoDias }: Capacida
   const { data: responsaveis = [], isLoading: loadingResp } = useQuery({
     queryKey: ["responsaveis-capacidade-sim"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("projetos_responsaveis").select("pessoa_id, disciplina");
-      if (error) throw error;
-      return data || [];
+      const res = await supabase.from("projetos_responsaveis" as never).select("pessoa_id, disciplina");
+      if (res.error) throw res.error;
+      return (res.data || []) as unknown as { pessoa_id: string; disciplina: string }[];
     },
     staleTime: 1000 * 60 * 5,
   });

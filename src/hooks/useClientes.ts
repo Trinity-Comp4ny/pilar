@@ -125,7 +125,7 @@ export const useClientes = () => {
       }
       if (data?.error) throw new Error(data.error);
 
-      return { email: data.email as string, senha: data.senha as string };
+      return { email: data.email as string };
     },
     onError: (error: Error) => {
       toast.error(error.message || "Erro ao criar acesso");
@@ -133,9 +133,9 @@ export const useClientes = () => {
   });
 
   const resetPortalPasswordMutation = useMutation({
-    mutationFn: async (clienteId: string) => {
+    mutationFn: async ({ clienteId, nomeCliente }: { clienteId: string; nomeCliente: string }) => {
       const { data, error: fnError } = await supabase.functions.invoke("reset-cliente-portal-password", {
-        body: { cliente_id: clienteId },
+        body: { cliente_id: clienteId, nome_cliente: nomeCliente },
       });
 
       if (fnError) {
@@ -144,7 +144,7 @@ export const useClientes = () => {
       }
       if (data?.error) throw new Error(data.error);
 
-      return { email: data.email as string, senha: data.senha as string };
+      return { email: data.email as string };
     },
     onError: (error: Error) => {
       toast.error(error.message || "Erro ao redefinir senha");
@@ -161,6 +161,19 @@ export const useClientes = () => {
     return data?.email ?? null;
   };
 
+  const revokePortalMutation = useMutation({
+    mutationFn: async (clienteId: string) => {
+      const { error } = await supabase.from("portal_tokens").update({ ativo: false }).eq("cliente_id", clienteId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Acesso ao portal revogado");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Erro ao revogar acesso");
+    },
+  });
+
   return {
     clientes: clientesQuery.data ?? [],
     isLoading: clientesQuery.isLoading,
@@ -173,6 +186,8 @@ export const useClientes = () => {
     isInvitingPortal: invitePortalMutation.isPending,
     resetPortalPassword: resetPortalPasswordMutation.mutateAsync,
     isResettingPortal: resetPortalPasswordMutation.isPending,
+    revokePortalAccess: revokePortalMutation.mutateAsync,
+    isRevokingPortal: revokePortalMutation.isPending,
     fetchPortalEmail,
   };
 };

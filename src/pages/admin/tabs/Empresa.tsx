@@ -49,7 +49,7 @@ export function EmpresaTab({ companyId, companyData, setCompanyData, usersCount,
         .update({
           nome: companyData.nomeEmpresa,
           cnpj: companyData.cnpj,
-          status: companyData.status,
+          status: companyData.status as "active" | "suspended" | "cancelled",
           email: companyData.email,
           contato: companyData.contato,
           endereco: companyData.endereco,

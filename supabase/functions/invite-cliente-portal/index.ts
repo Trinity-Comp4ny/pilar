@@ -3,6 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 import { authenticateUser, isUUID, jsonResponse, optionsResponse, safeErrorResponse } from "../_shared/cors.ts";
 import { EMAIL_RE } from "../_shared/validators.ts";
+import { sendEmail, templateAcessoPortalCliente } from "../_shared/email.ts";
 
 function generatePassword(length = 8): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
@@ -75,7 +76,25 @@ serve(async (req) => {
       return safeErrorResponse(400, `Falha ao criar conta do portal: ${insertError.message}`, req);
     }
 
-    return jsonResponse({ success: true, email: String(email).toLowerCase().trim(), senha }, 200, req);
+    const normalizedEmail = String(email).toLowerCase().trim();
+    const loginUrl = `${Deno.env.get("PUBLIC_SITE_URL") ?? ""}/portal/login`;
+
+    try {
+      await sendEmail({
+        to: normalizedEmail,
+        subject: "Seu acesso ao Portal do Cliente",
+        html: templateAcessoPortalCliente({
+          nomeCliente: cliente.nome,
+          email: normalizedEmail,
+          senha,
+          loginUrl,
+        }),
+      });
+    } catch (emailErr) {
+      console.error("[invite-cliente-portal] sendEmail failed", emailErr);
+    }
+
+    return jsonResponse({ success: true, email: normalizedEmail }, 200, req);
   } catch (error: unknown) {
     console.error("[invite-cliente-portal] unexpected error", error);
     return safeErrorResponse(400, "Invalid request", req);

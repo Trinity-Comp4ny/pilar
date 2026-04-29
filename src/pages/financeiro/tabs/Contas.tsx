@@ -11,13 +11,23 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { CreditCard, Wallet, Plus, Settings, Pencil, Trash2, TrendingUp, TrendingDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { getSafeErrorMessage } from "@/lib/safeError";
-import { formatCurrencyInput, parseCurrencyString } from "@/lib/currencyUtils";
+import { formatCurrencyInput, formatValorToInput, parseCurrencyString } from "@/lib/currencyUtils";
+import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 
 interface ContaItem {
   id: string;
@@ -53,6 +63,8 @@ export default function Configuracoes() {
 
   const [selectedCartao, setSelectedCartao] = useState<CartaoItem | null>(null);
   const [selectedConta, setSelectedConta] = useState<ContaItem | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ type: "conta" | "cartao"; id: string; nome: string } | null>(null);
+  const { canEdit } = useFeatureAccess("financeiro");
 
   // Form States
   const [nome, setNome] = useState("");
@@ -82,13 +94,13 @@ export default function Configuracoes() {
           saldo_atual: c.saldo_atual,
           total_entradas: c.total_entradas,
           total_saidas: c.total_saidas,
-        }))
+        })) as ContaItem[]
       );
   };
 
   const fetchCartoes = async () => {
     const { data } = await supabase.from("view_cartao_resumo").select("*");
-    if (data) setCartoes(data);
+    if (data) setCartoes(data as CartaoItem[]);
   };
 
   const handleSaveConta = async () => {
@@ -106,7 +118,7 @@ export default function Configuracoes() {
         return;
       }
 
-      const empresaIdResult = await supabase.rpc("get_user_empresa_id", {});
+      const empresaIdResult = await supabase.rpc("get_user_empresa_id");
       const empresaId = empresaIdResult.data;
 
       if (!empresaId) {
@@ -175,7 +187,7 @@ export default function Configuracoes() {
         return;
       }
 
-      const empresaIdResult = await supabase.rpc("get_user_empresa_id", {});
+      const empresaIdResult = await supabase.rpc("get_user_empresa_id");
       const empresaId = empresaIdResult.data;
 
       if (!empresaId) {
@@ -215,7 +227,7 @@ export default function Configuracoes() {
         setIsNewCartaoOpen(false);
         setIsCartaoDetailOpen(false);
       } else {
-        const { error } = await supabase.from("cartoes_credito").insert(payload);
+        const { error } = await supabase.from("cartoes_credito").insert(payload as never);
 
         if (error) {
           toast.error("Erro ao criar cartão");
@@ -232,21 +244,52 @@ export default function Configuracoes() {
     }
   };
 
-  const handleDeleteConta = async (id: string) => {
-    const { error } = await supabase.from("contas").delete().eq("id", id);
-    if (!error) {
-      toast.success("Conta excluída");
-      fetchContas();
-      setIsContaDetailOpen(false);
-    }
-  };
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    const { type, id } = deleteTarget;
+    setDeleteTarget(null);
 
-  const handleDeleteCartao = async (id: string) => {
-    const { error } = await supabase.from("cartoes_credito").delete().eq("id", id);
-    if (!error) {
-      toast.success("Cartão excluído");
-      fetchCartoes();
-      setIsCartaoDetailOpen(false);
+    if (type === "conta") {
+      const { count: receitasCount } = await supabase
+        .from("receitas")
+        .select("id", { count: "exact", head: true })
+        .eq("conta_id", id)
+        .is("deleted_at", null);
+      const { count: despesasCount } = await supabase
+        .from("despesas")
+        .select("id", { count: "exact", head: true })
+        .eq("conta_id", id)
+        .is("deleted_at", null);
+      const total = (receitasCount ?? 0) + (despesasCount ?? 0);
+      if (total > 0) {
+        toast.error("Conta com movimentações", {
+          description: `Existem ${total} lançamento(s) vinculados. Reatribua-os antes de excluir.`,
+        });
+        return;
+      }
+      const { error } = await supabase.from("contas").delete().eq("id", id);
+      if (!error) {
+        toast.success("Conta excluída");
+        fetchContas();
+        setIsContaDetailOpen(false);
+      }
+    } else {
+      const { count: faturasCount } = await supabase
+        .from("faturas")
+        .select("id", { count: "exact", head: true })
+        .eq("cartao_id", id);
+      if ((faturasCount ?? 0) > 0) {
+        toast.error("Cartão com faturas", {
+          description: `Existem ${faturasCount} fatura(s) vinculada(s). Quite-as antes de excluir o cartão.`,
+        });
+        return;
+      }
+      const { error } = await supabase.from("cartoes_credito").delete().eq("id", id);
+      if (!error) {
+        toast.success("Cartão excluído");
+        fetchCartoes();
+        setIsCartaoDetailOpen(false);
+      }
     }
   };
 
@@ -266,7 +309,7 @@ export default function Configuracoes() {
     setSelectedConta(conta);
     setNome(conta.nome);
     setBanco(conta.banco);
-    setSaldoInicial(formatCurrencyInput((conta.saldo_inicial * 100).toString()));
+    setSaldoInicial(formatValorToInput(conta.saldo_inicial ?? 0));
     setIsNewContaOpen(true);
   };
 
@@ -275,7 +318,7 @@ export default function Configuracoes() {
     setNome(cartao.nome);
     setDiaFechamento(cartao.dia_fechamento.toString());
     setDiaVencimento(cartao.dia_vencimento.toString());
-    setLimite(formatCurrencyInput((cartao.limite * 100).toString()));
+    setLimite(formatValorToInput(cartao.limite ?? 0));
     setContaPagamentoId(cartao.conta_pagamento_id || "");
     setIsNewCartaoOpen(true);
   };
@@ -340,19 +383,21 @@ export default function Configuracoes() {
                   if (!open) resetForm();
                 }}
               >
-                <DialogTrigger asChild>
-                  <Button
-                    className="bg-accent-orange hover:bg-accent-orange/90 text-ink rounded-full"
-                    size="sm"
-                    onClick={() => {
-                      resetForm();
-                      setIsNewContaOpen(true);
-                    }}
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Nova Conta
-                  </Button>
-                </DialogTrigger>
+                {canEdit && (
+                  <DialogTrigger asChild>
+                    <Button
+                      className="bg-accent-orange hover:bg-accent-orange/90 text-ink rounded-full"
+                      size="sm"
+                      onClick={() => {
+                        resetForm();
+                        setIsNewContaOpen(true);
+                      }}
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Nova Conta
+                    </Button>
+                  </DialogTrigger>
+                )}
                 <DialogContent className="sm:max-w-md">
                   <DialogHeader>
                     <DialogTitle>{selectedConta ? "Editar Conta" : "Adicionar Conta Bancária"}</DialogTitle>
@@ -422,19 +467,21 @@ export default function Configuracoes() {
                           <p className="text-xs text-gray-600">{conta.banco}</p>
                         </div>
                       </div>
-                      <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEditConta(conta)}>
-                          <Pencil className="h-3 w-3" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-red-600"
-                          onClick={() => handleDeleteConta(conta.id)}
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
-                      </div>
+                      {canEdit && (
+                        <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
+                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEditConta(conta)}>
+                            <Pencil className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-red-600"
+                            onClick={() => setDeleteTarget({ type: "conta", id: conta.id, nome: conta.nome })}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      )}
                     </div>
                     <div className="space-y-2">
                       <div className="flex justify-between items-center">
@@ -484,19 +531,21 @@ export default function Configuracoes() {
                   if (!open) resetForm();
                 }}
               >
-                <DialogTrigger asChild>
-                  <Button
-                    className="bg-accent-orange hover:bg-accent-orange/90 text-ink rounded-full"
-                    size="sm"
-                    onClick={() => {
-                      resetForm();
-                      setIsNewCartaoOpen(true);
-                    }}
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Novo Cartão
-                  </Button>
-                </DialogTrigger>
+                {canEdit && (
+                  <DialogTrigger asChild>
+                    <Button
+                      className="bg-accent-orange hover:bg-accent-orange/90 text-ink rounded-full"
+                      size="sm"
+                      onClick={() => {
+                        resetForm();
+                        setIsNewCartaoOpen(true);
+                      }}
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Novo Cartão
+                    </Button>
+                  </DialogTrigger>
+                )}
                 <DialogContent className="sm:max-w-md">
                   <DialogHeader>
                     <DialogTitle>{selectedCartao ? "Editar Cartão" : "Adicionar Cartão de Crédito"}</DialogTitle>
@@ -591,19 +640,26 @@ export default function Configuracoes() {
                           <span>Vence: dia {cartao.dia_vencimento}</span>
                         </div>
                       </div>
-                      <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEditCartao(cartao)}>
-                          <Pencil className="h-3 w-3" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-red-600"
-                          onClick={() => handleDeleteCartao(cartao.id)}
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
-                      </div>
+                      {canEdit && (
+                        <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => openEditCartao(cartao)}
+                          >
+                            <Pencil className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-red-600"
+                            onClick={() => setDeleteTarget({ type: "cartao", id: cartao.id, nome: cartao.nome })}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      )}
                     </div>
                     <div className="space-y-1">
                       <div className="flex justify-between text-xs">
@@ -674,12 +730,22 @@ export default function Configuracoes() {
                 <Button variant="outline" className="flex-1" onClick={() => setIsCartaoDetailOpen(false)}>
                   Fechar
                 </Button>
-                <Button variant="outline" className="flex-1" onClick={() => openEditCartao(selectedCartao)}>
-                  <Pencil className="mr-2 h-4 w-4" /> Editar
-                </Button>
-                <Button variant="destructive" className="flex-1" onClick={() => handleDeleteCartao(selectedCartao.id)}>
-                  <Trash2 className="mr-2 h-4 w-4" /> Excluir
-                </Button>
+                {canEdit && (
+                  <>
+                    <Button variant="outline" className="flex-1" onClick={() => openEditCartao(selectedCartao)}>
+                      <Pencil className="mr-2 h-4 w-4" /> Editar
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      className="flex-1"
+                      onClick={() =>
+                        setDeleteTarget({ type: "cartao", id: selectedCartao.id, nome: selectedCartao.nome })
+                      }
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" /> Excluir
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
           )}
@@ -729,17 +795,47 @@ export default function Configuracoes() {
                 <Button variant="outline" className="flex-1" onClick={() => setIsContaDetailOpen(false)}>
                   Fechar
                 </Button>
-                <Button variant="outline" className="flex-1" onClick={() => openEditConta(selectedConta)}>
-                  <Pencil className="mr-2 h-4 w-4" /> Editar
-                </Button>
-                <Button variant="destructive" className="flex-1" onClick={() => handleDeleteConta(selectedConta.id)}>
-                  <Trash2 className="mr-2 h-4 w-4" /> Excluir
-                </Button>
+                {canEdit && (
+                  <>
+                    <Button variant="outline" className="flex-1" onClick={() => openEditConta(selectedConta)}>
+                      <Pencil className="mr-2 h-4 w-4" /> Editar
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      className="flex-1"
+                      onClick={() => setDeleteTarget({ type: "conta", id: selectedConta.id, nome: selectedConta.nome })}
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" /> Excluir
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
           )}
         </DialogContent>
       </Dialog>
+
+      <AlertDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir {deleteTarget?.type === "conta" ? "conta" : "cartão"}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Confirme a exclusão de <strong>{deleteTarget?.nome}</strong>. Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-red-600 hover:bg-red-700">
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

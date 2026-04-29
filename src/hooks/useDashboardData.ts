@@ -45,7 +45,7 @@ export const useDashboardData = () => {
 
       const projetosData = results[6].data || [];
       const projetosAtivos = projetosData.filter(
-        (p: { status: string }) => p.status === PROJECT_STATUS.EM_ANDAMENTO
+        (p: { status: string | null }) => p.status === PROJECT_STATUS.EM_ANDAMENTO
       ).length;
 
       const kpis = buildKPIs(

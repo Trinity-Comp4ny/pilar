@@ -75,7 +75,6 @@ export function PlanoTab({ empresaId }: { empresaId: string | null }) {
               "Leads e propostas ilimitados",
               "Financeiro completo",
               "Portal do cliente",
-              "Timesheet e capacidade",
               "Mapa de projetos",
               "Convite de usuários ilimitados",
               "Relatórios",

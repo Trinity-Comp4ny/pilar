@@ -46,6 +46,7 @@ export function FolhaHistory({ history, selectedMonth, selectedYear, onOpenDetai
                       ${h.status === "pago" ? "bg-green-500 text-white" : ""}
                       ${h.status === "pendente" ? "bg-yellow-400 text-black" : ""}
                       ${h.status === "cancelado" ? "bg-red-500 text-white" : ""}
+                      ${h.status === "misto" ? "bg-orange-400 text-white" : ""}
                     `}
                   >
                     {h.status}

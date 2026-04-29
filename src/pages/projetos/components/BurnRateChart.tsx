@@ -57,19 +57,6 @@ export function BurnRateChart({ projetoId }: BurnRateChartProps) {
         .is("deleted_at", null)
         .order("data_vencimento");
 
-      // Buscar custos de timesheet
-      const { data: timesheets } = await supabase
-        .from("timesheets")
-        .select("horas, data")
-        .eq("projeto_id", projetoId)
-        .in("status", ["aprovado", "pendente"])
-        .is("deleted_at", null)
-        .order("data");
-
-      // Custo médio por hora do orçamento
-      const totalHoras = (orcamento || []).reduce((s, r) => s + Number(r.horas_estimadas), 0);
-      const custoMedioHora = totalHoras > 0 ? orcamentoTotal / totalHoras : 0;
-
       // Agrupar por mês
       const meses = new Map<string, { custos: number; receitas: number }>();
 
@@ -77,13 +64,6 @@ export function BurnRateChart({ projetoId }: BurnRateChartProps) {
         const key = d.data_vencimento?.substring(0, 7) || "unknown";
         const m = meses.get(key) || { custos: 0, receitas: 0 };
         m.custos += Number(d.valor) || 0;
-        meses.set(key, m);
-      }
-
-      for (const t of timesheets || []) {
-        const key = t.data?.substring(0, 7) || "unknown";
-        const m = meses.get(key) || { custos: 0, receitas: 0 };
-        m.custos += (Number(t.horas) || 0) * custoMedioHora;
         meses.set(key, m);
       }
 
@@ -168,9 +148,7 @@ export function BurnRateChart({ projetoId }: BurnRateChartProps) {
         </div>
 
         {serie.length === 0 ? (
-          <p className="text-sm text-muted-foreground text-center py-8">
-            Sem lançamentos financeiros ou timesheets neste projeto.
-          </p>
+          <p className="text-sm text-muted-foreground text-center py-8">Sem lançamentos financeiros neste projeto.</p>
         ) : (
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={serie} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>

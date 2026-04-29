@@ -119,7 +119,6 @@ export function ProjectDetailDialog({
       toast.success(`${dbDisc.nome}: ${newStatus}`);
       onProjectUpdated?.();
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Erro desconhecido";
       toast.error("Erro ao atualizar");
     }
     setUpdatingDisc(null);

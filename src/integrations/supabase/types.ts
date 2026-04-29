@@ -3520,6 +3520,29 @@ export type Database = {
         Returns: boolean;
       };
       verify_portal_token: { Args: { p_token: string }; Returns: Json };
+      portal_logout: { Args: { p_token: string }; Returns: void };
+      mfa_backup_codes_remaining: { Args: never; Returns: number };
+      mfa_generate_backup_codes: { Args: never; Returns: string[] };
+      get_portal_propostas: {
+        Args: { p_token: string };
+        Returns: {
+          id: string;
+          codigo: string | null;
+          titulo: string;
+          valor_proposto: number | null;
+          prazo_estimado_dias: number | null;
+          localizacao: string | null;
+          area_m2: number | null;
+          validade: string | null;
+          status: string;
+          observacao: string | null;
+          created_at: string;
+        }[];
+      };
+      portal_atualizar_status_proposta: {
+        Args: { p_token: string; p_proposta_id: string; p_status: string };
+        Returns: Json;
+      };
     };
     Enums: {
       status_empresa: "active" | "suspended" | "cancelled";

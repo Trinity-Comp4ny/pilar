@@ -66,7 +66,7 @@ export function BillingMilestonesTab({ projetoId, canEdit }: BillingMilestonesTa
         valor,
         data_prevista: formData || null,
         percentual: parseFloat(formPercentual) || null,
-      });
+      } as never);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -78,7 +78,7 @@ export function BillingMilestonesTab({ projetoId, canEdit }: BillingMilestonesTa
       setFormData("");
       setFormPercentual("");
     },
-    onError: (err: Error) => toast.error("Erro"),
+    onError: () => toast.error("Erro"),
   });
 
   const updateStatusMutation = useMutation({
@@ -105,7 +105,7 @@ export function BillingMilestonesTab({ projetoId, canEdit }: BillingMilestonesTa
       queryClient.invalidateQueries({ queryKey: ["receitas"] });
       toast.success("Marco faturado!", { description: "Receita criada automaticamente." });
     },
-    onError: (err: Error) => toast.error("Erro ao faturar"),
+    onError: () => toast.error("Erro ao faturar"),
   });
 
   const deleteMutation = useMutation({
@@ -132,7 +132,7 @@ export function BillingMilestonesTab({ projetoId, canEdit }: BillingMilestonesTa
     onSuccess: (count) => {
       toast.success(`${count} parcela(s) gerada(s) como receitas`);
     },
-    onError: (err: Error) => toast.error("Erro"),
+    onError: () => toast.error("Erro"),
   });
 
   const formatDate = (d: string | null) => (d ? new Date(d + "T00:00:00").toLocaleDateString("pt-BR") : "—");

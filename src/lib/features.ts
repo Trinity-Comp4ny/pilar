@@ -3,9 +3,7 @@ import {
   Brain,
   Building2,
   Calendar,
-  Clock,
   FileText,
-  Gauge,
   Globe,
   Home,
   LayoutTemplate,
@@ -25,8 +23,6 @@ export type FeatureKey =
   | "propostas"
   | "clientes"
   | "projetos"
-  | "planejamento"
-  | "timesheet"
   | "mapa"
   | "financeiro"
   | "pessoas"
@@ -134,26 +130,6 @@ export const FEATURES: readonly FeatureDefinition[] = [
     core: false,
     addon: false,
     includedInPlans: ["starter", "pro", "enterprise"],
-  },
-  {
-    key: "planejamento",
-    label: "Planejamento",
-    description: "Cronograma e alocação",
-    group: "operacao",
-    icon: Gauge,
-    core: false,
-    addon: false,
-    includedInPlans: ["pro", "enterprise"],
-  },
-  {
-    key: "timesheet",
-    label: "Timesheet",
-    description: "Lançamento de horas",
-    group: "operacao",
-    icon: Clock,
-    core: false,
-    addon: false,
-    includedInPlans: ["pro", "enterprise"],
   },
   {
     key: "mapa",

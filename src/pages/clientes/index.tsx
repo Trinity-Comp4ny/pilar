@@ -4,7 +4,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   Dialog,
@@ -15,22 +14,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import {
-  Plus,
-  Search,
-  ArrowUpDown,
-  User,
-  Mail,
-  Phone,
-  MapPin,
-  Trash2,
-  Pencil,
-  Landmark,
-  X,
-  Loader2,
-  Globe,
-  KeyRound,
-} from "lucide-react";
+import { Plus, Search, ArrowUpDown, Mail, Trash2, Pencil, Landmark, X, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { formatPhone, formatDocument, formatAgency, formatBankAccount } from "@/lib/maskUtils";
 import { PageLayout } from "@/components/PageLayout";
@@ -79,6 +63,8 @@ export default function Clientes() {
     isInvitingPortal,
     resetPortalPassword,
     isResettingPortal,
+    revokePortalAccess,
+    isRevokingPortal,
   } = useClientes();
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -103,8 +89,8 @@ export default function Clientes() {
 
   // Portal do Cliente
   const [portalStatus, setPortalStatus] = useState<"idle" | "loading" | "exists" | "none">("idle");
-  const [portalCredentials, setPortalCredentials] = useState<{ email: string; senha: string } | null>(null);
-  const [resetCredentials, setResetCredentials] = useState<{ email: string; senha: string } | null>(null);
+  const [portalCredentials, setPortalCredentials] = useState<{ email: string } | null>(null);
+  const [resetCredentials, setResetCredentials] = useState<{ email: string } | null>(null);
 
   // Message modal
   const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);
@@ -117,7 +103,7 @@ export default function Clientes() {
     if (!selectedClienteForMessage || !messageText || !subjectText) return;
 
     try {
-      const { data, error } = await supabase.functions.invoke("send-manual-client-email", {
+      const { error } = await supabase.functions.invoke("send-manual-client-email", {
         body: {
           email: selectedClienteForMessage?.email,
           subject: subjectText,
@@ -303,8 +289,24 @@ export default function Clientes() {
     if (!selectedCliente) return;
     if (!(await requireAal2())) return;
     try {
-      const credentials = await resetPortalPassword(selectedCliente.id);
+      const credentials = await resetPortalPassword({
+        clienteId: selectedCliente.id,
+        nomeCliente: selectedCliente.nome,
+      });
       setResetCredentials(credentials);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleRevokePortal = async () => {
+    if (!selectedCliente) return;
+    if (!(await requireAal2())) return;
+    try {
+      await revokePortalAccess(selectedCliente.id);
+      setPortalStatus("none");
+      setPortalCredentials(null);
+      setResetCredentials(null);
     } catch (err) {
       console.error(err);
     }
@@ -724,8 +726,10 @@ export default function Clientes() {
         resetCredentials={resetCredentials}
         isInvitingPortal={isInvitingPortal}
         isResettingPortal={isResettingPortal}
+        isRevokingPortal={isRevokingPortal}
         onInvitePortal={handleInvitePortal}
         onResetPortalPassword={handleResetPortalPassword}
+        onRevokePortal={handleRevokePortal}
         onEdit={handleEditClick}
         onDelete={handleDeleteClick}
         onClose={() => setIsDetailOpen(false)}

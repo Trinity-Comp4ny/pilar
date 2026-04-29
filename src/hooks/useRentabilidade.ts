@@ -68,7 +68,7 @@ export const useDashboardRentabilidade = () => {
       if (error) throw error;
 
       const rows = Array.isArray(data) ? data : [];
-      const projetos = rows.map((p) => calcularMargens(p as RpcRentabilidadeRow));
+      const projetos = rows.map((p) => calcularMargens(p as unknown as RpcRentabilidadeRow));
 
       // Métricas agregadas
       const comReceita = projetos.filter((p) => p.receitas_total > 0);
@@ -126,7 +126,7 @@ export const useRentabilidadePorCliente = () => {
       if (error) throw error;
 
       const rows = Array.isArray(data) ? data : [];
-      const projetos = rows.map((p) => calcularMargens(p as RpcRentabilidadeRow));
+      const projetos = rows.map((p) => calcularMargens(p as unknown as RpcRentabilidadeRow));
 
       // Buscar clientes dos projetos
       const projetoIds = projetos.map((p) => p.projeto_id).filter(Boolean);
@@ -190,7 +190,7 @@ export const useProjetosDrenandoCaixa = () => {
       if (error) throw error;
 
       const rows = Array.isArray(data) ? data : [];
-      const projetos = rows.map((p) => calcularMargens(p as RpcRentabilidadeRow));
+      const projetos = rows.map((p) => calcularMargens(p as unknown as RpcRentabilidadeRow));
 
       return projetos.filter((p) => p.margem_bruta < 0).sort((a, b) => a.margem_bruta - b.margem_bruta);
     },
@@ -208,7 +208,7 @@ export const useProjetoRentabilidade = (projetoId: string | undefined) => {
       });
       if (error) throw error;
       if (!data) return null;
-      return calcularMargens(data as RpcRentabilidadeRow);
+      return calcularMargens(data as unknown as RpcRentabilidadeRow);
     },
     enabled: !!projetoId,
     staleTime: 1000 * 60 * 3,

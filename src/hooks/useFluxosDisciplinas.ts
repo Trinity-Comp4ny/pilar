@@ -37,7 +37,7 @@ export const useCreateFluxo = () => {
           nome: fluxo.nome,
           descricao: fluxo.descricao || null,
           etapas: fluxo.etapas as unknown as Json,
-        })
+        } as never)
         .select()
         .single();
 

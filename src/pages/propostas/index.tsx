@@ -49,8 +49,8 @@ import { GerarPropostaDialog } from "./components/GerarPropostaDialog";
 interface PropostaDisciplina {
   id: string;
   disciplina: string;
-  horas_estimadas: number;
-  custo_hora: number;
+  horas_estimadas: number | null;
+  custo_hora: number | null;
 }
 import { fetchClientesLookup, fetchLeadsLookup } from "@/lib/supabaseQueries";
 import { useQuery } from "@tanstack/react-query";
@@ -67,7 +67,7 @@ export default function Propostas() {
   const converterProposta = useConverterProposta();
   const navigate = useNavigate();
 
-  const canEdit = userRole === "admin" || userRole === "operacional" || userRole === "marketing";
+  const canEdit = userRole === "admin";
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [vinculoTipo, setVinculoTipo] = useState<"cliente" | "lead">("cliente");
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
@@ -136,7 +136,7 @@ export default function Propostas() {
           setIsFormOpen(false);
           resetForm();
         },
-        onError: (err: Error) => toast.error("Erro"),
+        onError: () => toast.error("Erro"),
       }
     );
   };
@@ -146,7 +146,7 @@ export default function Propostas() {
       { id, status },
       {
         onSuccess: () => toast.success(`Proposta ${PROPOSTA_STATUS_CONFIG[status]?.label || status}`),
-        onError: (err: Error) => toast.error("Erro"),
+        onError: () => toast.error("Erro"),
       }
     );
   };
@@ -158,7 +158,7 @@ export default function Propostas() {
         toast.success("Proposta removida");
         setConfirmDeleteId(null);
       },
-      onError: (err: Error) => toast.error("Erro"),
+      onError: () => toast.error("Erro"),
     });
   };
 
@@ -172,7 +172,7 @@ export default function Propostas() {
         setConvertPropostaId(null);
         navigate(`/projetos/${projetoId}`);
       },
-      onError: (err: Error) => toast.error("Erro na conversão"),
+      onError: () => toast.error("Erro na conversão"),
     });
   };
 

@@ -79,7 +79,8 @@ export default function ProjecaoFluxoCaixa() {
       semanas.set(key, { entradas: 0, saidas: 0 });
     }
 
-    const getWeekKey = (dateStr: string) => {
+    const getWeekKey = (dateStr: string | null) => {
+      if (!dateStr) return Array.from(semanas.keys())[0] || "";
       const date = new Date(dateStr + "T00:00:00");
       const diffDays = Math.floor((date.getTime() - hoje.getTime()) / 86400000);
       const weekIndex = Math.max(0, Math.floor(diffDays / 7));
