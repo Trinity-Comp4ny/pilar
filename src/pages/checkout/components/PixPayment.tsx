@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Copy, Check, QrCode, Loader2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Copy, Check, QrCode, Loader2, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
@@ -15,8 +15,29 @@ function formatBRL(value: number): string {
   return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
+function useCountdown(expirationDate: string) {
+  const getSecondsLeft = () => Math.max(0, Math.floor((new Date(expirationDate).getTime() - Date.now()) / 1000));
+  const [secondsLeft, setSecondsLeft] = useState(getSecondsLeft);
+
+  useEffect(() => {
+    if (secondsLeft <= 0) return;
+    const id = setInterval(() => {
+      const s = getSecondsLeft();
+      setSecondsLeft(s);
+      if (s <= 0) clearInterval(id);
+    }, 1000);
+    return () => clearInterval(id);
+  }, [expirationDate]);
+
+  const mm = String(Math.floor(secondsLeft / 60)).padStart(2, "0");
+  const ss = String(secondsLeft % 60).padStart(2, "0");
+  return { secondsLeft, display: `${mm}:${ss}` };
+}
+
 export function PixPayment({ encodedImage, payload, expirationDate, value, isPolling }: PixPaymentProps) {
   const [copied, setCopied] = useState(false);
+  const { secondsLeft, display } = useCountdown(expirationDate);
+  const expired = secondsLeft <= 0;
 
   const handleCopy = async () => {
     try {
@@ -29,6 +50,23 @@ export function PixPayment({ encodedImage, payload, expirationDate, value, isPol
     }
   };
 
+  if (expired) {
+    return (
+      <div className="flex flex-col items-center gap-4 py-12 text-center">
+        <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-amber-100">
+          <AlertTriangle className="w-7 h-7 text-amber-600" />
+        </div>
+        <h2 className="text-xl font-medium text-slate-900">PIX expirado</h2>
+        <p className="text-sm text-slate-500 max-w-xs">
+          O QR Code expirou após 30 minutos. Volte à página inicial e gere um novo pagamento.
+        </p>
+        <Button variant="outline" onClick={() => window.location.reload()} className="mt-2">
+          Tentar novamente
+        </Button>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <header className="text-center">
@@ -40,8 +78,18 @@ export function PixPayment({ encodedImage, payload, expirationDate, value, isPol
       </header>
 
       <div className="bg-white border border-slate-200 rounded-2xl p-6 flex flex-col items-center">
-        <img src={`data:image/png;base64,${encodedImage}`} alt="QR Code PIX" className="w-56 h-56 rounded-lg" />
-        <p className="text-xs text-slate-400 mt-4">Vence em {new Date(expirationDate).toLocaleString("pt-BR")}</p>
+        <img
+          src={`data:image/png;base64,${encodedImage}`}
+          alt="QR Code PIX"
+          className="w-56 h-56 rounded-lg"
+          style={{ opacity: secondsLeft < 120 ? 0.6 : 1 }}
+        />
+        <div
+          className={`mt-4 flex items-center gap-1.5 text-sm font-mono font-semibold ${secondsLeft < 120 ? "text-red-500" : "text-slate-500"}`}
+        >
+          {secondsLeft < 120 && <AlertTriangle className="w-4 h-4" />}
+          {display}
+        </div>
       </div>
 
       <div>

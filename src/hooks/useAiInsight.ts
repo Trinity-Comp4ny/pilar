@@ -2,6 +2,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Json } from "@/integrations/supabase/types";
 
+// Módulo IA Hub dormente — tabelas ai_insights/ai_usage removidas do banco
+
 export interface AiInsight {
   id: string;
   empresa_id: string;
@@ -100,21 +102,11 @@ export type AiTipo = keyof typeof AI_TIPOS;
 /**
  * Busca insights recentes de um tipo
  */
-export const useAiInsights = (tipo?: AiTipo, limit = 10) => {
+export const useAiInsights = (_tipo?: AiTipo, _limit = 10) => {
   return useQuery({
-    queryKey: ["ai-insights", tipo, limit],
-    queryFn: async () => {
-      let query = supabase.from("ai_insights").select("*").order("created_at", { ascending: false }).limit(limit);
-
-      if (tipo) {
-        query = query.eq("tipo", tipo);
-      }
-
-      const { data, error } = await query;
-      if (error) throw error;
-      return (data || []) as AiInsight[];
-    },
-    staleTime: 1000 * 60 * 2,
+    queryKey: ["ai-insights", _tipo, _limit],
+    queryFn: async (): Promise<AiInsight[]> => [],
+    staleTime: 1000 * 60 * 60,
   });
 };
 
@@ -124,28 +116,13 @@ export const useAiInsights = (tipo?: AiTipo, limit = 10) => {
 export const useAiUsage = () => {
   return useQuery({
     queryKey: ["ai-usage"],
-    queryFn: async () => {
-      const now = new Date();
-      const mes = now.getMonth() + 1;
-      const ano = now.getFullYear();
-
-      const { data, error } = await supabase
-        .from("ai_usage")
-        .select("total_requests, limite_requests, total_tokens_entrada, total_tokens_saida")
-        .eq("mes", mes)
-        .eq("ano", ano)
-        .maybeSingle();
-
-      if (error) throw error;
-
-      return (data || {
-        total_requests: 0,
-        limite_requests: 100,
-        total_tokens_entrada: 0,
-        total_tokens_saida: 0,
-      }) as AiUsage;
-    },
-    staleTime: 1000 * 60 * 2,
+    queryFn: async (): Promise<AiUsage> => ({
+      total_requests: 0,
+      limite_requests: 100,
+      total_tokens_entrada: 0,
+      total_tokens_saida: 0,
+    }),
+    staleTime: 1000 * 60 * 60,
   });
 };
 

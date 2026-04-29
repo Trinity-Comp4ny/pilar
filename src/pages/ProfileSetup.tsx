@@ -15,7 +15,8 @@ import { PasswordStrengthIndicator } from "@/components/PasswordStrengthIndicato
 export default function ProfileSetup() {
   usePageTitle("Configuração do Perfil");
   const [isLoading, setIsLoading] = useState(false);
-  const [name, setName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -44,17 +45,14 @@ export default function ProfileSetup() {
 
         const { data: profile } = await supabase
           .from("profiles")
-          .select("nome, contato, email")
+          .select("first_name, last_name, contato, email")
           .eq("id", user.id)
           .single();
 
         if (profile) {
-          if (profile.nome && profile.nome !== profile.email) {
-            setName(profile.nome);
-          }
-          if (profile.contato) {
-            setPhone(profile.contato);
-          }
+          if (profile.first_name) setFirstName(profile.first_name);
+          if (profile.last_name) setLastName(profile.last_name);
+          if (profile.contato) setPhone(profile.contato);
         }
       } finally {
         // profile load complete
@@ -92,7 +90,8 @@ export default function ProfileSetup() {
       const { error } = await supabase
         .from("profiles")
         .update({
-          nome: name,
+          first_name: firstName.trim(),
+          last_name: lastName.trim(),
           contato: phone,
           onboarding_completed: true,
         })
@@ -181,18 +180,33 @@ export default function ProfileSetup() {
           </div>
 
           <form onSubmit={handleUpdate} className="space-y-5">
-            <div className="space-y-2">
-              <Label htmlFor="name" className="text-ink-soft font-medium">
-                Seu nome completo
-              </Label>
-              <div className="relative group">
-                <User className="absolute left-3 top-3 h-4 w-4 text-ink/40 group-focus-within:text-accent-orange transition-colors" />
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label htmlFor="firstName" className="text-ink-soft font-medium">
+                  Nome
+                </Label>
+                <div className="relative group">
+                  <User className="absolute left-3 top-3 h-4 w-4 text-ink/40 group-focus-within:text-accent-orange transition-colors" />
+                  <Input
+                    id="firstName"
+                    placeholder="Ex: Maria"
+                    className="pl-10 h-11 bg-paper-alt border-paper-border focus:border-accent-orange focus:ring-accent-orange/20 transition-all"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    required
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="lastName" className="text-ink-soft font-medium">
+                  Sobrenome
+                </Label>
                 <Input
-                  id="name"
-                  placeholder="Ex: Maria Souza"
-                  className="pl-10 h-11 bg-paper-alt border-paper-border focus:border-accent-orange focus:ring-accent-orange/20 transition-all"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  id="lastName"
+                  placeholder="Ex: Souza"
+                  className="h-11 bg-paper-alt border-paper-border focus:border-accent-orange focus:ring-accent-orange/20 transition-all"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
                   required
                 />
               </div>

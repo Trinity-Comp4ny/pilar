@@ -28,15 +28,8 @@ export function AlocacaoVsReal({ weekStart, weekEnd }: AlocacaoVsRealProps) {
 
   const { data: alocacoes = [], isLoading } = useQuery({
     queryKey: ["alocacoes-vsreal", weekStart, weekEnd],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("alocacoes")
-        .select("pessoa_id, horas_alocadas, semana_inicio")
-        .gte("semana_inicio", weekStart)
-        .lte("semana_inicio", weekEnd);
-      if (error) throw error;
-      return data || [];
-    },
+    queryFn: async (): Promise<{ pessoa_id: string; horas_alocadas: number; semana_inicio: string }[]> => [],
+    // Módulo Capacidade dormente — tabela alocacoes removida
     staleTime: 1000 * 60 * 3,
   });
 
