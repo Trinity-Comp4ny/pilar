@@ -15,7 +15,6 @@ import {
   LogOut,
   ChevronDown,
   Wallet,
-  CreditCard,
   UserPlus,
   type LucideIcon,
 } from "lucide-react";
@@ -95,8 +94,9 @@ export function AppSidebar() {
   const [sidebarWidth, setSidebarWidth] = useState(state === "collapsed" ? "64px" : "240px");
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
-  const userName =
-    profile?.nome || (user?.user_metadata as { nome?: string } | null | undefined)?.nome || user?.email || "Usuário";
+  const userName = profile
+    ? [profile.first_name, profile.last_name].filter(Boolean).join(" ").trim() || user?.email || "Usuário"
+    : (user?.user_metadata as { nome?: string } | null | undefined)?.nome || user?.email || "Usuário";
 
   const userEmail = user?.email ?? null;
   const collapsed = state === "collapsed";
@@ -114,20 +114,12 @@ export function AppSidebar() {
     navigate("/profile");
   };
 
-  const handleCompany = () => {
-    navigate("/company");
-  };
-
   const handleAdmin = () => {
     navigate("/admin");
   };
 
   const handleUltraAdmin = () => {
     navigate("/ultra-admin");
-  };
-
-  const handleBilling = () => {
-    navigate("/billing");
   };
 
   const handleNavClick = () => {
@@ -269,10 +261,18 @@ export function AppSidebar() {
               <UserCircle size={18} strokeWidth={1.5} className="text-black/70 w-[18px] h-[18px] flex-shrink-0" />
               {!collapsed && (
                 <>
-                  <span className="flex-1 text-left text-black/70 tracking-tight">{userName}</span>
+                  <div className="flex-1 text-left min-w-0">
+                    <p className="text-sm font-medium text-black/70 tracking-tight truncate leading-tight">
+                      {userName}
+                    </p>
+                    {userEmail && <p className="text-xs text-black/40 truncate leading-tight">{userEmail}</p>}
+                  </div>
                   <ChevronDown
                     size={14}
-                    className={cn("text-black/50 transition-transform duration-200", isUserMenuOpen && "rotate-180")}
+                    className={cn(
+                      "text-black/50 transition-transform duration-200 flex-shrink-0",
+                      isUserMenuOpen && "rotate-180"
+                    )}
                   />
                 </>
               )}
@@ -290,33 +290,17 @@ export function AppSidebar() {
               <User size={14} className="mr-2" />
               Perfil
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={handleCompany}>
-              <Building2 size={14} className="mr-2" />
-              Empresa
-            </DropdownMenuItem>
-            {isAdmin && (
-              <DropdownMenuItem onClick={handleBilling}>
-                <CreditCard size={14} className="mr-2" />
-                Assinatura
-              </DropdownMenuItem>
-            )}
             {isAdmin && !isUltraAdmin && (
               <DropdownMenuItem onClick={handleAdmin}>
                 <ShieldCheck size={14} className="mr-2" />
-                Admin Portal
+                Portal Admin
               </DropdownMenuItem>
             )}
             {isUltraAdmin && (
-              <>
-                <DropdownMenuItem onClick={handleAdmin}>
-                  <ShieldCheck size={14} className="mr-2" />
-                  Admin Portal
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleUltraAdmin}>
-                  <Zap size={14} className="mr-2" />
-                  Gestão Pilar
-                </DropdownMenuItem>
-              </>
+              <DropdownMenuItem onClick={handleUltraAdmin}>
+                <Zap size={14} className="mr-2" />
+                Portal Ultra
+              </DropdownMenuItem>
             )}
             <ImpersonationPicker />
             <DropdownMenuSeparator />

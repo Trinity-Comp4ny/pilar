@@ -34,14 +34,8 @@ export default function WIP() {
   const { data: snapshots = [], isLoading } = useQuery<WipSnapshot[]>({
     queryKey: ["wip-snapshots", mes, ano],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("wip_snapshots")
-        .select("*, projetos(nome, codigo_projeto)")
-        .eq("mes", mes)
-        .eq("ano", ano)
-        .order("wip_saldo", { ascending: false });
-      if (error) throw error;
-      return (data || []) as unknown as WipSnapshot[];
+      // Módulo WIP dormente — tabela wip_snapshots removida
+      return [] as WipSnapshot[];
     },
     staleTime: 1000 * 60 * 3,
   });

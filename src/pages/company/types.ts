@@ -21,7 +21,7 @@ export type CompanyData = {
   pixInstrucoes?: string;
 };
 
-export const ROLES = ["admin", "financeiro", "marketing", "operacional", "user"] as const;
+export const ROLES = ["admin", "user"] as const;
 
 export const STATUS_OPTIONS = [
   { value: "active", label: "Ativa" },

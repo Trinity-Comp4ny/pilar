@@ -42,21 +42,8 @@ export function CapacidadeSimulacao({ disciplinas, prazoEstimadoDias }: Capacida
   // Buscar alocações futuras (próximas N semanas)
   const { data: alocacoes = [], isLoading: loadingAloc } = useQuery({
     queryKey: ["alocacoes-capacidade-sim", semanas],
-    queryFn: async () => {
-      const hoje = new Date();
-      const monday = new Date(hoje);
-      monday.setDate(monday.getDate() - monday.getDay() + 1);
-      const inicio = monday.toISOString().split("T")[0];
-      const fim = new Date(monday.getTime() + semanas * 7 * 86400000).toISOString().split("T")[0];
-
-      const { data, error } = await supabase
-        .from("alocacoes")
-        .select("pessoa_id, horas_alocadas")
-        .gte("semana_inicio", inicio)
-        .lte("semana_inicio", fim);
-      if (error) throw error;
-      return data || [];
-    },
+    queryFn: async (): Promise<{ pessoa_id: string; horas_alocadas: number }[]> => [],
+    // Módulo Capacidade dormente — tabela alocacoes removida
     staleTime: 1000 * 60 * 3,
   });
 

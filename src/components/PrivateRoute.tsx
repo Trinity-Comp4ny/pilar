@@ -2,9 +2,12 @@ import { Navigate, useLocation, Outlet, Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { isUltraAdmin } from "@/lib/roles";
 import Layout from "./Layout";
 import { AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+
+export const ULTRA_PLATFORM_MODE_KEY = "ultra_admin_platform_mode";
 
 type SubStatus = "active" | "trialing" | "overdue" | "canceled" | "expired" | null;
 
@@ -145,6 +148,11 @@ export function PrivateRoute() {
   const isBillingPath = location.pathname.startsWith("/billing");
   if (suspended && !isBillingPath) {
     return <SubscriptionSuspendedScreen />;
+  }
+
+  const inPlatformMode = sessionStorage.getItem(ULTRA_PLATFORM_MODE_KEY) === "true";
+  if (isUltraAdmin(profile?.role) && !inPlatformMode && location.pathname === "/dashboard") {
+    return <Navigate to="/ultra-admin" replace />;
   }
 
   return <Layout />;
