@@ -60,7 +60,7 @@ export function PortalShell({ children }: { children: (data: PortalData, token: 
           {navItems.map((item) => (
             <NavLink
               key={item.path}
-              to={`/portal/${token}${item.path}`}
+              to={`/portal${item.path}`}
               end={item.end}
               className={({ isActive }) =>
                 `flex items-center gap-1.5 px-4 py-3 text-sm border-b-2 transition-colors ${
