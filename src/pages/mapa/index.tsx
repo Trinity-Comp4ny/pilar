@@ -6,7 +6,52 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, MapPin, ExternalLink, Search } from "lucide-react";
+import {
+  Loader2,
+  MapPin,
+  ExternalLink,
+  Search,
+  Map,
+  Satellite,
+  Sun,
+  Moon,
+  Layers,
+  Crosshair,
+  Maximize,
+  Minimize,
+} from "lucide-react";
+
+const TILE_LAYERS = {
+  rua: {
+    label: "Rua",
+    icon: Map,
+    url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+  },
+  satelite: {
+    label: "Satélite",
+    icon: Satellite,
+    url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+    attribution:
+      "Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community",
+  },
+  claro: {
+    label: "Claro",
+    icon: Sun,
+    url: "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+    attribution:
+      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+  },
+  escuro: {
+    label: "Escuro",
+    icon: Moon,
+    url: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+    attribution:
+      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+  },
+} as const;
+
+type TileLayerKey = keyof typeof TILE_LAYERS;
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-cluster";
 import L from "leaflet";
@@ -65,6 +110,15 @@ interface ProjetoMapa {
   cliente_nome: string | null;
 }
 
+/* ── Expõe instância do mapa via ref externo ── */
+function MapController({ mapRef }: { mapRef: React.MutableRefObject<L.Map | null> }) {
+  const map = useMap();
+  useEffect(() => {
+    mapRef.current = map;
+  }, [map, mapRef]);
+  return null;
+}
+
 /* ── Auto-fit: ajusta o mapa para enquadrar todos os marcadores ── */
 function FitBounds({ projetos }: { projetos: ProjetoMapa[] }) {
   const map = useMap();
@@ -106,7 +160,26 @@ export default function MapaObras() {
   const [statusFilter, setStatusFilter] = useState<string>("todos");
   const [searchOpen, setSearchOpen] = useState(false);
   const [selectedProjeto, setSelectedProjeto] = useState<ProjetoMapa | null>(null);
+  const [tileKey, setTileKey] = useState<TileLayerKey>("rua");
+  const [tileMenuOpen, setTileMenuOpen] = useState(false);
   const markerRefs = useRef<Record<string, L.Marker>>({});
+  const mapRef = useRef<L.Map | null>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  useEffect(() => {
+    const onFsChange = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener("fullscreenchange", onFsChange);
+    return () => document.removeEventListener("fullscreenchange", onFsChange);
+  }, []);
+
+  const handleFullscreen = useCallback(() => {
+    if (!document.fullscreenElement) {
+      wrapperRef.current?.requestFullscreen();
+    } else {
+      document.exitFullscreen();
+    }
+  }, []);
 
   const { data: projetos = [], isLoading } = useQuery({
     queryKey: ["projetos-mapa"],
@@ -157,6 +230,12 @@ export default function MapaObras() {
     setStatusFilter((prev) => (prev === status ? "todos" : status));
   }, []);
 
+  const handleFitBounds = useCallback(() => {
+    if (!mapRef.current || filtrados.length === 0) return;
+    const bounds = L.latLngBounds(filtrados.map((p) => [p.latitude, p.longitude]));
+    mapRef.current.flyToBounds(bounds, { padding: [40, 40], maxZoom: 14, duration: 0.8 });
+  }, [filtrados]);
+
   const handleSearchSelect = useCallback(
     (projetoId: string) => {
       const projeto = projetos.find((p) => p.id === projetoId);
@@ -169,62 +248,62 @@ export default function MapaObras() {
   );
 
   return (
-    <PageLayout>
-      <PageHeader title="Mapa de Obras" description="Visualize a localização dos seus projetos">
-        <div className="flex items-center gap-2">
-          {/* Busca de projeto */}
-          <Popover open={searchOpen} onOpenChange={setSearchOpen}>
-            <PopoverTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-1.5">
-                <Search className="h-3.5 w-3.5" />
-                Localizar
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-[280px] p-0" align="end">
-              <Command>
-                <CommandInput placeholder="Buscar projeto..." />
-                <CommandList>
-                  <CommandEmpty>Nenhum projeto encontrado.</CommandEmpty>
-                  <CommandGroup>
-                    {projetos.map((p) => (
-                      <CommandItem
-                        key={p.id}
-                        value={`${p.codigo_projeto} ${p.nome}`}
-                        onSelect={() => handleSearchSelect(p.id)}
-                        className="gap-2"
-                      >
-                        <div
-                          className="w-2.5 h-2.5 rounded-full shrink-0"
-                          style={{ background: STATUS_MARKER_COLORS[p.status] || "hsl(var(--status-unknown))" }}
-                        />
-                        <span className="truncate">
-                          {p.codigo_projeto} - {p.nome}
-                        </span>
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                </CommandList>
-              </Command>
-            </PopoverContent>
-          </Popover>
+    <PageLayout
+      header={
+        <PageHeader title="Mapa de Obras" description="Visualize a localização dos seus projetos">
+          <div className="flex items-center gap-2">
+            <Popover open={searchOpen} onOpenChange={setSearchOpen}>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-1.5">
+                  <Search className="h-3.5 w-3.5" />
+                  Localizar
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[280px] p-0" align="end">
+                <Command>
+                  <CommandInput placeholder="Buscar projeto..." />
+                  <CommandList>
+                    <CommandEmpty>Nenhum projeto encontrado.</CommandEmpty>
+                    <CommandGroup>
+                      {projetos.map((p) => (
+                        <CommandItem
+                          key={p.id}
+                          value={`${p.codigo_projeto} ${p.nome}`}
+                          onSelect={() => handleSearchSelect(p.id)}
+                          className="gap-2"
+                        >
+                          <div
+                            className="w-2.5 h-2.5 rounded-full shrink-0"
+                            style={{ background: STATUS_MARKER_COLORS[p.status] || "hsl(var(--status-unknown))" }}
+                          />
+                          <span className="truncate">
+                            {p.codigo_projeto} - {p.nome}
+                          </span>
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
 
-          {/* Filtro por status */}
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="todos">Todos os status</SelectItem>
-              {Object.values(PROJECT_STATUS).map((s) => (
-                <SelectItem key={s} value={s}>
-                  {s}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </PageHeader>
-
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos os status</SelectItem>
+                {Object.values(PROJECT_STATUS).map((s) => (
+                  <SelectItem key={s} value={s}>
+                    {s}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </PageHeader>
+      }
+    >
       {isLoading ? (
         <div className="flex items-center justify-center py-12">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -236,98 +315,166 @@ export default function MapaObras() {
           <p className="text-xs mt-1">Projetos precisam ter endereço com coordenadas para aparecer no mapa.</p>
         </div>
       ) : (
-        <div className="rounded-lg overflow-hidden border" style={{ height: "calc(100vh - 220px)" }}>
-          <MapContainer
-            center={[-15.78, -47.93]}
-            zoom={4}
-            style={{ height: "100%", width: "100%" }}
-            scrollWheelZoom={true}
-          >
-            <TileLayer
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            />
-            <FitBounds projetos={filtrados} />
-            <FlyToProject projeto={selectedProjeto} markerRefs={markerRefs} />
-            <MarkerClusterGroup
-              chunkedLoading
-              iconCreateFunction={createClusterIcon}
-              maxClusterRadius={50}
-              spiderfyOnMaxZoom
-              showCoverageOnHover={false}
-            >
-              {filtrados.map((projeto) => (
-                <Marker
-                  key={projeto.id}
-                  position={[projeto.latitude, projeto.longitude]}
-                  icon={createColoredIcon(STATUS_MARKER_COLORS[projeto.status] || "hsl(var(--status-unknown))")}
-                  ref={(ref) => {
-                    if (ref) markerRefs.current[projeto.id] = ref;
-                  }}
+        <>
+          {/* Legenda clicável com contagem por status */}
+          <div className="flex items-center gap-4 mb-3 flex-wrap">
+            {Object.entries(STATUS_MARKER_COLORS).map(([status, color]) => {
+              const count = contagemPorStatus[status] || 0;
+              const isActive = statusFilter === status;
+              return (
+                <button
+                  key={status}
+                  type="button"
+                  onClick={() => handleLegendClick(status)}
+                  className={`flex items-center gap-1.5 text-xs transition-opacity ${
+                    isActive
+                      ? "text-foreground font-medium"
+                      : statusFilter !== "todos"
+                        ? "text-muted-foreground/40"
+                        : "text-muted-foreground"
+                  } hover:opacity-80`}
                 >
-                  <Popup>
-                    <div className="min-w-[200px]">
-                      <p className="font-semibold text-sm">
-                        {projeto.codigo_projeto} - {projeto.nome}
-                      </p>
-                      {projeto.cliente_nome && <p className="text-xs text-gray-600">{projeto.cliente_nome}</p>}
-                      <div className="flex items-center gap-2 mt-1">
-                        <Badge className={`text-[10px] ${PROJECT_STATUS_CONFIG[projeto.status]?.color || ""}`}>
-                          {projeto.status}
-                        </Badge>
-                        <span className="text-xs">{formatCurrency(projeto.valor_contrato)}</span>
-                      </div>
-                      {projeto.localizacao && <p className="text-[11px] text-gray-500 mt-1">{projeto.localizacao}</p>}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="w-full mt-2 h-7 text-xs gap-1"
-                        onClick={() => navigate(`/projetos/${projeto.id}`)}
-                      >
-                        <ExternalLink className="h-3 w-3" />
-                        Abrir Projeto
-                      </Button>
-                    </div>
-                  </Popup>
-                </Marker>
-              ))}
-            </MarkerClusterGroup>
-          </MapContainer>
-        </div>
-      )}
+                  <div
+                    className="w-3 h-3 rounded-full shrink-0 transition-transform"
+                    style={{
+                      background: color,
+                      transform: isActive ? "scale(1.3)" : "scale(1)",
+                      boxShadow: isActive ? `0 0 0 2px ${color}40` : "none",
+                    }}
+                  />
+                  {status} ({count})
+                </button>
+              );
+            })}
+            <span className="text-xs text-muted-foreground ml-auto">{filtrados.length} projeto(s) no mapa</span>
+          </div>
 
-      {/* Legenda clicável com contagem por status */}
-      <div className="flex items-center gap-4 mt-3 flex-wrap">
-        {Object.entries(STATUS_MARKER_COLORS).map(([status, color]) => {
-          const count = contagemPorStatus[status] || 0;
-          const isActive = statusFilter === status;
-          return (
-            <button
-              key={status}
-              type="button"
-              onClick={() => handleLegendClick(status)}
-              className={`flex items-center gap-1.5 text-xs transition-opacity ${
-                isActive
-                  ? "text-foreground font-medium"
-                  : statusFilter !== "todos"
-                    ? "text-muted-foreground/40"
-                    : "text-muted-foreground"
-              } hover:opacity-80`}
+          <div
+            ref={wrapperRef}
+            className="rounded-lg overflow-hidden border relative"
+            style={{ height: isFullscreen ? "100dvh" : "calc(100vh - 260px)" }}
+          >
+            {/* Seletor de camada — minimizado, expande ao clicar */}
+            <div className="absolute bottom-8 left-3 z-[1000]">
+              {tileMenuOpen && (
+                <div className="mb-1 flex flex-col gap-1 bg-background/95 backdrop-blur-sm rounded-lg border shadow-md p-1">
+                  {(Object.entries(TILE_LAYERS) as [TileLayerKey, (typeof TILE_LAYERS)[TileLayerKey]][]).map(
+                    ([key, layer]) => {
+                      const Icon = layer.icon;
+                      const active = tileKey === key;
+                      return (
+                        <button
+                          key={key}
+                          type="button"
+                          onClick={() => {
+                            setTileKey(key);
+                            setTileMenuOpen(false);
+                          }}
+                          className={`flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                            active
+                              ? "bg-primary text-primary-foreground"
+                              : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                          }`}
+                        >
+                          <Icon className="h-3.5 w-3.5 shrink-0" />
+                          {layer.label}
+                        </button>
+                      );
+                    }
+                  )}
+                </div>
+              )}
+              <button
+                type="button"
+                onClick={() => setTileMenuOpen((o) => !o)}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border bg-background/95 backdrop-blur-sm shadow-md text-xs font-medium text-foreground hover:bg-muted transition-colors"
+              >
+                {(() => {
+                  const Icon = TILE_LAYERS[tileKey].icon;
+                  return <Icon className="h-3.5 w-3.5 shrink-0" />;
+                })()}
+                {TILE_LAYERS[tileKey].label}
+                <Layers className="h-3 w-3 text-muted-foreground" />
+              </button>
+            </div>
+
+            {/* Botões de controle — canto inferior direito */}
+            <div className="absolute bottom-8 right-3 z-[1000] flex flex-col gap-1">
+              <button
+                type="button"
+                title={isFullscreen ? "Sair da tela cheia" : "Tela cheia"}
+                onClick={handleFullscreen}
+                className="flex items-center justify-center w-9 h-9 rounded-lg border bg-background/95 backdrop-blur-sm shadow-md text-foreground hover:bg-muted transition-colors"
+              >
+                {isFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
+              </button>
+              <button
+                type="button"
+                title="Centralizar todos os projetos"
+                onClick={handleFitBounds}
+                className="flex items-center justify-center w-9 h-9 rounded-lg border bg-background/95 backdrop-blur-sm shadow-md text-foreground hover:bg-muted transition-colors"
+              >
+                <Crosshair className="h-4 w-4" />
+              </button>
+            </div>
+
+            <MapContainer
+              center={[-15.78, -47.93]}
+              zoom={4}
+              style={{ height: "100%", width: "100%" }}
+              scrollWheelZoom={true}
             >
-              <div
-                className="w-3 h-3 rounded-full shrink-0 transition-transform"
-                style={{
-                  background: color,
-                  transform: isActive ? "scale(1.3)" : "scale(1)",
-                  boxShadow: isActive ? `0 0 0 2px ${color}40` : "none",
-                }}
-              />
-              {status} ({count})
-            </button>
-          );
-        })}
-        <span className="text-xs text-muted-foreground ml-auto">{filtrados.length} projeto(s) no mapa</span>
-      </div>
+              <MapController mapRef={mapRef} />
+              <TileLayer key={tileKey} attribution={TILE_LAYERS[tileKey].attribution} url={TILE_LAYERS[tileKey].url} />
+              <FitBounds projetos={filtrados} />
+              <FlyToProject projeto={selectedProjeto} markerRefs={markerRefs} />
+              <MarkerClusterGroup
+                chunkedLoading
+                iconCreateFunction={createClusterIcon}
+                maxClusterRadius={50}
+                spiderfyOnMaxZoom
+                showCoverageOnHover={false}
+              >
+                {filtrados.map((projeto) => (
+                  <Marker
+                    key={projeto.id}
+                    position={[projeto.latitude, projeto.longitude]}
+                    icon={createColoredIcon(STATUS_MARKER_COLORS[projeto.status] || "hsl(var(--status-unknown))")}
+                    ref={(ref) => {
+                      if (ref) markerRefs.current[projeto.id] = ref;
+                    }}
+                  >
+                    <Popup>
+                      <div className="min-w-[200px]">
+                        <p className="font-semibold text-sm">
+                          {projeto.codigo_projeto} - {projeto.nome}
+                        </p>
+                        {projeto.cliente_nome && <p className="text-xs text-gray-600">{projeto.cliente_nome}</p>}
+                        <div className="flex items-center gap-2 mt-1">
+                          <Badge className={`text-[10px] ${PROJECT_STATUS_CONFIG[projeto.status]?.color || ""}`}>
+                            {projeto.status}
+                          </Badge>
+                          <span className="text-xs">{formatCurrency(projeto.valor_contrato)}</span>
+                        </div>
+                        {projeto.localizacao && <p className="text-[11px] text-gray-500 mt-1">{projeto.localizacao}</p>}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full mt-2 h-7 text-xs gap-1"
+                          onClick={() => navigate(`/projetos/${projeto.id}`)}
+                        >
+                          <ExternalLink className="h-3 w-3" />
+                          Abrir Projeto
+                        </Button>
+                      </div>
+                    </Popup>
+                  </Marker>
+                ))}
+              </MarkerClusterGroup>
+            </MapContainer>
+          </div>
+        </>
+      )}
     </PageLayout>
   );
 }

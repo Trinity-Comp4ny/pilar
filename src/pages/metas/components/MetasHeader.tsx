@@ -1,13 +1,9 @@
-import { TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 import { RefreshCw, Loader2 } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-
-const tabTriggerClass =
-  "rounded-none border-b-2 border-transparent data-[state=active]:border-accent-orange data-[state=active]:bg-white data-[state=active]:text-accent-orange py-3 px-4 min-w-max whitespace-nowrap text-sm";
 
 export function MetasHeader() {
   const { isMobile } = useSidebar();
@@ -48,23 +44,6 @@ export function MetasHeader() {
             Sincronizar
           </Button>
         </div>
-      </div>
-
-      <div className="w-full bg-white border-t overflow-x-auto">
-        <TabsList className="rounded-none bg-transparent border-none h-auto p-0 flex flex-nowrap gap-0 min-w-max w-full">
-          <TabsTrigger value="dashboard" className={tabTriggerClass}>
-            Dashboard
-          </TabsTrigger>
-          <TabsTrigger value="financeiras" className={tabTriggerClass}>
-            Financeiras
-          </TabsTrigger>
-          <TabsTrigger value="pessoais" className={tabTriggerClass}>
-            Pessoais
-          </TabsTrigger>
-          <TabsTrigger value="projetos" className={tabTriggerClass}>
-            Projetos
-          </TabsTrigger>
-        </TabsList>
       </div>
     </div>
   );
