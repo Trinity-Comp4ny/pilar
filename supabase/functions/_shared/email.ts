@@ -10,8 +10,12 @@
  * - Verde brand #A4EC86 usado apenas como acento em palavras-chave
  */
 
-const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") ?? "";
+const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 const RESEND_FROM = Deno.env.get("RESEND_FROM") ?? "Pilar <no-reply@pilarsoft.com.br>";
+
+const RESEND_ENDPOINT = "https://api.resend.com/emails";
+const MAX_RETRIES = 3;
+const BASE_DELAY_MS = 500;
 
 export interface EmailPayload {
   to: string | string[];
@@ -20,28 +24,51 @@ export interface EmailPayload {
   replyTo?: string;
 }
 
+async function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 export async function sendEmail(payload: EmailPayload): Promise<void> {
-  if (!RESEND_API_KEY) throw new Error("RESEND_API_KEY não configurado");
-
-  const res = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${RESEND_API_KEY}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      from: RESEND_FROM,
-      to: Array.isArray(payload.to) ? payload.to : [payload.to],
-      subject: payload.subject,
-      html: payload.html,
-      ...(payload.replyTo && { reply_to: payload.replyTo }),
-    }),
-  });
-
-  if (!res.ok) {
-    const body = await res.text();
-    throw new Error(`Resend error ${res.status}: ${body}`);
+  if (!RESEND_API_KEY) {
+    console.warn("[email] RESEND_API_KEY not configured — email not sent");
+    return;
   }
+
+  let lastError: Error | null = null;
+
+  for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+    try {
+      const res = await fetch(RESEND_ENDPOINT, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${RESEND_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          from: RESEND_FROM,
+          to: Array.isArray(payload.to) ? payload.to : [payload.to],
+          subject: payload.subject,
+          html: payload.html,
+          ...(payload.replyTo && { reply_to: payload.replyTo }),
+        }),
+      });
+
+      if (res.ok) return;
+
+      const body = await res.text();
+      const retryable = res.status >= 500 || res.status === 429;
+      lastError = new Error(`Resend ${res.status}: ${body}`);
+
+      if (!retryable || attempt === MAX_RETRIES - 1) throw lastError;
+    } catch (err) {
+      lastError = err instanceof Error ? err : new Error(String(err));
+      if (attempt === MAX_RETRIES - 1) throw lastError;
+    }
+
+    await sleep(BASE_DELAY_MS * 2 ** attempt);
+  }
+
+  if (lastError) throw lastError;
 }
 
 // ---------------------------------------------------------------------------
@@ -400,6 +427,40 @@ export function templateCobrancaDireta(params: {
       ${pixSection}
       ${hr()}
       <p style="margin:0;font-size:13px;line-height:1.6;color:${T.textSoft};font-family:${T.font}">Enviado por ${strong(empresaNome)} via Pilar. Em caso de dúvida, responda este email.</p>
+    `,
+  });
+}
+
+export function templateAcessoPortalCliente(params: {
+  nomeCliente: string;
+  email: string;
+  senha: string;
+  loginUrl: string;
+  isReset?: boolean;
+}): string {
+  const { nomeCliente, email, senha, loginUrl, isReset = false } = params;
+  const titulo = isReset ? `Sua senha foi ${accent("redefinida")}` : `Bem-vindo ao ${accent("Portal do Cliente")}`;
+  const intro = isReset
+    ? `Sua senha de acesso ao Portal do Cliente foi redefinida com sucesso. Use as credenciais abaixo.`
+    : `Seu acesso ao Portal do Cliente foi criado. Use as credenciais abaixo para acompanhar seu projeto.`;
+
+  return baseHtml({
+    preview: isReset ? "Senha redefinida — Portal do Cliente" : "Acesso ao Portal do Cliente",
+    content: `
+      ${title(titulo)}
+      ${body(`Olá, ${strong(nomeCliente)}. ${intro}`)}
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${T.surface}" style="background-color:${T.surface};border:1px solid ${T.border};border-radius:12px;margin-top:24px;border-collapse:separate">
+        <tr>
+          <td style="padding:20px 24px">
+            <p style="margin:0 0 4px;font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:${T.textSoft};font-family:${T.font}">Email</p>
+            <p style="margin:0 0 16px;font-size:15px;font-weight:600;color:${T.ink};font-family:${T.font}">${email}</p>
+            <p style="margin:0 0 4px;font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:${T.textSoft};font-family:${T.font}">Senha</p>
+            <p style="margin:0;font-family:'Courier New',Courier,monospace;font-size:18px;font-weight:700;color:${T.ink};letter-spacing:0.05em">${senha}</p>
+          </td>
+        </tr>
+      </table>
+      ${pillButton("ACESSAR PORTAL", loginUrl)}
+      ${hint("Recomendamos alterar sua senha após o primeiro acesso.")}
     `,
   });
 }

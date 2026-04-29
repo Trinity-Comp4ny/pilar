@@ -41,7 +41,7 @@ export default function AgingRecebiveis() {
 
     for (const r of receitas) {
       const clienteId = r.cliente_id || "sem-cliente";
-      const clienteNome = (r as ReceitaRow & { clientes?: { nome?: string } | null }).clientes?.nome || "Sem cliente";
+      const clienteNome = (r as { clientes?: { nome?: string } | null }).clientes?.nome || "Sem cliente";
       const vencimento = new Date(r.data_vencimento + "T00:00:00");
       const diasAtraso = Math.max(0, Math.floor((hoje.getTime() - vencimento.getTime()) / 86400000));
       const valor = Number(r.valor) || 0;

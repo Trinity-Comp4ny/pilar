@@ -25,16 +25,24 @@ import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CategoryManager } from "../components/CategoryManager";
 import { SupplierManager } from "../components/SupplierManager";
-import { Can } from "@/components/Can";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
-import { usePermissions } from "@/hooks/usePermissions";
-import { formatCurrencyInput, parseCurrencyString } from "@/lib/currencyUtils";
+import { useFeatureAccess } from "@/hooks/useFeatureAccess";
+import { formatCurrencyInput, formatValorToInput, parseCurrencyString } from "@/lib/currencyUtils";
 import { getDisplayDate, formatDateDisplay } from "@/lib/dateUtils";
-import { getSafeErrorMessage } from "@/lib/safeError";
 import { checkDuplicates, type DuplicateMatch } from "@/lib/duplicateCheck";
 import { DuplicateWarningDialog } from "@/components/DuplicateWarningDialog";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { DespesaDetailDialog } from "./DespesaDetailDialog";
 
 /**
@@ -51,18 +59,18 @@ interface Despesa {
   data_pagamento?: string;
   descricao: string;
   categoria_id: string | null;
-  categoria_nome?: string; // Joined
+  categoria_nome?: string | null;
   valor: number;
   status: string;
   projeto_id: string | null;
-  projeto_codigo?: string;
+  projeto_codigo?: string | null;
   nota_fiscal: string | null;
   conta_id: string | null;
   cartao_id: string | null;
   observacao: string | null;
   fornecedor_id: string | null;
-  fornecedor_nome?: string;
-  forma_pagamento?: string;
+  fornecedor_nome?: string | null;
+  forma_pagamento?: string | null;
   created_by?: string; // user uuid
   grupo_parcela?: string | null;
   parcela_numero?: number | null;
@@ -72,14 +80,14 @@ interface Despesa {
 export default function Despesas() {
   const [despesasRaw, setDespesasRaw] = useState<Despesa[]>([]);
   const [contas, setContas] = useState<{ id: string; nome: string }[]>([]);
-  const [cartoes, setCartoes] = useState<{ id: string; nome: string; dia_fechamento: number }[]>([]);
+  const [cartoes, setCartoes] = useState<{ id: string; nome: string; dia_fechamento: number | null }[]>([]);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [selectedDespesa, setSelectedDespesa] = useState<Despesa | null>(null);
 
-  const { isAdmin } = usePermissions();
+  const { canEdit } = useFeatureAccess("financeiro");
 
   const form = useForm<DespesaFormData>({
     resolver: zodResolver(despesaSchema),
@@ -91,7 +99,7 @@ export default function Despesas() {
 
   const [categorias, setCategorias] = useState<{ id: string; name: string }[]>([]);
   const [fornecedores, setFornecedores] = useState<{ id: string; name: string }[]>([]);
-  const [projetos, setProjetos] = useState<{ id: string; projetoID: string }[]>([]);
+  const [projetos, setProjetos] = useState<{ id: string; projetoID: string | null }[]>([]);
 
   const fetchData = useCallback(async () => {
     try {
@@ -129,7 +137,7 @@ export default function Despesas() {
       if (cartoesData) setCartoes(cartoesData);
       if (projetosData) setProjetos(projetosData.map((p) => ({ id: p.id, projetoID: p.codigo_projeto })));
       if (despesasData) {
-        setDespesasRaw(despesasData);
+        setDespesasRaw(despesasData as unknown as Despesa[]);
       }
     } catch {
       toast.error("Erro ao carregar dados", { description: "Não foi possível carregar as informações financeiras." });
@@ -196,7 +204,7 @@ export default function Despesas() {
     form.reset({
       dataVencimento: despesa.data_vencimento ? new Date(despesa.data_vencimento) : new Date(),
       descricao: despesa.descricao,
-      valorTotal: formatCurrencyInput((despesa.valor * 100).toString()),
+      valorTotal: formatValorToInput(despesa.valor),
       status: despesa.status as "Pago" | "Pendente",
       categoriaId: despesa.categoria_id || "",
       projetoID: despesa.projeto_id || "",
@@ -265,19 +273,29 @@ export default function Despesas() {
           observacao: formData.observacao || null,
           recorrente: formData.recorrente || false,
           periodicidade: formData.recorrente ? formData.periodicidade || "mensal" : null,
-          empresa_id: empresaId,
-          grupo_parcela: grupoParcela,
-          parcela_numero: numParcelas > 1 ? i + 1 : null,
-          parcela_total: numParcelas > 1 ? numParcelas : null,
+          empresa_id: empresaId!,
+          grupo_parcela: selectedDespesa ? (selectedDespesa.grupo_parcela ?? null) : grupoParcela,
+          parcela_numero: selectedDespesa ? (selectedDespesa.parcela_numero ?? null) : numParcelas > 1 ? i + 1 : null,
+          parcela_total: selectedDespesa
+            ? (selectedDespesa.parcela_total ?? null)
+            : numParcelas > 1
+              ? numParcelas
+              : null,
         });
       }
 
       let error = null;
 
       if (selectedDespesa) {
-        ({ error } = await supabase.from("despesas").update(despesasToInsert[0]).eq("id", selectedDespesa.id));
+        const dataChanged = despesasToInsert[0].data_vencimento !== selectedDespesa.data_vencimento;
+        const updatePayload =
+          dataChanged && selectedDespesa.cartao_id ? { ...despesasToInsert[0], fatura_id: null } : despesasToInsert[0];
+        ({ error } = await supabase
+          .from("despesas")
+          .update(updatePayload as Record<string, unknown> as never)
+          .eq("id", selectedDespesa.id));
       } else {
-        ({ error } = await supabase.from("despesas").insert(despesasToInsert));
+        ({ error } = await supabase.from("despesas").insert(despesasToInsert as never[]));
       }
 
       if (error) throw error;
@@ -306,13 +324,14 @@ export default function Despesas() {
           const key = `${billingMonth}-${billingYear}`;
           if (!mesesGerados.has(key)) {
             mesesGerados.add(key);
-            await supabase
-              .rpc("gerar_fatura", {
-                p_cartao_id: formData.cartaoId,
-                p_mes: billingMonth,
-                p_ano: billingYear,
-              })
-              .catch(() => {});
+            const { error: faturaError } = await supabase.rpc("gerar_fatura", {
+              p_cartao_id: formData.cartaoId,
+              p_mes: billingMonth,
+              p_ano: billingYear,
+            });
+            if (faturaError) {
+              toast.error("Erro ao associar fatura do cartão", { description: faturaError.message });
+            }
           }
         }
       }
@@ -373,8 +392,24 @@ export default function Despesas() {
   };
 
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deleteGroupTarget, setDeleteGroupTarget] = useState<{ id: string; grupoId: string; label: string } | null>(
+    null
+  );
 
-  const handleDelete = (id: string) => setDeleteId(id);
+  const handleDelete = (id: string) => {
+    const despesa = despesasRaw.find((d) => d.id === id);
+    if (despesa?.grupo_parcela) {
+      const total =
+        despesa.parcela_total ?? despesasRaw.filter((d) => d.grupo_parcela === despesa.grupo_parcela).length;
+      setDeleteGroupTarget({
+        id,
+        grupoId: despesa.grupo_parcela,
+        label: `parcela ${despesa.parcela_numero ?? "?"} de ${total}`,
+      });
+    } else {
+      setDeleteId(id);
+    }
+  };
 
   const confirmDelete = async () => {
     if (!deleteId) return;
@@ -389,6 +424,32 @@ export default function Despesas() {
       toast.error("Falha ao excluir despesa", {
         description: err instanceof Error ? err.message : "Tente novamente",
       });
+    }
+  };
+
+  const confirmDeleteGroup = async (mode: "single" | "all") => {
+    if (!deleteGroupTarget) return;
+    const { id, grupoId } = deleteGroupTarget;
+    setDeleteGroupTarget(null);
+    setIsDetailOpen(false);
+    const now = new Date().toISOString();
+    try {
+      if (mode === "all") {
+        const { error } = await supabase
+          .from("despesas")
+          .update({ deleted_at: now })
+          .eq("grupo_parcela", grupoId)
+          .is("deleted_at", null);
+        if (error) throw error;
+        toast.success("Grupo de parcelas excluído");
+      } else {
+        const { error } = await supabase.from("despesas").update({ deleted_at: now }).eq("id", id);
+        if (error) throw error;
+        toast.success("Parcela excluída");
+      }
+      await fetchData();
+    } catch (err) {
+      toast.error("Falha ao excluir", { description: err instanceof Error ? err.message : "Tente novamente" });
     }
   };
 
@@ -437,14 +498,14 @@ export default function Despesas() {
             </Dialog>
 
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <Can feature="financeiro" action="create">
+              {canEdit && (
                 <DialogTrigger asChild>
                   <Button className="rounded-full bg-accent-orange hover:bg-accent-orange/90 text-ink transition-colors px-5 py-2.5 text-sm">
                     <Plus className="mr-2 h-4 w-4" />
                     Nova Despesa
                   </Button>
                 </DialogTrigger>
-              </Can>
+              )}
               <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto p-0">
                 <div className="px-6 pt-6 pb-4 border-b">
                   <DialogHeader>
@@ -456,6 +517,18 @@ export default function Despesas() {
                 </div>
 
                 <form onSubmit={handleSubmit} className="divide-y">
+                  {selectedDespesa?.grupo_parcela && (
+                    <div className="px-6 pt-4 pb-0">
+                      <div className="flex items-center gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                        <span className="font-medium">
+                          Parcela {selectedDespesa.parcela_numero ?? "?"} de {selectedDespesa.parcela_total ?? "?"}
+                        </span>
+                        <span className="text-amber-600">
+                          — faz parte de um grupo. Editar aqui altera só esta parcela.
+                        </span>
+                      </div>
+                    </div>
+                  )}
                   {/* Descrição */}
                   <div className="px-6 py-4 space-y-3">
                     <Label className="text-[10px] uppercase text-muted-foreground tracking-wider">Descrição</Label>
@@ -849,26 +922,26 @@ export default function Despesas() {
                     </TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()}>
                       <div className="flex gap-1 justify-end">
-                        <Can feature="financeiro" action="edit">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                            onClick={() => openEditDespesa(despesa)}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                        </Can>
-                        <Can feature="financeiro" action="delete">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
-                            onClick={() => handleDelete(despesa.id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </Can>
+                        {canEdit && (
+                          <>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                              onClick={() => openEditDespesa(despesa)}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                              onClick={() => handleDelete(despesa.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -882,11 +955,11 @@ export default function Despesas() {
       <DespesaDetailDialog
         open={isDetailOpen}
         onOpenChange={setIsDetailOpen}
-        despesa={selectedDespesa}
+        despesa={selectedDespesa as never}
         contas={contas}
-        cartoes={cartoes}
-        isAdmin={isAdmin}
-        onEdit={openEditDespesa}
+        cartoes={cartoes.map((c) => ({ ...c, dia_fechamento: c.dia_fechamento ?? undefined }))}
+        canEdit={canEdit}
+        onEdit={openEditDespesa as never}
         onDelete={handleDelete}
       />
 
@@ -917,6 +990,37 @@ export default function Despesas() {
         confirmText="Excluir"
         variant="destructive"
       />
+
+      <AlertDialog
+        open={!!deleteGroupTarget}
+        onOpenChange={(open) => {
+          if (!open) setDeleteGroupTarget(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir parcela do grupo?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta é a {deleteGroupTarget?.label}. Deseja excluir apenas esta parcela ou todas as parcelas do grupo?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-orange-500 hover:bg-orange-600 text-white"
+              onClick={() => confirmDeleteGroup("single")}
+            >
+              Só esta parcela
+            </AlertDialogAction>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700 text-white"
+              onClick={() => confirmDeleteGroup("all")}
+            >
+              Todo o grupo
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

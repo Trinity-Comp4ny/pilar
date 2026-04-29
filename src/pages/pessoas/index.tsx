@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { supabase } from "@/integrations/supabase/client";
-import { useUserRole } from "@/hooks/useUserRole";
+import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import type { Pessoa } from "./types";
@@ -16,8 +16,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 export default function Pessoas() {
   usePageTitle("Pessoas");
-  const { data: userRole } = useUserRole();
-  const isAdmin = userRole === "admin";
+  const { canEdit: isAdmin } = useFeatureAccess("pessoas");
   const queryClient = useQueryClient();
 
   const {
@@ -29,7 +28,7 @@ export default function Pessoas() {
     queryFn: async () => {
       const { data, error } = await supabase.from("pessoas").select("*").is("deleted_at", null).order("nome");
       if (error) throw error;
-      return (data || []) as Pessoa[];
+      return (data || []) as unknown as Pessoa[];
     },
   });
 

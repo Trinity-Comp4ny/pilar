@@ -102,7 +102,7 @@ export function useMfa() {
   const unenrollPending = useCallback(async () => {
     const { data, error: listError } = await supabase.auth.mfa.listFactors();
     if (listError) throw listError;
-    const pending = (data?.totp ?? []).filter((f) => f.status === "unverified");
+    const pending = (data?.totp ?? []).filter((f) => (f.status as string) === "unverified");
     for (const f of pending) {
       const { error } = await supabase.auth.mfa.unenroll({ factorId: f.id });
       if (error) throw error;

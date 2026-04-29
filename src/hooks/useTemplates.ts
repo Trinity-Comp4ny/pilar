@@ -91,7 +91,7 @@ export const useCreateTemplate = () => {
           descricao: template.descricao || null,
           fases: template.fases as unknown as Json,
           checklist: (template.checklist || []) as unknown as Json,
-        })
+        } as never)
         .select()
         .single();
 

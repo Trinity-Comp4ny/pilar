@@ -9,6 +9,8 @@ import {
   safeErrorResponse,
 } from "../_shared/cors.ts";
 import { EMAIL_RE } from "../_shared/validators.ts";
+import { adminClient } from "../_shared/admin-auth.ts";
+import { logAction } from "../_shared/audit.ts";
 
 // Apenas admin/user via UI. ultra_admin é exclusivo via SQL direto.
 // Roles legados (financeiro/marketing/operacional) caem no fallback 'user'.
@@ -58,7 +60,7 @@ serve(async (req) => {
   try {
     const { data: profile, error: profileError } = await supabaseClient
       .from("profiles")
-      .select("empresa_id, role")
+      .select("empresa_id, role, email")
       .eq("id", user.id)
       .single();
 
@@ -110,6 +112,20 @@ serve(async (req) => {
       console.error("[invite-user] inviteUserByEmail failed", inviteError.message);
       return safeErrorResponse(400, "Falha ao enviar convite", req);
     }
+
+    const svc = adminClient();
+    await logAction(svc, {
+      actorId: user.id,
+      actorEmail: profile.email ?? user.email ?? "",
+      actorRole: profile.role as "ultra_admin" | "admin",
+      action: "invite_user",
+      category: "member",
+      targetType: "user",
+      targetName: nome || email,
+      empresaId: profile.empresa_id,
+      metadata: { email, role: safeRole },
+      req,
+    });
 
     return jsonResponse({ success: true, email }, 200, req);
   } catch (error: unknown) {

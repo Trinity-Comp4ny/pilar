@@ -4,7 +4,7 @@ import { Calendar as CalendarIcon, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { getSafeErrorMessage } from "@/lib/safeError";
+import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import type { FolhaItem, HistoryItem } from "./folha-pagamento/types";
 import { MONTHS, getMonthLabel, buildYearRange } from "./folha-pagamento/types";
 import { FolhaSummaryCards } from "./folha-pagamento/components/FolhaSummaryCards";
@@ -43,6 +43,7 @@ export default function FolhaPagamento() {
   const [selectedMonth, setSelectedMonth] = useState(currentDate.getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear());
   const years = buildYearRange(currentDate.getFullYear());
+  const { canEdit } = useFeatureAccess("financeiro");
 
   useEffect(() => {
     fetchData();
@@ -62,11 +63,17 @@ export default function FolhaPagamento() {
       const grouped = new Map<string, HistoryItem>();
       historyData?.forEach((item) => {
         const key = `${item.mes}-${item.ano}`;
-        const current = grouped.get(key) || { mes: item.mes, ano: item.ano, total: 0, count: 0, status: item.status };
+        const current = grouped.get(key) || {
+          mes: item.mes,
+          ano: item.ano,
+          total: 0,
+          count: 0,
+          status: item.status ?? "",
+        };
         current.total += Number(item.total_receber || 0);
         current.count += 1;
-        if (current.status !== item.status && current.count > 1) {
-          if (item.status === "pendente") current.status = "pendente";
+        if (current.status !== "misto" && current.status !== item.status) {
+          current.status = "misto";
         }
         grouped.set(key, current);
       });
@@ -83,7 +90,7 @@ export default function FolhaPagamento() {
       const { data: projectsData } = await supabase
         .from("projetos")
         .select("area_m2, data_inicio")
-        .eq("empresa_id", (await supabase.rpc("get_user_empresa_id")).data);
+        .eq("empresa_id", (await supabase.rpc("get_user_empresa_id")).data ?? "");
 
       const uniqueArea = (projectsData || [])
         .filter((p) => {
@@ -124,8 +131,8 @@ export default function FolhaPagamento() {
               v_variavel,
               v_total,
               lista_projetos: [],
-              status: item.status,
-              data_pagamento: item.data_pagamento,
+              status: item.status ?? undefined,
+              data_pagamento: item.data_pagamento ?? undefined,
               folha_id: item.id,
               edited_fields: [],
             };
@@ -140,23 +147,23 @@ export default function FolhaPagamento() {
         if (rpcError) throw rpcError;
 
         setData(
-          (previewData || []).map((item: Record<string, unknown>) => {
+          ((previewData || []) as Record<string, unknown>[]).map((item) => {
             const salario_fixo = Number(item.p_salario_fixo ?? item.salario_fixo ?? 0);
             const valor_m2 = Number(item.p_valor_m2 ?? item.valor_m2 ?? 0);
             const soma_area = Number(item.soma_area ?? item.total_area ?? 0);
             const v_variavel = Number(item.v_variavel ?? item.total_variavel ?? soma_area * valor_m2);
             const v_total = Number(item.v_total ?? item.total_receber ?? salario_fixo + v_variavel);
             return {
-              p_id: item.p_id ?? item.pessoa_id ?? item.id,
-              p_nome: item.p_nome ?? item.nome ?? "",
-              p_cargo: item.p_cargo ?? item.cargo ?? "",
+              p_id: String(item.p_id ?? item.pessoa_id ?? item.id ?? ""),
+              p_nome: String(item.p_nome ?? item.nome ?? ""),
+              p_cargo: String(item.p_cargo ?? item.cargo ?? ""),
               p_salario_fixo: salario_fixo,
               p_valor_m2: valor_m2,
               soma_area,
               v_variavel,
               v_total,
-              lista_projetos: item.lista_projetos ?? item.projetos_nomes ?? [],
-              edited_fields: [],
+              lista_projetos: (item.lista_projetos ?? item.projetos_nomes ?? []) as string[],
+              edited_fields: [] as string[],
             };
           })
         );
@@ -184,7 +191,7 @@ export default function FolhaPagamento() {
         total_receber: item.v_total,
         status: "pendente",
       }));
-      const { error } = await supabase.from("folha_pagamento").insert(payload);
+      const { error } = await supabase.from("folha_pagamento").insert(payload as never);
       if (error) throw error;
 
       toast.success("Folha fechada com sucesso!", {
@@ -277,10 +284,10 @@ export default function FolhaPagamento() {
         let categoriaFolhaPagamento = categorias?.find((c) => c.nome === "Folha de Pagamento");
 
         if (!categoriaFolhaPagamento) {
-          const empresaId = (await supabase.rpc("get_user_empresa_id", {})).data;
+          const empresaId = (await supabase.rpc("get_user_empresa_id")).data;
           const { data: insertedCategory, error: insertCategoriaError } = await supabase
             .from("categorias_financeiras")
-            .insert({ nome: "Folha de Pagamento", tipo: "Despesa", empresa_id: empresaId })
+            .insert({ nome: "Folha de Pagamento", tipo: "Despesa", empresa_id: empresaId } as never)
             .select("id, nome")
             .single();
           if (insertCategoriaError) throw insertCategoriaError;
@@ -311,7 +318,7 @@ export default function FolhaPagamento() {
               cartao_id: null,
               observacao: "Lançamento automático de Folha de Pagamento",
             },
-          ]);
+          ] as never);
         }
       }
 
@@ -358,9 +365,9 @@ export default function FolhaPagamento() {
               soma_area,
               v_variavel,
               v_total,
-              lista_projetos: [],
-              status: item.status,
-              data_pagamento: item.data_pagamento,
+              lista_projetos: [] as string[],
+              status: item.status ?? undefined,
+              data_pagamento: item.data_pagamento ?? undefined,
               folha_id: item.id,
             };
           })
@@ -415,7 +422,7 @@ export default function FolhaPagamento() {
           </div>
 
           <div className="flex items-center gap-4">
-            {statusFolha === "preview" && data.length > 0 && (
+            {statusFolha === "preview" && data.length > 0 && canEdit && (
               <CloseMonthDialog
                 open={confirmDialogOpen}
                 onOpenChange={setConfirmDialogOpen}

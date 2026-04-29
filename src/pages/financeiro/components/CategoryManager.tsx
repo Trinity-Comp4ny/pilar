@@ -24,7 +24,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Plus, Pencil, Trash2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { getSafeErrorMessage } from "@/lib/safeError";
 
 interface Category {
   id: string;
@@ -92,8 +91,8 @@ export function CategoryManager({ title, description, type, onCategoryChange }: 
       const { error } = await supabase.from("categorias_financeiras").insert({
         nome: newCategoryName.trim(),
         tipo: type,
-        empresa_id: (await supabase.rpc("get_user_empresa_id", {})).data,
-      });
+        empresa_id: (await supabase.rpc("get_user_empresa_id")).data,
+      } as never);
 
       if (error) throw error;
 

@@ -54,7 +54,7 @@ const SHORTCUTS: readonly Shortcut[] = [
     id: "ops",
     label: "Perfil Operação",
     apply: (keys) => {
-      const editor: FeatureKey[] = ["projetos", "planejamento", "timesheet", "mapa"];
+      const editor: FeatureKey[] = ["projetos", "mapa"];
       const viewer: FeatureKey[] = ["clientes", "pessoas"];
       const next: UserFeatures = {};
       for (const k of keys) {

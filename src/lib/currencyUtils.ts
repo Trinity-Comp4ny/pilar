@@ -12,57 +12,48 @@ export const formatCurrency = (value: number): string => {
   }).format(value);
 };
 
-/**
- * Remove caracteres não numéricos de uma string, mantendo apenas dígitos
- */
 export const removeNonNumeric = (value: string): string => {
   return value.replace(/\D/g, "");
 };
 
-/**
- * Converte uma string formatada (com vírgula decimal e possivelmente R$) para número
- */
 export const parseCurrencyString = (value: string): number => {
   if (!value) return 0;
-
-  // Remove o símbolo R$ e espaços
-  const cleanValue = value.replace(/[R$\s]/g, "");
-
-  // Remove todos os caracteres exceto dígitos e vírgula
-  const numbersOnly = cleanValue.replace(/[^\d,]/g, "");
-
-  // Se houver vírgula, trata como decimal
-  if (numbersOnly.includes(",")) {
-    const parts = numbersOnly.split(",");
-    const integerPart = parts[0] || "0";
-    const decimalPart = parts[1] ? parts[1].slice(0, 2) : "00"; // Máximo 2 casas decimais
-    return parseFloat(`${integerPart}.${decimalPart}`);
+  // Remove R$, espaços e pontos (separadores de milhar)
+  const clean = value.replace(/[R$\s.]/g, "");
+  // Tudo exceto dígitos e vírgula
+  const normalized = clean.replace(/[^\d,]/g, "");
+  if (!normalized) return 0;
+  if (normalized.includes(",")) {
+    const [int, dec = ""] = normalized.split(",");
+    return parseFloat(`${int || "0"}.${dec.slice(0, 2).padEnd(2, "0")}`);
   }
-
-  // Se não houver vírgula, trata como centavos
-  const numValue = parseInt(numbersOnly) || 0;
-  return numValue / 100;
+  return parseInt(normalized) || 0;
 };
 
-/**
- * Formata um valor digitado pelo usuário em tempo real
- * Converte números digitados para formato de moeda brasileira com símbolo R$
- */
+// Formata um número (reais) para exibição no campo de texto
+export const formatValorToInput = (valor: number): string => {
+  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(valor);
+};
+
+// Formata entrada do usuário em tempo real.
+// Trata vírgula como separador decimal; dígitos sem vírgula = reais inteiros.
 export const formatCurrencyInput = (value: string): string => {
   if (!value) return "R$ 0,00";
 
-  // Remove todos os caracteres não numéricos
-  const numbersOnly = removeNonNumeric(value);
+  // Preserva vírgula, remove R$, espaços e pontos (milhar)
+  const stripped = value.replace(/[R$\s.]/g, "");
+  if (!stripped) return "R$ 0,00";
 
-  if (numbersOnly === "") return "R$ 0,00";
+  if (stripped.includes(",")) {
+    const [int, dec = ""] = stripped.split(",");
+    const intNum = parseInt(int.replace(/\D/g, "") || "0");
+    const decStr = dec.replace(/\D/g, "").slice(0, 2);
+    const num = parseFloat(`${intNum}.${decStr.padEnd(2, "0")}`);
+    return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(num);
+  }
 
-  // Converte para centavos (divide por 100)
-  const cents = parseInt(numbersOnly) || 0;
-  const reais = cents / 100;
-
-  // Formata como moeda brasileira com símbolo R$
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  }).format(reais);
+  // Sem vírgula — dígitos representam reais inteiros
+  const digits = stripped.replace(/\D/g, "");
+  const num = parseInt(digits) || 0;
+  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(num);
 };

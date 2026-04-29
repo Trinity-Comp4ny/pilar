@@ -1,8 +1,29 @@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import { Pencil, Trash2 } from "lucide-react";
 import { formatDateDisplay } from "@/lib/dateUtils";
+
+const MESES_ABREV = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+
+function getFaturaLabel(despesa: Despesa, cartoes: ContaLookup[]): string | null {
+  if (!despesa.cartao_id) return null;
+  const cartao = cartoes.find((c) => c.id === despesa.cartao_id);
+  if (!cartao) return null;
+  const diaFechamento = cartao.dia_fechamento ?? 31;
+  const dt = new Date(despesa.data_vencimento + "T00:00:00");
+  let mes = dt.getMonth() + 1;
+  let ano = dt.getFullYear();
+  if (dt.getDate() > diaFechamento) {
+    mes++;
+    if (mes > 12) {
+      mes = 1;
+      ano++;
+    }
+  }
+  return `${MESES_ABREV[mes - 1]}/${ano}`;
+}
 
 export interface Despesa {
   id: string;
@@ -31,6 +52,7 @@ export interface Despesa {
 interface ContaLookup {
   id: string;
   nome: string;
+  dia_fechamento?: number;
 }
 
 interface DespesaDetailDialogProps {
@@ -39,7 +61,7 @@ interface DespesaDetailDialogProps {
   despesa: Despesa | null;
   contas: ContaLookup[];
   cartoes: ContaLookup[];
-  isAdmin: boolean;
+  canEdit: boolean;
   onEdit: (despesa: Despesa) => void;
   onDelete: (id: string) => void;
 }
@@ -50,7 +72,7 @@ export function DespesaDetailDialog({
   despesa,
   contas,
   cartoes,
-  isAdmin,
+  canEdit,
   onEdit,
   onDelete,
 }: DespesaDetailDialogProps) {
@@ -115,6 +137,14 @@ export function DespesaDetailDialog({
                       : "-"}
                 </p>
               </div>
+              {despesa.cartao_id && (
+                <div>
+                  <Label className="text-xs text-muted-foreground">Fatura</Label>
+                  <Badge variant="outline" className="mt-1 text-xs font-normal">
+                    {getFaturaLabel(despesa, cartoes) ?? "—"}
+                  </Badge>
+                </div>
+              )}
               <div>
                 <Label className="text-xs text-muted-foreground">Nota Fiscal</Label>
                 <p className="text-sm">{despesa.nota_fiscal || "-"}</p>
@@ -137,7 +167,7 @@ export function DespesaDetailDialog({
               <Button variant="outline" className="flex-1" onClick={() => onOpenChange(false)}>
                 Fechar
               </Button>
-              {isAdmin && (
+              {canEdit && (
                 <>
                   <Button variant="outline" className="flex-1" onClick={() => onEdit(despesa)}>
                     <Pencil className="mr-2 h-4 w-4" />

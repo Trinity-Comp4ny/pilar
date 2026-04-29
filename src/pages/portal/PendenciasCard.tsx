@@ -45,8 +45,8 @@ export function PendenciasCard({ projetoId, baseUrl }: PendenciasCardProps) {
       ]);
 
       const receitas = receitasRes.data ?? [];
-      const atrasadas = receitas.filter((r) => r.data_vencimento < hojeIso).length;
-      const proximasVencimento = receitas.filter((r) => r.data_vencimento >= hojeIso).length;
+      const atrasadas = receitas.filter((r) => (r.data_vencimento ?? "") < hojeIso).length;
+      const proximasVencimento = receitas.filter((r) => (r.data_vencimento ?? "") >= hojeIso).length;
 
       setPendencias({
         entregasPendentes: entregasRes.count ?? 0,

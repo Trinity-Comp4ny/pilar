@@ -84,7 +84,7 @@ export function EscopoTab({ projetoId, canEdit }: EscopoTabProps) {
       const map: Record<string, EscopoItem[]> = {};
       (data || []).forEach((item) => {
         if (!map[item.escopo_id]) map[item.escopo_id] = [];
-        map[item.escopo_id].push(item);
+        map[item.escopo_id].push(item as EscopoItem);
       });
       return map;
     },
@@ -107,9 +107,9 @@ export function EscopoTab({ projetoId, canEdit }: EscopoTabProps) {
           status: formTipo === "original" ? "aprovado" : "rascunho",
           horas_estimadas: totalHoras,
           custo_estimado: totalCusto,
-          valor_aditivo: totalCusto * 1.3, // 30% de margem sugerida
+          valor_aditivo: totalCusto * 1.3,
           justificativa: formJustificativa.trim() || null,
-        })
+        } as never)
         .select()
         .single();
       if (error) throw error;
@@ -145,7 +145,7 @@ export function EscopoTab({ projetoId, canEdit }: EscopoTabProps) {
       toast.success(formTipo === "original" ? "Escopo original definido" : "Aditivo criado");
       resetForm();
     },
-    onError: (err: Error) => toast.error("Erro"),
+    onError: () => toast.error("Erro"),
   });
 
   const updateStatusMutation = useMutation({
@@ -155,7 +155,7 @@ export function EscopoTab({ projetoId, canEdit }: EscopoTabProps) {
       } = await supabase.auth.getUser();
       const updateData: Record<string, string> = { status };
       if (status === "aprovado" || status === "rejeitado") {
-        updateData.aprovado_por = user?.id;
+        updateData.aprovado_por = user?.id ?? "";
         updateData.aprovado_em = new Date().toISOString();
       }
       const { error } = await supabase.from("escopos").update(updateData).eq("id", id);

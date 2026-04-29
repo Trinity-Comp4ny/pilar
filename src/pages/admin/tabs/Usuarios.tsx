@@ -106,7 +106,9 @@ export function UsuariosTab({ users, setUsers, currentUserId, companyFeatures }:
   const handleDelete = async (id: string) => {
     if (!(await requireAal2())) return;
     try {
-      const { error } = await supabase.from("profiles").delete().eq("id", id);
+      const { error } = await supabase.functions.invoke("delete-user", {
+        body: { user_id: id },
+      });
       if (error) throw error;
       setUsers((prev) => prev.filter((u) => u.id !== id));
       toast.success("Usuário removido");

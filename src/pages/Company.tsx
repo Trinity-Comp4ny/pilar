@@ -7,7 +7,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Building2, Users as UsersIcon, Palette } from "lucide-react";
 import { formatCNPJ, formatPhone, onlyDigits } from "@/lib/maskUtils";
-import { getSafeErrorMessage } from "@/lib/safeError";
 import type { CompanyData, CompanyUser } from "./company/types";
 import { ROLES } from "./company/types";
 import { CompanySummaryCard } from "./company/components/CompanySummaryCard";
@@ -115,14 +114,20 @@ export default function Company() {
           .eq("empresa_id", profile.empresa_id);
         if (companyUsers) {
           setUsers(
-            companyUsers.map((u) => ({ id: u.id, name: u.nome, email: u.email, role: u.role, contato: u.contato }))
+            companyUsers.map((u) => ({
+              id: u.id,
+              name: u.nome ?? "",
+              email: u.email ?? "",
+              role: u.role ?? "user",
+              contato: u.contato ?? undefined,
+            }))
           );
         }
       }
     };
 
     fetchData()
-      .catch((e: unknown) => toast.error("Erro ao carregar"))
+      .catch(() => toast.error("Erro ao carregar"))
       .finally(() => setIsLoading(false));
   }, [toast]);
 
@@ -228,7 +233,7 @@ export default function Company() {
       );
       setIsEditUserOpen(false);
       toast.success("Usuário atualizado");
-    } catch (e: unknown) {
+    } catch {
       toast.error("Erro ao atualizar usuário");
     }
   };
@@ -243,7 +248,7 @@ export default function Company() {
       setIsDeleteUserOpen(false);
       setDeleteUserId(null);
       toast.success("Usuário removido");
-    } catch (e: unknown) {
+    } catch {
       toast.error("Erro ao remover usuário");
     }
   };
@@ -295,7 +300,7 @@ export default function Company() {
       await uploadCompanyLogo();
       setEditingVisual(false);
       toast.success("Configuração salva", { description: "Visual da empresa atualizado com sucesso" });
-    } catch (e: unknown) {
+    } catch {
       toast.error("Erro ao salvar logo");
     }
   };
