@@ -131,7 +131,8 @@ const App = () => {
                       </Route>
 
                       <Route element={<FeatureRoute feature="propostas" />}>
-                        <Route path="/propostas" element={<Propostas />} />
+                        <Route path="/documentos" element={<Propostas />} />
+                        <Route path="/propostas" element={<Navigate to="/documentos" replace />} />
                       </Route>
 
                       <Route element={<FeatureRoute feature="capacidade" />}>

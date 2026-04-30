@@ -15,7 +15,19 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Mail, Phone, User, CheckCircle2, Loader2, AlertTriangle, UserPlus, FileText } from "lucide-react";
+import {
+  Plus,
+  Mail,
+  Phone,
+  User,
+  CheckCircle2,
+  Loader2,
+  AlertTriangle,
+  UserPlus,
+  FileText,
+  Pencil,
+  Trash2,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { formatPhone } from "@/lib/maskUtils";
@@ -31,6 +43,7 @@ import {
   useConvertLeadToClient,
   useDeleteLead,
   useCreatePropostaFromLead,
+  useUpdateLead,
   type Lead,
 } from "@/hooks/useLeads";
 
@@ -55,12 +68,20 @@ export default function Leads() {
   const convertToClient = useConvertLeadToClient();
   const deleteLead = useDeleteLead();
   const createProposta = useCreatePropostaFromLead();
+  const updateLead = useUpdateLead();
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isConvertOpen, setIsConvertOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
   const [formData, setFormData] = useState({
+    nome: "",
+    email: "",
+    contato: "",
+    origem: "",
+  });
+  const [editFormData, setEditFormData] = useState({
     nome: "",
     email: "",
     contato: "",
@@ -70,6 +91,7 @@ export default function Leads() {
   const [isMotivoPerdasOpen, setIsMotivoPerdasOpen] = useState(false);
   const [motivoPerda, setMotivoPerda] = useState("");
   const [isAutoConvertOpen, setIsAutoConvertOpen] = useState(false);
+  const [isCreatePropostaOpen, setIsCreatePropostaOpen] = useState(false);
   const queryClient = useQueryClient();
   const { canEdit } = useFeatureAccess("leads");
   const navigate = useNavigate();
@@ -203,7 +225,7 @@ export default function Leads() {
     createProposta.mutate(lead, {
       onSuccess: (proposta) => {
         setIsDetailOpen(false);
-        navigate(`/propostas?edit=${proposta.id}`);
+        navigate(`/documentos?edit=${proposta.id}`);
       },
     });
   };
@@ -214,6 +236,30 @@ export default function Leads() {
         setIsDetailOpen(false);
       },
     });
+  };
+
+  const handleOpenEdit = (lead: Lead) => {
+    setEditFormData({
+      nome: lead.nome,
+      email: lead.email ?? "",
+      contato: lead.contato ?? "",
+      origem: lead.origem ?? "",
+    });
+    setIsEditOpen(true);
+  };
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedLead) return;
+    updateLead.mutate(
+      { id: selectedLead.id, data: editFormData },
+      {
+        onSuccess: () => {
+          setSelectedLead({ ...selectedLead, ...editFormData });
+          setIsEditOpen(false);
+        },
+      }
+    );
   };
 
   const getLeadsByStatus = (status: string) => {
@@ -508,38 +554,136 @@ export default function Leads() {
                 </div>
 
                 {/* Ações */}
-                <div className="flex flex-col gap-2 pt-4">
-                  {selectedLead.status !== "Perdido" && selectedLead.status !== "Ganho" && (
-                    <Button
-                      className="w-full bg-accent-orange hover:bg-accent-orange/90 text-ink"
-                      onClick={() => handleCriarProposta(selectedLead)}
-                      disabled={createProposta.isPending}
-                    >
-                      {createProposta.isPending ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Criando...
-                        </>
-                      ) : (
-                        <>
-                          <FileText className="mr-2 h-4 w-4" /> Criar Proposta
-                        </>
-                      )}
-                    </Button>
-                  )}
-                  <div className="flex gap-2">
-                    <Button variant="outline" className="flex-1" onClick={() => setIsDetailOpen(false)}>
-                      Fechar
-                    </Button>
-                    {canEdit && (
-                      <Button variant="destructive" className="flex-1" onClick={() => handleDelete(selectedLead.id)}>
-                        Excluir
-                      </Button>
+                <div className="flex items-center gap-2 pt-4 border-t">
+                  <Button
+                    className="bg-accent-orange hover:bg-accent-orange/90 text-ink"
+                    onClick={() => setIsCreatePropostaOpen(true)}
+                    disabled={
+                      createProposta.isPending || selectedLead.status === "Perdido" || selectedLead.status === "Ganho"
+                    }
+                  >
+                    {createProposta.isPending ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <FileText className="mr-2 h-4 w-4" />
                     )}
-                  </div>
+                    Criar Proposta
+                  </Button>
+
+                  <div className="flex-1" />
+
+                  {canEdit && (
+                    <>
+                      <Button variant="outline" size="sm" onClick={() => handleOpenEdit(selectedLead)}>
+                        <Pencil className="h-3.5 w-3.5 mr-1.5" />
+                        Editar
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                        onClick={() => handleDelete(selectedLead.id)}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </>
+                  )}
                 </div>
               </div>
             </>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de Edição do Lead */}
+      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto p-0">
+          <div className="px-6 pt-6 pb-4">
+            <DialogHeader>
+              <DialogTitle>Editar Lead</DialogTitle>
+              <DialogDescription>Atualize as informações do lead</DialogDescription>
+            </DialogHeader>
+          </div>
+
+          <form onSubmit={handleEditSubmit}>
+            <div className="px-6 py-4 space-y-3">
+              <Label className="text-[10px] uppercase text-muted-foreground tracking-wider">Informações do Lead</Label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="edit-nome" className="text-xs">
+                    Nome *
+                  </Label>
+                  <Input
+                    id="edit-nome"
+                    value={editFormData.nome}
+                    onChange={(e) => setEditFormData({ ...editFormData, nome: e.target.value })}
+                    placeholder="Nome completo"
+                    required
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="edit-email" className="text-xs">
+                    Email
+                  </Label>
+                  <Input
+                    id="edit-email"
+                    type="email"
+                    value={editFormData.email}
+                    onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
+                    placeholder="email@exemplo.com"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="edit-contato" className="text-xs">
+                    Celular
+                  </Label>
+                  <Input
+                    id="edit-contato"
+                    value={editFormData.contato}
+                    onChange={(e) => setEditFormData({ ...editFormData, contato: formatPhone(e.target.value) })}
+                    maxLength={15}
+                    placeholder="(14) 99999-9999"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="edit-origem" className="text-xs">
+                    Origem
+                  </Label>
+                  <Input
+                    id="edit-origem"
+                    value={editFormData.origem}
+                    onChange={(e) => setEditFormData({ ...editFormData, origem: e.target.value })}
+                    placeholder="Ex: Instagram, LinkedIn, Indicação..."
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-2 px-6 py-4 bg-gray-50/30">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsEditOpen(false)}
+                className="flex-1"
+                disabled={updateLead.isPending}
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="submit"
+                className="flex-1 bg-accent-orange hover:bg-accent-orange/90 text-ink"
+                disabled={updateLead.isPending}
+              >
+                {updateLead.isPending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Salvando...
+                  </>
+                ) : (
+                  "Salvar"
+                )}
+              </Button>
+            </div>
+          </form>
         </DialogContent>
       </Dialog>
 
@@ -605,6 +749,47 @@ export default function Leads() {
             </Button>
             <Button onClick={handleConfirmMotivoPerdas} variant="destructive" disabled={!motivoPerda.trim()}>
               Confirmar Perda
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal Confirmação Criar Proposta */}
+      <Dialog open={isCreatePropostaOpen} onOpenChange={setIsCreatePropostaOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5 text-accent-orange" />
+              Criar Proposta
+            </DialogTitle>
+            <DialogDescription>
+              Deseja criar uma proposta para <span className="font-medium text-foreground">{selectedLead?.nome}</span>?
+              Você será redirecionado para o editor de propostas.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="mt-4">
+            <Button
+              variant="outline"
+              onClick={() => setIsCreatePropostaOpen(false)}
+              disabled={createProposta.isPending}
+            >
+              Cancelar
+            </Button>
+            <Button
+              className="bg-accent-orange hover:bg-accent-orange/90 text-ink"
+              onClick={() => {
+                setIsCreatePropostaOpen(false);
+                if (selectedLead) handleCriarProposta(selectedLead);
+              }}
+              disabled={createProposta.isPending}
+            >
+              {createProposta.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Criando...
+                </>
+              ) : (
+                "Confirmar"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

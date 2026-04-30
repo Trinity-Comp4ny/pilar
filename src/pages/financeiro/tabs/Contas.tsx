@@ -22,6 +22,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { CreditCard, Wallet, Plus, Settings, Pencil, Trash2, TrendingUp, TrendingDown } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { detectTipoChavePix, TIPO_CHAVE_PIX_LABEL, type TipoChavePix } from "@/lib/pixUtils";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -33,6 +35,8 @@ interface ContaItem {
   id: string;
   nome: string;
   banco: string;
+  chave_pix?: string | null;
+  tipo_chave_pix?: TipoChavePix | null;
   cor: string | null;
   empresa_id: string;
   saldo_inicial: number;
@@ -70,6 +74,7 @@ export default function Configuracoes() {
   const [nome, setNome] = useState("");
   const [banco, setBanco] = useState("");
   const [saldoInicial, setSaldoInicial] = useState("");
+  const [chavePix, setChavePix] = useState("");
   const [diaFechamento, setDiaFechamento] = useState("");
   const [diaVencimento, setDiaVencimento] = useState("");
   const [limite, setLimite] = useState("");
@@ -81,21 +86,48 @@ export default function Configuracoes() {
   }, []);
 
   const fetchContas = async () => {
-    const { data } = await supabase.from("view_financas_resumo").select("*");
-    if (data)
-      setContas(
-        data.map((c) => ({
-          id: c.conta_id,
-          nome: c.conta_nome,
-          banco: c.banco,
-          cor: c.cor,
-          empresa_id: c.empresa_id,
-          saldo_inicial: c.saldo_inicial,
-          saldo_atual: c.saldo_atual,
-          total_entradas: c.total_entradas,
-          total_saidas: c.total_saidas,
-        })) as ContaItem[]
-      );
+    const { data: viewData } = await supabase.from("view_financas_resumo").select("*");
+    if (!viewData) return;
+
+    const ids = viewData.map((c) => c.conta_id).filter(Boolean) as string[];
+    type PixRow = { id: string; chave_pix: string | null; tipo_chave_pix: string | null };
+    const pixData: PixRow[] = ids.length
+      ? await supabase
+          .from("contas")
+          .select("id")
+          .in("id", ids)
+          .then(async () => {
+            const { data } = await (
+              supabase as unknown as {
+                from: (t: string) => {
+                  select: (c: string) => { in: (col: string, vals: string[]) => Promise<{ data: PixRow[] | null }> };
+                };
+              }
+            )
+              .from("contas")
+              .select("id, chave_pix, tipo_chave_pix")
+              .in("id", ids);
+            return data ?? [];
+          })
+      : [];
+
+    const pixMap = Object.fromEntries(pixData.map((p) => [p.id, p]));
+
+    setContas(
+      viewData.map((c) => ({
+        id: c.conta_id,
+        nome: c.conta_nome,
+        banco: c.banco,
+        cor: c.cor,
+        empresa_id: c.empresa_id,
+        saldo_inicial: c.saldo_inicial,
+        saldo_atual: c.saldo_atual,
+        total_entradas: c.total_entradas,
+        total_saidas: c.total_saidas,
+        chave_pix: c.conta_id ? (pixMap[c.conta_id]?.chave_pix ?? null) : null,
+        tipo_chave_pix: c.conta_id ? ((pixMap[c.conta_id]?.tipo_chave_pix as TipoChavePix) ?? null) : null,
+      })) as ContaItem[]
+    );
   };
 
   const fetchCartoes = async () => {
@@ -126,6 +158,8 @@ export default function Configuracoes() {
         return;
       }
 
+      const pixTipo = chavePix ? (detectTipoChavePix(chavePix) ?? null) : null;
+
       // saldo_atual não é definido aqui — é calculado pela view_financas_resumo
       const payload = {
         empresa_id: empresaId,
@@ -133,6 +167,8 @@ export default function Configuracoes() {
         banco,
         saldo_inicial: parseCurrencyString(saldoInicial),
         cor: "hsl(var(--chart-neutral))",
+        chave_pix: chavePix || null,
+        tipo_chave_pix: pixTipo,
       };
 
       if (selectedConta) {
@@ -142,6 +178,8 @@ export default function Configuracoes() {
             nome,
             banco,
             saldo_inicial: parseCurrencyString(saldoInicial),
+            chave_pix: chavePix || null,
+            tipo_chave_pix: pixTipo,
           })
           .eq("id", selectedConta.id);
 
@@ -297,6 +335,7 @@ export default function Configuracoes() {
     setNome("");
     setBanco("");
     setSaldoInicial("");
+    setChavePix("");
     setDiaFechamento("");
     setDiaVencimento("");
     setLimite("");
@@ -309,6 +348,7 @@ export default function Configuracoes() {
     setSelectedConta(conta);
     setNome(conta.nome);
     setBanco(conta.banco);
+    setChavePix(conta.chave_pix ?? "");
     setSaldoInicial(formatValorToInput(conta.saldo_inicial ?? 0));
     setIsNewContaOpen(true);
   };
@@ -427,6 +467,21 @@ export default function Configuracoes() {
                         value={saldoInicial}
                         onChange={(e) => setSaldoInicial(formatCurrencyInput(e.target.value))}
                         placeholder="R$ 5.000,00"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="flex items-center gap-2">
+                        Chave PIX
+                        {chavePix && (
+                          <Badge variant="secondary" className="text-[10px] h-4 px-1.5">
+                            {TIPO_CHAVE_PIX_LABEL[detectTipoChavePix(chavePix) as TipoChavePix] ?? "Detectando..."}
+                          </Badge>
+                        )}
+                      </Label>
+                      <Input
+                        value={chavePix}
+                        onChange={(e) => setChavePix(e.target.value)}
+                        placeholder="CPF, CNPJ, e-mail, celular ou chave aleatória"
                       />
                     </div>
                     <Button
@@ -727,9 +782,6 @@ export default function Configuracoes() {
                 </div>
               </div>
               <div className="flex gap-2 mt-4 border-t pt-4">
-                <Button variant="outline" className="flex-1" onClick={() => setIsCartaoDetailOpen(false)}>
-                  Fechar
-                </Button>
                 {canEdit && (
                   <>
                     <Button variant="outline" className="flex-1" onClick={() => openEditCartao(selectedCartao)}>
@@ -792,9 +844,6 @@ export default function Configuracoes() {
                 </div>
               </div>
               <div className="flex gap-2 mt-4 border-t pt-4">
-                <Button variant="outline" className="flex-1" onClick={() => setIsContaDetailOpen(false)}>
-                  Fechar
-                </Button>
                 {canEdit && (
                   <>
                     <Button variant="outline" className="flex-1" onClick={() => openEditConta(selectedConta)}>

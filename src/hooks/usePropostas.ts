@@ -19,6 +19,11 @@ export interface Proposta {
   projeto_id: string | null;
   dados_simulacao: Record<string, unknown> | null;
   observacao: string | null;
+  contrato_enviado: boolean;
+  contrato_assinado: boolean;
+  contrato_recusado: boolean;
+  template_id?: string | null;
+  campos_extras?: Record<string, string> | null;
   created_at: string;
   // Joins
   cliente_nome?: string;

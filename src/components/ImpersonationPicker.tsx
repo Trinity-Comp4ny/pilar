@@ -16,7 +16,7 @@ export function ImpersonationPicker() {
   const { realRole } = usePermissions();
   const { viewAsRole, startImpersonation, stopImpersonation } = useImpersonation();
 
-  if (realRole !== "admin") return null;
+  if (realRole !== "admin" && realRole !== "ultra_admin") return null;
 
   return (
     <DropdownMenuSub>

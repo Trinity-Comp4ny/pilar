@@ -134,9 +134,6 @@ export function PessoaDetailDialog({ open, onOpenChange, pessoa, isAdmin, onEdit
           )}
 
           <div className="flex gap-2 pt-4">
-            <Button variant="outline" onClick={() => onOpenChange(false)} className="flex-1">
-              Fechar
-            </Button>
             {isAdmin && (
               <>
                 <Button variant="outline" onClick={() => onEdit(pessoa)} className="flex-1">

@@ -12,6 +12,11 @@ export interface ContaBancaria {
   [key: string]: Json | undefined;
 }
 
+export interface ChavePix {
+  chave: string;
+  tipo: string;
+}
+
 export interface Cliente {
   id: string;
   nome: string;
@@ -22,6 +27,7 @@ export interface Cliente {
   tipo_nf?: string;
   origem?: string;
   contas_bancarias?: ContaBancaria[];
+  chaves_pix?: ChavePix[];
 }
 
 export interface ClienteFormData {
@@ -33,6 +39,7 @@ export interface ClienteFormData {
   tipo_nf: string;
   origem: string;
   contas_bancarias: ContaBancaria[];
+  chaves_pix: ChavePix[];
 }
 
 export const useClientes = () => {
@@ -51,15 +58,17 @@ export const useClientes = () => {
 
   const upsertMutation = useMutation({
     mutationFn: async ({ id, data }: { id?: string; data: ClienteFormData }) => {
+      const nullIfEmpty = (v: string) => v?.trim() || null;
       const payload = {
         nome: data.nome,
         cpf_cnpj: data.cpf_cnpj,
-        endereco: data.endereco,
+        endereco: nullIfEmpty(data.endereco),
         contato: data.contato,
         email: data.email,
-        tipo_nf: data.tipo_nf,
-        origem: data.origem,
+        tipo_nf: nullIfEmpty(data.tipo_nf),
+        origem: nullIfEmpty(data.origem),
         contas_bancarias: data.contas_bancarias as unknown as Json,
+        chaves_pix: data.chaves_pix as unknown as Json,
       };
 
       if (id) {
@@ -82,8 +91,21 @@ export const useClientes = () => {
           : "Novo cliente foi adicionado com sucesso",
       });
     },
-    onError: () => {
-      toast.error("Erro ao salvar");
+    onError: (error: unknown) => {
+      const err = error as { code?: string; message?: string };
+      if (err.code === "23505") {
+        if (err.message?.includes("cpf_cnpj")) {
+          toast.error("CPF/CNPJ já cadastrado", { description: "Este documento já pertence a outro cliente." });
+        } else if (err.message?.includes("contato")) {
+          toast.error("Contato já cadastrado", { description: "Este telefone já pertence a outro cliente." });
+        } else if (err.message?.includes("email")) {
+          toast.error("E-mail já cadastrado", { description: "Este e-mail já pertence a outro cliente." });
+        } else {
+          toast.error("Registro duplicado", { description: "Um dos campos já está em uso por outro cliente." });
+        }
+      } else {
+        toast.error("Erro ao salvar", { description: err.message });
+      }
     },
   });
 
@@ -103,11 +125,21 @@ export const useClientes = () => {
     },
   });
 
+  const portalClienteIdsQuery = useQuery({
+    queryKey: ["portal-cliente-ids"],
+    queryFn: async () => {
+      const { data } = await supabase.from("cliente_portal_accounts").select("cliente_id").eq("ativo", true);
+      return new Set((data ?? []).map((r) => r.cliente_id as string));
+    },
+    staleTime: 1000 * 60 * 3,
+  });
+
   const checkPortalAccess = async (clienteId: string) => {
     const { data } = await supabase
       .from("cliente_portal_accounts")
       .select("id")
       .eq("cliente_id", clienteId)
+      .eq("ativo", true)
       .maybeSingle();
 
     return !!data;
@@ -180,6 +212,7 @@ export const useClientes = () => {
   return {
     clientes: clientesQuery.data ?? [],
     isLoading: clientesQuery.isLoading,
+    portalClienteIds: portalClienteIdsQuery.data ?? new Set<string>(),
     upsertCliente: upsertMutation.mutateAsync,
     isSaving: upsertMutation.isPending,
     deleteCliente: deleteMutation.mutateAsync,
