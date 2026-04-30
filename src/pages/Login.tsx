@@ -72,6 +72,7 @@ export default function Login() {
     toast.success("Login realizado com sucesso!", {
       description: "Bem-vindo de volta.",
     });
+    sessionStorage.setItem("pilar_post_login", "1");
     navigate("/dashboard");
     setIsLoading(false);
   };

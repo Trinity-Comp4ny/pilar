@@ -196,10 +196,6 @@ export function DisciplinaDetailDialog({
               </Button>
             </div>
           </div>
-
-          <Button onClick={() => onOpenChange(false)} className="w-full mt-2" variant="outline">
-            Fechar
-          </Button>
         </div>
       </DialogContent>
     </Dialog>

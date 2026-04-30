@@ -15,7 +15,8 @@ import {
 } from "@/components/ui/dialog";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, Plus, Settings, Pencil, Trash2, Loader2 } from "lucide-react";
+import { CalendarIcon, Plus, Settings, Pencil, Trash2, Loader2, QrCode } from "lucide-react";
+import { TIPO_CHAVE_PIX_LABEL } from "@/lib/pixUtils";
 import { format, addMonths } from "date-fns";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -102,7 +103,13 @@ export default function Receitas() {
 
   const [categorias, setCategorias] = useState<{ id: string; name: string }[]>([]);
   const [projetos, setProjetos] = useState<{ id: string; projetoID: string }[]>([]);
-  const [clientes, setClientes] = useState<{ id: string; nome: string }[]>([]);
+  const [clientes, setClientes] = useState<
+    {
+      id: string;
+      nome: string;
+      chaves_pix?: Array<{ chave: string; tipo: string }>;
+    }[]
+  >([]);
 
   const receitasFiltradas = useMemo(() => {
     return receitas.filter((r) => {
@@ -129,10 +136,26 @@ export default function Receitas() {
 
     setCategorias((categoriasData ?? []).map((cat) => ({ id: cat.id, name: cat.nome })));
 
-    // Fetch Clientes
-    const { data: clientesData } = await supabase.from("clientes").select("*").order("nome");
+    // Fetch Clientes (cast necessário até gen:types após migration)
+    type ClientePix = { id: string; nome: string; chaves_pix: Array<{ chave: string; tipo: string }> | null };
+    const { data: clientesData } = await (
+      supabase as unknown as {
+        from: (t: string) => {
+          select: (c: string) => { order: (col: string) => Promise<{ data: ClientePix[] | null }> };
+        };
+      }
+    )
+      .from("clientes")
+      .select("id, nome, chaves_pix")
+      .order("nome");
 
-    setClientes((clientesData ?? []).map((c) => ({ id: c.id, nome: c.nome })));
+    setClientes(
+      (clientesData ?? []).map((c) => ({
+        id: c.id,
+        nome: c.nome,
+        chaves_pix: Array.isArray(c.chaves_pix) ? c.chaves_pix : [],
+      }))
+    );
 
     // Fetch Contas
     const { data: contasData } = await supabase.from("contas").select("*").order("nome");
@@ -290,7 +313,7 @@ export default function Receitas() {
       setIsDialogOpen(false);
       fetchReceitas();
       resetForm();
-    } catch (err: unknown) {
+    } catch {
       toast.error("Erro ao salvar");
     } finally {
       setIsSaving(false);
@@ -625,6 +648,25 @@ export default function Receitas() {
                             ))}
                           </SelectContent>
                         </Select>
+                        {(() => {
+                          const clienteId = form.watch("clienteId");
+                          const cliente = clientes.find((c) => c.id === clienteId);
+                          const chaves = cliente?.chaves_pix ?? [];
+                          if (!chaves.length) return null;
+                          return (
+                            <div className="rounded-md border border-dashed px-3 py-2 space-y-1 bg-muted/30">
+                              {chaves.map((c, i) => (
+                                <div key={i} className="flex items-center gap-2 text-xs">
+                                  <QrCode className="h-3 w-3 shrink-0 text-accent-orange" />
+                                  <span className="font-medium">{c.chave}</span>
+                                  <Badge variant="outline" className="text-[10px] h-4 px-1 ml-auto">
+                                    {TIPO_CHAVE_PIX_LABEL[c.tipo as keyof typeof TIPO_CHAVE_PIX_LABEL] ?? c.tipo}
+                                  </Badge>
+                                </div>
+                              ))}
+                            </div>
+                          );
+                        })()}
                       </div>
                       <div className="space-y-1.5">
                         <Label className="text-xs">Projeto</Label>

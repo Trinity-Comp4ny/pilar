@@ -150,8 +150,10 @@ export function PrivateRoute() {
     return <SubscriptionSuspendedScreen />;
   }
 
-  const inPlatformMode = sessionStorage.getItem(ULTRA_PLATFORM_MODE_KEY) === "true";
-  if (isUltraAdmin(profile?.role) && !inPlatformMode && location.pathname === "/dashboard") {
+  const justLoggedIn = sessionStorage.getItem("pilar_post_login") === "1";
+  if (isUltraAdmin(profile?.role) && justLoggedIn && location.pathname === "/dashboard") {
+    sessionStorage.removeItem("pilar_post_login");
+    sessionStorage.setItem(ULTRA_PLATFORM_MODE_KEY, "true");
     return <Navigate to="/ultra-admin" replace />;
   }
 

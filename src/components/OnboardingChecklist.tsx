@@ -120,7 +120,7 @@ export function OnboardingChecklist() {
         title: "Crie sua primeira proposta",
         description: "Orçamento comercial vinculado a um cliente ou lead",
         cta: "Ir para Propostas",
-        ctaPath: "/propostas",
+        ctaPath: "/documentos",
         count: c.propostas,
       },
       {

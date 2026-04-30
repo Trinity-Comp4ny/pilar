@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
+import { useState, useMemo } from "react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,23 +7,24 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   Plus,
   FileText,
-  FileSignature,
   Loader2,
-  Trash2,
-  Send,
-  CheckCircle2,
   FolderPlus,
-  Download,
   LayoutTemplate,
-  Undo2,
-  XCircle,
+  LayoutList,
+  LayoutGrid,
+  Calendar,
+  Building2,
+  DollarSign,
+  Search,
+  Trash2,
+  ArrowUpDown,
 } from "lucide-react";
-import { DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { DialogDescription as DD, DialogFooter } from "@/components/ui/dialog";
 import { useNavigate } from "react-router-dom";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
@@ -40,11 +41,14 @@ import {
   PROPOSTA_STATUS_CONFIG,
   type PropostaInsert,
 } from "@/hooks/usePropostas";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatCurrencyInput, parseCurrencyString } from "@/lib/currencyUtils";
 import { CapacidadeSimulacao } from "./components/CapacidadeSimulacao";
 import { TemplatesManager } from "./components/TemplatesManager";
 import { GerarPropostaDialog } from "./components/GerarPropostaDialog";
+import { PropostaDetailDialog } from "./components/PropostaDetailDialog";
+import { fetchClientesLookup, fetchLeadsLookup } from "@/lib/supabaseQueries";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 interface PropostaDisciplina {
   id: string;
@@ -52,51 +56,57 @@ interface PropostaDisciplina {
   horas_estimadas: number | null;
   custo_hora: number | null;
 }
-import { fetchClientesLookup, fetchLeadsLookup } from "@/lib/supabaseQueries";
-import { useQuery } from "@tanstack/react-query";
-import { usePageTitle } from "@/hooks/usePageTitle";
+
+type ViewMode = "table" | "cards";
+
+const emptyForm: PropostaInsert = {
+  titulo: "",
+  codigo: "",
+  area_m2: undefined,
+  localizacao: "",
+  valor_proposto: undefined,
+  prazo_estimado_dias: undefined,
+  observacao: "",
+};
 
 export default function Propostas() {
-  usePageTitle("Propostas");
+  usePageTitle("Documentos");
+  const queryClient = useQueryClient();
   const { data: userRole } = useUserRole();
   const { data: propostas = [], isLoading } = usePropostas();
   const createProposta = useCreateProposta();
   const updateProposta = useUpdateProposta();
   const deleteProposta = useDeleteProposta();
-
   const converterProposta = useConverterProposta();
   const navigate = useNavigate();
 
-  const canEdit = userRole === "admin";
+  const canEdit = userRole === "admin" || userRole === "ultra_admin";
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [vinculoTipo, setVinculoTipo] = useState<"cliente" | "lead">("cliente");
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [convertPropostaId, setConvertPropostaId] = useState<string | null>(null);
   const [gerarDocxPropostaId, setGerarDocxPropostaId] = useState<string | null>(null);
   const [gerarContratoPropostaId, setGerarContratoPropostaId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState("propostas");
+  const [isTemplatesOpen, setIsTemplatesOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<ViewMode>("table");
+  const [detailPropostaId, setDetailPropostaId] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [sortField, setSortField] = useState<"titulo" | "valor_proposto" | "validade" | "created_at" | null>(null);
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
 
+  const detailProposta = propostas.find((p) => p.id === detailPropostaId) ?? null;
   const gerarDocxProposta = propostas.find((p) => p.id === gerarDocxPropostaId);
   const { data: gerarDocxDisciplinas = [] } = usePropostaDisciplinas(gerarDocxPropostaId);
   const gerarContratoProposta = propostas.find((p) => p.id === gerarContratoPropostaId);
   const { data: gerarContratoDisciplinas = [] } = usePropostaDisciplinas(gerarContratoPropostaId);
-
   const convertProposta = propostas.find((p) => p.id === convertPropostaId);
   const { data: convertDisciplinas = [] } = usePropostaDisciplinas(convertPropostaId);
 
-  // Form state
-  const [form, setForm] = useState<PropostaInsert>({
-    titulo: "",
-    codigo: "",
-    area_m2: undefined,
-    localizacao: "",
-    valor_proposto: undefined,
-    prazo_estimado_dias: undefined,
-    observacao: "",
-  });
+  const [form, setForm] = useState<PropostaInsert>(emptyForm);
   const [valorDisplay, setValorDisplay] = useState("");
 
-  // Clientes e leads para o select
   const { data: clientes = [] } = useQuery({
     queryKey: ["clientes-select"],
     queryFn: fetchClientesLookup,
@@ -108,37 +118,65 @@ export default function Propostas() {
   });
 
   const resetForm = () => {
-    setForm({
-      titulo: "",
-      codigo: "",
-      area_m2: undefined,
-      localizacao: "",
-      valor_proposto: undefined,
-      prazo_estimado_dias: undefined,
-      observacao: "",
-    });
+    setForm(emptyForm);
     setValorDisplay("");
     setVinculoTipo("cliente");
+    setEditingId(null);
   };
 
-  const handleCreate = () => {
+  const openEdit = (id: string) => {
+    const p = propostas.find((x) => x.id === id);
+    if (!p) return;
+    setDetailPropostaId(null);
+    setEditingId(id);
+    setForm({
+      titulo: p.titulo,
+      codigo: p.codigo || "",
+      area_m2: p.area_m2 ?? undefined,
+      localizacao: p.localizacao || "",
+      valor_proposto: p.valor_proposto ?? undefined,
+      prazo_estimado_dias: p.prazo_estimado_dias ?? undefined,
+      observacao: p.observacao || "",
+      cliente_id: p.cliente_id || undefined,
+      lead_id: p.lead_id || undefined,
+    });
+    setVinculoTipo(p.lead_id ? "lead" : "cliente");
+    setValorDisplay(
+      p.valor_proposto ? new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2 }).format(p.valor_proposto) : ""
+    );
+    setIsFormOpen(true);
+  };
+
+  const handleSubmit = () => {
     if (!form.titulo.trim()) {
       toast.error("Título é obrigatório");
       return;
     }
-
     const valorProposto = parseCurrencyString(valorDisplay);
-    createProposta.mutate(
-      { ...form, valor_proposto: valorProposto || undefined },
-      {
+    const payload = { ...form, valor_proposto: valorProposto || undefined };
+
+    if (editingId) {
+      updateProposta.mutate(
+        { id: editingId, ...payload },
+        {
+          onSuccess: () => {
+            toast.success("Proposta atualizada");
+            setIsFormOpen(false);
+            resetForm();
+          },
+          onError: () => toast.error("Erro ao atualizar"),
+        }
+      );
+    } else {
+      createProposta.mutate(payload, {
         onSuccess: () => {
           toast.success("Proposta criada");
           setIsFormOpen(false);
           resetForm();
         },
-        onError: () => toast.error("Erro"),
-      }
-    );
+        onError: () => toast.error("Erro ao criar"),
+      });
+    }
   };
 
   const handleStatusChange = (id: string, status: string) => {
@@ -157,6 +195,7 @@ export default function Propostas() {
       onSuccess: () => {
         toast.success("Proposta removida");
         setConfirmDeleteId(null);
+        setDetailPropostaId(null);
       },
       onError: () => toast.error("Erro"),
     });
@@ -182,6 +221,7 @@ export default function Propostas() {
   const formatDate = (d: string | null) => (d ? new Date(d + "T00:00:00").toLocaleDateString("pt-BR") : "—");
 
   const hoje = new Date().toISOString().slice(0, 10);
+
   const getDisplayStatus = (p: { status: string; validade: string | null }) => {
     if (p.validade && p.validade < hoje && (p.status === "rascunho" || p.status === "enviada")) {
       return "expirada";
@@ -189,16 +229,66 @@ export default function Propostas() {
     return p.status;
   };
 
-  // Métricas
-  const totalPropostas = propostas.length;
-  const valorTotal = propostas.reduce((s, p) => s + (p.valor_proposto || 0), 0);
-  const aceitas = propostas.filter((p) => p.status === "aceita").length;
-  const taxaConversao = totalPropostas > 0 ? ((aceitas / totalPropostas) * 100).toFixed(0) : "0";
+  const normalize = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+
+  const handleSort = (field: typeof sortField) => {
+    if (sortField === field) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    else {
+      setSortField(field);
+      setSortDir("asc");
+    }
+  };
+
+  const filteredPropostas = useMemo(() => {
+    const term = normalize(searchTerm.trim());
+    let list = propostas.filter((p) => {
+      if (term) {
+        const haystack = normalize(`${p.titulo} ${p.codigo || ""} ${p.cliente_nome || ""} ${p.lead_nome || ""}`);
+        if (!haystack.includes(term)) return false;
+      }
+      if (filterStatus !== "all" && getDisplayStatus(p) !== filterStatus) return false;
+      return true;
+    });
+    if (sortField) {
+      list = [...list].sort((a, b) => {
+        const av = a[sortField] ?? "";
+        const bv = b[sortField] ?? "";
+        const cmp = String(av).localeCompare(String(bv), "pt-BR", { numeric: true });
+        return sortDir === "asc" ? cmp : -cmp;
+      });
+    }
+    return list;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [propostas, searchTerm, filterStatus, sortField, sortDir, hoje]);
+
+  const header = (
+    <PageHeader title="Documentos" description="Gerencie propostas e contratos">
+      <div className="flex items-center gap-2">
+        <Button
+          className="rounded-full bg-accent-orange hover:bg-accent-orange/90 text-ink transition-colors px-5 py-2.5 text-sm"
+          onClick={() => setIsTemplatesOpen(true)}
+        >
+          <LayoutTemplate className="h-4 w-4 mr-1.5" />
+          Gerenciar Templates
+        </Button>
+        {canEdit && (
+          <Button
+            className="rounded-full bg-accent-orange hover:bg-accent-orange/90 text-ink transition-colors px-5 py-2.5 text-sm"
+            onClick={() => {
+              resetForm();
+              setIsFormOpen(true);
+            }}
+          >
+            <Plus className="h-4 w-4 mr-1" /> Nova Proposta
+          </Button>
+        )}
+      </div>
+    </PageHeader>
+  );
 
   if (isLoading) {
     return (
-      <PageLayout>
-        <PageHeader title="Propostas" description="Gerencie suas propostas comerciais" />
+      <PageLayout header={header}>
         <div className="flex items-center justify-center py-12">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
@@ -207,276 +297,301 @@ export default function Propostas() {
   }
 
   return (
-    <PageLayout>
-      <PageHeader title="Propostas" description="Gerencie suas propostas comerciais">
-        <div className="flex items-center gap-2">
-          {canEdit && activeTab === "propostas" && (
-            <Button
-              onClick={() => {
-                resetForm();
-                setIsFormOpen(true);
-              }}
-              className="bg-accent-orange hover:bg-accent-orange/90 text-ink"
-            >
-              <Plus className="h-4 w-4 mr-1" /> Nova Proposta
-            </Button>
-          )}
-        </div>
-      </PageHeader>
-
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="mb-6">
-          <TabsTrigger value="propostas" className="flex items-center gap-1.5">
-            <FileText className="h-3.5 w-3.5" />
-            Propostas
-          </TabsTrigger>
-          <TabsTrigger value="templates" className="flex items-center gap-1.5">
-            <LayoutTemplate className="h-3.5 w-3.5" />
-            Templates
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="propostas" className="mt-0">
-          {/* KPIs */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            <Card>
-              <CardContent className="p-4">
-                <p className="text-xs text-muted-foreground">Total</p>
-                <p className="text-xl font-bold">{totalPropostas}</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4">
-                <p className="text-xs text-muted-foreground">Valor Pipeline</p>
-                <p className="text-xl font-bold">{formatCurrency(valorTotal)}</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4">
-                <p className="text-xs text-muted-foreground">Aceitas</p>
-                <p className="text-xl font-bold">{aceitas}</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4">
-                <p className="text-xs text-muted-foreground">Conversão</p>
-                <p className="text-xl font-bold">{taxaConversao}%</p>
-              </CardContent>
-            </Card>
+    <PageLayout header={header}>
+      <Card className="rounded-2xl border border-black/5 bg-white w-full flex flex-col min-h-0">
+        <CardHeader>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+              <CardTitle className="text-lg font-medium tracking-tight">Lista de Documentos</CardTitle>
+              <CardDescription className="text-sm text-black/60 mt-1">
+                Total de {filteredPropostas.length} de {propostas.length} proposta(s)
+              </CardDescription>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+              <div className="relative w-full sm:w-56">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-black/40" />
+                <Input
+                  placeholder="Buscar por título, cliente..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 bg-gray-50 border-gray-200"
+                />
+              </div>
+              <Select value={filterStatus} onValueChange={setFilterStatus}>
+                <SelectTrigger className="w-full sm:w-36 bg-gray-50 border-gray-200">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos status</SelectItem>
+                  <SelectItem value="rascunho">Rascunho</SelectItem>
+                  <SelectItem value="enviada">Enviada</SelectItem>
+                  <SelectItem value="aceita">Aceita</SelectItem>
+                  <SelectItem value="recusada">Recusada</SelectItem>
+                  <SelectItem value="expirada">Expirada</SelectItem>
+                </SelectContent>
+              </Select>
+              <div className="flex items-center gap-1">
+                <Button
+                  variant={viewMode === "table" ? "secondary" : "ghost"}
+                  size="icon"
+                  className="h-9 w-9"
+                  onClick={() => setViewMode("table")}
+                  title="Tabela"
+                >
+                  <LayoutList className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant={viewMode === "cards" ? "secondary" : "ghost"}
+                  size="icon"
+                  className="h-9 w-9"
+                  onClick={() => setViewMode("cards")}
+                  title="Cards"
+                >
+                  <LayoutGrid className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
           </div>
+        </CardHeader>
 
-          {/* Tabela */}
+        <CardContent className="flex-1 min-h-0 p-0 pb-4">
           {propostas.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               <FileText className="h-10 w-10 mx-auto mb-3 opacity-40" />
               <p className="text-sm">Nenhuma proposta cadastrada.</p>
             </div>
-          ) : (
-            <Card>
-              <CardContent className="p-0">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="text-xs">Código</TableHead>
-                      <TableHead className="text-xs">Título</TableHead>
-                      <TableHead className="text-xs">Cliente/Lead</TableHead>
-                      <TableHead className="text-xs text-right">Valor</TableHead>
-                      <TableHead className="text-xs text-center">Status</TableHead>
-                      <TableHead className="text-xs">Validade</TableHead>
-                      {canEdit && <TableHead className="text-xs text-right">Ações</TableHead>}
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {propostas.map((p) => (
-                      <TableRow key={p.id}>
-                        <TableCell className="text-xs py-2 font-medium">{p.codigo || "—"}</TableCell>
-                        <TableCell className="text-xs py-2">{p.titulo}</TableCell>
-                        <TableCell className="text-xs py-2">{p.cliente_nome || p.lead_nome || "—"}</TableCell>
-                        <TableCell className="text-xs py-2 text-right">{formatCurrency(p.valor_proposto)}</TableCell>
-                        <TableCell className="text-xs py-2 text-center">
-                          {(() => {
-                            const displayStatus = getDisplayStatus(p);
-                            return (
-                              <Badge className={`text-[10px] ${PROPOSTA_STATUS_CONFIG[displayStatus]?.color || ""}`}>
-                                {PROPOSTA_STATUS_CONFIG[displayStatus]?.label || displayStatus}
-                              </Badge>
-                            );
-                          })()}
+          ) : filteredPropostas.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">
+              <Search className="h-8 w-8 mx-auto mb-3 opacity-40" />
+              <p className="text-sm">Nenhuma proposta encontrada para os filtros aplicados.</p>
+            </div>
+          ) : viewMode === "table" ? (
+            <div className="overflow-x-auto overflow-y-auto w-full max-h-[calc(100svh-360px)]">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="-ml-3 h-8 font-medium"
+                        onClick={() => handleSort("titulo")}
+                      >
+                        Título <ArrowUpDown className="ml-2 h-3 w-3" />
+                      </Button>
+                    </TableHead>
+                    <TableHead>Cliente/Lead</TableHead>
+                    <TableHead>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="-ml-3 h-8 font-medium"
+                        onClick={() => handleSort("valor_proposto")}
+                      >
+                        Valor <ArrowUpDown className="ml-2 h-3 w-3" />
+                      </Button>
+                    </TableHead>
+                    <TableHead className="text-center">Status</TableHead>
+                    <TableHead>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="-ml-3 h-8 font-medium"
+                        onClick={() => handleSort("validade")}
+                      >
+                        Validade <ArrowUpDown className="ml-2 h-3 w-3" />
+                      </Button>
+                    </TableHead>
+                    {canEdit && <TableHead className="text-right">Ações</TableHead>}
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredPropostas.map((p) => {
+                    const displayStatus = getDisplayStatus(p);
+                    return (
+                      <TableRow
+                        key={p.id}
+                        className="cursor-pointer hover:bg-gray-50"
+                        onClick={() => setDetailPropostaId(p.id)}
+                      >
+                        <TableCell className="py-4">
+                          <p className="text-sm font-medium">{p.titulo}</p>
+                          {p.codigo && <p className="text-[11px] text-muted-foreground font-mono">{p.codigo}</p>}
+                        </TableCell>
+                        <TableCell className="text-sm py-4">{p.cliente_nome || p.lead_nome || "—"}</TableCell>
+                        <TableCell className="text-sm py-4 font-medium">{formatCurrency(p.valor_proposto)}</TableCell>
+                        <TableCell className="text-sm py-4 text-center">
+                          <Badge className={`text-xs ${PROPOSTA_STATUS_CONFIG[displayStatus]?.color || ""}`}>
+                            {PROPOSTA_STATUS_CONFIG[displayStatus]?.label || displayStatus}
+                          </Badge>
                         </TableCell>
                         <TableCell
-                          className={`text-xs py-2 ${p.validade && p.validade < hoje ? "text-red-500 font-medium" : ""}`}
+                          className={`text-sm py-4 ${p.validade && p.validade < hoje ? "text-red-500 font-medium" : ""}`}
                         >
                           {formatDate(p.validade)}
                         </TableCell>
                         {canEdit && (
-                          <TableCell className="text-xs py-2 text-right">
-                            <TooltipProvider delayDuration={200}>
-                              <div className="flex items-center justify-end gap-1">
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      className="h-7 w-7 text-accent-orange"
-                                      onClick={() => setGerarDocxPropostaId(p.id)}
-                                    >
-                                      <Download className="h-3.5 w-3.5" />
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>Gerar DOCX</TooltipContent>
-                                </Tooltip>
-                                {p.status === "rascunho" && (
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="h-7 w-7 text-blue-600"
-                                        onClick={() => handleStatusChange(p.id, "enviada")}
-                                      >
-                                        <Send className="h-3.5 w-3.5" />
-                                      </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent>Marcar como enviada</TooltipContent>
-                                  </Tooltip>
-                                )}
-                                {p.status === "enviada" && (
-                                  <>
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <Button
-                                          variant="ghost"
-                                          size="icon"
-                                          className="h-7 w-7 text-gray-500"
-                                          onClick={() => handleStatusChange(p.id, "rascunho")}
-                                        >
-                                          <Undo2 className="h-3.5 w-3.5" />
-                                        </Button>
-                                      </TooltipTrigger>
-                                      <TooltipContent>Voltar para rascunho</TooltipContent>
-                                    </Tooltip>
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <Button
-                                          variant="ghost"
-                                          size="icon"
-                                          className="h-7 w-7 text-green-600"
-                                          onClick={() => handleStatusChange(p.id, "aceita")}
-                                        >
-                                          <CheckCircle2 className="h-3.5 w-3.5" />
-                                        </Button>
-                                      </TooltipTrigger>
-                                      <TooltipContent>Aceitar proposta</TooltipContent>
-                                    </Tooltip>
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <Button
-                                          variant="ghost"
-                                          size="icon"
-                                          className="h-7 w-7 text-red-500"
-                                          onClick={() => handleStatusChange(p.id, "recusada")}
-                                        >
-                                          <XCircle className="h-3.5 w-3.5" />
-                                        </Button>
-                                      </TooltipTrigger>
-                                      <TooltipContent>Recusar proposta</TooltipContent>
-                                    </Tooltip>
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <Button
-                                          variant="ghost"
-                                          size="icon"
-                                          className="h-7 w-7 text-blue-600"
-                                          onClick={() => setConvertPropostaId(p.id)}
-                                        >
-                                          <FolderPlus className="h-3.5 w-3.5" />
-                                        </Button>
-                                      </TooltipTrigger>
-                                      <TooltipContent>Aceitar e criar projeto</TooltipContent>
-                                    </Tooltip>
-                                  </>
-                                )}
-                                {p.status === "aceita" && !p.projeto_id && (
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="h-7 w-7 text-blue-600"
-                                        onClick={() => setConvertPropostaId(p.id)}
-                                      >
-                                        <FolderPlus className="h-3.5 w-3.5" />
-                                      </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent>Criar projeto</TooltipContent>
-                                  </Tooltip>
-                                )}
-                                {p.status === "aceita" && (
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="h-7 w-7 text-purple-600"
-                                        onClick={() => setGerarContratoPropostaId(p.id)}
-                                      >
-                                        <FileSignature className="h-3.5 w-3.5" />
-                                      </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent>Gerar contrato</TooltipContent>
-                                  </Tooltip>
-                                )}
-                                {p.status === "recusada" && (
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="h-7 w-7 text-gray-500"
-                                        onClick={() => handleStatusChange(p.id, "rascunho")}
-                                      >
-                                        <Undo2 className="h-3.5 w-3.5" />
-                                      </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent>Reabrir como rascunho</TooltipContent>
-                                  </Tooltip>
-                                )}
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      className="h-7 w-7 text-red-500"
-                                      onClick={() => setConfirmDeleteId(p.id)}
-                                    >
-                                      <Trash2 className="h-3.5 w-3.5" />
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>Excluir proposta</TooltipContent>
-                                </Tooltip>
-                              </div>
-                            </TooltipProvider>
+                          <TableCell className="text-right py-4">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setConfirmDeleteId(p.id);
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
                           </TableCell>
                         )}
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
+              {filteredPropostas.map((p) => {
+                const displayStatus = getDisplayStatus(p);
+                const isExpired = p.validade && p.validade < hoje;
+                return (
+                  <Card
+                    key={p.id}
+                    className="hover:shadow-md transition-shadow cursor-pointer"
+                    onClick={() => setDetailPropostaId(p.id)}
+                  >
+                    <CardContent className="p-4 space-y-3">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium truncate">{p.titulo}</p>
+                          {p.codigo && <p className="text-[11px] text-muted-foreground font-mono">{p.codigo}</p>}
+                        </div>
+                        <Badge
+                          className={`text-[10px] flex-shrink-0 ${PROPOSTA_STATUS_CONFIG[displayStatus]?.color || ""}`}
+                        >
+                          {PROPOSTA_STATUS_CONFIG[displayStatus]?.label || displayStatus}
+                        </Badge>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        {(p.cliente_nome || p.lead_nome) && (
+                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                            <Building2 className="h-3 w-3 flex-shrink-0" />
+                            <span className="truncate">{p.cliente_nome || p.lead_nome}</span>
+                          </div>
+                        )}
+                        {p.valor_proposto && (
+                          <div className="flex items-center gap-1.5 text-xs">
+                            <DollarSign className="h-3 w-3 flex-shrink-0 text-muted-foreground" />
+                            <span className="font-medium">{formatCurrency(p.valor_proposto)}</span>
+                          </div>
+                        )}
+                        {p.validade && (
+                          <div
+                            className={`flex items-center gap-1.5 text-xs ${isExpired ? "text-red-500" : "text-muted-foreground"}`}
+                          >
+                            <Calendar className="h-3 w-3 flex-shrink-0" />
+                            <span>{formatDate(p.validade)}</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {canEdit && (
+                        <div className="flex justify-end pt-1 border-t">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-red-500 hover:text-red-600 hover:bg-red-50"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setConfirmDeleteId(p.id);
+                            }}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
           )}
-        </TabsContent>
+        </CardContent>
+      </Card>
 
-        <TabsContent value="templates" className="mt-0">
+      {/* Sheet de Templates */}
+      <Sheet open={isTemplatesOpen} onOpenChange={setIsTemplatesOpen}>
+        <SheetContent side="right" className="w-full sm:max-w-2xl overflow-y-auto">
+          <SheetHeader className="mb-4">
+            <SheetTitle>Gerenciar Templates</SheetTitle>
+          </SheetHeader>
           <TemplatesManager />
-        </TabsContent>
-      </Tabs>
+        </SheetContent>
+      </Sheet>
 
-      {/* Dialog de criação */}
-      <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+      {/* Modal de detalhes */}
+      <PropostaDetailDialog
+        open={!!detailPropostaId}
+        onOpenChange={(open) => {
+          if (!open) setDetailPropostaId(null);
+        }}
+        proposta={detailProposta}
+        canEdit={canEdit}
+        hoje={hoje}
+        onEdit={() => detailPropostaId && openEdit(detailPropostaId)}
+        onDelete={() => {
+          setConfirmDeleteId(detailPropostaId);
+          setDetailPropostaId(null);
+        }}
+        onStatusChange={handleStatusChange}
+        onGerarDocx={() => {
+          setGerarDocxPropostaId(detailPropostaId);
+          setDetailPropostaId(null);
+        }}
+        onGerarContrato={() => {
+          if (detailPropostaId && detailProposta?.contrato_recusado) {
+            updateProposta.mutate({ id: detailPropostaId, contrato_recusado: false } as never);
+          }
+          setGerarContratoPropostaId(detailPropostaId);
+        }}
+        onConverter={() => {
+          setConvertPropostaId(detailPropostaId);
+          setDetailPropostaId(null);
+        }}
+        onMarcarContratoAssinado={() => {
+          if (detailPropostaId) {
+            updateProposta.mutate({ id: detailPropostaId, contrato_assinado: true } as never);
+          }
+        }}
+        onRecusarContrato={() => {
+          if (detailPropostaId) {
+            updateProposta.mutate({ id: detailPropostaId, contrato_recusado: true } as never, {
+              onSuccess: () =>
+                toast.info("Contrato recusado registrado.", {
+                  description: "Gere um novo contrato quando estiver pronto para reenviar.",
+                }),
+            });
+          }
+        }}
+        isUpdating={updateProposta.isPending}
+      />
+
+      {/* Dialog de criação / edição */}
+      <Dialog
+        open={isFormOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            setIsFormOpen(false);
+            resetForm();
+          }
+        }}
+      >
         <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Nova Proposta</DialogTitle>
+            <DialogTitle>{editingId ? "Editar Proposta" : "Nova Proposta"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 mt-2">
             <div className="grid grid-cols-2 gap-4">
@@ -615,11 +730,17 @@ export default function Propostas() {
               />
             </div>
             <div className="flex justify-end gap-2 pt-2">
-              <Button variant="outline" onClick={() => setIsFormOpen(false)}>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIsFormOpen(false);
+                  resetForm();
+                }}
+              >
                 Cancelar
               </Button>
-              <Button onClick={handleCreate} disabled={createProposta.isPending}>
-                Criar Proposta
+              <Button onClick={handleSubmit} disabled={createProposta.isPending || updateProposta.isPending}>
+                {editingId ? "Salvar Alterações" : "Criar Proposta"}
               </Button>
             </div>
           </div>
@@ -636,7 +757,7 @@ export default function Propostas() {
         onConfirm={handleDelete}
       />
 
-      {/* Dialog de Conversão Proposta → Projeto */}
+      {/* Dialog Conversão Proposta → Projeto */}
       <Dialog
         open={!!convertPropostaId}
         onOpenChange={(open) => {
@@ -649,9 +770,7 @@ export default function Propostas() {
               <FolderPlus className="h-5 w-5 text-blue-600" />
               Converter em Projeto
             </DialogTitle>
-            <DialogDescription>
-              Um novo projeto será criado automaticamente com os dados desta proposta.
-            </DialogDescription>
+            <DD>Um novo projeto será criado automaticamente com os dados desta proposta.</DD>
           </DialogHeader>
 
           {convertProposta && (
@@ -744,7 +863,6 @@ export default function Propostas() {
         </DialogContent>
       </Dialog>
 
-      {/* Dialog Gerar DOCX */}
       {gerarDocxProposta && (
         <GerarPropostaDialog
           open={!!gerarDocxPropostaId}
@@ -757,10 +875,13 @@ export default function Propostas() {
             horas_estimadas: Number(d.horas_estimadas),
             custo_hora: Number(d.custo_hora),
           }))}
+          onSent={() => {
+            setGerarDocxPropostaId(null);
+            handleStatusChange(gerarDocxProposta.id, "enviada");
+          }}
         />
       )}
 
-      {/* Dialog Gerar Contrato */}
       {gerarContratoProposta && (
         <GerarPropostaDialog
           open={!!gerarContratoPropostaId}
@@ -774,6 +895,10 @@ export default function Propostas() {
             horas_estimadas: Number(d.horas_estimadas),
             custo_hora: Number(d.custo_hora),
           }))}
+          onSent={() => {
+            queryClient.invalidateQueries({ queryKey: ["propostas"] });
+            setGerarContratoPropostaId(null);
+          }}
         />
       )}
     </PageLayout>

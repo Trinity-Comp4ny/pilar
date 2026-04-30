@@ -23,8 +23,10 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { Can } from "@/components/Can";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { usePageTitle } from "@/hooks/usePageTitle";
-import { useClientes, type Cliente, type ContaBancaria } from "@/hooks/useClientes";
+import { useClientes, type Cliente, type ContaBancaria, type ChavePix } from "@/hooks/useClientes";
 import { useRequireAal2 } from "@/hooks/useRequireAal2";
+import { detectTipoChavePix, normalizarChavePix, TIPO_CHAVE_PIX_LABEL } from "@/lib/pixUtils";
+import { Badge } from "@/components/ui/badge";
 import { ClienteMessageDialog } from "./ClienteMessageDialog";
 import { ClienteDetailDialog } from "./ClienteDetailDialog";
 
@@ -55,6 +57,7 @@ export default function Clientes() {
 
   const {
     clientes,
+    portalClienteIds,
     upsertCliente,
     isSaving,
     deleteCliente,
@@ -83,9 +86,13 @@ export default function Clientes() {
   const [origem, setOrigem] = useState("");
   const [contasBancarias, setContasBancarias] = useState<ContaBancaria[]>([]);
   const [newConta, setNewConta] = useState({ banco: "", agencia: "", conta: "", tipo: "corrente" });
+  const [chavesPix, setChavesPix] = useState<ChavePix[]>([]);
+  const [newChavePix, setNewChavePix] = useState("");
   const [currentId, setCurrentId] = useState<string | null>(null);
 
   const [searchTerm, setSearchTerm] = useState("");
+  const [filterOrigem, setFilterOrigem] = useState("all");
+  const [filterPortal, setFilterPortal] = useState("all");
 
   // Portal do Cliente
   const [portalStatus, setPortalStatus] = useState<"idle" | "loading" | "exists" | "none">("idle");
@@ -145,6 +152,8 @@ export default function Clientes() {
     setOrigem("");
     setContasBancarias([]);
     setNewConta({ banco: "", agencia: "", conta: "", tipo: "corrente" });
+    setChavesPix([]);
+    setNewChavePix("");
     setCurrentId(null);
     setIsEditMode(false);
   };
@@ -165,6 +174,8 @@ export default function Clientes() {
     setOrigem(cliente.origem || "");
     setContasBancarias(Array.isArray(cliente.contas_bancarias) ? cliente.contas_bancarias : []);
     setNewConta({ banco: "", agencia: "", conta: "", tipo: "corrente" });
+    setChavesPix(Array.isArray(cliente.chaves_pix) ? cliente.chaves_pix : []);
+    setNewChavePix("");
     setCurrentId(cliente.id);
     setIsEditMode(true);
     setIsDialogOpen(true);
@@ -176,10 +187,30 @@ export default function Clientes() {
       toast.error("Dados incompletos", { description: "Preencha banco, agência e conta antes de adicionar" });
       return;
     }
-
     const isFirst = contasBancarias.length === 0;
     setContasBancarias((prev) => [...prev, { ...newConta, is_primary: isFirst }]);
     setNewConta({ banco: "", agencia: "", conta: "", tipo: "corrente" });
+  };
+
+  const handleAddChavePix = () => {
+    const raw = newChavePix.trim();
+    if (!raw) return;
+    const tipo = detectTipoChavePix(raw);
+    if (!tipo) {
+      toast.error("Chave inválida", { description: "Formato não reconhecido como chave PIX" });
+      return;
+    }
+    const chave = normalizarChavePix(raw, tipo);
+    if (chavesPix.some((c) => c.chave === chave)) {
+      toast.error("Chave duplicada", { description: "Esta chave já foi adicionada" });
+      return;
+    }
+    setChavesPix((prev) => [...prev, { chave, tipo }]);
+    setNewChavePix("");
+  };
+
+  const handleRemoveChavePix = (index: number) => {
+    setChavesPix((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleSetPrimaryConta = (index: number) => {
@@ -204,8 +235,8 @@ export default function Clientes() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!nome || !cpfCnpj) {
-      toast.error("Campos obrigatórios", { description: "Preencha pelo menos nome e CPF/CNPJ" });
+    if (!nome || !cpfCnpj || !email || !contato) {
+      toast.error("Campos obrigatórios", { description: "Preencha nome, CPF/CNPJ, e-mail e contato" });
       return;
     }
 
@@ -221,6 +252,7 @@ export default function Clientes() {
           tipo_nf: tipoNf,
           origem,
           contas_bancarias: contasBancarias,
+          chaves_pix: chavesPix,
         },
       });
 
@@ -312,14 +344,24 @@ export default function Clientes() {
     }
   };
 
+  const origens = useMemo(
+    () => Array.from(new Set(clientes.map((c) => c.origem).filter(Boolean))) as string[],
+    [clientes]
+  );
+
   const filteredAndSortedClientes = useMemo(() => {
     const term = searchTerm.trim();
     const filtered = clientes.filter((cliente) => {
-      if (!term) return true;
-      const digits = cliente.cpf_cnpj ? cliente.cpf_cnpj.replace(/\D/g, "") : "";
-      const termDigits = term.replace(/\D/g, "");
-
-      return fuzzyMatch(cliente.nome, term) || (termDigits && digits.includes(termDigits));
+      if (term) {
+        const digits = cliente.cpf_cnpj ? cliente.cpf_cnpj.replace(/\D/g, "") : "";
+        const termDigits = term.replace(/\D/g, "");
+        const matchSearch = fuzzyMatch(cliente.nome, term) || (termDigits && digits.includes(termDigits));
+        if (!matchSearch) return false;
+      }
+      if (filterOrigem !== "all" && cliente.origem !== filterOrigem) return false;
+      if (filterPortal === "com" && !portalClienteIds.has(cliente.id)) return false;
+      if (filterPortal === "sem" && portalClienteIds.has(cliente.id)) return false;
+      return true;
     });
 
     if (sortField) {
@@ -332,7 +374,7 @@ export default function Clientes() {
     }
 
     return filtered;
-  }, [clientes, searchTerm, sortField, sortDirection]);
+  }, [clientes, searchTerm, filterOrigem, filterPortal, portalClienteIds, sortField, sortDirection]);
 
   return (
     <PageLayout
@@ -397,7 +439,7 @@ export default function Clientes() {
                       </div>
                       <div className="space-y-1.5">
                         <Label htmlFor="email" className="text-xs">
-                          Email
+                          Email *
                         </Label>
                         <Input
                           id="email"
@@ -409,7 +451,7 @@ export default function Clientes() {
                       </div>
                       <div className="space-y-1.5">
                         <Label htmlFor="contato" className="text-xs">
-                          Contato
+                          Contato *
                         </Label>
                         <Input
                           id="contato"
@@ -567,6 +609,73 @@ export default function Clientes() {
                     )}
                   </div>
 
+                  {/* Chaves PIX */}
+                  <div className="px-6 py-4 space-y-3">
+                    <Label className="text-[10px] uppercase text-muted-foreground tracking-wider">Chaves PIX</Label>
+                    <div className="flex gap-2">
+                      <div className="relative flex-1">
+                        <Input
+                          placeholder="CPF, CNPJ, e-mail, celular ou chave aleatória"
+                          value={newChavePix}
+                          onChange={(e) => setNewChavePix(e.target.value)}
+                          onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleAddChavePix())}
+                        />
+                        {newChavePix && (
+                          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground">
+                            {(() => {
+                              const t = detectTipoChavePix(newChavePix);
+                              return t ? TIPO_CHAVE_PIX_LABEL[t] : "...";
+                            })()}
+                          </span>
+                        )}
+                      </div>
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="outline"
+                        className="h-9 w-9 shrink-0"
+                        onClick={handleAddChavePix}
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    {chavesPix.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {chavesPix.map((c, i) => (
+                          <Badge
+                            key={i}
+                            variant="secondary"
+                            className="flex items-center gap-1.5 pl-2 pr-1 py-1 text-xs"
+                          >
+                            <select
+                              value={c.tipo}
+                              onChange={(e) =>
+                                setChavesPix((prev) =>
+                                  prev.map((item, idx) => (idx === i ? { ...item, tipo: e.target.value } : item))
+                                )
+                              }
+                              className="text-[10px] text-muted-foreground bg-transparent border-none outline-none cursor-pointer hover:text-foreground transition-colors appearance-none"
+                            >
+                              {Object.entries(TIPO_CHAVE_PIX_LABEL).map(([value, label]) => (
+                                <option key={value} value={value}>
+                                  {label}
+                                </option>
+                              ))}
+                            </select>
+                            <span className="font-medium">{c.chave}</span>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveChavePix(i)}
+                              className="ml-0.5 hover:text-red-500"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
                   {/* Footer */}
                   <div className="flex gap-2 px-6 py-4 bg-gray-50/30">
                     <Button
@@ -610,14 +719,41 @@ export default function Clientes() {
                 Total de {filteredAndSortedClientes.length} de {clientes.length} cliente(s)
               </CardDescription>
             </div>
-            <div className="relative w-full sm:w-64">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-black/40" />
-              <Input
-                placeholder="Buscar por nome ou CPF..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 bg-gray-50 border-gray-200"
-              />
+            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+              <div className="relative w-full sm:w-56">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-black/40" />
+                <Input
+                  placeholder="Buscar por nome ou CPF..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 bg-gray-50 border-gray-200"
+                />
+              </div>
+              {origens.length > 0 && (
+                <Select value={filterOrigem} onValueChange={setFilterOrigem}>
+                  <SelectTrigger className="w-full sm:w-36 bg-gray-50 border-gray-200">
+                    <SelectValue placeholder="Origem" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas origens</SelectItem>
+                    {origens.map((o) => (
+                      <SelectItem key={o} value={o}>
+                        {o}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+              <Select value={filterPortal} onValueChange={setFilterPortal}>
+                <SelectTrigger className="w-full sm:w-36 bg-gray-50 border-gray-200">
+                  <SelectValue placeholder="Portal" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="com">Com portal</SelectItem>
+                  <SelectItem value="sem">Sem portal</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </CardHeader>

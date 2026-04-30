@@ -164,9 +164,6 @@ export function DespesaDetailDialog({
             </div>
 
             <div className="flex gap-2 pt-4 mt-4 border-t">
-              <Button variant="outline" className="flex-1" onClick={() => onOpenChange(false)}>
-                Fechar
-              </Button>
               {canEdit && (
                 <>
                   <Button variant="outline" className="flex-1" onClick={() => onEdit(despesa)}>

@@ -11,6 +11,7 @@ import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { usePageTitle } from "@/hooks/usePageTitle";
 import {
   parseCompanyFeatures,
   parseUserFeatures,
@@ -82,6 +83,7 @@ async function edgeFetch(
 }
 
 export default function UltraAdmin() {
+  usePageTitle("Ultra Admin");
   const [empresas, setEmpresas] = useState<EmpresaRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState<string | null>(null);
