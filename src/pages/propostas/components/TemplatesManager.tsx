@@ -13,10 +13,13 @@ import {
   usePropostaTemplates,
   useUploadTemplate,
   useDeleteTemplate,
+  downloadTemplateFile,
   type TemplateTipo,
+  type PropostaTemplate,
 } from "@/hooks/usePropostaTemplates";
 import { AUTO_VARIABLES } from "@/lib/docxUtils";
 import { VariaveisGuideButton } from "./VariaveisGuideDialog";
+import mammoth from "mammoth";
 
 export function TemplatesManager() {
   const { data: templates = [], isLoading } = usePropostaTemplates();
@@ -29,10 +32,10 @@ export function TemplatesManager() {
   const [tipo, setTipo] = useState<TemplateTipo>("proposta");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [viewVarsId, setViewVarsId] = useState<string | null>(null);
+  const [previewTemplate, setPreviewTemplate] = useState<PropostaTemplate | null>(null);
+  const [previewHtml, setPreviewHtml] = useState<string>("");
+  const [previewLoading, setPreviewLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const viewTemplate = templates.find((t) => t.id === viewVarsId);
 
   const handleUpload = () => {
     if (!nome.trim()) {
@@ -51,9 +54,7 @@ export function TemplatesManager() {
           toast.success("Template salvo", { description: `${data.variaveis.length} variáveis detectadas` });
           resetForm();
         },
-        onError: (err: Error) => {
-          toast.error("Erro", { description: err.message });
-        },
+        onError: (err: Error) => toast.error("Erro", { description: err.message }),
       }
     );
   };
@@ -66,6 +67,31 @@ export function TemplatesManager() {
         setDeleteId(null);
       },
     });
+  };
+
+  const handlePreview = async (t: PropostaTemplate) => {
+    setPreviewTemplate(t);
+    setPreviewHtml("");
+    setPreviewLoading(true);
+    try {
+      const arrayBuffer = await downloadTemplateFile(t.arquivo_path);
+      const result = await mammoth.convertToHtml(
+        { arrayBuffer },
+        {
+          styleMap: [
+            "p[style-name='Heading 1'] => h1.docx-h1:fresh",
+            "p[style-name='Heading 2'] => h2.docx-h2:fresh",
+            "p[style-name='Heading 3'] => h3.docx-h3:fresh",
+          ],
+        }
+      );
+      setPreviewHtml(result.value);
+    } catch {
+      toast.error("Não foi possível gerar o preview");
+      setPreviewTemplate(null);
+    } finally {
+      setPreviewLoading(false);
+    }
   };
 
   const resetForm = () => {
@@ -85,15 +111,69 @@ export function TemplatesManager() {
     );
   }
 
+  const templatesProposta = templates.filter((t) => t.tipo === "proposta");
+  const templatesContrato = templates.filter((t) => t.tipo === "contrato");
+
+  const TemplateCard = ({ t }: { t: PropostaTemplate }) => (
+    <Card className="hover:shadow-md transition-shadow">
+      <CardContent className="p-4 space-y-3">
+        <div className="flex items-start justify-between">
+          <div className="flex items-center gap-2 min-w-0">
+            <FileText
+              className={`h-8 w-8 flex-shrink-0 ${t.tipo === "contrato" ? "text-purple-500" : "text-blue-500"}`}
+            />
+            <div className="min-w-0">
+              <p className="text-sm font-medium truncate">{t.nome}</p>
+              {t.descricao && <p className="text-xs text-muted-foreground truncate">{t.descricao}</p>}
+              <p className="text-[10px] text-muted-foreground mt-0.5">
+                {new Date(t.created_at).toLocaleDateString("pt-BR")}
+              </p>
+            </div>
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 text-red-500 flex-shrink-0"
+            onClick={() => setDeleteId(t.id)}
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+
+        <div className="flex flex-wrap gap-1">
+          {t.variaveis.slice(0, 5).map((v) => (
+            <Badge
+              key={v}
+              variant="secondary"
+              className={`text-[10px] ${v in AUTO_VARIABLES ? "bg-green-50 text-green-700" : "bg-amber-50 text-amber-700"}`}
+            >
+              {v}
+            </Badge>
+          ))}
+          {t.variaveis.length > 5 && (
+            <Badge variant="secondary" className="text-[10px]">
+              +{t.variaveis.length - 5}
+            </Badge>
+          )}
+        </div>
+
+        <div className="flex items-center justify-between border-t pt-2">
+          <span className="text-[10px] text-muted-foreground">{t.variaveis.length} variáveis</span>
+          <Button variant="outline" size="sm" className="h-7 text-xs gap-1" onClick={() => handlePreview(t)}>
+            <Eye className="h-3 w-3" />
+            Preview
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-lg font-medium">Templates de Proposta</h3>
-          <p className="text-sm text-muted-foreground">
-            Faça upload de arquivos DOCX com variáveis {"{{VARIAVEL}}"} para gerar propostas automaticamente
-          </p>
-        </div>
+        <p className="text-sm text-muted-foreground">
+          Faça upload de arquivos DOCX com variáveis {"{{VARIAVEL}}"} para gerar documentos automaticamente.
+        </p>
         <div className="flex items-center gap-2">
           <VariaveisGuideButton />
           <Button onClick={() => setIsUploadOpen(true)} className="bg-accent-orange hover:bg-accent-orange/90 text-ink">
@@ -114,67 +194,118 @@ export function TemplatesManager() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {templates.map((t) => (
-            <Card key={t.id} className="hover:shadow-md transition-shadow">
-              <CardContent className="p-4 space-y-3">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-2">
-                    <FileText className="h-5 w-5 text-accent-orange flex-shrink-0" />
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <p className="text-sm font-medium">{t.nome}</p>
-                        <Badge
-                          variant="secondary"
-                          className={`text-[10px] ${t.tipo === "contrato" ? "bg-purple-50 text-purple-700" : "bg-blue-50 text-blue-700"}`}
-                        >
-                          {t.tipo === "contrato" ? "Contrato" : "Proposta"}
-                        </Badge>
-                      </div>
-                      {t.descricao && <p className="text-xs text-muted-foreground">{t.descricao}</p>}
-                    </div>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7 text-red-500"
-                    onClick={() => setDeleteId(t.id)}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
-                </div>
-
-                <div className="flex flex-wrap gap-1">
-                  {t.variaveis.slice(0, 5).map((v) => (
-                    <Badge
-                      key={v}
-                      variant="secondary"
-                      className={`text-[10px] ${v in AUTO_VARIABLES ? "bg-green-50 text-green-700" : "bg-amber-50 text-amber-700"}`}
-                    >
-                      {v}
-                    </Badge>
-                  ))}
-                  {t.variaveis.length > 5 && (
-                    <Badge variant="secondary" className="text-[10px]">
-                      +{t.variaveis.length - 5}
-                    </Badge>
-                  )}
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] text-muted-foreground">
-                    {t.variaveis.length} variáveis · {new Date(t.created_at).toLocaleDateString("pt-BR")}
-                  </span>
-                  <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setViewVarsId(t.id)}>
-                    <Eye className="h-3 w-3 mr-1" />
-                    Ver variáveis
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+        <div className="space-y-6">
+          {templatesProposta.length > 0 && (
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <FileText className="h-4 w-4 text-blue-500" />
+                <h4 className="text-sm font-medium">Propostas</h4>
+                <Badge variant="secondary" className="text-[10px] bg-blue-50 text-blue-700">
+                  {templatesProposta.length}
+                </Badge>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {templatesProposta.map((t) => (
+                  <TemplateCard key={t.id} t={t} />
+                ))}
+              </div>
+            </div>
+          )}
+          {templatesContrato.length > 0 && (
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <FileText className="h-4 w-4 text-purple-500" />
+                <h4 className="text-sm font-medium">Contratos</h4>
+                <Badge variant="secondary" className="text-[10px] bg-purple-50 text-purple-700">
+                  {templatesContrato.length}
+                </Badge>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {templatesContrato.map((t) => (
+                  <TemplateCard key={t.id} t={t} />
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
+
+      {/* Preview Dialog */}
+      <Dialog
+        open={!!previewTemplate}
+        onOpenChange={(open) => {
+          if (!open) {
+            setPreviewTemplate(null);
+            setPreviewHtml("");
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-2xl max-h-[85vh] flex flex-col">
+          <DialogHeader className="flex-shrink-0">
+            <DialogTitle className="flex items-center gap-2">
+              <FileText
+                className={`h-4 w-4 ${previewTemplate?.tipo === "contrato" ? "text-purple-500" : "text-blue-500"}`}
+              />
+              {previewTemplate?.nome}
+              <Badge
+                variant="secondary"
+                className={`text-[10px] ml-1 ${previewTemplate?.tipo === "contrato" ? "bg-purple-50 text-purple-700" : "bg-blue-50 text-blue-700"}`}
+              >
+                {previewTemplate?.tipo === "contrato" ? "Contrato" : "Proposta"}
+              </Badge>
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="flex-1 overflow-y-auto min-h-0">
+            {previewLoading ? (
+              <div className="flex items-center justify-center py-16">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                <span className="ml-2 text-sm text-muted-foreground">Carregando preview...</span>
+              </div>
+            ) : previewHtml ? (
+              <div className="bg-white border rounded-lg shadow-sm mx-1 my-2">
+                {/* Folha de papel simulada */}
+                <div
+                  className="p-8 min-h-[400px] prose prose-sm max-w-none
+                    [&_h1]:text-xl [&_h1]:font-bold [&_h1]:mb-3 [&_h1]:mt-4
+                    [&_h2]:text-lg [&_h2]:font-semibold [&_h2]:mb-2 [&_h2]:mt-4
+                    [&_h3]:text-base [&_h3]:font-semibold [&_h3]:mb-2 [&_h3]:mt-3
+                    [&_p]:mb-2 [&_p]:leading-relaxed [&_p]:text-sm
+                    [&_table]:w-full [&_table]:border-collapse [&_table]:mb-4
+                    [&_td]:border [&_td]:border-gray-300 [&_td]:px-2 [&_td]:py-1 [&_td]:text-sm
+                    [&_th]:border [&_th]:border-gray-300 [&_th]:px-2 [&_th]:py-1 [&_th]:bg-gray-50 [&_th]:text-sm
+                    [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:mb-2
+                    [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:mb-2
+                    [&_li]:text-sm [&_li]:mb-1"
+                  dangerouslySetInnerHTML={{ __html: previewHtml }}
+                />
+              </div>
+            ) : null}
+          </div>
+
+          {previewTemplate && previewHtml && (
+            <div className="flex-shrink-0 pt-2 border-t">
+              <div className="flex flex-wrap gap-1">
+                {previewTemplate.variaveis.map((v) => (
+                  <Badge
+                    key={v}
+                    variant="secondary"
+                    className={`text-[10px] ${v in AUTO_VARIABLES ? "bg-green-50 text-green-700" : "bg-amber-50 text-amber-700"}`}
+                  >
+                    {`{{${v}}}`}
+                  </Badge>
+                ))}
+              </div>
+              <p className="text-[10px] text-muted-foreground mt-1.5">
+                <span className="inline-block w-2 h-2 rounded-sm bg-green-100 border border-green-300 mr-1" />
+                preenchimento automático
+                <span className="inline-block w-2 h-2 rounded-sm bg-amber-100 border border-amber-300 mx-1 ml-3" />
+                preenchimento manual
+              </p>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Upload Dialog */}
       <Dialog
@@ -201,7 +332,7 @@ export function TemplatesManager() {
                 </SelectContent>
               </Select>
               <p className="text-[10px] text-muted-foreground">
-                Templates de contrato aparecem só quando você clica em "Gerar contrato" em uma proposta aceita.
+                Templates de contrato aparecem só ao clicar em "Gerar contrato" em uma proposta aceita.
               </p>
             </div>
             <div className="space-y-2">
@@ -251,54 +382,6 @@ export function TemplatesManager() {
               )}
             </Button>
           </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* View Variables Dialog */}
-      <Dialog
-        open={!!viewVarsId}
-        onOpenChange={(open) => {
-          if (!open) setViewVarsId(null);
-        }}
-      >
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Variáveis — {viewTemplate?.nome}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3 mt-2">
-            {viewTemplate?.variaveis.map((v) => {
-              const isAuto = v in AUTO_VARIABLES;
-              return (
-                <div key={v} className="flex items-center justify-between text-sm">
-                  <div className="flex items-center gap-2">
-                    <Badge
-                      variant="secondary"
-                      className={`text-xs font-mono ${isAuto ? "bg-green-50 text-green-700" : "bg-amber-50 text-amber-700"}`}
-                    >
-                      {`{{${v}}}`}
-                    </Badge>
-                  </div>
-                  <span className="text-xs text-muted-foreground">
-                    {isAuto ? AUTO_VARIABLES[v] : "Preenchimento manual"}
-                  </span>
-                </div>
-              );
-            })}
-            <div className="bg-muted/50 rounded-lg p-3 text-xs text-muted-foreground space-y-1">
-              <p>
-                <Badge variant="secondary" className="text-[10px] bg-green-50 text-green-700 mr-1">
-                  verde
-                </Badge>{" "}
-                = preenchido automaticamente
-              </p>
-              <p>
-                <Badge variant="secondary" className="text-[10px] bg-amber-50 text-amber-700 mr-1">
-                  amarelo
-                </Badge>{" "}
-                = você preenche manualmente
-              </p>
-            </div>
-          </div>
         </DialogContent>
       </Dialog>
 

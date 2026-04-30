@@ -60,7 +60,7 @@ const menu: MenuGroup[] = [
     label: "Comercial",
     items: [
       { title: "Leads", url: "/leads", icon: UserPlus, feature: "leads" },
-      { title: "Propostas", url: "/propostas", icon: FileText, feature: "propostas" },
+      { title: "Documentos", url: "/documentos", icon: FileText, feature: "propostas" },
       { title: "Clientes", url: "/clientes", icon: Building2, feature: "clientes" },
     ],
   },
