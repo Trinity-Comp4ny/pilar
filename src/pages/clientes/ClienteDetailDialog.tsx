@@ -275,9 +275,6 @@ export function ClienteDetailDialog({
             </div>
 
             <div className="flex gap-2 pt-4">
-              <Button variant="outline" onClick={onClose} className="flex-1">
-                Fechar
-              </Button>
               {isAdmin && (
                 <>
                   <Button variant="secondary" onClick={() => onEdit(cliente)} className="flex-1">

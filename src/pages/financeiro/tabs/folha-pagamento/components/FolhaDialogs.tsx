@@ -231,9 +231,6 @@ export function DetailEditDialog({
             </>
           ) : (
             <>
-              <Button variant="outline" onClick={() => onOpenChange(false)}>
-                Fechar
-              </Button>
               <Button onClick={onStartEditing}>Editar</Button>
             </>
           )}

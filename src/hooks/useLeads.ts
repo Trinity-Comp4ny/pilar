@@ -151,6 +151,24 @@ export const useConvertLeadToClient = () => {
   });
 };
 
+export const useUpdateLead = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Partial<LeadInsert> }) => {
+      const { error } = await supabase.from("leads").update(data).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["leads"] });
+      toast.success("Lead atualizado");
+    },
+    onError: (err: unknown) => {
+      toast.error("Erro ao atualizar", { description: getSafeErrorMessage(err) });
+    },
+  });
+};
+
 export const useDeleteLead = () => {
   const queryClient = useQueryClient();
 

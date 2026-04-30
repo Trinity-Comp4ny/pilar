@@ -53,30 +53,62 @@ serve(async (req) => {
 
     const { data: existingAccount } = await supabaseAdmin
       .from("cliente_portal_accounts")
-      .select("id")
+      .select("id, ativo")
       .eq("cliente_id", cliente_id)
       .eq("empresa_id", profile.empresa_id)
       .maybeSingle();
 
-    if (existingAccount) return safeErrorResponse(409, "Este cliente já possui acesso ao portal", req);
+    if (existingAccount?.ativo) return safeErrorResponse(409, "Este cliente já possui acesso ao portal", req);
 
     const senha = generatePassword(8);
+    const normalizedEmail = String(email).toLowerCase().trim();
 
-    const { error: insertError } = await supabaseAdmin.rpc("_portal_create_account", {
-      p_cliente_id: cliente.id,
-      p_empresa_id: profile.empresa_id,
-      p_nome: cliente.nome,
-      p_email: String(email).toLowerCase().trim(),
-      p_senha: senha,
-      p_created_by: user.id,
-    });
+    if (existingAccount) {
+      // Conta revogada — reativar com nova senha e email
+      const { error: reactivateError } = await supabaseAdmin
+        .from("cliente_portal_accounts")
+        .update({
+          ativo: true,
+          email: normalizedEmail,
+          nome: cliente.nome,
+          senha_hash: null, // limpa; _portal_reset_password fará o hash
+          token_sessao: null,
+          token_expira_em: null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", existingAccount.id);
 
-    if (insertError) {
-      console.error("[invite-cliente-portal] _portal_create_account failed", insertError.message);
-      return safeErrorResponse(400, `Falha ao criar conta do portal: ${insertError.message}`, req);
+      if (reactivateError) {
+        console.error("[invite-cliente-portal] reactivate failed", reactivateError.message);
+        return safeErrorResponse(400, `Falha ao reativar conta do portal: ${reactivateError.message}`, req);
+      }
+
+      // Aplica nova senha com hash via RPC
+      const { error: resetError } = await supabaseAdmin.rpc("_portal_reset_password", {
+        p_account_id: existingAccount.id,
+        p_nova_senha: senha,
+      });
+
+      if (resetError) {
+        console.error("[invite-cliente-portal] reset password failed", resetError.message);
+        return safeErrorResponse(400, `Falha ao definir senha: ${resetError.message}`, req);
+      }
+    } else {
+      const { error: insertError } = await supabaseAdmin.rpc("_portal_create_account", {
+        p_cliente_id: cliente.id,
+        p_empresa_id: profile.empresa_id,
+        p_nome: cliente.nome,
+        p_email: normalizedEmail,
+        p_senha: senha,
+        p_created_by: user.id,
+      });
+
+      if (insertError) {
+        console.error("[invite-cliente-portal] _portal_create_account failed", insertError.message);
+        return safeErrorResponse(400, `Falha ao criar conta do portal: ${insertError.message}`, req);
+      }
     }
 
-    const normalizedEmail = String(email).toLowerCase().trim();
     const loginUrl = `${Deno.env.get("PUBLIC_SITE_URL") ?? ""}/portal/login`;
 
     try {

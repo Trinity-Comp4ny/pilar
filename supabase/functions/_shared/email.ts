@@ -22,6 +22,7 @@ export interface EmailPayload {
   subject: string;
   html: string;
   replyTo?: string;
+  attachments?: { filename: string; content: string }[];
 }
 
 async function sleep(ms: number): Promise<void> {
@@ -50,6 +51,7 @@ export async function sendEmail(payload: EmailPayload): Promise<void> {
           subject: payload.subject,
           html: payload.html,
           ...(payload.replyTo && { reply_to: payload.replyTo }),
+          ...(payload.attachments?.length && { attachments: payload.attachments }),
         }),
       });
 
@@ -462,5 +464,37 @@ export function templateAcessoPortalCliente(params: {
       ${pillButton("ACESSAR PORTAL", loginUrl)}
       ${hint("Recomendamos alterar sua senha após o primeiro acesso.")}
     `,
+  });
+}
+
+export function templatePropostaEnvio(params: {
+  nomeCliente: string;
+  tituloProposta: string;
+  empresaNome: string;
+  mensagem?: string;
+}): string {
+  const { nomeCliente, tituloProposta, empresaNome, mensagem } = params;
+
+  return baseHtml({
+    preview: `${tituloProposta} — proposta enviada por ${empresaNome}`,
+    content: `
+      ${title(`Nova ${accent("Proposta")}`)}
+      ${body(`Olá, ${strong(nomeCliente)}. ${empresaNome} enviou uma proposta para você. O documento está em anexo neste email.`)}
+
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${T.surface}" style="background-color:${T.surface};border:1px solid ${T.border};border-radius:12px;margin-top:24px;border-collapse:separate">
+        <tr>
+          <td style="padding:20px 24px">
+            <p style="margin:0 0 4px;font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:${T.textSoft};font-family:${T.font}">Proposta</p>
+            <p style="margin:0;font-size:16px;font-weight:600;color:${T.ink};font-family:${T.font};line-height:1.4">${tituloProposta}</p>
+          </td>
+        </tr>
+      </table>
+
+      ${mensagem ? `<p style="margin:24px 0 0;font-size:14px;line-height:1.7;color:${T.text};font-family:${T.font};white-space:pre-line">${mensagem}</p>` : ""}
+
+      ${hr()}
+      <p style="margin:0;font-size:13px;line-height:1.6;color:${T.textSoft};font-family:${T.font}">Enviado por ${strong(empresaNome)} via Pilar. Dúvidas? Responda este email.</p>
+    `,
+    footerNote: `Você recebeu esta proposta de ${empresaNome}.`,
   });
 }

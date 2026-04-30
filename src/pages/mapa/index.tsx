@@ -193,6 +193,7 @@ export default function MapaObras() {
   const mapRef = useRef<L.Map | null>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [semCoordenadasExpanded, setSemCoordenadasExpanded] = useState(false);
 
   useEffect(() => {
     const onFsChange = () => setIsFullscreen(!!document.fullscreenElement);
@@ -405,13 +406,42 @@ export default function MapaObras() {
       ) : (
         <>
           {semCoordenadas.length > 0 && (
-            <div className="flex items-center gap-2 mb-3 px-3 py-2 rounded-md bg-muted/50 border text-xs text-muted-foreground">
-              <AlertCircle className="h-3.5 w-3.5 shrink-0" />
-              <span>
-                <span className="font-medium text-foreground">{semCoordenadas.length}</span>{" "}
-                {semCoordenadas.length === 1 ? "projeto não aparece" : "projetos não aparecem"} no mapa por falta de
-                coordenadas geográficas.
-              </span>
+            <div className="mb-3 rounded-md bg-muted/50 border text-xs overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setSemCoordenadasExpanded((v) => !v)}
+                className="w-full flex items-center gap-2 px-3 py-2 text-muted-foreground hover:bg-muted/80 transition-colors"
+              >
+                <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+                <span>
+                  <span className="font-medium text-foreground">{semCoordenadas.length}</span>{" "}
+                  {semCoordenadas.length === 1 ? "projeto não aparece" : "projetos não aparecem"} no mapa por falta de
+                  coordenadas geográficas.
+                </span>
+                <span className="ml-auto text-[10px] text-muted-foreground/70">
+                  {semCoordenadasExpanded ? "ocultar ▲" : "ver projetos ▼"}
+                </span>
+              </button>
+              {semCoordenadasExpanded && (
+                <div className="border-t divide-y divide-border/50">
+                  {semCoordenadas.map((p) => (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => navigate(`/projetos/${p.id}`)}
+                      className="w-full flex items-center gap-2 px-3 py-2 hover:bg-muted transition-colors text-left"
+                    >
+                      <MapPin className="h-3 w-3 shrink-0 text-muted-foreground/50" />
+                      <span className="font-mono text-muted-foreground/70">{p.codigo_projeto}</span>
+                      <span className="truncate text-foreground">{p.nome}</span>
+                      {p.cliente_nome && (
+                        <span className="ml-auto shrink-0 text-muted-foreground/60">{p.cliente_nome}</span>
+                      )}
+                      <ExternalLink className="h-3 w-3 shrink-0 text-muted-foreground/50" />
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
