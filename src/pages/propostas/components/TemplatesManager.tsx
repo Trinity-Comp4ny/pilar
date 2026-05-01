@@ -145,7 +145,7 @@ export function TemplatesManager() {
             <Badge
               key={v}
               variant="secondary"
-              className={`text-[10px] ${v in AUTO_VARIABLES ? "bg-green-50 text-green-700" : "bg-amber-50 text-amber-700"}`}
+              className={`text-[10px] ${v in AUTO_VARIABLES ? "bg-positive/10 text-positive" : "bg-amber-50 text-amber-700"}`}
             >
               {v}
             </Badge>
@@ -170,13 +170,15 @@ export function TemplatesManager() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="space-y-3">
         <p className="text-sm text-muted-foreground">
-          Faça upload de arquivos DOCX com variáveis {"{{VARIAVEL}}"} para gerar documentos automaticamente.
+          Faça upload de arquivos <span className="font-medium text-foreground">.docx</span> com variáveis{" "}
+          <code className="text-xs bg-muted px-1 py-0.5 rounded font-mono">{"{{VARIAVEL}}"}</code> para gerar documentos
+          automaticamente.
         </p>
         <div className="flex items-center gap-2">
           <VariaveisGuideButton />
-          <Button onClick={() => setIsUploadOpen(true)} className="bg-accent-orange hover:bg-accent-orange/90 text-ink">
+          <Button onClick={() => setIsUploadOpen(true)} className="bg-brand hover:bg-brand/90 text-ink">
             <Upload className="h-4 w-4 mr-2" />
             Upload Template
           </Button>
@@ -290,14 +292,14 @@ export function TemplatesManager() {
                   <Badge
                     key={v}
                     variant="secondary"
-                    className={`text-[10px] ${v in AUTO_VARIABLES ? "bg-green-50 text-green-700" : "bg-amber-50 text-amber-700"}`}
+                    className={`text-[10px] ${v in AUTO_VARIABLES ? "bg-positive/10 text-positive" : "bg-amber-50 text-amber-700"}`}
                   >
                     {`{{${v}}}`}
                   </Badge>
                 ))}
               </div>
               <p className="text-[10px] text-muted-foreground mt-1.5">
-                <span className="inline-block w-2 h-2 rounded-sm bg-green-100 border border-green-300 mr-1" />
+                <span className="inline-block w-2 h-2 rounded-sm bg-positive/10 border border-positive/30 mr-1" />
                 preenchimento automático
                 <span className="inline-block w-2 h-2 rounded-sm bg-amber-100 border border-amber-300 mx-1 ml-3" />
                 preenchimento manual
@@ -371,7 +373,7 @@ export function TemplatesManager() {
             <Button
               onClick={handleUpload}
               disabled={uploadTemplate.isPending}
-              className="bg-accent-orange hover:bg-accent-orange/90 text-ink"
+              className="bg-brand hover:bg-brand/90 text-ink"
             >
               {uploadTemplate.isPending ? (
                 <>

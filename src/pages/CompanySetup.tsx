@@ -76,11 +76,11 @@ export default function CompanySetup() {
       <div className="w-full lg:w-1/2 flex items-center justify-center p-8 lg:p-16 bg-paper relative overflow-hidden">
         {/* Aurora sutil */}
         <div className="absolute inset-0 -z-10 pointer-events-none">
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-accent-orange/6 rounded-full blur-[100px] animate-aurora" />
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-brand/6 rounded-full blur-[100px] animate-aurora" />
         </div>
         <Link
           to="/profile-setup"
-          className="absolute top-8 left-8 lg:left-12 flex items-center gap-2 text-ink-soft hover:text-accent-orange transition-colors font-medium text-sm group"
+          className="absolute top-8 left-8 lg:left-12 flex items-center gap-2 text-ink-soft hover:text-brand transition-colors font-medium text-sm group"
         >
           <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
           Voltar
@@ -104,15 +104,15 @@ export default function CompanySetup() {
               </div>
 
               <div className="flex items-center gap-2">
-                <div className="h-2.5 w-2.5 rounded-full bg-accent-orange/70" />
-                <div className="h-2.5 w-2.5 rounded-full bg-accent-orange shadow-sm shadow-accent-orange/30" />
+                <div className="h-2.5 w-2.5 rounded-full bg-brand/70" />
+                <div className="h-2.5 w-2.5 rounded-full bg-brand shadow-sm shadow-brand/30" />
               </div>
             </div>
 
             <Progress
               value={progressValue}
               className="h-2 bg-paper-border"
-              indicatorClassName="bg-gradient-to-r from-accent-orange via-orange-500 to-yellow-400 transition-all duration-700 ease-out"
+              indicatorClassName="bg-gradient-to-r from-brand via-orange-500 to-yellow-400 transition-all duration-700 ease-out"
             />
           </div>
 
@@ -127,11 +127,11 @@ export default function CompanySetup() {
                 Razão social / Nome fantasia
               </Label>
               <div className="relative group">
-                <Building2 className="absolute left-3 top-3 h-4 w-4 text-ink/40 group-focus-within:text-accent-orange transition-colors" />
+                <Building2 className="absolute left-3 top-3 h-4 w-4 text-ink/40 group-focus-within:text-brand transition-colors" />
                 <Input
                   id="name"
                   placeholder="Ex: Construtora Pilar Ltda"
-                  className="pl-10 h-11 bg-paper-alt border-paper-border focus:border-accent-orange focus:ring-accent-orange/20 transition-all"
+                  className="pl-10 h-11 bg-paper-alt border-paper-border focus:border-brand focus:ring-brand/20 transition-all"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   required
@@ -144,11 +144,11 @@ export default function CompanySetup() {
                 CNPJ
               </Label>
               <div className="relative group">
-                <Hash className="absolute left-3 top-3 h-4 w-4 text-ink/40 group-focus-within:text-accent-orange transition-colors" />
+                <Hash className="absolute left-3 top-3 h-4 w-4 text-ink/40 group-focus-within:text-brand transition-colors" />
                 <Input
                   id="cnpj"
                   placeholder="00.000.000/0000-00"
-                  className="pl-10 h-11 bg-paper-alt border-paper-border focus:border-accent-orange focus:ring-accent-orange/20 transition-all"
+                  className="pl-10 h-11 bg-paper-alt border-paper-border focus:border-brand focus:ring-brand/20 transition-all"
                   value={cnpj}
                   onChange={(e) => {
                     const value = e.target.value.replace(/\D/g, "");
@@ -167,7 +167,7 @@ export default function CompanySetup() {
             </div>
 
             <Button
-              className="w-full h-11 bg-accent-orange hover:bg-accent-orange/90 text-ink font-medium shadow-lg shadow-accent-orange/20 hover:shadow-accent-orange/30 transition-all active:scale-[0.98] text-sm"
+              className="w-full h-11 bg-brand hover:bg-brand/90 text-ink font-medium shadow-lg shadow-brand/20 hover:shadow-brand/30 transition-all active:scale-[0.98] text-sm"
               type="submit"
               disabled={isLoading}
             >

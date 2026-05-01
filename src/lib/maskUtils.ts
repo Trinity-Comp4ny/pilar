@@ -28,6 +28,22 @@ export const formatDocument = (value: string): string => {
   return d.length > 11 ? formatCNPJ(d) : formatCPF(d);
 };
 
+/**
+ * Formata RG no padrão brasileiro mais comum: XX.XXX.XXX-X
+ * Aceita até 9 caracteres (8 dígitos + 1 dígito ou X verificador).
+ */
+export const formatRG = (value: string): string => {
+  const cleaned = (value ?? "")
+    .toUpperCase()
+    .replace(/[^0-9X]/g, "")
+    .slice(0, 9);
+  if (!cleaned) return "";
+  if (cleaned.length <= 2) return cleaned;
+  if (cleaned.length <= 5) return cleaned.replace(/^(.{2})(.+)$/, "$1.$2");
+  if (cleaned.length <= 8) return cleaned.replace(/^(.{2})(.{3})(.+)$/, "$1.$2.$3");
+  return cleaned.replace(/^(.{2})(.{3})(.{3})(.+)$/, "$1.$2.$3-$4");
+};
+
 export const formatPhone = (value: string): string => {
   const d = onlyDigits(value).slice(0, 11);
   if (!d) return "";
@@ -71,4 +87,5 @@ export default {
   formatCNPJ,
   formatDocument,
   formatPhone,
+  formatRG,
 };

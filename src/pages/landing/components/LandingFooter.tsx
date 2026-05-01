@@ -16,8 +16,8 @@ export function LandingFooter() {
                 Pilar<sup className="text-[9px] font-normal text-slate-400 ml-0.5 relative -top-2">®</sup>
               </span>
               <span className="relative flex h-1.5 w-1.5 ml-1">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent-orange opacity-60" />
-                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-accent-orange" />
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand opacity-60" />
+                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-brand" />
               </span>
             </div>
             <p className="text-slate-400 max-w-sm mb-6 font-light leading-relaxed">
@@ -30,17 +30,17 @@ export function LandingFooter() {
             <h4 className="text-sm font-semibold mb-6 tracking-wider text-white">Produto</h4>
             <ul className="space-y-4 text-slate-400 font-light text-sm">
               <li>
-                <a href="#prova" className="hover:text-accent-orange transition-colors">
+                <a href="#prova" className="hover:text-brand transition-colors">
                   Por que Pilar
                 </a>
               </li>
               <li>
-                <a href="#modulos" className="hover:text-accent-orange transition-colors">
+                <a href="#modulos" className="hover:text-brand transition-colors">
                   Módulos
                 </a>
               </li>
               <li>
-                <Link to="/login" className="hover:text-accent-orange transition-colors">
+                <Link to="/login" className="hover:text-brand transition-colors">
                   Entrar
                 </Link>
               </li>
@@ -51,12 +51,12 @@ export function LandingFooter() {
             <h4 className="text-sm font-semibold mb-6 tracking-wider text-white">Legal</h4>
             <ul className="space-y-4 text-slate-400 font-light text-sm">
               <li>
-                <a href="#" className="hover:text-accent-orange transition-colors">
+                <a href="#" className="hover:text-brand transition-colors">
                   Termos de Uso
                 </a>
               </li>
               <li>
-                <a href="#" className="hover:text-accent-orange transition-colors">
+                <a href="#" className="hover:text-brand transition-colors">
                   Privacidade
                 </a>
               </li>
@@ -72,7 +72,7 @@ export function LandingFooter() {
               href="https://trnty.com.br"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-slate-400 hover:text-accent-orange transition-colors font-medium"
+              className="text-slate-400 hover:text-brand transition-colors font-medium"
             >
               Trinity Company
             </a>

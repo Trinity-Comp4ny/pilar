@@ -57,7 +57,7 @@ export default function ClienteLogin() {
       {/* Lado Esquerdo — Formulário */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-8 lg:p-16 bg-paper relative overflow-hidden">
         <div className="absolute inset-0 -z-10 pointer-events-none">
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-accent-orange/6 rounded-full blur-[100px] animate-aurora" />
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-brand/6 rounded-full blur-[100px] animate-aurora" />
         </div>
         <div className="w-full max-w-[400px] space-y-8 animate-in fade-in slide-in-from-left-8 duration-700">
           <div className="text-center space-y-2">
@@ -81,12 +81,12 @@ export default function ClienteLogin() {
                 Email
               </Label>
               <div className="relative group">
-                <Mail className="absolute left-3 top-3 h-4 w-4 text-ink/40 group-focus-within:text-accent-orange transition-colors" />
+                <Mail className="absolute left-3 top-3 h-4 w-4 text-ink/40 group-focus-within:text-brand transition-colors" />
                 <Input
                   id="email"
                   type="email"
                   placeholder="seu@email.com"
-                  className="pl-10 h-11 bg-paper-alt border-paper-border focus:border-accent-orange focus:ring-accent-orange/20 transition-all"
+                  className="pl-10 h-11 bg-paper-alt border-paper-border focus:border-brand focus:ring-brand/20 transition-all"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -99,12 +99,12 @@ export default function ClienteLogin() {
                 Senha
               </Label>
               <div className="relative group">
-                <Lock className="absolute left-3 top-3 h-4 w-4 text-ink/40 group-focus-within:text-accent-orange transition-colors" />
+                <Lock className="absolute left-3 top-3 h-4 w-4 text-ink/40 group-focus-within:text-brand transition-colors" />
                 <Input
                   id="password"
                   type="password"
                   placeholder="••••••••"
-                  className="pl-10 h-11 bg-paper-alt border-paper-border focus:border-accent-orange focus:ring-accent-orange/20 transition-all"
+                  className="pl-10 h-11 bg-paper-alt border-paper-border focus:border-brand focus:ring-brand/20 transition-all"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
@@ -113,7 +113,7 @@ export default function ClienteLogin() {
             </div>
 
             <Button
-              className="w-full h-11 bg-accent-orange hover:bg-accent-orange/90 text-ink font-medium shadow-lg shadow-accent-orange/20 hover:shadow-accent-orange/30 transition-all active:scale-[0.98] text-sm"
+              className="w-full h-11 bg-brand hover:bg-brand/90 text-ink font-medium shadow-lg shadow-brand/20 hover:shadow-brand/30 transition-all active:scale-[0.98] text-sm"
               type="submit"
               disabled={isLoading}
             >

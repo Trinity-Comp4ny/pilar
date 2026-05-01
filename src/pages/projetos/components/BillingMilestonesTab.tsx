@@ -10,6 +10,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { formatCurrencyInput, parseCurrencyString, formatCurrency } from "@/lib/currencyUtils";
+import { DatePicker } from "@/components/ui/date-picker";
 
 interface BillingMilestonesTabProps {
   projetoId: string;
@@ -30,7 +31,7 @@ interface Marco {
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: typeof Clock }> = {
   pendente: { label: "Pendente", color: "bg-yellow-100 text-yellow-800", icon: Clock },
   faturado: { label: "Faturado", color: "bg-blue-100 text-blue-800", icon: CheckCircle2 },
-  recebido: { label: "Recebido", color: "bg-green-100 text-green-800", icon: CheckCircle2 },
+  recebido: { label: "Recebido", color: "bg-positive/10 text-positive", icon: CheckCircle2 },
   cancelado: { label: "Cancelado", color: "bg-red-100 text-red-800", icon: XCircle },
 };
 
@@ -158,7 +159,7 @@ export function BillingMilestonesTab({ projetoId, canEdit }: BillingMilestonesTa
           <div className="flex items-center gap-3 text-sm">
             <Badge variant="secondary">Total: {formatCurrency(totalMarcos)}</Badge>
             <Badge className="bg-blue-100 text-blue-800">Faturado: {formatCurrency(totalFaturado)}</Badge>
-            <Badge className="bg-green-100 text-green-800">Recebido: {formatCurrency(totalRecebido)}</Badge>
+            <Badge className="bg-positive/10 text-positive">Recebido: {formatCurrency(totalRecebido)}</Badge>
           </div>
           {canEdit && (
             <div className="flex gap-2">
@@ -219,7 +220,7 @@ export function BillingMilestonesTab({ projetoId, canEdit }: BillingMilestonesTa
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-7 w-7 text-green-600"
+                          className="h-7 w-7 text-positive"
                           onClick={() => updateStatusMutation.mutate({ id: marco.id, status: "recebido" })}
                         >
                           <CheckCircle2 className="h-3.5 w-3.5" />
@@ -277,7 +278,7 @@ export function BillingMilestonesTab({ projetoId, canEdit }: BillingMilestonesTa
               </div>
               <div className="space-y-1">
                 <Label className="text-xs">Data Prevista</Label>
-                <Input type="date" value={formData} onChange={(e) => setFormData(e.target.value)} />
+                <DatePicker value={formData || undefined} onChange={(v) => setFormData(v)} placeholder="dd/mm/aaaa" />
               </div>
               <div className="flex justify-end gap-2 pt-2">
                 <Button variant="outline" size="sm" onClick={() => setIsFormOpen(false)}>

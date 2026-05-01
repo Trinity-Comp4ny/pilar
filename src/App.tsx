@@ -13,6 +13,7 @@ import { ClientePrivateRoute } from "./components/ClientePrivateRoute";
 import { AdminRoute } from "./components/AdminRoute";
 import { UltraAdminRoute } from "./components/UltraAdminRoute";
 import { FeatureRoute } from "./components/FeatureRoute";
+import { AdminOnlyRoute } from "./components/AdminOnlyRoute";
 import { ImpersonationBanner } from "./components/ImpersonationBanner";
 
 const Landing = lazy(() => import("./pages/Landing"));
@@ -35,7 +36,6 @@ const Templates = lazy(() => import("./pages/templates"));
 const MapaObras = lazy(() => import("./pages/mapa"));
 const Propostas = lazy(() => import("./pages/propostas"));
 const Capacidade = lazy(() => import("./pages/capacidade"));
-const MetasPage = lazy(() => import("./pages/metas"));
 const AiHub = lazy(() => import("./pages/ai"));
 const ProjetoDetail = lazy(() => import("./pages/projetos/ProjetoDetail"));
 const ClienteLogin = lazy(() => import("./pages/cliente/ClienteLogin"));
@@ -114,8 +114,9 @@ const App = () => {
                         <Route path="/clientes" element={<Clientes />} />
                       </Route>
 
-                      <Route element={<FeatureRoute feature="pessoas" />}>
-                        <Route path="/pessoas" element={<Pessoas />} />
+                      <Route element={<AdminOnlyRoute />}>
+                        <Route path="/equipe" element={<Pessoas />} />
+                        <Route path="/pessoas" element={<Navigate to="/equipe" replace />} />
                       </Route>
 
                       <Route element={<FeatureRoute feature="relatorios" />}>
@@ -137,10 +138,6 @@ const App = () => {
 
                       <Route element={<FeatureRoute feature="capacidade" />}>
                         <Route path="/capacidade" element={<Capacidade />} />
-                      </Route>
-
-                      <Route element={<FeatureRoute feature="metas" />}>
-                        <Route path="/metas" element={<MetasPage />} />
                       </Route>
 
                       <Route element={<FeatureRoute feature="ai_hub" />}>

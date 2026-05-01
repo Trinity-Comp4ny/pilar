@@ -106,7 +106,7 @@ export default function Login() {
       <div className="w-full lg:w-1/2 flex items-center justify-center p-8 lg:p-16 bg-white relative">
         <Link
           to="/"
-          className="absolute top-8 left-8 lg:left-12 flex items-center gap-2 text-slate-500 hover:text-accent-orange transition-colors font-medium text-sm group"
+          className="absolute top-8 left-8 lg:left-12 flex items-center gap-2 text-slate-500 hover:text-brand transition-colors font-medium text-sm group"
         >
           <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
           Voltar
@@ -132,12 +132,12 @@ export default function Login() {
                 Email
               </Label>
               <div className="relative group">
-                <Mail className="absolute left-3 top-3 h-4 w-4 text-slate-400 group-focus-within:text-accent-orange transition-colors" />
+                <Mail className="absolute left-3 top-3 h-4 w-4 text-slate-400 group-focus-within:text-brand transition-colors" />
                 <Input
                   id="email"
                   type="email"
                   placeholder="seu@empresa.com"
-                  className="pl-10 h-11 bg-slate-50 border-slate-200 focus:border-accent-orange focus:ring-accent-orange/20 transition-all"
+                  className="pl-10 h-11 bg-slate-50 border-slate-200 focus:border-brand focus:ring-brand/20 transition-all"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -154,18 +154,18 @@ export default function Login() {
                   type="button"
                   onClick={handleResetPassword}
                   disabled={isResetting}
-                  className="text-xs font-medium text-accent-orange hover:text-green-600 hover:underline disabled:opacity-50"
+                  className="text-xs font-medium text-brand hover:text-brand/70 hover:underline disabled:opacity-50"
                 >
                   {isResetting ? "Enviando..." : "Esqueceu a senha?"}
                 </button>
               </div>
               <div className="relative group">
-                <Lock className="absolute left-3 top-3 h-4 w-4 text-slate-400 group-focus-within:text-accent-orange transition-colors" />
+                <Lock className="absolute left-3 top-3 h-4 w-4 text-slate-400 group-focus-within:text-brand transition-colors" />
                 <Input
                   id="password"
                   type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
-                  className="pl-10 pr-10 h-11 bg-slate-50 border-slate-200 focus:border-accent-orange focus:ring-accent-orange/20 transition-all"
+                  className="pl-10 pr-10 h-11 bg-slate-50 border-slate-200 focus:border-brand focus:ring-brand/20 transition-all"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
@@ -173,7 +173,7 @@ export default function Login() {
                 <button
                   type="button"
                   onClick={() => setShowPassword((v) => !v)}
-                  className="absolute right-3 top-3 text-slate-400 hover:text-accent-orange transition-colors"
+                  className="absolute right-3 top-3 text-slate-400 hover:text-brand transition-colors"
                   tabIndex={-1}
                   aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
                 >
@@ -183,7 +183,7 @@ export default function Login() {
             </div>
 
             <Button
-              className="w-full h-11 bg-accent-orange hover:bg-accent-orange/80 text-ink font-medium shadow-lg shadow-accent-orange/20 hover:shadow-accent-orange/30 transition-all active:scale-[0.98] text-sm"
+              className="w-full h-11 bg-brand hover:bg-brand/80 text-ink font-medium shadow-lg shadow-brand/20 hover:shadow-brand/30 transition-all active:scale-[0.98] text-sm"
               type="submit"
               disabled={isLoading}
             >
@@ -209,7 +209,7 @@ export default function Login() {
           <div className="text-center pt-2">
             <Button
               variant="outline"
-              className="w-full h-10 border-slate-200 text-slate-600 hover:text-accent-orange hover:border-accent-orange/50 hover:bg-accent-orange/10 transition-all text-sm font-medium"
+              className="w-full h-10 border-slate-200 text-slate-600 hover:text-brand hover:border-brand/50 hover:bg-brand/10 transition-all text-sm font-medium"
               asChild
             >
               <a href="https://trnty.com.br" target="_blank" rel="noopener noreferrer">
@@ -233,7 +233,7 @@ export default function Login() {
             style={{ animationDuration: "20s" }}
           />
           {/* Overlay gradiente + tintura laranja */}
-          <div className="absolute inset-0 bg-accent-orange/40 mix-blend-multiply" />
+          <div className="absolute inset-0 bg-brand/40 mix-blend-multiply" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/10" />
         </div>
 
@@ -263,15 +263,15 @@ export default function Login() {
             <div className="flex flex-col items-end gap-3 pt-4 border-t border-white/20">
               <div className="flex items-center gap-2 text-sm font-medium text-white/80">
                 <span>Controle Financeiro Integrado</span>
-                <CheckCircle2 className="w-5 h-5 text-accent-orange" />
+                <CheckCircle2 className="w-5 h-5 text-brand" />
               </div>
               <div className="flex items-center gap-2 text-sm font-medium text-white/80">
                 <span>Gestão de Projetos e Obras</span>
-                <CheckCircle2 className="w-5 h-5 text-accent-orange" />
+                <CheckCircle2 className="w-5 h-5 text-brand" />
               </div>
               <div className="flex items-center gap-2 text-sm font-medium text-white/80">
                 <span>CRM e Relacionamento</span>
-                <CheckCircle2 className="w-5 h-5 text-accent-orange" />
+                <CheckCircle2 className="w-5 h-5 text-brand" />
               </div>
             </div>
           </div>

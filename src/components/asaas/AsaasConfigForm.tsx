@@ -71,7 +71,7 @@ export function AsaasConfigForm() {
       <div className="space-y-2">
         <Label className="text-xs">API Key</Label>
         {jaConfigurado && !apiKey && (
-          <div className="flex items-center gap-2 rounded-md border border-green-200 bg-green-50 px-3 py-2 text-xs text-green-700">
+          <div className="flex items-center gap-2 rounded-md border border-positive/20 bg-positive/10 px-3 py-2 text-xs text-positive">
             <CheckCircle2 className="h-4 w-4 shrink-0" />
             Configurada. Digite uma nova chave abaixo apenas para substituí-la.
           </div>
@@ -94,7 +94,7 @@ export function AsaasConfigForm() {
       <Button
         onClick={handleSalvar}
         disabled={isSaving || (!jaConfigurado && !apiKey.trim())}
-        className="bg-accent-orange hover:bg-accent-orange/90 text-ink"
+        className="bg-brand hover:bg-brand/90 text-ink"
       >
         {isSaving ? (
           <>

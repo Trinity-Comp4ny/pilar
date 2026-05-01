@@ -713,7 +713,7 @@ function FileUploadField({
   }
 
   return (
-    <label className="flex items-center justify-center gap-2 rounded-md border-2 border-dashed border-black/10 bg-black/[0.015] px-3 py-4 cursor-pointer text-xs hover:border-accent-orange/30 hover:bg-accent-orange/5 transition-colors">
+    <label className="flex items-center justify-center gap-2 rounded-md border-2 border-dashed border-black/10 bg-black/[0.015] px-3 py-4 cursor-pointer text-xs hover:border-brand/30 hover:bg-brand/5 transition-colors">
       <Upload className="h-4 w-4 text-muted-foreground" />
       <span className="text-muted-foreground">Clique para escolher arquivo</span>
       <input type="file" className="hidden" onChange={onFileChange} />

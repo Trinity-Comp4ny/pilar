@@ -115,6 +115,10 @@
   --shadow-elegant: 0 4px 24px -4px hsl(var(--c-ink-900) / 0.1);
   --shadow-popover: 0 8px 32px -4px hsl(var(--c-ink-900) / 0.12);
 
+  /* ── Financeiro ──────────────────────────────────────────── */
+  --positive: var(--c-green-500); /* receita, saldo positivo, ativo */
+  --negative: var(--c-red-500); /* despesa, saldo negativo */
+
   /* ── Charts ───────────────────────────────────────────────── */
   --chart-success: var(--c-green-500);
   --chart-success-alt: var(--c-emerald-500);

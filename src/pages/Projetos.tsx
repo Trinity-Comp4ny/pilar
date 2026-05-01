@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -10,9 +11,27 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Plus, Settings2, Layers, Calendar as CalendarIcon, Filter, GitBranch } from "lucide-react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  ArrowDownAZ,
+  ArrowUpDown,
+  Calendar as CalendarIcon,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  ChevronUp,
+  GitBranch,
+  Layers,
+  Plus,
+  Settings2,
+} from "lucide-react";
 import { toast } from "sonner";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 import { PageLayout } from "@/components/PageLayout";
@@ -26,8 +45,9 @@ import {
   PROJECT_PRIORITY,
   PROJECT_PRIORITY_CONFIG,
   type ProjectPriority,
+  type ProjectStatus,
 } from "@/constants";
-import { type Projeto, type ProjetoDisciplinaDB, dbDisciplinaToLegacy } from "@/types/projetos";
+import { type Projeto, type ProjetoDisciplinaDB, dbDisciplinaToLegacy, getDeadlineStatus } from "@/types/projetos";
 import { ProjectCard } from "@/pages/projetos/components/ProjectCard";
 import { ProjectDetailDialog } from "@/pages/projetos/components/ProjectDetailDialog";
 import { ProjetoFormDialog } from "@/pages/projetos/components/ProjetoFormDialog";
@@ -35,6 +55,17 @@ import { ManageDisciplinasDialog } from "@/pages/projetos/components/ManageDisci
 import { FluxoDisciplinasDialog } from "@/pages/projetos/components/FluxoDisciplinasDialog";
 import { DisciplinasTab } from "@/pages/projetos/components/DisciplinasTab";
 import { CalendarioPrazosTab } from "@/pages/projetos/components/CalendarioPrazosTab";
+import { CronogramaProjetosTab } from "@/pages/projetos/components/CronogramaProjetosTab";
+import {
+  ProjetosFilterBar,
+  EMPTY_FILTERS,
+  type ProjetosFilters,
+  type DeadlineFilter,
+} from "@/pages/projetos/components/ProjetosFilterBar";
+import { ProjetosKPIs } from "@/pages/projetos/components/ProjetosKPIs";
+import { ProjetoColumnSkeleton } from "@/pages/projetos/components/ProjetoCardSkeleton";
+import { ProjetosEmptyState } from "@/pages/projetos/components/ProjetosEmptyState";
+import { QuickAddCard } from "@/pages/projetos/components/QuickAddCard";
 import { useTemplates } from "@/hooks/useTemplates";
 import { useFluxosDisciplinas } from "@/hooks/useFluxosDisciplinas";
 import { cn } from "@/lib/utils";
@@ -43,7 +74,68 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 const statusConfig = PROJECT_STATUS_CONFIG;
 
-type Tab = "kanban" | "disciplinas" | "calendario";
+type Tab = "kanban" | "disciplinas" | "cronograma" | "calendario";
+type SortKey = "priority" | "dueDate" | "value" | "name" | "created";
+type SortDir = "asc" | "desc";
+
+const SORT_LABELS: Record<SortKey, string> = {
+  priority: "Prioridade",
+  dueDate: "Previsão",
+  value: "Valor",
+  name: "Nome",
+  created: "Criação",
+};
+
+const STATUS_DOT: Record<string, string> = {
+  [PROJECT_STATUS.PLANEJAMENTO]: "bg-yellow-400",
+  [PROJECT_STATUS.EM_ANDAMENTO]: "bg-blue-500",
+  [PROJECT_STATUS.REVISAO]: "bg-purple-500",
+  [PROJECT_STATUS.PARALISADO]: "bg-brand",
+  [PROJECT_STATUS.CONCLUIDO]: "bg-status-done",
+  [PROJECT_STATUS.CANCELADO]: "bg-red-500",
+};
+
+// ---------- URL persistence helpers ----------
+function filtersToParams(filters: ProjetosFilters, sort: { key: SortKey; dir: SortDir }, collapsed: Set<string>) {
+  const params = new URLSearchParams();
+  if (filters.search) params.set("q", filters.search);
+  if (filters.prioridades.length) params.set("prio", filters.prioridades.join(","));
+  if (filters.pessoaIds.length) params.set("p", filters.pessoaIds.join(","));
+  if (filters.clienteIds.length) params.set("c", filters.clienteIds.join(","));
+  if (filters.deadlineStatus.length) params.set("d", filters.deadlineStatus.join(","));
+  if (filters.dataInicio) params.set("di", filters.dataInicio);
+  if (filters.dataFim) params.set("df", filters.dataFim);
+  if (sort.key !== "priority" || sort.dir !== "asc") params.set("sort", `${sort.key}.${sort.dir}`);
+  if (collapsed.size > 0) params.set("col", [...collapsed].join(","));
+  return params;
+}
+
+function parseFiltersFromParams(params: URLSearchParams): {
+  filters: ProjetosFilters;
+  sort: { key: SortKey; dir: SortDir };
+  collapsed: Set<string>;
+} {
+  const sortRaw = params.get("sort");
+  const [sk, sd] = (sortRaw || "priority.asc").split(".");
+  return {
+    filters: {
+      search: params.get("q") || "",
+      prioridades: (params.get("prio")?.split(",").filter(Boolean) as ProjectPriority[]) || [],
+      pessoaIds: params.get("p")?.split(",").filter(Boolean) || [],
+      clienteIds: params.get("c")?.split(",").filter(Boolean) || [],
+      deadlineStatus: (params.get("d")?.split(",").filter(Boolean) as DeadlineFilter[]) || [],
+      dataInicio: params.get("di") || "",
+      dataFim: params.get("df") || "",
+    },
+    sort: {
+      key: (["priority", "dueDate", "value", "name", "created"] as SortKey[]).includes(sk as SortKey)
+        ? (sk as SortKey)
+        : "priority",
+      dir: sd === "desc" ? "desc" : "asc",
+    },
+    collapsed: new Set(params.get("col")?.split(",").filter(Boolean) || []),
+  };
+}
 
 export default function ProjetosKanban() {
   usePageTitle("Projetos");
@@ -53,13 +145,25 @@ export default function ProjetosKanban() {
   const { data: fluxosData = [] } = useFluxosDisciplinas();
   const canEdit = can("projetos", "create");
 
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initial = useMemo(() => parseFiltersFromParams(searchParams), []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const [filters, setFilters] = useState<ProjetosFilters>(initial.filters);
+  const [sort, setSort] = useState<{ key: SortKey; dir: SortDir }>(initial.sort);
+  const [collapsedColumns, setCollapsedColumns] = useState<Set<string>>(initial.collapsed);
+
+  // Sync state → URL
+  useEffect(() => {
+    const params = filtersToParams(filters, sort, collapsedColumns);
+    setSearchParams(params, { replace: true });
+  }, [filters, sort, collapsedColumns, setSearchParams]);
+
   const [isFormDialogOpen, setIsFormDialogOpen] = useState(false);
   const [editingProjeto, setEditingProjeto] = useState<Projeto | null>(null);
   const [isDisciplinasOpen, setIsDisciplinasOpen] = useState(false);
   const [selectedProjeto, setSelectedProjeto] = useState<Projeto | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>("kanban");
-  const [filterPessoaId, setFilterPessoaId] = useState<string>("all");
   const [isFluxosOpen, setIsFluxosOpen] = useState(false);
   const [pendingDrag, setPendingDrag] = useState<{
     projetoId: string;
@@ -83,7 +187,7 @@ export default function ProjetosKanban() {
     },
   });
 
-  const { data: projetos = [] } = useQuery({
+  const { data: projetos = [], isLoading: loadingProjetos } = useQuery({
     queryKey: ["projetos"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -236,7 +340,6 @@ export default function ProjetosKanban() {
 
   const onDragEnd = async (result: DropResult) => {
     const { source, destination, draggableId } = result;
-
     if (!destination) return;
     if (source.droppableId === destination.droppableId) return;
     if (!canEdit) return;
@@ -244,7 +347,6 @@ export default function ProjetosKanban() {
     const newStatus = destination.droppableId as Projeto["status"];
     const todayStr = new Date().toISOString().slice(0, 10);
 
-    // Optimistic update via queryClient
     queryClient.setQueryData(["projetos"], (old: Projeto[] | undefined) =>
       (old || []).map((projeto) =>
         projeto.id === draggableId
@@ -259,12 +361,9 @@ export default function ProjetosKanban() {
 
     try {
       const updateData: Record<string, string> = { status: newStatus };
-      if (newStatus === PROJECT_STATUS.CONCLUIDO) {
-        updateData.data_final = todayStr;
-      }
+      if (newStatus === PROJECT_STATUS.CONCLUIDO) updateData.data_final = todayStr;
 
       const { error } = await supabase.from("projetos").update(updateData).eq("id", draggableId);
-
       if (error) throw error;
 
       toast.success("Status atualizado", {
@@ -285,9 +384,7 @@ export default function ProjetosKanban() {
       }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Erro desconhecido";
-      toast.error("Erro ao atualizar status", {
-        description: message,
-      });
+      toast.error("Erro ao atualizar status", { description: message });
       queryClient.invalidateQueries({ queryKey: ["projetos"] });
     }
   };
@@ -295,18 +392,12 @@ export default function ProjetosKanban() {
   const notifyProjectStatusChange = async (draggableId: string, newStatus: string) => {
     try {
       const { error } = await supabase.functions.invoke("notify-project-people", {
-        body: {
-          projetoId: draggableId,
-          novoStatus: newStatus,
-        },
+        body: { projetoId: draggableId, novoStatus: newStatus },
       });
-
       if (error) {
         toast.error("Erro ao enviar notificação por email");
-        console.error("Erro ao enviar notificação por email:", error);
         return;
       }
-
       toast.success("Notificação por email enviada");
     } catch (err) {
       console.error("Erro ao notificar mudança de status do projeto:", err);
@@ -316,48 +407,99 @@ export default function ProjetosKanban() {
   const sendClientEmail = async (client: string, project: string) => {
     try {
       const { error } = await supabase.functions.invoke("send-completion-email", {
-        body: {
-          email: client,
-          name: project,
-          type: "project",
-        },
+        body: { email: client, name: project, type: "project" },
       });
-
       if (error) {
         toast.error("Erro ao notificar cliente por email");
-        console.error("Erro ao notificar cliente por email:", error);
         return;
       }
-
       toast.success("Email de conclusão enviado para o cliente");
     } catch (err) {
       console.error("Erro ao enviar email para o cliente:", err);
     }
   };
 
-  const getProjetosByStatus = (status: string) => {
-    return projetos
-      .filter((projeto) => {
-        if (projeto.status !== status) return false;
-        if (filterPessoaId === "all") return true;
-        return projeto.disciplinas?.some((d) => {
-          if (d.responsavel_id === filterPessoaId) return true;
-          if (d.responsaveis?.some((r) => r.responsavel_id === filterPessoaId)) return true;
-          return false;
-        });
-      })
-      .sort((a, b) => {
+  // ---------- Filtros ----------
+  const matchesFilters = (projeto: Projeto): boolean => {
+    if (filters.search) {
+      const q = filters.search.trim().toLowerCase();
+      const haystack = `${projeto.codigo_projeto} ${projeto.nome} ${projeto.cliente_nome || ""}`.toLowerCase();
+      if (!haystack.includes(q)) return false;
+    }
+    if (filters.prioridades.length > 0 && !filters.prioridades.includes(projeto.prioridade as ProjectPriority)) {
+      return false;
+    }
+    if (filters.clienteIds.length > 0 && !filters.clienteIds.includes(projeto.cliente_id)) {
+      return false;
+    }
+    if (filters.pessoaIds.length > 0) {
+      const matched = projeto.disciplinas?.some((d) => {
+        if (filters.pessoaIds.includes(d.responsavel_id || "")) return true;
+        if (d.responsaveis?.some((r) => filters.pessoaIds.includes(r.responsavel_id))) return true;
+        return false;
+      });
+      if (!matched) return false;
+    }
+    if (filters.deadlineStatus.length > 0) {
+      const ds = getDeadlineStatus(projeto);
+      const key = ds?.status_data;
+      if (!key || !filters.deadlineStatus.includes(key as DeadlineFilter)) return false;
+    }
+    if (filters.dataInicio || filters.dataFim) {
+      const prev = projeto.data_previsao;
+      if (!prev) return false;
+      if (filters.dataInicio && prev < filters.dataInicio) return false;
+      if (filters.dataFim && prev > filters.dataFim) return false;
+    }
+    return true;
+  };
+
+  const sortProjetos = (a: Projeto, b: Projeto): number => {
+    const dir = sort.dir === "asc" ? 1 : -1;
+    switch (sort.key) {
+      case "priority": {
         const wa = PROJECT_PRIORITY_CONFIG[a.prioridade as ProjectPriority]?.sortWeight ?? 1;
         const wb = PROJECT_PRIORITY_CONFIG[b.prioridade as ProjectPriority]?.sortWeight ?? 1;
-        return wa - wb;
-      });
+        return (wa - wb) * dir;
+      }
+      case "dueDate": {
+        const da = a.data_previsao || "9999-12-31";
+        const db = b.data_previsao || "9999-12-31";
+        return da.localeCompare(db) * dir;
+      }
+      case "value":
+        return ((a.valor_contrato || 0) - (b.valor_contrato || 0)) * dir;
+      case "name":
+        return a.nome.localeCompare(b.nome) * dir;
+      case "created":
+      default:
+        return 0; // já vem ordenado por created_at desc do server
+    }
+  };
+
+  const filteredProjetos = useMemo(() => projetos.filter(matchesFilters), [projetos, filters]);
+
+  const getProjetosByStatus = (status: string) =>
+    filteredProjetos.filter((p) => p.status === status).sort(sortProjetos);
+
+  const toggleColumn = (status: string) => {
+    setCollapsedColumns((prev) => {
+      const next = new Set(prev);
+      if (next.has(status)) next.delete(status);
+      else next.add(status);
+      return next;
+    });
   };
 
   const tabs: { id: Tab; label: string; icon: typeof CalendarIcon }[] = [
     { id: "kanban", label: "Quadro", icon: CalendarIcon },
     { id: "disciplinas", label: "Disciplinas", icon: Layers },
+    { id: "cronograma", label: "Cronograma", icon: CalendarIcon },
     { id: "calendario", label: "Calendário", icon: CalendarIcon },
   ];
+
+  const noProjetos = !loadingProjetos && projetos.length === 0;
+  const noResults = !loadingProjetos && projetos.length > 0 && filteredProjetos.length === 0;
 
   return (
     <PageLayout
@@ -368,23 +510,8 @@ export default function ProjetosKanban() {
           title="Projetos"
           description="Gerencie seus projetos"
           children={
-            <div className="flex gap-2 items-center">
-              <div className="flex items-center gap-1.5">
-                <Filter className="h-4 w-4 text-muted-foreground" />
-                <Select value={filterPessoaId} onValueChange={setFilterPessoaId}>
-                  <SelectTrigger className="w-[180px] h-9 text-xs rounded-full">
-                    <SelectValue placeholder="Filtrar por pessoa" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todas as pessoas</SelectItem>
-                    {pessoas.map((p) => (
-                      <SelectItem key={p.id} value={p.id}>
-                        {p.nome}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+            <div className="flex gap-2 items-center flex-wrap">
+              <ProjetosFilterBar pessoas={pessoas} clientes={clientes} filters={filters} onChange={setFilters} />
 
               <Can feature="projetos" action="edit">
                 <Button variant="outline" className="rounded-full text-sm" onClick={() => setIsDisciplinasOpen(true)}>
@@ -402,7 +529,7 @@ export default function ProjetosKanban() {
 
               <Can feature="projetos" action="create">
                 <Button
-                  className="rounded-full bg-accent-orange hover:bg-accent-orange/90 text-ink transition-colors px-5 py-2.5 text-sm"
+                  className="rounded-full bg-brand hover:bg-brand/90 text-ink transition-colors px-5 py-2.5 text-sm"
                   onClick={handleNewProjeto}
                 >
                   <Plus className="mr-2 h-4 w-4" />
@@ -414,80 +541,200 @@ export default function ProjetosKanban() {
         />
       }
     >
+      {/* KPIs */}
+      {!loadingProjetos && projetos.length > 0 && (
+        <ProjetosKPIs
+          projetos={projetos}
+          onFilterAtraso={() => setFilters((f) => ({ ...f, deadlineStatus: ["em_atraso"] }))}
+          onFilterProximos={() => {
+            const today = new Date().toISOString().slice(0, 10);
+            const in7 = new Date();
+            in7.setDate(in7.getDate() + 7);
+            setFilters((f) => ({
+              ...f,
+              dataInicio: today,
+              dataFim: in7.toISOString().slice(0, 10),
+            }));
+          }}
+        />
+      )}
+
       {/* Abas */}
-      <div className="flex items-center gap-1 border-b mb-4 -mt-2">
-        {tabs.map((tab) => {
-          const Icon = tab.icon;
-          return (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => setActiveTab(tab.id)}
-              className={cn(
-                "flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px",
-                activeTab === tab.id
-                  ? "border-accent-orange text-accent-orange"
-                  : "border-transparent text-muted-foreground hover:text-foreground hover:border-gray-300"
-              )}
-            >
-              <Icon className="h-4 w-4" />
-              {tab.label}
-            </button>
-          );
-        })}
+      <div className="flex items-center gap-0 border-b mb-4">
+        {tabs.map((tab) => (
+          <button
+            key={tab.id}
+            type="button"
+            onClick={() => setActiveTab(tab.id)}
+            className={cn(
+              "px-4 py-2 text-sm transition-colors -mb-px rounded-t-md border border-transparent",
+              activeTab === tab.id
+                ? "bg-brand border-brand text-foreground font-medium"
+                : "text-muted-foreground hover:text-foreground hover:bg-muted"
+            )}
+          >
+            {tab.label}
+          </button>
+        ))}
       </div>
 
-      {activeTab === "kanban" ? (
-        <DragDropContext onDragEnd={onDragEnd}>
-          <div className="flex-1 min-h-0">
-            <div className="flex gap-3 w-full h-full min-h-0 overflow-x-auto pb-2">
-              {Object.entries(statusConfig).map(([status, config]) => (
-                <div key={status} className="flex flex-col min-w-[280px] w-[280px] flex-shrink-0 min-h-0">
-                  <div className={`${config.columnColor} rounded-t-lg p-3 border-b border-black/10`}>
-                    <h3 className="font-medium text-sm flex items-center justify-between">
-                      {config.label}
-                      <Badge variant="secondary" className="ml-2">
-                        {getProjetosByStatus(status).length}
-                      </Badge>
-                    </h3>
-                  </div>
-
-                  <Droppable droppableId={status}>
-                    {(provided, snapshot) => (
-                      <div
-                        ref={provided.innerRef}
-                        {...provided.droppableProps}
-                        className={`flex-1 min-h-0 overflow-y-auto p-2 space-y-2 rounded-b-lg border border-t-0 ${
-                          snapshot.isDraggingOver ? "bg-blue-50" : "bg-gray-50"
-                        }`}
-                      >
-                        {getProjetosByStatus(status).map((projeto, index) => (
-                          <Draggable key={projeto.id} draggableId={projeto.id} index={index}>
-                            {(provided, snapshot) => (
-                              <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
-                                <ProjectCard
-                                  projeto={projeto}
-                                  onClick={handleCardClick}
-                                  isDragging={snapshot.isDragging}
-                                />
-                              </div>
-                            )}
-                          </Draggable>
-                        ))}
-                        {provided.placeholder}
-                      </div>
-                    )}
-                  </Droppable>
-                </div>
-              ))}
-            </div>
-          </div>
-        </DragDropContext>
-      ) : activeTab === "disciplinas" ? (
-        <DisciplinasTab projetos={projetos} />
-      ) : (
-        <CalendarioPrazosTab projetos={projetos} />
+      {/* Empty states globais */}
+      {noProjetos && activeTab === "kanban" && (
+        <ProjetosEmptyState variant="no-projetos" onCreate={canEdit ? handleNewProjeto : undefined} />
       )}
+
+      {activeTab === "kanban" && !noProjetos ? (
+        <>
+          {noResults ? (
+            <ProjetosEmptyState variant="no-results" onClearFilters={() => setFilters(EMPTY_FILTERS)} />
+          ) : (
+            <DragDropContext onDragEnd={onDragEnd}>
+              <div className="flex-1 min-h-0">
+                {/* Desktop kanban */}
+                <div className="hidden md:flex gap-3 w-full h-full min-h-0 overflow-x-auto pb-2">
+                  {Object.entries(statusConfig).map(([status, config]) => {
+                    const items = getProjetosByStatus(status);
+                    const isCollapsed = collapsedColumns.has(status);
+                    const dotColor = STATUS_DOT[status] || "bg-gray-400";
+
+                    if (isCollapsed) {
+                      return (
+                        <div
+                          key={status}
+                          className="flex flex-col w-10 flex-shrink-0 min-h-0 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer"
+                          onClick={() => toggleColumn(status)}
+                        >
+                          <div className="flex flex-col items-center gap-2 py-3">
+                            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                            <span className={cn("h-2 w-2 rounded-full", dotColor)} />
+                          </div>
+                          <div className="flex-1 flex items-center justify-center">
+                            <span
+                              className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide whitespace-nowrap"
+                              style={{ writingMode: "vertical-rl", transform: "rotate(180deg)" }}
+                            >
+                              {config.label} · {items.length}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <div key={status} className="flex flex-col min-w-[280px] w-[280px] flex-shrink-0 min-h-0">
+                        <div className="flex items-center gap-2 px-2 py-2.5 group">
+                          <span className={cn("h-2 w-2 rounded-full flex-shrink-0", dotColor)} />
+                          <h3 className="text-xs font-medium text-foreground/80 uppercase tracking-wide">
+                            {config.label}
+                          </h3>
+                          <span className="text-[11px] text-muted-foreground tabular-nums">{items.length}</span>
+                          <div className="ml-auto flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <ColumnSortMenu sort={sort} onChange={setSort} />
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 text-muted-foreground"
+                              onClick={() => toggleColumn(status)}
+                              title="Minimizar coluna"
+                            >
+                              <ChevronLeft className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
+                        </div>
+
+                        <Droppable droppableId={status}>
+                          {(provided, snapshot) => (
+                            <div
+                              ref={provided.innerRef}
+                              {...provided.droppableProps}
+                              className={cn(
+                                "flex-1 min-h-0 overflow-y-auto p-2 space-y-2 rounded-lg bg-muted/30 transition-all",
+                                snapshot.isDraggingOver && "ring-2 ring-brand/40 bg-brand/5"
+                              )}
+                            >
+                              {loadingProjetos && <ProjetoColumnSkeleton count={2} />}
+                              {!loadingProjetos && items.length === 0 && !snapshot.isDraggingOver && (
+                                <div className="flex items-center justify-center py-6 text-[11px] text-muted-foreground/60 text-center px-2">
+                                  Solte um projeto aqui
+                                </div>
+                              )}
+                              {items.map((projeto, index) => (
+                                <Draggable key={projeto.id} draggableId={projeto.id} index={index}>
+                                  {(provided, snapshot) => (
+                                    <div
+                                      ref={provided.innerRef}
+                                      {...provided.draggableProps}
+                                      {...provided.dragHandleProps}
+                                    >
+                                      <ProjectCard
+                                        projeto={projeto}
+                                        onClick={handleCardClick}
+                                        onEdit={handleEditClick}
+                                        onDelete={handleDelete}
+                                        canEdit={canEdit}
+                                        isDragging={snapshot.isDragging}
+                                      />
+                                    </div>
+                                  )}
+                                </Draggable>
+                              ))}
+                              {provided.placeholder}
+                              {canEdit && !loadingProjetos && (
+                                <QuickAddCard
+                                  status={status as ProjectStatus}
+                                  clientes={clientes}
+                                  onCreated={() => queryClient.invalidateQueries({ queryKey: ["projetos"] })}
+                                />
+                              )}
+                            </div>
+                          )}
+                        </Droppable>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Mobile list view */}
+                <div className="md:hidden space-y-3">
+                  {Object.entries(statusConfig).map(([status, config]) => {
+                    const items = getProjetosByStatus(status);
+                    const dotColor = STATUS_DOT[status] || "bg-gray-400";
+                    if (items.length === 0) return null;
+                    return (
+                      <details key={status} open className="border rounded-lg bg-white">
+                        <summary className="flex items-center gap-2 px-3 py-2.5 cursor-pointer list-none">
+                          <span className={cn("h-2 w-2 rounded-full flex-shrink-0", dotColor)} />
+                          <span className="text-xs font-medium uppercase tracking-wide flex-1">{config.label}</span>
+                          <span className="text-[11px] text-muted-foreground tabular-nums">{items.length}</span>
+                          <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                        </summary>
+                        <div className="p-2 space-y-2 border-t bg-muted/20">
+                          {items.map((projeto) => (
+                            <ProjectCard
+                              key={projeto.id}
+                              projeto={projeto}
+                              onClick={handleCardClick}
+                              onEdit={handleEditClick}
+                              onDelete={handleDelete}
+                              canEdit={canEdit}
+                            />
+                          ))}
+                        </div>
+                      </details>
+                    );
+                  })}
+                </div>
+              </div>
+            </DragDropContext>
+          )}
+        </>
+      ) : activeTab === "disciplinas" ? (
+        <DisciplinasTab projetos={filteredProjetos} />
+      ) : activeTab === "cronograma" ? (
+        <CronogramaProjetosTab projetos={filteredProjetos} />
+      ) : activeTab === "calendario" ? (
+        <CalendarioPrazosTab projetos={filteredProjetos} />
+      ) : null}
 
       <ProjectDetailDialog
         open={isDetailOpen}
@@ -551,7 +798,7 @@ export default function ProjetosKanban() {
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => setPendingDrag(null)}>Não notificar</AlertDialogCancel>
             <AlertDialogAction
-              className="bg-accent-orange hover:bg-accent-orange/90 text-ink"
+              className="bg-brand hover:bg-brand/90 text-ink"
               onClick={async () => {
                 if (pendingDrag) {
                   await notifyProjectStatusChange(pendingDrag.projetoId, pendingDrag.newStatus);
@@ -572,5 +819,48 @@ export default function ProjetosKanban() {
         </AlertDialogContent>
       </AlertDialog>
     </PageLayout>
+  );
+}
+
+interface ColumnSortMenuProps {
+  sort: { key: SortKey; dir: SortDir };
+  onChange: (sort: { key: SortKey; dir: SortDir }) => void;
+}
+
+function ColumnSortMenu({ sort, onChange }: ColumnSortMenuProps) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground" title="Ordenar">
+          <ArrowUpDown className="h-3.5 w-3.5" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuLabel className="text-[10px] uppercase tracking-wide">Ordenar por</DropdownMenuLabel>
+        {(Object.keys(SORT_LABELS) as SortKey[]).map((k) => (
+          <DropdownMenuItem
+            key={k}
+            onClick={() => onChange({ ...sort, key: k })}
+            className={cn("text-xs", sort.key === k && "bg-muted font-medium")}
+          >
+            {k === "name" && <ArrowDownAZ className="h-3.5 w-3.5 mr-2" />}
+            {SORT_LABELS[k]}
+            {sort.key === k && <ChevronRight className="h-3.5 w-3.5 ml-auto" />}
+          </DropdownMenuItem>
+        ))}
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          className="text-xs"
+          onClick={() => onChange({ ...sort, dir: sort.dir === "asc" ? "desc" : "asc" })}
+        >
+          {sort.dir === "asc" ? (
+            <ChevronUp className="h-3.5 w-3.5 mr-2" />
+          ) : (
+            <ChevronDown className="h-3.5 w-3.5 mr-2" />
+          )}
+          Direção: {sort.dir === "asc" ? "Crescente" : "Decrescente"}
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

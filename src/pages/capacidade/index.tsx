@@ -43,8 +43,8 @@ function formatDateISO(date: Date): string {
 
 function getCellColor(pct: number): string {
   if (pct === 0) return "bg-gray-100 text-gray-400";
-  if (pct <= 60) return "bg-green-100 text-green-800";
-  if (pct <= 80) return "bg-green-200 text-green-900";
+  if (pct <= 60) return "bg-positive/10 text-positive";
+  if (pct <= 80) return "bg-positive/15 text-positive";
   if (pct <= 100) return "bg-yellow-200 text-yellow-900";
   return "bg-red-200 text-red-900 font-semibold";
 }
@@ -174,7 +174,7 @@ export default function Capacidade() {
       ) : pessoas.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">
           <LayoutGrid className="h-10 w-10 mx-auto mb-3 opacity-40" />
-          <p className="text-sm">Nenhuma pessoa cadastrada.</p>
+          <p className="text-sm">Nenhum membro cadastrado.</p>
         </div>
       ) : (
         <Card>
@@ -229,7 +229,7 @@ export default function Capacidade() {
           <div className="w-3 h-3 rounded bg-gray-100 border" /> 0%
         </div>
         <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded bg-green-200" /> &le;80%
+          <div className="w-3 h-3 rounded bg-positive/15" /> &le;80%
         </div>
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-3 rounded bg-yellow-200" /> 80-100%

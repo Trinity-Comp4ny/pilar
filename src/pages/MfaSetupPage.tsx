@@ -80,7 +80,7 @@ function OtpInput({ value, onChange, disabled }: { value: string; onChange: (v: 
           onKeyDown={(e) => handleKeyDown(i, e)}
           onPaste={handlePaste}
           onFocus={(e) => e.target.select()}
-          className="w-11 h-14 text-center text-xl font-semibold border border-paper-border rounded-lg bg-paper-alt focus:outline-none focus:ring-2 focus:ring-accent-orange/40 focus:border-accent-orange disabled:opacity-50 transition-colors text-ink"
+          className="w-11 h-14 text-center text-xl font-semibold border border-paper-border rounded-lg bg-paper-alt focus:outline-none focus:ring-2 focus:ring-brand/40 focus:border-brand disabled:opacity-50 transition-colors text-ink"
         />
       ))}
     </div>
@@ -144,8 +144,8 @@ function BackupCodesStep({ onDone }: { onDone: () => void }) {
     <div className="space-y-6">
       <div className="text-center space-y-2">
         <div className="flex justify-center mb-3">
-          <div className="p-3 rounded-full bg-green-100">
-            <Key className="h-7 w-7 text-green-600" />
+          <div className="p-3 rounded-full bg-positive/10">
+            <Key className="h-7 w-7 text-positive" />
           </div>
         </div>
         <h2 className="text-xl font-semibold text-ink">Seus códigos de backup</h2>
@@ -178,7 +178,7 @@ function BackupCodesStep({ onDone }: { onDone: () => void }) {
         Estes códigos não serão exibidos novamente. Salve-os agora.
       </p>
 
-      <Button className="w-full h-11 bg-accent-orange hover:bg-accent-orange/90 text-ink font-medium" onClick={onDone}>
+      <Button className="w-full h-11 bg-brand hover:bg-brand/90 text-ink font-medium" onClick={onDone}>
         Salvei meus códigos — Continuar
       </Button>
     </div>
@@ -310,12 +310,12 @@ export default function MfaSetupPage() {
       {/* Lado Esquerdo - Form */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-8 lg:p-16 bg-paper relative overflow-hidden">
         <div className="absolute inset-0 -z-10 pointer-events-none">
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-accent-orange/6 rounded-full blur-[100px] animate-aurora" />
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-brand/6 rounded-full blur-[100px] animate-aurora" />
         </div>
 
         <button
           onClick={handleLogout}
-          className="absolute top-8 left-8 lg:left-12 flex items-center gap-2 text-ink-soft hover:text-accent-orange transition-colors font-medium text-sm group"
+          className="absolute top-8 left-8 lg:left-12 flex items-center gap-2 text-ink-soft hover:text-brand transition-colors font-medium text-sm group"
         >
           <LogOut className="w-4 h-4" />
           Sair
@@ -337,8 +337,8 @@ export default function MfaSetupPage() {
 
             <div className="text-center space-y-1">
               <div className="flex justify-center mb-3">
-                <div className="p-3 rounded-full bg-accent-orange/10">
-                  <ShieldCheck className="h-7 w-7 text-accent-orange" />
+                <div className="p-3 rounded-full bg-brand/10">
+                  <ShieldCheck className="h-7 w-7 text-brand" />
                 </div>
               </div>
               <h1 className="text-xl font-semibold text-ink">Autenticação de dois fatores</h1>
@@ -406,7 +406,7 @@ export default function MfaSetupPage() {
               </div>
 
               <Button
-                className="w-full h-11 bg-accent-orange hover:bg-accent-orange/90 text-ink font-medium shadow-lg shadow-accent-orange/20 hover:shadow-accent-orange/30 transition-all active:scale-[0.98]"
+                className="w-full h-11 bg-brand hover:bg-brand/90 text-ink font-medium shadow-lg shadow-brand/20 hover:shadow-brand/30 transition-all active:scale-[0.98]"
                 onClick={() => handleVerify(code)}
                 disabled={code.length < 6 || submitting}
               >
@@ -418,7 +418,7 @@ export default function MfaSetupPage() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="text-ink-soft hover:text-accent-orange"
+                  className="text-ink-soft hover:text-brand"
                   onClick={() => setHelpOpen(true)}
                 >
                   <HelpCircle className="h-4 w-4 mr-2" />
@@ -475,15 +475,15 @@ export default function MfaSetupPage() {
             <div className="flex flex-col items-end gap-3 pt-4 border-t border-white/20">
               <div className="flex items-center gap-2 text-sm font-medium text-white/80">
                 <span>Controle Financeiro Integrado</span>
-                <CheckCircle2 className="w-5 h-5 text-accent-orange" />
+                <CheckCircle2 className="w-5 h-5 text-brand" />
               </div>
               <div className="flex items-center gap-2 text-sm font-medium text-white/80">
                 <span>Gestão de Projetos e Obras</span>
-                <CheckCircle2 className="w-5 h-5 text-accent-orange" />
+                <CheckCircle2 className="w-5 h-5 text-brand" />
               </div>
               <div className="flex items-center gap-2 text-sm font-medium text-white/80">
                 <span>CRM e Relacionamento</span>
-                <CheckCircle2 className="w-5 h-5 text-accent-orange" />
+                <CheckCircle2 className="w-5 h-5 text-brand" />
               </div>
             </div>
           </div>

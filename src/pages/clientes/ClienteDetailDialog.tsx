@@ -59,7 +59,7 @@ interface ClienteDetailDialogProps {
 function CredentialsBox({ credentials, variant }: { credentials: PortalCredentials; variant: "success" | "reset" }) {
   const styles =
     variant === "success"
-      ? { box: "bg-green-50 border-green-200", title: "text-green-800", desc: "text-green-700" }
+      ? { box: "bg-positive/10 border-positive/20", title: "text-positive", desc: "text-positive" }
       : { box: "bg-amber-50 border-amber-200", title: "text-amber-800", desc: "text-amber-700" };
 
   return (
@@ -161,7 +161,7 @@ export function ClienteDetailDialog({
 
                 {portalStatus === "exists" && !portalCredentials && (
                   <div className="space-y-3">
-                    <div className="flex items-center gap-2 bg-green-50 border border-green-200 rounded-lg px-3 py-2 text-sm text-green-800">
+                    <div className="flex items-center gap-2 bg-positive/10 border border-positive/20 rounded-lg px-3 py-2 text-sm text-positive">
                       <Globe size={14} />
                       <span className="flex-1">Cliente possui acesso ao portal</span>
                     </div>
@@ -213,7 +213,7 @@ export function ClienteDetailDialog({
                           size="sm"
                           onClick={() => setConfirmPortalOpen(true)}
                           disabled={isInvitingPortal}
-                          className="bg-accent-orange hover:bg-accent-orange/90 text-ink"
+                          className="bg-brand hover:bg-brand/90 text-ink"
                         >
                           {isInvitingPortal ? (
                             <Loader2 size={14} className="animate-spin mr-1.5" />
@@ -241,7 +241,7 @@ export function ClienteDetailDialog({
                     <div
                       key={`${conta.banco}-${conta.agencia}-${conta.conta}-${index}`}
                       className={`flex items-center justify-between gap-3 bg-gray-50 border rounded-lg px-3 py-2 text-sm ${
-                        conta.is_primary ? "border-accent-orange/50 bg-accent-orange/5" : "border-gray-200"
+                        conta.is_primary ? "border-brand/50 bg-brand/5" : "border-gray-200"
                       }`}
                     >
                       <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -252,7 +252,7 @@ export function ClienteDetailDialog({
                           <div className="flex items-center gap-2">
                             <span className="font-medium truncate">{conta.banco}</span>
                             {conta.is_primary && (
-                              <span className="text-[10px] bg-accent-orange/10 text-accent-orange px-1.5 py-0.5 rounded font-medium">
+                              <span className="text-[10px] bg-brand/10 text-brand px-1.5 py-0.5 rounded font-medium">
                                 Principal
                               </span>
                             )}
@@ -320,7 +320,7 @@ export function ClienteDetailDialog({
                 setConfirmPortalOpen(false);
                 onInvitePortal();
               }}
-              className="bg-accent-orange hover:bg-accent-orange/90 text-ink"
+              className="bg-brand hover:bg-brand/90 text-ink"
             >
               <Send size={14} className="mr-1.5" />
               Criar e enviar por email

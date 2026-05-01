@@ -265,7 +265,7 @@ export default function Propostas() {
     <PageHeader title="Documentos" description="Gerencie propostas e contratos">
       <div className="flex items-center gap-2">
         <Button
-          className="rounded-full bg-accent-orange hover:bg-accent-orange/90 text-ink transition-colors px-5 py-2.5 text-sm"
+          className="rounded-full bg-brand hover:bg-brand/90 text-ink transition-colors px-5 py-2.5 text-sm"
           onClick={() => setIsTemplatesOpen(true)}
         >
           <LayoutTemplate className="h-4 w-4 mr-1.5" />
@@ -273,7 +273,7 @@ export default function Propostas() {
         </Button>
         {canEdit && (
           <Button
-            className="rounded-full bg-accent-orange hover:bg-accent-orange/90 text-ink transition-colors px-5 py-2.5 text-sm"
+            className="rounded-full bg-brand hover:bg-brand/90 text-ink transition-colors px-5 py-2.5 text-sm"
             onClick={() => {
               resetForm();
               setIsFormOpen(true);

@@ -60,7 +60,7 @@ export function FinanceiroHeader({
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-start gap-3">
             {isMobile && (
-              <SidebarTrigger className="mt-0.5 text-black/80 hover:text-accent-orange hover:bg-black/5 transition-colors rounded-full h-9 w-9" />
+              <SidebarTrigger className="mt-0.5 text-black/80 hover:text-brand hover:bg-black/5 transition-colors rounded-full h-9 w-9" />
             )}
             <div>
               <h1 className="text-2xl md:text-3xl font-medium tracking-tight">Financeiro</h1>

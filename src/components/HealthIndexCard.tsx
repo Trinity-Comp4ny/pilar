@@ -12,7 +12,7 @@ const BREAKDOWN_LABELS: Record<keyof HealthBreakdown, string> = {
 };
 
 function ProgressBar({ value, label }: { value: number; label: string }) {
-  const color = value >= 70 ? "bg-green-500" : value >= 40 ? "bg-yellow-500" : "bg-red-500";
+  const color = value >= 70 ? "bg-chart-success" : value >= 40 ? "bg-chart-warning" : "bg-chart-danger";
   return (
     <div className="flex items-center gap-2">
       <span className="text-[11px] text-muted-foreground w-[90px] shrink-0">{label}</span>

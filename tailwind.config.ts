@@ -78,6 +78,8 @@ export default {
         brand: {
           DEFAULT: "hsl(var(--brand-accent) / <alpha-value>)",
         },
+        positive: "hsl(var(--positive) / <alpha-value>)",
+        negative: "hsl(var(--negative) / <alpha-value>)",
         chart: {
           success: "hsl(var(--chart-success) / <alpha-value>)",
           "success-alt": "hsl(var(--chart-success-alt) / <alpha-value>)",

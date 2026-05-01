@@ -16,7 +16,7 @@ const formatCurrency = (value: number) =>
 const formatPct = (value: number) => `${value.toFixed(1)}%`;
 
 function MargemBadge({ pct }: { pct: number }) {
-  if (pct >= 30) return <Badge className="bg-green-100 text-green-800 text-xs">{formatPct(pct)}</Badge>;
+  if (pct >= 30) return <Badge className="bg-positive/10 text-positive text-xs">{formatPct(pct)}</Badge>;
   if (pct >= 15) return <Badge className="bg-yellow-100 text-yellow-800 text-xs">{formatPct(pct)}</Badge>;
   if (pct >= 0) return <Badge className="bg-orange-100 text-orange-800 text-xs">{formatPct(pct)}</Badge>;
   return <Badge className="bg-red-100 text-red-800 text-xs">{formatPct(pct)}</Badge>;
@@ -119,7 +119,7 @@ export default function Rentabilidade() {
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <TrendingUp className="h-4 w-4 text-green-600" /> Mais Rentáveis
+                <TrendingUp className="h-4 w-4 text-positive" /> Mais Rentáveis
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -331,7 +331,7 @@ function RentabilidadePorClienteTab() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <TrendingUp className="h-4 w-4 text-green-600" /> Ranking por Margem
+              <TrendingUp className="h-4 w-4 text-positive" /> Ranking por Margem
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -425,7 +425,7 @@ function RiscosTab() {
       {projetosDrenando.length === 0 ? (
         <Card>
           <CardContent className="p-8 text-center">
-            <TrendingUp className="h-10 w-10 mx-auto mb-3 text-green-500 opacity-50" />
+            <TrendingUp className="h-10 w-10 mx-auto mb-3 text-positive opacity-50" />
             <p className="text-sm text-muted-foreground">Nenhum projeto com margem negativa. Parabéns!</p>
           </CardContent>
         </Card>

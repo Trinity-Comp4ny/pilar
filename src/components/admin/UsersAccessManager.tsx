@@ -76,7 +76,7 @@ export function UsersAccessManager({
           <Button
             type="button"
             onClick={() => setInviteOpen(true)}
-            className="rounded-full bg-accent-orange text-ink hover:bg-accent-orange/90"
+            className="rounded-full bg-brand text-ink hover:bg-brand/90"
           >
             <UserPlus size={16} strokeWidth={1.75} />
             Convidar usuário
@@ -320,7 +320,7 @@ function InviteDialog({ open, onClose, companyFeatures, isSubmitting, onSubmit }
                 features: isAdmin ? {} : features,
               })
             }
-            className="bg-accent-orange text-ink hover:bg-accent-orange/90"
+            className="bg-brand text-ink hover:bg-brand/90"
           >
             {isSubmitting ? "Enviando convite..." : "Enviar convite"}
           </Button>
@@ -398,7 +398,7 @@ function EditDialog({ user, onClose, companyFeatures, onSubmit }: EditDialogProp
           </Button>
           <Button
             onClick={() => onSubmit({ id: user.id, role, features: isAdmin ? {} : features })}
-            className="bg-accent-orange text-ink hover:bg-accent-orange/90"
+            className="bg-brand text-ink hover:bg-brand/90"
           >
             Salvar alterações
           </Button>
@@ -448,16 +448,16 @@ function RoleSelector({ value, onChange }: RoleSelectorProps) {
               onClick={() => onChange(option.value)}
               className={cn(
                 "flex items-start gap-3 rounded-lg border p-3 text-left transition-colors",
-                active ? "border-accent-orange/40 bg-accent-orange/5" : "border-black/10 hover:border-black/20"
+                active ? "border-brand/40 bg-brand/5" : "border-black/10 hover:border-black/20"
               )}
             >
               <div
                 className={cn(
                   "flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full",
-                  active ? "bg-accent-orange/10" : "bg-black/5"
+                  active ? "bg-brand/10" : "bg-black/5"
                 )}
               >
-                <Icon size={16} strokeWidth={1.5} className={active ? "text-accent-orange" : "text-black/50"} />
+                <Icon size={16} strokeWidth={1.5} className={active ? "text-brand" : "text-black/50"} />
               </div>
               <div>
                 <div className="text-sm font-medium text-black/80">{option.title}</div>
