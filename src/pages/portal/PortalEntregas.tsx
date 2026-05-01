@@ -41,7 +41,7 @@ interface Entrega {
 
 const STATUS_CONFIG: Record<Entrega["status"], { label: string; color: string; icon: typeof Clock }> = {
   pendente: { label: "Aguardando resposta", color: "bg-yellow-100 text-yellow-800", icon: Clock },
-  aprovado: { label: "Aprovado", color: "bg-green-100 text-green-800", icon: CheckCircle2 },
+  aprovado: { label: "Aprovado", color: "bg-positive/10 text-positive", icon: CheckCircle2 },
   revisao_solicitada: { label: "Revisão solicitada", color: "bg-orange-100 text-orange-800", icon: RotateCcw },
 };
 
@@ -327,7 +327,7 @@ function ThreadPortalCard({
               </div>
             ) : (
               <div className="flex gap-2 flex-wrap">
-                <Button size="sm" className="bg-green-600 hover:bg-green-700" onClick={onAprovar} disabled={saving}>
+                <Button size="sm" className="bg-positive hover:bg-positive/90" onClick={onAprovar} disabled={saving}>
                   <CheckCircle2 className="h-3 w-3 mr-1" /> Aprovar
                 </Button>
                 <Button size="sm" variant="outline" onClick={onStartRevisao}>

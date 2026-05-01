@@ -58,10 +58,12 @@ export function LogoPreviewDialog({ open, onOpenChange, pendingLogoFile, logoUrl
 interface EditUserDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  name: string;
+  firstName: string;
+  lastName: string;
   contact: string;
   role: (typeof ROLES)[number];
-  onNameChange: (v: string) => void;
+  onFirstNameChange: (v: string) => void;
+  onLastNameChange: (v: string) => void;
   onContactChange: (v: string) => void;
   onRoleChange: (v: (typeof ROLES)[number]) => void;
   onSave: () => void;
@@ -70,10 +72,12 @@ interface EditUserDialogProps {
 export function EditUserDialog({
   open,
   onOpenChange,
-  name,
+  firstName,
+  lastName,
   contact,
   role,
-  onNameChange,
+  onFirstNameChange,
+  onLastNameChange,
   onContactChange,
   onRoleChange,
   onSave,
@@ -86,9 +90,18 @@ export function EditUserDialog({
           <DialogDescription>Altere o nome, contato e função do usuário.</DialogDescription>
         </DialogHeader>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2 md:col-span-2">
-            <Label>Nome completo</Label>
-            <Input value={name} onChange={(e) => onNameChange(e.target.value)} />
+          <div className="space-y-2">
+            <Label>Nome *</Label>
+            <Input value={firstName} onChange={(e) => onFirstNameChange(e.target.value)} placeholder="Nome" required />
+          </div>
+          <div className="space-y-2">
+            <Label>Sobrenome *</Label>
+            <Input
+              value={lastName}
+              onChange={(e) => onLastNameChange(e.target.value)}
+              placeholder="Sobrenome"
+              required
+            />
           </div>
           <div className="space-y-2">
             <Label>Contato</Label>
@@ -114,7 +127,7 @@ export function EditUserDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)} className="rounded-full">
             Cancelar
           </Button>
-          <Button onClick={onSave} className="rounded-full bg-accent-orange hover:bg-accent-orange/90 text-ink">
+          <Button onClick={onSave} className="rounded-full bg-brand hover:bg-brand/90 text-ink">
             Salvar
           </Button>
         </DialogFooter>

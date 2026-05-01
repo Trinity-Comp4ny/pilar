@@ -58,7 +58,7 @@ export function ProjetoDetailInfo({ projeto, progress, margemBrutaPct }: Projeto
               className={`text-sm font-bold ${
                 margemBrutaPct !== null
                   ? margemBrutaPct >= 20
-                    ? "text-green-600"
+                    ? "text-positive"
                     : margemBrutaPct >= 0
                       ? "text-yellow-600"
                       : "text-red-600"

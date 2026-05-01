@@ -67,7 +67,7 @@ export function ClienteMessageDialog({
           </Button>
           <Button
             onClick={onSend}
-            className="flex-1 bg-accent-orange hover:bg-accent-orange/90 text-ink"
+            className="flex-1 bg-brand hover:bg-brand/90 text-ink"
             disabled={!message || !subject || !cliente}
           >
             Enviar

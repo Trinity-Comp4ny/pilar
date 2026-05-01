@@ -2,7 +2,7 @@ const modules = [
   { number: "01", label: "Comercial", headline: "Proposta aprovada vira projeto. Sem retrabalho." },
   { number: "02", label: "Operação", headline: "Escopos, fases e disciplinas no lugar certo." },
   { number: "03", label: "Financeiro", headline: "Resultado do projeto antes de fechar o mês." },
-  { number: "04", label: "Pessoas", headline: "Custo real de cada profissional por projeto." },
+  { number: "04", label: "Equipe", headline: "Custo real de cada profissional por projeto." },
   { number: "05", label: "Portal", headline: "O cliente acompanha. Seu WhatsApp descansa." },
 ];
 
@@ -13,7 +13,7 @@ export function FeaturesSection() {
         <div className="max-w-6xl mx-auto">
           <div className="max-w-2xl mb-20 reveal-up">
             <div className="mb-6">
-              <span className="inline-block px-3 py-1 bg-accent-orange text-ink text-xs font-medium uppercase tracking-[0.2em] rounded-sm">
+              <span className="inline-block px-3 py-1 bg-brand text-ink text-xs font-medium uppercase tracking-[0.2em] rounded-sm">
                 Módulos
               </span>
             </div>
@@ -28,7 +28,7 @@ export function FeaturesSection() {
               <div key={m.number} className="reveal-up" style={{ transitionDelay: `${i * 60}ms` }}>
                 <div className="flex items-baseline gap-4 mb-4">
                   <span className="text-xs font-medium text-slate-400 tabular-nums tracking-wider">{m.number}</span>
-                  <div className="flex-1 h-px bg-accent-orange/50" />
+                  <div className="flex-1 h-px bg-brand/50" />
                 </div>
                 <p className="text-xs uppercase tracking-[0.2em] text-slate-500 font-medium mb-3">{m.label}</p>
                 <h3 className="text-xl md:text-2xl font-medium text-ink-soft tracking-tight leading-snug">
@@ -41,7 +41,7 @@ export function FeaturesSection() {
           <div className="grid lg:grid-cols-12 gap-12 lg:gap-20 items-center">
             <div className="lg:col-span-5 reveal-up">
               <div className="mb-6">
-                <span className="inline-block px-3 py-1 bg-accent-orange text-ink text-xs font-medium uppercase tracking-[0.2em] rounded-sm">
+                <span className="inline-block px-3 py-1 bg-brand text-ink text-xs font-medium uppercase tracking-[0.2em] rounded-sm">
                   Portal do cliente
                 </span>
               </div>

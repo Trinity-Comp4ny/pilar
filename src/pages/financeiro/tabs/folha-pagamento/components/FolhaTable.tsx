@@ -98,13 +98,13 @@ export function FolhaTable({
                         </TableCell>
                         <TableCell>{item.p_cargo}</TableCell>
                         <TableCell
-                          className={`text-right ${isEdited(item, "salario") ? "text-accent-orange font-medium" : ""}`}
+                          className={`text-right ${isEdited(item, "salario") ? "text-brand font-medium" : ""}`}
                         >
                           {formatCurrency(item.p_salario_fixo)} {isEdited(item, "salario") && "*"}
                         </TableCell>
                         <TableCell className="text-center">
                           <div className="flex flex-col items-center">
-                            <span className={`font-medium ${isEdited(item, "area") ? "text-accent-orange" : ""}`}>
+                            <span className={`font-medium ${isEdited(item, "area") ? "text-brand" : ""}`}>
                               {area.toLocaleString("pt-BR")} m² {isEdited(item, "area") && "*"}
                             </span>
                             <span className="text-xs text-muted-foreground">
@@ -113,13 +113,13 @@ export function FolhaTable({
                           </div>
                         </TableCell>
                         <TableCell
-                          className={`text-right font-medium ${isEdited(item, "variavel") ? "text-accent-orange" : "text-green-600"}`}
+                          className={`text-right font-medium ${isEdited(item, "variavel") ? "text-brand" : "text-positive"}`}
                         >
                           {isEdited(item, "variavel") ? "" : "+"} {formatCurrency(item.v_variavel)}{" "}
                           {isEdited(item, "variavel") && "*"}
                         </TableCell>
                         <TableCell
-                          className={`text-right font-bold text-lg ${isEdited(item, "total") ? "text-accent-orange" : ""}`}
+                          className={`text-right font-bold text-lg ${isEdited(item, "total") ? "text-brand" : ""}`}
                         >
                           {formatCurrency(item.v_total)} {isEdited(item, "total") && "*"}
                         </TableCell>
@@ -131,7 +131,7 @@ export function FolhaTable({
                                   <Badge
                                     variant="secondary"
                                     className={`capitalize cursor-pointer hover:bg-opacity-80 transition-colors px-2 py-0.5 text-xs
-                                      ${item.status === "pago" ? "bg-green-500 text-white" : ""}
+                                      ${item.status === "pago" ? "bg-positive/100 text-white" : ""}
                                       ${item.status === "pendente" ? "bg-yellow-400 text-black" : ""}
                                       ${item.status === "cancelado" ? "bg-red-500 text-white" : ""}
                                     `}

@@ -389,7 +389,9 @@ export function useProjetoForm({
     const disc = updated[discIdx];
     const resps = [...getResponsaveisList(disc)];
     resps[respIdx] = { ...resps[respIdx], [field]: value };
-    updated[discIdx] = { ...disc, responsaveis: resps };
+    const isDateField = field === "data_inicio" || field === "data_previsao" || field === "data_final";
+    const topLevel = isDateField && respIdx === 0 ? { [field]: value } : {};
+    updated[discIdx] = { ...disc, responsaveis: resps, ...topLevel };
     setProjetosDisciplinas(updated);
   };
 
@@ -441,9 +443,7 @@ export function useProjetoForm({
     });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
+  const handleSubmit = async () => {
     if (!formData.codigo_projeto || !formData.cliente_id || !formData.nome) {
       toast.error("Campos obrigatórios", { description: "Preencha Código, Nome e Cliente" });
       return;

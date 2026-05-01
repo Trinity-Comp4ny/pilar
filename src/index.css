@@ -132,7 +132,7 @@
   right: -8px;
   bottom: 4px;
   height: 40%;
-  background: hsl(var(--accent-orange));
+  background: hsl(var(--brand-accent));
   z-index: -1;
   border-radius: 3px;
 }
@@ -142,7 +142,7 @@
   font-style: italic;
   font-weight: 300;
   color: hsl(var(--text-ink));
-  background: linear-gradient(transparent 58%, hsl(var(--accent-orange)) 58%);
+  background: linear-gradient(transparent 58%, hsl(var(--brand-accent)) 58%);
   box-decoration-break: clone;
   -webkit-box-decoration-break: clone;
 }

@@ -118,7 +118,7 @@ export function MockupTablet() {
   return (
     <div className="relative max-w-5xl mx-auto reveal-up hidden md:block" style={{ transitionDelay: "200ms" }}>
       {/* Blobs de glow com aurora */}
-      <div className="absolute -top-24 -right-24 w-72 h-72 bg-accent-orange/18 rounded-full blur-3xl -z-10 animate-aurora" />
+      <div className="absolute -top-24 -right-24 w-72 h-72 bg-brand/18 rounded-full blur-3xl -z-10 animate-aurora" />
       <div className="absolute -bottom-24 -left-24 w-72 h-72 bg-blue-500/12 rounded-full blur-3xl -z-10 animate-aurora-alt" />
 
       {/* Float wrapper */}
@@ -171,7 +171,7 @@ function MockupHeader() {
             <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500" />
           </span>
         </div>
-        <div className="h-8 w-8 rounded-full bg-accent-orange text-ink flex items-center justify-center text-xs font-medium cursor-pointer shadow-md shadow-accent-orange/40">
+        <div className="h-8 w-8 rounded-full bg-brand text-ink flex items-center justify-center text-xs font-medium cursor-pointer shadow-md shadow-brand/40">
           MR
         </div>
       </div>
@@ -192,7 +192,7 @@ function MockupSidebar({ activeTab, onTabChange }: { activeTab: MockupTab; onTab
   const locked: { icon: React.ReactNode; label: string }[] = [
     { icon: <FileText className="w-4 h-4" />, label: "Propostas" },
     { icon: <Target className="w-4 h-4" />, label: "Leads" },
-    { icon: <UserCheck className="w-4 h-4" />, label: "Pessoas" },
+    { icon: <UserCheck className="w-4 h-4" />, label: "Equipe" },
     { icon: <MapPin className="w-4 h-4" />, label: "Mapa" },
   ];
 
@@ -203,14 +203,12 @@ function MockupSidebar({ activeTab, onTabChange }: { activeTab: MockupTab; onTab
           key={tab.id}
           onClick={() => onTabChange(tab.id)}
           className={`p-2.5 rounded-xl transition-all cursor-pointer relative ${
-            activeTab === tab.id
-              ? "bg-accent-orange/10 text-accent-orange"
-              : "text-gray-400 hover:bg-gray-50 hover:text-gray-600"
+            activeTab === tab.id ? "bg-brand/10 text-brand" : "text-gray-400 hover:bg-gray-50 hover:text-gray-600"
           }`}
         >
           {tab.icon}
           {activeTab === tab.id && (
-            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-7 bg-accent-orange rounded-r-full" />
+            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-7 bg-brand rounded-r-full" />
           )}
         </div>
       ))}
@@ -225,7 +223,7 @@ function MockupSidebar({ activeTab, onTabChange }: { activeTab: MockupTab; onTab
           </div>
           <div className="absolute left-full ml-2 top-1/2 -translate-y-1/2 bg-gray-900 text-white text-[10px] px-2 py-1 rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none z-50 shadow-lg flex items-center gap-1.5">
             {item.label}
-            <span className="bg-accent-orange/90 text-white text-[8px] px-1 py-px rounded font-semibold tracking-wide">
+            <span className="bg-brand/90 text-white text-[8px] px-1 py-px rounded font-semibold tracking-wide">
               PRO
             </span>
           </div>
@@ -314,7 +312,7 @@ function DashboardTab() {
       change: "ativos",
       up: null as boolean | null,
       bg: "bg-orange-50",
-      text: "text-accent-orange",
+      text: "text-brand",
       icon: <Briefcase className="h-3.5 w-3.5" />,
       spark: SPARK.projetos,
       sc: "#f97316",
@@ -335,8 +333,8 @@ function DashboardTab() {
               onClick={() => setPeriod(p)}
               className={`px-2.5 py-1 rounded-full text-[11px] font-medium transition-all ${
                 period === p
-                  ? "bg-accent-orange text-white shadow-sm"
-                  : "bg-white text-gray-500 border border-gray-200 hover:border-accent-orange/40"
+                  ? "bg-brand text-white shadow-sm"
+                  : "bg-white text-gray-500 border border-gray-200 hover:border-brand/40"
               }`}
             >
               {p === "mes" ? "Mês" : p === "trim" ? "Trim." : "Ano"}
@@ -385,7 +383,7 @@ function DashboardTab() {
               </div>
               <div className="flex gap-3 text-[10px] text-gray-500">
                 <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-sm bg-accent-orange/80 inline-block" /> Receitas
+                  <span className="w-2 h-2 rounded-sm bg-brand/80 inline-block" /> Receitas
                 </span>
                 <span className="flex items-center gap-1">
                   <span className="w-2 h-2 rounded-sm bg-gray-200 inline-block" /> Despesas
@@ -403,14 +401,14 @@ function DashboardTab() {
                   {/* tooltip rico */}
                   <div className="relative flex-1 flex flex-col justify-end">
                     <div
-                      className="w-full bg-accent-orange/75 rounded-t-sm hover:bg-accent-orange"
+                      className="w-full bg-brand/75 rounded-t-sm hover:bg-brand"
                       style={{
                         height: barsReady ? `${h}%` : "0%",
                         transition: `height ${380 + i * 22}ms cubic-bezier(0.16,1,0.3,1)`,
                       }}
                     />
                     <div className="opacity-0 group-hover:opacity-100 absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 bg-gray-900 text-white text-[9px] px-2 py-1.5 rounded-lg whitespace-nowrap pointer-events-none z-20 shadow-xl">
-                      <div className="font-semibold text-accent-orange">R$ {(h * 500).toLocaleString("pt-BR")}</div>
+                      <div className="font-semibold text-brand">R$ {(h * 500).toLocaleString("pt-BR")}</div>
                       <div className="text-gray-400 text-[8px]">
                         Desp: R$ {Math.round(h * 175).toLocaleString("pt-BR")}
                       </div>
@@ -456,7 +454,7 @@ function DashboardTab() {
                   {p.initial}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium text-gray-900 group-hover:text-accent-orange transition-colors truncate">
+                  <p className="text-xs font-medium text-gray-900 group-hover:text-brand transition-colors truncate">
                     {p.name}
                   </p>
                   <div className="flex items-center gap-1 mt-0.5">
@@ -471,7 +469,7 @@ function DashboardTab() {
                 </div>
               </div>
             ))}
-            <Button variant="ghost" className="w-full text-[10px] text-gray-400 hover:text-accent-orange h-7 mt-1">
+            <Button variant="ghost" className="w-full text-[10px] text-gray-400 hover:text-brand h-7 mt-1">
               Ver todos →
             </Button>
           </CardContent>
@@ -596,7 +594,7 @@ function ProjetosTab() {
               <LayoutList className="w-3 h-3" /> Lista
             </button>
           </div>
-          <Button className="bg-accent-orange hover:bg-accent-orange/90 text-ink rounded-full text-xs h-8 px-3 shadow-sm">
+          <Button className="bg-brand hover:bg-brand/90 text-ink rounded-full text-xs h-8 px-3 shadow-sm">
             <Plus className="w-3 h-3 mr-1" /> Novo
           </Button>
         </div>
@@ -623,7 +621,7 @@ function ProjetosTab() {
                     <Card
                       key={idx}
                       onClick={() => setSelected(selected?.code === item.code ? null : item)}
-                      className={`cursor-pointer hover:shadow-md transition-all hover:-translate-y-0.5 border-gray-100 ${selected?.code === item.code ? "ring-2 ring-accent-orange/50" : ""}`}
+                      className={`cursor-pointer hover:shadow-md transition-all hover:-translate-y-0.5 border-gray-100 ${selected?.code === item.code ? "ring-2 ring-brand/50" : ""}`}
                     >
                       <CardContent className="p-3 space-y-2">
                         <div className="flex justify-between items-start">
@@ -655,7 +653,7 @@ function ProjetosTab() {
                             {item.team.slice(0, 2).map((m, p) => (
                               <div
                                 key={p}
-                                className="w-5 h-5 rounded-full bg-accent-orange/10 border-2 border-white flex items-center justify-center text-[7px] font-bold text-accent-orange"
+                                className="w-5 h-5 rounded-full bg-brand/10 border-2 border-white flex items-center justify-center text-[7px] font-bold text-brand"
                               >
                                 {m}
                               </div>
@@ -668,7 +666,7 @@ function ProjetosTab() {
                   ))}
                   <Button
                     variant="ghost"
-                    className="w-full border border-dashed border-gray-200 text-gray-400 hover:text-accent-orange hover:border-accent-orange/40 h-8 text-[10px]"
+                    className="w-full border border-dashed border-gray-200 text-gray-400 hover:text-brand hover:border-brand/40 h-8 text-[10px]"
                   >
                     <Plus className="w-2.5 h-2.5 mr-1" /> Adicionar
                   </Button>
@@ -696,7 +694,7 @@ function ProjetosTab() {
                     className="hover:bg-gray-50 cursor-pointer transition-colors group"
                   >
                     <td className="px-4 py-3">
-                      <div className="font-medium text-gray-900 group-hover:text-accent-orange transition-colors">
+                      <div className="font-medium text-gray-900 group-hover:text-brand transition-colors">
                         {p.title}
                       </div>
                       <div className="text-[10px] text-gray-400 font-mono">{p.code}</div>
@@ -750,7 +748,7 @@ function ProjetosTab() {
             <div className="grid grid-cols-2 gap-2 p-3 border-b border-gray-100">
               <div className="bg-gray-50 rounded-lg p-2">
                 <p className="text-[9px] text-gray-500 mb-0.5">Valor</p>
-                <p className="text-sm font-bold text-accent-orange">{selected.value}</p>
+                <p className="text-sm font-bold text-brand">{selected.value}</p>
               </div>
               <div className="bg-gray-50 rounded-lg p-2">
                 <p className="text-[9px] text-gray-500 mb-0.5">Tipo</p>
@@ -777,7 +775,7 @@ function ProjetosTab() {
                 {selected.team.map((m, i) => (
                   <div
                     key={i}
-                    className="w-7 h-7 rounded-full bg-accent-orange/10 border-2 border-white flex items-center justify-center text-[9px] font-bold text-accent-orange"
+                    className="w-7 h-7 rounded-full bg-brand/10 border-2 border-white flex items-center justify-center text-[9px] font-bold text-brand"
                   >
                     {m}
                   </div>
@@ -883,7 +881,7 @@ function ClientesTab() {
               </button>
             )}
           </div>
-          <Button className="bg-accent-orange hover:bg-accent-orange/90 text-ink rounded-full h-8 px-3 text-xs shadow-sm">
+          <Button className="bg-brand hover:bg-brand/90 text-ink rounded-full h-8 px-3 text-xs shadow-sm">
             <Plus className="w-3 h-3 mr-1" /> Novo
           </Button>
         </div>
@@ -920,7 +918,7 @@ function ClientesTab() {
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <span className="font-medium text-gray-900 group-hover:text-accent-orange transition-colors">
+                        <span className="font-medium text-gray-900 group-hover:text-brand transition-colors">
                           {client.name}
                         </span>
                         <Badge
@@ -993,7 +991,7 @@ function FinanceiroTab() {
           <h2 className="text-lg font-semibold text-gray-900">Financeiro</h2>
           <p className="text-xs text-gray-500">Controle financeiro em tempo real</p>
         </div>
-        <Button className="bg-accent-orange hover:bg-accent-orange/90 text-ink rounded-full text-xs h-8 px-3 shadow-sm">
+        <Button className="bg-brand hover:bg-brand/90 text-ink rounded-full text-xs h-8 px-3 shadow-sm">
           <Plus className="w-3 h-3 mr-1" /> Lançamento
         </Button>
       </div>
@@ -1076,7 +1074,7 @@ function FinanceiroVisao() {
             change: "do fat.",
             up: null as boolean | null,
             bg: "bg-orange-50",
-            text: "text-accent-orange",
+            text: "text-brand",
             icon: <Wallet className="h-3.5 w-3.5" />,
             spark: SPARK.projetos,
             sc: "#f97316",
@@ -1140,7 +1138,7 @@ function FinanceiroVisao() {
           <CardHeader className="p-3 pb-1 shrink-0">
             <div className="flex items-center justify-between">
               <CardTitle className="text-xs font-semibold text-gray-700">Lançamentos Recentes</CardTitle>
-              <button className="text-[10px] text-accent-orange hover:underline">Ver todos</button>
+              <button className="text-[10px] text-brand hover:underline">Ver todos</button>
             </div>
           </CardHeader>
           <CardContent className="p-3 pt-1 flex flex-col justify-around flex-1">
@@ -1166,7 +1164,7 @@ function FinanceiroVisao() {
                     )}
                   </div>
                   <div>
-                    <p className="text-[10px] font-medium text-gray-800 group-hover:text-accent-orange transition-colors">
+                    <p className="text-[10px] font-medium text-gray-800 group-hover:text-brand transition-colors">
                       {t.desc}
                     </p>
                     <span className="text-[9px] text-gray-400">
@@ -1245,7 +1243,7 @@ function FinanceiroFluxo() {
             <CardTitle className="text-xs font-semibold text-gray-700">Realizado vs Projetado</CardTitle>
             <div className="flex gap-3 text-[10px] text-gray-500">
               <span className="flex items-center gap-1">
-                <span className="w-2 h-2 rounded-sm bg-accent-orange/80 inline-block" /> Realizado
+                <span className="w-2 h-2 rounded-sm bg-brand/80 inline-block" /> Realizado
               </span>
               <span className="flex items-center gap-1">
                 <span className="w-2 h-2 rounded-sm bg-blue-200 inline-block" /> Projetado
@@ -1260,14 +1258,14 @@ function FinanceiroFluxo() {
                 <div className="flex-1 flex items-end gap-1">
                   <div className="flex-1 flex flex-col justify-end h-full">
                     <div
-                      className="w-full bg-accent-orange/80 rounded-t-sm hover:bg-accent-orange transition-colors relative"
+                      className="w-full bg-brand/80 rounded-t-sm hover:bg-brand transition-colors relative"
                       style={{
                         height: barsReady ? `${realizado[i]}%` : "0%",
                         transition: `height ${380 + i * 30}ms cubic-bezier(0.16,1,0.3,1)`,
                       }}
                     >
                       <div className="opacity-0 group-hover:opacity-100 absolute -top-7 left-0 bg-gray-900 text-white text-[9px] px-2 py-1 rounded-lg whitespace-nowrap pointer-events-none z-10 shadow-lg">
-                        <div className="font-semibold text-accent-orange">
+                        <div className="font-semibold text-brand">
                           R$ {(realizado[i] * 600).toLocaleString("pt-BR")}
                         </div>
                         <div className="text-gray-400 text-[8px]">
@@ -1357,7 +1355,7 @@ function FinanceiroContas() {
           <tbody className="divide-y divide-gray-50">
             {contas.map((c, i) => (
               <tr key={i} className="hover:bg-gray-50 cursor-pointer transition-colors group">
-                <td className="px-4 py-2.5 font-medium text-gray-900 group-hover:text-accent-orange transition-colors">
+                <td className="px-4 py-2.5 font-medium text-gray-900 group-hover:text-brand transition-colors">
                   {c.nome}
                 </td>
                 <td className="px-4 py-2.5 text-gray-500">{c.desc}</td>

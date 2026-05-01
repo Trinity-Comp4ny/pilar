@@ -288,7 +288,7 @@ export default function MetasPessoais() {
             </div>
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="bg-accent-orange hover:bg-accent-orange/90 text-ink rounded-full">
+                <Button className="bg-brand hover:bg-brand/90 text-ink rounded-full">
                   <Plus className="mr-2 h-4 w-4" />
                   Nova Meta
                 </Button>
@@ -302,7 +302,7 @@ export default function MetasPessoais() {
                   {metaFormFields(novaMeta, (field, value) => setNovaMeta({ ...novaMeta, [field]: value }))}
                   <Button
                     type="submit"
-                    className="w-full bg-accent-orange hover:bg-accent-orange/90 text-ink rounded-full"
+                    className="w-full bg-brand hover:bg-brand/90 text-ink rounded-full"
                     disabled={createMutation.isPending}
                   >
                     {createMutation.isPending ? "Salvando..." : "Salvar Meta"}
@@ -329,7 +329,7 @@ export default function MetasPessoais() {
                   )}
                   <Button
                     type="submit"
-                    className="w-full bg-accent-orange hover:bg-accent-orange/90 text-ink rounded-full"
+                    className="w-full bg-brand hover:bg-brand/90 text-ink rounded-full"
                     disabled={updateMutation.isPending}
                   >
                     {updateMutation.isPending ? "Atualizando..." : "Atualizar Meta"}
@@ -371,13 +371,13 @@ export default function MetasPessoais() {
               return (
                 <Card
                   key={meta.id}
-                  className={cn("vrz-card border-2 transition-all", isCompleted && "border-green-500 bg-green-50")}
+                  className={cn("vrz-card border-2 transition-all", isCompleted && "border-status-done bg-positive/10")}
                 >
                   <CardHeader className="pb-2">
                     <div className="flex justify-between items-start">
                       <div className="flex items-center gap-3 flex-1">
-                        <div className={cn("p-2 rounded-lg", isCompleted ? "bg-green-100" : "bg-blue-50")}>
-                          <User className={cn("h-5 w-5", isCompleted ? "text-green-500" : "text-blue-500")} />
+                        <div className={cn("p-2 rounded-lg", isCompleted ? "bg-positive/10" : "bg-blue-50")}>
+                          <User className={cn("h-5 w-5", isCompleted ? "text-positive" : "text-blue-500")} />
                         </div>
                         <div>
                           <CardTitle className="text-base">{meta.nome}</CardTitle>
@@ -388,7 +388,7 @@ export default function MetasPessoais() {
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className={cn("text-2xl font-bold", isCompleted && "text-green-600")}>{percent}%</span>
+                        <span className={cn("text-2xl font-bold", isCompleted && "text-positive")}>{percent}%</span>
                         <Button
                           variant="ghost"
                           size="icon"
@@ -419,7 +419,7 @@ export default function MetasPessoais() {
                       <Progress
                         value={percent}
                         className="h-2 bg-gray-100"
-                        indicatorClassName={isCompleted ? "bg-green-500" : "bg-blue-500"}
+                        indicatorClassName={isCompleted ? "bg-positive/100" : "bg-blue-500"}
                       />
                       <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground">

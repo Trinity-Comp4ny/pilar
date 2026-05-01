@@ -42,9 +42,7 @@ export function PlanoTab({ empresaId }: { empresaId: string | null }) {
             <div>
               <CardTitle className="flex items-center gap-3">
                 Plano Atual
-                <Badge className="bg-accent-orange/10 text-accent-orange hover:bg-accent-orange/10 border-transparent">
-                  Beta
-                </Badge>
+                <Badge className="bg-brand/10 text-brand hover:bg-brand/10 border-transparent">Beta</Badge>
               </CardTitle>
               <CardDescription>Acesso completo ao Pilar durante o período de beta</CardDescription>
             </div>

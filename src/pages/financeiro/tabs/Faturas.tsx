@@ -77,7 +77,7 @@ const MESES = [
 function getStatusBadge(status: string, dataVencimento: string) {
   const isOverdue = status !== "Paga" && new Date(dataVencimento) < new Date();
 
-  if (status === "Paga") return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Paga</Badge>;
+  if (status === "Paga") return <Badge className="bg-positive/10 text-positive hover:bg-positive/10">Paga</Badge>;
   if (isOverdue) return <Badge className="bg-red-100 text-red-800 hover:bg-red-100">Vencida</Badge>;
   if (status === "Parcial") return <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">Parcial</Badge>;
   if (status === "Fechada") return <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">Fechada</Badge>;
@@ -260,9 +260,7 @@ export default function Faturas() {
                   onClick={() => setSelectedCartaoId(cartao.id)}
                   className={cn(
                     "flex-shrink-0 p-4 rounded-lg border-2 transition-all text-left min-w-[200px]",
-                    selectedCartaoId === cartao.id
-                      ? "border-accent-orange bg-accent-orange/5"
-                      : "border-gray-200 hover:border-gray-300"
+                    selectedCartaoId === cartao.id ? "border-brand bg-brand/5" : "border-gray-200 hover:border-gray-300"
                   )}
                 >
                   <div className="flex items-center gap-2 mb-2">
@@ -347,7 +345,7 @@ export default function Faturas() {
                           {isPagavel && (
                             <Button
                               size="sm"
-                              className="bg-accent-orange hover:bg-accent-orange/90 text-ink rounded-full"
+                              className="bg-brand hover:bg-brand/90 text-ink rounded-full"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleOpenPagamento(fatura);
@@ -410,7 +408,7 @@ export default function Faturas() {
               </div>
 
               {selectedFatura.data_pagamento && (
-                <div className="p-3 bg-green-50 rounded-lg text-sm text-green-800">
+                <div className="p-3 bg-positive/10 rounded-lg text-sm text-positive">
                   Paga em {format(new Date(selectedFatura.data_pagamento + "T00:00:00"), "dd/MM/yyyy")}
                   {selectedFatura.conta_pagamento_nome && ` via ${selectedFatura.conta_pagamento_nome}`}
                 </div>
@@ -467,7 +465,7 @@ export default function Faturas() {
                         </p>
                       </div>
                       <Button
-                        className="bg-accent-orange hover:bg-accent-orange/90 text-ink rounded-full"
+                        className="bg-brand hover:bg-brand/90 text-ink rounded-full"
                         onClick={() => handleOpenPagamento(selectedFatura)}
                       >
                         <DollarSign className="h-4 w-4 mr-2" />
@@ -504,7 +502,7 @@ export default function Faturas() {
                   <>
                     <div className="flex justify-between text-sm mt-1">
                       <span className="text-gray-500">Já pago</span>
-                      <span className="text-green-600">
+                      <span className="text-positive">
                         - R$ {selectedFatura.valor_pago.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                       </span>
                     </div>
@@ -559,7 +557,7 @@ export default function Faturas() {
               )}
 
               <Button
-                className="w-full bg-accent-orange hover:bg-accent-orange/90 text-ink rounded-full"
+                className="w-full bg-brand hover:bg-brand/90 text-ink rounded-full"
                 onClick={handlePagar}
                 disabled={isPaying || !contaPagamentoId}
               >

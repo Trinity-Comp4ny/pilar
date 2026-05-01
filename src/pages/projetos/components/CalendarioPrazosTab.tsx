@@ -273,7 +273,7 @@ export function CalendarioPrazosTab({ projetos }: CalendarioPrazosTabProps) {
                       className={cn(
                         "min-h-[100px] border-r border-b p-1.5 text-left transition-colors",
                         isFimDeSemana && "bg-muted/20",
-                        isToday && "bg-accent-orange/5",
+                        isToday && "bg-brand/5",
                         eventosDoDia.length > 0 && "hover:bg-muted/40 cursor-pointer"
                       )}
                     >
@@ -282,7 +282,7 @@ export function CalendarioPrazosTab({ projetos }: CalendarioPrazosTabProps) {
                           className={cn(
                             "text-xs",
                             isToday
-                              ? "bg-accent-orange text-white rounded-full w-5 h-5 flex items-center justify-center font-semibold"
+                              ? "bg-brand text-white rounded-full w-5 h-5 flex items-center justify-center font-semibold"
                               : "text-muted-foreground"
                           )}
                         >
@@ -297,7 +297,7 @@ export function CalendarioPrazosTab({ projetos }: CalendarioPrazosTabProps) {
                               "text-[10px] px-1.5 py-0.5 rounded truncate",
                               e.atrasado && "bg-red-100 text-red-700",
                               !e.atrasado && e.proximo && "bg-amber-100 text-amber-700",
-                              !e.atrasado && !e.proximo && e.concluido && "bg-green-100 text-green-700",
+                              !e.atrasado && !e.proximo && e.concluido && "bg-positive/10 text-positive",
                               !e.atrasado && !e.proximo && !e.concluido && "bg-blue-100 text-blue-700"
                             )}
                           >
@@ -346,7 +346,7 @@ export function CalendarioPrazosTab({ projetos }: CalendarioPrazosTabProps) {
                                     </Badge>
                                   )}
                                   {e.concluido && (
-                                    <Badge className="text-[9px] px-1 py-0 bg-green-600 hover:bg-green-600 text-white">
+                                    <Badge className="text-[9px] px-1 py-0 bg-positive hover:bg-positive text-white">
                                       OK
                                     </Badge>
                                   )}
@@ -384,7 +384,7 @@ export function CalendarioPrazosTab({ projetos }: CalendarioPrazosTabProps) {
           <span className="h-2 w-2 rounded-full bg-blue-500" /> Futuro
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="h-2 w-2 rounded-full bg-green-500" /> Concluído
+          <span className="h-2 w-2 rounded-full bg-positive/100" /> Concluído
         </div>
         <div className="flex items-center gap-1.5 ml-auto">
           <span className="text-[10px]">●</span> Projeto

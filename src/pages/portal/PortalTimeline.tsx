@@ -92,7 +92,7 @@ export function TimelineContent({ projetoId }: { projetoId: string }) {
                   {/* Timeline line */}
                   <div className="flex flex-col items-center">
                     <div
-                      className={`w-3 h-3 rounded-full ${isConcluido ? "bg-green-500" : isAndamento ? "bg-blue-500" : "bg-gray-300"}`}
+                      className={`w-3 h-3 rounded-full ${isConcluido ? "bg-positive/100" : isAndamento ? "bg-blue-500" : "bg-gray-300"}`}
                     />
                     {i < disciplinas.length - 1 && <div className="w-0.5 flex-1 bg-gray-200 mt-1" />}
                   </div>

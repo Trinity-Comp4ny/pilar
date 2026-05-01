@@ -13,11 +13,13 @@ interface CompanyUsersTabProps {
   users: CompanyUser[];
   isAdmin: boolean;
   currentUserId: string | null;
-  inviteName: string;
+  inviteFirstName: string;
+  inviteLastName: string;
   inviteEmail: string;
   inviteRole: (typeof ROLES)[number];
   isInviting: boolean;
-  onInviteNameChange: (v: string) => void;
+  onInviteFirstNameChange: (v: string) => void;
+  onInviteLastNameChange: (v: string) => void;
   onInviteEmailChange: (v: string) => void;
   onInviteRoleChange: (v: (typeof ROLES)[number]) => void;
   onAddUser: () => void;
@@ -29,11 +31,13 @@ export function CompanyUsersTab({
   users,
   isAdmin,
   currentUserId,
-  inviteName,
+  inviteFirstName,
+  inviteLastName,
   inviteEmail,
   inviteRole,
   isInviting,
-  onInviteNameChange,
+  onInviteFirstNameChange,
+  onInviteLastNameChange,
   onInviteEmailChange,
   onInviteRoleChange,
   onAddUser,
@@ -52,14 +56,23 @@ export function CompanyUsersTab({
       <CardContent>
         {isAdmin && (
           <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="invite-name">Nome completo</Label>
+                <Label htmlFor="invite-first-name">Nome</Label>
                 <Input
-                  id="invite-name"
-                  value={inviteName}
-                  onChange={(e) => onInviteNameChange(e.target.value)}
-                  placeholder="Nome completo"
+                  id="invite-first-name"
+                  value={inviteFirstName}
+                  onChange={(e) => onInviteFirstNameChange(e.target.value)}
+                  placeholder="Nome"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="invite-last-name">Sobrenome</Label>
+                <Input
+                  id="invite-last-name"
+                  value={inviteLastName}
+                  onChange={(e) => onInviteLastNameChange(e.target.value)}
+                  placeholder="Sobrenome"
                 />
               </div>
               <div className="space-y-2">
@@ -91,8 +104,8 @@ export function CompanyUsersTab({
             <div className="flex items-center justify-between gap-3 flex-wrap">
               <Button
                 onClick={onAddUser}
-                className="rounded-full bg-accent-orange hover:bg-accent-orange/90 text-ink"
-                disabled={isInviting || !inviteName.trim() || !inviteEmail.trim()}
+                className="rounded-full bg-brand hover:bg-brand/90 text-ink"
+                disabled={isInviting || !inviteFirstName.trim() || !inviteEmail.trim()}
               >
                 {isInviting ? "Enviando convite..." : "Adicionar Usuário"}
               </Button>

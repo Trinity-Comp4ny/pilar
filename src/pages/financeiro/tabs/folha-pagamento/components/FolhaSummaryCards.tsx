@@ -22,7 +22,7 @@ export function FolhaSummaryCards({ totalFolha, peopleCount, totalUniqueArea }: 
 
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground">Pessoas</CardTitle>
+          <CardTitle className="text-sm font-medium text-muted-foreground">Equipe</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">{peopleCount}</div>

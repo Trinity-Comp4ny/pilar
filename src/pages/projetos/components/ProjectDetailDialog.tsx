@@ -8,6 +8,13 @@ import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   AlertDialog,
   AlertDialogContent,
   AlertDialogHeader,
@@ -18,29 +25,25 @@ import {
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
 import {
-  User,
-  DollarSign,
-  Ruler,
   Trash2,
   Edit,
-  MapPin,
   ExternalLink,
   AlertTriangle,
-  Layers,
+  MoreVertical,
+  User,
   Calendar,
-  FileText,
-  Calculator,
-  Flag,
-  FileCheck,
-  TrendingUp,
+  DollarSign,
+  Ruler,
+  MapPin,
+  Layers,
 } from "lucide-react";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import { PROJECT_STATUS_CONFIG, PROJECT_PRIORITY_CONFIG, type ProjectPriority } from "@/constants";
 import {
   type Projeto,
   disciplinaStatusOptions,
   formatCurrency,
-  formatDate,
   formatDateShort,
   getDeadlineStatus,
   getProjectProgress,
@@ -60,22 +63,11 @@ interface ProjectDetailDialogProps {
   onProjectUpdated?: () => void;
 }
 
-const SHORTCUTS: { tab: string; label: string; icon: typeof Layers }[] = [
-  { tab: "disciplinas", label: "Disciplinas", icon: Layers },
-  { tab: "cronograma", label: "Cronograma", icon: Calendar },
-  { tab: "pagamentos", label: "Pagamentos", icon: DollarSign },
-  { tab: "escopo", label: "Escopo", icon: FileText },
-  { tab: "orcamento", label: "Orçamento", icon: Calculator },
-  { tab: "marcos", label: "Marcos", icon: Flag },
-  { tab: "entregaveis", label: "Entregáveis", icon: FileCheck },
-  { tab: "burn-rate", label: "Burn Rate", icon: TrendingUp },
-];
-
-const DISC_STATUS_COLORS: Record<string, string> = {
-  Concluído: "bg-green-100 text-green-800 border-green-200",
-  "Em Andamento": "bg-blue-100 text-blue-800 border-blue-200",
-  Pendente: "bg-yellow-100 text-yellow-800 border-yellow-200",
-  "Não Iniciado": "bg-gray-100 text-gray-600 border-gray-200",
+const DISC_STATUS_DOT: Record<string, string> = {
+  Concluído: "bg-positive/100",
+  "Em Andamento": "bg-blue-500",
+  Pendente: "bg-amber-500",
+  "Não Iniciado": "bg-gray-400",
 };
 
 export function ProjectDetailDialog({
@@ -91,8 +83,8 @@ export function ProjectDetailDialog({
   const [updatingDisc, setUpdatingDisc] = useState<number | null>(null);
   const [justificativaDialog, setJustificativaDialog] = useState<{ discIdx: number; newStatus: string } | null>(null);
   const [justificativaText, setJustificativaText] = useState("");
+  const [concludingDiscIdx, setConcludingDiscIdx] = useState<number | null>(null);
 
-  // Fetch disciplinas from the relational table
   const { data: dbDisciplinas = [] } = useProjetoDisciplinas(projeto?.id);
   const updateStatusMut = useUpdateDisciplinaStatus();
   const disciplinasLegacy = dbDisciplinas.map(dbDisciplinaToLegacy);
@@ -102,6 +94,7 @@ export function ProjectDetailDialog({
   const deadline = getDeadlineStatus(projeto);
   const progress = getProjectProgress(disciplinasLegacy);
   const statusConfig = PROJECT_STATUS_CONFIG[projeto.status];
+  const priorityConfig = PROJECT_PRIORITY_CONFIG[projeto.prioridade as ProjectPriority];
 
   const applyDisciplineStatusChange = async (index: number, newStatus: string, justificativa?: string) => {
     const dbDisc = dbDisciplinas[index];
@@ -118,15 +111,19 @@ export function ProjectDetailDialog({
       });
       toast.success(`${dbDisc.nome}: ${newStatus}`);
       onProjectUpdated?.();
-    } catch (err: unknown) {
+    } catch {
       toast.error("Erro ao atualizar");
     }
     setUpdatingDisc(null);
   };
 
   const handleDisciplineStatusChange = async (index: number, newStatus: string) => {
+    if (newStatus === "Concluído") {
+      setConcludingDiscIdx(index);
+      return;
+    }
     const disc = disciplinasLegacy[index];
-    if (isDiscAtrasada(disc) && newStatus !== "Concluído" && !disc.justificativa_atraso) {
+    if (isDiscAtrasada(disc) && !disc.justificativa_atraso) {
       setJustificativaDialog({ discIdx: index, newStatus });
       setJustificativaText("");
       return;
@@ -148,29 +145,84 @@ export function ProjectDetailDialog({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto p-0">
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto p-0">
           {/* Header compacto */}
           <div className="px-6 pt-6 pb-4 border-b bg-gray-50/50">
             <DialogHeader className="mb-0">
-              <div className="flex items-center gap-3 flex-wrap">
-                <DialogTitle className="text-lg">{projeto.codigo_projeto}</DialogTitle>
-                <Badge className={statusConfig?.color}>{statusConfig?.label}</Badge>
-                {(() => {
-                  const pc = PROJECT_PRIORITY_CONFIG[projeto.prioridade as ProjectPriority];
-                  return pc ? (
-                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${pc.bgColor} ${pc.color}`}>
-                      {pc.label}
-                    </span>
-                  ) : null;
-                })()}
-                {deadline && (
-                  <Badge className={deadline.color + " text-[10px]"}>
-                    {deadline.label} {deadline.days > 0 ? `(${deadline.days}d)` : ""}
-                  </Badge>
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <DialogTitle className="text-lg">{projeto.codigo_projeto}</DialogTitle>
+                    <Badge className={statusConfig?.color}>{statusConfig?.label}</Badge>
+                    {priorityConfig && (
+                      <span
+                        className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${priorityConfig.bgColor} ${priorityConfig.color}`}
+                      >
+                        {priorityConfig.label}
+                      </span>
+                    )}
+                    {deadline && (
+                      <Badge className={deadline.color + " text-[10px]"}>
+                        {deadline.label} {deadline.days > 0 ? `(${deadline.days}d)` : ""}
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-1">{projeto.nome}</p>
+                </div>
+                {canEdit && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 -mr-2 -mt-1">
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => onEdit(projeto)}>
+                        <Edit className="h-3.5 w-3.5 mr-2" /> Editar dados
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        className="text-destructive focus:text-destructive"
+                        onClick={() => onDelete(projeto.id)}
+                      >
+                        <Trash2 className="h-3.5 w-3.5 mr-2" /> Excluir projeto
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 )}
               </div>
-              <p className="text-sm text-muted-foreground mt-1">{projeto.nome}</p>
             </DialogHeader>
+
+            {/* Metadados em linha — substituem coluna lateral */}
+            <div className="flex flex-wrap gap-x-4 gap-y-1.5 mt-3 text-xs text-muted-foreground">
+              <span className="flex items-center gap-1">
+                <User className="h-3 w-3" /> {projeto.cliente_nome || "—"}
+              </span>
+              <span className="flex items-center gap-1 text-positive font-medium">
+                <DollarSign className="h-3 w-3" /> {formatCurrency(projeto.valor_contrato)}
+              </span>
+              {projeto.area_m2 !== undefined && (
+                <span className="flex items-center gap-1">
+                  <Ruler className="h-3 w-3" /> {projeto.area_m2} m²
+                </span>
+              )}
+              {projeto.data_inicio && (
+                <span className="flex items-center gap-1">
+                  <Calendar className="h-3 w-3" /> Início {formatDateShort(projeto.data_inicio)}
+                </span>
+              )}
+              {projeto.data_previsao && (
+                <span className="flex items-center gap-1">
+                  <Calendar className="h-3 w-3" /> Previsão {formatDateShort(projeto.data_previsao)}
+                </span>
+              )}
+              {projeto.localizacao && (
+                <span className="flex items-center gap-1 truncate max-w-xs">
+                  <MapPin className="h-3 w-3 flex-shrink-0" />
+                  <span className="truncate">{projeto.localizacao}</span>
+                </span>
+              )}
+            </div>
 
             {/* Progresso */}
             <div className="flex items-center gap-3 mt-3">
@@ -179,215 +231,158 @@ export function ProjectDetailDialog({
             </div>
           </div>
 
-          {/* Conteúdo em 2 colunas */}
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-0 divide-y md:divide-y-0 md:divide-x">
-            {/* Coluna esquerda: Informações do projeto */}
-            <div className="md:col-span-2 p-5 space-y-4">
-              <div className="space-y-3">
-                <InfoRow icon={User} label="Cliente" value={projeto.cliente_nome || "—"} />
-                <InfoRow
-                  icon={DollarSign}
-                  label="Contrato"
-                  value={formatCurrency(projeto.valor_contrato)}
-                  valueClass="text-green-700 font-semibold"
-                />
-                <InfoRow icon={Ruler} label="Área" value={`${projeto.area_m2 || 0} m²`} />
-                {projeto.localizacao && <InfoRow icon={MapPin} label="Local" value={projeto.localizacao} />}
-
-                <div className="pt-2 border-t">
-                  <div className="grid grid-cols-3 gap-2">
-                    <DateBlock label="Início" value={projeto.data_inicio} />
-                    <DateBlock label="Previsão" value={projeto.data_previsao} />
-                    <DateBlock label="Final" value={projeto.data_final} />
-                  </div>
-                </div>
-
-                {projeto.observacao && (
-                  <div className="pt-2 border-t">
-                    <Label className="text-[10px] uppercase text-muted-foreground">Observações</Label>
-                    <p className="text-xs text-gray-700 mt-1">{projeto.observacao}</p>
-                  </div>
-                )}
-              </div>
+          {/* Conteúdo: foco em disciplinas */}
+          <div className="px-6 py-4">
+            <div className="flex items-center justify-between mb-3">
+              <Label className="text-xs font-semibold uppercase text-muted-foreground flex items-center gap-1.5">
+                <Layers className="h-3.5 w-3.5" />
+                Disciplinas ({disciplinasLegacy.length})
+              </Label>
             </div>
 
-            {/* Coluna direita: Disciplinas com edição inline */}
-            <div className="md:col-span-3 p-5">
-              <div className="flex items-center justify-between mb-3">
-                <Label className="text-xs font-semibold uppercase text-muted-foreground">
-                  Disciplinas ({disciplinasLegacy.length})
-                </Label>
+            {disciplinasLegacy.length === 0 ? (
+              <div className="text-xs text-muted-foreground text-center py-8 border border-dashed rounded-lg">
+                Nenhuma disciplina definida.
               </div>
+            ) : (
+              <div className="space-y-1.5">
+                {disciplinasLegacy.map((disc, idx) => {
+                  const resps = getResponsaveisList(disc);
+                  const atrasada = isDiscAtrasada(disc);
 
-              {disciplinasLegacy.length === 0 ? (
-                <p className="text-xs text-muted-foreground text-center py-6">Nenhuma disciplina definida.</p>
-              ) : (
-                <div className="space-y-2">
-                  {disciplinasLegacy.map((disc, idx) => {
-                    const statusColor =
-                      DISC_STATUS_COLORS[disc.status || "Não Iniciado"] || DISC_STATUS_COLORS["Não Iniciado"];
-                    const resps = getResponsaveisList(disc);
-
-                    return (
-                      <div key={idx} className="rounded-lg border p-3 hover:bg-gray-50/50 transition-colors">
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-1.5">
-                              <p className="text-sm font-medium truncate">{disc.disciplina}</p>
-                              {disc.prioridade &&
-                                (() => {
-                                  const dpc = PROJECT_PRIORITY_CONFIG[disc.prioridade as ProjectPriority];
-                                  return dpc ? (
-                                    <span
-                                      className={`text-[9px] px-1.5 py-0 rounded-full font-medium ${dpc.bgColor} ${dpc.color}`}
-                                    >
-                                      {dpc.label}
-                                    </span>
-                                  ) : null;
-                                })()}
-                              {isDiscAtrasada(disc) && (
-                                <span className="text-[9px] px-1.5 py-0.5 rounded-full font-medium bg-red-100 text-red-700 flex items-center gap-0.5">
-                                  <AlertTriangle size={10} /> Atrasada
-                                </span>
-                              )}
-                            </div>
-                            <p className="text-[11px] text-muted-foreground">
-                              {resps.map((r) => r.responsavel_nome).join(", ") || "Sem responsável"}
-                            </p>
-                            {isDiscAtrasada(disc) && disc.justificativa_atraso && (
-                              <p className="text-[10px] text-red-600 mt-0.5 italic">
-                                Justificativa: {disc.justificativa_atraso}
-                              </p>
+                  return (
+                    <div
+                      key={idx}
+                      className={cn(
+                        "rounded-lg border p-3 hover:bg-muted/30 transition-colors",
+                        atrasada && "bg-red-50/40 border-red-100"
+                      )}
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-sm font-medium">{disc.disciplina}</span>
+                            {atrasada && (
+                              <span className="text-[9px] px-1.5 py-0.5 rounded-full font-semibold bg-red-100 text-red-700 flex items-center gap-1">
+                                <AlertTriangle size={10} /> Atrasada
+                              </span>
                             )}
                           </div>
-
-                          {canEdit ? (
-                            <Select
-                              value={disc.status || "Não Iniciado"}
-                              onValueChange={(val) => handleDisciplineStatusChange(idx, val)}
-                              disabled={updatingDisc === idx}
-                            >
-                              <SelectTrigger className={`h-7 w-[130px] text-[11px] border ${statusColor}`}>
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {disciplinaStatusOptions.map((s) => (
-                                  <SelectItem key={s} value={s} className="text-xs">
-                                    {s}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          ) : (
-                            <Badge variant="outline" className={statusColor + " text-[11px]"}>
-                              {disc.status || "Não Iniciado"}
-                            </Badge>
+                          <p className="text-[11px] text-muted-foreground mt-0.5 truncate">
+                            {resps.map((r) => r.responsavel_nome).join(", ") || "Sem responsável"}
+                            {disc.data_previsao && ` · Previsão ${formatDateShort(disc.data_previsao)}`}
+                          </p>
+                          {atrasada && disc.justificativa_atraso && (
+                            <p className="text-[10px] text-red-600 mt-1 italic line-clamp-1">
+                              {disc.justificativa_atraso}
+                            </p>
                           )}
                         </div>
 
-                        {/* Responsáveis com datas individuais */}
-                        <div className="mt-2 space-y-1.5">
-                          {resps.map((resp, rIdx) => (
-                            <div key={rIdx} className="flex items-center gap-3 text-[10px] text-muted-foreground">
-                              <span className="font-medium text-foreground min-w-[80px] truncate flex items-center gap-1">
-                                <User className="h-3 w-3 shrink-0" />
-                                {resp.responsavel_nome}
+                        {canEdit ? (
+                          <Select
+                            value={disc.status || "Não Iniciado"}
+                            onValueChange={(val) => handleDisciplineStatusChange(idx, val)}
+                            disabled={updatingDisc === idx}
+                          >
+                            <SelectTrigger className="h-7 w-[140px] text-[11px]">
+                              <span className="flex items-center gap-1.5">
+                                <span
+                                  className={cn(
+                                    "h-2 w-2 rounded-full flex-shrink-0",
+                                    DISC_STATUS_DOT[disc.status || "Não Iniciado"]
+                                  )}
+                                />
+                                <SelectValue />
                               </span>
-                              <div className="flex items-center gap-3">
-                                {resp.data_inicio && <span>Início: {formatDateShort(resp.data_inicio)}</span>}
-                                {resp.data_previsao && <span>Prev: {formatDateShort(resp.data_previsao)}</span>}
-                                {resp.data_final && (
-                                  <span className="text-green-700 font-medium">
-                                    Final: {formatDateShort(resp.data_final)}
+                            </SelectTrigger>
+                            <SelectContent>
+                              {disciplinaStatusOptions.map((s) => (
+                                <SelectItem key={s} value={s} className="text-xs">
+                                  <span className="flex items-center gap-1.5">
+                                    <span className={cn("h-2 w-2 rounded-full", DISC_STATUS_DOT[s])} />
+                                    {s}
                                   </span>
-                                )}
-                                {!resp.data_inicio && !resp.data_previsao && !resp.data_final && <span>Sem datas</span>}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-
-                        {disc.observacoes && disc.observacoes.length > 0 && (
-                          <p className="text-[11px] text-gray-500 mt-1.5 italic line-clamp-1">
-                            "{disc.observacoes[disc.observacoes.length - 1].texto}"
-                          </p>
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <Badge variant="outline" className="text-[11px]">
+                            {disc.status || "Não Iniciado"}
+                          </Badge>
                         )}
                       </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {projeto.observacao && (
+              <div className="mt-4 pt-3 border-t">
+                <Label className="text-[10px] uppercase text-muted-foreground">Observações</Label>
+                <p className="text-xs text-gray-700 mt-1">{projeto.observacao}</p>
+              </div>
+            )}
           </div>
 
-          {/* Atalhos para abas da página completa */}
-          <div className="px-6 pt-4 pb-3 border-t bg-muted/20">
-            <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2 font-medium">
-              Abrir seção do projeto
-            </p>
-            <div className="flex flex-wrap gap-1.5">
-              {SHORTCUTS.map((s) => {
-                const Icon = s.icon;
-                return (
-                  <Button
-                    key={s.tab}
-                    variant="outline"
-                    size="sm"
-                    className="h-8 text-xs"
-                    onClick={() => {
-                      onOpenChange(false);
-                      navigate(`/projetos/${projeto.id}#${s.tab}`);
-                    }}
-                  >
-                    <Icon className="h-3.5 w-3.5 mr-1.5" />
-                    {s.label}
-                  </Button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Footer com ações */}
-          <div className="flex items-center gap-2 px-6 py-4 border-t bg-gray-50/30">
+          {/* Footer */}
+          <div className="flex items-center gap-2 px-6 py-3 border-t bg-gray-50/30">
             <Button
               size="sm"
               onClick={() => {
                 onOpenChange(false);
                 navigate(`/projetos/${projeto.id}`);
               }}
-              className="bg-accent-orange hover:bg-accent-orange/90 text-ink"
+              className="bg-brand hover:bg-brand/90 text-ink"
             >
               <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
               Abrir projeto completo
             </Button>
-
-            <div className="flex-1" />
-
-            {canEdit && (
-              <>
-                <Button variant="outline" size="sm" onClick={() => onEdit(projeto)}>
-                  <Edit className="h-3.5 w-3.5 mr-1.5" />
-                  Editar dados
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 text-destructive hover:bg-destructive/10"
-                  onClick={() => onDelete(projeto.id)}
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </Button>
-              </>
-            )}
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* Dialog de justificativa obrigatória para atraso */}
+      {/* Confirmação de conclusão */}
+      <AlertDialog
+        open={concludingDiscIdx !== null}
+        onOpenChange={(o) => {
+          if (!o) setConcludingDiscIdx(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar conclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              A disciplina{" "}
+              <strong>{concludingDiscIdx !== null && disciplinasLegacy[concludingDiscIdx]?.disciplina}</strong> será
+              marcada como <strong>Concluída</strong> e a data final será definida como{" "}
+              <strong>{new Date().toLocaleDateString("pt-BR")}</strong>.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-positive hover:bg-positive/90"
+              onClick={async () => {
+                if (concludingDiscIdx === null) return;
+                const idx = concludingDiscIdx;
+                setConcludingDiscIdx(null);
+                await applyDisciplineStatusChange(idx, "Concluído");
+              }}
+            >
+              Confirmar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Justificativa de atraso */}
       <AlertDialog
         open={!!justificativaDialog}
-        onOpenChange={(open) => {
-          if (!open) {
+        onOpenChange={(o) => {
+          if (!o) {
             setJustificativaDialog(null);
             setJustificativaText("");
           }
@@ -397,14 +392,14 @@ export function ProjectDetailDialog({
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
               <AlertTriangle className="h-5 w-5 text-red-500" />
-              Justificativa de Atraso Obrigatória
+              Justificativa de atraso obrigatória
             </AlertDialogTitle>
             <AlertDialogDescription>
               A disciplina{" "}
               <strong>
                 {justificativaDialog !== null && disciplinasLegacy[justificativaDialog.discIdx]?.disciplina}
               </strong>{" "}
-              está atrasada. É necessário informar uma justificativa para continuar.
+              está atrasada. Informe a justificativa para continuar.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="py-2">
@@ -422,7 +417,7 @@ export function ProjectDetailDialog({
             <AlertDialogAction
               onClick={handleJustificativaConfirm}
               disabled={!justificativaText.trim()}
-              className="bg-accent-orange hover:bg-accent-orange/90"
+              className="bg-brand hover:bg-brand/90"
             >
               Confirmar
             </AlertDialogAction>
@@ -430,36 +425,5 @@ export function ProjectDetailDialog({
         </AlertDialogContent>
       </AlertDialog>
     </>
-  );
-}
-
-function InfoRow({
-  icon: Icon,
-  label,
-  value,
-  valueClass = "",
-}: {
-  icon: React.ComponentType<{ className?: string }>;
-  label: string;
-  value: string;
-  valueClass?: string;
-}) {
-  return (
-    <div className="flex items-center gap-3">
-      <Icon className="h-4 w-4 text-muted-foreground shrink-0" />
-      <div className="flex-1 min-w-0">
-        <p className="text-[10px] uppercase text-muted-foreground">{label}</p>
-        <p className={`text-sm truncate ${valueClass}`}>{value}</p>
-      </div>
-    </div>
-  );
-}
-
-function DateBlock({ label, value }: { label: string; value: string | undefined }) {
-  return (
-    <div className="text-center">
-      <p className="text-[10px] uppercase text-muted-foreground">{label}</p>
-      <p className="text-xs font-medium">{formatDate(value)}</p>
-    </div>
   );
 }

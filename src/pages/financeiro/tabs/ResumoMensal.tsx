@@ -79,15 +79,15 @@ export default function ResumoMensal({ dateFrom, dateTo }: ResumoMensalProps) {
   return (
     <div className="space-y-6 w-full max-w-none">
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 w-full">
-        <Card className="vrz-card bg-green-50 border-green-100 w-full">
+        <Card className="vrz-card bg-positive/10 border-positive/10 w-full">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-green-800">Receitas</CardTitle>
+            <CardTitle className="text-sm font-medium text-positive">Receitas</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-700">
+            <div className="text-2xl font-bold text-positive">
               {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(stats.receitasTotal)}
             </div>
-            <p className="text-xs text-green-600 mt-1 flex items-center">
+            <p className="text-xs text-positive mt-1 flex items-center">
               <ArrowUpRight size={12} className="mr-1" />
               {stats.receitasMes}% vs mês anterior
             </p>
@@ -101,7 +101,7 @@ export default function ResumoMensal({ dateFrom, dateTo }: ResumoMensalProps) {
             <div className="text-2xl font-bold text-red-700">
               {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(stats.despesasTotal)}
             </div>
-            <p className="text-xs text-green-600 mt-1 flex items-center">
+            <p className="text-xs text-positive mt-1 flex items-center">
               <ArrowDownRight size={12} className="mr-1" />
               {stats.despesasMes}% vs mês anterior
             </p>
@@ -197,7 +197,7 @@ export default function ResumoMensal({ dateFrom, dateTo }: ResumoMensalProps) {
         <Card className="vrz-card w-full">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-green-600" />
+              <TrendingUp className="h-5 w-5 text-positive" />
               Principais Receitas do Mês
             </CardTitle>
             <CardDescription>Top 5 entradas de receita</CardDescription>
@@ -207,7 +207,7 @@ export default function ResumoMensal({ dateFrom, dateTo }: ResumoMensalProps) {
               {topTransactions?.receitas.map((item, idx) => (
                 <div
                   key={idx}
-                  className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-100 hover:bg-green-100 transition-colors"
+                  className="flex items-center justify-between p-3 bg-positive/10 rounded-lg border border-positive/10 hover:bg-positive/10 transition-colors"
                 >
                   <div className="flex-1">
                     <p className="text-sm font-medium text-gray-900">{item.descricao}</p>
@@ -215,7 +215,7 @@ export default function ResumoMensal({ dateFrom, dateTo }: ResumoMensalProps) {
                       {item.data_recebimento ? new Date(item.data_recebimento).toLocaleDateString("pt-BR") : "—"}
                     </p>
                   </div>
-                  <span className="text-sm font-bold text-green-700">{formatCurrency(item.valor)}</span>
+                  <span className="text-sm font-bold text-positive">{formatCurrency(item.valor)}</span>
                 </div>
               ))}
               {topTransactions?.receitas.length === 0 && (
@@ -225,7 +225,7 @@ export default function ResumoMensal({ dateFrom, dateTo }: ResumoMensalProps) {
             <div className="mt-4 pt-4 border-t border-gray-200">
               <div className="flex justify-between items-center">
                 <span className="text-sm font-medium text-gray-700">Total das 5 principais</span>
-                <span className="text-lg font-bold text-green-600">{formatCurrency(totalTopReceitas)}</span>
+                <span className="text-lg font-bold text-positive">{formatCurrency(totalTopReceitas)}</span>
               </div>
             </div>
           </CardContent>

@@ -10,7 +10,7 @@ export function ProofSection() {
       <div className="container mx-auto px-6 md:px-10">
         <div className="max-w-6xl mx-auto">
           <div className="mb-14 reveal-up">
-            <span className="inline-block px-3 py-1 bg-accent-orange text-ink text-xs font-medium uppercase tracking-[0.2em] rounded-sm">
+            <span className="inline-block px-3 py-1 bg-brand text-ink text-xs font-medium uppercase tracking-[0.2em] rounded-sm">
               O que trava seu escritório
             </span>
           </div>

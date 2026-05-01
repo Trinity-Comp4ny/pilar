@@ -23,7 +23,7 @@ export function HowItWorksSection() {
         <div className="max-w-6xl mx-auto">
           <div className="max-w-2xl mb-16 reveal-up">
             <div className="mb-6">
-              <span className="inline-block px-3 py-1 bg-accent-orange text-ink text-xs font-medium uppercase tracking-[0.2em] rounded-sm">
+              <span className="inline-block px-3 py-1 bg-brand text-ink text-xs font-medium uppercase tracking-[0.2em] rounded-sm">
                 Como começar
               </span>
             </div>

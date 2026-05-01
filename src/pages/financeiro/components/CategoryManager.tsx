@@ -201,7 +201,7 @@ export function CategoryManager({ title, description, type, onCategoryChange }: 
                 </Button>
                 <Button
                   onClick={handleAddCategory}
-                  className="flex-1 bg-accent-orange hover:bg-accent-orange/90 text-ink"
+                  className="flex-1 bg-brand hover:bg-brand/90 text-ink"
                   disabled={isSaving}
                 >
                   {isSaving ? (
@@ -294,7 +294,7 @@ export function CategoryManager({ title, description, type, onCategoryChange }: 
               </Button>
               <Button
                 onClick={handleEditCategory}
-                className="flex-1 bg-accent-orange hover:bg-accent-orange/90 text-ink"
+                className="flex-1 bg-brand hover:bg-brand/90 text-ink"
                 disabled={isSaving}
               >
                 {isSaving ? (

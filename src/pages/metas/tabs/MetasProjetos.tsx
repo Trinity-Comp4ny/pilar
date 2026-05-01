@@ -183,7 +183,7 @@ export default function MetasProjetos() {
       case "prazo":
         return { icon: "text-orange-500", bg: "bg-orange-50" };
       case "custo":
-        return { icon: "text-green-500", bg: "bg-green-50" };
+        return { icon: "text-positive", bg: "bg-positive/10" };
       case "qualidade":
         return { icon: "text-blue-500", bg: "bg-blue-50" };
       case "escopo":
@@ -303,7 +303,7 @@ export default function MetasProjetos() {
             </div>
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="bg-accent-orange hover:bg-accent-orange/90 text-ink rounded-full">
+                <Button className="bg-brand hover:bg-brand/90 text-ink rounded-full">
                   <Plus className="mr-2 h-4 w-4" />
                   Nova Meta
                 </Button>
@@ -317,7 +317,7 @@ export default function MetasProjetos() {
                   {metaFormFields(novaMeta, (field, value) => setNovaMeta({ ...novaMeta, [field]: value }))}
                   <Button
                     type="submit"
-                    className="w-full bg-accent-orange hover:bg-accent-orange/90 text-ink rounded-full"
+                    className="w-full bg-brand hover:bg-brand/90 text-ink rounded-full"
                     disabled={createMutation.isPending}
                   >
                     {createMutation.isPending ? "Salvando..." : "Salvar Meta"}
@@ -344,7 +344,7 @@ export default function MetasProjetos() {
                   )}
                   <Button
                     type="submit"
-                    className="w-full bg-accent-orange hover:bg-accent-orange/90 text-ink rounded-full"
+                    className="w-full bg-brand hover:bg-brand/90 text-ink rounded-full"
                     disabled={updateMutation.isPending}
                   >
                     {updateMutation.isPending ? "Atualizando..." : "Atualizar Meta"}
@@ -387,13 +387,13 @@ export default function MetasProjetos() {
               return (
                 <Card
                   key={meta.id}
-                  className={cn("vrz-card border-2 transition-all", isCompleted && "border-green-500 bg-green-50")}
+                  className={cn("vrz-card border-2 transition-all", isCompleted && "border-status-done bg-positive/10")}
                 >
                   <CardHeader className="pb-2">
                     <div className="flex justify-between items-start">
                       <div className="flex items-center gap-3 flex-1">
-                        <div className={cn("p-2 rounded-lg", isCompleted ? "bg-green-100" : colors.bg)}>
-                          <Calendar className={cn("h-5 w-5", isCompleted ? "text-green-500" : colors.icon)} />
+                        <div className={cn("p-2 rounded-lg", isCompleted ? "bg-positive/10" : colors.bg)}>
+                          <Calendar className={cn("h-5 w-5", isCompleted ? "text-positive" : colors.icon)} />
                         </div>
                         <div>
                           <CardTitle className="text-base">{meta.nome}</CardTitle>
@@ -404,7 +404,7 @@ export default function MetasProjetos() {
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className={cn("text-2xl font-bold", isCompleted && "text-green-600")}>{percent}%</span>
+                        <span className={cn("text-2xl font-bold", isCompleted && "text-positive")}>{percent}%</span>
                         <Button
                           variant="ghost"
                           size="icon"
@@ -435,7 +435,7 @@ export default function MetasProjetos() {
                       <Progress
                         value={percent}
                         className="h-2 bg-gray-100"
-                        indicatorClassName={isCompleted ? "bg-green-500" : "bg-purple-500"}
+                        indicatorClassName={isCompleted ? "bg-positive/100" : "bg-purple-500"}
                       />
                       <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground">

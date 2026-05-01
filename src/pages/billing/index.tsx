@@ -74,7 +74,7 @@ export default function Billing() {
               <h3 className="text-lg font-medium text-slate-900">Sem assinatura ativa</h3>
               <p className="text-sm text-slate-500 mt-1">Escolha um plano pra começar a usar o Pilar.</p>
             </div>
-            <Button onClick={() => navigate("/planos")} className="bg-accent-orange hover:bg-accent-orange/90 text-ink">
+            <Button onClick={() => navigate("/planos")} className="bg-brand hover:bg-brand/90 text-ink">
               Ver planos
             </Button>
           </CardContent>
@@ -189,7 +189,7 @@ export default function Billing() {
               <ul className="grid sm:grid-cols-2 gap-2 text-sm">
                 {subscription.plan.features.map((feature) => (
                   <li key={feature} className="flex items-center gap-2 text-slate-700">
-                    <span className="w-1.5 h-1.5 rounded-full bg-accent-orange" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-brand" />
                     {feature}
                   </li>
                 ))}

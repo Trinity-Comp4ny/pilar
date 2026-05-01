@@ -228,7 +228,7 @@ function FeatureRow({ feature, access, onChange, isLast }: FeatureRowProps) {
             {feature.addon && (
               <Badge
                 variant="outline"
-                className="h-5 rounded-full border-accent-orange/30 bg-accent-orange/10 px-2 text-[10px] font-medium text-accent-orange"
+                className="h-5 rounded-full border-brand/30 bg-brand/10 px-2 text-[10px] font-medium text-brand"
               >
                 Add-on
               </Badge>

@@ -88,7 +88,7 @@ export function ChangePlanDialog({ open, onOpenChange, current }: ChangePlanDial
                 onClick={() => setSelectedSlug(plan.slug)}
                 className={cn(
                   "relative text-left p-4 rounded-xl border-2 transition-all",
-                  isSelected ? "border-accent-orange bg-accent-orange/5" : "border-slate-200 hover:border-slate-300"
+                  isSelected ? "border-brand bg-brand/5" : "border-slate-200 hover:border-slate-300"
                 )}
               >
                 {isCurrent && (
@@ -98,7 +98,7 @@ export function ChangePlanDialog({ open, onOpenChange, current }: ChangePlanDial
                 )}
                 {isSelected && !isCurrent && (
                   <span className="absolute top-2 right-2">
-                    <Check className="w-4 h-4 text-accent-orange" />
+                    <Check className="w-4 h-4 text-brand" />
                   </span>
                 )}
                 <p className="text-sm font-medium text-slate-900">{plan.nome}</p>
@@ -116,7 +116,7 @@ export function ChangePlanDialog({ open, onOpenChange, current }: ChangePlanDial
           <Button
             onClick={handleConfirm}
             disabled={manage.isPending || !selectedSlug}
-            className="bg-accent-orange hover:bg-accent-orange/90 text-ink"
+            className="bg-brand hover:bg-brand/90 text-ink"
           >
             {manage.isPending ? (
               <>

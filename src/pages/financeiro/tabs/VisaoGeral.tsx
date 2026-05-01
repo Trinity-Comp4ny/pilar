@@ -13,7 +13,6 @@ import {
   Pie,
   Cell,
 } from "recharts";
-import MetasSummary from "../components/MetasSummary";
 import { CustomTooltip } from "../components/CustomTooltip";
 import { useFinanceData } from "@/hooks/useFinanceData";
 
@@ -58,15 +57,15 @@ export default function VisaoGeral({ visualizacao, dateFrom, dateTo }: VisaoGera
         <Card className="vrz-card w-full">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-black/60">Receitas Totais</CardTitle>
-            <div className="p-2 rounded-full bg-green-100 text-green-600">
+            <div className="p-2 rounded-full bg-positive/10 text-positive">
               <ArrowUpRight size={18} />
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-green-600">
+            <div className="text-3xl font-bold text-positive">
               {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(stats.receitasTotal)}
             </div>
-            <p className="text-xs text-green-600 flex items-center gap-1 mt-1">
+            <p className="text-xs text-positive flex items-center gap-1 mt-1">
               <TrendingUp size={12} />
               {stats.receitasMes}% vs período anterior
             </p>
@@ -85,7 +84,7 @@ export default function VisaoGeral({ visualizacao, dateFrom, dateTo }: VisaoGera
               {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(stats.despesasTotal)}
             </div>
             <p
-              className={`text-xs flex items-center gap-1 mt-1 ${Number(stats.despesasMes) > 0 ? "text-red-600" : "text-green-600"}`}
+              className={`text-xs flex items-center gap-1 mt-1 ${Number(stats.despesasMes) > 0 ? "text-red-600" : "text-positive"}`}
             >
               {Number(stats.despesasMes) > 0 ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
               {stats.despesasMes}% vs período anterior
@@ -185,19 +184,12 @@ export default function VisaoGeral({ visualizacao, dateFrom, dateTo }: VisaoGera
         </Card>
       </div>
 
-      {/* Metas Summary - Menor */}
-      <div className="xl:col-span-1 h-full w-full">
-        <div className="h-full w-full">
-          <MetasSummary />
-        </div>
-      </div>
-
       {/* Detalhamento de Entradas e Saídas - Gráficos de Rosca */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
         <Card className="vrz-card w-full">
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
-              <ArrowUpRight className="h-5 w-5 text-green-600" />
+              <ArrowUpRight className="h-5 w-5 text-positive" />
               Detalhamento de Entradas
             </CardTitle>
             <CardDescription>Receitas por categoria</CardDescription>

@@ -49,7 +49,7 @@ function VariacaoBadge({ valor }: { valor: number }) {
   const positivo = valor > 0;
   return (
     <span
-      className={`inline-flex items-center gap-0.5 text-[11px] font-medium px-1.5 py-0.5 rounded-full ${positivo ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}`}
+      className={`inline-flex items-center gap-0.5 text-[11px] font-medium px-1.5 py-0.5 rounded-full ${positivo ? "bg-positive/10 text-positive" : "bg-negative/10 text-negative"}`}
     >
       {positivo ? <TrendingUp size={11} /> : <TrendingDown size={11} />}
       {Math.abs(valor).toFixed(1)}%
@@ -138,7 +138,7 @@ function ProjectRow({ project, onClick }: { project: DashboardProjeto; onClick: 
           <div className="w-16 mt-1">
             <div className="h-1 bg-gray-200 rounded-full overflow-hidden">
               <div
-                className={`h-full rounded-full transition-all ${isAtrasado ? "bg-red-500" : project.progressoPrazo > 75 ? "bg-yellow-500" : "bg-green-500"}`}
+                className={`h-full rounded-full transition-all ${isAtrasado ? "bg-chart-danger" : project.progressoPrazo > 75 ? "bg-chart-warning" : "bg-status-done"}`}
                 style={{ width: `${Math.min(project.progressoPrazo, 100)}%` }}
               />
             </div>
@@ -155,12 +155,12 @@ function VencimentoRow({ item }: { item: DashboardVencimento }) {
   return (
     <div className="flex items-center gap-3 py-2.5 border-b border-gray-50 last:border-0">
       <div
-        className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 ${isReceita ? "bg-green-50" : "bg-red-50"}`}
+        className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 ${isReceita ? "bg-positive/10" : "bg-negative/10"}`}
       >
         {isReceita ? (
-          <ArrowUpRight size={14} className="text-green-600" />
+          <ArrowUpRight size={14} className="text-positive" />
         ) : (
-          <ArrowDownRight size={14} className="text-red-600" />
+          <ArrowDownRight size={14} className="text-negative" />
         )}
       </div>
       <div className="flex-1 min-w-0">
@@ -168,7 +168,7 @@ function VencimentoRow({ item }: { item: DashboardVencimento }) {
         <p className="text-[11px] text-gray-400 truncate">{item.projeto || item.descricao}</p>
       </div>
       <div className="text-right shrink-0">
-        <p className={`text-sm font-semibold ${isReceita ? "text-green-600" : "text-red-600"}`}>
+        <p className={`text-sm font-semibold ${isReceita ? "text-positive" : "text-negative"}`}>
           {isReceita ? "+" : "-"}
           {fmt.format(item.valor)}
         </p>
@@ -205,7 +205,7 @@ const PIPELINE_COLORS: Record<string, string> = {
   "Em contato": "bg-indigo-500",
   Proposta: "bg-purple-500",
   Negociação: "bg-amber-500",
-  Ganho: "bg-green-500",
+  Ganho: "bg-status-done",
   Perdido: "bg-gray-400",
 };
 
@@ -296,7 +296,7 @@ export default function Dashboard() {
         {canProjCreate && (
           <Button
             size="sm"
-            className="text-xs bg-accent-orange hover:bg-accent-orange/90 text-white"
+            className="text-xs bg-brand hover:bg-brand/90 text-gray-900"
             onClick={() => navigate("/projetos")}
           >
             <Plus size={14} className="mr-1" /> Novo Projeto
@@ -348,7 +348,7 @@ export default function Dashboard() {
       label: "Lançamento",
       icon: DollarSign,
       path: "/financeiro",
-      color: "hover:border-green-300 hover:bg-green-50/50",
+      color: "hover:border-positive/30 hover:bg-positive/5",
     },
     canRel && {
       label: "Relatórios",
@@ -386,8 +386,8 @@ export default function Dashboard() {
               title="Receita do Mês"
               value={fmt.format(kpis.receitaMes)}
               icon={ArrowUpRight}
-              iconBg="bg-green-50"
-              iconColor="text-green-600"
+              iconBg="bg-positive/10"
+              iconColor="text-positive"
               variacao={kpis.receitaVariacao}
               subtitle="vs. mês anterior"
             />
@@ -424,12 +424,12 @@ export default function Dashboard() {
             {canFin && (
               <Card className="col-span-2">
                 <CardContent className="p-4 flex items-center gap-4">
-                  <div className={`p-2.5 rounded-xl ${kpis.saldoMes >= 0 ? "bg-green-50" : "bg-red-50"}`}>
-                    <DollarSign size={20} className={kpis.saldoMes >= 0 ? "text-green-600" : "text-red-600"} />
+                  <div className={`p-2.5 rounded-xl ${kpis.saldoMes >= 0 ? "bg-positive/10" : "bg-negative/10"}`}>
+                    <DollarSign size={20} className={kpis.saldoMes >= 0 ? "text-positive" : "text-negative"} />
                   </div>
                   <div>
                     <span className="text-xs font-medium text-gray-500">Saldo do Mês</span>
-                    <p className={`text-2xl font-bold ${kpis.saldoMes >= 0 ? "text-green-600" : "text-red-600"}`}>
+                    <p className={`text-2xl font-bold ${kpis.saldoMes >= 0 ? "text-positive" : "text-negative"}`}>
                       {fmt.format(kpis.saldoMes)}
                     </p>
                   </div>
@@ -439,12 +439,12 @@ export default function Dashboard() {
             {canProj && (
               <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate("/projetos")}>
                 <CardContent className="p-4 flex items-center gap-4">
-                  <div className="p-2.5 rounded-xl bg-accent-orange/10">
-                    <Briefcase size={20} className="text-accent-orange" />
+                  <div className="p-2.5 rounded-xl bg-brand/10">
+                    <Briefcase size={20} className="text-brand" />
                   </div>
                   <div>
                     <span className="text-xs font-medium text-gray-500">Projetos Ativos</span>
-                    <p className="text-2xl font-bold text-accent-orange">{kpis.projetosAtivos}</p>
+                    <p className="text-2xl font-bold text-brand">{kpis.projetosAtivos}</p>
                   </div>
                 </CardContent>
               </Card>
@@ -491,18 +491,24 @@ export default function Dashboard() {
                     <ComposedChart data={chartData} margin={{ top: 5, right: 5, left: -15, bottom: 0 }}>
                       <defs>
                         <linearGradient id="gReceitas" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#22c55e" stopOpacity={0.15} />
-                          <stop offset="95%" stopColor="#22c55e" stopOpacity={0} />
+                          <stop offset="5%" stopColor="hsl(var(--chart-success))" stopOpacity={0.15} />
+                          <stop offset="95%" stopColor="hsl(var(--chart-success))" stopOpacity={0} />
                         </linearGradient>
                         <linearGradient id="gDespesas" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#ef4444" stopOpacity={0.15} />
-                          <stop offset="95%" stopColor="#ef4444" stopOpacity={0} />
+                          <stop offset="5%" stopColor="hsl(var(--chart-danger))" stopOpacity={0.15} />
+                          <stop offset="95%" stopColor="hsl(var(--chart-danger))" stopOpacity={0} />
                         </linearGradient>
                       </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" vertical={false} />
-                      <XAxis dataKey="mes" stroke="#9ca3af" fontSize={11} tickLine={false} axisLine={false} />
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--chart-grid))" vertical={false} />
+                      <XAxis
+                        dataKey="mes"
+                        stroke="hsl(var(--chart-neutral))"
+                        fontSize={11}
+                        tickLine={false}
+                        axisLine={false}
+                      />
                       <YAxis
-                        stroke="#9ca3af"
+                        stroke="hsl(var(--chart-neutral))"
                         fontSize={11}
                         tickLine={false}
                         axisLine={false}
@@ -514,7 +520,7 @@ export default function Dashboard() {
                         type="monotone"
                         dataKey="receitas"
                         name="Receitas"
-                        stroke="#22c55e"
+                        stroke="hsl(var(--chart-success))"
                         fill="url(#gReceitas)"
                         strokeWidth={2}
                       />
@@ -522,7 +528,7 @@ export default function Dashboard() {
                         type="monotone"
                         dataKey="despesas"
                         name="Despesas"
-                        stroke="#ef4444"
+                        stroke="hsl(var(--chart-danger))"
                         fill="url(#gDespesas)"
                         strokeWidth={2}
                       />
@@ -530,7 +536,7 @@ export default function Dashboard() {
                         type="monotone"
                         dataKey="saldo"
                         name="Saldo"
-                        stroke="#6366f1"
+                        stroke="hsl(var(--c-indigo-500))"
                         strokeWidth={1.5}
                         strokeDasharray="4 4"
                         dot={false}

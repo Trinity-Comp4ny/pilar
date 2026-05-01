@@ -81,7 +81,7 @@ const NotFound = () => {
               {isAuthenticated === false && (
                 <div className="text-sm text-slate-600">
                   Quer acessar sua conta?{" "}
-                  <Link to="/login" className="font-medium text-accent-orange hover:underline">
+                  <Link to="/login" className="font-medium text-brand hover:underline">
                     Ir para login
                   </Link>
                 </div>

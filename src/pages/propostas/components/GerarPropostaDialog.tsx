@@ -260,7 +260,7 @@ export function GerarPropostaDialog({
       <DialogContent className="sm:max-w-2xl max-h-[90vh] flex flex-col">
         <DialogHeader className="flex-shrink-0">
           <DialogTitle className="flex items-center gap-2">
-            <FileText className="h-5 w-5 text-accent-orange" />
+            <FileText className="h-5 w-5 text-brand" />
             {stepTitle[step]}
           </DialogTitle>
           {step === "config" && (
@@ -313,14 +313,14 @@ export function GerarPropostaDialog({
                   <Label className="text-xs text-muted-foreground uppercase tracking-wider">
                     Preenchido automaticamente
                   </Label>
-                  <div className="bg-green-50/50 rounded-lg p-3 space-y-1.5">
+                  <div className="bg-positive/5 rounded-lg p-3 space-y-1.5">
                     {selectedTemplate.variaveis
                       .filter((v) => v in AUTO_VARIABLES)
                       .map((v) => (
                         <div key={v} className="flex items-center justify-between text-sm">
                           <span className="flex items-center gap-2">
-                            <Check className="h-3 w-3 text-green-600" />
-                            <span className="font-mono text-xs text-green-700">{v}</span>
+                            <Check className="h-3 w-3 text-positive" />
+                            <span className="font-mono text-xs text-positive">{v}</span>
                           </span>
                           <span className="text-xs text-muted-foreground truncate max-w-[200px]">
                             {autoData[v] || "(vazio)"}
@@ -435,7 +435,7 @@ export function GerarPropostaDialog({
               <Button
                 onClick={handleVisualize}
                 disabled={!selectedTemplateId || isGenerating}
-                className="bg-accent-orange hover:bg-accent-orange/90 text-ink"
+                className="bg-brand hover:bg-brand/90 text-ink"
               >
                 {isGenerating ? (
                   <>
@@ -459,7 +459,7 @@ export function GerarPropostaDialog({
                 <Download className="h-4 w-4" /> Baixar DOCX
               </Button>
               {mode === "proposta" && (
-                <Button className="gap-1.5 bg-green-600 hover:bg-green-700 text-white" onClick={() => setStep("send")}>
+                <Button className="gap-1.5 bg-positive hover:bg-positive/90 text-white" onClick={() => setStep("send")}>
                   <Send className="h-4 w-4" /> Enviar por Email
                 </Button>
               )}
@@ -480,7 +480,7 @@ export function GerarPropostaDialog({
                 <ArrowLeft className="h-4 w-4 mr-1.5" /> Voltar ao Preview
               </Button>
               <Button
-                className="gap-1.5 bg-green-600 hover:bg-green-700 text-white"
+                className="gap-1.5 bg-positive hover:bg-positive/90 text-white"
                 disabled={!sendEmail.trim() || isSending}
                 onClick={handleSend}
               >
