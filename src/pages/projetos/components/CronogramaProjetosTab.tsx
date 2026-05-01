@@ -3,11 +3,77 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Calendar, Layers, ZoomIn, ZoomOut, AlertTriangle } from "lucide-react";
+import { Calendar, ChevronDown, Layers, ZoomIn, ZoomOut, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { type Projeto, getDeadlineStatus, isDiscAtrasada } from "@/types/projetos";
 import { PROJECT_STATUS, PROJECT_STATUS_CONFIG, type ProjectStatus } from "@/constants";
+
+interface MultiSelectProps {
+  options: string[];
+  selected: string[];
+  onChange: (val: string[]) => void;
+  placeholder: string;
+  searchPlaceholder?: string;
+}
+
+function MultiSelect({ options, selected, onChange, placeholder, searchPlaceholder }: MultiSelectProps) {
+  const [open, setOpen] = useState(false);
+
+  const toggle = (value: string) => {
+    if (selected.includes(value)) {
+      onChange(selected.filter((v) => v !== value));
+    } else {
+      onChange([...selected, value]);
+    }
+  };
+
+  const label =
+    selected.length === 0 ? placeholder : selected.length === 1 ? selected[0] : `${selected.length} selecionados`;
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          size="sm"
+          className={cn(
+            "h-7 text-xs w-[160px] justify-between font-normal",
+            selected.length > 0 && "border-foreground"
+          )}
+        >
+          <span className="truncate">{label}</span>
+          <ChevronDown className="h-3 w-3 ml-1 flex-shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[200px] p-0" align="start">
+        <Command>
+          <CommandInput placeholder={searchPlaceholder ?? "Buscar..."} className="h-8 text-xs" />
+          <CommandList>
+            <CommandEmpty className="text-xs py-2 text-center text-muted-foreground">Nenhum resultado.</CommandEmpty>
+            <CommandGroup>
+              {selected.length > 0 && (
+                <CommandItem onSelect={() => onChange([])} className="text-xs text-muted-foreground">
+                  Limpar seleção
+                </CommandItem>
+              )}
+              {options.map((opt) => (
+                <CommandItem key={opt} onSelect={() => toggle(opt)} className="text-xs gap-2">
+                  <Checkbox checked={selected.includes(opt)} className="pointer-events-none" />
+                  <span className="truncate">{opt}</span>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+}
 
 interface CronogramaProjetosTabProps {
   projetos: Projeto[];
@@ -107,8 +173,8 @@ export function CronogramaProjetosTab({ projetos }: CronogramaProjetosTabProps) 
   const navigate = useNavigate();
   const [zoom, setZoom] = useState<ZoomLevel>("months");
   const [statusFilter, setStatusFilter] = useState<ProjectStatus | "all">("all");
-  const [clienteFilter, setClienteFilter] = useState<string>("all");
-  const [responsavelFilter, setResponsavelFilter] = useState<string>("all");
+  const [clienteFilter, setClienteFilter] = useState<string[]>([]);
+  const [responsavelFilter, setResponsavelFilter] = useState<string[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
   const timelineRef = useRef<HTMLDivElement>(null);
 
@@ -127,14 +193,13 @@ export function CronogramaProjetosTab({ projetos }: CronogramaProjetosTabProps) 
     };
   }, [projetos]);
 
-  // Filter projects with valid dates and matching status
   const visibleProjetos = useMemo(() => {
     return projetos
       .filter((p) => {
         if (statusFilter !== "all" && p.status !== statusFilter) return false;
-        if (clienteFilter !== "all" && p.cliente_nome !== clienteFilter) return false;
-        if (responsavelFilter !== "all") {
-          const hasResp = (p.disciplinas || []).some((d) => d.responsavel_nome === responsavelFilter);
+        if (clienteFilter.length > 0 && !clienteFilter.includes(p.cliente_nome ?? "")) return false;
+        if (responsavelFilter.length > 0) {
+          const hasResp = (p.disciplinas || []).some((d) => responsavelFilter.includes(d.responsavel_nome ?? ""));
           if (!hasResp) return false;
         }
         return parseDate(p.data_inicio) && parseDate(p.data_previsao);
@@ -245,7 +310,8 @@ export function CronogramaProjetosTab({ projetos }: CronogramaProjetosTabProps) 
       <Card>
         <CardContent className="p-4">
           <div className="flex flex-col gap-3">
-            <div className="flex items-center justify-between flex-wrap gap-3">
+            {/* Title + zoom controls */}
+            <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-2">
                 <Calendar className="h-4 w-4 text-muted-foreground" />
                 <h3 className="text-sm font-semibold">Cronograma de Projetos</h3>
@@ -253,26 +319,7 @@ export function CronogramaProjetosTab({ projetos }: CronogramaProjetosTabProps) 
                   {visibleProjetos.length} projeto{visibleProjetos.length === 1 ? "" : "s"}
                 </span>
               </div>
-
               <div className="flex items-center gap-2">
-                {/* Status filter as chip group */}
-                <div className="flex items-center gap-1 flex-wrap">
-                  {statusOptions.map((opt) => (
-                    <button
-                      key={opt.value}
-                      onClick={() => setStatusFilter(opt.value)}
-                      className={cn(
-                        "text-[11px] px-2 py-1 rounded-full border transition-colors",
-                        statusFilter === opt.value
-                          ? "bg-foreground text-background border-foreground"
-                          : "bg-background text-muted-foreground border-input hover:bg-muted"
-                      )}
-                    >
-                      {opt.label}
-                    </button>
-                  ))}
-                </div>
-
                 <Button
                   variant="outline"
                   size="sm"
@@ -303,71 +350,40 @@ export function CronogramaProjetosTab({ projetos }: CronogramaProjetosTabProps) 
               </div>
             </div>
 
-            {/* Secondary filters: cliente + responsável */}
-            {(clienteOptions.length > 0 || responsavelOptions.length > 0) && (
-              <div className="flex items-center gap-2 flex-wrap">
-                {clienteOptions.length > 0 && (
-                  <div className="flex items-center gap-1 flex-wrap">
-                    <span className="text-[10px] text-muted-foreground font-medium mr-1">Cliente:</span>
-                    <button
-                      onClick={() => setClienteFilter("all")}
-                      className={cn(
-                        "text-[11px] px-2 py-0.5 rounded-full border transition-colors",
-                        clienteFilter === "all"
-                          ? "bg-foreground text-background border-foreground"
-                          : "bg-background text-muted-foreground border-input hover:bg-muted"
-                      )}
-                    >
-                      Todos
-                    </button>
-                    {clienteOptions.map((c) => (
-                      <button
-                        key={c}
-                        onClick={() => setClienteFilter(c)}
-                        className={cn(
-                          "text-[11px] px-2 py-0.5 rounded-full border transition-colors",
-                          clienteFilter === c
-                            ? "bg-foreground text-background border-foreground"
-                            : "bg-background text-muted-foreground border-input hover:bg-muted"
-                        )}
-                      >
-                        {c}
-                      </button>
-                    ))}
-                  </div>
-                )}
-                {responsavelOptions.length > 0 && (
-                  <div className="flex items-center gap-1 flex-wrap">
-                    <span className="text-[10px] text-muted-foreground font-medium mr-1">Responsável:</span>
-                    <button
-                      onClick={() => setResponsavelFilter("all")}
-                      className={cn(
-                        "text-[11px] px-2 py-0.5 rounded-full border transition-colors",
-                        responsavelFilter === "all"
-                          ? "bg-foreground text-background border-foreground"
-                          : "bg-background text-muted-foreground border-input hover:bg-muted"
-                      )}
-                    >
-                      Todos
-                    </button>
-                    {responsavelOptions.map((r) => (
-                      <button
-                        key={r}
-                        onClick={() => setResponsavelFilter(r)}
-                        className={cn(
-                          "text-[11px] px-2 py-0.5 rounded-full border transition-colors",
-                          responsavelFilter === r
-                            ? "bg-foreground text-background border-foreground"
-                            : "bg-background text-muted-foreground border-input hover:bg-muted"
-                        )}
-                      >
-                        {r}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
+            {/* Filters row */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as ProjectStatus | "all")}>
+                <SelectTrigger className="h-7 text-xs w-[160px]">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  {statusOptions.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value} className="text-xs">
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {clienteOptions.length > 0 && (
+                <MultiSelect
+                  options={clienteOptions}
+                  selected={clienteFilter}
+                  onChange={setClienteFilter}
+                  placeholder="Cliente"
+                  searchPlaceholder="Buscar cliente..."
+                />
+              )}
+              {responsavelOptions.length > 0 && (
+                <MultiSelect
+                  options={responsavelOptions}
+                  selected={responsavelFilter}
+                  onChange={setResponsavelFilter}
+                  placeholder="Responsável"
+                  searchPlaceholder="Buscar responsável..."
+                />
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>

@@ -154,7 +154,7 @@ export default function Login() {
                   type="button"
                   onClick={handleResetPassword}
                   disabled={isResetting}
-                  className="text-xs font-medium text-brand hover:text-brand/70 hover:underline disabled:opacity-50"
+                  className="text-xs font-medium text-slate-700 decoration-brand underline-offset-2 hover:underline disabled:opacity-50"
                 >
                   {isResetting ? "Enviando..." : "Esqueceu a senha?"}
                 </button>
@@ -232,8 +232,6 @@ export default function Login() {
             className="w-full h-full object-cover opacity-60 scale-105 animate-pulse-slow grayscale contrast-125"
             style={{ animationDuration: "20s" }}
           />
-          {/* Overlay gradiente + tintura laranja */}
-          <div className="absolute inset-0 bg-brand/40 mix-blend-multiply" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/10" />
         </div>
 

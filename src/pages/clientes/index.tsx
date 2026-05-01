@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -25,11 +26,9 @@ import { Can } from "@/components/Can";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useClientes, type Cliente, type ContaBancaria, type ChavePix } from "@/hooks/useClientes";
-import { useRequireAal2 } from "@/hooks/useRequireAal2";
 import { detectTipoChavePix, normalizarChavePix, TIPO_CHAVE_PIX_LABEL } from "@/lib/pixUtils";
 import { Badge } from "@/components/ui/badge";
 import { ClienteMessageDialog } from "./ClienteMessageDialog";
-import { ClienteDetailDialog } from "./ClienteDetailDialog";
 
 const normalize = (value: string) =>
   value
@@ -52,33 +51,19 @@ const fuzzyMatch = (text: string, query: string) => {
 
 export default function Clientes() {
   usePageTitle("Clientes");
-  const { can, isAdmin } = usePermissions();
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { can } = usePermissions();
   const canShowActions = can("clientes", "edit");
-  const requireAal2 = useRequireAal2();
-
-  const {
-    clientes,
-    portalClienteIds,
-    upsertCliente,
-    isSaving,
-    deleteCliente,
-    checkPortalAccess,
-    invitePortal,
-    isInvitingPortal,
-    resetPortalPassword,
-    isResettingPortal,
-    revokePortalAccess,
-    isRevokingPortal,
-  } = useClientes();
+  const { clientes, portalClienteIds, upsertCliente, isSaving, deleteCliente } = useClientes();
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
-  const [selectedCliente, setSelectedCliente] = useState<Cliente | null>(null);
-  const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [clienteToDelete, setClienteToDelete] = useState<string | null>(null);
 
   const [nome, setNome] = useState("");
+  const [sobrenome, setSobrenome] = useState("");
   const [cpfCnpj, setCpfCnpj] = useState("");
   const [endereco, setEndereco] = useState("");
   const [contato, setContato] = useState("");
@@ -96,6 +81,17 @@ export default function Clientes() {
   useEffect(() => {
     if (isDialogOpen) setStep(1);
   }, [isDialogOpen]);
+
+  useEffect(() => {
+    const editId = searchParams.get("edit");
+    if (!editId || clientes.length === 0) return;
+    const target = clientes.find((c) => c.id === editId);
+    if (target) {
+      handleEditClick(target);
+      setSearchParams({}, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, clientes]);
 
   const goNext = () => {
     if (!nome.trim() || !cpfCnpj.trim()) {
@@ -123,11 +119,6 @@ export default function Clientes() {
   const [filterOrigem, setFilterOrigem] = useState("all");
   const [filterPortal, setFilterPortal] = useState("all");
 
-  // Portal do Cliente
-  const [portalStatus, setPortalStatus] = useState<"idle" | "loading" | "exists" | "none">("idle");
-  const [portalCredentials, setPortalCredentials] = useState<{ email: string } | null>(null);
-  const [resetCredentials, setResetCredentials] = useState<{ email: string } | null>(null);
-
   // Message modal
   const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);
   const [selectedClienteForMessage, setSelectedClienteForMessage] = useState<Cliente | null>(null);
@@ -149,12 +140,16 @@ export default function Clientes() {
 
       if (error) {
         resetMessageModal();
-        toast.error(`Erro ao enviar mensagem para ${selectedClienteForMessage?.nome}`);
+        toast.error(
+          `Erro ao enviar mensagem para ${selectedClienteForMessage?.nome}${selectedClienteForMessage?.sobrenome ? " " + selectedClienteForMessage.sobrenome : ""}`
+        );
         console.error(`Erro na função: ${error.message}`);
       }
 
       resetMessageModal();
-      toast.success(`Mensagem enviada com sucesso para o cliente ${selectedClienteForMessage?.nome}.`);
+      toast.success(
+        `Mensagem enviada com sucesso para o cliente ${selectedClienteForMessage?.nome}${selectedClienteForMessage?.sobrenome ? " " + selectedClienteForMessage.sobrenome : ""}.`
+      );
     } catch (error) {
       console.error("Erro desconhecido:", error);
     }
@@ -173,6 +168,7 @@ export default function Clientes() {
 
   const resetForm = () => {
     setNome("");
+    setSobrenome("");
     setCpfCnpj("");
     setEndereco("");
     setContato("");
@@ -195,6 +191,7 @@ export default function Clientes() {
   const handleEditClick = (cliente: Cliente, e?: React.MouseEvent) => {
     e?.stopPropagation();
     setNome(cliente.nome);
+    setSobrenome(cliente.sobrenome ?? "");
     setCpfCnpj(cliente.cpf_cnpj);
     setEndereco(cliente.endereco || "");
     setContato(cliente.contato || "");
@@ -208,7 +205,6 @@ export default function Clientes() {
     setCurrentId(cliente.id);
     setIsEditMode(true);
     setIsDialogOpen(true);
-    setIsDetailOpen(false);
   };
 
   const handleAddConta = () => {
@@ -274,6 +270,7 @@ export default function Clientes() {
         id: isEditMode && currentId ? currentId : undefined,
         data: {
           nome,
+          sobrenome,
           cpf_cnpj: cpfCnpj,
           endereco,
           contato,
@@ -302,7 +299,6 @@ export default function Clientes() {
     if (!clienteToDelete) return;
     try {
       await deleteCliente(clienteToDelete);
-      setIsDetailOpen(false);
     } catch (err) {
       console.error(err);
     }
@@ -320,57 +316,7 @@ export default function Clientes() {
   };
 
   const handleRowClick = (cliente: Cliente) => {
-    setSelectedCliente(cliente);
-    setIsDetailOpen(true);
-    setPortalCredentials(null);
-    setResetCredentials(null);
-    // Verifica se já tem acesso ao portal
-    setPortalStatus("loading");
-    checkPortalAccess(cliente.id)
-      .then((exists) => setPortalStatus(exists ? "exists" : "none"))
-      .catch(() => setPortalStatus("none"));
-  };
-
-  const handleInvitePortal = async () => {
-    if (!selectedCliente?.email) return;
-    if (!(await requireAal2())) return;
-    try {
-      const credentials = await invitePortal({
-        clienteId: selectedCliente.id,
-        email: selectedCliente.email,
-      });
-      setPortalCredentials(credentials);
-      setPortalStatus("exists");
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const handleResetPortalPassword = async () => {
-    if (!selectedCliente) return;
-    if (!(await requireAal2())) return;
-    try {
-      const credentials = await resetPortalPassword({
-        clienteId: selectedCliente.id,
-        nomeCliente: selectedCliente.nome,
-      });
-      setResetCredentials(credentials);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const handleRevokePortal = async () => {
-    if (!selectedCliente) return;
-    if (!(await requireAal2())) return;
-    try {
-      await revokePortalAccess(selectedCliente.id);
-      setPortalStatus("none");
-      setPortalCredentials(null);
-      setResetCredentials(null);
-    } catch (err) {
-      console.error(err);
-    }
+    navigate(`/clientes/${cliente.id}`);
   };
 
   const origens = useMemo(
@@ -384,7 +330,8 @@ export default function Clientes() {
       if (term) {
         const digits = cliente.cpf_cnpj ? cliente.cpf_cnpj.replace(/\D/g, "") : "";
         const termDigits = term.replace(/\D/g, "");
-        const matchSearch = fuzzyMatch(cliente.nome, term) || (termDigits && digits.includes(termDigits));
+        const nomeCompleto = `${cliente.nome}${cliente.sobrenome ? " " + cliente.sobrenome : ""}`;
+        const matchSearch = fuzzyMatch(nomeCompleto, term) || (termDigits && digits.includes(termDigits));
         if (!matchSearch) return false;
       }
       if (filterOrigem !== "all" && cliente.origem !== filterOrigem) return false;
@@ -504,14 +451,25 @@ export default function Clientes() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                           <div className="space-y-1.5">
                             <Label htmlFor="nome" className="text-xs">
-                              Nome *
+                              Nome / Razão Social *
                             </Label>
                             <Input
                               id="nome"
                               value={nome}
                               onChange={(e) => setNome(e.target.value)}
-                              placeholder="Nome completo ou razão social"
+                              placeholder="Primeiro nome ou razão social"
                               required
+                            />
+                          </div>
+                          <div className="space-y-1.5">
+                            <Label htmlFor="sobrenome" className="text-xs">
+                              Sobrenome
+                            </Label>
+                            <Input
+                              id="sobrenome"
+                              value={sobrenome}
+                              onChange={(e) => setSobrenome(e.target.value)}
+                              placeholder="Sobrenome"
                             />
                           </div>
                           <div className="space-y-1.5">
@@ -903,7 +861,10 @@ export default function Clientes() {
                       className="cursor-pointer hover:bg-gray-50"
                       onClick={() => handleRowClick(cliente)}
                     >
-                      <TableCell className="font-medium">{cliente.nome}</TableCell>
+                      <TableCell className="font-medium">
+                        {cliente.nome}
+                        {cliente.sobrenome ? ` ${cliente.sobrenome}` : ""}
+                      </TableCell>
                       <TableCell>{formatDocument(cliente.cpf_cnpj)}</TableCell>
                       <TableCell className="hidden md:table-cell text-sm text-black/70">{cliente.email}</TableCell>
                       <TableCell className="hidden lg:table-cell">{cliente.contato}</TableCell>
@@ -951,25 +912,6 @@ export default function Clientes() {
           </div>
         </CardContent>
       </Card>
-
-      <ClienteDetailDialog
-        open={isDetailOpen}
-        onOpenChange={setIsDetailOpen}
-        cliente={selectedCliente}
-        isAdmin={isAdmin}
-        portalStatus={portalStatus}
-        portalCredentials={portalCredentials}
-        resetCredentials={resetCredentials}
-        isInvitingPortal={isInvitingPortal}
-        isResettingPortal={isResettingPortal}
-        isRevokingPortal={isRevokingPortal}
-        onInvitePortal={handleInvitePortal}
-        onResetPortalPassword={handleResetPortalPassword}
-        onRevokePortal={handleRevokePortal}
-        onEdit={handleEditClick}
-        onDelete={handleDeleteClick}
-        onClose={() => setIsDetailOpen(false)}
-      />
 
       <ClienteMessageDialog
         open={isMessageModalOpen}

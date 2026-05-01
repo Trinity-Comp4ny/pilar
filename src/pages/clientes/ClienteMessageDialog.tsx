@@ -33,7 +33,10 @@ export function ClienteMessageDialog({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Enviar Mensagem</DialogTitle>
-          <DialogDescription>Enviar mensagem para {cliente?.nome}</DialogDescription>
+          <DialogDescription>
+            Enviar mensagem para {cliente?.nome}
+            {cliente?.sobrenome ? ` ${cliente.sobrenome}` : ""}
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-4">

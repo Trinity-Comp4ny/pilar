@@ -6,7 +6,6 @@ import {
   LayoutDashboard,
   TrendingUp,
   Receipt,
-  CalendarDays,
   Users2,
   CreditCard,
   Landmark,
@@ -19,7 +18,6 @@ import {
 import { FinanceiroHeader } from "./financeiro/components/FinanceiroHeader";
 import VisaoGeral from "./financeiro/tabs/VisaoGeral";
 import FluxoCaixa from "./financeiro/tabs/FluxoCaixa";
-import ResumoMensal from "./financeiro/tabs/ResumoMensal";
 import Contas from "./financeiro/tabs/Contas";
 import Lancamentos from "./financeiro/tabs/Lancamentos";
 import FolhaPagamento from "./financeiro/tabs/FolhaPagamento";
@@ -36,7 +34,6 @@ const FINANCEIRO_TABS: SecondSidebarTab[] = [
   { id: "visao-geral", label: "Visão Geral", icon: LayoutDashboard },
   { id: "fluxo-caixa", label: "Fluxo de Caixa", icon: TrendingUp },
   { id: "lancamentos", label: "Lançamentos", icon: Receipt },
-  { id: "mensal", label: "Resumo Mensal", icon: CalendarDays },
   { id: "folha-pagamento", label: "Folha de Pagamento", icon: Users2 },
   { id: "faturas", label: "Faturas", icon: CreditCard, disabled: true },
   { id: "contas", label: "Contas", icon: Landmark },
@@ -99,10 +96,6 @@ export default function Financeiro() {
 
               <TabsContent value="lancamentos" className="mt-0 w-full focus-visible:ring-0">
                 {activeTab === "lancamentos" && <Lancamentos />}
-              </TabsContent>
-
-              <TabsContent value="mensal" className="mt-0 w-full focus-visible:ring-0">
-                {activeTab === "mensal" && <ResumoMensal dateFrom={dateFrom} dateTo={dateTo} />}
               </TabsContent>
 
               <TabsContent value="folha-pagamento" className="mt-0 w-full focus-visible:ring-0">

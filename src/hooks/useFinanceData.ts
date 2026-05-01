@@ -12,8 +12,8 @@ type CategoriaSelect = Pick<CategoriaFinanceira, "id" | "nome" | "tipo">;
 type ReceitaWithCategoria = ReceitaRow & { categorias_financeiras?: CategoriaSelect };
 type DespesaWithCategoria = DespesaRow & { categorias_financeiras?: CategoriaSelect };
 
-type ReceitaChartItem = Pick<ReceitaRow, "valor" | "data_recebimento" | "data_vencimento">;
-type DespesaChartItem = Pick<DespesaRow, "valor" | "data_pagamento" | "data_vencimento">;
+type ReceitaChartItem = Pick<ReceitaRow, "valor" | "data_recebimento" | "data_vencimento" | "status">;
+type DespesaChartItem = Pick<DespesaRow, "valor" | "data_pagamento" | "data_vencimento" | "status">;
 export const useFinanceData = (dateFrom?: Date, dateTo?: Date) => {
   return useQuery({
     queryKey: ["finance-data", dateFrom, dateTo],
@@ -109,18 +109,20 @@ export const useFinanceData = (dateFrom?: Date, dateTo?: Date) => {
       const despesasGrowth =
         despesasPrevTotal > 0 ? ((despesasTotal - despesasPrevTotal) / despesasPrevTotal) * 100 : 0;
 
-      const receitasChartAll: ReceitaChartItem[] = receitas.map((r) => ({
+      const receitasChartMain: ReceitaChartItem[] = receitasMain.map((r) => ({
         valor: r.valor,
         data_recebimento: r.data_recebimento,
         data_vencimento: r.data_vencimento,
+        status: r.status,
       }));
-      const despesasChartAll: DespesaChartItem[] = despesas.map((d) => ({
+      const despesasChartMain: DespesaChartItem[] = despesasMain.map((d) => ({
         valor: d.valor,
         data_pagamento: d.data_pagamento,
         data_vencimento: d.data_vencimento,
+        status: d.status,
       }));
 
-      const chartData = processChartData(receitasChartAll, despesasChartAll);
+      const chartData = processChartData(receitasChartMain, despesasChartMain);
       const chartDataDiario = processDailyChartData(receitasMain, despesasMain, start, end);
       const categoriaData = processCategoryData(receitasMain, "receitas");
       const despesasCategoriaData = processCategoryData(despesasMain, "despesas");
@@ -190,50 +192,78 @@ const processDailyChartData = (
   start: Date,
   end: Date
 ) => {
-  const daysMap = new Map<string, { dia: string; receitas: number; despesas: number }>();
+  const daysDiff = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
 
-  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-    const dayStr = d.getDate().toString();
-    const key = d.toISOString().split("T")[0];
-    if (!daysMap.has(key)) {
-      daysMap.set(key, { dia: dayStr, receitas: 0, despesas: 0 });
+  // Granularidade: diária ≤45d | semanal ≤365d | mensal >365d
+  const granularity: "day" | "week" | "month" = daysDiff <= 45 ? "day" : daysDiff <= 365 ? "week" : "month";
+
+  const bucketKey = (date: Date): string => {
+    if (granularity === "day") return date.toISOString().split("T")[0];
+    if (granularity === "month") {
+      return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, "0")}`;
+    }
+    // week: ISO week start (Monday)
+    const d = new Date(date);
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+    d.setDate(diff);
+    return d.toISOString().split("T")[0];
+  };
+
+  const bucketLabel = (key: string): string => {
+    if (granularity === "day") {
+      return String(parseInt(key.split("-")[2], 10));
+    }
+    if (granularity === "month") {
+      const [year, month] = key.split("-");
+      const d = new Date(Number(year), Number(month) - 1, 1);
+      return `${d.toLocaleString("pt-BR", { month: "short" }).replace(".", "")}/${year.slice(-2)}`;
+    }
+    // week: DD/MMM
+    const d = new Date(key + "T12:00:00");
+    return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" }).replace(".", "");
+  };
+
+  const bucketsMap = new Map<string, { dia: string; receitas: number; despesas: number }>();
+
+  // Pré-preenche todos os buckets do intervalo
+  if (granularity === "day") {
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      const key = bucketKey(d);
+      if (!bucketsMap.has(key)) bucketsMap.set(key, { dia: bucketLabel(key), receitas: 0, despesas: 0 });
+    }
+  } else if (granularity === "week") {
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      const key = bucketKey(d);
+      if (!bucketsMap.has(key)) bucketsMap.set(key, { dia: bucketLabel(key), receitas: 0, despesas: 0 });
+    }
+  } else {
+    for (let d = new Date(start); d <= end; d.setMonth(d.getMonth() + 1)) {
+      const key = bucketKey(d);
+      if (!bucketsMap.has(key)) bucketsMap.set(key, { dia: bucketLabel(key), receitas: 0, despesas: 0 });
     }
   }
 
-  const processReceitaItem = (item: ReceitaWithCategoria) => {
-    const displayDate = getDisplayDate(item.data_recebimento, item.data_vencimento, item.status);
-    if (!displayDate) return;
-
-    const date = new Date(displayDate);
-    if (date >= start && date <= end) {
-      const key = date.toISOString().split("T")[0];
-      const current = daysMap.get(key);
-      if (current) {
-        current.receitas += Number(item.valor);
-      }
-    }
+  const addTo = (date: Date, type: "receitas" | "despesas", valor: number) => {
+    if (date < start || date > end) return;
+    const key = bucketKey(date);
+    const bucket = bucketsMap.get(key);
+    if (bucket) bucket[type] += valor;
   };
 
-  const processDespesaItem = (item: DespesaWithCategoria) => {
-    const displayDate = getDisplayDate(item.data_pagamento, item.data_vencimento, item.status);
-    if (!displayDate) return;
+  receitas.forEach((r) => {
+    const displayDate = getDisplayDate(r.data_recebimento, r.data_vencimento, r.status);
+    if (displayDate) addTo(new Date(displayDate), "receitas", Number(r.valor));
+  });
 
-    const date = new Date(displayDate);
-    if (date >= start && date <= end) {
-      const key = date.toISOString().split("T")[0];
-      const current = daysMap.get(key);
-      if (current) {
-        current.despesas += Number(item.valor);
-      }
-    }
-  };
+  despesas.forEach((d) => {
+    const displayDate = getDisplayDate(d.data_pagamento, d.data_vencimento, d.status);
+    if (displayDate) addTo(new Date(displayDate), "despesas", Number(d.valor));
+  });
 
-  receitas.forEach((r) => processReceitaItem(r));
-  despesas.forEach((d) => processDespesaItem(d));
-
-  return Array.from(daysMap.entries())
-    .sort()
-    .map(([_, val]) => val);
+  return Array.from(bucketsMap.entries())
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([, val]) => val);
 };
 
 const processCategoryData = (
