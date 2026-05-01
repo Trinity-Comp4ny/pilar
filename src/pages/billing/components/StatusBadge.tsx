@@ -10,7 +10,7 @@ const LABELS: Record<MySubscription["status"], string> = {
 };
 
 const COLORS: Record<MySubscription["status"], string> = {
-  active: "bg-green-100 text-green-700 border-green-200",
+  active: "bg-positive/10 text-positive border-positive/20",
   trialing: "bg-blue-100 text-blue-700 border-blue-200",
   overdue: "bg-amber-100 text-amber-700 border-amber-200",
   canceled: "bg-slate-100 text-slate-600 border-slate-200",

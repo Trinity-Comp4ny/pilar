@@ -5,8 +5,26 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Search, ArrowUpDown, User, Briefcase, Trash2, Pencil, Loader2 } from "lucide-react";
+import { Search, ArrowUpDown, User, Briefcase, GraduationCap, Crown, Trash2, Pencil, Loader2 } from "lucide-react";
+import {
+  CONTRACT_TYPES,
+  CONTRACT_TYPE_LABELS,
+  CONTRACT_TYPE_COLORS,
+  PESSOA_STATUS_LABELS,
+  PESSOA_STATUS_COLORS,
+  type ContractType,
+  type PessoaStatus,
+} from "@/constants";
+import { cn } from "@/lib/utils";
 import type { Pessoa } from "../types";
+
+const TIPO_ICON: Record<string, typeof User> = {
+  [CONTRACT_TYPES.CLT]: User,
+  [CONTRACT_TYPES.PJ]: Briefcase,
+  [CONTRACT_TYPES.ESTAGIARIO]: GraduationCap,
+  [CONTRACT_TYPES.SOCIO]: Crown,
+  [CONTRACT_TYPES.TERCEIRIZADO]: Briefcase,
+};
 
 interface PessoaTableProps {
   pessoas: Pessoa[];
@@ -87,9 +105,9 @@ export function PessoaTable({ pessoas, isLoading, isAdmin, onRowClick, onEditCli
       <CardHeader>
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <CardTitle className="text-lg font-medium tracking-tight">Lista de Pessoas</CardTitle>
+            <CardTitle className="text-lg font-medium tracking-tight">Equipe</CardTitle>
             <CardDescription className="text-sm text-black/60 mt-1">
-              Total de {filteredAndSortedPessoas.length} de {pessoas.length} pessoa(s)
+              {filteredAndSortedPessoas.length} de {pessoas.length} membro(s)
             </CardDescription>
           </div>
           <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
@@ -142,6 +160,7 @@ export function PessoaTable({ pessoas, isLoading, isAdmin, onRowClick, onEditCli
                     </Button>
                   </TableHead>
                   <TableHead>Tipo</TableHead>
+                  <TableHead>Status</TableHead>
                   <TableHead>CPF</TableHead>
                   <TableHead>Cargo</TableHead>
                   <TableHead className="hidden md:table-cell">Telefone</TableHead>
@@ -151,7 +170,7 @@ export function PessoaTable({ pessoas, isLoading, isAdmin, onRowClick, onEditCli
               <TableBody>
                 {filteredAndSortedPessoas.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={isAdmin ? 6 : 5} className="text-center text-black/50 py-8">
+                    <TableCell colSpan={isAdmin ? 7 : 6} className="text-center text-black/50 py-8">
                       Nenhuma pessoa encontrada
                     </TableCell>
                   </TableRow>
@@ -165,14 +184,32 @@ export function PessoaTable({ pessoas, isLoading, isAdmin, onRowClick, onEditCli
                       <TableCell className="font-medium">
                         <div className="flex items-center gap-2">
                           <div className="bg-gray-100 p-1.5 rounded-full">
-                            {pessoa.tipo_contrato === "contratado" ? <User size={14} /> : <Briefcase size={14} />}
+                            {(() => {
+                              const Icon = TIPO_ICON[pessoa.tipo_contrato] || User;
+                              return <Icon size={14} />;
+                            })()}
                           </div>
                           {pessoa.nome}
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline" className="capitalize">
-                          {pessoa.tipo_contrato}
+                        <Badge
+                          variant="outline"
+                          className={cn(
+                            "border",
+                            CONTRACT_TYPE_COLORS[pessoa.tipo_contrato as ContractType] ||
+                              "bg-gray-100 text-gray-700 border-gray-200"
+                          )}
+                        >
+                          {CONTRACT_TYPE_LABELS[pessoa.tipo_contrato as ContractType] || pessoa.tipo_contrato}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant="outline"
+                          className={cn("border", PESSOA_STATUS_COLORS[(pessoa.status || "ativo") as PessoaStatus])}
+                        >
+                          {PESSOA_STATUS_LABELS[(pessoa.status || "ativo") as PessoaStatus]}
                         </Badge>
                       </TableCell>
                       <TableCell>{pessoa.cpf || "-"}</TableCell>

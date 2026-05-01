@@ -29,9 +29,9 @@ function getEtapaStatus(disciplinas: DisciplinaResponsavel[]): EtapaGroup["statu
 
 const STATUS_CONFIG = {
   concluido: {
-    bg: "bg-green-500",
-    border: "border-green-500",
-    text: "text-green-700",
+    bg: "bg-positive/100",
+    border: "border-status-done",
+    text: "text-positive",
     icon: CheckCircle2,
     label: "Concluído",
   },
@@ -107,7 +107,7 @@ export function FluxoPipeline({ disciplinas }: FluxoPipelineProps) {
                 <div
                   className={cn(
                     "w-6 sm:w-10 h-0.5",
-                    etapas[i - 1].status === "concluido" ? "bg-green-400" : "bg-gray-200"
+                    etapas[i - 1].status === "concluido" ? "bg-status-done" : "bg-gray-200"
                   )}
                 />
               )}
@@ -140,7 +140,7 @@ export function FluxoPipeline({ disciplinas }: FluxoPipelineProps) {
                           className={cn(
                             "h-1.5 w-1.5 rounded-full",
                             d.status === "Concluído"
-                              ? "bg-green-500"
+                              ? "bg-positive/100"
                               : d.status === "Em Andamento"
                                 ? "bg-blue-500"
                                 : "bg-gray-300"

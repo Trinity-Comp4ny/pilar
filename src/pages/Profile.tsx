@@ -53,6 +53,10 @@ export default function Profile() {
   }, [toast]);
 
   const handleSave = async () => {
+    if (!firstName.trim() || !lastName.trim()) {
+      toast.error("Nome e sobrenome são obrigatórios");
+      return;
+    }
     try {
       const { data: auth } = await supabase.auth.getUser();
       if (!auth?.user) return;
@@ -77,7 +81,7 @@ export default function Profile() {
 
   const inputReadonlyClass = !editing
     ? "bg-black/5 border-black/10 text-black/80"
-    : "border-accent-orange/20 focus-visible:ring-accent-orange/20";
+    : "border-brand/20 focus-visible:ring-brand/20";
   const alwaysReadonlyClass = "bg-black/5 border-black/10 text-black/80";
 
   return (
@@ -87,7 +91,7 @@ export default function Profile() {
           {!editing ? (
             <Button
               onClick={() => setEditing(true)}
-              className="rounded-full bg-accent-orange hover:bg-accent-orange/90 text-ink"
+              className="rounded-full bg-brand hover:bg-brand/90 text-ink"
               disabled={isLoading}
             >
               Editar Perfil
@@ -97,7 +101,7 @@ export default function Profile() {
               <Button variant="outline" onClick={() => setEditing(false)} className="rounded-full">
                 Cancelar
               </Button>
-              <Button onClick={handleSave} className="rounded-full bg-accent-orange hover:bg-accent-orange/90 text-ink">
+              <Button onClick={handleSave} className="rounded-full bg-brand hover:bg-brand/90 text-ink">
                 Salvar Alterações
               </Button>
             </div>
@@ -107,11 +111,11 @@ export default function Profile() {
     >
       <div className="w-full max-w-6xl mx-auto space-y-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <Card className={"border border-black/5 lg:col-span-1 " + (editing ? "ring-1 ring-accent-orange/25" : "")}>
+          <Card className={"border border-black/5 lg:col-span-1 " + (editing ? "ring-1 ring-brand/25" : "")}>
             <CardHeader>
               <div className="flex flex-col items-center text-center space-y-4">
-                <div className="h-24 w-24 rounded-full bg-accent-orange/10 flex items-center justify-center">
-                  <User size={40} className="text-accent-orange" />
+                <div className="h-24 w-24 rounded-full bg-brand/10 flex items-center justify-center">
+                  <User size={40} className="text-brand" />
                 </div>
                 <div>
                   <CardTitle className="text-xl">{[firstName, lastName].filter(Boolean).join(" ") || "-"}</CardTitle>
@@ -143,8 +147,8 @@ export default function Profile() {
             </CardContent>
           </Card>
 
-          <Card className={"border border-black/5 lg:col-span-2 " + (editing ? "ring-1 ring-accent-orange/25" : "")}>
-            <CardHeader className={editing ? "bg-accent-orange/5" : ""}>
+          <Card className={"border border-black/5 lg:col-span-2 " + (editing ? "ring-1 ring-brand/25" : "")}>
+            <CardHeader className={editing ? "bg-brand/5" : ""}>
               <CardTitle>Dados do Perfil</CardTitle>
               <CardDescription>Atualize seus dados pessoais</CardDescription>
             </CardHeader>

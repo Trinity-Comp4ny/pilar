@@ -133,12 +133,12 @@ export default function PasswordReset() {
       {/* Lado Esquerdo - Form */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-8 lg:p-16 bg-paper relative overflow-hidden">
         <div className="absolute inset-0 -z-10 pointer-events-none">
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-accent-orange/6 rounded-full blur-[100px] animate-aurora" />
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-brand/6 rounded-full blur-[100px] animate-aurora" />
         </div>
 
         <Link
           to="/login"
-          className="absolute top-8 left-8 lg:left-12 flex items-center gap-2 text-ink-soft hover:text-accent-orange transition-colors font-medium text-sm group"
+          className="absolute top-8 left-8 lg:left-12 flex items-center gap-2 text-ink-soft hover:text-brand transition-colors font-medium text-sm group"
         >
           <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
           Voltar para o login
@@ -158,7 +158,7 @@ export default function PasswordReset() {
 
           {step === "loading" && (
             <div className="flex flex-col items-center gap-3 py-8">
-              <Loader2 className="h-8 w-8 animate-spin text-accent-orange" />
+              <Loader2 className="h-8 w-8 animate-spin text-brand" />
               <p className="text-sm text-ink-soft">Validando link de recuperação...</p>
             </div>
           )}
@@ -170,7 +170,7 @@ export default function PasswordReset() {
                 O link de recuperação é válido por tempo limitado. Solicite um novo.
               </p>
               <Button
-                className="w-full h-11 bg-accent-orange hover:bg-accent-orange/90 text-ink font-medium"
+                className="w-full h-11 bg-brand hover:bg-brand/90 text-ink font-medium"
                 onClick={() => navigate("/forgot-password")}
               >
                 Solicitar novo link
@@ -182,8 +182,8 @@ export default function PasswordReset() {
             <div className="space-y-8">
               <div className="text-center space-y-2">
                 <div className="flex justify-center mb-4">
-                  <div className="p-3 rounded-2xl bg-accent-orange/10 border border-accent-orange/20">
-                    <ShieldCheck className="h-8 w-8 text-accent-orange" />
+                  <div className="p-3 rounded-2xl bg-brand/10 border border-brand/20">
+                    <ShieldCheck className="h-8 w-8 text-brand" />
                   </div>
                 </div>
                 <h1 className="text-2xl font-semibold tracking-tight text-ink">Verificação em dois fatores</h1>
@@ -210,7 +210,7 @@ export default function PasswordReset() {
 
               <Button
                 onClick={() => handleVerifyMfa(mfaCode)}
-                className="w-full h-11 bg-accent-orange hover:bg-accent-orange/90 text-ink font-medium shadow-lg shadow-accent-orange/20 hover:shadow-accent-orange/30 transition-all active:scale-[0.98]"
+                className="w-full h-11 bg-brand hover:bg-brand/90 text-ink font-medium shadow-lg shadow-brand/20 hover:shadow-brand/30 transition-all active:scale-[0.98]"
                 disabled={submitting || mfaCode.length !== 6}
               >
                 {submitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
@@ -231,11 +231,11 @@ export default function PasswordReset() {
                   Nova senha
                 </Label>
                 <div className="relative group">
-                  <Lock className="absolute left-3 top-3 h-4 w-4 text-ink/40 group-focus-within:text-accent-orange transition-colors" />
+                  <Lock className="absolute left-3 top-3 h-4 w-4 text-ink/40 group-focus-within:text-brand transition-colors" />
                   <Input
                     id="password"
                     type={showPassword ? "text" : "password"}
-                    className="pl-10 pr-10 h-11 bg-paper-alt border-paper-border focus:border-accent-orange focus:ring-accent-orange/20 transition-all"
+                    className="pl-10 pr-10 h-11 bg-paper-alt border-paper-border focus:border-brand focus:ring-brand/20 transition-all"
                     placeholder="••••••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -274,11 +274,11 @@ export default function PasswordReset() {
                   Confirmar senha
                 </Label>
                 <div className="relative group">
-                  <Lock className="absolute left-3 top-3 h-4 w-4 text-ink/40 group-focus-within:text-accent-orange transition-colors" />
+                  <Lock className="absolute left-3 top-3 h-4 w-4 text-ink/40 group-focus-within:text-brand transition-colors" />
                   <Input
                     id="confirm"
                     type={showConfirm ? "text" : "password"}
-                    className="pl-10 pr-10 h-11 bg-paper-alt border-paper-border focus:border-accent-orange focus:ring-accent-orange/20 transition-all"
+                    className="pl-10 pr-10 h-11 bg-paper-alt border-paper-border focus:border-brand focus:ring-brand/20 transition-all"
                     placeholder="••••••••••••"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
@@ -298,7 +298,7 @@ export default function PasswordReset() {
 
               <Button
                 type="submit"
-                className="w-full h-11 bg-accent-orange hover:bg-accent-orange/90 text-ink font-medium shadow-lg shadow-accent-orange/20 hover:shadow-accent-orange/30 transition-all active:scale-[0.98]"
+                className="w-full h-11 bg-brand hover:bg-brand/90 text-ink font-medium shadow-lg shadow-brand/20 hover:shadow-brand/30 transition-all active:scale-[0.98]"
                 disabled={submitting || !canSubmit}
               >
                 {submitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
@@ -353,15 +353,15 @@ export default function PasswordReset() {
             <div className="flex flex-col items-end gap-3 pt-4 border-t border-white/20">
               <div className="flex items-center gap-2 text-sm font-medium text-white/80">
                 <span>Controle Financeiro Integrado</span>
-                <CheckCircle2 className="w-5 h-5 text-accent-orange" />
+                <CheckCircle2 className="w-5 h-5 text-brand" />
               </div>
               <div className="flex items-center gap-2 text-sm font-medium text-white/80">
                 <span>Gestão de Projetos e Obras</span>
-                <CheckCircle2 className="w-5 h-5 text-accent-orange" />
+                <CheckCircle2 className="w-5 h-5 text-brand" />
               </div>
               <div className="flex items-center gap-2 text-sm font-medium text-white/80">
                 <span>CRM e Relacionamento</span>
-                <CheckCircle2 className="w-5 h-5 text-accent-orange" />
+                <CheckCircle2 className="w-5 h-5 text-brand" />
               </div>
             </div>
           </div>

@@ -21,7 +21,7 @@ export default function Lancamentos() {
             <TabsList className="grid w-full grid-cols-2 gap-2 mb-6">
               <TabsTrigger
                 value="receitas"
-                className="data-[state=active]:bg-green-100 data-[state=active]:text-green-700"
+                className="data-[state=active]:bg-positive/10 data-[state=active]:text-positive"
               >
                 <ArrowUpCircle className="mr-2 h-4 w-4" />
                 Receitas

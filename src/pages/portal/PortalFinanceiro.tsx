@@ -58,7 +58,7 @@ export function FinanceiroContent({ projetoId }: { projetoId: string }) {
         <Card>
           <CardContent className="p-4 text-center">
             <p className="text-xs text-muted-foreground">Pago</p>
-            <p className="text-lg font-bold text-green-600">{formatCurrency(totalPago)}</p>
+            <p className="text-lg font-bold text-positive">{formatCurrency(totalPago)}</p>
           </CardContent>
         </Card>
         <Card>
@@ -79,7 +79,7 @@ export function FinanceiroContent({ projetoId }: { projetoId: string }) {
             </div>
             <div className="w-full bg-gray-200 rounded-full h-3">
               <div
-                className="bg-green-500 h-3 rounded-full transition-all"
+                className="bg-positive/100 h-3 rounded-full transition-all"
                 style={{ width: `${(totalPago / totalPrevisto) * 100}%` }}
               />
             </div>
@@ -101,7 +101,7 @@ export function FinanceiroContent({ projetoId }: { projetoId: string }) {
                 return (
                   <div key={r.id} className="flex items-center gap-3 p-3 border rounded-lg">
                     <div
-                      className={`p-1.5 rounded ${isRecebido ? "bg-green-100 text-green-700" : isAtrasado ? "bg-red-100 text-red-700" : "bg-yellow-100 text-yellow-700"}`}
+                      className={`p-1.5 rounded ${isRecebido ? "bg-positive/10 text-positive" : isAtrasado ? "bg-red-100 text-red-700" : "bg-yellow-100 text-yellow-700"}`}
                     >
                       {isRecebido ? <CheckCircle2 className="h-4 w-4" /> : <Clock className="h-4 w-4" />}
                     </div>
@@ -115,7 +115,7 @@ export function FinanceiroContent({ projetoId }: { projetoId: string }) {
                     <div className="text-right">
                       <p className="text-sm font-bold">{formatCurrency(r.valor)}</p>
                       <Badge
-                        className={`text-[10px] ${isRecebido ? "bg-green-100 text-green-800" : isAtrasado ? "bg-red-100 text-red-800" : "bg-yellow-100 text-yellow-800"}`}
+                        className={`text-[10px] ${isRecebido ? "bg-positive/10 text-positive" : isAtrasado ? "bg-red-100 text-red-800" : "bg-yellow-100 text-yellow-800"}`}
                       >
                         {isRecebido ? "Pago" : isAtrasado ? "Atrasado" : "Pendente"}
                       </Badge>

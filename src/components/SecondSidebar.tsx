@@ -63,7 +63,7 @@ export function SecondSidebar({ tabs, value, onValueChange, className }: Props) 
         <button
           onClick={toggle}
           title={collapsed ? "Expandir menu" : "Recolher menu"}
-          className="h-8 w-8 rounded-full flex items-center justify-center text-black/70 hover:text-accent-orange hover:bg-accent-orange/5 transition-colors"
+          className="h-8 w-8 rounded-full flex items-center justify-center text-black/70 hover:text-brand hover:bg-brand/5 transition-colors"
         >
           <PanelLeft size={18} strokeWidth={1.5} />
         </button>
@@ -78,15 +78,13 @@ export function SecondSidebar({ tabs, value, onValueChange, className }: Props) 
             return (
               <div
                 key={tab.id}
-                title={tab.label}
                 className={cn(
-                  "flex items-center gap-3 px-3 py-2 rounded-full text-sm opacity-40 cursor-not-allowed group relative",
+                  "flex items-center gap-3 px-3 py-2 rounded-full text-sm opacity-40 cursor-not-allowed",
                   collapsed && "justify-center"
                 )}
               >
                 {Icon && <Icon size={18} strokeWidth={1.5} className="w-[18px] h-[18px] flex-shrink-0" />}
                 {!collapsed && <span className="tracking-tight truncate">{tab.label}</span>}
-                {collapsed && <Tooltip label={tab.label} />}
               </div>
             );
           }
@@ -95,9 +93,8 @@ export function SecondSidebar({ tabs, value, onValueChange, className }: Props) 
             <button
               key={tab.id}
               onClick={() => onValueChange(tab.id)}
-              title={collapsed ? tab.label : undefined}
               className={cn(
-                "w-full flex items-center gap-3 px-3 py-2 rounded-full text-sm transition-all duration-200 text-left group relative",
+                "w-full flex items-center gap-3 px-3 py-2 rounded-full text-sm transition-all duration-200 text-left",
                 collapsed && "justify-center",
                 isActive ? "bg-brand text-black/80 font-medium" : "text-black/70 hover:bg-brand/30"
               )}
@@ -113,19 +110,10 @@ export function SecondSidebar({ tabs, value, onValueChange, className }: Props) 
                   )}
                 </>
               )}
-              {collapsed && <Tooltip label={tab.label} />}
             </button>
           );
         })}
       </nav>
     </div>
-  );
-}
-
-function Tooltip({ label }: { label: string }) {
-  return (
-    <span className="absolute left-full ml-2 bg-black text-white text-xs py-1 px-2.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 shadow-lg">
-      {label}
-    </span>
   );
 }

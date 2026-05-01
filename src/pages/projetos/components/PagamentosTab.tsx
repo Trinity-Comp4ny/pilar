@@ -45,13 +45,13 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; bgCard: stri
   },
   Recebido: {
     label: "Recebido",
-    color: "bg-green-100 text-green-800",
+    color: "bg-positive/10 text-positive",
     bgCard: "border-l-green-500",
     icon: CheckCircle2,
   },
   Pago: {
     label: "Pago",
-    color: "bg-green-100 text-green-800",
+    color: "bg-positive/10 text-positive",
     bgCard: "border-l-green-500",
     icon: CheckCircle2,
   },
@@ -158,7 +158,7 @@ export function PagamentosTab({ projetoId, canEdit }: PagamentosTabProps) {
                 label="Total Recebido"
                 valor={formatCurrency(resumo.totalRecebido)}
                 icon={TrendingUp}
-                color="bg-green-100 text-green-700"
+                color="bg-positive/10 text-positive"
                 subtitle={`${resumo.percentualRecebido}% do contrato`}
               />
               <SummaryCard
@@ -261,7 +261,7 @@ export function PagamentosTab({ projetoId, canEdit }: PagamentosTabProps) {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8 text-green-600 shrink-0"
+                      className="h-8 w-8 text-positive shrink-0"
                       title="Marcar como recebido"
                       disabled={marcarRecebido.isPending}
                       onClick={() => handleMarcarRecebido(pag.id)}

@@ -54,7 +54,7 @@ export function BrazilSection() {
               return (
                 <div key={item.label} className="reveal-up" style={{ transitionDelay: `${i * 60}ms` }}>
                   <div className="flex items-center gap-4 mb-5">
-                    <Icon strokeWidth={1.5} className="w-4 h-4 text-accent-orange shrink-0" />
+                    <Icon strokeWidth={1.5} className="w-4 h-4 text-brand shrink-0" />
                     <div className="flex-1 h-px bg-slate-200" />
                   </div>
                   <p className="text-sm font-medium text-ink-soft mb-2 tracking-tight">{item.label}</p>

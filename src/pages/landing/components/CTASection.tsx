@@ -17,14 +17,14 @@ export function CTASection() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link
               to="/login"
-              className="w-full sm:w-auto px-7 py-3.5 bg-accent-orange text-ink rounded-full font-medium text-sm hover:bg-accent-orange/80 transition-colors flex items-center justify-center gap-2 group"
+              className="w-full sm:w-auto px-7 py-3.5 bg-brand text-ink rounded-full font-medium text-sm hover:bg-brand/80 transition-colors flex items-center justify-center gap-2 group"
             >
               Testar grátis por 14 dias
               <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
             </Link>
             <Link
               to="/planos"
-              className="w-full sm:w-auto px-6 py-3 text-ink-soft rounded-full font-medium text-sm hover:text-ink hover:bg-slate-50 transition-colors underline decoration-accent-orange underline-offset-4"
+              className="w-full sm:w-auto px-6 py-3 text-ink-soft rounded-full font-medium text-sm hover:text-ink hover:bg-slate-50 transition-colors underline decoration-brand underline-offset-4"
             >
               Ver planos
             </Link>

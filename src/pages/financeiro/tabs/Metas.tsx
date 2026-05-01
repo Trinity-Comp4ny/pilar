@@ -175,7 +175,7 @@ export default function Metas() {
   const getIcon = (categoria: string) => {
     switch (categoria) {
       case "receita":
-        return <TrendingUp className="h-5 w-5 text-green-500" />;
+        return <TrendingUp className="h-5 w-5 text-positive" />;
       case "lucro":
         return <Wallet className="h-5 w-5 text-blue-500" />;
       case "investimento":
@@ -205,7 +205,7 @@ export default function Metas() {
 
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="bg-accent-orange hover:bg-accent-orange/90 text-ink rounded-full">
+                <Button className="bg-brand hover:bg-brand/90 text-ink rounded-full">
                   <Plus className="mr-2 h-4 w-4" />
                   Nova Meta
                 </Button>
@@ -271,7 +271,7 @@ export default function Metas() {
                   </div>
                   <Button
                     type="submit"
-                    className="w-full bg-accent-orange hover:bg-accent-orange/90 text-ink rounded-full"
+                    className="w-full bg-brand hover:bg-brand/90 text-ink rounded-full"
                     disabled={createMetaMutation.isPending}
                   >
                     {createMetaMutation.isPending ? "Salvando..." : "Salvar Meta"}
@@ -348,7 +348,7 @@ export default function Metas() {
                   </div>
                   <Button
                     type="submit"
-                    className="w-full bg-accent-orange hover:bg-accent-orange/90 text-ink rounded-full"
+                    className="w-full bg-brand hover:bg-brand/90 text-ink rounded-full"
                     disabled={updateMetaMutation.isPending}
                   >
                     {updateMetaMutation.isPending ? "Atualizando..." : "Atualizar Meta"}
@@ -392,12 +392,12 @@ export default function Metas() {
               return (
                 <Card
                   key={meta.id}
-                  className={cn("vrz-card border-2 transition-all", isCompleted && "border-green-500 bg-green-50")}
+                  className={cn("vrz-card border-2 transition-all", isCompleted && "border-status-done bg-positive/10")}
                 >
                   <CardHeader className="pb-2">
                     <div className="flex justify-between items-start">
                       <div className="flex items-center gap-3 flex-1">
-                        <div className={cn("p-2 rounded-lg", isCompleted ? "bg-green-100" : "bg-gray-50")}>
+                        <div className={cn("p-2 rounded-lg", isCompleted ? "bg-positive/10" : "bg-gray-50")}>
                           {getIcon(meta.categoria)}
                         </div>
                         <div>
@@ -406,7 +406,7 @@ export default function Metas() {
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className={cn("text-2xl font-bold", isCompleted && "text-green-600")}>{percent}%</span>
+                        <span className={cn("text-2xl font-bold", isCompleted && "text-positive")}>{percent}%</span>
                         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(meta)}>
                           <Pencil className="h-4 w-4" />
                         </Button>
@@ -423,7 +423,7 @@ export default function Metas() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-2">
-                      <Progress value={percent} className="h-2 bg-black" indicatorClassName="bg-green-500" />
+                      <Progress value={percent} className="h-2 bg-black" indicatorClassName="bg-positive/100" />
                       <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground">
                           Atual:{" "}

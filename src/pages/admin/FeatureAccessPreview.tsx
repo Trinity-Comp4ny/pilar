@@ -228,7 +228,7 @@ export default function FeatureAccessPreview() {
             </CardHeader>
             <CardContent className="space-y-3">
               <UltraAdminShortcut />
-              <Button asChild className="rounded-full bg-accent-orange text-ink hover:bg-accent-orange/90">
+              <Button asChild className="rounded-full bg-brand text-ink hover:bg-brand/90">
                 <Link to="/ultra-admin">
                   <ExternalLink size={14} />
                   Abrir /ultra-admin
@@ -271,7 +271,7 @@ function UltraAdminShortcut() {
   };
 
   return (
-    <div className="flex items-center gap-3 rounded-lg border border-accent-orange/30 bg-accent-orange/5 px-3 py-2">
+    <div className="flex items-center gap-3 rounded-lg border border-brand/30 bg-brand/5 px-3 py-2">
       <div className="text-xs text-black/70">
         <span className="font-medium">Ultra admin preview (DEV only)</span>
         <p className="text-[11px] text-black/50">

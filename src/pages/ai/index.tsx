@@ -172,7 +172,7 @@ export default function AiHub() {
       <div className="mb-6">
         <div className="w-full bg-gray-200 rounded-full h-2">
           <div
-            className={`h-2 rounded-full transition-all ${usagePct > 80 ? "bg-red-500" : usagePct > 60 ? "bg-yellow-500" : "bg-green-500"}`}
+            className={`h-2 rounded-full transition-all ${usagePct > 80 ? "bg-red-500" : usagePct > 60 ? "bg-yellow-500" : "bg-positive/100"}`}
             style={{ width: `${Math.min(usagePct, 100)}%` }}
           />
         </div>

@@ -44,13 +44,15 @@ export default function Company() {
   });
 
   const [users, setUsers] = useState<CompanyUser[]>([]);
-  const [inviteName, setInviteName] = useState("");
+  const [inviteFirstName, setInviteFirstName] = useState("");
+  const [inviteLastName, setInviteLastName] = useState("");
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<(typeof ROLES)[number]>("user");
 
   const [isEditUserOpen, setIsEditUserOpen] = useState(false);
   const [editUserId, setEditUserId] = useState<string | null>(null);
-  const [editUserName, setEditUserName] = useState("");
+  const [editUserFirstName, setEditUserFirstName] = useState("");
+  const [editUserLastName, setEditUserLastName] = useState("");
   const [editUserContact, setEditUserContact] = useState("");
   const [editUserRole, setEditUserRole] = useState<(typeof ROLES)[number]>("user");
   const [isDeleteUserOpen, setIsDeleteUserOpen] = useState(false);
@@ -189,21 +191,23 @@ export default function Company() {
   };
 
   const addUser = async () => {
-    if (!inviteName.trim() || !inviteEmail.trim()) return;
+    if (!inviteFirstName.trim() || !inviteEmail.trim()) return;
     if (!(await requireAal2())) return;
     setIsInviting(true);
     try {
+      const fullName = [inviteFirstName.trim(), inviteLastName.trim()].filter(Boolean).join(" ");
       const { error } = await supabase.functions.invoke("invite-user", {
-        body: { email: inviteEmail.trim(), nome: inviteName.trim(), role: inviteRole },
+        body: { email: inviteEmail.trim(), nome: fullName, role: inviteRole },
       });
       if (error) throw error;
 
       toast.success("Convite enviado", { description: `Um email foi enviado para ${inviteEmail}` });
       setUsers([
         ...users,
-        { id: "pending-" + Date.now(), name: inviteName.trim(), email: inviteEmail.trim(), role: inviteRole },
+        { id: "pending-" + Date.now(), name: fullName, email: inviteEmail.trim(), role: inviteRole },
       ]);
-      setInviteName("");
+      setInviteFirstName("");
+      setInviteLastName("");
       setInviteEmail("");
       setInviteRole("user");
     } catch {
@@ -217,7 +221,9 @@ export default function Company() {
 
   const openEditUser = (u: CompanyUser) => {
     setEditUserId(u.id);
-    setEditUserName(u.name || "");
+    const [primeiro, ...resto] = (u.name || "").split(" ");
+    setEditUserFirstName(primeiro || "");
+    setEditUserLastName(resto.join(" "));
     setEditUserContact(u.contato || "");
     setEditUserRole(ROLES.includes(u.role as (typeof ROLES)[number]) ? (u.role as (typeof ROLES)[number]) : "user");
     setIsEditUserOpen(true);
@@ -225,16 +231,26 @@ export default function Company() {
 
   const handleSaveUser = async () => {
     if (!editUserId) return;
+    if (!editUserFirstName.trim() || !editUserLastName.trim()) {
+      toast.error("Nome e sobrenome são obrigatórios");
+      return;
+    }
     if (!(await requireAal2())) return;
     try {
       const { error } = await supabase
         .from("profiles")
-        .update({ nome: editUserName, contato: editUserContact, role: editUserRole })
+        .update({
+          first_name: editUserFirstName,
+          last_name: editUserLastName,
+          contato: editUserContact,
+          role: editUserRole,
+        } as never)
         .eq("id", editUserId);
       if (error) throw error;
+      const fullName = [editUserFirstName, editUserLastName].filter(Boolean).join(" ");
       setUsers((prev) =>
         prev.map((u) =>
-          u.id === editUserId ? { ...u, name: editUserName, contato: editUserContact, role: editUserRole } : u
+          u.id === editUserId ? { ...u, name: fullName, contato: editUserContact, role: editUserRole } : u
         )
       );
       setIsEditUserOpen(false);
@@ -363,11 +379,13 @@ export default function Company() {
                   users={users}
                   isAdmin={isAdmin}
                   currentUserId={currentUserId}
-                  inviteName={inviteName}
+                  inviteFirstName={inviteFirstName}
+                  inviteLastName={inviteLastName}
                   inviteEmail={inviteEmail}
                   inviteRole={inviteRole}
                   isInviting={isInviting}
-                  onInviteNameChange={setInviteName}
+                  onInviteFirstNameChange={setInviteFirstName}
+                  onInviteLastNameChange={setInviteLastName}
                   onInviteEmailChange={setInviteEmail}
                   onInviteRoleChange={setInviteRole}
                   onAddUser={addUser}
@@ -407,10 +425,12 @@ export default function Company() {
       <EditUserDialog
         open={isEditUserOpen}
         onOpenChange={setIsEditUserOpen}
-        name={editUserName}
+        firstName={editUserFirstName}
+        lastName={editUserLastName}
         contact={editUserContact}
         role={editUserRole}
-        onNameChange={setEditUserName}
+        onFirstNameChange={setEditUserFirstName}
+        onLastNameChange={setEditUserLastName}
         onContactChange={setEditUserContact}
         onRoleChange={setEditUserRole}
         onSave={handleSaveUser}

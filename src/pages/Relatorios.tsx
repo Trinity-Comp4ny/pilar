@@ -90,6 +90,9 @@ function parseDDMMYYYY(str: string): Date | null {
 export default function Relatorios() {
   usePageTitle("Relatórios");
   const [tipoRelatorio, setTipoRelatorio] = useState("");
+  const [periodoPreset, setPeriodoPreset] = useState<"7d" | "30d" | "this_month" | "last_month" | "all" | "custom">(
+    "all"
+  );
   const [dateFrom, setDateFrom] = useState<Date>();
   const [dateTo, setDateTo] = useState<Date>();
   const [isLoading, setIsLoading] = useState(false);
@@ -467,7 +470,9 @@ export default function Relatorios() {
     }
   };
 
-  const applyPreset = (preset: "7d" | "this_month" | "last_month" | "30d" | "all") => {
+  const applyPreset = (preset: "7d" | "this_month" | "last_month" | "30d" | "all" | "custom") => {
+    setPeriodoPreset(preset);
+    if (preset === "custom") return;
     const now = new Date();
     if (preset === "all") {
       setDateFrom(undefined);
@@ -654,9 +659,9 @@ export default function Relatorios() {
         <Card className="rounded-2xl border border-black/5 bg-white shrink-0">
           <CardContent className="p-5 space-y-4">
             {/* Linha 1: Tipo + Período + Botão */}
-            <div className="flex flex-col lg:flex-row gap-4 lg:items-end">
+            <div className="flex flex-wrap gap-4 items-end">
               {/* Tipo */}
-              <div className="space-y-1.5 lg:w-56 shrink-0">
+              <div className="space-y-1.5 w-56 shrink-0">
                 <Label className="text-xs font-medium text-black/60">Tipo de relatório</Label>
                 <Select value={tipoRelatorio} onValueChange={setTipoRelatorio}>
                   <SelectTrigger className="h-9 bg-white">
@@ -672,40 +677,36 @@ export default function Relatorios() {
                 </Select>
               </div>
 
-              {/* Período presets */}
-              <div className="space-y-1.5 flex-1 min-w-0">
+              {/* Período */}
+              <div className="space-y-1.5 xl:w-48 shrink-0">
                 <Label className="text-xs font-medium text-black/60">Período</Label>
-                <div className="flex flex-wrap items-center gap-2">
-                  {(
-                    [
-                      ["7d", "7 dias"],
-                      ["30d", "30 dias"],
-                      ["this_month", "Mês atual"],
-                      ["last_month", "Mês anterior"],
-                      ["all", "Todos"],
-                    ] as const
-                  ).map(([key, label]) => (
-                    <Button
-                      key={key}
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="h-9 text-xs"
-                      onClick={() => applyPreset(key)}
-                    >
-                      {label}
-                    </Button>
-                  ))}
+                <Select value={periodoPreset} onValueChange={(v) => applyPreset(v as typeof periodoPreset)}>
+                  <SelectTrigger className="h-9 bg-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="7d">Últimos 7 dias</SelectItem>
+                    <SelectItem value="30d">Últimos 30 dias</SelectItem>
+                    <SelectItem value="this_month">Mês atual</SelectItem>
+                    <SelectItem value="last_month">Mês anterior</SelectItem>
+                    <SelectItem value="all">Todos</SelectItem>
+                    <SelectItem value="custom">Personalizado</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-                  {/* Datas customizadas inline */}
-                  <div className="flex items-center gap-1.5">
+              {/* Datas customizadas (só aparecem quando "Personalizado") */}
+              {periodoPreset === "custom" && (
+                <div className="flex items-end gap-1.5">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium text-black/60">De</Label>
                     <Popover>
                       <PopoverTrigger asChild>
                         <Button
                           variant="outline"
                           size="sm"
                           className={cn(
-                            "h-9 text-xs gap-1.5 min-w-[120px] justify-start",
+                            "h-9 text-xs gap-1.5 w-[130px] justify-start",
                             !dateFrom && "text-muted-foreground"
                           )}
                         >
@@ -723,14 +724,17 @@ export default function Relatorios() {
                         />
                       </PopoverContent>
                     </Popover>
-                    <span className="text-xs text-black/40">até</span>
+                  </div>
+                  <span className="text-xs text-black/40 pb-2">até</span>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium text-black/60">Até</Label>
                     <Popover>
                       <PopoverTrigger asChild>
                         <Button
                           variant="outline"
                           size="sm"
                           className={cn(
-                            "h-9 text-xs gap-1.5 min-w-[120px] justify-start",
+                            "h-9 text-xs gap-1.5 w-[130px] justify-start",
                             !dateTo && "text-muted-foreground"
                           )}
                         >
@@ -750,12 +754,12 @@ export default function Relatorios() {
                     </Popover>
                   </div>
                 </div>
-              </div>
+              )}
 
               {/* Botão gerar */}
               <Button
                 onClick={handleGerarRelatorio}
-                className="h-9 px-5 bg-accent-orange hover:bg-accent-orange/90 text-ink shrink-0"
+                className="h-9 px-5 bg-brand hover:bg-brand/90 text-ink shrink-0"
                 disabled={isLoading}
               >
                 <Plus className="mr-1.5 h-4 w-4" />
@@ -829,7 +833,7 @@ export default function Relatorios() {
                   </Button>
                   <Button
                     size="sm"
-                    className="h-8 text-xs gap-1.5 bg-accent-orange text-ink hover:bg-accent-orange/90"
+                    className="h-8 text-xs gap-1.5 bg-brand text-ink hover:bg-brand/90"
                     onClick={() => handleExport("pdf")}
                     disabled={!filteredData.length}
                   >

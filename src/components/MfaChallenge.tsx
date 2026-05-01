@@ -84,7 +84,7 @@ export function MfaChallenge({ onVerified }: MfaChallengeProps) {
   if (!verifiedFactor) {
     return (
       <div className="space-y-4 text-center">
-        <ShieldCheck className="h-12 w-12 mx-auto text-accent-orange" />
+        <ShieldCheck className="h-12 w-12 mx-auto text-brand" />
         <h2 className="text-xl font-semibold text-ink">MFA não configurado</h2>
         <p className="text-sm text-ink-soft">
           Esta conta exige autenticação de dois fatores. Configure em Perfil &gt; Segurança.
@@ -120,7 +120,7 @@ export function MfaChallenge({ onVerified }: MfaChallengeProps) {
           />
           <Button
             onClick={handleBackupVerify}
-            className="w-full h-11 bg-accent-orange hover:bg-accent-orange/90 text-ink font-medium"
+            className="w-full h-11 bg-brand hover:bg-brand/90 text-ink font-medium"
             disabled={backupSubmitting || backupCode.length < 9}
           >
             {backupSubmitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
@@ -138,8 +138,8 @@ export function MfaChallenge({ onVerified }: MfaChallengeProps) {
     <div className="space-y-8">
       <div className="text-center space-y-2">
         <div className="flex justify-center mb-4">
-          <div className="p-3 rounded-2xl bg-accent-orange/10 border border-accent-orange/20">
-            <ShieldCheck className="h-8 w-8 text-accent-orange" />
+          <div className="p-3 rounded-2xl bg-brand/10 border border-brand/20">
+            <ShieldCheck className="h-8 w-8 text-brand" />
           </div>
         </div>
         <h2 className="text-2xl font-semibold tracking-tight text-ink">Verificação de dois fatores</h2>
@@ -167,7 +167,7 @@ export function MfaChallenge({ onVerified }: MfaChallengeProps) {
 
         <Button
           onClick={() => handleVerify(code)}
-          className="w-full h-11 bg-accent-orange hover:bg-accent-orange/90 text-ink font-medium shadow-lg shadow-accent-orange/20 hover:shadow-accent-orange/30 transition-all active:scale-[0.98] text-sm"
+          className="w-full h-11 bg-brand hover:bg-brand/90 text-ink font-medium shadow-lg shadow-brand/20 hover:shadow-brand/30 transition-all active:scale-[0.98] text-sm"
           disabled={submitting || code.length !== 6}
         >
           {submitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
@@ -178,7 +178,7 @@ export function MfaChallenge({ onVerified }: MfaChallengeProps) {
           <button
             type="button"
             onClick={() => setUseBackup(true)}
-            className="text-xs text-ink-soft hover:text-accent-orange transition-colors underline-offset-2 hover:underline"
+            className="text-xs text-ink-soft hover:text-brand transition-colors underline-offset-2 hover:underline"
           >
             Sem acesso ao app? Usar código de backup
           </button>

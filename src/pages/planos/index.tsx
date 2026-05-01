@@ -17,7 +17,7 @@ export default function Planos() {
         <div className="container mx-auto px-6 md:px-10 py-5 flex items-center justify-between">
           <Link
             to="/"
-            className="flex items-center gap-2 text-slate-500 hover:text-accent-orange transition-colors text-sm font-medium group"
+            className="flex items-center gap-2 text-slate-500 hover:text-brand transition-colors text-sm font-medium group"
           >
             <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
             Voltar
@@ -27,7 +27,7 @@ export default function Planos() {
           </span>
           <Link
             to="/login"
-            className="text-xs uppercase tracking-wider text-slate-500 hover:text-accent-orange transition-colors"
+            className="text-xs uppercase tracking-wider text-slate-500 hover:text-brand transition-colors"
           >
             Já tenho conta
           </Link>

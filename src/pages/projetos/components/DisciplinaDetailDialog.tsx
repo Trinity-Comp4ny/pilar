@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Plus, MessageSquare } from "lucide-react";
 import { PROJECT_PRIORITY, PRIORITY_OPTIONS, PROJECT_PRIORITY_CONFIG } from "@/constants";
 import { type DisciplinaResponsavel, disciplinaStatusOptions } from "@/types/projetos";
+import { DatePicker } from "@/components/ui/date-picker";
 
 interface DisciplinaDetailDialogProps {
   open: boolean;
@@ -134,26 +135,26 @@ export function DisciplinaDetailDialog({
           <div className="grid grid-cols-3 gap-2">
             <div className="space-y-1">
               <Label className="text-xs">Início</Label>
-              <Input
-                type="date"
-                value={(disciplina.data_inicio || "").slice(0, 10)}
-                onChange={(e) => onUpdateField("data_inicio", e.target.value)}
+              <DatePicker
+                value={(disciplina.data_inicio || "").slice(0, 10) || undefined}
+                onChange={(v) => onUpdateField("data_inicio", v)}
+                placeholder="dd/mm/aaaa"
               />
             </div>
             <div className="space-y-1">
               <Label className="text-xs">Previsão</Label>
-              <Input
-                type="date"
-                value={(disciplina.data_previsao || "").slice(0, 10)}
-                onChange={(e) => onUpdateField("data_previsao", e.target.value)}
+              <DatePicker
+                value={(disciplina.data_previsao || "").slice(0, 10) || undefined}
+                onChange={(v) => onUpdateField("data_previsao", v)}
+                placeholder="dd/mm/aaaa"
               />
             </div>
             <div className="space-y-1">
               <Label className="text-xs">Final</Label>
-              <Input
-                type="date"
-                value={(disciplina.data_final || "").slice(0, 10)}
-                onChange={(e) => onUpdateField("data_final", e.target.value)}
+              <DatePicker
+                value={(disciplina.data_final || "").slice(0, 10) || undefined}
+                onChange={(v) => onUpdateField("data_final", v)}
+                placeholder="dd/mm/aaaa"
               />
             </div>
           </div>

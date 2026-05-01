@@ -141,7 +141,7 @@ export default function MetasFinanceiras() {
   const getIcon = (categoria: string) => {
     switch (categoria) {
       case "receita":
-        return <TrendingUp className="h-5 w-5 text-green-500" />;
+        return <TrendingUp className="h-5 w-5 text-positive" />;
       case "lucro":
         return <Wallet className="h-5 w-5 text-blue-500" />;
       case "investimento":
@@ -170,7 +170,7 @@ export default function MetasFinanceiras() {
             </div>
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="bg-accent-orange hover:bg-accent-orange/90 text-ink rounded-full">
+                <Button className="bg-brand hover:bg-brand/90 text-ink rounded-full">
                   <Plus className="mr-2 h-4 w-4" />
                   Nova Meta
                 </Button>
@@ -269,7 +269,7 @@ export default function MetasFinanceiras() {
 
                   <Button
                     type="submit"
-                    className="w-full bg-accent-orange hover:bg-accent-orange/90 text-ink rounded-full"
+                    className="w-full bg-brand hover:bg-brand/90 text-ink rounded-full"
                     disabled={createMetaMutation.isPending}
                   >
                     {createMetaMutation.isPending ? "Salvando..." : "Salvar Meta"}
@@ -342,7 +342,7 @@ export default function MetasFinanceiras() {
                   </div>
                   <Button
                     type="submit"
-                    className="w-full bg-accent-orange hover:bg-accent-orange/90 text-ink rounded-full"
+                    className="w-full bg-brand hover:bg-brand/90 text-ink rounded-full"
                     disabled={updateMetaMutation.isPending}
                   >
                     {updateMetaMutation.isPending ? "Atualizando..." : "Atualizar Meta"}
@@ -373,7 +373,7 @@ export default function MetasFinanceiras() {
             </AlertDialogContent>
           </AlertDialog>
 
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 w-full">
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 w-full">
             {metas?.length === 0 && (
               <div className="col-span-full text-center py-10 text-muted-foreground">
                 Nenhuma meta financeira cadastrada. Clique em "Nova Meta" para começar.
@@ -385,62 +385,74 @@ export default function MetasFinanceiras() {
               return (
                 <Card
                   key={meta.id}
-                  className={cn("vrz-card border-2 transition-all", isCompleted && "border-green-500 bg-green-50")}
+                  className={cn("vrz-card border-2 transition-all", isCompleted && "border-status-done bg-positive/10")}
                 >
-                  <CardHeader className="pb-2">
-                    <div className="flex justify-between items-start">
-                      <div className="flex items-center gap-3 flex-1">
-                        <div className={cn("p-2 rounded-lg", isCompleted ? "bg-green-100" : "bg-gray-50")}>
-                          {getIcon(meta.categoria)}
-                        </div>
-                        <div>
-                          <CardTitle className="text-base">{meta.nome}</CardTitle>
-                          <CardDescription>
-                            Prazo: {meta.prazo ? new Date(meta.prazo).toLocaleDateString("pt-BR") : "—"}
-                          </CardDescription>
-                        </div>
+                  <CardContent className="p-4 space-y-3">
+                    {/* Linha 1: ações */}
+                    <div className="flex items-center justify-between">
+                      <div className={cn("p-2 rounded-lg", isCompleted ? "bg-positive/10" : "bg-gray-100")}>
+                        {getIcon(meta.categoria)}
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span className={cn("text-2xl font-bold", isCompleted && "text-green-600")}>{percent}%</span>
+                      <div className="flex gap-0.5">
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8"
+                          className="h-7 w-7"
                           onClick={() => {
                             setEditingMeta(meta);
                             setIsEditDialogOpen(true);
                           }}
                         >
-                          <Pencil className="h-4 w-4" />
+                          <Pencil className="h-3.5 w-3.5" />
                         </Button>
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8 text-red-600 hover:text-red-700"
+                          className="h-7 w-7 text-red-500 hover:text-red-600"
                           onClick={() => {
                             setMetaToDelete(meta.id);
                             setDeleteAlertOpen(true);
                           }}
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 className="h-3.5 w-3.5" />
                         </Button>
                       </div>
                     </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      <Progress value={percent} className="h-2 bg-black" indicatorClassName="bg-green-500" />
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">
-                          Atual:{" "}
-                          <span className="font-medium text-foreground">R$ {meta.atual.toLocaleString("pt-BR")}</span>
-                        </span>
-                        <span className="text-muted-foreground">
-                          Alvo:{" "}
-                          <span className="font-medium text-foreground">R$ {meta.alvo.toLocaleString("pt-BR")}</span>
-                        </span>
+
+                    {/* Linha 2: nome + % */}
+                    <div className="flex items-end justify-between gap-3">
+                      <p className="font-semibold text-sm leading-snug flex-1">{meta.nome}</p>
+                      <span
+                        className={cn(
+                          "text-2xl font-bold tabular-nums leading-none shrink-0",
+                          isCompleted ? "text-positive" : "text-foreground"
+                        )}
+                      >
+                        {percent}%
+                      </span>
+                    </div>
+
+                    {/* Linha 3: progress */}
+                    <Progress value={percent} className="h-1.5 bg-gray-200" indicatorClassName="bg-positive/100" />
+
+                    {/* Linha 4: prazo + valores */}
+                    <div className="flex items-end justify-between">
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-0.5">Atual</p>
+                        <p className="text-sm font-semibold whitespace-nowrap">
+                          R$ {meta.atual.toLocaleString("pt-BR")}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xs text-muted-foreground mb-0.5">Alvo</p>
+                        <p className="text-sm font-semibold whitespace-nowrap">
+                          R$ {meta.alvo.toLocaleString("pt-BR")}
+                        </p>
                       </div>
                     </div>
+                    <p className="text-xs text-muted-foreground">
+                      Prazo: {meta.prazo ? new Date(meta.prazo).toLocaleDateString("pt-BR") : "—"}
+                    </p>
                   </CardContent>
                 </Card>
               );

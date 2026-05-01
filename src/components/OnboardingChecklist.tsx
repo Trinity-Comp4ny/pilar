@@ -96,7 +96,7 @@ export function OnboardingChecklist() {
         title: "Cadastre sua primeira pessoa",
         description: "Equipe técnica que executa os projetos",
         cta: "Ir para Equipe",
-        ctaPath: "/pessoas",
+        ctaPath: "/equipe",
         count: c.pessoas,
       },
       {
@@ -192,12 +192,12 @@ export function OnboardingChecklist() {
   }
 
   return (
-    <Card className="border-accent-orange/30 bg-gradient-to-br from-accent-orange/5 to-transparent">
+    <Card className="border-brand/30 bg-gradient-to-br from-brand/5 to-transparent">
       <CardContent className="p-4 space-y-4">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="h-9 w-9 rounded-full bg-accent-orange/15 flex items-center justify-center flex-shrink-0">
-              <Rocket className="h-4.5 w-4.5 text-accent-orange" />
+            <div className="h-9 w-9 rounded-full bg-brand/15 flex items-center justify-center flex-shrink-0">
+              <Rocket className="h-4.5 w-4.5 text-brand" />
             </div>
             <div className="min-w-0">
               <p className="text-sm font-semibold text-black">Primeiros passos no Pilar</p>
@@ -240,7 +240,7 @@ function StepRow({ step, onClick }: { step: StepConfig; onClick: () => void }) {
         "w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-left transition-colors",
         done
           ? "bg-emerald-50/50 cursor-default"
-          : "bg-white hover:bg-accent-orange/5 border border-black/5 hover:border-accent-orange/30"
+          : "bg-white hover:bg-brand/5 border border-black/5 hover:border-brand/30"
       )}
     >
       {done ? (
@@ -257,7 +257,7 @@ function StepRow({ step, onClick }: { step: StepConfig; onClick: () => void }) {
         {!done && <p className="text-xs text-black/50 mt-0.5">{step.description}</p>}
       </div>
       {!done && (
-        <div className="flex items-center gap-1 text-xs text-accent-orange font-medium flex-shrink-0">
+        <div className="flex items-center gap-1 text-xs text-brand font-medium flex-shrink-0">
           {step.cta}
           <ChevronRight className="h-3.5 w-3.5" />
         </div>

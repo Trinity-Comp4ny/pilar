@@ -49,7 +49,7 @@ export const getDiscDeadlineStatus = (disc: { data_previsao?: string; data_final
     if (final <= previsao) {
       return {
         label: "No Prazo",
-        color: "bg-green-600 text-white",
+        color: "bg-status-done text-white",
         days: 0,
         status_data: "concluido_no_prazo" as const,
       };
@@ -83,7 +83,7 @@ export const getDiscDeadlineStatus = (disc: { data_previsao?: string; data_final
   if (diffDays <= 7) {
     return { label: "Atenção", color: "bg-yellow-500 text-white", days: diffDays, status_data: "atencao" as const };
   }
-  return { label: "No Prazo", color: "bg-green-500 text-white", days: diffDays, status_data: "no_prazo" as const };
+  return { label: "No Prazo", color: "bg-status-done text-white", days: diffDays, status_data: "no_prazo" as const };
 };
 
 export const getResponsaveisList = (disc: DisciplinaResponsavel): ResponsavelDatas[] => {
@@ -183,7 +183,7 @@ export const getDeadlineStatus = (projeto: { data_previsao?: string; data_final?
     if (final <= previsao) {
       return {
         label: "Concluído no Prazo",
-        color: "bg-green-600 text-white",
+        color: "bg-status-done text-white",
         days: 0,
         status_data: "concluido_no_prazo",
       };
@@ -215,7 +215,7 @@ export const getDeadlineStatus = (projeto: { data_previsao?: string; data_final?
   } else if (diffDays <= 7) {
     return { label: "Atenção", color: "bg-yellow-500 text-white", days: diffDays, status_data: "atencao" };
   } else {
-    return { label: "No Prazo", color: "bg-green-500 text-white", days: diffDays, status_data: "no_prazo" };
+    return { label: "No Prazo", color: "bg-status-done text-white", days: diffDays, status_data: "no_prazo" };
   }
 };
 

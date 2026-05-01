@@ -29,7 +29,7 @@ export function CycleToggle({ value, onChange }: CycleToggleProps) {
         )}
       >
         Anual
-        <span className="text-[10px] bg-accent-orange text-ink px-1.5 py-0.5 rounded-full">-17%</span>
+        <span className="text-[10px] bg-brand text-ink px-1.5 py-0.5 rounded-full">-17%</span>
       </button>
     </div>
   );

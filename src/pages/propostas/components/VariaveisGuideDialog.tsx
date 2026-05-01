@@ -43,7 +43,7 @@ export function VariaveisGuideDialog({ open, onOpenChange }: VariaveisGuideDialo
       <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <BookOpen className="h-5 w-5 text-accent-orange" />
+            <BookOpen className="h-5 w-5 text-brand" />
             Guia de Variáveis para Templates
           </DialogTitle>
           <DialogDescription>
@@ -80,7 +80,7 @@ export function VariaveisGuideDialog({ open, onOpenChange }: VariaveisGuideDialo
                 className="grid grid-cols-[1fr_1fr_auto] gap-0 items-center px-3 py-2.5 border-b last:border-b-0 hover:bg-muted/30 transition-colors"
               >
                 <div className="space-y-0.5">
-                  <Badge variant="secondary" className="font-mono text-xs bg-green-50 text-green-700">
+                  <Badge variant="secondary" className="font-mono text-xs bg-positive/10 text-positive">
                     {`{{${varName}}}`}
                   </Badge>
                   <p className="text-[11px] text-muted-foreground">{description}</p>
@@ -93,7 +93,7 @@ export function VariaveisGuideDialog({ open, onOpenChange }: VariaveisGuideDialo
                   onClick={() => handleCopy(varName)}
                 >
                   {copiedVar === varName ? (
-                    <Check className="h-3.5 w-3.5 text-green-600" />
+                    <Check className="h-3.5 w-3.5 text-positive" />
                   ) : (
                     <Copy className="h-3.5 w-3.5" />
                   )}

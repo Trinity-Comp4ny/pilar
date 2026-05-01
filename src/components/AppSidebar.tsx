@@ -7,7 +7,6 @@ import {
   MapPin,
   ShieldCheck,
   Zap,
-  Target,
   Users,
   User,
   UserCircle,
@@ -41,6 +40,7 @@ type MenuItem = {
   icon: LucideIcon;
   feature: Feature;
   badge?: "novo";
+  adminOnly?: boolean;
 };
 
 type MenuGroup = {
@@ -77,10 +77,7 @@ const menu: MenuGroup[] = [
   },
   {
     label: "Equipe",
-    items: [
-      { title: "Equipe", url: "/pessoas", icon: Users, feature: "pessoas" },
-      { title: "Metas", url: "/metas", icon: Target, feature: "metas" },
-    ],
+    items: [{ title: "Equipe", url: "/equipe", icon: Users, feature: "pessoas", adminOnly: true }],
   },
 ];
 
@@ -136,10 +133,12 @@ export function AppSidebar() {
       menu
         .map((group) => ({
           ...group,
-          items: group.items.map((item) => ({ item, nav: getNavItemProps(item.feature) })),
+          items: group.items
+            .filter((item) => !item.adminOnly || isAdmin)
+            .map((item) => ({ item, nav: getNavItemProps(item.feature) })),
         }))
         .filter((group) => group.items.some(({ nav }) => !nav.disabled)),
-    [getNavItemProps]
+    [getNavItemProps, isAdmin]
   );
 
   const renderItem = (item: MenuItem, navProps: { disabled: boolean; title: string }) => {
@@ -187,7 +186,7 @@ export function AppSidebar() {
           <>
             <span className="tracking-tight flex-1">{item.title}</span>
             {item.badge === "novo" && (
-              <span className="text-[10px] font-medium tracking-wide uppercase px-1.5 py-0.5 rounded-full bg-accent-orange/10 text-accent-orange">
+              <span className="text-[10px] font-medium tracking-wide uppercase px-1.5 py-0.5 rounded-full bg-brand/10 text-brand">
                 Novo
               </span>
             )}
@@ -196,9 +195,7 @@ export function AppSidebar() {
 
         {collapsed && (
           <>
-            {item.badge === "novo" && (
-              <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-accent-orange" />
-            )}
+            {item.badge === "novo" && <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-brand" />}
             <span className="absolute left-full ml-3 bg-black text-white text-xs py-1.5 px-3 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50 shadow-lg">
               {item.title}
             </span>
@@ -220,7 +217,7 @@ export function AppSidebar() {
                 Pilar<sup className="text-[8px] font-normal text-slate-400 ml-0.5 relative -top-2">®</sup>
               </span>
             </div>
-            <SidebarTrigger className="text-black/70 hover:text-accent-orange hover:bg-accent-orange/5 transition-colors rounded-full h-8 w-8" />
+            <SidebarTrigger className="text-black/70 hover:text-brand hover:bg-brand/5 transition-colors rounded-full h-8 w-8" />
           </>
         ) : (
           <div className="flex items-center justify-center w-full relative group">
@@ -228,7 +225,7 @@ export function AppSidebar() {
               <img src="/pilar-logo.svg" alt="Pilar" className="h-8 w-8" />
             </div>
             <div className="absolute opacity-0 group-hover:opacity-100 transition-opacity">
-              <SidebarTrigger className="text-black/70 hover:text-accent-orange hover:bg-accent-orange/5 transition-colors rounded-full h-8 w-8" />
+              <SidebarTrigger className="text-black/70 hover:text-brand hover:bg-brand/5 transition-colors rounded-full h-8 w-8" />
             </div>
           </div>
         )}

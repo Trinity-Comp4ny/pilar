@@ -308,7 +308,7 @@ export function CheckoutForm({
         <Button
           type="submit"
           disabled={isSubmitting}
-          className={cn("w-full h-12 text-sm font-medium", "bg-accent-orange hover:bg-accent-orange/90 text-ink")}
+          className={cn("w-full h-12 text-sm font-medium", "bg-brand hover:bg-brand/90 text-ink")}
         >
           {isSubmitting ? (
             <>

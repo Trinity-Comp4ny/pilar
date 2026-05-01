@@ -38,7 +38,7 @@ export function MfaHelpModal({ open, onOpenChange }: MfaHelpModalProps) {
         <div className="flex flex-col gap-6 py-2">
           {STEPS.map((step, idx) => (
             <div key={idx} className="flex gap-4">
-              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-accent-orange text-ink flex items-center justify-center font-semibold text-sm">
+              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-brand text-ink flex items-center justify-center font-semibold text-sm">
                 {idx + 1}
               </div>
               <div className="flex-1">

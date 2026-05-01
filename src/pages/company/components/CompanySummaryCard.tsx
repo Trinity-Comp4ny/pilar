@@ -27,10 +27,10 @@ export function CompanySummaryCard({
   return (
     <Card
       className={
-        "border border-black/5 lg:col-span-1 overflow-hidden " + (editingCompany ? "ring-1 ring-accent-orange/25" : "")
+        "border border-black/5 lg:col-span-1 overflow-hidden " + (editingCompany ? "ring-1 ring-brand/25" : "")
       }
     >
-      <CardHeader className={editingCompany ? "bg-accent-orange/5" : ""}>
+      <CardHeader className={editingCompany ? "bg-brand/5" : ""}>
         <div className="flex flex-col items-center text-center space-y-4">
           <div
             role="button"
@@ -80,11 +80,11 @@ export function CompanySummaryCard({
           </div>
 
           <div className="rounded-xl border border-black/5 bg-white p-4">
-            <p className="text-xs text-black/50">Pessoas vinculadas</p>
+            <p className="text-xs text-black/50">Equipe</p>
             <div className="flex items-center justify-between gap-3 mt-1">
               <p className="text-sm font-medium">{usersCount}</p>
-              <Link to="/pessoas" className="text-sm text-accent-orange hover:underline inline-flex items-center gap-1">
-                Ver pessoas
+              <Link to="/equipe" className="text-sm text-brand hover:underline inline-flex items-center gap-1">
+                Ver equipe
                 <ArrowUpRight className="h-4 w-4" />
               </Link>
             </div>

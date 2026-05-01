@@ -3,7 +3,23 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Pencil, Trash2, Landmark } from "lucide-react";
+import {
+  CONTRACT_TYPES,
+  CONTRACT_TYPE_LABELS,
+  CONTRACT_TYPE_COLORS,
+  PESSOA_STATUS_LABELS,
+  PESSOA_STATUS_COLORS,
+  type ContractType,
+  type PessoaStatus,
+} from "@/constants";
+import { cn } from "@/lib/utils";
 import type { Pessoa } from "../types";
+
+const formatDateBR = (iso?: string) => {
+  if (!iso) return "-";
+  const [y, m, d] = iso.split("-");
+  return `${d}/${m}/${y}`;
+};
 
 interface PessoaDetailDialogProps {
   open: boolean;
@@ -17,14 +33,22 @@ interface PessoaDetailDialogProps {
 export function PessoaDetailDialog({ open, onOpenChange, pessoa, isAdmin, onEdit, onDelete }: PessoaDetailDialogProps) {
   if (!pessoa) return null;
 
+  const tipo = pessoa.tipo_contrato as ContractType;
+  const status = (pessoa.status || "ativo") as PessoaStatus;
+  const isPJ = tipo === CONTRACT_TYPES.PJ;
+  const isCLT = tipo === CONTRACT_TYPES.CLT;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+          <DialogTitle className="flex flex-wrap items-center gap-2">
             {pessoa.nome}
-            <Badge variant="secondary" className="ml-2 capitalize">
-              {pessoa.tipo_contrato}
+            <Badge variant="outline" className={cn("border", CONTRACT_TYPE_COLORS[tipo])}>
+              {CONTRACT_TYPE_LABELS[tipo] || tipo}
+            </Badge>
+            <Badge variant="outline" className={cn("border", PESSOA_STATUS_COLORS[status])}>
+              {PESSOA_STATUS_LABELS[status]}
             </Badge>
           </DialogTitle>
           <DialogDescription>Detalhes do cadastro</DialogDescription>
@@ -37,17 +61,25 @@ export function PessoaDetailDialog({ open, onOpenChange, pessoa, isAdmin, onEdit
               <p className="font-medium">{pessoa.cpf || "-"}</p>
             </div>
             <div>
+              <Label className="text-xs text-muted-foreground">RG</Label>
+              <p className="font-medium">{pessoa.rg || "-"}</p>
+            </div>
+            <div>
               <Label className="text-xs text-muted-foreground">Cargo</Label>
               <p className="font-medium">{pessoa.cargo}</p>
             </div>
             <div>
+              <Label className="text-xs text-muted-foreground">Nascimento</Label>
+              <p className="font-medium">{formatDateBR(pessoa.data_nascimento)}</p>
+            </div>
+            <div>
               <Label className="text-xs text-muted-foreground">Admissão</Label>
-              <p className="font-medium">{pessoa.data_admissao || "-"}</p>
+              <p className="font-medium">{formatDateBR(pessoa.data_admissao)}</p>
             </div>
             {pessoa.data_demissao && (
               <div>
                 <Label className="text-xs text-muted-foreground">Demissão</Label>
-                <p className="font-medium">{pessoa.data_demissao}</p>
+                <p className="font-medium">{formatDateBR(pessoa.data_demissao)}</p>
               </div>
             )}
             {isAdmin && (
@@ -71,6 +103,32 @@ export function PessoaDetailDialog({ open, onOpenChange, pessoa, isAdmin, onEdit
               </>
             )}
           </div>
+
+          {isPJ && (pessoa.cnpj || pessoa.razao_social) && (
+            <div className="border-t pt-4">
+              <h4 className="font-medium text-sm text-muted-foreground mb-2">Dados PJ</h4>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-xs text-muted-foreground">CNPJ</Label>
+                  <p className="font-medium">{pessoa.cnpj || "-"}</p>
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground">Razão Social</Label>
+                  <p className="font-medium">{pessoa.razao_social || "-"}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {isCLT && pessoa.pis_nit && (
+            <div className="border-t pt-4">
+              <h4 className="font-medium text-sm text-muted-foreground mb-2">Dados CLT</h4>
+              <div>
+                <Label className="text-xs text-muted-foreground">PIS/NIT</Label>
+                <p className="font-medium">{pessoa.pis_nit}</p>
+              </div>
+            </div>
+          )}
 
           <div className="border-t pt-4 space-y-4">
             <h4 className="font-medium text-sm text-muted-foreground mb-2">Contato & Endereço</h4>
@@ -99,7 +157,7 @@ export function PessoaDetailDialog({ open, onOpenChange, pessoa, isAdmin, onEdit
                     <div
                       key={index}
                       className={`flex items-center justify-between gap-3 bg-gray-50 border rounded-lg px-3 py-2 text-sm ${
-                        conta.is_primary ? "border-accent-orange/50 bg-accent-orange/5" : "border-gray-200"
+                        conta.is_primary ? "border-brand/50 bg-brand/5" : "border-gray-200"
                       }`}
                     >
                       <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -110,7 +168,7 @@ export function PessoaDetailDialog({ open, onOpenChange, pessoa, isAdmin, onEdit
                           <div className="flex items-center gap-2">
                             <span className="font-medium truncate">{conta.banco}</span>
                             {conta.is_primary && (
-                              <span className="text-[10px] bg-accent-orange/10 text-accent-orange px-1.5 py-0.5 rounded font-medium">
+                              <span className="text-[10px] bg-brand/10 text-brand px-1.5 py-0.5 rounded font-medium">
                                 Principal
                               </span>
                             )}

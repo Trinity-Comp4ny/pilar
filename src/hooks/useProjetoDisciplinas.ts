@@ -240,9 +240,32 @@ export function useUpdateDisciplinaStatus() {
       const { error } = await supabase.from("projeto_disciplinas").update(updatePayload).eq("id", id);
 
       if (error) throw error;
-      return projetoId;
+      return { projetoId, id, status, justificativa_atraso, data_fim_real };
     },
-    onSuccess: (projetoId) => {
+    onMutate: async ({ id, projetoId, status, justificativa_atraso, data_fim_real }) => {
+      await queryClient.cancelQueries({ queryKey: ["projeto-disciplinas", projetoId] });
+      const snapshot = queryClient.getQueryData(["projeto-disciplinas", projetoId]);
+      queryClient.setQueryData(["projeto-disciplinas", projetoId], (old: unknown) => {
+        if (!Array.isArray(old)) return old;
+        return old.map((d: RawDisciplinaRow) =>
+          d.id === id
+            ? {
+                ...d,
+                status,
+                ...(justificativa_atraso !== undefined ? { justificativa_atraso } : {}),
+                ...(data_fim_real !== undefined ? { data_fim_real } : {}),
+              }
+            : d
+        );
+      });
+      return { snapshot, projetoId };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.snapshot !== undefined) {
+        queryClient.setQueryData(["projeto-disciplinas", context.projetoId], context.snapshot);
+      }
+    },
+    onSuccess: ({ projetoId }) => {
       queryClient.invalidateQueries({
         queryKey: ["projeto-disciplinas", projetoId],
       });

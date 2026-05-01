@@ -169,6 +169,7 @@ export const FEATURES: readonly FeatureDefinition[] = [
     icon: Target,
     core: false,
     addon: false,
+    dormant: true,
     includedInPlans: ["enterprise"],
   },
   {

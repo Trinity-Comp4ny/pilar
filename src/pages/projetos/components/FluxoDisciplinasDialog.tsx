@@ -186,7 +186,7 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
           onOpenChange(v);
         }}
       >
-        <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <GitBranch className="h-5 w-5" />
@@ -196,7 +196,7 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
 
           {mode === "list" ? (
             <div className="space-y-4 mt-2">
-              <Button onClick={handleNew} className="w-full" variant="outline">
+              <Button onClick={handleNew} className="w-full bg-brand hover:bg-brand/90 text-on-brand">
                 <Plus className="mr-2 h-4 w-4" /> Novo Fluxo
               </Button>
 
@@ -267,33 +267,33 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
             </div>
           ) : (
             <div className="space-y-4 mt-2">
-              <Button variant="ghost" size="sm" className="text-xs -ml-2" onClick={resetToList}>
-                <ArrowLeft className="mr-1 h-3 w-3" /> Voltar
+              <Button variant="ghost" size="sm" className="text-sm -ml-2" onClick={resetToList}>
+                <ArrowLeft className="mr-1 h-4 w-4" /> Voltar
               </Button>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <Label className="text-xs">Nome do Fluxo *</Label>
+                <div className="space-y-1.5">
+                  <Label className="text-sm">Nome do Fluxo *</Label>
                   <Input
                     value={form.nome}
                     onChange={(e) => setForm((prev) => ({ ...prev, nome: e.target.value }))}
                     placeholder="Ex: Fluxo Residencial"
-                    className="h-9"
+                    className="h-10"
                   />
                 </div>
-                <div className="space-y-1">
-                  <Label className="text-xs">Descrição</Label>
+                <div className="space-y-1.5">
+                  <Label className="text-sm">Descrição</Label>
                   <Input
                     value={form.descricao}
                     onChange={(e) => setForm((prev) => ({ ...prev, descricao: e.target.value }))}
                     placeholder="Opcional"
-                    className="h-9"
+                    className="h-10"
                   />
                 </div>
               </div>
 
               <div>
-                <Label className="text-xs font-semibold mb-2 block">
+                <Label className="text-sm font-semibold mb-2 block">
                   Etapas ({form.etapas.length}) — {totalDisciplinas} disciplina{totalDisciplinas !== 1 ? "s" : ""}
                 </Label>
 
@@ -306,44 +306,44 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
                     return (
                       <div key={etapaIdx} className="border rounded-lg p-3 bg-white space-y-2">
                         <div className="flex items-center gap-2">
-                          <span className="flex items-center justify-center h-6 w-6 rounded-full bg-blue-100 text-blue-700 text-xs font-bold flex-shrink-0">
+                          <span className="flex items-center justify-center h-7 w-7 rounded-full bg-blue-100 text-blue-700 text-sm font-bold flex-shrink-0">
                             {etapaIdx + 1}
                           </span>
                           <Input
                             value={etapa.nome}
                             onChange={(e) => updateEtapaNome(etapaIdx, e.target.value)}
                             placeholder="Nome da etapa"
-                            className="h-7 text-xs flex-1"
+                            className="h-9 text-sm flex-1"
                           />
                           <div className="flex gap-0.5 flex-shrink-0">
                             <Button
                               type="button"
                               variant="ghost"
                               size="sm"
-                              className="h-6 w-6 p-0"
+                              className="h-8 w-8 p-0"
                               disabled={etapaIdx === 0}
                               onClick={() => moveEtapa(etapaIdx, "up")}
                             >
-                              <ArrowUp size={12} />
+                              <ArrowUp size={14} />
                             </Button>
                             <Button
                               type="button"
                               variant="ghost"
                               size="sm"
-                              className="h-6 w-6 p-0"
+                              className="h-8 w-8 p-0"
                               disabled={etapaIdx === form.etapas.length - 1}
                               onClick={() => moveEtapa(etapaIdx, "down")}
                             >
-                              <ArrowDown size={12} />
+                              <ArrowDown size={14} />
                             </Button>
                             <Button
                               type="button"
                               variant="ghost"
                               size="sm"
-                              className="h-6 w-6 p-0 text-red-500"
+                              className="h-8 w-8 p-0 text-red-500"
                               onClick={() => removeEtapa(etapaIdx)}
                             >
-                              <Trash2 size={12} />
+                              <Trash2 size={14} />
                             </Button>
                           </div>
                         </div>
@@ -351,15 +351,15 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
                         {/* Disciplinas com responsável */}
                         <div className="space-y-1.5">
                           {etapa.disciplinas.map((disc, discIdx) => (
-                            <div key={discIdx} className="flex items-center gap-1.5 bg-gray-50 rounded px-2 py-1">
-                              <Badge variant="secondary" className="text-xs flex-shrink-0">
+                            <div key={discIdx} className="flex items-center gap-2 bg-gray-50 rounded px-2 py-1.5">
+                              <Badge variant="secondary" className="text-sm flex-shrink-0">
                                 {disc.nome}
                               </Badge>
                               <Select
                                 value={disc.responsavel_id || ""}
                                 onValueChange={(val) => updateDisciplinaResponsavel(etapaIdx, discIdx, val)}
                               >
-                                <SelectTrigger className="h-6 text-[10px] flex-1 min-w-[120px]">
+                                <SelectTrigger className="h-8 text-xs flex-1 min-w-[140px]">
                                   <SelectValue placeholder="Responsável (opcional)">
                                     {disc.responsavel_nome ? (
                                       <span className="flex items-center gap-1">
@@ -373,7 +373,7 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
                                 </SelectTrigger>
                                 <SelectContent>
                                   {pessoas.map((p) => (
-                                    <SelectItem key={p.id} value={p.id} className="text-xs">
+                                    <SelectItem key={p.id} value={p.id} className="text-sm">
                                       {p.nome}
                                     </SelectItem>
                                   ))}
@@ -381,10 +381,10 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
                               </Select>
                               <button
                                 type="button"
-                                className="hover:bg-gray-300 rounded-full p-0.5 flex-shrink-0"
+                                className="hover:bg-gray-300 rounded-full p-1 flex-shrink-0"
                                 onClick={() => removeDisciplinaFromEtapa(etapaIdx, discIdx)}
                               >
-                                <X size={12} className="text-red-500" />
+                                <X size={14} className="text-red-500" />
                               </button>
                             </div>
                           ))}
@@ -392,12 +392,12 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
 
                         {selectableDisciplinas.length > 0 && (
                           <Select onValueChange={(val) => addDisciplinaToEtapa(etapaIdx, val)} value="">
-                            <SelectTrigger className="h-7 text-xs">
+                            <SelectTrigger className="h-9 text-sm">
                               <SelectValue placeholder="Adicionar disciplina..." />
                             </SelectTrigger>
                             <SelectContent>
                               {selectableDisciplinas.map((d) => (
-                                <SelectItem key={d.id} value={d.nome} className="text-xs">
+                                <SelectItem key={d.id} value={d.nome} className="text-sm">
                                   {d.nome}
                                 </SelectItem>
                               ))}
@@ -406,31 +406,37 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
                         )}
 
                         {etapa.disciplinas.length > 1 && (
-                          <p className="text-[10px] text-muted-foreground">Disciplinas nesta etapa rodam em paralelo</p>
+                          <p className="text-xs text-muted-foreground">Disciplinas nesta etapa rodam em paralelo</p>
                         )}
                       </div>
                     );
                   })}
                 </div>
 
-                <Button type="button" variant="outline" size="sm" className="w-full mt-3 text-xs" onClick={addEtapa}>
-                  <Plus className="mr-1 h-3 w-3" /> Adicionar Etapa
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="w-full mt-3 text-sm h-9"
+                  onClick={addEtapa}
+                >
+                  <Plus className="mr-1 h-4 w-4" /> Adicionar Etapa
                 </Button>
               </div>
 
               {/* Preview */}
               {form.etapas.length > 0 && form.etapas.some((e) => e.disciplinas.length > 0) && (
                 <div className="bg-gray-50 rounded-lg p-3 border">
-                  <Label className="text-[10px] text-muted-foreground mb-2 block">Prévia do fluxo</Label>
-                  <div className="flex items-center gap-1.5 flex-wrap">
+                  <Label className="text-xs text-muted-foreground mb-2 block">Prévia do fluxo</Label>
+                  <div className="flex items-center gap-2 flex-wrap">
                     {form.etapas.map((etapa, i) => (
-                      <div key={i} className="flex items-center gap-1.5">
-                        {i > 0 && <span className="text-muted-foreground text-xs">→</span>}
-                        <div className="bg-white border rounded-md px-2 py-1">
-                          <span className="text-[10px] font-medium text-blue-700">{etapa.nome}</span>
-                          <div className="flex flex-col gap-0.5 mt-0.5">
+                      <div key={i} className="flex items-center gap-2">
+                        {i > 0 && <span className="text-muted-foreground text-sm">→</span>}
+                        <div className="bg-white border rounded-md px-2.5 py-1.5">
+                          <span className="text-xs font-medium text-blue-700">{etapa.nome}</span>
+                          <div className="flex flex-col gap-0.5 mt-1">
                             {etapa.disciplinas.map((d, di) => (
-                              <span key={di} className="text-[9px] bg-blue-50 text-blue-600 rounded px-1 py-0.5">
+                              <span key={di} className="text-[10px] bg-blue-50 text-blue-600 rounded px-1.5 py-0.5">
                                 {d.nome}
                                 {d.responsavel_nome ? ` (${d.responsavel_nome})` : ""}
                               </span>
@@ -443,15 +449,15 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
                 </div>
               )}
 
-              <div className="flex gap-2 pt-2">
+              <div className="flex flex-col gap-2 pt-2">
                 <Button
                   onClick={handleSave}
-                  className="flex-1"
+                  className="w-full bg-brand hover:bg-brand/90 text-on-brand"
                   disabled={createFluxo.isPending || updateFluxo.isPending}
                 >
                   {editingId ? "Salvar Alterações" : "Criar Fluxo"}
                 </Button>
-                <Button variant="outline" onClick={resetToList}>
+                <Button variant="outline" className="w-full" onClick={resetToList}>
                   Cancelar
                 </Button>
               </div>
