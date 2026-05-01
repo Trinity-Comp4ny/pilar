@@ -45,7 +45,15 @@ const STATUS_CONFIG: Record<Entrega["status"], { label: string; color: string; i
   revisao_solicitada: { label: "Revisão solicitada", color: "bg-orange-100 text-orange-800", icon: RotateCcw },
 };
 
-export function EntregasContent({ projetoId, token }: { projetoId: string; token?: string }) {
+export function EntregasContent({
+  projetoId,
+  token,
+  readOnly,
+}: {
+  projetoId: string;
+  token?: string;
+  readOnly?: boolean;
+}) {
   const [entregas, setEntregas] = useState<Entrega[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -150,6 +158,7 @@ export function EntregasContent({ projetoId, token }: { projetoId: string; token
                 onAprovar={() => handleAprovar(thread.current.id)}
                 onSolicitar={() => handleSolicitarRevisao(thread.current.id)}
                 saving={saving}
+                historico={readOnly}
               />
             ))}
           </div>

@@ -490,6 +490,7 @@ export type Database = {
           id: string;
           nome: string;
           origem: string | null;
+          sobrenome: string | null;
           tipo_nf: string | null;
           updated_at: string | null;
           updated_by: string | null;
@@ -508,6 +509,7 @@ export type Database = {
           id?: string;
           nome: string;
           origem?: string | null;
+          sobrenome?: string | null;
           tipo_nf?: string | null;
           updated_at?: string | null;
           updated_by?: string | null;
@@ -526,6 +528,7 @@ export type Database = {
           id?: string;
           nome?: string;
           origem?: string | null;
+          sobrenome?: string | null;
           tipo_nf?: string | null;
           updated_at?: string | null;
           updated_by?: string | null;
@@ -1390,12 +1393,18 @@ export type Database = {
           deleted_at: string | null;
           email: string | null;
           empresa_id: string;
+          empresa_lead: string | null;
           id: string;
           motivo_perda: string | null;
           nome: string;
+          notas: string | null;
           origem: string | null;
+          previsao_fechamento: string | null;
+          responsavel_id: string | null;
+          sobrenome: string | null;
           status: string | null;
           updated_at: string | null;
+          valor_estimado: number | null;
         };
         Insert: {
           cliente_id?: string | null;
@@ -1406,12 +1415,18 @@ export type Database = {
           deleted_at?: string | null;
           email?: string | null;
           empresa_id: string;
+          empresa_lead?: string | null;
           id?: string;
           motivo_perda?: string | null;
           nome: string;
+          notas?: string | null;
           origem?: string | null;
+          previsao_fechamento?: string | null;
+          responsavel_id?: string | null;
+          sobrenome?: string | null;
           status?: string | null;
           updated_at?: string | null;
+          valor_estimado?: number | null;
         };
         Update: {
           cliente_id?: string | null;
@@ -1422,12 +1437,18 @@ export type Database = {
           deleted_at?: string | null;
           email?: string | null;
           empresa_id?: string;
+          empresa_lead?: string | null;
           id?: string;
           motivo_perda?: string | null;
           nome?: string;
+          notas?: string | null;
           origem?: string | null;
+          previsao_fechamento?: string | null;
+          responsavel_id?: string | null;
+          sobrenome?: string | null;
           status?: string | null;
           updated_at?: string | null;
+          valor_estimado?: number | null;
         };
         Relationships: [
           {

@@ -107,7 +107,10 @@ export function ClienteDetailDialog({
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">{cliente.nome}</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              {cliente.nome}
+              {cliente.sobrenome ? ` ${cliente.sobrenome}` : ""}
+            </DialogTitle>
             <DialogDescription>Detalhes do cliente</DialogDescription>
           </DialogHeader>
 
@@ -300,7 +303,11 @@ export function ClienteDetailDialog({
               <div className="space-y-3 text-sm text-muted-foreground">
                 <p>
                   Será criada uma conta de acesso ao Portal do Cliente para{" "}
-                  <span className="font-medium text-foreground">{cliente.nome}</span>.
+                  <span className="font-medium text-foreground">
+                    {cliente.nome}
+                    {cliente.sobrenome ? ` ${cliente.sobrenome}` : ""}
+                  </span>
+                  .
                 </p>
                 <div className="flex items-start gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2.5 text-blue-800">
                   <Send size={14} className="mt-0.5 shrink-0" />
