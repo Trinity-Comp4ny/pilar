@@ -20,6 +20,7 @@ export interface ChavePix {
 export interface Cliente {
   id: string;
   nome: string;
+  sobrenome?: string;
   cpf_cnpj: string;
   endereco: string;
   contato: string;
@@ -32,6 +33,7 @@ export interface Cliente {
 
 export interface ClienteFormData {
   nome: string;
+  sobrenome: string;
   cpf_cnpj: string;
   endereco: string;
   contato: string;
@@ -61,6 +63,7 @@ export const useClientes = () => {
       const nullIfEmpty = (v: string) => v?.trim() || null;
       const payload = {
         nome: data.nome,
+        sobrenome: data.sobrenome || null,
         cpf_cnpj: data.cpf_cnpj,
         endereco: nullIfEmpty(data.endereco),
         contato: data.contato,

@@ -12,8 +12,8 @@ export function IdleTimeoutProvider() {
 
   const timeoutMs = (() => {
     if (!profile) return 30 * 60 * 1000;
-    if (profile.role === "admin" || profile.role === "ultra_admin") return 15 * 60 * 1000;
-    return 60 * 60 * 1000;
+    if (profile.role === "admin" || profile.role === "ultra_admin") return 30 * 60 * 1000;
+    return 2 * 60 * 60 * 1000;
   })();
 
   useIdleTimeout({ timeoutMs });
