@@ -17,7 +17,7 @@ export function LandingHeader({ onScrollToTop }: LandingHeaderProps) {
           href="https://trnty.com.br"
           target="_blank"
           rel="noopener noreferrer"
-          className="font-semibold hover:text-accent-orange transition-colors ml-1"
+          className="font-semibold hover:text-brand transition-colors ml-1"
         >
           Trinity Company
         </a>
@@ -39,19 +39,19 @@ export function LandingHeader({ onScrollToTop }: LandingHeaderProps) {
           <nav className="hidden md:flex items-center justify-center gap-10">
             <a
               href="#prova"
-              className="text-[11px] font-medium uppercase tracking-[0.18em] text-slate-500 relative after:absolute after:bottom-[-3px] after:left-0 after:h-px after:w-0 after:bg-accent-orange hover:after:w-full after:transition-all after:duration-300"
+              className="text-[11px] font-medium uppercase tracking-[0.18em] text-slate-500 relative after:absolute after:bottom-[-3px] after:left-0 after:h-px after:w-0 after:bg-brand hover:after:w-full after:transition-all after:duration-300"
             >
               Por que Pilar
             </a>
             <a
               href="#modulos"
-              className="text-[11px] font-medium uppercase tracking-[0.18em] text-slate-500 relative after:absolute after:bottom-[-3px] after:left-0 after:h-px after:w-0 after:bg-accent-orange hover:after:w-full after:transition-all after:duration-300"
+              className="text-[11px] font-medium uppercase tracking-[0.18em] text-slate-500 relative after:absolute after:bottom-[-3px] after:left-0 after:h-px after:w-0 after:bg-brand hover:after:w-full after:transition-all after:duration-300"
             >
               Módulos
             </a>
             <Link
               to="/planos"
-              className="text-[11px] font-medium uppercase tracking-[0.18em] text-slate-500 relative after:absolute after:bottom-[-3px] after:left-0 after:h-px after:w-0 after:bg-accent-orange hover:after:w-full after:transition-all after:duration-300"
+              className="text-[11px] font-medium uppercase tracking-[0.18em] text-slate-500 relative after:absolute after:bottom-[-3px] after:left-0 after:h-px after:w-0 after:bg-brand hover:after:w-full after:transition-all after:duration-300"
             >
               Preços
             </Link>
@@ -60,7 +60,7 @@ export function LandingHeader({ onScrollToTop }: LandingHeaderProps) {
           <div className="hidden md:flex justify-end">
             <Link
               to="/login"
-              className="px-6 py-2.5 bg-accent-orange text-ink rounded-full hover:bg-accent-orange/90 transition-all hover:-translate-y-0.5 active:translate-y-0 duration-200 font-medium text-[11px] uppercase tracking-[0.12em]"
+              className="px-6 py-2.5 bg-brand text-ink rounded-full hover:bg-brand/90 transition-all hover:-translate-y-0.5 active:translate-y-0 duration-200 font-medium text-[11px] uppercase tracking-[0.12em]"
             >
               Acessar Sistema
             </Link>
@@ -85,11 +85,7 @@ export function LandingHeader({ onScrollToTop }: LandingHeaderProps) {
             <Link to="/planos" className="text-lg font-medium text-slate-600" onClick={() => setMobileMenuOpen(false)}>
               Preços
             </Link>
-            <Link
-              to="/login"
-              className="text-lg font-medium text-accent-orange"
-              onClick={() => setMobileMenuOpen(false)}
-            >
+            <Link to="/login" className="text-lg font-medium text-brand" onClick={() => setMobileMenuOpen(false)}>
               Entrar
             </Link>
           </div>

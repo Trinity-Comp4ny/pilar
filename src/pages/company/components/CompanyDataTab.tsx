@@ -34,12 +34,12 @@ export function CompanyDataTab({
 }: CompanyDataTabProps) {
   const inputClass = !editing
     ? "bg-black/5 border-black/10 text-black/80"
-    : "border-accent-orange/20 focus-visible:ring-accent-orange/20";
+    : "border-brand/20 focus-visible:ring-brand/20";
   const readonlyClass = "bg-black/5 border-black/10 text-black/80";
 
   return (
-    <Card className={"border border-black/5 " + (editing ? "ring-1 ring-accent-orange/25" : "")}>
-      <CardHeader className={"flex flex-row items-center justify-between " + (editing ? "bg-accent-orange/5" : "")}>
+    <Card className={"border border-black/5 " + (editing ? "ring-1 ring-brand/25" : "")}>
+      <CardHeader className={"flex flex-row items-center justify-between " + (editing ? "bg-brand/5" : "")}>
         <div>
           <CardTitle className="flex items-center gap-2">
             <Building2 size={20} />
@@ -50,7 +50,7 @@ export function CompanyDataTab({
         {!editing ? (
           <Button
             onClick={onEdit}
-            className="rounded-full bg-accent-orange hover:bg-accent-orange/90 text-ink"
+            className="rounded-full bg-brand hover:bg-brand/90 text-ink"
             disabled={!isAdmin || isLoading}
           >
             Editar
@@ -60,7 +60,7 @@ export function CompanyDataTab({
             <Button variant="outline" onClick={onCancel} className="rounded-full">
               Cancelar
             </Button>
-            <Button onClick={onSave} className="rounded-full bg-accent-orange hover:bg-accent-orange/90 text-ink">
+            <Button onClick={onSave} className="rounded-full bg-brand hover:bg-brand/90 text-ink">
               Salvar
             </Button>
           </div>
@@ -169,7 +169,7 @@ export function CompanyDataTab({
 
         <div className="mt-6 pt-6 border-t">
           <div className="flex items-center gap-2 mb-3">
-            <QrCode size={16} className="text-accent-orange" />
+            <QrCode size={16} className="text-brand" />
             <Label className="text-sm font-semibold">Cobrança direta (sem Asaas)</Label>
           </div>
           <p className="text-xs text-muted-foreground mb-4">

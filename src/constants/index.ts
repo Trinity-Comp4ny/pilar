@@ -24,10 +24,14 @@ export const PROJECT_STATUS_CONFIG: Record<ProjectStatus, { label: string; color
   [PROJECT_STATUS.REVISAO]: { label: "Revisão", color: "bg-purple-100 text-purple-800", columnColor: "bg-purple-50" },
   [PROJECT_STATUS.PARALISADO]: {
     label: "Paralisado",
-    color: "bg-accent-orange/10 text-accent-orange",
-    columnColor: "bg-accent-orange/5",
+    color: "bg-brand/10 text-brand",
+    columnColor: "bg-brand/5",
   },
-  [PROJECT_STATUS.CONCLUIDO]: { label: "Concluído", color: "bg-green-100 text-green-800", columnColor: "bg-green-50" },
+  [PROJECT_STATUS.CONCLUIDO]: {
+    label: "Concluído",
+    color: "bg-status-done/10 text-status-done",
+    columnColor: "bg-status-done/5",
+  },
   [PROJECT_STATUS.CANCELADO]: { label: "Cancelado", color: "bg-red-100 text-red-800", columnColor: "bg-red-50" },
 };
 
@@ -112,15 +116,50 @@ export const DESPESA_STATUS = {
 
 // Contract Types
 export const CONTRACT_TYPES = {
-  CONTRATADO: "contratado",
+  CLT: "clt",
+  PJ: "pj",
+  ESTAGIARIO: "estagiario",
+  SOCIO: "socio",
   TERCEIRIZADO: "terceirizado",
 } as const;
 
 export type ContractType = (typeof CONTRACT_TYPES)[keyof typeof CONTRACT_TYPES];
 
 export const CONTRACT_TYPE_LABELS: Record<ContractType, string> = {
-  [CONTRACT_TYPES.CONTRATADO]: "Contratado (CLT/PJ)",
+  [CONTRACT_TYPES.CLT]: "CLT",
+  [CONTRACT_TYPES.PJ]: "PJ",
+  [CONTRACT_TYPES.ESTAGIARIO]: "Estagiário",
+  [CONTRACT_TYPES.SOCIO]: "Sócio",
   [CONTRACT_TYPES.TERCEIRIZADO]: "Terceirizado",
+};
+
+export const CONTRACT_TYPE_COLORS: Record<ContractType, string> = {
+  [CONTRACT_TYPES.CLT]: "bg-blue-100 text-blue-700 border-blue-200",
+  [CONTRACT_TYPES.PJ]: "bg-purple-100 text-purple-700 border-purple-200",
+  [CONTRACT_TYPES.ESTAGIARIO]: "bg-positive/10 text-positive border-positive/20",
+  [CONTRACT_TYPES.SOCIO]: "bg-amber-100 text-amber-700 border-amber-200",
+  [CONTRACT_TYPES.TERCEIRIZADO]: "bg-gray-100 text-gray-700 border-gray-200",
+};
+
+// Pessoa Status
+export const PESSOA_STATUS = {
+  ATIVO: "ativo",
+  INATIVO: "inativo",
+  AFASTADO: "afastado",
+} as const;
+
+export type PessoaStatus = (typeof PESSOA_STATUS)[keyof typeof PESSOA_STATUS];
+
+export const PESSOA_STATUS_LABELS: Record<PessoaStatus, string> = {
+  [PESSOA_STATUS.ATIVO]: "Ativo",
+  [PESSOA_STATUS.INATIVO]: "Inativo",
+  [PESSOA_STATUS.AFASTADO]: "Afastado",
+};
+
+export const PESSOA_STATUS_COLORS: Record<PessoaStatus, string> = {
+  [PESSOA_STATUS.ATIVO]: "bg-positive/10 text-positive border-positive/20",
+  [PESSOA_STATUS.INATIVO]: "bg-gray-100 text-gray-600 border-gray-200",
+  [PESSOA_STATUS.AFASTADO]: "bg-yellow-100 text-yellow-700 border-yellow-200",
 };
 
 // Payment Methods

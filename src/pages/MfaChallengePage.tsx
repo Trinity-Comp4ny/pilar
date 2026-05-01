@@ -25,12 +25,12 @@ export default function MfaChallengePage() {
       {/* Lado Esquerdo - Form */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-8 lg:p-16 bg-paper relative overflow-hidden">
         <div className="absolute inset-0 -z-10 pointer-events-none">
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-accent-orange/6 rounded-full blur-[100px] animate-aurora" />
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-brand/6 rounded-full blur-[100px] animate-aurora" />
         </div>
 
         <button
           onClick={handleLogout}
-          className="absolute top-8 left-8 lg:left-12 flex items-center gap-2 text-ink-soft hover:text-accent-orange transition-colors font-medium text-sm group"
+          className="absolute top-8 left-8 lg:left-12 flex items-center gap-2 text-ink-soft hover:text-brand transition-colors font-medium text-sm group"
         >
           <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
           Sair
@@ -98,15 +98,15 @@ export default function MfaChallengePage() {
             <div className="flex flex-col items-end gap-3 pt-4 border-t border-white/20">
               <div className="flex items-center gap-2 text-sm font-medium text-white/80">
                 <span>Controle Financeiro Integrado</span>
-                <CheckCircle2 className="w-5 h-5 text-accent-orange" />
+                <CheckCircle2 className="w-5 h-5 text-brand" />
               </div>
               <div className="flex items-center gap-2 text-sm font-medium text-white/80">
                 <span>Gestão de Projetos e Obras</span>
-                <CheckCircle2 className="w-5 h-5 text-accent-orange" />
+                <CheckCircle2 className="w-5 h-5 text-brand" />
               </div>
               <div className="flex items-center gap-2 text-sm font-medium text-white/80">
                 <span>CRM e Relacionamento</span>
-                <CheckCircle2 className="w-5 h-5 text-accent-orange" />
+                <CheckCircle2 className="w-5 h-5 text-brand" />
               </div>
             </div>
           </div>

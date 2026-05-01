@@ -15,7 +15,7 @@ import { PessoaTable } from "./components/PessoaTable";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 export default function Pessoas() {
-  usePageTitle("Pessoas");
+  usePageTitle("Equipe");
   const { canEdit: isAdmin } = useFeatureAccess("pessoas");
   const queryClient = useQueryClient();
 
@@ -34,7 +34,7 @@ export default function Pessoas() {
 
   useEffect(() => {
     if (fetchError) {
-      toast.error("Erro ao carregar pessoas", {
+      toast.error("Erro ao carregar equipe", {
         description: fetchError.message,
       });
     }
@@ -91,12 +91,12 @@ export default function Pessoas() {
       containerClassName="h-full flex flex-col min-h-0"
       header={
         <PageHeader
-          title="Pessoas"
+          title="Equipe"
           description="Gerencie funcionários e terceirizados"
           children={
             isAdmin ? (
               <Button
-                className="rounded-full bg-accent-orange hover:bg-accent-orange/90 text-ink transition-colors px-5 py-2.5 text-sm"
+                className="rounded-full bg-brand hover:bg-brand/90 text-ink transition-colors px-5 py-2.5 text-sm"
                 onClick={handleNewPessoa}
               >
                 <Plus className="mr-2 h-4 w-4" />

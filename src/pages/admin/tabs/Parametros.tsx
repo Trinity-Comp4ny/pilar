@@ -80,8 +80,8 @@ function ParamRow({
   return (
     <div className="flex items-center justify-between rounded-lg border border-black/5 bg-white p-4">
       <div className="flex items-center gap-3 min-w-0">
-        <div className="h-9 w-9 rounded-full bg-accent-orange/10 flex items-center justify-center flex-shrink-0">
-          <Icon size={16} className="text-accent-orange" />
+        <div className="h-9 w-9 rounded-full bg-brand/10 flex items-center justify-center flex-shrink-0">
+          <Icon size={16} className="text-brand" />
         </div>
         <div className="min-w-0">
           <div className="text-sm font-medium truncate">{name}</div>

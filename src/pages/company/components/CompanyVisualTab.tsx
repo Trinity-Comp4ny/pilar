@@ -35,8 +35,8 @@ export function CompanyVisualTab({
   };
 
   return (
-    <Card className={"border border-black/5 " + (editing ? "ring-1 ring-accent-orange/25" : "")}>
-      <CardHeader className={"flex flex-row items-center justify-between " + (editing ? "bg-accent-orange/5" : "")}>
+    <Card className={"border border-black/5 " + (editing ? "ring-1 ring-brand/25" : "")}>
+      <CardHeader className={"flex flex-row items-center justify-between " + (editing ? "bg-brand/5" : "")}>
         <div>
           <CardTitle className="flex items-center gap-2">
             <Palette size={20} />
@@ -47,7 +47,7 @@ export function CompanyVisualTab({
         {!editing ? (
           <Button
             onClick={onEdit}
-            className="rounded-full bg-accent-orange hover:bg-accent-orange/90 text-ink"
+            className="rounded-full bg-brand hover:bg-brand/90 text-ink"
             disabled={!isAdmin || isLoading}
           >
             Editar
@@ -57,7 +57,7 @@ export function CompanyVisualTab({
             <Button variant="outline" onClick={onCancel} className="rounded-full">
               Cancelar
             </Button>
-            <Button onClick={onSave} className="rounded-full bg-accent-orange hover:bg-accent-orange/90 text-ink">
+            <Button onClick={onSave} className="rounded-full bg-brand hover:bg-brand/90 text-ink">
               Salvar
             </Button>
           </div>

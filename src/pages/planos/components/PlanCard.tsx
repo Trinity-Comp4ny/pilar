@@ -27,12 +27,12 @@ export function PlanCard({ plan, cycle }: PlanCardProps) {
       className={cn(
         "relative flex flex-col rounded-2xl border p-8 bg-white transition-all",
         plan.destaque
-          ? "border-accent-orange shadow-2xl shadow-accent-orange/10 scale-[1.02]"
+          ? "border-brand shadow-2xl shadow-brand/10 scale-[1.02]"
           : "border-slate-200 hover:border-slate-300 hover:shadow-lg"
       )}
     >
       {plan.destaque && (
-        <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-accent-orange text-ink text-[10px] uppercase tracking-widest font-semibold px-3 py-1 rounded-full">
+        <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-brand text-ink text-[10px] uppercase tracking-widest font-semibold px-3 py-1 rounded-full">
           Mais popular
         </span>
       )}
@@ -53,7 +53,7 @@ export function PlanCard({ plan, cycle }: PlanCardProps) {
       <ul className="space-y-3 mb-8 flex-1">
         {plan.features.map((feature) => (
           <li key={feature} className="flex items-start gap-3 text-sm text-slate-700">
-            <Check className="w-4 h-4 text-accent-orange flex-shrink-0 mt-0.5" />
+            <Check className="w-4 h-4 text-brand flex-shrink-0 mt-0.5" />
             <span>{feature}</span>
           </li>
         ))}
@@ -63,9 +63,7 @@ export function PlanCard({ plan, cycle }: PlanCardProps) {
         to={`/checkout?plano=${plan.slug}&ciclo=${cycle}`}
         className={cn(
           "w-full px-6 py-3 rounded-full font-medium text-sm transition-all flex items-center justify-center gap-2 group",
-          plan.destaque
-            ? "bg-accent-orange text-ink hover:bg-accent-orange/90"
-            : "bg-ink-soft text-white hover:bg-black"
+          plan.destaque ? "bg-brand text-ink hover:bg-brand/90" : "bg-ink-soft text-white hover:bg-black"
         )}
       >
         Assinar {plan.nome}

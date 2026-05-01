@@ -51,13 +51,13 @@ export default function Landing() {
   };
 
   return (
-    <div className="landing-grain min-h-screen bg-paper text-ink-soft font-sans selection:bg-accent-orange/30 selection:text-ink">
+    <div className="landing-grain min-h-screen bg-paper text-ink-soft font-sans selection:bg-brand/30 selection:text-ink">
       <LandingHeader onScrollToTop={scrollToTop} />
 
       <section className="relative pt-40 pb-24 md:pt-56 md:pb-32 overflow-hidden">
         {/* Fundo aurora */}
         <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/3 w-[900px] h-[600px] bg-accent-orange/7 rounded-full blur-[130px] animate-aurora" />
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/3 w-[900px] h-[600px] bg-brand/7 rounded-full blur-[130px] animate-aurora" />
           <div className="absolute top-1/4 right-0 w-[500px] h-[400px] bg-blue-400/5 rounded-full blur-[100px] animate-aurora-alt" />
           <div className="absolute inset-0 hero-dot-grid" />
         </div>

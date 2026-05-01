@@ -43,7 +43,7 @@ export function CloseMonthDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
         <Button
-          className="bg-accent-orange hover:bg-accent-orange/90"
+          className="bg-brand hover:bg-brand/90"
           disabled={!allConfirmed}
           title={!allConfirmed ? "Confirme todos os colaboradores para fechar a folha" : ""}
         >
@@ -73,7 +73,7 @@ export function CloseMonthDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancelar
           </Button>
-          <Button onClick={onConfirm} disabled={saving} className="bg-accent-orange hover:bg-accent-orange/90">
+          <Button onClick={onConfirm} disabled={saving} className="bg-brand hover:bg-brand/90">
             {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Confirmar Fechamento
           </Button>
@@ -118,7 +118,7 @@ export function ConfirmPersonDialog({ open, onOpenChange, person, onConfirm }: C
             </div>
             <div className="flex justify-between text-lg pt-1">
               <span className="font-semibold">Total a Receber: </span>
-              <span className="font-bold text-green-600">{formatCurrency(person.v_total)}</span>
+              <span className="font-bold text-positive">{formatCurrency(person.v_total)}</span>
             </div>
           </div>
         )}
@@ -126,7 +126,7 @@ export function ConfirmPersonDialog({ open, onOpenChange, person, onConfirm }: C
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancelar
           </Button>
-          <Button onClick={onConfirm} className="bg-accent-orange hover:bg-accent-orange/90">
+          <Button onClick={onConfirm} className="bg-brand hover:bg-brand/90">
             Confirmar Colaborador
           </Button>
         </DialogFooter>
@@ -225,7 +225,7 @@ export function DetailEditDialog({
               <Button variant="outline" onClick={onCancelEditing}>
                 Cancelar
               </Button>
-              <Button onClick={onSaveEditing} className="bg-accent-orange hover:bg-accent-orange/90">
+              <Button onClick={onSaveEditing} className="bg-brand hover:bg-brand/90">
                 Salvar Alterações
               </Button>
             </>
@@ -265,7 +265,7 @@ function EditableField({
       {isEditing ? (
         <Input type="number" value={editValue} onChange={(e) => onChange(parseFloat(e.target.value) || 0)} />
       ) : (
-        <p className={isBold ? "font-bold text-lg text-green-600" : ""}>
+        <p className={isBold ? "font-bold text-lg text-positive" : ""}>
           {isCurrency ? formatCurrency(value) : `${value?.toLocaleString("pt-BR")}${suffix || ""}`}
         </p>
       )}
@@ -318,7 +318,7 @@ export function HistoryDetailDialog({ open, onOpenChange, selectedHistory, loadi
                     <TableCell>{item.p_cargo}</TableCell>
                     <TableCell className="text-right">{formatCurrency(item.p_salario_fixo)}</TableCell>
                     <TableCell className="text-center">{(item.soma_area ?? 0).toLocaleString("pt-BR")} m²</TableCell>
-                    <TableCell className="text-right text-green-600 font-medium">
+                    <TableCell className="text-right text-positive font-medium">
                       {formatCurrency(item.v_variavel)}
                     </TableCell>
                     <TableCell className="text-right font-bold">{formatCurrency(item.v_total)}</TableCell>
@@ -326,7 +326,7 @@ export function HistoryDetailDialog({ open, onOpenChange, selectedHistory, loadi
                       <Badge
                         variant="secondary"
                         className={`capitalize text-xs px-2 py-0.5
-                          ${item.status === "pago" ? "bg-green-500 text-white" : ""}
+                          ${item.status === "pago" ? "bg-positive/100 text-white" : ""}
                           ${item.status === "pendente" ? "bg-yellow-400 text-black" : ""}
                           ${item.status === "cancelado" ? "bg-red-500 text-white" : ""}
                         `}

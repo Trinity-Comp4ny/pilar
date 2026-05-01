@@ -9,7 +9,7 @@ import { usePageTitle } from "@/hooks/usePageTitle";
 
 const STATUS_COLORS: Record<string, string> = {
   Planejamento: "bg-blue-100 text-blue-800",
-  "Em andamento": "bg-green-100 text-green-800",
+  "Em andamento": "bg-positive/10 text-positive",
   Revisão: "bg-purple-100 text-purple-800",
   Paralisado: "bg-yellow-100 text-yellow-800",
   Concluído: "bg-gray-100 text-gray-800",
@@ -74,7 +74,7 @@ export default function ClienteDashboard() {
 
               return (
                 <Link key={projeto.projeto_id} to={`/cliente/projeto/${projeto.projeto_id}`} className="block group">
-                  <Card className="h-full transition-all hover:shadow-md hover:border-accent-orange/30 group-hover:border-accent-orange/30">
+                  <Card className="h-full transition-all hover:shadow-md hover:border-brand/30 group-hover:border-brand/30">
                     <CardContent className="p-5 space-y-4">
                       {/* Header do card */}
                       <div className="flex items-start justify-between gap-2">
@@ -96,10 +96,7 @@ export default function ClienteDashboard() {
                           <span className="text-xs font-medium">{progress}%</span>
                         </div>
                         <div className="w-full bg-gray-200 rounded-full h-2">
-                          <div
-                            className="bg-accent-orange h-2 rounded-full transition-all"
-                            style={{ width: `${progress}%` }}
-                          />
+                          <div className="bg-brand h-2 rounded-full transition-all" style={{ width: `${progress}%` }} />
                         </div>
                       </div>
 
@@ -110,7 +107,7 @@ export default function ClienteDashboard() {
                       </div>
 
                       {/* Link */}
-                      <div className="flex items-center gap-1 text-xs font-medium text-accent-orange group-hover:underline">
+                      <div className="flex items-center gap-1 text-xs font-medium text-brand group-hover:underline">
                         Ver detalhes
                         <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" />
                       </div>

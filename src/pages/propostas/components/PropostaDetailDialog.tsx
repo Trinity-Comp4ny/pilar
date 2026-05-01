@@ -115,10 +115,10 @@ const STAGE_CONFIG: Record<string, StageConfig> = {
     message: "Enviada ao cliente — aguardando resposta. Registre o resultado quando o cliente retornar.",
   },
   aceita: {
-    bg: "bg-green-50",
-    border: "border-green-200",
+    bg: "bg-positive/10",
+    border: "border-positive/20",
     icon: ThumbsUp,
-    iconColor: "text-green-600",
+    iconColor: "text-positive",
     message: "Proposta aceita! Formalize o contrato ou converta em projeto para iniciar o trabalho.",
   },
   recusada: {
@@ -277,7 +277,7 @@ export function PropostaDetailDialog({
                 <div className="flex flex-wrap gap-2">
                   <Button
                     variant="outline"
-                    className="gap-1.5 border-green-300 text-green-700 hover:bg-green-600 hover:text-white hover:border-green-600 transition-colors"
+                    className="gap-1.5 border-positive/30 text-positive hover:bg-positive hover:text-white hover:border-positive transition-colors"
                     disabled={isUpdating}
                     onClick={() => onStatusChange(proposta.id, "aceita")}
                   >
@@ -348,11 +348,11 @@ export function PropostaDetailDialog({
             <div className="space-y-3">
               {/* Status do contrato */}
               {proposta.contrato_assinado ? (
-                <div className="flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-3 py-2.5">
-                  <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0" />
+                <div className="flex items-center gap-2 rounded-lg border border-positive/20 bg-positive/10 px-3 py-2.5">
+                  <CheckCircle2 className="h-4 w-4 text-positive flex-shrink-0" />
                   <div>
-                    <p className="text-xs font-medium text-green-800">Contrato assinado</p>
-                    <p className="text-[11px] text-green-700">O cliente assinou o contrato.</p>
+                    <p className="text-xs font-medium text-positive">Contrato assinado</p>
+                    <p className="text-[11px] text-positive">O cliente assinou o contrato.</p>
                   </div>
                 </div>
               ) : proposta.contrato_recusado ? (
@@ -373,7 +373,7 @@ export function PropostaDetailDialog({
                   <div className="flex flex-wrap gap-2">
                     <Button
                       variant="outline"
-                      className="gap-1.5 border-green-300 text-green-700 hover:bg-green-600 hover:text-white hover:border-green-600 transition-colors"
+                      className="gap-1.5 border-positive/30 text-positive hover:bg-positive hover:text-white hover:border-positive transition-colors"
                       disabled={isUpdating}
                       onClick={onMarcarContratoAssinado}
                     >
@@ -432,7 +432,7 @@ export function PropostaDetailDialog({
               {canEdit && (
                 <div className="flex flex-wrap gap-2">
                   <Button
-                    className="gap-1.5 bg-green-600 hover:bg-green-700 text-white"
+                    className="gap-1.5 bg-positive hover:bg-positive/90 text-white"
                     disabled={isUpdating}
                     onClick={() => onStatusChange(proposta.id, "rascunho")}
                   >

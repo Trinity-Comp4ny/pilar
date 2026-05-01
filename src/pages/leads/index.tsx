@@ -53,10 +53,10 @@ const statusConfig: Record<string, { label: string; color: string; columnColor: 
   Proposta: { label: "Proposta Enviada", color: "bg-yellow-100 text-yellow-800", columnColor: "bg-yellow-50" },
   Negociação: {
     label: "Em Negociação",
-    color: "bg-accent-orange/10 text-accent-orange",
-    columnColor: "bg-accent-orange/5",
+    color: "bg-brand/10 text-brand",
+    columnColor: "bg-brand/5",
   },
-  Ganho: { label: "Ganho", color: "bg-green-100 text-green-800", columnColor: "bg-green-50" },
+  Ganho: { label: "Ganho", color: "bg-positive/10 text-positive", columnColor: "bg-positive/10" },
   Perdido: { label: "Perdido", color: "bg-red-100 text-red-800", columnColor: "bg-red-50" },
 };
 
@@ -278,7 +278,7 @@ export default function Leads() {
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               {canEdit && (
                 <DialogTrigger asChild>
-                  <Button className="rounded-full bg-accent-orange hover:bg-accent-orange/90 text-ink transition-colors px-5 py-2.5 text-sm">
+                  <Button className="rounded-full bg-brand hover:bg-brand/90 text-ink transition-colors px-5 py-2.5 text-sm">
                     <Plus className="mr-2 h-4 w-4" />
                     Novo Lead
                   </Button>
@@ -360,7 +360,7 @@ export default function Leads() {
                     </Button>
                     <Button
                       type="submit"
-                      className="flex-1 bg-accent-orange hover:bg-accent-orange/90 text-ink"
+                      className="flex-1 bg-brand hover:bg-brand/90 text-ink"
                       disabled={createLead.isPending}
                     >
                       {createLead.isPending ? (
@@ -383,7 +383,7 @@ export default function Leads() {
         <div className="flex-1 min-h-0">
           <div className="flex gap-4 w-full h-full min-h-0 overflow-x-auto pb-2">
             {Object.entries(statusConfig).map(([status, config]) => (
-              <div key={status} className="flex flex-col min-w-[260px] w-[260px] flex-shrink-0 min-h-0">
+              <div key={status} className="flex flex-col min-w-[340px] w-[340px] flex-shrink-0 min-h-0">
                 <div className={`${config.columnColor} rounded-t-lg p-3 border-b border-black/10`}>
                   <h3 className="font-medium text-sm flex items-center justify-between">
                     {config.label}
@@ -416,14 +416,14 @@ export default function Leads() {
                             >
                               <CardHeader className="p-3 pb-2">
                                 <div className="flex justify-between items-start">
-                                  <CardTitle className="text-sm font-medium flex items-start gap-2">
-                                    <User size={14} className="mt-0.5 flex-shrink-0" />
+                                  <CardTitle className="text-base font-medium flex items-start gap-2">
+                                    <User size={16} className="mt-0.5 flex-shrink-0" />
                                     <span className="line-clamp-1">{lead.nome}</span>
                                   </CardTitle>
                                   {lead.cliente_id && (
                                     <Badge
                                       variant="outline"
-                                      className="text-[10px] h-5 px-1.5 bg-green-50 text-green-700 border-green-200"
+                                      className="text-xs h-5 px-1.5 bg-positive/10 text-positive border-positive/20"
                                     >
                                       Cliente
                                     </Badge>
@@ -432,24 +432,24 @@ export default function Leads() {
                               </CardHeader>
                               <CardContent className="p-3 pt-0 space-y-1.5">
                                 {lead.email && (
-                                  <div className="flex items-center gap-2 text-xs text-black/60">
-                                    <Mail size={12} className="flex-shrink-0" />
+                                  <div className="flex items-center gap-2 text-sm text-black/60">
+                                    <Mail size={14} className="flex-shrink-0" />
                                     <span className="line-clamp-1">{lead.email}</span>
                                   </div>
                                 )}
                                 {lead.contato && (
-                                  <div className="flex items-center gap-2 text-xs text-black/60">
-                                    <Phone size={12} className="flex-shrink-0" />
+                                  <div className="flex items-center gap-2 text-sm text-black/60">
+                                    <Phone size={14} className="flex-shrink-0" />
                                     <span className="line-clamp-1">{lead.contato}</span>
                                   </div>
                                 )}
                                 {lead.origem && (
-                                  <p className="text-xs text-black/50 line-clamp-1 mt-2 pt-2 border-t">
+                                  <p className="text-sm text-black/50 line-clamp-1 mt-2 pt-2 border-t">
                                     Origem: {lead.origem}
                                   </p>
                                 )}
                                 {lead.status === "Perdido" && lead.motivo_perda && (
-                                  <p className="text-xs text-red-500/80 line-clamp-2 mt-1 pt-1 border-t border-red-100">
+                                  <p className="text-sm text-red-500/80 line-clamp-2 mt-1 pt-1 border-t border-red-100">
                                     Motivo: {lead.motivo_perda}
                                   </p>
                                 )}
@@ -488,7 +488,7 @@ export default function Leads() {
                   {selectedLead.status === "Ganho" && !selectedLead.cliente_id && (
                     <Button
                       size="sm"
-                      className="bg-green-600 hover:bg-green-700 text-white h-8"
+                      className="bg-positive hover:bg-positive/90 text-white h-8"
                       onClick={() => setIsConvertOpen(true)}
                     >
                       <CheckCircle2 className="mr-2 h-4 w-4" />
@@ -545,8 +545,8 @@ export default function Leads() {
 
                   {selectedLead.convertido_em && (
                     <div className="space-y-2">
-                      <Label className="text-xs text-green-600">Convertido em</Label>
-                      <p className="text-sm text-green-700 bg-green-50 p-3 rounded-lg border border-green-100">
+                      <Label className="text-xs text-positive">Convertido em</Label>
+                      <p className="text-sm text-positive bg-positive/10 p-3 rounded-lg border border-positive/10">
                         {new Date(selectedLead.convertido_em).toLocaleDateString("pt-BR")}
                       </p>
                     </div>
@@ -556,7 +556,7 @@ export default function Leads() {
                 {/* Ações */}
                 <div className="flex items-center gap-2 pt-4 border-t">
                   <Button
-                    className="bg-accent-orange hover:bg-accent-orange/90 text-ink"
+                    className="bg-brand hover:bg-brand/90 text-ink"
                     onClick={() => setIsCreatePropostaOpen(true)}
                     disabled={
                       createProposta.isPending || selectedLead.status === "Perdido" || selectedLead.status === "Ganho"
@@ -671,7 +671,7 @@ export default function Leads() {
               </Button>
               <Button
                 type="submit"
-                className="flex-1 bg-accent-orange hover:bg-accent-orange/90 text-ink"
+                className="flex-1 bg-brand hover:bg-brand/90 text-ink"
                 disabled={updateLead.isPending}
               >
                 {updateLead.isPending ? (
@@ -701,7 +701,7 @@ export default function Leads() {
             <Button variant="outline" onClick={() => setIsConvertOpen(false)}>
               Cancelar
             </Button>
-            <Button onClick={handleConvertToClient} className="bg-green-600 hover:bg-green-700 text-white">
+            <Button onClick={handleConvertToClient} className="bg-positive hover:bg-positive/90 text-white">
               Confirmar Conversão
             </Button>
           </DialogFooter>
@@ -759,7 +759,7 @@ export default function Leads() {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5 text-accent-orange" />
+              <FileText className="h-5 w-5 text-brand" />
               Criar Proposta
             </DialogTitle>
             <DialogDescription>
@@ -776,7 +776,7 @@ export default function Leads() {
               Cancelar
             </Button>
             <Button
-              className="bg-accent-orange hover:bg-accent-orange/90 text-ink"
+              className="bg-brand hover:bg-brand/90 text-ink"
               onClick={() => {
                 setIsCreatePropostaOpen(false);
                 if (selectedLead) handleCriarProposta(selectedLead);
@@ -809,7 +809,7 @@ export default function Leads() {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <UserPlus className="h-5 w-5 text-green-600" />
+              <UserPlus className="h-5 w-5 text-positive" />
               Lead Ganho!
             </DialogTitle>
             <DialogDescription>
@@ -822,7 +822,7 @@ export default function Leads() {
             </Button>
             <Button
               onClick={handleAutoConvert}
-              className="bg-green-600 hover:bg-green-700 text-white"
+              className="bg-positive hover:bg-positive/90 text-white"
               disabled={convertToClient.isPending}
             >
               {convertToClient.isPending ? (

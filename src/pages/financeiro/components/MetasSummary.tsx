@@ -68,7 +68,7 @@ export default function MetasSummary() {
                   <span className="text-sm font-medium">{meta.nome}</span>
                   <span className="text-sm font-bold">{percent}%</span>
                 </div>
-                <Progress value={percent} className="h-2 bg-black" indicatorClassName="bg-green-500" />
+                <Progress value={percent} className="h-2 bg-black" indicatorClassName="bg-positive/100" />
                 <div className="flex justify-between text-xs text-muted-foreground">
                   <span>R$ {(meta.atual / 1000).toFixed(0)}k</span>
                   <span>R$ {(meta.alvo / 1000).toFixed(0)}k</span>

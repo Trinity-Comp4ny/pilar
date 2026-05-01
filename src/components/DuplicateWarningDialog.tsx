@@ -48,7 +48,7 @@ export function DuplicateWarningDialog({ open, onOpenChange, duplicates, onConfi
 
         <AlertDialogFooter>
           <AlertDialogCancel>Cancelar</AlertDialogCancel>
-          <AlertDialogAction onClick={onConfirm} className="bg-accent-orange hover:bg-accent-orange/90">
+          <AlertDialogAction onClick={onConfirm} className="bg-brand hover:bg-brand/90">
             Salvar mesmo assim
           </AlertDialogAction>
         </AlertDialogFooter>

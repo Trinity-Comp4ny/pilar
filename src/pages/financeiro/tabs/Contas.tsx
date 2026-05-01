@@ -382,9 +382,9 @@ export default function Configuracoes() {
                 R$ {contas.reduce((acc, c) => acc + (c.saldo_atual || 0), 0).toLocaleString("pt-BR")}
               </p>
             </div>
-            <div className="p-4 bg-green-50 rounded-lg border border-green-100">
-              <p className="text-xs text-green-700 font-medium mb-1">Total Entradas</p>
-              <p className="text-2xl font-bold text-green-900">
+            <div className="p-4 bg-positive/10 rounded-lg border border-positive/10">
+              <p className="text-xs text-positive font-medium mb-1">Total Entradas</p>
+              <p className="text-2xl font-bold text-positive">
                 R$ {contas.reduce((acc, c) => acc + (c.total_entradas || 0), 0).toLocaleString("pt-BR")}
               </p>
             </div>
@@ -394,9 +394,9 @@ export default function Configuracoes() {
                 R$ {contas.reduce((acc, c) => acc + (c.total_saidas || 0), 0).toLocaleString("pt-BR")}
               </p>
             </div>
-            <div className="p-4 bg-accent-orange/10 rounded-lg border border-accent-orange/20">
-              <p className="text-xs text-accent-orange font-medium mb-1">Usado em Cartões</p>
-              <p className="text-2xl font-bold text-accent-orange">
+            <div className="p-4 bg-brand/10 rounded-lg border border-brand/20">
+              <p className="text-xs text-brand font-medium mb-1">Usado em Cartões</p>
+              <p className="text-2xl font-bold text-brand">
                 R$ {cartoes.reduce((acc, c) => acc + (c.usado || 0), 0).toLocaleString("pt-BR")}
               </p>
             </div>
@@ -426,7 +426,7 @@ export default function Configuracoes() {
                 {canEdit && (
                   <DialogTrigger asChild>
                     <Button
-                      className="bg-accent-orange hover:bg-accent-orange/90 text-ink rounded-full"
+                      className="bg-brand hover:bg-brand/90 text-ink rounded-full"
                       size="sm"
                       onClick={() => {
                         resetForm();
@@ -485,7 +485,7 @@ export default function Configuracoes() {
                       />
                     </div>
                     <Button
-                      className="w-full bg-accent-orange hover:bg-accent-orange/90 text-ink rounded-full"
+                      className="w-full bg-brand hover:bg-brand/90 text-ink rounded-full"
                       onClick={handleSaveConta}
                     >
                       {selectedConta ? "Atualizar Conta" : "Salvar Conta"}
@@ -552,7 +552,7 @@ export default function Configuracoes() {
                         <span
                           className={cn(
                             "font-medium flex items-center gap-1",
-                            variacao >= 0 ? "text-green-600" : "text-red-600"
+                            variacao >= 0 ? "text-positive" : "text-red-600"
                           )}
                         >
                           {variacao >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
@@ -589,7 +589,7 @@ export default function Configuracoes() {
                 {canEdit && (
                   <DialogTrigger asChild>
                     <Button
-                      className="bg-accent-orange hover:bg-accent-orange/90 text-ink rounded-full"
+                      className="bg-brand hover:bg-brand/90 text-ink rounded-full"
                       size="sm"
                       onClick={() => {
                         resetForm();
@@ -664,7 +664,7 @@ export default function Configuracoes() {
                       <p className="text-xs text-muted-foreground">Conta padrão usada ao pagar faturas deste cartão</p>
                     </div>
                     <Button
-                      className="w-full bg-accent-orange hover:bg-accent-orange/90 text-ink rounded-full"
+                      className="w-full bg-brand hover:bg-brand/90 text-ink rounded-full"
                       onClick={handleSaveCartao}
                     >
                       {selectedCartao ? "Atualizar Cartão" : "Salvar Cartão"}
@@ -727,7 +727,7 @@ export default function Configuracoes() {
                         <div
                           className={cn(
                             "h-2 rounded-full transition-all",
-                            percentUsed > 80 ? "bg-red-500" : percentUsed > 50 ? "bg-yellow-500" : "bg-green-500"
+                            percentUsed > 80 ? "bg-red-500" : percentUsed > 50 ? "bg-yellow-500" : "bg-positive/100"
                           )}
                           style={{ width: `${percentUsed}%` }}
                         />
@@ -770,13 +770,11 @@ export default function Configuracoes() {
                 </div>
                 <div>
                   <Label className="text-xs text-muted-foreground">Utilizado</Label>
-                  <p className="text-sm text-accent-orange font-medium">
-                    R$ {selectedCartao.usado?.toLocaleString("pt-BR")}
-                  </p>
+                  <p className="text-sm text-brand font-medium">R$ {selectedCartao.usado?.toLocaleString("pt-BR")}</p>
                 </div>
                 <div className="col-span-2 pt-2 border-t">
                   <Label className="text-xs text-muted-foreground">Disponível</Label>
-                  <p className="text-lg font-bold text-green-600">
+                  <p className="text-lg font-bold text-positive">
                     R$ {selectedCartao.disponivel?.toLocaleString("pt-BR")}
                   </p>
                 </div>
@@ -828,7 +826,7 @@ export default function Configuracoes() {
                 </div>
                 <div>
                   <Label className="text-xs text-muted-foreground">Entradas (Recebidas)</Label>
-                  <p className="text-sm font-medium text-green-600">
+                  <p className="text-sm font-medium text-positive">
                     + R$ {selectedConta.total_entradas?.toLocaleString("pt-BR")}
                   </p>
                 </div>

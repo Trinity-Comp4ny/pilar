@@ -86,7 +86,7 @@ export function ClienteShell({ account, children, projetoId, projetoNome, projet
                   className={({ isActive }) =>
                     `flex items-center gap-1.5 px-4 py-3 text-sm border-b-2 transition-colors ${
                       isActive
-                        ? "border-accent-orange text-accent-orange font-medium"
+                        ? "border-brand text-brand font-medium"
                         : "border-transparent text-muted-foreground hover:text-foreground"
                     }`
                   }

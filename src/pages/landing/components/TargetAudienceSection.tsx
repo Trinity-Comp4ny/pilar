@@ -41,7 +41,7 @@ export function TargetAudienceSection() {
             {personas.map((p, i) => (
               <div key={p.number} className="reveal-up" style={{ transitionDelay: `${i * 80}ms` }}>
                 <div className="flex items-baseline gap-4 mb-4">
-                  <span className="text-xs font-medium text-accent-orange tabular-nums tracking-wider">{p.number}</span>
+                  <span className="text-xs font-medium text-brand tabular-nums tracking-wider">{p.number}</span>
                   <div className="flex-1 h-px bg-slate-300/60" />
                 </div>
                 <p className="text-xs uppercase tracking-[0.2em] text-slate-500 font-medium mb-3">{p.label}</p>

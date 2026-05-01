@@ -26,7 +26,7 @@ interface AuditLog {
 }
 
 const ACTION_COLOR: Record<AuditLog["action"], string> = {
-  INSERT: "bg-green-100 text-green-700",
+  INSERT: "bg-positive/10 text-positive",
   UPDATE: "bg-blue-100 text-blue-700",
   DELETE: "bg-red-100 text-red-700",
 };
@@ -48,7 +48,7 @@ interface AdminAuditLog {
 const CATEGORY_COLOR: Record<string, string> = {
   user: "bg-blue-100 text-blue-700",
   empresa: "bg-purple-100 text-purple-700",
-  member: "bg-green-100 text-green-700",
+  member: "bg-positive/10 text-positive",
   billing: "bg-yellow-100 text-yellow-700",
   impersonation: "bg-orange-100 text-orange-700",
 };
@@ -423,8 +423,8 @@ export function AuditoriaTab() {
       <Card>
         <CardHeader>
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-full bg-accent-orange/10 flex items-center justify-center">
-              <ShieldCheck size={18} className="text-accent-orange" />
+            <div className="h-10 w-10 rounded-full bg-brand/10 flex items-center justify-center">
+              <ShieldCheck size={18} className="text-brand" />
             </div>
             <div>
               <CardTitle>Auditoria</CardTitle>

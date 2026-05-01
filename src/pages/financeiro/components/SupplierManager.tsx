@@ -179,7 +179,7 @@ export function SupplierManager({ onSupplierChange }: SupplierManagerProps) {
 
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
-            <Button size="sm" className="bg-accent-orange hover:bg-accent-orange/90 text-ink">
+            <Button size="sm" className="bg-brand hover:bg-brand/90 text-ink">
               <Plus className="h-4 w-4 mr-1" /> Adicionar
             </Button>
           </DialogTrigger>
@@ -249,7 +249,7 @@ export function SupplierManager({ onSupplierChange }: SupplierManagerProps) {
                 </Button>
                 <Button
                   onClick={handleAddSupplier}
-                  className="flex-1 bg-accent-orange hover:bg-accent-orange/90 text-ink"
+                  className="flex-1 bg-brand hover:bg-brand/90 text-ink"
                   disabled={isSaving}
                 >
                   {isSaving ? (
@@ -385,7 +385,7 @@ export function SupplierManager({ onSupplierChange }: SupplierManagerProps) {
               </Button>
               <Button
                 onClick={handleEditSupplier}
-                className="flex-1 bg-accent-orange hover:bg-accent-orange/90 text-ink"
+                className="flex-1 bg-brand hover:bg-brand/90 text-ink"
                 disabled={isSaving}
               >
                 {isSaving ? (

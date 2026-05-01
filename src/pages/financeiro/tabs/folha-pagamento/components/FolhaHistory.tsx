@@ -26,8 +26,8 @@ export function FolhaHistory({ history, selectedMonth, selectedYear, onOpenDetai
           history.map((h) => (
             <Card
               key={`${h.mes}-${h.ano}`}
-              className={`cursor-pointer transition-all hover:border-accent-orange/50 hover:shadow-md ${
-                selectedMonth === h.mes && selectedYear === h.ano ? "border-accent-orange bg-accent-orange/5" : ""
+              className={`cursor-pointer transition-all hover:border-brand/50 hover:shadow-md ${
+                selectedMonth === h.mes && selectedYear === h.ano ? "border-brand bg-brand/5" : ""
               }`}
               onClick={() => onOpenDetail(h)}
             >
@@ -39,11 +39,11 @@ export function FolhaHistory({ history, selectedMonth, selectedYear, onOpenDetai
                   <div className="text-sm text-muted-foreground">{h.count} colaboradores</div>
                 </div>
                 <div className="text-right">
-                  <div className="font-bold text-accent-orange">{formatCurrency(h.total)}</div>
+                  <div className="font-bold text-brand">{formatCurrency(h.total)}</div>
                   <Badge
                     variant="secondary"
                     className={`mt-1 capitalize text-[10px] h-5 px-2
-                      ${h.status === "pago" ? "bg-green-500 text-white" : ""}
+                      ${h.status === "pago" ? "bg-positive/100 text-white" : ""}
                       ${h.status === "pendente" ? "bg-yellow-400 text-black" : ""}
                       ${h.status === "cancelado" ? "bg-red-500 text-white" : ""}
                       ${h.status === "misto" ? "bg-orange-400 text-white" : ""}

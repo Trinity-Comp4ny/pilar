@@ -43,7 +43,7 @@ interface EscopoItem {
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: typeof Clock }> = {
   rascunho: { label: "Rascunho", color: "bg-gray-100 text-gray-800", icon: FileText },
   pendente_aprovacao: { label: "Pendente", color: "bg-yellow-100 text-yellow-800", icon: Clock },
-  aprovado: { label: "Aprovado", color: "bg-green-100 text-green-800", icon: CheckCircle2 },
+  aprovado: { label: "Aprovado", color: "bg-positive/10 text-positive", icon: CheckCircle2 },
   rejeitado: { label: "Rejeitado", color: "bg-red-100 text-red-800", icon: XCircle },
 };
 
@@ -342,7 +342,7 @@ export function EscopoTab({ projetoId, canEdit }: EscopoTabProps) {
                           <>
                             <Button
                               size="sm"
-                              className="text-xs h-7 bg-green-600 hover:bg-green-700"
+                              className="text-xs h-7 bg-positive hover:bg-positive/90"
                               onClick={() => updateStatusMutation.mutate({ id: escopo.id, status: "aprovado" })}
                             >
                               <CheckCircle2 className="h-3 w-3 mr-1" /> Aprovar

@@ -66,10 +66,10 @@ export default function MetasDashboard() {
       label: "Total de Metas",
       value: stats.total,
       icon: Target,
-      color: "text-accent-orange",
-      bg: "bg-accent-orange/10",
+      color: "text-brand",
+      bg: "bg-brand/10",
     },
-    { label: "Concluídas", value: stats.completed, icon: CheckCircle2, color: "text-green-600", bg: "bg-green-50" },
+    { label: "Concluídas", value: stats.completed, icon: CheckCircle2, color: "text-positive", bg: "bg-positive/10" },
     { label: "Progresso Médio", value: `${stats.avgProgress}%`, icon: Clock, color: "text-blue-600", bg: "bg-blue-50" },
     { label: "Atrasadas", value: stats.overdue, icon: AlertTriangle, color: "text-red-600", bg: "bg-red-50" },
   ];
@@ -166,7 +166,7 @@ export default function MetasDashboard() {
                     <Progress
                       value={percent}
                       className="h-2 bg-gray-100"
-                      indicatorClassName={percent >= 100 ? "bg-green-500" : "bg-accent-orange"}
+                      indicatorClassName={percent >= 100 ? "bg-positive/100" : "bg-brand"}
                     />
                   </div>
                 );
@@ -179,7 +179,7 @@ export default function MetasDashboard() {
       {/* Resumo por tipo */}
       <div className="grid md:grid-cols-3 gap-4">
         {[
-          { label: "Financeiras", icon: TrendingUp, stats: finStats, color: "text-green-600", bg: "bg-green-50" },
+          { label: "Financeiras", icon: TrendingUp, stats: finStats, color: "text-positive", bg: "bg-positive/10" },
           { label: "Pessoais", icon: Users, stats: pesStats, color: "text-blue-600", bg: "bg-blue-50" },
           { label: "Projetos", icon: Calendar, stats: projStats, color: "text-purple-600", bg: "bg-purple-50" },
         ].map((item) => {
@@ -199,7 +199,7 @@ export default function MetasDashboard() {
                 <Progress
                   value={item.stats.avgProgress}
                   className="h-2 bg-gray-100"
-                  indicatorClassName={item.stats.avgProgress >= 100 ? "bg-green-500" : "bg-accent-orange"}
+                  indicatorClassName={item.stats.avgProgress >= 100 ? "bg-positive/100" : "bg-brand"}
                 />
                 <div className="flex justify-between mt-2 text-xs text-muted-foreground">
                   <span>{item.stats.completed} concluídas</span>
