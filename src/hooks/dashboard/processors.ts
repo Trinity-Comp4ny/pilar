@@ -20,19 +20,53 @@ import type {
 export const sumValues = (data: { valor: number }[] | null): number =>
   (data || []).reduce((acc, item) => acc + Number(item.valor), 0);
 
+type ReceitaMesRow = {
+  valor: number;
+  status: string | null;
+  data_recebimento: string | null;
+  data_vencimento: string | null;
+};
+type DespesaMesRow = {
+  valor: number;
+  status: string | null;
+  data_pagamento: string | null;
+  data_vencimento: string | null;
+};
+
+function sumByDisplayDate(
+  data: ReceitaMesRow[] | DespesaMesRow[] | null,
+  type: "receita" | "despesa",
+  startStr: string,
+  endStr: string
+): number {
+  if (!data) return 0;
+  return (data as (ReceitaMesRow & DespesaMesRow)[]).reduce((acc, item) => {
+    const dateA = type === "receita" ? item.data_recebimento : item.data_pagamento;
+    const displayDate = getDisplayDate(dateA, item.data_vencimento, item.status);
+    if (!displayDate) return acc;
+    const d = displayDate.split("T")[0];
+    if (d >= startStr && d <= endStr) return acc + Number(item.valor);
+    return acc;
+  }, 0);
+}
+
 export function buildKPIs(
-  receitasMes: { valor: number }[] | null,
-  receitasMesAnt: { valor: number }[] | null,
-  despesasMes: { valor: number }[] | null,
-  despesasMesAnt: { valor: number }[] | null,
+  receitasMes: ReceitaMesRow[] | null,
+  receitasMesAnt: ReceitaMesRow[] | null,
+  despesasMes: DespesaMesRow[] | null,
+  despesasMesAnt: DespesaMesRow[] | null,
   receitasPendentes: { valor: number }[] | null,
   despesasPendentes: { valor: number }[] | null,
-  projetosAtivos: number
+  projetosAtivos: number,
+  mesAtualStartStr: string,
+  mesAtualEndStr: string,
+  mesAnteriorStartStr: string,
+  mesAnteriorEndStr: string
 ): DashboardKPI {
-  const receitaMes = sumValues(receitasMes);
-  const receitaMesAnt = sumValues(receitasMesAnt);
-  const despesaMes = sumValues(despesasMes);
-  const despesaMesAnt = sumValues(despesasMesAnt);
+  const receitaMes = sumByDisplayDate(receitasMes, "receita", mesAtualStartStr, mesAtualEndStr);
+  const receitaMesAnt = sumByDisplayDate(receitasMesAnt, "receita", mesAnteriorStartStr, mesAnteriorEndStr);
+  const despesaMes = sumByDisplayDate(despesasMes, "despesa", mesAtualStartStr, mesAtualEndStr);
+  const despesaMesAnt = sumByDisplayDate(despesasMesAnt, "despesa", mesAnteriorStartStr, mesAnteriorEndStr);
 
   return {
     receitaMes,

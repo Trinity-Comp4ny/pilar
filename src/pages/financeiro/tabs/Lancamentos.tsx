@@ -1,41 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowDownCircle, ArrowUpCircle, TrendingUp, TrendingDown, Wallet, Clock } from "lucide-react";
-import { format, startOfMonth, endOfMonth, subMonths, startOfYear, endOfYear } from "date-fns";
+import { Clock, Plus, TrendingDown, TrendingUp, Wallet } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
-import Receitas from "./Receitas";
-import Despesas from "./Despesas";
-
-type Tipo = "receitas" | "despesas";
-type Periodo = "mes-atual" | "mes-anterior" | "ultimos-30" | "ano" | "tudo";
-
-const PERIODO_LABEL: Record<Periodo, string> = {
-  "mes-atual": "Mês atual",
-  "mes-anterior": "Mês anterior",
-  "ultimos-30": "Últimos 30 dias",
-  ano: "Este ano",
-  tudo: "Todo período",
-};
-
-const periodoRange = (p: Periodo): { from: string | null; to: string | null } => {
-  const today = new Date();
-  if (p === "tudo") return { from: null, to: null };
-  if (p === "mes-atual")
-    return { from: format(startOfMonth(today), "yyyy-MM-dd"), to: format(endOfMonth(today), "yyyy-MM-dd") };
-  if (p === "mes-anterior") {
-    const prev = subMonths(today, 1);
-    return { from: format(startOfMonth(prev), "yyyy-MM-dd"), to: format(endOfMonth(prev), "yyyy-MM-dd") };
-  }
-  if (p === "ultimos-30") {
-    const from = new Date(today);
-    from.setDate(from.getDate() - 30);
-    return { from: format(from, "yyyy-MM-dd"), to: format(today, "yyyy-MM-dd") };
-  }
-  return { from: format(startOfYear(today), "yyyy-MM-dd"), to: format(endOfYear(today), "yyyy-MM-dd") };
-};
+import { LancamentosTable } from "../components/LancamentosTable";
+import { useLancamentosUnified } from "../hooks/useLancamentosUnified";
+import { LancamentoFormDialog } from "../components/LancamentoFormDialog";
+import { defaultFilters, periodoRange, type LancamentosFilters } from "../components/lancamentosFilters";
+import type { TipoLancamento } from "../hooks/useLancamentosUnified";
 
 interface KPIs {
   recebido: number;
@@ -48,12 +21,13 @@ const formatBRL = (v: number) =>
   v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 2 });
 
 export default function Lancamentos() {
-  const [tipo, setTipo] = useState<Tipo>("receitas");
-  const [periodo, setPeriodo] = useState<Periodo>("mes-atual");
+  const [filters, setFilters] = useState<LancamentosFilters>(defaultFilters);
+  const [newTipo, setNewTipo] = useState<TipoLancamento | null>(null);
   const [kpis, setKpis] = useState<KPIs>({ recebido: 0, pago: 0, aReceber: 0, aPagar: 0 });
   const [loadingKpis, setLoadingKpis] = useState(false);
 
-  const range = useMemo(() => periodoRange(periodo), [periodo]);
+  const range = useMemo(() => periodoRange(filters), [filters]);
+  const unified = useLancamentosUnified({ from: range.from, to: range.to });
 
   useEffect(() => {
     const fetchKpis = async () => {
@@ -99,18 +73,26 @@ export default function Lancamentos() {
           <h1 className="text-2xl font-bold">Lançamentos</h1>
           <p className="text-sm text-muted-foreground">Receitas e despesas em um só lugar</p>
         </div>
-        <Select value={periodo} onValueChange={(v) => setPeriodo(v as Periodo)}>
-          <SelectTrigger className="h-9 w-[180px] rounded-full">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {Object.entries(PERIODO_LABEL).map(([v, l]) => (
-              <SelectItem key={v} value={v}>
-                {l}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="flex items-center gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-9 rounded-full gap-1 border-positive text-positive hover:bg-positive/10"
+            onClick={() => setNewTipo("receita")}
+          >
+            <Plus className="h-3.5 w-3.5" />
+            Nova receita
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-9 rounded-full gap-1 border-red-400 text-red-600 hover:bg-red-50"
+            onClick={() => setNewTipo("despesa")}
+          >
+            <Plus className="h-3.5 w-3.5" />
+            Nova despesa
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -122,27 +104,35 @@ export default function Lancamentos() {
 
       <Card className="rounded-2xl border-black/10 p-4">
         <CardContent className="p-0">
-          <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-            <div className="inline-flex rounded-full bg-muted p-1">
-              <SegBtn active={tipo === "receitas"} onClick={() => setTipo("receitas")}>
-                <ArrowUpCircle className="h-4 w-4" />
-                Receitas
-              </SegBtn>
-              <SegBtn active={tipo === "despesas"} onClick={() => setTipo("despesas")}>
-                <ArrowDownCircle className="h-4 w-4" />
-                Despesas
-              </SegBtn>
-            </div>
+          <div className="flex flex-wrap items-center justify-end gap-2 mb-3">
             <div className="text-sm text-muted-foreground flex items-center gap-2">
               <Wallet className="h-4 w-4" />
-              Saldo do período:{" "}
+              Saldo no período:{" "}
               <span className={cn("font-semibold", saldo >= 0 ? "text-positive" : "text-red-600")}>
                 {formatBRL(saldo)}
               </span>
             </div>
           </div>
 
-          {tipo === "receitas" ? <Receitas /> : <Despesas />}
+          <LancamentosTable
+            data={unified.data}
+            loading={unified.loading}
+            onRefetch={unified.refetch}
+            filters={filters}
+            onFiltersChange={setFilters}
+          />
+
+          {newTipo && (
+            <LancamentoFormDialog
+              open={newTipo !== null}
+              onOpenChange={(v) => !v && setNewTipo(null)}
+              tipo={newTipo}
+              onSaved={() => {
+                setNewTipo(null);
+                unified.refetch();
+              }}
+            />
+          )}
         </CardContent>
       </Card>
     </div>
@@ -179,22 +169,5 @@ function KPICard({ label, value, icon: Icon, tone, loading }: KPICardProps) {
         </span>
       </div>
     </Card>
-  );
-}
-
-function SegBtn({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
-  return (
-    <Button
-      type="button"
-      variant="ghost"
-      size="sm"
-      onClick={onClick}
-      className={cn(
-        "rounded-full h-8 px-4 gap-2 text-sm transition-colors",
-        active ? "bg-white shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
-      )}
-    >
-      {children}
-    </Button>
   );
 }

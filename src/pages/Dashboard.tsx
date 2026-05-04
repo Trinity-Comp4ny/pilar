@@ -44,50 +44,46 @@ const fmtCompact = new Intl.NumberFormat("pt-BR", {
   maximumFractionDigits: 1,
 });
 
-function VariacaoBadge({ valor }: { valor: number }) {
-  if (valor === 0) return null;
-  const positivo = valor > 0;
-  return (
-    <span
-      className={`inline-flex items-center gap-0.5 text-[11px] font-medium px-1.5 py-0.5 rounded-full ${positivo ? "bg-positive/10 text-positive" : "bg-negative/10 text-negative"}`}
-    >
-      {positivo ? <TrendingUp size={11} /> : <TrendingDown size={11} />}
-      {Math.abs(valor).toFixed(1)}%
-    </span>
-  );
-}
-
 function KPICard({
   title,
   value,
-  icon: Icon,
-  iconBg,
-  iconColor,
+  cardBg,
+  titleColor,
+  valueColor,
+  subtitleColor,
   variacao,
   subtitle,
+  onClick,
 }: {
   title: string;
   value: string;
-  icon: React.ElementType;
-  iconBg: string;
-  iconColor: string;
+  cardBg: string;
+  titleColor: string;
+  valueColor: string;
+  subtitleColor: string;
   variacao?: number;
   subtitle?: string;
+  onClick?: () => void;
 }) {
+  const variacaoNode =
+    variacao !== undefined && variacao !== 0 ? (
+      <span className={`flex items-center gap-0.5 ${variacao > 0 ? "text-green-600" : "text-red-600"}`}>
+        {variacao > 0 ? <TrendingUp size={12} className="mr-0.5" /> : <TrendingDown size={12} className="mr-0.5" />}
+        {Math.abs(variacao).toFixed(1)}% vs mês anterior
+      </span>
+    ) : null;
+
   return (
-    <Card className="hover:shadow-md transition-shadow">
-      <CardContent className="p-4">
-        <div className="flex items-start justify-between mb-3">
-          <span className="text-xs font-medium text-gray-500">{title}</span>
-          <div className={`p-1.5 rounded-lg ${iconBg}`}>
-            <Icon size={15} className={iconColor} />
-          </div>
-        </div>
-        <div className="text-xl font-bold tracking-tight">{value}</div>
-        <div className="flex items-center gap-2 mt-1">
-          {variacao !== undefined && <VariacaoBadge valor={variacao} />}
-          {subtitle && <span className="text-[11px] text-gray-400">{subtitle}</span>}
-        </div>
+    <Card
+      className={`vrz-card w-full ${cardBg} ${onClick ? "cursor-pointer hover:shadow-md transition-all hover:-translate-y-0.5" : ""}`}
+      onClick={onClick}
+    >
+      <CardHeader className="pb-2">
+        <CardTitle className={`text-sm font-medium ${titleColor}`}>{title}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className={`text-2xl font-bold ${valueColor}`}>{value}</div>
+        <p className={`text-xs mt-1 flex items-center gap-1 ${subtitleColor}`}>{variacaoNode ?? subtitle}</p>
       </CardContent>
     </Card>
   );
@@ -380,87 +376,71 @@ export default function Dashboard() {
   return (
     <PageLayout header={header}>
       <div className="space-y-6 w-full max-w-none">
-        {canFin && (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <KPICard
-              title="Receita do Mês"
-              value={fmt.format(kpis.receitaMes)}
-              icon={ArrowUpRight}
-              iconBg="bg-positive/10"
-              iconColor="text-positive"
-              variacao={kpis.receitaVariacao}
-              subtitle="vs. mês anterior"
-            />
-            <KPICard
-              title="Despesa do Mês"
-              value={fmt.format(kpis.despesaMes)}
-              icon={ArrowDownRight}
-              iconBg="bg-red-50"
-              iconColor="text-red-600"
-              variacao={kpis.despesaVariacao}
-              subtitle="vs. mês anterior"
-            />
-            <KPICard
-              title="A Receber"
-              value={fmt.format(kpis.aReceber)}
-              icon={CalendarClock}
-              iconBg="bg-blue-50"
-              iconColor="text-blue-600"
-              subtitle="pendente"
-            />
-            <KPICard
-              title="A Pagar"
-              value={fmt.format(kpis.aPagar)}
-              icon={Clock}
-              iconBg="bg-amber-50"
-              iconColor="text-amber-600"
-              subtitle="pendente"
-            />
-          </div>
-        )}
-
-        {showMiniKpis && (
+        {(canFin || canProj || canLeads) && (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {canFin && (
-              <Card className="col-span-2">
-                <CardContent className="p-4 flex items-center gap-4">
-                  <div className={`p-2.5 rounded-xl ${kpis.saldoMes >= 0 ? "bg-positive/10" : "bg-negative/10"}`}>
-                    <DollarSign size={20} className={kpis.saldoMes >= 0 ? "text-positive" : "text-negative"} />
-                  </div>
-                  <div>
-                    <span className="text-xs font-medium text-gray-500">Saldo do Mês</span>
-                    <p className={`text-2xl font-bold ${kpis.saldoMes >= 0 ? "text-positive" : "text-negative"}`}>
-                      {fmt.format(kpis.saldoMes)}
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
+              <>
+                <KPICard
+                  title="Receita do Mês"
+                  value={fmt.format(kpis.receitaMes)}
+                  cardBg="bg-green-50 border-green-100"
+                  titleColor="text-green-800"
+                  valueColor="text-green-700"
+                  subtitleColor="text-green-600"
+                  variacao={kpis.receitaVariacao}
+                />
+                <KPICard
+                  title="Despesa do Mês"
+                  value={fmt.format(kpis.despesaMes)}
+                  cardBg="bg-red-50 border-red-100"
+                  titleColor="text-red-800"
+                  valueColor="text-red-700"
+                  subtitleColor="text-red-600"
+                  variacao={kpis.despesaVariacao}
+                />
+                <KPICard
+                  title="Saldo do Mês"
+                  value={fmt.format(kpis.saldoMes)}
+                  cardBg={kpis.saldoMes >= 0 ? "bg-blue-50 border-blue-100" : "bg-red-50 border-red-100"}
+                  titleColor={kpis.saldoMes >= 0 ? "text-blue-800" : "text-red-800"}
+                  valueColor={kpis.saldoMes >= 0 ? "text-blue-700" : "text-red-700"}
+                  subtitleColor={kpis.saldoMes >= 0 ? "text-blue-600" : "text-red-600"}
+                  subtitle="receitas − despesas"
+                />
+                <KPICard
+                  title="A Receber"
+                  value={fmt.format(kpis.aReceber)}
+                  cardBg="bg-amber-50 border-amber-100"
+                  titleColor="text-amber-800"
+                  valueColor="text-amber-700"
+                  subtitleColor="text-amber-600"
+                  subtitle="pendente"
+                />
+              </>
             )}
             {canProj && (
-              <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate("/projetos")}>
-                <CardContent className="p-4 flex items-center gap-4">
-                  <div className="p-2.5 rounded-xl bg-brand/10">
-                    <Briefcase size={20} className="text-brand" />
-                  </div>
-                  <div>
-                    <span className="text-xs font-medium text-gray-500">Projetos Ativos</span>
-                    <p className="text-2xl font-bold text-brand">{kpis.projetosAtivos}</p>
-                  </div>
-                </CardContent>
-              </Card>
+              <KPICard
+                title="Projetos Ativos"
+                value={String(kpis.projetosAtivos)}
+                cardBg="bg-orange-50 border-orange-100"
+                titleColor="text-orange-800"
+                valueColor="text-orange-700"
+                subtitleColor="text-orange-600"
+                subtitle="em andamento"
+                onClick={() => navigate("/projetos")}
+              />
             )}
             {canLeads && (
-              <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate("/leads")}>
-                <CardContent className="p-4 flex items-center gap-4">
-                  <div className="p-2.5 rounded-xl bg-purple-50">
-                    <Target size={20} className="text-purple-600" />
-                  </div>
-                  <div>
-                    <span className="text-xs font-medium text-gray-500">Leads</span>
-                    <p className="text-2xl font-bold text-purple-600">{leadsTotal}</p>
-                  </div>
-                </CardContent>
-              </Card>
+              <KPICard
+                title="Leads"
+                value={String(leadsTotal)}
+                cardBg="bg-purple-50 border-purple-100"
+                titleColor="text-purple-800"
+                valueColor="text-purple-700"
+                subtitleColor="text-purple-600"
+                subtitle="no pipeline"
+                onClick={() => navigate("/leads")}
+              />
             )}
           </div>
         )}

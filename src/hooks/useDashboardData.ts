@@ -44,9 +44,7 @@ export const useDashboardData = () => {
       );
 
       const projetosData = results[6].data || [];
-      const projetosAtivos = projetosData.filter(
-        (p: { status: string | null }) => p.status === PROJECT_STATUS.EM_ANDAMENTO
-      ).length;
+      const projetosAtivos = results[14].count ?? 0;
 
       const kpis = buildKPIs(
         results[0].data,
@@ -55,7 +53,11 @@ export const useDashboardData = () => {
         results[3].data,
         results[4].data,
         results[5].data,
-        projetosAtivos
+        projetosAtivos,
+        mesAtualStart.toISOString().split("T")[0],
+        mesAtualEnd.toISOString().split("T")[0],
+        mesAnteriorStart.toISOString().split("T")[0],
+        mesAnteriorEnd.toISOString().split("T")[0]
       );
 
       const projetos = buildProjetos(projetosData, now);

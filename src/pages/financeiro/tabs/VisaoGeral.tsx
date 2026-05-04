@@ -1,6 +1,16 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowUpRight, ArrowDownRight, TrendingUp, TrendingDown, DollarSign, BarChart3 } from "lucide-react";
+import {
+  ArrowUpRight,
+  ArrowDownRight,
+  TrendingUp,
+  TrendingDown,
+  DollarSign,
+  BarChart3,
+  Clock,
+  Trophy,
+} from "lucide-react";
+import { formatDateDisplay } from "@/lib/dateUtils";
 import {
   ResponsiveContainer,
   ComposedChart,
@@ -14,8 +24,6 @@ import {
   PieChart,
   Pie,
   Cell,
-  AreaChart,
-  Area,
 } from "recharts";
 import { CustomTooltip } from "../components/CustomTooltip";
 import { useFinanceData } from "@/hooks/useFinanceData";
@@ -29,96 +37,18 @@ interface VisaoGeralProps {
 const formatCurrency = (val: number) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(val);
 
-const formatVariation = (raw: string | number) => {
-  const value = Number(raw);
-  if (!Number.isFinite(value) || value === 0) return { label: "estável", up: false, neutral: true };
-  if (Math.abs(value) > 999) return { label: ">999%", up: value > 0, neutral: false };
-  return { label: `${value > 0 ? "+" : ""}${value.toFixed(1)}%`, up: value > 0, neutral: false };
-};
-
-interface KpiCardProps {
-  label: string;
-  value: number;
-  icon: React.ReactNode;
-  iconBg: string;
-  valueColor: string;
-  sparkData: Array<{ value: number }>;
-  sparkColor: string;
-  variation?: { label: string; up: boolean; neutral: boolean; goodWhenUp: boolean };
-  footer?: React.ReactNode;
-}
-
-function KpiCard({ label, value, icon, iconBg, valueColor, sparkData, sparkColor, variation, footer }: KpiCardProps) {
-  const trendColor = variation
-    ? variation.neutral
-      ? "text-muted-foreground"
-      : variation.up === variation.goodWhenUp
-        ? "text-emerald-600"
-        : "text-red-600"
-    : "text-muted-foreground";
-
-  return (
-    <Card className="vrz-card w-full overflow-hidden relative">
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-          {label}
-        </CardTitle>
-        <div className={`p-2 rounded-full ${iconBg}`}>{icon}</div>
-      </CardHeader>
-      <CardContent className="pb-3">
-        <div className={`text-3xl font-bold tabular-nums ${valueColor}`}>{formatCurrency(value)}</div>
-        {variation && (
-          <p className={`text-xs flex items-center gap-1 mt-1 font-medium ${trendColor}`}>
-            {variation.neutral ? (
-              <span className="opacity-60">—</span>
-            ) : variation.up ? (
-              <TrendingUp size={12} />
-            ) : (
-              <TrendingDown size={12} />
-            )}
-            {variation.label} <span className="text-muted-foreground font-normal">vs período anterior</span>
-          </p>
-        )}
-        {footer}
-      </CardContent>
-      <div className="h-12 -mt-2 px-1 opacity-90">
-        <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={sparkData} margin={{ top: 4, right: 0, left: 0, bottom: 0 }}>
-            <defs>
-              <linearGradient id={`spark-${label}`} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor={sparkColor} stopOpacity={0.4} />
-                <stop offset="100%" stopColor={sparkColor} stopOpacity={0} />
-              </linearGradient>
-            </defs>
-            <Area
-              type="monotone"
-              dataKey="value"
-              stroke={sparkColor}
-              strokeWidth={2}
-              fill={`url(#spark-${label})`}
-              isAnimationActive={false}
-            />
-          </AreaChart>
-        </ResponsiveContainer>
-      </div>
-    </Card>
-  );
-}
-
 function VisaoGeralSkeleton() {
   return (
     <div className="space-y-6 w-full max-w-none">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
         {[1, 2, 3].map((i) => (
           <Card key={i} className="vrz-card w-full">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardHeader className="pb-2">
               <Skeleton className="h-3 w-24" />
-              <Skeleton className="h-9 w-9 rounded-full" />
             </CardHeader>
             <CardContent className="space-y-2">
-              <Skeleton className="h-9 w-40" />
+              <Skeleton className="h-8 w-40" />
               <Skeleton className="h-3 w-32" />
-              <Skeleton className="h-12 w-full mt-3" />
             </CardContent>
           </Card>
         ))}
@@ -152,10 +82,9 @@ function VisaoGeralSkeleton() {
 interface DonutProps {
   data: Array<{ name: string; value: number; color: string }>;
   totalLabel: string;
-  totalColor: string;
 }
 
-function DonutChart({ data, totalLabel, totalColor }: DonutProps) {
+function DonutChart({ data, totalLabel }: DonutProps) {
   const total = data.reduce((acc, item) => acc + item.value, 0);
 
   return (
@@ -176,10 +105,13 @@ function DonutChart({ data, totalLabel, totalColor }: DonutProps) {
           ))}
           <text
             x="50%"
-            y="48%"
+            y="47%"
             textAnchor="middle"
             dominantBaseline="middle"
-            className="fill-muted-foreground text-[10px] font-semibold uppercase tracking-wider"
+            fontSize={10}
+            fontWeight={600}
+            fill="hsl(220 9% 46%)"
+            style={{ textTransform: "uppercase", letterSpacing: "0.05em" }}
           >
             {totalLabel}
           </text>
@@ -188,7 +120,9 @@ function DonutChart({ data, totalLabel, totalColor }: DonutProps) {
             y="56%"
             textAnchor="middle"
             dominantBaseline="middle"
-            className={`text-base font-bold tabular-nums ${totalColor}`}
+            fontSize={13}
+            fontWeight={700}
+            fill="hsl(0 0% 10%)"
           >
             {formatCurrency(total)}
           </text>
@@ -211,11 +145,13 @@ export default function VisaoGeral({ visualizacao, dateFrom, dateTo }: VisaoGera
     despesasTotal: 0,
     despesasMes: 0,
     saldo: 0,
+    aReceber: { total: 0, count: 0 },
+    aPagar: { total: 0, count: 0 },
   };
+  const topReceitas = dashboardData?.topReceitas ?? [];
+  const topDespesas = dashboardData?.topDespesas ?? [];
 
   const chartData = visualizacao === "dia" ? dashboardData?.chartDataDiario || [] : dashboardData?.chartData || [];
-  const chartDataDiario = dashboardData?.chartDataDiario || [];
-
   const categoriaData = dashboardData?.categoriaData || [];
   const despesasCategoriaData = dashboardData?.despesasCategoriaData || [];
 
@@ -223,55 +159,85 @@ export default function VisaoGeral({ visualizacao, dateFrom, dateTo }: VisaoGera
   const hasReceitasData = categoriaData.length > 0;
   const hasDespesasData = despesasCategoriaData.length > 0;
 
-  const receitasSpark = chartDataDiario.map((d) => ({ value: d.receitas }));
-  const despesasSpark = chartDataDiario.map((d) => ({ value: d.despesas }));
-  const saldoSpark = chartDataDiario.map((d) => ({ value: d.receitas - d.despesas }));
-
-  const receitasVar = { ...formatVariation(stats.receitasMes), goodWhenUp: true };
-  const despesasVar = { ...formatVariation(stats.despesasMes), goodWhenUp: false };
-  const margem = stats.receitasTotal > 0 ? (stats.saldo / stats.receitasTotal) * 100 : 0;
+  const margem = stats.receitasTotal > 0 ? ((stats.saldo / stats.receitasTotal) * 100).toFixed(1) : 0;
 
   return (
     <div className="space-y-6 w-full max-w-none">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
-        <KpiCard
-          label="Receitas Totais"
-          value={stats.receitasTotal}
-          icon={<ArrowUpRight size={18} className="text-emerald-600" />}
-          iconBg="bg-emerald-100"
-          valueColor="text-emerald-600"
-          sparkData={receitasSpark}
-          sparkColor="hsl(142 71% 45%)"
-          variation={receitasVar}
-        />
-
-        <KpiCard
-          label="Despesas Totais"
-          value={stats.despesasTotal}
-          icon={<ArrowDownRight size={18} className="text-red-600" />}
-          iconBg="bg-red-100"
-          valueColor="text-red-600"
-          sparkData={despesasSpark}
-          sparkColor="hsl(0 84% 60%)"
-          variation={despesasVar}
-        />
-
-        <KpiCard
-          label="Saldo Líquido"
-          value={stats.saldo}
-          icon={<DollarSign size={18} className="text-blue-600" />}
-          iconBg="bg-blue-100"
-          valueColor={stats.saldo >= 0 ? "text-blue-600" : "text-red-600"}
-          sparkData={saldoSpark}
-          sparkColor="hsl(217 91% 60%)"
-          footer={
-            <p className="text-xs text-muted-foreground mt-1 font-medium">
-              Margem de Lucro: <span className="text-foreground font-semibold">{margem.toFixed(1)}%</span>
+      {/* KPIs */}
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 w-full">
+        <Card className="vrz-card bg-positive/10 border-positive/10 w-full">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-green-700">Receitas Totais</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-700">{formatCurrency(stats.receitasTotal)}</div>
+            <p className="text-xs text-green-600 mt-1 flex items-center">
+              <ArrowUpRight size={12} className="mr-1" />
+              {stats.receitasMes}% vs período anterior
             </p>
-          }
-        />
+          </CardContent>
+        </Card>
+
+        <Card className="vrz-card bg-red-50 border-red-100 w-full">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-red-800">Despesas Totais</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-red-700">{formatCurrency(stats.despesasTotal)}</div>
+            <p
+              className={`text-xs mt-1 flex items-center ${Number(stats.despesasMes) > 0 ? "text-red-600" : "text-green-600"}`}
+            >
+              {Number(stats.despesasMes) > 0 ? (
+                <TrendingUp size={12} className="mr-1" />
+              ) : (
+                <TrendingDown size={12} className="mr-1" />
+              )}
+              {stats.despesasMes}% vs período anterior
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="vrz-card bg-blue-50 border-blue-100 w-full">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-blue-800">Lucro Líquido</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-blue-700">{formatCurrency(stats.saldo)}</div>
+            <p className="text-xs text-blue-600 mt-1">
+              <DollarSign size={12} className="mr-1 inline" />
+              Margem de {margem}%
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="vrz-card bg-emerald-50 border-emerald-100 w-full">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-emerald-800">A receber</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-emerald-700">{formatCurrency(stats.aReceber.total)}</div>
+            <p className="text-xs text-emerald-600 mt-1 flex items-center">
+              <Clock size={12} className="mr-1" />
+              {stats.aReceber.count} lançamento(s) pendente(s)
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="vrz-card bg-amber-50 border-amber-100 w-full">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-amber-800">A pagar</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-amber-700">{formatCurrency(stats.aPagar.total)}</div>
+            <p className="text-xs text-amber-600 mt-1 flex items-center">
+              <Clock size={12} className="mr-1" />
+              {stats.aPagar.count} lançamento(s) pendente(s)
+            </p>
+          </CardContent>
+        </Card>
       </div>
 
+      {/* Gráfico principal */}
       <Card className="vrz-card w-full">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
@@ -330,11 +296,12 @@ export default function VisaoGeral({ visualizacao, dateFrom, dateTo }: VisaoGera
         </CardContent>
       </Card>
 
+      {/* Detalhamento por categoria */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
         <Card className="vrz-card w-full">
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
-              <ArrowUpRight className="h-4 w-4 text-emerald-600" />
+              <ArrowUpRight className="h-4 w-4 text-green-600" />
               Detalhamento de Entradas
             </CardTitle>
             <CardDescription>Receitas por categoria</CardDescription>
@@ -346,7 +313,7 @@ export default function VisaoGeral({ visualizacao, dateFrom, dateTo }: VisaoGera
                   <p className="text-muted-foreground text-sm">Não possui registros de dados ainda</p>
                 </div>
               ) : (
-                <DonutChart data={categoriaData} totalLabel="Total Receitas" totalColor="fill-emerald-600" />
+                <DonutChart data={categoriaData} totalLabel="Total" />
               )}
             </div>
           </CardContent>
@@ -367,9 +334,80 @@ export default function VisaoGeral({ visualizacao, dateFrom, dateTo }: VisaoGera
                   <p className="text-muted-foreground text-sm">Não possui registros de dados ainda</p>
                 </div>
               ) : (
-                <DonutChart data={despesasCategoriaData} totalLabel="Total Despesas" totalColor="fill-red-600" />
+                <DonutChart data={despesasCategoriaData} totalLabel="Total" />
               )}
             </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Top 5 lançamentos do período */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
+        <Card className="vrz-card w-full">
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <Trophy className="h-4 w-4 text-green-600" />
+              Top 5 receitas
+            </CardTitle>
+            <CardDescription>Maiores entradas do período</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {topReceitas.length === 0 ? (
+              <div className="h-[200px] flex items-center justify-center">
+                <p className="text-muted-foreground text-sm">Sem receitas no período</p>
+              </div>
+            ) : (
+              <ul className="divide-y divide-black/5">
+                {topReceitas.map((r, i) => (
+                  <li key={r.id} className="flex items-center gap-3 py-2.5">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-positive/10 text-positive text-xs font-bold flex-shrink-0">
+                      {i + 1}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium truncate">{r.descricao}</p>
+                      <p className="text-xs text-muted-foreground">{formatDateDisplay(r.data)}</p>
+                    </div>
+                    <span className="text-sm font-semibold text-positive tabular-nums whitespace-nowrap">
+                      {formatCurrency(r.valor)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="vrz-card w-full">
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <Trophy className="h-4 w-4 text-red-600" />
+              Top 5 despesas
+            </CardTitle>
+            <CardDescription>Maiores saídas do período</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {topDespesas.length === 0 ? (
+              <div className="h-[200px] flex items-center justify-center">
+                <p className="text-muted-foreground text-sm">Sem despesas no período</p>
+              </div>
+            ) : (
+              <ul className="divide-y divide-black/5">
+                {topDespesas.map((d, i) => (
+                  <li key={d.id} className="flex items-center gap-3 py-2.5">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-red-50 text-red-600 text-xs font-bold flex-shrink-0">
+                      {i + 1}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium truncate">{d.descricao}</p>
+                      <p className="text-xs text-muted-foreground">{formatDateDisplay(d.data)}</p>
+                    </div>
+                    <span className="text-sm font-semibold text-red-600 tabular-nums whitespace-nowrap">
+                      {formatCurrency(d.valor)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
           </CardContent>
         </Card>
       </div>
