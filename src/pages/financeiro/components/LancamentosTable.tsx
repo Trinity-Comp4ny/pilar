@@ -1,14 +1,12 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import {
   ArrowDownCircle,
   ArrowUpCircle,
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
-  ChevronLeft,
-  ChevronRight,
   Check,
-  Download,
   Pencil,
   Rows3,
   Rows4,
@@ -19,7 +17,6 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,7 +24,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
@@ -35,7 +31,6 @@ import { formatDateDisplay, getDisplayDate } from "@/lib/dateUtils";
 import { parseCurrencyString } from "@/lib/currencyUtils";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import type { Lancamento } from "../hooks/useLancamentosUnified";
-import { QuickAddLancamento } from "./QuickAddLancamento";
 import { LancamentoDetailDialog } from "./LancamentoDetailDialog";
 import { LancamentoFormDialog } from "./LancamentoFormDialog";
 import { LancamentosFilterBar } from "./LancamentosFilterBar";
@@ -58,6 +53,8 @@ interface SortState {
 
 type Density = "comfortable" | "compact";
 
+const ROW_HEIGHT: Record<Density, number> = { comfortable: 56, compact: 40 };
+
 const formatBRL = (v: number) =>
   v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 2 });
 
@@ -74,20 +71,12 @@ const isOverdue = (l: Lancamento): boolean => {
   return venc < today;
 };
 
-const PAGE_SIZES = [25, 50, 100, 9999] as const;
-const PAGE_SIZE_LABEL: Record<number, string> = { 25: "25", 50: "50", 100: "100", 9999: "Todos" };
-
 export function LancamentosTable({ data, loading, onRefetch, filters, onFiltersChange }: Props) {
   const { canEdit } = useFeatureAccess("financeiro");
   const aux = useLancamentosFiltersData();
 
   const [sort, setSort] = useState<SortState>({ key: "data", dir: "desc" });
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState<number>(() => {
-    const v = Number(localStorage.getItem("lancamentos.pageSize") ?? "50");
-    return PAGE_SIZES.includes(v as (typeof PAGE_SIZES)[number]) ? v : 50;
-  });
   const [density, setDensity] = useState<Density>(
     () => (localStorage.getItem("lancamentos.density") as Density) ?? "comfortable"
   );
@@ -97,9 +86,6 @@ export function LancamentosTable({ data, loading, onRefetch, filters, onFiltersC
   const [detailTarget, setDetailTarget] = useState<Lancamento | null>(null);
   const [editTarget, setEditTarget] = useState<Lancamento | null>(null);
 
-  useEffect(() => {
-    localStorage.setItem("lancamentos.pageSize", String(pageSize));
-  }, [pageSize]);
   useEffect(() => {
     localStorage.setItem("lancamentos.density", density);
   }, [density]);
@@ -181,20 +167,8 @@ export function LancamentosTable({ data, loading, onRefetch, filters, onFiltersC
   }, [filtered, sort]);
 
   useEffect(() => {
-    setPage(1);
-  }, [filters, pageSize, sort]);
-
-  useEffect(() => {
     setSelected(new Set());
   }, [filters]);
-
-  const totalPages = Math.max(1, Math.ceil(sorted.length / pageSize));
-  const safePage = Math.min(page, totalPages);
-  const pageRows = useMemo(() => {
-    if (pageSize >= 9999) return sorted;
-    const start = (safePage - 1) * pageSize;
-    return sorted.slice(start, start + pageSize);
-  }, [sorted, safePage, pageSize]);
 
   const totals = useMemo(() => {
     let receitas = 0;
@@ -206,14 +180,12 @@ export function LancamentosTable({ data, loading, onRefetch, filters, onFiltersC
     return { receitas, despesas, saldo: receitas - despesas };
   }, [sorted]);
 
-  const allOnPageSelected = pageRows.length > 0 && pageRows.every((l) => selected.has(rowKey(l)));
-  const someOnPageSelected = pageRows.some((l) => selected.has(rowKey(l)));
+  const allSelected = sorted.length > 0 && sorted.every((l) => selected.has(rowKey(l)));
+  const someSelected = sorted.some((l) => selected.has(rowKey(l)));
 
-  const togglePageSelection = () => {
-    const next = new Set(selected);
-    if (allOnPageSelected) pageRows.forEach((l) => next.delete(rowKey(l)));
-    else pageRows.forEach((l) => next.add(rowKey(l)));
-    setSelected(next);
+  const toggleAll = () => {
+    if (allSelected) setSelected(new Set());
+    else setSelected(new Set(sorted.map((l) => rowKey(l))));
   };
 
   const toggleRow = (l: Lancamento) => {
@@ -303,18 +275,14 @@ export function LancamentosTable({ data, loading, onRefetch, filters, onFiltersC
         supabase
           .from("receitas")
           .update({ deleted_at: stamp } as never)
-          .in("id", recIds) as unknown as PromiseLike<{
-          error: unknown;
-        }>
+          .in("id", recIds) as unknown as PromiseLike<{ error: unknown }>
       );
     if (despIds.length)
       ops.push(
         supabase
           .from("despesas")
           .update({ deleted_at: stamp } as never)
-          .in("id", despIds) as unknown as PromiseLike<{
-          error: unknown;
-        }>
+          .in("id", despIds) as unknown as PromiseLike<{ error: unknown }>
       );
     const results = await Promise.all(ops);
     const failed = results.find((r) => (r as { error?: unknown }).error);
@@ -326,55 +294,6 @@ export function LancamentosTable({ data, loading, onRefetch, filters, onFiltersC
     setSelected(new Set());
     setBulkConfirm(false);
     onRefetch();
-  };
-
-  const exportCsv = () => {
-    const rows = selectedRows.length > 0 ? selectedRows : sorted;
-    if (rows.length === 0) {
-      toast.info("Nada para exportar");
-      return;
-    }
-    const headers = [
-      "Tipo",
-      "Data",
-      "Descrição",
-      "Cliente/Fornecedor",
-      "Categoria",
-      "Projeto",
-      "Parcela",
-      "Forma pgto",
-      "Valor",
-      "Status",
-    ];
-    const csv = [headers.join(",")]
-      .concat(
-        rows.map((l) => {
-          const data = getDisplayDate(l.data_efetivacao, l.data_vencimento, l.status) ?? "";
-          const parcela = l.parcela_numero && l.parcela_total ? `${l.parcela_numero}/${l.parcela_total}` : "1/1";
-          const cells = [
-            l.tipo,
-            data,
-            l.descricao,
-            l.contraparte_nome ?? "",
-            l.categoria_nome ?? "",
-            l.projeto_codigo ?? "",
-            parcela,
-            l.forma_pagamento ?? "",
-            String(l.valor).replace(".", ","),
-            l.status,
-          ];
-          return cells.map(csvCell).join(",");
-        })
-      )
-      .join("\n");
-    const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `lancamentos-${new Date().toISOString().slice(0, 10)}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-    toast.success(`${rows.length} registro(s) exportado(s)`);
   };
 
   const confirmDelete = async () => {
@@ -394,8 +313,29 @@ export function LancamentosTable({ data, loading, onRefetch, filters, onFiltersC
     onRefetch();
   };
 
-  const rowPad = density === "compact" ? "py-1.5" : "py-3";
+  // Virtualização
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const rowHeight = ROW_HEIGHT[density];
+  const virtualizer = useVirtualizer({
+    count: sorted.length,
+    getScrollElement: () => scrollRef.current,
+    estimateSize: () => rowHeight,
+    overscan: 10,
+  });
+  const virtualItems = virtualizer.getVirtualItems();
+  const totalSize = virtualizer.getTotalSize();
+  const paddingTop = virtualItems.length ? virtualItems[0].start : 0;
+  const paddingBottom = virtualItems.length ? totalSize - virtualItems[virtualItems.length - 1].end : 0;
+
+  // Resetar scroll ao mudar filtros/sort
+  useEffect(() => {
+    if (scrollRef.current) scrollRef.current.scrollTop = 0;
+  }, [filters, sort]);
+
   const cellTextSize = density === "compact" ? "text-xs" : "text-sm";
+  const cellPad = density === "compact" ? "py-1.5 px-3" : "py-3 px-3";
+
+  const colCount = canEdit ? 11 : 10;
 
   return (
     <div className="space-y-3">
@@ -410,8 +350,6 @@ export function LancamentosTable({ data, loading, onRefetch, filters, onFiltersC
         total={data.length}
         visible={sorted.length}
       />
-
-      {canEdit && <QuickAddLancamento onCreated={onRefetch} />}
 
       {/* Bulk action bar */}
       {selected.size > 0 && (
@@ -431,10 +369,6 @@ export function LancamentosTable({ data, loading, onRefetch, filters, onFiltersC
                 Marcar pago/recebido
               </Button>
             )}
-            <Button variant="outline" size="sm" onClick={exportCsv} className="h-7 text-xs gap-1 bg-white">
-              <Download className="h-3 w-3" />
-              CSV
-            </Button>
             {canEdit && (
               <Button
                 variant="outline"
@@ -459,249 +393,215 @@ export function LancamentosTable({ data, loading, onRefetch, filters, onFiltersC
         </div>
       )}
 
-      {/* Toolbar acima da tabela */}
-      <div className="flex flex-wrap items-center gap-2">
+      {/* Toolbar */}
+      <div className="flex items-center justify-end gap-2">
         <Button
-          variant="outline"
+          variant="ghost"
           size="sm"
-          onClick={exportCsv}
-          className="h-8 text-xs gap-1"
-          title="Exportar resultado filtrado"
+          onClick={() => setDensity(density === "compact" ? "comfortable" : "compact")}
+          className="h-8 px-2 text-xs gap-1 text-muted-foreground"
+          title={density === "compact" ? "Densidade confortável" : "Densidade compacta"}
         >
-          <Download className="h-3 w-3" />
-          Exportar CSV
+          {density === "compact" ? <Rows3 className="h-3.5 w-3.5" /> : <Rows4 className="h-3.5 w-3.5" />}
         </Button>
-        <div className="ml-auto flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setDensity(density === "compact" ? "comfortable" : "compact")}
-            className="h-8 px-2 text-xs gap-1 text-muted-foreground"
-            title={density === "compact" ? "Densidade confortável" : "Densidade compacta"}
-          >
-            {density === "compact" ? <Rows3 className="h-3.5 w-3.5" /> : <Rows4 className="h-3.5 w-3.5" />}
-          </Button>
-          <Select value={String(pageSize)} onValueChange={(v) => setPageSize(Number(v))}>
-            <SelectTrigger className="h-8 w-[110px] text-xs">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {PAGE_SIZES.map((s) => (
-                <SelectItem key={s} value={String(s)} className="text-xs">
-                  {PAGE_SIZE_LABEL[s]} por pág.
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
       </div>
 
-      <div className="overflow-x-auto rounded-xl border border-black/10 bg-white">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              {canEdit && (
-                <TableHead className="w-[40px]">
-                  <Checkbox
-                    checked={allOnPageSelected ? true : someOnPageSelected ? "indeterminate" : false}
-                    onCheckedChange={togglePageSelection}
-                    aria-label="Selecionar página"
-                  />
-                </TableHead>
-              )}
-              <TableHead className="w-[60px]">Tipo</TableHead>
-              <SortableHeader label="Data" k="data" sort={sort} onSort={headerSort} icon={<SortIcon k="data" />} />
-              <SortableHeader
-                label="Descrição"
-                k="descricao"
-                sort={sort}
-                onSort={headerSort}
-                icon={<SortIcon k="descricao" />}
-              />
-              <SortableHeader
-                label="Cliente/Fornecedor"
-                k="contraparte"
-                sort={sort}
-                onSort={headerSort}
-                icon={<SortIcon k="contraparte" />}
-              />
-              <SortableHeader
-                label="Categoria"
-                k="categoria"
-                sort={sort}
-                onSort={headerSort}
-                icon={<SortIcon k="categoria" />}
-              />
-              <SortableHeader
-                label="Projeto"
-                k="projeto"
-                sort={sort}
-                onSort={headerSort}
-                icon={<SortIcon k="projeto" />}
-              />
-              <TableHead>Parcela</TableHead>
-              <SortableHeader
-                label="Valor"
-                k="valor"
-                sort={sort}
-                onSort={headerSort}
-                icon={<SortIcon k="valor" />}
-                className="text-right"
-              />
-              <SortableHeader
-                label="Status"
-                k="status"
-                sort={sort}
-                onSort={headerSort}
-                icon={<SortIcon k="status" />}
-              />
-              <TableHead className="w-[60px]" />
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {loading && pageRows.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={11} className="text-center text-muted-foreground py-10">
-                  Carregando…
-                </TableCell>
-              </TableRow>
-            ) : pageRows.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={11} className="text-center text-muted-foreground py-10">
-                  Nenhum lançamento no filtro atual
-                </TableCell>
-              </TableRow>
-            ) : (
-              pageRows.map((l) => {
-                const isReceita = l.tipo === "receita";
-                const dataExibir = getDisplayDate(l.data_efetivacao, l.data_vencimento, l.status);
-                const overdue = isOverdue(l);
-                const k = rowKey(l);
-                const isSel = selected.has(k);
-                return (
-                  <TableRow
-                    key={k}
-                    data-selected={isSel}
-                    className={cn("hover:bg-gray-50 cursor-pointer", isSel && "bg-brand/5")}
-                    onClick={() => setDetailTarget(l)}
-                  >
-                    {canEdit && (
-                      <TableCell className={rowPad} onClick={(e) => e.stopPropagation()}>
-                        <Checkbox checked={isSel} onCheckedChange={() => toggleRow(l)} aria-label="Selecionar linha" />
-                      </TableCell>
-                    )}
-                    <TableCell className={rowPad}>
-                      <span
-                        className={cn(
-                          "inline-flex items-center justify-center h-7 w-7 rounded-full",
-                          isReceita ? "bg-positive/10 text-positive" : "bg-red-50 text-red-600"
-                        )}
-                        title={isReceita ? "Receita" : "Despesa"}
-                      >
-                        {isReceita ? <ArrowUpCircle className="h-4 w-4" /> : <ArrowDownCircle className="h-4 w-4" />}
-                      </span>
-                    </TableCell>
-                    <TableCell className={cn(rowPad, cellTextSize, overdue && "text-red-600 font-medium")}>
-                      {formatDateDisplay(dataExibir)}
-                      {overdue && <span className="ml-1 text-[10px] uppercase">atrasado</span>}
-                    </TableCell>
-                    <TableCell className={cn(rowPad, "font-medium", cellTextSize)}>{l.descricao}</TableCell>
-                    <TableCell className={cn(rowPad, cellTextSize)}>{l.contraparte_nome || "-"}</TableCell>
-                    <TableCell className={cn(rowPad, cellTextSize)}>{l.categoria_nome || "-"}</TableCell>
-                    <TableCell className={cn(rowPad, cellTextSize)}>{l.projeto_codigo || "-"}</TableCell>
-                    <TableCell className={cn(rowPad, "text-xs text-muted-foreground")}>
-                      {l.parcela_numero && l.parcela_total ? `${l.parcela_numero}/${l.parcela_total}` : "1/1"}
-                    </TableCell>
-                    <TableCell
-                      className={cn(
-                        rowPad,
-                        "text-right font-semibold tabular-nums",
-                        cellTextSize,
-                        isReceita ? "text-positive" : "text-red-600"
-                      )}
-                    >
-                      {isReceita ? "+" : "−"} {formatBRL(l.valor)}
-                    </TableCell>
-                    <TableCell className={rowPad} onClick={(e) => e.stopPropagation()}>
-                      <StatusBadge l={l} canEdit={canEdit} onChange={(s) => setStatus(l, s)} />
-                    </TableCell>
-                    <TableCell className={rowPad} onClick={(e) => e.stopPropagation()}>
-                      {canEdit && (
-                        <div className="flex gap-1 justify-end">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7 text-blue-600 hover:bg-blue-50"
-                            onClick={() => setEditTarget(l)}
-                          >
-                            <Pencil className="h-3.5 w-3.5" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7 text-red-600 hover:bg-red-50"
-                            onClick={() => setDeleteTarget(l)}
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </Button>
-                        </div>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                );
-              })
-            )}
-          </TableBody>
-          {sorted.length > 0 && (
-            <tfoot>
-              <tr className="border-t bg-gray-50/50 text-sm">
-                <td colSpan={canEdit ? 8 : 7} className="px-4 py-3 text-right text-muted-foreground">
-                  Totais filtrados
-                </td>
-                <td className="px-4 py-3 text-right tabular-nums">
-                  <div className="text-positive">+ {formatBRL(totals.receitas)}</div>
-                  <div className="text-red-600">− {formatBRL(totals.despesas)}</div>
-                  <div className={cn("font-bold mt-1", totals.saldo >= 0 ? "text-positive" : "text-red-600")}>
-                    = {formatBRL(totals.saldo)}
-                  </div>
-                </td>
-                <td colSpan={2} />
+      {/* Tabela virtualizada */}
+      <div className="rounded-xl border border-black/10 bg-white overflow-hidden">
+        <div ref={scrollRef} className="overflow-auto" style={{ maxHeight: "min(70vh, 720px)" }}>
+          <table className="w-full text-left border-collapse">
+            <thead className="sticky top-0 bg-white z-10 shadow-[0_1px_0_rgba(0,0,0,0.06)]">
+              <tr className="text-xs text-muted-foreground">
+                {canEdit && (
+                  <th className="w-[40px] px-3 py-2">
+                    <Checkbox
+                      checked={allSelected ? true : someSelected ? "indeterminate" : false}
+                      onCheckedChange={toggleAll}
+                      aria-label="Selecionar todos"
+                    />
+                  </th>
+                )}
+                <th className="w-[60px] px-3 py-2">Tipo</th>
+                <SortableTH label="Data" k="data" sort={sort} onSort={headerSort} icon={<SortIcon k="data" />} />
+                <SortableTH
+                  label="Descrição"
+                  k="descricao"
+                  sort={sort}
+                  onSort={headerSort}
+                  icon={<SortIcon k="descricao" />}
+                />
+                <SortableTH
+                  label="Cliente/Fornecedor"
+                  k="contraparte"
+                  sort={sort}
+                  onSort={headerSort}
+                  icon={<SortIcon k="contraparte" />}
+                />
+                <SortableTH
+                  label="Categoria"
+                  k="categoria"
+                  sort={sort}
+                  onSort={headerSort}
+                  icon={<SortIcon k="categoria" />}
+                />
+                <SortableTH
+                  label="Projeto"
+                  k="projeto"
+                  sort={sort}
+                  onSort={headerSort}
+                  icon={<SortIcon k="projeto" />}
+                />
+                <th className="px-3 py-2">Parcela</th>
+                <SortableTH
+                  label="Valor"
+                  k="valor"
+                  sort={sort}
+                  onSort={headerSort}
+                  icon={<SortIcon k="valor" />}
+                  className="text-right"
+                />
+                <SortableTH label="Status" k="status" sort={sort} onSort={headerSort} icon={<SortIcon k="status" />} />
+                <th className="w-[60px] px-3 py-2" />
               </tr>
-            </tfoot>
-          )}
-        </Table>
-      </div>
-
-      {/* Paginação */}
-      {pageSize < 9999 && totalPages > 1 && (
-        <div className="flex items-center justify-between text-xs text-muted-foreground">
-          <span>
-            Página {safePage} de {totalPages} — {sorted.length} registro{sorted.length !== 1 ? "s" : ""}
-          </span>
-          <div className="flex items-center gap-1">
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-7 text-xs gap-1"
-              disabled={safePage <= 1}
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-            >
-              <ChevronLeft className="h-3 w-3" />
-              Anterior
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-7 text-xs gap-1"
-              disabled={safePage >= totalPages}
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-            >
-              Próxima
-              <ChevronRight className="h-3 w-3" />
-            </Button>
-          </div>
+            </thead>
+            <tbody>
+              {loading && sorted.length === 0 ? (
+                <tr>
+                  <td colSpan={colCount} className="text-center text-muted-foreground py-10">
+                    Carregando…
+                  </td>
+                </tr>
+              ) : sorted.length === 0 ? (
+                <tr>
+                  <td colSpan={colCount} className="text-center text-muted-foreground py-10">
+                    Nenhum lançamento no filtro atual
+                  </td>
+                </tr>
+              ) : (
+                <>
+                  {paddingTop > 0 && (
+                    <tr aria-hidden>
+                      <td colSpan={colCount} style={{ height: paddingTop, padding: 0 }} />
+                    </tr>
+                  )}
+                  {virtualItems.map((vi) => {
+                    const l = sorted[vi.index];
+                    const isReceita = l.tipo === "receita";
+                    const dataExibir = getDisplayDate(l.data_efetivacao, l.data_vencimento, l.status);
+                    const overdue = isOverdue(l);
+                    const k = rowKey(l);
+                    const isSel = selected.has(k);
+                    return (
+                      <tr
+                        key={k}
+                        data-index={vi.index}
+                        ref={virtualizer.measureElement}
+                        className={cn(
+                          "border-b border-black/5 hover:bg-gray-50 cursor-pointer transition-colors",
+                          isSel && "bg-brand/5"
+                        )}
+                        onClick={() => setDetailTarget(l)}
+                      >
+                        {canEdit && (
+                          <td className={cellPad} onClick={(e) => e.stopPropagation()}>
+                            <Checkbox
+                              checked={isSel}
+                              onCheckedChange={() => toggleRow(l)}
+                              aria-label="Selecionar linha"
+                            />
+                          </td>
+                        )}
+                        <td className={cellPad}>
+                          <span
+                            className={cn(
+                              "inline-flex items-center justify-center h-7 w-7 rounded-full",
+                              isReceita ? "bg-positive/10 text-positive" : "bg-red-50 text-red-600"
+                            )}
+                            title={isReceita ? "Receita" : "Despesa"}
+                          >
+                            {isReceita ? (
+                              <ArrowUpCircle className="h-4 w-4" />
+                            ) : (
+                              <ArrowDownCircle className="h-4 w-4" />
+                            )}
+                          </span>
+                        </td>
+                        <td className={cn(cellPad, cellTextSize, overdue && "text-red-600 font-medium")}>
+                          {formatDateDisplay(dataExibir)}
+                          {overdue && <span className="ml-1 text-[10px] uppercase">atrasado</span>}
+                        </td>
+                        <td className={cn(cellPad, "font-medium", cellTextSize)}>{l.descricao}</td>
+                        <td className={cn(cellPad, cellTextSize)}>{l.contraparte_nome || "-"}</td>
+                        <td className={cn(cellPad, cellTextSize)}>{l.categoria_nome || "-"}</td>
+                        <td className={cn(cellPad, cellTextSize)}>{l.projeto_codigo || "-"}</td>
+                        <td className={cn(cellPad, "text-xs text-muted-foreground")}>
+                          {l.parcela_numero && l.parcela_total ? `${l.parcela_numero}/${l.parcela_total}` : "1/1"}
+                        </td>
+                        <td
+                          className={cn(
+                            cellPad,
+                            "text-right font-semibold tabular-nums",
+                            cellTextSize,
+                            isReceita ? "text-positive" : "text-red-600"
+                          )}
+                        >
+                          {isReceita ? "+" : "−"} {formatBRL(l.valor)}
+                        </td>
+                        <td className={cellPad} onClick={(e) => e.stopPropagation()}>
+                          <StatusBadge l={l} canEdit={canEdit} onChange={(s) => setStatus(l, s)} />
+                        </td>
+                        <td className={cellPad} onClick={(e) => e.stopPropagation()}>
+                          {canEdit && (
+                            <div className="flex gap-1 justify-end">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 text-blue-600 hover:bg-blue-50"
+                                onClick={() => setEditTarget(l)}
+                              >
+                                <Pencil className="h-3.5 w-3.5" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 text-red-600 hover:bg-red-50"
+                                onClick={() => setDeleteTarget(l)}
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  {paddingBottom > 0 && (
+                    <tr aria-hidden>
+                      <td colSpan={colCount} style={{ height: paddingBottom, padding: 0 }} />
+                    </tr>
+                  )}
+                </>
+              )}
+            </tbody>
+          </table>
         </div>
-      )}
+
+        {/* Footer com totais filtrados */}
+        {sorted.length > 0 && (
+          <div className="border-t border-black/10 bg-gray-50/60 px-4 py-3 flex flex-wrap items-center justify-between gap-3 text-xs">
+            <span className="text-muted-foreground">
+              {sorted.length} de {data.length} lançamento{data.length !== 1 ? "s" : ""}
+            </span>
+            <div className="flex flex-wrap items-center gap-4 tabular-nums">
+              <span className="text-positive">+ {formatBRL(totals.receitas)}</span>
+              <span className="text-red-600">− {formatBRL(totals.despesas)}</span>
+              <span className={cn("font-bold", totals.saldo >= 0 ? "text-positive" : "text-red-600")}>
+                = {formatBRL(totals.saldo)}
+              </span>
+            </div>
+          </div>
+        )}
+      </div>
 
       <LancamentoDetailDialog
         lancamento={detailTarget}
@@ -715,6 +615,7 @@ export function LancamentosTable({ data, loading, onRefetch, filters, onFiltersC
           setDetailTarget(null);
           setEditTarget(l);
         }}
+        onGroupChanged={onRefetch}
       />
 
       {editTarget && (
@@ -761,12 +662,7 @@ function rowKey(l: Lancamento): string {
   return `${l.tipo}-${l.id}`;
 }
 
-function csvCell(v: string): string {
-  if (/[",\n]/.test(v)) return `"${v.replace(/"/g, '""')}"`;
-  return v;
-}
-
-function SortableHeader({
+function SortableTH({
   label,
   k,
   sort,
@@ -783,7 +679,7 @@ function SortableHeader({
 }) {
   const active = sort.key === k;
   return (
-    <TableHead className={cn("cursor-pointer select-none", className)} onClick={() => onSort(k)}>
+    <th className={cn("px-3 py-2 cursor-pointer select-none font-medium text-xs", className)} onClick={() => onSort(k)}>
       <span
         className={cn(
           "inline-flex items-center gap-1 hover:text-foreground transition-colors",
@@ -793,7 +689,7 @@ function SortableHeader({
         {label}
         {icon}
       </span>
-    </TableHead>
+    </th>
   );
 }
 
@@ -832,24 +728,8 @@ function StatusBadge({ l, canEdit, onChange }: { l: Lancamento; canEdit: boolean
       <DropdownMenuTrigger asChild>{badge}</DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="text-xs">
         {options.map((o) => (
-          <DropdownMenuItem
-            key={o.value}
-            onSelect={() => onChange(o.value)}
-            className={cn(
-              "text-xs",
-              ((isReceita && (l.status === "Recebido" || l.status === "Recebida")) || l.status === o.value) &&
-                o.value === l.status &&
-                "bg-muted"
-            )}
-          >
-            <Check
-              className={cn(
-                "h-3 w-3 mr-1.5",
-                l.status === o.value || (isReceita && l.status === "Recebido" && o.value === "Recebido")
-                  ? "opacity-100"
-                  : "opacity-0"
-              )}
-            />
+          <DropdownMenuItem key={o.value} onSelect={() => onChange(o.value)} className="text-xs">
+            <Check className={cn("h-3 w-3 mr-1.5", l.status === o.value ? "opacity-100" : "opacity-0")} />
             {o.label}
           </DropdownMenuItem>
         ))}

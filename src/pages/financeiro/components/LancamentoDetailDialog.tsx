@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { formatDateDisplay } from "@/lib/dateUtils";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import type { Lancamento } from "../hooks/useLancamentosUnified";
+import { GrupoParcelaActions } from "./GrupoParcelaActions";
 
 interface Props {
   lancamento: Lancamento | null;
@@ -14,12 +15,20 @@ interface Props {
   onOpenChange: (v: boolean) => void;
   onDelete: (l: Lancamento) => void;
   onEditInTab: (l: Lancamento) => void;
+  onGroupChanged?: () => void;
 }
 
 const formatBRL = (v: number) =>
   v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 2 });
 
-export function LancamentoDetailDialog({ lancamento: l, open, onOpenChange, onDelete, onEditInTab }: Props) {
+export function LancamentoDetailDialog({
+  lancamento: l,
+  open,
+  onOpenChange,
+  onDelete,
+  onEditInTab,
+  onGroupChanged,
+}: Props) {
   const { canEdit } = useFeatureAccess("financeiro");
   if (!l) return null;
 
@@ -63,14 +72,19 @@ export function LancamentoDetailDialog({ lancamento: l, open, onOpenChange, onDe
           <Field label="Parcela">
             {l.parcela_numero && l.parcela_total ? `${l.parcela_numero}/${l.parcela_total}` : "1/1"}
           </Field>
-          {l.grupo_parcela && (
-            <Field label="Grupo">
-              <Badge variant="outline" className="text-[10px]">
-                Parte de um grupo
-              </Badge>
-            </Field>
-          )}
         </div>
+
+        {l.grupo_parcela && canEdit && (
+          <div className="pt-3">
+            <GrupoParcelaActions
+              lancamento={l}
+              onChanged={() => {
+                onGroupChanged?.();
+                onOpenChange(false);
+              }}
+            />
+          </div>
+        )}
 
         {canEdit && (
           <div className="flex items-center gap-2 pt-4 border-t mt-2">
