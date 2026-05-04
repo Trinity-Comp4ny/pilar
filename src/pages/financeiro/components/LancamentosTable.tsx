@@ -8,6 +8,12 @@ import {
   ArrowUp,
   ArrowDown,
   Check,
+  ChevronDown,
+  ChevronRight,
+  ChevronsDown,
+  ChevronsUp,
+  Layers,
+  MoreHorizontal,
   Pencil,
   Rows3,
   Rows4,
@@ -57,6 +63,10 @@ type Density = "comfortable" | "compact";
 
 const ROW_HEIGHT: Record<Density, number> = { comfortable: 56, compact: 40 };
 
+type FlatRow =
+  | { kind: "item"; data: Lancamento; isChild: boolean }
+  | { kind: "group"; groupId: string; items: Lancamento[] };
+
 const formatBRL = (v: number) =>
   v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 2 });
 
@@ -74,6 +84,8 @@ const isOverdue = (l: Lancamento): boolean => {
   return venc < today;
 };
 
+const stripParcelaSuffix = (desc: string) => desc.replace(/\s*\(\d+\/\d+\)$/, "").trim();
+
 export function LancamentosTable({ data, loading, onRefetch, filters, onFiltersChange }: Props) {
   const { canEdit } = useFeatureAccess("financeiro");
   const aux = useLancamentosFiltersData();
@@ -83,8 +95,11 @@ export function LancamentosTable({ data, loading, onRefetch, filters, onFiltersC
   const [density, setDensity] = useState<Density>(
     () => (localStorage.getItem("lancamentos.density") as Density) ?? "comfortable"
   );
+  const [grouped, setGrouped] = useState<boolean>(() => localStorage.getItem("lancamentos.grouped") !== "false");
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
 
   const [deleteTarget, setDeleteTarget] = useState<Lancamento | null>(null);
+  const [deleteGroupTarget, setDeleteGroupTarget] = useState<Lancamento[] | null>(null);
   const [bulkConfirm, setBulkConfirm] = useState(false);
   const [detailTarget, setDetailTarget] = useState<Lancamento | null>(null);
   const [editTarget, setEditTarget] = useState<Lancamento | null>(null);
@@ -93,6 +108,31 @@ export function LancamentosTable({ data, loading, onRefetch, filters, onFiltersC
   useEffect(() => {
     localStorage.setItem("lancamentos.density", density);
   }, [density]);
+
+  useEffect(() => {
+    localStorage.setItem("lancamentos.grouped", String(grouped));
+  }, [grouped]);
+
+  const toggleGroup = (groupId: string) => {
+    setExpandedGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(groupId)) next.delete(groupId);
+      else next.add(groupId);
+      return next;
+    });
+  };
+
+  const toggleGroupSelection = (items: Lancamento[]) => {
+    const allSel = items.every((i) => selected.has(rowKey(i)));
+    setSelected((prev) => {
+      const next = new Set(prev);
+      for (const i of items) {
+        if (allSel) next.delete(rowKey(i));
+        else next.add(rowKey(i));
+      }
+      return next;
+    });
+  };
 
   const filtered = useMemo(() => {
     const minVal = filters.valorMin ? parseCurrencyString(filters.valorMin) : null;
@@ -184,6 +224,90 @@ export function LancamentosTable({ data, loading, onRefetch, filters, onFiltersC
     return { receitas, despesas, saldo: receitas - despesas };
   }, [sorted]);
 
+  const flatRows = useMemo((): FlatRow[] => {
+    if (!grouped) return sorted.map((l) => ({ kind: "item" as const, data: l, isChild: false }));
+
+    // Collect all items per group (preserving sort order inside each group)
+    const groups = new Map<string, Lancamento[]>();
+    for (const l of sorted) {
+      if (l.grupo_parcela && l.parcela_total && l.parcela_total > 1) {
+        const arr = groups.get(l.grupo_parcela) ?? [];
+        arr.push(l);
+        groups.set(l.grupo_parcela, arr);
+      }
+    }
+
+    // Determine the "anchor" of each group: item with lowest parcela_numero.
+    // The group header is emitted at the anchor's position in sorted, so the
+    // group appears where parcela 1 would be — regardless of sort direction.
+    const groupAnchors = new Map<string, string>();
+    for (const [gid, items] of groups) {
+      const anchor = items.reduce((best, cur) =>
+        (cur.parcela_numero ?? Infinity) < (best.parcela_numero ?? Infinity) ? cur : best
+      );
+      groupAnchors.set(gid, rowKey(anchor));
+    }
+
+    const result: FlatRow[] = [];
+    const emitted = new Set<string>();
+    for (const l of sorted) {
+      if (l.grupo_parcela && l.parcela_total && l.parcela_total > 1) {
+        const gid = l.grupo_parcela;
+        if (!emitted.has(gid) && groupAnchors.get(gid) === rowKey(l)) {
+          emitted.add(gid);
+          const items = groups.get(gid)!;
+          // Children always shown in parcela_numero order for readability
+          const orderedItems = [...items].sort((a, b) => (a.parcela_numero ?? 0) - (b.parcela_numero ?? 0));
+          result.push({ kind: "group", groupId: gid, items: orderedItems });
+          if (expandedGroups.has(gid)) {
+            for (const item of orderedItems) {
+              result.push({ kind: "item", data: item, isChild: true });
+            }
+          }
+        }
+        // Non-anchor group members are skipped (represented by the group header)
+      } else {
+        result.push({ kind: "item", data: l, isChild: false });
+      }
+    }
+
+    // Safety: emit groups whose anchor wasn't in sorted (shouldn't happen)
+    for (const [gid, items] of groups) {
+      if (!emitted.has(gid)) {
+        const orderedItems = [...items].sort((a, b) => (a.parcela_numero ?? 0) - (b.parcela_numero ?? 0));
+        result.push({ kind: "group", groupId: gid, items: orderedItems });
+        if (expandedGroups.has(gid)) {
+          for (const item of orderedItems) {
+            result.push({ kind: "item", data: item, isChild: true });
+          }
+        }
+      }
+    }
+
+    return result;
+  }, [sorted, grouped, expandedGroups]);
+
+  const allGroupIds = useMemo(
+    () => flatRows.filter((r): r is Extract<FlatRow, { kind: "group" }> => r.kind === "group").map((r) => r.groupId),
+    [flatRows]
+  );
+  const allExpanded = allGroupIds.length > 0 && allGroupIds.every((id) => expandedGroups.has(id));
+
+  const toggleExpandAll = () => {
+    setExpandedGroups(allExpanded ? new Set() : new Set(allGroupIds));
+  };
+
+  const footerLabel = useMemo(() => {
+    if (!grouped) return `${sorted.length} de ${data.length} lançamento${data.length !== 1 ? "s" : ""}`;
+    const groupCount = flatRows.filter((r) => r.kind === "group").length;
+    const singleCount = flatRows.filter((r) => r.kind === "item" && !r.isChild).length;
+    const parts: string[] = [];
+    if (groupCount > 0) parts.push(`${groupCount} grupo${groupCount !== 1 ? "s" : ""}`);
+    if (singleCount > 0) parts.push(`${singleCount} avulso${singleCount !== 1 ? "s" : ""}`);
+    parts.push(`${sorted.length} lançamento${sorted.length !== 1 ? "s" : ""}`);
+    return parts.join(" · ");
+  }, [grouped, sorted, flatRows, data.length]);
+
   const allSelected = sorted.length > 0 && sorted.every((l) => selected.has(rowKey(l)));
   const someSelected = sorted.some((l) => selected.has(rowKey(l)));
 
@@ -252,12 +376,10 @@ export function LancamentosTable({ data, loading, onRefetch, filters, onFiltersC
     onRefetch();
   };
 
-  const bulkMarkPaid = async () => {
-    if (selectedRows.length === 0) return;
+  const markItemsPaid = async (items: Lancamento[]) => {
     const today = new Date().toISOString().slice(0, 10);
-    const recIds = selectedRows.filter((l) => l.tipo === "receita" && !isPaidStatus(l)).map((l) => l.id);
-    const despIds = selectedRows.filter((l) => l.tipo === "despesa" && !isPaidStatus(l)).map((l) => l.id);
-    // transferências não entram em bulk mark paid
+    const recIds = items.filter((l) => l.tipo === "receita" && !isPaidStatus(l)).map((l) => l.id);
+    const despIds = items.filter((l) => l.tipo === "despesa" && !isPaidStatus(l)).map((l) => l.id);
     const ops: PromiseLike<{ error: unknown }>[] = [];
     if (recIds.length)
       ops.push(
@@ -274,25 +396,28 @@ export function LancamentosTable({ data, loading, onRefetch, filters, onFiltersC
           .in("id", despIds) as unknown as PromiseLike<{ error: unknown }>
       );
     if (!ops.length) {
-      toast.info("Nada a marcar — selecionados já efetivados");
+      toast.info("Nada a marcar — já efetivados");
       return;
     }
     const results = await Promise.all(ops);
-    const failed = results.find((r) => (r as { error?: unknown }).error);
-    if (failed) {
+    if (results.find((r) => (r as { error?: unknown }).error)) {
       toast.error("Falha em alguns registros");
       return;
     }
     toast.success(`${recIds.length + despIds.length} marcado(s) como pago/recebido`);
-    setSelected(new Set());
     onRefetch();
   };
 
-  const bulkDelete = async () => {
+  const bulkMarkPaid = async () => {
     if (selectedRows.length === 0) return;
-    const recIds = selectedRows.filter((l) => l.tipo === "receita").map((l) => l.id);
-    const despIds = selectedRows.filter((l) => l.tipo === "despesa").map((l) => l.id);
-    const transfIds = selectedRows.filter((l) => l.tipo === "transferencia").map((l) => l.id);
+    await markItemsPaid(selectedRows);
+    setSelected(new Set());
+  };
+
+  const deleteItems = async (items: Lancamento[]) => {
+    const recIds = items.filter((l) => l.tipo === "receita").map((l) => l.id);
+    const despIds = items.filter((l) => l.tipo === "despesa").map((l) => l.id);
+    const transfIds = items.filter((l) => l.tipo === "transferencia").map((l) => l.id);
     const stamp = new Date().toISOString();
     const ops: PromiseLike<{ error: unknown }>[] = [];
     if (recIds.length)
@@ -317,15 +442,25 @@ export function LancamentosTable({ data, loading, onRefetch, filters, onFiltersC
           .in("id", transfIds) as unknown as PromiseLike<{ error: unknown }>
       );
     const results = await Promise.all(ops);
-    const failed = results.find((r) => (r as { error?: unknown }).error);
-    if (failed) {
+    if (results.find((r) => (r as { error?: unknown }).error)) {
       toast.error("Falha em alguns registros");
       return;
     }
-    toast.success(`${selectedRows.length} excluído(s)`);
+    toast.success(`${items.length} excluído(s)`);
+    onRefetch();
+  };
+
+  const bulkDelete = async () => {
+    if (selectedRows.length === 0) return;
+    await deleteItems(selectedRows);
     setSelected(new Set());
     setBulkConfirm(false);
-    onRefetch();
+  };
+
+  const confirmDeleteGroup = async () => {
+    if (!deleteGroupTarget) return;
+    setDeleteGroupTarget(null);
+    await deleteItems(deleteGroupTarget);
   };
 
   const confirmDelete = async () => {
@@ -359,7 +494,7 @@ export function LancamentosTable({ data, loading, onRefetch, filters, onFiltersC
   const scrollRef = useRef<HTMLDivElement>(null);
   const rowHeight = ROW_HEIGHT[density];
   const virtualizer = useVirtualizer({
-    count: sorted.length,
+    count: flatRows.length,
     getScrollElement: () => scrollRef.current,
     estimateSize: () => rowHeight,
     overscan: 10,
@@ -369,10 +504,10 @@ export function LancamentosTable({ data, loading, onRefetch, filters, onFiltersC
   const paddingTop = virtualItems.length ? virtualItems[0].start : 0;
   const paddingBottom = virtualItems.length ? totalSize - virtualItems[virtualItems.length - 1].end : 0;
 
-  // Resetar scroll ao mudar filtros/sort
+  // Resetar scroll ao mudar filtros/sort/grouped
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = 0;
-  }, [filters, sort]);
+  }, [filters, sort, grouped]);
 
   const cellTextSize = density === "compact" ? "text-xs" : "text-sm";
   const cellPad = density === "compact" ? "py-1.5 px-3" : "py-3 px-3";
@@ -437,6 +572,30 @@ export function LancamentosTable({ data, loading, onRefetch, filters, onFiltersC
 
       {/* Toolbar */}
       <div className="flex items-center justify-end gap-2">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => {
+            setGrouped((v) => !v);
+            setExpandedGroups(new Set());
+          }}
+          className={cn("h-8 px-2 text-xs gap-1", grouped ? "text-brand" : "text-muted-foreground")}
+          title={grouped ? "Desagrupar parcelas" : "Agrupar parcelas"}
+        >
+          <Layers className="h-3.5 w-3.5" />
+          <span className="hidden sm:inline">{grouped ? "Agrupado" : "Agrupar"}</span>
+        </Button>
+        {grouped && allGroupIds.length > 0 && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={toggleExpandAll}
+            className="h-8 px-2 text-xs gap-1 text-muted-foreground"
+            title={allExpanded ? "Recolher todos os grupos" : "Expandir todos os grupos"}
+          >
+            {allExpanded ? <ChevronsUp className="h-3.5 w-3.5" /> : <ChevronsDown className="h-3.5 w-3.5" />}
+          </Button>
+        )}
         <Button
           variant="ghost"
           size="sm"
@@ -515,8 +674,24 @@ export function LancamentosTable({ data, loading, onRefetch, filters, onFiltersC
                 </tr>
               ) : sorted.length === 0 ? (
                 <tr>
-                  <td colSpan={colCount} className="text-center text-muted-foreground py-10">
-                    Nenhum lançamento no filtro atual
+                  <td colSpan={colCount}>
+                    <div className="flex flex-col items-center gap-3 py-12 text-center">
+                      <ArrowUpCircle className="h-8 w-8 text-muted-foreground/30" />
+                      <p className="text-sm font-medium text-muted-foreground">Nenhum lançamento encontrado</p>
+                      <p className="text-xs text-muted-foreground/70">
+                        {data.length > 0
+                          ? "Ajuste os filtros para ver mais resultados"
+                          : "Crie uma receita ou despesa para começar"}
+                      </p>
+                      {data.length > 0 && (
+                        <button
+                          onClick={() => onFiltersChange(defaultFilters)}
+                          className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground transition-colors"
+                        >
+                          Limpar filtros
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ) : (
@@ -527,7 +702,152 @@ export function LancamentosTable({ data, loading, onRefetch, filters, onFiltersC
                     </tr>
                   )}
                   {virtualItems.map((vi) => {
-                    const l = sorted[vi.index];
+                    const row = flatRows[vi.index];
+
+                    if (row.kind === "group") {
+                      const { groupId, items } = row;
+                      const first = items[0];
+                      const isReceita = first.tipo === "receita";
+                      const total = items.reduce((s, i) => s + i.valor, 0);
+                      const paidCount = items.filter(isPaidStatus).length;
+                      const isExpanded = expandedGroups.has(groupId);
+                      const groupDesc = stripParcelaSuffix(first.descricao);
+                      const groupAllSelected = items.every((i) => selected.has(rowKey(i)));
+                      const groupSomeSelected = items.some((i) => selected.has(rowKey(i)));
+                      const originalTotal = first.parcela_total ?? items.length;
+                      const isPartiallyFiltered = items.length < originalTotal;
+
+                      // date range
+                      const dates = items
+                        .map((i) => i.data_vencimento)
+                        .filter(Boolean)
+                        .sort() as string[];
+                      const firstDate = dates[0] ?? "";
+                      const lastDate = dates[dates.length - 1] ?? "";
+                      const dateLabel =
+                        firstDate === lastDate
+                          ? formatDateDisplay(firstDate)
+                          : `${formatDateDisplay(firstDate)} → ${formatDateDisplay(lastDate)}`;
+
+                      const groupStatusLabel =
+                        paidCount === items.length
+                          ? isReceita
+                            ? "Recebido"
+                            : "Pago"
+                          : paidCount > 0
+                            ? "Parcial"
+                            : "Pendente";
+
+                      return (
+                        <tr
+                          key={`group-${groupId}`}
+                          data-index={vi.index}
+                          ref={virtualizer.measureElement}
+                          className="border-b border-black/5 hover:bg-gray-50 cursor-pointer transition-colors bg-gray-50/50"
+                          onClick={() => toggleGroup(groupId)}
+                        >
+                          {canEdit && (
+                            <td className={cellPad} onClick={(e) => e.stopPropagation()}>
+                              <Checkbox
+                                checked={groupAllSelected ? true : groupSomeSelected ? "indeterminate" : false}
+                                onCheckedChange={() => toggleGroupSelection(items)}
+                                aria-label="Selecionar grupo"
+                              />
+                            </td>
+                          )}
+                          <td className={cellPad}>
+                            <span
+                              className={cn(
+                                "inline-flex items-center justify-center h-7 w-7 rounded-full",
+                                isReceita ? "bg-positive/10 text-positive" : "bg-red-50 text-red-600"
+                              )}
+                            >
+                              {isReceita ? (
+                                <ArrowUpCircle className="h-4 w-4" />
+                              ) : (
+                                <ArrowDownCircle className="h-4 w-4" />
+                              )}
+                            </span>
+                          </td>
+                          <td className={cn(cellPad, cellTextSize, "text-muted-foreground whitespace-nowrap")}>
+                            {dateLabel}
+                          </td>
+                          <td className={cn(cellPad, "font-semibold", cellTextSize)}>
+                            <span className="inline-flex items-center gap-1.5">
+                              {isExpanded ? (
+                                <ChevronDown className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                              ) : (
+                                <ChevronRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                              )}
+                              {groupDesc}
+                            </span>
+                          </td>
+                          <td className={cn(cellPad, cellTextSize)}>{first.contraparte_nome || "-"}</td>
+                          <td className={cn(cellPad, cellTextSize)}>{first.categoria_nome || "-"}</td>
+                          <td className={cn(cellPad, cellTextSize)}>{first.projeto_codigo || "-"}</td>
+                          <td className={cn(cellPad, "text-xs text-muted-foreground")}>
+                            {isPartiallyFiltered ? (
+                              <span className="inline-flex items-center gap-1">
+                                <span className="text-amber-600 font-medium">{items.length}</span>
+                                <span>de {originalTotal}x</span>
+                              </span>
+                            ) : (
+                              `${items.length}x`
+                            )}
+                          </td>
+                          <td
+                            className={cn(
+                              cellPad,
+                              "text-right font-semibold tabular-nums",
+                              cellTextSize,
+                              isReceita ? "text-positive" : "text-red-600"
+                            )}
+                          >
+                            {isReceita ? "+" : "−"} {formatBRL(total)}
+                          </td>
+                          <td className={cellPad}>
+                            <Badge
+                              variant="secondary"
+                              className={cn(
+                                "text-xs",
+                                paidCount === items.length && isReceita && "bg-positive text-white",
+                                paidCount === items.length && !isReceita && "bg-red-600 text-white",
+                                paidCount > 0 && paidCount < items.length && "bg-amber-100 text-amber-800"
+                              )}
+                            >
+                              {groupStatusLabel}
+                            </Badge>
+                          </td>
+                          <td className={cellPad} onClick={(e) => e.stopPropagation()}>
+                            {canEdit && (
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground">
+                                    <MoreHorizontal className="h-3.5 w-3.5" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="text-xs">
+                                  <DropdownMenuItem className="text-xs gap-2" onSelect={() => markItemsPaid(items)}>
+                                    <Check className="h-3.5 w-3.5 text-positive" />
+                                    Marcar todas como pagas
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem
+                                    className="text-xs gap-2 text-red-600 focus:text-red-600"
+                                    onSelect={() => setDeleteGroupTarget(items)}
+                                  >
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                    Excluir grupo inteiro
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    }
+
+                    const l = row.data;
                     const isReceita = l.tipo === "receita";
                     const isTransf = l.tipo === "transferencia";
                     const dataExibir = getDisplayDate(l.data_efetivacao, l.data_vencimento, l.status);
@@ -542,7 +862,8 @@ export function LancamentosTable({ data, loading, onRefetch, filters, onFiltersC
                         className={cn(
                           "border-b border-black/5 hover:bg-gray-50 cursor-pointer transition-colors",
                           isSel && "bg-brand/5",
-                          isTransf && "bg-blue-50/30"
+                          isTransf && "bg-blue-50/30",
+                          row.isChild && "bg-white"
                         )}
                         onClick={() => (isTransf ? setEditTransferencia(l) : setDetailTarget(l))}
                       >
@@ -555,7 +876,7 @@ export function LancamentosTable({ data, loading, onRefetch, filters, onFiltersC
                             />
                           </td>
                         )}
-                        <td className={cellPad}>
+                        <td className={cn(cellPad, row.isChild && "pl-8")}>
                           <span
                             className={cn(
                               "inline-flex items-center justify-center h-7 w-7 rounded-full",
@@ -650,9 +971,7 @@ export function LancamentosTable({ data, loading, onRefetch, filters, onFiltersC
         {/* Footer com totais filtrados */}
         {sorted.length > 0 && (
           <div className="border-t border-black/10 bg-gray-50/60 px-4 py-3 flex flex-wrap items-center justify-between gap-3 text-xs">
-            <span className="text-muted-foreground">
-              {sorted.length} de {data.length} lançamento{data.length !== 1 ? "s" : ""}
-            </span>
+            <span className="text-muted-foreground">{footerLabel}</span>
             <div className="flex flex-wrap items-center gap-4 tabular-nums">
               <span className="text-positive">+ {formatBRL(totals.receitas)}</span>
               <span className="text-red-600">− {formatBRL(totals.despesas)}</span>
@@ -706,10 +1025,11 @@ export function LancamentosTable({ data, loading, onRefetch, filters, onFiltersC
         open={deleteTarget !== null}
         onOpenChange={(v) => !v && setDeleteTarget(null)}
         onConfirm={confirmDelete}
-        title={`Excluir ${deleteTarget?.tipo === "receita" ? "receita" : deleteTarget?.tipo === "transferencia" ? "transferência" : "despesa"}?`}
+        title={`Excluir ${deleteTarget?.tipo === "receita" ? "receita" : deleteTarget?.tipo === "transferencia" ? "transferência" : "despesa"}`}
+        itemName={deleteTarget?.descricao || undefined}
         description={
           deleteTarget?.grupo_parcela
-            ? "Esta é uma parcela de um grupo. Apenas esta parcela será excluída — use a aba específica para excluir o grupo inteiro."
+            ? "Esta é uma parcela de um grupo. Apenas esta parcela será excluída."
             : "Esta ação não pode ser desfeita."
         }
         confirmText="Excluir"
@@ -723,6 +1043,16 @@ export function LancamentosTable({ data, loading, onRefetch, filters, onFiltersC
         title={`Excluir ${selectedRows.length} lançamento(s)?`}
         description="Esta ação não pode ser desfeita."
         confirmText="Excluir todos"
+        variant="destructive"
+      />
+
+      <ConfirmDialog
+        open={deleteGroupTarget !== null}
+        onOpenChange={(v) => !v && setDeleteGroupTarget(null)}
+        onConfirm={confirmDeleteGroup}
+        title={`Excluir grupo inteiro (${deleteGroupTarget?.length ?? 0} parcelas)?`}
+        description="Todas as parcelas do grupo serão excluídas. Esta ação não pode ser desfeita."
+        confirmText="Excluir grupo"
         variant="destructive"
       />
     </div>

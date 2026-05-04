@@ -98,7 +98,7 @@ export function ProjetoDetailTabs({
 
   return (
     <Tabs value={activeTab} onValueChange={handleTabChange}>
-      <div className="flex gap-4 items-start">
+      <div className="flex flex-col md:flex-row gap-4 md:items-start">
         <SecondSidebar
           tabs={PROJETO_TABS}
           value={activeTab}

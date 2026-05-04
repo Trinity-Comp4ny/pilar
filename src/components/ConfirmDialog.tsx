@@ -15,6 +15,7 @@ interface ConfirmDialogProps {
   onConfirm: () => void;
   title: string;
   description: string;
+  itemName?: string;
   confirmText?: string;
   cancelText?: string;
   variant?: "default" | "destructive";
@@ -26,6 +27,7 @@ export function ConfirmDialog({
   onConfirm,
   title,
   description,
+  itemName,
   confirmText = "Confirmar",
   cancelText = "Cancelar",
   variant = "destructive",
@@ -35,7 +37,16 @@ export function ConfirmDialog({
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>{title}</AlertDialogTitle>
-          <AlertDialogDescription>{description}</AlertDialogDescription>
+          <AlertDialogDescription asChild>
+            <div className="space-y-2">
+              {itemName && (
+                <p className="font-medium text-foreground bg-muted rounded px-2 py-1 text-sm truncate">
+                  &ldquo;{itemName}&rdquo;
+                </p>
+              )}
+              <p>{description}</p>
+            </div>
+          </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>{cancelText}</AlertDialogCancel>

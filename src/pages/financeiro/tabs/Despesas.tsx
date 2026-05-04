@@ -80,7 +80,9 @@ interface Despesa {
 export default function Despesas() {
   const [despesasRaw, setDespesasRaw] = useState<Despesa[]>([]);
   const [contas, setContas] = useState<{ id: string; nome: string }[]>([]);
-  const [cartoes, setCartoes] = useState<{ id: string; nome: string; dia_fechamento: number | null }[]>([]);
+  const [cartoes, setCartoes] = useState<{ id: string; nome: string; tipo: string; dia_fechamento: number | null }[]>(
+    []
+  );
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -114,7 +116,7 @@ export default function Despesas() {
         supabase.from("categorias_financeiras").select("id, nome").eq("tipo", "Despesa").order("nome"),
         supabase.from("fornecedores").select("id, nome").order("nome"),
         supabase.from("contas").select("id, nome"),
-        supabase.from("cartoes_credito").select("id, nome, dia_fechamento"),
+        supabase.from("cartoes").select("id, nome, tipo, dia_fechamento"),
         supabase.from("projetos").select("id, nome, codigo_projeto").order("nome"),
         supabase
           .from("despesas")
@@ -152,8 +154,10 @@ export default function Despesas() {
     return despesasRaw.map((d) => {
       // Derive payment method
       let forma = "-";
-      if (d.cartao_id) forma = "Cartão de Crédito";
-      else if (d.conta_id) forma = "Conta/Outro";
+      if (d.cartao_id) {
+        const cartao = cartoes.find((c) => c.id === d.cartao_id);
+        forma = cartao?.tipo === "debito" ? "Cartão de Débito" : "Cartão de Crédito";
+      } else if (d.conta_id) forma = "Conta/Outro";
 
       return {
         ...d,
@@ -199,7 +203,12 @@ export default function Despesas() {
     setSelectedDespesa(despesa);
 
     // Derivar forma de pagamento pelo vínculo existente
-    const formaPgto = despesa.cartao_id ? "Cartão de Crédito" : "";
+    const cartaoEncontrado = cartoes.find((c) => c.id === despesa.cartao_id);
+    const formaPgto = despesa.cartao_id
+      ? cartaoEncontrado?.tipo === "debito"
+        ? "Cartão de Débito"
+        : "Cartão de Crédito"
+      : "";
 
     form.reset({
       dataVencimento: despesa.data_vencimento ? new Date(despesa.data_vencimento) : new Date(),
@@ -688,6 +697,7 @@ export default function Despesas() {
                               </SelectTrigger>
                               <SelectContent>
                                 <SelectItem value="Cartão de Crédito">Cartão de Crédito</SelectItem>
+                                <SelectItem value="Cartão de Débito">Cartão de Débito</SelectItem>
                                 <SelectItem value="PIX">PIX</SelectItem>
                                 <SelectItem value="Transferência">Transferência</SelectItem>
                                 <SelectItem value="Boleto">Boleto</SelectItem>
@@ -750,9 +760,10 @@ export default function Despesas() {
                           Conta / Cartão
                         </Label>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          {form.watch("formaPagamento") === "Cartão de Crédito" ? (
+                          {form.watch("formaPagamento") === "Cartão de Crédito" ||
+                          form.watch("formaPagamento") === "Cartão de Débito" ? (
                             <div className="space-y-1.5">
-                              <Label className="text-xs">Cartão de Crédito</Label>
+                              <Label className="text-xs">Cartão</Label>
                               <Select
                                 value={form.watch("cartaoId")}
                                 onValueChange={(v) => form.setValue("cartaoId", v)}

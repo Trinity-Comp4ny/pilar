@@ -79,7 +79,7 @@ export default function Admin() {
         const { data: profile } = await supabase
           .from("profiles")
           .select(
-            "id, empresa_id, role, empresas(id, nome, cnpj, status, email, contato, endereco, cidade, estado, cep, logo_url)"
+            "id, empresa_id, role, empresas(id, nome, cnpj, status, email, contato, endereco, cidade, estado, cep, logo_url, features)"
           )
           .eq("id", user.id)
           .single();

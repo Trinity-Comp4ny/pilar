@@ -18,6 +18,7 @@ import {
   type PropostaTemplate,
 } from "@/hooks/usePropostaTemplates";
 import { AUTO_VARIABLES } from "@/lib/docxUtils";
+import { sanitizeHtml } from "@/lib/sanitize";
 import { VariaveisGuideButton } from "./VariaveisGuideDialog";
 import mammoth from "mammoth";
 
@@ -279,7 +280,7 @@ export function TemplatesManager() {
                     [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:mb-2
                     [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:mb-2
                     [&_li]:text-sm [&_li]:mb-1"
-                  dangerouslySetInnerHTML={{ __html: previewHtml }}
+                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(previewHtml) }}
                 />
               </div>
             ) : null}

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,7 +31,18 @@ import {
   FileText,
   Pencil,
   Trash2,
+  ArrowRight,
+  MoreVertical,
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -119,6 +131,7 @@ export default function Leads() {
   const [motivoPerda, setMotivoPerda] = useState("");
   const [isAutoConvertOpen, setIsAutoConvertOpen] = useState(false);
   const [isCreatePropostaOpen, setIsCreatePropostaOpen] = useState(false);
+  const [leadToDelete, setLeadToDelete] = useState<{ id: string; nome: string } | null>(null);
   const [collapsedColumns, setCollapsedColumns] = useState<Set<string>>(new Set());
   const [filterProximos, setFilterProximos] = useState(false);
   const queryClient = useQueryClient();
@@ -285,10 +298,17 @@ export default function Leads() {
     });
   };
 
-  const handleDelete = async (id: string) => {
-    deleteLead.mutate(id, {
+  const handleDelete = (id: string) => {
+    const lead = leads.find((l) => l.id === id);
+    setLeadToDelete({ id, nome: lead ? `${lead.nome}${lead.sobrenome ? " " + lead.sobrenome : ""}` : "Lead" });
+  };
+
+  const handleDeleteConfirm = () => {
+    if (!leadToDelete) return;
+    deleteLead.mutate(leadToDelete.id, {
       onSuccess: () => {
         setIsDetailOpen(false);
+        setLeadToDelete(null);
       },
     });
   };
@@ -772,6 +792,45 @@ export default function Leads() {
                             <p className="text-sm text-red-500/80 line-clamp-2 mt-1 pt-1 border-t border-red-100">
                               Motivo: {lead.motivo_perda}
                             </p>
+                          )}
+                          {canEdit && (
+                            <div className="flex justify-end pt-2 mt-1 border-t" onClick={(e) => e.stopPropagation()}>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="sm" className="h-7 text-xs gap-1 text-muted-foreground">
+                                    <MoreVertical className="h-3.5 w-3.5" />
+                                    Ações
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuSub>
+                                    <DropdownMenuSubTrigger>
+                                      <ArrowRight className="h-3.5 w-3.5 mr-2" /> Mover para
+                                    </DropdownMenuSubTrigger>
+                                    <DropdownMenuSubContent>
+                                      {Object.keys(statusConfig)
+                                        .filter((s) => s !== lead.status)
+                                        .map((s) => (
+                                          <DropdownMenuItem
+                                            key={s}
+                                            onClick={() => {
+                                              if (s === "Perdido") {
+                                                setPendingDrop({ leadId: lead.id, newStatus: s });
+                                              } else if (s === "Ganho") {
+                                                setPendingDrop({ leadId: lead.id, newStatus: s });
+                                              } else {
+                                                updateStatus.mutate({ leadId: lead.id, newStatus: s });
+                                              }
+                                            }}
+                                          >
+                                            {statusConfig[s].label}
+                                          </DropdownMenuItem>
+                                        ))}
+                                    </DropdownMenuSubContent>
+                                  </DropdownMenuSub>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </div>
                           )}
                         </CardContent>
                       </Card>
@@ -1281,6 +1340,17 @@ export default function Leads() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        open={!!leadToDelete}
+        onOpenChange={(open) => !open && setLeadToDelete(null)}
+        onConfirm={handleDeleteConfirm}
+        title="Excluir Lead"
+        itemName={leadToDelete?.nome}
+        description="Esta ação não pode ser desfeita."
+        confirmText="Excluir"
+        cancelText="Cancelar"
+      />
     </PageLayout>
   );
 }

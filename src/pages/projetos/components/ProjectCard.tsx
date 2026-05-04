@@ -8,9 +8,13 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreVertical, ExternalLink, Edit, Trash2 } from "lucide-react";
+import { MoreVertical, ExternalLink, Edit, Trash2, ArrowRight } from "lucide-react";
+import { PROJECT_STATUS_CONFIG } from "@/constants";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
@@ -29,6 +33,7 @@ interface ProjectCardProps {
   onClick: (projeto: Projeto) => void;
   onEdit?: (projeto: Projeto) => void;
   onDelete?: (id: string) => void;
+  onMoveStatus?: (id: string, newStatus: string) => void;
   canEdit?: boolean;
   isDragging?: boolean;
 }
@@ -38,6 +43,7 @@ export function ProjectCard({
   onClick,
   onEdit,
   onDelete,
+  onMoveStatus,
   canEdit = false,
   isDragging = false,
 }: ProjectCardProps) {
@@ -88,6 +94,25 @@ export function ProjectCard({
                     <DropdownMenuItem onClick={() => onEdit(projeto)}>
                       <Edit className="h-3.5 w-3.5 mr-2" /> Editar dados
                     </DropdownMenuItem>
+                  )}
+                  {onMoveStatus && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuSub>
+                        <DropdownMenuSubTrigger>
+                          <ArrowRight className="h-3.5 w-3.5 mr-2" /> Mover para
+                        </DropdownMenuSubTrigger>
+                        <DropdownMenuSubContent>
+                          {Object.entries(PROJECT_STATUS_CONFIG)
+                            .filter(([s]) => s !== projeto.status)
+                            .map(([s, cfg]) => (
+                              <DropdownMenuItem key={s} onClick={() => onMoveStatus(projeto.id, s)}>
+                                {cfg.label}
+                              </DropdownMenuItem>
+                            ))}
+                        </DropdownMenuSubContent>
+                      </DropdownMenuSub>
+                    </>
                   )}
                   {onDelete && (
                     <>

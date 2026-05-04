@@ -15,8 +15,8 @@ export function AdminRoute() {
     return <Navigate to="/sem-acesso?recurso=admin_portal" replace />;
   }
 
-  if (mfaCurrentLevel !== "aal2" && location.pathname !== "/profile") {
-    return <Navigate to="/profile" replace state={{ reason: "aal2-required" }} />;
+  if (mfaCurrentLevel !== "aal2") {
+    return <Navigate to="/mfa" replace state={{ from: location, reason: "aal2-required" }} />;
   }
 
   return <Outlet />;

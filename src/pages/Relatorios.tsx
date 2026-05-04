@@ -8,7 +8,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CalendarIcon, Download, Plus, FileBarChart, Filter, X } from "lucide-react";
+import { CalendarIcon, Download, Plus, FileBarChart, Filter, X, Columns3 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { format, startOfDay, endOfDay, subDays, startOfMonth, endOfMonth, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { getDisplayDate, formatDateDisplay } from "@/lib/dateUtils";
@@ -98,6 +99,52 @@ export default function Relatorios() {
   const [isLoading, setIsLoading] = useState(false);
   const [reportData, setReportData] = useState<ReportRow[]>([]);
   const [reportTitle, setReportTitle] = useState<string>("");
+
+  const ALL_COLUMNS: (keyof ReportRow)[] = [
+    "Tipo",
+    "Descrição",
+    "Valor",
+    "Dt. Vencimento",
+    "Dt. Efetiva",
+    "Status",
+    "Projeto",
+    "Cliente / Fornecedor",
+    "Categoria",
+    "Conta",
+    "Forma Pgto",
+    "Nota Fiscal",
+    "Parcela",
+  ];
+  const DEFAULT_VISIBLE = new Set<keyof ReportRow>([
+    "Tipo",
+    "Descrição",
+    "Valor",
+    "Dt. Vencimento",
+    "Status",
+    "Cliente / Fornecedor",
+    "Categoria",
+  ]);
+
+  const [visibleColumns, setVisibleColumns] = useState<Set<keyof ReportRow>>(() => {
+    try {
+      const saved = localStorage.getItem("relatorios.columns");
+      if (saved) return new Set(JSON.parse(saved) as (keyof ReportRow)[]);
+    } catch {
+      /* ignore */
+    }
+    return DEFAULT_VISIBLE;
+  });
+
+  const toggleColumn = (col: keyof ReportRow) => {
+    setVisibleColumns((prev) => {
+      const next = new Set(prev);
+      if (next.has(col)) {
+        if (next.size > 1) next.delete(col);
+      } else next.add(col);
+      localStorage.setItem("relatorios.columns", JSON.stringify([...next]));
+      return next;
+    });
+  };
 
   // --- Filtros de coluna ---
   const [filterCategoria, setFilterCategoria] = useState<string>("");
@@ -821,6 +868,48 @@ export default function Relatorios() {
                   </Badge>
                 </div>
                 <div className="flex items-center gap-2">
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5">
+                        <Columns3 size={13} />
+                        Colunas
+                        {visibleColumns.size < ALL_COLUMNS.length && (
+                          <span className="text-[10px] bg-foreground text-background rounded-full px-1.5 py-0.5 min-w-[18px] tabular-nums">
+                            {visibleColumns.size}
+                          </span>
+                        )}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-52 p-2" align="end">
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between px-1 pb-1 border-b mb-1">
+                          <span className="text-xs font-medium text-muted-foreground">Colunas visíveis</span>
+                          <button
+                            onClick={() => {
+                              setVisibleColumns(new Set(ALL_COLUMNS));
+                              localStorage.setItem("relatorios.columns", JSON.stringify(ALL_COLUMNS));
+                            }}
+                            className="text-[10px] text-muted-foreground hover:text-foreground underline underline-offset-1"
+                          >
+                            Todas
+                          </button>
+                        </div>
+                        {ALL_COLUMNS.map((col) => (
+                          <label
+                            key={col}
+                            className="flex items-center gap-2 px-1 py-0.5 rounded hover:bg-muted cursor-pointer"
+                          >
+                            <Checkbox
+                              checked={visibleColumns.has(col)}
+                              onCheckedChange={() => toggleColumn(col)}
+                              className="h-3.5 w-3.5"
+                            />
+                            <span className="text-xs">{col}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
                   <Button
                     variant="outline"
                     size="sm"
@@ -845,49 +934,53 @@ export default function Relatorios() {
 
               {/* Tabela */}
               <div className="flex-1 min-h-0 w-full overflow-auto border rounded-xl bg-white">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      {Object.keys(reportData[0] || {}).map((key) => (
-                        <TableHead key={key} className="whitespace-nowrap text-xs">
-                          {key}
-                        </TableHead>
-                      ))}
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredData.length === 0 ? (
-                      <TableRow>
-                        <TableCell
-                          colSpan={Object.keys(reportData[0] || {}).length}
-                          className="text-center py-10 text-black/40 text-sm"
-                        >
-                          Nenhum registro encontrado com os filtros aplicados.
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      filteredData.map((row, idx) => (
-                        <TableRow key={idx}>
-                          {Object.keys(reportData[0] || {}).map((key) => (
-                            <TableCell key={key} className="align-top whitespace-nowrap text-xs">
-                              {renderCellValue(key, row[key as keyof ReportRow])}
-                            </TableCell>
+                {(() => {
+                  const cols = ALL_COLUMNS.filter((c) => visibleColumns.has(c));
+                  const valorIdx = cols.indexOf("Valor");
+                  return (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          {cols.map((key) => (
+                            <TableHead key={key} className="whitespace-nowrap text-xs">
+                              {key}
+                            </TableHead>
                           ))}
                         </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                  {filteredData.length > 0 && (
-                    <TableFooter>
-                      <TableRow className="bg-black/[0.02] font-semibold">
-                        <TableCell className="text-xs">Total</TableCell>
-                        <TableCell />
-                        <TableCell className="text-xs">{toCurrency(summary.total)}</TableCell>
-                        <TableCell colSpan={10} />
-                      </TableRow>
-                    </TableFooter>
-                  )}
-                </Table>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredData.length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={cols.length} className="text-center py-10 text-black/40 text-sm">
+                              Nenhum registro encontrado com os filtros aplicados.
+                            </TableCell>
+                          </TableRow>
+                        ) : (
+                          filteredData.map((row, idx) => (
+                            <TableRow key={idx}>
+                              {cols.map((key) => (
+                                <TableCell key={key} className="align-top whitespace-nowrap text-xs">
+                                  {renderCellValue(key, row[key as keyof ReportRow])}
+                                </TableCell>
+                              ))}
+                            </TableRow>
+                          ))
+                        )}
+                      </TableBody>
+                      {filteredData.length > 0 && valorIdx >= 0 && (
+                        <TableFooter>
+                          <TableRow className="bg-black/[0.02] font-semibold">
+                            {cols.map((key, i) => (
+                              <TableCell key={key} className="text-xs">
+                                {i === 0 ? "Total" : i === valorIdx ? toCurrency(summary.total) : ""}
+                              </TableCell>
+                            ))}
+                          </TableRow>
+                        </TableFooter>
+                      )}
+                    </Table>
+                  );
+                })()}
               </div>
             </>
           )}

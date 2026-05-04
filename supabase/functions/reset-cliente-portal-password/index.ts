@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { withSentry } from "../_shared/sentry.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 import { authenticateUser, isUUID, jsonResponse, optionsResponse, safeErrorResponse } from "../_shared/cors.ts";
@@ -11,77 +12,79 @@ function generatePassword(length = 10): string {
   return Array.from(array, (b) => chars[b % chars.length]).join("");
 }
 
-serve(async (req) => {
-  if (req.method === "OPTIONS") return optionsResponse(req);
-  if (req.method !== "POST") return safeErrorResponse(405, "Method not allowed", req);
+serve(
+  withSentry("reset-cliente-portal-password", async (req) => {
+    if (req.method === "OPTIONS") return optionsResponse(req);
+    if (req.method !== "POST") return safeErrorResponse(405, "Method not allowed", req);
 
-  const auth = await authenticateUser(req);
-  if (auth.error) return auth.error;
-  const { supabase: supabaseClient, user } = auth;
-
-  try {
-    const { data: profile, error: profileError } = await supabaseClient
-      .from("profiles")
-      .select("empresa_id, role")
-      .eq("id", user.id)
-      .single();
-
-    if (profileError || !profile) return safeErrorResponse(403, "Profile not found", req);
-    if (profile.role !== "admin" && profile.role !== "ultra_admin") {
-      return safeErrorResponse(403, "Apenas admin pode redefinir senhas do portal", req);
-    }
-    if (!profile.empresa_id) return safeErrorResponse(403, "Você precisa pertencer a uma empresa", req);
-
-    const { cliente_id, nome_cliente } = await req.json();
-    if (!isUUID(cliente_id)) return safeErrorResponse(400, "cliente_id inválido", req);
-
-    const supabaseAdmin = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-    );
-
-    const { data: account, error: accountError } = await supabaseAdmin
-      .from("cliente_portal_accounts")
-      .select("id, email")
-      .eq("cliente_id", cliente_id)
-      .eq("empresa_id", profile.empresa_id)
-      .single();
-
-    if (accountError || !account) return safeErrorResponse(404, "Conta do portal não encontrada", req);
-
-    const novaSenha = generatePassword(10);
-
-    const { error: resetError } = await supabaseAdmin.rpc("_portal_reset_password", {
-      p_account_id: account.id,
-      p_nova_senha: novaSenha,
-    });
-
-    if (resetError) {
-      console.error("[reset-cliente-portal-password] _portal_reset_password failed", resetError.message);
-      return safeErrorResponse(400, `Falha ao redefinir senha: ${resetError.message}`, req);
-    }
-
-    const loginUrl = `${Deno.env.get("PUBLIC_SITE_URL") ?? ""}/portal/login`;
+    const auth = await authenticateUser(req);
+    if (auth.error) return auth.error;
+    const { supabase: supabaseClient, user } = auth;
 
     try {
-      await sendEmail({
-        to: account.email,
-        subject: "Sua senha do Portal do Cliente foi redefinida",
-        html: templateAcessoPortalCliente({
-          nomeCliente: nome_cliente ?? "Cliente",
-          email: account.email,
-          senha: novaSenha,
-          loginUrl,
-          isReset: true,
-        }),
-      });
-    } catch (emailErr) {
-      console.error("[reset-cliente-portal-password] sendEmail failed", emailErr);
-    }
+      const { data: profile, error: profileError } = await supabaseClient
+        .from("profiles")
+        .select("empresa_id, role")
+        .eq("id", user.id)
+        .single();
 
-    return jsonResponse({ success: true, email: account.email }, 200, req);
-  } catch (error: unknown) {
-    console.error("[reset-cliente-portal-password] unexpected error", error);
-    return safeErrorResponse(400, "Invalid request", req);
-  }
-});
+      if (profileError || !profile) return safeErrorResponse(403, "Profile not found", req);
+      if (profile.role !== "admin" && profile.role !== "ultra_admin") {
+        return safeErrorResponse(403, "Apenas admin pode redefinir senhas do portal", req);
+      }
+      if (!profile.empresa_id) return safeErrorResponse(403, "Você precisa pertencer a uma empresa", req);
+
+      const { cliente_id, nome_cliente } = await req.json();
+      if (!isUUID(cliente_id)) return safeErrorResponse(400, "cliente_id inválido", req);
+
+      const supabaseAdmin = createClient(
+        Deno.env.get("SUPABASE_URL") ?? "",
+        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+      );
+
+      const { data: account, error: accountError } = await supabaseAdmin
+        .from("cliente_portal_accounts")
+        .select("id, email")
+        .eq("cliente_id", cliente_id)
+        .eq("empresa_id", profile.empresa_id)
+        .single();
+
+      if (accountError || !account) return safeErrorResponse(404, "Conta do portal não encontrada", req);
+
+      const novaSenha = generatePassword(10);
+
+      const { error: resetError } = await supabaseAdmin.rpc("_portal_reset_password", {
+        p_account_id: account.id,
+        p_nova_senha: novaSenha,
+      });
+
+      if (resetError) {
+        console.error("[reset-cliente-portal-password] _portal_reset_password failed", resetError.message);
+        return safeErrorResponse(400, `Falha ao redefinir senha: ${resetError.message}`, req);
+      }
+
+      const loginUrl = `${Deno.env.get("PUBLIC_SITE_URL") ?? ""}/portal/login`;
+
+      try {
+        await sendEmail({
+          to: account.email,
+          subject: "Sua senha do Portal do Cliente foi redefinida",
+          html: templateAcessoPortalCliente({
+            nomeCliente: nome_cliente ?? "Cliente",
+            email: account.email,
+            senha: novaSenha,
+            loginUrl,
+            isReset: true,
+          }),
+        });
+      } catch (emailErr) {
+        console.error("[reset-cliente-portal-password] sendEmail failed", emailErr);
+      }
+
+      return jsonResponse({ success: true, email: account.email }, 200, req);
+    } catch (error: unknown) {
+      console.error("[reset-cliente-portal-password] unexpected error", error);
+      return safeErrorResponse(400, "Invalid request", req);
+    }
+  })
+);

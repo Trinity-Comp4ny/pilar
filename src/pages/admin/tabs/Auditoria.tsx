@@ -97,7 +97,7 @@ const SENSITIVE_TABLES = [
   "receitas",
   "despesas",
   "contas",
-  "cartoes_credito",
+  "cartoes",
   "marcos_faturamento",
   "propostas",
   "leads",
