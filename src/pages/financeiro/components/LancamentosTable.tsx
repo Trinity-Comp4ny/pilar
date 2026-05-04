@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import {
   ArrowDownCircle,
+  ArrowLeftRight,
   ArrowUpCircle,
   ArrowUpDown,
   ArrowUp,
@@ -33,6 +34,7 @@ import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import type { Lancamento } from "../hooks/useLancamentosUnified";
 import { LancamentoDetailDialog } from "./LancamentoDetailDialog";
 import { LancamentoFormDialog } from "./LancamentoFormDialog";
+import { TransferenciaFormDialog } from "./TransferenciaFormDialog";
 import { LancamentosFilterBar } from "./LancamentosFilterBar";
 import { useLancamentosFiltersData } from "../hooks/useLancamentosFiltersData";
 import { defaultFilters, type LancamentosFilters } from "./lancamentosFilters";
@@ -60,7 +62,8 @@ const formatBRL = (v: number) =>
 
 const isPaidStatus = (l: Lancamento) =>
   (l.tipo === "receita" && (l.status === "Recebido" || l.status === "Recebida")) ||
-  (l.tipo === "despesa" && l.status === "Pago");
+  (l.tipo === "despesa" && l.status === "Pago") ||
+  (l.tipo === "transferencia" && l.status === "Concluída");
 
 const isOverdue = (l: Lancamento): boolean => {
   if (isPaidStatus(l)) return false;
@@ -85,6 +88,7 @@ export function LancamentosTable({ data, loading, onRefetch, filters, onFiltersC
   const [bulkConfirm, setBulkConfirm] = useState(false);
   const [detailTarget, setDetailTarget] = useState<Lancamento | null>(null);
   const [editTarget, setEditTarget] = useState<Lancamento | null>(null);
+  const [editTransferencia, setEditTransferencia] = useState<Lancamento | null>(null);
 
   useEffect(() => {
     localStorage.setItem("lancamentos.density", density);
@@ -175,7 +179,7 @@ export function LancamentosTable({ data, loading, onRefetch, filters, onFiltersC
     let despesas = 0;
     for (const l of sorted) {
       if (l.tipo === "receita") receitas += l.valor;
-      else despesas += l.valor;
+      else if (l.tipo === "despesa") despesas += l.valor;
     }
     return { receitas, despesas, saldo: receitas - despesas };
   }, [sorted]);
@@ -208,6 +212,25 @@ export function LancamentosTable({ data, loading, onRefetch, filters, onFiltersC
   };
 
   const setStatus = async (l: Lancamento, novoStatus: string) => {
+    if (l.tipo === "transferencia") {
+      const { error } = await supabase.rpc("rpc_editar_transferencia", {
+        p_id: l.id,
+        p_conta_origem_id: l.conta_id,
+        p_conta_destino_id: l.contraparte_id,
+        p_valor: l.valor,
+        p_data: l.data_vencimento,
+        p_descricao: l.descricao || null,
+        p_status: novoStatus,
+        p_observacao: null,
+      } as never);
+      if (error) {
+        toast.error("Falha ao atualizar status", { description: error.message });
+        return;
+      }
+      toast.success("Status atualizado");
+      onRefetch();
+      return;
+    }
     const table = l.tipo === "receita" ? "receitas" : "despesas";
     const today = new Date().toISOString().slice(0, 10);
     const isPaying =
@@ -234,6 +257,7 @@ export function LancamentosTable({ data, loading, onRefetch, filters, onFiltersC
     const today = new Date().toISOString().slice(0, 10);
     const recIds = selectedRows.filter((l) => l.tipo === "receita" && !isPaidStatus(l)).map((l) => l.id);
     const despIds = selectedRows.filter((l) => l.tipo === "despesa" && !isPaidStatus(l)).map((l) => l.id);
+    // transferências não entram em bulk mark paid
     const ops: PromiseLike<{ error: unknown }>[] = [];
     if (recIds.length)
       ops.push(
@@ -268,6 +292,7 @@ export function LancamentosTable({ data, loading, onRefetch, filters, onFiltersC
     if (selectedRows.length === 0) return;
     const recIds = selectedRows.filter((l) => l.tipo === "receita").map((l) => l.id);
     const despIds = selectedRows.filter((l) => l.tipo === "despesa").map((l) => l.id);
+    const transfIds = selectedRows.filter((l) => l.tipo === "transferencia").map((l) => l.id);
     const stamp = new Date().toISOString();
     const ops: PromiseLike<{ error: unknown }>[] = [];
     if (recIds.length)
@@ -283,6 +308,13 @@ export function LancamentosTable({ data, loading, onRefetch, filters, onFiltersC
           .from("despesas")
           .update({ deleted_at: stamp } as never)
           .in("id", despIds) as unknown as PromiseLike<{ error: unknown }>
+      );
+    if (transfIds.length)
+      ops.push(
+        supabase
+          .from("transferencias")
+          .update({ deleted_at: stamp } as never)
+          .in("id", transfIds) as unknown as PromiseLike<{ error: unknown }>
       );
     const results = await Promise.all(ops);
     const failed = results.find((r) => (r as { error?: unknown }).error);
@@ -300,6 +332,16 @@ export function LancamentosTable({ data, loading, onRefetch, filters, onFiltersC
     if (!deleteTarget) return;
     const { id, tipo } = deleteTarget;
     setDeleteTarget(null);
+    if (tipo === "transferencia") {
+      const { error } = await supabase.rpc("rpc_excluir_transferencia", { p_id: id } as never);
+      if (error) {
+        toast.error("Falha ao excluir", { description: error.message });
+        return;
+      }
+      toast.success("Transferência excluída");
+      onRefetch();
+      return;
+    }
     const table = tipo === "receita" ? "receitas" : "despesas";
     const { error } = await supabase
       .from(table)
@@ -487,6 +529,7 @@ export function LancamentosTable({ data, loading, onRefetch, filters, onFiltersC
                   {virtualItems.map((vi) => {
                     const l = sorted[vi.index];
                     const isReceita = l.tipo === "receita";
+                    const isTransf = l.tipo === "transferencia";
                     const dataExibir = getDisplayDate(l.data_efetivacao, l.data_vencimento, l.status);
                     const overdue = isOverdue(l);
                     const k = rowKey(l);
@@ -498,9 +541,10 @@ export function LancamentosTable({ data, loading, onRefetch, filters, onFiltersC
                         ref={virtualizer.measureElement}
                         className={cn(
                           "border-b border-black/5 hover:bg-gray-50 cursor-pointer transition-colors",
-                          isSel && "bg-brand/5"
+                          isSel && "bg-brand/5",
+                          isTransf && "bg-blue-50/30"
                         )}
-                        onClick={() => setDetailTarget(l)}
+                        onClick={() => (isTransf ? setEditTransferencia(l) : setDetailTarget(l))}
                       >
                         {canEdit && (
                           <td className={cellPad} onClick={(e) => e.stopPropagation()}>
@@ -515,11 +559,17 @@ export function LancamentosTable({ data, loading, onRefetch, filters, onFiltersC
                           <span
                             className={cn(
                               "inline-flex items-center justify-center h-7 w-7 rounded-full",
-                              isReceita ? "bg-positive/10 text-positive" : "bg-red-50 text-red-600"
+                              isTransf
+                                ? "bg-blue-100 text-blue-600"
+                                : isReceita
+                                  ? "bg-positive/10 text-positive"
+                                  : "bg-red-50 text-red-600"
                             )}
-                            title={isReceita ? "Receita" : "Despesa"}
+                            title={isTransf ? "Transferência" : isReceita ? "Receita" : "Despesa"}
                           >
-                            {isReceita ? (
+                            {isTransf ? (
+                              <ArrowLeftRight className="h-4 w-4" />
+                            ) : isReceita ? (
                               <ArrowUpCircle className="h-4 w-4" />
                             ) : (
                               <ArrowDownCircle className="h-4 w-4" />
@@ -530,22 +580,33 @@ export function LancamentosTable({ data, loading, onRefetch, filters, onFiltersC
                           {formatDateDisplay(dataExibir)}
                           {overdue && <span className="ml-1 text-[10px] uppercase">atrasado</span>}
                         </td>
-                        <td className={cn(cellPad, "font-medium", cellTextSize)}>{l.descricao}</td>
-                        <td className={cn(cellPad, cellTextSize)}>{l.contraparte_nome || "-"}</td>
-                        <td className={cn(cellPad, cellTextSize)}>{l.categoria_nome || "-"}</td>
-                        <td className={cn(cellPad, cellTextSize)}>{l.projeto_codigo || "-"}</td>
+                        <td className={cn(cellPad, "font-medium", cellTextSize)}>
+                          {l.descricao}
+                          {isTransf && l.conta_nome && (
+                            <span className="ml-1 text-[10px] text-muted-foreground font-normal">({l.conta_nome})</span>
+                          )}
+                        </td>
+                        <td className={cn(cellPad, cellTextSize)}>
+                          {isTransf ? (l.contraparte_nome ?? "-") : l.contraparte_nome || "-"}
+                        </td>
+                        <td className={cn(cellPad, cellTextSize)}>{isTransf ? "-" : l.categoria_nome || "-"}</td>
+                        <td className={cn(cellPad, cellTextSize)}>{isTransf ? "-" : l.projeto_codigo || "-"}</td>
                         <td className={cn(cellPad, "text-xs text-muted-foreground")}>
-                          {l.parcela_numero && l.parcela_total ? `${l.parcela_numero}/${l.parcela_total}` : "1/1"}
+                          {isTransf
+                            ? "-"
+                            : l.parcela_numero && l.parcela_total
+                              ? `${l.parcela_numero}/${l.parcela_total}`
+                              : "1/1"}
                         </td>
                         <td
                           className={cn(
                             cellPad,
                             "text-right font-semibold tabular-nums",
                             cellTextSize,
-                            isReceita ? "text-positive" : "text-red-600"
+                            isTransf ? "text-blue-600" : isReceita ? "text-positive" : "text-red-600"
                           )}
                         >
-                          {isReceita ? "+" : "−"} {formatBRL(l.valor)}
+                          {isTransf ? "⇄" : isReceita ? "+" : "−"} {formatBRL(l.valor)}
                         </td>
                         <td className={cellPad} onClick={(e) => e.stopPropagation()}>
                           <StatusBadge l={l} canEdit={canEdit} onChange={(s) => setStatus(l, s)} />
@@ -557,7 +618,7 @@ export function LancamentosTable({ data, loading, onRefetch, filters, onFiltersC
                                 variant="ghost"
                                 size="icon"
                                 className="h-7 w-7 text-blue-600 hover:bg-blue-50"
-                                onClick={() => setEditTarget(l)}
+                                onClick={() => (isTransf ? setEditTransferencia(l) : setEditTarget(l))}
                               >
                                 <Pencil className="h-3.5 w-3.5" />
                               </Button>
@@ -631,11 +692,21 @@ export function LancamentosTable({ data, loading, onRefetch, filters, onFiltersC
         />
       )}
 
+      <TransferenciaFormDialog
+        open={editTransferencia !== null}
+        onOpenChange={(v) => !v && setEditTransferencia(null)}
+        transferencia={editTransferencia}
+        onSaved={() => {
+          setEditTransferencia(null);
+          onRefetch();
+        }}
+      />
+
       <ConfirmDialog
         open={deleteTarget !== null}
         onOpenChange={(v) => !v && setDeleteTarget(null)}
         onConfirm={confirmDelete}
-        title={`Excluir ${deleteTarget?.tipo === "receita" ? "receita" : "despesa"}?`}
+        title={`Excluir ${deleteTarget?.tipo === "receita" ? "receita" : deleteTarget?.tipo === "transferencia" ? "transferência" : "despesa"}?`}
         description={
           deleteTarget?.grupo_parcela
             ? "Esta é uma parcela de um grupo. Apenas esta parcela será excluída — use a aba específica para excluir o grupo inteiro."
@@ -695,17 +766,24 @@ function SortableTH({
 
 function StatusBadge({ l, canEdit, onChange }: { l: Lancamento; canEdit: boolean; onChange: (s: string) => void }) {
   const isReceita = l.tipo === "receita";
+  const isTransf = l.tipo === "transferencia";
   const paid = isPaidStatus(l);
   const overdue = isOverdue(l);
-  const options: { value: string; label: string }[] = isReceita
+
+  const options: { value: string; label: string }[] = isTransf
     ? [
+        { value: "Concluída", label: "Concluída" },
         { value: "Pendente", label: "Pendente" },
-        { value: "Recebido", label: "Recebido" },
       ]
-    : [
-        { value: "Pendente", label: "Pendente" },
-        { value: "Pago", label: "Pago" },
-      ];
+    : isReceita
+      ? [
+          { value: "Pendente", label: "Pendente" },
+          { value: "Recebido", label: "Recebido" },
+        ]
+      : [
+          { value: "Pendente", label: "Pendente" },
+          { value: "Pago", label: "Pago" },
+        ];
 
   const badge = (
     <Badge
@@ -713,7 +791,8 @@ function StatusBadge({ l, canEdit, onChange }: { l: Lancamento; canEdit: boolean
       className={cn(
         "text-xs cursor-pointer transition-colors",
         paid && isReceita && "bg-positive text-white hover:bg-positive/90",
-        paid && !isReceita && "bg-red-600 text-white hover:bg-red-600/90",
+        paid && !isReceita && !isTransf && "bg-red-600 text-white hover:bg-red-600/90",
+        paid && isTransf && "bg-blue-600 text-white hover:bg-blue-600/90",
         !paid && overdue && "bg-amber-100 text-amber-800 hover:bg-amber-200"
       )}
     >
