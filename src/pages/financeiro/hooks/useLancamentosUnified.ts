@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
-export type TipoLancamento = "receita" | "despesa";
+export type TipoLancamento = "receita" | "despesa" | "transferencia";
 export type GrupoTipo = "finito" | "recorrente" | null;
 export type GrupoStatus = "aberto" | "parcial" | "quitado" | "cancelado" | null;
 
@@ -19,6 +19,8 @@ export interface Lancamento {
   projeto_id: string | null;
   projeto_codigo: string | null;
   centro_custo_id: string | null;
+  conta_id: string | null;
+  conta_nome: string | null;
   contraparte_id: string | null;
   contraparte_tipo: string | null;
   contraparte_nome: string | null;
@@ -31,6 +33,7 @@ export interface Lancamento {
   grupo_status: GrupoStatus;
   grupo_total_original: number | null;
   tags: string[] | null;
+  transferencia_par_id: string | null;
 }
 
 interface UseLancamentosArgs {
@@ -50,6 +53,7 @@ type LancamentoRow = {
   categoria_id: string | null;
   projeto_id: string | null;
   centro_custo_id: string | null;
+  conta_id: string | null;
   contraparte_id: string | null;
   contraparte_tipo: string | null;
   forma_pagamento: string | null;
@@ -61,6 +65,7 @@ type LancamentoRow = {
   grupo_status: GrupoStatus;
   grupo_total_original: number | null;
   tags: string[] | null;
+  transferencia_par_id: string | null;
 };
 
 export function useLancamentosUnified({ from, to }: UseLancamentosArgs) {
@@ -74,18 +79,20 @@ export function useLancamentosUnified({ from, to }: UseLancamentosArgs) {
       if (from) lancQ = lancQ.gte("data_vencimento", from);
       if (to) lancQ = lancQ.lte("data_vencimento", to);
 
-      const [lancRes, catRes, projRes, cliRes, fornRes] = await Promise.all([
+      const [lancRes, catRes, projRes, cliRes, fornRes, contasRes] = await Promise.all([
         lancQ,
         supabase.from("categorias_financeiras").select("id, nome"),
         supabase.from("projetos").select("id, codigo_projeto"),
         supabase.from("clientes").select("id, nome"),
         supabase.from("fornecedores").select("id, nome"),
+        supabase.from("contas").select("id, nome").is("deleted_at", null),
       ]);
 
       const catMap = new Map<string, string>((catRes.data ?? []).map((c) => [c.id, c.nome]));
       const projMap = new Map<string, string | null>((projRes.data ?? []).map((p) => [p.id, p.codigo_projeto]));
       const cliMap = new Map<string, string>((cliRes.data ?? []).map((c) => [c.id, c.nome]));
       const fornMap = new Map<string, string>((fornRes.data ?? []).map((f) => [f.id, f.nome]));
+      const contasMap = new Map<string, string>((contasRes.data ?? []).map((c) => [c.id, c.nome]));
 
       const rows = (lancRes.data ?? []) as unknown as LancamentoRow[];
 
@@ -95,7 +102,9 @@ export function useLancamentosUnified({ from, to }: UseLancamentosArgs) {
             ? null
             : r.contraparte_tipo === "cliente"
               ? (cliMap.get(r.contraparte_id) ?? null)
-              : (fornMap.get(r.contraparte_id) ?? null);
+              : r.contraparte_tipo === "conta_destino"
+                ? (contasMap.get(r.contraparte_id) ?? null)
+                : (fornMap.get(r.contraparte_id) ?? null);
 
         return {
           id: r.id,
@@ -111,6 +120,8 @@ export function useLancamentosUnified({ from, to }: UseLancamentosArgs) {
           projeto_id: r.projeto_id,
           projeto_codigo: r.projeto_id ? (projMap.get(r.projeto_id) ?? null) : null,
           centro_custo_id: r.centro_custo_id,
+          conta_id: r.conta_id,
+          conta_nome: r.conta_id ? (contasMap.get(r.conta_id) ?? null) : null,
           contraparte_id: r.contraparte_id,
           contraparte_tipo: r.contraparte_tipo,
           contraparte_nome: contraparteNome,
@@ -123,6 +134,7 @@ export function useLancamentosUnified({ from, to }: UseLancamentosArgs) {
           grupo_status: r.grupo_status,
           grupo_total_original: r.grupo_total_original == null ? null : Number(r.grupo_total_original),
           tags: r.tags,
+          transferencia_par_id: r.transferencia_par_id,
         };
       });
 

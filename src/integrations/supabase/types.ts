@@ -409,7 +409,7 @@ export type Database = {
           },
         ];
       };
-      cartoes_credito: {
+      cartoes: {
         Row: {
           conta_pagamento_id: string | null;
           cor: string | null;
@@ -421,6 +421,7 @@ export type Database = {
           id: string;
           limite: number;
           nome: string;
+          tipo: string;
           updated_at: string | null;
           usado: string | null;
           user_id: string | null;
@@ -436,6 +437,7 @@ export type Database = {
           id?: string;
           limite: number;
           nome: string;
+          tipo?: string;
           updated_at?: string | null;
           usado?: string | null;
           user_id?: string | null;
@@ -451,27 +453,28 @@ export type Database = {
           id?: string;
           limite?: number;
           nome?: string;
+          tipo?: string;
           updated_at?: string | null;
           usado?: string | null;
           user_id?: string | null;
         };
         Relationships: [
           {
-            foreignKeyName: "cartoes_credito_conta_pagamento_id_fkey";
+            foreignKeyName: "cartoes_conta_pagamento_id_fkey";
             columns: ["conta_pagamento_id"];
             isOneToOne: false;
             referencedRelation: "contas";
             referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "cartoes_credito_conta_pagamento_id_fkey";
+            foreignKeyName: "cartoes_conta_pagamento_id_fkey";
             columns: ["conta_pagamento_id"];
             isOneToOne: false;
             referencedRelation: "view_financas_resumo";
             referencedColumns: ["conta_id"];
           },
           {
-            foreignKeyName: "cartoes_credito_empresa_id_fkey";
+            foreignKeyName: "cartoes_empresa_id_fkey";
             columns: ["empresa_id"];
             isOneToOne: false;
             referencedRelation: "empresas";
@@ -630,6 +633,7 @@ export type Database = {
       clientes: {
         Row: {
           asaas_customer_id: string | null;
+          chaves_pix: Json | null;
           contas_bancarias: Json | null;
           contato: string;
           cpf_cnpj: string | null;
@@ -648,6 +652,7 @@ export type Database = {
         };
         Insert: {
           asaas_customer_id?: string | null;
+          chaves_pix?: Json | null;
           contas_bancarias?: Json | null;
           contato: string;
           cpf_cnpj?: string | null;
@@ -666,6 +671,7 @@ export type Database = {
         };
         Update: {
           asaas_customer_id?: string | null;
+          chaves_pix?: Json | null;
           contas_bancarias?: Json | null;
           contato?: string;
           cpf_cnpj?: string | null;
@@ -695,6 +701,7 @@ export type Database = {
       contas: {
         Row: {
           banco: string;
+          chave_pix: string | null;
           cor: string | null;
           created_at: string | null;
           deleted_at: string | null;
@@ -703,11 +710,13 @@ export type Database = {
           nome: string;
           saldo_atual: string | null;
           saldo_inicial: number | null;
+          tipo_chave_pix: string | null;
           updated_at: string | null;
           user_id: string | null;
         };
         Insert: {
           banco: string;
+          chave_pix?: string | null;
           cor?: string | null;
           created_at?: string | null;
           deleted_at?: string | null;
@@ -716,11 +725,13 @@ export type Database = {
           nome: string;
           saldo_atual?: string | null;
           saldo_inicial?: number | null;
+          tipo_chave_pix?: string | null;
           updated_at?: string | null;
           user_id?: string | null;
         };
         Update: {
           banco?: string;
+          chave_pix?: string | null;
           cor?: string | null;
           created_at?: string | null;
           deleted_at?: string | null;
@@ -729,6 +740,7 @@ export type Database = {
           nome?: string;
           saldo_atual?: string | null;
           saldo_inicial?: number | null;
+          tipo_chave_pix?: string | null;
           updated_at?: string | null;
           user_id?: string | null;
         };
@@ -847,7 +859,7 @@ export type Database = {
             foreignKeyName: "despesas_cartao_id_fkey";
             columns: ["cartao_id"];
             isOneToOne: false;
-            referencedRelation: "cartoes_credito";
+            referencedRelation: "cartoes";
             referencedColumns: ["id"];
           },
           {
@@ -1219,7 +1231,7 @@ export type Database = {
             foreignKeyName: "faturas_cartao_id_fkey";
             columns: ["cartao_id"];
             isOneToOne: false;
-            referencedRelation: "cartoes_credito";
+            referencedRelation: "cartoes";
             referencedColumns: ["id"];
           },
           {
@@ -2943,6 +2955,93 @@ export type Database = {
           },
         ];
       };
+      transferencias: {
+        Row: {
+          conta_destino_id: string;
+          conta_origem_id: string;
+          created_at: string;
+          created_by: string | null;
+          data_transferencia: string;
+          deleted_at: string | null;
+          descricao: string | null;
+          empresa_id: string;
+          id: string;
+          observacao: string | null;
+          status: string;
+          updated_at: string;
+          updated_by: string | null;
+          valor: number;
+        };
+        Insert: {
+          conta_destino_id: string;
+          conta_origem_id: string;
+          created_at?: string;
+          created_by?: string | null;
+          data_transferencia: string;
+          deleted_at?: string | null;
+          descricao?: string | null;
+          empresa_id: string;
+          id?: string;
+          observacao?: string | null;
+          status?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+          valor: number;
+        };
+        Update: {
+          conta_destino_id?: string;
+          conta_origem_id?: string;
+          created_at?: string;
+          created_by?: string | null;
+          data_transferencia?: string;
+          deleted_at?: string | null;
+          descricao?: string | null;
+          empresa_id?: string;
+          id?: string;
+          observacao?: string | null;
+          status?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+          valor?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "transferencias_conta_destino_id_fkey";
+            columns: ["conta_destino_id"];
+            isOneToOne: false;
+            referencedRelation: "contas";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "transferencias_conta_destino_id_fkey";
+            columns: ["conta_destino_id"];
+            isOneToOne: false;
+            referencedRelation: "view_financas_resumo";
+            referencedColumns: ["conta_id"];
+          },
+          {
+            foreignKeyName: "transferencias_conta_origem_id_fkey";
+            columns: ["conta_origem_id"];
+            isOneToOne: false;
+            referencedRelation: "contas";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "transferencias_conta_origem_id_fkey";
+            columns: ["conta_origem_id"];
+            isOneToOne: false;
+            referencedRelation: "view_financas_resumo";
+            referencedColumns: ["conta_id"];
+          },
+          {
+            foreignKeyName: "transferencias_empresa_id_fkey";
+            columns: ["empresa_id"];
+            isOneToOne: false;
+            referencedRelation: "empresas";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       wip_snapshots: {
         Row: {
           ano: number;
@@ -3036,6 +3135,7 @@ export type Database = {
           status: string | null;
           tags: string[] | null;
           tipo: string | null;
+          transferencia_par_id: string | null;
           updated_at: string | null;
           updated_by: string | null;
           valor: number | null;
@@ -3053,6 +3153,7 @@ export type Database = {
           id: string | null;
           limite: number | null;
           nome: string | null;
+          tipo: string | null;
           usado: number | null;
         };
         Insert: {
@@ -3065,6 +3166,7 @@ export type Database = {
           id?: string | null;
           limite?: number | null;
           nome?: string | null;
+          tipo?: string | null;
           usado?: never;
         };
         Update: {
@@ -3077,25 +3179,26 @@ export type Database = {
           id?: string | null;
           limite?: number | null;
           nome?: string | null;
+          tipo?: string | null;
           usado?: never;
         };
         Relationships: [
           {
-            foreignKeyName: "cartoes_credito_conta_pagamento_id_fkey";
+            foreignKeyName: "cartoes_conta_pagamento_id_fkey";
             columns: ["conta_pagamento_id"];
             isOneToOne: false;
             referencedRelation: "contas";
             referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "cartoes_credito_conta_pagamento_id_fkey";
+            foreignKeyName: "cartoes_conta_pagamento_id_fkey";
             columns: ["conta_pagamento_id"];
             isOneToOne: false;
             referencedRelation: "view_financas_resumo";
             referencedColumns: ["conta_id"];
           },
           {
-            foreignKeyName: "cartoes_credito_empresa_id_fkey";
+            foreignKeyName: "cartoes_empresa_id_fkey";
             columns: ["empresa_id"];
             isOneToOne: false;
             referencedRelation: "empresas";
@@ -3128,7 +3231,7 @@ export type Database = {
             foreignKeyName: "faturas_cartao_id_fkey";
             columns: ["cartao_id"];
             isOneToOne: false;
-            referencedRelation: "cartoes_credito";
+            referencedRelation: "cartoes";
             referencedColumns: ["id"];
           },
           {
@@ -3364,8 +3467,34 @@ export type Database = {
         Args: { p_proposta_id: string };
         Returns: string;
       };
+      rpc_criar_transferencia: {
+        Args: {
+          p_conta_destino_id: string;
+          p_conta_origem_id: string;
+          p_data: string;
+          p_descricao?: string;
+          p_observacao?: string;
+          p_status?: string;
+          p_valor: number;
+        };
+        Returns: string;
+      };
       rpc_daily_maintenance: { Args: never; Returns: Json };
       rpc_dashboard_rentabilidade: { Args: never; Returns: Json };
+      rpc_editar_transferencia: {
+        Args: {
+          p_conta_destino_id: string;
+          p_conta_origem_id: string;
+          p_data: string;
+          p_descricao?: string;
+          p_id: string;
+          p_observacao?: string;
+          p_status?: string;
+          p_valor: number;
+        };
+        Returns: undefined;
+      };
+      rpc_excluir_transferencia: { Args: { p_id: string }; Returns: undefined };
       rpc_faturar_marco: { Args: { p_marco_id: string }; Returns: string };
       rpc_gerar_alertas: { Args: never; Returns: number } | { Args: { p_empresa_id: string }; Returns: number };
       rpc_gerar_despesas_recorrentes: { Args: never; Returns: number };

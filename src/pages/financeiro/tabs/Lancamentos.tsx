@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Clock, Plus, TrendingDown, TrendingUp, Wallet } from "lucide-react";
+import { ArrowLeftRight, Clock, Plus, TrendingDown, TrendingUp, Wallet } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { LancamentosTable } from "../components/LancamentosTable";
 import { useLancamentosUnified } from "../hooks/useLancamentosUnified";
 import { LancamentoFormDialog } from "../components/LancamentoFormDialog";
+import { TransferenciaFormDialog } from "../components/TransferenciaFormDialog";
 import { defaultFilters, periodoRange, type LancamentosFilters } from "../components/lancamentosFilters";
 import type { TipoLancamento } from "../hooks/useLancamentosUnified";
 
@@ -23,6 +24,7 @@ const formatBRL = (v: number) =>
 export default function Lancamentos() {
   const [filters, setFilters] = useState<LancamentosFilters>(defaultFilters);
   const [newTipo, setNewTipo] = useState<TipoLancamento | null>(null);
+  const [newTransferencia, setNewTransferencia] = useState(false);
   const [kpis, setKpis] = useState<KPIs>({ recebido: 0, pago: 0, aReceber: 0, aPagar: 0 });
   const [loadingKpis, setLoadingKpis] = useState(false);
 
@@ -92,6 +94,15 @@ export default function Lancamentos() {
             <Plus className="h-3.5 w-3.5" />
             Nova despesa
           </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-9 rounded-full gap-1 border-blue-400 text-blue-600 hover:bg-blue-50"
+            onClick={() => setNewTransferencia(true)}
+          >
+            <ArrowLeftRight className="h-3.5 w-3.5" />
+            Transferência
+          </Button>
         </div>
       </div>
 
@@ -133,6 +144,15 @@ export default function Lancamentos() {
               }}
             />
           )}
+
+          <TransferenciaFormDialog
+            open={newTransferencia}
+            onOpenChange={setNewTransferencia}
+            onSaved={() => {
+              setNewTransferencia(false);
+              unified.refetch();
+            }}
+          />
         </CardContent>
       </Card>
     </div>
