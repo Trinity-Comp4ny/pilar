@@ -75,6 +75,7 @@ export default function Configuracoes() {
   const [banco, setBanco] = useState("");
   const [saldoInicial, setSaldoInicial] = useState("");
   const [chavePix, setChavePix] = useState("");
+  const [contaErrors, setContaErrors] = useState<Record<string, boolean>>({});
   const [diaFechamento, setDiaFechamento] = useState("");
   const [diaVencimento, setDiaVencimento] = useState("");
   const [limite, setLimite] = useState("");
@@ -136,8 +137,10 @@ export default function Configuracoes() {
   };
 
   const handleSaveConta = async () => {
-    if (!nome || !banco || !saldoInicial) {
-      toast.error("Campos obrigatórios", { description: "Preencha nome, banco e saldo inicial" });
+    const errors = { nome: !nome, banco: !banco, saldoInicial: !saldoInicial };
+    setContaErrors(errors);
+    if (errors.nome || errors.banco || errors.saldoInicial) {
+      toast.error("Campos obrigatórios", { description: "Preencha todos os campos marcados com *" });
       return;
     }
 
@@ -184,7 +187,7 @@ export default function Configuracoes() {
           .eq("id", selectedConta.id);
 
         if (error) {
-          toast.error("Erro ao atualizar");
+          toast.error("Erro ao atualizar conta", { description: error.message });
           return;
         }
 
@@ -196,7 +199,7 @@ export default function Configuracoes() {
         const { error } = await supabase.from("contas").insert(payload);
 
         if (error) {
-          toast.error("Erro ao criar conta");
+          toast.error("Erro ao criar conta", { description: error.message });
           return;
         }
 
@@ -240,7 +243,7 @@ export default function Configuracoes() {
         dia_vencimento: parseInt(diaVencimento),
         limite: parseCurrencyString(limite),
         usado: 0,
-        conta_pagamento_id: contaPagamentoId || null,
+        conta_pagamento_id: contaPagamentoId === "__none__" ? null : contaPagamentoId || null,
       };
 
       if (selectedCartao) {
@@ -251,7 +254,7 @@ export default function Configuracoes() {
             dia_fechamento: parseInt(diaFechamento),
             dia_vencimento: parseInt(diaVencimento),
             limite: parseCurrencyString(limite),
-            conta_pagamento_id: contaPagamentoId || null,
+            conta_pagamento_id: contaPagamentoId === "__none__" ? null : contaPagamentoId || null,
           })
           .eq("id", selectedCartao.id);
 
@@ -336,6 +339,7 @@ export default function Configuracoes() {
     setBanco("");
     setSaldoInicial("");
     setChavePix("");
+    setContaErrors({});
     setDiaFechamento("");
     setDiaVencimento("");
     setLimite("");
@@ -359,7 +363,7 @@ export default function Configuracoes() {
     setDiaFechamento(cartao.dia_fechamento.toString());
     setDiaVencimento(cartao.dia_vencimento.toString());
     setLimite(formatValorToInput(cartao.limite ?? 0));
-    setContaPagamentoId(cartao.conta_pagamento_id || "");
+    setContaPagamentoId(cartao.conta_pagamento_id || "__none__");
     setIsNewCartaoOpen(true);
   };
 
@@ -445,29 +449,50 @@ export default function Configuracoes() {
                   </DialogHeader>
                   <div className="space-y-4 mt-4">
                     <div className="space-y-2">
-                      <Label>Nome da Conta</Label>
+                      <Label>
+                        Nome da Conta <span className="text-destructive">*</span>
+                      </Label>
                       <Input
                         value={nome}
-                        onChange={(e) => setNome(e.target.value)}
+                        onChange={(e) => {
+                          setNome(e.target.value);
+                          setContaErrors((p) => ({ ...p, nome: false }));
+                        }}
                         placeholder="Ex: Nubank Conta Corrente"
+                        className={contaErrors.nome ? "border-destructive focus-visible:ring-destructive" : ""}
                       />
+                      {contaErrors.nome && <p className="text-xs text-destructive">Campo obrigatório</p>}
                     </div>
                     <div className="space-y-2">
-                      <Label>Banco</Label>
+                      <Label>
+                        Banco <span className="text-destructive">*</span>
+                      </Label>
                       <Input
                         value={banco}
-                        onChange={(e) => setBanco(e.target.value)}
+                        onChange={(e) => {
+                          setBanco(e.target.value);
+                          setContaErrors((p) => ({ ...p, banco: false }));
+                        }}
                         placeholder="Ex: Nubank, Itaú, Bradesco..."
+                        className={contaErrors.banco ? "border-destructive focus-visible:ring-destructive" : ""}
                       />
+                      {contaErrors.banco && <p className="text-xs text-destructive">Campo obrigatório</p>}
                     </div>
                     <div className="space-y-2">
-                      <Label>Saldo Inicial (R$)</Label>
+                      <Label>
+                        Saldo Inicial (R$) <span className="text-destructive">*</span>
+                      </Label>
                       <Input
                         type="text"
                         value={saldoInicial}
-                        onChange={(e) => setSaldoInicial(formatCurrencyInput(e.target.value))}
+                        onChange={(e) => {
+                          setSaldoInicial(formatCurrencyInput(e.target.value));
+                          setContaErrors((p) => ({ ...p, saldoInicial: false }));
+                        }}
                         placeholder="R$ 5.000,00"
+                        className={contaErrors.saldoInicial ? "border-destructive focus-visible:ring-destructive" : ""}
                       />
+                      {contaErrors.saldoInicial && <p className="text-xs text-destructive">Campo obrigatório</p>}
                     </div>
                     <div className="space-y-2">
                       <Label className="flex items-center gap-2">
@@ -653,7 +678,7 @@ export default function Configuracoes() {
                           <SelectValue placeholder="Selecione a conta (opcional)" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">Nenhuma</SelectItem>
+                          <SelectItem value="__none__">Nenhuma</SelectItem>
                           {contas.map((conta) => (
                             <SelectItem key={conta.id} value={conta.id}>
                               {conta.nome}
