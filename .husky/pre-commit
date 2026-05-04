@@ -15,3 +15,6 @@ npx tsc --noEmit --pretty
 
 # 3. Lint + format staged
 npx lint-staged
+
+# 4. Tests (rejeita commit se quebrar contrato)
+npm run test:run --silent

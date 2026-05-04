@@ -40,7 +40,7 @@ const FINANCEIRO_TABS: SecondSidebarTab[] = [
   { id: "projecao", label: "Projeção", icon: LineChart, disabled: true },
   { id: "aging", label: "Aging", icon: Clock, disabled: true },
   { id: "dre", label: "DRE", icon: FileBarChart2, disabled: true },
-  { id: "wip", label: "WIP", icon: Briefcase },
+  { id: "wip", label: "WIP", icon: Briefcase, disabled: true },
   { id: "rentabilidade", label: "Rentabilidade", icon: PieChart },
 ];
 
@@ -80,7 +80,7 @@ export default function Financeiro() {
           />
         </div>
 
-        <div className="flex flex-1 overflow-hidden">
+        <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
           <SecondSidebar tabs={FINANCEIRO_TABS} value={activeTab} onValueChange={handleTabChange} />
           <div className="flex-1 overflow-y-auto w-full bg-gray-50/50 p-6 md:p-8">
             <div className="w-full mx-auto space-y-6">

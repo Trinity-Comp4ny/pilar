@@ -75,7 +75,7 @@ export function useFinanceAuxData(tipo: "receita" | "despesa"): AuxData {
             supabase.from("fornecedores").select("id, nome").order("nome") as unknown as Promise<{
               data: FornRow[] | null;
             }>,
-            supabase.from("cartoes_credito").select("id, nome").order("nome") as unknown as Promise<{
+            supabase.from("cartoes").select("id, nome").order("nome") as unknown as Promise<{
               data: CartaoRow[] | null;
             }>,
           ]);

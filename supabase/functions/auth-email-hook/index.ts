@@ -12,6 +12,7 @@
  */
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { withSentry } from "../_shared/sentry.ts";
 
 import {
   sendEmail,
@@ -115,93 +116,95 @@ function buildVerifyUrl(data: HookPayload["email_data"]): string {
   return url.toString();
 }
 
-serve(async (req) => {
-  if (req.method !== "POST") {
-    return new Response("Method Not Allowed", { status: 405 });
-  }
-
-  const body = await req.text();
-
-  if (!(await verifyWebhook(req, body))) {
-    return new Response(JSON.stringify({ error: "Invalid signature" }), {
-      status: 401,
-      headers: { "Content-Type": "application/json" },
-    });
-  }
-
-  let payload: HookPayload;
-  try {
-    payload = JSON.parse(body);
-  } catch {
-    return new Response(JSON.stringify({ error: "Invalid JSON" }), {
-      status: 400,
-      headers: { "Content-Type": "application/json" },
-    });
-  }
-
-  const { user, email_data } = payload;
-  const to = user.email?.trim();
-  if (!to) {
-    return new Response(JSON.stringify({ error: "User email missing" }), {
-      status: 400,
-      headers: { "Content-Type": "application/json" },
-    });
-  }
-
-  const link = buildVerifyUrl(email_data);
-  const userName = user.user_metadata?.nome ?? user.user_metadata?.full_name;
-
-  try {
-    switch (email_data.email_action_type) {
-      case "recovery":
-        await sendEmail({
-          to,
-          subject: "Redefinir senha — Pilar",
-          html: templateRecuperacaoSenha(link),
-        });
-        break;
-
-      case "invite":
-        await sendEmail({
-          to,
-          subject: "Você foi convidado para o Pilar",
-          html: templateConviteUsuario(link, userName),
-        });
-        break;
-
-      case "magic_link":
-      case "magiclink":
-        await sendEmail({
-          to,
-          subject: "Seu link de acesso — Pilar",
-          html: templateMagicLink(link),
-        });
-        break;
-
-      case "signup":
-      case "email_change":
-      case "email_change_new":
-      case "email_change_current":
-        await sendEmail({
-          to,
-          subject: "Confirme seu email — Pilar",
-          html: templateConfirmacaoCadastro(link),
-        });
-        break;
-
-      default:
-        console.warn("[auth-email-hook] tipo desconhecido:", email_data.email_action_type);
+serve(
+  withSentry("auth-email-hook", async (req) => {
+    if (req.method !== "POST") {
+      return new Response("Method Not Allowed", { status: 405 });
     }
 
-    return new Response(JSON.stringify({ success: true }), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
-    });
-  } catch (err) {
-    console.error("[auth-email-hook]", err);
-    return new Response(JSON.stringify({ error: err instanceof Error ? err.message : "Failed to send" }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
-  }
-});
+    const body = await req.text();
+
+    if (!(await verifyWebhook(req, body))) {
+      return new Response(JSON.stringify({ error: "Invalid signature" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    let payload: HookPayload;
+    try {
+      payload = JSON.parse(body);
+    } catch {
+      return new Response(JSON.stringify({ error: "Invalid JSON" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    const { user, email_data } = payload;
+    const to = user.email?.trim();
+    if (!to) {
+      return new Response(JSON.stringify({ error: "User email missing" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    const link = buildVerifyUrl(email_data);
+    const userName = user.user_metadata?.nome ?? user.user_metadata?.full_name;
+
+    try {
+      switch (email_data.email_action_type) {
+        case "recovery":
+          await sendEmail({
+            to,
+            subject: "Redefinir senha — Pilar",
+            html: templateRecuperacaoSenha(link),
+          });
+          break;
+
+        case "invite":
+          await sendEmail({
+            to,
+            subject: "Você foi convidado para o Pilar",
+            html: templateConviteUsuario(link, userName),
+          });
+          break;
+
+        case "magic_link":
+        case "magiclink":
+          await sendEmail({
+            to,
+            subject: "Seu link de acesso — Pilar",
+            html: templateMagicLink(link),
+          });
+          break;
+
+        case "signup":
+        case "email_change":
+        case "email_change_new":
+        case "email_change_current":
+          await sendEmail({
+            to,
+            subject: "Confirme seu email — Pilar",
+            html: templateConfirmacaoCadastro(link),
+          });
+          break;
+
+        default:
+          console.warn("[auth-email-hook] tipo desconhecido:", email_data.email_action_type);
+      }
+
+      return new Response(JSON.stringify({ success: true }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    } catch (err) {
+      console.error("[auth-email-hook]", err);
+      return new Response(JSON.stringify({ error: err instanceof Error ? err.message : "Failed to send" }), {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+  })
+);

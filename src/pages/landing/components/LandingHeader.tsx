@@ -57,12 +57,18 @@ export function LandingHeader({ onScrollToTop }: LandingHeaderProps) {
             </Link>
           </nav>
 
-          <div className="hidden md:flex justify-end">
+          <div className="hidden md:flex items-center gap-4 justify-end">
+            <Link
+              to="/login"
+              className="text-[11px] font-medium uppercase tracking-[0.12em] text-slate-500 hover:text-slate-800 transition-colors"
+            >
+              Entrar
+            </Link>
             <Link
               to="/login"
               className="px-6 py-2.5 bg-brand text-ink rounded-full hover:bg-brand/90 transition-all hover:-translate-y-0.5 active:translate-y-0 duration-200 font-medium text-[11px] uppercase tracking-[0.12em]"
             >
-              Acessar Sistema
+              Começar Grátis
             </Link>
           </div>
 
@@ -85,8 +91,19 @@ export function LandingHeader({ onScrollToTop }: LandingHeaderProps) {
             <Link to="/planos" className="text-lg font-medium text-slate-600" onClick={() => setMobileMenuOpen(false)}>
               Preços
             </Link>
-            <Link to="/login" className="text-lg font-medium text-brand" onClick={() => setMobileMenuOpen(false)}>
-              Entrar
+            <Link
+              to="/login"
+              className="px-6 py-3 bg-brand text-ink rounded-full text-center font-medium text-sm uppercase tracking-[0.12em]"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Começar Grátis
+            </Link>
+            <Link
+              to="/login"
+              className="text-center text-sm font-medium text-slate-400"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Já tenho conta — Entrar
             </Link>
           </div>
         )}

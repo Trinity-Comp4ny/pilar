@@ -33,14 +33,36 @@ const DSN = import.meta.env.VITE_SENTRY_DSN as string | undefined;
 const ENV = (import.meta.env.VITE_SENTRY_ENV as string | undefined) ?? import.meta.env.MODE;
 const TRACES_RATE = Number(import.meta.env.VITE_SENTRY_TRACES_SAMPLE_RATE ?? 0.1);
 
-const SENSITIVE_KEYS = /password|senha|token|api_key|secret|authorization|cookie|cpf|cnpj/i;
+const SENSITIVE_KEYS =
+  /password|senha|token|api_key|secret|authorization|cookie|cpf|cnpj|rg|pix|conta_bancaria|agencia|salario/i;
+
+// Padrões PII brasileiros — mascarados em valores string mesmo quando a key é benigna.
+const PII_PATTERNS: Array<{ re: RegExp; replace: string }> = [
+  // CPF: 123.456.789-00 ou 12345678900
+  { re: /\b\d{3}\.?\d{3}\.?\d{3}-?\d{2}\b/g, replace: "[CPF]" },
+  // CNPJ: 12.345.678/0001-90 ou 12345678000190
+  { re: /\b\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2}\b/g, replace: "[CNPJ]" },
+  // CEP: 12345-678 ou 12345678
+  { re: /\b\d{5}-?\d{3}\b/g, replace: "[CEP]" },
+  // Cartão de crédito (16 dígitos com ou sem espaços)
+  { re: /\b(?:\d[ -]?){13,16}\d\b/g, replace: "[CARD]" },
+];
+
+function scrubString(s: string): string {
+  let out = s;
+  for (const { re, replace } of PII_PATTERNS) {
+    out = out.replace(re, replace);
+  }
+  return out;
+}
 
 function scrub(value: unknown, depth = 0): unknown {
   if (depth > 5) return "[max depth]";
   if (value === null || value === undefined) return value;
   if (typeof value === "string") {
-    if (value.length > 500) return value.slice(0, 500) + "…";
-    return value;
+    const masked = scrubString(value);
+    if (masked.length > 500) return masked.slice(0, 500) + "…";
+    return masked;
   }
   if (typeof value !== "object") return value;
 

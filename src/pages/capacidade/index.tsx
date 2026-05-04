@@ -182,7 +182,7 @@ export default function Capacidade() {
             <table className="w-full border-collapse text-xs">
               <thead>
                 <tr className="border-b">
-                  <th className="text-left py-2 px-3 font-medium text-muted-foreground min-w-[160px] sticky left-0 bg-white z-10">
+                  <th className="text-left py-2 px-3 font-medium text-muted-foreground min-w-[160px] sticky left-0 bg-white z-10 border-r border-black/5">
                     Pessoa
                   </th>
                   {weeks.map((w) => {
@@ -198,7 +198,7 @@ export default function Capacidade() {
               <tbody>
                 {pessoas.map((pessoa) => (
                   <tr key={pessoa.id} className="border-b hover:bg-muted/30">
-                    <td className="py-2 px-3 sticky left-0 bg-white z-10">
+                    <td className="py-2 px-3 sticky left-0 bg-white z-10 border-r border-black/5">
                       <div className="font-medium">{pessoa.nome}</div>
                       <div className="text-[10px] text-muted-foreground">
                         {pessoa.cargo || "—"} · {pessoa.horas_semanais}h/sem

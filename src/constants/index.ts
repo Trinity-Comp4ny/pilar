@@ -169,6 +169,7 @@ export const PAYMENT_METHODS = {
   BOLETO: "Boleto",
   DINHEIRO: "Dinheiro",
   CARTAO_CREDITO: "Cartão de Crédito",
+  CARTAO_DEBITO: "Cartão de Débito",
 } as const;
 
 export type PaymentMethod = (typeof PAYMENT_METHODS)[keyof typeof PAYMENT_METHODS];

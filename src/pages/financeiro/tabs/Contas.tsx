@@ -1,4 +1,4 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,7 +21,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { CreditCard, Wallet, Plus, Settings, Pencil, Trash2, TrendingUp, TrendingDown } from "lucide-react";
+import { CreditCard, Wallet, Plus, Pencil, Trash2, TrendingUp, TrendingDown } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { detectTipoChavePix, TIPO_CHAVE_PIX_LABEL, type TipoChavePix } from "@/lib/pixUtils";
 import { cn } from "@/lib/utils";
@@ -48,6 +48,7 @@ interface ContaItem {
 interface CartaoItem {
   id: string;
   nome: string;
+  tipo: string;
   dia_fechamento: number;
   dia_vencimento: number;
   limite: number;
@@ -60,13 +61,14 @@ export default function Configuracoes() {
   const [cartoes, setCartoes] = useState<CartaoItem[]>([]);
   const [contas, setContas] = useState<ContaItem[]>([]);
 
-  const [isCartaoDetailOpen, setIsCartaoDetailOpen] = useState(false);
-  const [isContaDetailOpen, setIsContaDetailOpen] = useState(false);
   const [isNewCartaoOpen, setIsNewCartaoOpen] = useState(false);
   const [isNewContaOpen, setIsNewContaOpen] = useState(false);
 
   const [selectedCartao, setSelectedCartao] = useState<CartaoItem | null>(null);
   const [selectedConta, setSelectedConta] = useState<ContaItem | null>(null);
+
+  const [panelConta, setPanelConta] = useState<ContaItem | null>(null);
+  const [panelCartao, setPanelCartao] = useState<CartaoItem | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ type: "conta" | "cartao"; id: string; nome: string } | null>(null);
   const { canEdit } = useFeatureAccess("financeiro");
 
@@ -80,6 +82,7 @@ export default function Configuracoes() {
   const [diaVencimento, setDiaVencimento] = useState("");
   const [limite, setLimite] = useState("");
   const [contaPagamentoId, setContaPagamentoId] = useState("");
+  const [tipoCartao, setTipoCartao] = useState<"credito" | "debito">("credito");
 
   useEffect(() => {
     fetchContas();
@@ -194,7 +197,6 @@ export default function Configuracoes() {
         toast.success("Conta atualizada");
         fetchContas();
         setIsNewContaOpen(false);
-        setIsContaDetailOpen(false);
       } else {
         const { error } = await supabase.from("contas").insert(payload);
 
@@ -239,6 +241,7 @@ export default function Configuracoes() {
       const payload = {
         empresa_id: empresaId,
         nome,
+        tipo: tipoCartao,
         dia_fechamento: parseInt(diaFechamento),
         dia_vencimento: parseInt(diaVencimento),
         limite: parseCurrencyString(limite),
@@ -248,9 +251,10 @@ export default function Configuracoes() {
 
       if (selectedCartao) {
         const { error } = await supabase
-          .from("cartoes_credito")
+          .from("cartoes")
           .update({
             nome,
+            tipo: tipoCartao,
             dia_fechamento: parseInt(diaFechamento),
             dia_vencimento: parseInt(diaVencimento),
             limite: parseCurrencyString(limite),
@@ -266,9 +270,8 @@ export default function Configuracoes() {
         toast.success("Cartão atualizado");
         fetchCartoes();
         setIsNewCartaoOpen(false);
-        setIsCartaoDetailOpen(false);
       } else {
-        const { error } = await supabase.from("cartoes_credito").insert(payload as never);
+        const { error } = await supabase.from("cartoes").insert(payload as never);
 
         if (error) {
           toast.error("Erro ao criar cartão");
@@ -312,7 +315,7 @@ export default function Configuracoes() {
       if (!error) {
         toast.success("Conta excluída");
         fetchContas();
-        setIsContaDetailOpen(false);
+        setPanelConta(null);
       }
     } else {
       const { count: faturasCount } = await supabase
@@ -325,11 +328,11 @@ export default function Configuracoes() {
         });
         return;
       }
-      const { error } = await supabase.from("cartoes_credito").delete().eq("id", id);
+      const { error } = await supabase.from("cartoes").delete().eq("id", id);
       if (!error) {
         toast.success("Cartão excluído");
         fetchCartoes();
-        setIsCartaoDetailOpen(false);
+        setPanelCartao(null);
       }
     }
   };
@@ -344,6 +347,7 @@ export default function Configuracoes() {
     setDiaVencimento("");
     setLimite("");
     setContaPagamentoId("");
+    setTipoCartao("credito");
     setSelectedConta(null);
     setSelectedCartao(null);
   };
@@ -364,528 +368,518 @@ export default function Configuracoes() {
     setDiaVencimento(cartao.dia_vencimento.toString());
     setLimite(formatValorToInput(cartao.limite ?? 0));
     setContaPagamentoId(cartao.conta_pagamento_id || "__none__");
+    setTipoCartao((cartao.tipo as "credito" | "debito") ?? "credito");
     setIsNewCartaoOpen(true);
   };
 
   return (
-    <div className="space-y-6 w-full max-w-none">
-      {/* Resumo Financeiro Geral */}
+    <>
       <Card className="vrz-card w-full">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Settings className="h-5 w-5" />
-            Resumo Financeiro Consolidado
-          </CardTitle>
-          <CardDescription>Visão geral de todas as contas e cartões</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 w-full">
-            <div className="p-4 bg-blue-50 rounded-lg border border-blue-100">
-              <p className="text-xs text-blue-700 font-medium mb-1">Total em Contas</p>
-              <p className="text-2xl font-bold text-blue-900">
-                R$ {contas.reduce((acc, c) => acc + (c.saldo_atual || 0), 0).toLocaleString("pt-BR")}
-              </p>
+        <CardContent className="p-0">
+          <div className="flex min-h-[480px]">
+            {/* Sidebar esquerda */}
+            <div className="w-64 shrink-0 border-r flex flex-col">
+              {/* Contas */}
+              <div className="p-4 border-b">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                    <Wallet className="h-3.5 w-3.5" /> Contas
+                  </span>
+                  {canEdit && (
+                    <Dialog
+                      open={isNewContaOpen}
+                      onOpenChange={(open) => {
+                        setIsNewContaOpen(open);
+                        if (!open) resetForm();
+                      }}
+                    >
+                      <DialogTrigger asChild>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-6 w-6"
+                          onClick={() => {
+                            resetForm();
+                            setIsNewContaOpen(true);
+                          }}
+                        >
+                          <Plus className="h-3.5 w-3.5" />
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="sm:max-w-md">
+                        <DialogHeader>
+                          <DialogTitle>{selectedConta ? "Editar Conta" : "Adicionar Conta Bancária"}</DialogTitle>
+                          <DialogDescription>Configure sua conta para acompanhamento automático</DialogDescription>
+                        </DialogHeader>
+                        <div className="space-y-4 mt-4">
+                          <div className="space-y-2">
+                            <Label>
+                              Nome da Conta <span className="text-destructive">*</span>
+                            </Label>
+                            <Input
+                              value={nome}
+                              onChange={(e) => {
+                                setNome(e.target.value);
+                                setContaErrors((p) => ({ ...p, nome: false }));
+                              }}
+                              placeholder="Ex: Nubank Conta Corrente"
+                              className={contaErrors.nome ? "border-destructive focus-visible:ring-destructive" : ""}
+                            />
+                            {contaErrors.nome && <p className="text-xs text-destructive">Campo obrigatório</p>}
+                          </div>
+                          <div className="space-y-2">
+                            <Label>
+                              Banco <span className="text-destructive">*</span>
+                            </Label>
+                            <Input
+                              value={banco}
+                              onChange={(e) => {
+                                setBanco(e.target.value);
+                                setContaErrors((p) => ({ ...p, banco: false }));
+                              }}
+                              placeholder="Ex: Nubank, Itaú, Bradesco..."
+                              className={contaErrors.banco ? "border-destructive focus-visible:ring-destructive" : ""}
+                            />
+                            {contaErrors.banco && <p className="text-xs text-destructive">Campo obrigatório</p>}
+                          </div>
+                          <div className="space-y-2">
+                            <Label>
+                              Saldo Inicial (R$) <span className="text-destructive">*</span>
+                            </Label>
+                            <Input
+                              type="text"
+                              value={saldoInicial}
+                              onChange={(e) => {
+                                setSaldoInicial(formatCurrencyInput(e.target.value));
+                                setContaErrors((p) => ({ ...p, saldoInicial: false }));
+                              }}
+                              placeholder="R$ 5.000,00"
+                              className={
+                                contaErrors.saldoInicial ? "border-destructive focus-visible:ring-destructive" : ""
+                              }
+                            />
+                            {contaErrors.saldoInicial && <p className="text-xs text-destructive">Campo obrigatório</p>}
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="flex items-center gap-2">
+                              Chave PIX
+                              {chavePix && (
+                                <Badge variant="secondary" className="text-[10px] h-4 px-1.5">
+                                  {TIPO_CHAVE_PIX_LABEL[detectTipoChavePix(chavePix) as TipoChavePix] ??
+                                    "Detectando..."}
+                                </Badge>
+                              )}
+                            </Label>
+                            <Input
+                              value={chavePix}
+                              onChange={(e) => setChavePix(e.target.value)}
+                              placeholder="CPF, CNPJ, e-mail, celular ou chave aleatória"
+                            />
+                          </div>
+                          <Button
+                            className="w-full bg-brand hover:bg-brand/90 text-ink rounded-full"
+                            onClick={handleSaveConta}
+                          >
+                            {selectedConta ? "Atualizar Conta" : "Salvar Conta"}
+                          </Button>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                  )}
+                </div>
+                <div className="space-y-0.5">
+                  {contas.map((conta) => (
+                    <button
+                      key={conta.id}
+                      onClick={() => {
+                        setPanelConta(conta);
+                        setPanelCartao(null);
+                      }}
+                      className={cn(
+                        "w-full text-left px-3 py-2 rounded-lg transition-colors flex items-center gap-2.5",
+                        panelConta?.id === conta.id && !panelCartao
+                          ? "bg-brand/10 text-brand"
+                          : "hover:bg-muted text-foreground"
+                      )}
+                    >
+                      <div
+                        className="w-6 h-6 shrink-0 rounded-full flex items-center justify-center text-white text-[10px] font-bold"
+                        style={{ backgroundColor: conta.cor || "hsl(var(--chart-neutral))" }}
+                      >
+                        {conta.banco ? conta.banco.substring(0, 2).toUpperCase() : "??"}
+                      </div>
+                      <span className="text-sm font-medium truncate flex-1">{conta.nome}</span>
+                      <span className="text-xs text-muted-foreground shrink-0 tabular-nums">
+                        {(conta.saldo_atual / 1000).toLocaleString("pt-BR", { maximumFractionDigits: 1 })}k
+                      </span>
+                    </button>
+                  ))}
+                  {contas.length === 0 && (
+                    <p className="text-xs text-muted-foreground px-3 py-2">Nenhuma conta cadastrada</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Cartões */}
+              <div className="p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                    <CreditCard className="h-3.5 w-3.5" /> Cartões
+                  </span>
+                  {canEdit && (
+                    <Dialog
+                      open={isNewCartaoOpen}
+                      onOpenChange={(open) => {
+                        setIsNewCartaoOpen(open);
+                        if (!open) resetForm();
+                      }}
+                    >
+                      <DialogTrigger asChild>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-6 w-6"
+                          onClick={() => {
+                            resetForm();
+                            setIsNewCartaoOpen(true);
+                          }}
+                        >
+                          <Plus className="h-3.5 w-3.5" />
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="sm:max-w-md">
+                        <DialogHeader>
+                          <DialogTitle>{selectedCartao ? "Editar Cartão" : "Adicionar Cartão"}</DialogTitle>
+                          <DialogDescription>
+                            Configure as datas do seu cartão para melhor controle financeiro
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="space-y-4 mt-4">
+                          <div className="space-y-2">
+                            <Label>Tipo de Cartão</Label>
+                            <Select value={tipoCartao} onValueChange={(v) => setTipoCartao(v as "credito" | "debito")}>
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="credito">Crédito</SelectItem>
+                                <SelectItem value="debito">Débito</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Nome do Cartão</Label>
+                            <Input
+                              value={nome}
+                              onChange={(e) => setNome(e.target.value)}
+                              placeholder="Ex: Nubank Platinum"
+                            />
+                          </div>
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                              <Label>Dia de Fechamento</Label>
+                              <Input
+                                type="number"
+                                min="1"
+                                max="31"
+                                value={diaFechamento}
+                                onChange={(e) => setDiaFechamento(e.target.value)}
+                                placeholder="10"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label>Dia de Vencimento</Label>
+                              <Input
+                                type="number"
+                                min="1"
+                                max="31"
+                                value={diaVencimento}
+                                onChange={(e) => setDiaVencimento(e.target.value)}
+                                placeholder="20"
+                              />
+                            </div>
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Limite (R$)</Label>
+                            <Input
+                              type="text"
+                              value={limite}
+                              onChange={(e) => setLimite(formatCurrencyInput(e.target.value))}
+                              placeholder="R$ 10.000,00"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Conta para Pagamento de Faturas</Label>
+                            <Select value={contaPagamentoId} onValueChange={setContaPagamentoId}>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Selecione a conta (opcional)" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="__none__">Nenhuma</SelectItem>
+                                {contas.map((conta) => (
+                                  <SelectItem key={conta.id} value={conta.id}>
+                                    {conta.nome}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <p className="text-xs text-muted-foreground">
+                              Conta padrão usada ao pagar faturas deste cartão
+                            </p>
+                          </div>
+                          <Button
+                            className="w-full bg-brand hover:bg-brand/90 text-ink rounded-full"
+                            onClick={handleSaveCartao}
+                          >
+                            {selectedCartao ? "Atualizar Cartão" : "Salvar Cartão"}
+                          </Button>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                  )}
+                </div>
+                <div className="space-y-0.5">
+                  {cartoes.map((cartao) => {
+                    const pct = cartao.limite ? (cartao.usado / cartao.limite) * 100 : 0;
+                    return (
+                      <button
+                        key={cartao.id}
+                        onClick={() => {
+                          setPanelCartao(cartao);
+                          setPanelConta(null);
+                        }}
+                        className={cn(
+                          "w-full text-left px-3 py-2.5 rounded-lg transition-colors",
+                          panelCartao?.id === cartao.id && !panelConta
+                            ? "bg-brand/10 text-brand"
+                            : "hover:bg-muted text-foreground"
+                        )}
+                      >
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className="text-sm font-medium truncate">{cartao.nome}</span>
+                          <span className="text-xs text-muted-foreground tabular-nums shrink-0 ml-2">
+                            {pct.toFixed(0)}%
+                          </span>
+                        </div>
+                        <div className="w-full bg-muted rounded-full h-1">
+                          <div
+                            className={cn(
+                              "h-1 rounded-full transition-all",
+                              pct > 80 ? "bg-red-500" : pct > 50 ? "bg-yellow-500" : "bg-positive"
+                            )}
+                            style={{ width: `${Math.min(pct, 100)}%` }}
+                          />
+                        </div>
+                      </button>
+                    );
+                  })}
+                  {cartoes.length === 0 && (
+                    <p className="text-xs text-muted-foreground px-3 py-2">Nenhum cartão cadastrado</p>
+                  )}
+                </div>
+              </div>
             </div>
-            <div className="p-4 bg-positive/10 rounded-lg border border-positive/10">
-              <p className="text-xs text-positive font-medium mb-1">Total Entradas</p>
-              <p className="text-2xl font-bold text-positive">
-                R$ {contas.reduce((acc, c) => acc + (c.total_entradas || 0), 0).toLocaleString("pt-BR")}
-              </p>
-            </div>
-            <div className="p-4 bg-red-50 rounded-lg border border-red-100">
-              <p className="text-xs text-red-700 font-medium mb-1">Total Saídas</p>
-              <p className="text-2xl font-bold text-red-900">
-                R$ {contas.reduce((acc, c) => acc + (c.total_saidas || 0), 0).toLocaleString("pt-BR")}
-              </p>
-            </div>
-            <div className="p-4 bg-brand/10 rounded-lg border border-brand/20">
-              <p className="text-xs text-brand font-medium mb-1">Usado em Cartões</p>
-              <p className="text-2xl font-bold text-brand">
-                R$ {cartoes.reduce((acc, c) => acc + (c.usado || 0), 0).toLocaleString("pt-BR")}
-              </p>
+
+            {/* Painel de detalhes */}
+            <div className="flex-1 p-6">
+              {panelConta && !panelCartao ? (
+                <div className="space-y-6">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-3">
+                      <div
+                        className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold"
+                        style={{ backgroundColor: panelConta.cor || "hsl(var(--chart-neutral))" }}
+                      >
+                        {panelConta.banco ? panelConta.banco.substring(0, 2).toUpperCase() : "??"}
+                      </div>
+                      <div>
+                        <h2 className="text-lg font-semibold">{panelConta.nome}</h2>
+                        <p className="text-sm text-muted-foreground">{panelConta.banco}</p>
+                      </div>
+                    </div>
+                    {canEdit && (
+                      <div className="flex gap-2">
+                        <Button variant="outline" size="sm" onClick={() => openEditConta(panelConta)}>
+                          <Pencil className="h-3.5 w-3.5 mr-1.5" /> Editar
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-destructive hover:text-destructive"
+                          onClick={() => setDeleteTarget({ type: "conta", id: panelConta.id, nome: panelConta.nome })}
+                        >
+                          <Trash2 className="h-3.5 w-3.5 mr-1.5" /> Excluir
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="border-t pt-5">
+                    <p className="text-xs text-muted-foreground mb-1">Saldo Atual</p>
+                    <p className="text-3xl font-bold">
+                      R$ {panelConta.saldo_atual?.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                    </p>
+                    {(() => {
+                      const variacao = (panelConta.saldo_atual || 0) - (panelConta.saldo_inicial || 0);
+                      const pct = panelConta.saldo_inicial ? (variacao / panelConta.saldo_inicial) * 100 : 0;
+                      return (
+                        <p
+                          className={cn(
+                            "text-sm mt-1 flex items-center gap-1",
+                            variacao >= 0 ? "text-positive" : "text-red-600"
+                          )}
+                        >
+                          {variacao >= 0 ? (
+                            <TrendingUp className="h-3.5 w-3.5" />
+                          ) : (
+                            <TrendingDown className="h-3.5 w-3.5" />
+                          )}
+                          {variacao >= 0 ? "+" : ""}
+                          {pct.toFixed(1)}% em relação ao saldo inicial
+                        </p>
+                      );
+                    })()}
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="p-4 rounded-lg bg-muted/50 border">
+                      <p className="text-xs text-muted-foreground mb-1">Saldo Inicial</p>
+                      <p className="text-sm font-semibold">
+                        R$ {panelConta.saldo_inicial?.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                      </p>
+                    </div>
+                    <div className="p-4 rounded-lg bg-positive/5 border border-positive/20">
+                      <p className="text-xs text-positive mb-1">Entradas</p>
+                      <p className="text-sm font-semibold text-positive">
+                        + R$ {panelConta.total_entradas?.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                      </p>
+                    </div>
+                    <div className="p-4 rounded-lg bg-red-50 border border-red-100">
+                      <p className="text-xs text-red-600 mb-1">Saídas</p>
+                      <p className="text-sm font-semibold text-red-700">
+                        - R$ {panelConta.total_saidas?.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                      </p>
+                    </div>
+                  </div>
+
+                  {panelConta.chave_pix && (
+                    <div className="p-4 rounded-lg bg-muted/50 border">
+                      <p className="text-xs text-muted-foreground mb-1">Chave PIX</p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-medium">{panelConta.chave_pix}</p>
+                        {panelConta.tipo_chave_pix && (
+                          <Badge variant="secondary" className="text-[10px] h-4 px-1.5">
+                            {TIPO_CHAVE_PIX_LABEL[panelConta.tipo_chave_pix]}
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : panelCartao && !panelConta ? (
+                <div className="space-y-6">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h2 className="text-lg font-semibold">{panelCartao.nome}</h2>
+                        <Badge variant="outline" className="text-xs">
+                          {panelCartao.tipo === "debito" ? "Débito" : "Crédito"}
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground mt-0.5">
+                        Fecha dia {panelCartao.dia_fechamento} · Vence dia {panelCartao.dia_vencimento}
+                      </p>
+                    </div>
+                    {canEdit && (
+                      <div className="flex gap-2">
+                        <Button variant="outline" size="sm" onClick={() => openEditCartao(panelCartao)}>
+                          <Pencil className="h-3.5 w-3.5 mr-1.5" /> Editar
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-destructive hover:text-destructive"
+                          onClick={() =>
+                            setDeleteTarget({ type: "cartao", id: panelCartao.id, nome: panelCartao.nome })
+                          }
+                        >
+                          <Trash2 className="h-3.5 w-3.5 mr-1.5" /> Excluir
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="border-t pt-5">
+                    <p className="text-xs text-muted-foreground mb-1">Disponível</p>
+                    <p className="text-3xl font-bold text-positive">
+                      R$ {panelCartao.disponivel?.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">
+                        Utilizado:{" "}
+                        <span className="font-medium text-foreground">
+                          R$ {panelCartao.usado?.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                        </span>
+                      </span>
+                      <span className="text-muted-foreground">
+                        Limite:{" "}
+                        <span className="font-medium text-foreground">
+                          R$ {panelCartao.limite?.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                        </span>
+                      </span>
+                    </div>
+                    {(() => {
+                      const pct = panelCartao.limite ? (panelCartao.usado / panelCartao.limite) * 100 : 0;
+                      return (
+                        <>
+                          <div className="w-full bg-muted rounded-full h-2.5">
+                            <div
+                              className={cn(
+                                "h-2.5 rounded-full transition-all",
+                                pct > 80 ? "bg-red-500" : pct > 50 ? "bg-yellow-500" : "bg-positive"
+                              )}
+                              style={{ width: `${Math.min(pct, 100)}%` }}
+                            />
+                          </div>
+                          <p className="text-xs text-muted-foreground">{pct.toFixed(1)}% utilizado</p>
+                        </>
+                      );
+                    })()}
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="p-4 rounded-lg bg-muted/50 border">
+                      <p className="text-xs text-muted-foreground mb-1">Fechamento</p>
+                      <p className="text-sm font-semibold">Dia {panelCartao.dia_fechamento}</p>
+                    </div>
+                    <div className="p-4 rounded-lg bg-muted/50 border">
+                      <p className="text-xs text-muted-foreground mb-1">Vencimento</p>
+                      <p className="text-sm font-semibold">Dia {panelCartao.dia_vencimento}</p>
+                    </div>
+                  </div>
+
+                  {panelCartao.conta_pagamento_id && (
+                    <div className="p-4 rounded-lg bg-muted/50 border">
+                      <p className="text-xs text-muted-foreground mb-1">Conta para pagamento de faturas</p>
+                      <p className="text-sm font-medium">
+                        {contas.find((c) => c.id === panelCartao.conta_pagamento_id)?.nome ?? "—"}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="h-full flex flex-col items-center justify-center gap-3 text-muted-foreground">
+                  <Wallet className="h-10 w-10 opacity-20" />
+                  <p className="text-sm">Selecione uma conta ou cartão</p>
+                </div>
+              )}
             </div>
           </div>
         </CardContent>
       </Card>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
-        {/* Contas Bancárias */}
-        <Card className="vrz-card w-full">
-          <CardHeader>
-            <div className="flex justify-between items-center">
-              <div>
-                <CardTitle className="flex items-center gap-2">
-                  <Wallet className="h-5 w-5" />
-                  Contas Bancárias
-                </CardTitle>
-                <CardDescription>Gerenciar saldos e movimentações</CardDescription>
-              </div>
-              <Dialog
-                open={isNewContaOpen}
-                onOpenChange={(open) => {
-                  setIsNewContaOpen(open);
-                  if (!open) resetForm();
-                }}
-              >
-                {canEdit && (
-                  <DialogTrigger asChild>
-                    <Button
-                      className="bg-brand hover:bg-brand/90 text-ink rounded-full"
-                      size="sm"
-                      onClick={() => {
-                        resetForm();
-                        setIsNewContaOpen(true);
-                      }}
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      Nova Conta
-                    </Button>
-                  </DialogTrigger>
-                )}
-                <DialogContent className="sm:max-w-md">
-                  <DialogHeader>
-                    <DialogTitle>{selectedConta ? "Editar Conta" : "Adicionar Conta Bancária"}</DialogTitle>
-                    <DialogDescription>Configure sua conta para acompanhamento automático</DialogDescription>
-                  </DialogHeader>
-                  <div className="space-y-4 mt-4">
-                    <div className="space-y-2">
-                      <Label>
-                        Nome da Conta <span className="text-destructive">*</span>
-                      </Label>
-                      <Input
-                        value={nome}
-                        onChange={(e) => {
-                          setNome(e.target.value);
-                          setContaErrors((p) => ({ ...p, nome: false }));
-                        }}
-                        placeholder="Ex: Nubank Conta Corrente"
-                        className={contaErrors.nome ? "border-destructive focus-visible:ring-destructive" : ""}
-                      />
-                      {contaErrors.nome && <p className="text-xs text-destructive">Campo obrigatório</p>}
-                    </div>
-                    <div className="space-y-2">
-                      <Label>
-                        Banco <span className="text-destructive">*</span>
-                      </Label>
-                      <Input
-                        value={banco}
-                        onChange={(e) => {
-                          setBanco(e.target.value);
-                          setContaErrors((p) => ({ ...p, banco: false }));
-                        }}
-                        placeholder="Ex: Nubank, Itaú, Bradesco..."
-                        className={contaErrors.banco ? "border-destructive focus-visible:ring-destructive" : ""}
-                      />
-                      {contaErrors.banco && <p className="text-xs text-destructive">Campo obrigatório</p>}
-                    </div>
-                    <div className="space-y-2">
-                      <Label>
-                        Saldo Inicial (R$) <span className="text-destructive">*</span>
-                      </Label>
-                      <Input
-                        type="text"
-                        value={saldoInicial}
-                        onChange={(e) => {
-                          setSaldoInicial(formatCurrencyInput(e.target.value));
-                          setContaErrors((p) => ({ ...p, saldoInicial: false }));
-                        }}
-                        placeholder="R$ 5.000,00"
-                        className={contaErrors.saldoInicial ? "border-destructive focus-visible:ring-destructive" : ""}
-                      />
-                      {contaErrors.saldoInicial && <p className="text-xs text-destructive">Campo obrigatório</p>}
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="flex items-center gap-2">
-                        Chave PIX
-                        {chavePix && (
-                          <Badge variant="secondary" className="text-[10px] h-4 px-1.5">
-                            {TIPO_CHAVE_PIX_LABEL[detectTipoChavePix(chavePix) as TipoChavePix] ?? "Detectando..."}
-                          </Badge>
-                        )}
-                      </Label>
-                      <Input
-                        value={chavePix}
-                        onChange={(e) => setChavePix(e.target.value)}
-                        placeholder="CPF, CNPJ, e-mail, celular ou chave aleatória"
-                      />
-                    </div>
-                    <Button
-                      className="w-full bg-brand hover:bg-brand/90 text-ink rounded-full"
-                      onClick={handleSaveConta}
-                    >
-                      {selectedConta ? "Atualizar Conta" : "Salvar Conta"}
-                    </Button>
-                  </div>
-                </DialogContent>
-              </Dialog>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {contas.map((conta, idx) => {
-                const variacao = (conta.saldo_atual || 0) - (conta.saldo_inicial || 0);
-                const percentVariacao = conta.saldo_inicial ? (variacao / conta.saldo_inicial) * 100 : 0;
-                return (
-                  <div
-                    key={idx}
-                    className="p-4 border rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
-                    onClick={() => {
-                      setSelectedConta(conta);
-                      setIsContaDetailOpen(true);
-                    }}
-                  >
-                    <div className="flex justify-between items-start mb-3">
-                      <div className="flex items-center gap-3">
-                        <div
-                          className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm"
-                          style={{ backgroundColor: conta.cor || "hsl(var(--chart-neutral))" }}
-                        >
-                          {conta.banco ? conta.banco.substring(0, 2).toUpperCase() : "??"}
-                        </div>
-                        <div>
-                          <h4 className="font-medium text-sm">{conta.nome}</h4>
-                          <p className="text-xs text-gray-600">{conta.banco}</p>
-                        </div>
-                      </div>
-                      {canEdit && (
-                        <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
-                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEditConta(conta)}>
-                            <Pencil className="h-3 w-3" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-red-600"
-                            onClick={() => setDeleteTarget({ type: "conta", id: conta.id, nome: conta.nome })}
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                    <div className="space-y-2">
-                      <div className="flex justify-between items-center">
-                        <span className="text-xs text-gray-600">Saldo Atual</span>
-                        <span className="text-lg font-bold text-gray-900">
-                          R$ {conta.saldo_atual?.toLocaleString("pt-BR")}
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-center text-xs">
-                        <span className="text-gray-500">
-                          Saldo Inicial: R$ {conta.saldo_inicial?.toLocaleString("pt-BR")}
-                        </span>
-                        <span
-                          className={cn(
-                            "font-medium flex items-center gap-1",
-                            variacao >= 0 ? "text-positive" : "text-red-600"
-                          )}
-                        >
-                          {variacao >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-                          {variacao >= 0 ? "+" : ""}
-                          {percentVariacao.toFixed(1)}%
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Cartões de Crédito */}
-        <Card className="vrz-card w-full">
-          <CardHeader>
-            <div className="flex justify-between items-center">
-              <div>
-                <CardTitle className="flex items-center gap-2">
-                  <CreditCard className="h-5 w-5" />
-                  Cartões de Crédito
-                </CardTitle>
-                <CardDescription>Gerenciar datas de fechamento e vencimento</CardDescription>
-              </div>
-              <Dialog
-                open={isNewCartaoOpen}
-                onOpenChange={(open) => {
-                  setIsNewCartaoOpen(open);
-                  if (!open) resetForm();
-                }}
-              >
-                {canEdit && (
-                  <DialogTrigger asChild>
-                    <Button
-                      className="bg-brand hover:bg-brand/90 text-ink rounded-full"
-                      size="sm"
-                      onClick={() => {
-                        resetForm();
-                        setIsNewCartaoOpen(true);
-                      }}
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      Novo Cartão
-                    </Button>
-                  </DialogTrigger>
-                )}
-                <DialogContent className="sm:max-w-md">
-                  <DialogHeader>
-                    <DialogTitle>{selectedCartao ? "Editar Cartão" : "Adicionar Cartão de Crédito"}</DialogTitle>
-                    <DialogDescription>
-                      Configure as datas do seu cartão para melhor controle financeiro
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="space-y-4 mt-4">
-                    <div className="space-y-2">
-                      <Label>Nome do Cartão</Label>
-                      <Input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Ex: Nubank Platinum" />
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label>Dia de Fechamento</Label>
-                        <Input
-                          type="number"
-                          min="1"
-                          max="31"
-                          value={diaFechamento}
-                          onChange={(e) => setDiaFechamento(e.target.value)}
-                          placeholder="10"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Dia de Vencimento</Label>
-                        <Input
-                          type="number"
-                          min="1"
-                          max="31"
-                          value={diaVencimento}
-                          onChange={(e) => setDiaVencimento(e.target.value)}
-                          placeholder="20"
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Limite (R$)</Label>
-                      <Input
-                        type="text"
-                        value={limite}
-                        onChange={(e) => setLimite(formatCurrencyInput(e.target.value))}
-                        placeholder="R$ 10.000,00"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Conta para Pagamento de Faturas</Label>
-                      <Select value={contaPagamentoId} onValueChange={setContaPagamentoId}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione a conta (opcional)" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="__none__">Nenhuma</SelectItem>
-                          {contas.map((conta) => (
-                            <SelectItem key={conta.id} value={conta.id}>
-                              {conta.nome}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <p className="text-xs text-muted-foreground">Conta padrão usada ao pagar faturas deste cartão</p>
-                    </div>
-                    <Button
-                      className="w-full bg-brand hover:bg-brand/90 text-ink rounded-full"
-                      onClick={handleSaveCartao}
-                    >
-                      {selectedCartao ? "Atualizar Cartão" : "Salvar Cartão"}
-                    </Button>
-                  </div>
-                </DialogContent>
-              </Dialog>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {cartoes.map((cartao, idx) => {
-                const percentUsed = (cartao.usado / cartao.limite) * 100;
-                return (
-                  <div
-                    key={idx}
-                    className="p-4 border rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
-                    onClick={() => {
-                      setSelectedCartao(cartao);
-                      setIsCartaoDetailOpen(true);
-                    }}
-                  >
-                    <div className="flex justify-between items-start mb-3">
-                      <div>
-                        <h4 className="font-medium text-sm">{cartao.nome}</h4>
-                        <div className="flex gap-4 mt-1 text-xs text-gray-600">
-                          <span>Fecha: dia {cartao.dia_fechamento}</span>
-                          <span>Vence: dia {cartao.dia_vencimento}</span>
-                        </div>
-                      </div>
-                      {canEdit && (
-                        <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={() => openEditCartao(cartao)}
-                          >
-                            <Pencil className="h-3 w-3" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-red-600"
-                            onClick={() => setDeleteTarget({ type: "cartao", id: cartao.id, nome: cartao.nome })}
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                    <div className="space-y-1">
-                      <div className="flex justify-between text-xs">
-                        <span className="text-gray-600">
-                          Utilizado: R$ {cartao.usado?.toLocaleString("pt-BR") || "0,00"}
-                        </span>
-                        <span className="text-gray-600">Limite: R$ {cartao.limite.toLocaleString("pt-BR")}</span>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div
-                          className={cn(
-                            "h-2 rounded-full transition-all",
-                            percentUsed > 80 ? "bg-red-500" : percentUsed > 50 ? "bg-yellow-500" : "bg-positive/100"
-                          )}
-                          style={{ width: `${percentUsed}%` }}
-                        />
-                      </div>
-                      <p className="text-xs text-gray-500">{percentUsed.toFixed(1)}% utilizado</p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Modal de Detalhes do Cartão */}
-      <Dialog open={isCartaoDetailOpen} onOpenChange={setIsCartaoDetailOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Detalhes do Cartão</DialogTitle>
-            <DialogDescription>Informações do cartão selecionado</DialogDescription>
-          </DialogHeader>
-          {selectedCartao && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="col-span-2">
-                  <Label className="text-xs text-muted-foreground">Nome do Cartão</Label>
-                  <p className="text-sm font-medium">{selectedCartao.nome}</p>
-                </div>
-                <div>
-                  <Label className="text-xs text-muted-foreground">Fechamento</Label>
-                  <p className="text-sm">Dia {selectedCartao.dia_fechamento}</p>
-                </div>
-                <div>
-                  <Label className="text-xs text-muted-foreground">Vencimento</Label>
-                  <p className="text-sm">Dia {selectedCartao.dia_vencimento}</p>
-                </div>
-                <div>
-                  <Label className="text-xs text-muted-foreground">Limite Total</Label>
-                  <p className="text-sm">R$ {selectedCartao.limite.toLocaleString("pt-BR")}</p>
-                </div>
-                <div>
-                  <Label className="text-xs text-muted-foreground">Utilizado</Label>
-                  <p className="text-sm text-brand font-medium">R$ {selectedCartao.usado?.toLocaleString("pt-BR")}</p>
-                </div>
-                <div className="col-span-2 pt-2 border-t">
-                  <Label className="text-xs text-muted-foreground">Disponível</Label>
-                  <p className="text-lg font-bold text-positive">
-                    R$ {selectedCartao.disponivel?.toLocaleString("pt-BR")}
-                  </p>
-                </div>
-              </div>
-              <div className="flex gap-2 mt-4 border-t pt-4">
-                {canEdit && (
-                  <>
-                    <Button variant="outline" className="flex-1" onClick={() => openEditCartao(selectedCartao)}>
-                      <Pencil className="mr-2 h-4 w-4" /> Editar
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      className="flex-1"
-                      onClick={() =>
-                        setDeleteTarget({ type: "cartao", id: selectedCartao.id, nome: selectedCartao.nome })
-                      }
-                    >
-                      <Trash2 className="mr-2 h-4 w-4" /> Excluir
-                    </Button>
-                  </>
-                )}
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      {/* Modal de Detalhes da Conta */}
-      <Dialog open={isContaDetailOpen} onOpenChange={setIsContaDetailOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Detalhes da Conta</DialogTitle>
-            <DialogDescription>Informações da conta selecionada</DialogDescription>
-          </DialogHeader>
-          {selectedConta && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="col-span-2">
-                  <Label className="text-xs text-muted-foreground">Nome da Conta</Label>
-                  <p className="text-sm font-medium">{selectedConta.nome}</p>
-                </div>
-                <div>
-                  <Label className="text-xs text-muted-foreground">Banco</Label>
-                  <p className="text-sm">{selectedConta.banco}</p>
-                </div>
-                <div>
-                  <Label className="text-xs text-muted-foreground">Saldo Inicial</Label>
-                  <p className="text-sm">R$ {selectedConta.saldo_inicial?.toLocaleString("pt-BR")}</p>
-                </div>
-                <div>
-                  <Label className="text-xs text-muted-foreground">Entradas (Recebidas)</Label>
-                  <p className="text-sm font-medium text-positive">
-                    + R$ {selectedConta.total_entradas?.toLocaleString("pt-BR")}
-                  </p>
-                </div>
-                <div>
-                  <Label className="text-xs text-muted-foreground">Saídas (Pagas)</Label>
-                  <p className="text-sm font-medium text-red-600">
-                    - R$ {selectedConta.total_saidas?.toLocaleString("pt-BR")}
-                  </p>
-                </div>
-                <div className="col-span-2 pt-2 border-t">
-                  <Label className="text-xs text-muted-foreground">Saldo Atual</Label>
-                  <p className="text-lg font-bold">R$ {selectedConta.saldo_atual?.toLocaleString("pt-BR")}</p>
-                </div>
-              </div>
-              <div className="flex gap-2 mt-4 border-t pt-4">
-                {canEdit && (
-                  <>
-                    <Button variant="outline" className="flex-1" onClick={() => openEditConta(selectedConta)}>
-                      <Pencil className="mr-2 h-4 w-4" /> Editar
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      className="flex-1"
-                      onClick={() => setDeleteTarget({ type: "conta", id: selectedConta.id, nome: selectedConta.nome })}
-                    >
-                      <Trash2 className="mr-2 h-4 w-4" /> Excluir
-                    </Button>
-                  </>
-                )}
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
 
       <AlertDialog
         open={!!deleteTarget}
@@ -908,6 +902,6 @@ export default function Configuracoes() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </>
   );
 }

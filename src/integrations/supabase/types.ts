@@ -28,123 +28,53 @@ export type Database = {
   };
   public: {
     Tables: {
-      ai_insights: {
+      admin_audit_logs: {
         Row: {
-          ano_referencia: number | null;
-          conteudo: Json;
-          created_at: string | null;
-          created_by: string | null;
-          custo_estimado: number | null;
-          empresa_id: string;
+          action: string;
+          actor_email: string;
+          actor_id: string;
+          actor_role: string;
+          category: string;
+          created_at: string;
+          empresa_id: string | null;
           id: string;
-          mes_referencia: number | null;
-          modelo_ia: string | null;
-          referencia_id: string | null;
-          referencia_tipo: string | null;
-          resumo: string | null;
-          status: string | null;
-          tipo: string;
-          tokens_entrada: number | null;
-          tokens_saida: number | null;
-          updated_at: string | null;
+          ip_address: string | null;
+          metadata: Json;
+          target_id: string | null;
+          target_name: string | null;
+          target_type: string | null;
         };
         Insert: {
-          ano_referencia?: number | null;
-          conteudo: Json;
-          created_at?: string | null;
-          created_by?: string | null;
-          custo_estimado?: number | null;
-          empresa_id: string;
+          action: string;
+          actor_email: string;
+          actor_id: string;
+          actor_role: string;
+          category: string;
+          created_at?: string;
+          empresa_id?: string | null;
           id?: string;
-          mes_referencia?: number | null;
-          modelo_ia?: string | null;
-          referencia_id?: string | null;
-          referencia_tipo?: string | null;
-          resumo?: string | null;
-          status?: string | null;
-          tipo: string;
-          tokens_entrada?: number | null;
-          tokens_saida?: number | null;
-          updated_at?: string | null;
+          ip_address?: string | null;
+          metadata?: Json;
+          target_id?: string | null;
+          target_name?: string | null;
+          target_type?: string | null;
         };
         Update: {
-          ano_referencia?: number | null;
-          conteudo?: Json;
-          created_at?: string | null;
-          created_by?: string | null;
-          custo_estimado?: number | null;
-          empresa_id?: string;
+          action?: string;
+          actor_email?: string;
+          actor_id?: string;
+          actor_role?: string;
+          category?: string;
+          created_at?: string;
+          empresa_id?: string | null;
           id?: string;
-          mes_referencia?: number | null;
-          modelo_ia?: string | null;
-          referencia_id?: string | null;
-          referencia_tipo?: string | null;
-          resumo?: string | null;
-          status?: string | null;
-          tipo?: string;
-          tokens_entrada?: number | null;
-          tokens_saida?: number | null;
-          updated_at?: string | null;
+          ip_address?: string | null;
+          metadata?: Json;
+          target_id?: string | null;
+          target_name?: string | null;
+          target_type?: string | null;
         };
-        Relationships: [
-          {
-            foreignKeyName: "ai_insights_empresa_id_fkey";
-            columns: ["empresa_id"];
-            isOneToOne: false;
-            referencedRelation: "empresas";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
-      ai_usage: {
-        Row: {
-          ano: number;
-          created_at: string | null;
-          custo_estimado_total: number | null;
-          empresa_id: string;
-          id: string;
-          limite_requests: number | null;
-          mes: number;
-          total_requests: number | null;
-          total_tokens_entrada: number | null;
-          total_tokens_saida: number | null;
-          updated_at: string | null;
-        };
-        Insert: {
-          ano: number;
-          created_at?: string | null;
-          custo_estimado_total?: number | null;
-          empresa_id: string;
-          id?: string;
-          limite_requests?: number | null;
-          mes: number;
-          total_requests?: number | null;
-          total_tokens_entrada?: number | null;
-          total_tokens_saida?: number | null;
-          updated_at?: string | null;
-        };
-        Update: {
-          ano?: number;
-          created_at?: string | null;
-          custo_estimado_total?: number | null;
-          empresa_id?: string;
-          id?: string;
-          limite_requests?: number | null;
-          mes?: number;
-          total_requests?: number | null;
-          total_tokens_entrada?: number | null;
-          total_tokens_saida?: number | null;
-          updated_at?: string | null;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "ai_usage_empresa_id_fkey";
-            columns: ["empresa_id"];
-            isOneToOne: false;
-            referencedRelation: "empresas";
-            referencedColumns: ["id"];
-          },
-        ];
+        Relationships: [];
       };
       alertas: {
         Row: {
@@ -198,71 +128,6 @@ export type Database = {
             columns: ["empresa_id"];
             isOneToOne: false;
             referencedRelation: "empresas";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
-      alocacoes: {
-        Row: {
-          created_at: string | null;
-          disciplina: string;
-          empresa_id: string;
-          horas_alocadas: number;
-          id: string;
-          pessoa_id: string;
-          projeto_id: string;
-          semana_inicio: string;
-          updated_at: string | null;
-        };
-        Insert: {
-          created_at?: string | null;
-          disciplina: string;
-          empresa_id: string;
-          horas_alocadas?: number;
-          id?: string;
-          pessoa_id: string;
-          projeto_id: string;
-          semana_inicio: string;
-          updated_at?: string | null;
-        };
-        Update: {
-          created_at?: string | null;
-          disciplina?: string;
-          empresa_id?: string;
-          horas_alocadas?: number;
-          id?: string;
-          pessoa_id?: string;
-          projeto_id?: string;
-          semana_inicio?: string;
-          updated_at?: string | null;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "alocacoes_empresa_id_fkey";
-            columns: ["empresa_id"];
-            isOneToOne: false;
-            referencedRelation: "empresas";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "alocacoes_pessoa_id_fkey";
-            columns: ["pessoa_id"];
-            isOneToOne: false;
-            referencedRelation: "pessoas";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "alocacoes_pessoa_id_fkey";
-            columns: ["pessoa_id"];
-            isOneToOne: false;
-            referencedRelation: "view_folha_pagamento";
-            referencedColumns: ["pessoa_id"];
-          },
-          {
-            foreignKeyName: "alocacoes_projeto_id_fkey";
-            columns: ["projeto_id"];
-            isOneToOne: false;
-            referencedRelation: "projetos";
             referencedColumns: ["id"];
           },
         ];
@@ -423,8 +288,7 @@ export type Database = {
           nome: string;
           tipo: string;
           updated_at: string | null;
-          usado: string | null;
-          user_id: string | null;
+          usado: number | null;
         };
         Insert: {
           conta_pagamento_id?: string | null;
@@ -439,8 +303,7 @@ export type Database = {
           nome: string;
           tipo?: string;
           updated_at?: string | null;
-          usado?: string | null;
-          user_id?: string | null;
+          usado?: number | null;
         };
         Update: {
           conta_pagamento_id?: string | null;
@@ -455,8 +318,7 @@ export type Database = {
           nome?: string;
           tipo?: string;
           updated_at?: string | null;
-          usado?: string | null;
-          user_id?: string | null;
+          usado?: number | null;
         };
         Relationships: [
           {
@@ -485,6 +347,7 @@ export type Database = {
       categorias_financeiras: {
         Row: {
           created_at: string | null;
+          deleted_at: string | null;
           empresa_id: string;
           id: string;
           nome: string;
@@ -493,6 +356,7 @@ export type Database = {
         };
         Insert: {
           created_at?: string | null;
+          deleted_at?: string | null;
           empresa_id: string;
           id?: string;
           nome: string;
@@ -501,6 +365,7 @@ export type Database = {
         };
         Update: {
           created_at?: string | null;
+          deleted_at?: string | null;
           empresa_id?: string;
           id?: string;
           nome?: string;
@@ -646,6 +511,7 @@ export type Database = {
           id: string;
           nome: string;
           origem: string | null;
+          sobrenome: string | null;
           tipo_nf: string | null;
           updated_at: string | null;
           updated_by: string | null;
@@ -665,6 +531,7 @@ export type Database = {
           id?: string;
           nome: string;
           origem?: string | null;
+          sobrenome?: string | null;
           tipo_nf?: string | null;
           updated_at?: string | null;
           updated_by?: string | null;
@@ -684,6 +551,7 @@ export type Database = {
           id?: string;
           nome?: string;
           origem?: string | null;
+          sobrenome?: string | null;
           tipo_nf?: string | null;
           updated_at?: string | null;
           updated_by?: string | null;
@@ -708,11 +576,10 @@ export type Database = {
           empresa_id: string;
           id: string;
           nome: string;
-          saldo_atual: string | null;
+          saldo_atual: number | null;
           saldo_inicial: number | null;
           tipo_chave_pix: string | null;
           updated_at: string | null;
-          user_id: string | null;
         };
         Insert: {
           banco: string;
@@ -723,11 +590,10 @@ export type Database = {
           empresa_id: string;
           id?: string;
           nome: string;
-          saldo_atual?: string | null;
+          saldo_atual?: number | null;
           saldo_inicial?: number | null;
           tipo_chave_pix?: string | null;
           updated_at?: string | null;
-          user_id?: string | null;
         };
         Update: {
           banco?: string;
@@ -738,15 +604,64 @@ export type Database = {
           empresa_id?: string;
           id?: string;
           nome?: string;
-          saldo_atual?: string | null;
+          saldo_atual?: number | null;
           saldo_inicial?: number | null;
           tipo_chave_pix?: string | null;
           updated_at?: string | null;
-          user_id?: string | null;
         };
         Relationships: [
           {
             foreignKeyName: "contas_empresa_id_fkey";
+            columns: ["empresa_id"];
+            isOneToOne: false;
+            referencedRelation: "empresas";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      convites: {
+        Row: {
+          cargo: Database["public"]["Enums"]["user_role"];
+          created_at: string;
+          criado_por: string | null;
+          email: string;
+          empresa_id: string;
+          expira_em: string;
+          features: Json;
+          id: string;
+          nome: string | null;
+          token: string;
+          usado_em: string | null;
+        };
+        Insert: {
+          cargo?: Database["public"]["Enums"]["user_role"];
+          created_at?: string;
+          criado_por?: string | null;
+          email: string;
+          empresa_id: string;
+          expira_em?: string;
+          features?: Json;
+          id?: string;
+          nome?: string | null;
+          token?: string;
+          usado_em?: string | null;
+        };
+        Update: {
+          cargo?: Database["public"]["Enums"]["user_role"];
+          created_at?: string;
+          criado_por?: string | null;
+          email?: string;
+          empresa_id?: string;
+          expira_em?: string;
+          features?: Json;
+          id?: string;
+          nome?: string | null;
+          token?: string;
+          usado_em?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "convites_empresa_id_fkey";
             columns: ["empresa_id"];
             isOneToOne: false;
             referencedRelation: "empresas";
@@ -956,6 +871,7 @@ export type Database = {
           email: string | null;
           endereco: string | null;
           estado: string | null;
+          features: Json;
           id: string;
           logo_url: string | null;
           nome: string;
@@ -977,6 +893,7 @@ export type Database = {
           email?: string | null;
           endereco?: string | null;
           estado?: string | null;
+          features?: Json;
           id?: string;
           logo_url?: string | null;
           nome: string;
@@ -998,6 +915,7 @@ export type Database = {
           email?: string | null;
           endereco?: string | null;
           estado?: string | null;
+          features?: Json;
           id?: string;
           logo_url?: string | null;
           nome?: string;
@@ -1602,12 +1520,18 @@ export type Database = {
           deleted_at: string | null;
           email: string | null;
           empresa_id: string;
+          empresa_lead: string | null;
           id: string;
           motivo_perda: string | null;
           nome: string;
+          notas: string | null;
           origem: string | null;
+          previsao_fechamento: string | null;
+          responsavel_id: string | null;
+          sobrenome: string | null;
           status: string | null;
           updated_at: string | null;
+          valor_estimado: number | null;
         };
         Insert: {
           cliente_id?: string | null;
@@ -1618,12 +1542,18 @@ export type Database = {
           deleted_at?: string | null;
           email?: string | null;
           empresa_id: string;
+          empresa_lead?: string | null;
           id?: string;
           motivo_perda?: string | null;
           nome: string;
+          notas?: string | null;
           origem?: string | null;
+          previsao_fechamento?: string | null;
+          responsavel_id?: string | null;
+          sobrenome?: string | null;
           status?: string | null;
           updated_at?: string | null;
+          valor_estimado?: number | null;
         };
         Update: {
           cliente_id?: string | null;
@@ -1634,12 +1564,18 @@ export type Database = {
           deleted_at?: string | null;
           email?: string | null;
           empresa_id?: string;
+          empresa_lead?: string | null;
           id?: string;
           motivo_perda?: string | null;
           nome?: string;
+          notas?: string | null;
           origem?: string | null;
+          previsao_fechamento?: string | null;
+          responsavel_id?: string | null;
+          sobrenome?: string | null;
           status?: string | null;
           updated_at?: string | null;
+          valor_estimado?: number | null;
         };
         Relationships: [
           {
@@ -1744,6 +1680,7 @@ export type Database = {
           auto_sync: boolean | null;
           categoria: string | null;
           created_at: string;
+          deleted_at: string | null;
           descricao: string | null;
           empresa_id: string | null;
           id: string;
@@ -1762,6 +1699,7 @@ export type Database = {
           auto_sync?: boolean | null;
           categoria?: string | null;
           created_at?: string;
+          deleted_at?: string | null;
           descricao?: string | null;
           empresa_id?: string | null;
           id?: string;
@@ -1780,6 +1718,7 @@ export type Database = {
           auto_sync?: boolean | null;
           categoria?: string | null;
           created_at?: string;
+          deleted_at?: string | null;
           descricao?: string | null;
           empresa_id?: string | null;
           id?: string;
@@ -1874,12 +1813,15 @@ export type Database = {
       pessoas: {
         Row: {
           cargo: string | null;
+          chaves_pix: Json | null;
+          cnpj: string | null;
           contas_bancarias: Json | null;
           cpf: string;
           created_at: string | null;
           created_by: string | null;
           data_admissao: string | null;
           data_demissao: string | null;
+          data_nascimento: string | null;
           deleted_at: string | null;
           email: string;
           empresa_id: string;
@@ -1887,8 +1829,14 @@ export type Database = {
           horas_semanais: number | null;
           id: string;
           nome: string;
+          pis_nit: string | null;
+          primeiro_nome: string;
           profile_id: string | null;
+          razao_social: string | null;
+          rg: string | null;
           salario_fixo: number | null;
+          sobrenome: string;
+          status: string;
           telefone: string;
           tipo_contrato: string | null;
           updated_at: string | null;
@@ -1897,12 +1845,15 @@ export type Database = {
         };
         Insert: {
           cargo?: string | null;
+          chaves_pix?: Json | null;
+          cnpj?: string | null;
           contas_bancarias?: Json | null;
           cpf: string;
           created_at?: string | null;
           created_by?: string | null;
           data_admissao?: string | null;
           data_demissao?: string | null;
+          data_nascimento?: string | null;
           deleted_at?: string | null;
           email: string;
           empresa_id: string;
@@ -1910,8 +1861,14 @@ export type Database = {
           horas_semanais?: number | null;
           id?: string;
           nome: string;
+          pis_nit?: string | null;
+          primeiro_nome: string;
           profile_id?: string | null;
+          razao_social?: string | null;
+          rg?: string | null;
           salario_fixo?: number | null;
+          sobrenome: string;
+          status?: string;
           telefone: string;
           tipo_contrato?: string | null;
           updated_at?: string | null;
@@ -1920,12 +1877,15 @@ export type Database = {
         };
         Update: {
           cargo?: string | null;
+          chaves_pix?: Json | null;
+          cnpj?: string | null;
           contas_bancarias?: Json | null;
           cpf?: string;
           created_at?: string | null;
           created_by?: string | null;
           data_admissao?: string | null;
           data_demissao?: string | null;
+          data_nascimento?: string | null;
           deleted_at?: string | null;
           email?: string;
           empresa_id?: string;
@@ -1933,8 +1893,14 @@ export type Database = {
           horas_semanais?: number | null;
           id?: string;
           nome?: string;
+          pis_nit?: string | null;
+          primeiro_nome?: string;
           profile_id?: string | null;
+          razao_social?: string | null;
+          rg?: string | null;
           salario_fixo?: number | null;
+          sobrenome?: string;
+          status?: string;
           telefone?: string;
           tipo_contrato?: string | null;
           updated_at?: string | null;
@@ -2021,70 +1987,6 @@ export type Database = {
           },
         ];
       };
-      portal_tokens: {
-        Row: {
-          ativo: boolean | null;
-          cliente_id: string;
-          created_at: string | null;
-          created_by: string | null;
-          email_cliente: string | null;
-          empresa_id: string;
-          expira_em: string | null;
-          id: string;
-          projeto_id: string;
-          token: string;
-          ultimo_acesso: string | null;
-        };
-        Insert: {
-          ativo?: boolean | null;
-          cliente_id: string;
-          created_at?: string | null;
-          created_by?: string | null;
-          email_cliente?: string | null;
-          empresa_id: string;
-          expira_em?: string | null;
-          id?: string;
-          projeto_id: string;
-          token?: string;
-          ultimo_acesso?: string | null;
-        };
-        Update: {
-          ativo?: boolean | null;
-          cliente_id?: string;
-          created_at?: string | null;
-          created_by?: string | null;
-          email_cliente?: string | null;
-          empresa_id?: string;
-          expira_em?: string | null;
-          id?: string;
-          projeto_id?: string;
-          token?: string;
-          ultimo_acesso?: string | null;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "portal_tokens_cliente_id_fkey";
-            columns: ["cliente_id"];
-            isOneToOne: false;
-            referencedRelation: "clientes";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "portal_tokens_empresa_id_fkey";
-            columns: ["empresa_id"];
-            isOneToOne: false;
-            referencedRelation: "empresas";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "portal_tokens_projeto_id_fkey";
-            columns: ["projeto_id"];
-            isOneToOne: false;
-            referencedRelation: "projetos";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
       profiles: {
         Row: {
           avatar_url: string | null;
@@ -2093,8 +1995,11 @@ export type Database = {
           created_by: string | null;
           email: string;
           empresa_id: string;
+          features: Json;
+          first_name: string;
           id: string;
-          nome: string;
+          last_name: string;
+          nome: string | null;
           onboarding_completed: boolean | null;
           role: Database["public"]["Enums"]["user_role"] | null;
           updated_at: string | null;
@@ -2107,8 +2012,11 @@ export type Database = {
           created_by?: string | null;
           email: string;
           empresa_id: string;
+          features?: Json;
+          first_name?: string;
           id: string;
-          nome: string;
+          last_name?: string;
+          nome?: string | null;
           onboarding_completed?: boolean | null;
           role?: Database["public"]["Enums"]["user_role"] | null;
           updated_at?: string | null;
@@ -2121,8 +2029,11 @@ export type Database = {
           created_by?: string | null;
           email?: string;
           empresa_id?: string;
+          features?: Json;
+          first_name?: string;
           id?: string;
-          nome?: string;
+          last_name?: string;
+          nome?: string | null;
           onboarding_completed?: boolean | null;
           role?: Database["public"]["Enums"]["user_role"] | null;
           updated_at?: string | null;
@@ -2513,6 +2424,9 @@ export type Database = {
           cliente_id: string | null;
           codigo: string | null;
           conteudo: Json | null;
+          contrato_assinado: boolean;
+          contrato_enviado: boolean;
+          contrato_recusado: boolean;
           created_at: string | null;
           created_by: string | null;
           custo_estimado: number | null;
@@ -2541,6 +2455,9 @@ export type Database = {
           cliente_id?: string | null;
           codigo?: string | null;
           conteudo?: Json | null;
+          contrato_assinado?: boolean;
+          contrato_enviado?: boolean;
+          contrato_recusado?: boolean;
           created_at?: string | null;
           created_by?: string | null;
           custo_estimado?: number | null;
@@ -2569,6 +2486,9 @@ export type Database = {
           cliente_id?: string | null;
           codigo?: string | null;
           conteudo?: Json | null;
+          contrato_assinado?: boolean;
+          contrato_enviado?: boolean;
+          contrato_recusado?: boolean;
           created_at?: string | null;
           created_by?: string | null;
           custo_estimado?: number | null;
@@ -2775,44 +2695,6 @@ export type Database = {
           },
         ];
       };
-      saude_operacional_snapshots: {
-        Row: {
-          ano: number;
-          breakdown: Json;
-          created_at: string | null;
-          empresa_id: string;
-          id: string;
-          mes: number;
-          score: number;
-        };
-        Insert: {
-          ano: number;
-          breakdown: Json;
-          created_at?: string | null;
-          empresa_id: string;
-          id?: string;
-          mes: number;
-          score: number;
-        };
-        Update: {
-          ano?: number;
-          breakdown?: Json;
-          created_at?: string | null;
-          empresa_id?: string;
-          id?: string;
-          mes?: number;
-          score?: number;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "saude_operacional_snapshots_empresa_id_fkey";
-            columns: ["empresa_id"];
-            isOneToOne: false;
-            referencedRelation: "empresas";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
       templates_projeto: {
         Row: {
           ativo: boolean | null;
@@ -2865,92 +2747,6 @@ export type Database = {
             columns: ["empresa_id"];
             isOneToOne: false;
             referencedRelation: "empresas";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
-      timesheets: {
-        Row: {
-          aprovado_em: string | null;
-          aprovado_por: string | null;
-          created_at: string | null;
-          created_by: string | null;
-          data: string;
-          deleted_at: string | null;
-          descricao: string | null;
-          disciplina: string;
-          empresa_id: string;
-          horas: number;
-          id: string;
-          pessoa_id: string;
-          projeto_id: string;
-          status: string | null;
-          updated_at: string | null;
-          updated_by: string | null;
-        };
-        Insert: {
-          aprovado_em?: string | null;
-          aprovado_por?: string | null;
-          created_at?: string | null;
-          created_by?: string | null;
-          data: string;
-          deleted_at?: string | null;
-          descricao?: string | null;
-          disciplina: string;
-          empresa_id: string;
-          horas: number;
-          id?: string;
-          pessoa_id: string;
-          projeto_id: string;
-          status?: string | null;
-          updated_at?: string | null;
-          updated_by?: string | null;
-        };
-        Update: {
-          aprovado_em?: string | null;
-          aprovado_por?: string | null;
-          created_at?: string | null;
-          created_by?: string | null;
-          data?: string;
-          deleted_at?: string | null;
-          descricao?: string | null;
-          disciplina?: string;
-          empresa_id?: string;
-          horas?: number;
-          id?: string;
-          pessoa_id?: string;
-          projeto_id?: string;
-          status?: string | null;
-          updated_at?: string | null;
-          updated_by?: string | null;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "timesheets_empresa_id_fkey";
-            columns: ["empresa_id"];
-            isOneToOne: false;
-            referencedRelation: "empresas";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "timesheets_pessoa_id_fkey";
-            columns: ["pessoa_id"];
-            isOneToOne: false;
-            referencedRelation: "pessoas";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "timesheets_pessoa_id_fkey";
-            columns: ["pessoa_id"];
-            isOneToOne: false;
-            referencedRelation: "view_folha_pagamento";
-            referencedColumns: ["pessoa_id"];
-          },
-          {
-            foreignKeyName: "timesheets_projeto_id_fkey";
-            columns: ["projeto_id"];
-            isOneToOne: false;
-            referencedRelation: "projetos";
             referencedColumns: ["id"];
           },
         ];
@@ -3038,66 +2834,6 @@ export type Database = {
             columns: ["empresa_id"];
             isOneToOne: false;
             referencedRelation: "empresas";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
-      wip_snapshots: {
-        Row: {
-          ano: number;
-          created_at: string | null;
-          created_by: string | null;
-          custo_realizado: number | null;
-          empresa_id: string;
-          faturado: number | null;
-          horas_realizadas: number | null;
-          id: string;
-          mes: number;
-          projeto_id: string;
-          recebido: number | null;
-          wip_saldo: number | null;
-        };
-        Insert: {
-          ano: number;
-          created_at?: string | null;
-          created_by?: string | null;
-          custo_realizado?: number | null;
-          empresa_id: string;
-          faturado?: number | null;
-          horas_realizadas?: number | null;
-          id?: string;
-          mes: number;
-          projeto_id: string;
-          recebido?: number | null;
-          wip_saldo?: number | null;
-        };
-        Update: {
-          ano?: number;
-          created_at?: string | null;
-          created_by?: string | null;
-          custo_realizado?: number | null;
-          empresa_id?: string;
-          faturado?: number | null;
-          horas_realizadas?: number | null;
-          id?: string;
-          mes?: number;
-          projeto_id?: string;
-          recebido?: number | null;
-          wip_saldo?: number | null;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "wip_snapshots_empresa_id_fkey";
-            columns: ["empresa_id"];
-            isOneToOne: false;
-            referencedRelation: "empresas";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "wip_snapshots_projeto_id_fkey";
-            columns: ["projeto_id"];
-            isOneToOne: false;
-            referencedRelation: "projetos";
             referencedColumns: ["id"];
           },
         ];
@@ -3333,6 +3069,7 @@ export type Database = {
       };
     };
     Functions: {
+      _feature_catalog: { Args: never; Returns: string[] };
       _portal_create_account: {
         Args: {
           p_cliente_id: string;
@@ -3348,9 +3085,23 @@ export type Database = {
         Args: { p_account_id: string; p_nova_senha: string };
         Returns: undefined;
       };
+      _validate_features_payload: {
+        Args: { p_empresa_id: string; p_features: Json };
+        Returns: undefined;
+      };
       admin_create_company_owner: {
         Args: { p_company_name?: string; p_email: string; p_nome: string };
         Returns: Json;
+      };
+      cleanup_pending_signups: { Args: never; Returns: number };
+      create_convite: {
+        Args: {
+          p_cargo: string;
+          p_email: string;
+          p_features?: Json;
+          p_nome?: string;
+        };
+        Returns: string;
       };
       create_projeto_completo:
         | {
@@ -3430,12 +3181,30 @@ export type Database = {
           valor_m2: number;
         }[];
       };
+      get_portal_propostas: {
+        Args: { p_token: string };
+        Returns: {
+          area_m2: number;
+          codigo: string;
+          created_at: string;
+          id: string;
+          localizacao: string;
+          observacao: string;
+          prazo_estimado_dias: number;
+          status: string;
+          titulo: string;
+          validade: string;
+          valor_proposto: number;
+        }[];
+      };
       get_user_empresa_id: { Args: never; Returns: string };
       get_user_empresa_id_text: { Args: never; Returns: string };
       has_role: {
         Args: { allowed_roles: Database["public"]["Enums"]["user_role"][] };
         Returns: boolean;
       };
+      is_company_admin: { Args: never; Returns: boolean };
+      is_ultra_admin: { Args: never; Returns: boolean };
       pagar_fatura: {
         Args: {
           p_conta_id: string;
@@ -3444,6 +3213,10 @@ export type Database = {
           p_valor_pago?: number;
         };
         Returns: undefined;
+      };
+      portal_atualizar_status_proposta: {
+        Args: { p_proposta_id: string; p_status: string; p_token: string };
+        Returns: Json;
       };
       portal_login: {
         Args: { p_email: string; p_senha: string };
@@ -3579,6 +3352,10 @@ export type Database = {
       rpc_sync_metas: { Args: never; Returns: number };
       show_limit: { Args: never; Returns: number };
       show_trgm: { Args: { "": string }; Returns: string[] };
+      update_company_features: {
+        Args: { p_features: Json };
+        Returns: undefined;
+      };
       update_projeto_completo:
         | {
             Args: {
@@ -3619,7 +3396,14 @@ export type Database = {
             };
             Returns: boolean;
           };
-      verify_portal_token: { Args: { p_token: string }; Returns: Json };
+      update_user_access: {
+        Args: { p_features?: Json; p_role: string; p_user_id: string };
+        Returns: undefined;
+      };
+      user_has_feature: {
+        Args: { p_feature: string; p_min_level?: string };
+        Returns: boolean;
+      };
     };
     Enums: {
       status_empresa: "active" | "suspended" | "cancelled";

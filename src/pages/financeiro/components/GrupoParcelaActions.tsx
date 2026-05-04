@@ -134,11 +134,11 @@ function EditarEmAbertoDialog({ open, grupoId, onClose, onDone }: OpProps) {
     try {
       const { data, error } = await supabase.rpc("rpc_grupo_parcela_editar_em_aberto", {
         p_grupo_id: grupoId,
-        p_novo_valor_parcela: valor ? Number(valor) : null,
-        p_nova_categoria_id: null,
-        p_novo_centro_custo_id: null,
-        p_nova_conta_id: null,
-        p_nova_observacao: observacao || null,
+        p_novo_valor_parcela: valor ? Number(valor) : undefined,
+        p_nova_categoria_id: undefined,
+        p_novo_centro_custo_id: undefined,
+        p_nova_conta_id: undefined,
+        p_nova_observacao: observacao || undefined,
       });
       if (error) throw error;
       toast.success(`${data ?? 0} parcela(s) atualizada(s)`);
@@ -206,7 +206,7 @@ function RenegociarDialog({ open, grupoId, onClose, onDone }: OpProps) {
         p_novo_total: Number(novoTotal),
         p_novo_num_parcelas: Number(numParcelas),
         p_nova_primeira_data: primeiraData,
-        p_observacao: observacao || null,
+        p_observacao: observacao || undefined,
       });
       if (error) throw error;
       toast.success("Grupo renegociado", { description: `Novo grupo: ${data}` });
@@ -279,7 +279,7 @@ function QuitarAntecipadoDialog({ open, grupoId, onClose, onDone }: OpProps) {
       const { data, error } = await supabase.rpc("rpc_grupo_parcela_quitar_antecipado", {
         p_grupo_id: grupoId,
         p_data_pagamento: dataPagamento,
-        p_quantidade: quantidade ? Number(quantidade) : null,
+        p_quantidade: quantidade ? Number(quantidade) : undefined,
         p_desconto_total: desconto ? Number(desconto) : 0,
       });
       if (error) throw error;

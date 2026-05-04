@@ -15,7 +15,6 @@ import {
   CalendarClock,
   ChevronRight,
   Plus,
-  FileText,
   BarChart3,
   Target,
 } from "lucide-react";
@@ -283,16 +282,26 @@ export default function Dashboard() {
       title="Dashboard"
       description={`Visão geral — ${mesAtual.charAt(0).toUpperCase() + mesAtual.slice(1)} ${new Date().getFullYear()}`}
     >
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 flex-wrap">
+        {canLeads && (
+          <Button variant="outline" size="sm" className="text-xs rounded-full" onClick={() => navigate("/leads")}>
+            <Users size={14} className="mr-1" /> Leads
+          </Button>
+        )}
+        {canRel && (
+          <Button variant="outline" size="sm" className="text-xs rounded-full" onClick={() => navigate("/relatorios")}>
+            <BarChart3 size={14} className="mr-1" /> Relatórios
+          </Button>
+        )}
         {canFin && (
-          <Button variant="outline" size="sm" className="text-xs" onClick={() => navigate("/financeiro")}>
+          <Button variant="outline" size="sm" className="text-xs rounded-full" onClick={() => navigate("/financeiro")}>
             <DollarSign size={14} className="mr-1" /> Financeiro
           </Button>
         )}
         {canProjCreate && (
           <Button
             size="sm"
-            className="text-xs bg-brand hover:bg-brand/90 text-gray-900"
+            className="text-xs bg-brand hover:bg-brand/90 text-gray-900 rounded-full"
             onClick={() => navigate("/projetos")}
           >
             <Plus size={14} className="mr-1" /> Novo Projeto
@@ -325,36 +334,7 @@ export default function Dashboard() {
 
   const { kpis, projetos, proximosVencimentos, leadsPipeline, leadsTotal, alertas, alertasNaoLidos, chartData } = data;
 
-  const showMiniKpis = canFin || canProj || canLeads;
-
-  const atalhos = [
-    canProjCreate && {
-      label: "Novo Projeto",
-      icon: Briefcase,
-      path: "/projetos",
-      color: "hover:border-orange-300 hover:bg-orange-50/50",
-    },
-    canLeads && {
-      label: "Novo Lead",
-      icon: Users,
-      path: "/leads",
-      color: "hover:border-purple-300 hover:bg-purple-50/50",
-    },
-    canFin && {
-      label: "Lançamento",
-      icon: DollarSign,
-      path: "/financeiro",
-      color: "hover:border-positive/30 hover:bg-positive/5",
-    },
-    canRel && {
-      label: "Relatórios",
-      icon: FileText,
-      path: "/relatorios",
-      color: "hover:border-blue-300 hover:bg-blue-50/50",
-    },
-  ].filter(Boolean) as { label: string; icon: typeof Briefcase; path: string; color: string }[];
-
-  const nothingVisible = !canFin && !canProj && !canLeads && !canRel;
+  const nothingVisible = !canFin && !canProj && !canLeads;
 
   if (nothingVisible) {
     return (
@@ -669,30 +649,6 @@ export default function Dashboard() {
                 </CardContent>
               </Card>
             )}
-          </div>
-        )}
-
-        {/* Atalhos rápidos */}
-        {atalhos.length > 0 && (
-          <div
-            className={cn(
-              "grid gap-3",
-              atalhos.length === 1 && "grid-cols-1",
-              atalhos.length === 2 && "grid-cols-2",
-              atalhos.length === 3 && "grid-cols-2 sm:grid-cols-3",
-              atalhos.length === 4 && "grid-cols-2 sm:grid-cols-4"
-            )}
-          >
-            {atalhos.map((atalho) => (
-              <button
-                key={atalho.label}
-                onClick={() => navigate(atalho.path)}
-                className={`flex items-center gap-3 p-4 rounded-xl border border-gray-100 bg-white text-left transition-all shadow-sm hover:shadow-md ${atalho.color}`}
-              >
-                <atalho.icon size={18} className="text-gray-500" />
-                <span className="text-sm font-medium text-gray-700">{atalho.label}</span>
-              </button>
-            ))}
           </div>
         )}
       </div>

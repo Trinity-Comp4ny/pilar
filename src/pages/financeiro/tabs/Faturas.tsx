@@ -245,7 +245,7 @@ export default function Faturas() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <CreditCard className="h-5 w-5" />
-            Faturas de Cartão de Crédito
+            Faturas de Cartão
           </CardTitle>
           <CardDescription>Selecione um cartão para ver suas faturas</CardDescription>
         </CardHeader>
