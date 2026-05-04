@@ -127,6 +127,40 @@ export const useFinanceData = (dateFrom?: Date, dateTo?: Date) => {
       const categoriaData = processCategoryData(receitasMain, "receitas");
       const despesasCategoriaData = processCategoryData(despesasMain, "despesas");
 
+      const receitasPendentes = receitasMain.filter((r) => r.status !== "Recebido");
+      const despesasPendentes = despesasMain.filter((d) => d.status !== "Pago");
+
+      const aReceber = {
+        total: receitasPendentes.reduce((acc, r) => acc + Number(r.valor), 0),
+        count: receitasPendentes.length,
+      };
+      const aPagar = {
+        total: despesasPendentes.reduce((acc, d) => acc + Number(d.valor), 0),
+        count: despesasPendentes.length,
+      };
+
+      const topReceitas = [...receitasMain]
+        .sort((a, b) => Number(b.valor) - Number(a.valor))
+        .slice(0, 5)
+        .map((r) => ({
+          id: r.id,
+          descricao: r.descricao,
+          valor: Number(r.valor),
+          data: getDisplayDate(r.data_recebimento, r.data_vencimento, r.status) ?? r.data_vencimento,
+          status: r.status,
+        }));
+
+      const topDespesas = [...despesasMain]
+        .sort((a, b) => Number(b.valor) - Number(a.valor))
+        .slice(0, 5)
+        .map((d) => ({
+          id: d.id,
+          descricao: d.descricao,
+          valor: Number(d.valor),
+          data: getDisplayDate(d.data_pagamento, d.data_vencimento, d.status) ?? d.data_vencimento,
+          status: d.status,
+        }));
+
       return {
         stats: {
           receitasTotal,
@@ -137,11 +171,15 @@ export const useFinanceData = (dateFrom?: Date, dateTo?: Date) => {
           despesasMes: despesasGrowth.toFixed(1),
           saldo: receitasTotal - despesasTotal,
           saldoGeral: receitasTotalGeral - despesasTotalGeral,
+          aReceber,
+          aPagar,
         },
         chartData,
         chartDataDiario,
         categoriaData,
         despesasCategoriaData,
+        topReceitas,
+        topDespesas,
       };
     },
   });

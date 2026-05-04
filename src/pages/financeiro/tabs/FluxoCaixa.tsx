@@ -87,27 +87,17 @@ export default function FluxoCaixa({ dateFrom, dateTo }: FluxoCaixaProps) {
   const totalTopReceitas = topTransactions?.receitas.reduce((acc: number, curr) => acc + Number(curr.valor), 0) || 0;
   const totalTopDespesas = topTransactions?.despesas.reduce((acc: number, curr) => acc + Number(curr.valor), 0) || 0;
 
-  const today = new Date();
-  const start = dateFrom || startOfMonth(today);
-  const end = dateTo || endOfMonth(today);
-  const totalDays = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1);
-  const elapsedDays = Math.min(
-    totalDays,
-    Math.max(1, Math.ceil((today.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1)
-  );
-  const projection = (stats.saldo / elapsedDays) * totalDays;
-
   return (
     <div className="space-y-6 w-full max-w-none">
       {/* KPIs */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 w-full">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
         <Card className="vrz-card bg-positive/10 border-positive/10 w-full">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-positive">Receitas</CardTitle>
+            <CardTitle className="text-sm font-medium text-green-700">Receitas</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-positive">{formatCurrency(stats.receitasTotal)}</div>
-            <p className="text-xs text-positive mt-1 flex items-center">
+            <div className="text-2xl font-bold text-green-700">{formatCurrency(stats.receitasTotal)}</div>
+            <p className="text-xs text-green-600 mt-1 flex items-center">
               <ArrowUpRight size={12} className="mr-1" />
               {stats.receitasMes}% vs mês anterior
             </p>
@@ -136,16 +126,6 @@ export default function FluxoCaixa({ dateFrom, dateTo }: FluxoCaixaProps) {
             <p className="text-xs text-blue-600 mt-1">
               Margem de {stats.receitasTotal > 0 ? ((stats.saldo / stats.receitasTotal) * 100).toFixed(1) : 0}%
             </p>
-          </CardContent>
-        </Card>
-
-        <Card className="vrz-card border-black/5 w-full">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-black/60">Projeção Final</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-black/80">{formatCurrency(projection)}</div>
-            <p className="text-xs text-black/50 mt-1">Baseado na média diária</p>
           </CardContent>
         </Card>
       </div>
