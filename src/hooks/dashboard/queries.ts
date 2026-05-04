@@ -10,46 +10,61 @@ export function buildDashboardQueries(
   mesAnteriorEnd: Date,
   chartStart: Date
 ) {
+  const mesAtualStartStr = mesAtualStart.toISOString().split("T")[0];
+  const mesAtualEndStr = mesAtualEnd.toISOString().split("T")[0];
+  const mesAnteriorStartStr = mesAnteriorStart.toISOString().split("T")[0];
+  const mesAnteriorEndStr = mesAnteriorEnd.toISOString().split("T")[0];
+
   return Promise.all([
-    // 0: receitasMes
+    // 0: receitasMes — busca por data_recebimento OU data_vencimento no mês atual
     supabase
       .from("receitas")
-      .select("valor")
-      .gte("data_vencimento", mesAtualStart.toISOString())
-      .lte("data_vencimento", mesAtualEnd.toISOString())
+      .select("valor, status, data_recebimento, data_vencimento")
+      .or(
+        `and(data_recebimento.gte.${mesAtualStartStr},data_recebimento.lte.${mesAtualEndStr}),` +
+          `and(data_vencimento.gte.${mesAtualStartStr},data_vencimento.lte.${mesAtualEndStr})`
+      )
       .is("deleted_at", null),
 
-    // 1: receitasMesAnt
+    // 1: receitasMesAnt — mês anterior
     supabase
       .from("receitas")
-      .select("valor")
-      .gte("data_vencimento", mesAnteriorStart.toISOString())
-      .lte("data_vencimento", mesAnteriorEnd.toISOString())
+      .select("valor, status, data_recebimento, data_vencimento")
+      .or(
+        `and(data_recebimento.gte.${mesAnteriorStartStr},data_recebimento.lte.${mesAnteriorEndStr}),` +
+          `and(data_vencimento.gte.${mesAnteriorStartStr},data_vencimento.lte.${mesAnteriorEndStr})`
+      )
       .is("deleted_at", null),
 
-    // 2: despesasMes
+    // 2: despesasMes — busca por data_pagamento OU data_vencimento no mês atual
     supabase
       .from("despesas")
-      .select("valor")
-      .gte("data_vencimento", mesAtualStart.toISOString())
-      .lte("data_vencimento", mesAtualEnd.toISOString())
+      .select("valor, status, data_pagamento, data_vencimento")
+      .eq("is_fatura_payment", false)
+      .or(
+        `and(data_pagamento.gte.${mesAtualStartStr},data_pagamento.lte.${mesAtualEndStr}),` +
+          `and(data_vencimento.gte.${mesAtualStartStr},data_vencimento.lte.${mesAtualEndStr})`
+      )
       .is("deleted_at", null),
 
-    // 3: despesasMesAnt
+    // 3: despesasMesAnt — mês anterior
     supabase
       .from("despesas")
-      .select("valor")
-      .gte("data_vencimento", mesAnteriorStart.toISOString())
-      .lte("data_vencimento", mesAnteriorEnd.toISOString())
+      .select("valor, status, data_pagamento, data_vencimento")
+      .eq("is_fatura_payment", false)
+      .or(
+        `and(data_pagamento.gte.${mesAnteriorStartStr},data_pagamento.lte.${mesAnteriorEndStr}),` +
+          `and(data_vencimento.gte.${mesAnteriorStartStr},data_vencimento.lte.${mesAnteriorEndStr})`
+      )
       .is("deleted_at", null),
 
-    // 4: receitasPendentes
+    // 4: receitasPendentes (A Receber)
     supabase.from("receitas").select("valor").eq("status", "Pendente").is("deleted_at", null),
 
-    // 5: despesasPendentes
+    // 5: despesasPendentes (A Pagar)
     supabase.from("despesas").select("valor").eq("status", "Pendente").is("deleted_at", null),
 
-    // 6: projetos
+    // 6: projetos para listagem (planejamento + em andamento, limite 8)
     supabase
       .from("projetos")
       .select(
@@ -113,5 +128,12 @@ export function buildDashboardQueries(
       .is("deleted_at", null)
       .order("data_vencimento", { ascending: true })
       .limit(5),
+
+    // 14: count exato de projetos Em andamento (sem limit)
+    supabase
+      .from("projetos")
+      .select("*", { count: "exact", head: true })
+      .is("deleted_at", null)
+      .eq("status", PROJECT_STATUS.EM_ANDAMENTO),
   ]);
 }
