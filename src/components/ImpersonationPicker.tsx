@@ -1,4 +1,5 @@
 import { Eye } from "lucide-react";
+import { toast } from "sonner";
 import {
   DropdownMenuSub,
   DropdownMenuSubContent,
@@ -18,6 +19,20 @@ export function ImpersonationPicker() {
 
   if (realRole !== "admin" && realRole !== "ultra_admin") return null;
 
+  const handleStart = async (r: UserRole) => {
+    try {
+      await startImpersonation(r);
+      toast.success(`Visualizando como ${ROLE_LABEL[r]}`);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Falha ao iniciar visualização";
+      toast.error(msg);
+    }
+  };
+
+  const handleStop = async () => {
+    await stopImpersonation();
+  };
+
   return (
     <DropdownMenuSub>
       <DropdownMenuSubTrigger>
@@ -29,7 +44,7 @@ export function ImpersonationPicker() {
           {IMPERSONATABLE.map((r) => (
             <DropdownMenuItem
               key={r}
-              onClick={() => startImpersonation(r)}
+              onClick={() => handleStart(r)}
               className={viewAsRole === r ? "bg-brand/10 text-brand" : ""}
             >
               {ROLE_LABEL[r]}
@@ -37,7 +52,7 @@ export function ImpersonationPicker() {
             </DropdownMenuItem>
           ))}
           {viewAsRole && (
-            <DropdownMenuItem onClick={stopImpersonation} className="border-t mt-1">
+            <DropdownMenuItem onClick={handleStop} className="border-t mt-1">
               Sair da visualização
             </DropdownMenuItem>
           )}

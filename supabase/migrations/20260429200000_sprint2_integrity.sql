@@ -29,7 +29,7 @@ DO $$ BEGIN
   ) THEN
     ALTER TABLE public.projeto_orcamento_fases
       ADD CONSTRAINT projeto_orcamento_fases_projeto_disciplina_uq
-      UNIQUE (projeto_id, disciplina_id);
+      UNIQUE (projeto_id, disciplina);
   END IF;
 END $$;
 

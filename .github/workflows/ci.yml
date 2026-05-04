@@ -24,9 +24,10 @@ jobs:
       - run: npm run lint
       - name: Typecheck
         run: npx tsc --noEmit -p tsconfig.app.json
-        continue-on-error: true
       - run: npm run test:run
       - run: npm run build
+      - name: Bundle size budget
+        run: npm run check:bundle-size
 
   audit:
     name: Security audit
@@ -90,7 +91,10 @@ jobs:
           PGPASSWORD: postgres
         run: |
           psql -h localhost -U postgres -d postgres -c "CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;"
-          psql -h localhost -U postgres -d postgres -f supabase/tests/rls_security.sql
+          # ON_ERROR_STOP garante que falha em qualquer teste mata o job
+          psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f supabase/tests/rls_security.sql
+          psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f supabase/tests/impersonation.sql
+          psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f supabase/tests/policy_audit_logs_impersonation.sql
 
   e2e:
     name: Playwright E2E

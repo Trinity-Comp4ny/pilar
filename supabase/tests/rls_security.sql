@@ -27,7 +27,10 @@ VALUES
   ('00000000-0000-0000-0000-00000000000b', 'Empresa B', NULL, TRUE)
 ON CONFLICT (id) DO NOTHING;
 
--- Usuários simulados em auth.users (pgTAP test-only)
+-- Usuários simulados em auth.users (pgTAP test-only).
+-- Bypass do trigger handle_new_user que exige token de convite.
+SET LOCAL session_replication_role = 'replica';
+
 INSERT INTO auth.users (id, email, raw_user_meta_data, aud, role)
 VALUES
   ('aaaaaaaa-0000-0000-0000-000000000001', 'admin_a@test.com', '{}'::jsonb, 'authenticated', 'authenticated'),
@@ -35,11 +38,13 @@ VALUES
   ('bbbbbbbb-0000-0000-0000-000000000001', 'admin_b@test.com', '{}'::jsonb, 'authenticated', 'authenticated')
 ON CONFLICT (id) DO NOTHING;
 
-INSERT INTO public.profiles (id, empresa_id, nome, email, role, onboarding_completed)
+SET LOCAL session_replication_role = 'origin';
+
+INSERT INTO public.profiles (id, empresa_id, first_name, last_name, email, role, onboarding_completed)
 VALUES
-  ('aaaaaaaa-0000-0000-0000-000000000001', '00000000-0000-0000-0000-00000000000a', 'Admin A', 'admin_a@test.com', 'admin', TRUE),
-  ('aaaaaaaa-0000-0000-0000-000000000002', '00000000-0000-0000-0000-00000000000a', 'User A', 'user_a@test.com', 'user', TRUE),
-  ('bbbbbbbb-0000-0000-0000-000000000001', '00000000-0000-0000-0000-00000000000b', 'Admin B', 'admin_b@test.com', 'admin', TRUE)
+  ('aaaaaaaa-0000-0000-0000-000000000001', '00000000-0000-0000-0000-00000000000a', 'Admin', 'A', 'admin_a@test.com', 'admin', TRUE),
+  ('aaaaaaaa-0000-0000-0000-000000000002', '00000000-0000-0000-0000-00000000000a', 'User', 'A', 'user_a@test.com', 'user', TRUE),
+  ('bbbbbbbb-0000-0000-0000-000000000001', '00000000-0000-0000-0000-00000000000b', 'Admin', 'B', 'admin_b@test.com', 'admin', TRUE)
 ON CONFLICT (id) DO NOTHING;
 
 -- Cliente e projeto em cada empresa

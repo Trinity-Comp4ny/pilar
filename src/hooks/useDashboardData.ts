@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
 import { startOfMonth, endOfMonth, subMonths } from "date-fns";
-import { PROJECT_STATUS } from "@/constants";
 import { buildDashboardQueries } from "./dashboard/queries";
 import {
   buildKPIs,

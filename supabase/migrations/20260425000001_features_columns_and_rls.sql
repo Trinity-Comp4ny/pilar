@@ -60,6 +60,26 @@ ALTER TABLE public.empresas
 ALTER TABLE public.profiles
   ADD COLUMN IF NOT EXISTS features JSONB NOT NULL DEFAULT '{}'::jsonb;
 
+-- Recria convites caso tenha sido dropada por migration de sync anterior
+CREATE TABLE IF NOT EXISTS public.convites (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  empresa_id UUID NOT NULL REFERENCES public.empresas(id) ON DELETE CASCADE,
+  email TEXT NOT NULL,
+  cargo public.user_role NOT NULL DEFAULT 'user',
+  nome TEXT,
+  token TEXT UNIQUE NOT NULL DEFAULT encode(gen_random_bytes(32), 'hex'),
+  criado_por UUID REFERENCES auth.users(id),
+  expira_em TIMESTAMPTZ NOT NULL DEFAULT (NOW() + INTERVAL '7 days'),
+  usado_em TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_convites_token ON public.convites(token) WHERE usado_em IS NULL;
+CREATE INDEX IF NOT EXISTS idx_convites_email ON public.convites(email) WHERE usado_em IS NULL;
+CREATE INDEX IF NOT EXISTS idx_convites_empresa ON public.convites(empresa_id);
+
+ALTER TABLE public.convites ENABLE ROW LEVEL SECURITY;
+
 ALTER TABLE public.convites
   ADD COLUMN IF NOT EXISTS features JSONB NOT NULL DEFAULT '{}'::jsonb;
 

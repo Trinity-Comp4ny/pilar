@@ -15,7 +15,20 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Search, ArrowUpDown, Mail, Trash2, Pencil, Landmark, X, Loader2, User, Check } from "lucide-react";
+import {
+  Plus,
+  Search,
+  ArrowUpDown,
+  Mail,
+  Trash2,
+  Pencil,
+  Landmark,
+  X,
+  Loader2,
+  User,
+  Check,
+  UsersRound,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { formatPhone, formatDocument, formatAgency, formatBankAccount } from "@/lib/maskUtils";
@@ -60,7 +73,7 @@ export default function Clientes() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
-  const [clienteToDelete, setClienteToDelete] = useState<string | null>(null);
+  const [clienteToDelete, setClienteToDelete] = useState<{ id: string; nome: string } | null>(null);
 
   const [nome, setNome] = useState("");
   const [sobrenome, setSobrenome] = useState("");
@@ -291,14 +304,16 @@ export default function Clientes() {
 
   const handleDeleteClick = (id: string, e?: React.MouseEvent) => {
     e?.stopPropagation();
-    setClienteToDelete(id);
+    const cliente = clientes.find((c) => c.id === id);
+    const nomeCompleto = cliente ? `${cliente.nome}${cliente.sobrenome ? " " + cliente.sobrenome : ""}` : "Cliente";
+    setClienteToDelete({ id, nome: nomeCompleto });
     setConfirmDeleteOpen(true);
   };
 
   const handleDeleteConfirm = async () => {
     if (!clienteToDelete) return;
     try {
-      await deleteCliente(clienteToDelete);
+      await deleteCliente(clienteToDelete.id);
     } catch (err) {
       console.error(err);
     }
@@ -850,8 +865,33 @@ export default function Clientes() {
               <TableBody>
                 {filteredAndSortedClientes.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={canShowActions ? 5 : 4} className="text-center text-black/50 py-8">
-                      Nenhum cliente encontrado
+                    <TableCell colSpan={canShowActions ? 5 : 4}>
+                      <div className="flex flex-col items-center gap-3 py-12 text-center">
+                        <UsersRound className="h-8 w-8 text-muted-foreground/40" />
+                        {clientes.length === 0 ? (
+                          <>
+                            <p className="text-sm font-medium text-muted-foreground">Nenhum cliente cadastrado</p>
+                            <p className="text-xs text-muted-foreground/70">Crie o primeiro cliente para começar</p>
+                          </>
+                        ) : (
+                          <>
+                            <p className="text-sm font-medium text-muted-foreground">Nenhum resultado encontrado</p>
+                            <p className="text-xs text-muted-foreground/70">Tente ajustar os filtros aplicados</p>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="rounded-full"
+                              onClick={() => {
+                                setSearchTerm("");
+                                setFilterOrigem("all");
+                                setFilterPortal("all");
+                              }}
+                            >
+                              Limpar filtros
+                            </Button>
+                          </>
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -930,7 +970,8 @@ export default function Clientes() {
         onOpenChange={setConfirmDeleteOpen}
         onConfirm={handleDeleteConfirm}
         title="Excluir Cliente"
-        description="Tem certeza que deseja excluir este cliente? Esta ação não pode ser desfeita."
+        itemName={clienteToDelete?.nome}
+        description="Esta ação não pode ser desfeita."
         confirmText="Excluir"
         cancelText="Cancelar"
       />

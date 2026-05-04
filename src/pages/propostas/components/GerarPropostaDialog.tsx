@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import { saveAs } from "file-saver";
 import { usePropostaTemplates, downloadTemplateFile } from "@/hooks/usePropostaTemplates";
 import { AUTO_VARIABLES, buildVariableData, generateDocx } from "@/lib/docxUtils";
+import { sanitizeHtml } from "@/lib/sanitize";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import mammoth from "mammoth";
@@ -378,7 +379,7 @@ export function GerarPropostaDialog({
                     [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:mb-2
                     [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:mb-2
                     [&_li]:text-sm [&_li]:mb-1"
-                  dangerouslySetInnerHTML={{ __html: previewHtml }}
+                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(previewHtml) }}
                 />
               </div>
             )}

@@ -139,7 +139,18 @@ export default function Login() {
                   placeholder="seu@empresa.com"
                   className="pl-10 h-11 bg-slate-50 border-slate-200 focus:border-brand focus:ring-brand/20 transition-all"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    e.target.setCustomValidity("");
+                    setEmail(e.target.value);
+                  }}
+                  onInvalid={(e) => {
+                    const input = e.target as HTMLInputElement;
+                    input.setCustomValidity(
+                      input.value
+                        ? "Por favor, insira um endereço de e-mail válido."
+                        : "Por favor, preencha o campo de e-mail."
+                    );
+                  }}
                   required
                 />
               </div>
@@ -167,7 +178,13 @@ export default function Login() {
                   placeholder="••••••••"
                   className="pl-10 pr-10 h-11 bg-slate-50 border-slate-200 focus:border-brand focus:ring-brand/20 transition-all"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => {
+                    e.target.setCustomValidity("");
+                    setPassword(e.target.value);
+                  }}
+                  onInvalid={(e) =>
+                    (e.target as HTMLInputElement).setCustomValidity("Por favor, preencha o campo de senha.")
+                  }
                   required
                 />
                 <button

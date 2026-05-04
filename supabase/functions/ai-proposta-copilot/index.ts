@@ -1,55 +1,87 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { withSentry } from "../_shared/sentry.ts";
 import { corsHeaders } from "../_shared/cors.ts";
-import { createAuthClient, createAdminClient, checkRateLimit, callGemini, saveInsight, type AiRequest } from "../_shared/ai-client.ts";
+import {
+  createAuthClient,
+  createAdminClient,
+  checkRateLimit,
+  callGemini,
+  saveInsight,
+  type AiRequest,
+} from "../_shared/ai-client.ts";
 
-serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+serve(
+  withSentry("ai-proposta-copilot", async (req) => {
+    if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
-  try {
-    const authClient = createAuthClient(req);
-    const adminClient = createAdminClient();
+    try {
+      const authClient = createAuthClient(req);
+      const adminClient = createAdminClient();
 
-    const { data: { user }, error: userError } = await authClient.auth.getUser();
-    if (userError || !user) throw new Error("Não autenticado");
+      const {
+        data: { user },
+        error: userError,
+      } = await authClient.auth.getUser();
+      if (userError || !user) throw new Error("Não autenticado");
 
-    const { data: profile } = await authClient.from("profiles").select("empresa_id").eq("id", user.id).single();
-    if (!profile) throw new Error("Perfil não encontrado");
+      const { data: profile } = await authClient.from("profiles").select("empresa_id").eq("id", user.id).single();
+      if (!profile) throw new Error("Perfil não encontrado");
 
-    const empresaId = profile.empresa_id;
-    if (!(await checkRateLimit(adminClient, empresaId))) {
-      return new Response(JSON.stringify({ error: "Limite mensal atingido" }), { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 429 });
-    }
+      const empresaId = profile.empresa_id;
+      if (!(await checkRateLimit(adminClient, empresaId))) {
+        return new Response(JSON.stringify({ error: "Limite mensal atingido" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 429,
+        });
+      }
 
-    const { briefing, area_m2, tipologia, disciplinas, prazo_dias } = await req.json();
+      const { briefing, area_m2, tipologia, disciplinas, prazo_dias } = await req.json();
 
-    // Busca projetos históricos similares
-    const { data: historicos } = await adminClient
-      .from("projetos")
-      .select("nome, area_m2, valor_contrato, data_inicio, data_final, status")
-      .eq("empresa_id", empresaId)
-      .eq("status", "Concluído")
-      .is("deleted_at", null)
-      .order("created_at", { ascending: false })
-      .limit(20);
+      // Busca projetos históricos similares
+      const { data: historicos } = await adminClient
+        .from("projetos")
+        .select("nome, area_m2, valor_contrato, data_inicio, data_final, status")
+        .eq("empresa_id", empresaId)
+        .eq("status", "Concluído")
+        .is("deleted_at", null)
+        .order("created_at", { ascending: false })
+        .limit(20);
 
-    interface ProjetoHistRow { nome: string; area_m2: number | null; valor_contrato: number | null; data_inicio: string | null; data_final: string | null; status: string }
-    interface ProjetoHistMetrica { nome: string; area: number | null; valor: number | null; duracao_dias: number | null }
+      interface ProjetoHistRow {
+        nome: string;
+        area_m2: number | null;
+        valor_contrato: number | null;
+        data_inicio: string | null;
+        data_final: string | null;
+        status: string;
+      }
+      interface ProjetoHistMetrica {
+        nome: string;
+        area: number | null;
+        valor: number | null;
+        duracao_dias: number | null;
+      }
 
-    const projetosHist: ProjetoHistMetrica[] = ((historicos || []) as ProjetoHistRow[]).map((p) => ({
-      nome: p.nome,
-      area: p.area_m2,
-      valor: p.valor_contrato,
-      duracao_dias: p.data_inicio && p.data_final
-        ? Math.round((new Date(p.data_final).getTime() - new Date(p.data_inicio).getTime()) / 86400000)
-        : null,
-    }));
+      const projetosHist: ProjetoHistMetrica[] = ((historicos || []) as ProjetoHistRow[]).map((p) => ({
+        nome: p.nome,
+        area: p.area_m2,
+        valor: p.valor_contrato,
+        duracao_dias:
+          p.data_inicio && p.data_final
+            ? Math.round((new Date(p.data_final).getTime() - new Date(p.data_inicio).getTime()) / 86400000)
+            : null,
+      }));
 
-    const projetosComAreaValor = projetosHist.filter((p): p is ProjetoHistMetrica & { area: number; valor: number } => p.area != null && p.area > 0 && p.valor != null && p.valor > 0);
-    const valorMedioM2 = projetosComAreaValor.length > 0
-      ? projetosComAreaValor.reduce((s: number, p) => s + p.valor / p.area, 0) / projetosComAreaValor.length
-      : 0;
+      const projetosComAreaValor = projetosHist.filter(
+        (p): p is ProjetoHistMetrica & { area: number; valor: number } =>
+          p.area != null && p.area > 0 && p.valor != null && p.valor > 0
+      );
+      const valorMedioM2 =
+        projetosComAreaValor.length > 0
+          ? projetosComAreaValor.reduce((s: number, p) => s + p.valor / p.area, 0) / projetosComAreaValor.length
+          : 0;
 
-    const contexto = `
+      const contexto = `
 BRIEFING DO CLIENTE:
 ${briefing || "Não fornecido"}
 
@@ -65,8 +97,8 @@ ${projetosHist.map((p) => `- ${p.nome}: ${p.area}m², R$ ${p.valor}, ${p.duracao
 Valor médio por m² do escritório: R$ ${valorMedioM2.toFixed(2)}/m²
 `.trim();
 
-    const aiRequest: AiRequest = {
-      systemPrompt: `Você é um consultor especializado em escritórios de engenharia e arquitetura no Brasil.
+      const aiRequest: AiRequest = {
+        systemPrompt: `Você é um consultor especializado em escritórios de engenharia e arquitetura no Brasil.
 Com base no briefing e histórico, sugira uma proposta comercial completa.
 Responda em português brasileiro. Retorne JSON:
 {
@@ -77,19 +109,27 @@ Responda em português brasileiro. Retorne JSON:
   "perguntas_faltantes": [string],
   "faixa_preco": { "minimo": number, "recomendado": number, "maximo": number, "justificativa": string }
 }`,
-      userMessage: contexto,
-      empresaId,
-      tipo: "proposta_copilot",
-    };
+        userMessage: contexto,
+        empresaId,
+        tipo: "proposta_copilot",
+      };
 
-    const aiResponse = await callGemini(aiRequest);
-    const insight = await saveInsight(adminClient, aiRequest, aiResponse, user.id);
+      const aiResponse = await callGemini(aiRequest);
+      const insight = await saveInsight(adminClient, aiRequest, aiResponse, user.id);
 
-    return new Response(JSON.stringify(insight), { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 });
-  } catch (error: unknown) {
-    const isAuthError = error instanceof Error && (error.message === "Não autenticado" || error.message === "Perfil não encontrado");
-    const status = isAuthError ? 401 : 400;
-    const message = isAuthError ? (error as Error).message : "Erro ao gerar proposta";
-    return new Response(JSON.stringify({ error: message }), { headers: { ...corsHeaders, "Content-Type": "application/json" }, status });
-  }
-});
+      return new Response(JSON.stringify(insight), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    } catch (error: unknown) {
+      const isAuthError =
+        error instanceof Error && (error.message === "Não autenticado" || error.message === "Perfil não encontrado");
+      const status = isAuthError ? 401 : 400;
+      const message = isAuthError ? (error as Error).message : "Erro ao gerar proposta";
+      return new Response(JSON.stringify({ error: message }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status,
+      });
+    }
+  })
+);

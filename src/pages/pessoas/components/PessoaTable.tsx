@@ -5,7 +5,18 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Search, ArrowUpDown, User, Briefcase, GraduationCap, Crown, Trash2, Pencil, Loader2 } from "lucide-react";
+import {
+  Search,
+  ArrowUpDown,
+  User,
+  Briefcase,
+  GraduationCap,
+  Crown,
+  Trash2,
+  Pencil,
+  Loader2,
+  Users,
+} from "lucide-react";
 import {
   CONTRACT_TYPES,
   CONTRACT_TYPE_LABELS,
@@ -170,8 +181,23 @@ export function PessoaTable({ pessoas, isLoading, isAdmin, onRowClick, onEditCli
               <TableBody>
                 {filteredAndSortedPessoas.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={isAdmin ? 7 : 6} className="text-center text-black/50 py-8">
-                      Nenhuma pessoa encontrada
+                    <TableCell colSpan={isAdmin ? 7 : 6}>
+                      <div className="flex flex-col items-center gap-3 py-12 text-center">
+                        <Users className="h-8 w-8 text-muted-foreground/40" />
+                        {pessoas.length === 0 ? (
+                          <>
+                            <p className="text-sm font-medium text-muted-foreground">Nenhum membro cadastrado</p>
+                            <p className="text-xs text-muted-foreground/70">Adicione o primeiro membro da equipe</p>
+                          </>
+                        ) : (
+                          <>
+                            <p className="text-sm font-medium text-muted-foreground">Nenhum resultado encontrado</p>
+                            <p className="text-xs text-muted-foreground/70">
+                              Tente ajustar a busca ou o filtro de cargo
+                            </p>
+                          </>
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ) : (

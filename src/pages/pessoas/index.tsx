@@ -45,7 +45,7 @@ export default function Pessoas() {
   const [selectedPessoa, setSelectedPessoa] = useState<Pessoa | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
-  const [pessoaToDelete, setPessoaToDelete] = useState<string | null>(null);
+  const [pessoaToDelete, setPessoaToDelete] = useState<{ id: string; nome: string } | null>(null);
 
   const handleNewPessoa = () => {
     setEditingPessoa(null);
@@ -65,7 +65,8 @@ export default function Pessoas() {
   };
 
   const handleDeleteClick = (id: string) => {
-    setPessoaToDelete(id);
+    const pessoa = pessoas.find((p) => p.id === id);
+    setPessoaToDelete({ id, nome: pessoa?.nome ?? "Pessoa" });
     setConfirmDeleteOpen(true);
   };
 
@@ -75,7 +76,7 @@ export default function Pessoas() {
     const { error } = await supabase
       .from("pessoas")
       .update({ deleted_at: new Date().toISOString() })
-      .eq("id", pessoaToDelete);
+      .eq("id", pessoaToDelete.id);
     if (!error) {
       toast.success("Pessoa excluída");
       setIsDetailOpen(false);
@@ -137,7 +138,8 @@ export default function Pessoas() {
         onOpenChange={setConfirmDeleteOpen}
         onConfirm={handleDeleteConfirm}
         title="Excluir Pessoa"
-        description="Tem certeza que deseja excluir esta pessoa? Esta ação não pode ser desfeita."
+        itemName={pessoaToDelete?.nome}
+        description="Esta ação não pode ser desfeita."
         confirmText="Excluir"
         cancelText="Cancelar"
       />

@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { toast } from "sonner";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { monitoring } from "@/lib/monitoring";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ImpersonationProvider } from "@/contexts/ImpersonationContext";
 import { IdleTimeoutProvider } from "@/components/IdleTimeoutProvider";
@@ -44,7 +45,6 @@ const ClienteDashboard = lazy(() => import("./pages/cliente/ClienteDashboard"));
 const ClienteProjetoDetail = lazy(() => import("./pages/cliente/ClienteProjetoDetail"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Admin = lazy(() => import("./pages/admin"));
-const FeatureAccessPreview = lazy(() => import("./pages/admin/FeatureAccessPreview"));
 const UltraAdmin = lazy(() => import("./pages/ultra-admin"));
 const MfaChallengePage = lazy(() => import("./pages/MfaChallengePage"));
 const MfaSetupPage = lazy(() => import("./pages/MfaSetupPage"));
@@ -61,12 +61,26 @@ const queryClient = new QueryClient({
       refetchOnWindowFocus: false,
     },
     mutations: {
-      onError: (error) => {
+      onError: (error, variables) => {
         const message = error instanceof Error ? error.message : "Erro inesperado";
         toast.error(message);
+        monitoring.captureException(error instanceof Error ? error : new Error(message), {
+          source: "react-query.mutation",
+          variables,
+        });
       },
     },
   },
+});
+
+queryClient.getQueryCache().subscribe((event) => {
+  if (event.type === "updated" && event.action.type === "error") {
+    const err = event.action.error;
+    monitoring.captureException(err instanceof Error ? err : new Error(String(err)), {
+      source: "react-query.query",
+      queryKey: event.query.queryKey,
+    });
+  }
 });
 
 const App = () => {
@@ -156,7 +170,6 @@ const App = () => {
 
                       <Route element={<AdminRoute />}>
                         <Route path="/admin" element={<Admin />} />
-                        <Route path="/admin/features-preview" element={<FeatureAccessPreview />} />
                       </Route>
 
                       <Route element={<UltraAdminRoute />}>

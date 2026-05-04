@@ -44,7 +44,7 @@ export default function MetasPage() {
           <MetasHeader />
         </div>
 
-        <div className="flex flex-1 overflow-hidden">
+        <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
           <SecondSidebar tabs={METAS_TABS} value={activeTab} onValueChange={handleTabChange} />
           <div className="flex-1 overflow-y-auto w-full bg-gray-50/50 p-6 md:p-8">
             <div className="w-full mx-auto space-y-6">

@@ -84,7 +84,7 @@ export default function Propostas() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [vinculoTipo, setVinculoTipo] = useState<"cliente" | "lead">("cliente");
-  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<{ id: string; titulo: string } | null>(null);
   const [convertPropostaId, setConvertPropostaId] = useState<string | null>(null);
   const [gerarDocxPropostaId, setGerarDocxPropostaId] = useState<string | null>(null);
   const [gerarContratoPropostaId, setGerarContratoPropostaId] = useState<string | null>(null);
@@ -190,11 +190,11 @@ export default function Propostas() {
   };
 
   const handleDelete = () => {
-    if (!confirmDeleteId) return;
-    deleteProposta.mutate(confirmDeleteId, {
+    if (!confirmDelete) return;
+    deleteProposta.mutate(confirmDelete.id, {
       onSuccess: () => {
         toast.success("Proposta removida");
-        setConfirmDeleteId(null);
+        setConfirmDelete(null);
         setDetailPropostaId(null);
       },
       onError: () => toast.error("Erro"),
@@ -361,9 +361,19 @@ export default function Propostas() {
               <p className="text-sm">Nenhuma proposta cadastrada.</p>
             </div>
           ) : filteredPropostas.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <Search className="h-8 w-8 mx-auto mb-3 opacity-40" />
-              <p className="text-sm">Nenhuma proposta encontrada para os filtros aplicados.</p>
+            <div className="flex flex-col items-center gap-3 py-14 text-center">
+              <Search className="h-8 w-8 text-muted-foreground/40" />
+              <p className="text-sm font-medium text-muted-foreground">Nenhuma proposta encontrada</p>
+              <p className="text-xs text-muted-foreground/70">Ajuste os filtros para ver mais resultados</p>
+              <button
+                onClick={() => {
+                  setSearchTerm("");
+                  setFilterStatus("all");
+                }}
+                className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground transition-colors"
+              >
+                Limpar filtros
+              </button>
             </div>
           ) : viewMode === "table" ? (
             <div className="overflow-x-auto overflow-y-auto w-full max-h-[calc(100svh-360px)]">
@@ -438,7 +448,7 @@ export default function Propostas() {
                               className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                setConfirmDeleteId(p.id);
+                                setConfirmDelete({ id: p.id, titulo: p.titulo });
                               }}
                             >
                               <Trash2 className="h-4 w-4" />
@@ -506,7 +516,7 @@ export default function Propostas() {
                             className="h-7 w-7 text-red-500 hover:text-red-600 hover:bg-red-50"
                             onClick={(e) => {
                               e.stopPropagation();
-                              setConfirmDeleteId(p.id);
+                              setConfirmDelete({ id: p.id, titulo: p.titulo });
                             }}
                           >
                             <Trash2 className="h-3.5 w-3.5" />
@@ -543,7 +553,9 @@ export default function Propostas() {
         hoje={hoje}
         onEdit={() => detailPropostaId && openEdit(detailPropostaId)}
         onDelete={() => {
-          setConfirmDeleteId(detailPropostaId);
+          if (detailPropostaId && detailProposta) {
+            setConfirmDelete({ id: detailPropostaId, titulo: detailProposta.titulo });
+          }
           setDetailPropostaId(null);
         }}
         onStatusChange={handleStatusChange}
@@ -748,12 +760,13 @@ export default function Propostas() {
       </Dialog>
 
       <ConfirmDialog
-        open={!!confirmDeleteId}
+        open={!!confirmDelete}
         onOpenChange={(open) => {
-          if (!open) setConfirmDeleteId(null);
+          if (!open) setConfirmDelete(null);
         }}
         title="Excluir Proposta"
-        description="Tem certeza que deseja excluir esta proposta?"
+        itemName={confirmDelete?.titulo}
+        description="Esta ação não pode ser desfeita."
         onConfirm={handleDelete}
       />
 

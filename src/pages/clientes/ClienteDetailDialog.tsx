@@ -90,7 +90,6 @@ export function ClienteDetailDialog({
   onRevokePortal,
   onEdit,
   onDelete,
-  onClose,
 }: ClienteDetailDialogProps) {
   const [confirmPortalOpen, setConfirmPortalOpen] = useState(false);
 

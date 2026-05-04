@@ -84,7 +84,7 @@ const defaultValues = (tipo: TipoLancamento): FormData => ({
 export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onSaved }: LancamentoFormDialogProps) {
   const isEdit = !!lancamento;
   const isReceita = tipo === "receita";
-  const aux = useFinanceAuxData(tipo);
+  const aux = useFinanceAuxData(tipo as "receita" | "despesa");
 
   const form = useForm<FormData>({
     resolver: zodResolver(schema),

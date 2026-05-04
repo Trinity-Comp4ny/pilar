@@ -48,6 +48,7 @@ import {
   type ProjectStatus,
 } from "@/constants";
 import { type Projeto, type ProjetoDisciplinaDB, dbDisciplinaToLegacy, getDeadlineStatus } from "@/types/projetos";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { ProjectCard } from "@/pages/projetos/components/ProjectCard";
 import { ProjectDetailDialog } from "@/pages/projetos/components/ProjectDetailDialog";
 import { ProjetoFormDialog } from "@/pages/projetos/components/ProjetoFormDialog";
@@ -165,6 +166,8 @@ export default function ProjetosKanban() {
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>("kanban");
   const [isFluxosOpen, setIsFluxosOpen] = useState(false);
+  const [projetoToDelete, setProjetoToDelete] = useState<{ id: string; nome: string } | null>(null);
+
   const [pendingDrag, setPendingDrag] = useState<{
     projetoId: string;
     newStatus: string;
@@ -325,8 +328,52 @@ export default function ProjetosKanban() {
     setIsFormDialogOpen(true);
   };
 
-  const handleDelete = async (id: string) => {
-    const { error } = await supabase.from("projetos").update({ deleted_at: new Date().toISOString() }).eq("id", id);
+  const handleDelete = (id: string) => {
+    const projeto = projetos.find((p) => p.id === id);
+    setProjetoToDelete({ id, nome: projeto?.nome ?? "Projeto" });
+  };
+
+  const handleMoveStatus = async (projetoId: string, newStatus: string) => {
+    const todayStr = new Date().toISOString().slice(0, 10);
+    queryClient.setQueryData(["projetos"], (old: Projeto[] | undefined) =>
+      (old || []).map((p) =>
+        p.id === projetoId
+          ? {
+              ...p,
+              status: newStatus as Projeto["status"],
+              data_final: newStatus === PROJECT_STATUS.CONCLUIDO ? todayStr : p.data_final,
+            }
+          : p
+      )
+    );
+    const updateData: Record<string, string> = { status: newStatus };
+    if (newStatus === PROJECT_STATUS.CONCLUIDO) updateData.data_final = todayStr;
+    const { error } = await supabase.from("projetos").update(updateData).eq("id", projetoId);
+    if (error) {
+      toast.error("Erro ao mover projeto");
+      queryClient.invalidateQueries({ queryKey: ["projetos"] });
+      return;
+    }
+    toast.success(`Movido para ${statusConfig[newStatus as keyof typeof statusConfig]?.label}`);
+    queryClient.invalidateQueries({ queryKey: ["projetos"] });
+    const projeto = projetos.find((p) => p.id === projetoId);
+    if (newStatus !== PROJECT_STATUS.CANCELADO) {
+      setPendingDrag({
+        projetoId,
+        newStatus,
+        clienteEmail: projeto?.cliente_email ?? undefined,
+        clienteNome: projeto?.cliente_nome ?? undefined,
+        projetoNome: projeto?.nome ?? undefined,
+      });
+    }
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!projetoToDelete) return;
+    const { error } = await supabase
+      .from("projetos")
+      .update({ deleted_at: new Date().toISOString() })
+      .eq("id", projetoToDelete.id);
     if (!error) {
       toast.success("Projeto excluído");
       setIsDetailOpen(false);
@@ -336,6 +383,7 @@ export default function ProjetosKanban() {
         description: "Verifique se existem registros vinculados.",
       });
     }
+    setProjetoToDelete(null);
   };
 
   const onDragEnd = async (result: DropResult) => {
@@ -716,6 +764,7 @@ export default function ProjetosKanban() {
                               onClick={handleCardClick}
                               onEdit={handleEditClick}
                               onDelete={handleDelete}
+                              onMoveStatus={canEdit ? handleMoveStatus : undefined}
                               canEdit={canEdit}
                             />
                           ))}
@@ -818,6 +867,17 @@ export default function ProjetosKanban() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <ConfirmDialog
+        open={!!projetoToDelete}
+        onOpenChange={(open) => !open && setProjetoToDelete(null)}
+        onConfirm={handleDeleteConfirm}
+        title="Excluir Projeto"
+        itemName={projetoToDelete?.nome}
+        description="Esta ação não pode ser desfeita. Todos os dados do projeto serão removidos."
+        confirmText="Excluir"
+        cancelText="Cancelar"
+      />
     </PageLayout>
   );
 }
