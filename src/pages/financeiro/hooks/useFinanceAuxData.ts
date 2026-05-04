@@ -8,6 +8,7 @@ interface AuxData {
   cartoes: { id: string; nome: string }[];
   clientes: { id: string; nome: string; chaves_pix?: Array<{ chave: string; tipo: string }> }[];
   fornecedores: { id: string; nome: string }[];
+  centrosCusto: { id: string; nome: string; codigo: string | null }[];
   loading: boolean;
 }
 
@@ -20,6 +21,7 @@ export function useFinanceAuxData(tipo: "receita" | "despesa"): AuxData {
     { id: string; nome: string; chaves_pix?: Array<{ chave: string; tipo: string }> }[]
   >([]);
   const [fornecedores, setFornecedores] = useState<{ id: string; nome: string }[]>([]);
+  const [centrosCusto, setCentrosCusto] = useState<{ id: string; nome: string; codigo: string | null }[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -28,16 +30,23 @@ export function useFinanceAuxData(tipo: "receita" | "despesa"): AuxData {
       setLoading(true);
       try {
         const tipoCat = tipo === "receita" ? "Receita" : "Despesa";
-        const [{ data: cats }, { data: projs }, { data: cnts }] = await Promise.all([
+        const [{ data: cats }, { data: projs }, { data: cnts }, { data: ccs }] = await Promise.all([
           supabase.from("categorias_financeiras").select("id, nome").eq("tipo", tipoCat).order("nome"),
           supabase.from("projetos").select("id, codigo_projeto").order("nome"),
           supabase.from("contas").select("id, nome").order("nome"),
+          supabase
+            .from("centros_custo")
+            .select("id, nome, codigo")
+            .eq("ativo", true)
+            .is("deleted_at", null)
+            .order("nome"),
         ]);
 
         if (cancelled) return;
         setCategorias((cats ?? []).map((c) => ({ id: c.id, nome: c.nome })));
         setProjetos((projs ?? []).map((p) => ({ id: p.id, codigo: p.codigo_projeto ?? "" })));
         setContas((cnts ?? []).map((c) => ({ id: c.id, nome: c.nome })));
+        setCentrosCusto((ccs ?? []).map((c) => ({ id: c.id, nome: c.nome, codigo: c.codigo })));
 
         if (tipo === "receita") {
           type ClientePix = { id: string; nome: string; chaves_pix: Array<{ chave: string; tipo: string }> | null };
@@ -85,5 +94,5 @@ export function useFinanceAuxData(tipo: "receita" | "despesa"): AuxData {
     };
   }, [tipo]);
 
-  return { categorias, projetos, contas, cartoes, clientes, fornecedores, loading };
+  return { categorias, projetos, contas, cartoes, clientes, fornecedores, centrosCusto, loading };
 }

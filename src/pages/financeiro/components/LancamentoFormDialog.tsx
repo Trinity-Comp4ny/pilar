@@ -13,7 +13,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Badge } from "@/components/ui/badge";
-import { CalendarIcon, ChevronDown, Loader2, QrCode } from "lucide-react";
+import { CalendarIcon, ChevronDown, Loader2, QrCode, Settings2, Plus, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { formatCurrencyInput, parseCurrencyString } from "@/lib/currencyUtils";
@@ -22,6 +22,7 @@ import { DuplicateWarningDialog } from "@/components/DuplicateWarningDialog";
 import { TIPO_CHAVE_PIX_LABEL } from "@/lib/pixUtils";
 import { useFinanceAuxData } from "../hooks/useFinanceAuxData";
 import type { Lancamento, TipoLancamento } from "../hooks/useLancamentosUnified";
+import { CentroCustoManager } from "./CentroCustoManager";
 
 const schema = z
   .object({
@@ -37,6 +38,8 @@ const schema = z
     cartaoId: z.string().optional().default(""),
     clienteId: z.string().optional().default(""),
     fornecedorId: z.string().optional().default(""),
+    centroCustoId: z.string().optional().default(""),
+    dataCompetencia: z.date().optional(),
     notaFiscal: z.string().optional().default(""),
     observacao: z.string().optional().default(""),
   })
@@ -72,6 +75,8 @@ const defaultValues = (tipo: TipoLancamento): FormData => ({
   cartaoId: "",
   clienteId: "",
   fornecedorId: "",
+  centroCustoId: "",
+  dataCompetencia: undefined,
   notaFiscal: "",
   observacao: "",
 });
@@ -91,6 +96,9 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
   const [showDupWarning, setShowDupWarning] = useState(false);
   const [pendingData, setPendingData] = useState<FormData | null>(null);
   const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [ccManagerOpen, setCcManagerOpen] = useState(false);
+  const [rateios, setRateios] = useState<{ centro_custo_id: string; percentual: string }[]>([]);
+  const [rateioOn, setRateioOn] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -112,15 +120,58 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
         cartaoId: "",
         clienteId: isReceita ? (lancamento.contraparte_id ?? "") : "",
         fornecedorId: !isReceita ? (lancamento.contraparte_id ?? "") : "",
+        centroCustoId: lancamento.centro_custo_id ?? "",
+        dataCompetencia: lancamento.data_competencia ? new Date(lancamento.data_competencia + "T12:00:00") : undefined,
         notaFiscal: "",
         observacao: "",
       });
       if (lancamento.categoria_id || lancamento.projeto_id || lancamento.contraparte_id) setAdvancedOpen(false);
+
+      void (async () => {
+        const { data: existingRateios } = await supabase
+          .from("lancamento_rateios")
+          .select("centro_custo_id, percentual")
+          .eq("lancamento_id", lancamento.id)
+          .eq("tipo_lancamento", tipo);
+        if (existingRateios && existingRateios.length > 0) {
+          setRateioOn(true);
+          setRateios(
+            existingRateios.map((r) => ({
+              centro_custo_id: r.centro_custo_id,
+              percentual: String(r.percentual),
+            }))
+          );
+        } else {
+          setRateioOn(false);
+          setRateios([]);
+        }
+      })();
     } else {
       form.reset(defaultValues(tipo));
       setAdvancedOpen(false);
+      setRateioOn(false);
+      setRateios([]);
     }
   }, [open, lancamento, tipo]);
+
+  const persistRateio = async (lancamentoId: string, tipoLanc: TipoLancamento) => {
+    if (!rateioOn || rateios.length === 0) return;
+    const validRateios = rateios.filter((r) => r.centro_custo_id && r.percentual);
+    if (validRateios.length === 0) return;
+    const soma = validRateios.reduce((acc, r) => acc + Number(r.percentual || 0), 0);
+    if (Math.abs(soma - 100) > 0.01) {
+      throw new Error(`Soma dos percentuais do rateio deve ser 100 (atual: ${soma})`);
+    }
+    const { error } = await supabase.rpc("rpc_lancamento_set_rateio", {
+      p_lancamento_id: lancamentoId,
+      p_tipo_lancamento: tipoLanc,
+      p_rateios: validRateios.map((r) => ({
+        centro_custo_id: r.centro_custo_id,
+        percentual: Number(r.percentual),
+      })),
+    });
+    if (error) throw error;
+  };
 
   const save = async (data: FormData) => {
     setSaving(true);
@@ -134,11 +185,16 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
       const grupoParcela = !isEdit && numParcelas > 1 ? crypto.randomUUID() : null;
       const table = isReceita ? "receitas" : "despesas";
 
+      const dataCompetenciaStr = data.dataCompetencia
+        ? format(data.dataCompetencia, "yyyy-MM-dd")
+        : format(data.dataVencimento, "yyyy-MM-dd");
+
       if (isEdit && lancamento) {
         const payload = isReceita
           ? {
               data_vencimento: format(data.dataVencimento, "yyyy-MM-dd"),
               data_recebimento: data.status === "Recebida" ? format(data.dataVencimento, "yyyy-MM-dd") : null,
+              data_competencia: dataCompetenciaStr,
               descricao: data.descricao,
               valor: valorNum,
               status: data.status === "Recebida" ? "Recebido" : data.status,
@@ -147,12 +203,14 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
               projeto_id: data.projetoId || null,
               conta_id: data.contaId || null,
               cliente_id: data.clienteId || null,
+              centro_custo_id: data.centroCustoId || null,
               nota_fiscal: data.notaFiscal || null,
               observacao: data.observacao || null,
             }
           : {
               data_vencimento: format(data.dataVencimento, "yyyy-MM-dd"),
               data_pagamento: data.status === "Pago" ? format(data.dataVencimento, "yyyy-MM-dd") : null,
+              data_competencia: dataCompetenciaStr,
               descricao: data.descricao,
               valor: valorNum,
               status: data.status,
@@ -162,6 +220,7 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
               conta_id: data.contaId || null,
               cartao_id: data.cartaoId || null,
               fornecedor_id: data.fornecedorId || null,
+              centro_custo_id: data.centroCustoId || null,
               nota_fiscal: data.notaFiscal || null,
               observacao: data.observacao || null,
             };
@@ -170,6 +229,8 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
           .update(payload as never)
           .eq("id", lancamento.id);
         if (error) throw error;
+
+        await persistRateio(lancamento.id, tipo);
         toast.success("Lançamento atualizado");
       } else {
         const rows = Array.from({ length: numParcelas }, (_, i) => {
@@ -184,6 +245,7 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
             ? {
                 data_vencimento: dataStr,
                 data_recebimento: data.status === "Recebida" ? dataStr : null,
+                data_competencia: dataCompetenciaStr,
                 descricao: desc,
                 valor: valorFinal,
                 status: data.status === "Recebida" ? "Recebido" : "Pendente",
@@ -192,6 +254,7 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
                 projeto_id: data.projetoId || null,
                 conta_id: data.contaId || null,
                 cliente_id: data.clienteId || null,
+                centro_custo_id: data.centroCustoId || null,
                 nota_fiscal: data.notaFiscal || null,
                 observacao: data.observacao || null,
                 empresa_id: empresaId,
@@ -202,6 +265,7 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
             : {
                 data_vencimento: dataStr,
                 data_pagamento: data.status === "Pago" ? dataStr : null,
+                data_competencia: dataCompetenciaStr,
                 descricao: desc,
                 valor: valorFinal,
                 status: data.status,
@@ -211,6 +275,7 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
                 conta_id: data.contaId || null,
                 cartao_id: data.cartaoId || null,
                 fornecedor_id: data.fornecedorId || null,
+                centro_custo_id: data.centroCustoId || null,
                 nota_fiscal: data.notaFiscal || null,
                 observacao: data.observacao || null,
                 empresa_id: empresaId,
@@ -219,8 +284,18 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
                 parcela_total: numParcelas > 1 ? numParcelas : null,
               };
         });
-        const { error } = await supabase.from(table).insert(rows as never);
+        const { data: inserted, error } = await supabase
+          .from(table)
+          .insert(rows as never)
+          .select("id");
         if (error) throw error;
+
+        if (rateioOn && rateios.length > 0 && inserted) {
+          for (const row of inserted as Array<{ id: string }>) {
+            await persistRateio(row.id, tipo);
+          }
+        }
+
         toast.success(isReceita ? "Receita cadastrada" : "Despesa cadastrada", {
           description: `${numParcelas} registro(s) criado(s)`,
         });
@@ -269,6 +344,19 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
         { value: "Pendente", label: "Pendente" },
         { value: "Pago", label: "Pago" },
       ];
+
+  function RateioSomaBadge({ rateios }: { rateios: { percentual: string }[] }) {
+    const soma = rateios.reduce((acc, r) => acc + Number(r.percentual || 0), 0);
+    const ok = Math.abs(soma - 100) < 0.01;
+    return (
+      <Badge
+        variant="secondary"
+        className={cn("tabular-nums", ok ? "bg-positive/10 text-positive" : "bg-amber-100 text-amber-700")}
+      >
+        Soma: {soma.toFixed(2)}%
+      </Badge>
+    );
+  }
 
   return (
     <>
@@ -534,6 +622,155 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
               <CollapsibleContent>
                 <div className="px-6 pb-4 grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div className="space-y-1.5">
+                    <Label className="text-xs">Data de competência</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className={cn(
+                            "w-full h-9 justify-start text-xs font-normal",
+                            !form.watch("dataCompetencia") && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-1.5 h-3 w-3" />
+                          {form.watch("dataCompetencia")
+                            ? format(form.watch("dataCompetencia") as Date, "dd/MM/yyyy")
+                            : "Igual ao vencimento"}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={form.watch("dataCompetencia")}
+                          onSelect={(d) => form.setValue("dataCompetencia", d)}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label className="text-xs flex items-center justify-between">
+                      Centro de custo
+                      <button
+                        type="button"
+                        className="text-[10px] text-brand hover:underline inline-flex items-center gap-0.5"
+                        onClick={() => setCcManagerOpen(true)}
+                      >
+                        <Settings2 className="h-3 w-3" /> gerenciar
+                      </button>
+                    </Label>
+                    <Select
+                      value={form.watch("centroCustoId")}
+                      onValueChange={(v) => form.setValue("centroCustoId", v)}
+                      disabled={rateioOn}
+                    >
+                      <SelectTrigger className="h-9">
+                        <SelectValue placeholder={rateioOn ? "Definido por rateio" : "Selecione"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {aux.centrosCusto.map((c) => (
+                          <SelectItem key={c.id} value={c.id}>
+                            {c.codigo ? `${c.codigo} — ` : ""}
+                            {c.nome}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="md:col-span-2 space-y-2 rounded-md border p-3 bg-muted/20">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-xs font-medium">Rateio entre centros de custo</Label>
+                      <button
+                        type="button"
+                        className={cn(
+                          "text-[10px] px-2 py-0.5 rounded border",
+                          rateioOn ? "bg-brand text-ink border-brand" : "bg-transparent text-muted-foreground"
+                        )}
+                        onClick={() => {
+                          const next = !rateioOn;
+                          setRateioOn(next);
+                          if (next && rateios.length === 0) {
+                            setRateios([
+                              { centro_custo_id: "", percentual: "" },
+                              { centro_custo_id: "", percentual: "" },
+                            ]);
+                          }
+                        }}
+                      >
+                        {rateioOn ? "ON" : "OFF"}
+                      </button>
+                    </div>
+                    {rateioOn && (
+                      <>
+                        <div className="space-y-1.5">
+                          {rateios.map((r, i) => (
+                            <div key={i} className="flex items-center gap-2">
+                              <Select
+                                value={r.centro_custo_id}
+                                onValueChange={(v) =>
+                                  setRateios((prev) =>
+                                    prev.map((p, idx) => (idx === i ? { ...p, centro_custo_id: v } : p))
+                                  )
+                                }
+                              >
+                                <SelectTrigger className="h-8 flex-1 text-xs">
+                                  <SelectValue placeholder="Centro" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {aux.centrosCusto.map((c) => (
+                                    <SelectItem key={c.id} value={c.id}>
+                                      {c.codigo ? `${c.codigo} — ` : ""}
+                                      {c.nome}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <Input
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                max="100"
+                                placeholder="%"
+                                className="h-8 w-20 text-xs"
+                                value={r.percentual}
+                                onChange={(e) =>
+                                  setRateios((prev) =>
+                                    prev.map((p, idx) => (idx === i ? { ...p, percentual: e.target.value } : p))
+                                  )
+                                }
+                              />
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 text-red-600"
+                                onClick={() => setRateios((prev) => prev.filter((_, idx) => idx !== i))}
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                        <div className="flex items-center justify-between text-xs">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setRateios((prev) => [...prev, { centro_custo_id: "", percentual: "" }])}
+                          >
+                            <Plus className="h-3 w-3 mr-1" />
+                            Adicionar centro
+                          </Button>
+                          <RateioSomaBadge rateios={rateios} />
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                  <div className="space-y-1.5">
                     <Label className="text-xs">Nota fiscal</Label>
                     <Select value={form.watch("notaFiscal")} onValueChange={(v) => form.setValue("notaFiscal", v)}>
                       <SelectTrigger className="h-9">
@@ -573,6 +810,14 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
           </form>
         </DialogContent>
       </Dialog>
+
+      <CentroCustoManager
+        open={ccManagerOpen}
+        onOpenChange={setCcManagerOpen}
+        onChanged={() => {
+          /* aux refreshes on next open of form */
+        }}
+      />
 
       <DuplicateWarningDialog
         open={showDupWarning}

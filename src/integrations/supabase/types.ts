@@ -1523,6 +1523,63 @@ export type Database = {
           },
         ];
       };
+      lancamento_rateios: {
+        Row: {
+          centro_custo_id: string;
+          created_at: string;
+          created_by: string | null;
+          empresa_id: string;
+          id: string;
+          lancamento_id: string;
+          observacao: string | null;
+          percentual: number;
+          tipo_lancamento: string;
+          updated_at: string;
+          valor: number | null;
+        };
+        Insert: {
+          centro_custo_id: string;
+          created_at?: string;
+          created_by?: string | null;
+          empresa_id: string;
+          id?: string;
+          lancamento_id: string;
+          observacao?: string | null;
+          percentual: number;
+          tipo_lancamento: string;
+          updated_at?: string;
+          valor?: number | null;
+        };
+        Update: {
+          centro_custo_id?: string;
+          created_at?: string;
+          created_by?: string | null;
+          empresa_id?: string;
+          id?: string;
+          lancamento_id?: string;
+          observacao?: string | null;
+          percentual?: number;
+          tipo_lancamento?: string;
+          updated_at?: string;
+          valor?: number | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "lancamento_rateios_centro_custo_id_fkey";
+            columns: ["centro_custo_id"];
+            isOneToOne: false;
+            referencedRelation: "centros_custo";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "lancamento_rateios_empresa_id_fkey";
+            columns: ["empresa_id"];
+            isOneToOne: false;
+            referencedRelation: "empresas";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       leads: {
         Row: {
           cliente_id: string | null;
@@ -2964,6 +3021,7 @@ export type Database = {
           deleted_at: string | null;
           descricao: string | null;
           empresa_id: string | null;
+          fatura_id: string | null;
           forma_pagamento: string | null;
           grupo_parcela: string | null;
           grupo_status: string | null;
@@ -3243,6 +3301,10 @@ export type Database = {
             };
             Returns: string;
           };
+      find_or_create_fatura: {
+        Args: { p_cartao_id: string; p_data_compra: string };
+        Returns: string;
+      };
       gerar_fatura: {
         Args: { p_ano: number; p_cartao_id: string; p_mes: number };
         Returns: string;
@@ -3372,6 +3434,14 @@ export type Database = {
           p_observacao?: string;
         };
         Returns: string;
+      };
+      rpc_lancamento_set_rateio: {
+        Args: {
+          p_lancamento_id: string;
+          p_rateios: Json;
+          p_tipo_lancamento: string;
+        };
+        Returns: number;
       };
       rpc_projeto_rentabilidade: {
         Args: { p_projeto_id: string };
