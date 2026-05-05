@@ -274,6 +274,54 @@ export type Database = {
           },
         ];
       };
+      audit_logs_archive: {
+        Row: {
+          action: string;
+          actor_email: string | null;
+          actor_id: string | null;
+          archived_at: string;
+          created_at: string;
+          diff: Json | null;
+          empresa_id: string | null;
+          id: string;
+          ip_address: string | null;
+          new_data: Json | null;
+          old_data: Json | null;
+          target_id: string | null;
+          target_table: string;
+        };
+        Insert: {
+          action: string;
+          actor_email?: string | null;
+          actor_id?: string | null;
+          archived_at?: string;
+          created_at: string;
+          diff?: Json | null;
+          empresa_id?: string | null;
+          id: string;
+          ip_address?: string | null;
+          new_data?: Json | null;
+          old_data?: Json | null;
+          target_id?: string | null;
+          target_table: string;
+        };
+        Update: {
+          action?: string;
+          actor_email?: string | null;
+          actor_id?: string | null;
+          archived_at?: string;
+          created_at?: string;
+          diff?: Json | null;
+          empresa_id?: string | null;
+          id?: string;
+          ip_address?: string | null;
+          new_data?: Json | null;
+          old_data?: Json | null;
+          target_id?: string | null;
+          target_table?: string;
+        };
+        Relationships: [];
+      };
       cartoes: {
         Row: {
           conta_pagamento_id: string | null;
@@ -662,6 +710,53 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "convites_empresa_id_fkey";
+            columns: ["empresa_id"];
+            isOneToOne: false;
+            referencedRelation: "empresas";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      data_deletion_requests: {
+        Row: {
+          empresa_id: string | null;
+          id: string;
+          motivo: string | null;
+          notes: string | null;
+          notified_at: string | null;
+          processed_at: string | null;
+          processed_by: string | null;
+          requested_at: string;
+          status: string;
+          user_id: string;
+        };
+        Insert: {
+          empresa_id?: string | null;
+          id?: string;
+          motivo?: string | null;
+          notes?: string | null;
+          notified_at?: string | null;
+          processed_at?: string | null;
+          processed_by?: string | null;
+          requested_at?: string;
+          status?: string;
+          user_id: string;
+        };
+        Update: {
+          empresa_id?: string | null;
+          id?: string;
+          motivo?: string | null;
+          notes?: string | null;
+          notified_at?: string | null;
+          processed_at?: string | null;
+          processed_by?: string | null;
+          requested_at?: string;
+          status?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "data_deletion_requests_empresa_id_fkey";
             columns: ["empresa_id"];
             isOneToOne: false;
             referencedRelation: "empresas";
@@ -1097,6 +1192,7 @@ export type Database = {
           deleted_at: string | null;
           empresa_id: string;
           id: string;
+          idempotency_key: string | null;
           mes_referencia: number;
           status: string;
           updated_at: string | null;
@@ -1117,6 +1213,7 @@ export type Database = {
           deleted_at?: string | null;
           empresa_id: string;
           id?: string;
+          idempotency_key?: string | null;
           mes_referencia: number;
           status?: string;
           updated_at?: string | null;
@@ -1137,6 +1234,7 @@ export type Database = {
           deleted_at?: string | null;
           empresa_id?: string;
           id?: string;
+          idempotency_key?: string | null;
           mes_referencia?: number;
           status?: string;
           updated_at?: string | null;
@@ -1181,6 +1279,36 @@ export type Database = {
             referencedColumns: ["id"];
           },
         ];
+      };
+      feature_flags: {
+        Row: {
+          created_at: string;
+          description: string | null;
+          enabled_for_all: boolean;
+          enabled_for_empresas: string[];
+          key: string;
+          percentage: number;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          description?: string | null;
+          enabled_for_all?: boolean;
+          enabled_for_empresas?: string[];
+          key: string;
+          percentage?: number;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          description?: string | null;
+          enabled_for_all?: boolean;
+          enabled_for_empresas?: string[];
+          key?: string;
+          percentage?: number;
+          updated_at?: string;
+        };
+        Relationships: [];
       };
       fluxos_disciplinas: {
         Row: {
@@ -1452,6 +1580,42 @@ export type Database = {
             referencedColumns: ["id"];
           },
         ];
+      };
+      impersonation_sessions: {
+        Row: {
+          admin_id: string;
+          admin_role: string;
+          ended_at: string | null;
+          expires_at: string;
+          id: string;
+          ip_address: string | null;
+          started_at: string;
+          target_role: string;
+          user_agent: string | null;
+        };
+        Insert: {
+          admin_id: string;
+          admin_role: string;
+          ended_at?: string | null;
+          expires_at?: string;
+          id?: string;
+          ip_address?: string | null;
+          started_at?: string;
+          target_role: string;
+          user_agent?: string | null;
+        };
+        Update: {
+          admin_id?: string;
+          admin_role?: string;
+          ended_at?: string | null;
+          expires_at?: string;
+          id?: string;
+          ip_address?: string | null;
+          started_at?: string;
+          target_role?: string;
+          user_agent?: string | null;
+        };
+        Relationships: [];
       };
       lancamento_rateios: {
         Row: {
@@ -1816,7 +1980,7 @@ export type Database = {
           chaves_pix: Json | null;
           cnpj: string | null;
           contas_bancarias: Json | null;
-          cpf: string;
+          cpf: string | null;
           created_at: string | null;
           created_by: string | null;
           data_admissao: string | null;
@@ -1837,7 +2001,7 @@ export type Database = {
           salario_fixo: number | null;
           sobrenome: string;
           status: string;
-          telefone: string;
+          telefone: string | null;
           tipo_contrato: string | null;
           updated_at: string | null;
           updated_by: string | null;
@@ -1848,7 +2012,7 @@ export type Database = {
           chaves_pix?: Json | null;
           cnpj?: string | null;
           contas_bancarias?: Json | null;
-          cpf: string;
+          cpf?: string | null;
           created_at?: string | null;
           created_by?: string | null;
           data_admissao?: string | null;
@@ -1869,7 +2033,7 @@ export type Database = {
           salario_fixo?: number | null;
           sobrenome: string;
           status?: string;
-          telefone: string;
+          telefone?: string | null;
           tipo_contrato?: string | null;
           updated_at?: string | null;
           updated_by?: string | null;
@@ -1880,7 +2044,7 @@ export type Database = {
           chaves_pix?: Json | null;
           cnpj?: string | null;
           contas_bancarias?: Json | null;
-          cpf?: string;
+          cpf?: string | null;
           created_at?: string | null;
           created_by?: string | null;
           data_admissao?: string | null;
@@ -1901,7 +2065,7 @@ export type Database = {
           salario_fixo?: number | null;
           sobrenome?: string;
           status?: string;
-          telefone?: string;
+          telefone?: string | null;
           tipo_contrato?: string | null;
           updated_at?: string | null;
           updated_by?: string | null;
@@ -3093,6 +3257,12 @@ export type Database = {
         Args: { p_company_name?: string; p_email: string; p_nome: string };
         Returns: Json;
       };
+      audit_log_cleanup: { Args: never; Returns: number };
+      audit_logs_archive_old: { Args: never; Returns: number };
+      check_convite_rate_limit: {
+        Args: { p_empresa_id: string };
+        Returns: undefined;
+      };
       cleanup_pending_signups: { Args: never; Returns: number };
       create_convite: {
         Args: {
@@ -3100,6 +3270,15 @@ export type Database = {
           p_email: string;
           p_features?: Json;
           p_nome?: string;
+        };
+        Returns: string;
+      };
+      create_portal_token: {
+        Args: {
+          p_cliente_id: string;
+          p_dias_validade?: number;
+          p_email_cliente?: string;
+          p_projeto_id: string;
         };
         Returns: string;
       };
@@ -3155,6 +3334,27 @@ export type Database = {
             };
             Returns: string;
           };
+      current_effective_role: { Args: never; Returns: string };
+      current_impersonation: {
+        Args: never;
+        Returns: {
+          admin_id: string;
+          admin_role: string;
+          ended_at: string | null;
+          expires_at: string;
+          id: string;
+          ip_address: string | null;
+          started_at: string;
+          target_role: string;
+          user_agent: string | null;
+        };
+        SetofOptions: {
+          from: "*";
+          to: "impersonation_sessions";
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
       find_or_create_fatura: {
         Args: { p_cartao_id: string; p_data_compra: string };
         Returns: string;
@@ -3181,6 +3381,10 @@ export type Database = {
           valor_m2: number;
         }[];
       };
+      get_lancamentos_kpis: {
+        Args: { p_from?: string; p_to?: string };
+        Returns: Json;
+      };
       get_portal_propostas: {
         Args: { p_token: string };
         Returns: {
@@ -3203,13 +3407,17 @@ export type Database = {
         Args: { allowed_roles: Database["public"]["Enums"]["user_role"][] };
         Returns: boolean;
       };
+      impersonation_sessions_cleanup: { Args: never; Returns: number };
       is_company_admin: { Args: never; Returns: boolean };
+      is_feature_flag_enabled: { Args: { p_key: string }; Returns: boolean };
+      is_impersonating: { Args: never; Returns: boolean };
       is_ultra_admin: { Args: never; Returns: boolean };
       pagar_fatura: {
         Args: {
           p_conta_id: string;
           p_data_pagamento?: string;
           p_fatura_id: string;
+          p_idempotency_key?: string;
           p_valor_pago?: number;
         };
         Returns: undefined;
@@ -3227,6 +3435,7 @@ export type Database = {
         Args: { p_grupo_id: string };
         Returns: undefined;
       };
+      request_data_deletion: { Args: { p_motivo?: string }; Returns: string };
       rpc_atualizar_status_atrasados: { Args: never; Returns: Json };
       rpc_calcular_wip: {
         Args: { p_ano: number; p_mes: number };
@@ -3352,6 +3561,11 @@ export type Database = {
       rpc_sync_metas: { Args: never; Returns: number };
       show_limit: { Args: never; Returns: number };
       show_trgm: { Args: { "": string }; Returns: string[] };
+      start_impersonation: {
+        Args: { p_ip?: string; p_target_role: string; p_user_agent?: string };
+        Returns: string;
+      };
+      stop_impersonation: { Args: never; Returns: undefined };
       update_company_features: {
         Args: { p_features: Json };
         Returns: undefined;
@@ -3417,7 +3631,7 @@ export type Database = {
         | "Em andamento"
         | "Revisão";
       tipo_categoria: "Receita" | "Despesa";
-      user_role: "ultra_admin" | "admin" | "financeiro" | "marketing" | "operacional" | "user";
+      user_role: "user" | "admin" | "ultra_admin";
     };
     CompositeTypes: {
       [_ in never]: never;
@@ -3544,7 +3758,7 @@ export const Constants = {
       status_financeiro: ["Pendente", "Pago", "Recebido", "Atrasado", "Cancelado"],
       status_projeto: ["Planejamento", "Execução", "Paralisado", "Concluído", "Cancelado", "Em andamento", "Revisão"],
       tipo_categoria: ["Receita", "Despesa"],
-      user_role: ["ultra_admin", "admin", "financeiro", "marketing", "operacional", "user"],
+      user_role: ["user", "admin", "ultra_admin"],
     },
   },
 } as const;
