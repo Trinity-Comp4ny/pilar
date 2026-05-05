@@ -7,6 +7,7 @@ import { MockupTablet } from "./landing/components/MockupTablet";
 import { ProofSection } from "./landing/components/ProofSection";
 import { FeaturesSection } from "./landing/components/FeaturesSection";
 import { HowItWorksSection } from "./landing/components/HowItWorksSection";
+import { PricingSection } from "./landing/components/PricingSection";
 import { CTASection } from "./landing/components/CTASection";
 import { LandingFooter } from "./landing/components/LandingFooter";
 import { usePageTitle } from "@/hooks/usePageTitle";
@@ -68,6 +69,7 @@ export default function Landing() {
       <ProofSection />
       <FeaturesSection />
       <HowItWorksSection />
+      <PricingSection />
       <CTASection />
       <LandingFooter />
     </div>
