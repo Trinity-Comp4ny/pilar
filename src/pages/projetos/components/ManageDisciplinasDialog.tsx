@@ -111,10 +111,10 @@ export function ManageDisciplinasDialog({
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-7 w-7 p-0 text-muted-foreground hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="h-8 w-8 p-0 text-muted-foreground hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
                         onClick={() => setDeleteId(d.id)}
                       >
-                        <Trash2 size={14} />
+                        <Trash2 size={16} />
                       </Button>
                     </div>
                   ))

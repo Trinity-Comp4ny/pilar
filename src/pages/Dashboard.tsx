@@ -567,10 +567,10 @@ export default function Dashboard() {
         {/* Gráfico Financeiro */}
         {canFin && (
           <div className="grid grid-cols-1 gap-6">
-            <Card>
+            <Card className="rounded-2xl border border-black/5 bg-white">
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="flex items-center gap-2 text-base font-semibold">
+                  <CardTitle className="text-lg font-medium tracking-tight flex items-center gap-2">
                     <BarChart3 size={18} className="text-muted-foreground" />
                     Fluxo Financeiro
                   </CardTitle>
@@ -651,10 +651,10 @@ export default function Dashboard() {
         {/* Projetos + Alertas */}
         <div className={cn("grid grid-cols-1 gap-6", canProj && "lg:grid-cols-3")}>
           {canProj && (
-            <Card className="lg:col-span-2">
+            <Card className="rounded-2xl border border-black/5 bg-white lg:col-span-2">
               <CardHeader className="pb-1">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="flex items-center gap-2 text-base font-semibold">
+                  <CardTitle className="text-lg font-medium tracking-tight flex items-center gap-2">
                     <Briefcase size={18} className="text-muted-foreground" />
                     Projetos
                   </CardTitle>
@@ -696,10 +696,10 @@ export default function Dashboard() {
           )}
 
           {/* Alertas */}
-          <Card>
+          <Card className="rounded-2xl border border-black/5 bg-white">
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2 text-base font-semibold">
+                <CardTitle className="text-lg font-medium tracking-tight flex items-center gap-2">
                   <AlertTriangle size={18} className="text-muted-foreground" />
                   Alertas
                   {alertasNaoLidos > 0 && (
@@ -734,10 +734,10 @@ export default function Dashboard() {
         {(canFin || canLeads) && (
           <div className={cn("grid grid-cols-1 gap-6", canFin && canLeads && "lg:grid-cols-3")}>
             {canFin && (
-              <Card className={cn(canFin && canLeads && "lg:col-span-2")}>
+              <Card className={cn("rounded-2xl border border-black/5 bg-white", canFin && canLeads && "lg:col-span-2")}>
                 <CardHeader className="pb-2">
                   <div className="flex items-center justify-between">
-                    <CardTitle className="flex items-center gap-2 text-base font-semibold">
+                    <CardTitle className="text-lg font-medium tracking-tight flex items-center gap-2">
                       <CalendarClock size={18} className="text-muted-foreground" />
                       Próximos Vencimentos
                     </CardTitle>
@@ -769,10 +769,10 @@ export default function Dashboard() {
             )}
 
             {canLeads && (
-              <Card>
+              <Card className="rounded-2xl border border-black/5 bg-white">
                 <CardHeader className="pb-2">
                   <div className="flex items-center justify-between">
-                    <CardTitle className="flex items-center gap-2 text-base font-semibold">
+                    <CardTitle className="text-lg font-medium tracking-tight flex items-center gap-2">
                       <Target size={18} className="text-muted-foreground" />
                       Pipeline de Leads
                     </CardTitle>

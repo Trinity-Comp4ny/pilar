@@ -66,7 +66,7 @@ export function FinanceiroHeader({ mode = "basico", onModeChange }: FinanceiroHe
             )}
             <div>
               <h1 className="text-2xl md:text-3xl font-medium tracking-tight">Financeiro</h1>
-              <p className="text-sm text-black/60 mt-1">Gerencie receitas e despesas</p>
+              <p className="text-sm text-muted-foreground mt-1">Gerencie receitas e despesas</p>
             </div>
 
             <div className="flex items-center gap-2 ml-2 px-3 py-1.5 rounded-full bg-gray-50 border">
@@ -80,7 +80,7 @@ export function FinanceiroHeader({ mode = "basico", onModeChange }: FinanceiroHe
               />
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <button type="button" className="text-gray-400 hover:text-gray-600 transition-colors">
+                  <button type="button" className="text-muted-foreground hover:text-foreground transition-colors">
                     <HelpCircle className="h-3.5 w-3.5" />
                   </button>
                 </TooltipTrigger>
@@ -93,8 +93,8 @@ export function FinanceiroHeader({ mode = "basico", onModeChange }: FinanceiroHe
 
           <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-end">
             <div className="flex items-center gap-2 flex-wrap">
-              <CalendarDays className="h-4 w-4 text-gray-500" />
-              <span className="text-sm font-medium text-gray-700">Período:</span>
+              <CalendarDays className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm font-medium text-muted-foreground">Período:</span>
 
               <Select value={filterType} onValueChange={handleFilterChange}>
                 <SelectTrigger className="w-[170px] h-9 text-sm rounded-full">

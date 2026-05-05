@@ -8,7 +8,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CalendarIcon, Download, Plus, FileBarChart, Filter, X, Columns3, Sparkles } from "lucide-react";
+import { CalendarIcon, Download, Plus, FileBarChart, Filter, X, Columns3 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { format, startOfDay, endOfDay, subDays, startOfMonth, endOfMonth, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -23,7 +23,6 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGri
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { usePageTitle } from "@/hooks/usePageTitle";
-import { useRelatorioExecutivo } from "@/hooks/useRelatorioExecutivo";
 import { RelatoriosSummary } from "./relatorios/RelatoriosSummary";
 
 interface ReportRow {
@@ -92,7 +91,6 @@ function parseDDMMYYYY(str: string): Date | null {
 
 export default function Relatorios() {
   usePageTitle("Relatórios");
-  const { gerar: gerarExecutivo, isGenerating: isExecutivoLoading } = useRelatorioExecutivo();
   const [tipoRelatorio, setTipoRelatorio] = useState("");
   const [periodoPreset, setPeriodoPreset] = useState<"7d" | "30d" | "this_month" | "last_month" | "all" | "custom">(
     "all"
@@ -599,7 +597,7 @@ export default function Relatorios() {
 
     return (
       <div className="rounded-xl border border-black/5 bg-white p-4">
-        <p className="text-sm font-medium text-black/70 mb-3">Evolução mensal</p>
+        <p className="text-sm font-medium text-muted-foreground mb-3">Evolução mensal</p>
         <ResponsiveContainer width="100%" height={220}>
           <BarChart data={chartData} barGap={4}>
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--chart-grid))" />
@@ -698,18 +696,7 @@ export default function Relatorios() {
   return (
     <PageLayout
       containerClassName="h-full flex flex-col min-h-0"
-      header={
-        <PageHeader title="Relatórios" description="Monte, visualize e exporte relatórios financeiros">
-          <Button
-            onClick={gerarExecutivo}
-            disabled={isExecutivoLoading}
-            className="h-9 gap-1.5 bg-brand text-ink hover:bg-brand/90"
-          >
-            <Sparkles className="h-4 w-4" />
-            {isExecutivoLoading ? "Gerando..." : "Relatório Executivo"}
-          </Button>
-        </PageHeader>
-      }
+      header={<PageHeader title="Relatórios" description="Monte, visualize e exporte relatórios financeiros" />}
     >
       <div className="flex-1 overflow-y-auto flex flex-col gap-5 pb-6">
         {/* ═══ Barra de parâmetros ═══ */}
@@ -719,7 +706,7 @@ export default function Relatorios() {
             <div className="flex flex-wrap gap-4 items-end">
               {/* Tipo */}
               <div className="space-y-1.5 w-56 shrink-0">
-                <Label className="text-xs font-medium text-black/60">Tipo de relatório</Label>
+                <Label className="text-xs font-medium text-muted-foreground">Tipo de relatório</Label>
                 <Select value={tipoRelatorio} onValueChange={setTipoRelatorio}>
                   <SelectTrigger className="h-9 bg-white">
                     <SelectValue placeholder="Selecione o tipo" />
@@ -736,7 +723,7 @@ export default function Relatorios() {
 
               {/* Período */}
               <div className="space-y-1.5 xl:w-48 shrink-0">
-                <Label className="text-xs font-medium text-black/60">Período</Label>
+                <Label className="text-xs font-medium text-muted-foreground">Período</Label>
                 <Select value={periodoPreset} onValueChange={(v) => applyPreset(v as typeof periodoPreset)}>
                   <SelectTrigger className="h-9 bg-white">
                     <SelectValue />
@@ -756,7 +743,7 @@ export default function Relatorios() {
               {periodoPreset === "custom" && (
                 <div className="flex items-end gap-1.5">
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-medium text-black/60">De</Label>
+                    <Label className="text-xs font-medium text-muted-foreground">De</Label>
                     <Popover>
                       <PopoverTrigger asChild>
                         <Button
@@ -782,9 +769,9 @@ export default function Relatorios() {
                       </PopoverContent>
                     </Popover>
                   </div>
-                  <span className="text-xs text-black/40 pb-2">até</span>
+                  <span className="text-xs text-muted-foreground pb-2">até</span>
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-medium text-black/60">Até</Label>
+                    <Label className="text-xs font-medium text-muted-foreground">Até</Label>
                     <Popover>
                       <PopoverTrigger asChild>
                         <Button
@@ -872,7 +859,7 @@ export default function Relatorios() {
               {/* Header da tabela com badge + export */}
               <div className="flex items-center justify-between shrink-0">
                 <div className="flex items-center gap-3">
-                  <h3 className="text-sm font-medium text-black/70">Registros</h3>
+                  <h3 className="text-sm font-medium text-muted-foreground">Registros</h3>
                   <Badge variant="secondary" className="text-xs">
                     {filteredData.length} {hasActiveFilters ? `de ${reportData.length}` : ""}
                   </Badge>
@@ -964,7 +951,10 @@ export default function Relatorios() {
                       <TableBody>
                         {filteredData.length === 0 ? (
                           <TableRow>
-                            <TableCell colSpan={cols.length} className="text-center py-10 text-black/40 text-sm">
+                            <TableCell
+                              colSpan={cols.length}
+                              className="text-center py-10 text-muted-foreground text-sm"
+                            >
                               Nenhum registro encontrado com os filtros aplicados.
                             </TableCell>
                           </TableRow>

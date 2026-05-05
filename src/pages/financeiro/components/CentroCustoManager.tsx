@@ -193,7 +193,7 @@ export function CentroCustoManager({ open, onOpenChange, onChanged }: Props) {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-7 w-7"
+                      className="h-8 w-8"
                       onClick={() => toggleAtivo(c)}
                       title={c.ativo ? "Desativar" : "Ativar"}
                       aria-label={c.ativo ? "Desativar" : "Ativar"}
@@ -203,20 +203,20 @@ export function CentroCustoManager({ open, onOpenChange, onChanged }: Props) {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-7 w-7"
+                      className="h-8 w-8"
                       onClick={() => startEdit(c)}
                       aria-label="Editar centro de custo"
                     >
-                      <Pencil className="h-3 w-3" />
+                      <Pencil className="h-4 w-4" />
                     </Button>
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-7 w-7 text-red-600"
+                      className="h-8 w-8 text-red-600"
                       onClick={() => setDeleteTarget(c)}
                       aria-label={`Excluir ${c.nome}`}
                     >
-                      <Trash2 className="h-3 w-3" />
+                      <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
                 ))}

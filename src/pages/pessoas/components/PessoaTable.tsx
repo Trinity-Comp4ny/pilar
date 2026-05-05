@@ -108,7 +108,7 @@ export function PessoaTable({ pessoas, isLoading, isAdmin, onRowClick, onEditCli
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
             <CardTitle className="text-lg font-medium tracking-tight">Equipe</CardTitle>
-            <CardDescription className="text-sm text-black/60 mt-1">
+            <CardDescription className="text-sm text-muted-foreground mt-1">
               {filteredAndSortedPessoas.length} de {pessoas.length} membro(s)
             </CardDescription>
           </div>
@@ -146,12 +146,7 @@ export function PessoaTable({ pessoas, isLoading, isAdmin, onRowClick, onEditCli
             <TableHeader>
               <TableRow>
                 <TableHead>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleSort("nome")}
-                    className="-ml-3 h-8 font-medium"
-                  >
+                  <Button variant="ghost" onClick={() => handleSort("nome")} className="-ml-3 h-8 font-medium text-xs">
                     Nome
                     <ArrowUpDown className="ml-2 h-3 w-3" />
                   </Button>
@@ -236,7 +231,7 @@ export function PessoaTable({ pessoas, isLoading, isAdmin, onRowClick, onEditCli
                             onClick={(e) => onEditClick(pessoa, e)}
                             aria-label="Editar"
                           >
-                            <Pencil className="h-3 w-3" />
+                            <Pencil className="h-4 w-4" />
                           </Button>
                           <Button
                             variant="ghost"
@@ -248,7 +243,7 @@ export function PessoaTable({ pessoas, isLoading, isAdmin, onRowClick, onEditCli
                             }}
                             aria-label="Excluir"
                           >
-                            <Trash2 className="h-3 w-3" />
+                            <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
                       </TableCell>

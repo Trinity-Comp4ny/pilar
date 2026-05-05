@@ -141,7 +141,7 @@ export default function Faturas() {
                     />
                     <span className="font-medium text-sm">{cartao.nome}</span>
                   </div>
-                  <div className="text-xs text-gray-500">
+                  <div className="text-xs text-muted-foreground">
                     Fecha: dia {cartao.dia_fechamento} | Vence: dia {cartao.dia_vencimento}
                   </div>
                   <div className="text-xs text-gray-500 mt-1">
@@ -191,7 +191,7 @@ export default function Faturas() {
                             </h4>
                             {getStatusBadge(fatura.status, fatura.data_vencimento)}
                           </div>
-                          <div className="flex gap-4 text-xs text-gray-500 mt-1">
+                          <div className="flex gap-4 text-xs text-muted-foreground mt-1">
                             <span className="flex items-center gap-1">
                               <Calendar className="h-3 w-3" />
                               {format(new Date(fatura.data_inicio + "T00:00:00"), "dd/MM")} a{" "}
@@ -208,7 +208,7 @@ export default function Faturas() {
                               R$ {fatura.valor_total.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                             </p>
                             {fatura.valor_pago > 0 && fatura.status !== "Paga" && (
-                              <p className="text-xs text-gray-500">
+                              <p className="text-xs text-muted-foreground">
                                 Restante: R$ {restante.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                               </p>
                             )}
@@ -225,7 +225,7 @@ export default function Faturas() {
                               Pagar
                             </Button>
                           )}
-                          <ChevronRight className="h-4 w-4 text-gray-400" />
+                          <ChevronRight className="h-4 w-4 text-muted-foreground" />
                         </div>
                       </div>
                     </div>
@@ -253,23 +253,23 @@ export default function Faturas() {
               {/* Resumo */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <div className="p-3 bg-gray-50 rounded-lg">
-                  <p className="text-xs text-gray-500">Status</p>
+                  <p className="text-xs text-muted-foreground">Status</p>
                   <div className="mt-1">{getStatusBadge(selectedFatura.status, selectedFatura.data_vencimento)}</div>
                 </div>
                 <div className="p-3 bg-gray-50 rounded-lg">
-                  <p className="text-xs text-gray-500">Valor Total</p>
+                  <p className="text-xs text-muted-foreground">Valor Total</p>
                   <p className="text-sm font-bold mt-1">
                     R$ {selectedFatura.valor_total.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                   </p>
                 </div>
                 <div className="p-3 bg-gray-50 rounded-lg">
-                  <p className="text-xs text-gray-500">Vencimento</p>
+                  <p className="text-xs text-muted-foreground">Vencimento</p>
                   <p className="text-sm font-medium mt-1">
                     {format(new Date(selectedFatura.data_vencimento + "T00:00:00"), "dd/MM/yyyy")}
                   </p>
                 </div>
                 <div className="p-3 bg-gray-50 rounded-lg">
-                  <p className="text-xs text-gray-500">Ciclo</p>
+                  <p className="text-xs text-muted-foreground">Ciclo</p>
                   <p className="text-sm mt-1">
                     {format(new Date(selectedFatura.data_inicio + "T00:00:00"), "dd/MM")} a{" "}
                     {format(new Date(selectedFatura.data_fim + "T00:00:00"), "dd/MM")}
@@ -297,10 +297,10 @@ export default function Faturas() {
                       <div key={d.id} className="flex justify-between items-center p-3 border rounded-lg">
                         <div>
                           <p className="text-sm font-medium">{d.descricao}</p>
-                          <div className="flex gap-2 text-xs text-gray-500 mt-0.5">
+                          <div className="flex gap-2 text-xs text-muted-foreground mt-0.5">
                             <span>{format(new Date(d.data_vencimento + "T00:00:00"), "dd/MM/yyyy")}</span>
                             {d.categorias_financeiras?.nome && (
-                              <span className="text-gray-400">| {d.categorias_financeiras.nome}</span>
+                              <span className="text-muted-foreground">| {d.categorias_financeiras.nome}</span>
                             )}
                           </div>
                         </div>
@@ -326,7 +326,7 @@ export default function Faturas() {
                     <Separator />
                     <div className="flex justify-between items-center">
                       <div>
-                        <p className="text-sm text-gray-500">Valor restante</p>
+                        <p className="text-sm text-muted-foreground">Valor restante</p>
                         <p className="text-lg font-bold">
                           R${" "}
                           {(selectedFatura.valor_total - selectedFatura.valor_pago).toLocaleString("pt-BR", {
@@ -363,7 +363,7 @@ export default function Faturas() {
             <div className="space-y-4 mt-2">
               <div className="p-4 bg-gray-50 rounded-lg">
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Valor total da fatura</span>
+                  <span className="text-muted-foreground">Valor total da fatura</span>
                   <span className="font-bold">
                     R$ {selectedFatura.valor_total.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                   </span>
@@ -371,7 +371,7 @@ export default function Faturas() {
                 {selectedFatura.valor_pago > 0 && (
                   <>
                     <div className="flex justify-between text-sm mt-1">
-                      <span className="text-gray-500">Já pago</span>
+                      <span className="text-muted-foreground">Já pago</span>
                       <span className="text-positive">
                         - R$ {selectedFatura.valor_pago.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                       </span>
@@ -414,7 +414,7 @@ export default function Faturas() {
                   value={valorPagamento}
                   onChange={(e) => setValorPagamento(e.target.value)}
                 />
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-muted-foreground">
                   Deixe o valor total para pagamento integral ou altere para pagamento parcial.
                 </p>
               </div>

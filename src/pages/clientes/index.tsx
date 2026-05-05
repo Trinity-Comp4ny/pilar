@@ -816,7 +816,7 @@ export default function Clientes() {
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
               <CardTitle className="text-lg font-medium tracking-tight">Lista de Clientes</CardTitle>
-              <CardDescription className="text-sm text-black/60 mt-1">
+              <CardDescription className="text-sm text-muted-foreground mt-1">
                 Total de {filteredAndSortedClientes.length} de {clientes.length} cliente(s)
               </CardDescription>
             </div>
@@ -866,9 +866,8 @@ export default function Clientes() {
                   <TableHead>
                     <Button
                       variant="ghost"
-                      size="sm"
                       onClick={() => handleSort("nome")}
-                      className="-ml-3 h-8 font-medium"
+                      className="-ml-3 h-8 font-medium text-xs"
                     >
                       Nome
                       <ArrowUpDown className="ml-2 h-3 w-3" />
@@ -877,9 +876,8 @@ export default function Clientes() {
                   <TableHead>
                     <Button
                       variant="ghost"
-                      size="sm"
                       onClick={() => handleSort("cpf_cnpj")}
-                      className="-ml-3 h-8 font-medium"
+                      className="-ml-3 h-8 font-medium text-xs"
                     >
                       CPF/CNPJ
                       <ArrowUpDown className="ml-2 h-3 w-3" />
@@ -933,7 +931,9 @@ export default function Clientes() {
                         {cliente.sobrenome ? ` ${cliente.sobrenome}` : ""}
                       </TableCell>
                       <TableCell>{formatDocument(cliente.cpf_cnpj)}</TableCell>
-                      <TableCell className="hidden md:table-cell text-sm text-black/70">{cliente.email}</TableCell>
+                      <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
+                        {cliente.email}
+                      </TableCell>
                       <TableCell className="hidden lg:table-cell">{cliente.contato}</TableCell>
                       {canShowActions && (
                         <TableCell className="text-right">

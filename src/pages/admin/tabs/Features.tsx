@@ -64,9 +64,9 @@ export function FeaturesEmpresaTab({ companyFeatures, setCompanyFeatures, curren
   };
 
   return (
-    <Card className="border border-black/5">
+    <Card className="rounded-2xl border border-black/5 bg-white">
       <CardHeader>
-        <CardTitle className="text-base">Features da Empresa</CardTitle>
+        <CardTitle className="text-lg font-medium tracking-tight">Features da Empresa</CardTitle>
         <CardDescription>
           Ative ou desative módulos. O plano sugere o conjunto incluso; add-ons são cobrados à parte.
         </CardDescription>

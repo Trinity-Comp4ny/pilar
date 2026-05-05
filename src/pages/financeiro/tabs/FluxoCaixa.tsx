@@ -66,7 +66,7 @@ export default function FluxoCaixa({ dateFrom, dateTo }: FluxoCaixaProps) {
   if (isLoadingDashboard || isLoadingTop) {
     return (
       <div className="flex justify-center items-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
       </div>
     );
   }
@@ -90,40 +90,46 @@ export default function FluxoCaixa({ dateFrom, dateTo }: FluxoCaixaProps) {
   return (
     <div className="space-y-6 w-full max-w-none">
       {/* KPIs */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
-        <Card className="vrz-card bg-positive/10 border-positive/10 w-full">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
+        <Card className="vrz-card bg-positive/10 border-positive/10 w-full min-w-0">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-green-700">Receitas</CardTitle>
+            <CardTitle className="text-sm font-medium text-green-700 truncate">Receitas</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-700">{formatCurrency(stats.receitasTotal)}</div>
-            <p className="text-xs text-green-600 mt-1 flex items-center">
-              <ArrowUpRight size={12} className="mr-1" />
-              {stats.receitasMes}% vs mês anterior
+          <CardContent className="min-w-0">
+            <div className="text-xl md:text-2xl font-bold text-green-700 tabular-nums truncate">
+              {formatCurrency(stats.receitasTotal)}
+            </div>
+            <p className="text-xs text-green-600 mt-1 flex items-center min-w-0">
+              <ArrowUpRight size={12} className="mr-1 flex-shrink-0" />
+              <span className="truncate">{stats.receitasMes}% vs mês anterior</span>
             </p>
           </CardContent>
         </Card>
 
-        <Card className="vrz-card bg-red-50 border-red-100 w-full">
+        <Card className="vrz-card bg-red-50 border-red-100 w-full min-w-0">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-red-800">Despesas</CardTitle>
+            <CardTitle className="text-sm font-medium text-red-800 truncate">Despesas</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-700">{formatCurrency(stats.despesasTotal)}</div>
-            <p className="text-xs text-red-600 mt-1 flex items-center">
-              <ArrowDownRight size={12} className="mr-1" />
-              {stats.despesasMes}% vs mês anterior
+          <CardContent className="min-w-0">
+            <div className="text-xl md:text-2xl font-bold text-red-700 tabular-nums truncate">
+              {formatCurrency(stats.despesasTotal)}
+            </div>
+            <p className="text-xs text-red-600 mt-1 flex items-center min-w-0">
+              <ArrowDownRight size={12} className="mr-1 flex-shrink-0" />
+              <span className="truncate">{stats.despesasMes}% vs mês anterior</span>
             </p>
           </CardContent>
         </Card>
 
-        <Card className="vrz-card bg-blue-50 border-blue-100 w-full">
+        <Card className="vrz-card bg-blue-50 border-blue-100 w-full min-w-0">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-blue-800">Lucro Líquido</CardTitle>
+            <CardTitle className="text-sm font-medium text-blue-800 truncate">Lucro Líquido</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-700">{formatCurrency(stats.saldo)}</div>
-            <p className="text-xs text-blue-600 mt-1">
+          <CardContent className="min-w-0">
+            <div className="text-xl md:text-2xl font-bold text-blue-700 tabular-nums truncate">
+              {formatCurrency(stats.saldo)}
+            </div>
+            <p className="text-xs text-blue-600 mt-1 truncate">
               Margem de {stats.receitasTotal > 0 ? ((stats.saldo / stats.receitasTotal) * 100).toFixed(1) : 0}%
             </p>
           </CardContent>
@@ -243,8 +249,8 @@ export default function FluxoCaixa({ dateFrom, dateTo }: FluxoCaixaProps) {
                   className="flex items-center justify-between p-3 bg-positive/10 rounded-lg border border-positive/10 hover:bg-positive/20 transition-colors"
                 >
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-900">{item.descricao}</p>
-                    <p className="text-xs text-gray-500 mt-0.5">
+                    <p className="text-sm font-medium">{item.descricao}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
                       {item.data_recebimento ? new Date(item.data_recebimento).toLocaleDateString("pt-BR") : "—"}
                     </p>
                   </div>
@@ -255,9 +261,9 @@ export default function FluxoCaixa({ dateFrom, dateTo }: FluxoCaixaProps) {
                 <p className="text-sm text-muted-foreground text-center py-4">Nenhuma receita encontrada.</p>
               )}
             </div>
-            <div className="mt-4 pt-4 border-t border-gray-200">
+            <div className="mt-4 pt-4 border-t border-black/10">
               <div className="flex justify-between items-center">
-                <span className="text-sm font-medium text-gray-700">Total das 5 principais</span>
+                <span className="text-sm font-medium text-muted-foreground">Total das 5 principais</span>
                 <span className="text-lg font-bold text-positive">{formatCurrency(totalTopReceitas)}</span>
               </div>
             </div>
@@ -280,8 +286,8 @@ export default function FluxoCaixa({ dateFrom, dateTo }: FluxoCaixaProps) {
                   className="flex items-center justify-between p-3 bg-red-50 rounded-lg border border-red-100 hover:bg-red-100 transition-colors"
                 >
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-900">{item.descricao}</p>
-                    <p className="text-xs text-gray-500 mt-0.5">
+                    <p className="text-sm font-medium">{item.descricao}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
                       {item.data_pagamento ? new Date(item.data_pagamento).toLocaleDateString("pt-BR") : "—"} •{" "}
                       {item.categorias_financeiras?.nome || "Outros"}
                     </p>
@@ -293,9 +299,9 @@ export default function FluxoCaixa({ dateFrom, dateTo }: FluxoCaixaProps) {
                 <p className="text-sm text-muted-foreground text-center py-4">Nenhuma despesa encontrada.</p>
               )}
             </div>
-            <div className="mt-4 pt-4 border-t border-gray-200">
+            <div className="mt-4 pt-4 border-t border-black/10">
               <div className="flex justify-between items-center">
-                <span className="text-sm font-medium text-gray-700">Total das 5 principais</span>
+                <span className="text-sm font-medium text-muted-foreground">Total das 5 principais</span>
                 <span className="text-lg font-bold text-red-600">{formatCurrency(totalTopDespesas)}</span>
               </div>
             </div>

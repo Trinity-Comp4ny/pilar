@@ -293,7 +293,7 @@ export function HistoryDetailDialog({ open, onOpenChange, selectedHistory, loadi
         </DialogHeader>
         {loading ? (
           <div className="flex justify-center items-center py-8">
-            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
           </div>
         ) : items.length === 0 ? (
           <p className="text-sm text-muted-foreground">Nenhum registro encontrado para esta folha.</p>
