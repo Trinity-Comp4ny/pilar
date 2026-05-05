@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Copy, Check, RefreshCw, ShieldCheck, Loader2 } from "lucide-react";
 import { callUntypedRpc } from "@/lib/supabaseRpc";
+import { monitoring } from "@/lib/monitoring";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 
 export function MfaBackupCodes() {
@@ -35,7 +36,7 @@ export function MfaBackupCodes() {
       await fetchRemaining();
       toast.success("Códigos gerados");
     } catch (err) {
-      console.error(err);
+      monitoring.captureException(err, { context: "generateBackupCodes" });
       toast.error("Erro ao gerar", {
         description: err instanceof Error ? err.message : "Verifique se MFA está ativo",
       });

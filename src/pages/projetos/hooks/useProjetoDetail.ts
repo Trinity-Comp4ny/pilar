@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { monitoring } from "@/lib/monitoring";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
@@ -130,7 +131,7 @@ export function useProjetoDetail(id: string | undefined) {
           void notifyNextStage(dbDisc.id);
         }
       } catch (err: unknown) {
-        console.error(err);
+        monitoring.captureException(err, { context: "handleStatusChange" });
         toast.error("Erro ao atualizar");
       }
     },
@@ -143,7 +144,7 @@ export function useProjetoDetail(id: string | undefined) {
         body: { disciplina_id: disciplinaId },
       });
       if (error) {
-        console.error("notify-next-stage error", error);
+        monitoring.captureException(error, { context: "notify-next-stage" });
         return;
       }
       const result = data as { notificados?: number; skipped?: string };
@@ -151,7 +152,7 @@ export function useProjetoDetail(id: string | undefined) {
         toast.success(`${result.notificados} responsável(is) da próxima etapa notificado(s)`);
       }
     } catch (err) {
-      console.error("notify-next-stage unexpected", err);
+      monitoring.captureException(err, { context: "notify-next-stage unexpected" });
     }
   };
 
@@ -167,13 +168,13 @@ export function useProjetoDetail(id: string | undefined) {
 
       if (error) {
         toast.error(`Erro ao enviar email para o cliente ${projeto?.cliente_nome}.`);
-        console.error("Erro na função:", error);
+        monitoring.captureException(error, { context: "sendDisciplinaEmail" });
         return;
       }
 
       toast.success(`Email enviado com sucesso para o cliente ${projeto?.cliente_nome}.`);
     } catch (err) {
-      console.error("Erro desconhecido:", err);
+      monitoring.captureException(err, { context: "sendDisciplinaEmail unexpected" });
     }
   };
 

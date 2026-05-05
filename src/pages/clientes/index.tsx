@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { monitoring } from "@/lib/monitoring";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -157,7 +158,7 @@ export default function Clientes() {
         toast.error(
           `Erro ao enviar mensagem para ${selectedClienteForMessage?.nome}${selectedClienteForMessage?.sobrenome ? " " + selectedClienteForMessage.sobrenome : ""}`
         );
-        console.error(`Erro na função: ${error.message}`);
+        monitoring.captureException(error, { context: "sendClientMessage" });
       }
 
       resetMessageModal();
@@ -165,7 +166,7 @@ export default function Clientes() {
         `Mensagem enviada com sucesso para o cliente ${selectedClienteForMessage?.nome}${selectedClienteForMessage?.sobrenome ? " " + selectedClienteForMessage.sobrenome : ""}.`
       );
     } catch (error) {
-      console.error("Erro desconhecido:", error);
+      monitoring.captureException(error, { context: "sendClientMessage unexpected" });
     }
   };
 
@@ -297,7 +298,7 @@ export default function Clientes() {
       resetForm();
       setIsDialogOpen(false);
     } catch (err) {
-      console.error(err);
+      monitoring.captureException(err, { context: "handleSaveCliente" });
     }
   };
 
@@ -314,7 +315,7 @@ export default function Clientes() {
     try {
       await deleteCliente(clienteToDelete.id);
     } catch (err) {
-      console.error(err);
+      monitoring.captureException(err, { context: "handleDeleteCliente" });
     }
     setConfirmDeleteOpen(false);
     setClienteToDelete(null);

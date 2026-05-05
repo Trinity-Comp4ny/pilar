@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createAdminClient } from "../_shared/ai-client.ts";
 import { withSentry } from "../_shared/sentry.ts";
 import { createLogger } from "../_shared/logger.ts";
+import { safeEqual } from "../_shared/crypto.ts";
 
 const log = createLogger("asaas-webhook");
 
@@ -75,13 +76,13 @@ serve(
         .eq("empresa_id", receita.empresa_id)
         .maybeSingle();
 
-      tokenValido = !!config?.webhook_token && receivedToken === config.webhook_token;
+      tokenValido = !!config?.webhook_token && safeEqual(receivedToken, config.webhook_token);
     }
 
     // Fallback para env var global (dev/staging)
     if (!tokenValido) {
       const globalToken = Deno.env.get("ASAAS_WEBHOOK_TOKEN");
-      tokenValido = !!globalToken && receivedToken === globalToken;
+      tokenValido = !!globalToken && safeEqual(receivedToken, globalToken);
     }
 
     if (!tokenValido) {
@@ -122,7 +123,11 @@ serve(
         updatePayload.data_recebimento = payment.paymentDate ?? new Date().toISOString().split("T")[0];
       }
 
-      await adminClient.from("receitas").update(updatePayload).eq("id", receita.id);
+      const { error: updateErr } = await adminClient.from("receitas").update(updatePayload).eq("id", receita.id);
+      if (updateErr) {
+        log.error("falha ao atualizar receita", updateErr, { receita_id: receita.id, event });
+        return new Response("Internal Server Error", { status: 500 });
+      }
 
       // Atualizar marco vinculado se recebido
       if (novoStatus === "Recebido") {
