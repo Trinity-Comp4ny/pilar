@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeftRight, Clock, Plus, TrendingDown, TrendingUp, Wallet } from "lucide-react";
@@ -21,51 +22,42 @@ interface KPIs {
 const formatBRL = (v: number) =>
   v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 2 });
 
+const EMPTY_KPIS: KPIs = { recebido: 0, pago: 0, aReceber: 0, aPagar: 0 };
+
 export default function Lancamentos() {
   const [filters, setFilters] = useState<LancamentosFilters>(defaultFilters);
   const [newTipo, setNewTipo] = useState<TipoLancamento | null>(null);
   const [newTransferencia, setNewTransferencia] = useState(false);
-  const [kpis, setKpis] = useState<KPIs>({ recebido: 0, pago: 0, aReceber: 0, aPagar: 0 });
-  const [loadingKpis, setLoadingKpis] = useState(false);
 
   const range = useMemo(() => periodoRange(filters), [filters]);
   const paginated = useLancamentosPaginados({ from: range.from, to: range.to });
   const items = paginated.data;
 
-  useEffect(() => {
-    const fetchKpis = async () => {
-      setLoadingKpis(true);
-      try {
-        let receitasQuery = supabase.from("receitas").select("valor, status, data_vencimento").is("deleted_at", null);
-        let despesasQuery = supabase.from("despesas").select("valor, status, data_vencimento").is("deleted_at", null);
+  const queryClient = useQueryClient();
+  const invalidateKpis = () => queryClient.invalidateQueries({ queryKey: ["lancamentos-kpis"] });
 
-        if (range.from) {
-          receitasQuery = receitasQuery.gte("data_vencimento", range.from);
-          despesasQuery = despesasQuery.gte("data_vencimento", range.from);
-        }
-        if (range.to) {
-          receitasQuery = receitasQuery.lte("data_vencimento", range.to);
-          despesasQuery = despesasQuery.lte("data_vencimento", range.to);
-        }
+  const { data: kpisRaw, isLoading: loadingKpis } = useQuery({
+    queryKey: ["lancamentos-kpis", range.from, range.to],
+    queryFn: async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase.rpc as any)("get_lancamentos_kpis", {
+        p_from: range.from ?? null,
+        p_to: range.to ?? null,
+      });
+      if (error) throw error;
+      return data as { recebido: number; a_receber: number; pago: number; a_pagar: number };
+    },
+    staleTime: 30_000,
+  });
 
-        const [{ data: rec }, { data: desp }] = await Promise.all([receitasQuery, despesasQuery]);
-
-        const recebido = (rec ?? [])
-          .filter((r) => r.status === "Recebido")
-          .reduce((s, r) => s + Number(r.valor || 0), 0);
-        const aReceber = (rec ?? [])
-          .filter((r) => r.status !== "Recebido")
-          .reduce((s, r) => s + Number(r.valor || 0), 0);
-        const pago = (desp ?? []).filter((d) => d.status === "Pago").reduce((s, d) => s + Number(d.valor || 0), 0);
-        const aPagar = (desp ?? []).filter((d) => d.status !== "Pago").reduce((s, d) => s + Number(d.valor || 0), 0);
-
-        setKpis({ recebido, pago, aReceber, aPagar });
-      } finally {
-        setLoadingKpis(false);
+  const kpis: KPIs = kpisRaw
+    ? {
+        recebido: Number(kpisRaw.recebido),
+        pago: Number(kpisRaw.pago),
+        aReceber: Number(kpisRaw.a_receber),
+        aPagar: Number(kpisRaw.a_pagar),
       }
-    };
-    fetchKpis();
-  }, [range.from, range.to]);
+    : EMPTY_KPIS;
 
   const saldo = kpis.recebido - kpis.pago;
 
@@ -145,6 +137,7 @@ export default function Lancamentos() {
               onSaved={() => {
                 setNewTipo(null);
                 paginated.refetch();
+                invalidateKpis();
               }}
             />
           )}
@@ -155,6 +148,7 @@ export default function Lancamentos() {
             onSaved={() => {
               setNewTransferencia(false);
               paginated.refetch();
+              invalidateKpis();
             }}
           />
         </CardContent>
