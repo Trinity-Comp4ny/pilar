@@ -42,6 +42,7 @@ const Propostas = lazy(() => import("./pages/propostas"));
 const Capacidade = lazy(() => import("./pages/capacidade"));
 const AiHub = lazy(() => import("./pages/ai"));
 const ProjetoDetail = lazy(() => import("./pages/projetos/ProjetoDetail"));
+const Calendario = lazy(() => import("./pages/Calendario"));
 const ClienteLogin = lazy(() => import("./pages/cliente/ClienteLogin"));
 const ClienteDashboard = lazy(() => import("./pages/cliente/ClienteDashboard"));
 const ClienteProjetoDetail = lazy(() => import("./pages/cliente/ClienteProjetoDetail"));
@@ -128,6 +129,7 @@ const App = () => {
                       <Route element={<FeatureRoute feature="projetos" />}>
                         <Route path="/projetos" element={<Projetos />} />
                         <Route path="/projetos/:id" element={<ProjetoDetail />} />
+                        <Route path="/calendario" element={<Calendario />} />
                       </Route>
 
                       <Route element={<FeatureRoute feature="clientes" />}>
