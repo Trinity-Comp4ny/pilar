@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, ShieldCheck, Trash2 } from "lucide-react";
+import { ArrowLeft, Download, ShieldCheck, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -58,6 +58,32 @@ export default function Privacidade() {
   const [motivo, setMotivo] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [open, setOpen] = useState(false);
+  const [exportSubmitting, setExportSubmitting] = useState(false);
+  const [exportRequested, setExportRequested] = useState(false);
+
+  const handleRequestExport = async () => {
+    if (!user) return;
+    setExportSubmitting(true);
+    try {
+      const { data, error } = await (
+        supabase.rpc as unknown as (
+          fn: string,
+          args?: Record<string, unknown>
+        ) => Promise<{ data: { error?: string } | null; error: { message: string } | null }>
+      )("request_data_export");
+      if (error) throw error;
+      if (data?.error === "already_pending") {
+        toast.info("Já existe uma solicitação de exportação em andamento.");
+        return;
+      }
+      setExportRequested(true);
+      toast.success("Solicitação registrada. Enviaremos seus dados por email em até 15 dias.");
+    } catch (err) {
+      toast.error(`Erro ao registrar solicitação: ${err instanceof Error ? err.message : "Tente novamente."}`);
+    } finally {
+      setExportSubmitting(false);
+    }
+  };
 
   const handleRequestDeletion = async () => {
     if (!user) {
@@ -232,14 +258,61 @@ export default function Privacidade() {
           )}
         </section>
 
-        <section>
-          <h2 className="text-xl font-medium tracking-tight mb-3">5. Contato</h2>
-          <p className="text-sm text-muted-foreground leading-relaxed">
-            Dúvidas sobre este documento ou sobre o tratamento dos seus dados: privacidade@trnty.com.br.
-          </p>
+        <section className="rounded-lg border bg-muted/30 p-6 space-y-4">
+          <div className="flex items-start gap-3">
+            <Download className="w-5 h-5 text-brand mt-0.5" />
+            <div className="flex-1">
+              <h3 className="font-medium mb-1">Solicitar exportação dos meus dados</h3>
+              <p className="text-sm text-muted-foreground">
+                Você pode solicitar uma cópia de todos os dados pessoais que tratamos (LGPD Art. 18, V — portabilidade).
+                Enviaremos um arquivo JSON para o seu email cadastrado em até 15 dias.
+              </p>
+            </div>
+          </div>
+
+          {user ? (
+            exportRequested ? (
+              <p className="text-sm text-positive font-medium">
+                ✓ Solicitação registrada — aguarde contato em até 15 dias úteis.
+              </p>
+            ) : (
+              <Button variant="outline" size="sm" onClick={handleRequestExport} disabled={exportSubmitting}>
+                <Download className="w-4 h-4 mr-2" />
+                {exportSubmitting ? "Enviando..." : "Solicitar exportação de dados"}
+              </Button>
+            )
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              Para solicitar a exportação pelo sistema, faça{" "}
+              <Link to="/login" className="text-brand underline">
+                login
+              </Link>
+              . Ou envie um email para privacidade@trnty.com.br.
+            </p>
+          )}
         </section>
 
-        <p className="text-xs text-muted-foreground pt-8 border-t">Última atualização: 04 de maio de 2026.</p>
+        <section>
+          <h2 className="text-xl font-medium tracking-tight mb-3">5. Encarregado de Dados (DPO)</h2>
+          <div className="text-sm text-muted-foreground leading-relaxed space-y-2">
+            <p>
+              <strong className="text-foreground">Controlador:</strong> Trinity Company LTDA
+            </p>
+            <p>
+              <strong className="text-foreground">Encarregado (DPO):</strong> privacidade@trnty.com.br
+            </p>
+            <p>
+              Você pode exercer todos os direitos do Art. 18 da LGPD (acesso, correção, portabilidade, exclusão,
+              revogação de consentimento) diretamente nesta página ou pelo email acima. Respondemos em até 15 dias.
+            </p>
+            <p>
+              Em caso de incidente de segurança que afete seus dados, você será notificado por email e a ANPD será
+              comunicada conforme previsto na Lei 13.709/2018.
+            </p>
+          </div>
+        </section>
+
+        <p className="text-xs text-muted-foreground pt-8 border-t">Última atualização: 05 de maio de 2026.</p>
       </main>
     </div>
   );
