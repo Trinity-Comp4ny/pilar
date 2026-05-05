@@ -192,7 +192,7 @@ export function DisciplinaDetailDialog({
                   }
                 }}
               />
-              <Button type="button" size="icon" onClick={onAddObservation}>
+              <Button type="button" size="icon" onClick={onAddObservation} aria-label="Adicionar observação">
                 <Plus size={16} />
               </Button>
             </div>

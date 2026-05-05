@@ -222,6 +222,7 @@ export function BillingMilestonesTab({ projetoId, canEdit }: BillingMilestonesTa
                           size="icon"
                           className="h-7 w-7 text-positive"
                           onClick={() => updateStatusMutation.mutate({ id: marco.id, status: "recebido" })}
+                          aria-label="Marcar como recebido"
                         >
                           <CheckCircle2 className="h-3.5 w-3.5" />
                         </Button>
@@ -231,6 +232,7 @@ export function BillingMilestonesTab({ projetoId, canEdit }: BillingMilestonesTa
                         size="icon"
                         className="h-7 w-7 text-red-500"
                         onClick={() => deleteMutation.mutate(marco.id)}
+                        aria-label="Excluir marco"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </Button>

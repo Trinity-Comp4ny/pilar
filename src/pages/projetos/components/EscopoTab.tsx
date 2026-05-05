@@ -437,7 +437,13 @@ export function EscopoTab({ projetoId, canEdit }: EscopoTabProps) {
                     value={item.custo || ""}
                     onChange={(e) => updateItem(i, "custo", parseFloat(e.target.value) || 0)}
                   />
-                  <Button variant="ghost" size="icon" className="h-7 w-7 text-red-400" onClick={() => removeItem(i)}>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 text-red-400"
+                    onClick={() => removeItem(i)}
+                    aria-label="Excluir item"
+                  >
                     <Trash2 className="h-3 w-3" />
                   </Button>
                 </div>

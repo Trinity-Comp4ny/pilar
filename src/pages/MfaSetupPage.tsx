@@ -288,6 +288,7 @@ export default function MfaSetupPage() {
                     size="icon"
                     className="shrink-0 h-8 w-8 border-paper-border"
                     onClick={handleCopy}
+                    aria-label="Copiar chave"
                   >
                     {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
                   </Button>

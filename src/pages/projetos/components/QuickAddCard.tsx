@@ -123,7 +123,7 @@ export function QuickAddCard({ status, clientes, onCreated }: QuickAddCardProps)
         >
           {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Criar"}
         </Button>
-        <Button size="icon" variant="ghost" className="h-7 w-7" onClick={reset} disabled={saving}>
+        <Button size="icon" variant="ghost" className="h-7 w-7" onClick={reset} disabled={saving} aria-label="Cancelar">
           <X className="h-3.5 w-3.5" />
         </Button>
       </div>

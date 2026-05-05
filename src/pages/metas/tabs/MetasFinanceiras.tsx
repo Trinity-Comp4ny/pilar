@@ -396,6 +396,7 @@ export default function MetasFinanceiras() {
                             setEditingMeta(meta);
                             setIsEditDialogOpen(true);
                           }}
+                          aria-label="Editar meta"
                         >
                           <Pencil className="h-3.5 w-3.5" />
                         </Button>
@@ -407,6 +408,7 @@ export default function MetasFinanceiras() {
                             setMetaToDelete(meta.id);
                             setDeleteAlertOpen(true);
                           }}
+                          aria-label="Excluir meta"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
                         </Button>

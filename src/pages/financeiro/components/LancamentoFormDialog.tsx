@@ -748,6 +748,7 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
                                 size="icon"
                                 className="h-7 w-7 text-red-600"
                                 onClick={() => setRateios((prev) => prev.filter((_, idx) => idx !== i))}
+                                aria-label="Remover rateio"
                               >
                                 <Trash2 className="h-3 w-3" />
                               </Button>
