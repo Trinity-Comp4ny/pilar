@@ -39,10 +39,9 @@ export default function Lancamentos() {
   const { data: kpisRaw, isLoading: loadingKpis } = useQuery({
     queryKey: ["lancamentos-kpis", range.from, range.to],
     queryFn: async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data, error } = await (supabase.rpc as any)("get_lancamentos_kpis", {
-        p_from: range.from ?? null,
-        p_to: range.to ?? null,
+      const { data, error } = await supabase.rpc("get_lancamentos_kpis", {
+        p_from: range.from ?? undefined,
+        p_to: range.to ?? undefined,
       });
       if (error) throw error;
       return data as { recebido: number; a_receber: number; pago: number; a_pagar: number };
