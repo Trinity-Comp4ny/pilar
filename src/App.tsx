@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { toast } from "sonner";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { monitoring } from "@/lib/monitoring";
+import { usePageTracking } from "@/hooks/usePageTracking";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ImpersonationProvider } from "@/contexts/ImpersonationContext";
 import { IdleTimeoutProvider } from "@/components/IdleTimeoutProvider";
@@ -92,6 +93,7 @@ const App = () => {
         <TooltipProvider>
           <Toaster />
           <BrowserRouter>
+            <PageTracker />
             <AuthProvider>
               <IdleTimeoutProvider />
               <ImpersonationProvider>
@@ -207,5 +209,10 @@ const App = () => {
     </ErrorBoundary>
   );
 };
+
+function PageTracker() {
+  usePageTracking();
+  return null;
+}
 
 export default App;

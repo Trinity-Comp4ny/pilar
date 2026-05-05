@@ -5,11 +5,15 @@ import { authenticateUser, jsonResponse, optionsResponse, safeErrorResponse } fr
 import { sendEmail, templateMensagemManual } from "../_shared/email.ts";
 import { EMAIL_RE } from "../_shared/validators.ts";
 import { createLogger } from "../_shared/logger.ts";
+import { getRateLimitKey, RateLimiter } from "../_shared/rate-limiter.ts";
 
 const log = createLogger("send-manual-client-email");
 
 const MAX_SUBJECT_LEN = 200;
 const MAX_MESSAGE_LEN = 10_000;
+
+// 20 emails manuais por usuário por hora
+const limiter = new RateLimiter(20, 60 * 60_000);
 
 serve(
   withSentry("send-manual-client-email", async (req) => {
@@ -18,6 +22,15 @@ serve(
 
     const auth = await authenticateUser(req);
     if (auth.error) return auth.error;
+
+    const key = getRateLimitKey(req, auth.user.id);
+    if (!limiter.allow(key)) {
+      const headers = limiter.retryAfterHeaders(key);
+      return new Response(JSON.stringify({ success: false, error: "Rate limit excedido" }), {
+        status: 429,
+        headers: { "Content-Type": "application/json", ...headers },
+      });
+    }
 
     try {
       const { email, subject, message } = await req.json();

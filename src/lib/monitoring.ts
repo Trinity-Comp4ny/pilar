@@ -4,7 +4,8 @@
  * Ativação:
  *   1. Definir VITE_SENTRY_DSN no .env (obrigatório para envio real)
  *   2. Opcional: VITE_SENTRY_ENV (default: import.meta.env.MODE)
- *   3. Opcional: VITE_SENTRY_TRACES_SAMPLE_RATE (default: 0.1)
+ *   3. Opcional: VITE_SENTRY_TRACES_RATE (default: 0.1) — sample rate de transactions
+ *      (legacy: VITE_SENTRY_TRACES_SAMPLE_RATE também aceito)
  *
  * Sem DSN, roda em no-op (console em dev, silêncio em prod).
  */
@@ -31,7 +32,12 @@ interface Monitoring {
 const DEV = import.meta.env.DEV;
 const DSN = import.meta.env.VITE_SENTRY_DSN as string | undefined;
 const ENV = (import.meta.env.VITE_SENTRY_ENV as string | undefined) ?? import.meta.env.MODE;
-const TRACES_RATE = Number(import.meta.env.VITE_SENTRY_TRACES_SAMPLE_RATE ?? 0.1);
+const TRACES_RATE = Number(
+  import.meta.env.VITE_SENTRY_TRACES_RATE ?? import.meta.env.VITE_SENTRY_TRACES_SAMPLE_RATE ?? 0.1
+);
+
+// Rotas públicas / pouco interessantes — drop transactions para economizar quota.
+const IGNORED_TX_ROUTES = [/^\/privacidade/, /^\/cliente\/login/, /^\/login/, /^\/forgot-password/];
 
 const SENSITIVE_KEYS =
   /password|senha|token|api_key|secret|authorization|cookie|cpf|cnpj|rg|pix|conta_bancaria|agencia|salario/i;
@@ -107,6 +113,15 @@ const sentryMonitoring: Monitoring = {
       replaysSessionSampleRate: 0,
       replaysOnErrorSampleRate: 1.0,
       sendDefaultPii: false,
+      integrations: [
+        Sentry.browserTracingIntegration(),
+        Sentry.replayIntegration({ maskAllText: true, blockAllMedia: true }),
+      ],
+      beforeSendTransaction(event) {
+        const txName = event.transaction ?? "";
+        if (IGNORED_TX_ROUTES.some((re) => re.test(txName))) return null;
+        return event;
+      },
       beforeSend(event) {
         if (event.request?.data) {
           event.request.data = scrub(event.request.data);

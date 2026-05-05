@@ -8,12 +8,22 @@
  * Ativação: setar `SENTRY_DSN` nos secrets do Supabase.
  *   supabase secrets set SENTRY_DSN=https://xxx@oyyy.ingest.sentry.io/zzz
  *
+ * Performance Monitoring (transactions):
+ *   - SENTRY_TRACES_RATE (default 0.1) — fração de invocações enviadas como transaction.
+ *   - Cada transaction tem op="edge.function", name=fnName, duração medida via Date.now().
+ *
  * Sem DSN: roda em no-op (apenas console).
  */
 
 const DSN = Deno.env.get("SENTRY_DSN") ?? "";
 const ENVIRONMENT = Deno.env.get("SENTRY_ENV") ?? Deno.env.get("DENO_ENV") ?? "production";
 const RELEASE = Deno.env.get("SENTRY_RELEASE") ?? undefined;
+const TRACES_RATE = (() => {
+  const raw = Number(Deno.env.get("SENTRY_TRACES_RATE") ?? "0.1");
+  if (!Number.isFinite(raw) || raw < 0) return 0;
+  if (raw > 1) return 1;
+  return raw;
+})();
 
 interface ParsedDsn {
   host: string;
@@ -132,8 +142,78 @@ export async function captureException(err: unknown, ctx: SentryContext = {}): P
 }
 
 /**
- * Envolve um handler de Edge Function. Captura exceções não tratadas em Sentry
- * e retorna 500 sem vazar detalhes pro cliente.
+ * Envia uma transaction (Performance) como envelope Sentry.
+ * Transaction = um span raiz com timing start/end.
+ */
+async function sendTransaction(params: {
+  fnName: string;
+  startMs: number;
+  endMs: number;
+  status: "ok" | "internal_error";
+  httpStatus?: number;
+  method?: string;
+  url?: string;
+}): Promise<void> {
+  if (!PARSED) return;
+
+  const eventId = genEventId();
+  const traceId = crypto.randomUUID().replace(/-/g, "");
+  const spanId = crypto.randomUUID().replace(/-/g, "").slice(0, 16);
+  const sentAt = new Date().toISOString();
+  const startTs = params.startMs / 1000;
+  const endTs = params.endMs / 1000;
+
+  const event = {
+    event_id: eventId,
+    type: "transaction",
+    transaction: params.fnName,
+    platform: "javascript",
+    environment: ENVIRONMENT,
+    release: RELEASE,
+    server_name: params.fnName,
+    timestamp: endTs,
+    start_timestamp: startTs,
+    tags: {
+      runtime: "deno-edge",
+      fn: params.fnName,
+      ...(params.method && { method: params.method }),
+      ...(params.httpStatus && { http_status: String(params.httpStatus) }),
+    },
+    contexts: {
+      trace: {
+        trace_id: traceId,
+        span_id: spanId,
+        op: "edge.function",
+        status: params.status,
+        ...(params.url && { data: { "http.url": params.url } }),
+      },
+    },
+    spans: [],
+  };
+
+  const envelopeHeader = JSON.stringify({ event_id: eventId, sent_at: sentAt, dsn: DSN });
+  const itemHeader = JSON.stringify({ type: "transaction" });
+  const body = `${envelopeHeader}\n${itemHeader}\n${JSON.stringify(event)}`;
+
+  try {
+    const res = await fetch(PARSED.envelopeUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-sentry-envelope",
+        "X-Sentry-Auth": `Sentry sentry_version=7, sentry_key=${PARSED.publicKey}, sentry_client=pilar-edge/1.0`,
+      },
+      body,
+    });
+    if (!res.ok) console.warn(`[sentry] tx envelope rejected ${res.status}`);
+  } catch (e) {
+    console.warn(`[sentry] tx failed: ${e instanceof Error ? e.message : String(e)}`);
+  }
+}
+
+/**
+ * Envolve um handler de Edge Function. Captura exceções não tratadas em Sentry,
+ * registra uma transaction (Performance) com sampling, e retorna 500 sem vazar
+ * detalhes pro cliente.
  *
  * Uso:
  *   serve(withSentry("asaas-webhook", async (req) => { ... }))
@@ -143,18 +223,43 @@ export function withSentry(
   handler: (req: Request) => Promise<Response>
 ): (req: Request) => Promise<Response> {
   return async (req: Request) => {
+    const sampled = PARSED ? Math.random() < TRACES_RATE : false;
+    const startMs = sampled ? Date.now() : 0;
+    let response: Response;
+    let status: "ok" | "internal_error" = "ok";
+    let httpStatus: number | undefined;
+
     try {
-      return await handler(req);
+      response = await handler(req);
+      httpStatus = response.status;
+      if (response.status >= 500) status = "internal_error";
     } catch (err) {
+      status = "internal_error";
       await captureException(err, {
         fn: fnName,
         tags: { method: req.method },
         extra: { url: req.url },
       });
-      return new Response(JSON.stringify({ error: "Internal Server Error" }), {
+      response = new Response(JSON.stringify({ error: "Internal Server Error" }), {
         status: 500,
         headers: { "Content-Type": "application/json" },
       });
+      httpStatus = 500;
     }
+
+    if (sampled) {
+      // fire-and-forget pra não atrasar a resposta
+      sendTransaction({
+        fnName,
+        startMs,
+        endMs: Date.now(),
+        status,
+        httpStatus,
+        method: req.method,
+        url: req.url,
+      }).catch(() => undefined);
+    }
+
+    return response;
   };
 }

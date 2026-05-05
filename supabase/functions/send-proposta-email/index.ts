@@ -5,11 +5,15 @@ import { authenticateUser, jsonResponse, optionsResponse, safeErrorResponse } fr
 import { sendEmail, templatePropostaEnvio } from "../_shared/email.ts";
 import { EMAIL_RE } from "../_shared/validators.ts";
 import { createLogger } from "../_shared/logger.ts";
+import { getRateLimitKey, RateLimiter } from "../_shared/rate-limiter.ts";
 
 const log = createLogger("send-proposta-email");
 
 const MAX_MESSAGE_LEN = 5_000;
 const MAX_ATTACHMENT_B64 = 15 * 1024 * 1024; // ~11 MB decoded
+
+// 10 emails por usuário por minuto
+const limiter = new RateLimiter(10, 60_000);
 
 serve(
   withSentry("send-proposta-email", async (req) => {
@@ -18,6 +22,15 @@ serve(
 
     const auth = await authenticateUser(req);
     if (auth.error) return auth.error;
+
+    const key = getRateLimitKey(req, auth.user.id);
+    if (!limiter.allow(key)) {
+      const headers = limiter.retryAfterHeaders(key);
+      return new Response(JSON.stringify({ success: false, error: "Rate limit excedido" }), {
+        status: 429,
+        headers: { "Content-Type": "application/json", ...headers },
+      });
+    }
 
     const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 

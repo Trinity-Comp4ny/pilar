@@ -6,8 +6,12 @@ import { authenticateUser, isUUID, jsonResponse, optionsResponse, safeErrorRespo
 import { sendEmail, templateCobrancaDireta } from "../_shared/email.ts";
 import { EMAIL_RE } from "../_shared/validators.ts";
 import { createLogger } from "../_shared/logger.ts";
+import { getRateLimitKey, RateLimiter } from "../_shared/rate-limiter.ts";
 
 const log = createLogger("send-invoice-reminder");
+
+// 30 cobranças por usuário por hora
+const limiter = new RateLimiter(30, 60 * 60_000);
 
 function formatCurrency(value: number): string {
   return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
@@ -28,6 +32,15 @@ serve(
 
     const auth = await authenticateUser(req);
     if (auth.error) return auth.error;
+
+    const key = getRateLimitKey(req, auth.user.id);
+    if (!limiter.allow(key)) {
+      const headers = limiter.retryAfterHeaders(key);
+      return new Response(JSON.stringify({ success: false, error: "Rate limit excedido" }), {
+        status: 429,
+        headers: { "Content-Type": "application/json", ...headers },
+      });
+    }
     const { supabase: supabaseClient, user } = auth;
 
     try {
