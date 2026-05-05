@@ -1,6 +1,9 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { withSentry } from "../_shared/sentry.ts";
 import { getCorsHeaders } from "../_shared/cors.ts";
+import { createLogger } from "../_shared/logger.ts";
+
+const log = createLogger("turnstile-verify");
 
 // Verifica token Cloudflare Turnstile server-side
 // Necessário env TURNSTILE_SECRET_KEY
@@ -54,7 +57,7 @@ serve(
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     } catch (error: unknown) {
-      console.error("[turnstile-verify]", error);
+      log.error("turnstile verification failed", error);
       return new Response(JSON.stringify({ success: false, error: "internal" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },

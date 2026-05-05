@@ -64,7 +64,7 @@ DELETE FROM public.impersonation_sessions WHERE admin_id::TEXT LIKE '11111111-%'
 SELECT test_set_auth('11111111-0000-0000-0000-000000000002');
 
 SELECT throws_ok(
-  $$ SELECT public.start_impersonation('viewer', NULL, NULL) $$,
+  $$ SELECT public.start_impersonation('user', NULL, NULL) $$,
   '42501',
   NULL,
   'user comum recebe 42501 ao tentar start_impersonation'
@@ -148,7 +148,7 @@ SELECT ok(
 -- Teste 9: start novo encerra sessão prévia
 -- =============================================
 SELECT lives_ok(
-  $$ SELECT public.start_impersonation('viewer', NULL, NULL) $$,
+  $$ SELECT public.start_impersonation('user', NULL, NULL) $$,
   'segundo start funciona'
 );
 
@@ -161,7 +161,7 @@ SELECT is(
 
 SELECT is(
   public.current_effective_role(),
-  'viewer',
+  'user',
   'current_effective_role atualiza para o novo target'
 );
 

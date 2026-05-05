@@ -4,6 +4,9 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 import { authenticateUser, isUUID, jsonResponse, optionsResponse, safeErrorResponse } from "../_shared/cors.ts";
 import { sendEmail, templateNotificacaoProjeto } from "../_shared/email.ts";
+import { createLogger } from "../_shared/logger.ts";
+
+const log = createLogger("notify-project-people");
 
 serve(
   withSentry("notify-project-people", async (req) => {
@@ -73,7 +76,7 @@ serve(
 
       return jsonResponse({ success: true, notified: destinatarios.length }, 200, req);
     } catch (err) {
-      console.error("[notify-project-people]", err);
+      log.error("notify project people failed", err, { user_id: user.id, empresa_id: profile?.empresa_id });
       return safeErrorResponse(500, "Erro ao enviar notificações", req);
     }
   })

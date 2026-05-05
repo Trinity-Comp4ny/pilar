@@ -4,6 +4,9 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 import { authenticateUser, isUUID, jsonResponse, optionsResponse, safeErrorResponse } from "../_shared/cors.ts";
 import { sendEmail, templateAcessoPortalCliente } from "../_shared/email.ts";
+import { createLogger } from "../_shared/logger.ts";
+
+const log = createLogger("reset-cliente-portal-password");
 
 function generatePassword(length = 10): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
@@ -59,7 +62,11 @@ serve(
       });
 
       if (resetError) {
-        console.error("[reset-cliente-portal-password] _portal_reset_password failed", resetError.message);
+        log.error("_portal_reset_password failed", resetError, {
+          account_id: account.id,
+          empresa_id: profile.empresa_id,
+          user_id: user.id,
+        });
         return safeErrorResponse(400, `Falha ao redefinir senha: ${resetError.message}`, req);
       }
 
@@ -78,12 +85,12 @@ serve(
           }),
         });
       } catch (emailErr) {
-        console.error("[reset-cliente-portal-password] sendEmail failed", emailErr);
+        log.error("sendEmail failed", emailErr, { account_id: account.id, empresa_id: profile.empresa_id });
       }
 
       return jsonResponse({ success: true, email: account.email }, 200, req);
     } catch (error: unknown) {
-      console.error("[reset-cliente-portal-password] unexpected error", error);
+      log.error("unexpected error", error, { user_id: user.id });
       return safeErrorResponse(400, "Invalid request", req);
     }
   })

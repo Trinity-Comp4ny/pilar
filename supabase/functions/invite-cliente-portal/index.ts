@@ -5,6 +5,9 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { authenticateUser, isUUID, jsonResponse, optionsResponse, safeErrorResponse } from "../_shared/cors.ts";
 import { EMAIL_RE } from "../_shared/validators.ts";
 import { sendEmail, templateAcessoPortalCliente } from "../_shared/email.ts";
+import { createLogger } from "../_shared/logger.ts";
+
+const log = createLogger("invite-cliente-portal");
 
 function generatePassword(length = 8): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
@@ -81,7 +84,7 @@ serve(
           .eq("id", existingAccount.id);
 
         if (reactivateError) {
-          console.error("[invite-cliente-portal] reactivate failed", reactivateError.message);
+          log.error("reactivate account failed", reactivateError, { account_id: existingAccount.id, cliente_id });
           return safeErrorResponse(400, `Falha ao reativar conta do portal: ${reactivateError.message}`, req);
         }
 
@@ -92,7 +95,7 @@ serve(
         });
 
         if (resetError) {
-          console.error("[invite-cliente-portal] reset password failed", resetError.message);
+          log.error("reset password failed", resetError, { account_id: existingAccount.id });
           return safeErrorResponse(400, `Falha ao definir senha: ${resetError.message}`, req);
         }
       } else {
@@ -106,7 +109,7 @@ serve(
         });
 
         if (insertError) {
-          console.error("[invite-cliente-portal] _portal_create_account failed", insertError.message);
+          log.error("_portal_create_account failed", insertError, { cliente_id, empresa_id: profile.empresa_id });
           return safeErrorResponse(400, `Falha ao criar conta do portal: ${insertError.message}`, req);
         }
       }
@@ -125,12 +128,12 @@ serve(
           }),
         });
       } catch (emailErr) {
-        console.error("[invite-cliente-portal] sendEmail failed", emailErr);
+        log.error("sendEmail failed", emailErr, { cliente_id });
       }
 
       return jsonResponse({ success: true, email: normalizedEmail }, 200, req);
     } catch (error: unknown) {
-      console.error("[invite-cliente-portal] unexpected error", error);
+      log.error("unexpected error", error, { user_id: user.id });
       return safeErrorResponse(400, "Invalid request", req);
     }
   })

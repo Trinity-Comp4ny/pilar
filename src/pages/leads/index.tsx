@@ -33,7 +33,10 @@ import {
   Trash2,
   ArrowRight,
   MoreVertical,
+  TrendingUp,
+  Search,
 } from "lucide-react";
+import { EmptyState } from "@/components/EmptyState";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -371,6 +374,10 @@ export default function Leads() {
 
   const leadNome = (lead: Lead) => (lead.sobrenome ? `${lead.nome} ${lead.sobrenome}` : lead.nome);
 
+  const hasNoLeads = leads.length === 0;
+  const visibleCount = Object.keys(statusConfig).reduce((sum, s) => sum + getLeadsByStatus(s).length, 0);
+  const hasNoResults = !hasNoLeads && visibleCount === 0;
+
   return (
     <PageLayout
       className="overflow-y-hidden"
@@ -575,273 +582,308 @@ export default function Leads() {
         </div>
       )}
 
-      <DragDropContext onDragEnd={onDragEnd}>
-        <div className="flex-1 min-h-0">
-          {/* Desktop kanban */}
-          <div className="hidden md:flex gap-3 w-full h-full min-h-0 overflow-x-auto pb-2">
-            {Object.entries(statusConfig).map(([status, config]) => {
-              const items = getLeadsByStatus(status);
-              const isCollapsed = collapsedColumns.has(status);
-              const dotColor = STATUS_DOT[status] || "bg-pipeline-perdido";
+      {hasNoLeads ? (
+        <div className="flex-1 min-h-0 flex items-center justify-center">
+          <EmptyState
+            icon={TrendingUp}
+            title="Nenhum lead cadastrado"
+            description="Comece capturando seu primeiro lead para acompanhar oportunidades no pipeline."
+            action={
+              canEdit
+                ? {
+                    label: "Criar Primeiro Lead",
+                    onClick: () => setIsDialogOpen(true),
+                  }
+                : undefined
+            }
+          />
+        </div>
+      ) : hasNoResults ? (
+        <div className="flex-1 min-h-0 flex items-center justify-center">
+          <EmptyState
+            icon={Search}
+            title="Nenhum resultado para esses filtros"
+            description="Tente ajustar ou limpar os filtros aplicados para ver seus leads."
+            action={{
+              label: "Limpar filtros",
+              onClick: () => setFilterProximos(false),
+              variant: "outline",
+            }}
+          />
+        </div>
+      ) : (
+        <DragDropContext onDragEnd={onDragEnd}>
+          <div className="flex-1 min-h-0">
+            {/* Desktop kanban */}
+            <div className="hidden md:flex gap-3 w-full h-full min-h-0 overflow-x-auto pb-2">
+              {Object.entries(statusConfig).map(([status, config]) => {
+                const items = getLeadsByStatus(status);
+                const isCollapsed = collapsedColumns.has(status);
+                const dotColor = STATUS_DOT[status] || "bg-pipeline-perdido";
 
-              if (isCollapsed) {
+                if (isCollapsed) {
+                  return (
+                    <div
+                      key={status}
+                      className="flex flex-col w-10 flex-shrink-0 min-h-0 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer"
+                      onClick={() => toggleColumn(status)}
+                    >
+                      <div className="flex flex-col items-center gap-2 py-3">
+                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                        <span className={cn("h-2 w-2 rounded-full", dotColor)} />
+                      </div>
+                      <div className="flex-1 flex items-center justify-center">
+                        <span
+                          className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide whitespace-nowrap"
+                          style={{ writingMode: "vertical-rl", transform: "rotate(180deg)" }}
+                        >
+                          {config.label} · {items.length}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                }
+
                 return (
-                  <div
-                    key={status}
-                    className="flex flex-col w-10 flex-shrink-0 min-h-0 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer"
-                    onClick={() => toggleColumn(status)}
-                  >
-                    <div className="flex flex-col items-center gap-2 py-3">
-                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                      <span className={cn("h-2 w-2 rounded-full", dotColor)} />
+                  <div key={status} className="flex flex-col min-w-[280px] w-[280px] flex-shrink-0 min-h-0">
+                    <div className="flex items-center gap-2 px-2 py-2.5 group">
+                      <span className={cn("h-2 w-2 rounded-full flex-shrink-0", dotColor)} />
+                      <h3 className="text-xs font-medium text-foreground/80 uppercase tracking-wide">{config.label}</h3>
+                      <span className="text-[11px] text-muted-foreground tabular-nums">{items.length}</span>
+                      <div className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 text-muted-foreground"
+                          onClick={() => toggleColumn(status)}
+                          title="Minimizar coluna"
+                        >
+                          <ChevronLeft className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
                     </div>
-                    <div className="flex-1 flex items-center justify-center">
-                      <span
-                        className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide whitespace-nowrap"
-                        style={{ writingMode: "vertical-rl", transform: "rotate(180deg)" }}
-                      >
-                        {config.label} · {items.length}
-                      </span>
-                    </div>
+
+                    <Droppable droppableId={status}>
+                      {(provided, snapshot) => (
+                        <div
+                          ref={provided.innerRef}
+                          {...provided.droppableProps}
+                          className={cn(
+                            "flex-1 min-h-0 overflow-y-auto p-2 space-y-2 rounded-lg bg-muted/30 transition-all",
+                            snapshot.isDraggingOver && "ring-2 ring-brand/40 bg-brand/5"
+                          )}
+                        >
+                          {items.length === 0 && !snapshot.isDraggingOver && (
+                            <div className="flex items-center justify-center py-8 px-2 text-center text-[11px] text-muted-foreground/70 border border-dashed border-muted-foreground/20 rounded-md">
+                              Arraste leads para cá
+                            </div>
+                          )}
+                          {items.map((lead, index) => (
+                            <Draggable key={lead.id} draggableId={lead.id} index={index}>
+                              {(provided, snapshot) => (
+                                <Card
+                                  ref={provided.innerRef}
+                                  {...provided.draggableProps}
+                                  {...provided.dragHandleProps}
+                                  onClick={() => handleCardClick(lead)}
+                                  className={cn(
+                                    "cursor-pointer hover:shadow-md transition-shadow w-full",
+                                    snapshot.isDragging && "shadow-lg opacity-90"
+                                  )}
+                                >
+                                  <CardHeader className="p-3 pb-2">
+                                    <div className="flex justify-between items-start gap-2">
+                                      <div className="flex-1 min-w-0">
+                                        <CardTitle className="text-base font-medium flex items-start gap-2">
+                                          <User size={16} className="mt-0.5 flex-shrink-0" />
+                                          <span className="line-clamp-1">{leadNome(lead)}</span>
+                                        </CardTitle>
+                                        {lead.empresa_lead && (
+                                          <p className="text-xs text-black/50 mt-0.5 ml-6 line-clamp-1">
+                                            {lead.empresa_lead}
+                                          </p>
+                                        )}
+                                      </div>
+                                      <div className="flex flex-col items-end gap-1 shrink-0">
+                                        {lead.cliente_id && (
+                                          <Badge
+                                            variant="outline"
+                                            className="text-xs h-5 px-1.5 bg-brand text-ink border-brand/40"
+                                          >
+                                            Cliente
+                                          </Badge>
+                                        )}
+                                        {lead.valor_estimado != null && (
+                                          <span className="text-xs font-semibold text-brand tabular-nums">
+                                            {formatCurrency(lead.valor_estimado)}
+                                          </span>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </CardHeader>
+                                  <CardContent className="p-3 pt-0 space-y-1.5">
+                                    {lead.email && (
+                                      <div className="flex items-center gap-2 text-sm text-black/60">
+                                        <Mail size={14} className="flex-shrink-0" />
+                                        <span className="line-clamp-1">{lead.email}</span>
+                                      </div>
+                                    )}
+                                    {lead.contato && (
+                                      <div className="flex items-center gap-2 text-sm text-black/60">
+                                        <Phone size={14} className="flex-shrink-0" />
+                                        <span className="line-clamp-1">{lead.contato}</span>
+                                      </div>
+                                    )}
+                                    {lead.origem && (
+                                      <p className="text-sm text-black/50 line-clamp-1 mt-2 pt-2 border-t">
+                                        Origem: {lead.origem}
+                                      </p>
+                                    )}
+                                    {lead.status === "Perdido" && lead.motivo_perda && (
+                                      <p className="text-sm text-chart-danger/80 line-clamp-2 mt-1 pt-1 border-t border-danger-soft-border">
+                                        Motivo: {lead.motivo_perda}
+                                      </p>
+                                    )}
+                                  </CardContent>
+                                </Card>
+                              )}
+                            </Draggable>
+                          ))}
+                          {provided.placeholder}
+                        </div>
+                      )}
+                    </Droppable>
                   </div>
                 );
-              }
+              })}
+            </div>
 
-              return (
-                <div key={status} className="flex flex-col min-w-[280px] w-[280px] flex-shrink-0 min-h-0">
-                  <div className="flex items-center gap-2 px-2 py-2.5 group">
-                    <span className={cn("h-2 w-2 rounded-full flex-shrink-0", dotColor)} />
-                    <h3 className="text-xs font-medium text-foreground/80 uppercase tracking-wide">{config.label}</h3>
-                    <span className="text-[11px] text-muted-foreground tabular-nums">{items.length}</span>
-                    <div className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6 text-muted-foreground"
-                        onClick={() => toggleColumn(status)}
-                        title="Minimizar coluna"
-                      >
-                        <ChevronLeft className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
-                  </div>
-
-                  <Droppable droppableId={status}>
-                    {(provided, snapshot) => (
-                      <div
-                        ref={provided.innerRef}
-                        {...provided.droppableProps}
-                        className={cn(
-                          "flex-1 min-h-0 overflow-y-auto p-2 space-y-2 rounded-lg bg-muted/30 transition-all",
-                          snapshot.isDraggingOver && "ring-2 ring-brand/40 bg-brand/5"
-                        )}
-                      >
-                        {items.length === 0 && !snapshot.isDraggingOver && (
-                          <div className="flex items-center justify-center py-6 text-[11px] text-muted-foreground/60 text-center px-2">
-                            Solte um lead aqui
-                          </div>
-                        )}
-                        {items.map((lead, index) => (
-                          <Draggable key={lead.id} draggableId={lead.id} index={index}>
-                            {(provided, snapshot) => (
-                              <Card
-                                ref={provided.innerRef}
-                                {...provided.draggableProps}
-                                {...provided.dragHandleProps}
-                                onClick={() => handleCardClick(lead)}
-                                className={cn(
-                                  "cursor-pointer hover:shadow-md transition-shadow w-full",
-                                  snapshot.isDragging && "shadow-lg opacity-90"
+            {/* Mobile list view */}
+            <div className="md:hidden space-y-3">
+              {Object.entries(statusConfig).map(([status, config]) => {
+                const items = getLeadsByStatus(status);
+                const dotColor = STATUS_DOT[status] || "bg-pipeline-perdido";
+                if (items.length === 0) return null;
+                return (
+                  <details key={status} open className="border rounded-lg bg-white">
+                    <summary className="flex items-center gap-2 px-3 py-2.5 cursor-pointer list-none">
+                      <span className={cn("h-2 w-2 rounded-full flex-shrink-0", dotColor)} />
+                      <span className="text-xs font-medium uppercase tracking-wide flex-1">{config.label}</span>
+                      <span className="text-[11px] text-muted-foreground tabular-nums">{items.length}</span>
+                      <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                    </summary>
+                    <div className="p-2 space-y-2 border-t bg-muted/20">
+                      {items.map((lead) => (
+                        <Card
+                          key={lead.id}
+                          onClick={() => handleCardClick(lead)}
+                          className="cursor-pointer hover:shadow-md transition-shadow w-full"
+                        >
+                          <CardHeader className="p-3 pb-2">
+                            <div className="flex justify-between items-start gap-2">
+                              <div className="flex-1 min-w-0">
+                                <CardTitle className="text-base font-medium flex items-start gap-2">
+                                  <User size={16} className="mt-0.5 flex-shrink-0" />
+                                  <span className="line-clamp-1">{leadNome(lead)}</span>
+                                </CardTitle>
+                                {lead.empresa_lead && (
+                                  <p className="text-xs text-black/50 mt-0.5 ml-6 line-clamp-1">{lead.empresa_lead}</p>
                                 )}
-                              >
-                                <CardHeader className="p-3 pb-2">
-                                  <div className="flex justify-between items-start gap-2">
-                                    <div className="flex-1 min-w-0">
-                                      <CardTitle className="text-base font-medium flex items-start gap-2">
-                                        <User size={16} className="mt-0.5 flex-shrink-0" />
-                                        <span className="line-clamp-1">{leadNome(lead)}</span>
-                                      </CardTitle>
-                                      {lead.empresa_lead && (
-                                        <p className="text-xs text-black/50 mt-0.5 ml-6 line-clamp-1">
-                                          {lead.empresa_lead}
-                                        </p>
-                                      )}
-                                    </div>
-                                    <div className="flex flex-col items-end gap-1 shrink-0">
-                                      {lead.cliente_id && (
-                                        <Badge
-                                          variant="outline"
-                                          className="text-xs h-5 px-1.5 bg-brand text-ink border-brand/40"
-                                        >
-                                          Cliente
-                                        </Badge>
-                                      )}
-                                      {lead.valor_estimado != null && (
-                                        <span className="text-xs font-semibold text-brand tabular-nums">
-                                          {formatCurrency(lead.valor_estimado)}
-                                        </span>
-                                      )}
-                                    </div>
-                                  </div>
-                                </CardHeader>
-                                <CardContent className="p-3 pt-0 space-y-1.5">
-                                  {lead.email && (
-                                    <div className="flex items-center gap-2 text-sm text-black/60">
-                                      <Mail size={14} className="flex-shrink-0" />
-                                      <span className="line-clamp-1">{lead.email}</span>
-                                    </div>
-                                  )}
-                                  {lead.contato && (
-                                    <div className="flex items-center gap-2 text-sm text-black/60">
-                                      <Phone size={14} className="flex-shrink-0" />
-                                      <span className="line-clamp-1">{lead.contato}</span>
-                                    </div>
-                                  )}
-                                  {lead.origem && (
-                                    <p className="text-sm text-black/50 line-clamp-1 mt-2 pt-2 border-t">
-                                      Origem: {lead.origem}
-                                    </p>
-                                  )}
-                                  {lead.status === "Perdido" && lead.motivo_perda && (
-                                    <p className="text-sm text-chart-danger/80 line-clamp-2 mt-1 pt-1 border-t border-danger-soft-border">
-                                      Motivo: {lead.motivo_perda}
-                                    </p>
-                                  )}
-                                </CardContent>
-                              </Card>
+                              </div>
+                              <div className="flex flex-col items-end gap-1 shrink-0">
+                                {lead.cliente_id && (
+                                  <Badge
+                                    variant="outline"
+                                    className="text-xs h-5 px-1.5 bg-positive/10 text-positive border-positive/20"
+                                  >
+                                    Cliente
+                                  </Badge>
+                                )}
+                                {lead.valor_estimado != null && (
+                                  <span className="text-xs font-semibold text-brand tabular-nums">
+                                    {formatCurrency(lead.valor_estimado)}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </CardHeader>
+                          <CardContent className="p-3 pt-0 space-y-1.5">
+                            {lead.email && (
+                              <div className="flex items-center gap-2 text-sm text-black/60">
+                                <Mail size={14} className="flex-shrink-0" />
+                                <span className="line-clamp-1">{lead.email}</span>
+                              </div>
                             )}
-                          </Draggable>
-                        ))}
-                        {provided.placeholder}
-                      </div>
-                    )}
-                  </Droppable>
-                </div>
-              );
-            })}
+                            {lead.contato && (
+                              <div className="flex items-center gap-2 text-sm text-black/60">
+                                <Phone size={14} className="flex-shrink-0" />
+                                <span className="line-clamp-1">{lead.contato}</span>
+                              </div>
+                            )}
+                            {lead.origem && (
+                              <p className="text-sm text-black/50 line-clamp-1 mt-2 pt-2 border-t">
+                                Origem: {lead.origem}
+                              </p>
+                            )}
+                            {lead.status === "Perdido" && lead.motivo_perda && (
+                              <p className="text-sm text-chart-danger/80 line-clamp-2 mt-1 pt-1 border-t border-danger-soft-border">
+                                Motivo: {lead.motivo_perda}
+                              </p>
+                            )}
+                            {canEdit && (
+                              <div className="flex justify-end pt-2 mt-1 border-t" onClick={(e) => e.stopPropagation()}>
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-7 text-xs gap-1 text-muted-foreground"
+                                    >
+                                      <MoreVertical className="h-3.5 w-3.5" />
+                                      Ações
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end">
+                                    <DropdownMenuSub>
+                                      <DropdownMenuSubTrigger>
+                                        <ArrowRight className="h-3.5 w-3.5 mr-2" /> Mover para
+                                      </DropdownMenuSubTrigger>
+                                      <DropdownMenuSubContent>
+                                        {Object.keys(statusConfig)
+                                          .filter((s) => s !== lead.status)
+                                          .map((s) => (
+                                            <DropdownMenuItem
+                                              key={s}
+                                              onClick={() => {
+                                                if (s === "Perdido") {
+                                                  setPendingDrop({ leadId: lead.id, newStatus: s });
+                                                } else if (s === "Ganho") {
+                                                  setPendingDrop({ leadId: lead.id, newStatus: s });
+                                                } else {
+                                                  updateStatus.mutate({ leadId: lead.id, newStatus: s });
+                                                }
+                                              }}
+                                            >
+                                              {statusConfig[s].label}
+                                            </DropdownMenuItem>
+                                          ))}
+                                      </DropdownMenuSubContent>
+                                    </DropdownMenuSub>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              </div>
+                            )}
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  </details>
+                );
+              })}
+            </div>
           </div>
-
-          {/* Mobile list view */}
-          <div className="md:hidden space-y-3">
-            {Object.entries(statusConfig).map(([status, config]) => {
-              const items = getLeadsByStatus(status);
-              const dotColor = STATUS_DOT[status] || "bg-pipeline-perdido";
-              if (items.length === 0) return null;
-              return (
-                <details key={status} open className="border rounded-lg bg-white">
-                  <summary className="flex items-center gap-2 px-3 py-2.5 cursor-pointer list-none">
-                    <span className={cn("h-2 w-2 rounded-full flex-shrink-0", dotColor)} />
-                    <span className="text-xs font-medium uppercase tracking-wide flex-1">{config.label}</span>
-                    <span className="text-[11px] text-muted-foreground tabular-nums">{items.length}</span>
-                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                  </summary>
-                  <div className="p-2 space-y-2 border-t bg-muted/20">
-                    {items.map((lead) => (
-                      <Card
-                        key={lead.id}
-                        onClick={() => handleCardClick(lead)}
-                        className="cursor-pointer hover:shadow-md transition-shadow w-full"
-                      >
-                        <CardHeader className="p-3 pb-2">
-                          <div className="flex justify-between items-start gap-2">
-                            <div className="flex-1 min-w-0">
-                              <CardTitle className="text-base font-medium flex items-start gap-2">
-                                <User size={16} className="mt-0.5 flex-shrink-0" />
-                                <span className="line-clamp-1">{leadNome(lead)}</span>
-                              </CardTitle>
-                              {lead.empresa_lead && (
-                                <p className="text-xs text-black/50 mt-0.5 ml-6 line-clamp-1">{lead.empresa_lead}</p>
-                              )}
-                            </div>
-                            <div className="flex flex-col items-end gap-1 shrink-0">
-                              {lead.cliente_id && (
-                                <Badge
-                                  variant="outline"
-                                  className="text-xs h-5 px-1.5 bg-positive/10 text-positive border-positive/20"
-                                >
-                                  Cliente
-                                </Badge>
-                              )}
-                              {lead.valor_estimado != null && (
-                                <span className="text-xs font-semibold text-brand tabular-nums">
-                                  {formatCurrency(lead.valor_estimado)}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        </CardHeader>
-                        <CardContent className="p-3 pt-0 space-y-1.5">
-                          {lead.email && (
-                            <div className="flex items-center gap-2 text-sm text-black/60">
-                              <Mail size={14} className="flex-shrink-0" />
-                              <span className="line-clamp-1">{lead.email}</span>
-                            </div>
-                          )}
-                          {lead.contato && (
-                            <div className="flex items-center gap-2 text-sm text-black/60">
-                              <Phone size={14} className="flex-shrink-0" />
-                              <span className="line-clamp-1">{lead.contato}</span>
-                            </div>
-                          )}
-                          {lead.origem && (
-                            <p className="text-sm text-black/50 line-clamp-1 mt-2 pt-2 border-t">
-                              Origem: {lead.origem}
-                            </p>
-                          )}
-                          {lead.status === "Perdido" && lead.motivo_perda && (
-                            <p className="text-sm text-chart-danger/80 line-clamp-2 mt-1 pt-1 border-t border-danger-soft-border">
-                              Motivo: {lead.motivo_perda}
-                            </p>
-                          )}
-                          {canEdit && (
-                            <div className="flex justify-end pt-2 mt-1 border-t" onClick={(e) => e.stopPropagation()}>
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button variant="ghost" size="sm" className="h-7 text-xs gap-1 text-muted-foreground">
-                                    <MoreVertical className="h-3.5 w-3.5" />
-                                    Ações
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                  <DropdownMenuSub>
-                                    <DropdownMenuSubTrigger>
-                                      <ArrowRight className="h-3.5 w-3.5 mr-2" /> Mover para
-                                    </DropdownMenuSubTrigger>
-                                    <DropdownMenuSubContent>
-                                      {Object.keys(statusConfig)
-                                        .filter((s) => s !== lead.status)
-                                        .map((s) => (
-                                          <DropdownMenuItem
-                                            key={s}
-                                            onClick={() => {
-                                              if (s === "Perdido") {
-                                                setPendingDrop({ leadId: lead.id, newStatus: s });
-                                              } else if (s === "Ganho") {
-                                                setPendingDrop({ leadId: lead.id, newStatus: s });
-                                              } else {
-                                                updateStatus.mutate({ leadId: lead.id, newStatus: s });
-                                              }
-                                            }}
-                                          >
-                                            {statusConfig[s].label}
-                                          </DropdownMenuItem>
-                                        ))}
-                                    </DropdownMenuSubContent>
-                                  </DropdownMenuSub>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </div>
-                          )}
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                </details>
-              );
-            })}
-          </div>
-        </div>
-      </DragDropContext>
+        </DragDropContext>
+      )}
 
       {/* Modal de Detalhes do Lead */}
       <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
