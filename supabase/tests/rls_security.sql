@@ -48,10 +48,10 @@ VALUES
 ON CONFLICT (id) DO NOTHING;
 
 -- Cliente e projeto em cada empresa
-INSERT INTO public.clientes (id, empresa_id, nome, contato)
+INSERT INTO public.clientes (id, empresa_id, nome, contato, email)
 VALUES
-  ('c1111111-0000-0000-0000-000000000001', '00000000-0000-0000-0000-00000000000a', 'Cliente A', 'a@a.com'),
-  ('c2222222-0000-0000-0000-000000000001', '00000000-0000-0000-0000-00000000000b', 'Cliente B', 'b@b.com')
+  ('c1111111-0000-0000-0000-000000000001', '00000000-0000-0000-0000-00000000000a', 'Cliente A', 'a@a.com', 'a@a.com'),
+  ('c2222222-0000-0000-0000-000000000001', '00000000-0000-0000-0000-00000000000b', 'Cliente B', 'b@b.com', 'b@b.com')
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO public.projetos (id, empresa_id, nome, cliente_id, codigo_projeto)
@@ -231,8 +231,8 @@ SELECT throws_ok(
 -- =============================================
 SELECT test_set_auth('aaaaaaaa-0000-0000-0000-000000000001');
 
-INSERT INTO public.clientes (id, empresa_id, nome, contato)
-VALUES ('d0000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-00000000000a', 'Audit Test', 'audit@test.com');
+INSERT INTO public.clientes (id, empresa_id, nome, contato, email)
+VALUES ('d0000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-00000000000a', 'Audit Test', 'audit@test.com', 'audit@test.com');
 
 SELECT is(
   (SELECT COUNT(*)::int FROM public.audit_logs
