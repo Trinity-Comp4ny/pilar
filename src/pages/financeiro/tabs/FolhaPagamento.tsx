@@ -61,18 +61,20 @@ export default function FolhaPagamento() {
       if (error) throw error;
 
       const grouped = new Map<string, HistoryItem>();
+      const normalizeStatus = (s: string | null | undefined) => s ?? "pendente";
       historyData?.forEach((item) => {
         const key = `${item.mes}-${item.ano}`;
+        const itemStatus = normalizeStatus(item.status);
         const current = grouped.get(key) || {
           mes: item.mes,
           ano: item.ano,
           total: 0,
           count: 0,
-          status: item.status ?? "",
+          status: itemStatus,
         };
         current.total += Number(item.total_receber || 0);
         current.count += 1;
-        if (current.status !== "misto" && current.status !== item.status) {
+        if (current.status !== "misto" && current.status !== itemStatus) {
           current.status = "misto";
         }
         grouped.set(key, current);
