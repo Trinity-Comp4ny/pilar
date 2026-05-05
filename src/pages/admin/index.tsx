@@ -125,7 +125,7 @@ export default function Admin() {
           const [{ data: companyUsers }, { data: pendingConvites }] = await Promise.all([
             supabase
               .from("profiles")
-              .select("id, first_name, last_name, email, role, features, contato")
+              .select("id, first_name, last_name, email, role, features, contato, onboarding_completed")
               .eq("empresa_id", profile.empresa_id),
             supabase
               .from("convites")
@@ -146,6 +146,7 @@ export default function Admin() {
             role: u.role,
             features: u.features,
             contato: (u as { contato?: string | null }).contato,
+            isPending: (u as { onboarding_completed?: boolean | null }).onboarding_completed === false,
           }));
 
           const pendingList: RawUser[] = (pendingConvites ?? []).map((c) => ({
