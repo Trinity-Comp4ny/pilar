@@ -11,13 +11,19 @@ function LayoutContent() {
 
   return (
     <div className="min-h-screen bg-white">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[9999] focus:rounded focus:bg-background focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:shadow-md focus:outline-none focus:ring-2 focus:ring-ring"
+      >
+        Pular para conteúdo principal
+      </a>
       <AppSidebar />
       <div className={`${marginLeft}`}>
         <UltraAdminPlatformBanner />
         <div className="flex justify-end items-center px-6 pt-4 md:px-10">
           <AlertsBell />
         </div>
-        <main className="md:px-10 md:pb-10 md:pt-4">
+        <main id="main-content" className="md:px-10 md:pb-10 md:pt-4">
           <ErrorBoundary>
             <Outlet />
           </ErrorBoundary>
