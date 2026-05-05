@@ -109,15 +109,15 @@ SELECT is(
 );
 
 -- =============================================
--- Teste 5: admin impersonando viewer → NÃO vê
+-- Teste 5: admin impersonando user (segunda sessão) → NÃO vê
 -- =============================================
-SELECT public.start_impersonation('viewer', NULL, 'pgtap');
+SELECT public.start_impersonation('user', NULL, 'pgtap');
 
 SELECT is(
   (SELECT COUNT(*)::INTEGER FROM public.audit_logs
    WHERE empresa_id = '00000000-0000-0000-0000-0000000000bb' AND target_table = 'pgtap_marker'),
   0,
-  'admin impersonando viewer também é bloqueado'
+  'admin impersonando user também é bloqueado'
 );
 
 SELECT public.stop_impersonation();

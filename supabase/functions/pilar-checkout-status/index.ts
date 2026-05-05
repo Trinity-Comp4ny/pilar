@@ -15,6 +15,9 @@ import { withSentry } from "../_shared/sentry.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { jsonResponse, optionsResponse } from "../_shared/cors.ts";
 import { getPayment } from "../_shared/asaas-platform.ts";
+import { createLogger } from "../_shared/logger.ts";
+
+const log = createLogger("pilar-checkout-status");
 
 serve(
   withSentry("pilar-checkout-status", async (req) => {
@@ -77,7 +80,11 @@ serve(
           signup.payment_status = "paid";
         }
       } catch (err) {
-        console.warn("[pilar-checkout-status] asaas check failed", err);
+        log.warn("asaas payment check failed", {
+          signup_id: signup.id,
+          payment_id: signup.asaas_payment_id,
+          error: err instanceof Error ? err.message : String(err),
+        });
       }
     }
 

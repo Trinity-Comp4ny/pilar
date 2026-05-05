@@ -4,6 +4,9 @@ import { withSentry } from "../_shared/sentry.ts";
 import { authenticateUser, jsonResponse, optionsResponse, safeErrorResponse } from "../_shared/cors.ts";
 import { sendEmail, templateMensagemManual } from "../_shared/email.ts";
 import { EMAIL_RE } from "../_shared/validators.ts";
+import { createLogger } from "../_shared/logger.ts";
+
+const log = createLogger("send-manual-client-email");
 
 const MAX_SUBJECT_LEN = 200;
 const MAX_MESSAGE_LEN = 10_000;
@@ -43,7 +46,7 @@ serve(
 
       return jsonResponse({ success: true }, 200, req);
     } catch (err) {
-      console.error("[send-manual-client-email]", err);
+      log.error("send manual client email failed", err);
       return safeErrorResponse(500, "Erro ao enviar email", req);
     }
   })

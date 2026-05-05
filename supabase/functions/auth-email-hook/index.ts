@@ -13,6 +13,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { withSentry } from "../_shared/sentry.ts";
+import { createLogger } from "../_shared/logger.ts";
 
 import {
   sendEmail,
@@ -21,6 +22,8 @@ import {
   templateMagicLink,
   templateRecuperacaoSenha,
 } from "../_shared/email.ts";
+
+const log = createLogger("auth-email-hook");
 
 const HOOK_SECRET = Deno.env.get("AUTH_HOOK_SEND_EMAIL_SECRET") ?? "";
 const SIGNATURE_TOLERANCE_SECONDS = 5 * 60;
@@ -63,7 +66,7 @@ function decodeSecret(secret: string): Uint8Array {
 
 async function verifyWebhook(req: Request, body: string): Promise<boolean> {
   if (!HOOK_SECRET) {
-    console.warn("[auth-email-hook] AUTH_HOOK_SEND_EMAIL_SECRET not set — skipping verify");
+    log.warn("AUTH_HOOK_SEND_EMAIL_SECRET not set — skipping verify");
     return true;
   }
 
@@ -71,14 +74,14 @@ async function verifyWebhook(req: Request, body: string): Promise<boolean> {
   const timestamp = req.headers.get("webhook-timestamp");
   const signatureHeader = req.headers.get("webhook-signature");
   if (!id || !timestamp || !signatureHeader) {
-    console.error("[auth-email-hook] missing webhook headers", { id, timestamp, signatureHeader: !!signatureHeader });
+    log.error("missing webhook headers", undefined, { id, timestamp, hasSignature: !!signatureHeader });
     return false;
   }
 
   const nowSec = Math.floor(Date.now() / 1000);
   const tsNum = parseInt(timestamp, 10);
   if (!Number.isFinite(tsNum) || Math.abs(nowSec - tsNum) > SIGNATURE_TOLERANCE_SECONDS) {
-    console.error("[auth-email-hook] timestamp out of tolerance", { tsNum, nowSec });
+    log.error("timestamp out of tolerance", undefined, { tsNum, nowSec });
     return false;
   }
 
@@ -192,7 +195,7 @@ serve(
           break;
 
         default:
-          console.warn("[auth-email-hook] tipo desconhecido:", email_data.email_action_type);
+          log.warn("tipo de email desconhecido", { email_action_type: email_data.email_action_type });
       }
 
       return new Response(JSON.stringify({ success: true }), {
@@ -200,7 +203,7 @@ serve(
         headers: { "Content-Type": "application/json" },
       });
     } catch (err) {
-      console.error("[auth-email-hook]", err);
+      log.error("send email failed", err, { email_action_type: email_data.email_action_type, user_id: user.id });
       return new Response(JSON.stringify({ error: err instanceof Error ? err.message : "Failed to send" }), {
         status: 500,
         headers: { "Content-Type": "application/json" },

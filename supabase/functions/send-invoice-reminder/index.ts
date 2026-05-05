@@ -5,6 +5,9 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { authenticateUser, isUUID, jsonResponse, optionsResponse, safeErrorResponse } from "../_shared/cors.ts";
 import { sendEmail, templateCobrancaDireta } from "../_shared/email.ts";
 import { EMAIL_RE } from "../_shared/validators.ts";
+import { createLogger } from "../_shared/logger.ts";
+
+const log = createLogger("send-invoice-reminder");
 
 function formatCurrency(value: number): string {
   return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
@@ -95,7 +98,7 @@ serve(
 
       return jsonResponse({ success: true, email: clienteEmail, vencida }, 200, req);
     } catch (err) {
-      console.error("[send-invoice-reminder]", err);
+      log.error("send invoice reminder failed", err, { user_id: user.id });
       return safeErrorResponse(
         500,
         `Erro ao enviar cobrança: ${err instanceof Error ? err.message : "desconhecido"}`,

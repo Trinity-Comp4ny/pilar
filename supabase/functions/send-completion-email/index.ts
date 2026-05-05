@@ -4,6 +4,9 @@ import { withSentry } from "../_shared/sentry.ts";
 import { authenticateUser, jsonResponse, optionsResponse, safeErrorResponse } from "../_shared/cors.ts";
 import { sendEmail, templateDisciplinaConcluida, templateProjetoConcluido } from "../_shared/email.ts";
 import { isValidEmail } from "../_shared/validators.ts";
+import { createLogger } from "../_shared/logger.ts";
+
+const log = createLogger("send-completion-email");
 
 type CompletionType = "project" | "subject";
 
@@ -40,7 +43,7 @@ serve(
 
       return jsonResponse({ success: true }, 200, req);
     } catch (err) {
-      console.error("[send-completion-email]", err);
+      log.error("send completion email failed", err);
       return safeErrorResponse(500, "Erro ao enviar email", req);
     }
   })

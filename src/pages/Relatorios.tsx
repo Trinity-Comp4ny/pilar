@@ -8,7 +8,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CalendarIcon, Download, Plus, FileBarChart, Filter, X, Columns3 } from "lucide-react";
+import { CalendarIcon, Download, Plus, FileBarChart, Filter, X, Columns3, Sparkles } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { format, startOfDay, endOfDay, subDays, startOfMonth, endOfMonth, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -23,6 +23,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGri
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { usePageTitle } from "@/hooks/usePageTitle";
+import { useRelatorioExecutivo } from "@/hooks/useRelatorioExecutivo";
 import { RelatoriosSummary } from "./relatorios/RelatoriosSummary";
 
 interface ReportRow {
@@ -91,6 +92,7 @@ function parseDDMMYYYY(str: string): Date | null {
 
 export default function Relatorios() {
   usePageTitle("Relatórios");
+  const { gerar: gerarExecutivo, isGenerating: isExecutivoLoading } = useRelatorioExecutivo();
   const [tipoRelatorio, setTipoRelatorio] = useState("");
   const [periodoPreset, setPeriodoPreset] = useState<"7d" | "30d" | "this_month" | "last_month" | "all" | "custom">(
     "all"
@@ -696,7 +698,18 @@ export default function Relatorios() {
   return (
     <PageLayout
       containerClassName="h-full flex flex-col min-h-0"
-      header={<PageHeader title="Relatórios" description="Monte, visualize e exporte relatórios financeiros" />}
+      header={
+        <PageHeader title="Relatórios" description="Monte, visualize e exporte relatórios financeiros">
+          <Button
+            onClick={gerarExecutivo}
+            disabled={isExecutivoLoading}
+            className="h-9 gap-1.5 bg-brand text-ink hover:bg-brand/90"
+          >
+            <Sparkles className="h-4 w-4" />
+            {isExecutivoLoading ? "Gerando..." : "Relatório Executivo"}
+          </Button>
+        </PageHeader>
+      }
     >
       <div className="flex-1 min-h-0 flex flex-col gap-5">
         {/* ═══ Barra de parâmetros ═══ */}

@@ -3,6 +3,9 @@ import { withSentry } from "../_shared/sentry.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 import { isUUID, jsonResponse, optionsResponse, safeErrorResponse } from "../_shared/cors.ts";
+import { createLogger } from "../_shared/logger.ts";
+
+const log = createLogger("portal-entrega-download");
 
 /**
  * Retorna signed URL de 5min para arquivo do bucket portal-entregas.
@@ -74,7 +77,7 @@ serve(
         .createSignedUrl(entrega.arquivo_path, 300);
 
       if (signError || !signed?.signedUrl) {
-        console.error("[portal-entrega-download] signed url failed", signError?.message);
+        log.error("signed url failed", signError, { entrega_id: entrega.id, empresa_id });
         return safeErrorResponse(500, "Falha ao gerar link", req);
       }
 
@@ -87,7 +90,7 @@ serve(
         req
       );
     } catch (error: unknown) {
-      console.error("[portal-entrega-download] unexpected error", error);
+      log.error("unexpected error", error);
       return safeErrorResponse(400, "Invalid request", req);
     }
   })

@@ -15,7 +15,7 @@ import { usePageTitle } from "@/hooks/usePageTitle";
 import { SecondSidebar, type SecondSidebarTab } from "@/components/SecondSidebar";
 import { FinanceFilterProvider, type Visualizacao } from "./financeiro/contexts/FinanceFilterContext";
 
-const FINANCEIRO_TABS: SecondSidebarTab[] = [
+const FINANCEIRO_TABS_ALL: SecondSidebarTab[] = [
   { id: "visao-geral", label: "Visão Geral", icon: LayoutDashboard },
   { id: "fluxo-caixa", label: "Fluxo de Caixa", icon: TrendingUp },
   { id: "lancamentos", label: "Lançamentos", icon: Receipt },
@@ -23,6 +23,10 @@ const FINANCEIRO_TABS: SecondSidebarTab[] = [
   { id: "faturas", label: "Faturas", icon: CreditCard, disabled: true },
   { id: "contas", label: "Contas", icon: Landmark },
 ];
+
+const BASIC_TAB_IDS = new Set(["visao-geral", "lancamentos", "contas"]);
+const FINANCEIRO_MODE_KEY = "pilar-financeiro-mode";
+type FinanceiroMode = "basico" | "avancado";
 
 function parseDateParam(v: string | null): Date | undefined {
   if (!v) return undefined;
@@ -50,6 +54,29 @@ export default function Financeiro() {
   const [visualizacao, setVisualizacao] = useState<Visualizacao>(initial.viz);
   const [dateFrom, setDateFrom] = useState<Date | undefined>(initial.from);
   const [dateTo, setDateTo] = useState<Date | undefined>(initial.to);
+  const [mode, setMode] = useState<FinanceiroMode>(() => {
+    if (typeof window === "undefined") return "basico";
+    const stored = window.localStorage.getItem(FINANCEIRO_MODE_KEY);
+    return stored === "avancado" ? "avancado" : "basico";
+  });
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(FINANCEIRO_MODE_KEY, mode);
+    }
+  }, [mode]);
+
+  const visibleTabs = useMemo(
+    () => (mode === "basico" ? FINANCEIRO_TABS_ALL.filter((t) => BASIC_TAB_IDS.has(t.id)) : FINANCEIRO_TABS_ALL),
+    [mode]
+  );
+
+  // Se a tab atual não estiver visível no modo Básico, voltar para Visão Geral
+  useEffect(() => {
+    if (mode === "basico" && !BASIC_TAB_IDS.has(activeTab)) {
+      setActiveTab("visao-geral");
+    }
+  }, [mode, activeTab]);
 
   // Sync state → URL
   useEffect(() => {
@@ -76,11 +103,11 @@ export default function Financeiro() {
       <FinanceFilterProvider value={filterValue}>
         <Tabs value={activeTab} onValueChange={handleTabChange} className="flex flex-col flex-1 overflow-hidden">
           <div className="sticky top-0 z-20 w-full bg-white border-b">
-            <FinanceiroHeader />
+            <FinanceiroHeader mode={mode} onModeChange={setMode} />
           </div>
 
           <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
-            <SecondSidebar tabs={FINANCEIRO_TABS} value={activeTab} onValueChange={handleTabChange} />
+            <SecondSidebar tabs={visibleTabs} value={activeTab} onValueChange={handleTabChange} />
             <div className="flex-1 overflow-y-auto w-full bg-gray-50/50 p-6 md:p-8">
               <div className="w-full mx-auto space-y-6">
                 <TabsContent value="visao-geral" className="mt-0 w-full focus-visible:ring-0">

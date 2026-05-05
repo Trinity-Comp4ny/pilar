@@ -40,6 +40,17 @@ setup("authenticate as admin", async ({ page, baseURL }) => {
     );
   }
 
+  // Guarda anti-produção: jamais autenticar contra o projeto Supabase de prod.
+  // O ref `vepnsonbnsimqcsfcagm` corresponde ao projeto Pilar produção; testes E2E
+  // devem usar staging/local. Se cair aqui, alguém configurou o env errado.
+  const PROD_SUPABASE_REF = "vepnsonbnsimqcsfcagm";
+  if (supabaseUrl.includes(PROD_SUPABASE_REF)) {
+    throw new Error(
+      `[auth.setup] ABORTANDO: VITE_SUPABASE_URL aponta para o projeto Supabase de produção (${PROD_SUPABASE_REF}). ` +
+        "Testes E2E nunca devem rodar contra produção. Use staging ou ambiente local."
+    );
+  }
+
   const supabase = createClient(supabaseUrl, supabaseKey, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
