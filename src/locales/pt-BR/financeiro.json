@@ -1,0 +1,42 @@
+{
+  "kinds": {
+    "receita": "Receita",
+    "despesa": "Despesa",
+    "transferencia": "Transferência"
+  },
+  "actions": {
+    "pay": "Pagar",
+    "receive": "Receber",
+    "settle": "Liquidar",
+    "reconcile": "Conciliar"
+  },
+  "fields": {
+    "amount": "Valor",
+    "dueDate": "Vencimento",
+    "paidAt": "Pago em",
+    "competence": "Competência",
+    "category": "Categoria",
+    "account": "Conta",
+    "costCenter": "Centro de custo",
+    "description": "Descrição",
+    "supplier": "Fornecedor",
+    "client": "Cliente",
+    "installments": "Parcelas",
+    "invoice": "Fatura",
+    "card": "Cartão"
+  },
+  "status": {
+    "pending": "Pendente",
+    "paid": "Pago",
+    "overdue": "Vencido",
+    "cancelled": "Cancelado"
+  },
+  "tabs": {
+    "overview": "Visão geral",
+    "cashflow": "Fluxo de caixa",
+    "monthly": "Mensal",
+    "payroll": "Folha",
+    "invoices": "Faturas",
+    "accounts": "Contas"
+  }
+}

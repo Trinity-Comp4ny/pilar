@@ -1,0 +1,42 @@
+{
+  "kinds": {
+    "receita": "Income",
+    "despesa": "Expense",
+    "transferencia": "Transfer"
+  },
+  "actions": {
+    "pay": "Pay",
+    "receive": "Receive",
+    "settle": "Settle",
+    "reconcile": "Reconcile"
+  },
+  "fields": {
+    "amount": "Amount",
+    "dueDate": "Due date",
+    "paidAt": "Paid at",
+    "competence": "Competence",
+    "category": "Category",
+    "account": "Account",
+    "costCenter": "Cost center",
+    "description": "Description",
+    "supplier": "Supplier",
+    "client": "Client",
+    "installments": "Installments",
+    "invoice": "Invoice",
+    "card": "Card"
+  },
+  "status": {
+    "pending": "Pending",
+    "paid": "Paid",
+    "overdue": "Overdue",
+    "cancelled": "Cancelled"
+  },
+  "tabs": {
+    "overview": "Overview",
+    "cashflow": "Cash flow",
+    "monthly": "Monthly",
+    "payroll": "Payroll",
+    "invoices": "Invoices",
+    "accounts": "Accounts"
+  }
+}
