@@ -85,7 +85,7 @@ export function useProjetoDetail(id: string | undefined) {
     if (!canEdit) return;
     Promise.all([
       supabase.from("disciplinas").select("id, nome").order("nome"),
-      supabase.from("pessoas").select("id, nome").order("nome"),
+      supabase.from("pessoas").select("id, nome").is("deleted_at", null).order("nome"),
       supabase.from("clientes").select("id, nome").order("nome"),
       supabase.auth.getUser(),
     ]).then(([discRes, pesRes, cliRes, userRes]) => {

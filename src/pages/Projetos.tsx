@@ -299,7 +299,7 @@ export default function ProjetosKanban() {
   const { data: pessoas = [] } = useQuery({
     queryKey: ["pessoas-select"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("pessoas").select("id, nome").order("nome");
+      const { data, error } = await supabase.from("pessoas").select("id, nome").is("deleted_at", null).order("nome");
       if (error) throw error;
       return data || [];
     },
