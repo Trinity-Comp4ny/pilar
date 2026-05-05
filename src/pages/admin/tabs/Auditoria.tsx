@@ -7,8 +7,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ShieldCheck, Loader2, RefreshCw, Download } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { ShieldCheck, Loader2, RefreshCw, Download, FileSearch } from "lucide-react";
+import { EmptyState } from "@/components/EmptyState";
+import { untypedFrom } from "@/lib/supabaseRpc";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -123,9 +124,8 @@ function DataAuditTab() {
     setLoading(true);
     setError(null);
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const base = (supabase as unknown as any).from("audit_logs");
-      let q = base
+      // gen:types não inclui audit_logs ainda
+      let q = untypedFrom<AuditLog>("audit_logs")
         .select("id, actor_id, actor_email, action, target_table, target_id, diff, created_at")
         .order("created_at", { ascending: false })
         .limit(200);
@@ -136,7 +136,7 @@ function DataAuditTab() {
 
       const { data, error: err } = await q;
       if (err) throw err;
-      setLogs((data as unknown as AuditLog[]) ?? []);
+      setLogs(data ?? []);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao carregar logs");
     } finally {
@@ -220,7 +220,11 @@ function DataAuditTab() {
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
       ) : logs.length === 0 ? (
-        <div className="text-center p-12 text-sm text-muted-foreground">Nenhum registro encontrado.</div>
+        <EmptyState
+          icon={FileSearch}
+          title="Nenhum registro encontrado"
+          description="Ajuste os filtros ou aguarde novas ações."
+        />
       ) : (
         <div className="rounded-md border">
           <Table>
@@ -286,9 +290,8 @@ function AdminActionsTab() {
     setLoading(true);
     setError(null);
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const base = (supabase as unknown as any).from("admin_audit_logs");
-      let q = base
+      // gen:types não inclui admin_audit_logs ainda
+      let q = untypedFrom<AdminAuditLog>("admin_audit_logs")
         .select("id, actor_email, actor_role, action, category, target_type, target_name, metadata, created_at")
         .order("created_at", { ascending: false })
         .limit(200);
@@ -298,7 +301,7 @@ function AdminActionsTab() {
 
       const { data, error: err } = await q;
       if (err) throw err;
-      setLogs((data as unknown as AdminAuditLog[]) ?? []);
+      setLogs(data ?? []);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao carregar logs admin");
     } finally {
@@ -356,7 +359,11 @@ function AdminActionsTab() {
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
       ) : logs.length === 0 ? (
-        <div className="text-center p-12 text-sm text-muted-foreground">Nenhum registro encontrado.</div>
+        <EmptyState
+          icon={FileSearch}
+          title="Nenhum registro encontrado"
+          description="Ajuste os filtros ou aguarde novas ações."
+        />
       ) : (
         <div className="rounded-md border">
           <Table>

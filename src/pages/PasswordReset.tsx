@@ -228,7 +228,7 @@ export default function PasswordReset() {
 
               <div className="space-y-2">
                 <Label htmlFor="password" className="text-ink-soft font-medium">
-                  Nova senha
+                  Nova senha <span className="text-red-500">*</span>
                 </Label>
                 <div className="relative group">
                   <Lock className="absolute left-3 top-3 h-4 w-4 text-ink/40 group-focus-within:text-brand transition-colors" />
@@ -271,7 +271,7 @@ export default function PasswordReset() {
 
               <div className="space-y-2">
                 <Label htmlFor="confirm" className="text-ink-soft font-medium">
-                  Confirmar senha
+                  Confirmar senha <span className="text-red-500">*</span>
                 </Label>
                 <div className="relative group">
                   <Lock className="absolute left-3 top-3 h-4 w-4 text-ink/40 group-focus-within:text-brand transition-colors" />
@@ -294,6 +294,11 @@ export default function PasswordReset() {
                     {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
+                {confirmPassword && confirmPassword !== password ? (
+                  <p className="text-xs text-red-500" role="alert">
+                    As senhas não coincidem.
+                  </p>
+                ) : null}
               </div>
 
               <Button

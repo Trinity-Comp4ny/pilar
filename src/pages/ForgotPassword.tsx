@@ -17,17 +17,25 @@ const schema = z.object({
 export default function ForgotPassword() {
   usePageTitle("Recuperar senha");
   const [email, setEmail] = useState("");
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [touched, setTouched] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [sent, setSent] = useState(false);
 
+  const validate = (value: string) => {
+    const result = schema.safeParse({ email: value });
+    setEmailError(result.success ? null : (result.error.issues[0]?.message ?? "Email inválido"));
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setTouched(true);
 
     const parsed = schema.safeParse({ email });
     if (!parsed.success) {
-      toast.error("Email inválido", {
-        description: parsed.error.issues[0]?.message,
-      });
+      const msg = parsed.error.issues[0]?.message ?? "Email inválido";
+      setEmailError(msg);
+      toast.error("Email inválido", { description: msg });
       return;
     }
 
@@ -96,7 +104,7 @@ export default function ForgotPassword() {
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-ink-soft font-medium">
-                  Email
+                  Email <span className="text-red-500">*</span>
                 </Label>
                 <div className="relative group">
                   <Mail className="absolute left-3 top-3 h-4 w-4 text-ink/40 group-focus-within:text-brand transition-colors" />
@@ -106,11 +114,30 @@ export default function ForgotPassword() {
                     placeholder="seu@empresa.com"
                     className="pl-10 h-11 bg-paper-alt border-paper-border focus:border-brand focus:ring-brand/20 transition-all"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      setEmail(v);
+                      if (touched) validate(v);
+                    }}
+                    onBlur={() => {
+                      setTouched(true);
+                      validate(email);
+                    }}
+                    aria-invalid={!!emailError}
+                    aria-describedby="email-hint"
                     required
                     autoFocus
                   />
                 </div>
+                {touched && emailError ? (
+                  <p id="email-hint" className="text-xs text-red-500" role="alert">
+                    {emailError}
+                  </p>
+                ) : (
+                  <p id="email-hint" className="text-xs text-ink-soft">
+                    Use o email cadastrado da sua conta.
+                  </p>
+                )}
               </div>
 
               <Button

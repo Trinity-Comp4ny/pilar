@@ -66,6 +66,8 @@ export function ImpersonationProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   // Source of truth: servidor. Hidrata estado no mount + sempre que role real mudar.
+  // Polling: re-checa servidor a cada 5min e ao voltar pra aba (visibility change).
+  // Detecta sessão expirada (30min server-side) e limpa UI imediatamente.
   useEffect(() => {
     let cancelled = false;
 
@@ -78,7 +80,7 @@ export function ImpersonationProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    (async () => {
+    const refresh = async () => {
       const session = await fetchServerSession();
       if (cancelled) return;
 
@@ -91,11 +93,26 @@ export function ImpersonationProvider({ children }: { children: ReactNode }) {
         setViewAsRole(null);
         writeStored(null);
       }
-      setLoading(false);
+    };
+
+    (async () => {
+      await refresh();
+      if (!cancelled) setLoading(false);
     })();
+
+    const intervalId = setInterval(refresh, 5 * 60 * 1000);
+
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") {
+        void refresh();
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibility);
 
     return () => {
       cancelled = true;
+      clearInterval(intervalId);
+      document.removeEventListener("visibilitychange", onVisibility);
     };
   }, [realRole]);
 

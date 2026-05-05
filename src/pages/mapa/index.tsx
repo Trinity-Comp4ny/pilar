@@ -61,6 +61,7 @@ import { MapContainer, TileLayer, Marker, Tooltip, useMap } from "react-leaflet"
 import MarkerClusterGroup from "react-leaflet-cluster";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import { EmptyState } from "@/components/EmptyState";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { supabase } from "@/integrations/supabase/client";
@@ -398,11 +399,11 @@ export default function MapaObras() {
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
       ) : projetos.length === 0 ? (
-        <div className="text-center py-12 text-muted-foreground">
-          <MapPin className="h-10 w-10 mx-auto mb-3 opacity-40" />
-          <p className="text-sm">Nenhum projeto com localização geográfica encontrado.</p>
-          <p className="text-xs mt-1">Projetos precisam ter endereço com coordenadas para aparecer no mapa.</p>
-        </div>
+        <EmptyState
+          icon={MapPin}
+          title="Nenhum projeto com localização geográfica encontrado"
+          description="Projetos precisam ter endereço com coordenadas para aparecer no mapa."
+        />
       ) : (
         <>
           {semCoordenadas.length > 0 && (

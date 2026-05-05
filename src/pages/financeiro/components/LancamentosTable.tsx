@@ -51,6 +51,10 @@ interface Props {
   onRefetch: () => void;
   filters: LancamentosFilters;
   onFiltersChange: (next: LancamentosFilters) => void;
+  // Paginação cursor-based (opcional). Quando passados, exibe "Carregar mais".
+  hasNextPage?: boolean;
+  isFetchingNextPage?: boolean;
+  onLoadMore?: () => void;
 }
 
 type SortKey = "data" | "descricao" | "valor" | "categoria" | "projeto" | "contraparte" | "status";
@@ -86,7 +90,16 @@ const isOverdue = (l: Lancamento): boolean => {
 
 const stripParcelaSuffix = (desc: string) => desc.replace(/\s*\(\d+\/\d+\)$/, "").trim();
 
-export function LancamentosTable({ data, loading, onRefetch, filters, onFiltersChange }: Props) {
+export function LancamentosTable({
+  data,
+  loading,
+  onRefetch,
+  filters,
+  onFiltersChange,
+  hasNextPage,
+  isFetchingNextPage,
+  onLoadMore,
+}: Props) {
   const { canEdit } = useFeatureAccess("financeiro");
   const aux = useLancamentosFiltersData();
 
@@ -979,6 +992,15 @@ export function LancamentosTable({ data, loading, onRefetch, filters, onFiltersC
                 = {formatBRL(totals.saldo)}
               </span>
             </div>
+          </div>
+        )}
+
+        {/* Botão "Carregar mais" para paginação cursor-based */}
+        {hasNextPage && onLoadMore && (
+          <div className="border-t border-black/10 bg-white px-4 py-3 flex justify-center">
+            <Button variant="outline" size="sm" onClick={onLoadMore} disabled={isFetchingNextPage} className="text-xs">
+              {isFetchingNextPage ? "Carregando…" : "Carregar mais"}
+            </Button>
           </div>
         )}
       </div>

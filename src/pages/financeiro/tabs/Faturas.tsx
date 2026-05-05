@@ -8,56 +8,11 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Separator } from "@/components/ui/separator";
 import { CreditCard, Receipt, Calendar, DollarSign, ChevronRight, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useState, useEffect, useCallback } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { format } from "date-fns";
-
-interface Cartao {
-  id: string;
-  nome: string;
-  dia_fechamento: number;
-  dia_vencimento: number;
-  cor: string | null;
-  limite: number;
-  usado: number;
-  disponivel: number;
-  conta_pagamento_id: string | null;
-}
-
-interface Fatura {
-  id: string;
-  cartao_id: string;
-  cartao_nome: string;
-  cartao_cor: string | null;
-  mes_referencia: number;
-  ano_referencia: number;
-  data_inicio: string;
-  data_fim: string;
-  data_vencimento: string;
-  status: string;
-  data_pagamento: string | null;
-  conta_pagamento_id: string | null;
-  conta_pagamento_nome: string | null;
-  valor_total: number;
-  valor_pago: number;
-  qtd_despesas: number;
-}
-
-interface Despesa {
-  id: string;
-  descricao: string;
-  valor: number;
-  data_vencimento: string;
-  status: string;
-  categoria_id: string | null;
-  categorias_financeiras: { nome: string } | null;
-}
-
-interface Conta {
-  id: string;
-  nome: string;
-}
+import { useCartoesResumo, useContas, useFaturas, useDespesasFatura, type Fatura } from "../hooks/useFaturas";
+import { usePagarFatura } from "../hooks/usePagarFatura";
 
 const MESES = [
   "Janeiro",
@@ -85,117 +40,35 @@ function getStatusBadge(status: string, dataVencimento: string) {
 }
 
 export default function Faturas() {
-  const [cartoes, setCartoes] = useState<Cartao[]>([]);
+  const { data: cartoes = [] } = useCartoesResumo();
+  const { data: contas = [] } = useContas();
+
   const [selectedCartaoId, setSelectedCartaoId] = useState<string>("");
-  const [faturas, setFaturas] = useState<Fatura[]>([]);
-  const [contas, setContas] = useState<Conta[]>([]);
-  const [loading, setLoading] = useState(false);
+
+  // Auto-select primeiro cartão quando carregar
+  useEffect(() => {
+    if (!selectedCartaoId && cartoes.length > 0) {
+      setSelectedCartaoId(cartoes[0].id);
+    }
+  }, [cartoes, selectedCartaoId]);
+
+  const { data: faturas = [], isLoading: loadingFaturas } = useFaturas(selectedCartaoId || null);
 
   // Detail dialog
   const [selectedFatura, setSelectedFatura] = useState<Fatura | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
-  const [despesasFatura, setDespesasFatura] = useState<Despesa[]>([]);
+  const { data: despesasFatura = [] } = useDespesasFatura(selectedFatura?.id ?? null);
 
   // Payment dialog
   const [isPagamentoOpen, setIsPagamentoOpen] = useState(false);
   const [contaPagamentoId, setContaPagamentoId] = useState("");
   const [valorPagamento, setValorPagamento] = useState("");
-  const [isPaying, setIsPaying] = useState(false);
 
-  const fetchCartoes = useCallback(async () => {
-    const { data } = await supabase.from("view_cartao_resumo").select("*");
-    if (data) {
-      setCartoes(data as Cartao[]);
-      if (data.length > 0 && !selectedCartaoId) {
-        setSelectedCartaoId(data[0].id ?? "");
-      }
-    }
-  }, [selectedCartaoId]);
+  const pagarMutation = usePagarFatura();
 
-  const fetchContas = useCallback(async () => {
-    const { data } = await supabase.from("contas").select("id, nome");
-    if (data) setContas(data);
-  }, []);
-
-  const gerarFaturasCartao = useCallback(async (cartaoId: string) => {
-    // Gerar faturas para os últimos 3 meses e o mês atual
-    const now = new Date();
-    for (let i = -2; i <= 1; i++) {
-      const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
-      try {
-        await supabase.rpc("gerar_fatura", {
-          p_cartao_id: cartaoId,
-          p_mes: d.getMonth() + 1,
-          p_ano: d.getFullYear(),
-        });
-      } catch {
-        toast.error("Erro ao pagar fatura");
-      }
-    }
-  }, []);
-
-  const fetchFaturas = useCallback(
-    async (cartaoId: string) => {
-      setLoading(true);
-      try {
-        // Gerar faturas pendentes
-        await gerarFaturasCartao(cartaoId);
-
-        const { data } = await supabase
-          .from("view_fatura_resumo")
-          .select("*")
-          .eq("cartao_id", cartaoId)
-          .order("ano_referencia", { ascending: false })
-          .order("mes_referencia", { ascending: false });
-
-        if (data) {
-          // Determinar status real baseado na data
-          const today = new Date();
-          setFaturas(
-            (data as unknown as Fatura[])
-              .filter((f) => (f.valor_total ?? 0) > 0 || f.status !== "Aberta")
-              .map((f) => {
-                let status = f.status;
-                if (status === "Aberta" && new Date(f.data_fim) < today) {
-                  status = "Fechada";
-                }
-                return { ...f, status };
-              })
-          );
-        }
-      } finally {
-        setLoading(false);
-      }
-    },
-    [gerarFaturasCartao]
-  );
-
-  const fetchDespesasFatura = async (faturaId: string) => {
-    const { data } = await supabase
-      .from("despesas")
-      .select("id, descricao, valor, data_vencimento, status, categoria_id, categorias_financeiras(nome)")
-      .eq("fatura_id", faturaId)
-      .not("cartao_id", "is", null)
-      .order("data_vencimento", { ascending: true });
-
-    if (data) setDespesasFatura(data as Despesa[]);
-  };
-
-  useEffect(() => {
-    fetchCartoes();
-    fetchContas();
-  }, [fetchCartoes, fetchContas]);
-
-  useEffect(() => {
-    if (selectedCartaoId) {
-      fetchFaturas(selectedCartaoId);
-    }
-  }, [selectedCartaoId, fetchFaturas]);
-
-  const handleOpenDetail = async (fatura: Fatura) => {
+  const handleOpenDetail = (fatura: Fatura) => {
     setSelectedFatura(fatura);
     setIsDetailOpen(true);
-    await fetchDespesasFatura(fatura.id);
   };
 
   const handleOpenPagamento = (fatura: Fatura) => {
@@ -207,33 +80,31 @@ export default function Faturas() {
     setIsPagamentoOpen(true);
   };
 
-  const handlePagar = async () => {
+  const handlePagar = () => {
     if (!selectedFatura || !contaPagamentoId) {
       toast.error("Selecione a conta bancária");
       return;
     }
 
-    setIsPaying(true);
-    try {
-      const { error } = await supabase.rpc("pagar_fatura", {
-        p_fatura_id: selectedFatura.id,
-        p_conta_id: contaPagamentoId,
-        p_valor_pago: parseFloat(valorPagamento),
-        p_data_pagamento: format(new Date(), "yyyy-MM-dd"),
-      });
-
-      if (error) throw error;
-
-      toast.success("Fatura paga com sucesso!");
-      setIsPagamentoOpen(false);
-      setIsDetailOpen(false);
-      fetchFaturas(selectedCartaoId);
-      fetchCartoes();
-    } catch (err: unknown) {
-      toast.error("Erro ao pagar fatura");
-    } finally {
-      setIsPaying(false);
-    }
+    pagarMutation.mutate(
+      {
+        faturaId: selectedFatura.id,
+        contaId: contaPagamentoId,
+        valor: parseFloat(valorPagamento),
+        dataPagamento: new Date(),
+      },
+      {
+        onSuccess: () => {
+          toast.success("Fatura paga com sucesso!");
+          setIsPagamentoOpen(false);
+          setIsDetailOpen(false);
+        },
+        onError: (err) => {
+          const msg = err instanceof Error ? err.message : "Erro ao pagar fatura";
+          toast.error(msg);
+        },
+      }
+    );
   };
 
   const selectedCartao = cartoes.find((c) => c.id === selectedCartaoId);
@@ -296,7 +167,7 @@ export default function Faturas() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {loading ? (
+            {loadingFaturas ? (
               <p className="text-sm text-muted-foreground py-4">Carregando faturas...</p>
             ) : faturas.length === 0 ? (
               <p className="text-sm text-muted-foreground py-4">Nenhuma fatura encontrada para este cartão.</p>
@@ -559,9 +430,9 @@ export default function Faturas() {
               <Button
                 className="w-full bg-brand hover:bg-brand/90 text-ink rounded-full"
                 onClick={handlePagar}
-                disabled={isPaying || !contaPagamentoId}
+                disabled={pagarMutation.isPending || !contaPagamentoId}
               >
-                {isPaying ? "Processando..." : "Confirmar Pagamento"}
+                {pagarMutation.isPending ? "Processando..." : "Confirmar Pagamento"}
               </Button>
             </div>
           )}

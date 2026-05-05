@@ -39,7 +39,8 @@ export default function ClienteLogin() {
       if (error) throw error;
       if (!data) throw new Error("Resposta inválida");
 
-      const result = data as unknown as { token: string; nome: string };
+      // RPC portal_login retorna Json no schema; estrutura { token, nome } é contrato do backend.
+      const result = data as { token: string; nome: string };
       setPortalToken(result.token);
 
       toast.success("Login realizado!", { description: `Bem-vindo, ${result.nome}.` });
@@ -78,7 +79,7 @@ export default function ClienteLogin() {
           <form onSubmit={handleLogin} className="space-y-5">
             <div className="space-y-2">
               <Label htmlFor="email" className="text-ink-soft font-medium">
-                Email
+                Email <span className="text-red-500">*</span>
               </Label>
               <div className="relative group">
                 <Mail className="absolute left-3 top-3 h-4 w-4 text-ink/40 group-focus-within:text-brand transition-colors" />
@@ -96,7 +97,7 @@ export default function ClienteLogin() {
 
             <div className="space-y-2">
               <Label htmlFor="password" className="text-ink-soft font-medium">
-                Senha
+                Senha <span className="text-red-500">*</span>
               </Label>
               <div className="relative group">
                 <Lock className="absolute left-3 top-3 h-4 w-4 text-ink/40 group-focus-within:text-brand transition-colors" />

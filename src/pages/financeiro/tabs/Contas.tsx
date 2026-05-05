@@ -94,28 +94,11 @@ export default function Configuracoes() {
     if (!viewData) return;
 
     const ids = viewData.map((c) => c.conta_id).filter(Boolean) as string[];
-    type PixRow = { id: string; chave_pix: string | null; tipo_chave_pix: string | null };
-    const pixData: PixRow[] = ids.length
-      ? await supabase
-          .from("contas")
-          .select("id")
-          .in("id", ids)
-          .then(async () => {
-            const { data } = await (
-              supabase as unknown as {
-                from: (t: string) => {
-                  select: (c: string) => { in: (col: string, vals: string[]) => Promise<{ data: PixRow[] | null }> };
-                };
-              }
-            )
-              .from("contas")
-              .select("id, chave_pix, tipo_chave_pix")
-              .in("id", ids);
-            return data ?? [];
-          })
-      : [];
+    const { data: pixData = [] } = ids.length
+      ? await supabase.from("contas").select("id, chave_pix, tipo_chave_pix").in("id", ids)
+      : { data: [] };
 
-    const pixMap = Object.fromEntries(pixData.map((p) => [p.id, p]));
+    const pixMap = Object.fromEntries((pixData ?? []).map((p) => [p.id, p]));
 
     setContas(
       viewData.map((c) => ({

@@ -5,6 +5,7 @@ import { ChevronLeft, ChevronRight, Loader2, LayoutGrid, AlertTriangle } from "l
 import { useQuery } from "@tanstack/react-query";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
+import { EmptyState } from "@/components/EmptyState";
 import { supabase } from "@/integrations/supabase/client";
 import { AlocacaoVsReal } from "./components/AlocacaoVsReal";
 import { usePageTitle } from "@/hooks/usePageTitle";
@@ -168,14 +169,15 @@ export default function Capacidade() {
       </div>
 
       {isLoading ? (
-        <div className="flex items-center justify-center py-12">
+        <div className="flex items-center justify-center py-12" aria-busy="true" aria-label="Carregando capacidade">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
       ) : pessoas.length === 0 ? (
-        <div className="text-center py-12 text-muted-foreground">
-          <LayoutGrid className="h-10 w-10 mx-auto mb-3 opacity-40" />
-          <p className="text-sm">Nenhum membro cadastrado.</p>
-        </div>
+        <EmptyState
+          icon={LayoutGrid}
+          title="Nenhum membro cadastrado"
+          description="Cadastre membros da equipe para visualizar a capacidade semanal."
+        />
       ) : (
         <Card>
           <CardContent className="p-0 overflow-x-auto">

@@ -124,7 +124,7 @@ export default function CompanySetup() {
           <form onSubmit={handleUpdate} className="space-y-5">
             <div className="space-y-2">
               <Label htmlFor="name" className="text-ink-soft font-medium">
-                Razão social / Nome fantasia
+                Razão social / Nome fantasia <span className="text-red-500">*</span>
               </Label>
               <div className="relative group">
                 <Building2 className="absolute left-3 top-3 h-4 w-4 text-ink/40 group-focus-within:text-brand transition-colors" />
