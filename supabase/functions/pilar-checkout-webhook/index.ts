@@ -18,6 +18,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { createLogger } from "../_shared/logger.ts";
 import { withSentry } from "../_shared/sentry.ts";
+import { safeEqual } from "../_shared/crypto.ts";
 
 const log = createLogger("pilar-checkout-webhook");
 
@@ -61,7 +62,7 @@ serve(
       log.error("ASAAS_PLATFORM_WEBHOOK_TOKEN não configurado");
       return new Response("Misconfigured", { status: 500 });
     }
-    if (!receivedToken || receivedToken !== expectedToken) {
+    if (!receivedToken || !safeEqual(receivedToken, expectedToken)) {
       return new Response("Unauthorized", { status: 401 });
     }
 

@@ -11,28 +11,9 @@ export const ULTRA_PLATFORM_MODE_KEY = "ultra_admin_platform_mode";
 
 type SubStatus = "active" | "trialing" | "overdue" | "canceled" | "expired" | null;
 
-const SUB_CACHE_KEY = "pilar-sub-status";
-const SUB_CACHE_TTL = 5 * 60 * 1000; // 5 min
-
-function readCachedStatus(): SubStatus | undefined {
-  try {
-    const raw = sessionStorage.getItem(SUB_CACHE_KEY);
-    if (!raw) return undefined;
-    const { status, ts } = JSON.parse(raw) as { status: SubStatus; ts: number };
-    if (Date.now() - ts > SUB_CACHE_TTL) return undefined;
-    return status;
-  } catch {
-    return undefined;
-  }
-}
-
-function writeCachedStatus(status: SubStatus) {
-  try {
-    sessionStorage.setItem(SUB_CACHE_KEY, JSON.stringify({ status, ts: Date.now() }));
-  } catch {
-    // ignore
-  }
-}
+// Cache somente em memória — sessionStorage era manipulável via DevTools.
+// Objeto mutável: property .v é escrita pelo check(), const no binding.
+const subStatusCache: { v: SubStatus | undefined } = { v: undefined };
 
 function SubscriptionSuspendedScreen() {
   return (
@@ -67,7 +48,7 @@ function SubscriptionSuspendedScreen() {
 export function PrivateRoute() {
   const { isAuthenticated, profile, loading, mfaChallengeRequired, hasVerifiedMfaFactor } = useAuth();
   const location = useLocation();
-  const [subStatus, setSubStatus] = useState<SubStatus | undefined>(readCachedStatus());
+  const [subStatus, setSubStatus] = useState<SubStatus | undefined>(subStatusCache.v);
 
   useEffect(() => {
     if (!isAuthenticated || subStatus !== undefined) return;
@@ -82,11 +63,11 @@ export function PrivateRoute() {
           error: unknown;
         }>);
         const s = data?.status ?? null;
+        subStatusCache.v = s;
         setSubStatus(s);
-        writeCachedStatus(s);
       } catch {
+        subStatusCache.v = null;
         setSubStatus(null);
-        writeCachedStatus(null);
       }
     };
     check();
