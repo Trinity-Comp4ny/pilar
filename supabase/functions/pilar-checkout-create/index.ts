@@ -121,9 +121,8 @@ serve(
         return jsonResponse({ error: "Muitas tentativas. Aguarde antes de tentar novamente." }, 429, req);
       }
     } catch (err) {
-      // falha no rate limit não bloqueia — log e segue
-      log.warn("rate limit check failed", { plan_slug: body.plan_slug });
-      void err;
+      log.error("rate limit check failed — rejecting request (fail-closed)", err);
+      return jsonResponse({ error: "Serviço temporariamente indisponível. Tente novamente em instantes." }, 503, req);
     }
 
     // --- Email já existe? ---

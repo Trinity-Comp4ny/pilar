@@ -34,6 +34,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
+import { monitoring } from "@/lib/monitoring";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { Can } from "@/components/Can";
@@ -55,7 +56,6 @@ import { ProjetoFormDialog } from "@/pages/projetos/components/ProjetoFormDialog
 import { ManageDisciplinasDialog } from "@/pages/projetos/components/ManageDisciplinasDialog";
 import { FluxoDisciplinasDialog } from "@/pages/projetos/components/FluxoDisciplinasDialog";
 import { DisciplinasTab } from "@/pages/projetos/components/DisciplinasTab";
-import { CalendarioPrazosTab } from "@/pages/projetos/components/CalendarioPrazosTab";
 import { CronogramaProjetosTab } from "@/pages/projetos/components/CronogramaProjetosTab";
 import {
   ProjetosFilterBar,
@@ -75,7 +75,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 const statusConfig = PROJECT_STATUS_CONFIG;
 
-type Tab = "kanban" | "disciplinas" | "cronograma" | "calendario";
+type Tab = "kanban" | "disciplinas" | "cronograma";
 type SortKey = "priority" | "dueDate" | "value" | "name" | "created";
 type SortDir = "asc" | "desc";
 
@@ -450,7 +450,7 @@ export default function ProjetosKanban() {
       }
       toast.success("Notificação por email enviada");
     } catch (err) {
-      console.error("Erro ao notificar mudança de status do projeto:", err);
+      monitoring.captureException(err, { context: "notifyProjectStatusChange" });
     }
   };
 
@@ -465,7 +465,7 @@ export default function ProjetosKanban() {
       }
       toast.success("Email de conclusão enviado para o cliente");
     } catch (err) {
-      console.error("Erro ao enviar email para o cliente:", err);
+      monitoring.captureException(err, { context: "sendClientEmail" });
     }
   };
 
@@ -558,7 +558,6 @@ export default function ProjetosKanban() {
     { id: "kanban", label: "Quadro", icon: CalendarIcon },
     { id: "disciplinas", label: "Disciplinas", icon: Layers },
     { id: "cronograma", label: "Cronograma", icon: CalendarIcon },
-    { id: "calendario", label: "Calendário", icon: CalendarIcon },
   ];
 
   const noProjetos = !loadingProjetos && projetos.length === 0;
@@ -802,8 +801,6 @@ export default function ProjetosKanban() {
         <DisciplinasTab projetos={filteredProjetos} />
       ) : activeTab === "cronograma" ? (
         <CronogramaProjetosTab projetos={filteredProjetos} />
-      ) : activeTab === "calendario" ? (
-        <CalendarioPrazosTab projetos={filteredProjetos} />
       ) : null}
 
       <ProjectDetailDialog
