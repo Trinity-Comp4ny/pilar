@@ -183,7 +183,7 @@ export default function ProfileSetup() {
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
                 <Label htmlFor="firstName" className="text-ink-soft font-medium">
-                  Nome *
+                  Nome <span className="text-red-500">*</span>
                 </Label>
                 <div className="relative group">
                   <User className="absolute left-3 top-3 h-4 w-4 text-ink/40 group-focus-within:text-brand transition-colors" />
@@ -199,7 +199,7 @@ export default function ProfileSetup() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="lastName" className="text-ink-soft font-medium">
-                  Sobrenome *
+                  Sobrenome <span className="text-red-500">*</span>
                 </Label>
                 <Input
                   id="lastName"
@@ -214,7 +214,7 @@ export default function ProfileSetup() {
 
             <div className="space-y-2">
               <Label htmlFor="phone" className="text-ink-soft font-medium">
-                Telefone
+                Telefone <span className="text-red-500">*</span>
               </Label>
               <div className="relative group">
                 <Phone className="absolute left-3 top-3 h-4 w-4 text-ink/40 group-focus-within:text-brand transition-colors" />
@@ -239,7 +239,7 @@ export default function ProfileSetup() {
 
             <div className="space-y-2">
               <Label htmlFor="password" className="text-ink-soft font-medium">
-                Nova senha
+                Nova senha <span className="text-red-500">*</span>
               </Label>
               <div className="relative group">
                 <Lock className="absolute left-3 top-3 h-4 w-4 text-ink/40 group-focus-within:text-brand transition-colors" />
@@ -260,7 +260,7 @@ export default function ProfileSetup() {
 
             <div className="space-y-2">
               <Label htmlFor="confirmPassword" className="text-ink-soft font-medium">
-                Confirmar senha
+                Confirmar senha <span className="text-red-500">*</span>
               </Label>
               <div className="relative group">
                 <Lock className="absolute left-3 top-3 h-4 w-4 text-ink/40 group-focus-within:text-brand transition-colors" />
@@ -275,6 +275,11 @@ export default function ProfileSetup() {
                   minLength={6}
                 />
               </div>
+              {confirmPassword && confirmPassword !== password ? (
+                <p className="text-xs text-red-500" role="alert">
+                  As senhas não coincidem.
+                </p>
+              ) : null}
             </div>
 
             <Button

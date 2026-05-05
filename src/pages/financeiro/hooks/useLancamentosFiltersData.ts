@@ -34,6 +34,7 @@ export function useLancamentosFiltersData(): FiltersData {
           supabase.from("categorias_financeiras").select("id, nome, tipo").order("nome"),
           supabase.from("projetos").select("id, codigo_projeto").order("nome"),
           supabase.from("clientes").select("id, nome").order("nome"),
+          // gen:types não inclui "fornecedores" ainda; cast defensivo até regeneração.
           supabase.from("fornecedores").select("id, nome").order("nome") as unknown as Promise<{
             data: { id: string; nome: string }[] | null;
           }>,

@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { startOfMonth, endOfMonth, subMonths } from "date-fns";
+import { startOfMonth, endOfMonth, subMonths, differenceInCalendarDays, addDays } from "date-fns";
 import { buildDashboardQueries } from "./dashboard/queries";
 import {
   buildKPIs,
@@ -22,25 +22,25 @@ export type {
   DashboardData,
 } from "./dashboard/types";
 
-export const useDashboardData = () => {
+export const useDashboardData = (dateFrom?: Date, dateTo?: Date) => {
+  const fromKey = dateFrom?.toISOString() ?? null;
+  const toKey = dateTo?.toISOString() ?? null;
+
   return useQuery({
-    queryKey: ["dashboard-v2"],
+    queryKey: ["dashboard-v2", fromKey, toKey],
     queryFn: async (): Promise<DashboardData> => {
       const now = new Date();
-      const mesAtualStart = startOfMonth(now);
-      const mesAtualEnd = endOfMonth(now);
-      const mesAnteriorStart = startOfMonth(subMonths(now, 1));
-      const mesAnteriorEnd = endOfMonth(subMonths(now, 1));
+      const periodoStart = dateFrom ?? startOfMonth(now);
+      const periodoEnd = dateTo ?? endOfMonth(now);
+
+      // Período anterior de mesma duração para variação %
+      const duracao = differenceInCalendarDays(periodoEnd, periodoStart);
+      const prevEnd = addDays(periodoStart, -1);
+      const prevStart = addDays(prevEnd, -duracao);
+
       const chartStart = subMonths(now, 11);
 
-      const results = await buildDashboardQueries(
-        now,
-        mesAtualStart,
-        mesAtualEnd,
-        mesAnteriorStart,
-        mesAnteriorEnd,
-        chartStart
-      );
+      const results = await buildDashboardQueries(now, periodoStart, periodoEnd, prevStart, prevEnd, chartStart);
 
       const projetosData = results[6].data || [];
       const projetosAtivos = results[14].count ?? 0;
@@ -53,10 +53,10 @@ export const useDashboardData = () => {
         results[4].data,
         results[5].data,
         projetosAtivos,
-        mesAtualStart.toISOString().split("T")[0],
-        mesAtualEnd.toISOString().split("T")[0],
-        mesAnteriorStart.toISOString().split("T")[0],
-        mesAnteriorEnd.toISOString().split("T")[0]
+        periodoStart.toISOString().split("T")[0],
+        periodoEnd.toISOString().split("T")[0],
+        prevStart.toISOString().split("T")[0],
+        prevEnd.toISOString().split("T")[0]
       );
 
       const projetos = buildProjetos(projetosData, now);

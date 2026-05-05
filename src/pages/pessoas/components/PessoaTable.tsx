@@ -5,18 +5,9 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import {
-  Search,
-  ArrowUpDown,
-  User,
-  Briefcase,
-  GraduationCap,
-  Crown,
-  Trash2,
-  Pencil,
-  Loader2,
-  Users,
-} from "lucide-react";
+import { Search, ArrowUpDown, User, Briefcase, GraduationCap, Crown, Trash2, Pencil, Users } from "lucide-react";
+import { EmptyState } from "@/components/EmptyState";
+import { TableSkeleton } from "@/components/TableSkeleton";
 import {
   CONTRACT_TYPES,
   CONTRACT_TYPE_LABELS,
@@ -150,129 +141,122 @@ export function PessoaTable({ pessoas, isLoading, isAdmin, onRowClick, onEditCli
         </div>
       </CardHeader>
       <CardContent className="flex-1 min-h-0">
-        {isLoading ? (
-          <div className="flex justify-center items-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          </div>
-        ) : (
-          <div className="overflow-x-auto overflow-y-auto w-full max-h-[calc(100svh-260px)]">
-            <Table>
-              <TableHeader>
+        <div className="overflow-x-auto overflow-y-auto w-full max-h-[calc(100svh-260px)]">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleSort("nome")}
+                    className="-ml-3 h-8 font-medium"
+                  >
+                    Nome
+                    <ArrowUpDown className="ml-2 h-3 w-3" />
+                  </Button>
+                </TableHead>
+                <TableHead>Tipo</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>CPF</TableHead>
+                <TableHead>Cargo</TableHead>
+                <TableHead className="hidden md:table-cell">Telefone</TableHead>
+                {isAdmin && <TableHead className="text-right">Ações</TableHead>}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {isLoading ? (
+                <TableSkeleton rows={5} columns={isAdmin ? 7 : 6} />
+              ) : filteredAndSortedPessoas.length === 0 ? (
                 <TableRow>
-                  <TableHead>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleSort("nome")}
-                      className="-ml-3 h-8 font-medium"
-                    >
-                      Nome
-                      <ArrowUpDown className="ml-2 h-3 w-3" />
-                    </Button>
-                  </TableHead>
-                  <TableHead>Tipo</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>CPF</TableHead>
-                  <TableHead>Cargo</TableHead>
-                  <TableHead className="hidden md:table-cell">Telefone</TableHead>
-                  {isAdmin && <TableHead className="text-right">Ações</TableHead>}
+                  <TableCell colSpan={isAdmin ? 7 : 6}>
+                    {pessoas.length === 0 ? (
+                      <EmptyState
+                        icon={Users}
+                        title="Nenhum membro cadastrado"
+                        description="Adicione o primeiro membro da equipe."
+                      />
+                    ) : (
+                      <EmptyState
+                        icon={Users}
+                        title="Nenhum resultado encontrado"
+                        description="Tente ajustar a busca ou o filtro de cargo."
+                      />
+                    )}
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredAndSortedPessoas.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={isAdmin ? 7 : 6}>
-                      <div className="flex flex-col items-center gap-3 py-12 text-center">
-                        <Users className="h-8 w-8 text-muted-foreground/40" />
-                        {pessoas.length === 0 ? (
-                          <>
-                            <p className="text-sm font-medium text-muted-foreground">Nenhum membro cadastrado</p>
-                            <p className="text-xs text-muted-foreground/70">Adicione o primeiro membro da equipe</p>
-                          </>
-                        ) : (
-                          <>
-                            <p className="text-sm font-medium text-muted-foreground">Nenhum resultado encontrado</p>
-                            <p className="text-xs text-muted-foreground/70">
-                              Tente ajustar a busca ou o filtro de cargo
-                            </p>
-                          </>
-                        )}
+              ) : (
+                filteredAndSortedPessoas.map((pessoa) => (
+                  <TableRow
+                    key={pessoa.id}
+                    className="cursor-pointer hover:bg-gray-50"
+                    onClick={() => onRowClick(pessoa)}
+                  >
+                    <TableCell className="font-medium">
+                      <div className="flex items-center gap-2">
+                        <div className="bg-gray-100 p-1.5 rounded-full">
+                          {(() => {
+                            const Icon = TIPO_ICON[pessoa.tipo_contrato] || User;
+                            return <Icon size={14} />;
+                          })()}
+                        </div>
+                        {pessoa.nome}
                       </div>
                     </TableCell>
-                  </TableRow>
-                ) : (
-                  filteredAndSortedPessoas.map((pessoa) => (
-                    <TableRow
-                      key={pessoa.id}
-                      className="cursor-pointer hover:bg-gray-50"
-                      onClick={() => onRowClick(pessoa)}
-                    >
-                      <TableCell className="font-medium">
-                        <div className="flex items-center gap-2">
-                          <div className="bg-gray-100 p-1.5 rounded-full">
-                            {(() => {
-                              const Icon = TIPO_ICON[pessoa.tipo_contrato] || User;
-                              return <Icon size={14} />;
-                            })()}
-                          </div>
-                          {pessoa.nome}
+                    <TableCell>
+                      <Badge
+                        variant="outline"
+                        className={cn(
+                          "border",
+                          CONTRACT_TYPE_COLORS[pessoa.tipo_contrato as ContractType] ||
+                            "bg-gray-100 text-gray-700 border-gray-200"
+                        )}
+                      >
+                        {CONTRACT_TYPE_LABELS[pessoa.tipo_contrato as ContractType] || pessoa.tipo_contrato}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant="outline"
+                        className={cn("border", PESSOA_STATUS_COLORS[(pessoa.status || "ativo") as PessoaStatus])}
+                      >
+                        {PESSOA_STATUS_LABELS[(pessoa.status || "ativo") as PessoaStatus]}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{pessoa.cpf || "-"}</TableCell>
+                    <TableCell>{pessoa.cargo}</TableCell>
+                    <TableCell className="hidden md:table-cell">{pessoa.telefone || "-"}</TableCell>
+                    {isAdmin && (
+                      <TableCell className="text-right">
+                        <div className="flex gap-1 justify-end" onClick={(e) => e.stopPropagation()}>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={(e) => onEditClick(pessoa, e)}
+                          >
+                            <Pencil className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-red-600"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onDeleteClick(pessoa.id);
+                            }}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
                         </div>
                       </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant="outline"
-                          className={cn(
-                            "border",
-                            CONTRACT_TYPE_COLORS[pessoa.tipo_contrato as ContractType] ||
-                              "bg-gray-100 text-gray-700 border-gray-200"
-                          )}
-                        >
-                          {CONTRACT_TYPE_LABELS[pessoa.tipo_contrato as ContractType] || pessoa.tipo_contrato}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant="outline"
-                          className={cn("border", PESSOA_STATUS_COLORS[(pessoa.status || "ativo") as PessoaStatus])}
-                        >
-                          {PESSOA_STATUS_LABELS[(pessoa.status || "ativo") as PessoaStatus]}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>{pessoa.cpf || "-"}</TableCell>
-                      <TableCell>{pessoa.cargo}</TableCell>
-                      <TableCell className="hidden md:table-cell">{pessoa.telefone || "-"}</TableCell>
-                      {isAdmin && (
-                        <TableCell className="text-right">
-                          <div className="flex gap-1 justify-end" onClick={(e) => e.stopPropagation()}>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8"
-                              onClick={(e) => onEditClick(pessoa, e)}
-                            >
-                              <Pencil className="h-3 w-3" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-red-600"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onDeleteClick(pessoa.id);
-                              }}
-                            >
-                              <Trash2 className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      )}
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        )}
+                    )}
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
       </CardContent>
     </Card>
   );

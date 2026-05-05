@@ -38,6 +38,7 @@ export function useClienteProjetoData(projetoId: string | undefined) {
           p_token: token,
         });
         if (rpcError) throw rpcError;
+        // RPC retorna Json; estrutura é contrato do backend (ver get_cliente_projeto_detail).
         setData(result as unknown as ClienteProjetoData);
       } catch (e: unknown) {
         setError(e instanceof Error ? e.message : "Erro ao carregar projeto");

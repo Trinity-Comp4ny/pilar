@@ -53,6 +53,9 @@ export const useClientes = () => {
       const { data, error } = await supabase.from("clientes").select("*").order("nome");
 
       if (error) throw error;
+      // Tipos gerados marcam campos opcionais como `string | null`, mas a interface
+      // Cliente usa `string | undefined`. Cast via unknown evita atualizar todos
+      // os consumidores neste momento.
       return (data ?? []) as unknown as Cliente[];
     },
     staleTime: 1000 * 60 * 3,

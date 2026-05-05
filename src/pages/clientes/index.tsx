@@ -42,6 +42,7 @@ import { useClientes, type Cliente, type ContaBancaria, type ChavePix } from "@/
 import { detectTipoChavePix, normalizarChavePix, TIPO_CHAVE_PIX_LABEL } from "@/lib/pixUtils";
 import { Badge } from "@/components/ui/badge";
 import { ClienteMessageDialog } from "./ClienteMessageDialog";
+import { EmptyState } from "@/components/EmptyState";
 
 const normalize = (value: string) =>
   value
@@ -866,32 +867,31 @@ export default function Clientes() {
                 {filteredAndSortedClientes.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={canShowActions ? 5 : 4}>
-                      <div className="flex flex-col items-center gap-3 py-12 text-center">
-                        <UsersRound className="h-8 w-8 text-muted-foreground/40" />
-                        {clientes.length === 0 ? (
-                          <>
-                            <p className="text-sm font-medium text-muted-foreground">Nenhum cliente cadastrado</p>
-                            <p className="text-xs text-muted-foreground/70">Crie o primeiro cliente para começar</p>
-                          </>
-                        ) : (
-                          <>
-                            <p className="text-sm font-medium text-muted-foreground">Nenhum resultado encontrado</p>
-                            <p className="text-xs text-muted-foreground/70">Tente ajustar os filtros aplicados</p>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="rounded-full"
-                              onClick={() => {
-                                setSearchTerm("");
-                                setFilterOrigem("all");
-                                setFilterPortal("all");
-                              }}
-                            >
-                              Limpar filtros
-                            </Button>
-                          </>
-                        )}
-                      </div>
+                      {clientes.length === 0 ? (
+                        <EmptyState
+                          icon={UsersRound}
+                          title="Nenhum cliente cadastrado"
+                          description="Crie o primeiro cliente para começar."
+                          action={
+                            can("clientes", "create") ? { label: "Novo Cliente", onClick: handleOpenDialog } : undefined
+                          }
+                        />
+                      ) : (
+                        <EmptyState
+                          icon={UsersRound}
+                          title="Nenhum resultado encontrado"
+                          description="Tente ajustar os filtros aplicados."
+                          action={{
+                            label: "Limpar filtros",
+                            variant: "outline",
+                            onClick: () => {
+                              setSearchTerm("");
+                              setFilterOrigem("all");
+                              setFilterPortal("all");
+                            },
+                          }}
+                        />
+                      )}
                     </TableCell>
                   </TableRow>
                 ) : (

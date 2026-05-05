@@ -129,7 +129,7 @@ export default function Login() {
           <form onSubmit={handleLogin} className="space-y-5">
             <div className="space-y-2">
               <Label htmlFor="email" className="text-slate-700 font-medium">
-                Email
+                Email <span className="text-red-500">*</span>
               </Label>
               <div className="relative group">
                 <Mail className="absolute left-3 top-3 h-4 w-4 text-slate-400 group-focus-within:text-brand transition-colors" />
@@ -159,7 +159,7 @@ export default function Login() {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="password" className="text-slate-700 font-medium">
-                  Senha
+                  Senha <span className="text-red-500">*</span>
                 </Label>
                 <button
                   type="button"

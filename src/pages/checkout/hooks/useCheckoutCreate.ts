@@ -77,8 +77,8 @@ export function useCheckoutCreate() {
       }
 
       if (!data || !("success" in data) || !data.success) {
-        const anyData = data as unknown as { error?: string } | null;
-        throw new Error(anyData?.error ?? "Falha ao criar cobrança");
+        const errorPayload = data as { error?: string } | null;
+        throw new Error(errorPayload?.error ?? "Falha ao criar cobrança");
       }
 
       return data;

@@ -1,3 +1,6 @@
+// Cache policy: índice de saúde combina dados financeiros + projetos. Como agrega
+// receitas/despesas/inadimplência (dinheiro real), tratamos como dado crítico:
+// staleTime 2min, refetchInterval 5min e refetchOnWindowFocus ligados.
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -187,6 +190,8 @@ export const useHealthIndex = () => {
 
       return { score, breakdown, label, color } as HealthIndex;
     },
-    staleTime: 1000 * 60 * 10,
+    staleTime: 2 * 60 * 1000,
+    refetchInterval: 5 * 60 * 1000,
+    refetchOnWindowFocus: true,
   });
 };

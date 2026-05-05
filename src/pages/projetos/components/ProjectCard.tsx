@@ -50,7 +50,11 @@ export function ProjectCard({
   const navigate = useNavigate();
   const priorityConfig = PROJECT_PRIORITY_CONFIG[projeto.prioridade as ProjectPriority];
   const priorityDot =
-    projeto.prioridade === "Alta" ? "bg-red-500" : projeto.prioridade === "Media" ? "bg-amber-400" : "bg-blue-400";
+    projeto.prioridade === "Alta"
+      ? "bg-status-cancelled"
+      : projeto.prioridade === "Media"
+        ? "bg-status-planning"
+        : "bg-status-progress";
   const progress = getProjectProgress(projeto.disciplinas);
   const deadline = getDeadlineStatus(projeto);
 

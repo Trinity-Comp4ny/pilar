@@ -21,6 +21,7 @@ import { translateAuthError } from "@/lib/authErrors";
 import { MfaHelpModal } from "@/components/MfaHelpModal";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { supabase } from "@/integrations/supabase/client";
+import { callUntypedRpc } from "@/lib/supabaseRpc";
 
 // ─── OTP Input ────────────────────────────────────────────────────────────────
 
@@ -99,9 +100,8 @@ function BackupCodesStep({ onDone }: { onDone: () => void }) {
   useEffect(() => {
     const generate = async () => {
       try {
-        // mfa_generate_backup_codes não está nos tipos gerados ainda
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { data, error } = await (supabase.rpc as any)("mfa_generate_backup_codes");
+        // mfa_generate_backup_codes não está nos tipos gerados ainda (gen:types pendente)
+        const { data, error } = await callUntypedRpc<string[]>("mfa_generate_backup_codes");
         if (error || !data) {
           toast.error("Não foi possível gerar códigos de backup");
           onDone();

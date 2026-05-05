@@ -27,12 +27,7 @@ import {
 } from "recharts";
 import { CustomTooltip } from "../components/CustomTooltip";
 import { useFinanceData } from "@/hooks/useFinanceData";
-
-interface VisaoGeralProps {
-  visualizacao: "dia" | "mes" | "ano";
-  dateFrom?: Date;
-  dateTo?: Date;
-}
+import { useFinanceFilter } from "../hooks/useFinanceFilter";
 
 const formatCurrency = (val: number) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(val);
@@ -134,7 +129,8 @@ function DonutChart({ data, totalLabel }: DonutProps) {
   );
 }
 
-export default function VisaoGeral({ visualizacao, dateFrom, dateTo }: VisaoGeralProps) {
+export default function VisaoGeral() {
+  const { visualizacao, dateFrom, dateTo } = useFinanceFilter();
   const { data: dashboardData, isLoading } = useFinanceData(dateFrom, dateTo);
 
   if (isLoading) return <VisaoGeralSkeleton />;

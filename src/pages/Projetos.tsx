@@ -88,12 +88,12 @@ const SORT_LABELS: Record<SortKey, string> = {
 };
 
 const STATUS_DOT: Record<string, string> = {
-  [PROJECT_STATUS.PLANEJAMENTO]: "bg-yellow-400",
-  [PROJECT_STATUS.EM_ANDAMENTO]: "bg-blue-500",
-  [PROJECT_STATUS.REVISAO]: "bg-purple-500",
+  [PROJECT_STATUS.PLANEJAMENTO]: "bg-status-planning",
+  [PROJECT_STATUS.EM_ANDAMENTO]: "bg-status-progress",
+  [PROJECT_STATUS.REVISAO]: "bg-status-review",
   [PROJECT_STATUS.PARALISADO]: "bg-brand",
   [PROJECT_STATUS.CONCLUIDO]: "bg-status-done",
-  [PROJECT_STATUS.CANCELADO]: "bg-red-500",
+  [PROJECT_STATUS.CANCELADO]: "bg-status-cancelled",
 };
 
 // ---------- URL persistence helpers ----------
@@ -103,6 +103,7 @@ function filtersToParams(filters: ProjetosFilters, sort: { key: SortKey; dir: So
   if (filters.prioridades.length) params.set("prio", filters.prioridades.join(","));
   if (filters.pessoaIds.length) params.set("p", filters.pessoaIds.join(","));
   if (filters.clienteIds.length) params.set("c", filters.clienteIds.join(","));
+  if (filters.disciplinaIds.length) params.set("disc", filters.disciplinaIds.join(","));
   if (filters.deadlineStatus.length) params.set("d", filters.deadlineStatus.join(","));
   if (filters.dataInicio) params.set("di", filters.dataInicio);
   if (filters.dataFim) params.set("df", filters.dataFim);
@@ -124,6 +125,7 @@ function parseFiltersFromParams(params: URLSearchParams): {
       prioridades: (params.get("prio")?.split(",").filter(Boolean) as ProjectPriority[]) || [],
       pessoaIds: params.get("p")?.split(",").filter(Boolean) || [],
       clienteIds: params.get("c")?.split(",").filter(Boolean) || [],
+      disciplinaIds: params.get("disc")?.split(",").filter(Boolean) || [],
       deadlineStatus: (params.get("d")?.split(",").filter(Boolean) as DeadlineFilter[]) || [],
       dataInicio: params.get("di") || "",
       dataFim: params.get("df") || "",
@@ -468,6 +470,11 @@ export default function ProjetosKanban() {
   };
 
   // ---------- Filtros ----------
+  const disciplinaNomesSelected = useMemo(() => {
+    const map = new Map(disciplinas.map((d) => [d.id, d.nome.toLowerCase()]));
+    return new Set(filters.disciplinaIds.map((id) => map.get(id)).filter(Boolean) as string[]);
+  }, [disciplinas, filters.disciplinaIds]);
+
   const matchesFilters = (projeto: Projeto): boolean => {
     if (filters.search) {
       const q = filters.search.trim().toLowerCase();
@@ -486,6 +493,10 @@ export default function ProjetosKanban() {
         if (d.responsaveis?.some((r) => filters.pessoaIds.includes(r.responsavel_id))) return true;
         return false;
       });
+      if (!matched) return false;
+    }
+    if (disciplinaNomesSelected.size > 0) {
+      const matched = projeto.disciplinas?.some((d) => disciplinaNomesSelected.has((d.disciplina || "").toLowerCase()));
       if (!matched) return false;
     }
     if (filters.deadlineStatus.length > 0) {
@@ -525,7 +536,11 @@ export default function ProjetosKanban() {
     }
   };
 
-  const filteredProjetos = useMemo(() => projetos.filter(matchesFilters), [projetos, filters]);
+  const filteredProjetos = useMemo(
+    () => projetos.filter(matchesFilters),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [projetos, filters, disciplinaNomesSelected]
+  );
 
   const getProjetosByStatus = (status: string) =>
     filteredProjetos.filter((p) => p.status === status).sort(sortProjetos);
@@ -559,7 +574,13 @@ export default function ProjetosKanban() {
           description="Gerencie seus projetos"
           children={
             <div className="flex gap-2 items-center flex-wrap">
-              <ProjetosFilterBar pessoas={pessoas} clientes={clientes} filters={filters} onChange={setFilters} />
+              <ProjetosFilterBar
+                pessoas={pessoas}
+                clientes={clientes}
+                disciplinas={disciplinas}
+                filters={filters}
+                onChange={setFilters}
+              />
 
               <Can feature="projetos" action="edit">
                 <Button variant="outline" className="rounded-full text-sm" onClick={() => setIsDisciplinasOpen(true)}>
@@ -643,7 +664,7 @@ export default function ProjetosKanban() {
                   {Object.entries(statusConfig).map(([status, config]) => {
                     const items = getProjetosByStatus(status);
                     const isCollapsed = collapsedColumns.has(status);
-                    const dotColor = STATUS_DOT[status] || "bg-gray-400";
+                    const dotColor = STATUS_DOT[status] || "bg-status-unknown";
 
                     if (isCollapsed) {
                       return (
@@ -746,7 +767,7 @@ export default function ProjetosKanban() {
                 <div className="md:hidden space-y-3">
                   {Object.entries(statusConfig).map(([status, config]) => {
                     const items = getProjetosByStatus(status);
-                    const dotColor = STATUS_DOT[status] || "bg-gray-400";
+                    const dotColor = STATUS_DOT[status] || "bg-status-unknown";
                     if (items.length === 0) return null;
                     return (
                       <details key={status} open className="border rounded-lg bg-white">

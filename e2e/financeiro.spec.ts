@@ -6,8 +6,12 @@ import { test, expect } from "@playwright/test";
  * Rotas protegidas devem redirecionar para landing quando não há sessão.
  * Isso valida que PrivateRoute + RLS do Supabase não vazam dados sensíveis.
  *
- * TODO: completar com fluxo autenticado (criar receita, editar, deletar)
- *       quando houver fixture de login compartilhada (.auth/storageState.json).
+ * Fluxos autenticados (smoke + happy paths) ficam em
+ * `financeiro-authenticated.spec.ts`, que roda no projeto "authenticated" e
+ * reutiliza o storageState gerado por `auth.setup.ts`.
+ *
+ * TODO: portar os specs marcados com `test.skip` abaixo (criar receita,
+ *       idempotência de pagamento, MFA step-up) para o spec autenticado.
  */
 
 test.describe("Financeiro — guard de rota sem sessão", () => {

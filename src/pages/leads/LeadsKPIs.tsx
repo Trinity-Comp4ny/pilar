@@ -52,7 +52,7 @@ export function LeadsKPIs({ leads, onFilterProximos }: LeadsKPIsProps) {
         icon={CalendarClock}
         label="Fecham em 7 dias"
         value={stats.proximos.toString()}
-        color="text-amber-600"
+        color="text-warning"
         onClick={stats.proximos > 0 ? onFilterProximos : undefined}
       />
       <KpiCard
@@ -64,7 +64,7 @@ export function LeadsKPIs({ leads, onFilterProximos }: LeadsKPIsProps) {
             ? "text-muted-foreground"
             : stats.taxaConversao >= 50
               ? "text-positive"
-              : "text-amber-600"
+              : "text-warning"
         }
       />
     </div>
