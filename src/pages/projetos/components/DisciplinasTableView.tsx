@@ -374,11 +374,11 @@ export function DisciplinasTableView({
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-7 w-7 text-muted-foreground hover:text-red-600"
+                            className="h-8 w-8 text-muted-foreground hover:text-red-600"
                             onClick={() => handleRemoveDisc(idx)}
                             aria-label="Excluir disciplina"
                           >
-                            <Trash2 className="h-3.5 w-3.5" />
+                            <Trash2 className="h-4 w-4" />
                           </Button>
                         </TableCell>
                       )}
@@ -430,24 +430,24 @@ export function DisciplinasTableView({
                       <div className="flex gap-1">
                         <Button
                           size="icon"
-                          className="h-7 w-7"
+                          className="h-8 w-8"
                           onClick={onAddDisc}
                           disabled={!newDisc.disciplina || !newDisc.responsavel_id}
                           aria-label="Adicionar disciplina"
                         >
-                          <Plus className="h-3.5 w-3.5" />
+                          <Plus className="h-4 w-4" />
                         </Button>
                         <Button
                           size="icon"
                           variant="ghost"
-                          className="h-7 w-7"
+                          className="h-8 w-8"
                           onClick={() => {
                             setIsAddingDisc(false);
                             setNewDisc({ disciplina: "", responsavel_id: "" });
                           }}
                           aria-label="Cancelar"
                         >
-                          <X className="h-3.5 w-3.5" />
+                          <X className="h-4 w-4" />
                         </Button>
                       </div>
                     </TableCell>

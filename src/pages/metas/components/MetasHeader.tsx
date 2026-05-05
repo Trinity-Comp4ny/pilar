@@ -12,7 +12,7 @@ export function MetasHeader() {
           )}
           <div>
             <h1 className="text-2xl md:text-3xl font-medium tracking-tight">Metas</h1>
-            <p className="text-sm text-black/60 mt-1">Acompanhe e gerencie seus objetivos</p>
+            <p className="text-sm text-muted-foreground mt-1">Acompanhe e gerencie seus objetivos</p>
           </div>
         </div>
       </div>

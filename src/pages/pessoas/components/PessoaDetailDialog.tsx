@@ -173,7 +173,7 @@ export function PessoaDetailDialog({ open, onOpenChange, pessoa, isAdmin, onEdit
                               </span>
                             )}
                           </div>
-                          <div className="flex items-center gap-2 text-xs text-black/60">
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
                             <span>Ag: {conta.agencia}</span>
                             <span className="text-gray-300">|</span>
                             <span>Cc: {conta.conta}</span>

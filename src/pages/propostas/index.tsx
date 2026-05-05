@@ -301,7 +301,7 @@ export default function Propostas() {
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
               <CardTitle className="text-lg font-medium tracking-tight">Lista de Documentos</CardTitle>
-              <CardDescription className="text-sm text-black/60 mt-1">
+              <CardDescription className="text-sm text-muted-foreground mt-1">
                 Total de {filteredPropostas.length} de {propostas.length} proposta(s)
               </CardDescription>
             </div>
@@ -381,8 +381,7 @@ export default function Propostas() {
                     <TableHead>
                       <Button
                         variant="ghost"
-                        size="sm"
-                        className="-ml-3 h-8 font-medium"
+                        className="-ml-3 h-8 font-medium text-xs"
                         onClick={() => handleSort("titulo")}
                       >
                         Título <ArrowUpDown className="ml-2 h-3 w-3" />
@@ -392,8 +391,7 @@ export default function Propostas() {
                     <TableHead>
                       <Button
                         variant="ghost"
-                        size="sm"
-                        className="-ml-3 h-8 font-medium"
+                        className="-ml-3 h-8 font-medium text-xs"
                         onClick={() => handleSort("valor_proposto")}
                       >
                         Valor <ArrowUpDown className="ml-2 h-3 w-3" />
@@ -403,8 +401,7 @@ export default function Propostas() {
                     <TableHead>
                       <Button
                         variant="ghost"
-                        size="sm"
-                        className="-ml-3 h-8 font-medium"
+                        className="-ml-3 h-8 font-medium text-xs"
                         onClick={() => handleSort("validade")}
                       >
                         Validade <ArrowUpDown className="ml-2 h-3 w-3" />
@@ -512,14 +509,14 @@ export default function Propostas() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-7 w-7 text-red-500 hover:text-red-600 hover:bg-red-50"
+                            className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
                             onClick={(e) => {
                               e.stopPropagation();
                               setConfirmDelete({ id: p.id, titulo: p.titulo });
                             }}
                             aria-label="Excluir proposta"
                           >
-                            <Trash2 className="h-3.5 w-3.5" />
+                            <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
                       )}

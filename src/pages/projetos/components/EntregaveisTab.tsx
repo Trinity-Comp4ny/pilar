@@ -147,7 +147,7 @@ export function EntregaveisTab({ projetoId, canEdit, disciplinas }: EntregaveisT
 
         {isLoading ? (
           <div className="py-10 flex justify-center">
-            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
           </div>
         ) : threads.length === 0 ? (
           <EmptyState canEdit={canEdit} onNew={openNew} />

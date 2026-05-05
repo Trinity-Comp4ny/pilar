@@ -427,14 +427,14 @@ function AdminActionsTab() {
 export function AuditoriaTab() {
   return (
     <div className="space-y-4">
-      <Card>
+      <Card className="rounded-2xl border border-black/5 bg-white">
         <CardHeader>
           <div className="flex items-center gap-3">
             <div className="h-10 w-10 rounded-full bg-brand/10 flex items-center justify-center">
               <ShieldCheck size={18} className="text-brand" />
             </div>
             <div>
-              <CardTitle>Auditoria</CardTitle>
+              <CardTitle className="text-lg font-medium tracking-tight">Auditoria</CardTitle>
               <CardDescription>Log completo de dados e ações administrativas</CardDescription>
             </div>
           </div>

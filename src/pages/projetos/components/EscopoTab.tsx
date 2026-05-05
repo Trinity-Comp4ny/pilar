@@ -211,7 +211,7 @@ export function EscopoTab({ projetoId, canEdit }: EscopoTabProps) {
   if (isLoading)
     return (
       <div className="flex justify-center py-8">
-        <Loader2 className="h-5 w-5 animate-spin" />
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
       </div>
     );
 
@@ -440,11 +440,11 @@ export function EscopoTab({ projetoId, canEdit }: EscopoTabProps) {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-7 w-7 text-red-400"
+                    className="h-8 w-8 text-red-400"
                     onClick={() => removeItem(i)}
                     aria-label="Excluir item"
                   >
-                    <Trash2 className="h-3 w-3" />
+                    <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
               ))}
