@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
@@ -542,20 +543,14 @@ function PeriodoSection({
         <div className="grid grid-cols-2 gap-2">
           <div>
             <label className="text-[10px] uppercase text-muted-foreground">De</label>
-            <Input
-              type="date"
-              value={filters.dataInicio}
-              onChange={(e) => onChange({ ...filters, dataInicio: e.target.value })}
-              className="h-8 text-xs"
-            />
+            <DatePicker value={filters.dataInicio} onChange={(v) => onChange({ ...filters, dataInicio: v })} />
           </div>
           <div>
             <label className="text-[10px] uppercase text-muted-foreground">Até</label>
-            <Input
-              type="date"
+            <DatePicker
               value={filters.dataFim}
-              onChange={(e) => onChange({ ...filters, dataFim: e.target.value })}
-              className="h-8 text-xs"
+              onChange={(v) => onChange({ ...filters, dataFim: v })}
+              minDate={filters.dataInicio || undefined}
             />
           </div>
         </div>

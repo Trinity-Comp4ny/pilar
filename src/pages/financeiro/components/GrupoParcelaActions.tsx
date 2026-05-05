@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { DatePicker } from "@/components/ui/date-picker";
 import {
   Dialog,
   DialogContent,
@@ -246,7 +247,7 @@ function RenegociarDialog({ open, grupoId, onClose, onDone }: OpProps) {
             </div>
             <div>
               <Label>1ª data *</Label>
-              <Input type="date" value={primeiraData} onChange={(e) => setPrimeiraData(e.target.value)} />
+              <DatePicker value={primeiraData} onChange={(v) => setPrimeiraData(v)} />
             </div>
           </div>
           <div>
@@ -303,7 +304,7 @@ function QuitarAntecipadoDialog({ open, grupoId, onClose, onDone }: OpProps) {
         <div className="space-y-3 py-2">
           <div>
             <Label>Data do pagamento *</Label>
-            <Input type="date" value={dataPagamento} onChange={(e) => setDataPagamento(e.target.value)} />
+            <DatePicker value={dataPagamento} onChange={(v) => setDataPagamento(v)} />
           </div>
           <div>
             <Label>Quantidade (vazio = todas em aberto)</Label>

@@ -159,7 +159,7 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
 
   const goNext = async () => {
     if (step === 1) {
-      const valid = await form.trigger(["primeiro_nome", "sobrenome", "cargo", "email"]);
+      const valid = await form.trigger(["primeiro_nome", "sobrenome", "cargo", "email", "cpf"]);
       if (!valid) return;
     }
     if (step === 2 && isPJ) {
@@ -179,56 +179,65 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
     }
   };
 
-  const handleSubmit = form.handleSubmit(async (formData: PessoaFormData) => {
-    try {
-      const primeiroNome = formData.primeiro_nome.trim();
-      const sobrenome = formData.sobrenome.trim();
-      const payload = {
-        primeiro_nome: primeiroNome,
-        sobrenome: sobrenome || null,
-        nome: [primeiroNome, sobrenome].filter(Boolean).join(" "),
-        cpf: formData.cpf || null,
-        rg: formData.rg || null,
-        data_nascimento: formData.data_nascimento || null,
-        tipo_contrato: formData.tipo_contrato,
-        status: formData.status,
-        cargo: formData.cargo,
-        telefone: formData.telefone || null,
-        email: formData.email,
-        endereco: formData.endereco?.trim() || null,
-        data_admissao: formData.data_admissao || null,
-        data_demissao: formData.data_demissao || null,
-        contas_bancarias: contasBancarias,
-        chaves_pix: chavesPix,
-        salario_fixo: formData.salario_fixo ? parseCurrencyString(formData.salario_fixo) : null,
-        valor_m2: formData.valor_m2 ? parseCurrencyString(formData.valor_m2) : null,
-        cnpj: formData.tipo_contrato === CONTRACT_TYPES.PJ ? formData.cnpj || null : null,
-        razao_social: formData.tipo_contrato === CONTRACT_TYPES.PJ ? formData.razao_social || null : null,
-        pis_nit: formData.tipo_contrato === CONTRACT_TYPES.CLT ? formData.pis_nit || null : null,
-      };
+  const step1Keys = ["primeiro_nome", "sobrenome", "cpf", "cargo", "email"] as const;
+  const step2Keys = ["tipo_contrato", "cnpj", "salario_fixo", "data_admissao", "data_demissao"] as const;
 
-      if (isEditMode && editPessoa) {
-        const { error } = await supabase
-          .from("pessoas")
-          .update(payload as never)
-          .eq("id", editPessoa.id);
-        if (error) throw error;
-        toast.success("Pessoa atualizada", { description: "Dados atualizados com sucesso" });
-      } else {
-        const { error } = await supabase.from("pessoas").insert({
-          ...payload,
-          empresa_id: (await supabase.rpc("get_user_empresa_id")).data,
-        } as never);
-        if (error) throw error;
-        toast.success("Pessoa cadastrada", { description: "Nova pessoa adicionada com sucesso" });
+  const handleSubmit = form.handleSubmit(
+    async (formData: PessoaFormData) => {
+      try {
+        const primeiroNome = formData.primeiro_nome.trim();
+        const sobrenome = formData.sobrenome.trim();
+        const payload = {
+          primeiro_nome: primeiroNome,
+          sobrenome: sobrenome || null,
+          nome: [primeiroNome, sobrenome].filter(Boolean).join(" "),
+          cpf: formData.cpf || null,
+          rg: formData.rg || null,
+          data_nascimento: formData.data_nascimento || null,
+          tipo_contrato: formData.tipo_contrato,
+          status: formData.status,
+          cargo: formData.cargo,
+          telefone: formData.telefone || null,
+          email: formData.email,
+          endereco: formData.endereco?.trim() || null,
+          data_admissao: formData.data_admissao || null,
+          data_demissao: formData.data_demissao || null,
+          contas_bancarias: contasBancarias,
+          chaves_pix: chavesPix,
+          salario_fixo: formData.salario_fixo ? parseCurrencyString(formData.salario_fixo) : null,
+          valor_m2: formData.valor_m2 ? parseCurrencyString(formData.valor_m2) : null,
+          cnpj: formData.tipo_contrato === CONTRACT_TYPES.PJ ? formData.cnpj || null : null,
+          razao_social: formData.tipo_contrato === CONTRACT_TYPES.PJ ? formData.razao_social || null : null,
+          pis_nit: formData.tipo_contrato === CONTRACT_TYPES.CLT ? formData.pis_nit || null : null,
+        };
+
+        if (isEditMode && editPessoa) {
+          const { error } = await supabase
+            .from("pessoas")
+            .update(payload as never)
+            .eq("id", editPessoa.id);
+          if (error) throw error;
+          toast.success("Pessoa atualizada", { description: "Dados atualizados com sucesso" });
+        } else {
+          const { error } = await supabase.from("pessoas").insert({
+            ...payload,
+            empresa_id: (await supabase.rpc("get_user_empresa_id")).data,
+          } as never);
+          if (error) throw error;
+          toast.success("Pessoa cadastrada", { description: "Nova pessoa adicionada com sucesso" });
+        }
+
+        onOpenChange(false);
+        onSaved();
+      } catch (err) {
+        toast.error(parseSupabaseError(err));
       }
-
-      onOpenChange(false);
-      onSaved();
-    } catch (err) {
-      toast.error(parseSupabaseError(err));
+    },
+    (errors) => {
+      if (step1Keys.some((k) => k in errors)) setStep(1);
+      else if (step2Keys.some((k) => k in errors)) setStep(2);
     }
-  });
+  );
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -289,13 +298,7 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
           })}
         </div>
 
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (step === 3) handleSubmit(e);
-          }}
-          className="divide-y"
-        >
+        <form onSubmit={(e) => e.preventDefault()} className="divide-y">
           {/* STEP 1 — Identidade */}
           {step === 1 && (
             <div className="px-6 py-4 space-y-3">
@@ -728,7 +731,12 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
                 Próximo →
               </Button>
             ) : (
-              <Button type="submit" className="bg-brand hover:bg-brand/90 text-ink" disabled={isSubmitting}>
+              <Button
+                type="button"
+                onClick={() => handleSubmit()}
+                className="bg-brand hover:bg-brand/90 text-ink"
+                disabled={isSubmitting}
+              >
                 {isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Salvando...

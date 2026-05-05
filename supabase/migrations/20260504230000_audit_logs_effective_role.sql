@@ -14,14 +14,18 @@
 -- Esta é a primeira policy migrada. Demais policies serão migradas individualmente
 -- conforme cobertas por pgTAP.
 
-DROP POLICY IF EXISTS "audit_logs_admin_read" ON public.audit_logs;
+DO $$ BEGIN
+  IF EXISTS (SELECT 1 FROM pg_tables WHERE schemaname = 'public' AND tablename = 'audit_logs') THEN
+    DROP POLICY IF EXISTS "audit_logs_admin_read" ON public.audit_logs;
 
-CREATE POLICY "audit_logs_admin_read" ON public.audit_logs
-  FOR SELECT
-  USING (
-    empresa_id = public.get_user_empresa_id()
-    AND public.current_effective_role() IN ('admin', 'ultra_admin')
-  );
+    CREATE POLICY "audit_logs_admin_read" ON public.audit_logs
+      FOR SELECT
+      USING (
+        empresa_id = public.get_user_empresa_id()
+        AND public.current_effective_role() IN ('admin', 'ultra_admin')
+      );
 
-COMMENT ON POLICY "audit_logs_admin_read" ON public.audit_logs IS
-  'Lê audit logs da empresa apenas se role efetivo (considerando impersonation) for admin/ultra_admin.';
+    COMMENT ON POLICY "audit_logs_admin_read" ON public.audit_logs IS
+      'Lê audit logs da empresa apenas se role efetivo (considerando impersonation) for admin/ultra_admin.';
+  END IF;
+END $$;

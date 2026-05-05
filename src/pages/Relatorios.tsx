@@ -711,7 +711,7 @@ export default function Relatorios() {
         </PageHeader>
       }
     >
-      <div className="flex-1 min-h-0 flex flex-col gap-5">
+      <div className="flex-1 overflow-y-auto flex flex-col gap-5 pb-6">
         {/* ═══ Barra de parâmetros ═══ */}
         <Card className="rounded-2xl border border-black/5 bg-white shrink-0">
           <CardContent className="p-5 space-y-4">
@@ -850,7 +850,7 @@ export default function Relatorios() {
         </Card>
 
         {/* ═══ Resultado ═══ */}
-        <div className="flex-1 min-h-0 flex flex-col gap-5">
+        <div className="flex flex-col gap-5">
           {isLoading ? (
             renderLoadingSkeleton()
           ) : reportData.length === 0 ? (
@@ -943,7 +943,10 @@ export default function Relatorios() {
               </div>
 
               {/* Tabela */}
-              <div className="flex-1 min-h-0 w-full overflow-auto border rounded-xl bg-white">
+              <div
+                className="flex-1 min-h-0 w-full overflow-auto border rounded-xl bg-white"
+                style={{ minHeight: "320px" }}
+              >
                 {(() => {
                   const cols = ALL_COLUMNS.filter((c) => visibleColumns.has(c));
                   const valorIdx = cols.indexOf("Valor");

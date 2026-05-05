@@ -328,7 +328,7 @@ export function ProjectDetailDialog({
           </div>
 
           {/* Footer */}
-          <div className="flex items-center gap-2 px-6 py-3 border-t bg-gray-50/30">
+          <div className="flex items-center justify-end gap-2 px-6 py-3 border-t bg-gray-50/30">
             <Button
               size="sm"
               onClick={() => {

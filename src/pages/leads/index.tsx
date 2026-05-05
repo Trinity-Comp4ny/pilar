@@ -4,6 +4,7 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -24,13 +25,10 @@ import {
   Mail,
   Phone,
   User,
-  CheckCircle2,
   Loader2,
   AlertTriangle,
   UserPlus,
   FileText,
-  Pencil,
-  Trash2,
   ArrowRight,
   MoreVertical,
   TrendingUp,
@@ -57,6 +55,7 @@ import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { LeadsKPIs } from "./LeadsKPIs";
+import { LeadDetailDialog } from "./components/LeadDetailDialog";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import {
   useLeads,
@@ -485,11 +484,10 @@ export default function Leads() {
                         <Label htmlFor="previsao_fechamento" className="text-xs">
                           Previsão de Fechamento
                         </Label>
-                        <Input
+                        <DatePicker
                           id="previsao_fechamento"
-                          type="date"
                           value={formData.previsao_fechamento}
-                          onChange={(e) => setFormData({ ...formData, previsao_fechamento: e.target.value })}
+                          onChange={(v) => setFormData({ ...formData, previsao_fechamento: v })}
                         />
                       </div>
                       <div className="space-y-1.5">
@@ -885,182 +883,18 @@ export default function Leads() {
         </DragDropContext>
       )}
 
-      {/* Modal de Detalhes do Lead */}
-      <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
-        <DialogContent className="sm:max-w-lg">
-          {selectedLead && (
-            <>
-              <DialogHeader>
-                <DialogTitle className="text-xl">Detalhes do Lead</DialogTitle>
-                <DialogDescription>Informações completas sobre o lead</DialogDescription>
-              </DialogHeader>
-
-              <div className="space-y-6">
-                {/* Status Badge */}
-                <div className="flex items-center justify-between">
-                  <Badge className={statusConfig[selectedLead.status]?.color || "bg-muted"}>
-                    {selectedLead.status}
-                  </Badge>
-
-                  {selectedLead.status === "Ganho" && !selectedLead.cliente_id && (
-                    <Button
-                      size="sm"
-                      className="bg-positive hover:bg-positive/90 text-white h-8"
-                      onClick={() => setIsConvertOpen(true)}
-                    >
-                      <CheckCircle2 className="mr-2 h-4 w-4" />
-                      Transformar em Cliente
-                    </Button>
-                  )}
-                </div>
-
-                {/* Informações */}
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label className="text-xs text-black/60">Nome</Label>
-                      <div className="flex items-center gap-2 text-sm font-medium">
-                        <User size={16} className="text-black/40" />
-                        {selectedLead.nome}
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-xs text-black/60">Sobrenome</Label>
-                      <div className="text-sm font-medium">{selectedLead.sobrenome || "—"}</div>
-                    </div>
-                  </div>
-
-                  {selectedLead.email && (
-                    <div className="space-y-2">
-                      <Label className="text-xs text-black/60">Email</Label>
-                      <div className="flex items-center gap-2 text-sm">
-                        <Mail size={16} className="text-black/40" />
-                        {selectedLead.email}
-                      </div>
-                    </div>
-                  )}
-
-                  {selectedLead.contato && (
-                    <div className="space-y-2">
-                      <Label className="text-xs text-black/60">Contato</Label>
-                      <div className="flex items-center gap-2 text-sm">
-                        <Phone size={16} className="text-black/40" />
-                        {selectedLead.contato}
-                      </div>
-                    </div>
-                  )}
-
-                  {selectedLead.origem && (
-                    <div className="space-y-2">
-                      <Label className="text-xs text-black/60">Origem</Label>
-                      <p className="text-sm text-black/70 bg-black/5 p-3 rounded-lg">{selectedLead.origem}</p>
-                    </div>
-                  )}
-
-                  {selectedLead.status === "Perdido" && selectedLead.motivo_perda && (
-                    <div className="space-y-2">
-                      <Label className="text-xs text-chart-danger">Motivo da Perda</Label>
-                      <p className="text-sm text-danger-mid bg-danger-soft p-3 rounded-lg border border-danger-soft-border">
-                        {selectedLead.motivo_perda}
-                      </p>
-                    </div>
-                  )}
-
-                  {selectedLead.convertido_em && (
-                    <div className="space-y-2">
-                      <Label className="text-xs text-positive">Convertido em</Label>
-                      <p className="text-sm text-positive bg-positive/10 p-3 rounded-lg border border-positive/10">
-                        {new Date(selectedLead.convertido_em).toLocaleDateString("pt-BR")}
-                      </p>
-                    </div>
-                  )}
-
-                  {selectedLead.empresa_lead && (
-                    <div className="space-y-2">
-                      <Label className="text-xs text-black/60">Empresa</Label>
-                      <p className="text-sm">{selectedLead.empresa_lead}</p>
-                    </div>
-                  )}
-
-                  {selectedLead.valor_estimado != null && (
-                    <div className="space-y-2">
-                      <Label className="text-xs text-black/60">Valor Estimado</Label>
-                      <p className="text-sm font-semibold text-brand">{formatCurrency(selectedLead.valor_estimado)}</p>
-                    </div>
-                  )}
-
-                  {selectedLead.previsao_fechamento && (
-                    <div className="space-y-2">
-                      <Label className="text-xs text-black/60">Previsão de Fechamento</Label>
-                      <p className="text-sm">
-                        {new Date(selectedLead.previsao_fechamento + "T00:00:00").toLocaleDateString("pt-BR")}
-                      </p>
-                    </div>
-                  )}
-
-                  {selectedLead.responsavel_id && (
-                    <div className="space-y-2">
-                      <Label className="text-xs text-black/60">Responsável</Label>
-                      <p className="text-sm">
-                        {(() => {
-                          const m = members.find((x) => x.id === selectedLead.responsavel_id);
-                          return m ? `${m.first_name} ${m.last_name}` : "—";
-                        })()}
-                      </p>
-                    </div>
-                  )}
-
-                  {selectedLead.notas && (
-                    <div className="space-y-2">
-                      <Label className="text-xs text-black/60">Notas</Label>
-                      <p className="text-sm text-black/70 bg-black/5 p-3 rounded-lg whitespace-pre-wrap">
-                        {selectedLead.notas}
-                      </p>
-                    </div>
-                  )}
-                </div>
-
-                {/* Ações */}
-                <div className="flex items-center gap-2 pt-4 border-t">
-                  <Button
-                    className="bg-brand hover:bg-brand/90 text-ink"
-                    onClick={() => setIsCreatePropostaOpen(true)}
-                    disabled={
-                      createProposta.isPending || selectedLead.status === "Perdido" || selectedLead.status === "Ganho"
-                    }
-                  >
-                    {createProposta.isPending ? (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : (
-                      <FileText className="mr-2 h-4 w-4" />
-                    )}
-                    Criar Proposta
-                  </Button>
-
-                  <div className="flex-1" />
-
-                  {canEdit && (
-                    <>
-                      <Button variant="outline" size="sm" onClick={() => handleOpenEdit(selectedLead)}>
-                        <Pencil className="h-3.5 w-3.5 mr-1.5" />
-                        Editar
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-destructive hover:bg-destructive/10"
-                        onClick={() => handleDelete(selectedLead.id)}
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    </>
-                  )}
-                </div>
-              </div>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
+      <LeadDetailDialog
+        open={isDetailOpen}
+        onOpenChange={setIsDetailOpen}
+        lead={selectedLead}
+        canEdit={canEdit}
+        members={members}
+        onEdit={handleOpenEdit}
+        onDelete={handleDelete}
+        onCreateProposta={() => setIsCreatePropostaOpen(true)}
+        onConvert={() => setIsConvertOpen(true)}
+        createPropostaPending={createProposta.isPending}
+      />
 
       {/* Modal de Edição do Lead */}
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
@@ -1151,11 +985,10 @@ export default function Leads() {
                   <Label htmlFor="edit-previsao_fechamento" className="text-xs">
                     Previsão de Fechamento
                   </Label>
-                  <Input
+                  <DatePicker
                     id="edit-previsao_fechamento"
-                    type="date"
                     value={editFormData.previsao_fechamento}
-                    onChange={(e) => setEditFormData({ ...editFormData, previsao_fechamento: e.target.value })}
+                    onChange={(v) => setEditFormData({ ...editFormData, previsao_fechamento: v })}
                   />
                 </div>
                 <div className="space-y-1.5">
