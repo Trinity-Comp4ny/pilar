@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { callUntypedRpc } from "@/lib/supabaseRpc";
 
 const TOKEN_KEY = "pilar_portal_token";
 
@@ -31,8 +32,8 @@ export async function portalLogout() {
   const token = getPortalToken();
   if (token) {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await (supabase.rpc as any)("portal_logout", { p_token: token });
+      // gen:types não inclui portal_logout ainda
+      await callUntypedRpc("portal_logout", { p_token: token });
     } catch {
       // Falha no logout server-side é tolerável — o importante é limpar cliente
     }

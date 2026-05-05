@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
+import { EmptyState } from "@/components/EmptyState";
 import { supabase } from "@/integrations/supabase/client";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from "recharts";
 import jsPDF from "jspdf";
@@ -642,15 +643,11 @@ export default function Relatorios() {
   );
 
   const renderEmptyState = () => (
-    <div className="flex flex-col items-center justify-center py-20 text-center">
-      <div className="rounded-2xl bg-black/[0.03] p-5 mb-4">
-        <FileBarChart size={40} className="text-black/20" />
-      </div>
-      <p className="text-sm font-medium text-black/60">Nenhum relatório gerado</p>
-      <p className="text-xs text-black/40 mt-1 max-w-[300px]">
-        Selecione o tipo e período acima, depois clique em "Gerar relatório".
-      </p>
-    </div>
+    <EmptyState
+      icon={FileBarChart}
+      title="Nenhum relatório gerado"
+      description='Selecione o tipo e período acima, depois clique em "Gerar relatório".'
+    />
   );
 
   const renderStatusBadge = (status: string) => {

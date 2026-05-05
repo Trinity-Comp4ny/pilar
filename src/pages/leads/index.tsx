@@ -68,21 +68,21 @@ import {
 } from "@/hooks/useLeads";
 
 const statusConfig: Record<string, { label: string; color: string }> = {
-  Novo: { label: "Novo", color: "bg-blue-100 text-blue-800" },
-  "Em contato": { label: "Em Contato", color: "bg-purple-100 text-purple-800" },
-  Proposta: { label: "Proposta Enviada", color: "bg-yellow-100 text-yellow-800" },
+  Novo: { label: "Novo", color: "bg-info-soft text-info-strong" },
+  "Em contato": { label: "Em Contato", color: "bg-highlight-soft text-highlight-strong" },
+  Proposta: { label: "Proposta Enviada", color: "bg-warning-soft text-warning-strong" },
   Negociação: { label: "Em Negociação", color: "bg-brand/10 text-brand" },
   Ganho: { label: "Ganho", color: "bg-positive/10 text-positive" },
-  Perdido: { label: "Perdido", color: "bg-red-100 text-red-800" },
+  Perdido: { label: "Perdido", color: "bg-danger-soft text-danger-strong" },
 };
 
 const STATUS_DOT: Record<string, string> = {
-  Novo: "bg-blue-500",
-  "Em contato": "bg-purple-500",
-  Proposta: "bg-yellow-400",
+  Novo: "bg-pipeline-novo",
+  "Em contato": "bg-pipeline-contato",
+  Proposta: "bg-pipeline-negociacao",
   Negociação: "bg-brand",
   Ganho: "bg-status-done",
-  Perdido: "bg-red-500",
+  Perdido: "bg-status-cancelled",
 };
 
 export default function Leads() {
@@ -531,7 +531,7 @@ export default function Leads() {
                     </div>
                   </div>
 
-                  <div className="flex gap-2 px-6 py-4 bg-gray-50/30">
+                  <div className="flex gap-2 px-6 py-4 bg-muted/30">
                     <Button
                       type="button"
                       variant="outline"
@@ -566,7 +566,7 @@ export default function Leads() {
 
       {filterProximos && (
         <div className="flex items-center gap-2 mb-2 px-1">
-          <span className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-full px-3 py-0.5">
+          <span className="text-xs text-warning-mid bg-warning-soft border border-warning-mid-border rounded-full px-3 py-0.5">
             Filtro: fechamentos nos próximos 7 dias
           </span>
           <button onClick={() => setFilterProximos(false)} className="text-xs text-muted-foreground underline">
@@ -582,7 +582,7 @@ export default function Leads() {
             {Object.entries(statusConfig).map(([status, config]) => {
               const items = getLeadsByStatus(status);
               const isCollapsed = collapsedColumns.has(status);
-              const dotColor = STATUS_DOT[status] || "bg-gray-400";
+              const dotColor = STATUS_DOT[status] || "bg-pipeline-perdido";
 
               if (isCollapsed) {
                 return (
@@ -703,7 +703,7 @@ export default function Leads() {
                                     </p>
                                   )}
                                   {lead.status === "Perdido" && lead.motivo_perda && (
-                                    <p className="text-sm text-red-500/80 line-clamp-2 mt-1 pt-1 border-t border-red-100">
+                                    <p className="text-sm text-chart-danger/80 line-clamp-2 mt-1 pt-1 border-t border-danger-soft-border">
                                       Motivo: {lead.motivo_perda}
                                     </p>
                                   )}
@@ -725,7 +725,7 @@ export default function Leads() {
           <div className="md:hidden space-y-3">
             {Object.entries(statusConfig).map(([status, config]) => {
               const items = getLeadsByStatus(status);
-              const dotColor = STATUS_DOT[status] || "bg-gray-400";
+              const dotColor = STATUS_DOT[status] || "bg-pipeline-perdido";
               if (items.length === 0) return null;
               return (
                 <details key={status} open className="border rounded-lg bg-white">
@@ -789,7 +789,7 @@ export default function Leads() {
                             </p>
                           )}
                           {lead.status === "Perdido" && lead.motivo_perda && (
-                            <p className="text-sm text-red-500/80 line-clamp-2 mt-1 pt-1 border-t border-red-100">
+                            <p className="text-sm text-chart-danger/80 line-clamp-2 mt-1 pt-1 border-t border-danger-soft-border">
                               Motivo: {lead.motivo_perda}
                             </p>
                           )}
@@ -856,7 +856,7 @@ export default function Leads() {
               <div className="space-y-6">
                 {/* Status Badge */}
                 <div className="flex items-center justify-between">
-                  <Badge className={statusConfig[selectedLead.status]?.color || "bg-gray-100"}>
+                  <Badge className={statusConfig[selectedLead.status]?.color || "bg-muted"}>
                     {selectedLead.status}
                   </Badge>
 
@@ -917,8 +917,8 @@ export default function Leads() {
 
                   {selectedLead.status === "Perdido" && selectedLead.motivo_perda && (
                     <div className="space-y-2">
-                      <Label className="text-xs text-red-500">Motivo da Perda</Label>
-                      <p className="text-sm text-red-700 bg-red-50 p-3 rounded-lg border border-red-100">
+                      <Label className="text-xs text-chart-danger">Motivo da Perda</Label>
+                      <p className="text-sm text-danger-mid bg-danger-soft p-3 rounded-lg border border-danger-soft-border">
                         {selectedLead.motivo_perda}
                       </p>
                     </div>
@@ -1162,7 +1162,7 @@ export default function Leads() {
               </div>
             </div>
 
-            <div className="flex gap-2 px-6 py-4 bg-gray-50/30">
+            <div className="flex gap-2 px-6 py-4 bg-muted/30">
               <Button
                 type="button"
                 variant="outline"
@@ -1225,7 +1225,7 @@ export default function Leads() {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-red-500" />
+              <AlertTriangle className="h-5 w-5 text-chart-danger" />
               Motivo da Perda
             </DialogTitle>
             <DialogDescription>

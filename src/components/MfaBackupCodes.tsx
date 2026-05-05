@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Copy, Check, RefreshCw, ShieldCheck, Loader2 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { callUntypedRpc } from "@/lib/supabaseRpc";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 
 export function MfaBackupCodes() {
@@ -14,9 +14,9 @@ export function MfaBackupCodes() {
   const [confirmOpen, setConfirmOpen] = useState(false);
 
   const fetchRemaining = async () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data, error } = await (supabase.rpc as any)("mfa_backup_codes_remaining");
-    if (!error) setRemaining((data as number | null) ?? 0);
+    // gen:types não inclui esta RPC ainda
+    const { data, error } = await callUntypedRpc<number>("mfa_backup_codes_remaining");
+    if (!error) setRemaining(data ?? 0);
     setLoading(false);
   };
 
@@ -28,10 +28,10 @@ export function MfaBackupCodes() {
     setConfirmOpen(false);
     setGenerating(true);
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data, error } = await (supabase.rpc as any)("mfa_generate_backup_codes");
+      // gen:types não inclui esta RPC ainda
+      const { data, error } = await callUntypedRpc<string[]>("mfa_generate_backup_codes");
       if (error) throw error;
-      setGeneratedCodes((data as unknown as string[]) ?? []);
+      setGeneratedCodes(data ?? []);
       await fetchRemaining();
       toast.success("Códigos gerados");
     } catch (err) {

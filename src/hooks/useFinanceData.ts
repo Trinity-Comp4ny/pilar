@@ -1,3 +1,6 @@
+// Cache policy: dados financeiros (saldo/receitas/despesas) precisam estar fresh.
+// staleTime 2min + refetchInterval 5min + refetchOnWindowFocus garantem que o
+// usuário sempre veja números próximos da realidade ao voltar pra aba.
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { subMonths, startOfMonth, endOfMonth } from "date-fns";
@@ -17,6 +20,9 @@ type DespesaChartItem = Pick<DespesaRow, "valor" | "data_pagamento" | "data_venc
 export const useFinanceData = (dateFrom?: Date, dateTo?: Date) => {
   return useQuery({
     queryKey: ["finance-data", dateFrom, dateTo],
+    staleTime: 2 * 60 * 1000,
+    refetchInterval: 5 * 60 * 1000,
+    refetchOnWindowFocus: true,
     queryFn: async () => {
       const now = new Date();
       const start = dateFrom || startOfMonth(now);

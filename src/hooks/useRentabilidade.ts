@@ -1,3 +1,6 @@
+// Cache policy: rentabilidade depende de receitas/despesas reais. Tratado como
+// dado financeiro crítico: staleTime 2min, refetchInterval 5min em background
+// e refetchOnWindowFocus para o usuário ver números atualizados ao retornar.
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -102,7 +105,9 @@ export const useDashboardRentabilidade = () => {
         menosRentaveis,
       };
     },
-    staleTime: 1000 * 60 * 5,
+    staleTime: 2 * 60 * 1000,
+    refetchInterval: 5 * 60 * 1000,
+    refetchOnWindowFocus: true,
   });
 };
 
@@ -178,7 +183,9 @@ export const useRentabilidadePorCliente = () => {
 
       return { clientes, totalReceitas };
     },
-    staleTime: 1000 * 60 * 5,
+    staleTime: 2 * 60 * 1000,
+    refetchInterval: 5 * 60 * 1000,
+    refetchOnWindowFocus: true,
   });
 };
 
@@ -194,7 +201,9 @@ export const useProjetosDrenandoCaixa = () => {
 
       return projetos.filter((p) => p.margem_bruta < 0).sort((a, b) => a.margem_bruta - b.margem_bruta);
     },
-    staleTime: 1000 * 60 * 5,
+    staleTime: 2 * 60 * 1000,
+    refetchInterval: 5 * 60 * 1000,
+    refetchOnWindowFocus: true,
   });
 };
 
@@ -211,6 +220,8 @@ export const useProjetoRentabilidade = (projetoId: string | undefined) => {
       return calcularMargens(data as unknown as RpcRentabilidadeRow);
     },
     enabled: !!projetoId,
-    staleTime: 1000 * 60 * 3,
+    staleTime: 2 * 60 * 1000,
+    refetchInterval: 5 * 60 * 1000,
+    refetchOnWindowFocus: true,
   });
 };

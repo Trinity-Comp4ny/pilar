@@ -31,6 +31,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { useUserRole } from "@/hooks/useUserRole";
 import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { EmptyState } from "@/components/EmptyState";
 import {
   usePropostas,
   useCreateProposta,
@@ -356,25 +357,25 @@ export default function Propostas() {
 
         <CardContent className="flex-1 min-h-0 p-0 pb-4">
           {propostas.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <FileText className="h-10 w-10 mx-auto mb-3 opacity-40" />
-              <p className="text-sm">Nenhuma proposta cadastrada.</p>
-            </div>
+            <EmptyState
+              icon={FileText}
+              title="Nenhuma proposta cadastrada"
+              description="Crie sua primeira proposta para começar."
+            />
           ) : filteredPropostas.length === 0 ? (
-            <div className="flex flex-col items-center gap-3 py-14 text-center">
-              <Search className="h-8 w-8 text-muted-foreground/40" />
-              <p className="text-sm font-medium text-muted-foreground">Nenhuma proposta encontrada</p>
-              <p className="text-xs text-muted-foreground/70">Ajuste os filtros para ver mais resultados</p>
-              <button
-                onClick={() => {
+            <EmptyState
+              icon={Search}
+              title="Nenhuma proposta encontrada"
+              description="Ajuste os filtros para ver mais resultados."
+              action={{
+                label: "Limpar filtros",
+                variant: "outline",
+                onClick: () => {
                   setSearchTerm("");
                   setFilterStatus("all");
-                }}
-                className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground transition-colors"
-              >
-                Limpar filtros
-              </button>
-            </div>
+                },
+              }}
+            />
           ) : viewMode === "table" ? (
             <div className="overflow-x-auto overflow-y-auto w-full max-h-[calc(100svh-360px)]">
               <Table>

@@ -19,6 +19,7 @@ import {
 } from "@/hooks/useTemplates";
 import { TemplateForm } from "./components/TemplateForm";
 import { usePageTitle } from "@/hooks/usePageTitle";
+import { EmptyState } from "@/components/EmptyState";
 
 export default function Templates() {
   usePageTitle("Templates");
@@ -102,7 +103,7 @@ export default function Templates() {
     return (
       <PageLayout>
         <PageHeader title="Templates de Projeto" description="Modelos reutilizáveis para criação rápida de projetos" />
-        <div className="flex items-center justify-center py-12">
+        <div className="flex items-center justify-center py-12" aria-busy="true" aria-label="Carregando templates">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
       </PageLayout>
@@ -120,18 +121,12 @@ export default function Templates() {
       </PageHeader>
 
       {templates.length === 0 ? (
-        <div className="text-center py-12 text-muted-foreground">
-          <FileText className="h-10 w-10 mx-auto mb-3 opacity-40" />
-          <p className="text-sm">Nenhum template criado ainda.</p>
-          <p className="text-xs mt-1">
-            Templates permitem criar projetos rapidamente com fases e disciplinas pré-definidas.
-          </p>
-          {canEdit && (
-            <Button variant="outline" className="mt-4" onClick={openCreate}>
-              <Plus className="h-4 w-4 mr-1" /> Criar Primeiro Template
-            </Button>
-          )}
-        </div>
+        <EmptyState
+          icon={FileText}
+          title="Nenhum template criado ainda"
+          description="Templates permitem criar projetos rapidamente com fases e disciplinas pré-definidas."
+          action={canEdit ? { label: "Criar Primeiro Template", variant: "outline", onClick: openCreate } : undefined}
+        />
       ) : (
         <div className="space-y-6">
           {Object.entries(agrupado).map(([tipo, items]) => (

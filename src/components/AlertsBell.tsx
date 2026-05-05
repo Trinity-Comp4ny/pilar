@@ -46,7 +46,7 @@ export function AlertsBell() {
         <Button variant="ghost" size="icon" className="relative h-8 w-8">
           <Bell className="h-4 w-4" />
           {naoLidos > 0 && (
-            <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-red-500 text-[10px] font-bold text-white flex items-center justify-center">
+            <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-chart-danger text-[10px] font-bold text-white flex items-center justify-center">
               {naoLidos > 9 ? "9+" : naoLidos}
             </span>
           )}
@@ -75,7 +75,7 @@ export function AlertsBell() {
                 <div
                   key={alerta.id}
                   className={`px-4 py-3 border-b last:border-0 hover:bg-muted/50 cursor-pointer transition-colors ${
-                    !alerta.lido ? "bg-blue-50/50" : ""
+                    !alerta.lido ? "bg-info-soft/50" : ""
                   }`}
                   onClick={() => !alerta.lido && handleMarcarLido(alerta.id)}
                 >
@@ -90,7 +90,7 @@ export function AlertsBell() {
                         >
                           {alerta.titulo}
                         </p>
-                        {!alerta.lido && <span className="h-1.5 w-1.5 rounded-full bg-blue-500 shrink-0" />}
+                        {!alerta.lido && <span className="h-1.5 w-1.5 rounded-full bg-chart-info shrink-0" />}
                       </div>
                       <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2">{alerta.mensagem}</p>
                       <p className="text-[10px] text-muted-foreground mt-1">{formatTimeAgo(alerta.created_at)}</p>

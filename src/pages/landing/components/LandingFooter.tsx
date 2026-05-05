@@ -56,9 +56,9 @@ export function LandingFooter() {
                 </a>
               </li>
               <li>
-                <a href="#" className="hover:text-brand transition-colors">
+                <Link to="/privacidade" className="hover:text-brand transition-colors">
                   Privacidade
-                </a>
+                </Link>
               </li>
             </ul>
           </div>

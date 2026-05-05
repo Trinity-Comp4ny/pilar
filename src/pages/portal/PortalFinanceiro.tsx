@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, CheckCircle2, Clock } from "lucide-react";
+import { Loader2, CheckCircle2, Clock, Receipt } from "lucide-react";
+import { EmptyState } from "@/components/EmptyState";
 import { supabase } from "@/integrations/supabase/client";
 interface Receita {
   id: string;
@@ -92,7 +93,7 @@ export function FinanceiroContent({ projetoId }: { projetoId: string }) {
         <CardContent className="p-6">
           <h3 className="text-sm font-semibold mb-4">Parcelas</h3>
           {receitas.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-4">Nenhuma parcela registrada.</p>
+            <EmptyState icon={Receipt} title="Nenhuma parcela registrada" />
           ) : (
             <div className="space-y-3">
               {receitas.map((r) => {

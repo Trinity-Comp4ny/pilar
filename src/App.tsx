@@ -15,6 +15,7 @@ import { AdminRoute } from "./components/AdminRoute";
 import { UltraAdminRoute } from "./components/UltraAdminRoute";
 import { FeatureRoute } from "./components/FeatureRoute";
 import { AdminOnlyRoute } from "./components/AdminOnlyRoute";
+import { RequireAal2 } from "./components/RequireAal2";
 import { ImpersonationBanner } from "./components/ImpersonationBanner";
 
 const Landing = lazy(() => import("./pages/Landing"));
@@ -51,6 +52,7 @@ const MfaSetupPage = lazy(() => import("./pages/MfaSetupPage"));
 const PasswordReset = lazy(() => import("./pages/PasswordReset"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
 const SemAcesso = lazy(() => import("./pages/SemAcesso"));
+const Privacidade = lazy(() => import("./pages/Privacidade"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -108,6 +110,7 @@ const App = () => {
                     <Route path="/login" element={<Login />} />
                     <Route path="/forgot-password" element={<ForgotPassword />} />
                     <Route path="/reset-password" element={<PasswordReset />} />
+                    <Route path="/privacidade" element={<Privacidade />} />
 
                     <Route element={<PrivateRoute />}>
                       <Route path="/dashboard" element={<Dashboard />} />
@@ -160,10 +163,15 @@ const App = () => {
                         <Route path="/ai" element={<AiHub />} />
                       </Route>
                       <Route path="/profile" element={<Profile />} />
-                      <Route path="/company" element={<Company />} />
                       <Route path="/company-setup" element={<CompanySetup />} />
-                      <Route path="/billing" element={<Billing />} />
                       <Route path="/profile-setup" element={<ProfileSetup />} />
+
+                      {/* Rotas administrativas sensíveis exigem step-up MFA (sessão AAL2) */}
+                      <Route element={<RequireAal2 />}>
+                        <Route path="/company" element={<Company />} />
+                        <Route path="/billing" element={<Billing />} />
+                      </Route>
+
                       <Route path="/mfa" element={<MfaChallengePage />} />
                       <Route path="/mfa/setup" element={<MfaSetupPage />} />
                       <Route path="/sem-acesso" element={<SemAcesso />} />

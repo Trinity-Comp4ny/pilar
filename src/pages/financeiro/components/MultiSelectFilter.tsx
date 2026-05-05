@@ -42,7 +42,7 @@ export function MultiSelectFilter({
     else onChange([...selected, value]);
   };
 
-  const clear = (e: React.MouseEvent) => {
+  const clear = (e: React.SyntheticEvent) => {
     e.stopPropagation();
     onChange([]);
   };
@@ -73,7 +73,7 @@ export function MultiSelectFilter({
               tabIndex={0}
               onClick={clear}
               onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") clear(e as unknown as React.MouseEvent);
+                if (e.key === "Enter" || e.key === " ") clear(e);
               }}
               className="ml-0.5 rounded-full hover:bg-brand/20 p-0.5 cursor-pointer"
               aria-label="Limpar"

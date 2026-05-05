@@ -19,6 +19,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { getPortalToken } from "@/hooks/useClienteAuth";
+import { EmptyState } from "@/components/EmptyState";
 
 interface Entrega {
   id: string;
@@ -120,9 +121,8 @@ export function EntregasContent({
   if (threads.length === 0) {
     return (
       <Card>
-        <CardContent className="p-8 text-center text-muted-foreground">
-          <FileText className="h-8 w-8 mx-auto mb-2 opacity-40" />
-          <p className="text-sm">Nenhuma entrega disponível.</p>
+        <CardContent className="p-0">
+          <EmptyState icon={FileText} title="Nenhuma entrega disponível" />
         </CardContent>
       </Card>
     );

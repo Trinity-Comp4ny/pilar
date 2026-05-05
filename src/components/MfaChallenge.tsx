@@ -6,7 +6,7 @@ import { ShieldCheck, Loader2, Key } from "lucide-react";
 import { useMfa } from "@/hooks/useMfa";
 import { translateAuthError } from "@/lib/authErrors";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
-import { supabase } from "@/integrations/supabase/client";
+import { callUntypedRpc } from "@/lib/supabaseRpc";
 
 interface MfaChallengeProps {
   onVerified?: () => void;
@@ -57,9 +57,10 @@ export function MfaChallenge({ onVerified }: MfaChallengeProps) {
     }
     setBackupSubmitting(true);
     try {
-      // mfa_consume_backup_code não está nos tipos gerados ainda
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: valid, error } = await (supabase.rpc as any)("mfa_consume_backup_code", { p_code: normalized });
+      // mfa_consume_backup_code não está nos tipos gerados ainda (gen:types pendente)
+      const { data: valid, error } = await callUntypedRpc<boolean>("mfa_consume_backup_code", {
+        p_code: normalized,
+      });
       if (error || !valid) {
         toast.error("Código inválido ou já utilizado");
         return;

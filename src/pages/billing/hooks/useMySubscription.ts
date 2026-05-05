@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { untypedFrom } from "@/lib/supabaseRpc";
 import type { Plan } from "@/pages/planos/hooks/usePlans";
 
 export interface MySubscription {
@@ -30,21 +30,12 @@ interface SubscriptionRow {
   plan: Plan | null;
 }
 
-type AnyFrom = (table: string) => {
-  select: (cols: string) => {
-    maybeSingle: () => Promise<{
-      data: SubscriptionRow | null;
-      error: { message: string } | null;
-    }>;
-  };
-};
-
 export function useMySubscription() {
   return useQuery({
     queryKey: ["pilar-my-subscription"],
     queryFn: async (): Promise<MySubscription | null> => {
-      const from = supabase.from as unknown as AnyFrom;
-      const { data, error } = await from("pilar_subscriptions")
+      // gen:types não inclui pilar_subscriptions/pilar_subscription_plans ainda.
+      const { data, error } = await untypedFrom<SubscriptionRow>("pilar_subscriptions")
         .select(
           `id, empresa_id, plan_id, status, billing_cycle, billing_type,
            current_period_start, current_period_end, canceled_at, created_at,

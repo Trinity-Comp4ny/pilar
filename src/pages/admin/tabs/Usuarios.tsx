@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { callUntypedRpc } from "@/lib/supabaseRpc";
 import { toast } from "sonner";
 import { UsersAccessManager, type ManagedUser } from "@/components/admin/UsersAccessManager";
 import { useRequireAal2 } from "@/hooks/useRequireAal2";
@@ -83,10 +84,8 @@ export function UsuariosTab({ users, setUsers, currentUserId, companyFeatures }:
   const handleUpdate = async (payload: { id: string; role: "admin" | "user"; features: UserFeatures }) => {
     if (!(await requireAal2())) return;
     try {
-      // RPC entra nos types após gen:types pós-migration
-      const { error } = await (
-        supabase.rpc as unknown as (fn: string, args: Record<string, unknown>) => Promise<{ error: Error | null }>
-      )("update_user_access", {
+      // gen:types ainda não inclui update_user_access
+      const { error } = await callUntypedRpc("update_user_access", {
         p_user_id: payload.id,
         p_role: payload.role,
         p_features: payload.features,
