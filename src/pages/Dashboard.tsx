@@ -52,6 +52,7 @@ import { PROJECT_STATUS_CONFIG, PROJECT_PRIORITY_CONFIG, type ProjectStatus, typ
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { usePermissions } from "@/hooks/usePermissions";
 import { cn } from "@/lib/utils";
+import { CalendarioPreview } from "@/pages/projetos/components/CalendarioPreview";
 
 const fmt = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 const fmtCompact = new Intl.NumberFormat("pt-BR", {
@@ -726,6 +727,9 @@ export default function Dashboard() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Calendário de prazos */}
+        {canProj && <CalendarioPreview />}
 
         {/* Próximos Vencimentos + Pipeline de Leads */}
         {(canFin || canLeads) && (

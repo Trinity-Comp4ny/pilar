@@ -1,5 +1,6 @@
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
+import "@/types/jspdf-autotable";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -186,7 +187,6 @@ export function generateExecutiveReport(data: ExecutiveReportData): jsPDF {
     },
     margin: { left: 14, right: 14 },
   });
-  // @ts-expect-error - autoTable injects lastAutoTable
   y = (doc.lastAutoTable?.finalY ?? y) + 8;
 
   // Pipeline de Leads
@@ -219,7 +219,6 @@ export function generateExecutiveReport(data: ExecutiveReportData): jsPDF {
     },
     margin: { left: 14, right: 14 },
   });
-  // @ts-expect-error - autoTable injects lastAutoTable
   y = (doc.lastAutoTable?.finalY ?? y) + 8;
 
   // Quebra se faltar espaço
@@ -250,7 +249,6 @@ export function generateExecutiveReport(data: ExecutiveReportData): jsPDF {
     },
     margin: { left: 14, right: 14 },
   });
-  // @ts-expect-error - autoTable injects lastAutoTable
   y = (doc.lastAutoTable?.finalY ?? y) + 8;
 
   if (y > pageHeight - 60) {
