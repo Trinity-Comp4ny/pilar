@@ -244,18 +244,18 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="h-7 w-7 p-0 text-blue-500"
+                              className="h-8 w-8 p-0 text-blue-500"
                               onClick={() => handleEdit(fluxo)}
                             >
-                              <Edit size={14} />
+                              <Edit size={16} />
                             </Button>
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="h-7 w-7 p-0 text-red-500"
+                              className="h-8 w-8 p-0 text-red-500"
                               onClick={() => setConfirmDeleteId(fluxo.id)}
                             >
-                              <Trash2 size={14} />
+                              <Trash2 size={16} />
                             </Button>
                           </div>
                         </div>

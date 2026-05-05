@@ -35,8 +35,8 @@ const formatCurrency = (val: number) =>
 function VisaoGeralSkeleton() {
   return (
     <div className="space-y-6 w-full max-w-none">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
-        {[1, 2, 3].map((i) => (
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 w-full">
+        {[1, 2, 3, 4, 5].map((i) => (
           <Card key={i} className="vrz-card w-full">
             <CardHeader className="pb-2">
               <Skeleton className="h-3 w-24" />
@@ -160,74 +160,84 @@ export default function VisaoGeral() {
   return (
     <div className="space-y-6 w-full max-w-none">
       {/* KPIs */}
-      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 w-full">
-        <Card className="vrz-card bg-positive/10 border-positive/10 w-full">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 w-full">
+        <Card className="vrz-card bg-positive/10 border-positive/10 w-full min-w-0">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-green-700">Receitas Totais</CardTitle>
+            <CardTitle className="text-sm font-medium text-green-700 truncate">Receitas Totais</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-700">{formatCurrency(stats.receitasTotal)}</div>
-            <p className="text-xs text-green-600 mt-1 flex items-center">
-              <ArrowUpRight size={12} className="mr-1" />
-              {stats.receitasMes}% vs período anterior
+          <CardContent className="min-w-0">
+            <div className="text-xl md:text-2xl font-bold text-green-700 tabular-nums truncate">
+              {formatCurrency(stats.receitasTotal)}
+            </div>
+            <p className="text-xs text-green-600 mt-1 flex items-center min-w-0">
+              <ArrowUpRight size={12} className="mr-1 flex-shrink-0" />
+              <span className="truncate">{stats.receitasMes}% vs período anterior</span>
             </p>
           </CardContent>
         </Card>
 
-        <Card className="vrz-card bg-red-50 border-red-100 w-full">
+        <Card className="vrz-card bg-red-50 border-red-100 w-full min-w-0">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-red-800">Despesas Totais</CardTitle>
+            <CardTitle className="text-sm font-medium text-red-800 truncate">Despesas Totais</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-700">{formatCurrency(stats.despesasTotal)}</div>
+          <CardContent className="min-w-0">
+            <div className="text-xl md:text-2xl font-bold text-red-700 tabular-nums truncate">
+              {formatCurrency(stats.despesasTotal)}
+            </div>
             <p
-              className={`text-xs mt-1 flex items-center ${Number(stats.despesasMes) > 0 ? "text-red-600" : "text-green-600"}`}
+              className={`text-xs mt-1 flex items-center min-w-0 ${Number(stats.despesasMes) > 0 ? "text-red-600" : "text-green-600"}`}
             >
               {Number(stats.despesasMes) > 0 ? (
-                <TrendingUp size={12} className="mr-1" />
+                <TrendingUp size={12} className="mr-1 flex-shrink-0" />
               ) : (
-                <TrendingDown size={12} className="mr-1" />
+                <TrendingDown size={12} className="mr-1 flex-shrink-0" />
               )}
-              {stats.despesasMes}% vs período anterior
+              <span className="truncate">{stats.despesasMes}% vs período anterior</span>
             </p>
           </CardContent>
         </Card>
 
-        <Card className="vrz-card bg-blue-50 border-blue-100 w-full">
+        <Card className="vrz-card bg-blue-50 border-blue-100 w-full min-w-0">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-blue-800">Lucro Líquido</CardTitle>
+            <CardTitle className="text-sm font-medium text-blue-800 truncate">Lucro Líquido</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-700">{formatCurrency(stats.saldo)}</div>
-            <p className="text-xs text-blue-600 mt-1">
-              <DollarSign size={12} className="mr-1 inline" />
-              Margem de {margem}%
+          <CardContent className="min-w-0">
+            <div className="text-xl md:text-2xl font-bold text-blue-700 tabular-nums truncate">
+              {formatCurrency(stats.saldo)}
+            </div>
+            <p className="text-xs text-blue-600 mt-1 flex items-center min-w-0">
+              <DollarSign size={12} className="mr-1 flex-shrink-0" />
+              <span className="truncate">Margem de {margem}%</span>
             </p>
           </CardContent>
         </Card>
 
-        <Card className="vrz-card bg-emerald-50 border-emerald-100 w-full">
+        <Card className="vrz-card bg-emerald-50 border-emerald-100 w-full min-w-0">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-emerald-800">A receber</CardTitle>
+            <CardTitle className="text-sm font-medium text-emerald-800 truncate">A receber</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-emerald-700">{formatCurrency(stats.aReceber.total)}</div>
-            <p className="text-xs text-emerald-600 mt-1 flex items-center">
-              <Clock size={12} className="mr-1" />
-              {stats.aReceber.count} lançamento(s) pendente(s)
+          <CardContent className="min-w-0">
+            <div className="text-xl md:text-2xl font-bold text-emerald-700 tabular-nums truncate">
+              {formatCurrency(stats.aReceber.total)}
+            </div>
+            <p className="text-xs text-emerald-600 mt-1 flex items-center min-w-0">
+              <Clock size={12} className="mr-1 flex-shrink-0" />
+              <span className="truncate">{stats.aReceber.count} lançamento(s) pendente(s)</span>
             </p>
           </CardContent>
         </Card>
 
-        <Card className="vrz-card bg-amber-50 border-amber-100 w-full">
+        <Card className="vrz-card bg-amber-50 border-amber-100 w-full min-w-0">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-amber-800">A pagar</CardTitle>
+            <CardTitle className="text-sm font-medium text-amber-800 truncate">A pagar</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-amber-700">{formatCurrency(stats.aPagar.total)}</div>
-            <p className="text-xs text-amber-600 mt-1 flex items-center">
-              <Clock size={12} className="mr-1" />
-              {stats.aPagar.count} lançamento(s) pendente(s)
+          <CardContent className="min-w-0">
+            <div className="text-xl md:text-2xl font-bold text-amber-700 tabular-nums truncate">
+              {formatCurrency(stats.aPagar.total)}
+            </div>
+            <p className="text-xs text-amber-600 mt-1 flex items-center min-w-0">
+              <Clock size={12} className="mr-1 flex-shrink-0" />
+              <span className="truncate">{stats.aPagar.count} lançamento(s) pendente(s)</span>
             </p>
           </CardContent>
         </Card>

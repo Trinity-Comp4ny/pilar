@@ -105,7 +105,7 @@ export default function Lancamentos() {
         <KPICard label="A pagar" value={kpis.aPagar} icon={Clock} tone="neutral-negative" loading={loadingKpis} />
       </div>
 
-      <Card className="rounded-2xl border-black/10 p-4">
+      <Card className="rounded-2xl border border-black/5 bg-white p-4">
         <CardContent className="p-0">
           <div className="flex flex-wrap items-center justify-end gap-2 mb-3">
             <div className="text-sm text-muted-foreground flex items-center gap-2">
@@ -173,7 +173,7 @@ function KPICard({ label, value, icon: Icon, tone, loading }: KPICardProps) {
   }[tone];
 
   return (
-    <Card className="rounded-2xl border-black/10 p-4">
+    <Card className="rounded-2xl border border-black/5 bg-white p-4">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <p className="text-xs text-muted-foreground uppercase tracking-wider">{label}</p>

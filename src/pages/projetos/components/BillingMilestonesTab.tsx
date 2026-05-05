@@ -147,7 +147,7 @@ export function BillingMilestonesTab({ projetoId, canEdit }: BillingMilestonesTa
   if (isLoading)
     return (
       <div className="flex justify-center py-8">
-        <Loader2 className="h-5 w-5 animate-spin" />
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
       </div>
     );
 
@@ -208,34 +208,34 @@ export function BillingMilestonesTab({ projetoId, canEdit }: BillingMilestonesTa
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-7 w-7 text-blue-600"
+                          className="h-8 w-8 text-blue-600"
                           title="Faturar (cria receita)"
                           aria-label="Faturar"
                           disabled={faturarMarcoMutation.isPending}
                           onClick={() => faturarMarcoMutation.mutate(marco.id)}
                         >
-                          <Banknote className="h-3.5 w-3.5" />
+                          <Banknote className="h-4 w-4" />
                         </Button>
                       )}
                       {marco.status === "faturado" && (
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-7 w-7 text-positive"
+                          className="h-8 w-8 text-positive"
                           onClick={() => updateStatusMutation.mutate({ id: marco.id, status: "recebido" })}
                           aria-label="Marcar como recebido"
                         >
-                          <CheckCircle2 className="h-3.5 w-3.5" />
+                          <CheckCircle2 className="h-4 w-4" />
                         </Button>
                       )}
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-7 w-7 text-red-500"
+                        className="h-8 w-8 text-red-500"
                         onClick={() => deleteMutation.mutate(marco.id)}
                         aria-label="Excluir marco"
                       >
-                        <Trash2 className="h-3.5 w-3.5" />
+                        <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
                   )}

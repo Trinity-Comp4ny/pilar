@@ -158,7 +158,7 @@ export function LeadDetailDialog({
           {lead.origem && (
             <div className="space-y-1.5">
               <Label className="text-[10px] uppercase text-muted-foreground tracking-wider">Origem</Label>
-              <p className="text-sm text-black/70 bg-black/5 p-3 rounded-lg">{lead.origem}</p>
+              <p className="text-sm text-muted-foreground bg-black/5 p-3 rounded-lg">{lead.origem}</p>
             </div>
           )}
 
@@ -187,7 +187,9 @@ export function LeadDetailDialog({
           {lead.notas && (
             <div className="space-y-1.5">
               <Label className="text-[10px] uppercase text-muted-foreground tracking-wider">Notas</Label>
-              <p className="text-sm text-black/70 bg-black/5 p-3 rounded-lg whitespace-pre-wrap">{lead.notas}</p>
+              <p className="text-sm text-muted-foreground bg-black/5 p-3 rounded-lg whitespace-pre-wrap">
+                {lead.notas}
+              </p>
             </div>
           )}
 

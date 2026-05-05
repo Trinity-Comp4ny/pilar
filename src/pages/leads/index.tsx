@@ -698,7 +698,7 @@ export default function Leads() {
                                           <span className="line-clamp-1">{leadNome(lead)}</span>
                                         </CardTitle>
                                         {lead.empresa_lead && (
-                                          <p className="text-xs text-black/50 mt-0.5 ml-6 line-clamp-1">
+                                          <p className="text-xs text-muted-foreground mt-0.5 ml-6 line-clamp-1">
                                             {lead.empresa_lead}
                                           </p>
                                         )}
@@ -722,19 +722,19 @@ export default function Leads() {
                                   </CardHeader>
                                   <CardContent className="p-3 pt-0 space-y-1.5">
                                     {lead.email && (
-                                      <div className="flex items-center gap-2 text-sm text-black/60">
+                                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                         <Mail size={14} className="flex-shrink-0" />
                                         <span className="line-clamp-1">{lead.email}</span>
                                       </div>
                                     )}
                                     {lead.contato && (
-                                      <div className="flex items-center gap-2 text-sm text-black/60">
+                                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                         <Phone size={14} className="flex-shrink-0" />
                                         <span className="line-clamp-1">{lead.contato}</span>
                                       </div>
                                     )}
                                     {lead.origem && (
-                                      <p className="text-sm text-black/50 line-clamp-1 mt-2 pt-2 border-t">
+                                      <p className="text-sm text-muted-foreground line-clamp-1 mt-2 pt-2 border-t">
                                         Origem: {lead.origem}
                                       </p>
                                     )}
@@ -786,7 +786,9 @@ export default function Leads() {
                                   <span className="line-clamp-1">{leadNome(lead)}</span>
                                 </CardTitle>
                                 {lead.empresa_lead && (
-                                  <p className="text-xs text-black/50 mt-0.5 ml-6 line-clamp-1">{lead.empresa_lead}</p>
+                                  <p className="text-xs text-muted-foreground mt-0.5 ml-6 line-clamp-1">
+                                    {lead.empresa_lead}
+                                  </p>
                                 )}
                               </div>
                               <div className="flex flex-col items-end gap-1 shrink-0">
@@ -808,19 +810,19 @@ export default function Leads() {
                           </CardHeader>
                           <CardContent className="p-3 pt-0 space-y-1.5">
                             {lead.email && (
-                              <div className="flex items-center gap-2 text-sm text-black/60">
+                              <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                 <Mail size={14} className="flex-shrink-0" />
                                 <span className="line-clamp-1">{lead.email}</span>
                               </div>
                             )}
                             {lead.contato && (
-                              <div className="flex items-center gap-2 text-sm text-black/60">
+                              <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                 <Phone size={14} className="flex-shrink-0" />
                                 <span className="line-clamp-1">{lead.contato}</span>
                               </div>
                             )}
                             {lead.origem && (
-                              <p className="text-sm text-black/50 line-clamp-1 mt-2 pt-2 border-t">
+                              <p className="text-sm text-muted-foreground line-clamp-1 mt-2 pt-2 border-t">
                                 Origem: {lead.origem}
                               </p>
                             )}

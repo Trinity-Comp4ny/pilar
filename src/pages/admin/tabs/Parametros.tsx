@@ -9,9 +9,9 @@ export function ParametrosTab() {
 
   return (
     <div className="space-y-6">
-      <Card>
+      <Card className="rounded-2xl border border-black/5 bg-white">
         <CardHeader>
-          <CardTitle>Catálogos da empresa</CardTitle>
+          <CardTitle className="text-lg font-medium tracking-tight">Catálogos da empresa</CardTitle>
           <CardDescription>Defina padrões que serão usados em todo o sistema</CardDescription>
         </CardHeader>
         <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -44,9 +44,9 @@ export function ParametrosTab() {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="rounded-2xl border border-black/5 bg-white">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+          <CardTitle className="text-lg font-medium tracking-tight flex items-center gap-2">
             Status e fluxos
             <Badge variant="secondary">Em breve</Badge>
           </CardTitle>
@@ -85,7 +85,7 @@ function ParamRow({
         </div>
         <div className="min-w-0">
           <div className="text-sm font-medium truncate">{name}</div>
-          <div className="text-xs text-black/60 truncate">{description}</div>
+          <div className="text-xs text-muted-foreground truncate">{description}</div>
         </div>
       </div>
       {disabled ? (

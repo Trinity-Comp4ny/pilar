@@ -956,20 +956,20 @@ export function LancamentosTable({
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-7 w-7 text-blue-600 hover:bg-blue-50"
+                                className="h-8 w-8 text-blue-600 hover:bg-blue-50"
                                 onClick={() => (isTransf ? setEditTransferencia(l) : setEditTarget(l))}
                                 aria-label="Editar lançamento"
                               >
-                                <Pencil className="h-3.5 w-3.5" />
+                                <Pencil className="h-4 w-4" />
                               </Button>
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-7 w-7 text-red-600 hover:bg-red-50"
+                                className="h-8 w-8 text-red-600 hover:bg-red-50"
                                 onClick={() => setDeleteTarget(l)}
                                 aria-label="Excluir lançamento"
                               >
-                                <Trash2 className="h-3.5 w-3.5" />
+                                <Trash2 className="h-4 w-4" />
                               </Button>
                             </div>
                           )}
