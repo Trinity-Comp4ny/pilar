@@ -88,7 +88,21 @@ export const getDiscDeadlineStatus = (disc: { data_previsao?: string; data_final
 
 export const getResponsaveisList = (disc: DisciplinaResponsavel): ResponsavelDatas[] => {
   if (disc.responsaveis && disc.responsaveis.length > 0) return disc.responsaveis;
-  if (!disc.responsavel_id) return [];
+  if (!disc.responsavel_id) {
+    if (disc.data_inicio || disc.data_previsao || disc.data_final) {
+      return [
+        {
+          responsavel_id: "",
+          responsavel_nome: "",
+          data_inicio: disc.data_inicio,
+          data_previsao: disc.data_previsao,
+          data_final: disc.data_final,
+          status: disc.status,
+        },
+      ];
+    }
+    return [];
+  }
   return [
     {
       responsavel_id: disc.responsavel_id,

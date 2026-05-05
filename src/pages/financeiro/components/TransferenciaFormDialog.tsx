@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
@@ -195,7 +196,7 @@ export function TransferenciaFormDialog({ open, onOpenChange, transferencia, onS
             </div>
             <div>
               <Label>Data *</Label>
-              <Input type="date" value={form.data} onChange={(e) => set("data", e.target.value)} />
+              <DatePicker value={form.data} onChange={(v) => set("data", v)} />
             </div>
           </div>
 

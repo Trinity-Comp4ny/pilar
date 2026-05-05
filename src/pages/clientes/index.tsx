@@ -271,9 +271,7 @@ export default function Clientes() {
     });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
+  const handleSave = async () => {
     if (!nome || !cpfCnpj || !email || !contato) {
       toast.error("Campos obrigatórios", { description: "Preencha nome, CPF/CNPJ, e-mail e contato" });
       return;
@@ -456,7 +454,7 @@ export default function Clientes() {
                   );
                 })()}
 
-                <form onSubmit={handleSubmit} className="divide-y">
+                <form onSubmit={(e) => e.preventDefault()} className="divide-y">
                   {step === 1 && (
                     <>
                       {/* Identificação */}
@@ -759,12 +757,37 @@ export default function Clientes() {
                         Voltar
                       </Button>
                     )}
-                    {step === 1 ? (
+                    {step === 1 && !isEditMode ? (
                       <Button type="button" onClick={goNext} className="bg-brand hover:bg-brand/90 text-ink">
                         Próximo →
                       </Button>
+                    ) : step === 1 && isEditMode ? (
+                      <>
+                        <Button type="button" onClick={goNext} variant="outline">
+                          Próximo →
+                        </Button>
+                        <Button
+                          type="button"
+                          onClick={handleSave}
+                          className="bg-brand hover:bg-brand/90 text-ink"
+                          disabled={isSaving}
+                        >
+                          {isSaving ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Salvando...
+                            </>
+                          ) : (
+                            "Atualizar"
+                          )}
+                        </Button>
+                      </>
                     ) : (
-                      <Button type="submit" className="bg-brand hover:bg-brand/90 text-ink" disabled={isSaving}>
+                      <Button
+                        type="button"
+                        onClick={handleSave}
+                        className="bg-brand hover:bg-brand/90 text-ink"
+                        disabled={isSaving}
+                      >
                         {isSaving ? (
                           <>
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Salvando...

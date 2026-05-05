@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar, Check, DollarSign, FileText, Layers, Loader2, MapPin } from "lucide-react";
+import { DatePicker } from "@/components/ui/date-picker";
 import { cn } from "@/lib/utils";
 import { formatCurrencyInput } from "@/lib/currencyUtils";
 import { toast } from "sonner";
@@ -420,12 +421,10 @@ export function ProjetoFormDialog({
                     <Label htmlFor="dataInicio" className="text-xs">
                       Início
                     </Label>
-                    <Input
+                    <DatePicker
                       id="dataInicio"
-                      type="date"
                       value={form.formData.data_inicio}
-                      onChange={(e) => form.handleInputChange("data_inicio", e.target.value)}
-                      className="h-9"
+                      onChange={(v) => form.handleInputChange("data_inicio", v)}
                     />
                   </div>
                   <div className="space-y-1.5">
@@ -449,24 +448,22 @@ export function ProjetoFormDialog({
                     <Label htmlFor="dataPrevisao" className="text-xs">
                       Previsão
                     </Label>
-                    <Input
+                    <DatePicker
                       id="dataPrevisao"
-                      type="date"
                       value={form.formData.data_previsao}
-                      onChange={(e) => form.handleInputChange("data_previsao", e.target.value)}
-                      className="h-9"
+                      onChange={(v) => form.handleInputChange("data_previsao", v)}
+                      minDate={form.formData.data_inicio || undefined}
                     />
                   </div>
                   <div className="space-y-1.5">
                     <Label htmlFor="dataFinal" className="text-xs">
                       Final Real
                     </Label>
-                    <Input
+                    <DatePicker
                       id="dataFinal"
-                      type="date"
                       value={form.formData.data_final}
-                      onChange={(e) => form.handleInputChange("data_final", e.target.value)}
-                      className="h-9"
+                      onChange={(v) => form.handleInputChange("data_final", v)}
+                      minDate={form.formData.data_inicio || undefined}
                     />
                   </div>
                 </div>
