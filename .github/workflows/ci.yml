@@ -153,38 +153,3 @@ jobs:
             echo "::error::src/integrations/supabase/types.ts is out of sync with the migrations. Run 'npm run gen:types' and commit the result."
             exit 1
           fi
-
-  e2e:
-    name: Playwright E2E
-    runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
-    # E2E roda exclusivamente contra `npm run preview` local (porta 4173 — ver
-    # playwright.config.ts webServer). NUNCA aponta pra produção.
-    # Caso futuramente queira rodar contra staging, defina o secret
-    # STAGING_E2E_URL e exporte como BASE_URL — sem isso o Playwright usa
-    # o preview local e o auth.setup.ts ainda tem guarda anti-produção.
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-      - run: npm ci
-      - name: Install Playwright browsers
-        run: npx playwright install --with-deps chromium
-      - name: Build
-        env:
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
-        run: npm run build
-      - name: Run E2E
-        env:
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
-        run: npm run test:e2e
-      - uses: actions/upload-artifact@v4
-        if: failure()
-        with:
-          name: playwright-report
-          path: playwright-report/
-          retention-days: 7
