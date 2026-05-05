@@ -141,6 +141,8 @@ jobs:
             psql -h localhost -U postgres -d postgres -f "$f" || exit 1
           done
       - name: Generate TypeScript types from local DB
+        env:
+          AUTH_HOOK_SEND_EMAIL_SECRET: "v1,whsec_dGVzdHRlc3R0ZXN0dGVzdHRlc3R0ZXN0"
         run: |
           supabase gen types typescript \
             --db-url "postgresql://postgres:postgres@localhost:5432/postgres" \
