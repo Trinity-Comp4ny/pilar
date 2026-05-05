@@ -2,6 +2,9 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { withSentry } from "../_shared/sentry.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { authenticateUser, getCorsHeaders, jsonResponse, safeErrorResponse, optionsResponse } from "../_shared/cors.ts";
+import { createLogger } from "../_shared/logger.ts";
+
+const log = createLogger("upload-portal-entrega");
 
 // Upload autenticado de arquivos ao bucket portal-entregas
 // Valida magic bytes (signature) antes de enviar pro storage
@@ -143,9 +146,12 @@ serve(
       const declaredMime = file.type || "application/octet-stream";
 
       if (!validateMagicBytes(buf, declaredMime)) {
-        console.warn("[upload-portal-entrega] magic bytes mismatch", {
-          declared: declaredMime,
-          user: user.id,
+        log.warn("magic bytes mismatch", {
+          declared_mime: declaredMime,
+          user_id: user.id,
+          empresa_id: profile.empresa_id,
+          projeto_id,
+          entrega_id,
         });
         return safeErrorResponse(400, "Tipo de arquivo não corresponde ao conteúdo", req);
       }
@@ -161,7 +167,12 @@ serve(
       });
 
       if (upErr) {
-        console.error("[upload-portal-entrega] upload failed", upErr.message);
+        log.error("upload failed", upErr, {
+          empresa_id: profile.empresa_id,
+          projeto_id,
+          entrega_id,
+          path,
+        });
         return safeErrorResponse(500, "Falha ao salvar arquivo", req);
       }
 
@@ -178,12 +189,16 @@ serve(
         .eq("empresa_id", profile.empresa_id);
 
       if (updErr) {
-        console.error("[upload-portal-entrega] update failed", updErr.message);
+        log.error("update failed", updErr, {
+          empresa_id: profile.empresa_id,
+          entrega_id,
+          path,
+        });
       }
 
       return jsonResponse({ success: true, path, size: file.size }, 200, req);
     } catch (error: unknown) {
-      console.error("[upload-portal-entrega]", error);
+      log.error("unexpected error", error, { user_id: user.id });
       return safeErrorResponse(400, "Invalid request", req);
     }
   })

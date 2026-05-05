@@ -4,6 +4,9 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 import { authenticateUser, isUUID, jsonResponse, optionsResponse, safeErrorResponse } from "../_shared/cors.ts";
 import { sendEmail, templateProximaEtapa } from "../_shared/email.ts";
+import { createLogger } from "../_shared/logger.ts";
+
+const log = createLogger("notify-next-stage");
 
 interface DiscRow {
   id: string;
@@ -112,7 +115,7 @@ serve(
 
       return jsonResponse({ success: true, notificados: enviados.length, enviados, erros }, 200, req);
     } catch (err) {
-      console.error("[notify-next-stage]", err);
+      log.error("notify next stage failed", err, { user_id: user.id });
       return safeErrorResponse(500, "Erro ao notificar próxima etapa", req);
     }
   })

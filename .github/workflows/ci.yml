@@ -156,6 +156,11 @@ jobs:
     name: Playwright E2E
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
+    # E2E roda exclusivamente contra `npm run preview` local (porta 4173 — ver
+    # playwright.config.ts webServer). NUNCA aponta pra produção.
+    # Caso futuramente queira rodar contra staging, defina o secret
+    # STAGING_E2E_URL e exporte como BASE_URL — sem isso o Playwright usa
+    # o preview local e o auth.setup.ts ainda tem guarda anti-produção.
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

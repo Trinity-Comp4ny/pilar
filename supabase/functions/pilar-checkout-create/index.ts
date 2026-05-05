@@ -19,6 +19,9 @@ import {
   getSubscriptionPayments,
   type AsaasPayment,
 } from "../_shared/asaas-platform.ts";
+import { createLogger } from "../_shared/logger.ts";
+
+const log = createLogger("pilar-checkout-create");
 
 interface CheckoutPayload {
   email: string;
@@ -117,9 +120,10 @@ serve(
       if (rlAllowed === false) {
         return jsonResponse({ error: "Muitas tentativas. Aguarde antes de tentar novamente." }, 429, req);
       }
-    } catch {
+    } catch (err) {
       // falha no rate limit não bloqueia — log e segue
-      console.warn("[pilar-checkout-create] rate limit check failed");
+      log.warn("rate limit check failed", { plan_slug: body.plan_slug });
+      void err;
     }
 
     // --- Email já existe? ---
@@ -191,7 +195,7 @@ serve(
       .single();
 
     if (signupErr || !signup) {
-      console.error("[pilar-checkout-create] signup insert failed", signupErr);
+      log.error("signup insert failed", signupErr, { plan_id: plan.id, plan_slug: body.plan_slug });
       return jsonResponse({ error: "Erro ao iniciar checkout" }, 500, req);
     }
 
@@ -272,7 +276,7 @@ serve(
           expiration_date: qr.expirationDate,
         };
       } catch (err) {
-        console.warn("[pilar-checkout-create] pix qr failed", err);
+        log.warn("pix qr failed", { signup_id: signup.id, payment_id: firstPayment.id, err: String(err) });
       }
     }
 

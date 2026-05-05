@@ -4,6 +4,9 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { authenticateUser, jsonResponse, optionsResponse, safeErrorResponse } from "../_shared/cors.ts";
 import { sendEmail, templatePropostaEnvio } from "../_shared/email.ts";
 import { EMAIL_RE } from "../_shared/validators.ts";
+import { createLogger } from "../_shared/logger.ts";
+
+const log = createLogger("send-proposta-email");
 
 const MAX_MESSAGE_LEN = 5_000;
 const MAX_ATTACHMENT_B64 = 15 * 1024 * 1024; // ~11 MB decoded
@@ -72,7 +75,7 @@ serve(
 
       return jsonResponse({ success: true }, 200, req);
     } catch (err) {
-      console.error("[send-proposta-email]", err);
+      log.error("send proposta email failed", err);
       return safeErrorResponse(500, "Erro ao enviar email", req);
     }
   })

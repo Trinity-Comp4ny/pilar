@@ -1,7 +1,10 @@
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { Calendar as CalendarIcon, CalendarDays } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Calendar as CalendarIcon, CalendarDays, HelpCircle } from "lucide-react";
 import { format, startOfMonth, endOfMonth, subMonths, startOfYear, endOfYear, isSameDay } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useMemo } from "react";
@@ -34,7 +37,12 @@ function detectPreset(from: Date | undefined, to: Date | undefined): PresetKey {
   return "custom";
 }
 
-export function FinanceiroHeader() {
+interface FinanceiroHeaderProps {
+  mode?: "basico" | "avancado";
+  onModeChange?: (mode: "basico" | "avancado") => void;
+}
+
+export function FinanceiroHeader({ mode = "basico", onModeChange }: FinanceiroHeaderProps = {}) {
   const { dateFrom, setDateFrom, dateTo, setDateTo, visualizacao, setVisualizacao } = useFinanceFilter();
   const { isMobile } = useSidebar();
   const filterType = useMemo(() => detectPreset(dateFrom, dateTo), [dateFrom, dateTo]);
@@ -59,6 +67,27 @@ export function FinanceiroHeader() {
             <div>
               <h1 className="text-2xl md:text-3xl font-medium tracking-tight">Financeiro</h1>
               <p className="text-sm text-black/60 mt-1">Gerencie receitas e despesas</p>
+            </div>
+
+            <div className="flex items-center gap-2 ml-2 px-3 py-1.5 rounded-full bg-gray-50 border">
+              <Label htmlFor="financeiro-mode" className="text-xs font-medium cursor-pointer select-none">
+                {mode === "avancado" ? "Modo avançado" : "Modo simples"}
+              </Label>
+              <Switch
+                id="financeiro-mode"
+                checked={mode === "avancado"}
+                onCheckedChange={(checked) => onModeChange?.(checked ? "avancado" : "basico")}
+              />
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button type="button" className="text-gray-400 hover:text-gray-600 transition-colors">
+                    <HelpCircle className="h-3.5 w-3.5" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="max-w-[260px]">
+                  <p className="text-xs">Modo avançado mostra DRE, Aging, Projeção de caixa, Folha, Faturas e mais.</p>
+                </TooltipContent>
+              </Tooltip>
             </div>
           </div>
 

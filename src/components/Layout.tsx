@@ -4,6 +4,7 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { AlertsBell } from "@/components/AlertsBell";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { UltraAdminPlatformBanner } from "@/components/UltraAdminPlatformBanner";
+import { CommandPalette, CommandPaletteHint } from "@/components/CommandPalette";
 
 function LayoutContent() {
   const { state, isMobile } = useSidebar();
@@ -23,6 +24,8 @@ function LayoutContent() {
           </ErrorBoundary>
         </main>
       </div>
+      <CommandPalette />
+      <CommandPaletteHint />
     </div>
   );
 }

@@ -5,7 +5,7 @@ import { ArrowLeftRight, Clock, Plus, TrendingDown, TrendingUp, Wallet } from "l
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { LancamentosTable } from "../components/LancamentosTable";
-import { useLancamentosUnified } from "../hooks/useLancamentosUnified";
+import { useLancamentosPaginados } from "../hooks/useLancamentosPaginados";
 import { LancamentoFormDialog } from "../components/LancamentoFormDialog";
 import { TransferenciaFormDialog } from "../components/TransferenciaFormDialog";
 import { defaultFilters, periodoRange, type LancamentosFilters } from "../components/lancamentosFilters";
@@ -29,7 +29,8 @@ export default function Lancamentos() {
   const [loadingKpis, setLoadingKpis] = useState(false);
 
   const range = useMemo(() => periodoRange(filters), [filters]);
-  const unified = useLancamentosUnified({ from: range.from, to: range.to });
+  const paginated = useLancamentosPaginados({ from: range.from, to: range.to });
+  const items = paginated.data;
 
   useEffect(() => {
     const fetchKpis = async () => {
@@ -126,11 +127,14 @@ export default function Lancamentos() {
           </div>
 
           <LancamentosTable
-            data={unified.data}
-            loading={unified.loading}
-            onRefetch={unified.refetch}
+            data={items}
+            loading={paginated.isLoading}
+            onRefetch={() => paginated.refetch()}
             filters={filters}
             onFiltersChange={setFilters}
+            hasNextPage={paginated.hasNextPage}
+            isFetchingNextPage={paginated.isFetchingNextPage}
+            onLoadMore={() => paginated.fetchNextPage()}
           />
 
           {newTipo && (
@@ -140,7 +144,7 @@ export default function Lancamentos() {
               tipo={newTipo}
               onSaved={() => {
                 setNewTipo(null);
-                unified.refetch();
+                paginated.refetch();
               }}
             />
           )}
@@ -150,7 +154,7 @@ export default function Lancamentos() {
             onOpenChange={setNewTransferencia}
             onSaved={() => {
               setNewTransferencia(false);
-              unified.refetch();
+              paginated.refetch();
             }}
           />
         </CardContent>
