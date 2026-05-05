@@ -2,6 +2,7 @@ import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
   BarChart,
   Calendar,
+  CalendarDays,
   FileText,
   Home,
   MapPin,
@@ -68,6 +69,7 @@ const menu: MenuGroup[] = [
     label: "Operação",
     items: [
       { title: "Projetos", url: "/projetos", icon: Calendar, feature: "projetos" },
+      { title: "Calendário", url: "/calendario", icon: CalendarDays, feature: "projetos" },
       { title: "Mapa", url: "/mapa", icon: MapPin, feature: "mapa" },
     ],
   },

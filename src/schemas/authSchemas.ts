@@ -47,10 +47,29 @@ export const profileSetupDefaultValues: ProfileSetupFormData = {
   confirmPassword: "",
 };
 
-export const companySetupSchema = z.object({
-  name: z.string().trim().min(1, "Nome é obrigatório"),
-  cnpj: z.string().trim().optional().default(""),
-});
+function validCnpjChecksum(digits: string): boolean {
+  if (digits.length !== 14 || /^(\d)\1+$/.test(digits)) return false;
+  const calc = (s: string, w: number[]) => s.split("").reduce((sum, n, i) => sum + parseInt(n) * w[i], 0);
+  const w1 = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+  const w2 = [6, ...w1];
+  const r1 = calc(digits.slice(0, 12), w1) % 11;
+  const r2 = calc(digits.slice(0, 13), w2) % 11;
+  return parseInt(digits[12]) === (r1 < 2 ? 0 : 11 - r1) && parseInt(digits[13]) === (r2 < 2 ? 0 : 11 - r2);
+}
+
+export const companySetupSchema = z
+  .object({
+    name: z.string().trim().min(1, "Nome é obrigatório"),
+    cnpj: z.string().trim().optional().default(""),
+  })
+  .refine(
+    (d) => {
+      const digits = (d.cnpj ?? "").replace(/\D/g, "");
+      if (digits.length === 0) return true;
+      return validCnpjChecksum(digits);
+    },
+    { message: "CNPJ inválido", path: ["cnpj"] }
+  );
 export type CompanySetupFormData = z.infer<typeof companySetupSchema>;
 export const companySetupDefaultValues: CompanySetupFormData = { name: "", cnpj: "" };
 
