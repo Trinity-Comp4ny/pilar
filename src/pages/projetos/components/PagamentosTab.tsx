@@ -263,6 +263,7 @@ export function PagamentosTab({ projetoId, canEdit }: PagamentosTabProps) {
                       size="icon"
                       className="h-8 w-8 text-positive shrink-0"
                       title="Marcar como recebido"
+                      aria-label="Marcar como recebido"
                       disabled={marcarRecebido.isPending}
                       onClick={() => handleMarcarRecebido(pag.id)}
                     >

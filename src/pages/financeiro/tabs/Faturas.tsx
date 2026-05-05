@@ -215,8 +215,7 @@ export default function Faturas() {
                           </div>
                           {isPagavel && (
                             <Button
-                              size="sm"
-                              className="bg-brand hover:bg-brand/90 text-ink rounded-full"
+                              className="rounded-full bg-brand hover:bg-brand/90 text-ink transition-colors px-5 py-2.5 text-sm"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleOpenPagamento(fatura);
@@ -336,7 +335,7 @@ export default function Faturas() {
                         </p>
                       </div>
                       <Button
-                        className="bg-brand hover:bg-brand/90 text-ink rounded-full"
+                        className="rounded-full bg-brand hover:bg-brand/90 text-ink transition-colors px-5 py-2.5 text-sm"
                         onClick={() => handleOpenPagamento(selectedFatura)}
                       >
                         <DollarSign className="h-4 w-4 mr-2" />
@@ -428,7 +427,7 @@ export default function Faturas() {
               )}
 
               <Button
-                className="w-full bg-brand hover:bg-brand/90 text-ink rounded-full"
+                className="w-full rounded-full bg-brand hover:bg-brand/90 text-ink transition-colors px-5 py-2.5 text-sm"
                 onClick={handlePagar}
                 disabled={pagarMutation.isPending || !contaPagamentoId}
               >

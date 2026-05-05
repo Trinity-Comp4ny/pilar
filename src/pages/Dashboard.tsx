@@ -378,7 +378,7 @@ export default function Dashboard() {
         <div className="flex items-center gap-1.5 mr-1">
           <CalendarDays className="h-4 w-4 text-muted-foreground" />
           <Select value={preset} onValueChange={handlePresetChange}>
-            <SelectTrigger className="w-[160px] h-8 text-xs rounded-full">
+            <SelectTrigger className="w-[160px] h-9 text-sm rounded-full">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -393,7 +393,7 @@ export default function Dashboard() {
             <div className="flex gap-1">
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" size="sm" className="h-8 text-xs rounded-full">
+                  <Button variant="outline" size="sm" className="h-9 text-sm rounded-full">
                     <CalendarIcon className="mr-1 h-3 w-3" />
                     {format(dateFrom, "dd/MM/yy")}
                   </Button>
@@ -404,7 +404,7 @@ export default function Dashboard() {
               </Popover>
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" size="sm" className="h-8 text-xs rounded-full">
+                  <Button variant="outline" size="sm" className="h-9 text-sm rounded-full">
                     <CalendarIcon className="mr-1 h-3 w-3" />
                     {format(dateTo, "dd/MM/yy")}
                   </Button>
@@ -417,24 +417,23 @@ export default function Dashboard() {
           )}
         </div>
         {canLeads && (
-          <Button variant="outline" size="sm" className="text-xs rounded-full" onClick={() => navigate("/leads")}>
+          <Button variant="outline" size="sm" className="text-sm rounded-full" onClick={() => navigate("/leads")}>
             <Users size={14} className="mr-1" /> Leads
           </Button>
         )}
         {canRel && (
-          <Button variant="outline" size="sm" className="text-xs rounded-full" onClick={() => navigate("/relatorios")}>
+          <Button variant="outline" size="sm" className="text-sm rounded-full" onClick={() => navigate("/relatorios")}>
             <BarChart3 size={14} className="mr-1" /> Relatórios
           </Button>
         )}
         {canFin && (
-          <Button variant="outline" size="sm" className="text-xs rounded-full" onClick={() => navigate("/financeiro")}>
+          <Button variant="outline" size="sm" className="text-sm rounded-full" onClick={() => navigate("/financeiro")}>
             <DollarSign size={14} className="mr-1" /> Financeiro
           </Button>
         )}
         {canProjCreate && (
           <Button
-            size="sm"
-            className="text-xs bg-brand hover:bg-brand/90 text-ink-on-brand rounded-full"
+            className="rounded-full bg-brand hover:bg-brand/90 text-ink-on-brand transition-colors px-5 py-2.5 text-sm"
             onClick={() => navigate("/projetos")}
           >
             <Plus size={14} className="mr-1" /> Novo Projeto

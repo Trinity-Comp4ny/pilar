@@ -378,7 +378,6 @@ export default function Configuracoes() {
                     >
                       <DialogTrigger asChild>
                         <Button
-                          size="icon"
                           variant="ghost"
                           className="h-6 w-6"
                           onClick={() => {
@@ -461,7 +460,7 @@ export default function Configuracoes() {
                             />
                           </div>
                           <Button
-                            className="w-full bg-brand hover:bg-brand/90 text-ink rounded-full"
+                            className="w-full rounded-full bg-brand hover:bg-brand/90 text-ink transition-colors px-5 py-2.5 text-sm"
                             onClick={handleSaveConta}
                           >
                             {selectedConta ? "Atualizar Conta" : "Salvar Conta"}
@@ -520,7 +519,6 @@ export default function Configuracoes() {
                     >
                       <DialogTrigger asChild>
                         <Button
-                          size="icon"
                           variant="ghost"
                           className="h-6 w-6"
                           onClick={() => {
@@ -613,7 +611,7 @@ export default function Configuracoes() {
                             </p>
                           </div>
                           <Button
-                            className="w-full bg-brand hover:bg-brand/90 text-ink rounded-full"
+                            className="w-full rounded-full bg-brand hover:bg-brand/90 text-ink transition-colors px-5 py-2.5 text-sm"
                             onClick={handleSaveCartao}
                           >
                             {selectedCartao ? "Atualizar Cartão" : "Salvar Cartão"}
@@ -684,16 +682,19 @@ export default function Configuracoes() {
                     </div>
                     {canEdit && (
                       <div className="flex gap-2">
-                        <Button variant="outline" size="sm" onClick={() => openEditConta(panelConta)}>
-                          <Pencil className="h-3.5 w-3.5 mr-1.5" /> Editar
+                        <Button
+                          variant="outline"
+                          className="h-9 rounded-full text-sm"
+                          onClick={() => openEditConta(panelConta)}
+                        >
+                          <Pencil className="h-4 w-4 mr-1.5" /> Editar
                         </Button>
                         <Button
                           variant="outline"
-                          size="sm"
-                          className="text-destructive hover:text-destructive"
+                          className="h-9 rounded-full text-sm text-destructive hover:text-destructive"
                           onClick={() => setDeleteTarget({ type: "conta", id: panelConta.id, nome: panelConta.nome })}
                         >
-                          <Trash2 className="h-3.5 w-3.5 mr-1.5" /> Excluir
+                          <Trash2 className="h-4 w-4 mr-1.5" /> Excluir
                         </Button>
                       </div>
                     )}
@@ -777,18 +778,21 @@ export default function Configuracoes() {
                     </div>
                     {canEdit && (
                       <div className="flex gap-2">
-                        <Button variant="outline" size="sm" onClick={() => openEditCartao(panelCartao)}>
-                          <Pencil className="h-3.5 w-3.5 mr-1.5" /> Editar
+                        <Button
+                          variant="outline"
+                          className="h-9 rounded-full text-sm"
+                          onClick={() => openEditCartao(panelCartao)}
+                        >
+                          <Pencil className="h-4 w-4 mr-1.5" /> Editar
                         </Button>
                         <Button
                           variant="outline"
-                          size="sm"
-                          className="text-destructive hover:text-destructive"
+                          className="h-9 rounded-full text-sm text-destructive hover:text-destructive"
                           onClick={() =>
                             setDeleteTarget({ type: "cartao", id: panelCartao.id, nome: panelCartao.nome })
                           }
                         >
-                          <Trash2 className="h-3.5 w-3.5 mr-1.5" /> Excluir
+                          <Trash2 className="h-4 w-4 mr-1.5" /> Excluir
                         </Button>
                       </div>
                     )}

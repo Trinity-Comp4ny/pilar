@@ -706,6 +706,7 @@ export default function Clientes() {
                             variant="outline"
                             className="h-9 w-9 shrink-0"
                             onClick={handleAddChavePix}
+                            aria-label="Adicionar chave PIX"
                           >
                             <Plus className="h-4 w-4" />
                           </Button>
@@ -821,17 +822,17 @@ export default function Clientes() {
             </div>
             <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
               <div className="relative w-full sm:w-56">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-black/40" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
                 <Input
                   placeholder="Buscar por nome ou CPF..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 bg-gray-50 border-gray-200"
+                  className="h-9 pl-9 rounded-full text-sm"
                 />
               </div>
               {origens.length > 0 && (
                 <Select value={filterOrigem} onValueChange={setFilterOrigem}>
-                  <SelectTrigger className="w-full sm:w-36 bg-gray-50 border-gray-200">
+                  <SelectTrigger className="h-9 w-full sm:w-36 rounded-full text-sm">
                     <SelectValue placeholder="Origem" />
                   </SelectTrigger>
                   <SelectContent>
@@ -845,7 +846,7 @@ export default function Clientes() {
                 </Select>
               )}
               <Select value={filterPortal} onValueChange={setFilterPortal}>
-                <SelectTrigger className="w-full sm:w-36 bg-gray-50 border-gray-200">
+                <SelectTrigger className="h-9 w-full sm:w-36 rounded-full text-sm">
                   <SelectValue placeholder="Portal" />
                 </SelectTrigger>
                 <SelectContent>
@@ -946,6 +947,7 @@ export default function Clientes() {
                                 setSelectedClienteForMessage(cliente);
                                 setIsMessageModalOpen(true);
                               }}
+                              aria-label="Enviar mensagem"
                             >
                               <Mail className="h-4 w-4" />
                             </Button>
@@ -954,6 +956,7 @@ export default function Clientes() {
                               size="icon"
                               className="h-8 w-8"
                               onClick={(e) => handleEditClick(cliente, e)}
+                              aria-label="Editar cliente"
                             >
                               <Pencil className="h-4 w-4" />
                             </Button>
@@ -963,6 +966,7 @@ export default function Clientes() {
                                 size="icon"
                                 className="h-8 w-8 text-red-500"
                                 onClick={(e) => handleDeleteClick(cliente.id, e)}
+                                aria-label="Excluir cliente"
                               >
                                 <Trash2 className="h-4 w-4" />
                               </Button>

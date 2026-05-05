@@ -120,6 +120,7 @@ export function AsaasConfigForm() {
                 size="icon"
                 onClick={() => handleCopiar(webhookUrl)}
                 title="Copiar URL"
+                aria-label="Copiar"
               >
                 <Copy className="h-4 w-4" />
               </Button>
@@ -141,6 +142,7 @@ export function AsaasConfigForm() {
                 size="icon"
                 onClick={() => handleCopiar(webhookToken)}
                 title="Copiar token"
+                aria-label="Copiar"
               >
                 <Copy className="h-4 w-4" />
               </Button>
@@ -151,6 +153,7 @@ export function AsaasConfigForm() {
                 onClick={handleRegenerarToken}
                 disabled={isRegenerando}
                 title="Regenerar token"
+                aria-label="Atualizar"
               >
                 <RefreshCw className={`h-4 w-4 ${isRegenerando ? "animate-spin" : ""}`} />
               </Button>

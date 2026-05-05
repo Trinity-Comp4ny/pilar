@@ -97,7 +97,7 @@ export function FinanceiroHeader({ mode = "basico", onModeChange }: FinanceiroHe
               <span className="text-sm font-medium text-gray-700">Período:</span>
 
               <Select value={filterType} onValueChange={handleFilterChange}>
-                <SelectTrigger className="w-[170px] h-9 text-xs rounded-full">
+                <SelectTrigger className="w-[170px] h-9 text-sm rounded-full">
                   <SelectValue placeholder="Selecione o período" />
                 </SelectTrigger>
                 <SelectContent>
@@ -114,13 +114,12 @@ export function FinanceiroHeader({ mode = "basico", onModeChange }: FinanceiroHe
                     <PopoverTrigger asChild>
                       <Button
                         variant="outline"
-                        size="sm"
                         className={cn(
-                          "justify-start text-left font-normal text-xs h-9 min-w-[120px] rounded-full",
+                          "justify-start text-left font-normal text-sm h-9 min-w-[130px] rounded-full",
                           !dateFrom && "text-muted-foreground"
                         )}
                       >
-                        <CalendarIcon className="mr-2 h-3 w-3" />
+                        <CalendarIcon className="mr-2 h-4 w-4" />
                         {dateFrom ? format(dateFrom, "dd/MM/yyyy") : "Início"}
                       </Button>
                     </PopoverTrigger>
@@ -132,13 +131,12 @@ export function FinanceiroHeader({ mode = "basico", onModeChange }: FinanceiroHe
                     <PopoverTrigger asChild>
                       <Button
                         variant="outline"
-                        size="sm"
                         className={cn(
-                          "justify-start text-left font-normal text-xs h-9 min-w-[120px] rounded-full",
+                          "justify-start text-left font-normal text-sm h-9 min-w-[130px] rounded-full",
                           !dateTo && "text-muted-foreground"
                         )}
                       >
-                        <CalendarIcon className="mr-2 h-3 w-3" />
+                        <CalendarIcon className="mr-2 h-4 w-4" />
                         {dateTo ? format(dateTo, "dd/MM/yyyy") : "Fim"}
                       </Button>
                     </PopoverTrigger>
