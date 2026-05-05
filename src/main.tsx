@@ -2,8 +2,10 @@ import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
 import { initMonitoring } from "./lib/monitoring";
+import { initAnalytics } from "./lib/analytics";
 
 initMonitoring();
+initAnalytics();
 
 // Redireciona recovery links para /reset-password antes do React montar,
 // evitando race condition com onAuthStateChange.
