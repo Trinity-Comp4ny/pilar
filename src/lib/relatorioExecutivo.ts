@@ -1,6 +1,5 @@
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
-import "@/types/jspdf-autotable";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 

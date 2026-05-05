@@ -562,6 +562,7 @@ export default function Receitas() {
                               size="icon"
                               className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
                               onClick={() => openEditReceita(receita)}
+                              aria-label="Editar receita"
                             >
                               <Pencil className="h-4 w-4" />
                             </Button>
@@ -570,6 +571,7 @@ export default function Receitas() {
                               size="icon"
                               className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
                               onClick={() => handleDelete(receita.id)}
+                              aria-label="Excluir receita"
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>

@@ -199,7 +199,13 @@ export function CentroCustoManager({ open, onOpenChange, onChanged }: Props) {
                     >
                       <span className="text-[10px]">{c.ativo ? "ON" : "OFF"}</span>
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => startEdit(c)}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      onClick={() => startEdit(c)}
+                      aria-label="Editar centro de custo"
+                    >
                       <Pencil className="h-3 w-3" />
                     </Button>
                     <Button

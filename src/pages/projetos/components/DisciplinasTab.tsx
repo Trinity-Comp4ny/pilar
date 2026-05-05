@@ -394,6 +394,7 @@ export function DisciplinasTab({ projetos, isLoading }: DisciplinasTabProps) {
               size="icon"
               className="h-8 w-8 rounded-none"
               onClick={() => setViewMode("cards")}
+              aria-label="Visualizar em cards"
             >
               <LayoutGrid className="h-4 w-4" />
             </Button>
@@ -402,6 +403,7 @@ export function DisciplinasTab({ projetos, isLoading }: DisciplinasTabProps) {
               size="icon"
               className="h-8 w-8 rounded-none"
               onClick={() => setViewMode("table")}
+              aria-label="Visualizar em tabela"
             >
               <List className="h-4 w-4" />
             </Button>

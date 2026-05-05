@@ -401,7 +401,13 @@ export default function Metas() {
                       </div>
                       <div className="flex items-center gap-2">
                         <span className={cn("text-2xl font-bold", isCompleted && "text-positive")}>{percent}%</span>
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(meta)}>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => handleEdit(meta)}
+                          aria-label="Editar meta"
+                        >
                           <Pencil className="h-4 w-4" />
                         </Button>
                         <Button
@@ -409,6 +415,7 @@ export default function Metas() {
                           size="icon"
                           className="h-8 w-8 text-red-600 hover:text-red-700"
                           onClick={() => handleDeleteClick(meta.id)}
+                          aria-label="Excluir meta"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>

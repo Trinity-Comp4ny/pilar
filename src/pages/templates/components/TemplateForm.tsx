@@ -178,7 +178,13 @@ export function TemplateForm({ template, onSubmit, onCancel, isLoading }: Templa
                   min={1}
                 />
                 <span className="text-xs text-muted-foreground whitespace-nowrap">dias</span>
-                <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500" onClick={() => removeFase(fi)}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-red-500"
+                  onClick={() => removeFase(fi)}
+                  aria-label="Excluir fase"
+                >
                   <Trash2 className="h-3.5 w-3.5" />
                 </Button>
               </div>
@@ -221,6 +227,7 @@ export function TemplateForm({ template, onSubmit, onCancel, isLoading }: Templa
                       size="icon"
                       className="h-6 w-6"
                       onClick={() => removeDisciplinaFromFase(fi, di)}
+                      aria-label="Excluir disciplina"
                     >
                       <Trash2 className="h-3 w-3 text-red-400" />
                     </Button>
@@ -257,7 +264,13 @@ export function TemplateForm({ template, onSubmit, onCancel, isLoading }: Templa
               {item.obrigatorio ? "Obrigatório" : "Opcional"}
             </Badge>
             <span className="flex-1">{item.item}</span>
-            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => removeChecklistItem(i)}>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6"
+              onClick={() => removeChecklistItem(i)}
+              aria-label="Excluir item do checklist"
+            >
               <Trash2 className="h-3 w-3 text-red-400" />
             </Button>
           </div>

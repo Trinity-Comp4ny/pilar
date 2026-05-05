@@ -398,6 +398,7 @@ export default function MetasPessoais() {
                             setEditingMeta(meta);
                             setIsEditDialogOpen(true);
                           }}
+                          aria-label="Editar meta"
                         >
                           <Pencil className="h-4 w-4" />
                         </Button>
@@ -409,6 +410,7 @@ export default function MetasPessoais() {
                             setMetaToDelete(meta.id);
                             setDeleteAlertOpen(true);
                           }}
+                          aria-label="Excluir meta"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>

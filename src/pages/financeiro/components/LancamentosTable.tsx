@@ -835,7 +835,12 @@ export function LancamentosTable({
                             {canEdit && (
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                  <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground">
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-7 w-7 text-muted-foreground"
+                                    aria-label="Mais opções"
+                                  >
                                     <MoreHorizontal className="h-3.5 w-3.5" />
                                   </Button>
                                 </DropdownMenuTrigger>
@@ -953,6 +958,7 @@ export function LancamentosTable({
                                 size="icon"
                                 className="h-7 w-7 text-blue-600 hover:bg-blue-50"
                                 onClick={() => (isTransf ? setEditTransferencia(l) : setEditTarget(l))}
+                                aria-label="Editar lançamento"
                               >
                                 <Pencil className="h-3.5 w-3.5" />
                               </Button>
@@ -961,6 +967,7 @@ export function LancamentosTable({
                                 size="icon"
                                 className="h-7 w-7 text-red-600 hover:bg-red-50"
                                 onClick={() => setDeleteTarget(l)}
+                                aria-label="Excluir lançamento"
                               >
                                 <Trash2 className="h-3.5 w-3.5" />
                               </Button>

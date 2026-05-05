@@ -114,17 +114,17 @@ export function PessoaTable({ pessoas, isLoading, isAdmin, onRowClick, onEditCli
           </div>
           <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
             <div className="relative w-full sm:w-64">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-black/40" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
               <Input
                 placeholder="Buscar por nome ou cargo..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 bg-gray-50 border-gray-200"
+                className="h-9 pl-9 rounded-full text-sm"
               />
             </div>
             <div className="w-full sm:w-48">
               <Select value={filterCargo} onValueChange={setFilterCargo}>
-                <SelectTrigger className="bg-gray-50 border-gray-200">
+                <SelectTrigger className="h-9 rounded-full text-sm">
                   <SelectValue placeholder="Cargo" />
                 </SelectTrigger>
                 <SelectContent>
@@ -234,6 +234,7 @@ export function PessoaTable({ pessoas, isLoading, isAdmin, onRowClick, onEditCli
                             size="icon"
                             className="h-8 w-8"
                             onClick={(e) => onEditClick(pessoa, e)}
+                            aria-label="Editar"
                           >
                             <Pencil className="h-3 w-3" />
                           </Button>
@@ -245,6 +246,7 @@ export function PessoaTable({ pessoas, isLoading, isAdmin, onRowClick, onEditCli
                               e.stopPropagation();
                               onDeleteClick(pessoa.id);
                             }}
+                            aria-label="Excluir"
                           >
                             <Trash2 className="h-3 w-3" />
                           </Button>

@@ -23,7 +23,7 @@ export function ProjetoDetailHeader({ projeto, deadline, canEdit, onBack, onEdit
 
   return (
     <div className="flex items-center gap-3 mb-6">
-      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onBack}>
+      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onBack} aria-label="Voltar">
         <ArrowLeft className="h-4 w-4" />
       </Button>
       <div className="flex-1">

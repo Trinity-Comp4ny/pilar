@@ -172,7 +172,7 @@ export function ProjectDetailDialog({
                 {canEdit && (
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 -mr-2 -mt-1">
+                      <Button variant="ghost" size="icon" className="h-8 w-8 -mr-2 -mt-1" aria-label="Mais opções">
                         <MoreVertical className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>

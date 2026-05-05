@@ -628,6 +628,7 @@ export default function Clientes() {
                               variant="outline"
                               className="h-9 w-9 shrink-0"
                               onClick={handleAddConta}
+                              aria-label="Adicionar conta"
                             >
                               <Plus className="h-4 w-4" />
                             </Button>
@@ -669,6 +670,7 @@ export default function Clientes() {
                                   size="icon"
                                   className="h-7 w-7 text-red-500 shrink-0"
                                   onClick={() => handleRemoveConta(index)}
+                                  aria-label="Remover conta"
                                 >
                                   <X className="h-3 w-3" />
                                 </Button>
