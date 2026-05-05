@@ -194,6 +194,20 @@ serve(
       .single();
 
     if (signupErr || !signup) {
+      // 23505 = unique_violation. Reservamos o email atomicamente via índice único parcial
+      // (uniq_pending_signup_email_active). Se duas requisições simultâneas chegarem aqui,
+      // só uma vence — a outra cai aqui e NÃO toca em Asaas (sem duplicar customer/subscription).
+      if (signupErr && (signupErr as { code?: string }).code === "23505") {
+        log.warn("checkout duplicado bloqueado pelo unique index", { email });
+        return jsonResponse(
+          {
+            error:
+              "Já existe um checkout em andamento com esse email. Verifique sua caixa de entrada ou aguarde alguns minutos.",
+          },
+          409,
+          req
+        );
+      }
       log.error("signup insert failed", signupErr, { plan_id: plan.id, plan_slug: body.plan_slug });
       return jsonResponse({ error: "Erro ao iniciar checkout" }, 500, req);
     }
