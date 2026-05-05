@@ -196,6 +196,7 @@ export function CentroCustoManager({ open, onOpenChange, onChanged }: Props) {
                       className="h-7 w-7"
                       onClick={() => toggleAtivo(c)}
                       title={c.ativo ? "Desativar" : "Ativar"}
+                      aria-label={c.ativo ? "Desativar" : "Ativar"}
                     >
                       <span className="text-[10px]">{c.ativo ? "ON" : "OFF"}</span>
                     </Button>

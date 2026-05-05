@@ -123,7 +123,7 @@ export function ProjetosFilterBar({ pessoas, clientes, disciplinas, filters, onC
         <PopoverTrigger asChild>
           <Button
             variant="outline"
-            className={cn("rounded-full text-sm gap-2", filtroCount > 0 && "border-foreground/40 bg-muted")}
+            className={cn("h-9 rounded-full text-sm gap-2", filtroCount > 0 && "border-foreground/40 bg-muted")}
           >
             <SlidersHorizontal className="h-4 w-4" />
             <span>Filtros</span>

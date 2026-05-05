@@ -51,7 +51,8 @@ export interface ExecutiveReportData {
 const BRL = (v: number) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(Number.isFinite(v) ? v : 0);
 
-const BRAND: [number, number, number] = [249, 115, 22]; // orange-500
+const BRAND: [number, number, number] = [164, 236, 134]; // #A4EC86 — brand verde
+const BRAND_TEXT: [number, number, number] = [30, 30, 30]; // texto escuro sobre brand claro
 const INK: [number, number, number] = [30, 30, 30];
 const MUTED: [number, number, number] = [110, 110, 110];
 
@@ -178,7 +179,7 @@ export function generateExecutiveReport(data: ExecutiveReportData): jsPDF {
         ? data.topProjetos.map((p) => [p.nome, p.cliente, BRL(p.valorContrato), `${Math.round(p.progresso)}%`])
         : [["Sem projetos no período", "", "", ""]],
     theme: "grid",
-    headStyles: { fillColor: BRAND, textColor: 255, fontSize: 9, fontStyle: "bold" },
+    headStyles: { fillColor: BRAND, textColor: BRAND_TEXT, fontSize: 9, fontStyle: "bold" },
     styles: { fontSize: 9, cellPadding: 2 },
     columnStyles: {
       2: { halign: "right" },
@@ -210,7 +211,7 @@ export function generateExecutiveReport(data: ExecutiveReportData): jsPDF {
           ]
         : [["Sem leads", "0", BRL(0)]],
     theme: "grid",
-    headStyles: { fillColor: BRAND, textColor: 255, fontSize: 9, fontStyle: "bold" },
+    headStyles: { fillColor: BRAND, textColor: BRAND_TEXT, fontSize: 9, fontStyle: "bold" },
     styles: { fontSize: 9, cellPadding: 2 },
     columnStyles: {
       1: { halign: "right" },
@@ -239,7 +240,7 @@ export function generateExecutiveReport(data: ExecutiveReportData): jsPDF {
         ? seis.map((m) => [m.mes, BRL(m.receitas), BRL(m.despesas), BRL(m.saldo)])
         : [["Sem dados", BRL(0), BRL(0), BRL(0)]],
     theme: "grid",
-    headStyles: { fillColor: BRAND, textColor: 255, fontSize: 9, fontStyle: "bold" },
+    headStyles: { fillColor: BRAND, textColor: BRAND_TEXT, fontSize: 9, fontStyle: "bold" },
     styles: { fontSize: 9, cellPadding: 2 },
     columnStyles: {
       1: { halign: "right" },
@@ -273,7 +274,7 @@ export function generateExecutiveReport(data: ExecutiveReportData): jsPDF {
           ]
         : [["Sem contas cadastradas", BRL(0)]],
     theme: "grid",
-    headStyles: { fillColor: BRAND, textColor: 255, fontSize: 9, fontStyle: "bold" },
+    headStyles: { fillColor: BRAND, textColor: BRAND_TEXT, fontSize: 9, fontStyle: "bold" },
     styles: { fontSize: 9, cellPadding: 2 },
     columnStyles: {
       1: { halign: "right" },

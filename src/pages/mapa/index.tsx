@@ -323,8 +323,8 @@ export default function MapaObras() {
           <div className="flex items-center gap-2">
             <Popover open={searchOpen} onOpenChange={setSearchOpen}>
               <PopoverTrigger asChild>
-                <Button variant="outline" size="sm" className="gap-1.5">
-                  <Search className="h-3.5 w-3.5" />
+                <Button variant="outline" className="h-9 rounded-full text-sm gap-1.5">
+                  <Search className="h-4 w-4" />
                   Localizar
                   {filtrados.length > 0 && (
                     <span className="ml-0.5 rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground leading-none">
@@ -378,7 +378,7 @@ export default function MapaObras() {
             </Popover>
 
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-[180px] h-9 rounded-full text-sm">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>

@@ -119,7 +119,7 @@ export function LancamentosFilterBar({
             placeholder="Buscar descrição, cliente ou fornecedor…"
             value={filters.search}
             onChange={(e) => onChange({ search: e.target.value })}
-            className="h-9 pl-9 pr-8 rounded-full"
+            className="h-9 pl-9 pr-8 rounded-full text-sm"
           />
           {filters.search && (
             <button
@@ -152,13 +152,12 @@ export function LancamentosFilterBar({
           <PopoverTrigger asChild>
             <Button
               variant="outline"
-              size="sm"
               className={cn(
-                "h-9 rounded-full gap-1.5 text-xs font-normal",
+                "h-9 rounded-full gap-1.5 text-sm font-normal",
                 filters.periodo !== "mes-atual" && "border-brand bg-brand/5 text-brand"
               )}
             >
-              <CalendarIcon className="h-3 w-3" />
+              <CalendarIcon className="h-4 w-4" />
               {periodoTriggerLabel}
             </Button>
           </PopoverTrigger>
@@ -214,13 +213,12 @@ export function LancamentosFilterBar({
           <SheetTrigger asChild>
             <Button
               variant="outline"
-              size="sm"
               className={cn(
-                "h-9 rounded-full gap-1.5 text-xs font-normal",
+                "h-9 rounded-full gap-1.5 text-sm font-normal",
                 advancedCount > 0 && "border-brand bg-brand/5 text-brand hover:bg-brand/10 hover:text-brand"
               )}
             >
-              <SlidersHorizontal className="h-3 w-3" />
+              <SlidersHorizontal className="h-4 w-4" />
               Filtros
               {advancedCount > 0 && (
                 <Badge variant="secondary" className="h-4 px-1.5 text-[10px] bg-brand text-ink hover:bg-brand">
@@ -329,7 +327,6 @@ export function LancamentosFilterBar({
               <div className="flex items-center justify-between w-full gap-2">
                 <Button
                   variant="ghost"
-                  size="sm"
                   onClick={() => {
                     onChange({
                       status: "todos",
@@ -342,16 +339,15 @@ export function LancamentosFilterBar({
                       valorMax: "",
                     });
                   }}
-                  className="h-8 text-xs gap-1 text-muted-foreground"
+                  className="h-9 text-sm gap-1 text-muted-foreground rounded-full"
                   disabled={advancedCount === 0}
                 >
-                  <X className="h-3 w-3" />
+                  <X className="h-4 w-4" />
                   Limpar avançados
                 </Button>
                 <Button
-                  size="sm"
                   onClick={() => setAdvOpen(false)}
-                  className="h-8 text-xs bg-brand hover:bg-brand/90 text-ink"
+                  className="rounded-full bg-brand hover:bg-brand/90 text-ink transition-colors px-5 py-2.5 text-sm"
                 >
                   Aplicar
                 </Button>
@@ -365,7 +361,7 @@ export function LancamentosFilterBar({
         </span>
 
         {hasActive && (
-          <Button variant="ghost" size="sm" onClick={onReset} className="h-8 gap-1 text-xs text-muted-foreground">
+          <Button variant="ghost" onClick={onReset} className="h-9 gap-1 text-sm text-muted-foreground rounded-full">
             <X className="h-3 w-3" />
             Limpar tudo
           </Button>
@@ -474,7 +470,6 @@ function SegBtn({
     <Button
       type="button"
       variant="ghost"
-      size="sm"
       onClick={onClick}
       className={cn(
         "rounded-full h-7 px-3 gap-1.5 text-xs transition-colors",

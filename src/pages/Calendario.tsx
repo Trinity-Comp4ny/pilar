@@ -160,22 +160,22 @@ export default function Calendario() {
         <PageHeader title="Calendário" description="Prazos e entregas dos projetos">
           <div className="flex items-center gap-2 flex-wrap">
             <div className="flex items-center gap-1">
-              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={goPrev} aria-label="Mês anterior">
+              <Button variant="ghost" size="icon" className="h-9 w-9" onClick={goPrev} aria-label="Mês anterior">
                 <ChevronLeft className="h-4 w-4" />
               </Button>
               <span className="text-sm font-medium min-w-[160px] text-center">
                 {MESES[cursor.getMonth()]} {cursor.getFullYear()}
               </span>
-              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={goNext} aria-label="Próximo mês">
+              <Button variant="ghost" size="icon" className="h-9 w-9" onClick={goNext} aria-label="Próximo mês">
                 <ChevronRight className="h-4 w-4" />
               </Button>
-              <Button variant="outline" size="sm" className="ml-1 h-8 text-xs rounded-full" onClick={goHoje}>
+              <Button variant="outline" size="sm" className="ml-1 h-9 text-sm rounded-full" onClick={goHoje}>
                 Hoje
               </Button>
             </div>
 
             <Select value={filtroProjeto} onValueChange={setFiltroProjeto}>
-              <SelectTrigger className="w-[200px] h-8 text-xs rounded-full">
+              <SelectTrigger className="w-[200px] h-9 text-sm rounded-full">
                 <SelectValue placeholder="Projeto" />
               </SelectTrigger>
               <SelectContent>
@@ -190,7 +190,7 @@ export default function Calendario() {
             </Select>
 
             <Select value={filtroResponsavel} onValueChange={setFiltroResponsavel}>
-              <SelectTrigger className="w-[180px] h-8 text-xs rounded-full">
+              <SelectTrigger className="w-[180px] h-9 text-sm rounded-full">
                 <SelectValue placeholder="Responsável" />
               </SelectTrigger>
               <SelectContent>

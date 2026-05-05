@@ -704,6 +704,7 @@ export default function ProjetosKanban() {
                               className="h-6 w-6 text-muted-foreground"
                               onClick={() => toggleColumn(status)}
                               title="Minimizar coluna"
+                              aria-label="Minimizar coluna"
                             >
                               <ChevronLeft className="h-3.5 w-3.5" />
                             </Button>
@@ -909,7 +910,13 @@ function ColumnSortMenu({ sort, onChange }: ColumnSortMenuProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground" title="Ordenar">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-6 w-6 text-muted-foreground"
+          title="Ordenar"
+          aria-label="Ordenar"
+        >
           <ArrowUpDown className="h-3.5 w-3.5" />
         </Button>
       </DropdownMenuTrigger>
