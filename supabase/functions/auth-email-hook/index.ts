@@ -66,8 +66,8 @@ function decodeSecret(secret: string): Uint8Array {
 
 async function verifyWebhook(req: Request, body: string): Promise<boolean> {
   if (!HOOK_SECRET) {
-    log.warn("AUTH_HOOK_SEND_EMAIL_SECRET not set — skipping verify");
-    return true;
+    log.error("AUTH_HOOK_SEND_EMAIL_SECRET not configured — refusing webhook");
+    return false;
   }
 
   const id = req.headers.get("webhook-id");
