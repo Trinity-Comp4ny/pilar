@@ -376,6 +376,7 @@ export function DisciplinasTableView({
                             size="icon"
                             className="h-7 w-7 text-muted-foreground hover:text-red-600"
                             onClick={() => handleRemoveDisc(idx)}
+                            aria-label="Excluir disciplina"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
                           </Button>
@@ -432,6 +433,7 @@ export function DisciplinasTableView({
                           className="h-7 w-7"
                           onClick={onAddDisc}
                           disabled={!newDisc.disciplina || !newDisc.responsavel_id}
+                          aria-label="Adicionar disciplina"
                         >
                           <Plus className="h-3.5 w-3.5" />
                         </Button>
@@ -443,6 +445,7 @@ export function DisciplinasTableView({
                             setIsAddingDisc(false);
                             setNewDisc({ disciplina: "", responsavel_id: "" });
                           }}
+                          aria-label="Cancelar"
                         >
                           <X className="h-3.5 w-3.5" />
                         </Button>
@@ -598,6 +601,7 @@ function ResponsaveisCell({ discIdx, disc, dbDisc, pessoas, canEdit, onAdd, onRe
                       size="icon"
                       className="h-5 w-5 text-muted-foreground hover:text-red-600"
                       onClick={() => onRemove(discIdx, rIdx)}
+                      aria-label="Remover responsável"
                     >
                       <X className="h-3 w-3" />
                     </Button>
@@ -629,6 +633,7 @@ function ResponsaveisCell({ discIdx, disc, dbDisc, pessoas, canEdit, onAdd, onRe
                 await onAdd(discIdx, selectedToAdd);
                 setSelectedToAdd("");
               }}
+              aria-label="Adicionar responsável"
             >
               <Plus className="h-3.5 w-3.5" />
             </Button>

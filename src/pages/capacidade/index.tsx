@@ -149,7 +149,13 @@ export default function Capacidade() {
 
       {/* Navegação */}
       <div className="flex items-center gap-2 mb-4">
-        <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => navegarSemanas(-1)}>
+        <Button
+          variant="outline"
+          size="icon"
+          className="h-8 w-8"
+          onClick={() => navegarSemanas(-1)}
+          aria-label="Semana anterior"
+        >
           <ChevronLeft className="h-4 w-4" />
         </Button>
         <span className="text-sm font-medium">
@@ -160,7 +166,13 @@ export default function Capacidade() {
             month: "short",
           })}
         </span>
-        <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => navegarSemanas(1)}>
+        <Button
+          variant="outline"
+          size="icon"
+          className="h-8 w-8"
+          onClick={() => navegarSemanas(1)}
+          aria-label="Próxima semana"
+        >
           <ChevronRight className="h-4 w-4" />
         </Button>
         <Button variant="ghost" size="sm" className="text-xs" onClick={() => setStartMonday(getMonday(new Date()))}>

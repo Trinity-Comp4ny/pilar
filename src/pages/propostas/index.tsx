@@ -310,16 +310,16 @@ export default function Propostas() {
             </div>
             <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
               <div className="relative w-full sm:w-56">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-black/40" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
                 <Input
                   placeholder="Buscar por título, cliente..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 bg-gray-50 border-gray-200"
+                  className="h-9 pl-9 rounded-full text-sm"
                 />
               </div>
               <Select value={filterStatus} onValueChange={setFilterStatus}>
-                <SelectTrigger className="w-full sm:w-36 bg-gray-50 border-gray-200">
+                <SelectTrigger className="h-9 w-full sm:w-36 rounded-full text-sm">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -337,7 +337,7 @@ export default function Propostas() {
                   size="icon"
                   className="h-9 w-9"
                   onClick={() => setViewMode("table")}
-                  title="Tabela"
+                  aria-label="Visualizar em tabela"
                 >
                   <LayoutList className="h-4 w-4" />
                 </Button>
@@ -346,7 +346,7 @@ export default function Propostas() {
                   size="icon"
                   className="h-9 w-9"
                   onClick={() => setViewMode("cards")}
-                  title="Cards"
+                  aria-label="Visualizar em cards"
                 >
                   <LayoutGrid className="h-4 w-4" />
                 </Button>
@@ -451,6 +451,7 @@ export default function Propostas() {
                                 e.stopPropagation();
                                 setConfirmDelete({ id: p.id, titulo: p.titulo });
                               }}
+                              aria-label="Excluir proposta"
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
@@ -519,6 +520,7 @@ export default function Propostas() {
                               e.stopPropagation();
                               setConfirmDelete({ id: p.id, titulo: p.titulo });
                             }}
+                            aria-label="Excluir proposta"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
                           </Button>

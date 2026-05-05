@@ -298,6 +298,7 @@ export function SupplierManager({ onSupplierChange }: SupplierManagerProps) {
                       setEditSupplier(supplier);
                       setIsEditDialogOpen(true);
                     }}
+                    aria-label="Editar fornecedor"
                   >
                     <Pencil className="h-4 w-4" />
                   </Button>
@@ -308,6 +309,7 @@ export function SupplierManager({ onSupplierChange }: SupplierManagerProps) {
                       setDeleteSupplier(supplier);
                       setIsDeleteDialogOpen(true);
                     }}
+                    aria-label="Excluir fornecedor"
                   >
                     <Trash2 className="h-4 w-4 text-red-500" />
                   </Button>

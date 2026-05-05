@@ -244,6 +244,7 @@ export function CategoryManager({ title, description, type, onCategoryChange }: 
                       setEditCategory(category);
                       setIsEditDialogOpen(true);
                     }}
+                    aria-label="Editar categoria"
                   >
                     <Pencil className="h-4 w-4" />
                   </Button>
@@ -254,6 +255,7 @@ export function CategoryManager({ title, description, type, onCategoryChange }: 
                       setDeleteCategory(category);
                       setIsDeleteDialogOpen(true);
                     }}
+                    aria-label="Excluir categoria"
                   >
                     <Trash2 className="h-4 w-4 text-red-500" />
                   </Button>

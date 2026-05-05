@@ -140,7 +140,13 @@ export default function Templates() {
                         <CardTitle className="text-sm font-medium">{template.nome}</CardTitle>
                         {canEdit && (
                           <div className="flex items-center gap-1">
-                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(template)}>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7"
+                              onClick={() => openEdit(template)}
+                              aria-label="Editar template"
+                            >
                               <Pencil className="h-3.5 w-3.5" />
                             </Button>
                             <Button
@@ -148,6 +154,7 @@ export default function Templates() {
                               size="icon"
                               className="h-7 w-7 text-red-500"
                               onClick={() => setConfirmDeleteId(template.id)}
+                              aria-label="Excluir template"
                             >
                               <Trash2 className="h-3.5 w-3.5" />
                             </Button>

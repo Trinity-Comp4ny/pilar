@@ -385,6 +385,7 @@ export default function Configuracoes() {
                             resetForm();
                             setIsNewContaOpen(true);
                           }}
+                          aria-label="Adicionar conta"
                         >
                           <Plus className="h-3.5 w-3.5" />
                         </Button>
@@ -526,6 +527,7 @@ export default function Configuracoes() {
                             resetForm();
                             setIsNewCartaoOpen(true);
                           }}
+                          aria-label="Adicionar cartão"
                         >
                           <Plus className="h-3.5 w-3.5" />
                         </Button>

@@ -89,7 +89,7 @@ export function ProjetosFilterBar({ pessoas, clientes, disciplinas, filters, onC
       <Button
         variant="ghost"
         className={cn(
-          "h-10 rounded-full text-sm text-muted-foreground transition-opacity w-[120px] justify-center",
+          "h-9 rounded-full text-sm text-muted-foreground transition-opacity w-[120px] justify-center",
           totalActive === 0 && "opacity-0 pointer-events-none"
         )}
         onClick={() => onChange(EMPTY_FILTERS)}
@@ -105,7 +105,7 @@ export function ProjetosFilterBar({ pessoas, clientes, disciplinas, filters, onC
           value={filters.search}
           onChange={(e) => onChange({ ...filters, search: e.target.value })}
           placeholder="Buscar (/)"
-          className="h-10 w-[240px] pl-9 pr-8 text-sm rounded-full"
+          className="h-9 w-[240px] pl-9 pr-8 text-sm rounded-full"
         />
         {filters.search && (
           <button

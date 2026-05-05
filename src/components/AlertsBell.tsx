@@ -43,7 +43,7 @@ export function AlertsBell() {
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative h-8 w-8">
+        <Button variant="ghost" size="icon" className="relative h-8 w-8" aria-label="Notificações">
           <Bell className="h-4 w-4" />
           {naoLidos > 0 && (
             <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-chart-danger text-[10px] font-bold text-white flex items-center justify-center">

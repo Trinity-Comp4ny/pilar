@@ -136,6 +136,7 @@ export function TemplatesManager() {
             size="icon"
             className="h-7 w-7 text-red-500 flex-shrink-0"
             onClick={() => setDeleteId(t.id)}
+            aria-label="Excluir template"
           >
             <Trash2 className="h-3.5 w-3.5" />
           </Button>

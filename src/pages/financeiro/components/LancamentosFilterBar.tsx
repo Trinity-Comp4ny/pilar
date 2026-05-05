@@ -114,12 +114,12 @@ export function LancamentosFilterBar({
       {/* Linha unificada: search + tipo + período + filtros avançados + contador */}
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative flex-1 min-w-[220px] max-w-md">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
           <Input
             placeholder="Buscar descrição, cliente ou fornecedor…"
             value={filters.search}
             onChange={(e) => onChange({ search: e.target.value })}
-            className="h-9 pl-8 pr-8 rounded-full"
+            className="h-9 pl-9 pr-8 rounded-full"
           />
           {filters.search && (
             <button
