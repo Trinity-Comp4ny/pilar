@@ -394,11 +394,11 @@ export default function FolhaPagamento() {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 rounded-lg border border-border shadow-sm">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
-              <CalendarIcon className="h-5 w-5 text-muted-foreground" />
+              <CalendarIcon className="h-4 w-4 text-muted-foreground" />
               <span className="text-sm font-medium">Período:</span>
             </div>
             <Select value={selectedMonth.toString()} onValueChange={(v) => setSelectedMonth(parseInt(v))}>
-              <SelectTrigger className="w-[140px]">
+              <SelectTrigger className="w-[140px] h-9 rounded-full text-sm">
                 <SelectValue placeholder="Mês" />
               </SelectTrigger>
               <SelectContent>
@@ -410,7 +410,7 @@ export default function FolhaPagamento() {
               </SelectContent>
             </Select>
             <Select value={selectedYear.toString()} onValueChange={(v) => setSelectedYear(parseInt(v))}>
-              <SelectTrigger className="w-[100px]">
+              <SelectTrigger className="w-[100px] h-9 rounded-full text-sm">
                 <SelectValue placeholder="Ano" />
               </SelectTrigger>
               <SelectContent>

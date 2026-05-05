@@ -610,6 +610,7 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
                       variant="outline"
                       className="h-9 w-9 shrink-0"
                       onClick={handleAddConta}
+                      aria-label="Adicionar conta"
                     >
                       <Plus className="h-4 w-4" />
                     </Button>
@@ -647,6 +648,7 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
                           size="icon"
                           className="h-7 w-7 text-red-500 shrink-0"
                           onClick={() => handleRemoveConta(index)}
+                          aria-label="Remover conta"
                         >
                           <Trash2 className="h-3 w-3" />
                         </Button>
@@ -681,6 +683,7 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
                     variant="outline"
                     className="h-9 w-9 shrink-0"
                     onClick={handleAddChavePix}
+                    aria-label="Adicionar chave PIX"
                   >
                     <Plus className="h-4 w-4" />
                   </Button>

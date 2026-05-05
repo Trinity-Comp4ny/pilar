@@ -210,6 +210,7 @@ export function BillingMilestonesTab({ projetoId, canEdit }: BillingMilestonesTa
                           size="icon"
                           className="h-7 w-7 text-blue-600"
                           title="Faturar (cria receita)"
+                          aria-label="Faturar"
                           disabled={faturarMarcoMutation.isPending}
                           onClick={() => faturarMarcoMutation.mutate(marco.id)}
                         >

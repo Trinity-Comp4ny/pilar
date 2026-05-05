@@ -265,10 +265,7 @@ export default function Propostas() {
   const header = (
     <PageHeader title="Documentos" description="Gerencie propostas e contratos">
       <div className="flex items-center gap-2">
-        <Button
-          className="rounded-full bg-brand hover:bg-brand/90 text-ink transition-colors px-5 py-2.5 text-sm"
-          onClick={() => setIsTemplatesOpen(true)}
-        >
+        <Button variant="outline" className="rounded-full px-5 py-2.5 text-sm" onClick={() => setIsTemplatesOpen(true)}>
           <LayoutTemplate className="h-4 w-4 mr-1.5" />
           Gerenciar Templates
         </Button>
