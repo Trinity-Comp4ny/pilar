@@ -1,11 +1,10 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { format, addMonths } from "date-fns";
 import { toast } from "sonner";
-import { parseCurrencyString } from "@/lib/currencyUtils";
 import type { DespesaFormData } from "@/schemas/despesaSchema";
 import type { ReceitaFormData } from "@/schemas/receitaSchema";
 import { FINANCE_ITEMS_KEYS, type FinanceItemTipo, type DespesaItem, type ReceitaItem } from "./useFinanceItems";
+import { buildDespesaPayloads, buildReceitaPayloads } from "../lib/buildLancamentoPayload";
 
 interface SaveDespesaArgs {
   formData: DespesaFormData;
@@ -18,64 +17,29 @@ interface SaveReceitaArgs {
   selected: ReceitaItem | null;
 }
 
-async function saveDespesaImpl({ formData, selected, cartoes }: SaveDespesaArgs) {
-  const numParcelas = parseInt(formData.parcelas) || 1;
-  const valorNumerico = parseCurrencyString(formData.valorTotal);
-  const valorParcela = Math.round((valorNumerico / numParcelas) * 100) / 100;
-
+async function getEmpresaId(): Promise<string> {
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) throw new Error("Usuário não autenticado");
-
   const { data: empresaId } = await supabase.rpc("get_user_empresa_id");
   if (!empresaId) throw new Error("Usuário não vinculado a uma empresa");
+  return empresaId;
+}
 
-  const grupoParcela = numParcelas > 1 ? crypto.randomUUID() : null;
-  const despesasToInsert: Array<Record<string, unknown>> = [];
-  const initialDate = new Date(formData.dataVencimento);
-
-  for (let i = 0; i < numParcelas; i++) {
-    const dataParcela = addMonths(initialDate, i);
-    const dataStr = format(dataParcela, "yyyy-MM-dd");
-    const isUltima = i === numParcelas - 1 && numParcelas > 1;
-    const valorFinal = isUltima
-      ? Math.round((valorNumerico - valorParcela * (numParcelas - 1)) * 100) / 100
-      : valorParcela;
-
-    despesasToInsert.push({
-      data_vencimento: dataStr,
-      data_pagamento: formData.status === "Pago" ? dataStr : null,
-      descricao: numParcelas > 1 ? `${formData.descricao} (${i + 1}/${numParcelas})` : formData.descricao,
-      categoria_id: formData.categoriaId || null,
-      valor: valorFinal,
-      fornecedor_id: formData.fornecedorId || null,
-      projeto_id: formData.projetoID || null,
-      nota_fiscal: formData.notaFiscal || null,
-      status: formData.status === "Pago" ? "Pago" : "Pendente",
-      conta_id: formData.contaId || null,
-      cartao_id: formData.cartaoId || null,
-      observacao: formData.observacao || null,
-      recorrente: formData.recorrente || false,
-      periodicidade: formData.recorrente ? formData.periodicidade || "mensal" : null,
-      empresa_id: empresaId,
-      grupo_parcela: selected ? (selected.grupo_parcela ?? null) : grupoParcela,
-      parcela_numero: selected ? (selected.parcela_numero ?? null) : numParcelas > 1 ? i + 1 : null,
-      parcela_total: selected ? (selected.parcela_total ?? null) : numParcelas > 1 ? numParcelas : null,
-    });
-  }
+async function saveDespesaImpl({ formData, selected, cartoes }: SaveDespesaArgs) {
+  const empresaId = await getEmpresaId();
+  const despesasToInsert = buildDespesaPayloads({ formData, empresaId, selectedParcela: selected });
 
   if (selected) {
     const dataChanged = despesasToInsert[0].data_vencimento !== selected.data_vencimento;
+    // Quando muda a data de uma despesa de cartão, desvincula a fatura para reassociação correta.
     const updatePayload =
       dataChanged && selected.cartao_id ? { ...despesasToInsert[0], fatura_id: null } : despesasToInsert[0];
-    const { error } = await supabase
-      .from("despesas")
-      .update(updatePayload as never)
-      .eq("id", selected.id);
+    const { error } = await supabase.from("despesas").update(updatePayload).eq("id", selected.id);
     if (error) throw error;
   } else {
-    const { error } = await supabase.from("despesas").insert(despesasToInsert as never[]);
+    const { error } = await supabase.from("despesas").insert(despesasToInsert);
     if (error) throw error;
   }
 
@@ -85,6 +49,7 @@ async function saveDespesaImpl({ formData, selected, cartoes }: SaveDespesaArgs)
     const mesesGerados = new Set<string>();
 
     for (const d of despesasToInsert) {
+      if (!d.data_vencimento) continue;
       const dt = new Date(d.data_vencimento + "T00:00:00");
       let billingMonth = dt.getMonth() + 1;
       let billingYear = dt.getFullYear();
@@ -110,65 +75,22 @@ async function saveDespesaImpl({ formData, selected, cartoes }: SaveDespesaArgs)
     }
   }
 
-  return { numParcelas, isEdit: !!selected };
+  return { numParcelas: despesasToInsert.length, isEdit: !!selected };
 }
 
 async function saveReceitaImpl({ formData, selected }: SaveReceitaArgs) {
-  const numParcelas = parseInt(formData.parcelas) || 1;
-  const valorNumerico = parseCurrencyString(formData.valorTotal);
-  const valorParcela = Math.round((valorNumerico / numParcelas) * 100) / 100;
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) throw new Error("Usuário não autenticado");
-
-  const { data: empresaId } = await supabase.rpc("get_user_empresa_id");
-  if (!empresaId) throw new Error("Usuário não vinculado a uma empresa");
-
-  const grupoParcela = numParcelas > 1 ? crypto.randomUUID() : null;
-  const receitasToInsert: Array<Record<string, unknown>> = [];
-
-  for (let i = 0; i < numParcelas; i++) {
-    const dataParcela = addMonths(formData.dataVencimento, i);
-    const dataStr = format(dataParcela, "yyyy-MM-dd");
-    const isUltima = i === numParcelas - 1 && numParcelas > 1;
-    const valorFinal = isUltima
-      ? Math.round((valorNumerico - valorParcela * (numParcelas - 1)) * 100) / 100
-      : valorParcela;
-
-    receitasToInsert.push({
-      data_vencimento: dataStr,
-      data_recebimento: formData.status === "Recebida" ? dataStr : null,
-      descricao: numParcelas > 1 ? `${formData.descricao} (${i + 1}/${numParcelas})` : formData.descricao,
-      projeto_id: formData.projetoID || null,
-      categoria_id: formData.categoriaId || null,
-      valor: valorFinal,
-      forma_pagamento: formData.formaPagamento || null,
-      nota_fiscal: formData.notaFiscal || null,
-      status: formData.status === "Recebida" ? "Recebido" : "Pendente",
-      conta_id: formData.contaId || null,
-      cliente_id: formData.clienteId || null,
-      observacao: formData.observacao || null,
-      empresa_id: empresaId,
-      grupo_parcela: selected ? (selected.grupo_parcela ?? null) : grupoParcela,
-      parcela_numero: selected ? (selected.parcela_numero ?? null) : numParcelas > 1 ? i + 1 : null,
-      parcela_total: selected ? (selected.parcela_total ?? null) : numParcelas > 1 ? numParcelas : null,
-    });
-  }
+  const empresaId = await getEmpresaId();
+  const receitasToInsert = buildReceitaPayloads({ formData, empresaId, selectedParcela: selected });
 
   if (selected) {
-    const { error } = await supabase
-      .from("receitas")
-      .update(receitasToInsert[0] as never)
-      .eq("id", selected.id);
+    const { error } = await supabase.from("receitas").update(receitasToInsert[0]).eq("id", selected.id);
     if (error) throw error;
   } else {
-    const { error } = await supabase.from("receitas").insert(receitasToInsert as never[]);
+    const { error } = await supabase.from("receitas").insert(receitasToInsert);
     if (error) throw error;
   }
 
-  return { numParcelas, isEdit: !!selected };
+  return { numParcelas: receitasToInsert.length, isEdit: !!selected };
 }
 
 export function useFinanceItemMutations(tipo: FinanceItemTipo) {
