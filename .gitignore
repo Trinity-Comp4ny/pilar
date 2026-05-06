@@ -35,3 +35,4 @@ supabase/.branches/
 # Edge function secrets (nunca commitar)
 supabase/functions/.env
 supabase/.env
+backups/
