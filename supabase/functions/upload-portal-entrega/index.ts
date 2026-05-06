@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { withSentry } from "../_shared/sentry.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { authenticateUser, getCorsHeaders, jsonResponse, safeErrorResponse, optionsResponse } from "../_shared/cors.ts";
+import { authenticateUser, jsonResponse, safeErrorResponse, optionsResponse } from "../_shared/cors.ts";
 import { createLogger } from "../_shared/logger.ts";
 
 const log = createLogger("upload-portal-entrega");

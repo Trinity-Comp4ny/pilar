@@ -1029,7 +1029,7 @@ export function LancamentosTable({
 
       {editTarget && (
         <LancamentoFormDialog
-          open={editTarget !== null}
+          open
           onOpenChange={(v) => !v && setEditTarget(null)}
           tipo={editTarget.tipo}
           lancamento={editTarget}
