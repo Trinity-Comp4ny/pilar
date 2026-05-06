@@ -80,6 +80,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await supabase.auth.signOut();
     localStorage.removeItem("pilar-auth");
     localStorage.removeItem("pilar-user-name");
+    localStorage.removeItem("pilar-remember-me");
     setUser(null);
     setProfile(null);
     setMfaCurrentLevel("aal1");
