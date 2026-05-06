@@ -130,7 +130,7 @@ export default function Lancamentos() {
 
           {newTipo && (
             <LancamentoFormDialog
-              open={newTipo !== null}
+              open
               onOpenChange={(v) => !v && setNewTipo(null)}
               tipo={newTipo}
               onSaved={() => {

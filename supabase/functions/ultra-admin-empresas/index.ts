@@ -38,6 +38,7 @@ serve(
         ]);
 
         if (empErr || !empresa) return safeErrorResponse(404, "Empresa não encontrada", req);
+        if (usrErr) return safeErrorResponse(500, "Falha ao buscar usuários da empresa", req);
 
         // Buscar plano da empresa
         const { data: sub } = await svc
