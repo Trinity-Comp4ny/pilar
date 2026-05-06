@@ -5,7 +5,7 @@ interface AuxData {
   categorias: { id: string; nome: string }[];
   projetos: { id: string; codigo: string }[];
   contas: { id: string; nome: string }[];
-  cartoes: { id: string; nome: string }[];
+  cartoes: { id: string; nome: string; tipo: string }[];
   clientes: { id: string; nome: string; chaves_pix?: Array<{ chave: string; tipo: string }> }[];
   fornecedores: { id: string; nome: string }[];
   centrosCusto: { id: string; nome: string; codigo: string | null }[];
@@ -16,7 +16,7 @@ export function useFinanceAuxData(tipo: "receita" | "despesa"): AuxData {
   const [categorias, setCategorias] = useState<{ id: string; nome: string }[]>([]);
   const [projetos, setProjetos] = useState<{ id: string; codigo: string }[]>([]);
   const [contas, setContas] = useState<{ id: string; nome: string }[]>([]);
-  const [cartoes, setCartoes] = useState<{ id: string; nome: string }[]>([]);
+  const [cartoes, setCartoes] = useState<{ id: string; nome: string; tipo: string }[]>([]);
   const [clientes, setClientes] = useState<
     { id: string; nome: string; chaves_pix?: Array<{ chave: string; tipo: string }> }[]
   >([]);
@@ -32,8 +32,8 @@ export function useFinanceAuxData(tipo: "receita" | "despesa"): AuxData {
         const tipoCat = tipo === "receita" ? "Receita" : "Despesa";
         const [{ data: cats }, { data: projs }, { data: cnts }, { data: ccs }] = await Promise.all([
           supabase.from("categorias_financeiras").select("id, nome").eq("tipo", tipoCat).order("nome"),
-          supabase.from("projetos").select("id, codigo_projeto").order("nome"),
-          supabase.from("contas").select("id, nome").order("nome"),
+          supabase.from("projetos").select("id, codigo_projeto").is("deleted_at", null).order("nome"),
+          supabase.from("contas").select("id, nome").is("deleted_at", null).order("nome"),
           supabase
             .from("centros_custo")
             .select("id, nome, codigo")
@@ -70,18 +70,22 @@ export function useFinanceAuxData(tipo: "receita" | "despesa"): AuxData {
             );
         } else {
           type FornRow = { id: string; nome: string };
-          type CartaoRow = { id: string; nome: string };
+          type CartaoRow = { id: string; nome: string; tipo: string };
           const [{ data: forns }, { data: crts }] = await Promise.all([
             supabase.from("fornecedores").select("id, nome").order("nome") as unknown as Promise<{
               data: FornRow[] | null;
             }>,
-            supabase.from("cartoes").select("id, nome").order("nome") as unknown as Promise<{
+            supabase
+              .from("cartoes")
+              .select("id, nome, tipo")
+              .is("deleted_at", null)
+              .order("nome") as unknown as Promise<{
               data: CartaoRow[] | null;
             }>,
           ]);
           if (!cancelled) {
             setFornecedores((forns ?? []).map((f) => ({ id: f.id, nome: f.nome })));
-            setCartoes((crts ?? []).map((c) => ({ id: c.id, nome: c.nome })));
+            setCartoes((crts ?? []).map((c) => ({ id: c.id, nome: c.nome, tipo: c.tipo })));
           }
         }
       } finally {
