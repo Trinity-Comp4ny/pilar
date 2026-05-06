@@ -14,6 +14,15 @@
 -- Esta é a primeira policy migrada. Demais policies serão migradas individualmente
 -- conforme cobertas por pgTAP.
 
+-- Garantir empresa_id em audit_logs (alguns ambientes remotos não tinham a coluna).
+DO $$ BEGIN
+  IF EXISTS (SELECT 1 FROM pg_tables WHERE schemaname = 'public' AND tablename = 'audit_logs') THEN
+    ALTER TABLE public.audit_logs ADD COLUMN IF NOT EXISTS empresa_id uuid;
+    CREATE INDEX IF NOT EXISTS idx_audit_logs_empresa_created
+      ON public.audit_logs (empresa_id, created_at DESC);
+  END IF;
+END $$;
+
 DO $$ BEGIN
   IF EXISTS (SELECT 1 FROM pg_tables WHERE schemaname = 'public' AND tablename = 'audit_logs') THEN
     DROP POLICY IF EXISTS "audit_logs_admin_read" ON public.audit_logs;
