@@ -43,3 +43,14 @@ ALTER TABLE storage.buckets
   ADD COLUMN IF NOT EXISTS public BOOLEAN NOT NULL DEFAULT FALSE,
   ADD COLUMN IF NOT EXISTS file_size_limit BIGINT,
   ADD COLUMN IF NOT EXISTS allowed_mime_types TEXT[];
+
+-- tg_audit_profile_changes: função auxiliar referenciada por trigger em
+-- 20260504700000_cleanup_user_role_enum.sql, mas cuja definição vive no DB
+-- remoto e não nas migrations. Stub no-op só pra trigger CREATE não falhar.
+CREATE SCHEMA IF NOT EXISTS public;
+CREATE OR REPLACE FUNCTION public.tg_audit_profile_changes()
+RETURNS TRIGGER LANGUAGE plpgsql AS $$
+BEGIN
+  RETURN NEW;
+END;
+$$;
