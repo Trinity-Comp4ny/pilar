@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,12 +12,15 @@ import { Mail, Lock, ArrowLeft, Loader2, CheckCircle2, Eye, EyeOff } from "lucid
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { loginSchema, loginDefaultValues, type LoginFormData } from "@/schemas";
 
+const REMEMBER_ME_KEY = "pilar-remember-me";
+
 export default function Login() {
   usePageTitle("Login");
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -68,6 +72,12 @@ export default function Login() {
     // "MFA verificado" após passar). PrivateRoute cuida dos redirects de onboarding.
     const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
     const mfaRequired = aal?.nextLevel === "aal2" && aal?.currentLevel === "aal1";
+
+    if (rememberMe) {
+      localStorage.setItem(REMEMBER_ME_KEY, "1");
+    } else {
+      localStorage.removeItem(REMEMBER_ME_KEY);
+    }
 
     if (mfaRequired) {
       navigate("/mfa");
@@ -201,6 +211,18 @@ export default function Login() {
                   </FormItem>
                 )}
               />
+
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="remember-me"
+                  checked={rememberMe}
+                  onCheckedChange={(v) => setRememberMe(!!v)}
+                  className="data-[state=checked]:bg-brand data-[state=checked]:border-brand data-[state=checked]:text-ink"
+                />
+                <label htmlFor="remember-me" className="text-sm text-slate-600 cursor-pointer select-none leading-none">
+                  Lembre-me
+                </label>
+              </div>
 
               <Button
                 className="w-full h-11 bg-brand hover:bg-brand/80 text-ink font-medium shadow-lg shadow-brand/20 hover:shadow-brand/30 transition-all active:scale-[0.98] text-sm"
