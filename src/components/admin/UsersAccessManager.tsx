@@ -375,7 +375,7 @@ function EditDialog({ user, onClose, companyFeatures, onSubmit }: EditDialogProp
   const isAdmin = role === "admin";
 
   return (
-    <Dialog open={user !== null} onOpenChange={(v) => (!v ? onClose() : undefined)}>
+    <Dialog open onOpenChange={(v) => (!v ? onClose() : undefined)}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle>Editar acessos — {user.name}</DialogTitle>
