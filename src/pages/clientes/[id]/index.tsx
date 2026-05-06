@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -49,6 +49,7 @@ import { useClientes } from "@/hooks/useClientes";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { ClienteMessageDialog } from "@/pages/clientes/ClienteMessageDialog";
 import { FinanceiroContent } from "@/pages/portal/PortalFinanceiro";
+import type { ClienteReceita } from "@/pages/cliente/useClienteProjetoData";
 import { EntregasContent } from "@/pages/portal/PortalEntregas";
 import { PROJECT_STATUS_CONFIG } from "@/constants";
 import { cn } from "@/lib/utils";
@@ -60,6 +61,24 @@ const formatCurrency = (v: number | null) =>
   v != null ? new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v) : "—";
 
 const formatDate = (d: string | null) => (d ? new Date(d + "T00:00:00").toLocaleDateString("pt-BR") : "—");
+
+// ─── Admin Financeiro Wrapper ────────────────────────────────────────────────
+
+function AdminFinanceiroContent({ projetoId }: { projetoId: string }) {
+  const [receitas, setReceitas] = useState<ClienteReceita[]>([]);
+
+  useEffect(() => {
+    supabase
+      .from("receitas")
+      .select("id, descricao, valor, data_vencimento, data_recebimento, status")
+      .eq("projeto_id", projetoId)
+      .is("deleted_at", null)
+      .order("data_vencimento", { ascending: true })
+      .then(({ data }) => setReceitas((data ?? []) as ClienteReceita[]));
+  }, [projetoId]);
+
+  return <FinanceiroContent receitas={receitas} />;
+}
 
 // ─── Projeto Card ────────────────────────────────────────────────────────────
 
@@ -617,7 +636,7 @@ export default function ClienteDetalhePage() {
             <div className="space-y-3">
               {projetos.map((p) => (
                 <ProjetoAccordion key={p.id} projeto={p}>
-                  <FinanceiroContent projetoId={p.id} />
+                  <AdminFinanceiroContent projetoId={p.id} />
                 </ProjetoAccordion>
               ))}
             </div>
