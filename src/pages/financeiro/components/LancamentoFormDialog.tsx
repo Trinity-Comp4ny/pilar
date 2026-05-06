@@ -100,6 +100,19 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
   const [rateios, setRateios] = useState<{ centro_custo_id: string; percentual: string }[]>([]);
   const [rateioOn, setRateioOn] = useState(false);
 
+  const formaPagamento = form.watch("formaPagamento");
+  const isCartaoPayment = formaPagamento === "Cartão de Crédito" || formaPagamento === "Cartão de Débito";
+  const tipoCartaoFiltro = formaPagamento === "Cartão de Débito" ? "debito" : "credito";
+  const cartoesFiltrados = isCartaoPayment ? aux.cartoes.filter((c) => c.tipo === tipoCartaoFiltro) : aux.cartoes;
+
+  useEffect(() => {
+    if (isCartaoPayment) {
+      form.setValue("contaId", "");
+    } else {
+      form.setValue("cartaoId", "");
+    }
+  }, [isCartaoPayment]);
+
   useEffect(() => {
     if (!open) return;
     if (lancamento) {
@@ -116,8 +129,8 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
         parcelas: "1",
         categoriaId: lancamento.categoria_id ?? "",
         projetoId: lancamento.projeto_id ?? "",
-        contaId: "",
-        cartaoId: "",
+        contaId: lancamento.conta_id ?? "",
+        cartaoId: lancamento.cartao_id ?? "",
         clienteId: isReceita ? (lancamento.contraparte_id ?? "") : "",
         fornecedorId: !isReceita ? (lancamento.contraparte_id ?? "") : "",
         centroCustoId: lancamento.centro_custo_id ?? "",
@@ -365,7 +378,7 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
           <div className="px-6 pt-6 pb-4 border-b">
             <DialogHeader>
               <DialogTitle>
-                {isEdit ? "Editar" : "Novo"} {isReceita ? "Receita" : "Despesa"}
+                {isEdit ? "Editar" : "Nova"} {isReceita ? "Receita" : "Despesa"}
               </DialogTitle>
               <DialogDescription>
                 {isEdit ? "Altere os campos e salve" : "Campos obrigatórios marcados com *"}
@@ -561,39 +574,18 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
                   </Select>
                 </div>
 
-                <div className="space-y-1.5">
-                  <Label className="text-xs">
-                    Conta
-                    {(form.watch("status") === "Recebida" || form.watch("status") === "Pago") && (
-                      <span className="text-red-500 ml-0.5">*</span>
-                    )}
-                  </Label>
-                  <Select value={form.watch("contaId")} onValueChange={(v) => form.setValue("contaId", v)}>
-                    <SelectTrigger className={cn("h-9", form.formState.errors.contaId && "border-red-500")}>
-                      <SelectValue placeholder="Selecione" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {aux.contas.map((c) => (
-                        <SelectItem key={c.id} value={c.id}>
-                          {c.nome}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {form.formState.errors.contaId && (
-                    <p className="text-xs text-red-500">{form.formState.errors.contaId.message}</p>
-                  )}
-                </div>
-
-                {!isReceita && aux.cartoes.length > 0 && (
+                {isCartaoPayment && !isReceita ? (
                   <div className="space-y-1.5">
-                    <Label className="text-xs">Cartão de crédito</Label>
+                    <Label className="text-xs">
+                      {formaPagamento}
+                      {form.watch("status") === "Pago" && <span className="text-red-500 ml-0.5">*</span>}
+                    </Label>
                     <Select value={form.watch("cartaoId")} onValueChange={(v) => form.setValue("cartaoId", v)}>
                       <SelectTrigger className={cn("h-9", form.formState.errors.cartaoId && "border-red-500")}>
-                        <SelectValue placeholder="Selecione" />
+                        <SelectValue placeholder="Selecione o cartão" />
                       </SelectTrigger>
                       <SelectContent>
-                        {aux.cartoes.map((c) => (
+                        {cartoesFiltrados.map((c) => (
                           <SelectItem key={c.id} value={c.id}>
                             {c.nome}
                           </SelectItem>
@@ -602,6 +594,30 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
                     </Select>
                     {form.formState.errors.cartaoId && (
                       <p className="text-xs text-red-500">{form.formState.errors.cartaoId.message}</p>
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">
+                      Conta
+                      {(form.watch("status") === "Recebida" || form.watch("status") === "Pago") && (
+                        <span className="text-red-500 ml-0.5">*</span>
+                      )}
+                    </Label>
+                    <Select value={form.watch("contaId")} onValueChange={(v) => form.setValue("contaId", v)}>
+                      <SelectTrigger className={cn("h-9", form.formState.errors.contaId && "border-red-500")}>
+                        <SelectValue placeholder="Selecione a conta" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {aux.contas.map((c) => (
+                          <SelectItem key={c.id} value={c.id}>
+                            {c.nome}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {form.formState.errors.contaId && (
+                      <p className="text-xs text-red-500">{form.formState.errors.contaId.message}</p>
                     )}
                   </div>
                 )}
