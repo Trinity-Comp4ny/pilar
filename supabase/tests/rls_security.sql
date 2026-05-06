@@ -24,9 +24,9 @@ SELECT plan(18);
 INSERT INTO public.empresas (id, nome, owner_id, onboarding_completed, features)
 VALUES
   ('00000000-0000-0000-0000-00000000000a', 'Empresa A', NULL, TRUE,
-   '{"financeiro": true, "leads": true, "projetos": true, "clientes": true, "asaas": true}'::jsonb),
+   '{"financeiro": true, "leads": true, "projetos": true, "clientes": true, "propostas": true}'::jsonb),
   ('00000000-0000-0000-0000-00000000000b', 'Empresa B', NULL, TRUE,
-   '{"financeiro": true, "leads": true, "projetos": true, "clientes": true, "asaas": true}'::jsonb)
+   '{"financeiro": true, "leads": true, "projetos": true, "clientes": true, "propostas": true}'::jsonb)
 ON CONFLICT (id) DO UPDATE SET features = EXCLUDED.features, onboarding_completed = TRUE;
 
 -- Usuários simulados em auth.users (pgTAP test-only).
@@ -45,11 +45,11 @@ SET LOCAL session_replication_role = 'origin';
 INSERT INTO public.profiles (id, empresa_id, first_name, last_name, email, role, onboarding_completed, features)
 VALUES
   ('aaaaaaaa-0000-0000-0000-000000000001', '00000000-0000-0000-0000-00000000000a', 'Admin', 'A', 'admin_a@test.com', 'admin', TRUE,
-   '{"financeiro": "editor", "leads": "editor", "projetos": "editor", "clientes": "editor", "asaas": "editor"}'::jsonb),
+   '{"financeiro": "editor", "leads": "editor", "projetos": "editor", "clientes": "editor"}'::jsonb),
   ('aaaaaaaa-0000-0000-0000-000000000002', '00000000-0000-0000-0000-00000000000a', 'User', 'A', 'user_a@test.com', 'user', TRUE,
    '{"clientes": "viewer", "projetos": "viewer"}'::jsonb),
   ('bbbbbbbb-0000-0000-0000-000000000001', '00000000-0000-0000-0000-00000000000b', 'Admin', 'B', 'admin_b@test.com', 'admin', TRUE,
-   '{"financeiro": "editor", "leads": "editor", "projetos": "editor", "clientes": "editor", "asaas": "editor"}'::jsonb)
+   '{"financeiro": "editor", "leads": "editor", "projetos": "editor", "clientes": "editor"}'::jsonb)
 ON CONFLICT (id) DO UPDATE SET features = EXCLUDED.features, role = EXCLUDED.role;
 
 -- Cliente e projeto em cada empresa
