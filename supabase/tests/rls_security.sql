@@ -21,11 +21,13 @@ SELECT plan(18);
 -- Setup: duas empresas e usuários de cada
 -- =============================================
 
-INSERT INTO public.empresas (id, nome, owner_id, onboarding_completed)
+INSERT INTO public.empresas (id, nome, owner_id, onboarding_completed, features)
 VALUES
-  ('00000000-0000-0000-0000-00000000000a', 'Empresa A', NULL, TRUE),
-  ('00000000-0000-0000-0000-00000000000b', 'Empresa B', NULL, TRUE)
-ON CONFLICT (id) DO NOTHING;
+  ('00000000-0000-0000-0000-00000000000a', 'Empresa A', NULL, TRUE,
+   '{"financeiro": true, "leads": true, "projetos": true, "clientes": true, "asaas": true}'::jsonb),
+  ('00000000-0000-0000-0000-00000000000b', 'Empresa B', NULL, TRUE,
+   '{"financeiro": true, "leads": true, "projetos": true, "clientes": true, "asaas": true}'::jsonb)
+ON CONFLICT (id) DO UPDATE SET features = EXCLUDED.features, onboarding_completed = TRUE;
 
 -- Usuários simulados em auth.users (pgTAP test-only).
 -- Bypass do trigger handle_new_user que exige token de convite.
@@ -40,12 +42,15 @@ ON CONFLICT (id) DO NOTHING;
 
 SET LOCAL session_replication_role = 'origin';
 
-INSERT INTO public.profiles (id, empresa_id, first_name, last_name, email, role, onboarding_completed)
+INSERT INTO public.profiles (id, empresa_id, first_name, last_name, email, role, onboarding_completed, features)
 VALUES
-  ('aaaaaaaa-0000-0000-0000-000000000001', '00000000-0000-0000-0000-00000000000a', 'Admin', 'A', 'admin_a@test.com', 'admin', TRUE),
-  ('aaaaaaaa-0000-0000-0000-000000000002', '00000000-0000-0000-0000-00000000000a', 'User', 'A', 'user_a@test.com', 'user', TRUE),
-  ('bbbbbbbb-0000-0000-0000-000000000001', '00000000-0000-0000-0000-00000000000b', 'Admin', 'B', 'admin_b@test.com', 'admin', TRUE)
-ON CONFLICT (id) DO NOTHING;
+  ('aaaaaaaa-0000-0000-0000-000000000001', '00000000-0000-0000-0000-00000000000a', 'Admin', 'A', 'admin_a@test.com', 'admin', TRUE,
+   '{"financeiro": "editor", "leads": "editor", "projetos": "editor", "clientes": "editor", "asaas": "editor"}'::jsonb),
+  ('aaaaaaaa-0000-0000-0000-000000000002', '00000000-0000-0000-0000-00000000000a', 'User', 'A', 'user_a@test.com', 'user', TRUE,
+   '{"clientes": "viewer", "projetos": "viewer"}'::jsonb),
+  ('bbbbbbbb-0000-0000-0000-000000000001', '00000000-0000-0000-0000-00000000000b', 'Admin', 'B', 'admin_b@test.com', 'admin', TRUE,
+   '{"financeiro": "editor", "leads": "editor", "projetos": "editor", "clientes": "editor", "asaas": "editor"}'::jsonb)
+ON CONFLICT (id) DO UPDATE SET features = EXCLUDED.features, role = EXCLUDED.role;
 
 -- Cliente e projeto em cada empresa
 INSERT INTO public.clientes (id, empresa_id, nome, contato, email)
@@ -116,11 +121,11 @@ SELECT is(
 -- =============================================
 -- Teste 4: Admin da Empresa A VÊ receitas da própria empresa
 -- =============================================
+SELECT test_set_auth('aaaaaaaa-0000-0000-0000-000000000001'); -- admin A
+
 INSERT INTO public.receitas (id, empresa_id, descricao, valor, data_vencimento, status)
 VALUES ('50000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-00000000000a', 'Test', 1000, CURRENT_DATE, 'Pendente')
 ON CONFLICT (id) DO NOTHING;
-
-SELECT test_set_auth('aaaaaaaa-0000-0000-0000-000000000001'); -- admin A
 
 SELECT is(
   (SELECT COUNT(*)::int FROM public.receitas WHERE id = '50000000-0000-0000-0000-00000000000a'),
@@ -131,11 +136,14 @@ SELECT is(
 -- =============================================
 -- Teste 5: Admin A NÃO vê asaas_config da Empresa B
 -- =============================================
+-- Setup: insere asaas_config nas duas empresas com role postgres (bypass RLS).
+RESET ROLE;
 INSERT INTO public.asaas_config (id, empresa_id, api_key, ambiente)
 VALUES
   ('a1111111-0000-0000-0000-000000000001', '00000000-0000-0000-0000-00000000000a', 'secret_a', 'sandbox'),
   ('a2222222-0000-0000-0000-000000000001', '00000000-0000-0000-0000-00000000000b', 'secret_b', 'sandbox')
 ON CONFLICT (id) DO NOTHING;
+SELECT test_set_auth('aaaaaaaa-0000-0000-0000-000000000001'); -- admin A
 
 SELECT is(
   (SELECT COUNT(*)::int FROM public.asaas_config WHERE empresa_id = '00000000-0000-0000-0000-00000000000b'),
@@ -178,10 +186,12 @@ SELECT throws_ok(
 -- Teste 8: RPC rpc_faturar_marco bloqueia cross-empresa
 -- =============================================
 
--- Cria marco na Empresa B
+-- Cria marco na Empresa B (bypass RLS para setup cross-empresa)
+RESET ROLE;
 INSERT INTO public.marcos_faturamento (id, empresa_id, projeto_id, nome, valor, status)
 VALUES ('ffff0000-0000-0000-0000-00000000000b', '00000000-0000-0000-0000-00000000000b', '90000000-0000-0000-0000-00000000000b', 'Marco B', 500, 'pendente')
 ON CONFLICT (id) DO NOTHING;
+SELECT test_set_auth('aaaaaaaa-0000-0000-0000-000000000001'); -- admin A
 
 SELECT throws_ok(
   $$ SELECT public.rpc_faturar_marco('ffff0000-0000-0000-0000-00000000000b'::uuid) $$,
@@ -193,9 +203,11 @@ SELECT throws_ok(
 -- Teste 9: RPC rpc_converter_lead_cliente bloqueia cross-empresa
 -- =============================================
 
+RESET ROLE;
 INSERT INTO public.leads (id, empresa_id, nome, status)
 VALUES ('aaaa0000-0000-0000-0000-00000000000b', '00000000-0000-0000-0000-00000000000b', 'Lead B', 'Novo')
 ON CONFLICT (id) DO NOTHING;
+SELECT test_set_auth('aaaaaaaa-0000-0000-0000-000000000001'); -- admin A
 
 SELECT throws_ok(
   $$ SELECT public.rpc_converter_lead_cliente('aaaa0000-0000-0000-0000-00000000000b'::uuid) $$,

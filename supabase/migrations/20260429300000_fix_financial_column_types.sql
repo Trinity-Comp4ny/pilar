@@ -3,7 +3,8 @@
 
 DO $$ BEGIN
   IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'contas' AND column_name = 'saldo_atual' AND data_type = 'text') THEN
-    ALTER TABLE contas ALTER COLUMN saldo_atual TYPE numeric USING NULLIF(saldo_atual, '')::numeric;
+    ALTER TABLE contas ALTER COLUMN saldo_atual TYPE numeric USING
+      CASE WHEN saldo_atual ~ '^-?[0-9]+(\.[0-9]+)?$' THEN saldo_atual::numeric ELSE NULL END;
   END IF;
   IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'contas' AND column_name = 'user_id') THEN
     ALTER TABLE contas DROP COLUMN user_id;
@@ -13,9 +14,11 @@ END $$;
 DO $$ BEGIN
   -- Suporta tanto o nome antigo (cartoes_credito) quanto o novo (cartoes)
   IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'cartoes_credito' AND column_name = 'usado' AND data_type = 'text') THEN
-    ALTER TABLE cartoes_credito ALTER COLUMN usado TYPE numeric USING NULLIF(usado, '')::numeric;
+    ALTER TABLE cartoes_credito ALTER COLUMN usado TYPE numeric USING
+      CASE WHEN usado ~ '^-?[0-9]+(\.[0-9]+)?$' THEN usado::numeric ELSE NULL END;
   ELSIF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'cartoes' AND column_name = 'usado' AND data_type = 'text') THEN
-    ALTER TABLE cartoes ALTER COLUMN usado TYPE numeric USING NULLIF(usado, '')::numeric;
+    ALTER TABLE cartoes ALTER COLUMN usado TYPE numeric USING
+      CASE WHEN usado ~ '^-?[0-9]+(\.[0-9]+)?$' THEN usado::numeric ELSE NULL END;
   END IF;
   IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'cartoes_credito' AND column_name = 'user_id') THEN
     ALTER TABLE cartoes_credito DROP COLUMN user_id;
