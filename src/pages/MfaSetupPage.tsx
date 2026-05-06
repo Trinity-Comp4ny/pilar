@@ -115,6 +115,7 @@ export default function MfaSetupPage() {
   const { signOut, refreshMfaLevel } = useAuth();
   const { enrollTotp, resetAllFactors, verifyTotp } = useMfa();
 
+  const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [enrollment, setEnrollment] = useState<MfaEnrollResult | null>(null);
   const [starting, setStarting] = useState(true);
   const [startError, setStartError] = useState<string | null>(null);
@@ -222,8 +223,9 @@ export default function MfaSetupPage() {
           Sair
         </button>
 
-        <div className="w-full max-w-[400px] space-y-8 animate-in fade-in slide-in-from-left-8 duration-700">
-          <div className="space-y-6">
+        <div className="w-full max-w-[400px] animate-in fade-in slide-in-from-left-8 duration-700">
+          {/* Header fixo */}
+          <div className="space-y-4 mb-8">
             <div className="flex justify-center items-center gap-2">
               <img
                 src="/pilar-logo.svg"
@@ -231,72 +233,210 @@ export default function MfaSetupPage() {
                 className="h-10 w-auto hover:rotate-12 transition-transform duration-300"
               />
               <span className="text-2xl font-medium tracking-tight text-ink">
-                Pilar
-                <sup className="text-[10px] font-normal text-slate-400 ml-0.5 relative -top-2.5">®</sup>
+                Pilar<sup className="text-[10px] font-normal text-slate-400 ml-0.5 relative -top-2.5">®</sup>
               </span>
             </div>
 
-            <div className="text-center space-y-1">
-              <div className="flex justify-center mb-3">
-                <div className="p-3 rounded-full bg-brand/10">
-                  <ShieldCheck className="h-7 w-7 text-brand" />
-                </div>
-              </div>
-              <h1 className="text-xl font-semibold text-ink">Autenticação de dois fatores</h1>
-              <p className="text-sm text-ink-soft">
-                Configure o MFA para proteger sua conta antes de acessar a plataforma.
-              </p>
+            {/* Progress dots */}
+            <div className="flex items-center justify-center gap-2">
+              {([1, 2, 3, 4] as const).map((s) => (
+                <div
+                  key={s}
+                  className={`h-1.5 rounded-full transition-all duration-300 ${
+                    s === step ? "w-6 bg-brand" : s < step ? "w-4 bg-brand/40" : "w-4 bg-paper-border"
+                  }`}
+                />
+              ))}
             </div>
           </div>
 
-          {starting && (
-            <div className="flex flex-col items-center gap-3 py-6">
-              <Loader2 className="h-6 w-6 animate-spin text-ink-soft" />
-              <p className="text-sm text-ink-soft">Preparando configuração...</p>
-            </div>
-          )}
+          {/* ── Etapa 1: Instalar app ────────────────────────────── */}
+          {step === 1 && (
+            <div className="space-y-6 animate-in fade-in duration-300">
+              <div className="text-center space-y-2">
+                <div className="flex justify-center mb-3">
+                  <div className="p-3 rounded-full bg-brand/10">
+                    <ShieldCheck className="h-7 w-7 text-brand" />
+                  </div>
+                </div>
+                <h1 className="text-xl font-semibold text-ink">Passo 1 de 4 — Instalar o app</h1>
+                <p className="text-sm text-ink-soft">
+                  Escolha <strong className="text-ink">qualquer um</strong> dos apps abaixo e instale no seu celular.
+                  Todos funcionam da mesma forma.
+                </p>
+              </div>
 
-          {!starting && startError && (
-            <div className="flex flex-col items-center gap-3 py-4 text-center">
-              <AlertCircle className="h-8 w-8 text-destructive" />
-              <p className="text-sm text-destructive">{startError}</p>
-              <Button variant="outline" size="sm" onClick={() => startEnrollment(true)}>
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Tentar novamente
+              <div className="space-y-3">
+                {[
+                  { name: "Google Authenticator", hint: "Android e iOS" },
+                  { name: "Authy", hint: "Android, iOS e Desktop" },
+                  { name: "1Password", hint: "Se já usa 1Password" },
+                ].map((app) => (
+                  <div
+                    key={app.name}
+                    className="flex items-center rounded-xl border border-paper-border bg-paper-alt px-4 py-3"
+                  >
+                    <div>
+                      <p className="text-sm font-medium text-ink">{app.name}</p>
+                      <p className="text-xs text-ink-soft">{app.hint}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <Button
+                className="w-full h-11 bg-brand hover:bg-brand/90 text-ink font-medium"
+                onClick={() => setStep(2)}
+              >
+                Já tenho o app instalado →
               </Button>
             </div>
           )}
 
-          {!starting && enrollment && (
-            <div className="space-y-6">
-              <div className="flex flex-col items-center gap-2">
-                <div className="p-3 bg-paper-alt rounded-xl border border-paper-border shadow-sm">
-                  <img src={enrollment.qrCode} alt="QR Code MFA" className="w-44 h-44" />
+          {/* ── Etapa 2: Abrir modo de scan ──────────────────────── */}
+          {step === 2 && (
+            <div className="space-y-6 animate-in fade-in duration-300">
+              <div className="text-center space-y-2">
+                <div className="flex justify-center mb-3">
+                  <div className="p-3 rounded-full bg-brand/10">
+                    <ShieldCheck className="h-7 w-7 text-brand" />
+                  </div>
                 </div>
-                <p className="text-xs text-ink-soft">Google Authenticator · Authy · 1Password</p>
-              </div>
-
-              <div className="space-y-1">
-                <p className="text-xs text-ink-soft text-center">Ou adicione a chave manualmente:</p>
-                <div className="flex items-center gap-2">
-                  <code className="flex-1 px-2 py-1.5 bg-paper-alt border border-paper-border rounded text-xs break-all select-all font-mono text-ink">
-                    {enrollment.secret}
-                  </code>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    className="shrink-0 h-8 w-8 border-paper-border"
-                    onClick={handleCopy}
-                    aria-label="Copiar chave"
-                  >
-                    {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-                  </Button>
-                </div>
+                <h1 className="text-xl font-semibold text-ink">Passo 2 de 4 — Abrir o app</h1>
+                <p className="text-sm text-ink-soft">Prepare o app para escanear o QR Code.</p>
               </div>
 
               <div className="space-y-3">
-                <p className="text-sm font-medium text-center text-ink">Digite o código do aplicativo</p>
+                <div className="rounded-xl border border-paper-border bg-paper-alt p-4 space-y-3">
+                  <p className="text-sm font-semibold text-ink">No app autenticador:</p>
+                  <ol className="space-y-2 text-sm text-ink-soft">
+                    <li className="flex items-start gap-2">
+                      <span className="flex-shrink-0 w-5 h-5 rounded-full bg-brand/20 text-brand text-xs font-bold flex items-center justify-center mt-0.5">
+                        1
+                      </span>
+                      Abra o app no celular
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="flex-shrink-0 w-5 h-5 rounded-full bg-brand/20 text-brand text-xs font-bold flex items-center justify-center mt-0.5">
+                        2
+                      </span>
+                      Toque no botão <strong className="text-ink">+</strong> ou "Adicionar conta"
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="flex-shrink-0 w-5 h-5 rounded-full bg-brand/20 text-brand text-xs font-bold flex items-center justify-center mt-0.5">
+                        3
+                      </span>
+                      Selecione <strong className="text-ink">"Escanear QR Code"</strong>
+                    </li>
+                  </ol>
+                </div>
+
+                <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 flex items-start gap-3">
+                  <AlertCircle className="h-4 w-4 text-red-500 flex-shrink-0 mt-0.5" />
+                  <p className="text-xs text-red-700">
+                    <strong>Não abra a câmera padrão do celular.</strong> O QR Code só funciona dentro do app
+                    autenticador.
+                  </p>
+                </div>
+              </div>
+
+              <Button
+                className="w-full h-11 bg-brand hover:bg-brand/90 text-ink font-medium"
+                onClick={() => setStep(3)}
+              >
+                Estou com o app pronto para escanear →
+              </Button>
+
+              <button
+                onClick={() => setStep(1)}
+                className="w-full text-xs text-ink-soft hover:text-brand transition-colors text-center"
+              >
+                ← Voltar
+              </button>
+            </div>
+          )}
+
+          {/* ── Etapa 3: Escanear QR Code ────────────────────────── */}
+          {step === 3 && (
+            <div className="space-y-5 animate-in fade-in duration-300">
+              <div className="text-center space-y-2">
+                <h1 className="text-xl font-semibold text-ink">Passo 3 de 4 — Escanear</h1>
+                <p className="text-sm text-ink-soft">Aponte o app para o QR Code abaixo.</p>
+              </div>
+
+              {starting && (
+                <div className="flex flex-col items-center gap-3 py-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-ink-soft" />
+                  <p className="text-sm text-ink-soft">Gerando QR Code...</p>
+                </div>
+              )}
+
+              {!starting && startError && (
+                <div className="flex flex-col items-center gap-3 py-4 text-center">
+                  <AlertCircle className="h-8 w-8 text-destructive" />
+                  <p className="text-sm text-destructive">{startError}</p>
+                  <Button variant="outline" size="sm" onClick={() => startEnrollment(true)}>
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Tentar novamente
+                  </Button>
+                </div>
+              )}
+
+              {!starting && enrollment && (
+                <>
+                  <div className="flex flex-col items-center">
+                    <div className="p-4 bg-white rounded-2xl border border-paper-border shadow-md">
+                      <img src={enrollment.qrCode} alt="QR Code MFA" className="w-48 h-48" />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <p className="text-xs text-ink-soft text-center">
+                      Prefere adicionar manualmente? Cole esta chave no app:
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <code className="flex-1 px-2 py-1.5 bg-paper-alt border border-paper-border rounded text-xs break-all select-all font-mono text-ink">
+                        {enrollment.secret}
+                      </code>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        className="shrink-0 h-8 w-8"
+                        onClick={handleCopy}
+                      >
+                        {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                      </Button>
+                    </div>
+                  </div>
+
+                  <Button
+                    className="w-full h-11 bg-brand hover:bg-brand/90 text-ink font-medium"
+                    onClick={() => setStep(4)}
+                  >
+                    Escanei o QR Code →
+                  </Button>
+                </>
+              )}
+
+              <button
+                onClick={() => setStep(2)}
+                className="w-full text-xs text-ink-soft hover:text-brand transition-colors text-center"
+              >
+                ← Voltar
+              </button>
+            </div>
+          )}
+
+          {/* ── Etapa 4: Digitar código ──────────────────────────── */}
+          {step === 4 && enrollment && (
+            <div className="space-y-6 animate-in fade-in duration-300">
+              <div className="text-center space-y-2">
+                <h1 className="text-xl font-semibold text-ink">Passo 4 de 4 — Confirmar</h1>
+                <p className="text-sm text-ink-soft">Digite o código de 6 dígitos que aparece no app agora.</p>
+              </div>
+
+              <div className="space-y-4">
                 <OtpInput value={code} onChange={handleCodeChange} disabled={submitting} />
                 {submitting && (
                   <div className="flex justify-center">
@@ -314,16 +454,17 @@ export default function MfaSetupPage() {
                 Confirmar e acessar
               </Button>
 
-              <div className="flex justify-center">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-ink-soft hover:text-brand"
+              <div className="flex flex-col items-center gap-2">
+                <button onClick={() => setStep(3)} className="text-xs text-ink-soft hover:text-brand transition-colors">
+                  ← Voltar para o QR Code
+                </button>
+                <button
                   onClick={() => setHelpOpen(true)}
+                  className="inline-flex items-center gap-1.5 text-xs text-ink-soft hover:text-brand transition-colors"
                 >
-                  <HelpCircle className="h-4 w-4 mr-2" />
-                  Como funciona?
-                </Button>
+                  <HelpCircle className="h-3.5 w-3.5" />
+                  Precisa de ajuda?
+                </button>
               </div>
             </div>
           )}
