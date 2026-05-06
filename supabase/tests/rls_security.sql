@@ -15,7 +15,7 @@ BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 SET search_path = public, extensions;
 
-SELECT plan(18);
+SELECT plan(16);
 
 -- =============================================
 -- Setup: duas empresas e usuários de cada
@@ -238,38 +238,9 @@ SELECT throws_ok(
   'Signup com token inválido é rejeitado'
 );
 
--- =============================================
--- Teste 12: audit_log — INSERT cria linha
--- =============================================
-SELECT test_set_auth('aaaaaaaa-0000-0000-0000-000000000001');
-
-INSERT INTO public.clientes (id, empresa_id, nome, contato, email)
-VALUES ('d0000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-00000000000a', 'Audit Test', 'audit@test.com', 'audit@test.com');
-
-SELECT is(
-  (SELECT COUNT(*)::int FROM public.audit_logs
-   WHERE target_table = 'clientes'
-     AND target_id = 'd0000000-0000-0000-0000-00000000000a'
-     AND action = 'INSERT'),
-  1,
-  'audit_log registra INSERT em clientes'
-);
-
--- =============================================
--- Teste 13: audit_log — senha_hash é mascarada
--- =============================================
-INSERT INTO public.cliente_portal_accounts (cliente_id, empresa_id, nome, email, senha_hash)
-VALUES ('c1111111-0000-0000-0000-000000000001', '00000000-0000-0000-0000-00000000000a',
-        'Portal Test', 'portal@test.com', 'bcrypt_hash_secret_123');
-
-SELECT is(
-  (SELECT new_data->>'senha_hash' FROM public.audit_logs
-   WHERE target_table = 'cliente_portal_accounts'
-     AND actor_id = 'aaaaaaaa-0000-0000-0000-000000000001'
-   ORDER BY created_at DESC LIMIT 1),
-  '***',
-  'audit_log mascara senha_hash'
-);
+-- Testes 12-13 (audit_logs INSERT/mask) removidos — tabela public.audit_logs
+-- foi removida no remote (migration 028) e arquitetura migrou para
+-- admin_audit_logs com escopo diferente.
 
 -- =============================================
 -- Teste 14: rate_limit — bloqueia após N tentativas
