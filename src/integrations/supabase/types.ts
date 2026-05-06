@@ -1,30 +1,10 @@
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 export type Database = {
-  graphql_public: {
-    Tables: {
-      [_ in never]: never;
-    };
-    Views: {
-      [_ in never]: never;
-    };
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json;
-          operationName?: string;
-          query?: string;
-          variables?: Json;
-        };
-        Returns: Json;
-      };
-    };
-    Enums: {
-      [_ in never]: never;
-    };
-    CompositeTypes: {
-      [_ in never]: never;
-    };
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "13.0.5";
   };
   public: {
     Tables: {
@@ -273,6 +253,45 @@ export type Database = {
             referencedColumns: ["id"];
           },
         ];
+      };
+      audit_logs: {
+        Row: {
+          action: string;
+          actor_email: string | null;
+          actor_id: string | null;
+          created_at: string;
+          diff: Json | null;
+          empresa_id: string | null;
+          id: string;
+          metadata: Json;
+          target_id: string | null;
+          target_table: string | null;
+        };
+        Insert: {
+          action: string;
+          actor_email?: string | null;
+          actor_id?: string | null;
+          created_at?: string;
+          diff?: Json | null;
+          empresa_id?: string | null;
+          id?: string;
+          metadata?: Json;
+          target_id?: string | null;
+          target_table?: string | null;
+        };
+        Update: {
+          action?: string;
+          actor_email?: string | null;
+          actor_id?: string | null;
+          created_at?: string;
+          diff?: Json | null;
+          empresa_id?: string | null;
+          id?: string;
+          metadata?: Json;
+          target_id?: string | null;
+          target_table?: string | null;
+        };
+        Relationships: [];
       };
       audit_logs_archive: {
         Row: {
@@ -717,6 +736,59 @@ export type Database = {
           },
         ];
       };
+      critical_alerts: {
+        Row: {
+          actor_email: string | null;
+          actor_id: string | null;
+          alert_type: string;
+          created_at: string;
+          empresa_id: string | null;
+          id: string;
+          message: string;
+          metadata: Json | null;
+          notified: boolean | null;
+          severity: string;
+          target_id: string | null;
+          target_table: string | null;
+        };
+        Insert: {
+          actor_email?: string | null;
+          actor_id?: string | null;
+          alert_type: string;
+          created_at?: string;
+          empresa_id?: string | null;
+          id?: string;
+          message: string;
+          metadata?: Json | null;
+          notified?: boolean | null;
+          severity: string;
+          target_id?: string | null;
+          target_table?: string | null;
+        };
+        Update: {
+          actor_email?: string | null;
+          actor_id?: string | null;
+          alert_type?: string;
+          created_at?: string;
+          empresa_id?: string | null;
+          id?: string;
+          message?: string;
+          metadata?: Json | null;
+          notified?: boolean | null;
+          severity?: string;
+          target_id?: string | null;
+          target_table?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "critical_alerts_empresa_id_fkey";
+            columns: ["empresa_id"];
+            isOneToOne: false;
+            referencedRelation: "empresas";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       data_deletion_requests: {
         Row: {
           empresa_id: string | null;
@@ -757,6 +829,50 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "data_deletion_requests_empresa_id_fkey";
+            columns: ["empresa_id"];
+            isOneToOne: false;
+            referencedRelation: "empresas";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      data_export_requests: {
+        Row: {
+          completed_at: string | null;
+          created_at: string;
+          download_url: string | null;
+          empresa_id: string | null;
+          expires_at: string | null;
+          id: string;
+          requested_at: string;
+          status: string;
+          user_id: string;
+        };
+        Insert: {
+          completed_at?: string | null;
+          created_at?: string;
+          download_url?: string | null;
+          empresa_id?: string | null;
+          expires_at?: string | null;
+          id?: string;
+          requested_at?: string;
+          status?: string;
+          user_id: string;
+        };
+        Update: {
+          completed_at?: string | null;
+          created_at?: string;
+          download_url?: string | null;
+          empresa_id?: string | null;
+          expires_at?: string | null;
+          id?: string;
+          requested_at?: string;
+          status?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "data_export_requests_empresa_id_fkey";
             columns: ["empresa_id"];
             isOneToOne: false;
             referencedRelation: "empresas";
@@ -952,6 +1068,42 @@ export type Database = {
           created_at?: string;
           id?: string;
           nome?: string;
+        };
+        Relationships: [];
+      };
+      empresa_owners_pending: {
+        Row: {
+          company_name: string;
+          created_at: string;
+          criado_por: string | null;
+          email: string;
+          expira_em: string;
+          id: string;
+          nome: string | null;
+          token: string;
+          usado_em: string | null;
+        };
+        Insert: {
+          company_name: string;
+          created_at?: string;
+          criado_por?: string | null;
+          email: string;
+          expira_em?: string;
+          id?: string;
+          nome?: string | null;
+          token?: string;
+          usado_em?: string | null;
+        };
+        Update: {
+          company_name?: string;
+          created_at?: string;
+          criado_por?: string | null;
+          email?: string;
+          expira_em?: string;
+          id?: string;
+          nome?: string | null;
+          token?: string;
+          usado_em?: string | null;
         };
         Relationships: [];
       };
@@ -1926,6 +2078,30 @@ export type Database = {
           },
         ];
       };
+      mfa_backup_codes: {
+        Row: {
+          code_hash: string;
+          created_at: string;
+          id: string;
+          used_at: string | null;
+          user_id: string;
+        };
+        Insert: {
+          code_hash: string;
+          created_at?: string;
+          id?: string;
+          used_at?: string | null;
+          user_id: string;
+        };
+        Update: {
+          code_hash?: string;
+          created_at?: string;
+          id?: string;
+          used_at?: string | null;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       orcamento_versoes: {
         Row: {
           created_at: string | null;
@@ -2084,6 +2260,319 @@ export type Database = {
             columns: ["profile_id"];
             isOneToOne: false;
             referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      pilar_checkout_webhook_logs: {
+        Row: {
+          asaas_payment_id: string | null;
+          asaas_subscription_id: string | null;
+          created_at: string;
+          error: string | null;
+          event: string;
+          id: string;
+          payload: Json | null;
+          pending_signup_id: string | null;
+          processed: boolean;
+          subscription_id: string | null;
+        };
+        Insert: {
+          asaas_payment_id?: string | null;
+          asaas_subscription_id?: string | null;
+          created_at?: string;
+          error?: string | null;
+          event: string;
+          id?: string;
+          payload?: Json | null;
+          pending_signup_id?: string | null;
+          processed?: boolean;
+          subscription_id?: string | null;
+        };
+        Update: {
+          asaas_payment_id?: string | null;
+          asaas_subscription_id?: string | null;
+          created_at?: string;
+          error?: string | null;
+          event?: string;
+          id?: string;
+          payload?: Json | null;
+          pending_signup_id?: string | null;
+          processed?: boolean;
+          subscription_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "pilar_checkout_webhook_logs_pending_signup_id_fkey";
+            columns: ["pending_signup_id"];
+            isOneToOne: false;
+            referencedRelation: "pilar_pending_signups";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "pilar_checkout_webhook_logs_subscription_id_fkey";
+            columns: ["subscription_id"];
+            isOneToOne: false;
+            referencedRelation: "pilar_subscriptions";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      pilar_pending_signups: {
+        Row: {
+          activated_at: string | null;
+          asaas_customer_id: string | null;
+          asaas_payment_id: string | null;
+          asaas_subscription_id: string | null;
+          billing_cycle: string;
+          billing_type: string;
+          checkout_session_token: string;
+          company_name: string;
+          cpf_cnpj: string;
+          created_at: string;
+          email: string;
+          empresa_owner_pending_id: string | null;
+          id: string;
+          invite_dispatched_at: string | null;
+          nome: string;
+          paid_at: string | null;
+          payment_metadata: Json | null;
+          payment_status: string;
+          plan_id: string;
+          telefone: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          activated_at?: string | null;
+          asaas_customer_id?: string | null;
+          asaas_payment_id?: string | null;
+          asaas_subscription_id?: string | null;
+          billing_cycle?: string;
+          billing_type: string;
+          checkout_session_token?: string;
+          company_name: string;
+          cpf_cnpj: string;
+          created_at?: string;
+          email: string;
+          empresa_owner_pending_id?: string | null;
+          id?: string;
+          invite_dispatched_at?: string | null;
+          nome: string;
+          paid_at?: string | null;
+          payment_metadata?: Json | null;
+          payment_status?: string;
+          plan_id: string;
+          telefone?: string | null;
+          updated_at?: string;
+        };
+        Update: {
+          activated_at?: string | null;
+          asaas_customer_id?: string | null;
+          asaas_payment_id?: string | null;
+          asaas_subscription_id?: string | null;
+          billing_cycle?: string;
+          billing_type?: string;
+          checkout_session_token?: string;
+          company_name?: string;
+          cpf_cnpj?: string;
+          created_at?: string;
+          email?: string;
+          empresa_owner_pending_id?: string | null;
+          id?: string;
+          invite_dispatched_at?: string | null;
+          nome?: string;
+          paid_at?: string | null;
+          payment_metadata?: Json | null;
+          payment_status?: string;
+          plan_id?: string;
+          telefone?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "pilar_pending_signups_empresa_owner_pending_id_fkey";
+            columns: ["empresa_owner_pending_id"];
+            isOneToOne: false;
+            referencedRelation: "empresa_owners_pending";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "pilar_pending_signups_plan_id_fkey";
+            columns: ["plan_id"];
+            isOneToOne: false;
+            referencedRelation: "pilar_subscription_plans";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      pilar_subscription_plans: {
+        Row: {
+          ativo: boolean;
+          created_at: string;
+          descricao: string | null;
+          destaque: boolean;
+          features: Json;
+          id: string;
+          max_projetos: number | null;
+          max_usuarios: number | null;
+          nome: string;
+          ordem: number;
+          preco_anual: number | null;
+          preco_mensal: number;
+          slug: string;
+        };
+        Insert: {
+          ativo?: boolean;
+          created_at?: string;
+          descricao?: string | null;
+          destaque?: boolean;
+          features?: Json;
+          id?: string;
+          max_projetos?: number | null;
+          max_usuarios?: number | null;
+          nome: string;
+          ordem?: number;
+          preco_anual?: number | null;
+          preco_mensal: number;
+          slug: string;
+        };
+        Update: {
+          ativo?: boolean;
+          created_at?: string;
+          descricao?: string | null;
+          destaque?: boolean;
+          features?: Json;
+          id?: string;
+          max_projetos?: number | null;
+          max_usuarios?: number | null;
+          nome?: string;
+          ordem?: number;
+          preco_anual?: number | null;
+          preco_mensal?: number;
+          slug?: string;
+        };
+        Relationships: [];
+      };
+      pilar_subscriptions: {
+        Row: {
+          asaas_customer_id: string | null;
+          asaas_subscription_id: string | null;
+          billing_cycle: string | null;
+          billing_type: string | null;
+          canceled_at: string | null;
+          created_at: string;
+          current_period_end: string | null;
+          current_period_start: string | null;
+          empresa_id: string;
+          id: string;
+          pending_signup_id: string | null;
+          plan_id: string;
+          status: string;
+          trial_ends_at: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          asaas_customer_id?: string | null;
+          asaas_subscription_id?: string | null;
+          billing_cycle?: string | null;
+          billing_type?: string | null;
+          canceled_at?: string | null;
+          created_at?: string;
+          current_period_end?: string | null;
+          current_period_start?: string | null;
+          empresa_id: string;
+          id?: string;
+          pending_signup_id?: string | null;
+          plan_id: string;
+          status?: string;
+          trial_ends_at?: string | null;
+          updated_at?: string;
+        };
+        Update: {
+          asaas_customer_id?: string | null;
+          asaas_subscription_id?: string | null;
+          billing_cycle?: string | null;
+          billing_type?: string | null;
+          canceled_at?: string | null;
+          created_at?: string;
+          current_period_end?: string | null;
+          current_period_start?: string | null;
+          empresa_id?: string;
+          id?: string;
+          pending_signup_id?: string | null;
+          plan_id?: string;
+          status?: string;
+          trial_ends_at?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "pilar_subscriptions_empresa_id_fkey";
+            columns: ["empresa_id"];
+            isOneToOne: true;
+            referencedRelation: "empresas";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "pilar_subscriptions_pending_signup_id_fkey";
+            columns: ["pending_signup_id"];
+            isOneToOne: false;
+            referencedRelation: "pilar_pending_signups";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "pilar_subscriptions_plan_id_fkey";
+            columns: ["plan_id"];
+            isOneToOne: false;
+            referencedRelation: "pilar_subscription_plans";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      portal_download_logs: {
+        Row: {
+          arquivo_path: string | null;
+          cliente_id: string | null;
+          created_at: string;
+          empresa_id: string;
+          entrega_id: string | null;
+          id: string;
+          ip: string | null;
+          user_agent: string | null;
+        };
+        Insert: {
+          arquivo_path?: string | null;
+          cliente_id?: string | null;
+          created_at?: string;
+          empresa_id: string;
+          entrega_id?: string | null;
+          id?: string;
+          ip?: string | null;
+          user_agent?: string | null;
+        };
+        Update: {
+          arquivo_path?: string | null;
+          cliente_id?: string | null;
+          created_at?: string;
+          empresa_id?: string;
+          entrega_id?: string | null;
+          id?: string;
+          ip?: string | null;
+          user_agent?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "portal_download_logs_cliente_id_fkey";
+            columns: ["cliente_id"];
+            isOneToOne: false;
+            referencedRelation: "clientes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "portal_download_logs_empresa_id_fkey";
+            columns: ["empresa_id"];
+            isOneToOne: false;
+            referencedRelation: "empresas";
             referencedColumns: ["id"];
           },
         ];
@@ -2713,6 +3202,27 @@ export type Database = {
           },
         ];
       };
+      rate_limit_attempts: {
+        Row: {
+          action: string;
+          attempted_at: string;
+          id: string;
+          key: string;
+        };
+        Insert: {
+          action: string;
+          attempted_at?: string;
+          id?: string;
+          key: string;
+        };
+        Update: {
+          action?: string;
+          attempted_at?: string;
+          id?: string;
+          key?: string;
+        };
+        Relationships: [];
+      };
       receitas: {
         Row: {
           asaas_billing_type: string | null;
@@ -3002,6 +3512,24 @@ export type Database = {
           },
         ];
       };
+      ultra_admin_modes: {
+        Row: {
+          scoped: boolean;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          scoped?: boolean;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          scoped?: boolean;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       lancamentos: {
@@ -3263,6 +3791,7 @@ export type Database = {
         Args: { p_empresa_id: string };
         Returns: undefined;
       };
+      cleanup_expired_pending_signups: { Args: never; Returns: number };
       cleanup_pending_signups: { Args: never; Returns: number };
       create_convite: {
         Args: {
@@ -3408,10 +3937,23 @@ export type Database = {
         Returns: boolean;
       };
       impersonation_sessions_cleanup: { Args: never; Returns: number };
+      insert_audit_log: {
+        Args: {
+          p_action: string;
+          p_actor_email?: string;
+          p_actor_id?: string;
+          p_diff?: Json;
+          p_metadata?: Json;
+          p_target_id?: string;
+          p_target_table?: string;
+        };
+        Returns: undefined;
+      };
       is_company_admin: { Args: never; Returns: boolean };
       is_feature_flag_enabled: { Args: { p_key: string }; Returns: boolean };
       is_impersonating: { Args: never; Returns: boolean };
       is_ultra_admin: { Args: never; Returns: boolean };
+      is_ultra_admin_scoped: { Args: never; Returns: boolean };
       pagar_fatura: {
         Args: {
           p_conta_id: string;
@@ -3421,6 +3963,10 @@ export type Database = {
           p_valor_pago?: number;
         };
         Returns: undefined;
+      };
+      pilar_set_ultra_admin_scope: {
+        Args: { p_scoped: boolean };
+        Returns: boolean;
       };
       portal_atualizar_status_proposta: {
         Args: { p_proposta_id: string; p_status: string; p_token: string };
@@ -3436,6 +3982,7 @@ export type Database = {
         Returns: undefined;
       };
       request_data_deletion: { Args: { p_motivo?: string }; Returns: string };
+      request_data_export: { Args: never; Returns: Json };
       rpc_atualizar_status_atrasados: { Args: never; Returns: Json };
       rpc_calcular_wip: {
         Args: { p_ano: number; p_mes: number };
@@ -3749,9 +4296,6 @@ export type CompositeTypes<
     : never;
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       status_empresa: ["active", "suspended", "cancelled"],
