@@ -70,7 +70,9 @@ serve(
         return safeErrorResponse(400, `Falha ao redefinir senha: ${resetError.message}`, req);
       }
 
-      const loginUrl = `${Deno.env.get("PUBLIC_SITE_URL") ?? ""}/portal/login`;
+      const siteUrl = Deno.env.get("PUBLIC_SITE_URL");
+      if (!siteUrl) log.error("PUBLIC_SITE_URL secret not set — email button will be broken", null, {});
+      const loginUrl = `${siteUrl ?? "https://www.pilarsoft.com.br"}/cliente/login`;
 
       try {
         await sendEmail({
