@@ -811,7 +811,7 @@ export default function Clientes() {
         />
       }
     >
-      <Card className="rounded-2xl border border-black/5 bg-white w-full flex flex-col min-h-0">
+      <Card className="rounded-2xl border border-black/5 bg-white w-full flex flex-col min-h-0 overflow-hidden">
         <CardHeader>
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
