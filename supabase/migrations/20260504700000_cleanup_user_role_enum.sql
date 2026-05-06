@@ -22,12 +22,20 @@ BEGIN;
 CREATE TYPE public.user_role_v2 AS ENUM ('user', 'admin', 'ultra_admin');
 
 -- 2. Drop funções/triggers que dependem do tipo da coluna
+-- Drop policies que dependem de has_role(user_role[]) — serão recriadas no fim.
+DROP POLICY IF EXISTS "Company logos admin write" ON storage.objects;
+DROP POLICY IF EXISTS "Company logos admin update" ON storage.objects;
+DROP POLICY IF EXISTS "Company logos admin delete" ON storage.objects;
+DROP POLICY IF EXISTS "convites_admin_full" ON public.convites;
+DROP POLICY IF EXISTS "portal_download_logs_admin" ON public.portal_download_logs;
+
 DROP FUNCTION IF EXISTS public.has_role(VARIADIC public.user_role[]);
 -- Triggers que mencionam coluna `role` em UPDATE OF — precisam ser dropadas
 -- antes do ALTER COLUMN TYPE, e recriadas depois (mesma definição).
 DROP TRIGGER IF EXISTS validate_profile_features ON public.profiles;
 DROP TRIGGER IF EXISTS protect_ultra_admin ON public.profiles;
 DROP TRIGGER IF EXISTS validate_convite_features ON public.convites;
+DROP TRIGGER IF EXISTS audit_profile_changes ON public.profiles;
 
 -- 3a. profiles.role: drop default, alterar tipo, restaurar default
 ALTER TABLE public.profiles ALTER COLUMN role DROP DEFAULT;
@@ -133,5 +141,46 @@ CREATE TRIGGER protect_ultra_admin
 CREATE TRIGGER validate_convite_features
   BEFORE INSERT OR UPDATE OF features, cargo ON public.convites
   FOR EACH ROW EXECUTE FUNCTION tg_validate_convite_features();
+
+CREATE TRIGGER audit_profile_changes
+  AFTER UPDATE OF role, features ON public.profiles
+  FOR EACH ROW EXECUTE FUNCTION tg_audit_profile_changes();
+
+-- 7. Recriar policies dropadas (assinatura has_role idêntica, agora sobre enum novo)
+CREATE POLICY "convites_admin_full" ON public.convites
+  USING (empresa_id = public.get_user_empresa_id() AND public.has_role('admin'))
+  WITH CHECK (empresa_id = public.get_user_empresa_id() AND public.has_role('admin'));
+
+CREATE POLICY "portal_download_logs_admin" ON public.portal_download_logs
+  FOR SELECT USING (empresa_id = public.get_user_empresa_id() AND public.has_role('admin'));
+
+CREATE POLICY "Company logos admin write" ON storage.objects
+  FOR INSERT TO authenticated
+  WITH CHECK (
+    bucket_id = 'company-logos'
+    AND public.has_role('admin')
+    AND (split_part(name, '/', 1))::uuid = public.get_user_empresa_id()
+  );
+
+CREATE POLICY "Company logos admin update" ON storage.objects
+  FOR UPDATE TO authenticated
+  USING (
+    bucket_id = 'company-logos'
+    AND public.has_role('admin')
+    AND (split_part(name, '/', 1))::uuid = public.get_user_empresa_id()
+  )
+  WITH CHECK (
+    bucket_id = 'company-logos'
+    AND public.has_role('admin')
+    AND (split_part(name, '/', 1))::uuid = public.get_user_empresa_id()
+  );
+
+CREATE POLICY "Company logos admin delete" ON storage.objects
+  FOR DELETE TO authenticated
+  USING (
+    bucket_id = 'company-logos'
+    AND public.has_role('admin')
+    AND (split_part(name, '/', 1))::uuid = public.get_user_empresa_id()
+  );
 
 COMMIT;
