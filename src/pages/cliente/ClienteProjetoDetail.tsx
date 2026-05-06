@@ -5,7 +5,7 @@ import { ClienteShell } from "./ClienteShell";
 import { useClienteProjetoData } from "./useClienteProjetoData";
 import { FinanceiroContent } from "@/pages/portal/PortalFinanceiro";
 import { EntregasContent } from "@/pages/portal/PortalEntregas";
-import { TimelineContent } from "@/pages/portal/PortalTimeline";
+import { TimelineContent, type TimelineDisciplina } from "@/pages/portal/PortalTimeline";
 import { PendenciasCard } from "@/pages/portal/PendenciasCard";
 import type { ClienteAccount } from "@/hooks/useClienteAuth";
 import { usePageTitle } from "@/hooks/usePageTitle";
@@ -19,14 +19,24 @@ function ProjetoOverview({
   projetoId,
   dataInicio,
   dataPrevisao,
+  disciplinas,
+  receitas,
+  portalEntregasPendentes,
 }: {
   projetoId: string;
   dataInicio: string | null;
   dataPrevisao: string | null;
+  disciplinas: TimelineDisciplina[];
+  receitas: import("@/pages/cliente/useClienteProjetoData").ClienteReceita[];
+  portalEntregasPendentes: number;
 }) {
   return (
     <div className="space-y-6">
-      <PendenciasCard projetoId={projetoId} baseUrl={`/cliente/projeto/${projetoId}`} />
+      <PendenciasCard
+        baseUrl={`/cliente/projeto/${projetoId}`}
+        receitas={receitas}
+        portalEntregasPendentes={portalEntregasPendentes}
+      />
 
       <div className="grid grid-cols-2 gap-4">
         <Card>
@@ -43,7 +53,7 @@ function ProjetoOverview({
         </Card>
       </div>
 
-      <TimelineContent projetoId={projetoId} />
+      <TimelineContent disciplinas={disciplinas} />
     </div>
   );
 }
@@ -89,12 +99,19 @@ export default function ClienteProjetoDetail() {
 
   let content: React.ReactNode;
   if (subPath === "/financeiro") {
-    content = <FinanceiroContent projetoId={data.projeto_id} />;
+    content = <FinanceiroContent receitas={data.receitas ?? []} />;
   } else if (subPath === "/entregas") {
     content = <EntregasContent projetoId={data.projeto_id} />;
   } else {
     content = (
-      <ProjetoOverview projetoId={data.projeto_id} dataInicio={data.data_inicio} dataPrevisao={data.data_previsao} />
+      <ProjetoOverview
+        projetoId={data.projeto_id}
+        dataInicio={data.data_inicio}
+        dataPrevisao={data.data_previsao}
+        disciplinas={(data.disciplinas as TimelineDisciplina[]) ?? []}
+        receitas={data.receitas ?? []}
+        portalEntregasPendentes={data.portal_entregas_pendentes ?? 0}
+      />
     );
   }
 
