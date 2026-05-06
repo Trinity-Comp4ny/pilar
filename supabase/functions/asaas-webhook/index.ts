@@ -1,5 +1,10 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createAdminClient } from "../_shared/ai-client.ts";
+import { withSentry } from "../_shared/sentry.ts";
+import { createLogger } from "../_shared/logger.ts";
+import { safeEqual } from "../_shared/crypto.ts";
+
+const log = createLogger("asaas-webhook");
 
 // IMPORTANTE: Esta função deve ser deployada com --no-verify-jwt
 // pois é chamada diretamente pelo Asaas (sem JWT de usuário).
@@ -28,100 +33,112 @@ const STATUS_MAP: Record<string, string | null> = {
   PAYMENT_AWAITING_RISK_ANALYSIS: null,
 };
 
-serve(async (req) => {
-  if (req.method !== "POST") {
-    return new Response("Method not allowed", { status: 405 });
-  }
+serve(
+  withSentry("asaas-webhook", async (req) => {
+    if (req.method !== "POST") {
+      return new Response("Method not allowed", { status: 405 });
+    }
 
-  const adminClient = createAdminClient();
+    const adminClient = createAdminClient();
 
-  let payload: AsaasPaymentEvent;
-  try {
-    payload = (await req.json()) as AsaasPaymentEvent;
-  } catch {
-    return new Response("Invalid JSON", { status: 400 });
-  }
+    let payload: AsaasPaymentEvent;
+    try {
+      payload = (await req.json()) as AsaasPaymentEvent;
+    } catch {
+      return new Response("Invalid JSON", { status: 400 });
+    }
 
-  const { event, payment } = payload;
+    const { event, payment } = payload;
 
-  if (!payment?.id) {
-    return new Response("OK", { status: 200 });
-  }
+    if (!payment?.id) {
+      return new Response("OK", { status: 200 });
+    }
 
-  // Buscar receita pelo asaas_payment_id
-  const { data: receita } = await adminClient
-    .from("receitas")
-    .select("id, empresa_id, status")
-    .eq("asaas_payment_id", payment.id)
-    .maybeSingle();
-
-  // Token obrigatório — sem header = rejeita imediatamente
-  const receivedToken = req.headers.get("asaas-access-token");
-  if (!receivedToken) {
-    return new Response("Unauthorized", { status: 401 });
-  }
-
-  let tokenValido = false;
-
-  if (receita?.empresa_id) {
-    const { data: config } = await adminClient
-      .from("asaas_config")
-      .select("webhook_token")
-      .eq("empresa_id", receita.empresa_id)
+    // Buscar receita pelo asaas_payment_id
+    const { data: receita } = await adminClient
+      .from("receitas")
+      .select("id, empresa_id, status")
+      .eq("asaas_payment_id", payment.id)
       .maybeSingle();
 
-    tokenValido = !!config?.webhook_token && receivedToken === config.webhook_token;
-  }
+    // Token obrigatório — sem header = rejeita imediatamente
+    const receivedToken = req.headers.get("asaas-access-token");
+    if (!receivedToken) {
+      return new Response("Unauthorized", { status: 401 });
+    }
 
-  // Fallback para env var global (dev/staging)
-  if (!tokenValido) {
-    const globalToken = Deno.env.get("ASAAS_WEBHOOK_TOKEN");
-    tokenValido = !!globalToken && receivedToken === globalToken;
-  }
+    let tokenValido = false;
 
-  if (!tokenValido) {
-    return new Response("Unauthorized", { status: 401 });
-  }
+    if (receita?.empresa_id) {
+      const { data: config } = await adminClient
+        .from("asaas_config")
+        .select("webhook_token")
+        .eq("empresa_id", receita.empresa_id)
+        .maybeSingle();
 
-  // Registrar log (mesmo sem receita encontrada, para auditoria)
-  await adminClient.from("asaas_webhook_logs").insert({
-    empresa_id: receita?.empresa_id ?? null,
-    event,
-    payment_id: payment.id,
-    receita_id: receita?.id ?? null,
-    payload,
-  });
+      tokenValido = !!config?.webhook_token && safeEqual(receivedToken, config.webhook_token);
+    }
 
-  if (!receita) {
+    // Fallback para env var global (dev/staging)
+    if (!tokenValido) {
+      const globalToken = Deno.env.get("ASAAS_WEBHOOK_TOKEN");
+      tokenValido = !!globalToken && safeEqual(receivedToken, globalToken);
+    }
+
+    if (!tokenValido) {
+      return new Response("Unauthorized", { status: 401 });
+    }
+
+    // Registrar log (mesmo sem receita encontrada, para auditoria).
+    // Idempotência: índice único em (event, payment_id) faz INSERT falhar em duplicata
+    // → tratamos como noop e retornamos 200 sem reprocessar.
+    const { error: logErr } = await adminClient.from("asaas_webhook_logs").insert({
+      empresa_id: receita?.empresa_id ?? null,
+      event,
+      payment_id: payment.id,
+      receita_id: receita?.id ?? null,
+      payload,
+    });
+
+    if (logErr?.code === "23505") {
+      return new Response("OK (duplicate, ignored)", { status: 200 });
+    }
+
+    if (!receita) {
+      return new Response("OK", { status: 200 });
+    }
+
+    const novoStatus = STATUS_MAP[event];
+
+    if (novoStatus !== undefined) {
+      const updatePayload: Record<string, unknown> = {
+        asaas_payment_status: payment.status,
+      };
+
+      if (novoStatus !== null) {
+        updatePayload.status = novoStatus;
+      }
+
+      if (novoStatus === "Recebido") {
+        updatePayload.data_recebimento = payment.paymentDate ?? new Date().toISOString().split("T")[0];
+      }
+
+      const { error: updateErr } = await adminClient.from("receitas").update(updatePayload).eq("id", receita.id);
+      if (updateErr) {
+        log.error("falha ao atualizar receita", updateErr, { receita_id: receita.id, event });
+        return new Response("Internal Server Error", { status: 500 });
+      }
+
+      // Atualizar marco vinculado se recebido
+      if (novoStatus === "Recebido") {
+        await adminClient
+          .from("marcos_faturamento")
+          .update({ status: "recebido" })
+          .eq("receita_id", receita.id)
+          .eq("status", "faturado");
+      }
+    }
+
     return new Response("OK", { status: 200 });
-  }
-
-  const novoStatus = STATUS_MAP[event];
-
-  if (novoStatus !== undefined) {
-    const updatePayload: Record<string, unknown> = {
-      asaas_payment_status: payment.status,
-    };
-
-    if (novoStatus !== null) {
-      updatePayload.status = novoStatus;
-    }
-
-    if (novoStatus === "Recebido") {
-      updatePayload.data_recebimento = payment.paymentDate ?? new Date().toISOString().split("T")[0];
-    }
-
-    await adminClient.from("receitas").update(updatePayload).eq("id", receita.id);
-
-    // Atualizar marco vinculado se recebido
-    if (novoStatus === "Recebido") {
-      await adminClient
-        .from("marcos_faturamento")
-        .update({ status: "recebido" })
-        .eq("receita_id", receita.id)
-        .eq("status", "faturado");
-    }
-  }
-
-  return new Response("OK", { status: 200 });
-});
+  })
+);

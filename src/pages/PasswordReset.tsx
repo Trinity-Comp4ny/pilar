@@ -1,15 +1,17 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, Check, CheckCircle2, Eye, EyeOff, Loader2, Lock, ShieldCheck } from "lucide-react";
 import { usePageTitle } from "@/hooks/usePageTitle";
-import { passwordSchema } from "@/lib/passwordPolicy";
 import { translateAuthError } from "@/lib/authErrors";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
+import { passwordResetSchema, passwordResetDefaultValues, type PasswordResetFormData } from "@/schemas";
 
 type Step = "loading" | "mfa" | "password" | "expired";
 
@@ -20,11 +22,17 @@ export default function PasswordReset() {
   const [step, setStep] = useState<Step>("loading");
   const [mfaFactorId, setMfaFactorId] = useState<string | null>(null);
   const [mfaCode, setMfaCode] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+
+  const form = useForm<PasswordResetFormData>({
+    resolver: zodResolver(passwordResetSchema),
+    mode: "onChange",
+    defaultValues: passwordResetDefaultValues,
+  });
+
+  const password = form.watch("password");
 
   useEffect(() => {
     let timeoutId: number | undefined;
@@ -94,29 +102,16 @@ export default function PasswordReset() {
   };
 
   const requirements = [
-    { label: "8+ caracteres", ok: password.length > 8 },
-    { label: "Letra maiúscula", ok: /[A-Z]/.test(password) },
-    { label: "Número", ok: /\d/.test(password) },
-    { label: "Caractere especial", ok: /[!@#$%^&*(),.?":{}|<>_\-+=/\\[\]`~';]/.test(password) },
+    { label: "8+ caracteres", ok: (password?.length ?? 0) > 8 },
+    { label: "Letra maiúscula", ok: /[A-Z]/.test(password ?? "") },
+    { label: "Número", ok: /\d/.test(password ?? "") },
+    { label: "Caractere especial", ok: /[!@#$%^&*(),.?":{}|<>_\-+=/\\[\]`~';]/.test(password ?? "") },
   ];
-  const allRequirementsMet = requirements.every((r) => r.ok);
-  const passwordsMatch = password.length > 0 && password === confirmPassword;
-  const canSubmit = allRequirementsMet && passwordsMatch;
 
-  const handleUpdatePassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (password !== confirmPassword) {
-      toast.error("Senhas não conferem");
-      return;
-    }
-    const parsed = passwordSchema.safeParse(password);
-    if (!parsed.success) {
-      toast.error("Senha fraca", { description: parsed.error.issues[0]?.message });
-      return;
-    }
+  const handleUpdatePassword = async (values: PasswordResetFormData) => {
     setSubmitting(true);
     try {
-      const { error } = await supabase.auth.updateUser({ password });
+      const { error } = await supabase.auth.updateUser({ password: values.password });
       if (error) throw error;
       await supabase.auth.signOut();
       toast.success("Senha alterada!", { description: "Faça login com a nova senha." });
@@ -220,91 +215,103 @@ export default function PasswordReset() {
           )}
 
           {step === "password" && (
-            <form onSubmit={handleUpdatePassword} className="space-y-6">
-              <div className="text-center space-y-2">
-                <h1 className="text-2xl font-semibold tracking-tight text-ink">Nova senha</h1>
-                <p className="text-sm text-ink-soft">Defina uma senha forte para sua conta.</p>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="password" className="text-ink-soft font-medium">
-                  Nova senha
-                </Label>
-                <div className="relative group">
-                  <Lock className="absolute left-3 top-3 h-4 w-4 text-ink/40 group-focus-within:text-brand transition-colors" />
-                  <Input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    className="pl-10 pr-10 h-11 bg-paper-alt border-paper-border focus:border-brand focus:ring-brand/20 transition-all"
-                    placeholder="••••••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    minLength={12}
-                    autoFocus
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword((v) => !v)}
-                    className="absolute right-3 top-3 text-ink/40 hover:text-ink-soft transition-colors"
-                    tabIndex={-1}
-                  >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(handleUpdatePassword)} className="space-y-6">
+                <div className="text-center space-y-2">
+                  <h1 className="text-2xl font-semibold tracking-tight text-ink">Nova senha</h1>
+                  <p className="text-sm text-ink-soft">Defina uma senha forte para sua conta.</p>
                 </div>
-                <ul className="grid grid-cols-2 gap-x-6 gap-y-2 pt-1">
-                  {requirements.map(({ label, ok }) => (
-                    <li key={label} className="flex items-center gap-2">
-                      <Check
-                        className={`w-3.5 h-3.5 flex-shrink-0 transition-all duration-200 ${ok ? "text-chart-success" : "text-ink/20"}`}
-                        strokeWidth={2.5}
-                      />
-                      <span
-                        className={`text-xs transition-colors duration-200 ${ok ? "text-chart-success font-medium" : "text-ink-soft"}`}
-                      >
-                        {label}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="confirm" className="text-ink-soft font-medium">
-                  Confirmar senha
-                </Label>
-                <div className="relative group">
-                  <Lock className="absolute left-3 top-3 h-4 w-4 text-ink/40 group-focus-within:text-brand transition-colors" />
-                  <Input
-                    id="confirm"
-                    type={showConfirm ? "text" : "password"}
-                    className="pl-10 pr-10 h-11 bg-paper-alt border-paper-border focus:border-brand focus:ring-brand/20 transition-all"
-                    placeholder="••••••••••••"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    required
-                    minLength={12}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirm((v) => !v)}
-                    className="absolute right-3 top-3 text-ink/40 hover:text-ink-soft transition-colors"
-                    tabIndex={-1}
-                  >
-                    {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                </div>
-              </div>
+                <FormField
+                  control={form.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem className="space-y-2">
+                      <FormLabel className="text-ink-soft font-medium">
+                        Nova senha <span className="text-red-500">*</span>
+                      </FormLabel>
+                      <FormControl>
+                        <div className="relative group">
+                          <Lock className="absolute left-3 top-3 h-4 w-4 text-ink/40 group-focus-within:text-brand transition-colors" />
+                          <Input
+                            {...field}
+                            type={showPassword ? "text" : "password"}
+                            className="pl-10 pr-10 h-11 bg-paper-alt border-paper-border focus:border-brand focus:ring-brand/20 transition-all"
+                            placeholder="••••••••••••"
+                            autoFocus
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowPassword((v) => !v)}
+                            className="absolute right-3 top-3 text-ink/40 hover:text-ink-soft transition-colors"
+                            tabIndex={-1}
+                          >
+                            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          </button>
+                        </div>
+                      </FormControl>
+                      <ul className="grid grid-cols-2 gap-x-6 gap-y-2 pt-1">
+                        {requirements.map(({ label, ok }) => (
+                          <li key={label} className="flex items-center gap-2">
+                            <Check
+                              className={`w-3.5 h-3.5 flex-shrink-0 transition-all duration-200 ${ok ? "text-chart-success" : "text-ink/20"}`}
+                              strokeWidth={2.5}
+                            />
+                            <span
+                              className={`text-xs transition-colors duration-200 ${ok ? "text-chart-success font-medium" : "text-ink-soft"}`}
+                            >
+                              {label}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-              <Button
-                type="submit"
-                className="w-full h-11 bg-brand hover:bg-brand/90 text-ink font-medium shadow-lg shadow-brand/20 hover:shadow-brand/30 transition-all active:scale-[0.98]"
-                disabled={submitting || !canSubmit}
-              >
-                {submitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                Salvar nova senha
-              </Button>
-            </form>
+                <FormField
+                  control={form.control}
+                  name="confirmPassword"
+                  render={({ field }) => (
+                    <FormItem className="space-y-2">
+                      <FormLabel className="text-ink-soft font-medium">
+                        Confirmar senha <span className="text-red-500">*</span>
+                      </FormLabel>
+                      <FormControl>
+                        <div className="relative group">
+                          <Lock className="absolute left-3 top-3 h-4 w-4 text-ink/40 group-focus-within:text-brand transition-colors" />
+                          <Input
+                            {...field}
+                            type={showConfirm ? "text" : "password"}
+                            className="pl-10 pr-10 h-11 bg-paper-alt border-paper-border focus:border-brand focus:ring-brand/20 transition-all"
+                            placeholder="••••••••••••"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowConfirm((v) => !v)}
+                            className="absolute right-3 top-3 text-ink/40 hover:text-ink-soft transition-colors"
+                            tabIndex={-1}
+                          >
+                            {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          </button>
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <Button
+                  type="submit"
+                  className="w-full h-11 bg-brand hover:bg-brand/90 text-ink font-medium shadow-lg shadow-brand/20 hover:shadow-brand/30 transition-all active:scale-[0.98]"
+                  disabled={submitting || !form.formState.isValid}
+                >
+                  {submitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                  Salvar nova senha
+                </Button>
+              </form>
+            </Form>
           )}
         </div>
       </div>

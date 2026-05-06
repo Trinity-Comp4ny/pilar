@@ -5,7 +5,9 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Search, ArrowUpDown, User, Briefcase, GraduationCap, Crown, Trash2, Pencil, Loader2 } from "lucide-react";
+import { Search, ArrowUpDown, User, Briefcase, GraduationCap, Crown, Trash2, Pencil, Users } from "lucide-react";
+import { EmptyState } from "@/components/EmptyState";
+import { TableSkeleton } from "@/components/TableSkeleton";
 import {
   CONTRACT_TYPES,
   CONTRACT_TYPE_LABELS,
@@ -106,23 +108,23 @@ export function PessoaTable({ pessoas, isLoading, isAdmin, onRowClick, onEditCli
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
             <CardTitle className="text-lg font-medium tracking-tight">Equipe</CardTitle>
-            <CardDescription className="text-sm text-black/60 mt-1">
+            <CardDescription className="text-sm text-muted-foreground mt-1">
               {filteredAndSortedPessoas.length} de {pessoas.length} membro(s)
             </CardDescription>
           </div>
           <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
             <div className="relative w-full sm:w-64">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-black/40" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
               <Input
                 placeholder="Buscar por nome ou cargo..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 bg-gray-50 border-gray-200"
+                className="h-9 pl-9 rounded-full text-sm"
               />
             </div>
             <div className="w-full sm:w-48">
               <Select value={filterCargo} onValueChange={setFilterCargo}>
-                <SelectTrigger className="bg-gray-50 border-gray-200">
+                <SelectTrigger className="h-9 rounded-full text-sm">
                   <SelectValue placeholder="Cargo" />
                 </SelectTrigger>
                 <SelectContent>
@@ -139,114 +141,119 @@ export function PessoaTable({ pessoas, isLoading, isAdmin, onRowClick, onEditCli
         </div>
       </CardHeader>
       <CardContent className="flex-1 min-h-0">
-        {isLoading ? (
-          <div className="flex justify-center items-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          </div>
-        ) : (
-          <div className="overflow-x-auto overflow-y-auto w-full max-h-[calc(100svh-260px)]">
-            <Table>
-              <TableHeader>
+        <div className="overflow-x-auto overflow-y-auto w-full max-h-[calc(100svh-260px)]">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>
+                  <Button variant="ghost" onClick={() => handleSort("nome")} className="-ml-3 h-8 font-medium text-xs">
+                    Nome
+                    <ArrowUpDown className="ml-2 h-3 w-3" />
+                  </Button>
+                </TableHead>
+                <TableHead>Tipo</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>CPF</TableHead>
+                <TableHead>Cargo</TableHead>
+                <TableHead className="hidden md:table-cell">Telefone</TableHead>
+                {isAdmin && <TableHead className="text-right">Ações</TableHead>}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {isLoading ? (
+                <TableSkeleton rows={5} columns={isAdmin ? 7 : 6} />
+              ) : filteredAndSortedPessoas.length === 0 ? (
                 <TableRow>
-                  <TableHead>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleSort("nome")}
-                      className="-ml-3 h-8 font-medium"
-                    >
-                      Nome
-                      <ArrowUpDown className="ml-2 h-3 w-3" />
-                    </Button>
-                  </TableHead>
-                  <TableHead>Tipo</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>CPF</TableHead>
-                  <TableHead>Cargo</TableHead>
-                  <TableHead className="hidden md:table-cell">Telefone</TableHead>
-                  {isAdmin && <TableHead className="text-right">Ações</TableHead>}
+                  <TableCell colSpan={isAdmin ? 7 : 6}>
+                    {pessoas.length === 0 ? (
+                      <EmptyState
+                        icon={Users}
+                        title="Nenhum membro cadastrado"
+                        description="Adicione o primeiro membro da equipe."
+                      />
+                    ) : (
+                      <EmptyState
+                        icon={Users}
+                        title="Nenhum resultado encontrado"
+                        description="Tente ajustar a busca ou o filtro de cargo."
+                      />
+                    )}
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredAndSortedPessoas.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={isAdmin ? 7 : 6} className="text-center text-black/50 py-8">
-                      Nenhuma pessoa encontrada
+              ) : (
+                filteredAndSortedPessoas.map((pessoa) => (
+                  <TableRow
+                    key={pessoa.id}
+                    className="cursor-pointer hover:bg-gray-50"
+                    onClick={() => onRowClick(pessoa)}
+                  >
+                    <TableCell className="font-medium">
+                      <div className="flex items-center gap-2">
+                        <div className="bg-gray-100 p-1.5 rounded-full">
+                          {(() => {
+                            const Icon = TIPO_ICON[pessoa.tipo_contrato] || User;
+                            return <Icon size={14} />;
+                          })()}
+                        </div>
+                        {pessoa.nome}
+                      </div>
                     </TableCell>
-                  </TableRow>
-                ) : (
-                  filteredAndSortedPessoas.map((pessoa) => (
-                    <TableRow
-                      key={pessoa.id}
-                      className="cursor-pointer hover:bg-gray-50"
-                      onClick={() => onRowClick(pessoa)}
-                    >
-                      <TableCell className="font-medium">
-                        <div className="flex items-center gap-2">
-                          <div className="bg-gray-100 p-1.5 rounded-full">
-                            {(() => {
-                              const Icon = TIPO_ICON[pessoa.tipo_contrato] || User;
-                              return <Icon size={14} />;
-                            })()}
-                          </div>
-                          {pessoa.nome}
+                    <TableCell>
+                      <Badge
+                        variant="outline"
+                        className={cn(
+                          "border",
+                          CONTRACT_TYPE_COLORS[pessoa.tipo_contrato as ContractType] ||
+                            "bg-gray-100 text-gray-700 border-gray-200"
+                        )}
+                      >
+                        {CONTRACT_TYPE_LABELS[pessoa.tipo_contrato as ContractType] || pessoa.tipo_contrato}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant="outline"
+                        className={cn("border", PESSOA_STATUS_COLORS[(pessoa.status || "ativo") as PessoaStatus])}
+                      >
+                        {PESSOA_STATUS_LABELS[(pessoa.status || "ativo") as PessoaStatus]}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{pessoa.cpf || "-"}</TableCell>
+                    <TableCell>{pessoa.cargo}</TableCell>
+                    <TableCell className="hidden md:table-cell">{pessoa.telefone || "-"}</TableCell>
+                    {isAdmin && (
+                      <TableCell className="text-right">
+                        <div className="flex gap-1 justify-end" onClick={(e) => e.stopPropagation()}>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={(e) => onEditClick(pessoa, e)}
+                            aria-label="Editar"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-red-600"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onDeleteClick(pessoa.id);
+                            }}
+                            aria-label="Excluir"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         </div>
                       </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant="outline"
-                          className={cn(
-                            "border",
-                            CONTRACT_TYPE_COLORS[pessoa.tipo_contrato as ContractType] ||
-                              "bg-gray-100 text-gray-700 border-gray-200"
-                          )}
-                        >
-                          {CONTRACT_TYPE_LABELS[pessoa.tipo_contrato as ContractType] || pessoa.tipo_contrato}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant="outline"
-                          className={cn("border", PESSOA_STATUS_COLORS[(pessoa.status || "ativo") as PessoaStatus])}
-                        >
-                          {PESSOA_STATUS_LABELS[(pessoa.status || "ativo") as PessoaStatus]}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>{pessoa.cpf || "-"}</TableCell>
-                      <TableCell>{pessoa.cargo}</TableCell>
-                      <TableCell className="hidden md:table-cell">{pessoa.telefone || "-"}</TableCell>
-                      {isAdmin && (
-                        <TableCell className="text-right">
-                          <div className="flex gap-1 justify-end" onClick={(e) => e.stopPropagation()}>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8"
-                              onClick={(e) => onEditClick(pessoa, e)}
-                            >
-                              <Pencil className="h-3 w-3" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-red-600"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onDeleteClick(pessoa.id);
-                              }}
-                            >
-                              <Trash2 className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      )}
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        )}
+                    )}
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
       </CardContent>
     </Card>
   );

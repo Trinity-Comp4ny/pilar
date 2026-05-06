@@ -166,12 +166,12 @@ export function DisciplinaDetailDialog({
 
             <div className="bg-gray-50 rounded-lg p-3 h-48 overflow-y-auto space-y-3">
               {disciplina.observacoes?.length === 0 ? (
-                <p className="text-xs text-center text-gray-400 py-4">Nenhuma observação registrada</p>
+                <p className="text-xs text-center text-muted-foreground py-4">Nenhuma observação registrada</p>
               ) : (
                 disciplina.observacoes?.map((obs, i) => (
                   <div key={i} className="bg-white p-2 rounded border shadow-sm text-sm">
                     <p className="text-gray-800">{obs.texto}</p>
-                    <div className="flex justify-between items-center mt-1 text-[10px] text-gray-400">
+                    <div className="flex justify-between items-center mt-1 text-[10px] text-muted-foreground">
                       <span>{obs.usuario}</span>
                       <span>{new Date(obs.data).toLocaleString()}</span>
                     </div>
@@ -192,7 +192,7 @@ export function DisciplinaDetailDialog({
                   }
                 }}
               />
-              <Button type="button" size="icon" onClick={onAddObservation}>
+              <Button type="button" size="icon" onClick={onAddObservation} aria-label="Adicionar observação">
                 <Plus size={16} />
               </Button>
             </div>

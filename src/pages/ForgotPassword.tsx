@@ -1,38 +1,32 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Mail, Loader2, CheckCircle2, ArrowLeft } from "lucide-react";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { translateAuthError } from "@/lib/authErrors";
-
-const schema = z.object({
-  email: z.string().trim().toLowerCase().email("Email inválido"),
-});
+import { forgotPasswordSchema, forgotPasswordDefaultValues, type ForgotPasswordFormData } from "@/schemas";
 
 export default function ForgotPassword() {
   usePageTitle("Recuperar senha");
-  const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [sent, setSent] = useState(false);
+  const [sentEmail, setSentEmail] = useState("");
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const form = useForm<ForgotPasswordFormData>({
+    resolver: zodResolver(forgotPasswordSchema),
+    mode: "onChange",
+    defaultValues: forgotPasswordDefaultValues,
+  });
 
-    const parsed = schema.safeParse({ email });
-    if (!parsed.success) {
-      toast.error("Email inválido", {
-        description: parsed.error.issues[0]?.message,
-      });
-      return;
-    }
-
+  const handleSubmit = async (values: ForgotPasswordFormData) => {
     setIsLoading(true);
-    const { error } = await supabase.auth.resetPasswordForEmail(parsed.data.email, {
+    const { error } = await supabase.auth.resetPasswordForEmail(values.email, {
       redirectTo: `${window.location.origin}/reset-password`,
     });
 
@@ -42,6 +36,7 @@ export default function ForgotPassword() {
       return;
     }
 
+    setSentEmail(values.email);
     setSent(true);
     setIsLoading(false);
   };
@@ -83,7 +78,8 @@ export default function ForgotPassword() {
               <CheckCircle2 className="w-12 h-12 text-brand" />
               <p className="text-base font-medium text-ink">Email enviado!</p>
               <p className="text-sm text-ink-soft">
-                Verifique sua caixa de entrada em <strong>{email}</strong> e clique no link para redefinir sua senha.
+                Verifique sua caixa de entrada em <strong>{sentEmail}</strong> e clique no link para redefinir sua
+                senha.
               </p>
               <Link
                 to="/login"
@@ -93,40 +89,54 @@ export default function ForgotPassword() {
               </Link>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="space-y-5">
-              <div className="space-y-2">
-                <Label htmlFor="email" className="text-ink-soft font-medium">
-                  Email
-                </Label>
-                <div className="relative group">
-                  <Mail className="absolute left-3 top-3 h-4 w-4 text-ink/40 group-focus-within:text-brand transition-colors" />
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="seu@empresa.com"
-                    className="pl-10 h-11 bg-paper-alt border-paper-border focus:border-brand focus:ring-brand/20 transition-all"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    autoFocus
-                  />
-                </div>
-              </div>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-5">
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field, fieldState }) => (
+                    <FormItem className="space-y-2">
+                      <FormLabel className="text-ink-soft font-medium">
+                        Email <span className="text-red-500">*</span>
+                      </FormLabel>
+                      <FormControl>
+                        <div className="relative group">
+                          <Mail className="absolute left-3 top-3 h-4 w-4 text-ink/40 group-focus-within:text-brand transition-colors" />
+                          <Input
+                            {...field}
+                            type="email"
+                            placeholder="seu@empresa.com"
+                            className="pl-10 h-11 bg-paper-alt border-paper-border focus:border-brand focus:ring-brand/20 transition-all"
+                            autoFocus
+                          />
+                        </div>
+                      </FormControl>
+                      {fieldState.error ? (
+                        <FormMessage />
+                      ) : (
+                        <FormDescription className="text-xs text-ink-soft">
+                          Use o email cadastrado da sua conta.
+                        </FormDescription>
+                      )}
+                    </FormItem>
+                  )}
+                />
 
-              <Button
-                className="w-full h-11 bg-brand hover:bg-brand/90 text-ink font-medium shadow-lg shadow-brand/20 hover:shadow-brand/30 transition-all active:scale-[0.98] text-sm"
-                type="submit"
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Enviando...
-                  </>
-                ) : (
-                  "Enviar link de recuperação"
-                )}
-              </Button>
-            </form>
+                <Button
+                  className="w-full h-11 bg-brand hover:bg-brand/90 text-ink font-medium shadow-lg shadow-brand/20 hover:shadow-brand/30 transition-all active:scale-[0.98] text-sm"
+                  type="submit"
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Enviando...
+                    </>
+                  ) : (
+                    "Enviar link de recuperação"
+                  )}
+                </Button>
+              </form>
+            </Form>
           )}
         </div>
       </div>

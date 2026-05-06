@@ -61,18 +61,20 @@ export default function FolhaPagamento() {
       if (error) throw error;
 
       const grouped = new Map<string, HistoryItem>();
+      const normalizeStatus = (s: string | null | undefined) => s ?? "pendente";
       historyData?.forEach((item) => {
         const key = `${item.mes}-${item.ano}`;
+        const itemStatus = normalizeStatus(item.status);
         const current = grouped.get(key) || {
           mes: item.mes,
           ano: item.ano,
           total: 0,
           count: 0,
-          status: item.status ?? "",
+          status: itemStatus,
         };
         current.total += Number(item.total_receber || 0);
         current.count += 1;
-        if (current.status !== "misto" && current.status !== item.status) {
+        if (current.status !== "misto" && current.status !== itemStatus) {
           current.status = "misto";
         }
         grouped.set(key, current);
@@ -392,11 +394,11 @@ export default function FolhaPagamento() {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 rounded-lg border border-border shadow-sm">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
-              <CalendarIcon className="h-5 w-5 text-muted-foreground" />
+              <CalendarIcon className="h-4 w-4 text-muted-foreground" />
               <span className="text-sm font-medium">Período:</span>
             </div>
             <Select value={selectedMonth.toString()} onValueChange={(v) => setSelectedMonth(parseInt(v))}>
-              <SelectTrigger className="w-[140px]">
+              <SelectTrigger className="w-[140px] h-9 rounded-full text-sm">
                 <SelectValue placeholder="Mês" />
               </SelectTrigger>
               <SelectContent>
@@ -408,7 +410,7 @@ export default function FolhaPagamento() {
               </SelectContent>
             </Select>
             <Select value={selectedYear.toString()} onValueChange={(v) => setSelectedYear(parseInt(v))}>
-              <SelectTrigger className="w-[100px]">
+              <SelectTrigger className="w-[100px] h-9 rounded-full text-sm">
                 <SelectValue placeholder="Ano" />
               </SelectTrigger>
               <SelectContent>

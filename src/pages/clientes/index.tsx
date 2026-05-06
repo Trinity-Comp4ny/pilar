@@ -1,4 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { monitoring } from "@/lib/monitoring";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -14,7 +16,20 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Search, ArrowUpDown, Mail, Trash2, Pencil, Landmark, X, Loader2, User, Check } from "lucide-react";
+import {
+  Plus,
+  Search,
+  ArrowUpDown,
+  Mail,
+  Trash2,
+  Pencil,
+  Landmark,
+  X,
+  Loader2,
+  User,
+  Check,
+  UsersRound,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { formatPhone, formatDocument, formatAgency, formatBankAccount } from "@/lib/maskUtils";
@@ -25,11 +40,10 @@ import { Can } from "@/components/Can";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useClientes, type Cliente, type ContaBancaria, type ChavePix } from "@/hooks/useClientes";
-import { useRequireAal2 } from "@/hooks/useRequireAal2";
 import { detectTipoChavePix, normalizarChavePix, TIPO_CHAVE_PIX_LABEL } from "@/lib/pixUtils";
 import { Badge } from "@/components/ui/badge";
 import { ClienteMessageDialog } from "./ClienteMessageDialog";
-import { ClienteDetailDialog } from "./ClienteDetailDialog";
+import { EmptyState } from "@/components/EmptyState";
 
 const normalize = (value: string) =>
   value
@@ -52,33 +66,19 @@ const fuzzyMatch = (text: string, query: string) => {
 
 export default function Clientes() {
   usePageTitle("Clientes");
-  const { can, isAdmin } = usePermissions();
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { can } = usePermissions();
   const canShowActions = can("clientes", "edit");
-  const requireAal2 = useRequireAal2();
-
-  const {
-    clientes,
-    portalClienteIds,
-    upsertCliente,
-    isSaving,
-    deleteCliente,
-    checkPortalAccess,
-    invitePortal,
-    isInvitingPortal,
-    resetPortalPassword,
-    isResettingPortal,
-    revokePortalAccess,
-    isRevokingPortal,
-  } = useClientes();
+  const { clientes, portalClienteIds, upsertCliente, isSaving, deleteCliente } = useClientes();
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
-  const [selectedCliente, setSelectedCliente] = useState<Cliente | null>(null);
-  const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
-  const [clienteToDelete, setClienteToDelete] = useState<string | null>(null);
+  const [clienteToDelete, setClienteToDelete] = useState<{ id: string; nome: string } | null>(null);
 
   const [nome, setNome] = useState("");
+  const [sobrenome, setSobrenome] = useState("");
   const [cpfCnpj, setCpfCnpj] = useState("");
   const [endereco, setEndereco] = useState("");
   const [contato, setContato] = useState("");
@@ -96,6 +96,17 @@ export default function Clientes() {
   useEffect(() => {
     if (isDialogOpen) setStep(1);
   }, [isDialogOpen]);
+
+  useEffect(() => {
+    const editId = searchParams.get("edit");
+    if (!editId || clientes.length === 0) return;
+    const target = clientes.find((c) => c.id === editId);
+    if (target) {
+      handleEditClick(target);
+      setSearchParams({}, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, clientes]);
 
   const goNext = () => {
     if (!nome.trim() || !cpfCnpj.trim()) {
@@ -123,11 +134,6 @@ export default function Clientes() {
   const [filterOrigem, setFilterOrigem] = useState("all");
   const [filterPortal, setFilterPortal] = useState("all");
 
-  // Portal do Cliente
-  const [portalStatus, setPortalStatus] = useState<"idle" | "loading" | "exists" | "none">("idle");
-  const [portalCredentials, setPortalCredentials] = useState<{ email: string } | null>(null);
-  const [resetCredentials, setResetCredentials] = useState<{ email: string } | null>(null);
-
   // Message modal
   const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);
   const [selectedClienteForMessage, setSelectedClienteForMessage] = useState<Cliente | null>(null);
@@ -149,14 +155,18 @@ export default function Clientes() {
 
       if (error) {
         resetMessageModal();
-        toast.error(`Erro ao enviar mensagem para ${selectedClienteForMessage?.nome}`);
-        console.error(`Erro na função: ${error.message}`);
+        toast.error(
+          `Erro ao enviar mensagem para ${selectedClienteForMessage?.nome}${selectedClienteForMessage?.sobrenome ? " " + selectedClienteForMessage.sobrenome : ""}`
+        );
+        monitoring.captureException(error, { context: "sendClientMessage" });
       }
 
       resetMessageModal();
-      toast.success(`Mensagem enviada com sucesso para o cliente ${selectedClienteForMessage?.nome}.`);
+      toast.success(
+        `Mensagem enviada com sucesso para o cliente ${selectedClienteForMessage?.nome}${selectedClienteForMessage?.sobrenome ? " " + selectedClienteForMessage.sobrenome : ""}.`
+      );
     } catch (error) {
-      console.error("Erro desconhecido:", error);
+      monitoring.captureException(error, { context: "sendClientMessage unexpected" });
     }
   };
 
@@ -173,6 +183,7 @@ export default function Clientes() {
 
   const resetForm = () => {
     setNome("");
+    setSobrenome("");
     setCpfCnpj("");
     setEndereco("");
     setContato("");
@@ -195,6 +206,7 @@ export default function Clientes() {
   const handleEditClick = (cliente: Cliente, e?: React.MouseEvent) => {
     e?.stopPropagation();
     setNome(cliente.nome);
+    setSobrenome(cliente.sobrenome ?? "");
     setCpfCnpj(cliente.cpf_cnpj);
     setEndereco(cliente.endereco || "");
     setContato(cliente.contato || "");
@@ -208,7 +220,6 @@ export default function Clientes() {
     setCurrentId(cliente.id);
     setIsEditMode(true);
     setIsDialogOpen(true);
-    setIsDetailOpen(false);
   };
 
   const handleAddConta = () => {
@@ -261,9 +272,7 @@ export default function Clientes() {
     });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
+  const handleSave = async () => {
     if (!nome || !cpfCnpj || !email || !contato) {
       toast.error("Campos obrigatórios", { description: "Preencha nome, CPF/CNPJ, e-mail e contato" });
       return;
@@ -274,6 +283,7 @@ export default function Clientes() {
         id: isEditMode && currentId ? currentId : undefined,
         data: {
           nome,
+          sobrenome,
           cpf_cnpj: cpfCnpj,
           endereco,
           contato,
@@ -288,23 +298,24 @@ export default function Clientes() {
       resetForm();
       setIsDialogOpen(false);
     } catch (err) {
-      console.error(err);
+      monitoring.captureException(err, { context: "handleSaveCliente" });
     }
   };
 
   const handleDeleteClick = (id: string, e?: React.MouseEvent) => {
     e?.stopPropagation();
-    setClienteToDelete(id);
+    const cliente = clientes.find((c) => c.id === id);
+    const nomeCompleto = cliente ? `${cliente.nome}${cliente.sobrenome ? " " + cliente.sobrenome : ""}` : "Cliente";
+    setClienteToDelete({ id, nome: nomeCompleto });
     setConfirmDeleteOpen(true);
   };
 
   const handleDeleteConfirm = async () => {
     if (!clienteToDelete) return;
     try {
-      await deleteCliente(clienteToDelete);
-      setIsDetailOpen(false);
+      await deleteCliente(clienteToDelete.id);
     } catch (err) {
-      console.error(err);
+      monitoring.captureException(err, { context: "handleDeleteCliente" });
     }
     setConfirmDeleteOpen(false);
     setClienteToDelete(null);
@@ -320,57 +331,7 @@ export default function Clientes() {
   };
 
   const handleRowClick = (cliente: Cliente) => {
-    setSelectedCliente(cliente);
-    setIsDetailOpen(true);
-    setPortalCredentials(null);
-    setResetCredentials(null);
-    // Verifica se já tem acesso ao portal
-    setPortalStatus("loading");
-    checkPortalAccess(cliente.id)
-      .then((exists) => setPortalStatus(exists ? "exists" : "none"))
-      .catch(() => setPortalStatus("none"));
-  };
-
-  const handleInvitePortal = async () => {
-    if (!selectedCliente?.email) return;
-    if (!(await requireAal2())) return;
-    try {
-      const credentials = await invitePortal({
-        clienteId: selectedCliente.id,
-        email: selectedCliente.email,
-      });
-      setPortalCredentials(credentials);
-      setPortalStatus("exists");
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const handleResetPortalPassword = async () => {
-    if (!selectedCliente) return;
-    if (!(await requireAal2())) return;
-    try {
-      const credentials = await resetPortalPassword({
-        clienteId: selectedCliente.id,
-        nomeCliente: selectedCliente.nome,
-      });
-      setResetCredentials(credentials);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const handleRevokePortal = async () => {
-    if (!selectedCliente) return;
-    if (!(await requireAal2())) return;
-    try {
-      await revokePortalAccess(selectedCliente.id);
-      setPortalStatus("none");
-      setPortalCredentials(null);
-      setResetCredentials(null);
-    } catch (err) {
-      console.error(err);
-    }
+    navigate(`/clientes/${cliente.id}`);
   };
 
   const origens = useMemo(
@@ -384,7 +345,8 @@ export default function Clientes() {
       if (term) {
         const digits = cliente.cpf_cnpj ? cliente.cpf_cnpj.replace(/\D/g, "") : "";
         const termDigits = term.replace(/\D/g, "");
-        const matchSearch = fuzzyMatch(cliente.nome, term) || (termDigits && digits.includes(termDigits));
+        const nomeCompleto = `${cliente.nome}${cliente.sobrenome ? " " + cliente.sobrenome : ""}`;
+        const matchSearch = fuzzyMatch(nomeCompleto, term) || (termDigits && digits.includes(termDigits));
         if (!matchSearch) return false;
       }
       if (filterOrigem !== "all" && cliente.origem !== filterOrigem) return false;
@@ -493,7 +455,7 @@ export default function Clientes() {
                   );
                 })()}
 
-                <form onSubmit={handleSubmit} className="divide-y">
+                <form onSubmit={(e) => e.preventDefault()} className="divide-y">
                   {step === 1 && (
                     <>
                       {/* Identificação */}
@@ -504,14 +466,25 @@ export default function Clientes() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                           <div className="space-y-1.5">
                             <Label htmlFor="nome" className="text-xs">
-                              Nome *
+                              Nome / Razão Social *
                             </Label>
                             <Input
                               id="nome"
                               value={nome}
                               onChange={(e) => setNome(e.target.value)}
-                              placeholder="Nome completo ou razão social"
+                              placeholder="Primeiro nome ou razão social"
                               required
+                            />
+                          </div>
+                          <div className="space-y-1.5">
+                            <Label htmlFor="sobrenome" className="text-xs">
+                              Sobrenome
+                            </Label>
+                            <Input
+                              id="sobrenome"
+                              value={sobrenome}
+                              onChange={(e) => setSobrenome(e.target.value)}
+                              placeholder="Sobrenome"
                             />
                           </div>
                           <div className="space-y-1.5">
@@ -655,6 +628,7 @@ export default function Clientes() {
                               variant="outline"
                               className="h-9 w-9 shrink-0"
                               onClick={handleAddConta}
+                              aria-label="Adicionar conta"
                             >
                               <Plus className="h-4 w-4" />
                             </Button>
@@ -696,6 +670,7 @@ export default function Clientes() {
                                   size="icon"
                                   className="h-7 w-7 text-red-500 shrink-0"
                                   onClick={() => handleRemoveConta(index)}
+                                  aria-label="Remover conta"
                                 >
                                   <X className="h-3 w-3" />
                                 </Button>
@@ -731,6 +706,7 @@ export default function Clientes() {
                             variant="outline"
                             className="h-9 w-9 shrink-0"
                             onClick={handleAddChavePix}
+                            aria-label="Adicionar chave PIX"
                           >
                             <Plus className="h-4 w-4" />
                           </Button>
@@ -785,12 +761,37 @@ export default function Clientes() {
                         Voltar
                       </Button>
                     )}
-                    {step === 1 ? (
+                    {step === 1 && !isEditMode ? (
                       <Button type="button" onClick={goNext} className="bg-brand hover:bg-brand/90 text-ink">
                         Próximo →
                       </Button>
+                    ) : step === 1 && isEditMode ? (
+                      <>
+                        <Button type="button" onClick={goNext} variant="outline">
+                          Próximo →
+                        </Button>
+                        <Button
+                          type="button"
+                          onClick={handleSave}
+                          className="bg-brand hover:bg-brand/90 text-ink"
+                          disabled={isSaving}
+                        >
+                          {isSaving ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Salvando...
+                            </>
+                          ) : (
+                            "Atualizar"
+                          )}
+                        </Button>
+                      </>
                     ) : (
-                      <Button type="submit" className="bg-brand hover:bg-brand/90 text-ink" disabled={isSaving}>
+                      <Button
+                        type="button"
+                        onClick={handleSave}
+                        className="bg-brand hover:bg-brand/90 text-ink"
+                        disabled={isSaving}
+                      >
                         {isSaving ? (
                           <>
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Salvando...
@@ -815,23 +816,23 @@ export default function Clientes() {
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
               <CardTitle className="text-lg font-medium tracking-tight">Lista de Clientes</CardTitle>
-              <CardDescription className="text-sm text-black/60 mt-1">
+              <CardDescription className="text-sm text-muted-foreground mt-1">
                 Total de {filteredAndSortedClientes.length} de {clientes.length} cliente(s)
               </CardDescription>
             </div>
             <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
               <div className="relative w-full sm:w-56">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-black/40" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
                 <Input
                   placeholder="Buscar por nome ou CPF..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 bg-gray-50 border-gray-200"
+                  className="h-9 pl-9 rounded-full text-sm"
                 />
               </div>
               {origens.length > 0 && (
                 <Select value={filterOrigem} onValueChange={setFilterOrigem}>
-                  <SelectTrigger className="w-full sm:w-36 bg-gray-50 border-gray-200">
+                  <SelectTrigger className="h-9 w-full sm:w-36 rounded-full text-sm">
                     <SelectValue placeholder="Origem" />
                   </SelectTrigger>
                   <SelectContent>
@@ -845,7 +846,7 @@ export default function Clientes() {
                 </Select>
               )}
               <Select value={filterPortal} onValueChange={setFilterPortal}>
-                <SelectTrigger className="w-full sm:w-36 bg-gray-50 border-gray-200">
+                <SelectTrigger className="h-9 w-full sm:w-36 rounded-full text-sm">
                   <SelectValue placeholder="Portal" />
                 </SelectTrigger>
                 <SelectContent>
@@ -865,9 +866,8 @@ export default function Clientes() {
                   <TableHead>
                     <Button
                       variant="ghost"
-                      size="sm"
                       onClick={() => handleSort("nome")}
-                      className="-ml-3 h-8 font-medium"
+                      className="-ml-3 h-8 font-medium text-xs"
                     >
                       Nome
                       <ArrowUpDown className="ml-2 h-3 w-3" />
@@ -876,9 +876,8 @@ export default function Clientes() {
                   <TableHead>
                     <Button
                       variant="ghost"
-                      size="sm"
                       onClick={() => handleSort("cpf_cnpj")}
-                      className="-ml-3 h-8 font-medium"
+                      className="-ml-3 h-8 font-medium text-xs"
                     >
                       CPF/CNPJ
                       <ArrowUpDown className="ml-2 h-3 w-3" />
@@ -892,8 +891,32 @@ export default function Clientes() {
               <TableBody>
                 {filteredAndSortedClientes.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={canShowActions ? 5 : 4} className="text-center text-black/50 py-8">
-                      Nenhum cliente encontrado
+                    <TableCell colSpan={canShowActions ? 5 : 4}>
+                      {clientes.length === 0 ? (
+                        <EmptyState
+                          icon={UsersRound}
+                          title="Nenhum cliente cadastrado"
+                          description="Crie o primeiro cliente para começar."
+                          action={
+                            can("clientes", "create") ? { label: "Novo Cliente", onClick: handleOpenDialog } : undefined
+                          }
+                        />
+                      ) : (
+                        <EmptyState
+                          icon={UsersRound}
+                          title="Nenhum resultado encontrado"
+                          description="Tente ajustar os filtros aplicados."
+                          action={{
+                            label: "Limpar filtros",
+                            variant: "outline",
+                            onClick: () => {
+                              setSearchTerm("");
+                              setFilterOrigem("all");
+                              setFilterPortal("all");
+                            },
+                          }}
+                        />
+                      )}
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -903,9 +926,14 @@ export default function Clientes() {
                       className="cursor-pointer hover:bg-gray-50"
                       onClick={() => handleRowClick(cliente)}
                     >
-                      <TableCell className="font-medium">{cliente.nome}</TableCell>
+                      <TableCell className="font-medium">
+                        {cliente.nome}
+                        {cliente.sobrenome ? ` ${cliente.sobrenome}` : ""}
+                      </TableCell>
                       <TableCell>{formatDocument(cliente.cpf_cnpj)}</TableCell>
-                      <TableCell className="hidden md:table-cell text-sm text-black/70">{cliente.email}</TableCell>
+                      <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
+                        {cliente.email}
+                      </TableCell>
                       <TableCell className="hidden lg:table-cell">{cliente.contato}</TableCell>
                       {canShowActions && (
                         <TableCell className="text-right">
@@ -919,6 +947,7 @@ export default function Clientes() {
                                 setSelectedClienteForMessage(cliente);
                                 setIsMessageModalOpen(true);
                               }}
+                              aria-label="Enviar mensagem"
                             >
                               <Mail className="h-4 w-4" />
                             </Button>
@@ -927,6 +956,7 @@ export default function Clientes() {
                               size="icon"
                               className="h-8 w-8"
                               onClick={(e) => handleEditClick(cliente, e)}
+                              aria-label="Editar cliente"
                             >
                               <Pencil className="h-4 w-4" />
                             </Button>
@@ -936,6 +966,7 @@ export default function Clientes() {
                                 size="icon"
                                 className="h-8 w-8 text-red-500"
                                 onClick={(e) => handleDeleteClick(cliente.id, e)}
+                                aria-label="Excluir cliente"
                               >
                                 <Trash2 className="h-4 w-4" />
                               </Button>
@@ -951,25 +982,6 @@ export default function Clientes() {
           </div>
         </CardContent>
       </Card>
-
-      <ClienteDetailDialog
-        open={isDetailOpen}
-        onOpenChange={setIsDetailOpen}
-        cliente={selectedCliente}
-        isAdmin={isAdmin}
-        portalStatus={portalStatus}
-        portalCredentials={portalCredentials}
-        resetCredentials={resetCredentials}
-        isInvitingPortal={isInvitingPortal}
-        isResettingPortal={isResettingPortal}
-        isRevokingPortal={isRevokingPortal}
-        onInvitePortal={handleInvitePortal}
-        onResetPortalPassword={handleResetPortalPassword}
-        onRevokePortal={handleRevokePortal}
-        onEdit={handleEditClick}
-        onDelete={handleDeleteClick}
-        onClose={() => setIsDetailOpen(false)}
-      />
 
       <ClienteMessageDialog
         open={isMessageModalOpen}
@@ -988,7 +1000,8 @@ export default function Clientes() {
         onOpenChange={setConfirmDeleteOpen}
         onConfirm={handleDeleteConfirm}
         title="Excluir Cliente"
-        description="Tem certeza que deseja excluir este cliente? Esta ação não pode ser desfeita."
+        itemName={clienteToDelete?.nome}
+        description="Esta ação não pode ser desfeita."
         confirmText="Excluir"
         cancelText="Cancelar"
       />

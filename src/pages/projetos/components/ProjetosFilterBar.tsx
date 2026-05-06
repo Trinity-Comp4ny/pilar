@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
@@ -7,6 +8,7 @@ import {
   Calendar as CalendarIcon,
   ChevronDown,
   Clock,
+  Layers,
   SlidersHorizontal,
   Search,
   Users,
@@ -23,6 +25,7 @@ export interface ProjetosFilters {
   pessoaIds: string[];
   prioridades: ProjectPriority[];
   clienteIds: string[];
+  disciplinaIds: string[];
   deadlineStatus: DeadlineFilter[];
   dataInicio: string;
   dataFim: string;
@@ -33,6 +36,7 @@ export const EMPTY_FILTERS: ProjetosFilters = {
   pessoaIds: [],
   prioridades: [],
   clienteIds: [],
+  disciplinaIds: [],
   deadlineStatus: [],
   dataInicio: "",
   dataFim: "",
@@ -41,6 +45,7 @@ export const EMPTY_FILTERS: ProjetosFilters = {
 interface ProjetosFilterBarProps {
   pessoas: { id: string; nome: string }[];
   clientes: { id: string; nome: string }[];
+  disciplinas: { id: string; nome: string }[];
   filters: ProjetosFilters;
   onChange: (filters: ProjetosFilters) => void;
 }
@@ -51,7 +56,7 @@ const DEADLINE_OPTIONS: { id: DeadlineFilter; label: string; dot: string }[] = [
   { id: "no_prazo", label: "No prazo", dot: "bg-positive/100" },
 ];
 
-export function ProjetosFilterBar({ pessoas, clientes, filters, onChange }: ProjetosFilterBarProps) {
+export function ProjetosFilterBar({ pessoas, clientes, disciplinas, filters, onChange }: ProjetosFilterBarProps) {
   const searchRef = useRef<HTMLInputElement>(null);
 
   // Atalho `/` foca a busca
@@ -71,6 +76,7 @@ export function ProjetosFilterBar({ pessoas, clientes, filters, onChange }: Proj
     filters.pessoaIds.length +
     filters.prioridades.length +
     filters.clienteIds.length +
+    filters.disciplinaIds.length +
     filters.deadlineStatus.length +
     (filters.dataInicio ? 1 : 0) +
     (filters.dataFim ? 1 : 0);
@@ -83,7 +89,7 @@ export function ProjetosFilterBar({ pessoas, clientes, filters, onChange }: Proj
       <Button
         variant="ghost"
         className={cn(
-          "h-10 rounded-full text-sm text-muted-foreground transition-opacity w-[120px] justify-center",
+          "h-9 rounded-full text-sm text-muted-foreground transition-opacity w-[120px] justify-center",
           totalActive === 0 && "opacity-0 pointer-events-none"
         )}
         onClick={() => onChange(EMPTY_FILTERS)}
@@ -99,7 +105,7 @@ export function ProjetosFilterBar({ pessoas, clientes, filters, onChange }: Proj
           value={filters.search}
           onChange={(e) => onChange({ ...filters, search: e.target.value })}
           placeholder="Buscar (/)"
-          className="h-10 w-[240px] pl-9 pr-8 text-sm rounded-full"
+          className="h-9 w-[240px] pl-9 pr-8 text-sm rounded-full"
         />
         {filters.search && (
           <button
@@ -117,7 +123,7 @@ export function ProjetosFilterBar({ pessoas, clientes, filters, onChange }: Proj
         <PopoverTrigger asChild>
           <Button
             variant="outline"
-            className={cn("rounded-full text-sm gap-2", filtroCount > 0 && "border-foreground/40 bg-muted")}
+            className={cn("h-9 rounded-full text-sm gap-2", filtroCount > 0 && "border-foreground/40 bg-muted")}
           >
             <SlidersHorizontal className="h-4 w-4" />
             <span>Filtros</span>
@@ -129,7 +135,13 @@ export function ProjetosFilterBar({ pessoas, clientes, filters, onChange }: Proj
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-[340px] p-0" align="end">
-          <FiltersPanel pessoas={pessoas} clientes={clientes} filters={filters} onChange={onChange} />
+          <FiltersPanel
+            pessoas={pessoas}
+            clientes={clientes}
+            disciplinas={disciplinas}
+            filters={filters}
+            onChange={onChange}
+          />
         </PopoverContent>
       </Popover>
     </div>
@@ -140,11 +152,13 @@ export function ProjetosFilterBar({ pessoas, clientes, filters, onChange }: Proj
 function FiltersPanel({
   pessoas,
   clientes,
+  disciplinas,
   filters,
   onChange,
 }: {
   pessoas: { id: string; nome: string }[];
   clientes: { id: string; nome: string }[];
+  disciplinas: { id: string; nome: string }[];
   filters: ProjetosFilters;
   onChange: (filters: ProjetosFilters) => void;
 }) {
@@ -162,6 +176,14 @@ function FiltersPanel({
       clienteIds: filters.clienteIds.includes(id)
         ? filters.clienteIds.filter((c) => c !== id)
         : [...filters.clienteIds, id],
+    });
+
+  const toggleDisciplina = (id: string) =>
+    onChange({
+      ...filters,
+      disciplinaIds: filters.disciplinaIds.includes(id)
+        ? filters.disciplinaIds.filter((d) => d !== id)
+        : [...filters.disciplinaIds, id],
     });
 
   const togglePrioridade = (p: ProjectPriority) =>
@@ -184,6 +206,7 @@ function FiltersPanel({
     filters.pessoaIds.length +
     filters.prioridades.length +
     filters.clienteIds.length +
+    filters.disciplinaIds.length +
     filters.deadlineStatus.length +
     (filters.dataInicio ? 1 : 0) +
     (filters.dataFim ? 1 : 0);
@@ -279,6 +302,14 @@ function FiltersPanel({
           selected={filters.clienteIds}
           onToggle={toggleCliente}
           onClear={() => onChange({ ...filters, clienteIds: [] })}
+        />
+
+        {/* Disciplina */}
+        <DisciplinasSection
+          disciplinas={disciplinas}
+          selected={filters.disciplinaIds}
+          onToggle={toggleDisciplina}
+          onClear={() => onChange({ ...filters, disciplinaIds: [] })}
         />
 
         {/* Período */}
@@ -437,6 +468,62 @@ function ClientesSection({
   );
 }
 
+function DisciplinasSection({
+  disciplinas,
+  selected,
+  onToggle,
+  onClear,
+}: {
+  disciplinas: { id: string; nome: string }[];
+  selected: string[];
+  onToggle: (id: string) => void;
+  onClear: () => void;
+}) {
+  const [search, setSearch] = useState("");
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return q ? disciplinas.filter((d) => d.nome.toLowerCase().includes(q)) : disciplinas;
+  }, [disciplinas, search]);
+
+  return (
+    <FilterSection
+      title="Disciplina"
+      count={selected.length}
+      icon={<Layers className="h-3.5 w-3.5 text-muted-foreground" />}
+      defaultOpen={false}
+    >
+      <div className="space-y-2">
+        <Input
+          placeholder="Buscar disciplina..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="h-8 text-xs"
+        />
+        <div className="max-h-48 overflow-y-auto -mx-1">
+          {filtered.length === 0 ? (
+            <p className="text-xs text-muted-foreground text-center py-3">Nenhuma disciplina</p>
+          ) : (
+            filtered.map((d) => (
+              <label
+                key={d.id}
+                className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted cursor-pointer text-xs"
+              >
+                <Checkbox checked={selected.includes(d.id)} onCheckedChange={() => onToggle(d.id)} />
+                <span className="truncate">{d.nome}</span>
+              </label>
+            ))
+          )}
+        </div>
+        {selected.length > 0 && (
+          <Button variant="ghost" size="sm" className="h-7 text-xs w-full" onClick={onClear}>
+            Limpar disciplinas
+          </Button>
+        )}
+      </div>
+    </FilterSection>
+  );
+}
+
 function PeriodoSection({
   filters,
   onChange,
@@ -456,20 +543,14 @@ function PeriodoSection({
         <div className="grid grid-cols-2 gap-2">
           <div>
             <label className="text-[10px] uppercase text-muted-foreground">De</label>
-            <Input
-              type="date"
-              value={filters.dataInicio}
-              onChange={(e) => onChange({ ...filters, dataInicio: e.target.value })}
-              className="h-8 text-xs"
-            />
+            <DatePicker value={filters.dataInicio} onChange={(v) => onChange({ ...filters, dataInicio: v })} />
           </div>
           <div>
             <label className="text-[10px] uppercase text-muted-foreground">Até</label>
-            <Input
-              type="date"
+            <DatePicker
               value={filters.dataFim}
-              onChange={(e) => onChange({ ...filters, dataFim: e.target.value })}
-              className="h-8 text-xs"
+              onChange={(v) => onChange({ ...filters, dataFim: v })}
+              minDate={filters.dataInicio || undefined}
             />
           </div>
         </div>

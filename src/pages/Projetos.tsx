@@ -34,6 +34,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
+import { monitoring } from "@/lib/monitoring";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { Can } from "@/components/Can";
@@ -48,13 +49,13 @@ import {
   type ProjectStatus,
 } from "@/constants";
 import { type Projeto, type ProjetoDisciplinaDB, dbDisciplinaToLegacy, getDeadlineStatus } from "@/types/projetos";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { ProjectCard } from "@/pages/projetos/components/ProjectCard";
 import { ProjectDetailDialog } from "@/pages/projetos/components/ProjectDetailDialog";
 import { ProjetoFormDialog } from "@/pages/projetos/components/ProjetoFormDialog";
 import { ManageDisciplinasDialog } from "@/pages/projetos/components/ManageDisciplinasDialog";
 import { FluxoDisciplinasDialog } from "@/pages/projetos/components/FluxoDisciplinasDialog";
 import { DisciplinasTab } from "@/pages/projetos/components/DisciplinasTab";
-import { CalendarioPrazosTab } from "@/pages/projetos/components/CalendarioPrazosTab";
 import { CronogramaProjetosTab } from "@/pages/projetos/components/CronogramaProjetosTab";
 import {
   ProjetosFilterBar,
@@ -74,7 +75,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 const statusConfig = PROJECT_STATUS_CONFIG;
 
-type Tab = "kanban" | "disciplinas" | "cronograma" | "calendario";
+type Tab = "kanban" | "disciplinas" | "cronograma";
 type SortKey = "priority" | "dueDate" | "value" | "name" | "created";
 type SortDir = "asc" | "desc";
 
@@ -87,12 +88,12 @@ const SORT_LABELS: Record<SortKey, string> = {
 };
 
 const STATUS_DOT: Record<string, string> = {
-  [PROJECT_STATUS.PLANEJAMENTO]: "bg-yellow-400",
-  [PROJECT_STATUS.EM_ANDAMENTO]: "bg-blue-500",
-  [PROJECT_STATUS.REVISAO]: "bg-purple-500",
+  [PROJECT_STATUS.PLANEJAMENTO]: "bg-status-planning",
+  [PROJECT_STATUS.EM_ANDAMENTO]: "bg-status-progress",
+  [PROJECT_STATUS.REVISAO]: "bg-status-review",
   [PROJECT_STATUS.PARALISADO]: "bg-brand",
   [PROJECT_STATUS.CONCLUIDO]: "bg-status-done",
-  [PROJECT_STATUS.CANCELADO]: "bg-red-500",
+  [PROJECT_STATUS.CANCELADO]: "bg-status-cancelled",
 };
 
 // ---------- URL persistence helpers ----------
@@ -102,6 +103,7 @@ function filtersToParams(filters: ProjetosFilters, sort: { key: SortKey; dir: So
   if (filters.prioridades.length) params.set("prio", filters.prioridades.join(","));
   if (filters.pessoaIds.length) params.set("p", filters.pessoaIds.join(","));
   if (filters.clienteIds.length) params.set("c", filters.clienteIds.join(","));
+  if (filters.disciplinaIds.length) params.set("disc", filters.disciplinaIds.join(","));
   if (filters.deadlineStatus.length) params.set("d", filters.deadlineStatus.join(","));
   if (filters.dataInicio) params.set("di", filters.dataInicio);
   if (filters.dataFim) params.set("df", filters.dataFim);
@@ -123,6 +125,7 @@ function parseFiltersFromParams(params: URLSearchParams): {
       prioridades: (params.get("prio")?.split(",").filter(Boolean) as ProjectPriority[]) || [],
       pessoaIds: params.get("p")?.split(",").filter(Boolean) || [],
       clienteIds: params.get("c")?.split(",").filter(Boolean) || [],
+      disciplinaIds: params.get("disc")?.split(",").filter(Boolean) || [],
       deadlineStatus: (params.get("d")?.split(",").filter(Boolean) as DeadlineFilter[]) || [],
       dataInicio: params.get("di") || "",
       dataFim: params.get("df") || "",
@@ -165,6 +168,8 @@ export default function ProjetosKanban() {
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>("kanban");
   const [isFluxosOpen, setIsFluxosOpen] = useState(false);
+  const [projetoToDelete, setProjetoToDelete] = useState<{ id: string; nome: string } | null>(null);
+
   const [pendingDrag, setPendingDrag] = useState<{
     projetoId: string;
     newStatus: string;
@@ -294,7 +299,7 @@ export default function ProjetosKanban() {
   const { data: pessoas = [] } = useQuery({
     queryKey: ["pessoas-select"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("pessoas").select("id, nome").order("nome");
+      const { data, error } = await supabase.from("pessoas").select("id, nome").is("deleted_at", null).order("nome");
       if (error) throw error;
       return data || [];
     },
@@ -325,8 +330,52 @@ export default function ProjetosKanban() {
     setIsFormDialogOpen(true);
   };
 
-  const handleDelete = async (id: string) => {
-    const { error } = await supabase.from("projetos").update({ deleted_at: new Date().toISOString() }).eq("id", id);
+  const handleDelete = (id: string) => {
+    const projeto = projetos.find((p) => p.id === id);
+    setProjetoToDelete({ id, nome: projeto?.nome ?? "Projeto" });
+  };
+
+  const handleMoveStatus = async (projetoId: string, newStatus: string) => {
+    const todayStr = new Date().toISOString().slice(0, 10);
+    queryClient.setQueryData(["projetos"], (old: Projeto[] | undefined) =>
+      (old || []).map((p) =>
+        p.id === projetoId
+          ? {
+              ...p,
+              status: newStatus as Projeto["status"],
+              data_final: newStatus === PROJECT_STATUS.CONCLUIDO ? todayStr : p.data_final,
+            }
+          : p
+      )
+    );
+    const updateData: Record<string, string> = { status: newStatus };
+    if (newStatus === PROJECT_STATUS.CONCLUIDO) updateData.data_final = todayStr;
+    const { error } = await supabase.from("projetos").update(updateData).eq("id", projetoId);
+    if (error) {
+      toast.error("Erro ao mover projeto");
+      queryClient.invalidateQueries({ queryKey: ["projetos"] });
+      return;
+    }
+    toast.success(`Movido para ${statusConfig[newStatus as keyof typeof statusConfig]?.label}`);
+    queryClient.invalidateQueries({ queryKey: ["projetos"] });
+    const projeto = projetos.find((p) => p.id === projetoId);
+    if (newStatus !== PROJECT_STATUS.CANCELADO) {
+      setPendingDrag({
+        projetoId,
+        newStatus,
+        clienteEmail: projeto?.cliente_email ?? undefined,
+        clienteNome: projeto?.cliente_nome ?? undefined,
+        projetoNome: projeto?.nome ?? undefined,
+      });
+    }
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!projetoToDelete) return;
+    const { error } = await supabase
+      .from("projetos")
+      .update({ deleted_at: new Date().toISOString() })
+      .eq("id", projetoToDelete.id);
     if (!error) {
       toast.success("Projeto excluído");
       setIsDetailOpen(false);
@@ -336,6 +385,7 @@ export default function ProjetosKanban() {
         description: "Verifique se existem registros vinculados.",
       });
     }
+    setProjetoToDelete(null);
   };
 
   const onDragEnd = async (result: DropResult) => {
@@ -400,7 +450,7 @@ export default function ProjetosKanban() {
       }
       toast.success("Notificação por email enviada");
     } catch (err) {
-      console.error("Erro ao notificar mudança de status do projeto:", err);
+      monitoring.captureException(err, { context: "notifyProjectStatusChange" });
     }
   };
 
@@ -415,11 +465,16 @@ export default function ProjetosKanban() {
       }
       toast.success("Email de conclusão enviado para o cliente");
     } catch (err) {
-      console.error("Erro ao enviar email para o cliente:", err);
+      monitoring.captureException(err, { context: "sendClientEmail" });
     }
   };
 
   // ---------- Filtros ----------
+  const disciplinaNomesSelected = useMemo(() => {
+    const map = new Map(disciplinas.map((d) => [d.id, d.nome.toLowerCase()]));
+    return new Set(filters.disciplinaIds.map((id) => map.get(id)).filter(Boolean) as string[]);
+  }, [disciplinas, filters.disciplinaIds]);
+
   const matchesFilters = (projeto: Projeto): boolean => {
     if (filters.search) {
       const q = filters.search.trim().toLowerCase();
@@ -438,6 +493,10 @@ export default function ProjetosKanban() {
         if (d.responsaveis?.some((r) => filters.pessoaIds.includes(r.responsavel_id))) return true;
         return false;
       });
+      if (!matched) return false;
+    }
+    if (disciplinaNomesSelected.size > 0) {
+      const matched = projeto.disciplinas?.some((d) => disciplinaNomesSelected.has((d.disciplina || "").toLowerCase()));
       if (!matched) return false;
     }
     if (filters.deadlineStatus.length > 0) {
@@ -477,7 +536,11 @@ export default function ProjetosKanban() {
     }
   };
 
-  const filteredProjetos = useMemo(() => projetos.filter(matchesFilters), [projetos, filters]);
+  const filteredProjetos = useMemo(
+    () => projetos.filter(matchesFilters),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [projetos, filters, disciplinaNomesSelected]
+  );
 
   const getProjetosByStatus = (status: string) =>
     filteredProjetos.filter((p) => p.status === status).sort(sortProjetos);
@@ -495,7 +558,6 @@ export default function ProjetosKanban() {
     { id: "kanban", label: "Quadro", icon: CalendarIcon },
     { id: "disciplinas", label: "Disciplinas", icon: Layers },
     { id: "cronograma", label: "Cronograma", icon: CalendarIcon },
-    { id: "calendario", label: "Calendário", icon: CalendarIcon },
   ];
 
   const noProjetos = !loadingProjetos && projetos.length === 0;
@@ -511,7 +573,13 @@ export default function ProjetosKanban() {
           description="Gerencie seus projetos"
           children={
             <div className="flex gap-2 items-center flex-wrap">
-              <ProjetosFilterBar pessoas={pessoas} clientes={clientes} filters={filters} onChange={setFilters} />
+              <ProjetosFilterBar
+                pessoas={pessoas}
+                clientes={clientes}
+                disciplinas={disciplinas}
+                filters={filters}
+                onChange={setFilters}
+              />
 
               <Can feature="projetos" action="edit">
                 <Button variant="outline" className="rounded-full text-sm" onClick={() => setIsDisciplinasOpen(true)}>
@@ -595,7 +663,7 @@ export default function ProjetosKanban() {
                   {Object.entries(statusConfig).map(([status, config]) => {
                     const items = getProjetosByStatus(status);
                     const isCollapsed = collapsedColumns.has(status);
-                    const dotColor = STATUS_DOT[status] || "bg-gray-400";
+                    const dotColor = STATUS_DOT[status] || "bg-status-unknown";
 
                     if (isCollapsed) {
                       return (
@@ -636,6 +704,7 @@ export default function ProjetosKanban() {
                               className="h-6 w-6 text-muted-foreground"
                               onClick={() => toggleColumn(status)}
                               title="Minimizar coluna"
+                              aria-label="Minimizar coluna"
                             >
                               <ChevronLeft className="h-3.5 w-3.5" />
                             </Button>
@@ -698,7 +767,7 @@ export default function ProjetosKanban() {
                 <div className="md:hidden space-y-3">
                   {Object.entries(statusConfig).map(([status, config]) => {
                     const items = getProjetosByStatus(status);
-                    const dotColor = STATUS_DOT[status] || "bg-gray-400";
+                    const dotColor = STATUS_DOT[status] || "bg-status-unknown";
                     if (items.length === 0) return null;
                     return (
                       <details key={status} open className="border rounded-lg bg-white">
@@ -716,6 +785,7 @@ export default function ProjetosKanban() {
                               onClick={handleCardClick}
                               onEdit={handleEditClick}
                               onDelete={handleDelete}
+                              onMoveStatus={canEdit ? handleMoveStatus : undefined}
                               canEdit={canEdit}
                             />
                           ))}
@@ -732,8 +802,6 @@ export default function ProjetosKanban() {
         <DisciplinasTab projetos={filteredProjetos} />
       ) : activeTab === "cronograma" ? (
         <CronogramaProjetosTab projetos={filteredProjetos} />
-      ) : activeTab === "calendario" ? (
-        <CalendarioPrazosTab projetos={filteredProjetos} />
       ) : null}
 
       <ProjectDetailDialog
@@ -818,6 +886,17 @@ export default function ProjetosKanban() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <ConfirmDialog
+        open={!!projetoToDelete}
+        onOpenChange={(open) => !open && setProjetoToDelete(null)}
+        onConfirm={handleDeleteConfirm}
+        title="Excluir Projeto"
+        itemName={projetoToDelete?.nome}
+        description="Esta ação não pode ser desfeita. Todos os dados do projeto serão removidos."
+        confirmText="Excluir"
+        cancelText="Cancelar"
+      />
     </PageLayout>
   );
 }
@@ -831,7 +910,13 @@ function ColumnSortMenu({ sort, onChange }: ColumnSortMenuProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground" title="Ordenar">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-6 w-6 text-muted-foreground"
+          title="Ordenar"
+          aria-label="Ordenar"
+        >
           <ArrowUpDown className="h-3.5 w-3.5" />
         </Button>
       </DropdownMenuTrigger>

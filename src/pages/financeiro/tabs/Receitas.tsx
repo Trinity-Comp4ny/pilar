@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,101 +15,53 @@ import {
 } from "@/components/ui/dialog";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, Check, DollarSign, Plus, Settings, Pencil, Tag, Trash2, Loader2, QrCode } from "lucide-react";
+import { CalendarIcon, Plus, Settings, Pencil, Trash2, QrCode } from "lucide-react";
 import { TIPO_CHAVE_PIX_LABEL } from "@/lib/pixUtils";
-import { format, addMonths } from "date-fns";
+import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CategoryManager } from "../components/CategoryManager";
 import { Badge } from "@/components/ui/badge";
-import { supabase } from "@/integrations/supabase/client";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import { getDisplayDate, formatDateDisplay } from "@/lib/dateUtils";
-import { formatCurrencyInput, formatValorToInput, parseCurrencyString } from "@/lib/currencyUtils";
+import { formatValorToInput } from "@/lib/currencyUtils";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { receitaSchema, receitaDefaultValues, type ReceitaFormData } from "@/schemas/receitaSchema";
-import { checkDuplicates, type DuplicateMatch } from "@/lib/duplicateCheck";
 import { DuplicateWarningDialog } from "@/components/DuplicateWarningDialog";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { AsaasCobrancaButton } from "@/components/asaas/AsaasCobrancaButton";
 import { AsaasConfigForm } from "@/components/asaas/AsaasConfigForm";
 import { CobrarPorEmailButton } from "@/components/CobrarPorEmailButton";
+import { useFinanceItems, type ReceitaItem } from "../hooks/useFinanceItems";
+import { useFinanceItemMutations } from "../hooks/useFinanceItemMutations";
+import { useFinanceItemForm } from "../hooks/useFinanceItemForm";
+import { FinanceItemForm, ParcelaBanner, DeleteGroupDialog } from "../components/FinanceItemForm";
 
-/**
- * Função para obter a data de exibição correta baseada no status
- */
-const getReceitaDisplayDate = (receita: Receita): string => {
-  const displayDate = getDisplayDate(receita.data_recebimento, receita.data_vencimento, receita.status);
-  return formatDateDisplay(displayDate);
-};
-
-interface Receita {
-  id: string;
-  data_vencimento: string;
-  data_recebimento?: string;
-  descricao: string;
-  projeto_id: string | null;
-  categoria_id: string | null;
-  categoria_nome?: string;
-  valor: number;
-  forma_pagamento: string | null;
-  nota_fiscal: string | null;
-  status: string;
-  conta_id: string | null;
-  cliente_id: string | null;
-  observacao: string | null;
-  cliente_nome?: string;
-  projeto_codigo?: string;
-  parcelas?: string;
-  grupo_parcela?: string | null;
-  parcela_numero?: number | null;
-  parcela_total?: number | null;
-  asaas_payment_id?: string | null;
-  asaas_payment_url?: string | null;
-  asaas_payment_status?: string | null;
-  asaas_billing_type?: string | null;
-}
+const getReceitaDisplayDate = (r: ReceitaItem): string =>
+  formatDateDisplay(getDisplayDate(r.data_recebimento ?? null, r.data_vencimento, r.status));
 
 export default function Receitas() {
-  const [receitas, setReceitas] = useState<Receita[]>([]);
-  const [contas, setContas] = useState<{ id: string; nome: string }[]>([]);
+  const { canEdit } = useFeatureAccess("financeiro");
+  const { items: receitasRaw, aux, refetch } = useFinanceItems("receita");
+  const { categorias, contas, projetos, clientes } = aux;
+
+  const { saveReceita, deleteOne, deleteGroup } = useFinanceItemMutations("receita");
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
-  const [selectedReceita, setSelectedReceita] = useState<Receita | null>(null);
+  const [selectedReceita, setSelectedReceita] = useState<ReceitaItem | null>(null);
 
-  const { canEdit } = useFeatureAccess("financeiro");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("todos");
 
   const form = useForm<ReceitaFormData>({
     resolver: zodResolver(receitaSchema),
     defaultValues: receitaDefaultValues,
   });
 
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("todos");
-
-  const [categorias, setCategorias] = useState<{ id: string; name: string }[]>([]);
-  const [projetos, setProjetos] = useState<{ id: string; projetoID: string }[]>([]);
-  const [clientes, setClientes] = useState<
-    {
-      id: string;
-      nome: string;
-      chaves_pix?: Array<{ chave: string; tipo: string }>;
-    }[]
-  >([]);
+  const receitas = useMemo(() => receitasRaw, [receitasRaw]);
 
   const receitasFiltradas = useMemo(() => {
     return receitas.filter((r) => {
@@ -126,96 +78,23 @@ export default function Receitas() {
     });
   }, [receitas, searchTerm, statusFilter]);
 
-  const fetchAuxiliaryData = async () => {
-    // Fetch Categorias
-    const { data: categoriasData } = await supabase
-      .from("categorias_financeiras")
-      .select("*")
-      .eq("tipo", "Receita")
-      .order("nome");
-
-    setCategorias((categoriasData ?? []).map((cat) => ({ id: cat.id, name: cat.nome })));
-
-    // Fetch Clientes (cast necessário até gen:types após migration)
-    type ClientePix = { id: string; nome: string; chaves_pix: Array<{ chave: string; tipo: string }> | null };
-    const { data: clientesData } = await (
-      supabase as unknown as {
-        from: (t: string) => {
-          select: (c: string) => { order: (col: string) => Promise<{ data: ClientePix[] | null }> };
-        };
-      }
-    )
-      .from("clientes")
-      .select("id, nome, chaves_pix")
-      .order("nome");
-
-    setClientes(
-      (clientesData ?? []).map((c) => ({
-        id: c.id,
-        nome: c.nome,
-        chaves_pix: Array.isArray(c.chaves_pix) ? c.chaves_pix : [],
-      }))
-    );
-
-    // Fetch Contas
-    const { data: contasData } = await supabase.from("contas").select("*").order("nome");
-
-    setContas((contasData ?? []).map((c) => ({ id: c.id, nome: c.nome })));
-
-    // Fetch Projetos
-    const { data: projetosData } = await supabase.from("projetos").select("id, nome, codigo_projeto").order("nome");
-
-    setProjetos((projetosData ?? []).map((p) => ({ id: p.id, projetoID: p.codigo_projeto ?? "" })));
+  const onSave = async (formData: ReceitaFormData) => {
+    await saveReceita.mutateAsync({ formData, selected: selectedReceita });
+    setIsDialogOpen(false);
+    setSelectedReceita(null);
+    form.reset(receitaDefaultValues);
   };
 
-  // Fetch Initial Data
-  useEffect(() => {
-    fetchReceitas();
-    fetchAuxiliaryData();
-  }, []);
+  const formCtl = useFinanceItemForm({
+    form,
+    table: "receitas",
+    isDialogOpen,
+    hasSelected: !!selectedReceita,
+    onSave,
+  });
 
-  const fetchReceitas = async () => {
-    const { data, error } = await supabase
-      .from("receitas")
-      .select(
-        `
-        *,
-        categorias_financeiras (nome),
-        clientes (nome),
-        projetos (codigo_projeto)
-      `
-      )
-      .is("deleted_at", null)
-      .order("data_recebimento", { ascending: false })
-      .order("data_vencimento", { ascending: false });
-
-    if (error) {
-      // Error will be visible through empty data state
-    }
-
-    const formattedData = (data ?? []).map((d) => ({
-      ...d,
-      categoria_nome: d.categorias_financeiras?.nome,
-      cliente_nome: d.clientes?.nome,
-      projeto_codigo: d.projetos?.codigo_projeto,
-      data_recebimento: d.data_recebimento || d.data_vencimento,
-    }));
-    setReceitas(formattedData as unknown as Receita[]);
-  };
-
-  const handleCategoryChange = () => {
-    fetchAuxiliaryData();
-  };
-
-  const handleValorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const inputValue = e.target.value;
-    const formattedValue = formatCurrencyInput(inputValue);
-    form.setValue("valorTotal", formattedValue);
-  };
-
-  const openEditReceita = (receita: Receita) => {
+  const openEditReceita = (receita: ReceitaItem) => {
     setSelectedReceita(receita);
-
     form.reset({
       dataVencimento: receita.data_vencimento ? new Date(receita.data_vencimento) : new Date(),
       descricao: receita.descricao,
@@ -231,134 +110,8 @@ export default function Receitas() {
       parcelas: "1",
       recorrencia: "Nenhuma",
     });
-
     setIsDetailOpen(false);
     setIsDialogOpen(true);
-  };
-
-  const [isSaving, setIsSaving] = useState(false);
-  const [duplicates, setDuplicates] = useState<DuplicateMatch[]>([]);
-  const [showDuplicateWarning, setShowDuplicateWarning] = useState(false);
-  const [pendingFormData, setPendingFormData] = useState<ReceitaFormData | null>(null);
-  const [step, setStep] = useState<1 | 2>(1);
-
-  const saveReceita = async (formData: ReceitaFormData) => {
-    setIsSaving(true);
-    try {
-      const numParcelas = parseInt(formData.parcelas) || 1;
-      const valorNumerico = parseCurrencyString(formData.valorTotal);
-      const valorParcela = Math.round((valorNumerico / numParcelas) * 100) / 100;
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (!user) throw new Error("Usuário não autenticado");
-
-      const { data: empresaId } = await supabase.rpc("get_user_empresa_id");
-      if (!empresaId) throw new Error("Usuário não vinculado a uma empresa");
-
-      const grupoParcela = numParcelas > 1 ? crypto.randomUUID() : null;
-      const receitasToInsert = [];
-
-      for (let i = 0; i < numParcelas; i++) {
-        const dataParcela = addMonths(formData.dataVencimento, i);
-        const dataStr = format(dataParcela, "yyyy-MM-dd");
-        const isUltimaParcela = i === numParcelas - 1 && numParcelas > 1;
-        const valorFinal = isUltimaParcela
-          ? Math.round((valorNumerico - valorParcela * (numParcelas - 1)) * 100) / 100
-          : valorParcela;
-
-        receitasToInsert.push({
-          data_vencimento: dataStr,
-          data_recebimento: formData.status === "Recebida" ? dataStr : null,
-          descricao: numParcelas > 1 ? `${formData.descricao} (${i + 1}/${numParcelas})` : formData.descricao,
-          projeto_id: formData.projetoID || null,
-          categoria_id: formData.categoriaId || null,
-          valor: valorFinal,
-          forma_pagamento: formData.formaPagamento || null,
-          nota_fiscal: formData.notaFiscal || null,
-          status: formData.status === "Recebida" ? "Recebido" : "Pendente",
-          conta_id: formData.contaId || null,
-          cliente_id: formData.clienteId || null,
-          observacao: formData.observacao || null,
-          empresa_id: empresaId,
-          grupo_parcela: selectedReceita ? (selectedReceita.grupo_parcela ?? null) : grupoParcela,
-          parcela_numero: selectedReceita ? (selectedReceita.parcela_numero ?? null) : numParcelas > 1 ? i + 1 : null,
-          parcela_total: selectedReceita
-            ? (selectedReceita.parcela_total ?? null)
-            : numParcelas > 1
-              ? numParcelas
-              : null,
-        });
-      }
-
-      let error = null;
-
-      if (selectedReceita) {
-        ({ error } = await supabase
-          .from("receitas")
-          .update(receitasToInsert[0] as never)
-          .eq("id", selectedReceita.id));
-      } else {
-        ({ error } = await supabase.from("receitas").insert(receitasToInsert as never));
-      }
-
-      if (error) throw error;
-
-      toast.success(selectedReceita ? "Receita atualizada" : "Receita cadastrada", {
-        description: selectedReceita
-          ? `1 registro atualizado com sucesso`
-          : `${numParcelas} registro(s) criado(s) com sucesso`,
-      });
-
-      setIsDialogOpen(false);
-      fetchReceitas();
-      resetForm();
-    } catch {
-      toast.error("Erro ao salvar");
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleSubmit = form.handleSubmit(async (formData) => {
-    if (selectedReceita) {
-      await saveReceita(formData);
-      return;
-    }
-
-    setIsSaving(true);
-    try {
-      const valorNumerico = parseCurrencyString(formData.valorTotal);
-      const numParcelas = parseInt(formData.parcelas) || 1;
-      const valorParcela = valorNumerico / numParcelas;
-
-      const found = await checkDuplicates({
-        table: "receitas",
-        descricao: formData.descricao,
-        valor: valorParcela,
-        dataVencimento: formData.dataVencimento,
-      });
-
-      if (found.length > 0) {
-        setDuplicates(found);
-        setPendingFormData(formData);
-        setShowDuplicateWarning(true);
-        setIsSaving(false);
-        return;
-      }
-    } catch {
-      toast.error("Erro ao salvar receita");
-    } finally {
-      if (!showDuplicateWarning) setIsSaving(false);
-    }
-
-    await saveReceita(formData);
-  });
-
-  const resetForm = () => {
-    form.reset(receitaDefaultValues);
-    setSelectedReceita(null);
   };
 
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -384,70 +137,245 @@ export default function Receitas() {
     if (!deleteId) return;
     const id = deleteId;
     setDeleteId(null);
-    try {
-      const { error } = await supabase.from("receitas").update({ deleted_at: new Date().toISOString() }).eq("id", id);
-      if (error) throw error;
-      toast.success("Receita excluída");
-      await fetchReceitas();
-    } catch (err) {
-      toast.error("Falha ao excluir receita", {
-        description: err instanceof Error ? err.message : "Tente novamente",
-      });
-    }
+    await deleteOne.mutateAsync(id);
   };
 
   const confirmDeleteGroup = async (mode: "single" | "all") => {
     if (!deleteGroupTarget) return;
-    const { id, grupoId } = deleteGroupTarget;
+    const target = deleteGroupTarget;
     setDeleteGroupTarget(null);
     setIsDetailOpen(false);
-    const now = new Date().toISOString();
-    try {
-      if (mode === "all") {
-        const { error } = await supabase
-          .from("receitas")
-          .update({ deleted_at: now })
-          .eq("grupo_parcela", grupoId)
-          .is("deleted_at", null);
-        if (error) throw error;
-        toast.success("Grupo de parcelas excluído");
-      } else {
-        const { error } = await supabase.from("receitas").update({ deleted_at: now }).eq("id", id);
-        if (error) throw error;
-        toast.success("Parcela excluída");
-      }
-      await fetchReceitas();
-    } catch (err) {
-      toast.error("Falha ao excluir", { description: err instanceof Error ? err.message : "Tente novamente" });
-    }
+    await deleteGroup.mutateAsync({ id: target.id, grupoId: target.grupoId, mode });
   };
-
-  const RECEITA_STEPS: { id: 1 | 2; label: string; icon: typeof DollarSign; desc: string }[] = [
-    { id: 1, label: "Identificação", icon: DollarSign, desc: "Valor, data e forma de pagamento" },
-    { id: 2, label: "Classificação", icon: Tag, desc: "Vínculos e categorias" },
-  ];
 
   useEffect(() => {
-    if (isDialogOpen) setStep(1);
+    if (!isDialogOpen) {
+      setSelectedReceita(null);
+    }
   }, [isDialogOpen]);
 
-  const goNext = async () => {
-    const valid = await form.trigger(["descricao", "valorTotal", "dataVencimento"]);
-    if (!valid) return;
-    setStep(2);
-  };
+  const Step1 = (
+    <>
+      <div className="px-6 py-4 space-y-3">
+        <Label className="text-[10px] uppercase text-muted-foreground tracking-wider">Descrição</Label>
+        <Input id="descricao" {...form.register("descricao")} placeholder="Ex: Pagamento projeto residencial" />
+      </div>
 
-  const goToStep = async (target: 1 | 2) => {
-    if (selectedReceita !== null || target <= step) {
-      setStep(target);
-      return;
-    }
-    if (target === 2) {
-      const valid = await form.trigger(["descricao", "valorTotal", "dataVencimento"]);
-      if (!valid) return;
-    }
-    setStep(target);
-  };
+      <div className="px-6 py-4 space-y-3">
+        <Label className="text-[10px] uppercase text-muted-foreground tracking-wider">Dados Financeiros</Label>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="space-y-1.5">
+            <Label htmlFor="valorTotal" className="text-xs">
+              Valor Total (R$) *
+            </Label>
+            <Input
+              id="valorTotal"
+              type="text"
+              value={form.watch("valorTotal")}
+              onChange={formCtl.handleValorChange}
+              placeholder="R$ 0,00"
+              className="h-9"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="parcelas" className="text-xs">
+              Parcelas
+            </Label>
+            <Input id="parcelas" type="number" min="1" {...form.register("parcelas")} className="h-9" />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="status" className="text-xs">
+              Status
+            </Label>
+            <Select
+              value={form.watch("status")}
+              onValueChange={(v) => form.setValue("status", v as "Recebida" | "Pendente")}
+            >
+              <SelectTrigger id="status" className="h-9">
+                <SelectValue placeholder="Selecione" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Recebida">Recebida</SelectItem>
+                <SelectItem value="Pendente">Pendente</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="formaPagamento" className="text-xs">
+              Forma Pgto.
+            </Label>
+            <Select value={form.watch("formaPagamento")} onValueChange={(v) => form.setValue("formaPagamento", v)}>
+              <SelectTrigger id="formaPagamento" className="h-9">
+                <SelectValue placeholder="Selecione" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="PIX">PIX</SelectItem>
+                <SelectItem value="Transferência">Transferência</SelectItem>
+                <SelectItem value="Boleto">Boleto</SelectItem>
+                <SelectItem value="Dinheiro">Dinheiro</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      </div>
+
+      <div className="px-6 py-4 space-y-3">
+        <Label className="text-[10px] uppercase text-muted-foreground tracking-wider">Vencimento</Label>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <Label className="text-xs">Data Vencimento *</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className={cn(
+                    "w-full justify-start text-left font-normal text-xs h-9",
+                    !form.watch("dataVencimento") && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-1 h-3 w-3" />
+                  {form.watch("dataVencimento") ? format(form.watch("dataVencimento"), "dd/MM/yyyy") : "Selecionar"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={form.watch("dataVencimento")}
+                  onSelect={(d) => form.setValue("dataVencimento", d as Date)}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs">Recorrência</Label>
+            <Select value={form.watch("recorrencia")} onValueChange={(v) => form.setValue("recorrencia", v)}>
+              <SelectTrigger className="h-9">
+                <SelectValue placeholder="Selecione" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Nenhuma">Nenhuma</SelectItem>
+                <SelectItem value="Semanal">Semanal</SelectItem>
+                <SelectItem value="Mensal">Mensal</SelectItem>
+                <SelectItem value="Anual">Anual</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+
+  const clienteId = form.watch("clienteId");
+  const clienteSel = clientes.find((c) => c.id === clienteId);
+  const chavesPix = clienteSel?.chaves_pix ?? [];
+
+  const Step2 = (
+    <>
+      <div className="px-6 py-4 space-y-3">
+        <Label className="text-[10px] uppercase text-muted-foreground tracking-wider">Vínculos e Classificação</Label>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div className="space-y-1.5">
+            <Label className="text-xs">Cliente (Pagante)</Label>
+            <Select value={form.watch("clienteId")} onValueChange={(v) => form.setValue("clienteId", v)}>
+              <SelectTrigger className="h-9">
+                <SelectValue placeholder="Selecione" />
+              </SelectTrigger>
+              <SelectContent>
+                {clientes.map((cliente) => (
+                  <SelectItem key={cliente.id} value={cliente.id}>
+                    {cliente.nome}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {chavesPix.length > 0 && (
+              <div className="rounded-md border border-dashed px-3 py-2 space-y-1 bg-muted/30">
+                {chavesPix.map((c, i) => (
+                  <div key={i} className="flex items-center gap-2 text-xs">
+                    <QrCode className="h-3 w-3 shrink-0 text-brand" />
+                    <span className="font-medium">{c.chave}</span>
+                    <Badge variant="outline" className="text-[10px] h-4 px-1 ml-auto">
+                      {TIPO_CHAVE_PIX_LABEL[c.tipo as keyof typeof TIPO_CHAVE_PIX_LABEL] ?? c.tipo}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs">Projeto</Label>
+            <Select value={form.watch("projetoID")} onValueChange={(v) => form.setValue("projetoID", v)}>
+              <SelectTrigger className="h-9">
+                <SelectValue placeholder="Selecione" />
+              </SelectTrigger>
+              <SelectContent>
+                {projetos.map((proj) => (
+                  <SelectItem key={proj.id} value={proj.id}>
+                    {proj.projetoID}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs">
+              Conta de Recebimento
+              {form.watch("status") === "Recebida" && <span className="text-red-500 ml-0.5">*</span>}
+            </Label>
+            <Select value={form.watch("contaId")} onValueChange={(v) => form.setValue("contaId", v)}>
+              <SelectTrigger className={`h-9 ${form.formState.errors.contaId ? "border-red-500" : ""}`}>
+                <SelectValue placeholder="Selecione" />
+              </SelectTrigger>
+              <SelectContent>
+                {contas.map((conta) => (
+                  <SelectItem key={conta.id} value={conta.id}>
+                    {conta.nome}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {form.formState.errors.contaId && (
+              <p className="text-xs text-red-500">{form.formState.errors.contaId.message}</p>
+            )}
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs">Categoria</Label>
+            <Select value={form.watch("categoriaId")} onValueChange={(v) => form.setValue("categoriaId", v)}>
+              <SelectTrigger className="h-9">
+                <SelectValue placeholder="Selecione" />
+              </SelectTrigger>
+              <SelectContent>
+                {categorias.map((cat) => (
+                  <SelectItem key={cat.id} value={cat.id}>
+                    {cat.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs">Nota Fiscal</Label>
+            <Select value={form.watch("notaFiscal")} onValueChange={(v) => form.setValue("notaFiscal", v)}>
+              <SelectTrigger className="h-9">
+                <SelectValue placeholder="Selecione" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Sim">Sim</SelectItem>
+                <SelectItem value="Não">Não</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      </div>
+
+      <div className="px-6 py-4 space-y-3">
+        <Label className="text-[10px] uppercase text-muted-foreground tracking-wider">Observação</Label>
+        <Input id="observacao" {...form.register("observacao")} placeholder="Observações adicionais" />
+      </div>
+    </>
+  );
 
   return (
     <div className="space-y-8 w-full max-w-none">
@@ -472,7 +400,6 @@ export default function Receitas() {
                   <DialogTitle>Configurações de Receitas</DialogTitle>
                   <DialogDescription>Gerencie as categorias de receitas</DialogDescription>
                 </DialogHeader>
-
                 <Tabs defaultValue="categorias" className="mt-4">
                   <TabsList className="grid w-full grid-cols-2">
                     <TabsTrigger value="categorias">Categorias</TabsTrigger>
@@ -483,7 +410,6 @@ export default function Receitas() {
                       title="Categorias de Receitas"
                       description="Gerencie as categorias disponíveis para classificar receitas"
                       type="Receita"
-                      onCategoryChange={handleCategoryChange}
                     />
                   </TabsContent>
                   <TabsContent value="asaas" className="mt-4">
@@ -493,388 +419,43 @@ export default function Receitas() {
               </DialogContent>
             </Dialog>
 
-            <Dialog
-              open={isDialogOpen}
-              onOpenChange={(open) => {
-                setIsDialogOpen(open);
-                if (open) {
+            {canEdit && (
+              <Button
+                onClick={() => {
                   setSelectedReceita(null);
-                  resetForm();
-                }
-              }}
-            >
-              {canEdit && (
-                <DialogTrigger asChild>
-                  <Button className="rounded-full bg-brand hover:bg-brand/90 text-ink transition-colors px-5 py-2.5 text-sm">
-                    <Plus className="mr-2 h-4 w-4" />
-                    Nova Receita
-                  </Button>
-                </DialogTrigger>
-              )}
-              <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto p-0">
-                <div className="px-6 pt-6 pb-4 border-b">
-                  <DialogHeader>
-                    <DialogTitle>{selectedReceita ? "Editar Receita" : "Nova Receita"}</DialogTitle>
-                    <DialogDescription>{RECEITA_STEPS.find((s) => s.id === step)?.desc}</DialogDescription>
-                  </DialogHeader>
-                </div>
+                  form.reset(receitaDefaultValues);
+                  setIsDialogOpen(true);
+                }}
+                className="rounded-full bg-brand hover:bg-brand/90 text-ink transition-colors px-5 py-2.5 text-sm"
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Nova Receita
+              </Button>
+            )}
 
-                {/* Stepper */}
-                <div className="flex items-center gap-1 px-6 py-3 border-b">
-                  {RECEITA_STEPS.map((s, i) => {
-                    const Icon = s.icon;
-                    const isActive = step === s.id;
-                    const isCompleted = step > s.id;
-                    const isClickable = selectedReceita !== null || s.id <= step;
-                    return (
-                      <div key={s.id} className="flex items-center flex-1">
-                        <button
-                          type="button"
-                          onClick={() => isClickable && goToStep(s.id)}
-                          disabled={!isClickable}
-                          className={cn(
-                            "flex items-center gap-2 flex-1 p-2 rounded-lg transition-colors text-left",
-                            isClickable && "hover:bg-muted",
-                            !isClickable && "opacity-50 cursor-not-allowed"
-                          )}
-                        >
-                          <span
-                            className={cn(
-                              "h-7 w-7 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-semibold",
-                              isActive && "bg-brand text-ink",
-                              isCompleted && "bg-brand text-ink",
-                              !isActive && !isCompleted && "bg-muted text-muted-foreground"
-                            )}
-                          >
-                            {isCompleted ? <Check className="h-4 w-4" /> : <Icon className="h-3.5 w-3.5" />}
-                          </span>
-                          <div className="hidden sm:block min-w-0">
-                            <p
-                              className={cn(
-                                "text-xs font-medium truncate",
-                                isActive ? "text-foreground" : "text-muted-foreground"
-                              )}
-                            >
-                              {s.label}
-                            </p>
-                            <p className="text-[10px] text-muted-foreground">Passo {s.id}</p>
-                          </div>
-                        </button>
-                        {i < RECEITA_STEPS.length - 1 && (
-                          <div className={cn("h-px flex-1 mx-1", step > s.id ? "bg-brand" : "bg-muted")} />
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    if (step === 2) handleSubmit(e);
-                  }}
-                  className="divide-y"
-                >
-                  {step === 1 && selectedReceita?.grupo_parcela && (
-                    <div className="px-6 pt-4 pb-0">
-                      <div className="flex items-center gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
-                        <span className="font-medium">
-                          Parcela {selectedReceita.parcela_numero ?? "?"} de {selectedReceita.parcela_total ?? "?"}
-                        </span>
-                        <span className="text-amber-600">
-                          — faz parte de um grupo. Editar aqui altera só esta parcela.
-                        </span>
-                      </div>
-                    </div>
-                  )}
-                  {step === 1 && (
-                    <>
-                      <div className="px-6 py-4 space-y-3">
-                        <Label className="text-[10px] uppercase text-muted-foreground tracking-wider">Descrição</Label>
-                        <Input
-                          id="descricao"
-                          {...form.register("descricao")}
-                          placeholder="Ex: Pagamento projeto residencial"
-                        />
-                      </div>
-
-                      <div className="px-6 py-4 space-y-3">
-                        <Label className="text-[10px] uppercase text-muted-foreground tracking-wider">
-                          Dados Financeiros
-                        </Label>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                          <div className="space-y-1.5">
-                            <Label htmlFor="valorTotal" className="text-xs">
-                              Valor Total (R$) *
-                            </Label>
-                            <Input
-                              id="valorTotal"
-                              type="text"
-                              value={form.watch("valorTotal")}
-                              onChange={handleValorChange}
-                              placeholder="R$ 0,00"
-                              className="h-9"
-                            />
-                          </div>
-                          <div className="space-y-1.5">
-                            <Label htmlFor="parcelas" className="text-xs">
-                              Parcelas
-                            </Label>
-                            <Input id="parcelas" type="number" min="1" {...form.register("parcelas")} className="h-9" />
-                          </div>
-                          <div className="space-y-1.5">
-                            <Label htmlFor="status" className="text-xs">
-                              Status
-                            </Label>
-                            <Select
-                              value={form.watch("status")}
-                              onValueChange={(v) => form.setValue("status", v as "Recebida" | "Pendente")}
-                            >
-                              <SelectTrigger id="status" className="h-9">
-                                <SelectValue placeholder="Selecione" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="Recebida">Recebida</SelectItem>
-                                <SelectItem value="Pendente">Pendente</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <div className="space-y-1.5">
-                            <Label htmlFor="formaPagamento" className="text-xs">
-                              Forma Pgto.
-                            </Label>
-                            <Select
-                              value={form.watch("formaPagamento")}
-                              onValueChange={(v) => form.setValue("formaPagamento", v)}
-                            >
-                              <SelectTrigger id="formaPagamento" className="h-9">
-                                <SelectValue placeholder="Selecione" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="PIX">PIX</SelectItem>
-                                <SelectItem value="Transferência">Transferência</SelectItem>
-                                <SelectItem value="Boleto">Boleto</SelectItem>
-                                <SelectItem value="Dinheiro">Dinheiro</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="px-6 py-4 space-y-3">
-                        <Label className="text-[10px] uppercase text-muted-foreground tracking-wider">Vencimento</Label>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          <div className="space-y-1.5">
-                            <Label className="text-xs">Data Vencimento *</Label>
-                            <Popover>
-                              <PopoverTrigger asChild>
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  className={cn(
-                                    "w-full justify-start text-left font-normal text-xs h-9",
-                                    !form.watch("dataVencimento") && "text-muted-foreground"
-                                  )}
-                                >
-                                  <CalendarIcon className="mr-1 h-3 w-3" />
-                                  {form.watch("dataVencimento")
-                                    ? format(form.watch("dataVencimento"), "dd/MM/yyyy")
-                                    : "Selecionar"}
-                                </Button>
-                              </PopoverTrigger>
-                              <PopoverContent className="w-auto p-0" align="start">
-                                <Calendar
-                                  mode="single"
-                                  selected={form.watch("dataVencimento")}
-                                  onSelect={(d) => form.setValue("dataVencimento", d as Date)}
-                                  initialFocus
-                                />
-                              </PopoverContent>
-                            </Popover>
-                          </div>
-                          <div className="space-y-1.5">
-                            <Label className="text-xs">Recorrência</Label>
-                            <Select
-                              value={form.watch("recorrencia")}
-                              onValueChange={(v) => form.setValue("recorrencia", v)}
-                            >
-                              <SelectTrigger className="h-9">
-                                <SelectValue placeholder="Selecione" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="Nenhuma">Nenhuma</SelectItem>
-                                <SelectItem value="Semanal">Semanal</SelectItem>
-                                <SelectItem value="Mensal">Mensal</SelectItem>
-                                <SelectItem value="Anual">Anual</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        </div>
-                      </div>
-                    </>
-                  )}
-
-                  {step === 2 && (
-                    <>
-                      <div className="px-6 py-4 space-y-3">
-                        <Label className="text-[10px] uppercase text-muted-foreground tracking-wider">
-                          Vínculos e Classificação
-                        </Label>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                          <div className="space-y-1.5">
-                            <Label className="text-xs">Cliente (Pagante)</Label>
-                            <Select
-                              value={form.watch("clienteId")}
-                              onValueChange={(v) => form.setValue("clienteId", v)}
-                            >
-                              <SelectTrigger className="h-9">
-                                <SelectValue placeholder="Selecione" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {clientes.map((cliente) => (
-                                  <SelectItem key={cliente.id} value={cliente.id}>
-                                    {cliente.nome}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            {(() => {
-                              const clienteId = form.watch("clienteId");
-                              const cliente = clientes.find((c) => c.id === clienteId);
-                              const chaves = cliente?.chaves_pix ?? [];
-                              if (!chaves.length) return null;
-                              return (
-                                <div className="rounded-md border border-dashed px-3 py-2 space-y-1 bg-muted/30">
-                                  {chaves.map((c, i) => (
-                                    <div key={i} className="flex items-center gap-2 text-xs">
-                                      <QrCode className="h-3 w-3 shrink-0 text-brand" />
-                                      <span className="font-medium">{c.chave}</span>
-                                      <Badge variant="outline" className="text-[10px] h-4 px-1 ml-auto">
-                                        {TIPO_CHAVE_PIX_LABEL[c.tipo as keyof typeof TIPO_CHAVE_PIX_LABEL] ?? c.tipo}
-                                      </Badge>
-                                    </div>
-                                  ))}
-                                </div>
-                              );
-                            })()}
-                          </div>
-                          <div className="space-y-1.5">
-                            <Label className="text-xs">Projeto</Label>
-                            <Select
-                              value={form.watch("projetoID")}
-                              onValueChange={(v) => form.setValue("projetoID", v)}
-                            >
-                              <SelectTrigger className="h-9">
-                                <SelectValue placeholder="Selecione" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {projetos.map((proj) => (
-                                  <SelectItem key={proj.id} value={proj.id}>
-                                    {proj.projetoID}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <div className="space-y-1.5">
-                            <Label className="text-xs">
-                              Conta de Recebimento
-                              {form.watch("status") === "Recebida" && <span className="text-red-500 ml-0.5">*</span>}
-                            </Label>
-                            <Select value={form.watch("contaId")} onValueChange={(v) => form.setValue("contaId", v)}>
-                              <SelectTrigger className={`h-9 ${form.formState.errors.contaId ? "border-red-500" : ""}`}>
-                                <SelectValue placeholder="Selecione" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {contas.map((conta) => (
-                                  <SelectItem key={conta.id} value={conta.id}>
-                                    {conta.nome}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            {form.formState.errors.contaId && (
-                              <p className="text-xs text-red-500">{form.formState.errors.contaId.message}</p>
-                            )}
-                          </div>
-                          <div className="space-y-1.5">
-                            <Label className="text-xs">Categoria</Label>
-                            <Select
-                              value={form.watch("categoriaId")}
-                              onValueChange={(v) => form.setValue("categoriaId", v)}
-                            >
-                              <SelectTrigger className="h-9">
-                                <SelectValue placeholder="Selecione" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {categorias.map((cat) => (
-                                  <SelectItem key={cat.id} value={cat.id}>
-                                    {cat.name}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <div className="space-y-1.5">
-                            <Label className="text-xs">Nota Fiscal</Label>
-                            <Select
-                              value={form.watch("notaFiscal")}
-                              onValueChange={(v) => form.setValue("notaFiscal", v)}
-                            >
-                              <SelectTrigger className="h-9">
-                                <SelectValue placeholder="Selecione" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="Sim">Sim</SelectItem>
-                                <SelectItem value="Não">Não</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="px-6 py-4 space-y-3">
-                        <Label className="text-[10px] uppercase text-muted-foreground tracking-wider">Observação</Label>
-                        <Input id="observacao" {...form.register("observacao")} placeholder="Observações adicionais" />
-                      </div>
-                    </>
-                  )}
-
-                  <div className="flex items-center gap-2 px-6 py-4 bg-gray-50/30">
-                    <Button type="button" variant="ghost" onClick={() => setIsDialogOpen(false)} disabled={isSaving}>
-                      Cancelar
-                    </Button>
-                    <div className="flex-1" />
-                    {step === 2 && (
-                      <Button type="button" variant="outline" onClick={() => setStep(1)} disabled={isSaving}>
-                        Voltar
-                      </Button>
-                    )}
-                    {step === 1 ? (
-                      <Button type="button" onClick={goNext} className="bg-brand hover:bg-brand/90 text-ink">
-                        Próximo →
-                      </Button>
-                    ) : (
-                      <Button type="submit" className="bg-brand hover:bg-brand/90 text-ink" disabled={isSaving}>
-                        {isSaving ? (
-                          <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Salvando...
-                          </>
-                        ) : selectedReceita ? (
-                          "Atualizar"
-                        ) : (
-                          "Salvar"
-                        )}
-                      </Button>
-                    )}
-                  </div>
-                </form>
-              </DialogContent>
-            </Dialog>
+            <FinanceItemForm
+              open={isDialogOpen}
+              onOpenChange={setIsDialogOpen}
+              isEdit={!!selectedReceita}
+              tipo="receita"
+              step={formCtl.step}
+              setStep={formCtl.setStep}
+              hasSelected={!!selectedReceita}
+              isSaving={formCtl.isSaving}
+              onSubmit={formCtl.submit}
+              onNext={formCtl.goNext}
+              onBack={formCtl.goBack}
+              step1={Step1}
+              step2={Step2}
+              parcelaBanner={
+                selectedReceita?.grupo_parcela ? (
+                  <ParcelaBanner numero={selectedReceita.parcela_numero} total={selectedReceita.parcela_total} />
+                ) : undefined
+              }
+            />
           </div>
         </CardHeader>
         <CardContent className="p-0">
-          {/* Filtros */}
           <div className="flex items-center gap-3 px-4 py-3 border-b bg-gray-50/50">
             <Input
               placeholder="Buscar por descrição ou cliente..."
@@ -901,8 +482,7 @@ export default function Receitas() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Data (Venc/Pag)</TableHead>{" "}
-                  {/* Mais claro: mostra vencimento para pendentes, pagamento para recebidos */}
+                  <TableHead>Data (Venc/Pag)</TableHead>
                   <TableHead>Descrição</TableHead>
                   <TableHead>Cliente</TableHead>
                   <TableHead>Projeto</TableHead>
@@ -982,6 +562,7 @@ export default function Receitas() {
                               size="icon"
                               className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
                               onClick={() => openEditReceita(receita)}
+                              aria-label="Editar receita"
                             >
                               <Pencil className="h-4 w-4" />
                             </Button>
@@ -990,6 +571,7 @@ export default function Receitas() {
                               size="icon"
                               className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
                               onClick={() => handleDelete(receita.id)}
+                              aria-label="Excluir receita"
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
@@ -1005,7 +587,6 @@ export default function Receitas() {
         </CardContent>
       </Card>
 
-      {/* Modal de Detalhes */}
       <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
@@ -1079,19 +660,14 @@ export default function Receitas() {
                   <div className="col-span-2 pt-1">
                     <Label className="text-xs text-muted-foreground mb-2 block">Cobrança</Label>
                     <div className="flex flex-wrap gap-2">
-                      <CobrarPorEmailButton
-                        receitaId={selectedReceita.id}
-                        onSuccess={() => {
-                          fetchReceitas();
-                        }}
-                      />
+                      <CobrarPorEmailButton receitaId={selectedReceita.id} onSuccess={() => refetch()} />
                       <AsaasCobrancaButton
                         receitaId={selectedReceita.id}
                         asaasPaymentUrl={selectedReceita.asaas_payment_url}
                         asaasPaymentStatus={selectedReceita.asaas_payment_status}
                         asaasBillingType={selectedReceita.asaas_billing_type}
                         onSuccess={() => {
-                          fetchReceitas();
+                          refetch();
                           setIsDetailOpen(false);
                         }}
                       />
@@ -1128,19 +704,13 @@ export default function Receitas() {
       </Dialog>
 
       <DuplicateWarningDialog
-        open={showDuplicateWarning}
+        open={formCtl.showDuplicateWarning}
         onOpenChange={(open) => {
-          setShowDuplicateWarning(open);
-          if (!open) setPendingFormData(null);
+          formCtl.setShowDuplicateWarning(open);
+          if (!open) formCtl.setPendingFormData(null);
         }}
-        duplicates={duplicates}
-        onConfirm={() => {
-          setShowDuplicateWarning(false);
-          if (pendingFormData) {
-            saveReceita(pendingFormData);
-            setPendingFormData(null);
-          }
-        }}
+        duplicates={formCtl.duplicates}
+        onConfirm={formCtl.confirmDuplicate}
       />
 
       <ConfirmDialog
@@ -1155,36 +725,11 @@ export default function Receitas() {
         variant="destructive"
       />
 
-      <AlertDialog
-        open={!!deleteGroupTarget}
-        onOpenChange={(open) => {
-          if (!open) setDeleteGroupTarget(null);
-        }}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Excluir parcela do grupo?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Esta é a {deleteGroupTarget?.label}. Deseja excluir apenas esta parcela ou todas as parcelas do grupo?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-orange-500 hover:bg-orange-600 text-white"
-              onClick={() => confirmDeleteGroup("single")}
-            >
-              Só esta parcela
-            </AlertDialogAction>
-            <AlertDialogAction
-              className="bg-red-600 hover:bg-red-700 text-white"
-              onClick={() => confirmDeleteGroup("all")}
-            >
-              Todo o grupo
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <DeleteGroupDialog
+        target={deleteGroupTarget}
+        onCancel={() => setDeleteGroupTarget(null)}
+        onConfirm={confirmDeleteGroup}
+      />
     </div>
   );
 }

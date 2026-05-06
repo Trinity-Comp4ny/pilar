@@ -91,6 +91,7 @@ export function VariaveisGuideDialog({ open, onOpenChange }: VariaveisGuideDialo
                   size="icon"
                   className="h-7 w-7 flex-shrink-0"
                   onClick={() => handleCopy(varName)}
+                  aria-label="Copiar variável"
                 >
                   {copiedVar === varName ? (
                     <Check className="h-3.5 w-3.5 text-positive" />

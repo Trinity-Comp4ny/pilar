@@ -207,7 +207,13 @@ export function OnboardingChecklist() {
             </div>
           </div>
           <div className="flex items-center gap-1 flex-shrink-0">
-            <Button size="icon" variant="ghost" className="h-7 w-7" onClick={handleToggleCollapse}>
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-7 w-7"
+              onClick={handleToggleCollapse}
+              aria-label={collapsed ? "Expandir" : "Recolher"}
+            >
               {collapsed ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronUp className="h-3.5 w-3.5" />}
             </Button>
             <Button size="icon" variant="ghost" className="h-7 w-7" onClick={handleDismiss} title="Dispensar">

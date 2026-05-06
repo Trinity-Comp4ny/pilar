@@ -39,7 +39,7 @@ export function FolhaTable({
       <CardContent className="p-0">
         {loading ? (
           <div className="flex justify-center items-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
           </div>
         ) : (
           <div className="overflow-x-auto">

@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { getSafeErrorMessage } from "@/lib/safeError";
@@ -10,15 +12,20 @@ import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, ArrowRight, Building2, Hash, Loader2 } from "lucide-react";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useAuth } from "@/contexts/AuthContext";
+import { companySetupSchema, companySetupDefaultValues, type CompanySetupFormData } from "@/schemas";
 
 export default function CompanySetup() {
   usePageTitle("Configuração da Empresa");
   const [isLoading, setIsLoading] = useState(false);
-  const [name, setName] = useState("");
-  const [cnpj, setCnpj] = useState("");
   const [progressValue, setProgressValue] = useState(0);
   const navigate = useNavigate();
   const { refreshProfile } = useAuth();
+
+  const form = useForm<CompanySetupFormData>({
+    resolver: zodResolver(companySetupSchema),
+    mode: "onChange",
+    defaultValues: companySetupDefaultValues,
+  });
 
   const targetProgress = useMemo(() => {
     const step = 2;
@@ -31,8 +38,7 @@ export default function CompanySetup() {
     return () => window.clearTimeout(t);
   }, [targetProgress]);
 
-  const handleUpdate = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleUpdate = async (values: CompanySetupFormData) => {
     setIsLoading(true);
 
     try {
@@ -49,7 +55,7 @@ export default function CompanySetup() {
       // 2. Atualizar dados da empresa e marcar onboarding completo
       const { error } = await supabase
         .from("empresas")
-        .update({ nome: name, cnpj: cnpj, onboarding_completed: true })
+        .update({ nome: values.name, cnpj: values.cnpj, onboarding_completed: true })
         .eq("id", profile.empresa_id);
 
       if (error) throw error;
@@ -121,68 +127,84 @@ export default function CompanySetup() {
             <p className="text-sm text-ink-soft">Defina o nome da organização e o CNPJ para emissão e cadastro.</p>
           </div>
 
-          <form onSubmit={handleUpdate} className="space-y-5">
-            <div className="space-y-2">
-              <Label htmlFor="name" className="text-ink-soft font-medium">
-                Razão social / Nome fantasia
-              </Label>
-              <div className="relative group">
-                <Building2 className="absolute left-3 top-3 h-4 w-4 text-ink/40 group-focus-within:text-brand transition-colors" />
-                <Input
-                  id="name"
-                  placeholder="Ex: Construtora Pilar Ltda"
-                  className="pl-10 h-11 bg-paper-alt border-paper-border focus:border-brand focus:ring-brand/20 transition-all"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  required
-                />
-              </div>
-            </div>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(handleUpdate)} className="space-y-5">
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem className="space-y-2">
+                    <FormLabel className="text-ink-soft font-medium">
+                      Razão social / Nome fantasia <span className="text-red-500">*</span>
+                    </FormLabel>
+                    <FormControl>
+                      <div className="relative group">
+                        <Building2 className="absolute left-3 top-3 h-4 w-4 text-ink/40 group-focus-within:text-brand transition-colors" />
+                        <Input
+                          {...field}
+                          placeholder="Ex: Construtora Pilar Ltda"
+                          className="pl-10 h-11 bg-paper-alt border-paper-border focus:border-brand focus:ring-brand/20 transition-all"
+                        />
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <div className="space-y-2">
-              <Label htmlFor="cnpj" className="text-ink-soft font-medium">
-                CNPJ
-              </Label>
-              <div className="relative group">
-                <Hash className="absolute left-3 top-3 h-4 w-4 text-ink/40 group-focus-within:text-brand transition-colors" />
-                <Input
-                  id="cnpj"
-                  placeholder="00.000.000/0000-00"
-                  className="pl-10 h-11 bg-paper-alt border-paper-border focus:border-brand focus:ring-brand/20 transition-all"
-                  value={cnpj}
-                  onChange={(e) => {
-                    const value = e.target.value.replace(/\D/g, "");
-                    const formatted = value
-                      .replace(/^(\d{2})(\d)/, "$1.$2")
-                      .replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3")
-                      .replace(/\.(\d{3})(\d)/, ".$1/$2")
-                      .replace(/(\d{4})(\d)/, "$1-$2")
-                      .slice(0, 18);
-                    setCnpj(formatted);
-                  }}
-                  maxLength={18}
-                />
-              </div>
-              <p className="text-xs text-ink-soft">Você pode preencher depois, se preferir.</p>
-            </div>
+              <FormField
+                control={form.control}
+                name="cnpj"
+                render={({ field }) => (
+                  <FormItem className="space-y-2">
+                    <FormLabel className="text-ink-soft font-medium">CNPJ</FormLabel>
+                    <FormControl>
+                      <div className="relative group">
+                        <Hash className="absolute left-3 top-3 h-4 w-4 text-ink/40 group-focus-within:text-brand transition-colors" />
+                        <Input
+                          {...field}
+                          placeholder="00.000.000/0000-00"
+                          className="pl-10 h-11 bg-paper-alt border-paper-border focus:border-brand focus:ring-brand/20 transition-all"
+                          maxLength={18}
+                          onChange={(e) => {
+                            const value = e.target.value.replace(/\D/g, "");
+                            const formatted = value
+                              .replace(/^(\d{2})(\d)/, "$1.$2")
+                              .replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3")
+                              .replace(/\.(\d{3})(\d)/, ".$1/$2")
+                              .replace(/(\d{4})(\d)/, "$1-$2")
+                              .slice(0, 18);
+                            field.onChange(formatted);
+                          }}
+                        />
+                      </div>
+                    </FormControl>
+                    <FormDescription className="text-xs text-ink-soft">
+                      Você pode preencher depois, se preferir.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <Button
-              className="w-full h-11 bg-brand hover:bg-brand/90 text-ink font-medium shadow-lg shadow-brand/20 hover:shadow-brand/30 transition-all active:scale-[0.98] text-sm"
-              type="submit"
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Salvando...
-                </>
-              ) : (
-                <>
-                  Finalizar e entrar
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </>
-              )}
-            </Button>
-          </form>
+              <Button
+                className="w-full h-11 bg-brand hover:bg-brand/90 text-ink font-medium shadow-lg shadow-brand/20 hover:shadow-brand/30 transition-all active:scale-[0.98] text-sm"
+                type="submit"
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Salvando...
+                  </>
+                ) : (
+                  <>
+                    Finalizar e entrar
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </>
+                )}
+              </Button>
+            </form>
+          </Form>
 
           <div className="text-xs text-ink/40">Pronto: ao finalizar, você será direcionado para o dashboard.</div>
         </div>

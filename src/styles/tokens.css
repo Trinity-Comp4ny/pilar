@@ -36,12 +36,14 @@
   --c-brand-500: 102 73% 73%; /* #A4EC86 */
 
   /* Greens */
+  --c-green-50: 138 76% 97%;
   --c-green-100: 141 79% 85%;
   --c-green-200: 141 74% 73%;
   --c-green-400: 142 69% 58%;
   --c-green-500: 142 71% 45%;
   --c-green-600: 142 76% 36%;
   --c-green-700: 142 72% 29%;
+  --c-green-800: 143 64% 24%;
   --c-green-900: 142 61% 21%;
 
   /* Reds */
@@ -57,13 +59,41 @@
   /* Outras cores de gráfico */
   --c-emerald-500: 160 84% 39%;
   --c-lime-500: 85 85% 45%;
+  --c-yellow-100: 55 97% 88%;
+  --c-yellow-400: 48 96% 53%;
+  --c-yellow-600: 35 92% 33%;
+  --c-yellow-800: 28 73% 26%;
+  --c-amber-50: 48 100% 96%;
+  --c-amber-100: 48 96% 89%;
+  --c-amber-200: 48 97% 77%;
   --c-amber-500: 48 96% 47%;
   --c-amber-600: 38 92% 50%;
+  --c-amber-700: 26 90% 37%;
+  --c-amber-800: 23 83% 31%;
+  --c-orange-50: 33 100% 96%;
+  --c-orange-100: 34 100% 92%;
+  --c-orange-200: 32 98% 83%;
   --c-orange-500: 25 95% 53%;
+  --c-orange-600: 21 90% 48%;
+  --c-orange-700: 17 88% 40%;
+  --c-orange-800: 15 79% 34%;
+  --c-blue-50: 214 100% 97%;
+  --c-blue-100: 214 95% 93%;
+  --c-blue-200: 213 97% 87%;
+  --c-blue-400: 213 94% 68%;
   --c-blue-500: 217 91% 60%;
+  --c-blue-600: 221 83% 53%;
+  --c-blue-700: 224 76% 48%;
+  --c-blue-800: 226 71% 40%;
   --c-indigo-500: 239 84% 67%;
   --c-violet-500: 262 83% 67%;
+  --c-purple-50: 270 100% 98%;
+  --c-purple-100: 269 100% 95%;
+  --c-purple-200: 269 100% 92%;
   --c-purple-500: 271 91% 65%;
+  --c-purple-600: 271 81% 56%;
+  --c-purple-700: 272 72% 47%;
+  --c-purple-800: 273 67% 39%;
   --c-pink-500: 330 81% 60%;
   --c-cyan-500: 189 94% 43%;
 
@@ -138,4 +168,67 @@
   --status-paused: var(--c-orange-500);
   --status-cancelled: var(--c-red-500);
   --status-unknown: var(--c-gray-500);
+
+  /* ── Tinted surfaces / strong text para KPIs e badges ─────── */
+  /* Cada família expõe três aliases:
+   *   surface-*-soft   → bg sutil (50)
+   *   border-*-soft    → border de baixa ênfase (100)
+   *   text-*-strong    → texto de alta legibilidade sobre soft (700/800)
+   *   text-*-mid       → texto de ênfase média (600/700)
+   * Visual mantido idêntico ao Tailwind hardcoded substituído.
+   */
+
+  /* Success (verde) */
+  --surface-success-soft: var(--c-green-50);
+  --border-success-soft: var(--c-green-100);
+  --text-success-strong: var(--c-green-800);
+  --text-success-mid: var(--c-green-700);
+  --text-success-soft: var(--c-green-600);
+
+  /* Danger (vermelho) */
+  --surface-danger-soft: var(--c-red-50);
+  --border-danger-soft: var(--c-red-100);
+  --border-danger-mid: var(--c-red-200);
+  --text-danger-strong: var(--c-red-900);
+  --text-danger-mid: var(--c-red-700);
+  --text-danger-soft: var(--c-red-600);
+
+  /* Info (azul) */
+  --surface-info-soft: var(--c-blue-50);
+  --border-info-soft: var(--c-blue-100);
+  --border-info-mid: var(--c-blue-200);
+  --text-info-strong: var(--c-blue-800);
+  --text-info-mid: var(--c-blue-700);
+  --text-info-soft: var(--c-blue-600);
+
+  /* Warning (amber) */
+  --surface-warning-soft: var(--c-amber-50);
+  --border-warning-soft: var(--c-amber-100);
+  --border-warning-mid: var(--c-amber-200);
+  --text-warning-strong: var(--c-amber-800);
+  --text-warning-mid: var(--c-amber-700);
+  --text-warning-soft: var(--c-amber-600);
+
+  /* Attention (orange) — projetos ativos */
+  --surface-attention-soft: var(--c-orange-50);
+  --border-attention-soft: var(--c-orange-100);
+  --border-attention-mid: var(--c-orange-200);
+  --text-attention-strong: var(--c-orange-800);
+  --text-attention-mid: var(--c-orange-700);
+  --text-attention-soft: var(--c-orange-600);
+
+  /* Highlight (purple) — leads */
+  --surface-highlight-soft: var(--c-purple-50);
+  --border-highlight-soft: var(--c-purple-100);
+  --border-highlight-mid: var(--c-purple-200);
+  --text-highlight-strong: var(--c-purple-800);
+  --text-highlight-mid: var(--c-purple-700);
+  --text-highlight-soft: var(--c-purple-600);
+
+  /* Pipeline de Leads (cores das etapas) */
+  --pipeline-novo: var(--c-blue-500);
+  --pipeline-contato: var(--c-indigo-500);
+  --pipeline-proposta: var(--c-purple-500);
+  --pipeline-negociacao: var(--c-amber-500);
+  --pipeline-perdido: var(--c-gray-400);
 }

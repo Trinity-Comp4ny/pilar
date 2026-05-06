@@ -33,7 +33,7 @@ export const despesaSchema = z
       return true;
     },
     {
-      message: "Para despesas pagas, selecione a Conta ou Cartão de Crédito.",
+      message: "Para despesas pagas, selecione a Conta ou Cartão.",
       path: ["contaId"],
     }
   )

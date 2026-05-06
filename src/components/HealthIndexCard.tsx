@@ -16,7 +16,7 @@ function ProgressBar({ value, label }: { value: number; label: string }) {
   return (
     <div className="flex items-center gap-2">
       <span className="text-[11px] text-muted-foreground w-[90px] shrink-0">{label}</span>
-      <div className="flex-1 bg-gray-200 rounded-full h-1.5">
+      <div className="flex-1 bg-muted rounded-full h-1.5">
         <div className={`h-1.5 rounded-full ${color}`} style={{ width: `${Math.min(value, 100)}%` }} />
       </div>
       <span className="text-[11px] font-medium w-[28px] text-right">{value}</span>
@@ -32,12 +32,12 @@ export function HealthIndexCard() {
       <Card className="vrz-card w-full">
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle className="text-sm font-medium text-black/60">Saúde Operacional</CardTitle>
-          <div className="p-2 rounded-full bg-gray-100 text-gray-400">
+          <div className="p-2 rounded-full bg-muted text-ink-disabled">
             <Activity size={18} />
           </div>
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold text-gray-300">—</div>
+          <div className="text-2xl font-bold text-ink-disabled">—</div>
         </CardContent>
       </Card>
     );

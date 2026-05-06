@@ -20,6 +20,7 @@ export interface ChavePix {
 export interface Cliente {
   id: string;
   nome: string;
+  sobrenome?: string;
   cpf_cnpj: string;
   endereco: string;
   contato: string;
@@ -32,6 +33,7 @@ export interface Cliente {
 
 export interface ClienteFormData {
   nome: string;
+  sobrenome: string;
   cpf_cnpj: string;
   endereco: string;
   contato: string;
@@ -51,6 +53,9 @@ export const useClientes = () => {
       const { data, error } = await supabase.from("clientes").select("*").order("nome");
 
       if (error) throw error;
+      // Tipos gerados marcam campos opcionais como `string | null`, mas a interface
+      // Cliente usa `string | undefined`. Cast via unknown evita atualizar todos
+      // os consumidores neste momento.
       return (data ?? []) as unknown as Cliente[];
     },
     staleTime: 1000 * 60 * 3,
@@ -61,6 +66,7 @@ export const useClientes = () => {
       const nullIfEmpty = (v: string) => v?.trim() || null;
       const payload = {
         nome: data.nome,
+        sobrenome: data.sobrenome || null,
         cpf_cnpj: data.cpf_cnpj,
         endereco: nullIfEmpty(data.endereco),
         contato: data.contato,

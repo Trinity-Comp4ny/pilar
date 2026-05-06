@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { monitoring } from "@/lib/monitoring";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
@@ -44,8 +45,8 @@ export function useProjetoDetail(id: string | undefined) {
         codigo_projeto: data.codigo_projeto ?? "",
         nome: data.nome,
         cliente_id: data.cliente_id ?? "",
-        cliente_nome: (data as unknown as { clientes?: { nome?: string } }).clientes?.nome,
-        cliente_email: (data as unknown as { clientes?: { email?: string } }).clientes?.email,
+        cliente_nome: Array.isArray(data.clientes) ? data.clientes[0]?.nome : data.clientes?.nome,
+        cliente_email: Array.isArray(data.clientes) ? data.clientes[0]?.email : data.clientes?.email,
         localizacao: data.localizacao || undefined,
         parcelas: data.parcelas || undefined,
         area_m2: data.area_m2 || undefined,
@@ -85,7 +86,7 @@ export function useProjetoDetail(id: string | undefined) {
     if (!canEdit) return;
     Promise.all([
       supabase.from("disciplinas").select("id, nome").order("nome"),
-      supabase.from("pessoas").select("id, nome").order("nome"),
+      supabase.from("pessoas").select("id, nome").is("deleted_at", null).order("nome"),
       supabase.from("clientes").select("id, nome").order("nome"),
       supabase.auth.getUser(),
     ]).then(([discRes, pesRes, cliRes, userRes]) => {
@@ -130,7 +131,7 @@ export function useProjetoDetail(id: string | undefined) {
           void notifyNextStage(dbDisc.id);
         }
       } catch (err: unknown) {
-        console.error(err);
+        monitoring.captureException(err, { context: "handleStatusChange" });
         toast.error("Erro ao atualizar");
       }
     },
@@ -143,7 +144,7 @@ export function useProjetoDetail(id: string | undefined) {
         body: { disciplina_id: disciplinaId },
       });
       if (error) {
-        console.error("notify-next-stage error", error);
+        monitoring.captureException(error, { context: "notify-next-stage" });
         return;
       }
       const result = data as { notificados?: number; skipped?: string };
@@ -151,7 +152,7 @@ export function useProjetoDetail(id: string | undefined) {
         toast.success(`${result.notificados} responsável(is) da próxima etapa notificado(s)`);
       }
     } catch (err) {
-      console.error("notify-next-stage unexpected", err);
+      monitoring.captureException(err, { context: "notify-next-stage unexpected" });
     }
   };
 
@@ -167,13 +168,13 @@ export function useProjetoDetail(id: string | undefined) {
 
       if (error) {
         toast.error(`Erro ao enviar email para o cliente ${projeto?.cliente_nome}.`);
-        console.error("Erro na função:", error);
+        monitoring.captureException(error, { context: "sendDisciplinaEmail" });
         return;
       }
 
       toast.success(`Email enviado com sucesso para o cliente ${projeto?.cliente_nome}.`);
     } catch (err) {
-      console.error("Erro desconhecido:", err);
+      monitoring.captureException(err, { context: "sendDisciplinaEmail unexpected" });
     }
   };
 

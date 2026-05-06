@@ -12,8 +12,6 @@ import {
   AlertCircle,
   RefreshCw,
   CheckCircle2,
-  Key,
-  Download,
 } from "lucide-react";
 import { useMfa, type MfaEnrollResult } from "@/hooks/useMfa";
 import { useAuth } from "@/contexts/AuthContext";
@@ -89,102 +87,6 @@ function OtpInput({ value, onChange, disabled }: { value: string; onChange: (v: 
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-// ─── Backup Codes Step ────────────────────────────────────────────────────────
-
-function BackupCodesStep({ onDone }: { onDone: () => void }) {
-  const [codes, setCodes] = useState<string[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [copiedAll, setCopiedAll] = useState(false);
-
-  useEffect(() => {
-    const generate = async () => {
-      try {
-        // mfa_generate_backup_codes não está nos tipos gerados ainda
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { data, error } = await (supabase.rpc as any)("mfa_generate_backup_codes");
-        if (error || !data) {
-          toast.error("Não foi possível gerar códigos de backup");
-          onDone();
-          return;
-        }
-        setCodes(data);
-      } finally {
-        setLoading(false);
-      }
-    };
-    generate();
-  }, [onDone]);
-
-  const handleCopyAll = async () => {
-    await navigator.clipboard.writeText(codes.join("\n"));
-    setCopiedAll(true);
-    setTimeout(() => setCopiedAll(false), 2000);
-  };
-
-  const handleDownload = () => {
-    const blob = new Blob([codes.join("\n")], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "pilar-backup-codes.txt";
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  if (loading) {
-    return (
-      <div className="flex flex-col items-center gap-3 py-8">
-        <Loader2 className="h-6 w-6 animate-spin text-ink-soft" />
-        <p className="text-sm text-ink-soft">Gerando códigos de backup...</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-6">
-      <div className="text-center space-y-2">
-        <div className="flex justify-center mb-3">
-          <div className="p-3 rounded-full bg-positive/10">
-            <Key className="h-7 w-7 text-positive" />
-          </div>
-        </div>
-        <h2 className="text-xl font-semibold text-ink">Seus códigos de backup</h2>
-        <p className="text-sm text-ink-soft leading-relaxed">
-          Guarde estes códigos em local seguro. Cada código pode ser usado uma vez caso você perca acesso ao app
-          autenticador.
-        </p>
-      </div>
-
-      <div className="grid grid-cols-2 gap-2 p-4 bg-paper-alt border border-paper-border rounded-xl">
-        {codes.map((c) => (
-          <code key={c} className="text-sm font-mono text-center text-ink py-1">
-            {c}
-          </code>
-        ))}
-      </div>
-
-      <div className="flex gap-2">
-        <Button variant="outline" className="flex-1 border-paper-border" onClick={handleCopyAll}>
-          {copiedAll ? <Check className="h-4 w-4 mr-2" /> : <Copy className="h-4 w-4 mr-2" />}
-          Copiar todos
-        </Button>
-        <Button variant="outline" className="flex-1 border-paper-border" onClick={handleDownload}>
-          <Download className="h-4 w-4 mr-2" />
-          Baixar .txt
-        </Button>
-      </div>
-
-      <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-center">
-        Estes códigos não serão exibidos novamente. Salve-os agora.
-      </p>
-
-      <Button className="w-full h-11 bg-brand hover:bg-brand/90 text-ink font-medium" onClick={onDone}>
-        Salvei meus códigos — Continuar
-      </Button>
-    </div>
-  );
-}
-
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 const SESSION_KEY = "mfa_setup_enrollment";
@@ -220,7 +122,6 @@ export default function MfaSetupPage() {
   const [submitting, setSubmitting] = useState(false);
   const [copied, setCopied] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
-  const [showBackupCodes, setShowBackupCodes] = useState(false);
   const hasSubmitted = useRef(false);
 
   const startEnrollment = useCallback(
@@ -272,7 +173,7 @@ export default function MfaSetupPage() {
         clearEnrollment();
         await refreshMfaLevel();
         toast.success("MFA configurado com sucesso");
-        setShowBackupCodes(true);
+        navigate("/dashboard", { replace: true });
       } catch (err) {
         toast.error("Código inválido", { description: translateAuthError(err) });
         setCode("");
@@ -348,16 +249,14 @@ export default function MfaSetupPage() {
             </div>
           </div>
 
-          {showBackupCodes && <BackupCodesStep onDone={() => navigate("/dashboard", { replace: true })} />}
-
-          {!showBackupCodes && starting && (
+          {starting && (
             <div className="flex flex-col items-center gap-3 py-6">
               <Loader2 className="h-6 w-6 animate-spin text-ink-soft" />
               <p className="text-sm text-ink-soft">Preparando configuração...</p>
             </div>
           )}
 
-          {!showBackupCodes && !starting && startError && (
+          {!starting && startError && (
             <div className="flex flex-col items-center gap-3 py-4 text-center">
               <AlertCircle className="h-8 w-8 text-destructive" />
               <p className="text-sm text-destructive">{startError}</p>
@@ -368,7 +267,7 @@ export default function MfaSetupPage() {
             </div>
           )}
 
-          {!showBackupCodes && !starting && enrollment && (
+          {!starting && enrollment && (
             <div className="space-y-6">
               <div className="flex flex-col items-center gap-2">
                 <div className="p-3 bg-paper-alt rounded-xl border border-paper-border shadow-sm">
@@ -389,6 +288,7 @@ export default function MfaSetupPage() {
                     size="icon"
                     className="shrink-0 h-8 w-8 border-paper-border"
                     onClick={handleCopy}
+                    aria-label="Copiar chave"
                   >
                     {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
                   </Button>

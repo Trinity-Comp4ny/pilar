@@ -1,28 +1,33 @@
 import { useEffect, useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { ArrowLeft, ArrowRight, Loader2, Lock, Phone, User } from "lucide-react";
 import { usePageTitle } from "@/hooks/usePageTitle";
-import { passwordSchema } from "@/lib/passwordPolicy";
 import { PasswordStrengthIndicator } from "@/components/PasswordStrengthIndicator";
+import { profileSetupSchema, profileSetupDefaultValues, type ProfileSetupFormData } from "@/schemas";
 
 export default function ProfileSetup() {
   usePageTitle("Configuração do Perfil");
   const [isLoading, setIsLoading] = useState(false);
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
   const [progressValue, setProgressValue] = useState(0);
   const navigate = useNavigate();
   const { refreshProfile } = useAuth();
+
+  const form = useForm<ProfileSetupFormData>({
+    resolver: zodResolver(profileSetupSchema),
+    mode: "onChange",
+    defaultValues: profileSetupDefaultValues,
+  });
+
+  const password = form.watch("password");
 
   const targetProgress = useMemo(() => {
     const step = 1;
@@ -50,33 +55,22 @@ export default function ProfileSetup() {
           .single();
 
         if (profile) {
-          if (profile.first_name) setFirstName(profile.first_name);
-          if (profile.last_name) setLastName(profile.last_name);
-          if (profile.contato) setPhone(profile.contato);
+          form.reset({
+            firstName: profile.first_name ?? "",
+            lastName: profile.last_name ?? "",
+            phone: profile.contato ?? "",
+            password: "",
+            confirmPassword: "",
+          });
         }
       } finally {
         // profile load complete
       }
     };
     loadProfile();
-  }, []);
+  }, [form]);
 
-  const handleUpdate = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (password && password !== confirmPassword) {
-      toast.error("Senhas não conferem", { description: "Por favor, digite a mesma senha nos dois campos." });
-      return;
-    }
-
-    if (password) {
-      const parsed = passwordSchema.safeParse(password);
-      if (!parsed.success) {
-        toast.error("Senha fraca", { description: parsed.error.issues[0]?.message });
-        return;
-      }
-    }
-
+  const handleUpdate = async (values: ProfileSetupFormData) => {
     setIsLoading(true);
 
     try {
@@ -90,9 +84,9 @@ export default function ProfileSetup() {
       const { error } = await supabase
         .from("profiles")
         .update({
-          first_name: firstName.trim(),
-          last_name: lastName.trim(),
-          contato: phone,
+          first_name: values.firstName.trim(),
+          last_name: values.lastName.trim(),
+          contato: values.phone,
           onboarding_completed: true,
         })
         .eq("id", user.id);
@@ -100,12 +94,10 @@ export default function ProfileSetup() {
       if (error) throw error;
 
       // 2. Atualizar senha após o perfil — o onAuthStateChange lerá o perfil já atualizado
-      if (password) {
-        const { error: pwdError } = await supabase.auth.updateUser({
-          password: password,
-        });
-        if (pwdError) throw pwdError;
-      }
+      const { error: pwdError } = await supabase.auth.updateUser({
+        password: values.password,
+      });
+      if (pwdError) throw pwdError;
 
       // 3. Forçar refresh do contexto para garantir que PrivateRoute leia onboarding_completed: true
       await refreshProfile();
@@ -179,121 +171,154 @@ export default function ProfileSetup() {
             <p className="text-sm text-ink-soft">Confirme seus dados e defina uma senha para continuar.</p>
           </div>
 
-          <form onSubmit={handleUpdate} className="space-y-5">
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <Label htmlFor="firstName" className="text-ink-soft font-medium">
-                  Nome *
-                </Label>
-                <div className="relative group">
-                  <User className="absolute left-3 top-3 h-4 w-4 text-ink/40 group-focus-within:text-brand transition-colors" />
-                  <Input
-                    id="firstName"
-                    placeholder="Ex: Maria"
-                    className="pl-10 h-11 bg-paper-alt border-paper-border focus:border-brand focus:ring-brand/20 transition-all"
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
-                    required
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="lastName" className="text-ink-soft font-medium">
-                  Sobrenome *
-                </Label>
-                <Input
-                  id="lastName"
-                  placeholder="Ex: Souza"
-                  className="h-11 bg-paper-alt border-paper-border focus:border-brand focus:ring-brand/20 transition-all"
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                  required
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(handleUpdate)} className="space-y-5">
+              <div className="grid grid-cols-2 gap-3">
+                <FormField
+                  control={form.control}
+                  name="firstName"
+                  render={({ field }) => (
+                    <FormItem className="space-y-2">
+                      <FormLabel className="text-ink-soft font-medium">
+                        Nome <span className="text-red-500">*</span>
+                      </FormLabel>
+                      <FormControl>
+                        <div className="relative group">
+                          <User className="absolute left-3 top-3 h-4 w-4 text-ink/40 group-focus-within:text-brand transition-colors" />
+                          <Input
+                            {...field}
+                            placeholder="Ex: Maria"
+                            className="pl-10 h-11 bg-paper-alt border-paper-border focus:border-brand focus:ring-brand/20 transition-all"
+                          />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="lastName"
+                  render={({ field }) => (
+                    <FormItem className="space-y-2">
+                      <FormLabel className="text-ink-soft font-medium">
+                        Sobrenome <span className="text-red-500">*</span>
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          placeholder="Ex: Souza"
+                          className="h-11 bg-paper-alt border-paper-border focus:border-brand focus:ring-brand/20 transition-all"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
               </div>
-            </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="phone" className="text-ink-soft font-medium">
-                Telefone
-              </Label>
-              <div className="relative group">
-                <Phone className="absolute left-3 top-3 h-4 w-4 text-ink/40 group-focus-within:text-brand transition-colors" />
-                <Input
-                  id="phone"
-                  type="tel"
-                  placeholder="(00) 00000-0000"
-                  className="pl-10 h-11 bg-paper-alt border-paper-border focus:border-brand focus:ring-brand/20 transition-all"
-                  value={phone}
-                  onChange={(e) => {
-                    const value = e.target.value.replace(/\D/g, "");
-                    const formatted = value
-                      .replace(/^(\d{2})/, "($1) ")
-                      .replace(/(\d{5})(\d)/, "$1-$2")
-                      .slice(0, 15);
-                    setPhone(formatted);
-                  }}
-                  required
-                />
-              </div>
-            </div>
+              <FormField
+                control={form.control}
+                name="phone"
+                render={({ field }) => (
+                  <FormItem className="space-y-2">
+                    <FormLabel className="text-ink-soft font-medium">
+                      Telefone <span className="text-red-500">*</span>
+                    </FormLabel>
+                    <FormControl>
+                      <div className="relative group">
+                        <Phone className="absolute left-3 top-3 h-4 w-4 text-ink/40 group-focus-within:text-brand transition-colors" />
+                        <Input
+                          {...field}
+                          type="tel"
+                          placeholder="(00) 00000-0000"
+                          className="pl-10 h-11 bg-paper-alt border-paper-border focus:border-brand focus:ring-brand/20 transition-all"
+                          onChange={(e) => {
+                            const value = e.target.value.replace(/\D/g, "");
+                            const formatted = value
+                              .replace(/^(\d{2})/, "($1) ")
+                              .replace(/(\d{5})(\d)/, "$1-$2")
+                              .slice(0, 15);
+                            field.onChange(formatted);
+                          }}
+                        />
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <div className="space-y-2">
-              <Label htmlFor="password" className="text-ink-soft font-medium">
-                Nova senha
-              </Label>
-              <div className="relative group">
-                <Lock className="absolute left-3 top-3 h-4 w-4 text-ink/40 group-focus-within:text-brand transition-colors" />
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="••••••••"
-                  className="pl-10 h-11 bg-paper-alt border-paper-border focus:border-brand focus:ring-brand/20 transition-all"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  minLength={12}
-                />
-              </div>
-              {password && <PasswordStrengthIndicator password={password} />}
-              <p className="text-xs text-ink-soft">Mínimo 12 caracteres, com maiúscula, minúscula, número e símbolo.</p>
-            </div>
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem className="space-y-2">
+                    <FormLabel className="text-ink-soft font-medium">
+                      Nova senha <span className="text-red-500">*</span>
+                    </FormLabel>
+                    <FormControl>
+                      <div className="relative group">
+                        <Lock className="absolute left-3 top-3 h-4 w-4 text-ink/40 group-focus-within:text-brand transition-colors" />
+                        <Input
+                          {...field}
+                          type="password"
+                          placeholder="••••••••"
+                          className="pl-10 h-11 bg-paper-alt border-paper-border focus:border-brand focus:ring-brand/20 transition-all"
+                        />
+                      </div>
+                    </FormControl>
+                    {password && <PasswordStrengthIndicator password={password} />}
+                    <p className="text-xs text-ink-soft">
+                      Mínimo 12 caracteres, com maiúscula, minúscula, número e símbolo.
+                    </p>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword" className="text-ink-soft font-medium">
-                Confirmar senha
-              </Label>
-              <div className="relative group">
-                <Lock className="absolute left-3 top-3 h-4 w-4 text-ink/40 group-focus-within:text-brand transition-colors" />
-                <Input
-                  id="confirmPassword"
-                  type="password"
-                  placeholder="••••••••"
-                  className="pl-10 h-11 bg-paper-alt border-paper-border focus:border-brand focus:ring-brand/20 transition-all"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  required
-                  minLength={6}
-                />
-              </div>
-            </div>
+              <FormField
+                control={form.control}
+                name="confirmPassword"
+                render={({ field }) => (
+                  <FormItem className="space-y-2">
+                    <FormLabel className="text-ink-soft font-medium">
+                      Confirmar senha <span className="text-red-500">*</span>
+                    </FormLabel>
+                    <FormControl>
+                      <div className="relative group">
+                        <Lock className="absolute left-3 top-3 h-4 w-4 text-ink/40 group-focus-within:text-brand transition-colors" />
+                        <Input
+                          {...field}
+                          type="password"
+                          placeholder="••••••••"
+                          className="pl-10 h-11 bg-paper-alt border-paper-border focus:border-brand focus:ring-brand/20 transition-all"
+                        />
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <Button
-              className="w-full h-11 bg-brand hover:bg-brand/90 text-ink font-medium shadow-lg shadow-brand/20 hover:shadow-brand/30 transition-all active:scale-[0.98] text-sm"
-              type="submit"
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Salvando...
-                </>
-              ) : (
-                <>
-                  Continuar
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </>
-              )}
-            </Button>
-          </form>
+              <Button
+                className="w-full h-11 bg-brand hover:bg-brand/90 text-ink font-medium shadow-lg shadow-brand/20 hover:shadow-brand/30 transition-all active:scale-[0.98] text-sm"
+                type="submit"
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Salvando...
+                  </>
+                ) : (
+                  <>
+                    Continuar
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </>
+                )}
+              </Button>
+            </form>
+          </Form>
 
           <div className="text-xs text-ink/40">
             Ao continuar, você confirma que as informações acima estão corretas.

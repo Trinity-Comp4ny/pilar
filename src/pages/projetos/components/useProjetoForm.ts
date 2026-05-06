@@ -304,13 +304,13 @@ export function useProjetoForm({
   };
 
   const addProjetoDisciplina = () => {
-    if (!tempDisciplina.disciplina || !tempDisciplina.responsavel_id) return;
+    if (!tempDisciplina.disciplina) return;
 
     const pessoa = pessoas.find((p) => p.id === tempDisciplina.responsavel_id);
 
     const novaDisciplina: DisciplinaResponsavel = {
       disciplina: tempDisciplina.disciplina,
-      responsavel_id: tempDisciplina.responsavel_id,
+      responsavel_id: tempDisciplina.responsavel_id || "",
       responsavel_nome: pessoa?.nome || "",
       data_inicio: tempDisciplina.data_inicio,
       data_previsao: tempDisciplina.data_previsao,
@@ -318,16 +318,18 @@ export function useProjetoForm({
       status: tempDisciplina.status || "Não Iniciado",
       prioridade: tempDisciplina.prioridade || PROJECT_PRIORITY.MEDIA,
       observacoes: tempDisciplina.observacoes || [],
-      responsaveis: [
-        {
-          responsavel_id: tempDisciplina.responsavel_id!,
-          responsavel_nome: pessoa?.nome || "",
-          data_inicio: tempDisciplina.data_inicio,
-          data_previsao: tempDisciplina.data_previsao,
-          data_final: tempDisciplina.data_final,
-          status: tempDisciplina.status || "Não Iniciado",
-        },
-      ],
+      responsaveis: tempDisciplina.responsavel_id
+        ? [
+            {
+              responsavel_id: tempDisciplina.responsavel_id,
+              responsavel_nome: pessoa?.nome || "",
+              data_inicio: tempDisciplina.data_inicio,
+              data_previsao: tempDisciplina.data_previsao,
+              data_final: tempDisciplina.data_final,
+              status: tempDisciplina.status || "Não Iniciado",
+            },
+          ]
+        : [],
     };
 
     setProjetosDisciplinas([...projetosDisciplinas, novaDisciplina]);
@@ -340,17 +342,32 @@ export function useProjetoForm({
   };
 
   const addResponsavelToDisc = (discIdx: number) => {
-    if (!newFormResp.responsavel_id) return;
-    const pessoa = pessoas.find((p) => p.id === newFormResp.responsavel_id);
     const updated = [...projetosDisciplinas];
     const disc = updated[discIdx];
     const currentResps = getResponsaveisList(disc);
 
-    if (currentResps.some((r) => r.responsavel_id === newFormResp.responsavel_id)) {
+    if (!newFormResp.responsavel_id) {
+      const hasDates = newFormResp.data_inicio || newFormResp.data_previsao || newFormResp.data_final;
+      if (!hasDates) return;
+      // Save dates directly on the disc without a responsável
+      updated[discIdx] = {
+        ...disc,
+        data_inicio: newFormResp.data_inicio || disc.data_inicio,
+        data_previsao: newFormResp.data_previsao || disc.data_previsao,
+        data_final: newFormResp.data_final || disc.data_final,
+      };
+      setProjetosDisciplinas(updated);
+      setNewFormResp({ responsavel_id: "", data_inicio: "", data_previsao: "", data_final: "" });
+      setAddingRespToFormDisc(null);
+      return;
+    }
+
+    if (currentResps.some((r) => r.responsavel_id && r.responsavel_id === newFormResp.responsavel_id)) {
       toast.error("Responsável já adicionado nesta disciplina");
       return;
     }
 
+    const pessoa = pessoas.find((p) => p.id === newFormResp.responsavel_id);
     const novoResp: ResponsavelDatas = {
       responsavel_id: newFormResp.responsavel_id,
       responsavel_nome: pessoa?.nome || "",
@@ -360,7 +377,15 @@ export function useProjetoForm({
       status: "Não Iniciado",
     };
 
-    updated[discIdx] = { ...disc, responsaveis: [...currentResps, novoResp] };
+    // Replace placeholder (dates-only entry with empty responsavel_id) if it exists
+    const hasPlaceholder = currentResps.length === 1 && !currentResps[0].responsavel_id;
+    const newResps = hasPlaceholder ? [novoResp] : [...currentResps, novoResp];
+    updated[discIdx] = {
+      ...disc,
+      responsaveis: newResps,
+      responsavel_id: novoResp.responsavel_id,
+      responsavel_nome: novoResp.responsavel_nome,
+    };
     setProjetosDisciplinas(updated);
     setNewFormResp({ responsavel_id: "", data_inicio: "", data_previsao: "", data_final: "" });
     setAddingRespToFormDisc(null);

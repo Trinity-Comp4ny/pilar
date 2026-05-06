@@ -944,6 +944,7 @@ function ClientesTab() {
                         variant="ghost"
                         size="icon"
                         className="h-6 w-6 text-gray-400 hover:text-blue-600 hover:bg-blue-50"
+                        aria-label="Editar"
                       >
                         <Pencil className="w-3 h-3" />
                       </Button>
@@ -951,6 +952,7 @@ function ClientesTab() {
                         variant="ghost"
                         size="icon"
                         className="h-6 w-6 text-gray-400 hover:text-red-600 hover:bg-red-50"
+                        aria-label="Excluir"
                       >
                         <Trash2 className="w-3 h-3" />
                       </Button>

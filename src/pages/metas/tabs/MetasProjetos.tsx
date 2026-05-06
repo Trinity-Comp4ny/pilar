@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
@@ -273,7 +274,7 @@ export default function MetasProjetos() {
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label>Prazo</Label>
-          <Input type="date" value={values.prazo ?? ""} onChange={(e) => onChange("prazo", e.target.value)} />
+          <DatePicker value={String(values.prazo ?? "")} onChange={(v) => onChange("prazo", v)} />
         </div>
         <div className="space-y-2">
           <Label>Categoria</Label>
@@ -413,6 +414,7 @@ export default function MetasProjetos() {
                             setEditingMeta(meta);
                             setIsEditDialogOpen(true);
                           }}
+                          aria-label="Editar meta"
                         >
                           <Pencil className="h-4 w-4" />
                         </Button>
@@ -424,6 +426,7 @@ export default function MetasProjetos() {
                             setMetaToDelete(meta.id);
                             setDeleteAlertOpen(true);
                           }}
+                          aria-label="Excluir meta"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>

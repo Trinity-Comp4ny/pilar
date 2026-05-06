@@ -176,7 +176,14 @@ function MfaEnrollModal({ open, enrollment, onClose, onVerified }: MfaEnrollModa
                 <code className="flex-1 px-2 py-1.5 bg-muted rounded text-xs break-all select-all font-mono">
                   {enrollment.secret}
                 </code>
-                <Button type="button" variant="outline" size="icon" className="shrink-0 h-8 w-8" onClick={handleCopy}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className="shrink-0 h-8 w-8"
+                  onClick={handleCopy}
+                  aria-label="Copiar chave"
+                >
                   {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
                 </Button>
               </div>

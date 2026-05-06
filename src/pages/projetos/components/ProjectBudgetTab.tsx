@@ -133,7 +133,7 @@ export function ProjectBudgetTab({ projetoId, canEdit, disciplinas }: ProjectBud
   if (isLoading) {
     return (
       <div className="flex justify-center py-8">
-        <Loader2 className="h-5 w-5 animate-spin" />
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
       </div>
     );
   }
@@ -185,6 +185,7 @@ export function ProjectBudgetTab({ projetoId, canEdit, disciplinas }: ProjectBud
                         e.stopPropagation();
                         deleteMutation.mutate(o.id);
                       }}
+                      aria-label="Excluir"
                     >
                       <Trash2 className="h-3 w-3" />
                     </Button>
@@ -233,7 +234,13 @@ export function ProjectBudgetTab({ projetoId, canEdit, disciplinas }: ProjectBud
                   />
                 </TableCell>
                 <TableCell className="text-right">
-                  <Button size="icon" className="h-6 w-6" onClick={handleSave} disabled={upsertMutation.isPending}>
+                  <Button
+                    size="icon"
+                    className="h-6 w-6"
+                    onClick={handleSave}
+                    disabled={upsertMutation.isPending}
+                    aria-label="Salvar"
+                  >
                     <Save className="h-3 w-3" />
                   </Button>
                 </TableCell>

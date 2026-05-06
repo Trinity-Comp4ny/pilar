@@ -1,7 +1,7 @@
 import { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { callUntypedRpc } from "@/lib/supabaseRpc";
 import { CompanyFeatureToggles } from "@/components/admin/CompanyFeatureToggles";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -50,10 +50,8 @@ export function FeaturesEmpresaTab({ companyFeatures, setCompanyFeatures, curren
     if (!(await requireAal2())) return;
     setIsSaving(true);
     try {
-      // RPC entra nos types após gen:types pós-migration
-      const { error } = await (
-        supabase.rpc as unknown as (fn: string, args: Record<string, unknown>) => Promise<{ error: Error | null }>
-      )("update_company_features", { p_features: draft });
+      // gen:types ainda não inclui update_company_features
+      const { error } = await callUntypedRpc("update_company_features", { p_features: draft });
       if (error) throw error;
       setCompanyFeatures(draft);
       toast.success("Features atualizadas");
@@ -66,9 +64,9 @@ export function FeaturesEmpresaTab({ companyFeatures, setCompanyFeatures, curren
   };
 
   return (
-    <Card className="border border-black/5">
+    <Card className="rounded-2xl border border-black/5 bg-white">
       <CardHeader>
-        <CardTitle className="text-base">Features da Empresa</CardTitle>
+        <CardTitle className="text-lg font-medium tracking-tight">Features da Empresa</CardTitle>
         <CardDescription>
           Ative ou desative módulos. O plano sugere o conjunto incluso; add-ons são cobrados à parte.
         </CardDescription>

@@ -6,19 +6,21 @@ Sistema de gestão empresarial desenvolvido com React, TypeScript, Vite e Supaba
 
 ### Pré-requisitos
 
-- Node.js 18+ 
+- Node.js 18+
 - npm ou yarn
 - Conta no Supabase
 
 ### Configuração Inicial
 
 1. **Clone o repositório**
+
 ```bash
-git clone <YOUR_GIT_URL>
+git clone https://github.com/Trinity-Comp4ny/pilar.git
 cd pilar
 ```
 
 2. **Instale as dependências**
+
 ```bash
 npm install
 ```
@@ -26,11 +28,13 @@ npm install
 3. **Configure as variáveis de ambiente**
 
 Copie o arquivo `.env.example` para `.env`:
+
 ```bash
 cp .env.example .env
 ```
 
 Edite o arquivo `.env` e adicione suas credenciais do Supabase:
+
 ```env
 VITE_SUPABASE_URL=sua_url_do_supabase
 VITE_SUPABASE_ANON_KEY=sua_chave_anonima_do_supabase
@@ -39,6 +43,7 @@ VITE_SUPABASE_ANON_KEY=sua_chave_anonima_do_supabase
 > ⚠️ **IMPORTANTE**: O arquivo `.env` contém informações sensíveis e **NÃO deve ser commitado** no Git. Ele já está incluído no `.gitignore`.
 
 4. **Inicie o servidor de desenvolvimento**
+
 ```bash
 npm run dev
 ```
@@ -79,6 +84,7 @@ pilar/
    - Use `.env.example` como template
 
 2. **Remover `.env` do histórico do Git** (se já foi commitado):
+
 ```bash
 # Remove do índice do Git mas mantém o arquivo local
 git rm --cached .env
@@ -168,6 +174,7 @@ Verifique se as variáveis `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` estão
 ### Tipos TypeScript desatualizados
 
 Se você modificou o schema do Supabase, regenere os tipos:
+
 ```bash
 npx supabase gen types typescript --project-id <seu-project-id> > src/integrations/supabase/types.ts
 ```

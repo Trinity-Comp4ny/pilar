@@ -5,6 +5,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { toast } from "sonner";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { monitoring } from "@/lib/monitoring";
+import { usePageTracking } from "@/hooks/usePageTracking";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ImpersonationProvider } from "@/contexts/ImpersonationContext";
 import { IdleTimeoutProvider } from "@/components/IdleTimeoutProvider";
@@ -14,6 +16,7 @@ import { AdminRoute } from "./components/AdminRoute";
 import { UltraAdminRoute } from "./components/UltraAdminRoute";
 import { FeatureRoute } from "./components/FeatureRoute";
 import { AdminOnlyRoute } from "./components/AdminOnlyRoute";
+import { RequireAal2 } from "./components/RequireAal2";
 import { ImpersonationBanner } from "./components/ImpersonationBanner";
 
 const Landing = lazy(() => import("./pages/Landing"));
@@ -26,6 +29,7 @@ const Leads = lazy(() => import("./pages/leads"));
 const Financeiro = lazy(() => import("./pages/Financeiro"));
 const Projetos = lazy(() => import("./pages/Projetos"));
 const Clientes = lazy(() => import("./pages/clientes"));
+const ClienteDetalhe = lazy(() => import("./pages/clientes/[id]"));
 const Pessoas = lazy(() => import("./pages/pessoas"));
 const Relatorios = lazy(() => import("./pages/Relatorios"));
 const Profile = lazy(() => import("./pages/Profile"));
@@ -38,18 +42,19 @@ const Propostas = lazy(() => import("./pages/propostas"));
 const Capacidade = lazy(() => import("./pages/capacidade"));
 const AiHub = lazy(() => import("./pages/ai"));
 const ProjetoDetail = lazy(() => import("./pages/projetos/ProjetoDetail"));
+const Calendario = lazy(() => import("./pages/Calendario"));
 const ClienteLogin = lazy(() => import("./pages/cliente/ClienteLogin"));
 const ClienteDashboard = lazy(() => import("./pages/cliente/ClienteDashboard"));
 const ClienteProjetoDetail = lazy(() => import("./pages/cliente/ClienteProjetoDetail"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Admin = lazy(() => import("./pages/admin"));
-const FeatureAccessPreview = lazy(() => import("./pages/admin/FeatureAccessPreview"));
 const UltraAdmin = lazy(() => import("./pages/ultra-admin"));
 const MfaChallengePage = lazy(() => import("./pages/MfaChallengePage"));
 const MfaSetupPage = lazy(() => import("./pages/MfaSetupPage"));
 const PasswordReset = lazy(() => import("./pages/PasswordReset"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
 const SemAcesso = lazy(() => import("./pages/SemAcesso"));
+const Privacidade = lazy(() => import("./pages/Privacidade"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -60,12 +65,26 @@ const queryClient = new QueryClient({
       refetchOnWindowFocus: false,
     },
     mutations: {
-      onError: (error) => {
+      onError: (error, variables) => {
         const message = error instanceof Error ? error.message : "Erro inesperado";
         toast.error(message);
+        monitoring.captureException(error instanceof Error ? error : new Error(message), {
+          source: "react-query.mutation",
+          variables,
+        });
       },
     },
   },
+});
+
+queryClient.getQueryCache().subscribe((event) => {
+  if (event.type === "updated" && event.action.type === "error") {
+    const err = event.action.error;
+    monitoring.captureException(err instanceof Error ? err : new Error(String(err)), {
+      source: "react-query.query",
+      queryKey: event.query.queryKey,
+    });
+  }
 });
 
 const App = () => {
@@ -75,6 +94,7 @@ const App = () => {
         <TooltipProvider>
           <Toaster />
           <BrowserRouter>
+            <PageTracker />
             <AuthProvider>
               <IdleTimeoutProvider />
               <ImpersonationProvider>
@@ -93,6 +113,7 @@ const App = () => {
                     <Route path="/login" element={<Login />} />
                     <Route path="/forgot-password" element={<ForgotPassword />} />
                     <Route path="/reset-password" element={<PasswordReset />} />
+                    <Route path="/privacidade" element={<Privacidade />} />
 
                     <Route element={<PrivateRoute />}>
                       <Route path="/dashboard" element={<Dashboard />} />
@@ -108,10 +129,12 @@ const App = () => {
                       <Route element={<FeatureRoute feature="projetos" />}>
                         <Route path="/projetos" element={<Projetos />} />
                         <Route path="/projetos/:id" element={<ProjetoDetail />} />
+                        <Route path="/calendario" element={<Calendario />} />
                       </Route>
 
                       <Route element={<FeatureRoute feature="clientes" />}>
                         <Route path="/clientes" element={<Clientes />} />
+                        <Route path="/clientes/:id" element={<ClienteDetalhe />} />
                       </Route>
 
                       <Route element={<AdminOnlyRoute />}>
@@ -144,17 +167,21 @@ const App = () => {
                         <Route path="/ai" element={<AiHub />} />
                       </Route>
                       <Route path="/profile" element={<Profile />} />
-                      <Route path="/company" element={<Company />} />
                       <Route path="/company-setup" element={<CompanySetup />} />
-                      <Route path="/billing" element={<Billing />} />
                       <Route path="/profile-setup" element={<ProfileSetup />} />
+
+                      {/* Rotas administrativas sensíveis exigem step-up MFA (sessão AAL2) */}
+                      <Route element={<RequireAal2 />}>
+                        <Route path="/company" element={<Company />} />
+                        <Route path="/billing" element={<Billing />} />
+                      </Route>
+
                       <Route path="/mfa" element={<MfaChallengePage />} />
                       <Route path="/mfa/setup" element={<MfaSetupPage />} />
                       <Route path="/sem-acesso" element={<SemAcesso />} />
 
                       <Route element={<AdminRoute />}>
                         <Route path="/admin" element={<Admin />} />
-                        <Route path="/admin/features-preview" element={<FeatureAccessPreview />} />
                       </Route>
 
                       <Route element={<UltraAdminRoute />}>
@@ -184,5 +211,10 @@ const App = () => {
     </ErrorBoundary>
   );
 };
+
+function PageTracker() {
+  usePageTracking();
+  return null;
+}
 
 export default App;

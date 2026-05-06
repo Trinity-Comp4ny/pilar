@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { untypedFrom } from "@/lib/supabaseRpc";
 import { toast } from "sonner";
 import { Building2, CreditCard, ShieldCheck, SlidersHorizontal, Sparkles, Users, Zap } from "lucide-react";
 import { PageLayout } from "@/components/PageLayout";
@@ -79,7 +80,7 @@ export default function Admin() {
         const { data: profile } = await supabase
           .from("profiles")
           .select(
-            "id, empresa_id, role, empresas(id, nome, cnpj, status, email, contato, endereco, cidade, estado, cep, logo_url)"
+            "id, empresa_id, role, empresas(id, nome, cnpj, status, email, contato, endereco, cidade, estado, cep, logo_url, features)"
           )
           .eq("id", user.id)
           .single();
@@ -104,42 +105,14 @@ export default function Admin() {
         }
 
         if (profile?.empresa_id) {
-          // Tipos pilar_subscriptions/pilar_subscription_plans entram após gen:types pós-migration
-          const subResult = await (
-            supabase as unknown as {
-              from: (t: string) => {
-                select: (s: string) => {
-                  eq: (
-                    k: string,
-                    v: string
-                  ) => {
-                    maybeSingle: () => Promise<{ data: { plan_id?: string | null } | null }>;
-                  };
-                };
-              };
-            }
-          )
-            .from("pilar_subscriptions")
+          // gen:types não inclui pilar_subscriptions/pilar_subscription_plans ainda
+          const subResult = await untypedFrom<{ plan_id: string | null }>("pilar_subscriptions")
             .select("plan_id")
             .eq("empresa_id", profile.empresa_id)
             .maybeSingle();
           const planId = subResult.data?.plan_id;
           if (planId) {
-            const planResult = await (
-              supabase as unknown as {
-                from: (t: string) => {
-                  select: (s: string) => {
-                    eq: (
-                      k: string,
-                      v: string
-                    ) => {
-                      maybeSingle: () => Promise<{ data: { slug?: string | null } | null }>;
-                    };
-                  };
-                };
-              }
-            )
-              .from("pilar_subscription_plans")
+            const planResult = await untypedFrom<{ slug: string | null }>("pilar_subscription_plans")
               .select("slug")
               .eq("id", planId)
               .maybeSingle();
@@ -152,7 +125,7 @@ export default function Admin() {
           const [{ data: companyUsers }, { data: pendingConvites }] = await Promise.all([
             supabase
               .from("profiles")
-              .select("id, first_name, last_name, email, role, features, contato")
+              .select("id, first_name, last_name, email, role, features, contato, onboarding_completed")
               .eq("empresa_id", profile.empresa_id),
             supabase
               .from("convites")
@@ -173,6 +146,7 @@ export default function Admin() {
             role: u.role,
             features: u.features,
             contato: (u as { contato?: string | null }).contato,
+            isPending: (u as { onboarding_completed?: boolean | null }).onboarding_completed === false,
           }));
 
           const pendingList: RawUser[] = (pendingConvites ?? []).map((c) => ({

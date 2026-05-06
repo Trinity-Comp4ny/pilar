@@ -1,21 +1,28 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Mail, Lock, ArrowLeft, Loader2, CheckCircle2, Eye, EyeOff } from "lucide-react";
 import { usePageTitle } from "@/hooks/usePageTitle";
+import { loginSchema, loginDefaultValues, type LoginFormData } from "@/schemas";
 
 export default function Login() {
   usePageTitle("Login");
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+
+  const form = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+    mode: "onChange",
+    defaultValues: loginDefaultValues,
+  });
 
   useEffect(() => {
     const checkUser = async () => {
@@ -29,13 +36,12 @@ export default function Login() {
     checkUser();
   }, [navigate]);
 
-  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const handleLogin = async (values: LoginFormData) => {
     setIsLoading(true);
 
     // guard_login_attempt não está nos tipos gerados ainda — usar cast seguro
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: loginAllowed } = await (supabase.rpc as any)("guard_login_attempt", { p_email: email });
+    const { data: loginAllowed } = await (supabase.rpc as any)("guard_login_attempt", { p_email: values.email });
     if (loginAllowed === false) {
       toast.error("Muitas tentativas", {
         description: "Aguarde 15 minutos antes de tentar novamente.",
@@ -45,8 +51,8 @@ export default function Login() {
     }
 
     const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
+      email: values.email,
+      password: values.password,
     });
 
     if (error) {
@@ -78,6 +84,7 @@ export default function Login() {
   };
 
   const handleResetPassword = async () => {
+    const email = form.getValues("email");
     if (!email.trim()) {
       toast.error("Informe o email", {
         description: "Digite seu email no campo acima para receber o link de redefinição.",
@@ -126,76 +133,90 @@ export default function Login() {
             <p className="text-sm text-slate-500">Acesse sua conta</p>
           </div>
 
-          <form onSubmit={handleLogin} className="space-y-5">
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-slate-700 font-medium">
-                Email
-              </Label>
-              <div className="relative group">
-                <Mail className="absolute left-3 top-3 h-4 w-4 text-slate-400 group-focus-within:text-brand transition-colors" />
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="seu@empresa.com"
-                  className="pl-10 h-11 bg-slate-50 border-slate-200 focus:border-brand focus:ring-brand/20 transition-all"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-              </div>
-            </div>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(handleLogin)} className="space-y-5">
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem className="space-y-2">
+                    <FormLabel className="text-slate-700 font-medium">
+                      Email <span className="text-red-500">*</span>
+                    </FormLabel>
+                    <FormControl>
+                      <div className="relative group">
+                        <Mail className="absolute left-3 top-3 h-4 w-4 text-slate-400 group-focus-within:text-brand transition-colors" />
+                        <Input
+                          {...field}
+                          type="email"
+                          placeholder="seu@empresa.com"
+                          className="pl-10 h-11 bg-slate-50 border-slate-200 focus:border-brand focus:ring-brand/20 transition-all"
+                        />
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="password" className="text-slate-700 font-medium">
-                  Senha
-                </Label>
-                <button
-                  type="button"
-                  onClick={handleResetPassword}
-                  disabled={isResetting}
-                  className="text-xs font-medium text-brand hover:text-brand/70 hover:underline disabled:opacity-50"
-                >
-                  {isResetting ? "Enviando..." : "Esqueceu a senha?"}
-                </button>
-              </div>
-              <div className="relative group">
-                <Lock className="absolute left-3 top-3 h-4 w-4 text-slate-400 group-focus-within:text-brand transition-colors" />
-                <Input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  placeholder="••••••••"
-                  className="pl-10 pr-10 h-11 bg-slate-50 border-slate-200 focus:border-brand focus:ring-brand/20 transition-all"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword((v) => !v)}
-                  className="absolute right-3 top-3 text-slate-400 hover:text-brand transition-colors"
-                  tabIndex={-1}
-                  aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
-                >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
-              </div>
-            </div>
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <FormLabel className="text-slate-700 font-medium">
+                        Senha <span className="text-red-500">*</span>
+                      </FormLabel>
+                      <button
+                        type="button"
+                        onClick={handleResetPassword}
+                        disabled={isResetting}
+                        className="text-xs font-medium text-slate-700 decoration-brand underline-offset-2 hover:underline disabled:opacity-50"
+                      >
+                        {isResetting ? "Enviando..." : "Esqueceu a senha?"}
+                      </button>
+                    </div>
+                    <FormControl>
+                      <div className="relative group">
+                        <Lock className="absolute left-3 top-3 h-4 w-4 text-slate-400 group-focus-within:text-brand transition-colors" />
+                        <Input
+                          {...field}
+                          type={showPassword ? "text" : "password"}
+                          placeholder="••••••••"
+                          className="pl-10 pr-10 h-11 bg-slate-50 border-slate-200 focus:border-brand focus:ring-brand/20 transition-all"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword((v) => !v)}
+                          className="absolute right-3 top-3 text-slate-400 hover:text-brand transition-colors"
+                          tabIndex={-1}
+                          aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
+                        >
+                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <Button
-              className="w-full h-11 bg-brand hover:bg-brand/80 text-ink font-medium shadow-lg shadow-brand/20 hover:shadow-brand/30 transition-all active:scale-[0.98] text-sm"
-              type="submit"
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Entrando...
-                </>
-              ) : (
-                "Entrar"
-              )}
-            </Button>
-          </form>
+              <Button
+                className="w-full h-11 bg-brand hover:bg-brand/80 text-ink font-medium shadow-lg shadow-brand/20 hover:shadow-brand/30 transition-all active:scale-[0.98] text-sm"
+                type="submit"
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Entrando...
+                  </>
+                ) : (
+                  "Entrar"
+                )}
+              </Button>
+            </form>
+          </Form>
 
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
@@ -232,8 +253,6 @@ export default function Login() {
             className="w-full h-full object-cover opacity-60 scale-105 animate-pulse-slow grayscale contrast-125"
             style={{ animationDuration: "20s" }}
           />
-          {/* Overlay gradiente + tintura laranja */}
-          <div className="absolute inset-0 bg-brand/40 mix-blend-multiply" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/10" />
         </div>
 

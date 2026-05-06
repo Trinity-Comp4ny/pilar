@@ -19,6 +19,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { getPortalToken } from "@/hooks/useClienteAuth";
+import { EmptyState } from "@/components/EmptyState";
 
 interface Entrega {
   id: string;
@@ -45,7 +46,15 @@ const STATUS_CONFIG: Record<Entrega["status"], { label: string; color: string; i
   revisao_solicitada: { label: "Revisão solicitada", color: "bg-orange-100 text-orange-800", icon: RotateCcw },
 };
 
-export function EntregasContent({ projetoId, token }: { projetoId: string; token?: string }) {
+export function EntregasContent({
+  projetoId,
+  token,
+  readOnly,
+}: {
+  projetoId: string;
+  token?: string;
+  readOnly?: boolean;
+}) {
   const [entregas, setEntregas] = useState<Entrega[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -112,9 +121,8 @@ export function EntregasContent({ projetoId, token }: { projetoId: string; token
   if (threads.length === 0) {
     return (
       <Card>
-        <CardContent className="p-8 text-center text-muted-foreground">
-          <FileText className="h-8 w-8 mx-auto mb-2 opacity-40" />
-          <p className="text-sm">Nenhuma entrega disponível.</p>
+        <CardContent className="p-0">
+          <EmptyState icon={FileText} title="Nenhuma entrega disponível" />
         </CardContent>
       </Card>
     );
@@ -150,6 +158,7 @@ export function EntregasContent({ projetoId, token }: { projetoId: string; token
                 onAprovar={() => handleAprovar(thread.current.id)}
                 onSolicitar={() => handleSolicitarRevisao(thread.current.id)}
                 saving={saving}
+                historico={readOnly}
               />
             ))}
           </div>

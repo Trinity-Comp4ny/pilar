@@ -1,56 +1,58 @@
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { Calendar as CalendarIcon, CalendarDays } from "lucide-react";
-import { format, startOfMonth, endOfMonth, subMonths, startOfYear, endOfYear } from "date-fns";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Calendar as CalendarIcon, CalendarDays, HelpCircle } from "lucide-react";
+import { format, startOfMonth, endOfMonth, subMonths, startOfYear, endOfYear, isSameDay } from "date-fns";
 import { cn } from "@/lib/utils";
-import { Dispatch, SetStateAction, useState, useEffect } from "react";
+import { useMemo } from "react";
 import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useFinanceFilter } from "../hooks/useFinanceFilter";
 
-interface FinanceiroHeaderProps {
-  dateFrom: Date | undefined;
-  setDateFrom: Dispatch<SetStateAction<Date | undefined>>;
-  dateTo: Date | undefined;
-  setDateTo: Dispatch<SetStateAction<Date | undefined>>;
-  visualizacao: "dia" | "mes" | "ano";
-  setVisualizacao: Dispatch<SetStateAction<"dia" | "mes" | "ano">>;
+type PresetKey = "this-month" | "last-month" | "this-year" | "custom";
+
+function rangeForPreset(preset: PresetKey): { from: Date; to: Date } | null {
+  const now = new Date();
+  if (preset === "this-month") return { from: startOfMonth(now), to: endOfMonth(now) };
+  if (preset === "last-month") {
+    const last = subMonths(now, 1);
+    return { from: startOfMonth(last), to: endOfMonth(last) };
+  }
+  if (preset === "this-year") return { from: startOfYear(now), to: endOfYear(now) };
+  return null;
 }
 
-export function FinanceiroHeader({
-  dateFrom,
-  setDateFrom,
-  dateTo,
-  setDateTo,
-  visualizacao: _visualizacao,
-  setVisualizacao: _setVisualizacao,
-}: FinanceiroHeaderProps) {
-  const { isMobile } = useSidebar();
-  const [filterType, setFilterType] = useState("this-month");
+function detectPreset(from: Date | undefined, to: Date | undefined): PresetKey {
+  if (!from || !to) return "custom";
+  const sameAs = (k: Exclude<PresetKey, "custom">) => {
+    const r = rangeForPreset(k);
+    return !!r && isSameDay(r.from, from) && isSameDay(r.to, to);
+  };
+  if (sameAs("this-month")) return "this-month";
+  if (sameAs("last-month")) return "last-month";
+  if (sameAs("this-year")) return "this-year";
+  return "custom";
+}
 
-  useEffect(() => {
-    // Set default filter to current month on mount
-    const now = new Date();
-    setDateFrom(startOfMonth(now));
-    setDateTo(endOfMonth(now));
-  }, [setDateFrom, setDateTo]);
+interface FinanceiroHeaderProps {
+  mode?: "basico" | "avancado";
+  onModeChange?: (mode: "basico" | "avancado") => void;
+}
+
+export function FinanceiroHeader({ mode = "basico", onModeChange }: FinanceiroHeaderProps = {}) {
+  const { dateFrom, setDateFrom, dateTo, setDateTo, visualizacao, setVisualizacao } = useFinanceFilter();
+  const { isMobile } = useSidebar();
+  const filterType = useMemo(() => detectPreset(dateFrom, dateTo), [dateFrom, dateTo]);
 
   const handleFilterChange = (value: string) => {
-    setFilterType(value);
-    const now = new Date();
-
-    if (value === "this-month") {
-      setDateFrom(startOfMonth(now));
-      setDateTo(endOfMonth(now));
-    } else if (value === "last-month") {
-      const last = subMonths(now, 1);
-      setDateFrom(startOfMonth(last));
-      setDateTo(endOfMonth(last));
-    } else if (value === "this-year") {
-      setDateFrom(startOfYear(now));
-      setDateTo(endOfYear(now));
-    } else if (value === "custom") {
-      // Do not change dates, let user pick
+    if (value === "custom") return;
+    const range = rangeForPreset(value as PresetKey);
+    if (range) {
+      setDateFrom(range.from);
+      setDateTo(range.to);
     }
   };
 
@@ -64,17 +66,38 @@ export function FinanceiroHeader({
             )}
             <div>
               <h1 className="text-2xl md:text-3xl font-medium tracking-tight">Financeiro</h1>
-              <p className="text-sm text-black/60 mt-1">Gerencie receitas e despesas</p>
+              <p className="text-sm text-muted-foreground mt-1">Gerencie receitas e despesas</p>
+            </div>
+
+            <div className="flex items-center gap-2 ml-2 px-3 py-1.5 rounded-full bg-gray-50 border">
+              <Label htmlFor="financeiro-mode" className="text-xs font-medium cursor-pointer select-none">
+                {mode === "avancado" ? "Modo avançado" : "Modo simples"}
+              </Label>
+              <Switch
+                id="financeiro-mode"
+                checked={mode === "avancado"}
+                onCheckedChange={(checked) => onModeChange?.(checked ? "avancado" : "basico")}
+              />
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button type="button" className="text-muted-foreground hover:text-foreground transition-colors">
+                    <HelpCircle className="h-3.5 w-3.5" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="max-w-[260px]">
+                  <p className="text-xs">Modo avançado mostra DRE, Aging, Projeção de caixa, Folha, Faturas e mais.</p>
+                </TooltipContent>
+              </Tooltip>
             </div>
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-end">
-            <div className="flex items-center gap-2">
-              <CalendarDays className="h-4 w-4 text-gray-500" />
-              <span className="text-sm font-medium text-gray-700">Período:</span>
+            <div className="flex items-center gap-2 flex-wrap">
+              <CalendarDays className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm font-medium text-muted-foreground">Período:</span>
 
               <Select value={filterType} onValueChange={handleFilterChange}>
-                <SelectTrigger className="w-[180px] h-9 text-xs rounded-full">
+                <SelectTrigger className="w-[170px] h-9 text-sm rounded-full">
                   <SelectValue placeholder="Selecione o período" />
                 </SelectTrigger>
                 <SelectContent>
@@ -91,13 +114,12 @@ export function FinanceiroHeader({
                     <PopoverTrigger asChild>
                       <Button
                         variant="outline"
-                        size="sm"
                         className={cn(
-                          "justify-start text-left font-normal text-xs h-9 min-w-[120px] rounded-full",
+                          "justify-start text-left font-normal text-sm h-9 min-w-[130px] rounded-full",
                           !dateFrom && "text-muted-foreground"
                         )}
                       >
-                        <CalendarIcon className="mr-2 h-3 w-3" />
+                        <CalendarIcon className="mr-2 h-4 w-4" />
                         {dateFrom ? format(dateFrom, "dd/MM/yyyy") : "Início"}
                       </Button>
                     </PopoverTrigger>
@@ -109,13 +131,12 @@ export function FinanceiroHeader({
                     <PopoverTrigger asChild>
                       <Button
                         variant="outline"
-                        size="sm"
                         className={cn(
-                          "justify-start text-left font-normal text-xs h-9 min-w-[120px] rounded-full",
+                          "justify-start text-left font-normal text-sm h-9 min-w-[130px] rounded-full",
                           !dateTo && "text-muted-foreground"
                         )}
                       >
-                        <CalendarIcon className="mr-2 h-3 w-3" />
+                        <CalendarIcon className="mr-2 h-4 w-4" />
                         {dateTo ? format(dateTo, "dd/MM/yyyy") : "Fim"}
                       </Button>
                     </PopoverTrigger>
@@ -125,6 +146,24 @@ export function FinanceiroHeader({
                   </Popover>
                 </div>
               )}
+
+              <div className="inline-flex rounded-full bg-muted p-0.5 ml-1">
+                {(["dia", "mes"] as const).map((v) => (
+                  <button
+                    key={v}
+                    type="button"
+                    onClick={() => setVisualizacao(v)}
+                    className={cn(
+                      "px-3 h-8 rounded-full text-xs transition-colors",
+                      visualizacao === v
+                        ? "bg-white shadow-sm text-foreground font-medium"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    {v === "dia" ? "Diário" : "Mensal"}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </div>

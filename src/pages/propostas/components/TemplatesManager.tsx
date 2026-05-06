@@ -18,6 +18,7 @@ import {
   type PropostaTemplate,
 } from "@/hooks/usePropostaTemplates";
 import { AUTO_VARIABLES } from "@/lib/docxUtils";
+import { sanitizeHtml } from "@/lib/sanitize";
 import { VariaveisGuideButton } from "./VariaveisGuideDialog";
 import mammoth from "mammoth";
 
@@ -133,10 +134,11 @@ export function TemplatesManager() {
           <Button
             variant="ghost"
             size="icon"
-            className="h-7 w-7 text-red-500 flex-shrink-0"
+            className="h-8 w-8 text-red-500 flex-shrink-0"
             onClick={() => setDeleteId(t.id)}
+            aria-label="Excluir template"
           >
-            <Trash2 className="h-3.5 w-3.5" />
+            <Trash2 className="h-4 w-4" />
           </Button>
         </div>
 
@@ -279,7 +281,7 @@ export function TemplatesManager() {
                     [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:mb-2
                     [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:mb-2
                     [&_li]:text-sm [&_li]:mb-1"
-                  dangerouslySetInnerHTML={{ __html: previewHtml }}
+                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(previewHtml) }}
                 />
               </div>
             ) : null}

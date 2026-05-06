@@ -1,0 +1,42 @@
+{
+  "actions": {
+    "save": "Salvar",
+    "cancel": "Cancelar",
+    "confirm": "Confirmar",
+    "delete": "Excluir",
+    "edit": "Editar",
+    "create": "Criar",
+    "add": "Adicionar",
+    "remove": "Remover",
+    "search": "Buscar",
+    "filter": "Filtrar",
+    "clear": "Limpar",
+    "apply": "Aplicar",
+    "close": "Fechar",
+    "back": "Voltar",
+    "next": "Próximo",
+    "previous": "Anterior",
+    "export": "Exportar",
+    "import": "Importar",
+    "duplicate": "Duplicar",
+    "refresh": "Atualizar"
+  },
+  "answers": {
+    "yes": "Sim",
+    "no": "Não"
+  },
+  "states": {
+    "loading": "Carregando...",
+    "saving": "Salvando...",
+    "empty": "Sem dados",
+    "noResults": "Nenhum resultado encontrado",
+    "error": "Ocorreu um erro",
+    "success": "Operação realizada com sucesso"
+  },
+  "labels": {
+    "required": "Obrigatório",
+    "optional": "Opcional",
+    "all": "Todos",
+    "none": "Nenhum"
+  }
+}

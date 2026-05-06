@@ -9,9 +9,9 @@ export function AutomacoesTab() {
 
   return (
     <div className="space-y-6">
-      <Card>
+      <Card className="rounded-2xl border border-black/5 bg-white">
         <CardHeader>
-          <CardTitle>Integrações ativas</CardTitle>
+          <CardTitle className="text-lg font-medium tracking-tight">Integrações ativas</CardTitle>
           <CardDescription>Conexões com serviços externos já disponíveis</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -25,9 +25,9 @@ export function AutomacoesTab() {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="rounded-2xl border border-black/5 bg-white">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+          <CardTitle className="text-lg font-medium tracking-tight flex items-center gap-2">
             Futuras integrações
             <Badge variant="secondary">Em breve</Badge>
           </CardTitle>
@@ -46,14 +46,14 @@ export function AutomacoesTab() {
             >
               <div className="flex items-center gap-3">
                 <div className="h-9 w-9 rounded-full bg-black/5 flex items-center justify-center">
-                  <Zap size={16} className="text-black/40" />
+                  <Zap size={16} className="text-muted-foreground" />
                 </div>
                 <div>
                   <div className="text-sm font-medium">{item.name}</div>
-                  <div className="text-xs text-black/60">{item.description}</div>
+                  <div className="text-xs text-muted-foreground">{item.description}</div>
                 </div>
               </div>
-              <Badge variant="outline" className="text-black/40">
+              <Badge variant="outline" className="text-muted-foreground">
                 planejado
               </Badge>
             </div>
@@ -96,7 +96,7 @@ function IntegrationRow({
               {status}
             </Badge>
           </div>
-          <div className="text-xs text-black/60">{description}</div>
+          <div className="text-xs text-muted-foreground">{description}</div>
         </div>
       </div>
       <Button variant="ghost" size="sm" onClick={onOpen} className="gap-1">

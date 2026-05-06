@@ -6,6 +6,7 @@ import { getSafeErrorMessage } from "@/lib/safeError";
 export interface Lead {
   id: string;
   nome: string;
+  sobrenome?: string;
   email?: string;
   contato?: string;
   status: "Novo" | "Em contato" | "Proposta" | "Negociação" | "Ganho" | "Perdido";
@@ -13,13 +14,24 @@ export interface Lead {
   cliente_id?: string;
   motivo_perda?: string;
   convertido_em?: string;
+  valor_estimado?: number;
+  responsavel_id?: string;
+  previsao_fechamento?: string;
+  empresa_lead?: string;
+  notas?: string;
 }
 
 export interface LeadInsert {
   nome: string;
+  sobrenome?: string;
   email?: string;
   contato?: string;
   origem?: string;
+  valor_estimado?: number;
+  responsavel_id?: string;
+  previsao_fechamento?: string;
+  empresa_lead?: string;
+  notas?: string;
 }
 
 export const useLeads = () => {
@@ -48,9 +60,15 @@ export const useCreateLead = () => {
         .from("leads")
         .insert({
           nome: lead.nome ?? "",
+          sobrenome: lead.sobrenome ?? null,
           email: lead.email,
           contato: lead.contato,
           origem: lead.origem,
+          valor_estimado: lead.valor_estimado ?? null,
+          responsavel_id: lead.responsavel_id ?? null,
+          previsao_fechamento: lead.previsao_fechamento ?? null,
+          empresa_lead: lead.empresa_lead ?? null,
+          notas: lead.notas ?? null,
           status: "Novo",
           empresa_id: empresaId,
         } as never)
@@ -181,6 +199,28 @@ export const useDeleteLead = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["leads"] });
       toast.success("Lead excluído");
+    },
+  });
+};
+
+export interface LeadMember {
+  id: string;
+  first_name: string;
+  last_name: string;
+}
+
+export const useLeadMembers = () => {
+  return useQuery({
+    queryKey: ["lead-members"],
+    queryFn: async () => {
+      const { data: empresaId } = await supabase.rpc("get_user_empresa_id");
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, first_name, last_name")
+        .eq("empresa_id", empresaId ?? "")
+        .order("first_name");
+      if (error) throw error;
+      return (data || []) as LeadMember[];
     },
   });
 };

@@ -2,6 +2,7 @@ import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
   BarChart,
   Calendar,
+  CalendarDays,
   FileText,
   Home,
   MapPin,
@@ -68,6 +69,7 @@ const menu: MenuGroup[] = [
     label: "Operação",
     items: [
       { title: "Projetos", url: "/projetos", icon: Calendar, feature: "projetos" },
+      { title: "Calendário", url: "/calendario", icon: CalendarDays, feature: "projetos" },
       { title: "Mapa", url: "/mapa", icon: MapPin, feature: "mapa" },
     ],
   },
@@ -214,7 +216,7 @@ export function AppSidebar() {
             <div className="flex items-center gap-3">
               <img src="/pilar-logo.svg" alt="Pilar" className="h-7 w-7" />
               <span className="text-base font-normal tracking-tight">
-                Pilar<sup className="text-[8px] font-normal text-slate-400 ml-0.5 relative -top-2">®</sup>
+                Pilar<sup className="text-[8px] font-normal text-ink-disabled ml-0.5 relative -top-2">®</sup>
               </span>
             </div>
             <SidebarTrigger className="text-black/70 hover:text-brand hover:bg-brand/5 transition-colors rounded-full h-8 w-8" />
@@ -305,7 +307,7 @@ export function AppSidebar() {
             )}
             <ImpersonationPicker />
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleLogout} className="text-red-600 focus:text-red-600">
+            <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive">
               <LogOut size={14} className="mr-2" />
               Sair
             </DropdownMenuItem>

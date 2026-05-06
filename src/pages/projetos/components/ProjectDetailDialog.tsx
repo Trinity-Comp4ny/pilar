@@ -172,7 +172,7 @@ export function ProjectDetailDialog({
                 {canEdit && (
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 -mr-2 -mt-1">
+                      <Button variant="ghost" size="icon" className="h-8 w-8 -mr-2 -mt-1" aria-label="Mais opções">
                         <MoreVertical className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
@@ -328,7 +328,7 @@ export function ProjectDetailDialog({
           </div>
 
           {/* Footer */}
-          <div className="flex items-center gap-2 px-6 py-3 border-t bg-gray-50/30">
+          <div className="flex items-center justify-end gap-2 px-6 py-3 border-t bg-gray-50/30">
             <Button
               size="sm"
               onClick={() => {

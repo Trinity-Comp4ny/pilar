@@ -147,7 +147,7 @@ export function EntregaveisTab({ projetoId, canEdit, disciplinas }: EntregaveisT
 
         {isLoading ? (
           <div className="py-10 flex justify-center">
-            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
           </div>
         ) : threads.length === 0 ? (
           <EmptyState canEdit={canEdit} onNew={openNew} />
@@ -705,7 +705,7 @@ function FileUploadField({
           <span className="truncate">{file.name}</span>
           <span className="text-muted-foreground flex-shrink-0">{formatFileSize(file.size)}</span>
         </div>
-        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onClear}>
+        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onClear} aria-label="Remover arquivo">
           <Trash2 className="h-3 w-3" />
         </Button>
       </div>

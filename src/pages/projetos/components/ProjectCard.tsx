@@ -8,9 +8,13 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreVertical, ExternalLink, Edit, Trash2 } from "lucide-react";
+import { MoreVertical, ExternalLink, Edit, Trash2, ArrowRight } from "lucide-react";
+import { PROJECT_STATUS_CONFIG } from "@/constants";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
@@ -29,6 +33,7 @@ interface ProjectCardProps {
   onClick: (projeto: Projeto) => void;
   onEdit?: (projeto: Projeto) => void;
   onDelete?: (id: string) => void;
+  onMoveStatus?: (id: string, newStatus: string) => void;
   canEdit?: boolean;
   isDragging?: boolean;
 }
@@ -38,13 +43,18 @@ export function ProjectCard({
   onClick,
   onEdit,
   onDelete,
+  onMoveStatus,
   canEdit = false,
   isDragging = false,
 }: ProjectCardProps) {
   const navigate = useNavigate();
   const priorityConfig = PROJECT_PRIORITY_CONFIG[projeto.prioridade as ProjectPriority];
   const priorityDot =
-    projeto.prioridade === "Alta" ? "bg-red-500" : projeto.prioridade === "Media" ? "bg-amber-400" : "bg-blue-400";
+    projeto.prioridade === "Alta"
+      ? "bg-status-cancelled"
+      : projeto.prioridade === "Media"
+        ? "bg-status-planning"
+        : "bg-status-progress";
   const progress = getProjectProgress(projeto.disciplinas);
   const deadline = getDeadlineStatus(projeto);
 
@@ -76,6 +86,7 @@ export function ProjectCard({
                     variant="ghost"
                     size="icon"
                     className="h-6 w-6 text-muted-foreground hover:text-foreground -mr-1"
+                    aria-label="Mais opções"
                   >
                     <MoreVertical className="h-3.5 w-3.5" />
                   </Button>
@@ -88,6 +99,25 @@ export function ProjectCard({
                     <DropdownMenuItem onClick={() => onEdit(projeto)}>
                       <Edit className="h-3.5 w-3.5 mr-2" /> Editar dados
                     </DropdownMenuItem>
+                  )}
+                  {onMoveStatus && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuSub>
+                        <DropdownMenuSubTrigger>
+                          <ArrowRight className="h-3.5 w-3.5 mr-2" /> Mover para
+                        </DropdownMenuSubTrigger>
+                        <DropdownMenuSubContent>
+                          {Object.entries(PROJECT_STATUS_CONFIG)
+                            .filter(([s]) => s !== projeto.status)
+                            .map(([s, cfg]) => (
+                              <DropdownMenuItem key={s} onClick={() => onMoveStatus(projeto.id, s)}>
+                                {cfg.label}
+                              </DropdownMenuItem>
+                            ))}
+                        </DropdownMenuSubContent>
+                      </DropdownMenuSub>
+                    </>
                   )}
                   {onDelete && (
                     <>

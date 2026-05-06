@@ -1,9 +1,12 @@
 import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { toast } from "sonner";
@@ -11,6 +14,7 @@ import { User, Mail, Phone, Building2, ShieldCheck } from "lucide-react";
 import { formatPhone } from "@/lib/maskUtils";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { MfaSetup } from "@/components/MfaSetup";
+import { profileEditSchema, profileEditDefaultValues, type ProfileEditFormData } from "@/schemas";
 
 export default function Profile() {
   usePageTitle("Perfil");
@@ -18,9 +22,16 @@ export default function Profile() {
   const [isLoading, setIsLoading] = useState(true);
   const [companyName, setCompanyName] = useState<string>("");
   const [email, setEmail] = useState<string>("");
-  const [firstName, setFirstName] = useState<string>("");
-  const [lastName, setLastName] = useState<string>("");
-  const [contact, setContact] = useState<string>("");
+
+  const form = useForm<ProfileEditFormData>({
+    resolver: zodResolver(profileEditSchema),
+    mode: "onChange",
+    defaultValues: profileEditDefaultValues,
+  });
+
+  const firstName = form.watch("firstName");
+  const lastName = form.watch("lastName");
+  const contact = form.watch("contact");
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -38,9 +49,11 @@ export default function Profile() {
 
         if (error) throw error;
 
-        setFirstName(profile?.first_name || "");
-        setLastName(profile?.last_name || "");
-        setContact(profile?.contato || "");
+        form.reset({
+          firstName: profile?.first_name ?? "",
+          lastName: profile?.last_name ?? "",
+          contact: profile?.contato ?? "",
+        });
         setCompanyName(profile?.empresas?.nome || "");
       } catch (err: unknown) {
         toast.error("Erro ao carregar perfil");
@@ -50,13 +63,9 @@ export default function Profile() {
     };
 
     fetchProfile();
-  }, [toast]);
+  }, [form]);
 
-  const handleSave = async () => {
-    if (!firstName.trim() || !lastName.trim()) {
-      toast.error("Nome e sobrenome são obrigatórios");
-      return;
-    }
+  const handleSave = async (values: ProfileEditFormData) => {
     try {
       const { data: auth } = await supabase.auth.getUser();
       if (!auth?.user) return;
@@ -64,9 +73,9 @@ export default function Profile() {
       const { error } = await supabase
         .from("profiles")
         .update({
-          first_name: firstName.trim(),
-          last_name: lastName.trim(),
-          contato: contact,
+          first_name: values.firstName.trim(),
+          last_name: values.lastName.trim(),
+          contato: values.contact,
         })
         .eq("id", auth.user.id);
 
@@ -101,7 +110,10 @@ export default function Profile() {
               <Button variant="outline" onClick={() => setEditing(false)} className="rounded-full">
                 Cancelar
               </Button>
-              <Button onClick={handleSave} className="rounded-full bg-brand hover:bg-brand/90 text-ink">
+              <Button
+                onClick={form.handleSubmit(handleSave)}
+                className="rounded-full bg-brand hover:bg-brand/90 text-ink"
+              >
                 Salvar Alterações
               </Button>
             </div>
@@ -153,47 +165,63 @@ export default function Profile() {
               <CardDescription>Atualize seus dados pessoais</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="firstName">Nome *</Label>
-                  <Input
-                    id="firstName"
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
-                    readOnly={!editing}
-                    className={inputReadonlyClass}
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(handleSave)} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="firstName"
+                    render={({ field }) => (
+                      <FormItem className="space-y-2">
+                        <FormLabel>Nome *</FormLabel>
+                        <FormControl>
+                          <Input {...field} readOnly={!editing} className={inputReadonlyClass} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="lastName">Sobrenome *</Label>
-                  <Input
-                    id="lastName"
-                    value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
-                    readOnly={!editing}
-                    className={inputReadonlyClass}
+                  <FormField
+                    control={form.control}
+                    name="lastName"
+                    render={({ field }) => (
+                      <FormItem className="space-y-2">
+                        <FormLabel>Sobrenome *</FormLabel>
+                        <FormControl>
+                          <Input {...field} readOnly={!editing} className={inputReadonlyClass} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
-                </div>
-                <div className="space-y-2 md:col-span-2">
-                  <Label htmlFor="company">Empresa</Label>
-                  <Input id="company" value={companyName} readOnly className={alwaysReadonlyClass} />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input id="email" value={email} readOnly className={alwaysReadonlyClass} />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="contact">Contato (Celular)</Label>
-                  <Input
-                    id="contact"
-                    value={contact}
-                    onChange={(e) => setContact(formatPhone(e.target.value))}
-                    readOnly={!editing}
-                    className={inputReadonlyClass}
-                    placeholder="(11) 99999-9999"
+                  <div className="space-y-2 md:col-span-2">
+                    <Label htmlFor="company">Empresa</Label>
+                    <Input id="company" value={companyName} readOnly className={alwaysReadonlyClass} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input id="email" value={email} readOnly className={alwaysReadonlyClass} />
+                  </div>
+                  <FormField
+                    control={form.control}
+                    name="contact"
+                    render={({ field }) => (
+                      <FormItem className="space-y-2">
+                        <FormLabel>Contato (Celular)</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            onChange={(e) => field.onChange(formatPhone(e.target.value))}
+                            readOnly={!editing}
+                            className={inputReadonlyClass}
+                            placeholder="(11) 99999-9999"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
-                </div>
-              </div>
+                </form>
+              </Form>
             </CardContent>
           </Card>
 

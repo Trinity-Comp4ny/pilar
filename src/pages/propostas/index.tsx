@@ -31,6 +31,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { useUserRole } from "@/hooks/useUserRole";
 import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { EmptyState } from "@/components/EmptyState";
 import {
   usePropostas,
   useCreateProposta,
@@ -84,7 +85,7 @@ export default function Propostas() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [vinculoTipo, setVinculoTipo] = useState<"cliente" | "lead">("cliente");
-  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<{ id: string; titulo: string } | null>(null);
   const [convertPropostaId, setConvertPropostaId] = useState<string | null>(null);
   const [gerarDocxPropostaId, setGerarDocxPropostaId] = useState<string | null>(null);
   const [gerarContratoPropostaId, setGerarContratoPropostaId] = useState<string | null>(null);
@@ -190,11 +191,11 @@ export default function Propostas() {
   };
 
   const handleDelete = () => {
-    if (!confirmDeleteId) return;
-    deleteProposta.mutate(confirmDeleteId, {
+    if (!confirmDelete) return;
+    deleteProposta.mutate(confirmDelete.id, {
       onSuccess: () => {
         toast.success("Proposta removida");
-        setConfirmDeleteId(null);
+        setConfirmDelete(null);
         setDetailPropostaId(null);
       },
       onError: () => toast.error("Erro"),
@@ -264,10 +265,7 @@ export default function Propostas() {
   const header = (
     <PageHeader title="Documentos" description="Gerencie propostas e contratos">
       <div className="flex items-center gap-2">
-        <Button
-          className="rounded-full bg-brand hover:bg-brand/90 text-ink transition-colors px-5 py-2.5 text-sm"
-          onClick={() => setIsTemplatesOpen(true)}
-        >
+        <Button variant="outline" className="rounded-full px-5 py-2.5 text-sm" onClick={() => setIsTemplatesOpen(true)}>
           <LayoutTemplate className="h-4 w-4 mr-1.5" />
           Gerenciar Templates
         </Button>
@@ -303,22 +301,22 @@ export default function Propostas() {
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
               <CardTitle className="text-lg font-medium tracking-tight">Lista de Documentos</CardTitle>
-              <CardDescription className="text-sm text-black/60 mt-1">
+              <CardDescription className="text-sm text-muted-foreground mt-1">
                 Total de {filteredPropostas.length} de {propostas.length} proposta(s)
               </CardDescription>
             </div>
             <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
               <div className="relative w-full sm:w-56">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-black/40" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
                 <Input
                   placeholder="Buscar por título, cliente..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 bg-gray-50 border-gray-200"
+                  className="h-9 pl-9 rounded-full text-sm"
                 />
               </div>
               <Select value={filterStatus} onValueChange={setFilterStatus}>
-                <SelectTrigger className="w-full sm:w-36 bg-gray-50 border-gray-200">
+                <SelectTrigger className="h-9 w-full sm:w-36 rounded-full text-sm">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -336,7 +334,7 @@ export default function Propostas() {
                   size="icon"
                   className="h-9 w-9"
                   onClick={() => setViewMode("table")}
-                  title="Tabela"
+                  aria-label="Visualizar em tabela"
                 >
                   <LayoutList className="h-4 w-4" />
                 </Button>
@@ -345,7 +343,7 @@ export default function Propostas() {
                   size="icon"
                   className="h-9 w-9"
                   onClick={() => setViewMode("cards")}
-                  title="Cards"
+                  aria-label="Visualizar em cards"
                 >
                   <LayoutGrid className="h-4 w-4" />
                 </Button>
@@ -356,15 +354,25 @@ export default function Propostas() {
 
         <CardContent className="flex-1 min-h-0 p-0 pb-4">
           {propostas.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <FileText className="h-10 w-10 mx-auto mb-3 opacity-40" />
-              <p className="text-sm">Nenhuma proposta cadastrada.</p>
-            </div>
+            <EmptyState
+              icon={FileText}
+              title="Nenhuma proposta cadastrada"
+              description="Crie sua primeira proposta para começar."
+            />
           ) : filteredPropostas.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <Search className="h-8 w-8 mx-auto mb-3 opacity-40" />
-              <p className="text-sm">Nenhuma proposta encontrada para os filtros aplicados.</p>
-            </div>
+            <EmptyState
+              icon={Search}
+              title="Nenhuma proposta encontrada"
+              description="Ajuste os filtros para ver mais resultados."
+              action={{
+                label: "Limpar filtros",
+                variant: "outline",
+                onClick: () => {
+                  setSearchTerm("");
+                  setFilterStatus("all");
+                },
+              }}
+            />
           ) : viewMode === "table" ? (
             <div className="overflow-x-auto overflow-y-auto w-full max-h-[calc(100svh-360px)]">
               <Table>
@@ -373,8 +381,7 @@ export default function Propostas() {
                     <TableHead>
                       <Button
                         variant="ghost"
-                        size="sm"
-                        className="-ml-3 h-8 font-medium"
+                        className="-ml-3 h-8 font-medium text-xs"
                         onClick={() => handleSort("titulo")}
                       >
                         Título <ArrowUpDown className="ml-2 h-3 w-3" />
@@ -384,8 +391,7 @@ export default function Propostas() {
                     <TableHead>
                       <Button
                         variant="ghost"
-                        size="sm"
-                        className="-ml-3 h-8 font-medium"
+                        className="-ml-3 h-8 font-medium text-xs"
                         onClick={() => handleSort("valor_proposto")}
                       >
                         Valor <ArrowUpDown className="ml-2 h-3 w-3" />
@@ -395,8 +401,7 @@ export default function Propostas() {
                     <TableHead>
                       <Button
                         variant="ghost"
-                        size="sm"
-                        className="-ml-3 h-8 font-medium"
+                        className="-ml-3 h-8 font-medium text-xs"
                         onClick={() => handleSort("validade")}
                       >
                         Validade <ArrowUpDown className="ml-2 h-3 w-3" />
@@ -438,8 +443,9 @@ export default function Propostas() {
                               className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                setConfirmDeleteId(p.id);
+                                setConfirmDelete({ id: p.id, titulo: p.titulo });
                               }}
+                              aria-label="Excluir proposta"
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
@@ -503,13 +509,14 @@ export default function Propostas() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-7 w-7 text-red-500 hover:text-red-600 hover:bg-red-50"
+                            className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
                             onClick={(e) => {
                               e.stopPropagation();
-                              setConfirmDeleteId(p.id);
+                              setConfirmDelete({ id: p.id, titulo: p.titulo });
                             }}
+                            aria-label="Excluir proposta"
                           >
-                            <Trash2 className="h-3.5 w-3.5" />
+                            <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
                       )}
@@ -543,7 +550,9 @@ export default function Propostas() {
         hoje={hoje}
         onEdit={() => detailPropostaId && openEdit(detailPropostaId)}
         onDelete={() => {
-          setConfirmDeleteId(detailPropostaId);
+          if (detailPropostaId && detailProposta) {
+            setConfirmDelete({ id: detailPropostaId, titulo: detailProposta.titulo });
+          }
           setDetailPropostaId(null);
         }}
         onStatusChange={handleStatusChange}
@@ -748,12 +757,13 @@ export default function Propostas() {
       </Dialog>
 
       <ConfirmDialog
-        open={!!confirmDeleteId}
+        open={!!confirmDelete}
         onOpenChange={(open) => {
-          if (!open) setConfirmDeleteId(null);
+          if (!open) setConfirmDelete(null);
         }}
         title="Excluir Proposta"
-        description="Tem certeza que deseja excluir esta proposta?"
+        itemName={confirmDelete?.titulo}
+        description="Esta ação não pode ser desfeita."
         onConfirm={handleDelete}
       />
 

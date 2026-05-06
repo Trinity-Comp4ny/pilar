@@ -46,7 +46,18 @@ export const pessoaSchema = z
   .object({
     primeiro_nome: z.string().min(1, "Nome é obrigatório"),
     sobrenome: z.string().min(1, "Sobrenome é obrigatório"),
-    cpf: z.string().optional().default(""),
+    cpf: z
+      .string()
+      .optional()
+      .default("")
+      .refine(
+        (cpf) => {
+          const digits = onlyDigits(cpf ?? "");
+          if (digits.length === 0) return true;
+          return isValidCPF(cpf ?? "");
+        },
+        { message: "CPF inválido" }
+      ),
     rg: z.string().optional().default(""),
     data_nascimento: z.string().optional().default(""),
     tipo_contrato: z
@@ -75,14 +86,6 @@ export const pessoaSchema = z
     message: "CNPJ é obrigatório para PJ",
     path: ["cnpj"],
   })
-  .refine(
-    (data) => {
-      const digits = onlyDigits(data.cpf ?? "");
-      if (digits.length === 0) return true;
-      return isValidCPF(data.cpf ?? "");
-    },
-    { message: "CPF inválido", path: ["cpf"] }
-  )
   .refine(
     (data) => {
       if (data.tipo_contrato !== CONTRACT_TYPES.PJ) return true;

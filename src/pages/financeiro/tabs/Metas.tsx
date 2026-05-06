@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
@@ -249,12 +250,7 @@ export default function Metas() {
                   </div>
                   <div className="space-y-2">
                     <Label>Prazo</Label>
-                    <Input
-                      type="date"
-                      value={novaMeta.prazo}
-                      onChange={(e) => setNovaMeta({ ...novaMeta, prazo: e.target.value })}
-                      required
-                    />
+                    <DatePicker value={novaMeta.prazo} onChange={(v) => setNovaMeta({ ...novaMeta, prazo: v })} />
                   </div>
                   <div className="space-y-2">
                     <Label>Categoria</Label>
@@ -324,11 +320,9 @@ export default function Metas() {
                   </div>
                   <div className="space-y-2">
                     <Label>Prazo</Label>
-                    <Input
-                      type="date"
+                    <DatePicker
                       value={editingMeta.prazo}
-                      onChange={(e) => setEditingMeta({ ...editingMeta, prazo: e.target.value })}
-                      required
+                      onChange={(v) => setEditingMeta({ ...editingMeta, prazo: v })}
                     />
                   </div>
                   <div className="space-y-2">
@@ -407,7 +401,13 @@ export default function Metas() {
                       </div>
                       <div className="flex items-center gap-2">
                         <span className={cn("text-2xl font-bold", isCompleted && "text-positive")}>{percent}%</span>
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(meta)}>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => handleEdit(meta)}
+                          aria-label="Editar meta"
+                        >
                           <Pencil className="h-4 w-4" />
                         </Button>
                         <Button
@@ -415,6 +415,7 @@ export default function Metas() {
                           size="icon"
                           className="h-8 w-8 text-red-600 hover:text-red-700"
                           onClick={() => handleDeleteClick(meta.id)}
+                          aria-label="Excluir meta"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>

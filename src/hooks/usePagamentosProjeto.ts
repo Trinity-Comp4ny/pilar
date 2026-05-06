@@ -83,7 +83,7 @@ export const usePagamentosProjeto = (projetoId: string | undefined) => {
         data_recebimento: r.data_recebimento,
         status: r.status as StatusFinanceiro,
         cliente_id: r.cliente_id,
-        cliente_nome: (r as unknown as { clientes?: { nome?: string } }).clientes?.nome ?? null,
+        cliente_nome: (Array.isArray(r.clientes) ? r.clientes[0]?.nome : r.clientes?.nome) ?? null,
         nota_fiscal: r.nota_fiscal,
         forma_pagamento: r.forma_pagamento,
         parcela_numero: r.parcela_numero,

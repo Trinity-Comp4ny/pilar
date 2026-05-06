@@ -11,7 +11,10 @@ else
 fi
 
 # 2. Typecheck
-npx tsc --noEmit --pretty
+npx tsc --noEmit --pretty --project tsconfig.app.json
 
 # 3. Lint + format staged
 npx lint-staged
+
+# 4. Tests (rejeita commit se quebrar contrato)
+npm run test:run --silent

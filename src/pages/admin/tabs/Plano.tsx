@@ -36,11 +36,11 @@ export function PlanoTab({ empresaId }: { empresaId: string | null }) {
 
   return (
     <div className="space-y-6">
-      <Card>
+      <Card className="rounded-2xl border border-black/5 bg-white">
         <CardHeader>
           <div className="flex items-center justify-between gap-4">
             <div>
-              <CardTitle className="flex items-center gap-3">
+              <CardTitle className="text-lg font-medium tracking-tight flex items-center gap-3">
                 Plano Atual
                 <Badge className="bg-brand/10 text-brand hover:bg-brand/10 border-transparent">Beta</Badge>
               </CardTitle>
@@ -61,9 +61,9 @@ export function PlanoTab({ empresaId }: { empresaId: string | null }) {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="rounded-2xl border border-black/5 bg-white">
         <CardHeader>
-          <CardTitle>Recursos incluídos</CardTitle>
+          <CardTitle className="text-lg font-medium tracking-tight">Recursos incluídos</CardTitle>
           <CardDescription>Tudo o que está disponível na sua conta hoje</CardDescription>
         </CardHeader>
         <CardContent>

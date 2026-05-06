@@ -136,7 +136,7 @@ export function PagamentosTab({ projetoId, canEdit }: PagamentosTabProps) {
   if (isLoading) {
     return (
       <div className="flex justify-center py-8">
-        <Loader2 className="h-5 w-5 animate-spin" />
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
       </div>
     );
   }
@@ -263,6 +263,7 @@ export function PagamentosTab({ projetoId, canEdit }: PagamentosTabProps) {
                       size="icon"
                       className="h-8 w-8 text-positive shrink-0"
                       title="Marcar como recebido"
+                      aria-label="Marcar como recebido"
                       disabled={marcarRecebido.isPending}
                       onClick={() => handleMarcarRecebido(pag.id)}
                     >

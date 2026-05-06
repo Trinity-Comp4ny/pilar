@@ -5,6 +5,7 @@ import { ChevronLeft, ChevronRight, Loader2, LayoutGrid, AlertTriangle } from "l
 import { useQuery } from "@tanstack/react-query";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
+import { EmptyState } from "@/components/EmptyState";
 import { supabase } from "@/integrations/supabase/client";
 import { AlocacaoVsReal } from "./components/AlocacaoVsReal";
 import { usePageTitle } from "@/hooks/usePageTitle";
@@ -148,7 +149,13 @@ export default function Capacidade() {
 
       {/* Navegação */}
       <div className="flex items-center gap-2 mb-4">
-        <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => navegarSemanas(-1)}>
+        <Button
+          variant="outline"
+          size="icon"
+          className="h-8 w-8"
+          onClick={() => navegarSemanas(-1)}
+          aria-label="Semana anterior"
+        >
           <ChevronLeft className="h-4 w-4" />
         </Button>
         <span className="text-sm font-medium">
@@ -159,7 +166,13 @@ export default function Capacidade() {
             month: "short",
           })}
         </span>
-        <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => navegarSemanas(1)}>
+        <Button
+          variant="outline"
+          size="icon"
+          className="h-8 w-8"
+          onClick={() => navegarSemanas(1)}
+          aria-label="Próxima semana"
+        >
           <ChevronRight className="h-4 w-4" />
         </Button>
         <Button variant="ghost" size="sm" className="text-xs" onClick={() => setStartMonday(getMonday(new Date()))}>
@@ -168,21 +181,22 @@ export default function Capacidade() {
       </div>
 
       {isLoading ? (
-        <div className="flex items-center justify-center py-12">
+        <div className="flex items-center justify-center py-12" aria-busy="true" aria-label="Carregando capacidade">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
       ) : pessoas.length === 0 ? (
-        <div className="text-center py-12 text-muted-foreground">
-          <LayoutGrid className="h-10 w-10 mx-auto mb-3 opacity-40" />
-          <p className="text-sm">Nenhum membro cadastrado.</p>
-        </div>
+        <EmptyState
+          icon={LayoutGrid}
+          title="Nenhum membro cadastrado"
+          description="Cadastre membros da equipe para visualizar a capacidade semanal."
+        />
       ) : (
         <Card>
           <CardContent className="p-0 overflow-x-auto">
             <table className="w-full border-collapse text-xs">
               <thead>
                 <tr className="border-b">
-                  <th className="text-left py-2 px-3 font-medium text-muted-foreground min-w-[160px] sticky left-0 bg-white z-10">
+                  <th className="text-left py-2 px-3 font-medium text-muted-foreground min-w-[160px] sticky left-0 bg-white z-10 border-r border-black/5">
                     Pessoa
                   </th>
                   {weeks.map((w) => {
@@ -198,7 +212,7 @@ export default function Capacidade() {
               <tbody>
                 {pessoas.map((pessoa) => (
                   <tr key={pessoa.id} className="border-b hover:bg-muted/30">
-                    <td className="py-2 px-3 sticky left-0 bg-white z-10">
+                    <td className="py-2 px-3 sticky left-0 bg-white z-10 border-r border-black/5">
                       <div className="font-medium">{pessoa.nome}</div>
                       <div className="text-[10px] text-muted-foreground">
                         {pessoa.cargo || "—"} · {pessoa.horas_semanais}h/sem
