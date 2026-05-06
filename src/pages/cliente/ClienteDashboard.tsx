@@ -67,7 +67,7 @@ export default function ClienteDashboard() {
 
         {/* Grid de projetos */}
         {!loading && projetos.length > 0 && (
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {projetos.map((projeto) => {
               const progress = calcProgress(projeto.disciplinas);
               const statusColor = STATUS_COLORS[projeto.projeto_status] || "bg-gray-100 text-gray-800";
@@ -106,8 +106,7 @@ export default function ClienteDashboard() {
                         <span>Previsão: {formatDate(projeto.data_previsao)}</span>
                       </div>
 
-                      {/* Link */}
-                      <div className="flex items-center gap-1 text-xs font-medium text-brand group-hover:underline">
+                      <div className="inline-flex items-center gap-1 bg-brand text-ink text-xs font-medium px-3 py-1.5 rounded-lg transition-all group-hover:bg-brand/90">
                         Ver detalhes
                         <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" />
                       </div>

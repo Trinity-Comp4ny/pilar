@@ -1,43 +1,10 @@
-import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, CheckCircle2, Clock, Receipt } from "lucide-react";
+import { CheckCircle2, Clock, Receipt } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
-import { supabase } from "@/integrations/supabase/client";
-interface Receita {
-  id: string;
-  descricao: string;
-  valor: number;
-  data_vencimento: string;
-  data_recebimento: string | null;
-  status: string;
-}
+import type { ClienteReceita } from "@/pages/cliente/useClienteProjetoData";
 
-export function FinanceiroContent({ projetoId }: { projetoId: string }) {
-  const [receitas, setReceitas] = useState<Receita[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetch = async () => {
-      const { data } = await supabase
-        .from("receitas")
-        .select("id, descricao, valor, data_vencimento, data_recebimento, status")
-        .eq("projeto_id", projetoId)
-        .is("deleted_at", null)
-        .order("data_vencimento", { ascending: true });
-      if (data) setReceitas(data as Receita[]);
-      setLoading(false);
-    };
-    fetch();
-  }, [projetoId]);
-
-  if (loading)
-    return (
-      <div className="flex justify-center py-8">
-        <Loader2 className="h-5 w-5 animate-spin" />
-      </div>
-    );
-
+export function FinanceiroContent({ receitas }: { receitas: ClienteReceita[] }) {
   const formatCurrency = (v: number) =>
     new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
   const formatDate = (d: string | null) => (d ? new Date(d + "T00:00:00").toLocaleDateString("pt-BR") : "—");

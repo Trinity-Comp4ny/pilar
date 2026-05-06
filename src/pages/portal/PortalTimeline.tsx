@@ -1,10 +1,8 @@
-import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Loader2 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-interface Disciplina {
+
+export interface TimelineDisciplina {
   disciplina: string;
   status?: string;
   data_inicio?: string;
@@ -13,55 +11,7 @@ interface Disciplina {
   responsavel_nome?: string;
 }
 
-export function TimelineContent({ projetoId }: { projetoId: string }) {
-  const [disciplinas, setDisciplinas] = useState<Disciplina[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetch = async () => {
-      const { data } = await supabase
-        .from("projeto_disciplinas")
-        .select(
-          `
-          nome, status, data_inicio, data_fim, data_fim_real,
-          projeto_disciplina_responsaveis (
-            pessoas ( nome )
-          )
-        `
-        )
-        .eq("projeto_id", projetoId)
-        .order("created_at");
-      if (data) {
-        setDisciplinas(
-          data.map((d: Record<string, unknown>) => {
-            const resps = (d.projeto_disciplina_responsaveis as Array<{ pessoas: { nome: string } }>) || [];
-            return {
-              disciplina: d.nome as string,
-              status: d.status as string | undefined,
-              data_inicio: d.data_inicio as string | undefined,
-              data_previsao: d.data_fim as string | undefined,
-              data_final: d.data_fim_real as string | undefined,
-              responsavel_nome:
-                resps
-                  .map((r) => r.pessoas?.nome)
-                  .filter(Boolean)
-                  .join(", ") || undefined,
-            };
-          })
-        );
-      }
-      setLoading(false);
-    };
-    fetch();
-  }, [projetoId]);
-
-  if (loading)
-    return (
-      <div className="flex justify-center py-8">
-        <Loader2 className="h-5 w-5 animate-spin" />
-      </div>
-    );
-
+export function TimelineContent({ disciplinas }: { disciplinas: TimelineDisciplina[] }) {
   const total = disciplinas.length;
   const concluidas = disciplinas.filter((d) => d.status === "Concluído").length;
   const progress = total > 0 ? Math.round((concluidas / total) * 100) : 0;
@@ -83,39 +33,42 @@ export function TimelineContent({ projetoId }: { projetoId: string }) {
       <Card>
         <CardContent className="p-6">
           <h3 className="text-sm font-semibold mb-4">Etapas do Projeto</h3>
-          <div className="relative">
-            {disciplinas.map((d, i) => {
-              const isConcluido = d.status === "Concluído";
-              const isAndamento = d.status === "Em Andamento";
-              return (
-                <div key={i} className="flex gap-4 mb-4 last:mb-0">
-                  {/* Timeline line */}
-                  <div className="flex flex-col items-center">
-                    <div
-                      className={`w-3 h-3 rounded-full ${isConcluido ? "bg-positive/100" : isAndamento ? "bg-blue-500" : "bg-gray-300"}`}
-                    />
-                    {i < disciplinas.length - 1 && <div className="w-0.5 flex-1 bg-gray-200 mt-1" />}
-                  </div>
-                  <div className="flex-1 pb-4">
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm font-medium">{d.disciplina}</p>
-                      <Badge variant={isConcluido ? "default" : "secondary"} className="text-[10px]">
-                        {d.status || "Não iniciado"}
-                      </Badge>
+          {disciplinas.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Nenhuma etapa cadastrada.</p>
+          ) : (
+            <div className="relative">
+              {disciplinas.map((d, i) => {
+                const isConcluido = d.status === "Concluído";
+                const isAndamento = d.status === "Em Andamento";
+                return (
+                  <div key={i} className="flex gap-4 mb-4 last:mb-0">
+                    <div className="flex flex-col items-center">
+                      <div
+                        className={`w-3 h-3 rounded-full ${isConcluido ? "bg-positive" : isAndamento ? "bg-blue-500" : "bg-gray-300"}`}
+                      />
+                      {i < disciplinas.length - 1 && <div className="w-0.5 flex-1 bg-gray-200 mt-1" />}
                     </div>
-                    <div className="flex gap-3 text-xs text-muted-foreground mt-1">
-                      {d.data_inicio && <span>Início: {formatDate(d.data_inicio)}</span>}
-                      {d.data_previsao && <span>Previsão: {formatDate(d.data_previsao)}</span>}
-                      {d.data_final && <span>Concluído: {formatDate(d.data_final)}</span>}
+                    <div className="flex-1 pb-4">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-medium">{d.disciplina}</p>
+                        <Badge variant={isConcluido ? "default" : "secondary"} className="text-[10px]">
+                          {d.status || "Não iniciado"}
+                        </Badge>
+                      </div>
+                      <div className="flex gap-3 text-xs text-muted-foreground mt-1">
+                        {d.data_inicio && <span>Início: {formatDate(d.data_inicio)}</span>}
+                        {d.data_previsao && <span>Previsão: {formatDate(d.data_previsao)}</span>}
+                        {d.data_final && <span>Concluído: {formatDate(d.data_final)}</span>}
+                      </div>
+                      {d.responsavel_nome && (
+                        <p className="text-xs text-muted-foreground mt-0.5">Responsável: {d.responsavel_nome}</p>
+                      )}
                     </div>
-                    {d.responsavel_nome && (
-                      <p className="text-xs text-muted-foreground mt-0.5">Responsável: {d.responsavel_nome}</p>
-                    )}
                   </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

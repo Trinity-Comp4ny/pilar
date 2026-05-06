@@ -1,88 +1,46 @@
-import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { AlertCircle, FileCheck, Clock, ChevronRight, Loader2 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { AlertCircle, FileCheck, Clock, ChevronRight } from "lucide-react";
+import type { ClienteReceita } from "@/pages/cliente/useClienteProjetoData";
 
 interface PendenciasCardProps {
-  projetoId: string;
-  baseUrl: string; // ex: "/cliente/projeto/:id" ou "/portal/:token"
+  baseUrl: string;
+  receitas: ClienteReceita[];
+  portalEntregasPendentes: number;
 }
 
-interface Pendencias {
-  entregasPendentes: number;
-  faturasProximasVencimento: number;
-  faturasAtrasadas: number;
-}
-
-export function PendenciasCard({ projetoId, baseUrl }: PendenciasCardProps) {
+export function PendenciasCard({ baseUrl, receitas, portalEntregasPendentes }: PendenciasCardProps) {
   const navigate = useNavigate();
-  const [pendencias, setPendencias] = useState<Pendencias | null>(null);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const load = async () => {
-      const hoje = new Date();
-      const em7dias = new Date(hoje);
-      em7dias.setDate(em7dias.getDate() + 7);
-      const hojeIso = hoje.toISOString().split("T")[0];
-      const em7diasIso = em7dias.toISOString().split("T")[0];
+  const hoje = new Date().toISOString().split("T")[0];
+  const em7dias = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
 
-      const [entregasRes, receitasRes] = await Promise.all([
-        supabase
-          .from("portal_entregas")
-          .select("id", { count: "exact", head: true })
-          .eq("projeto_id", projetoId)
-          .eq("status", "pendente"),
-        supabase
-          .from("receitas")
-          .select("id, data_vencimento, status")
-          .eq("projeto_id", projetoId)
-          .neq("status", "Recebido")
-          .is("deleted_at", null)
-          .lte("data_vencimento", em7diasIso),
-      ]);
+  const naoRecebidas = receitas.filter((r) => r.status !== "Recebido" && r.data_vencimento);
+  const faturasAtrasadas = naoRecebidas.filter((r) => r.data_vencimento < hoje).length;
+  const faturasProximasVencimento = naoRecebidas.filter(
+    (r) => r.data_vencimento >= hoje && r.data_vencimento <= em7dias
+  ).length;
 
-      const receitas = receitasRes.data ?? [];
-      const atrasadas = receitas.filter((r) => (r.data_vencimento ?? "") < hojeIso).length;
-      const proximasVencimento = receitas.filter((r) => (r.data_vencimento ?? "") >= hojeIso).length;
-
-      setPendencias({
-        entregasPendentes: entregasRes.count ?? 0,
-        faturasProximasVencimento: proximasVencimento,
-        faturasAtrasadas: atrasadas,
-      });
-      setLoading(false);
-    };
-    load();
-  }, [projetoId]);
-
-  if (loading) {
-    return (
-      <Card>
-        <CardContent className="p-4 flex justify-center">
-          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (!pendencias) return null;
+  const pendencias = {
+    entregasPendentes: portalEntregasPendentes,
+    faturasProximasVencimento,
+    faturasAtrasadas,
+  };
 
   const totalPendencias =
     pendencias.entregasPendentes + pendencias.faturasProximasVencimento + pendencias.faturasAtrasadas;
 
   if (totalPendencias === 0) {
     return (
-      <Card className="border-emerald-200/60 bg-emerald-50/30">
+      <Card className="border-brand/30 bg-brand/10">
         <CardContent className="p-4 flex items-center gap-3">
-          <div className="h-9 w-9 rounded-full bg-emerald-100 flex items-center justify-center">
-            <FileCheck className="h-4 w-4 text-emerald-700" />
+          <div className="h-9 w-9 rounded-full bg-brand/20 flex items-center justify-center">
+            <FileCheck className="h-4 w-4 text-ink" />
           </div>
           <div>
-            <p className="text-sm font-medium text-emerald-900">Nada pendente</p>
-            <p className="text-xs text-emerald-700/80">Você está em dia com este projeto.</p>
+            <p className="text-sm font-medium text-ink">Nada pendente</p>
+            <p className="text-xs text-ink/60">Você está em dia com este projeto.</p>
           </div>
         </CardContent>
       </Card>

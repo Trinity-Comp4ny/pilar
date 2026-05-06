@@ -2,8 +2,15 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getPortalToken } from "@/hooks/useClienteAuth";
 
-// Backlog (2026-04-23): atualizar RPC get_cliente_projeto_detail para ler de
-// projeto_disciplinas em vez da coluna JSONB projetos.disciplinas (deprecada).
+export interface ClienteReceita {
+  id: string;
+  descricao: string;
+  valor: number;
+  data_vencimento: string;
+  data_recebimento: string | null;
+  status: string;
+}
+
 export interface ClienteProjetoData {
   projeto_id: string;
   cliente_id: string;
@@ -15,9 +22,18 @@ export interface ClienteProjetoData {
   data_previsao: string | null;
   data_final: string | null;
   valor_contrato: number | null;
-  disciplinas: Array<{ disciplina?: string; status?: string }>;
+  disciplinas: Array<{
+    disciplina?: string;
+    status?: string;
+    data_inicio?: string;
+    data_previsao?: string;
+    data_final?: string;
+    responsavel_nome?: string;
+  }>;
   cliente_nome: string;
   empresa_nome: string;
+  receitas: ClienteReceita[];
+  portal_entregas_pendentes: number;
 }
 
 export function useClienteProjetoData(projetoId: string | undefined) {
@@ -28,7 +44,7 @@ export function useClienteProjetoData(projetoId: string | undefined) {
   useEffect(() => {
     if (!projetoId) return;
 
-    const fetch = async () => {
+    const load = async () => {
       try {
         const token = getPortalToken();
         if (!token) throw new Error("Não autenticado");
@@ -38,15 +54,16 @@ export function useClienteProjetoData(projetoId: string | undefined) {
           p_token: token,
         });
         if (rpcError) throw rpcError;
-        // RPC retorna Json; estrutura é contrato do backend (ver get_cliente_projeto_detail).
         setData(result as unknown as ClienteProjetoData);
       } catch (e: unknown) {
-        setError(e instanceof Error ? e.message : "Erro ao carregar projeto");
+        const msg =
+          e instanceof Error ? e.message : ((e as { message?: string } | null)?.message ?? "Erro ao carregar projeto");
+        setError(msg);
       } finally {
         setLoading(false);
       }
     };
-    fetch();
+    load();
   }, [projetoId]);
 
   return { data, loading, error };
