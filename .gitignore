@@ -36,3 +36,6 @@ supabase/.branches/
 supabase/functions/.env
 supabase/.env
 backups/
+
+# Claude Code worktrees (temporary agent workspaces)
+.claude/worktrees/

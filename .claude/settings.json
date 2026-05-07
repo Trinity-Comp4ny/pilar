@@ -1,0 +1,39 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find:*)",
+      "Bash(grep:*)",
+      "Bash(ls:*)",
+      "Bash(wc:*)",
+      "Bash(sort:*)",
+      "Bash(git add:*)",
+      "Bash(git checkout:*)",
+      "Bash(git commit:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git ls-files:*)",
+      "Bash(git mv:*)",
+      "Bash(git push:*)",
+      "Bash(git rm:*)",
+      "Bash(git show:*)",
+      "Bash(git status:*)",
+      "Bash(gh api:*)",
+      "Bash(npm audit:*)",
+      "Bash(npm install:*)",
+      "Bash(npm list:*)",
+      "Bash(npm run:*)",
+      "Bash(npx supabase:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npx vite:*)",
+      "Bash(supabase functions:*)",
+      "Read(//tmp/**)",
+      "mcp__github__get_file_contents",
+      "WebSearch",
+      "WebFetch(domain:devportal.itau.com.br)",
+      "WebFetch(domain:developer.itau.com.br)",
+      "WebFetch(domain:ajuda.contaazul.com)",
+      "WebFetch(domain:docs.asaas.com)",
+      "WebFetch(domain:asaas.com)"
+    ]
+  }
+}
