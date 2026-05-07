@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 
 interface LandingHeaderProps {
@@ -8,6 +8,21 @@ interface LandingHeaderProps {
 
 export function LandingHeader({ onScrollToTop }: LandingHeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleSectionLink = (sectionId: string) => (e: React.MouseEvent) => {
+    e.preventDefault();
+    setMobileMenuOpen(false);
+    if (location.pathname === "/") {
+      document.getElementById(sectionId)?.scrollIntoView({ behavior: "smooth" });
+    } else {
+      navigate("/");
+      setTimeout(() => {
+        document.getElementById(sectionId)?.scrollIntoView({ behavior: "smooth" });
+      }, 100);
+    }
+  };
 
   return (
     <>
@@ -38,13 +53,15 @@ export function LandingHeader({ onScrollToTop }: LandingHeaderProps) {
 
           <nav className="hidden md:flex items-center justify-center gap-10">
             <a
-              href="#prova"
+              href="/#prova"
+              onClick={handleSectionLink("prova")}
               className="text-[11px] font-medium uppercase tracking-[0.18em] text-slate-500 relative after:absolute after:bottom-[-3px] after:left-0 after:h-px after:w-0 after:bg-brand hover:after:w-full after:transition-all after:duration-300"
             >
               Por que Pilar
             </a>
             <a
-              href="#modulos"
+              href="/#modulos"
+              onClick={handleSectionLink("modulos")}
               className="text-[11px] font-medium uppercase tracking-[0.18em] text-slate-500 relative after:absolute after:bottom-[-3px] after:left-0 after:h-px after:w-0 after:bg-brand hover:after:w-full after:transition-all after:duration-300"
             >
               Módulos
@@ -82,10 +99,10 @@ export function LandingHeader({ onScrollToTop }: LandingHeaderProps) {
 
         {mobileMenuOpen && (
           <div className="md:hidden absolute top-full left-0 right-0 bg-paper border-b border-paper-border p-6 flex flex-col gap-4 shadow-xl animate-in slide-in-from-top-5">
-            <a href="#prova" className="text-lg font-medium text-slate-600" onClick={() => setMobileMenuOpen(false)}>
+            <a href="/#prova" onClick={handleSectionLink("prova")} className="text-lg font-medium text-slate-600">
               Por que Pilar
             </a>
-            <a href="#modulos" className="text-lg font-medium text-slate-600" onClick={() => setMobileMenuOpen(false)}>
+            <a href="/#modulos" onClick={handleSectionLink("modulos")} className="text-lg font-medium text-slate-600">
               Módulos
             </a>
             <Link to="/planos" className="text-lg font-medium text-slate-600" onClick={() => setMobileMenuOpen(false)}>

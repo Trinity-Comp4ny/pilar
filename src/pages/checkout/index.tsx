@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link, Navigate, useSearchParams } from "react-router-dom";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Loader2, ShieldCheck } from "lucide-react";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { usePlans } from "@/pages/planos/hooks/usePlans";
 import type { BillingCycle } from "@/pages/planos/components/CycleToggle";
@@ -35,9 +35,7 @@ export default function Checkout() {
   const effectiveStatus = status?.payment_status ?? checkoutResult?.payment_status ?? null;
   const inviteDispatched = status?.invite_dispatched ?? false;
 
-  if (!planSlug) {
-    return <Navigate to="/planos" replace />;
-  }
+  if (!planSlug) return <Navigate to="/planos" replace />;
 
   if (loadingPlans) {
     return (
@@ -47,33 +45,51 @@ export default function Checkout() {
     );
   }
 
-  if (!plan) {
-    return <Navigate to="/planos" replace />;
-  }
+  if (!plan) return <Navigate to="/planos" replace />;
 
   const planValue = cycle === "yearly" ? (plan.preco_anual ?? plan.preco_mensal * 12) : plan.preco_mensal;
 
   return (
-    <div className="min-h-screen bg-paper text-ink-soft">
+    <div className="landing-grain min-h-screen bg-paper text-ink-soft font-sans">
+      {/* Fundo aurora suave */}
+      <div className="fixed inset-0 -z-10 pointer-events-none overflow-hidden">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[500px] bg-brand/5 rounded-full blur-[120px]" />
+      </div>
+
+      {/* Header mínimo */}
       <header className="sticky top-0 z-40 bg-paper/90 backdrop-blur-md border-b border-paper-border">
-        <div className="container mx-auto px-6 md:px-10 py-5 flex items-center justify-between">
+        <div className="container mx-auto px-6 md:px-10 py-4 flex items-center justify-between">
           <Link
             to="/planos"
             className="flex items-center gap-2 text-slate-500 hover:text-brand transition-colors text-sm font-medium group"
           >
             <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-            Voltar aos planos
+            Voltar
           </Link>
-          <span className="text-xl font-medium tracking-tight">
-            Pilar<sup className="text-[9px] font-normal text-slate-400 ml-0.5 relative -top-2">®</sup>
-          </span>
-          <span className="w-24" />
+
+          <a href="/" className="flex items-center gap-2 group">
+            <img
+              src="/pilar-logo.svg"
+              alt="Pilar"
+              className="h-7 w-auto transition-transform duration-500 group-hover:rotate-12"
+            />
+            <span className="text-lg font-medium tracking-tight text-ink-soft">
+              Pilar<sup className="text-[9px] font-normal text-slate-400 ml-0.5 relative -top-2">®</sup>
+            </span>
+          </a>
+
+          <div className="flex items-center gap-1 text-[11px] text-slate-400">
+            <ShieldCheck className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Checkout seguro</span>
+          </div>
         </div>
       </header>
 
-      <main className="container mx-auto px-6 md:px-10 py-12 max-w-5xl">
-        <div className="grid lg:grid-cols-[1fr_380px] gap-10">
-          <section className="bg-white rounded-2xl border border-slate-200 p-8 shadow-sm">
+      <main className="container mx-auto px-6 md:px-10 py-10 max-w-5xl">
+        <div className="grid lg:grid-cols-[1fr_360px] gap-8 items-start">
+
+          {/* Formulário */}
+          <section className="bg-white rounded-2xl border border-paper-border p-8 shadow-sm">
             {effectiveStatus === "paid" ? (
               <PaymentSuccess
                 email={checkoutResult?.plan && status?.email ? status.email : ""}
@@ -112,34 +128,64 @@ export default function Checkout() {
             )}
           </section>
 
-          <aside className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm h-fit sticky top-28">
-            <h3 className="text-xs uppercase tracking-wider text-slate-400 mb-4">Resumo</h3>
+          {/* Resumo sticky */}
+          <aside className="sticky top-[73px] space-y-4">
+            <div className="bg-white rounded-2xl border border-paper-border p-6 shadow-sm">
+              <div className="flex items-center justify-between mb-4">
+                <p className="text-[10px] uppercase tracking-widest text-slate-400">Resumo do pedido</p>
+                <Link
+                  to="/planos"
+                  className="flex items-center gap-1 text-[11px] text-slate-700 hover:text-slate-900 transition-colors font-medium"
+                >
+                  Trocar plano <ArrowRight className="w-3 h-3" />
+                </Link>
+              </div>
 
-            <div className="space-y-3 pb-4 border-b border-slate-100">
-              <div className="flex justify-between items-start">
+              <div className="flex items-start justify-between gap-4 pb-4 border-b border-slate-100">
                 <div>
-                  <p className="text-sm font-medium text-slate-900">Pilar {plan.nome}</p>
-                  <p className="text-xs text-slate-500">
+                  <p className="font-semibold text-slate-900">Pilar {plan.nome}</p>
+                  <p className="text-xs text-slate-500 mt-0.5">
                     {cycle === "yearly" ? "Assinatura anual" : "Assinatura mensal"}
                   </p>
+                  {plan.descricao && <p className="text-xs text-slate-400 mt-1">{plan.descricao}</p>}
                 </div>
-                <p className="text-sm font-medium text-slate-900">{formatBRL(planValue)}</p>
+                <p className="text-sm font-semibold text-slate-900 whitespace-nowrap">{formatBRL(planValue)}</p>
+              </div>
+
+              {plan.features.length > 0 && (
+                <ul className="mt-4 space-y-2.5">
+                  {plan.features.map((feature) => (
+                    <li key={feature} className="flex items-start gap-2.5 text-xs text-slate-600">
+                      <Check className="w-3.5 h-3.5 text-brand flex-shrink-0 mt-0.5" />
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+              <div className="mt-5 pt-4 border-t border-slate-100 flex justify-between items-baseline">
+                <span className="text-xs uppercase tracking-wider text-slate-500">Total</span>
+                <div className="text-right">
+                  <p className="text-2xl font-semibold text-slate-900">{formatBRL(planValue)}</p>
+                  <p className="text-[11px] text-slate-400">{cycle === "yearly" ? "por ano" : "por mês"}</p>
+                </div>
               </div>
             </div>
 
-            <div className="pt-4 flex justify-between items-baseline">
-              <span className="text-xs uppercase tracking-wider text-slate-500">Total</span>
-              <div className="text-right">
-                <p className="text-2xl font-semibold text-slate-900">{formatBRL(planValue)}</p>
-                <p className="text-[11px] text-slate-400">{cycle === "yearly" ? "por ano" : "por mês"}</p>
-              </div>
+            {/* Trust signals */}
+            <div className="bg-white rounded-xl border border-paper-border p-4 space-y-2.5">
+              {[
+                "Sem fidelidade — cancele quando quiser",
+                "Nota fiscal emitida automaticamente",
+                "Acesso imediato após confirmação",
+                "Suporte por email incluso",
+              ].map((item) => (
+                <div key={item} className="flex items-center gap-2 text-xs text-slate-500">
+                  <ShieldCheck className="w-3.5 h-3.5 text-brand flex-shrink-0" />
+                  {item}
+                </div>
+              ))}
             </div>
-
-            <ul className="mt-6 space-y-2 text-xs text-slate-500">
-              <li>✓ Sem fidelidade, cancele quando quiser</li>
-              <li>✓ Nota fiscal emitida automaticamente</li>
-              <li>✓ Suporte por email</li>
-            </ul>
           </aside>
         </div>
       </main>

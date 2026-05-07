@@ -30,12 +30,12 @@ export function LandingFooter() {
             <h4 className="text-sm font-semibold mb-6 tracking-wider text-white">Produto</h4>
             <ul className="space-y-4 text-slate-400 font-light text-sm">
               <li>
-                <a href="#prova" className="hover:text-brand transition-colors">
+                <a href="/#prova" className="hover:text-brand transition-colors">
                   Por que Pilar
                 </a>
               </li>
               <li>
-                <a href="#modulos" className="hover:text-brand transition-colors">
+                <a href="/#modulos" className="hover:text-brand transition-colors">
                   Módulos
                 </a>
               </li>

@@ -4,11 +4,11 @@
 CREATE TABLE IF NOT EXISTS public.rate_limit_attempts (
   id         BIGSERIAL PRIMARY KEY,
   key        TEXT NOT NULL,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  attempted_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE INDEX IF NOT EXISTS idx_rate_limit_key_time
-  ON public.rate_limit_attempts(key, created_at DESC);
+  ON public.rate_limit_attempts(key, attempted_at DESC);
 
 -- Cleanup automático: remove registros com mais de 1 hora
 CREATE OR REPLACE FUNCTION public.rate_limit_cleanup()
@@ -17,7 +17,7 @@ LANGUAGE sql
 SECURITY DEFINER
 SET search_path = public
 AS $$
-  DELETE FROM public.rate_limit_attempts WHERE created_at < NOW() - INTERVAL '1 hour';
+  DELETE FROM public.rate_limit_attempts WHERE attempted_at < NOW() - INTERVAL '1 hour';
 $$;
 
 -- Registra tentativa e retorna TRUE se dentro do limite
@@ -42,7 +42,7 @@ BEGIN
   SELECT COUNT(*) INTO v_count
   FROM public.rate_limit_attempts
   WHERE key = v_composite
-    AND created_at > NOW() - (p_window || ' seconds')::INTERVAL;
+    AND attempted_at > NOW() - (p_window || ' seconds')::INTERVAL;
 
   IF v_count >= p_max THEN
     RETURN FALSE;

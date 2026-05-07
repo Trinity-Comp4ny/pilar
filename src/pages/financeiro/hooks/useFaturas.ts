@@ -76,21 +76,25 @@ export function useContas() {
 
 export async function gerarFaturasCartao(cartaoId: string) {
   const now = new Date();
-  const calls: Promise<unknown>[] = [];
+  const calls = [];
   for (let i = -2; i <= 1; i++) {
     const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
     calls.push(
-      Promise.resolve(
-        supabase.rpc("gerar_fatura", {
-          p_cartao_id: cartaoId,
-          p_mes: d.getMonth() + 1,
-          p_ano: d.getFullYear(),
-        })
-      )
+      supabase.rpc("gerar_fatura", {
+        p_cartao_id: cartaoId,
+        p_mes: d.getMonth() + 1,
+        p_ano: d.getFullYear(),
+      })
     );
   }
-  // Falhas são silenciadas: a fatura pode já existir (constraint UNIQUE)
-  await Promise.allSettled(calls);
+  const results = await Promise.allSettled(calls);
+  const realErrors = results.flatMap((r) => {
+    if (r.status === "rejected") return [r.reason as Error];
+    // 23505 = unique_violation: fatura já existe, esperado
+    if (r.value.error && r.value.error.code !== "23505") return [new Error(r.value.error.message)];
+    return [];
+  });
+  if (realErrors.length > 0) throw realErrors[0];
 }
 
 export function useFaturas(cartaoId: string | null) {
