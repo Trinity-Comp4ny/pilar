@@ -111,7 +111,7 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
     } else {
       form.setValue("cartaoId", "");
     }
-  }, [isCartaoPayment]);
+  }, [isCartaoPayment, form]);
 
   useEffect(() => {
     if (!open) return;
