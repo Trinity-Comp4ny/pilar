@@ -9,7 +9,7 @@ interface PaymentSuccessProps {
 export function PaymentSuccess({ email, planNome, inviteDispatched }: PaymentSuccessProps) {
   return (
     <div className="text-center space-y-6 py-8">
-      <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-positive/10 text-positive">
+      <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-brand/10 text-brand">
         <CheckCircle2 className="w-8 h-8" />
       </div>
 
