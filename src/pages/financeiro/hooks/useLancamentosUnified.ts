@@ -1,8 +1,12 @@
-// Tipos compartilhados entre LancamentosTable, LancamentoFormDialog,
-// LancamentoDetailDialog, GrupoParcelaActions e useLancamentosPaginados.
-// A função useLancamentosUnified foi removida — o dado paginado
-// vem de useLancamentosPaginados (React Query + keyset) e os KPIs
-// vêm da RPC get_lancamentos_kpis.
+// Tipos do domínio de lançamentos financeiros — compartilhados entre
+// LancamentosTable, LancamentoFormDialog, LancamentoDetailDialog,
+// GrupoParcelaActions e useLancamentosPaginados.
+//
+// Arquitetura de dados financeiros:
+//   useLancamentosPaginados  → tabela paginada (keyset cursor, TanStack Query infinite)
+//   useFinanceItems          → listas completas para Despesas/Receitas (TanStack Query)
+//   useFinanceData           → KPIs e gráficos para VisaoGeral/FluxoCaixa (TanStack Query)
+//   useFinanceAuxData        → dados auxiliares do formulário (TanStack Query, staleTime 10min)
 
 export type TipoLancamento = "receita" | "despesa" | "transferencia";
 export type GrupoTipo = "finito" | "recorrente" | null;

@@ -15,7 +15,14 @@ import {
 } from "@/components/ui/dialog";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, Plus, Settings, Pencil, Trash2, QrCode } from "lucide-react";
+import { CalendarIcon, Plus, Settings, Pencil, Trash2, QrCode, MoreVertical, CheckCircle2, Clock } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { TIPO_CHAVE_PIX_LABEL } from "@/lib/pixUtils";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -46,7 +53,7 @@ export default function Receitas() {
   const { items: receitasRaw, aux, refetch } = useFinanceItems("receita");
   const { categorias, contas, projetos, clientes } = aux;
 
-  const { saveReceita, deleteOne, deleteGroup } = useFinanceItemMutations("receita");
+  const { saveReceita, deleteOne, deleteGroup, marcarRecebida, marcarPendente } = useFinanceItemMutations("receita");
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -118,6 +125,7 @@ export default function Receitas() {
   const [deleteGroupTarget, setDeleteGroupTarget] = useState<{ id: string; grupoId: string; label: string } | null>(
     null
   );
+  const [confirmRecebidaId, setConfirmRecebidaId] = useState<string | null>(null);
 
   const handleDelete = (id: string) => {
     const receita = receitas.find((r) => r.id === id);
@@ -554,30 +562,40 @@ export default function Receitas() {
                       </Badge>
                     </TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()}>
-                      <div className="flex gap-1 justify-end">
-                        {canEdit && (
-                          <>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                              onClick={() => openEditReceita(receita)}
-                              aria-label="Editar receita"
-                            >
-                              <Pencil className="h-4 w-4" />
+                      {canEdit && (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                              <MoreVertical className="h-4 w-4" />
                             </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => openEditReceita(receita)}>
+                              <Pencil className="mr-2 h-4 w-4" />
+                              Editar
+                            </DropdownMenuItem>
+                            {receita.status !== "Recebido" && receita.status !== "Recebida" ? (
+                              <DropdownMenuItem onClick={() => setConfirmRecebidaId(receita.id)}>
+                                <CheckCircle2 className="mr-2 h-4 w-4 text-positive" />
+                                Marcar como recebida
+                              </DropdownMenuItem>
+                            ) : (
+                              <DropdownMenuItem onClick={() => marcarPendente.mutate(receita.id)}>
+                                <Clock className="mr-2 h-4 w-4 text-amber-500" />
+                                Marcar como pendente
+                              </DropdownMenuItem>
+                            )}
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              className="text-red-600 focus:text-red-600"
                               onClick={() => handleDelete(receita.id)}
-                              aria-label="Excluir receita"
                             >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </>
-                        )}
-                      </div>
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Excluir
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -711,6 +729,17 @@ export default function Receitas() {
         }}
         duplicates={formCtl.duplicates}
         onConfirm={formCtl.confirmDuplicate}
+      />
+
+      <ConfirmDialog
+        open={confirmRecebidaId !== null}
+        onOpenChange={(v) => { if (!v) setConfirmRecebidaId(null); }}
+        onConfirm={() => {
+          if (confirmRecebidaId) marcarRecebida.mutate(confirmRecebidaId, { onSettled: () => setConfirmRecebidaId(null) });
+        }}
+        title="Confirmar recebimento?"
+        description="Deseja marcar esta receita como recebida?"
+        confirmText="Confirmar"
       />
 
       <ConfirmDialog

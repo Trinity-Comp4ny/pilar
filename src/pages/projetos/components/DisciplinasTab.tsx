@@ -272,7 +272,7 @@ export function DisciplinasTab({ projetos, isLoading }: DisciplinasTabProps) {
               </div>
               <span className="text-sm font-bold">{metrics.progressoPct}%</span>
             </div>
-            <Progress value={metrics.progressoPct} className="h-2.5" />
+            <Progress value={metrics.progressoPct} className="h-2.5" indicatorClassName="bg-brand" />
             <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
               <span>
                 {metrics.concluidas} de {metrics.total} atribuições concluídas
@@ -472,7 +472,7 @@ export function DisciplinasTab({ projetos, isLoading }: DisciplinasTabProps) {
 
                       <div className="flex items-center gap-3 mt-2">
                         <div className="flex-1 max-w-[200px]">
-                          <Progress value={grupo.progresso} className="h-1.5" />
+                          <Progress value={grupo.progresso} className="h-1.5" indicatorClassName="bg-brand" />
                         </div>
                         <span className="text-xs font-medium text-muted-foreground">{grupo.progresso}%</span>
                       </div>

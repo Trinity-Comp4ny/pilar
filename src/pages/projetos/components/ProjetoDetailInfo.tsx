@@ -77,7 +77,7 @@ export function ProjetoDetailInfo({ projeto, progress, margemBrutaPct }: Projeto
           <span className="text-xs text-muted-foreground">Progresso das disciplinas</span>
           <span className="text-xs font-medium">{progress}%</span>
         </div>
-        <Progress value={progress} className="h-2" />
+        <Progress value={progress} className="h-2" indicatorClassName="bg-brand" />
       </div>
     </>
   );
