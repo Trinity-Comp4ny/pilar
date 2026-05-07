@@ -9,7 +9,7 @@ import { monitoring } from "@/lib/monitoring";
 import { usePageTracking } from "@/hooks/usePageTracking";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ImpersonationProvider } from "@/contexts/ImpersonationContext";
-import { IdleTimeoutProvider } from "@/components/IdleTimeoutProvider";
+import { PageSkeleton } from "@/components/PageSkeleton";
 import { PrivateRoute } from "./components/PrivateRoute";
 import { ClientePrivateRoute } from "./components/ClientePrivateRoute";
 import { AdminRoute } from "./components/AdminRoute";
@@ -96,16 +96,9 @@ const App = () => {
           <BrowserRouter>
             <PageTracker />
             <AuthProvider>
-              <IdleTimeoutProvider />
               <ImpersonationProvider>
                 <ImpersonationBanner />
-                <Suspense
-                  fallback={
-                    <div className="min-h-screen flex items-center justify-center text-sm text-gray-500">
-                      Carregando...
-                    </div>
-                  }
-                >
+                <Suspense fallback={<PageSkeleton />}>
                   <Routes>
                     <Route path="/" element={<Landing />} />
                     <Route path="/planos" element={<Planos />} />

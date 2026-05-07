@@ -241,7 +241,7 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
           .from(table)
           .update(payload as never)
           .eq("id", lancamento.id);
-        if (error) throw error;
+        if (error) throw new Error(error.message + (error.details ? ` (${error.details})` : ""));
 
         await persistRateio(lancamento.id, tipo);
         toast.success("Lançamento atualizado");
@@ -301,7 +301,7 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
           .from(table)
           .insert(rows as never)
           .select("id");
-        if (error) throw error;
+        if (error) throw new Error(error.message + (error.details ? ` (${error.details})` : ""));
 
         if (rateioOn && rateios.length > 0 && inserted) {
           for (const row of inserted as Array<{ id: string }>) {
@@ -316,7 +316,8 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
       onOpenChange(false);
       onSaved();
     } catch (e) {
-      toast.error("Erro ao salvar", { description: e instanceof Error ? e.message : undefined });
+      const msg = e instanceof Error ? e.message : (e as { message?: string })?.message;
+      toast.error("Erro ao salvar", { description: msg });
     } finally {
       setSaving(false);
     }

@@ -811,7 +811,7 @@ export default function Clientes() {
         />
       }
     >
-      <Card className="rounded-2xl border border-black/5 bg-white w-full flex flex-col min-h-0 overflow-hidden">
+      <Card className="rounded-2xl border border-black/5 bg-white w-full flex flex-col flex-1 min-h-0 overflow-hidden">
         <CardHeader>
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
@@ -859,7 +859,7 @@ export default function Clientes() {
           </div>
         </CardHeader>
         <CardContent className="flex-1 min-h-0">
-          <div className="overflow-x-auto overflow-y-auto w-full max-h-[calc(100svh-240px)]">
+          <div className="overflow-x-auto overflow-y-auto w-full h-full">
             <Table>
               <TableHeader>
                 <TableRow>
