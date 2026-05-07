@@ -15,6 +15,18 @@ describe("onlyDigits", () => {
     expect(onlyDigits("(11) 99999-9999")).toBe("11999999999");
     expect(onlyDigits("abc")).toBe("");
   });
+
+  it("retorna string vazia para null (regressão Bug B1)", () => {
+    expect(onlyDigits(null)).toBe("");
+  });
+
+  it("retorna string vazia para undefined", () => {
+    expect(onlyDigits(undefined)).toBe("");
+  });
+
+  it("retorna string vazia para string vazia", () => {
+    expect(onlyDigits("")).toBe("");
+  });
 });
 
 describe("formatCPF", () => {

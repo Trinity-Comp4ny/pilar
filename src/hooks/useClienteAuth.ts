@@ -17,15 +17,16 @@ interface VerifySessionResponse extends ClienteAccount {
 }
 
 export function getPortalToken(): string | null {
-  return localStorage.getItem(TOKEN_KEY);
+  return sessionStorage.getItem(TOKEN_KEY);
 }
 
 export function setPortalToken(token: string) {
-  localStorage.setItem(TOKEN_KEY, token);
+  sessionStorage.setItem(TOKEN_KEY, token);
 }
 
 export function clearPortalToken() {
-  localStorage.removeItem(TOKEN_KEY);
+  sessionStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(TOKEN_KEY); // limpa tokens legados em localStorage
 }
 
 export async function portalLogout() {

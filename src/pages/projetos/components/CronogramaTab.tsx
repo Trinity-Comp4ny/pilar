@@ -17,6 +17,7 @@ interface CronogramaTabProps {
   projetoDataInicio?: string;
   projetoDataPrevisao?: string;
   onDatesChange?: (discIdx: number, updates: { data_inicio?: string; data_previsao?: string }) => Promise<void>;
+  onDisciplinaClick?: (disc: DisciplinaResponsavel) => void;
 }
 
 type ZoomLevel = "months" | "weeks";
@@ -170,6 +171,7 @@ export function CronogramaTab({
   projetoDataInicio,
   projetoDataPrevisao,
   onDatesChange,
+  onDisciplinaClick,
 }: CronogramaTabProps) {
   const [zoom, setZoom] = useState<ZoomLevel>("months");
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -798,14 +800,19 @@ export function CronogramaTab({
                                     </div>
                                   )}
 
-                                  {/* Body — drag move */}
+                                  {/* Body — drag move / click to edit */}
                                   <div
                                     className={cn(
                                       "flex-1 flex items-center overflow-hidden",
-                                      canDrag ? "mx-4 cursor-grab active:cursor-grabbing" : "mx-2"
+                                      canDrag ? "mx-4 cursor-grab active:cursor-grabbing" : "mx-2",
+                                      onDisciplinaClick && "cursor-pointer"
                                     )}
                                     onMouseDown={canDrag ? (e) => startDrag(e, i, "move") : undefined}
                                     onTouchStart={canDrag ? (e) => startTouchDrag(e, i, "move") : undefined}
+                                    onClick={() => {
+                                      if (dragRef.current) return;
+                                      onDisciplinaClick?.(row.disc);
+                                    }}
                                   >
                                     {/* Progress fill for Em Andamento */}
                                     {row.status === "Em Andamento" && row.start && row.end && (
