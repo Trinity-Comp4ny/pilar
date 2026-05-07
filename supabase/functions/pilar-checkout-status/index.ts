@@ -48,8 +48,22 @@ serve(
 
     const { data: signup, error } = await admin
       .from("pilar_pending_signups")
-      .select(
-        `id, email, payment_status, billing_type, billing_cycle,
+      .select<string, {
+        id: string;
+        email: string;
+        nome: string | null;
+        company_name: string | null;
+        payment_status: string;
+        billing_type: string | null;
+        billing_cycle: string | null;
+        paid_at: string | null;
+        invite_dispatched_at: string | null;
+        activated_at: string | null;
+        asaas_payment_id: string | null;
+        payment_metadata: unknown;
+        plan: { slug: string; nome: string } | null;
+      }>(
+        `id, email, nome, company_name, payment_status, billing_type, billing_cycle,
        paid_at, invite_dispatched_at, activated_at,
        asaas_payment_id, payment_metadata,
        plan:pilar_subscription_plans(slug, nome)`
@@ -83,6 +97,64 @@ serve(
         log.warn("asaas payment check failed", {
           signup_id: signup.id,
           payment_id: signup.asaas_payment_id,
+          error: err instanceof Error ? err.message : String(err),
+        });
+      }
+    }
+
+    // Fallback de invite: se pago mas webhook não disparou o invite ainda, dispara aqui.
+    // Garante entrega mesmo se o webhook falhar ou demorar.
+    if (signup.payment_status === "paid" && !signup.invite_dispatched_at) {
+      try {
+        const appOrigin = (Deno.env.get("ALLOWED_ORIGINS") ?? "")
+          .split(",")[0]
+          .trim()
+          .replace(/\/$/, "") || "https://app.pilarsoft.com.br";
+
+        await admin
+          .from("empresa_owners_pending")
+          .update({ usado_em: new Date().toISOString() })
+          .eq("email", signup.email)
+          .is("usado_em", null);
+
+        const { data: ownerPending, error: ownerErr } = await admin
+          .from("empresa_owners_pending")
+          .insert({
+            email: signup.email,
+            company_name: signup.company_name ?? "",
+            nome: signup.nome ?? "",
+          })
+          .select("id, token")
+          .single();
+
+        if (!ownerErr && ownerPending) {
+          const { error: inviteErr } = await admin.auth.admin.inviteUserByEmail(signup.email, {
+            redirectTo: `${appOrigin}/profile-setup`,
+            data: {
+              invite_token: ownerPending.token,
+              nome: signup.nome,
+              is_pilar_subscriber: true,
+            },
+          });
+
+          if (!inviteErr) {
+            await admin
+              .from("pilar_pending_signups")
+              .update({
+                empresa_owner_pending_id: ownerPending.id,
+                invite_dispatched_at: new Date().toISOString(),
+              })
+              .eq("id", signup.id);
+
+            signup.invite_dispatched_at = new Date().toISOString();
+            log.info("invite dispatched via status fallback", { signup_id: signup.id });
+          } else {
+            log.warn("invite fallback: inviteUserByEmail failed", { signup_id: signup.id, error: inviteErr.message });
+          }
+        }
+      } catch (err) {
+        log.warn("invite fallback failed", {
+          signup_id: signup.id,
           error: err instanceof Error ? err.message : String(err),
         });
       }
