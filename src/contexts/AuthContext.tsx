@@ -3,6 +3,7 @@ import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { monitoring } from "@/lib/monitoring";
+import { STORAGE_KEYS } from "@/constants";
 
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 type Empresa = Database["public"]["Tables"]["empresas"]["Row"];
@@ -78,9 +79,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = useCallback(async () => {
     await supabase.auth.signOut();
-    localStorage.removeItem("pilar-auth");
-    localStorage.removeItem("pilar-user-name");
-    localStorage.removeItem("pilar-remember-me");
+    localStorage.removeItem(STORAGE_KEYS.AUTH);
+    localStorage.removeItem(STORAGE_KEYS.USER_NAME);
+    localStorage.removeItem(STORAGE_KEYS.REMEMBER_ME);
     setUser(null);
     setProfile(null);
     setMfaCurrentLevel("aal1");
