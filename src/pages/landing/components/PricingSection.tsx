@@ -2,25 +2,10 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { usePlans, type Plan } from "@/pages/planos/hooks/usePlans";
+import { formatBRL } from "@/lib/currency";
+import { usePlans, calculateYearlySavingPct } from "@/pages/planos/hooks/usePlans";
+import { CycleToggle, type BillingCycle } from "@/pages/planos/components/CycleToggle";
 import { monitoring } from "@/lib/monitoring";
-
-type BillingCycle = "monthly" | "yearly";
-
-function formatBRL(value: number): string {
-  return value.toLocaleString("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-    minimumFractionDigits: 0,
-  });
-}
-
-function calculateAnnualSavings(plan: Plan): number | null {
-  if (!plan.preco_anual || plan.preco_mensal <= 0) return null;
-  const fullYear = plan.preco_mensal * 12;
-  if (plan.preco_anual >= fullYear) return null;
-  return Math.round(((fullYear - plan.preco_anual) / fullYear) * 100);
-}
 
 export function PricingSection() {
   const [cycle, setCycle] = useState<BillingCycle>("monthly");
@@ -34,13 +19,12 @@ export function PricingSection() {
     }
   }, [error]);
 
-  // Falha silenciosa: não bloqueia a landing.
   if (error) return null;
 
   const hasYearlyPricing = (plans ?? []).some((p) => p.preco_anual && p.preco_anual > 0);
   const maxSavings = (plans ?? []).reduce<number>((acc, p) => {
-    const s = calculateAnnualSavings(p);
-    return s && s > acc ? s : acc;
+    const s = calculateYearlySavingPct(p);
+    return s != null && s > acc ? s : acc;
   }, 0);
 
   return (
@@ -61,39 +45,7 @@ export function PricingSection() {
 
           {hasYearlyPricing && (
             <div className="flex justify-center mb-12 reveal-up">
-              <div
-                role="tablist"
-                aria-label="Ciclo de cobrança"
-                className="inline-flex items-center rounded-full border border-paper-border bg-white p-1 shadow-sm"
-              >
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={cycle === "monthly"}
-                  onClick={() => setCycle("monthly")}
-                  className={cn(
-                    "px-5 py-2 rounded-full text-xs font-medium uppercase tracking-wider transition-all",
-                    cycle === "monthly" ? "bg-ink-soft text-white" : "text-slate-500 hover:text-slate-800"
-                  )}
-                >
-                  Mensal
-                </button>
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={cycle === "yearly"}
-                  onClick={() => setCycle("yearly")}
-                  className={cn(
-                    "px-5 py-2 rounded-full text-xs font-medium uppercase tracking-wider transition-all flex items-center gap-2",
-                    cycle === "yearly" ? "bg-ink-soft text-white" : "text-slate-500 hover:text-slate-800"
-                  )}
-                >
-                  Anual
-                  {maxSavings > 0 && (
-                    <span className="text-[10px] bg-brand text-ink px-1.5 py-0.5 rounded-full">-{maxSavings}%</span>
-                  )}
-                </button>
-              </div>
+              <CycleToggle value={cycle} onChange={setCycle} yearlySavingPct={maxSavings || undefined} />
             </div>
           )}
 
@@ -105,7 +57,7 @@ export function PricingSection() {
             </div>
           )}
 
-          {!isLoading && plans && plans.length === 0 && (
+          {!isLoading && plans?.length === 0 && (
             <p className="text-center text-sm text-slate-400 py-12">
               Estamos finalizando os planos. Volte em instantes.
             </p>
@@ -167,10 +119,7 @@ export function PricingSection() {
                       )}
                     >
                       Assinar {plan.nome}
-                      <ArrowRight
-                        aria-hidden="true"
-                        className="w-4 h-4 group-hover:translate-x-0.5 transition-transform"
-                      />
+                      <ArrowRight aria-hidden="true" className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
                     </Link>
                   </article>
                 );
