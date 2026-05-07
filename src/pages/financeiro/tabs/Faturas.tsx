@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { useCartoesResumo, useContas, useFaturas, useDespesasFatura, type Fatura } from "../hooks/useFaturas";
+import { useCartoesResumo, useContas, useFaturas, useDespesasFatura, useInvalidateFaturas, gerarFaturasCartao, type Fatura } from "../hooks/useFaturas";
 import { usePagarFatura } from "../hooks/usePagarFatura";
 
 const MESES = [
@@ -53,6 +53,12 @@ export default function Faturas() {
   }, [cartoes, selectedCartaoId]);
 
   const { data: faturas = [], isLoading: loadingFaturas } = useFaturas(selectedCartaoId || null);
+  const invalidateFaturas = useInvalidateFaturas();
+
+  useEffect(() => {
+    if (!selectedCartaoId) return;
+    void gerarFaturasCartao(selectedCartaoId).then(() => invalidateFaturas());
+  }, [selectedCartaoId, invalidateFaturas]);
 
   // Detail dialog
   const [selectedFatura, setSelectedFatura] = useState<Fatura | null>(null);
