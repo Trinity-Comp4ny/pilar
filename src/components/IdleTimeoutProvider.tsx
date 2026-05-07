@@ -1,7 +1,7 @@
+import { useState } from "react";
 import { useIdleTimeout } from "@/hooks/useIdleTimeout";
 import { useAuth } from "@/contexts/AuthContext";
-
-const REMEMBER_ME_KEY = "pilar-remember-me";
+import { STORAGE_KEYS } from "@/constants";
 
 /**
  * Monta idle timeout conforme role:
@@ -12,7 +12,7 @@ const REMEMBER_ME_KEY = "pilar-remember-me";
 export function IdleTimeoutProvider() {
   const { profile } = useAuth();
 
-  const rememberMe = localStorage.getItem(REMEMBER_ME_KEY) === "1";
+  const [rememberMe] = useState(() => localStorage.getItem(STORAGE_KEYS.REMEMBER_ME) === "1");
 
   const timeoutMs = (() => {
     if (!profile) return 30 * 60 * 1000;

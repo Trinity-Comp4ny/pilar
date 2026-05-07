@@ -211,3 +211,10 @@ export const NOTA_FISCAL = {
   SIM: "Sim",
   NAO: "Não",
 } as const;
+
+// Storage Keys
+export const STORAGE_KEYS = {
+  REMEMBER_ME: "pilar-remember-me",
+  AUTH: "pilar-auth",
+  USER_NAME: "pilar-user-name",
+} as const;

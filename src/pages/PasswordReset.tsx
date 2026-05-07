@@ -257,7 +257,11 @@ export default function PasswordReset() {
                               className={`w-3.5 h-3.5 flex-shrink-0 transition-all duration-200 ${ok ? "text-chart-success" : "text-ink/20"}`}
                               strokeWidth={2.5}
                             />
-                            <span className="text-xs font-medium text-ink">{label}</span>
+                            <span
+                              className={`text-xs transition-colors duration-200 ${ok ? "text-chart-success font-medium" : "text-ink-soft"}`}
+                            >
+                              {label}
+                            </span>
                           </li>
                         ))}
                       </ul>
