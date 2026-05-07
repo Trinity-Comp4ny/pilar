@@ -57,7 +57,12 @@ export default function Faturas() {
 
   useEffect(() => {
     if (!selectedCartaoId) return;
-    void gerarFaturasCartao(selectedCartaoId).then(() => invalidateFaturas());
+    void gerarFaturasCartao(selectedCartaoId)
+      .then(() => invalidateFaturas())
+      .catch((err) => {
+        const msg = err instanceof Error ? err.message : (err as { message?: string })?.message ?? "Erro ao gerar faturas";
+        toast.error("Erro ao carregar faturas", { description: msg });
+      });
   }, [selectedCartaoId, invalidateFaturas]);
 
   // Detail dialog
