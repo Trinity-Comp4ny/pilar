@@ -41,7 +41,7 @@ export function TimelineContent({ disciplinas }: { disciplinas: TimelineDiscipli
                 const isConcluido = d.status === "Concluído";
                 const isAndamento = d.status === "Em Andamento";
                 return (
-                  <div key={i} className="flex gap-4 mb-4 last:mb-0">
+                  <div key={d.disciplina ?? i} className="flex gap-4 mb-4 last:mb-0">
                     <div className="flex flex-col items-center">
                       <div
                         className={`w-3 h-3 rounded-full ${isConcluido ? "bg-positive" : isAndamento ? "bg-blue-500" : "bg-gray-300"}`}
