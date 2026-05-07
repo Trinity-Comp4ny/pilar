@@ -159,6 +159,7 @@ export default function Clientes() {
           `Erro ao enviar mensagem para ${selectedClienteForMessage?.nome}${selectedClienteForMessage?.sobrenome ? " " + selectedClienteForMessage.sobrenome : ""}`
         );
         monitoring.captureException(error, { context: "sendClientMessage" });
+        return;
       }
 
       resetMessageModal();
