@@ -137,9 +137,9 @@ async function fetchAuxData(tipo: FinanceItemTipo): Promise<AuxData> {
     { data: clientesData },
   ] = await Promise.all([
     supabase.from("categorias_financeiras").select("id, nome").eq("tipo", tipoCategoria).order("nome"),
-    supabase.from("contas").select("id, nome").order("nome"),
+    supabase.from("contas").select("id, nome").is("deleted_at", null).order("nome"),
     tipo === "despesa"
-      ? supabase.from("cartoes").select("id, nome, tipo, dia_fechamento")
+      ? supabase.from("cartoes").select("id, nome, tipo, dia_fechamento").is("deleted_at", null)
       : Promise.resolve({ data: [] as never[] }),
     supabase.from("projetos").select("id, nome, codigo_projeto").order("nome"),
     tipo === "despesa"

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { parseCurrencyString, formatCurrencyInput, removeNonNumeric, formatCurrency } from "./currencyUtils";
+import { parseCurrencyString, formatCurrencyInput, removeNonNumeric, formatCurrency, formatValorToInput } from "./currencyUtils";
 
 describe("parseCurrencyString", () => {
   it("parses formatted Brazilian currency", () => {
@@ -54,5 +54,62 @@ describe("formatCurrency", () => {
     expect(formatCurrency(1500)).toContain("1.500");
     expect(formatCurrency(0)).toContain("0,00");
     expect(formatCurrency(10.5)).toContain("10,50");
+  });
+});
+
+describe("parseCurrencyString — edge cases", () => {
+  it("sinal negativo é ignorado (stripped como não-numérico) — retorna positivo", () => {
+    // O parser remove não-numéricos: "-100" vira "100" → 100/100 = 1
+    expect(parseCurrencyString("-100")).toBe(1);
+  });
+
+  it("parseia valor com 1 casa decimal", () => {
+    expect(parseCurrencyString("10,5")).toBe(10.5);
+  });
+
+  it("parseia valor com separadores de milhar e decimal", () => {
+    expect(parseCurrencyString("1.234.567,89")).toBe(1234567.89);
+  });
+
+  it("retorna 0 para string só com símbolo", () => {
+    expect(parseCurrencyString("R$")).toBe(0);
+  });
+
+  it("parseia zero formatado", () => {
+    expect(parseCurrencyString("R$ 0,00")).toBe(0);
+  });
+
+  it("parseia valor alto sem perder precisão", () => {
+    expect(parseCurrencyString("R$ 999.999,99")).toBe(999999.99);
+  });
+});
+
+describe("formatValorToInput", () => {
+  it("formata número como moeda BRL", () => {
+    expect(formatValorToInput(1500)).toContain("1.500");
+    expect(formatValorToInput(0)).toContain("0,00");
+    expect(formatValorToInput(1500)).toContain("R");
+  });
+
+  it("formata centavos corretamente", () => {
+    expect(formatValorToInput(0.01)).toContain("0,01");
+    expect(formatValorToInput(1.5)).toContain("1,50");
+  });
+});
+
+describe("formatCurrencyInput — edge cases", () => {
+  it("retorna R$ 0,00 para entrada nula-like", () => {
+    expect(formatCurrencyInput("")).toContain("0,00");
+    expect(formatCurrencyInput("0")).toContain("0,00");
+    expect(formatCurrencyInput("00")).toContain("0,00");
+  });
+
+  it("formata valor grande corretamente", () => {
+    expect(formatCurrencyInput("99999999")).toContain("999.999,99");
+  });
+
+  it("ignora múltiplos zeros à esquerda", () => {
+    const result = formatCurrencyInput("001");
+    expect(result).toContain("0,01");
   });
 });
