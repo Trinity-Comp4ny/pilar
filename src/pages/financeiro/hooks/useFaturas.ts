@@ -74,7 +74,7 @@ export function useContas() {
   });
 }
 
-async function gerarFaturasCartao(cartaoId: string) {
+export async function gerarFaturasCartao(cartaoId: string) {
   const now = new Date();
   const calls: Promise<unknown>[] = [];
   for (let i = -2; i <= 1; i++) {
@@ -100,8 +100,6 @@ export function useFaturas(cartaoId: string | null) {
     staleTime: STALE_30S,
     queryFn: async () => {
       if (!cartaoId) return [] as Fatura[];
-
-      await gerarFaturasCartao(cartaoId);
 
       const { data, error } = await supabase
         .from("view_fatura_resumo")

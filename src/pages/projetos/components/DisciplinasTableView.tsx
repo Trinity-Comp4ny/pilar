@@ -68,7 +68,7 @@ export function DisciplinasTableView({
   const [justificativaDialog, setJustificativaDialog] = useState<{ idx: number; newStatus: string } | null>(null);
   const [justificativaText, setJustificativaText] = useState("");
   const [concludingIdx, setConcludingIdx] = useState<number | null>(null);
-  const [obsDraft, setObsDraft] = useState("");
+  const [obsDrafts, setObsDrafts] = useState<Record<string, string>>({});
 
   const quickUpdate = async (idx: number, patch: Partial<ProjetoDisciplinaDB>) => {
     const dbDisc = dbDisciplinas[idx];
@@ -252,6 +252,7 @@ export function DisciplinasTableView({
                           <DatePicker
                             value={disc.data_inicio || undefined}
                             onChange={(v) => quickUpdate(idx, { data_inicio: v || null })}
+                            maxDate={disc.data_previsao || disc.data_final || undefined}
                             placeholder="—"
                             className="h-7 text-xs border-0 bg-transparent hover:bg-muted"
                           />
@@ -266,6 +267,8 @@ export function DisciplinasTableView({
                           <DatePicker
                             value={disc.data_previsao || undefined}
                             onChange={(v) => quickUpdate(idx, { data_fim: v || null })}
+                            minDate={disc.data_inicio || undefined}
+                            maxDate={disc.data_final || undefined}
                             placeholder="—"
                             className="h-7 text-xs border-0 bg-transparent hover:bg-muted"
                           />
@@ -282,6 +285,7 @@ export function DisciplinasTableView({
                           <DatePicker
                             value={disc.data_final || undefined}
                             onChange={(v) => quickUpdate(idx, { data_fim_real: v || null })}
+                            minDate={disc.data_inicio || undefined}
                             placeholder="—"
                             className="h-7 text-xs border-0 bg-transparent hover:bg-muted"
                           />
@@ -313,7 +317,9 @@ export function DisciplinasTableView({
                               variant="ghost"
                               size="sm"
                               className="h-7 px-2 text-xs"
-                              onClick={() => setObsDraft("")}
+                              onClick={() =>
+                                setObsDrafts((prev) => ({ ...prev, [dbDisc?.id ?? idx]: "" }))
+                              }
                             >
                               <MessageSquare className="h-3.5 w-3.5 mr-1" />
                               {obsCount > 0 ? obsCount : ""}
@@ -333,16 +339,19 @@ export function DisciplinasTableView({
                                 <div className="flex gap-1.5">
                                   <Input
                                     placeholder="Nova observação..."
-                                    value={obsDraft}
-                                    onChange={(e) => setObsDraft(e.target.value)}
+                                    value={obsDrafts[dbDisc?.id ?? idx] ?? ""}
+                                    onChange={(e) =>
+                                      setObsDrafts((prev) => ({ ...prev, [dbDisc?.id ?? idx]: e.target.value }))
+                                    }
                                     onKeyDown={(e) => {
-                                      if (e.key === "Enter" && obsDraft.trim()) {
+                                      const draft = obsDrafts[dbDisc?.id ?? idx] ?? "";
+                                      if (e.key === "Enter" && draft.trim()) {
                                         e.preventDefault();
                                         const stamp = new Date().toLocaleString("pt-BR");
-                                        const entry = `[${stamp}] ${obsDraft.trim()}`;
+                                        const entry = `[${stamp}] ${draft.trim()}`;
                                         const next = dbDisc?.observacoes ? `${dbDisc.observacoes}\n${entry}` : entry;
                                         quickUpdate(idx, { observacoes: next });
-                                        setObsDraft("");
+                                        setObsDrafts((prev) => ({ ...prev, [dbDisc?.id ?? idx]: "" }));
                                       }
                                     }}
                                     className="h-8 text-xs"
@@ -350,13 +359,14 @@ export function DisciplinasTableView({
                                   <Button
                                     size="sm"
                                     className="h-8"
-                                    disabled={!obsDraft.trim()}
+                                    disabled={!(obsDrafts[dbDisc?.id ?? idx] ?? "").trim()}
                                     onClick={() => {
+                                      const draft = obsDrafts[dbDisc?.id ?? idx] ?? "";
                                       const stamp = new Date().toLocaleString("pt-BR");
-                                      const entry = `[${stamp}] ${obsDraft.trim()}`;
+                                      const entry = `[${stamp}] ${draft.trim()}`;
                                       const next = dbDisc?.observacoes ? `${dbDisc.observacoes}\n${entry}` : entry;
                                       quickUpdate(idx, { observacoes: next });
-                                      setObsDraft("");
+                                      setObsDrafts((prev) => ({ ...prev, [dbDisc?.id ?? idx]: "" }));
                                     }}
                                   >
                                     <Plus className="h-3.5 w-3.5" />

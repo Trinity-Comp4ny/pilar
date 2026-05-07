@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 interface AuxData {
@@ -12,91 +12,69 @@ interface AuxData {
   loading: boolean;
 }
 
+async function fetchFinanceAuxData(tipo: "receita" | "despesa"): Promise<Omit<AuxData, "loading">> {
+  const tipoCat = tipo === "receita" ? "Receita" : "Despesa";
+
+  const baseQueries = Promise.all([
+    supabase.from("categorias_financeiras").select("id, nome").eq("tipo", tipoCat).order("nome"),
+    supabase.from("projetos").select("id, codigo_projeto").is("deleted_at", null).order("nome"),
+    supabase.from("contas").select("id, nome").is("deleted_at", null).order("nome"),
+    supabase.from("centros_custo").select("id, nome, codigo").eq("ativo", true).is("deleted_at", null).order("nome"),
+  ]);
+
+  if (tipo === "receita") {
+    const [[catsRes, projsRes, cntsRes, ccsRes], clisRes] = await Promise.all([
+      baseQueries,
+      supabase.from("clientes").select("id, nome, chaves_pix").order("nome"),
+    ]);
+    return {
+      categorias: (catsRes.data ?? []).map((c) => ({ id: c.id, nome: c.nome })),
+      projetos: (projsRes.data ?? []).map((p) => ({ id: p.id, codigo: p.codigo_projeto ?? "" })),
+      contas: (cntsRes.data ?? []).map((c) => ({ id: c.id, nome: c.nome })),
+      centrosCusto: (ccsRes.data ?? []).map((c) => ({ id: c.id, nome: c.nome, codigo: c.codigo })),
+      clientes: (clisRes.data ?? []).map((c) => ({
+        id: c.id,
+        nome: c.nome,
+        chaves_pix: Array.isArray(c.chaves_pix) ? (c.chaves_pix as Array<{ chave: string; tipo: string }>) : [],
+      })),
+      fornecedores: [],
+      cartoes: [],
+    };
+  }
+
+  const [[catsRes, projsRes, cntsRes, ccsRes], fornsRes, crtsRes] = await Promise.all([
+    baseQueries,
+    supabase.from("fornecedores").select("id, nome").order("nome"),
+    supabase.from("cartoes").select("id, nome, tipo").is("deleted_at", null).order("nome"),
+  ]);
+
+  return {
+    categorias: (catsRes.data ?? []).map((c) => ({ id: c.id, nome: c.nome })),
+    projetos: (projsRes.data ?? []).map((p) => ({ id: p.id, codigo: p.codigo_projeto ?? "" })),
+    contas: (cntsRes.data ?? []).map((c) => ({ id: c.id, nome: c.nome })),
+    centrosCusto: (ccsRes.data ?? []).map((c) => ({ id: c.id, nome: c.nome, codigo: c.codigo })),
+    clientes: [],
+    fornecedores: (fornsRes.data ?? []).map((f) => ({ id: f.id, nome: f.nome })),
+    cartoes: (crtsRes.data ?? []).map((c) => ({ id: c.id, nome: c.nome, tipo: c.tipo })),
+  };
+}
+
+const EMPTY: Omit<AuxData, "loading"> = {
+  categorias: [],
+  projetos: [],
+  contas: [],
+  cartoes: [],
+  clientes: [],
+  fornecedores: [],
+  centrosCusto: [],
+};
+
 export function useFinanceAuxData(tipo: "receita" | "despesa"): AuxData {
-  const [categorias, setCategorias] = useState<{ id: string; nome: string }[]>([]);
-  const [projetos, setProjetos] = useState<{ id: string; codigo: string }[]>([]);
-  const [contas, setContas] = useState<{ id: string; nome: string }[]>([]);
-  const [cartoes, setCartoes] = useState<{ id: string; nome: string; tipo: string }[]>([]);
-  const [clientes, setClientes] = useState<
-    { id: string; nome: string; chaves_pix?: Array<{ chave: string; tipo: string }> }[]
-  >([]);
-  const [fornecedores, setFornecedores] = useState<{ id: string; nome: string }[]>([]);
-  const [centrosCusto, setCentrosCusto] = useState<{ id: string; nome: string; codigo: string | null }[]>([]);
-  const [loading, setLoading] = useState(false);
+  const { data, isLoading } = useQuery({
+    queryKey: ["finance-aux-data", tipo],
+    queryFn: () => fetchFinanceAuxData(tipo),
+    staleTime: 10 * 60 * 1000,
+  });
 
-  useEffect(() => {
-    let cancelled = false;
-    const fetch = async () => {
-      setLoading(true);
-      try {
-        const tipoCat = tipo === "receita" ? "Receita" : "Despesa";
-        const [{ data: cats }, { data: projs }, { data: cnts }, { data: ccs }] = await Promise.all([
-          supabase.from("categorias_financeiras").select("id, nome").eq("tipo", tipoCat).order("nome"),
-          supabase.from("projetos").select("id, codigo_projeto").is("deleted_at", null).order("nome"),
-          supabase.from("contas").select("id, nome").is("deleted_at", null).order("nome"),
-          supabase
-            .from("centros_custo")
-            .select("id, nome, codigo")
-            .eq("ativo", true)
-            .is("deleted_at", null)
-            .order("nome"),
-        ]);
-
-        if (cancelled) return;
-        setCategorias((cats ?? []).map((c) => ({ id: c.id, nome: c.nome })));
-        setProjetos((projs ?? []).map((p) => ({ id: p.id, codigo: p.codigo_projeto ?? "" })));
-        setContas((cnts ?? []).map((c) => ({ id: c.id, nome: c.nome })));
-        setCentrosCusto((ccs ?? []).map((c) => ({ id: c.id, nome: c.nome, codigo: c.codigo })));
-
-        if (tipo === "receita") {
-          type ClientePix = { id: string; nome: string; chaves_pix: Array<{ chave: string; tipo: string }> | null };
-          const { data: clis } = await (
-            supabase as unknown as {
-              from: (t: string) => {
-                select: (c: string) => { order: (col: string) => Promise<{ data: ClientePix[] | null }> };
-              };
-            }
-          )
-            .from("clientes")
-            .select("id, nome, chaves_pix")
-            .order("nome");
-          if (!cancelled)
-            setClientes(
-              (clis ?? []).map((c) => ({
-                id: c.id,
-                nome: c.nome,
-                chaves_pix: Array.isArray(c.chaves_pix) ? c.chaves_pix : [],
-              }))
-            );
-        } else {
-          type FornRow = { id: string; nome: string };
-          type CartaoRow = { id: string; nome: string; tipo: string };
-          const [{ data: forns }, { data: crts }] = await Promise.all([
-            supabase.from("fornecedores").select("id, nome").order("nome") as unknown as Promise<{
-              data: FornRow[] | null;
-            }>,
-            supabase
-              .from("cartoes")
-              .select("id, nome, tipo")
-              .is("deleted_at", null)
-              .order("nome") as unknown as Promise<{
-              data: CartaoRow[] | null;
-            }>,
-          ]);
-          if (!cancelled) {
-            setFornecedores((forns ?? []).map((f) => ({ id: f.id, nome: f.nome })));
-            setCartoes((crts ?? []).map((c) => ({ id: c.id, nome: c.nome, tipo: c.tipo })));
-          }
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    };
-    fetch();
-    return () => {
-      cancelled = true;
-    };
-  }, [tipo]);
-
-  return { categorias, projetos, contas, cartoes, clientes, fornecedores, centrosCusto, loading };
+  return { ...(data ?? EMPTY), loading: isLoading };
 }

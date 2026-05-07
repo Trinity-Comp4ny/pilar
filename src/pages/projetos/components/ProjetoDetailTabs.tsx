@@ -10,6 +10,7 @@ import { type Projeto, type DisciplinaResponsavel, type ProjetoDisciplinaDB } fr
 import { CronogramaTab } from "./CronogramaTab";
 import { PagamentosTab } from "./PagamentosTab";
 import { DisciplinasTableView } from "./DisciplinasTableView";
+import { DisciplinaDetailDialog } from "./DisciplinaDetailDialog";
 
 interface ProjetoDetailTabsProps {
   projeto: Projeto;
@@ -84,6 +85,58 @@ export function ProjetoDetailTabs({
     localStorage.setItem("pilar-disc-view", v);
   };
 
+  const [selectedDisc, setSelectedDisc] = useState<DisciplinaResponsavel | null>(null);
+  const [discDialogOpen, setDiscDialogOpen] = useState(false);
+  const [newObservation, setNewObservation] = useState("");
+
+  const handleDiscClick = (disc: DisciplinaResponsavel) => {
+    setSelectedDisc(disc);
+    setDiscDialogOpen(true);
+  };
+
+  const handleDiscUpdateField = async (field: keyof DisciplinaResponsavel, value: string) => {
+    if (!selectedDisc) return;
+    const discIdx = disciplinasLegacy.findIndex((d) => d.disciplina === selectedDisc.disciplina);
+    if (discIdx < 0) return;
+    const dbDisc = getDbDisc(discIdx);
+    if (!dbDisc) return;
+    const fieldMap: Partial<Record<keyof DisciplinaResponsavel, keyof ProjetoDisciplinaDB>> = {
+      observacoes: "observacoes",
+      data_inicio: "data_inicio",
+      data_previsao: "data_fim",
+      data_final: "data_fim_real",
+      status: "status",
+      justificativa_atraso: "justificativa_atraso",
+    };
+    const dbField = fieldMap[field] ?? (field as keyof ProjetoDisciplinaDB);
+    await handleSaveDiscChanges({ ...dbDisc, [dbField]: value });
+    setSelectedDisc((prev) => prev && { ...prev, [field]: value });
+  };
+
+  const handleDiscUpdateResponsavel = async (val: string, nome: string) => {
+    if (!selectedDisc) return;
+    const discIdx = disciplinasLegacy.findIndex((d) => d.disciplina === selectedDisc.disciplina);
+    if (discIdx < 0) return;
+    const dbDisc = getDbDisc(discIdx);
+    if (!dbDisc) return;
+    const existingResps = dbDisc.responsaveis ?? [];
+    const updatedResps =
+      existingResps.length > 0
+        ? existingResps.map((r, i) => (i === 0 ? { id: val, nome } : r))
+        : [{ id: val, nome }];
+    await handleSaveDiscChanges({ ...dbDisc, responsaveis: updatedResps });
+    setSelectedDisc((prev) => prev && { ...prev, responsavel_id: val, responsavel_nome: nome });
+  };
+
+  const handleAddObservation = async () => {
+    if (!selectedDisc || !newObservation.trim()) return;
+    const obs = selectedDisc.observacoes
+      ? `${selectedDisc.observacoes}\n${newObservation.trim()}`
+      : newObservation.trim();
+    await handleDiscUpdateField("observacoes", obs);
+    setNewObservation("");
+  };
+
   useEffect(() => {
     const { tab, view } = resolveFromHash(location.hash);
     if (tab !== activeTab) setActiveTab(tab);
@@ -154,6 +207,7 @@ export function ProjetoDetailTabs({
                   projetoDataInicio={projeto.data_inicio}
                   projetoDataPrevisao={projeto.data_previsao}
                   onDatesChange={canEdit ? handleCronogramaDatesChange : undefined}
+                  onDisciplinaClick={handleDiscClick}
                 />
               )}
             </div>
@@ -164,6 +218,19 @@ export function ProjetoDetailTabs({
           </TabsContent>
         </div>
       </div>
+
+      <DisciplinaDetailDialog
+        open={discDialogOpen}
+        onOpenChange={setDiscDialogOpen}
+        disciplina={selectedDisc}
+        disciplinas={disciplinasCatalog}
+        pessoas={pessoas}
+        onUpdateField={handleDiscUpdateField}
+        onUpdateResponsavel={handleDiscUpdateResponsavel}
+        newObservation={newObservation}
+        onNewObservationChange={setNewObservation}
+        onAddObservation={handleAddObservation}
+      />
     </Tabs>
   );
 }

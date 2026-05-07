@@ -90,6 +90,7 @@ export function buildDespesaPayloads({ formData, empresaId, selectedParcela }: B
       fornecedor_id: formData.fornecedorId || null,
       projeto_id: formData.projetoID || null,
       nota_fiscal: formData.notaFiscal || null,
+      forma_pagamento: formData.formaPagamento || null,
       status: isPago ? "Pago" : "Pendente",
       conta_id: formData.contaId || null,
       cartao_id: formData.cartaoId || null,

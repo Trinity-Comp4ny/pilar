@@ -5,6 +5,22 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Loader2,
   CheckCircle2,
   Clock,
@@ -13,6 +29,7 @@ import {
   DollarSign,
   TrendingUp,
   CalendarClock,
+  MoreVertical,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -109,6 +126,7 @@ function SummaryCard({
 
 export function PagamentosTab({ projetoId, canEdit }: PagamentosTabProps) {
   const [filtro, setFiltro] = useState<FiltroStatus>("todos");
+  const [confirmId, setConfirmId] = useState<string | null>(null);
   const { data, isLoading } = usePagamentosProjeto(projetoId);
   const marcarRecebido = useMarcarRecebido();
 
@@ -123,12 +141,14 @@ export function PagamentosTab({ projetoId, canEdit }: PagamentosTabProps) {
     return true;
   });
 
-  const handleMarcarRecebido = (receitaId: string) => {
+  const handleConfirmRecebido = () => {
+    if (!confirmId) return;
     marcarRecebido.mutate(
-      { receitaId },
+      { receitaId: confirmId },
       {
         onSuccess: () => toast.success("Pagamento marcado como recebido"),
-        onError: () => toast.error("Erro"),
+        onError: () => toast.error("Erro ao atualizar pagamento"),
+        onSettled: () => setConfirmId(null),
       }
     );
   };
@@ -183,7 +203,7 @@ export function PagamentosTab({ projetoId, canEdit }: PagamentosTabProps) {
                 <span className="text-xs text-muted-foreground">Recebimento do contrato</span>
                 <span className="text-xs font-medium">{resumo.percentualRecebido}%</span>
               </div>
-              <Progress value={resumo.percentualRecebido} className="h-2" />
+              <Progress value={resumo.percentualRecebido} className="h-2" indicatorClassName="bg-brand" />
             </div>
 
             {resumo.proximoVencimento && (
@@ -258,17 +278,19 @@ export function PagamentosTab({ projetoId, canEdit }: PagamentosTabProps) {
                   </div>
 
                   {canEdit && isPendente && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-positive shrink-0"
-                      title="Marcar como recebido"
-                      aria-label="Marcar como recebido"
-                      disabled={marcarRecebido.isPending}
-                      onClick={() => handleMarcarRecebido(pag.id)}
-                    >
-                      <CheckCircle2 className="h-4 w-4" />
-                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => setConfirmId(pag.id)}>
+                          <CheckCircle2 className="mr-2 h-4 w-4 text-positive" />
+                          Marcar como recebido
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   )}
                 </div>
               );
@@ -276,6 +298,23 @@ export function PagamentosTab({ projetoId, canEdit }: PagamentosTabProps) {
           </div>
         )}
       </CardContent>
+
+      <AlertDialog open={!!confirmId} onOpenChange={(open) => !open && setConfirmId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar recebimento</AlertDialogTitle>
+            <AlertDialogDescription>
+              Deseja marcar este pagamento como recebido? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmRecebido} disabled={marcarRecebido.isPending}>
+              {marcarRecebido.isPending ? "Salvando..." : "Confirmar"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }

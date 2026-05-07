@@ -481,7 +481,7 @@ export default function Configuracoes() {
                       className={cn(
                         "w-full text-left px-3 py-2 rounded-lg transition-colors flex items-center gap-2.5",
                         panelConta?.id === conta.id && !panelCartao
-                          ? "bg-brand/10 text-brand"
+                          ? "bg-brand text-white font-medium"
                           : "hover:bg-muted text-foreground"
                       )}
                     >
@@ -634,7 +634,7 @@ export default function Configuracoes() {
                         className={cn(
                           "w-full text-left px-3 py-2.5 rounded-lg transition-colors",
                           panelCartao?.id === cartao.id && !panelConta
-                            ? "bg-brand/10 text-brand"
+                            ? "bg-brand text-white font-medium"
                             : "hover:bg-muted text-foreground"
                         )}
                       >
