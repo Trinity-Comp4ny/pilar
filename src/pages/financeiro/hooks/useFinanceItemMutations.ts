@@ -37,10 +37,10 @@ async function saveDespesaImpl({ formData, selected, cartoes }: SaveDespesaArgs)
     const updatePayload =
       dataChanged && selected.cartao_id ? { ...despesasToInsert[0], fatura_id: null } : despesasToInsert[0];
     const { error } = await supabase.from("despesas").update(updatePayload).eq("id", selected.id);
-    if (error) throw error;
+    if (error) throw new Error(error.message + (error.details ? ` (${error.details})` : ""));
   } else {
     const { error } = await supabase.from("despesas").insert(despesasToInsert);
-    if (error) throw error;
+    if (error) throw new Error(error.message + (error.details ? ` (${error.details})` : ""));
   }
 
   if (formData.cartaoId) {
@@ -84,10 +84,10 @@ async function saveReceitaImpl({ formData, selected }: SaveReceitaArgs) {
 
   if (selected) {
     const { error } = await supabase.from("receitas").update(receitasToInsert[0]).eq("id", selected.id);
-    if (error) throw error;
+    if (error) throw new Error(error.message + (error.details ? ` (${error.details})` : ""));
   } else {
     const { error } = await supabase.from("receitas").insert(receitasToInsert);
-    if (error) throw error;
+    if (error) throw new Error(error.message + (error.details ? ` (${error.details})` : ""));
   }
 
   return { numParcelas: receitasToInsert.length, isEdit: !!selected };
@@ -109,7 +109,10 @@ export function useFinanceItemMutations(tipo: FinanceItemTipo) {
       });
       invalidate();
     },
-    onError: () => toast.error("Erro ao salvar"),
+    onError: (err) =>
+      toast.error("Erro ao salvar despesa", {
+        description: err instanceof Error ? err.message : "Tente novamente",
+      }),
   });
 
   const saveReceita = useMutation({
@@ -120,7 +123,42 @@ export function useFinanceItemMutations(tipo: FinanceItemTipo) {
       });
       invalidate();
     },
-    onError: () => toast.error("Erro ao salvar"),
+    onError: (err) =>
+      toast.error("Erro ao salvar receita", {
+        description: err instanceof Error ? err.message : "Tente novamente",
+      }),
+  });
+
+  const marcarRecebida = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("receitas")
+        .update({ status: "Recebido", data_recebimento: new Date().toISOString().split("T")[0] })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Receita marcada como recebida");
+      invalidate();
+    },
+    onError: (err) =>
+      toast.error("Erro ao atualizar", { description: err instanceof Error ? err.message : "Tente novamente" }),
+  });
+
+  const marcarPendente = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("receitas")
+        .update({ status: "Pendente", data_recebimento: null })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Receita marcada como pendente");
+      invalidate();
+    },
+    onError: (err) =>
+      toast.error("Erro ao atualizar", { description: err instanceof Error ? err.message : "Tente novamente" }),
   });
 
   const deleteOne = useMutation({
@@ -164,5 +202,5 @@ export function useFinanceItemMutations(tipo: FinanceItemTipo) {
       }),
   });
 
-  return { saveDespesa, saveReceita, deleteOne, deleteGroup };
+  return { saveDespesa, saveReceita, deleteOne, deleteGroup, marcarRecebida, marcarPendente };
 }

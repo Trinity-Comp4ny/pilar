@@ -252,6 +252,7 @@ export function DisciplinasTableView({
                           <DatePicker
                             value={disc.data_inicio || undefined}
                             onChange={(v) => quickUpdate(idx, { data_inicio: v || null })}
+                            maxDate={disc.data_previsao || disc.data_final || undefined}
                             placeholder="—"
                             className="h-7 text-xs border-0 bg-transparent hover:bg-muted"
                           />
@@ -266,6 +267,8 @@ export function DisciplinasTableView({
                           <DatePicker
                             value={disc.data_previsao || undefined}
                             onChange={(v) => quickUpdate(idx, { data_fim: v || null })}
+                            minDate={disc.data_inicio || undefined}
+                            maxDate={disc.data_final || undefined}
                             placeholder="—"
                             className="h-7 text-xs border-0 bg-transparent hover:bg-muted"
                           />
@@ -282,6 +285,7 @@ export function DisciplinasTableView({
                           <DatePicker
                             value={disc.data_final || undefined}
                             onChange={(v) => quickUpdate(idx, { data_fim_real: v || null })}
+                            minDate={disc.data_inicio || undefined}
                             placeholder="—"
                             className="h-7 text-xs border-0 bg-transparent hover:bg-muted"
                           />
