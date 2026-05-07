@@ -50,26 +50,31 @@ serve(
         .eq("projeto_id", projeto_id)
         .order("created_at");
 
-      const disciplinas = await Promise.all(
-        (disciplinasRaw ?? []).map(async (pd) => {
-          const { data: resps } = await admin
+      const disciplinaIds = (disciplinasRaw ?? []).map((pd) => pd.id);
+      const { data: todosResps } = disciplinaIds.length
+        ? await admin
             .from("projeto_disciplina_responsaveis")
-            .select("pessoas(nome)")
-            .eq("projeto_disciplina_id", pd.id);
-          return {
-            disciplina: pd.nome,
-            status: pd.status,
-            data_inicio: pd.data_inicio,
-            data_previsao: pd.data_fim,
-            data_final: pd.data_fim_real,
-            responsavel_nome:
-              (resps ?? [])
-                .map((r: Record<string, unknown>) => (r.pessoas as { nome: string } | null)?.nome)
-                .filter(Boolean)
-                .join(", ") || null,
-          };
-        })
-      );
+            .select("projeto_disciplina_id, pessoas(nome)")
+            .in("projeto_disciplina_id", disciplinaIds)
+        : { data: [] };
+
+      const respsByDisciplina = new Map<string, string[]>();
+      for (const r of todosResps ?? []) {
+        const nome = (r.pessoas as { nome: string } | null)?.nome;
+        if (!nome) continue;
+        const arr = respsByDisciplina.get(r.projeto_disciplina_id) ?? [];
+        arr.push(nome);
+        respsByDisciplina.set(r.projeto_disciplina_id, arr);
+      }
+
+      const disciplinas = (disciplinasRaw ?? []).map((pd) => ({
+        disciplina: pd.nome,
+        status: pd.status,
+        data_inicio: pd.data_inicio,
+        data_previsao: pd.data_fim,
+        data_final: pd.data_fim_real,
+        responsavel_nome: respsByDisciplina.get(pd.id)?.join(", ") || null,
+      }));
 
       // Busca receitas
       const { data: receitas } = await admin
