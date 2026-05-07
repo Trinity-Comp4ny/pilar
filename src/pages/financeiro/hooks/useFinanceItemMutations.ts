@@ -109,10 +109,10 @@ export function useFinanceItemMutations(tipo: FinanceItemTipo) {
       });
       invalidate();
     },
-    onError: (err) =>
-      toast.error("Erro ao salvar despesa", {
-        description: err instanceof Error ? err.message : "Tente novamente",
-      }),
+    onError: (err) => {
+      const msg = err instanceof Error ? err.message : (err as { message?: string })?.message ?? "Erro ao salvar";
+      toast.error("Erro ao salvar despesa", { description: msg });
+    },
   });
 
   const saveReceita = useMutation({
@@ -123,10 +123,10 @@ export function useFinanceItemMutations(tipo: FinanceItemTipo) {
       });
       invalidate();
     },
-    onError: (err) =>
-      toast.error("Erro ao salvar receita", {
-        description: err instanceof Error ? err.message : "Tente novamente",
-      }),
+    onError: (err) => {
+      const msg = err instanceof Error ? err.message : (err as { message?: string })?.message ?? "Erro ao salvar";
+      toast.error("Erro ao salvar receita", { description: msg });
+    },
   });
 
   const marcarRecebida = useMutation({
@@ -135,14 +135,16 @@ export function useFinanceItemMutations(tipo: FinanceItemTipo) {
         .from("receitas")
         .update({ status: "Recebido", data_recebimento: new Date().toISOString().split("T")[0] })
         .eq("id", id);
-      if (error) throw error;
+      if (error) throw new Error(error.message + (error.details ? ` (${error.details})` : ""));
     },
     onSuccess: () => {
       toast.success("Receita marcada como recebida");
       invalidate();
     },
-    onError: (err) =>
-      toast.error("Erro ao atualizar", { description: err instanceof Error ? err.message : "Tente novamente" }),
+    onError: (err) => {
+      const msg = err instanceof Error ? err.message : (err as { message?: string })?.message ?? "Erro desconhecido";
+      toast.error("Erro ao atualizar", { description: msg });
+    },
   });
 
   const marcarPendente = useMutation({
@@ -151,14 +153,16 @@ export function useFinanceItemMutations(tipo: FinanceItemTipo) {
         .from("receitas")
         .update({ status: "Pendente", data_recebimento: null })
         .eq("id", id);
-      if (error) throw error;
+      if (error) throw new Error(error.message + (error.details ? ` (${error.details})` : ""));
     },
     onSuccess: () => {
       toast.success("Receita marcada como pendente");
       invalidate();
     },
-    onError: (err) =>
-      toast.error("Erro ao atualizar", { description: err instanceof Error ? err.message : "Tente novamente" }),
+    onError: (err) => {
+      const msg = err instanceof Error ? err.message : (err as { message?: string })?.message ?? "Erro desconhecido";
+      toast.error("Erro ao atualizar", { description: msg });
+    },
   });
 
   const deleteOne = useMutation({
