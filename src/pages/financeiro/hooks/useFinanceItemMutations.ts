@@ -168,7 +168,7 @@ export function useFinanceItemMutations(tipo: FinanceItemTipo) {
   const deleteOne = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from(tableName).update({ deleted_at: new Date().toISOString() }).eq("id", id);
-      if (error) throw error;
+      if (error) throw new Error(error.message + (error.details ? ` (${error.details})` : ""));
     },
     onSuccess: () => {
       toast.success(`${labelSingular} excluída`);

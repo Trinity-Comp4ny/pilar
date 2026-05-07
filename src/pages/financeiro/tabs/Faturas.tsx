@@ -58,7 +58,7 @@ export default function Faturas() {
   useEffect(() => {
     if (!selectedCartaoId) return;
     void gerarFaturasCartao(selectedCartaoId).then(() => invalidateFaturas());
-  }, [selectedCartaoId]);
+  }, [selectedCartaoId, invalidateFaturas]);
 
   // Detail dialog
   const [selectedFatura, setSelectedFatura] = useState<Fatura | null>(null);
