@@ -858,8 +858,15 @@ export default function Leads() {
                                               onClick={() => {
                                                 if (s === "Perdido") {
                                                   setPendingDrop({ leadId: lead.id, newStatus: s });
+                                                  setMotivoPerda("");
+                                                  setIsMotivoPerdasOpen(true);
                                                 } else if (s === "Ganho") {
-                                                  setPendingDrop({ leadId: lead.id, newStatus: s });
+                                                  if (!lead.cliente_id) {
+                                                    setPendingDrop({ leadId: lead.id, newStatus: s });
+                                                    setIsAutoConvertOpen(true);
+                                                  } else {
+                                                    updateStatus.mutate({ leadId: lead.id, newStatus: s });
+                                                  }
                                                 } else {
                                                   updateStatus.mutate({ leadId: lead.id, newStatus: s });
                                                 }
