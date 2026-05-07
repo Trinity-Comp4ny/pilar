@@ -27,7 +27,10 @@ import { CentroCustoManager } from "./CentroCustoManager";
 const schema = z
   .object({
     descricao: z.string().min(1, "Descrição obrigatória"),
-    valorTotal: z.string().min(1, "Valor obrigatório"),
+    valorTotal: z.string().min(1, "Valor obrigatório").refine(
+      (v) => parseCurrencyString(v) > 0,
+      "Valor deve ser maior que zero"
+    ),
     dataVencimento: z.date({ required_error: "Data obrigatória" }),
     status: z.string(),
     formaPagamento: z.string().optional().default(""),
@@ -222,7 +225,7 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
             }
           : {
               data_vencimento: format(data.dataVencimento, "yyyy-MM-dd"),
-              data_pagamento: data.status === "Pago" ? format(data.dataVencimento, "yyyy-MM-dd") : null,
+              data_pagamento: data.status === "Pago" ? (lancamento.data_efetivacao ?? format(data.dataVencimento, "yyyy-MM-dd")) : null,
               data_competencia: dataCompetenciaStr,
               descricao: data.descricao,
               valor: valorNum,
@@ -254,14 +257,15 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
             ? Math.round((valorNum - valorParcela * (numParcelas - 1)) * 100) / 100
             : valorParcela;
           const desc = numParcelas > 1 ? `${data.descricao} (${i + 1}/${numParcelas})` : data.descricao;
+          const isPrimeira = i === 0;
           return isReceita
             ? {
                 data_vencimento: dataStr,
-                data_recebimento: data.status === "Recebida" ? dataStr : null,
+                data_recebimento: isPrimeira && data.status === "Recebida" ? dataStr : null,
                 data_competencia: dataCompetenciaStr,
                 descricao: desc,
                 valor: valorFinal,
-                status: data.status === "Recebida" ? "Recebido" : "Pendente",
+                status: isPrimeira && data.status === "Recebida" ? "Recebido" : "Pendente",
                 forma_pagamento: data.formaPagamento || null,
                 categoria_id: data.categoriaId || null,
                 projeto_id: data.projetoId || null,
@@ -277,11 +281,11 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
               }
             : {
                 data_vencimento: dataStr,
-                data_pagamento: data.status === "Pago" ? dataStr : null,
+                data_pagamento: isPrimeira && data.status === "Pago" ? dataStr : null,
                 data_competencia: dataCompetenciaStr,
                 descricao: desc,
                 valor: valorFinal,
-                status: data.status,
+                status: isPrimeira ? data.status : "Pendente",
                 forma_pagamento: data.formaPagamento || null,
                 categoria_id: data.categoriaId || null,
                 projeto_id: data.projetoId || null,
@@ -316,7 +320,7 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
       onOpenChange(false);
       onSaved();
     } catch (e) {
-      const msg = e instanceof Error ? e.message : (e as { message?: string })?.message;
+      const msg = e instanceof Error ? e.message : (e as { message?: string })?.message ?? "Erro desconhecido";
       toast.error("Erro ao salvar", { description: msg });
     } finally {
       setSaving(false);
