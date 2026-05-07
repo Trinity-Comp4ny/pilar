@@ -58,7 +58,7 @@ double_confirm_changes = true
 enable_confirmations = false
 
 [auth.hook.send_email]
-enabled = false
+enabled = true
 uri = "http://host.docker.internal:54331/functions/v1/auth-email-hook"
 secrets = "env(AUTH_HOOK_SEND_EMAIL_SECRET)"
 

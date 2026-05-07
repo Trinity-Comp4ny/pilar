@@ -11,8 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Mail, Lock, ArrowLeft, Loader2, CheckCircle2, Eye, EyeOff } from "lucide-react";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { loginSchema, loginDefaultValues, type LoginFormData } from "@/schemas";
-
-const REMEMBER_ME_KEY = "pilar-remember-me";
+import { STORAGE_KEYS } from "@/constants";
 
 export default function Login() {
   usePageTitle("Login");
@@ -74,9 +73,9 @@ export default function Login() {
     const mfaRequired = aal?.nextLevel === "aal2" && aal?.currentLevel === "aal1";
 
     if (rememberMe) {
-      localStorage.setItem(REMEMBER_ME_KEY, "1");
+      localStorage.setItem(STORAGE_KEYS.REMEMBER_ME, "1");
     } else {
-      localStorage.removeItem(REMEMBER_ME_KEY);
+      localStorage.removeItem(STORAGE_KEYS.REMEMBER_ME);
     }
 
     if (mfaRequired) {

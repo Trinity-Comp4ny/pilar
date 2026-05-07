@@ -74,7 +74,13 @@ function AdminFinanceiroContent({ projetoId }: { projetoId: string }) {
       .eq("projeto_id", projetoId)
       .is("deleted_at", null)
       .order("data_vencimento", { ascending: true })
-      .then(({ data }) => setReceitas((data ?? []) as ClienteReceita[]));
+      .then(({ data, error }) => {
+        if (error) {
+          toast.error("Erro ao carregar receitas");
+          return;
+        }
+        setReceitas((data ?? []) as ClienteReceita[]);
+      });
   }, [projetoId]);
 
   return <FinanceiroContent receitas={receitas} />;
