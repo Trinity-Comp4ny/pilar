@@ -13,10 +13,14 @@ BEGIN
       AND deleted_at IS NULL
       AND is_fatura_payment = false
   LOOP
-    v_fatura_id := public.find_or_create_fatura(r.cartao_id, r.data_vencimento::date);
-    IF v_fatura_id IS NOT NULL THEN
-      UPDATE despesas SET fatura_id = v_fatura_id WHERE id = r.id;
-    END IF;
+    BEGIN
+      v_fatura_id := public.find_or_create_fatura(r.cartao_id, r.data_vencimento::date);
+      IF v_fatura_id IS NOT NULL THEN
+        UPDATE despesas SET fatura_id = v_fatura_id WHERE id = r.id;
+      END IF;
+    EXCEPTION WHEN OTHERS THEN
+      NULL; -- skip this row, continue with next
+    END;
   END LOOP;
 END;
 $$;

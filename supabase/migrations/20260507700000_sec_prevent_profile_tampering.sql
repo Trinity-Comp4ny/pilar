@@ -6,6 +6,11 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 BEGIN
+  -- service_role (edge functions, migrations, admin operations) bypasses this trigger
+  IF auth.uid() IS NULL THEN
+    RETURN NEW;
+  END IF;
+
   -- Block role escalation by non-admins
   IF NEW.role IS DISTINCT FROM OLD.role THEN
     IF NOT EXISTS (
