@@ -274,8 +274,8 @@ export default function Clientes() {
   };
 
   const handleSave = async () => {
-    if (!nome || !cpfCnpj || !email || !contato) {
-      toast.error("Campos obrigatórios", { description: "Preencha nome, CPF/CNPJ, e-mail e contato" });
+    if (!nome) {
+      toast.error("Campos obrigatórios", { description: "Preencha o nome do cliente" });
       return;
     }
 
@@ -490,7 +490,7 @@ export default function Clientes() {
                           </div>
                           <div className="space-y-1.5">
                             <Label htmlFor="cpf" className="text-xs">
-                              CPF/CNPJ *
+                              CPF/CNPJ
                             </Label>
                             <Input
                               id="cpf"
@@ -498,12 +498,11 @@ export default function Clientes() {
                               onChange={(e) => setCpfCnpj(formatDocument(e.target.value))}
                               placeholder="000.000.000-00"
                               maxLength={18}
-                              required
                             />
                           </div>
                           <div className="space-y-1.5">
                             <Label htmlFor="email" className="text-xs">
-                              Email *
+                              Email
                             </Label>
                             <Input
                               id="email"
@@ -515,7 +514,7 @@ export default function Clientes() {
                           </div>
                           <div className="space-y-1.5">
                             <Label htmlFor="contato" className="text-xs">
-                              Contato *
+                              Contato
                             </Label>
                             <Input
                               id="contato"
