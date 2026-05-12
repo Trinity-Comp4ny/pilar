@@ -109,8 +109,8 @@ export default function Clientes() {
   }, [searchParams, clientes]);
 
   const goNext = () => {
-    if (!nome.trim() || !cpfCnpj.trim()) {
-      toast.error("Preencha nome e CPF/CNPJ para continuar");
+    if (!nome.trim()) {
+      toast.error("Preencha o nome do cliente para continuar");
       return;
     }
     setStep(2);
