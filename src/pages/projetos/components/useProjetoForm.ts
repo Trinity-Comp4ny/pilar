@@ -499,25 +499,9 @@ export function useProjetoForm({
 
         if (error) throw error;
 
-        // Sync disciplinas to relational table
-        const discsForBulk = projetosDisciplinas.map((d) => {
-          const resps = getResponsaveisList(d);
-          return {
-            nome: d.disciplina,
-            status: d.status || "Não Iniciado",
-            data_inicio: d.data_inicio || null,
-            data_fim: d.data_previsao || null,
-            data_fim_real: d.data_final || null,
-            prioridade: d.prioridade || null,
-            justificativa_atraso: d.justificativa_atraso || null,
-            ordem_etapa: typeof d.etapa === "number" ? d.etapa : null,
-            responsavel_ids: resps.map((r) => r.responsavel_id).filter(Boolean),
-          };
-        });
-        await bulkSaveDisciplinas.mutateAsync({
-          projetoId: editProjeto.id,
-          disciplinas: discsForBulk,
-        });
+        // Disciplinas em edição são gerenciadas inline (DisciplinasTableView).
+        // Não chamamos bulkSave aqui para não apagar disciplinas existentes
+        // (editProjeto.disciplinas é sempre [] em useProjetoDetail).
 
         toast.success("Projeto atualizado", { description: "Projeto foi atualizado com sucesso" });
       } else {
