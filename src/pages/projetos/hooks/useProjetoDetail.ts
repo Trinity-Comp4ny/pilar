@@ -187,7 +187,8 @@ export function useProjetoDetail(id: string | undefined) {
         await deleteDisciplinaMut.mutateAsync({ id: dbDisc.id, projetoId: projeto.id });
         toast.success("Disciplina removida");
       } catch (err: unknown) {
-        toast.error("Erro ao remover");
+        const message = err instanceof Error ? err.message : String(err);
+        toast.error("Erro ao remover", { description: message });
       }
     },
     [projeto, dbDisciplinas, deleteDisciplinaMut, toast]
@@ -205,7 +206,8 @@ export function useProjetoDetail(id: string | undefined) {
         });
         toast.success("Disciplina adicionada");
       } catch (err: unknown) {
-        toast.error("Erro ao adicionar");
+        const message = err instanceof Error ? err.message : String(err);
+        toast.error("Erro ao adicionar disciplina", { description: message });
       }
     },
     [projeto, upsertDisciplina, toast]
@@ -233,7 +235,8 @@ export function useProjetoDetail(id: string | undefined) {
         });
         toast.success("Disciplina atualizada");
       } catch (err: unknown) {
-        toast.error("Erro ao salvar");
+        const message = err instanceof Error ? err.message : String(err);
+        toast.error("Erro ao salvar", { description: message });
       }
     },
     [projeto, upsertDisciplina, toast]

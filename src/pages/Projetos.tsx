@@ -381,9 +381,7 @@ export default function ProjetosKanban() {
       setIsDetailOpen(false);
       queryClient.invalidateQueries({ queryKey: ["projetos"] });
     } else {
-      toast.error("Erro ao excluir", {
-        description: "Verifique se existem registros vinculados.",
-      });
+      toast.error("Erro ao excluir", { description: error.message });
     }
     setProjetoToDelete(null);
   };
