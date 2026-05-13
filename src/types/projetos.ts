@@ -32,7 +32,8 @@ export interface DisciplinaResponsavel {
 }
 
 export function isDiscAtrasada(disc: DisciplinaResponsavel): boolean {
-  if (disc.status === "Concluído") return false;
+  // data_final preenchida = concluída de fato, independente do campo status
+  if (disc.status === "Concluído" || disc.data_final) return false;
   if (!disc.data_previsao) return false;
   const hoje = new Date();
   hoje.setHours(0, 0, 0, 0);
@@ -43,7 +44,10 @@ export function isDiscAtrasada(disc: DisciplinaResponsavel): boolean {
 export const getDiscDeadlineStatus = (disc: { data_previsao?: string; data_final?: string; status?: string }) => {
   const { data_previsao, data_final, status } = disc;
 
-  if (status === "Concluído" && data_final && data_previsao) {
+  // data_final preenchida indica conclusão de fato, mesmo se status não foi atualizado
+  const isConcluida = status === "Concluído" || !!data_final;
+
+  if (isConcluida && data_final && data_previsao) {
     const final = new Date(data_final + "T00:00:00");
     const previsao = new Date(data_previsao + "T00:00:00");
     if (final <= previsao) {
@@ -62,7 +66,7 @@ export const getDiscDeadlineStatus = (disc: { data_previsao?: string; data_final
     };
   }
 
-  if (!data_previsao || status === "Concluído") return null;
+  if (!data_previsao || isConcluida) return null;
 
   const hoje = new Date();
   hoje.setHours(0, 0, 0, 0);
@@ -189,8 +193,10 @@ export { formatDate, formatDateShort } from "@/lib/dateUtils";
 export const getDeadlineStatus = (projeto: { data_previsao?: string; data_final?: string; status: string }) => {
   const { data_previsao, data_final, status } = projeto;
 
-  // Se projeto está concluído, verifica se foi no prazo ou com atraso
-  if (status === "Concluído" && data_final && data_previsao) {
+  // data_final preenchida indica conclusão de fato, mesmo se status não foi atualizado
+  const isConcluido = status === "Concluído" || !!data_final;
+
+  if (isConcluido && data_final && data_previsao) {
     const final = new Date(data_final + "T00:00:00");
     const previsao = new Date(data_previsao + "T00:00:00");
 
@@ -211,7 +217,7 @@ export const getDeadlineStatus = (projeto: { data_previsao?: string; data_final?
     }
   }
 
-  if (!data_previsao || status === "Cancelado") {
+  if (!data_previsao || status === "Cancelado" || isConcluido) {
     return null;
   }
 

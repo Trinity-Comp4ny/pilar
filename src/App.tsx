@@ -30,6 +30,7 @@ const Financeiro = lazy(() => import("./pages/Financeiro"));
 const Projetos = lazy(() => import("./pages/Projetos"));
 const Clientes = lazy(() => import("./pages/clientes"));
 const ClienteDetalhe = lazy(() => import("./pages/clientes/[id]"));
+const Fornecedores = lazy(() => import("./pages/fornecedores"));
 const Pessoas = lazy(() => import("./pages/pessoas"));
 const Relatorios = lazy(() => import("./pages/Relatorios"));
 const Profile = lazy(() => import("./pages/Profile"));
@@ -128,6 +129,10 @@ const App = () => {
                       <Route element={<FeatureRoute feature="clientes" />}>
                         <Route path="/clientes" element={<Clientes />} />
                         <Route path="/clientes/:id" element={<ClienteDetalhe />} />
+                      </Route>
+
+                      <Route element={<FeatureRoute feature="financeiro" />}>
+                        <Route path="/fornecedores" element={<Fornecedores />} />
                       </Route>
 
                       <Route element={<AdminOnlyRoute />}>

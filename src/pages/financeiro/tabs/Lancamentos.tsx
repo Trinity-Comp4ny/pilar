@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeftRight, Clock, Plus, TrendingDown, TrendingUp, Wallet } from "lucide-react";
+import { ArrowLeftRight, Clock, Plus, TrendingDown, TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { LancamentosTable } from "../components/LancamentosTable";
@@ -58,8 +58,6 @@ export default function Lancamentos() {
       }
     : EMPTY_KPIS;
 
-  const saldo = kpis.recebido - kpis.pago;
-
   return (
     <div className="space-y-6 w-full">
       <div className="flex flex-wrap items-end justify-between gap-3">
@@ -107,15 +105,7 @@ export default function Lancamentos() {
 
       <Card className="rounded-2xl border border-black/5 bg-white p-4">
         <CardContent className="p-0">
-          <div className="flex flex-wrap items-center justify-end gap-2 mb-3">
-            <div className="text-sm text-muted-foreground flex items-center gap-2">
-              <Wallet className="h-4 w-4" />
-              Saldo no período:{" "}
-              <span className={cn("font-semibold", saldo >= 0 ? "text-positive" : "text-red-600")}>
-                {formatBRL(saldo)}
-              </span>
-            </div>
-          </div>
+
 
           <LancamentosTable
             data={items}

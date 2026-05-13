@@ -4,6 +4,14 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getCorsHeaders } from "../_shared/cors.ts";
 import { createLogger } from "../_shared/logger.ts";
 import { withSentry } from "../_shared/sentry.ts";
+import { checkDbRateLimit, getClientKey } from "../_shared/db-rate-limit.ts";
+import { emailSchema, nameSchema, parseOr400, z } from "../_shared/schemas.ts";
+
+const createOwnerSchema = z.object({
+  email: emailSchema,
+  company_name: nameSchema,
+  nome: z.string().trim().min(1).max(200).optional(),
+});
 
 // Cria convite para novo tenant (dono de empresa).
 // Requer header X-Super-Admin-Key matching SUPER_ADMIN_KEY (env).
@@ -85,24 +93,46 @@ serve(
         });
       }
 
-      const body = await req.json();
-      const email = (body.email as string | undefined)?.trim().toLowerCase();
-      const company_name = body.company_name as string | undefined;
-      const nome = body.nome as string | undefined;
-
-      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-        log.warn("rejected: invalid email", {});
-        throw new Error("email inválido");
+      let raw: unknown;
+      try {
+        raw = await req.json();
+      } catch {
+        log.warn("rejected: invalid json", {});
+        throw new Error("JSON inválido");
       }
-      if (!company_name || company_name.trim().length < 2) {
-        log.warn("rejected: invalid company_name", {});
-        throw new Error("company_name obrigatório (mínimo 2 chars)");
+      const parsed = parseOr400(createOwnerSchema, raw);
+      if (!parsed.ok) {
+        log.warn("rejected: validation failed", { reason: parsed.error });
+        throw new Error(parsed.error);
       }
+      const { email, company_name, nome } = parsed.data;
 
       const supabaseAdmin = createClient(
         Deno.env.get("SUPABASE_URL") ?? "",
         Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
       );
+
+      // Rate limit por IP (defesa em profundidade se SUPER_ADMIN_KEY vazar)
+      const rl = await checkDbRateLimit(supabaseAdmin, {
+        bucket: "create_company_owner",
+        key: getClientKey(req),
+        max: 10,
+        windowSeconds: 3600,
+      });
+      if (rl.rpcError) {
+        log.error("rate limit check failed — fail-closed", null, { rpcError: rl.rpcError });
+        return new Response(JSON.stringify({ error: "Serviço indisponível" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 503,
+        });
+      }
+      if (!rl.allowed) {
+        log.warn("rate limited", { origin: rawOrigin });
+        return new Response(JSON.stringify({ error: "Muitas tentativas. Aguarde." }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 429,
+        });
+      }
 
       // Invalida convites anteriores não usados para o mesmo email
       await supabaseAdmin
@@ -114,7 +144,7 @@ serve(
       // Cria novo token pendente
       const { data: pending, error: insertError } = await supabaseAdmin
         .from("empresa_owners_pending")
-        .insert({ email, company_name: company_name.trim(), nome: nome ?? null })
+        .insert({ email, company_name, nome: nome ?? null })
         .select("token")
         .single();
 
