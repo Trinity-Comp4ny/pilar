@@ -12,7 +12,7 @@ type DespesaRow = Tables<"despesas">;
 // Helpers — usa datas mid-month para evitar shift de timezone (UTC vs UTC-3)
 const receita = (
   valor: number,
-  opts: { data_vencimento?: string | null; data_recebimento?: string | null; status?: string } = {}
+  opts: { data_vencimento?: string | null; data_recebimento?: string | null; status?: ReceitaRow["status"] } = {}
 ): Pick<ReceitaRow, "valor" | "data_recebimento" | "data_vencimento" | "status"> => ({
   valor: valor as unknown as ReceitaRow["valor"],
   data_vencimento: "data_vencimento" in opts ? opts.data_vencimento! : "2026-05-15",
@@ -22,7 +22,7 @@ const receita = (
 
 const despesa = (
   valor: number,
-  opts: { data_pagamento?: string | null; data_vencimento?: string; status?: string } = {}
+  opts: { data_pagamento?: string | null; data_vencimento?: string; status?: DespesaRow["status"] } = {}
 ): Pick<DespesaRow, "valor" | "data_pagamento" | "data_vencimento" | "status"> => ({
   valor: valor as unknown as DespesaRow["valor"],
   data_pagamento: opts.data_pagamento ?? null,
