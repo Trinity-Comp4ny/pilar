@@ -19,10 +19,10 @@ import { LeadFormDialog, EMPTY_LEAD_FORM, type LeadFormData } from "./components
 import { LeadKanbanCard } from "./components/LeadKanbanCard";
 import {
   LeadMotivoPerdasDialog,
-  LeadAutoConvertDialog,
   LeadConvertDialog,
   LeadCreatePropostaDialog,
 } from "./components/LeadActionDialogs";
+import { LeadCnpjConvertDialog, type ConvertEnrichment } from "./components/LeadCnpjConvertDialog";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import {
   useLeads,
@@ -243,9 +243,9 @@ export default function Leads() {
     );
   };
 
-  const handleAutoConvert = () => {
+  const handleAutoConvert = (enrichment: ConvertEnrichment | null) => {
     if (!pendingDrop) return;
-    convertToClient.mutate(pendingDrop.leadId, {
+    convertToClient.mutate({ leadId: pendingDrop.leadId, enrichment }, {
       onSuccess: () => {
         setIsAutoConvertOpen(false);
         setPendingDrop(null);
@@ -273,7 +273,7 @@ export default function Leads() {
       setIsConvertOpen(false);
       return;
     }
-    convertToClient.mutate(selectedLead.id, {
+    convertToClient.mutate({ leadId: selectedLead.id }, {
       onSuccess: () => {
         toast.success("Sucesso!", { description: `${leadNome(selectedLead)} foi convertido em cliente.` });
         setIsConvertOpen(false);
@@ -543,7 +543,7 @@ export default function Leads() {
         onCancel={() => { setIsMotivoPerdasOpen(false); setPendingDrop(null); }}
       />
 
-      <LeadAutoConvertDialog
+      <LeadCnpjConvertDialog
         open={isAutoConvertOpen}
         onOpenChange={(open) => {
           if (!open && pendingDrop) { queryClient.invalidateQueries({ queryKey: ["leads"] }); setPendingDrop(null); }

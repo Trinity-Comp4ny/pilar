@@ -67,10 +67,10 @@ export const useClientes = () => {
       const payload = {
         nome: data.nome,
         sobrenome: data.sobrenome || null,
-        cpf_cnpj: data.cpf_cnpj,
+        cpf_cnpj: nullIfEmpty(data.cpf_cnpj),
         endereco: nullIfEmpty(data.endereco),
-        contato: data.contato,
-        email: data.email,
+        contato: nullIfEmpty(data.contato),
+        email: nullIfEmpty(data.email),
         tipo_nf: nullIfEmpty(data.tipo_nf),
         origem: nullIfEmpty(data.origem),
         contas_bancarias: data.contas_bancarias as unknown as Json,

@@ -474,6 +474,35 @@ export function useProjetoForm({
       return;
     }
 
+    // Validação de datas das disciplinas vs prazo do projeto
+    const projetoPrevisao = formData.data_previsao;
+    const projetoFinal = formData.data_final;
+    const projetoInicio = formData.data_inicio;
+    for (const disc of projetosDisciplinas) {
+      const resps = getResponsaveisList(disc);
+      const datas = resps.length > 0 ? resps : [{ data_inicio: disc.data_inicio, data_previsao: disc.data_previsao, data_final: disc.data_final }];
+      for (const d of datas) {
+        if (projetoInicio && d.data_inicio && d.data_inicio < projetoInicio) {
+          toast.error("Datas inválidas", {
+            description: `Disciplina "${disc.disciplina}" tem início anterior ao do projeto`,
+          });
+          return;
+        }
+        if (projetoPrevisao && d.data_previsao && d.data_previsao > projetoPrevisao) {
+          toast.error("Datas inválidas", {
+            description: `Previsão da disciplina "${disc.disciplina}" ultrapassa a previsão do projeto`,
+          });
+          return;
+        }
+        if (projetoFinal && d.data_final && d.data_final > projetoFinal) {
+          toast.error("Datas inválidas", {
+            description: `Conclusão da disciplina "${disc.disciplina}" é posterior à conclusão do projeto`,
+          });
+          return;
+        }
+      }
+    }
+
     setIsSaving(true);
     const localizacaoComposta = composeLocalizacao(formData) || formData.localizacao;
 
@@ -499,25 +528,9 @@ export function useProjetoForm({
 
         if (error) throw error;
 
-        // Sync disciplinas to relational table
-        const discsForBulk = projetosDisciplinas.map((d) => {
-          const resps = getResponsaveisList(d);
-          return {
-            nome: d.disciplina,
-            status: d.status || "Não Iniciado",
-            data_inicio: d.data_inicio || null,
-            data_fim: d.data_previsao || null,
-            data_fim_real: d.data_final || null,
-            prioridade: d.prioridade || null,
-            justificativa_atraso: d.justificativa_atraso || null,
-            ordem_etapa: typeof d.etapa === "number" ? d.etapa : null,
-            responsavel_ids: resps.map((r) => r.responsavel_id).filter(Boolean),
-          };
-        });
-        await bulkSaveDisciplinas.mutateAsync({
-          projetoId: editProjeto.id,
-          disciplinas: discsForBulk,
-        });
+        // Disciplinas em edição são gerenciadas inline (DisciplinasTableView).
+        // Não chamamos bulkSave aqui para não apagar disciplinas existentes
+        // (editProjeto.disciplinas é sempre [] em useProjetoDetail).
 
         toast.success("Projeto atualizado", { description: "Projeto foi atualizado com sucesso" });
       } else {
@@ -539,7 +552,8 @@ export function useProjetoForm({
 
         if (error) throw error;
 
-        // Sync disciplinas to relational table for new project
+        // Sync disciplinas to relational table for new project.
+        // Se falhar, faz rollback do projeto pra não deixar registro órfão sem disciplinas.
         if (newProjetoId && projetosDisciplinas.length > 0) {
           const discsForBulk = projetosDisciplinas.map((d) => {
             const resps = getResponsaveisList(d);
@@ -554,10 +568,18 @@ export function useProjetoForm({
               responsavel_ids: resps.map((r) => r.responsavel_id).filter(Boolean),
             };
           });
-          await bulkSaveDisciplinas.mutateAsync({
-            projetoId: newProjetoId as string,
-            disciplinas: discsForBulk,
-          });
+          try {
+            await bulkSaveDisciplinas.mutateAsync({
+              projetoId: newProjetoId as string,
+              disciplinas: discsForBulk,
+            });
+          } catch (discErr) {
+            await supabase
+              .from("projetos")
+              .update({ deleted_at: new Date().toISOString() })
+              .eq("id", newProjetoId as string);
+            throw discErr;
+          }
         }
 
         const numParcelas = parseInt(formData.parcelas || "0", 10);
@@ -674,7 +696,8 @@ export function useProjetoForm({
           .then(() => onSaved());
       }
     } catch (err: unknown) {
-      toast.error("Erro ao salvar");
+      const message = err instanceof Error ? err.message : String(err);
+      toast.error("Erro ao salvar", { description: message });
     } finally {
       setIsSaving(false);
     }

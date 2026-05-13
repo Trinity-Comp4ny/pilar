@@ -5,7 +5,10 @@ import {
   ArrowDownCircle,
   ArrowUpCircle,
   CalendarIcon,
+  ChevronsDown,
+  ChevronsUp,
   Filter,
+  Layers,
   LayoutList,
   Search,
   SlidersHorizontal,
@@ -43,6 +46,11 @@ interface Props {
   fornecedores: MultiSelectOption[];
   total: number;
   visible: number;
+  grouped: boolean;
+  allGroupIds: string[];
+  allExpanded: boolean;
+  onToggleGrouped: () => void;
+  onToggleExpandAll: () => void;
 }
 
 const PERIODO_LABEL: Record<Periodo | "custom", string> = {
@@ -71,6 +79,11 @@ export function LancamentosFilterBar({
   fornecedores,
   total,
   visible,
+  grouped,
+  allGroupIds,
+  allExpanded,
+  onToggleGrouped,
+  onToggleExpandAll,
 }: Props) {
   const [periodoOpen, setPeriodoOpen] = useState(false);
   const [advOpen, setAdvOpen] = useState(false);
@@ -356,9 +369,32 @@ export function LancamentosFilterBar({
           </SheetContent>
         </Sheet>
 
-        <span className="text-xs text-muted-foreground ml-auto tabular-nums">
-          {visible} de {total}
-        </span>
+        <div className="ml-auto flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onToggleGrouped}
+            className="h-8 px-2 text-xs gap-1 text-muted-foreground"
+            title={grouped ? "Desagrupar parcelas" : "Agrupar parcelas"}
+          >
+            <Layers className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">{grouped ? "Parcelas agrupadas" : "Agrupar parcelas"}</span>
+          </Button>
+          {grouped && allGroupIds.length > 0 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onToggleExpandAll}
+              className="h-8 px-2 text-xs gap-1 text-muted-foreground"
+              title={allExpanded ? "Recolher todos" : "Expandir todos"}
+            >
+              {allExpanded ? <ChevronsUp className="h-3.5 w-3.5" /> : <ChevronsDown className="h-3.5 w-3.5" />}
+            </Button>
+          )}
+          <span className="text-xs text-muted-foreground tabular-nums pl-2 border-l border-black/10">
+            {visible} de {total}
+          </span>
+        </div>
 
         {hasActive && (
           <Button variant="ghost" onClick={onReset} className="h-9 gap-1 text-sm text-muted-foreground rounded-full">
