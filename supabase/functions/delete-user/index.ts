@@ -1,10 +1,14 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
-import { authenticateUser, isUUID, jsonResponse, optionsResponse, safeErrorResponse } from "../_shared/cors.ts";
+import { authenticateUser, jsonResponse, optionsResponse, safeErrorResponse } from "../_shared/cors.ts";
 import { adminClient } from "../_shared/admin-auth.ts";
 import { logAction } from "../_shared/audit.ts";
 import { withSentry } from "../_shared/sentry.ts";
 import { createLogger } from "../_shared/logger.ts";
+import { checkDbRateLimit } from "../_shared/db-rate-limit.ts";
+import { parseOr400, uuidSchema, z } from "../_shared/schemas.ts";
+
+const deleteUserSchema = z.object({ user_id: uuidSchema });
 
 const log = createLogger("delete-user");
 
@@ -30,11 +34,33 @@ serve(
       }
       if (!callerProfile.empresa_id) return safeErrorResponse(403, "Empresa não encontrada", req);
 
-      const { user_id } = await req.json();
-      if (!isUUID(user_id)) return safeErrorResponse(400, "user_id inválido", req);
+      let raw: unknown;
+      try {
+        raw = await req.json();
+      } catch {
+        return safeErrorResponse(400, "JSON inválido", req);
+      }
+      const parsed = parseOr400(deleteUserSchema, raw);
+      if (!parsed.ok) return safeErrorResponse(400, parsed.error, req);
+      const { user_id } = parsed.data;
       if (user_id === user.id) return safeErrorResponse(400, "Não é possível remover a própria conta", req);
 
       const svc = adminClient();
+
+      // Rate limit por actor — admin comprometido não pode varrer a empresa em massa
+      const rl = await checkDbRateLimit(svc, {
+        bucket: "delete_user",
+        key: `uid:${user.id}`,
+        max: 10,
+        windowSeconds: 3600,
+      });
+      if (rl.rpcError) {
+        log.error("rate limit check failed — fail-closed", null, { rpcError: rl.rpcError });
+        return safeErrorResponse(503, "Serviço indisponível", req);
+      }
+      if (!rl.allowed) {
+        return safeErrorResponse(429, "Muitas remoções em sequência. Aguarde antes de tentar novamente.", req);
+      }
 
       // Verificar que o usuário alvo pertence à mesma empresa
       const { data: targetProfile, error: targetError } = await svc
