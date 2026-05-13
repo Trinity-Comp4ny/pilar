@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, Users, Briefcase, Database } from "lucide-react";
+import { FalarComercialDialog } from "@/components/admin/FalarComercialDialog";
 
 type Usage = {
   usuarios: number;
@@ -13,6 +14,7 @@ type Usage = {
 
 export function PlanoTab({ empresaId }: { empresaId: string | null }) {
   const [usage, setUsage] = useState<Usage>({ usuarios: 0, projetos: 0, clientes: 0 });
+  const [comercialOpen, setComercialOpen] = useState(false);
 
   useEffect(() => {
     if (!empresaId) return;
@@ -46,8 +48,8 @@ export function PlanoTab({ empresaId }: { empresaId: string | null }) {
               </CardTitle>
               <CardDescription>Acesso completo ao Pilar durante o período de beta</CardDescription>
             </div>
-            <Button variant="outline" asChild>
-              <a href="mailto:comercial@pilarsoft.com.br?subject=Planos%20Pilar">Falar com comercial</a>
+            <Button variant="outline" onClick={() => setComercialOpen(true)}>
+              Falar com comercial
             </Button>
           </div>
         </CardHeader>
@@ -85,6 +87,7 @@ export function PlanoTab({ empresaId }: { empresaId: string | null }) {
           </ul>
         </CardContent>
       </Card>
+      <FalarComercialDialog open={comercialOpen} onOpenChange={setComercialOpen} />
     </div>
   );
 }
