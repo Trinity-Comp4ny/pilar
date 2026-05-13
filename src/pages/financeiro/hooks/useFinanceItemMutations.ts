@@ -167,7 +167,7 @@ export function useFinanceItemMutations(tipo: FinanceItemTipo) {
 
   const deleteOne = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from(tableName).update({ deleted_at: new Date().toISOString() }).eq("id", id);
+      const { error } = await supabase.from(tableName).delete().eq("id", id);
       if (error) throw new Error(error.message + (error.details ? ` (${error.details})` : ""));
     },
     onSuccess: () => {
@@ -182,17 +182,16 @@ export function useFinanceItemMutations(tipo: FinanceItemTipo) {
 
   const deleteGroup = useMutation({
     mutationFn: async ({ id, grupoId, mode }: { id: string; grupoId: string; mode: "single" | "all" }) => {
-      const now = new Date().toISOString();
       if (mode === "all") {
         const { error } = await supabase
           .from(tableName)
-          .update({ deleted_at: now })
+          .delete()
           .eq("grupo_parcela", grupoId)
           .is("deleted_at", null);
         if (error) throw error;
         return "all" as const;
       }
-      const { error } = await supabase.from(tableName).update({ deleted_at: now }).eq("id", id);
+      const { error } = await supabase.from(tableName).delete().eq("id", id);
       if (error) throw error;
       return "single" as const;
     },

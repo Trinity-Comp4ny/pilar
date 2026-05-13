@@ -550,7 +550,7 @@ export function useProjetoForm({
           p_prioridade: formData.prioridade,
         });
 
-        if (error) throw error;
+        if (error) throw new Error(error.message || String(error));
 
         // Sync disciplinas to relational table for new project.
         // Se falhar, faz rollback do projeto pra não deixar registro órfão sem disciplinas.
@@ -576,7 +576,7 @@ export function useProjetoForm({
           } catch (discErr) {
             await supabase
               .from("projetos")
-              .update({ deleted_at: new Date().toISOString() })
+              .delete()
               .eq("id", newProjetoId as string);
             throw discErr;
           }
