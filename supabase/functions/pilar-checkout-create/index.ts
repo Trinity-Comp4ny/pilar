@@ -20,43 +20,50 @@ import {
   type AsaasPayment,
 } from "../_shared/asaas-platform.ts";
 import { createLogger } from "../_shared/logger.ts";
+import { checkDbRateLimit, getClientKey } from "../_shared/db-rate-limit.ts";
+import { cpfCnpjSchema, emailSchema, nameSchema, parseOr400, phoneSchema, z } from "../_shared/schemas.ts";
 
 const log = createLogger("pilar-checkout-create");
 
-interface CheckoutPayload {
-  email: string;
-  nome: string;
-  company_name: string;
-  cpf_cnpj: string;
-  telefone?: string;
-  plan_slug: string;
-  billing_cycle: "monthly" | "yearly";
-  billing_type: "CREDIT_CARD" | "PIX" | "BOLETO";
-  credit_card?: {
-    holderName: string;
-    number: string;
-    expiryMonth: string;
-    expiryYear: string;
-    ccv: string;
-  };
-  credit_card_holder_info?: {
-    name: string;
-    email: string;
-    cpfCnpj: string;
-    postalCode: string;
-    addressNumber: string;
-    phone?: string;
-  };
-}
+const creditCardSchema = z.object({
+  holderName: z.string().trim().min(2).max(200),
+  number: z.string().regex(/^\d{13,19}$/, "número de cartão inválido"),
+  expiryMonth: z.string().regex(/^(0[1-9]|1[0-2])$/, "mês inválido"),
+  expiryYear: z.string().regex(/^\d{4}$/, "ano inválido"),
+  ccv: z.string().regex(/^\d{3,4}$/, "CCV inválido"),
+});
 
-function validCpfCnpj(value: string): boolean {
-  const digits = value.replace(/\D/g, "");
-  return digits.length === 11 || digits.length === 14;
-}
+const holderInfoSchema = z.object({
+  name: z.string().trim().min(2).max(200),
+  email: emailSchema,
+  cpfCnpj: cpfCnpjSchema,
+  postalCode: z
+    .string()
+    .transform((v) => v.replace(/\D/g, ""))
+    .refine((v) => v.length === 8, "CEP inválido"),
+  addressNumber: z.string().trim().min(1).max(20),
+  phone: phoneSchema,
+});
 
-function validEmail(value: string): boolean {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
-}
+const checkoutSchema = z
+  .object({
+    email: emailSchema,
+    nome: nameSchema,
+    company_name: nameSchema,
+    cpf_cnpj: cpfCnpjSchema,
+    telefone: phoneSchema,
+    plan_slug: z.string().trim().min(1).max(64),
+    billing_cycle: z.enum(["monthly", "yearly"]),
+    billing_type: z.enum(["CREDIT_CARD", "PIX", "BOLETO"]),
+    credit_card: creditCardSchema.optional(),
+    credit_card_holder_info: holderInfoSchema.optional(),
+  })
+  .refine(
+    (v) => v.billing_type !== "CREDIT_CARD" || (v.credit_card && v.credit_card_holder_info),
+    { message: "Dados do cartão e do titular são obrigatórios para CREDIT_CARD" }
+  );
+
+type CheckoutPayload = z.infer<typeof checkoutSchema>;
 
 function todayISO(): string {
   return new Date().toISOString().split("T")[0];
@@ -71,58 +78,31 @@ serve(
 
     const admin = createClient(Deno.env.get("SUPABASE_URL") ?? "", Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "");
 
-    let body: CheckoutPayload;
+    let raw: unknown;
     try {
-      body = (await req.json()) as CheckoutPayload;
+      raw = await req.json();
     } catch {
       return jsonResponse({ error: "JSON inválido" }, 400, req);
     }
 
-    // --- Validação ---
-    const email = body.email?.trim().toLowerCase();
-    if (!email || !validEmail(email)) {
-      return jsonResponse({ error: "Email inválido" }, 400, req);
-    }
-    if (!body.nome || body.nome.trim().length < 2) {
-      return jsonResponse({ error: "Nome obrigatório" }, 400, req);
-    }
-    if (!body.company_name || body.company_name.trim().length < 2) {
-      return jsonResponse({ error: "Nome da empresa obrigatório" }, 400, req);
-    }
-    if (!validCpfCnpj(body.cpf_cnpj)) {
-      return jsonResponse({ error: "CPF/CNPJ inválido" }, 400, req);
-    }
-    if (!["CREDIT_CARD", "PIX", "BOLETO"].includes(body.billing_type)) {
-      return jsonResponse({ error: "Forma de pagamento inválida" }, 400, req);
-    }
-    if (!["monthly", "yearly"].includes(body.billing_cycle)) {
-      return jsonResponse({ error: "Ciclo inválido" }, 400, req);
-    }
-    if (body.billing_type === "CREDIT_CARD") {
-      if (!body.credit_card?.number || !body.credit_card.ccv) {
-        return jsonResponse({ error: "Dados do cartão ausentes" }, 400, req);
-      }
-      if (!body.credit_card_holder_info?.cpfCnpj || !body.credit_card_holder_info.postalCode) {
-        return jsonResponse({ error: "Dados do titular ausentes" }, 400, req);
-      }
-    }
+    const parsed = parseOr400(checkoutSchema, raw);
+    if (!parsed.ok) return jsonResponse({ error: parsed.error }, 400, req);
+    const body: CheckoutPayload = parsed.data;
+    const email = body.email;
 
-    // --- Rate limit por IP ---
-    const clientIp =
-      req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? req.headers.get("x-real-ip") ?? "unknown";
-    try {
-      const { data: rlAllowed } = await admin.rpc("check_rate_limit", {
-        p_action: "checkout_create",
-        p_key: clientIp,
-        p_max_attempts: 5,
-        p_window_seconds: 3600,
-      });
-      if (rlAllowed === false) {
-        return jsonResponse({ error: "Muitas tentativas. Aguarde antes de tentar novamente." }, 429, req);
-      }
-    } catch (err) {
-      log.error("rate limit check failed — rejecting request (fail-closed)", err);
+    // --- Rate limit por IP (DB, atômico cross-instance) ---
+    const rl = await checkDbRateLimit(admin, {
+      bucket: "checkout_create",
+      key: getClientKey(req),
+      max: 5,
+      windowSeconds: 3600,
+    });
+    if (rl.rpcError) {
+      log.error("rate limit check failed — rejecting request (fail-closed)", { rpcError: rl.rpcError });
       return jsonResponse({ error: "Serviço temporariamente indisponível. Tente novamente em instantes." }, 503, req);
+    }
+    if (!rl.allowed) {
+      return jsonResponse({ error: "Muitas tentativas. Aguarde antes de tentar novamente." }, 429, req);
     }
 
     // --- Email já existe? ---
