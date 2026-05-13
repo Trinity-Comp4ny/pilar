@@ -374,7 +374,7 @@ export default function ProjetosKanban() {
     if (!projetoToDelete) return;
     const { error } = await supabase
       .from("projetos")
-      .update({ deleted_at: new Date().toISOString() })
+      .delete()
       .eq("id", projetoToDelete.id);
     if (!error) {
       toast.success("Projeto excluído");
