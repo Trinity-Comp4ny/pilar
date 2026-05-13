@@ -350,9 +350,9 @@ export function LancamentosTable({
     const stamp = new Date().toISOString();
     const ops: PromiseLike<{ error: unknown }>[] = [];
     if (recIds.length)
-      ops.push(supabase.from("receitas").update({ deleted_at: stamp } as never).in("id", recIds) as unknown as PromiseLike<{ error: unknown }>);
+      ops.push(supabase.from("receitas").delete().in("id", recIds) as unknown as PromiseLike<{ error: unknown }>);
     if (despIds.length)
-      ops.push(supabase.from("despesas").update({ deleted_at: stamp } as never).in("id", despIds) as unknown as PromiseLike<{ error: unknown }>);
+      ops.push(supabase.from("despesas").delete().in("id", despIds) as unknown as PromiseLike<{ error: unknown }>);
     if (transfIds.length)
       ops.push(supabase.from("transferencias").update({ deleted_at: stamp } as never).in("id", transfIds) as unknown as PromiseLike<{ error: unknown }>);
     const results = await Promise.all(ops);
@@ -386,7 +386,7 @@ export function LancamentosTable({
       return;
     }
     const table = tipo === "receita" ? "receitas" : "despesas";
-    const { error } = await supabase.from(table).update({ deleted_at: new Date().toISOString() } as never).eq("id", id);
+    const { error } = await supabase.from(table).delete().eq("id", id);
     if (error) { toast.error("Falha ao excluir", { description: error.message }); return; }
     toast.success("Lançamento excluído");
     onRefetch();
