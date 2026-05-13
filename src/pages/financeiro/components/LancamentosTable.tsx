@@ -21,7 +21,6 @@ import { LancamentosFilterBar } from "./LancamentosFilterBar";
 import { useLancamentosFiltersData } from "../hooks/useLancamentosFiltersData";
 import { defaultFilters, type LancamentosFilters } from "./lancamentosFilters";
 import { LancamentosBulkBar } from "./LancamentosBulkBar";
-import { LancamentosToolbar } from "./LancamentosToolbar";
 import { LancamentosGroupRow } from "./LancamentosGroupRow";
 import { LancamentosItemRow } from "./LancamentosItemRow";
 
@@ -42,9 +41,7 @@ interface SortState {
   dir: "asc" | "desc";
 }
 
-type Density = "comfortable" | "compact";
-
-const ROW_HEIGHT: Record<Density, number> = { comfortable: 56, compact: 40 };
+const ROW_HEIGHT = 56;
 
 type FlatRow =
   | { kind: "item"; data: Lancamento; isChild: boolean }
@@ -88,9 +85,6 @@ export function LancamentosTable({
 
   const [sort, setSort] = useState<SortState>({ key: "data", dir: "desc" });
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [density, setDensity] = useState<Density>(
-    () => (localStorage.getItem("lancamentos.density") as Density) ?? "comfortable"
-  );
   const [grouped, setGrouped] = useState<boolean>(() => localStorage.getItem("lancamentos.grouped") !== "false");
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
 
@@ -101,7 +95,6 @@ export function LancamentosTable({
   const [editTarget, setEditTarget] = useState<Lancamento | null>(null);
   const [editTransferencia, setEditTransferencia] = useState<Lancamento | null>(null);
 
-  useEffect(() => { localStorage.setItem("lancamentos.density", density); }, [density]);
   useEffect(() => { localStorage.setItem("lancamentos.grouped", String(grouped)); }, [grouped]);
 
   const toggleGroup = (groupId: string) => {
@@ -400,7 +393,7 @@ export function LancamentosTable({
   };
 
   const scrollRef = useRef<HTMLDivElement>(null);
-  const rowHeight = ROW_HEIGHT[density];
+  const rowHeight = ROW_HEIGHT;
   const virtualizer = useVirtualizer({
     count: flatRows.length,
     getScrollElement: () => scrollRef.current,
@@ -416,8 +409,8 @@ export function LancamentosTable({
     if (scrollRef.current) scrollRef.current.scrollTop = 0;
   }, [filters, sort, grouped]);
 
-  const cellTextSize = density === "compact" ? "text-xs" : "text-sm";
-  const cellPad = density === "compact" ? "py-1.5 px-3" : "py-3 px-3";
+  const cellTextSize = "text-sm";
+  const cellPad = "py-3 px-3";
   const colCount = canEdit ? 11 : 10;
 
   return (
@@ -432,6 +425,11 @@ export function LancamentosTable({
         fornecedores={aux.fornecedores.map((f) => ({ value: f.id, label: f.nome }))}
         total={data.length}
         visible={sorted.length}
+        grouped={grouped}
+        allGroupIds={allGroupIds}
+        allExpanded={allExpanded}
+        onToggleGrouped={() => { setGrouped((v) => !v); setExpandedGroups(new Set()); }}
+        onToggleExpandAll={toggleExpandAll}
       />
 
       <LancamentosBulkBar
@@ -440,16 +438,6 @@ export function LancamentosTable({
         onMarkPaid={bulkMarkPaid}
         onDelete={() => setBulkConfirm(true)}
         onClear={() => setSelected(new Set())}
-      />
-
-      <LancamentosToolbar
-        grouped={grouped}
-        density={density}
-        allGroupIds={allGroupIds}
-        allExpanded={allExpanded}
-        onToggleGrouped={() => { setGrouped((v) => !v); setExpandedGroups(new Set()); }}
-        onToggleExpandAll={toggleExpandAll}
-        onToggleDensity={() => setDensity(density === "compact" ? "comfortable" : "compact")}
       />
 
       <div className="rounded-xl border border-black/10 bg-white overflow-hidden">
