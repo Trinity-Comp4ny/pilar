@@ -199,7 +199,7 @@ interface ChartItem {
   status?: string | null;
 }
 
-const processChartData = (receitas: ReceitaChartItem[], despesas: DespesaChartItem[]) => {
+export const processChartData = (receitas: ReceitaChartItem[], despesas: DespesaChartItem[]) => {
   const monthsMap = new Map<string, { mes: string; receitas: number; despesas: number; sortKey: string }>();
 
   const processItem = (item: ChartItem, type: "receitas" | "despesas", dateField: string) => {
@@ -230,7 +230,7 @@ const processChartData = (receitas: ReceitaChartItem[], despesas: DespesaChartIt
   return Array.from(monthsMap.values()).sort((a, b) => a.sortKey.localeCompare(b.sortKey));
 };
 
-const processDailyChartData = (
+export const processDailyChartData = (
   receitas: ReceitaWithCategoria[],
   despesas: DespesaWithCategoria[],
   start: Date,
@@ -310,7 +310,7 @@ const processDailyChartData = (
     .map(([, val]) => val);
 };
 
-const processCategoryData = (
+export const processCategoryData = (
   items: (ReceitaWithCategoria | DespesaWithCategoria)[],
   type: "receitas" | "despesas" = "receitas"
 ) => {

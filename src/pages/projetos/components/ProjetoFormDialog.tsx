@@ -506,6 +506,7 @@ export function ProjetoFormDialog({
               onUpdateRespDatas={form.updateRespDatasInForm}
               projetoDataInicio={form.formData.data_inicio || undefined}
               projetoDataPrevisao={form.formData.data_previsao || undefined}
+              projetoDataFinal={form.formData.data_final || undefined}
             />
           )}
 

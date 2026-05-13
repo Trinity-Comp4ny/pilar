@@ -54,6 +54,7 @@ interface DisciplinasSectionProps {
   onUpdateRespDatas: (discIdx: number, respIdx: number, field: keyof ResponsavelDatas, value: string) => void;
   projetoDataInicio?: string;
   projetoDataPrevisao?: string;
+  projetoDataFinal?: string;
 }
 
 export function DisciplinasSection({
@@ -78,17 +79,26 @@ export function DisciplinasSection({
   onUpdateRespDatas,
   projetoDataInicio,
   projetoDataPrevisao,
+  projetoDataFinal,
 }: DisciplinasSectionProps) {
   const [selectedFluxoId, setSelectedFluxoId] = useState<string>("");
   const [showAddForm, setShowAddForm] = useState(false);
 
   const minDate = projetoDataInicio || undefined;
   const maxDate = projetoDataPrevisao || undefined;
+  const maxFinalDate = projetoDataFinal || undefined;
 
   const isOutOfRange = (date?: string): boolean => {
     if (!date) return false;
     if (minDate && date < minDate) return true;
     if (maxDate && date > maxDate) return true;
+    return false;
+  };
+
+  const isFinalOutOfRange = (date?: string): boolean => {
+    if (!date) return false;
+    if (minDate && date < minDate) return true;
+    if (maxFinalDate && date > maxFinalDate) return true;
     return false;
   };
 
@@ -361,14 +371,15 @@ export function DisciplinasSection({
                                       value={resp.data_final}
                                       onChange={(v) => onUpdateRespDatas(idx, rIdx, "data_final", v)}
                                       minDate={minDate}
-                                      className={
-                                        resp.data_final && resp.data_final < (minDate ?? "")
-                                          ? "border-orange-400 bg-orange-50"
-                                          : ""
-                                      }
+                                      maxDate={maxFinalDate}
+                                      className={isFinalOutOfRange(resp.data_final) ? "border-orange-400 bg-orange-50" : ""}
                                     />
-                                    {resp.data_final && resp.data_final < (minDate ?? "") && (
-                                      <p className="text-[9px] text-orange-600">Anterior ao início do projeto</p>
+                                    {isFinalOutOfRange(resp.data_final) && (
+                                      <p className="text-[9px] text-orange-600">
+                                        {minDate && resp.data_final! < minDate
+                                          ? "Anterior ao início do projeto"
+                                          : "Posterior à conclusão do projeto"}
+                                      </p>
                                     )}
                                   </div>
                                 </div>

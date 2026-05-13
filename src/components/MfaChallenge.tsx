@@ -1,24 +1,29 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { ShieldCheck, Loader2, HelpCircle, RefreshCw } from "lucide-react";
+import { ShieldCheck, Loader2, HelpCircle, RefreshCw, KeyRound } from "lucide-react";
 import { useMfa } from "@/hooks/useMfa";
 import { translateAuthError } from "@/lib/authErrors";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { MfaHelpModal } from "@/components/MfaHelpModal";
+import { callUntypedRpc } from "@/lib/supabaseRpc";
 
 interface MfaChallengeProps {
   onVerified?: () => void;
 }
 
 export function MfaChallenge({ onVerified }: MfaChallengeProps) {
-  const { factors, verifyTotp, unenrollPending, loading } = useMfa();
+  const { factors, verifyTotp, unenrollPending, resetAllFactors, loading } = useMfa();
   const navigate = useNavigate();
   const [code, setCode] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const [resetting, setResetting] = useState(false);
+  const [backupMode, setBackupMode] = useState(false);
+  const [backupCode, setBackupCode] = useState("");
+  const [backupSubmitting, setBackupSubmitting] = useState(false);
 
   const verifiedFactor = factors.find((f) => f.status === "verified");
 
@@ -46,6 +51,36 @@ export function MfaChallenge({ onVerified }: MfaChallengeProps) {
     setCode(value);
     if (value.length === 6) {
       handleVerify(value);
+    }
+  };
+
+  const handleBackupCode = async () => {
+    const normalized = backupCode.trim().toUpperCase().replace(/\s/g, "");
+    if (!normalized) {
+      toast.error("Informe o código de recuperação");
+      return;
+    }
+    setBackupSubmitting(true);
+    try {
+      const { data: valid, error } = await callUntypedRpc<boolean>("mfa_consume_backup_code", {
+        p_code: normalized,
+      });
+      if (error) throw error;
+      if (!valid) {
+        toast.error("Código inválido ou já utilizado");
+        return;
+      }
+      // Desregistra todos os fatores — sessão volta a AAL1/AAL1
+      // PrivateRoute redirecionará para /mfa/setup
+      await resetAllFactors();
+      toast.success("Código de recuperação aceito", {
+        description: "Configure um novo autenticador para continuar.",
+      });
+      navigate("/mfa/setup", { replace: true });
+    } catch (err) {
+      toast.error("Erro ao validar código", { description: translateAuthError(err) });
+    } finally {
+      setBackupSubmitting(false);
     }
   };
 
@@ -121,6 +156,57 @@ export function MfaChallenge({ onVerified }: MfaChallengeProps) {
     );
   }
 
+  if (backupMode) {
+    return (
+      <div className="space-y-8">
+        <div className="text-center space-y-2">
+          <div className="flex justify-center mb-4">
+            <div className="p-3 rounded-2xl bg-amber-100 border border-amber-200">
+              <KeyRound className="h-8 w-8 text-amber-600" />
+            </div>
+          </div>
+          <h2 className="text-2xl font-semibold tracking-tight text-ink">Código de recuperação</h2>
+          <p className="text-sm text-ink-soft leading-relaxed">
+            Digite um dos códigos de recuperação gerados durante o setup do MFA.
+            <br />
+            <span className="text-ink/40 text-xs">O código será invalidado após o uso.</span>
+          </p>
+        </div>
+
+        <div className="space-y-4">
+          <Input
+            value={backupCode}
+            onChange={(e) => setBackupCode(e.target.value)}
+            placeholder="XXXX-XXXX"
+            className="text-center font-mono text-lg tracking-widest h-12"
+            disabled={backupSubmitting}
+            onKeyDown={(e) => e.key === "Enter" && handleBackupCode()}
+            autoFocus
+          />
+
+          <Button
+            onClick={handleBackupCode}
+            className="w-full h-11 bg-amber-500 hover:bg-amber-600 text-white font-medium"
+            disabled={backupSubmitting || !backupCode.trim()}
+          >
+            {backupSubmitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+            Usar código de recuperação
+          </Button>
+
+          <div className="flex justify-center">
+            <button
+              type="button"
+              onClick={() => { setBackupMode(false); setBackupCode(""); }}
+              className="text-xs text-ink-soft hover:text-ink transition-colors underline"
+            >
+              Voltar para autenticador
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
       <MfaHelpModal open={helpOpen} onOpenChange={setHelpOpen} />
@@ -172,6 +258,14 @@ export function MfaChallenge({ onVerified }: MfaChallengeProps) {
             >
               <HelpCircle className="h-3.5 w-3.5" />
               Como usar o app autenticador?
+            </button>
+            <button
+              type="button"
+              onClick={() => setBackupMode(true)}
+              className="inline-flex items-center gap-1.5 text-xs text-ink-soft hover:text-ink transition-colors"
+            >
+              <KeyRound className="h-3 w-3" />
+              Não tenho acesso ao autenticador
             </button>
           </div>
         </div>

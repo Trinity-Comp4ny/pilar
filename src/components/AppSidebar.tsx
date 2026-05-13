@@ -16,6 +16,7 @@ import {
   ChevronDown,
   Wallet,
   UserPlus,
+  Truck,
   type LucideIcon,
 } from "lucide-react";
 import { useSidebar, SidebarTrigger } from "@/components/ui/sidebar";
@@ -63,6 +64,7 @@ const menu: MenuGroup[] = [
       { title: "Leads", url: "/leads", icon: UserPlus, feature: "leads" },
       { title: "Documentos", url: "/documentos", icon: FileText, feature: "propostas" },
       { title: "Clientes", url: "/clientes", icon: Building2, feature: "clientes" },
+      { title: "Fornecedores", url: "/fornecedores", icon: Truck, feature: "financeiro" },
     ],
   },
   {

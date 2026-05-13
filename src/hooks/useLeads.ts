@@ -143,16 +143,33 @@ export const useUpdateLeadStatus = () => {
   });
 };
 
+export type ConvertEnrichment = {
+  cnpj: string | null;
+  razao_social: string | null;
+  endereco: string | null;
+};
+
 export const useConvertLeadToClient = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (leadId: string) => {
+    mutationFn: async ({ leadId, enrichment }: { leadId: string; enrichment?: ConvertEnrichment | null }) => {
       const { data, error } = await supabase.rpc("rpc_converter_lead_cliente", {
         p_lead_id: leadId,
       });
 
       if (error) throw error;
+
+      if (enrichment && data) {
+        const updates: Record<string, unknown> = {};
+        if (enrichment.cnpj) updates.cnpj = enrichment.cnpj;
+        if (enrichment.razao_social) updates.nome = enrichment.razao_social;
+        if (enrichment.endereco) updates.endereco = enrichment.endereco;
+        if (Object.keys(updates).length > 0) {
+          await supabase.from("clientes").update(updates).eq("id", data as string);
+        }
+      }
+
       return data;
     },
     onSuccess: () => {
