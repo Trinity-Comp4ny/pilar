@@ -100,6 +100,7 @@ export function buildDashboardQueries(
     supabase
       .from("despesas")
       .select("valor, data_pagamento, data_vencimento, status")
+      .eq("is_fatura_payment", false)
       .gte("data_vencimento", startOfMonth(chartStart).toISOString())
       .is("deleted_at", null),
 
