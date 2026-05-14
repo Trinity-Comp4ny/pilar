@@ -1832,6 +1832,7 @@ export type Database = {
       leads: {
         Row: {
           cliente_id: string | null;
+          cnpj: string | null;
           contato: string | null;
           convertido_em: string | null;
           created_at: string | null;
@@ -1854,6 +1855,7 @@ export type Database = {
         };
         Insert: {
           cliente_id?: string | null;
+          cnpj?: string | null;
           contato?: string | null;
           convertido_em?: string | null;
           created_at?: string | null;
@@ -1876,6 +1878,7 @@ export type Database = {
         };
         Update: {
           cliente_id?: string | null;
+          cnpj?: string | null;
           contato?: string | null;
           convertido_em?: string | null;
           created_at?: string | null;

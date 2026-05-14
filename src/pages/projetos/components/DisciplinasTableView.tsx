@@ -481,8 +481,13 @@ export function DisciplinasTableView({
             <AlertDialogTitle>Confirmar conclusão</AlertDialogTitle>
             <AlertDialogDescription>
               A disciplina <strong>{concludingIdx !== null && disciplinasLegacy[concludingIdx]?.disciplina}</strong>{" "}
-              será marcada como <strong>Concluída</strong> e a data final será definida como{" "}
-              <strong>{new Date().toLocaleDateString("pt-BR")}</strong>.
+              será marcada como <strong>Concluída</strong>
+              {concludingIdx !== null && !dbDisciplinas[concludingIdx]?.data_fim_real && (
+                <>
+                  {" "}e a data final será registrada como{" "}
+                  <strong>{new Date().toLocaleDateString("pt-BR")}</strong>
+                </>
+              )}.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
