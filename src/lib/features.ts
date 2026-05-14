@@ -30,7 +30,8 @@ export type FeatureKey =
   | "portal_cliente"
   | "ai_hub"
   | "capacidade"
-  | "templates";
+  | "templates"
+  | "timesheet";
 
 export type FeatureGroup = "visao" | "comercial" | "operacao" | "financeiro" | "equipe" | "extras";
 
@@ -215,6 +216,18 @@ export const FEATURES: readonly FeatureDefinition[] = [
     core: false,
     addon: true,
     addonPriceLabel: "+R$ 29/mês",
+    dormant: true,
+    includedInPlans: ["enterprise"],
+  },
+  {
+    key: "timesheet",
+    label: "Timesheet",
+    description: "Registro de horas por projeto e colaborador",
+    group: "operacao",
+    icon: Workflow,
+    core: false,
+    addon: true,
+    addonPriceLabel: "+R$ 49/mês",
     dormant: true,
     includedInPlans: ["enterprise"],
   },
