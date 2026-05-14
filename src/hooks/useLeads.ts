@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { getSafeErrorMessage } from "@/lib/safeError";
@@ -33,6 +33,54 @@ export interface LeadInsert {
   empresa_lead?: string;
   notas?: string;
 }
+
+// ---------------------------------------------------------------------------
+// Hook paginado — use para listagens grandes (1000+ leads).
+// O hook original useLeads() continua funcionando sem alterações.
+// ---------------------------------------------------------------------------
+
+export interface UseLeadsPaginadosOptions {
+  pageSize?: number;
+  searchTerm?: string;
+  statusFilter?: Lead["status"][];
+  enabled?: boolean;
+}
+
+export function useLeadsPaginados(options: UseLeadsPaginadosOptions = {}) {
+  const { pageSize = 20, searchTerm = "", statusFilter, enabled = true } = options;
+
+  return useInfiniteQuery({
+    queryKey: ["leads-paginados", pageSize, searchTerm, statusFilter],
+    queryFn: async ({ pageParam = 0 }) => {
+      let query = supabase
+        .from("leads")
+        .select("*", { count: "exact" })
+        .is("deleted_at", null)
+        .order("created_at", { ascending: false })
+        .range(pageParam * pageSize, (pageParam + 1) * pageSize - 1);
+
+      if (searchTerm) {
+        query = query.ilike("nome", `%${searchTerm}%`);
+      }
+
+      if (statusFilter && statusFilter.length > 0) {
+        query = query.in("status", statusFilter);
+      }
+
+      const { data, error, count } = await query;
+      if (error) throw error;
+      return { data: (data ?? []) as Lead[], count: count ?? 0, page: pageParam };
+    },
+    getNextPageParam: (lastPage, allPages) => {
+      const loaded = allPages.reduce((acc, p) => acc + p.data.length, 0);
+      return loaded < lastPage.count ? allPages.length : undefined;
+    },
+    initialPageParam: 0,
+    enabled,
+  });
+}
+
+// ---------------------------------------------------------------------------
 
 export const useLeads = () => {
   return useQuery({
