@@ -48,6 +48,8 @@ import {
   type DashboardAlerta,
   type LeadsPipeline,
 } from "@/hooks/useDashboardData";
+import { useFinanceChartData } from "@/hooks/useFinanceChartData";
+import { useAuth } from "@/contexts/AuthContext";
 import { PROJECT_STATUS_CONFIG, PROJECT_PRIORITY_CONFIG, type ProjectStatus, type ProjectPriority } from "@/constants";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -361,7 +363,15 @@ export default function Dashboard() {
     }
   };
 
+  const { profile } = useAuth();
+  const empresaId = profile?.empresa_id ?? null;
+
   const { data, isLoading, error } = useDashboardData(dateFrom, dateTo);
+
+  // Intervalo dos últimos 11 meses + mês atual para o gráfico de fluxo
+  const chartInicio = useMemo(() => startOfMonth(subMonths(new Date(), 11)), []);
+  const chartFim = useMemo(() => new Date(), []);
+  const { data: chartDataRpc } = useFinanceChartData(empresaId, chartInicio, chartFim);
 
   const canFin = can("financeiro", "view");
   const canProj = can("projetos", "view");
@@ -467,7 +477,10 @@ export default function Dashboard() {
     );
   }
 
-  const { kpis, projetos, proximosVencimentos, leadsPipeline, leadsTotal, alertas, alertasNaoLidos, chartData } = data;
+  const { kpis, projetos, proximosVencimentos, leadsPipeline, leadsTotal, alertas, alertasNaoLidos, chartData: chartDataFallback } = data;
+
+  // Usa dados da RPC quando disponível; fallback para a query legada
+  const chartData = chartDataRpc && chartDataRpc.length > 0 ? chartDataRpc : chartDataFallback;
 
   const nothingVisible = !canFin && !canProj && !canLeads;
 
