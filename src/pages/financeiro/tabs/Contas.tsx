@@ -880,7 +880,7 @@ export default function Configuracoes() {
           <AlertDialogHeader>
             <AlertDialogTitle>Excluir {deleteTarget?.type === "conta" ? "conta" : "cartão"}?</AlertDialogTitle>
             <AlertDialogDescription>
-              Confirme a exclusão de <strong>{deleteTarget?.nome}</strong>. Esta ação não pode ser desfeita.
+              Deseja excluir <strong>{deleteTarget?.nome}</strong>? A conta será desativada e não aparecerá mais nos lançamentos.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

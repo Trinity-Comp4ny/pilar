@@ -1,7 +1,9 @@
 import { useNavigate, NavLink } from "react-router-dom";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { LogOut, ArrowLeft, FolderKanban, DollarSign, FileCheck } from "lucide-react";
+import { LogOut, ArrowLeft, FolderKanban, DollarSign, FileCheck, LayoutDashboard } from "lucide-react";
 import { portalLogout, type ClienteAccount } from "@/hooks/useClienteAuth";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ClienteShellProps {
   account: ClienteAccount;
@@ -19,6 +21,13 @@ const projetoNavItems = [
 
 export function ClienteShell({ account, children, projetoId, projetoNome, projetoCodigo }: ClienteShellProps) {
   const navigate = useNavigate();
+  const [isAdminSession, setIsAdminSession] = useState(false);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      setIsAdminSession(!!data.session);
+    });
+  }, []);
 
   const handleLogout = async () => {
     await portalLogout();
@@ -40,6 +49,17 @@ export function ClienteShell({ account, children, projetoId, projetoNome, projet
             </div>
           </div>
           <div className="flex items-center gap-4">
+            {isAdminSession && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate("/clientes")}
+                className="text-xs"
+              >
+                <LayoutDashboard className="h-3.5 w-3.5 mr-1" />
+                Voltar ao painel
+              </Button>
+            )}
             <span className="text-sm text-muted-foreground hidden sm:block">{account.nome}</span>
             <Button
               variant="ghost"

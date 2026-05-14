@@ -5,6 +5,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, Users, Briefcase, Database } from "lucide-react";
 import { FalarComercialDialog } from "@/components/admin/FalarComercialDialog";
+import type { SubscriptionPlanSlug } from "@/lib/features";
+
+const PLAN_LABELS: Record<SubscriptionPlanSlug, string> = {
+  starter: "Starter",
+  pro: "Pro",
+  enterprise: "Enterprise",
+};
 
 type Usage = {
   usuarios: number;
@@ -12,7 +19,7 @@ type Usage = {
   clientes: number;
 };
 
-export function PlanoTab({ empresaId }: { empresaId: string | null }) {
+export function PlanoTab({ empresaId, currentPlan }: { empresaId: string | null; currentPlan: SubscriptionPlanSlug }) {
   const [usage, setUsage] = useState<Usage>({ usuarios: 0, projetos: 0, clientes: 0 });
   const [comercialOpen, setComercialOpen] = useState(false);
 
@@ -44,9 +51,11 @@ export function PlanoTab({ empresaId }: { empresaId: string | null }) {
             <div>
               <CardTitle className="text-lg font-medium tracking-tight flex items-center gap-3">
                 Plano Atual
-                <Badge className="bg-brand/10 text-brand hover:bg-brand/10 border-transparent">Beta</Badge>
+                <Badge className="bg-brand/10 text-brand hover:bg-brand/10 border-transparent">
+                  {PLAN_LABELS[currentPlan]}
+                </Badge>
               </CardTitle>
-              <CardDescription>Acesso completo ao Pilar durante o período de beta</CardDescription>
+              <CardDescription>Acesso completo ao Pilar no plano {PLAN_LABELS[currentPlan]}</CardDescription>
             </div>
             <Button variant="outline" onClick={() => setComercialOpen(true)}>
               Falar com comercial
