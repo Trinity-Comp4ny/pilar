@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { Json } from "@/integrations/supabase/types";
@@ -43,6 +43,49 @@ export interface ClienteFormData {
   contas_bancarias: ContaBancaria[];
   chaves_pix: ChavePix[];
 }
+
+// ---------------------------------------------------------------------------
+// Hook paginado — use para listagens grandes (1000+ clientes).
+// O hook original useClientes() continua funcionando sem alterações.
+// ---------------------------------------------------------------------------
+
+export interface UseClientesPaginadosOptions {
+  pageSize?: number;
+  searchTerm?: string;
+  enabled?: boolean;
+}
+
+export function useClientesPaginados(options: UseClientesPaginadosOptions = {}) {
+  const { pageSize = 20, searchTerm = "", enabled = true } = options;
+
+  return useInfiniteQuery({
+    queryKey: ["clientes-paginados", pageSize, searchTerm],
+    queryFn: async ({ pageParam = 0 }) => {
+      let query = supabase
+        .from("clientes")
+        .select("*", { count: "exact" })
+        .order("nome")
+        .range(pageParam * pageSize, (pageParam + 1) * pageSize - 1);
+
+      if (searchTerm) {
+        query = query.ilike("nome", `%${searchTerm}%`);
+      }
+
+      const { data, error, count } = await query;
+      if (error) throw error;
+      return { data: (data ?? []) as unknown as Cliente[], count: count ?? 0, page: pageParam };
+    },
+    getNextPageParam: (lastPage, allPages) => {
+      const loaded = allPages.reduce((acc, p) => acc + p.data.length, 0);
+      return loaded < lastPage.count ? allPages.length : undefined;
+    },
+    initialPageParam: 0,
+    enabled,
+    staleTime: 1000 * 60 * 3,
+  });
+}
+
+// ---------------------------------------------------------------------------
 
 export const useClientes = () => {
   const queryClient = useQueryClient();
