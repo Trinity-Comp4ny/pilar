@@ -54,30 +54,33 @@ serve(
       return new Response("OK", { status: 200 });
     }
 
-    // Buscar receita pelo asaas_payment_id
-    const { data: receita } = await adminClient
-      .from("receitas")
-      .select("id, empresa_id, status")
-      .eq("asaas_payment_id", payment.id)
-      .maybeSingle();
-
     // Token obrigatório — sem header = rejeita imediatamente
     const receivedToken = req.headers.get("asaas-access-token");
     if (!receivedToken) {
       return new Response("Unauthorized", { status: 401 });
     }
 
-    let tokenValido = false;
+    // Resolve empresa_id a partir do customer (asaas_customer_id no externalReference
+    // ou via asaas_config para determinar o tenant antes do lookup de receita).
+    // Isso evita cross-tenant: buscamos receita apenas dentro da empresa correta.
+    let resolvedEmpresaId: string | null = null;
 
-    if (receita?.empresa_id) {
-      const { data: config } = await adminClient
-        .from("asaas_config")
-        .select("webhook_token")
-        .eq("empresa_id", receita.empresa_id)
-        .maybeSingle();
+    // Tenta resolver via asaas_config (webhook_token identifica a empresa)
+    const { data: configRows } = await adminClient
+      .from("asaas_config")
+      .select("empresa_id, webhook_token")
+      .not("webhook_token", "is", null);
 
-      tokenValido = !!config?.webhook_token && safeEqual(receivedToken, config.webhook_token);
+    if (configRows) {
+      for (const cfg of configRows) {
+        if (cfg.webhook_token && safeEqual(receivedToken, cfg.webhook_token)) {
+          resolvedEmpresaId = cfg.empresa_id;
+          break;
+        }
+      }
     }
+
+    let tokenValido = resolvedEmpresaId !== null;
 
     // Fallback para env var global (dev/staging)
     if (!tokenValido) {
@@ -88,6 +91,19 @@ serve(
     if (!tokenValido) {
       return new Response("Unauthorized", { status: 401 });
     }
+
+    // Buscar receita pelo asaas_payment_id, restringindo ao empresa_id resolvido
+    // para evitar que um webhook de uma empresa acesse receitas de outra (cross-tenant).
+    let receitaQuery = adminClient
+      .from("receitas")
+      .select("id, empresa_id, status")
+      .eq("asaas_payment_id", payment.id);
+
+    if (resolvedEmpresaId) {
+      receitaQuery = receitaQuery.eq("empresa_id", resolvedEmpresaId);
+    }
+
+    const { data: receita } = await receitaQuery.maybeSingle();
 
     // Registrar log (mesmo sem receita encontrada, para auditoria).
     // Idempotência: índice único em (event, payment_id) faz INSERT falhar em duplicata
