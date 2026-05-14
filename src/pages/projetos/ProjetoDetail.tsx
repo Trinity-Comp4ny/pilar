@@ -88,6 +88,7 @@ export default function ProjetoDetail() {
         templatesData={templatesData}
         currentUser={currentUser}
         onSaved={refetchProjeto}
+        existingDisciplinas={dbDisciplinas}
       />
     </PageLayout>
   );

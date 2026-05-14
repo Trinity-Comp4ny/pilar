@@ -1588,6 +1588,7 @@ export type Database = {
           empresa_id: string;
           id: string;
           nome: string;
+          telefone: string | null;
           updated_at: string | null;
         };
         Insert: {
@@ -1599,6 +1600,7 @@ export type Database = {
           empresa_id: string;
           id?: string;
           nome: string;
+          telefone?: string | null;
           updated_at?: string | null;
         };
         Update: {
@@ -1610,6 +1612,7 @@ export type Database = {
           empresa_id?: string;
           id?: string;
           nome?: string;
+          telefone?: string | null;
           updated_at?: string | null;
         };
         Relationships: [
