@@ -18,6 +18,7 @@ import { FeatureRoute } from "./components/FeatureRoute";
 import { AdminOnlyRoute } from "./components/AdminOnlyRoute";
 import { RequireAal2 } from "./components/RequireAal2";
 import { ImpersonationBanner } from "./components/ImpersonationBanner";
+import { TrialBanner } from "./components/TrialBanner";
 
 const Landing = lazy(() => import("./pages/Landing"));
 const Planos = lazy(() => import("./pages/planos"));
@@ -100,6 +101,7 @@ const App = () => {
             <AuthProvider>
               <ImpersonationProvider>
                 <ImpersonationBanner />
+                <TrialBanner />
                 <Suspense fallback={<PageSkeleton />}>
                   <Routes>
                     <Route path="/" element={<Landing />} />
