@@ -50,6 +50,7 @@ import { PropostaDetailDialog } from "./components/PropostaDetailDialog";
 import { fetchClientesLookup, fetchLeadsLookup } from "@/lib/supabaseQueries";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { usePageTitle } from "@/hooks/usePageTitle";
+import { SmartInvoiceDialog } from "@/components/SmartInvoiceDialog";
 
 interface PropostaDisciplina {
   id: string;
@@ -91,6 +92,11 @@ export default function Propostas() {
   const [gerarContratoPropostaId, setGerarContratoPropostaId] = useState<string | null>(null);
   const [isTemplatesOpen, setIsTemplatesOpen] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>("table");
+  const [smartInvoice, setSmartInvoice] = useState<{
+    projetoId: string;
+    propostaValor: number;
+    propostaNome: string;
+  } | null>(null);
   const [detailPropostaId, setDetailPropostaId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
@@ -204,13 +210,22 @@ export default function Propostas() {
 
   const handleConverterEmProjeto = () => {
     if (!convertPropostaId) return;
+    const proposta = propostas.find((p) => p.id === convertPropostaId);
     converterProposta.mutate(convertPropostaId, {
       onSuccess: (projetoId) => {
         toast.success("Projeto criado!", {
           description: "A proposta foi convertida em projeto com orçamento pré-preenchido.",
         });
         setConvertPropostaId(null);
-        navigate(`/projetos/${projetoId}`);
+        if (proposta) {
+          setSmartInvoice({
+            projetoId,
+            propostaValor: proposta.valor_proposto ?? 0,
+            propostaNome: proposta.titulo,
+          });
+        } else {
+          navigate(`/projetos/${projetoId}`);
+        }
       },
       onError: () => toast.error("Erro na conversão"),
     });
@@ -908,6 +923,21 @@ export default function Propostas() {
           onSent={() => {
             queryClient.invalidateQueries({ queryKey: ["propostas"] });
             setGerarContratoPropostaId(null);
+          }}
+        />
+      )}
+
+      {/* SmartInvoiceDialog — aparece após converter proposta em projeto */}
+      {smartInvoice && (
+        <SmartInvoiceDialog
+          open={!!smartInvoice}
+          projetoId={smartInvoice.projetoId}
+          propostaValor={smartInvoice.propostaValor}
+          propostaNome={smartInvoice.propostaNome}
+          onClose={() => {
+            const destino = smartInvoice.projetoId;
+            setSmartInvoice(null);
+            navigate(`/projetos/${destino}`);
           }}
         />
       )}
