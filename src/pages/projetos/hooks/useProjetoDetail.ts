@@ -341,6 +341,7 @@ export function useProjetoDetail(id: string | undefined) {
     deadline,
     progress,
     margemBrutaPct,
+    rentabilidade,
 
     // Mutations
     applyDiscStatusChange,
