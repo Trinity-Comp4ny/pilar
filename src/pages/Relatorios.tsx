@@ -322,61 +322,55 @@ export default function Relatorios() {
     const all: FinancialRecord[] = [];
 
     while (true) {
-      let query = supabase.from(tipo).select(`
-        *,
-        projetos (nome),
-        categorias_financeiras (nome),
-        contas (nome)
-      `);
+      // Build separate typed query branches to avoid redundant .select() override
+      // and to apply is_fatura_payment only on despesas
+      const { data, error } = await (() => {
+        let q =
+          tipo === "receitas"
+            ? supabase
+                .from("receitas")
+                .select(
+                  "*, projetos (nome), categorias_financeiras (nome), contas (nome), clientes (nome)"
+                )
+                .is("deleted_at", null)
+            : supabase
+                .from("despesas")
+                .select(
+                  "*, projetos (nome), categorias_financeiras (nome), contas (nome), fornecedores (nome)"
+                )
+                .is("deleted_at", null)
+                .eq("is_fatura_payment", false);
 
-      if (tipo === "receitas") {
-        query = query.select(`
-          *,
-          projetos (nome),
-          categorias_financeiras (nome),
-          contas (nome),
-          clientes (nome)
-        `);
-      } else {
-        query = query.select(`
-          *,
-          projetos (nome),
-          categorias_financeiras (nome),
-          contas (nome),
-          fornecedores (nome)
-        `);
-      }
-
-      if (tipo === "receitas") {
-        query = query.order("data_recebimento", { ascending: false }).order("data_vencimento", { ascending: false });
-      } else {
-        query = query.order("data_pagamento", { ascending: false }).order("data_vencimento", { ascending: false });
-      }
-
-      if (dateFrom) {
-        const start = startOfDay(dateFrom).toISOString();
         if (tipo === "receitas") {
-          query = query.or(`data_recebimento.gte.${start},data_vencimento.gte.${start}`);
+          q = q.order("data_recebimento", { ascending: false }).order("data_vencimento", { ascending: false });
         } else {
-          query = query.or(`data_pagamento.gte.${start},data_vencimento.gte.${start}`);
+          q = q.order("data_pagamento", { ascending: false }).order("data_vencimento", { ascending: false });
         }
-      }
 
-      if (dateTo) {
-        const end = endOfDay(dateTo).toISOString();
-        if (tipo === "receitas") {
-          query = query.or(`data_recebimento.lte.${end},data_vencimento.lte.${end}`);
-        } else {
-          query = query.or(`data_pagamento.lte.${end},data_vencimento.lte.${end}`);
+        if (dateFrom) {
+          const start = startOfDay(dateFrom).toISOString();
+          if (tipo === "receitas") {
+            q = q.or(`data_recebimento.gte.${start},data_vencimento.gte.${start}`);
+          } else {
+            q = q.or(`data_pagamento.gte.${start},data_vencimento.gte.${start}`);
+          }
         }
-      }
 
-      query = query.range(page * pageLimit, page * pageLimit + pageLimit - 1);
+        if (dateTo) {
+          const end = endOfDay(dateTo).toISOString();
+          if (tipo === "receitas") {
+            q = q.or(`data_recebimento.lte.${end},data_vencimento.lte.${end}`);
+          } else {
+            q = q.or(`data_pagamento.lte.${end},data_vencimento.lte.${end}`);
+          }
+        }
 
-      const { data, error } = await query;
+        return q.range(page * pageLimit, page * pageLimit + pageLimit - 1);
+      })();
+
       if (error) throw error;
 
-      const chunk = data || [];
+      const chunk = (data as FinancialRecord[]) || [];
       all.push(...chunk);
       if (chunk.length < pageLimit) break;
       page += 1;
