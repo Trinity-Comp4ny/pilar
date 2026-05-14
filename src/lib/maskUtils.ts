@@ -81,6 +81,38 @@ export const formatBankAccount = (value: string): string => {
   return d;
 };
 
+export const validateEmail = (value: string): boolean => {
+  if (!value) return true;
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+};
+
+export const validateCPF = (value: string): boolean => {
+  const d = onlyDigits(value);
+  if (d.length !== 11) return false;
+  if (/^(\d)\1{10}$/.test(d)) return false;
+  const calc = (len: number): number => {
+    let sum = 0;
+    for (let i = 0; i < len; i++) sum += parseInt(d[i]) * (len + 1 - i);
+    const rem = (sum * 10) % 11;
+    return rem === 10 || rem === 11 ? 0 : rem;
+  };
+  return calc(9) === parseInt(d[9]) && calc(10) === parseInt(d[10]);
+};
+
+export const validateCNPJ = (value: string): boolean => {
+  const d = onlyDigits(value);
+  if (d.length !== 14) return false;
+  if (/^(\d)\1{13}$/.test(d)) return false;
+  const calc = (len: number): number => {
+    const weights = len === 12 ? [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2] : [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+    let sum = 0;
+    for (let i = 0; i < len; i++) sum += parseInt(d[i]) * weights[i];
+    const rem = sum % 11;
+    return rem < 2 ? 0 : 11 - rem;
+  };
+  return calc(12) === parseInt(d[12]) && calc(13) === parseInt(d[13]);
+};
+
 export default {
   onlyDigits,
   formatCPF,
@@ -88,4 +120,7 @@ export default {
   formatDocument,
   formatPhone,
   formatRG,
+  validateEmail,
+  validateCPF,
+  validateCNPJ,
 };

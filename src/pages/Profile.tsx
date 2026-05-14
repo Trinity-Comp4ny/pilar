@@ -15,9 +15,13 @@ import { formatPhone } from "@/lib/maskUtils";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { MfaSetup } from "@/components/MfaSetup";
 import { profileEditSchema, profileEditDefaultValues, type ProfileEditFormData } from "@/schemas";
+import { useAuth } from "@/contexts/AuthContext";
+import { EmailChangeCard } from "@/components/profile/EmailChangeCard";
+import { PasswordChangeCard } from "@/components/profile/PasswordChangeCard";
 
 export default function Profile() {
   usePageTitle("Perfil");
+  const { refreshProfile } = useAuth();
   const [editing, setEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [companyName, setCompanyName] = useState<string>("");
@@ -83,6 +87,7 @@ export default function Profile() {
 
       setEditing(false);
       toast.success("Perfil atualizado", { description: "Suas informações foram salvas com sucesso" });
+      void refreshProfile();
     } catch (err: unknown) {
       toast.error("Erro ao salvar");
     }
@@ -237,6 +242,9 @@ export default function Profile() {
               <MfaSetup />
             </CardContent>
           </Card>
+
+          <EmailChangeCard currentEmail={email} onChanged={(newEmail) => setEmail(newEmail)} />
+          <PasswordChangeCard currentEmail={email} />
         </div>
       </div>
     </PageLayout>

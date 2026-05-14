@@ -238,9 +238,12 @@ type InviteDialogProps = {
   onSubmit: (payload: InvitePayload) => void;
 };
 
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 function InviteDialog({ open, onClose, companyFeatures, isSubmitting, onSubmit }: InviteDialogProps) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [emailError, setEmailError] = useState("");
   const [role, setRole] = useState<AssignableRole>("user");
   const [features, setFeatures] = useState<UserFeatures>({});
 
@@ -248,6 +251,7 @@ function InviteDialog({ open, onClose, companyFeatures, isSubmitting, onSubmit }
     if (!open) {
       setName("");
       setEmail("");
+      setEmailError("");
       setRole("user");
       setFeatures({});
     }
@@ -255,6 +259,20 @@ function InviteDialog({ open, onClose, companyFeatures, isSubmitting, onSubmit }
 
   const canSubmit = name.trim().length > 0 && email.trim().length > 0 && !isSubmitting;
   const isAdmin = role === "admin";
+
+  const handleEmailChange = (value: string) => {
+    setEmail(value);
+    if (emailError) setEmailError("");
+  };
+
+  const handleSubmit = () => {
+    const trimmed = email.trim();
+    if (!trimmed || !EMAIL_REGEX.test(trimmed)) {
+      setEmailError("Email inválido");
+      return;
+    }
+    onSubmit({ name: name.trim(), email: trimmed, role, features: isAdmin ? {} : features });
+  };
 
   return (
     <Dialog open={open} onOpenChange={(v) => (!v ? onClose() : undefined)}>
@@ -280,9 +298,12 @@ function InviteDialog({ open, onClose, companyFeatures, isSubmitting, onSubmit }
                 id="invite-email"
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => handleEmailChange(e.target.value)}
                 placeholder="email@empresa.com"
+                aria-invalid={!!emailError}
+                className={emailError ? "border-destructive focus-visible:ring-destructive" : ""}
               />
+              {emailError && <p className="text-xs text-destructive">{emailError}</p>}
             </div>
           </div>
 
@@ -312,14 +333,7 @@ function InviteDialog({ open, onClose, companyFeatures, isSubmitting, onSubmit }
           </Button>
           <Button
             disabled={!canSubmit}
-            onClick={() =>
-              onSubmit({
-                name: name.trim(),
-                email: email.trim(),
-                role,
-                features: isAdmin ? {} : features,
-              })
-            }
+            onClick={handleSubmit}
             className="bg-brand text-ink hover:bg-brand/90"
           >
             {isSubmitting ? "Enviando convite..." : "Enviar convite"}

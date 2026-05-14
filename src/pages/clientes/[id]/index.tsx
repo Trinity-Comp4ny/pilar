@@ -344,7 +344,7 @@ function VisaoGeralTab({ cliente, isAdmin }: { cliente: Cliente; isAdmin: boolea
               </div>
             )}
 
-            {!isLoadingPortal && portalStatus?.exists && !portalCredentials && (
+            {!isLoadingPortal && (portalStatus?.exists || !!portalCredentials) && (
               <div className="space-y-3">
                 <div className="flex items-center gap-2 bg-positive/10 border border-positive/20 rounded-lg px-3 py-2 text-sm text-positive">
                   <Globe className="h-4 w-4" />

@@ -190,6 +190,7 @@ const App = () => {
                     <Route path="/rentabilidade" element={<Navigate to="/financeiro?tab=rentabilidade" replace />} />
 
                     {/* Portal do Cliente — Autenticado */}
+                    <Route path="/portal" element={<Navigate to="/cliente/login" replace />} />
                     <Route path="/cliente/login" element={<ClienteLogin />} />
                     <Route path="/cliente" element={<ClientePrivateRoute />}>
                       <Route path="dashboard" element={<ClienteDashboard />} />

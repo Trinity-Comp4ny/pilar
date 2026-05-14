@@ -22,6 +22,8 @@ import { usePageTitle } from "@/hooks/usePageTitle";
 import { usePermissions } from "@/hooks/usePermissions";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { formatCNPJ, formatPhone, onlyDigits } from "@/lib/maskUtils";
+import { isValidCNPJ } from "@/lib/brasilApi";
 
 interface Fornecedor {
   id: string;
@@ -29,9 +31,18 @@ interface Fornecedor {
   cnpj?: string;
   contato?: string;
   email?: string;
+  telefone?: string;
 }
 
-const EMPTY_FORM = { nome: "", cnpj: "", contato: "", email: "" };
+type FormState = {
+  nome: string;
+  cnpj: string;
+  contato: string;
+  email: string;
+  telefone: string;
+};
+
+const EMPTY_FORM: FormState = { nome: "", cnpj: "", contato: "", email: "", telefone: "" };
 
 export default function Fornecedores() {
   usePageTitle("Fornecedores");
@@ -43,7 +54,8 @@ export default function Fornecedores() {
   const [isEditMode, setIsEditMode] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [currentId, setCurrentId] = useState<string | null>(null);
-  const [form, setForm] = useState(EMPTY_FORM);
+  const [form, setForm] = useState<FormState>(EMPTY_FORM);
+  const [cnpjError, setCnpjError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [toDelete, setToDelete] = useState<{ id: string; nome: string } | null>(null);
@@ -58,44 +70,89 @@ export default function Fornecedores() {
         cnpj: f.cnpj ?? undefined,
         contato: f.contato ?? undefined,
         email: f.email ?? undefined,
+        telefone: f.telefone ?? undefined,
       }))
     );
   }, []);
 
   useEffect(() => { fetchFornecedores(); }, [fetchFornecedores]);
 
-  const resetForm = () => { setForm(EMPTY_FORM); setCurrentId(null); setIsEditMode(false); };
+  const resetForm = () => {
+    setForm(EMPTY_FORM);
+    setCurrentId(null);
+    setIsEditMode(false);
+    setCnpjError("");
+  };
 
   const handleOpenNew = () => { resetForm(); setIsDialogOpen(true); };
 
   const handleEditClick = (f: Fornecedor, e?: React.MouseEvent) => {
     e?.stopPropagation();
-    setForm({ nome: f.nome, cnpj: f.cnpj ?? "", contato: f.contato ?? "", email: f.email ?? "" });
+    setForm({
+      nome: f.nome,
+      cnpj: f.cnpj ? formatCNPJ(f.cnpj) : "",
+      contato: f.contato ?? "",
+      email: f.email ?? "",
+      telefone: f.telefone ? formatPhone(f.telefone) : "",
+    });
+    setCnpjError("");
     setCurrentId(f.id);
     setIsEditMode(true);
     setIsDialogOpen(true);
   };
 
-  const handleSave = async () => {
+  const handleCnpjChange = (value: string) => {
+    const formatted = formatCNPJ(value);
+    setForm((prev) => ({ ...prev, cnpj: formatted }));
+    if (cnpjError) setCnpjError("");
+  };
+
+  const handleTelefoneChange = (value: string) => {
+    const formatted = formatPhone(value);
+    setForm((prev) => ({ ...prev, telefone: formatted }));
+  };
+
+  const validateForm = (): boolean => {
     if (!form.nome.trim()) {
       toast.error("O nome do fornecedor é obrigatório");
-      return;
+      return false;
     }
+    const cnpjDigits = onlyDigits(form.cnpj);
+    if (cnpjDigits.length > 0 && !isValidCNPJ(form.cnpj)) {
+      setCnpjError("CNPJ inválido");
+      return false;
+    }
+    return true;
+  };
+
+  const handleSave = async () => {
+    if (!validateForm()) return;
+
     setIsSaving(true);
     try {
+      const cnpjRaw = onlyDigits(form.cnpj) || null;
+      const telefoneRaw = onlyDigits(form.telefone) || null;
+
       if (isEditMode && currentId) {
         const { error } = await supabase
           .from("fornecedores")
-          .update({ nome: form.nome.trim(), cnpj: form.cnpj.trim() || null, contato: form.contato.trim() || null, email: form.email.trim() || null })
+          .update({
+            nome: form.nome.trim(),
+            cnpj: cnpjRaw,
+            contato: form.contato.trim() || null,
+            email: form.email.trim() || null,
+            telefone: telefoneRaw,
+          })
           .eq("id", currentId);
         if (error) throw error;
         toast.success("Fornecedor atualizado");
       } else {
         const { error } = await supabase.from("fornecedores").insert({
           nome: form.nome.trim(),
-          cnpj: form.cnpj.trim() || null,
+          cnpj: cnpjRaw,
           contato: form.contato.trim() || null,
           email: form.email.trim() || null,
+          telefone: telefoneRaw,
           empresa_id: (await supabase.rpc("get_user_empresa_id")).data,
         } as never);
         if (error) throw error;
@@ -104,8 +161,13 @@ export default function Fornecedores() {
       resetForm();
       setIsDialogOpen(false);
       fetchFornecedores();
-    } catch {
-      toast.error("Erro ao salvar fornecedor");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "";
+      if (message.includes("unique") || message.includes("duplicate") || message.includes("fornecedores_cnpj")) {
+        toast.error("CNPJ já cadastrado para outro fornecedor");
+      } else {
+        toast.error("Erro ao salvar fornecedor");
+      }
     } finally {
       setIsSaving(false);
     }
@@ -127,15 +189,19 @@ export default function Fornecedores() {
     fetchFornecedores();
   };
 
+  // BUG-A7-2: filter by nome, CNPJ (digits or formatted) and email
   const filtered = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
     if (!term) return fornecedores;
-    return fornecedores.filter(
-      (f) =>
-        f.nome.toLowerCase().includes(term) ||
-        (f.cnpj ?? "").replace(/\D/g, "").includes(term.replace(/\D/g, "")) ||
-        (f.email ?? "").toLowerCase().includes(term)
-    );
+    const termDigits = onlyDigits(term);
+    return fornecedores.filter((f) => {
+      if (f.nome.toLowerCase().includes(term)) return true;
+      const cnpjDigits = onlyDigits(f.cnpj ?? "");
+      if (cnpjDigits && termDigits && cnpjDigits.includes(termDigits)) return true;
+      if (formatCNPJ(cnpjDigits).includes(term)) return true;
+      if ((f.email ?? "").toLowerCase().includes(term)) return true;
+      return false;
+    });
   }, [fornecedores, searchTerm]);
 
   return (
@@ -182,9 +248,14 @@ export default function Fornecedores() {
                     <Input
                       id="cnpj"
                       value={form.cnpj}
-                      onChange={(e) => setForm({ ...form, cnpj: e.target.value })}
+                      onChange={(e) => handleCnpjChange(e.target.value)}
                       placeholder="00.000.000/0000-00"
+                      aria-invalid={!!cnpjError}
+                      className={cnpjError ? "border-red-500 focus-visible:ring-red-500" : ""}
                     />
+                    {cnpjError && (
+                      <p className="text-xs text-red-500">{cnpjError}</p>
+                    )}
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1.5">
@@ -197,15 +268,24 @@ export default function Fornecedores() {
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <Label htmlFor="email" className="text-xs">Email</Label>
+                      <Label htmlFor="telefone" className="text-xs">Telefone</Label>
                       <Input
-                        id="email"
-                        type="email"
-                        value={form.email}
-                        onChange={(e) => setForm({ ...form, email: e.target.value })}
-                        placeholder="email@exemplo.com"
+                        id="telefone"
+                        value={form.telefone}
+                        onChange={(e) => handleTelefoneChange(e.target.value)}
+                        placeholder="(00) 00000-0000"
                       />
                     </div>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="email" className="text-xs">Email</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={form.email}
+                      onChange={(e) => setForm({ ...form, email: e.target.value })}
+                      placeholder="email@exemplo.com"
+                    />
                   </div>
                   <div className="flex items-center gap-2 pt-2">
                     <Button type="button" variant="ghost" onClick={() => setIsDialogOpen(false)} disabled={isSaving}>
@@ -251,6 +331,7 @@ export default function Fornecedores() {
                   <TableHead>Nome</TableHead>
                   <TableHead>CNPJ</TableHead>
                   <TableHead className="hidden md:table-cell">Contato</TableHead>
+                  <TableHead className="hidden lg:table-cell">Telefone</TableHead>
                   <TableHead className="hidden md:table-cell">Email</TableHead>
                   {canEdit && <TableHead className="text-right">Ações</TableHead>}
                 </TableRow>
@@ -258,7 +339,7 @@ export default function Fornecedores() {
               <TableBody>
                 {filtered.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={canEdit ? 5 : 4}>
+                    <TableCell colSpan={canEdit ? 6 : 5}>
                       {fornecedores.length === 0 ? (
                         <EmptyState
                           icon={Truck}
@@ -284,8 +365,11 @@ export default function Fornecedores() {
                   filtered.map((f) => (
                     <TableRow key={f.id}>
                       <TableCell className="font-medium">{f.nome}</TableCell>
-                      <TableCell>{f.cnpj || "-"}</TableCell>
+                      <TableCell>{f.cnpj ? formatCNPJ(f.cnpj) : "-"}</TableCell>
                       <TableCell className="hidden md:table-cell text-sm text-muted-foreground">{f.contato || "-"}</TableCell>
+                      <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
+                        {f.telefone ? formatPhone(f.telefone) : "-"}
+                      </TableCell>
                       <TableCell className="hidden md:table-cell text-sm text-muted-foreground">{f.email || "-"}</TableCell>
                       {canEdit && (
                         <TableCell className="text-right">
