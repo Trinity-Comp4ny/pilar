@@ -1,6 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, Clock, Receipt } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { CheckCircle2, Clock, Receipt, ExternalLink } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
 import type { ClienteReceita } from "@/pages/cliente/useClienteProjetoData";
 
@@ -80,13 +81,32 @@ export function FinanceiroContent({ receitas }: { receitas: ClienteReceita[] }) 
                         {r.data_recebimento && ` · Pago em: ${formatDate(r.data_recebimento)}`}
                       </p>
                     </div>
-                    <div className="text-right">
+                    <div className="text-right space-y-1.5">
                       <p className="text-sm font-bold">{formatCurrency(r.valor)}</p>
-                      <Badge
-                        className={`text-[10px] ${isRecebido ? "bg-positive/10 text-positive" : isAtrasado ? "bg-red-100 text-red-800" : "bg-yellow-100 text-yellow-800"}`}
-                      >
-                        {isRecebido ? "Pago" : isAtrasado ? "Atrasado" : "Pendente"}
-                      </Badge>
+                      <div className="flex items-center justify-end gap-1.5 flex-wrap">
+                        {!isRecebido && r.asaas_billing_type && (
+                          <Badge className="text-[10px] bg-blue-100 text-blue-800">
+                            {r.asaas_billing_type === "PIX" ? "PIX" : "Boleto"}
+                          </Badge>
+                        )}
+                        <Badge
+                          className={`text-[10px] ${isRecebido ? "bg-positive/10 text-positive" : isAtrasado ? "bg-red-100 text-red-800" : "bg-yellow-100 text-yellow-800"}`}
+                        >
+                          {isRecebido ? "Pago" : isAtrasado ? "Atrasado" : "Pendente"}
+                        </Badge>
+                      </div>
+                      {!isRecebido && r.asaas_payment_url && (
+                        <Button
+                          asChild
+                          size="sm"
+                          className="h-7 text-xs px-2.5 bg-blue-600 hover:bg-blue-700 text-white"
+                        >
+                          <a href={r.asaas_payment_url} target="_blank" rel="noopener noreferrer">
+                            Pagar agora
+                            <ExternalLink className="h-3 w-3 ml-1" />
+                          </a>
+                        </Button>
+                      )}
                     </div>
                   </div>
                 );
