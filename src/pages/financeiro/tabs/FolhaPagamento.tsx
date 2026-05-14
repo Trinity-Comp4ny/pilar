@@ -81,7 +81,7 @@ export default function FolhaPagamento() {
       });
       setHistory(Array.from(grouped.values()));
     } catch {
-      toast.error("Erro ao gerar folha de pagamento");
+      toast.error("Erro ao carregar histórico da folha");
     }
   };
 

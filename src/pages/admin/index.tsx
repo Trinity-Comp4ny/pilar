@@ -230,7 +230,7 @@ export default function Admin() {
         </TabsContent>
 
         <TabsContent value="plano" className="mt-6">
-          <PlanoTab empresaId={companyId} />
+          <PlanoTab empresaId={companyId} currentPlan={currentPlan} />
         </TabsContent>
       </Tabs>
     </PageLayout>
