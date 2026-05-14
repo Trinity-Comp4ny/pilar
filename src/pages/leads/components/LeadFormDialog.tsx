@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
-import { formatPhone } from "@/lib/maskUtils";
+import { formatPhone, formatCNPJ } from "@/lib/maskUtils";
 import { formatCurrencyInput } from "@/lib/currencyUtils";
 
 export type LeadFormData = {
@@ -17,6 +17,7 @@ export type LeadFormData = {
   origem: string;
   valor_estimado: string;
   empresa_lead: string;
+  cnpj: string;
   previsao_fechamento: string;
   responsavel_id: string;
   notas: string;
@@ -30,6 +31,7 @@ export const EMPTY_LEAD_FORM: LeadFormData = {
   origem: "",
   valor_estimado: "",
   empresa_lead: "",
+  cnpj: "",
   previsao_fechamento: "",
   responsavel_id: "",
   notas: "",
@@ -96,6 +98,16 @@ export function LeadFormDialog({ open, onOpenChange, mode, formData, onFormChang
                   value={formData.empresa_lead}
                   onChange={(e) => set("empresa_lead", e.target.value)}
                   placeholder="Nome da empresa"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor={`${prefix}cnpj`} className="text-xs">CNPJ</Label>
+                <Input
+                  id={`${prefix}cnpj`}
+                  value={formData.cnpj}
+                  onChange={(e) => set("cnpj", formatCNPJ(e.target.value))}
+                  maxLength={18}
+                  placeholder="00.000.000/0000-00"
                 />
               </div>
               <div className="space-y-1.5">

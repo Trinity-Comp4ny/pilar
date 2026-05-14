@@ -18,6 +18,7 @@ export interface Lead {
   responsavel_id?: string;
   previsao_fechamento?: string;
   empresa_lead?: string;
+  cnpj?: string;
   notas?: string;
 }
 
@@ -31,6 +32,7 @@ export interface LeadInsert {
   responsavel_id?: string;
   previsao_fechamento?: string;
   empresa_lead?: string;
+  cnpj?: string;
   notas?: string;
 }
 

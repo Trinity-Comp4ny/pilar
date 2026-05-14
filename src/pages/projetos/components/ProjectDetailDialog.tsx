@@ -357,8 +357,13 @@ export function ProjectDetailDialog({
             <AlertDialogDescription>
               A disciplina{" "}
               <strong>{concludingDiscIdx !== null && disciplinasLegacy[concludingDiscIdx]?.disciplina}</strong> será
-              marcada como <strong>Concluída</strong> e a data final será definida como{" "}
-              <strong>{new Date().toLocaleDateString("pt-BR")}</strong>.
+              marcada como <strong>Concluída</strong>
+              {concludingDiscIdx !== null && !dbDisciplinas[concludingDiscIdx]?.data_fim_real && (
+                <>
+                  {" "}e a data final será registrada como{" "}
+                  <strong>{new Date().toLocaleDateString("pt-BR")}</strong>
+                </>
+              )}.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
