@@ -44,6 +44,16 @@ export default defineConfig({
     },
   ],
 
+  // Variáveis de ambiente documentadas — carregue via .env antes de rodar.
+  // set -a && source .env && set +a && npx playwright test
+  //
+  // E2E_TEST_EMAIL     — usuário de teste (admin/gestor)
+  // E2E_TEST_PASSWORD  — senha do usuário de teste
+  // E2E_ADMIN_EMAIL    — usuário com perfil admin (opcional, fallback para TEST)
+  // E2E_ADMIN_PASSWORD — senha do admin (opcional, fallback para TEST)
+  // E2E_PORTAL_EMAIL   — usuário do portal cliente (opcional, specs são skipped sem ele)
+  // E2E_PORTAL_PASSWORD — senha do portal cliente
+
   webServer: {
     command: "npm run preview -- --port " + PORT,
     port: PORT,
