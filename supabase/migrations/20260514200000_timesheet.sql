@@ -26,7 +26,7 @@ CREATE POLICY "insert_own" ON public.timesheet_lancamentos
 CREATE POLICY "update_own_pending" ON public.timesheet_lancamentos
   FOR UPDATE USING (
     empresa_id = get_user_empresa_id() AND
-    (user_id = auth.uid() OR user_has_feature(auth.uid(), 'pessoas'))
+    (user_id = auth.uid() OR user_has_feature('pessoas'))
   );
 
 CREATE INDEX idx_timesheet_empresa_data ON public.timesheet_lancamentos(empresa_id, data DESC) WHERE status != 'rejeitado';
