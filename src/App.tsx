@@ -38,6 +38,7 @@ const Company = lazy(() => import("./pages/Company"));
 const CompanySetup = lazy(() => import("./pages/CompanySetup"));
 const ProfileSetup = lazy(() => import("./pages/ProfileSetup"));
 const Templates = lazy(() => import("./pages/templates"));
+const Timesheet = lazy(() => import("./pages/Timesheet"));
 const MapaObras = lazy(() => import("./pages/mapa"));
 const Propostas = lazy(() => import("./pages/propostas"));
 const Capacidade = lazy(() => import("./pages/capacidade"));
@@ -146,6 +147,10 @@ const App = () => {
 
                       <Route element={<FeatureRoute feature="templates" />}>
                         <Route path="/templates" element={<Templates />} />
+                      </Route>
+
+                      <Route element={<FeatureRoute feature="timesheet" />}>
+                        <Route path="/timesheet" element={<Timesheet />} />
                       </Route>
 
                       <Route element={<FeatureRoute feature="mapa" />}>

@@ -69,6 +69,7 @@ import { ProjetosEmptyState } from "@/pages/projetos/components/ProjetosEmptySta
 import { QuickAddCard } from "@/pages/projetos/components/QuickAddCard";
 import { useTemplates } from "@/hooks/useTemplates";
 import { useFluxosDisciplinas } from "@/hooks/useFluxosDisciplinas";
+import { useDashboardRentabilidade } from "@/hooks/useRentabilidade";
 import { cn } from "@/lib/utils";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -146,7 +147,15 @@ export default function ProjetosKanban() {
   const queryClient = useQueryClient();
   const { data: templatesData = [] } = useTemplates();
   const { data: fluxosData = [] } = useFluxosDisciplinas();
+  const { data: rentabilidadeData } = useDashboardRentabilidade();
   const canEdit = can("projetos", "create");
+
+  const rentabilidadeMap = useMemo<Record<string, number>>(() => {
+    if (!rentabilidadeData?.projetos) return {};
+    return Object.fromEntries(
+      rentabilidadeData.projetos.map((p) => [p.projeto_id, p.margem_bruta_pct])
+    );
+  }, [rentabilidadeData]);
 
   const [searchParams, setSearchParams] = useSearchParams();
   const initial = useMemo(() => parseFiltersFromParams(searchParams), []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -740,6 +749,7 @@ export default function ProjetosKanban() {
                                         onDelete={handleDelete}
                                         canEdit={canEdit}
                                         isDragging={snapshot.isDragging}
+                                        margemBrutaPct={rentabilidadeMap[projeto.id] ?? null}
                                       />
                                     </div>
                                   )}
@@ -785,6 +795,7 @@ export default function ProjetosKanban() {
                               onDelete={handleDelete}
                               onMoveStatus={canEdit ? handleMoveStatus : undefined}
                               canEdit={canEdit}
+                              margemBrutaPct={rentabilidadeMap[projeto.id] ?? null}
                             />
                           ))}
                         </div>
