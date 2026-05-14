@@ -88,6 +88,38 @@ serve(
       const redirectOrigin = getTrustedOrigin(req);
       if (!redirectOrigin) return safeErrorResponse(500, "Server CORS misconfigured", req);
 
+      // Verificar limite de usuários do plano da empresa
+      const { data: planLimit } = await supabaseClient
+        .from("pilar_subscriptions")
+        .select("pilar_subscription_plans(max_usuarios)")
+        .eq("empresa_id", profile.empresa_id)
+        .eq("status", "active")
+        .maybeSingle();
+
+      const maxUsuarios = (planLimit as { pilar_subscription_plans?: { max_usuarios?: number | null } } | null)
+        ?.pilar_subscription_plans?.max_usuarios ?? null;
+
+      if (maxUsuarios !== null) {
+        const { count: activeCount, error: countErr } = await supabaseClient
+          .from("profiles")
+          .select("id", { count: "exact", head: true })
+          .eq("empresa_id", profile.empresa_id)
+          .is("deleted_at", null);
+
+        if (countErr) {
+          log.error("failed to count active users", countErr, { empresa_id: profile.empresa_id });
+          return safeErrorResponse(500, "Erro ao verificar limite de usuários", req);
+        }
+
+        if ((activeCount ?? 0) >= maxUsuarios) {
+          return safeErrorResponse(
+            422,
+            `Limite de usuários atingido para o plano atual (${maxUsuarios} usuário${maxUsuarios === 1 ? "" : "s"})`,
+            req
+          );
+        }
+      }
+
       // Rate limit anti-spam: 5/min, 50/hour por empresa
       const { error: rateLimitError } = await supabaseClient.rpc("check_convite_rate_limit", {
         p_empresa_id: profile.empresa_id,

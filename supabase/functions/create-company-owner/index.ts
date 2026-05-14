@@ -162,6 +162,11 @@ serve(
 
       if (inviteError) throw inviteError;
 
+      // trial_ends_at: a subscription é criada pelo trigger tg_pilar_link_subscription_on_owner_used
+      // (migration 027) quando o usuário completa o profile-setup e seta empresa_owners_pending.usado_em.
+      // O pilar-checkout-webhook seta trial_ends_at=NOW()+14d na subscription após o pagamento confirmado.
+      // Para empresas criadas manualmente aqui (admin flow), não há trial — trial_ends_at permanece NULL.
+
       log.info("company owner invite created", { origin: rawOrigin });
 
       return new Response(JSON.stringify({ success: true, email }), {
