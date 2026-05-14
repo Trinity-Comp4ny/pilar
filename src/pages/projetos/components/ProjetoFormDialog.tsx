@@ -5,13 +5,14 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { Calendar, Check, DollarSign, FileText, Layers, Loader2, MapPin } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Calendar, Check, DollarSign, FileText, Info, Layers, Loader2, MapPin, User } from "lucide-react";
 import { DatePicker } from "@/components/ui/date-picker";
 import { cn } from "@/lib/utils";
 import { formatCurrencyInput } from "@/lib/currencyUtils";
 import { toast } from "sonner";
 import { PROJECT_PRIORITY, PRIORITY_OPTIONS, PROJECT_PRIORITY_CONFIG } from "@/constants";
-import { type Projeto } from "@/types/projetos";
+import { type Projeto, type ProjetoDisciplinaDB } from "@/types/projetos";
 import { type TemplateProjeto } from "@/hooks/useTemplates";
 import type { FluxoDisciplinas } from "@/types/fluxoDisciplinas";
 import { useProjetoForm, ESTADOS_BR } from "./useProjetoForm";
@@ -29,6 +30,8 @@ interface ProjetoFormDialogProps {
   fluxosData?: FluxoDisciplinas[];
   currentUser: { name: string; email: string } | null;
   onSaved: () => void;
+  /** Disciplinas existentes do banco (usadas em modo edição para exibição read-only) */
+  existingDisciplinas?: ProjetoDisciplinaDB[];
 }
 
 type Step = 1 | 2 | 3;
@@ -50,6 +53,7 @@ export function ProjetoFormDialog({
   fluxosData = [],
   currentUser,
   onSaved,
+  existingDisciplinas = [],
 }: ProjetoFormDialogProps) {
   const form = useProjetoForm({
     open,
@@ -484,30 +488,84 @@ export function ProjetoFormDialog({
 
           {/* STEP 3 — Disciplinas */}
           {step === 3 && (
-            <DisciplinasSection
-              disciplinas={disciplinas}
-              pessoas={pessoas}
-              fluxosData={fluxosData}
-              onApplyFluxo={form.applyFluxo}
-              projetosDisciplinas={form.projetosDisciplinas}
-              tempDisciplina={form.tempDisciplina}
-              onTempDisciplinaChange={form.setTempDisciplina}
-              onAddDisciplina={form.addProjetoDisciplina}
-              onRemoveDisciplina={form.removeProjetoDisciplina}
-              onOpenDetail={form.handleOpenDisciplinaDetail}
-              expandedFormDiscIdx={form.expandedFormDiscIdx}
-              onExpandToggle={form.setExpandedFormDiscIdx}
-              addingRespToFormDisc={form.addingRespToFormDisc}
-              onSetAddingResp={form.setAddingRespToFormDisc}
-              newFormResp={form.newFormResp}
-              onNewFormRespChange={form.setNewFormResp}
-              onAddResponsavel={form.addResponsavelToDisc}
-              onRemoveResponsavel={form.removeResponsavelFromDisc}
-              onUpdateRespDatas={form.updateRespDatasInForm}
-              projetoDataInicio={form.formData.data_inicio || undefined}
-              projetoDataPrevisao={form.formData.data_previsao || undefined}
-              projetoDataFinal={form.formData.data_final || undefined}
-            />
+            <>
+              {form.isEditMode ? (
+                <div className="space-y-3">
+                  <Label className="text-base font-semibold block">Disciplinas do Projeto</Label>
+
+                  <div className="flex items-start gap-2 rounded-lg border border-blue-200 bg-blue-50 p-3 text-xs text-blue-700">
+                    <Info className="mt-0.5 h-3.5 w-3.5 flex-shrink-0" />
+                    <span>
+                      As disciplinas podem ser editadas diretamente na tabela de disciplinas do projeto.
+                    </span>
+                  </div>
+
+                  {existingDisciplinas.length === 0 ? (
+                    <p className="py-2 text-sm text-muted-foreground">
+                      Nenhuma disciplina cadastrada neste projeto ainda.
+                    </p>
+                  ) : (
+                    <div className="space-y-2">
+                      {existingDisciplinas.map((d) => (
+                        <div key={d.id} className="rounded-lg border bg-white px-3 py-2.5">
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <Badge variant="outline">{d.nome}</Badge>
+                              {d.prioridade && (
+                                <span className="text-[10px] text-muted-foreground">{d.prioridade}</span>
+                              )}
+                            </div>
+                            <span
+                              className={cn(
+                                "text-[10px] font-medium",
+                                d.status === "Concluído"
+                                  ? "text-positive"
+                                  : d.status === "Em Andamento"
+                                    ? "text-blue-600"
+                                    : "text-gray-500"
+                              )}
+                            >
+                              {d.status}
+                            </span>
+                          </div>
+                          {(d.responsaveis ?? []).length > 0 && (
+                            <div className="mt-1.5 flex items-center gap-1 text-xs text-muted-foreground">
+                              <User className="h-3 w-3 flex-shrink-0" />
+                              <span>{(d.responsaveis ?? []).map((r) => r.nome).join(", ")}</span>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <DisciplinasSection
+                  disciplinas={disciplinas}
+                  pessoas={pessoas}
+                  fluxosData={fluxosData}
+                  onApplyFluxo={form.applyFluxo}
+                  projetosDisciplinas={form.projetosDisciplinas}
+                  tempDisciplina={form.tempDisciplina}
+                  onTempDisciplinaChange={form.setTempDisciplina}
+                  onAddDisciplina={form.addProjetoDisciplina}
+                  onRemoveDisciplina={form.removeProjetoDisciplina}
+                  onOpenDetail={form.handleOpenDisciplinaDetail}
+                  expandedFormDiscIdx={form.expandedFormDiscIdx}
+                  onExpandToggle={form.setExpandedFormDiscIdx}
+                  addingRespToFormDisc={form.addingRespToFormDisc}
+                  onSetAddingResp={form.setAddingRespToFormDisc}
+                  newFormResp={form.newFormResp}
+                  onNewFormRespChange={form.setNewFormResp}
+                  onAddResponsavel={form.addResponsavelToDisc}
+                  onRemoveResponsavel={form.removeResponsavelFromDisc}
+                  onUpdateRespDatas={form.updateRespDatasInForm}
+                  projetoDataInicio={form.formData.data_inicio || undefined}
+                  projetoDataPrevisao={form.formData.data_previsao || undefined}
+                  projetoDataFinal={form.formData.data_final || undefined}
+                />
+              )}
+            </>
           )}
 
           <DisciplinaDetailDialog
