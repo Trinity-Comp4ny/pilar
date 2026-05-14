@@ -13,7 +13,7 @@ ALTER TABLE public.ai_usage_logs ENABLE ROW LEVEL SECURITY;
 -- Só admins podem ver os logs de uso de IA da sua empresa
 CREATE POLICY "admin_read" ON public.ai_usage_logs
   FOR SELECT USING (
-    empresa_id = get_user_empresa_id() AND user_has_feature(auth.uid(), 'pessoas')
+    empresa_id = get_user_empresa_id() AND user_has_feature('pessoas')
   );
 
 -- Apenas service role pode inserir (edge functions usam service role)
