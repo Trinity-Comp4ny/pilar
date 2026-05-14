@@ -14,6 +14,7 @@ import { User, Mail, Phone, Building2, ShieldCheck } from "lucide-react";
 import { formatPhone } from "@/lib/maskUtils";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { MfaSetup } from "@/components/MfaSetup";
+import { Skeleton } from "@/components/ui/skeleton";
 import { profileEditSchema, profileEditDefaultValues, type ProfileEditFormData } from "@/schemas";
 import { useAuth } from "@/contexts/AuthContext";
 import { EmailChangeCard } from "@/components/profile/EmailChangeCard";
@@ -127,6 +128,28 @@ export default function Profile() {
       }
     >
       <div className="w-full max-w-6xl mx-auto space-y-6">
+        {isLoading && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <Card className="border border-black/5 lg:col-span-1">
+              <CardContent className="pt-6 flex flex-col items-center gap-4">
+                <Skeleton className="h-24 w-24 rounded-full" />
+                <Skeleton className="h-5 w-32" />
+                <Skeleton className="h-4 w-24" />
+              </CardContent>
+            </Card>
+            <Card className="border border-black/5 lg:col-span-2">
+              <CardContent className="pt-6 grid grid-cols-2 gap-4">
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} className="space-y-2">
+                    <Skeleton className="h-4 w-20" />
+                    <Skeleton className="h-9 w-full" />
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          </div>
+        )}
+        {!isLoading && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <Card className={"border border-black/5 lg:col-span-1 " + (editing ? "ring-1 ring-brand/25" : "")}>
             <CardHeader>
@@ -246,6 +269,7 @@ export default function Profile() {
           <EmailChangeCard currentEmail={email} onChanged={(newEmail) => setEmail(newEmail)} />
           <PasswordChangeCard currentEmail={email} />
         </div>
+        )}
       </div>
     </PageLayout>
   );
