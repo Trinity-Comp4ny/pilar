@@ -85,11 +85,8 @@ export async function checkRateLimit(supabaseAdmin: SupabaseClient, empresaId: s
 }
 
 /**
- * Registra uso do Gemini na tabela ai_usage_logs (se existir).
+ * Registra uso do Gemini na tabela ai_usage_logs para billing granular por feature.
  * Falha silenciosa — nunca quebra o fluxo principal.
- *
- * TODO: criar migration para ai_usage_logs com colunas:
- *   empresa_id UUID, feature_key TEXT, tokens_input INT, tokens_output INT, created_at TIMESTAMPTZ
  */
 async function logAiUsage(
   supabaseAdmin: SupabaseClient,
