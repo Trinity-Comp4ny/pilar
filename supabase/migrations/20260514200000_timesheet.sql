@@ -35,4 +35,4 @@ CREATE INDEX idx_timesheet_projeto ON public.timesheet_lancamentos(projeto_id) W
 -- Trigger updated_at
 CREATE TRIGGER set_timesheet_updated_at
   BEFORE UPDATE ON public.timesheet_lancamentos
-  FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+  FOR EACH ROW EXECUTE FUNCTION public.tg_pilar_touch_updated_at();
