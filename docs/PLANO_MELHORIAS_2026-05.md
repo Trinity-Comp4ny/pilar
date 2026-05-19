@@ -3,6 +3,8 @@
 > Gerado em 2026-05-13 após análise de mesa redonda com 10+ agentes especializados.  
 > Implementação paralela em 6 worktrees, mergeada em `staging` em 2026-05-13.
 
+> **Atualização 2026-05-19**: ICP refinado e plano executável de 4 semanas em [ICP_E_PLANO_DESIGN_PARTNER_2026-05.md](./ICP_E_PLANO_DESIGN_PARTNER_2026-05.md). Auditoria de código revelou que Timesheet está MUITO mais avançado do que listado em P4 abaixo — migration aplicada, página/dialog/hook prontos. Falta ativar feature flag e integrar com margem.
+
 ---
 
 ## Status Geral
