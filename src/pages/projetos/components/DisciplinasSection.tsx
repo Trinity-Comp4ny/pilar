@@ -509,16 +509,23 @@ export function DisciplinasSection({
               <Select
                 value={tempDisciplina.responsavel_id}
                 onValueChange={(val) => onTempDisciplinaChange({ ...tempDisciplina, responsavel_id: val })}
+                disabled={pessoas.length === 0}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione" />
+                  <SelectValue placeholder={pessoas.length === 0 ? "Nenhuma pessoa cadastrada" : "Selecione"} />
                 </SelectTrigger>
                 <SelectContent>
-                  {pessoas.map((pessoa) => (
-                    <SelectItem key={pessoa.id} value={pessoa.id}>
-                      {pessoa.nome}
-                    </SelectItem>
-                  ))}
+                  {pessoas.length === 0 ? (
+                    <div className="px-2 py-3 text-xs text-muted-foreground">
+                      Cadastre membros em <strong>Pessoas</strong> para atribuir responsáveis.
+                    </div>
+                  ) : (
+                    pessoas.map((pessoa) => (
+                      <SelectItem key={pessoa.id} value={pessoa.id}>
+                        {pessoa.nome}
+                      </SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
             </div>
