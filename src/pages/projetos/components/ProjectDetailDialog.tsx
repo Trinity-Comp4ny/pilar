@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -84,6 +85,7 @@ export function ProjectDetailDialog({
   const [justificativaDialog, setJustificativaDialog] = useState<{ discIdx: number; newStatus: string } | null>(null);
   const [justificativaText, setJustificativaText] = useState("");
   const [concludingDiscIdx, setConcludingDiscIdx] = useState<number | null>(null);
+  const [concludingDate, setConcludingDate] = useState<string>("");
 
   const { data: dbDisciplinas = [] } = useProjetoDisciplinas(projeto?.id);
   const updateStatusMut = useUpdateDisciplinaStatus();
@@ -96,18 +98,26 @@ export function ProjectDetailDialog({
   const statusConfig = PROJECT_STATUS_CONFIG[projeto.status];
   const priorityConfig = PROJECT_PRIORITY_CONFIG[projeto.prioridade as ProjectPriority];
 
-  const applyDisciplineStatusChange = async (index: number, newStatus: string, justificativa?: string) => {
+  const applyDisciplineStatusChange = async (
+    index: number,
+    newStatus: string,
+    justificativa?: string,
+    dataFimRealOverride?: string
+  ) => {
     const dbDisc = dbDisciplinas[index];
     if (!dbDisc) return;
     setUpdatingDisc(index);
     try {
+      const resolvedDataFim =
+        newStatus === "Concluído"
+          ? dataFimRealOverride || (!dbDisc.data_fim_real ? new Date().toISOString().split("T")[0] : undefined)
+          : undefined;
       await updateStatusMut.mutateAsync({
         id: dbDisc.id,
         projetoId: projeto.id,
         status: newStatus,
         justificativa_atraso: justificativa,
-        data_fim_real:
-          newStatus === "Concluído" && !dbDisc.data_fim_real ? new Date().toISOString().split("T")[0] : undefined,
+        data_fim_real: resolvedDataFim,
       });
       toast.success(`${dbDisc.nome}: ${newStatus}`);
       onProjectUpdated?.();
@@ -119,6 +129,8 @@ export function ProjectDetailDialog({
 
   const handleDisciplineStatusChange = async (index: number, newStatus: string) => {
     if (newStatus === "Concluído") {
+      const existing = dbDisciplinas[index]?.data_fim_real;
+      setConcludingDate(existing || new Date().toISOString().split("T")[0]);
       setConcludingDiscIdx(index);
       return;
     }
@@ -357,24 +369,31 @@ export function ProjectDetailDialog({
             <AlertDialogDescription>
               A disciplina{" "}
               <strong>{concludingDiscIdx !== null && disciplinasLegacy[concludingDiscIdx]?.disciplina}</strong> será
-              marcada como <strong>Concluída</strong>
-              {concludingDiscIdx !== null && !dbDisciplinas[concludingDiscIdx]?.data_fim_real && (
-                <>
-                  {" "}e a data final será registrada como{" "}
-                  <strong>{new Date().toLocaleDateString("pt-BR")}</strong>
-                </>
-              )}.
+              marcada como <strong>Concluída</strong>. Informe a data real da entrega abaixo.
             </AlertDialogDescription>
           </AlertDialogHeader>
+          <div className="space-y-1.5 py-2">
+            <Label className="text-xs">Data final</Label>
+            <DatePicker
+              value={concludingDate || undefined}
+              onChange={(v) => setConcludingDate(v || "")}
+              maxDate={new Date().toISOString().split("T")[0]}
+            />
+            <p className="text-[11px] text-muted-foreground">
+              Use a data em que o trabalho foi de fato entregue, não a data administrativa de hoje.
+            </p>
+          </div>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
               className="bg-positive hover:bg-positive/90"
+              disabled={!concludingDate}
               onClick={async () => {
-                if (concludingDiscIdx === null) return;
+                if (concludingDiscIdx === null || !concludingDate) return;
                 const idx = concludingDiscIdx;
+                const date = concludingDate;
                 setConcludingDiscIdx(null);
-                await applyDisciplineStatusChange(idx, "Concluído");
+                await applyDisciplineStatusChange(idx, "Concluído", undefined, date);
               }}
             >
               Confirmar

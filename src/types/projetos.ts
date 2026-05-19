@@ -17,6 +17,8 @@ export interface ResponsavelDatas {
 }
 
 export interface DisciplinaResponsavel {
+  /** ID na tabela relacional projeto_disciplinas. Presente para registros já persistidos. */
+  id?: string;
   disciplina: string;
   responsavel_id: string;
   responsavel_nome: string;
@@ -169,6 +171,7 @@ export function dbDisciplinaToLegacy(d: ProjetoDisciplinaDB): DisciplinaResponsa
   }));
 
   return {
+    id: d.id,
     disciplina: d.nome,
     responsavel_id: resps[0]?.responsavel_id || "",
     responsavel_nome: resps[0]?.responsavel_nome || "",

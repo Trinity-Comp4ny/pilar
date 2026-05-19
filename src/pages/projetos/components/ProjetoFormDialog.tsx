@@ -5,8 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import { Calendar, Check, DollarSign, FileText, Info, Layers, Loader2, MapPin, User } from "lucide-react";
+import { Calendar, Check, DollarSign, FileText, Layers, Loader2, MapPin } from "lucide-react";
 import { DatePicker } from "@/components/ui/date-picker";
 import { cn } from "@/lib/utils";
 import { formatCurrencyInput } from "@/lib/currencyUtils";
@@ -18,6 +17,9 @@ import type { FluxoDisciplinas } from "@/types/fluxoDisciplinas";
 import { useProjetoForm, ESTADOS_BR } from "./useProjetoForm";
 import { DisciplinasSection } from "./DisciplinasSection";
 import { DisciplinaDetailDialog } from "./DisciplinaDetailDialog";
+import { useProjetoDisciplinas } from "@/hooks/useProjetoDisciplinas";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ProjetoFormDialogProps {
   open: boolean;
@@ -53,12 +55,33 @@ export function ProjetoFormDialog({
   fluxosData = [],
   currentUser,
   onSaved,
-  existingDisciplinas = [],
+  existingDisciplinas: existingDisciplinasProp,
 }: ProjetoFormDialogProps) {
+  // Garante hidratação em edição mesmo quando o caller (ex: Projetos.tsx lista)
+  // não passa existingDisciplinas — busca direto pelo id do projeto editado.
+  const { data: fetchedDisciplinas } = useProjetoDisciplinas(
+    existingDisciplinasProp === undefined && editProjeto ? editProjeto.id : undefined
+  );
+  const existingDisciplinas: ProjetoDisciplinaDB[] = existingDisciplinasProp ?? fetchedDisciplinas ?? [];
+
+  // Fallback: se o caller não populou pessoas (ou carregou tardio), busca aqui.
+  // Evita Step 3 com select de Responsável vazio quando o catalog ainda não carregou.
+  const { data: fetchedPessoas = [] } = useQuery({
+    queryKey: ["pessoas-form-fallback"],
+    queryFn: async () => {
+      const { data } = await supabase.from("pessoas").select("id, nome").is("deleted_at", null).order("nome");
+      return data || [];
+    },
+    enabled: open && pessoas.length === 0,
+    staleTime: 1000 * 60 * 5,
+  });
+  const effectivePessoas = pessoas.length > 0 ? pessoas : fetchedPessoas;
+
   const form = useProjetoForm({
     open,
     onOpenChange,
     editProjeto,
+    existingDisciplinas,
     pessoas,
     templatesData,
     fluxosData,
@@ -489,60 +512,9 @@ export function ProjetoFormDialog({
           {/* STEP 3 — Disciplinas */}
           {step === 3 && (
             <>
-              {form.isEditMode ? (
-                <div className="space-y-3">
-                  <Label className="text-base font-semibold block">Disciplinas do Projeto</Label>
-
-                  <div className="flex items-start gap-2 rounded-lg border border-blue-200 bg-blue-50 p-3 text-xs text-blue-700">
-                    <Info className="mt-0.5 h-3.5 w-3.5 flex-shrink-0" />
-                    <span>
-                      As disciplinas podem ser editadas diretamente na tabela de disciplinas do projeto.
-                    </span>
-                  </div>
-
-                  {existingDisciplinas.length === 0 ? (
-                    <p className="py-2 text-sm text-muted-foreground">
-                      Nenhuma disciplina cadastrada neste projeto ainda.
-                    </p>
-                  ) : (
-                    <div className="space-y-2">
-                      {existingDisciplinas.map((d) => (
-                        <div key={d.id} className="rounded-lg border bg-white px-3 py-2.5">
-                          <div className="flex items-center justify-between gap-2">
-                            <div className="flex flex-wrap items-center gap-2">
-                              <Badge variant="outline">{d.nome}</Badge>
-                              {d.prioridade && (
-                                <span className="text-[10px] text-muted-foreground">{d.prioridade}</span>
-                              )}
-                            </div>
-                            <span
-                              className={cn(
-                                "text-[10px] font-medium",
-                                d.status === "Concluído"
-                                  ? "text-positive"
-                                  : d.status === "Em Andamento"
-                                    ? "text-blue-600"
-                                    : "text-gray-500"
-                              )}
-                            >
-                              {d.status}
-                            </span>
-                          </div>
-                          {(d.responsaveis ?? []).length > 0 && (
-                            <div className="mt-1.5 flex items-center gap-1 text-xs text-muted-foreground">
-                              <User className="h-3 w-3 flex-shrink-0" />
-                              <span>{(d.responsaveis ?? []).map((r) => r.nome).join(", ")}</span>
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <DisciplinasSection
+              <DisciplinasSection
                   disciplinas={disciplinas}
-                  pessoas={pessoas}
+                  pessoas={effectivePessoas}
                   fluxosData={fluxosData}
                   onApplyFluxo={form.applyFluxo}
                   projetosDisciplinas={form.projetosDisciplinas}
@@ -564,7 +536,6 @@ export function ProjetoFormDialog({
                   projetoDataPrevisao={form.formData.data_previsao || undefined}
                   projetoDataFinal={form.formData.data_final || undefined}
                 />
-              )}
             </>
           )}
 
@@ -573,7 +544,7 @@ export function ProjetoFormDialog({
             onOpenChange={form.setIsDisciplinaDetailOpen}
             disciplina={selectedDisciplina}
             disciplinas={disciplinas}
-            pessoas={pessoas}
+            pessoas={effectivePessoas}
             onUpdateField={form.updateDisciplinaField}
             onUpdateResponsavel={form.updateDisciplinaResponsavel}
             newObservation={form.newObservation}
