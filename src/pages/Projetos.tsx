@@ -182,9 +182,16 @@ export default function ProjetosKanban() {
   const [pendingDrag, setPendingDrag] = useState<{
     projetoId: string;
     newStatus: string;
-    clienteEmail?: string;
-    clienteNome?: string;
     projetoNome?: string;
+  } | null>(null);
+
+  // Reabertura: quando projeto sai da coluna "Concluído", pede confirmação
+  // antes de remover a data_final registrada — evita perda silenciosa em drag acidental.
+  const [pendingReopen, setPendingReopen] = useState<{
+    projetoId: string;
+    newStatus: string;
+    projetoNome: string;
+    dataFinal?: string;
   } | null>(null);
 
   const { data: currentUser = null } = useQuery({
@@ -344,7 +351,9 @@ export default function ProjetosKanban() {
     setProjetoToDelete({ id, nome: projeto?.nome ?? "Projeto" });
   };
 
-  const handleMoveStatus = async (projetoId: string, newStatus: string) => {
+  // Aplica a mudança de status no cache e no banco.
+  // clearDataFinal=true zera data_final (usado na reabertura de projeto concluído).
+  const applyStatusMove = async (projetoId: string, newStatus: string, clearDataFinal = false) => {
     const todayStr = new Date().toISOString().slice(0, 10);
     queryClient.setQueryData(["projetos"], (old: Projeto[] | undefined) =>
       (old || []).map((p) =>
@@ -352,28 +361,53 @@ export default function ProjetosKanban() {
           ? {
               ...p,
               status: newStatus as Projeto["status"],
-              data_final: newStatus === PROJECT_STATUS.CONCLUIDO ? todayStr : p.data_final,
+              data_final:
+                newStatus === PROJECT_STATUS.CONCLUIDO
+                  ? todayStr
+                  : clearDataFinal
+                    ? undefined
+                    : p.data_final,
             }
           : p
       )
     );
-    const updateData: Record<string, string> = { status: newStatus };
+    const updateData: Record<string, string | null> = { status: newStatus };
     if (newStatus === PROJECT_STATUS.CONCLUIDO) updateData.data_final = todayStr;
+    else if (clearDataFinal) updateData.data_final = null;
+
     const { error } = await supabase.from("projetos").update(updateData).eq("id", projetoId);
     if (error) {
       toast.error("Erro ao mover projeto");
       queryClient.invalidateQueries({ queryKey: ["projetos"] });
-      return;
+      return false;
     }
     toast.success(`Movido para ${statusConfig[newStatus as keyof typeof statusConfig]?.label}`);
     queryClient.invalidateQueries({ queryKey: ["projetos"] });
+    return true;
+  };
+
+  const handleMoveStatus = async (projetoId: string, newStatus: string) => {
     const projeto = projetos.find((p) => p.id === projetoId);
+    const fromStatus = projeto?.status;
+
+    // Reabrindo um projeto concluído? Pede confirmação antes de zerar data_final.
+    if (fromStatus === PROJECT_STATUS.CONCLUIDO && newStatus !== PROJECT_STATUS.CONCLUIDO) {
+      setPendingReopen({
+        projetoId,
+        newStatus,
+        projetoNome: projeto?.nome ?? "Projeto",
+        dataFinal: projeto?.data_final,
+      });
+      return;
+    }
+
+    const ok = await applyStatusMove(projetoId, newStatus);
+    if (!ok) return;
+
     if (newStatus !== PROJECT_STATUS.CANCELADO) {
       setPendingDrag({
         projetoId,
         newStatus,
-        clienteEmail: projeto?.cliente_email ?? undefined,
-        clienteNome: projeto?.cliente_nome ?? undefined,
         projetoNome: projeto?.nome ?? undefined,
       });
     }
@@ -402,47 +436,29 @@ export default function ProjetosKanban() {
     if (!canEdit) return;
 
     const newStatus = destination.droppableId as Projeto["status"];
-    const todayStr = new Date().toISOString().slice(0, 10);
+    const fromStatus = source.droppableId;
+    const projeto = projetos.find((p) => p.id === draggableId);
 
-    queryClient.setQueryData(["projetos"], (old: Projeto[] | undefined) =>
-      (old || []).map((projeto) =>
-        projeto.id === draggableId
-          ? {
-              ...projeto,
-              status: newStatus,
-              data_final: newStatus === PROJECT_STATUS.CONCLUIDO ? todayStr : projeto.data_final,
-            }
-          : projeto
-      )
-    );
-
-    try {
-      const updateData: Record<string, string> = { status: newStatus };
-      if (newStatus === PROJECT_STATUS.CONCLUIDO) updateData.data_final = todayStr;
-
-      const { error } = await supabase.from("projetos").update(updateData).eq("id", draggableId);
-      if (error) throw error;
-
-      toast.success("Status atualizado", {
-        description: `Projeto movido para ${statusConfig[newStatus].label}`,
+    // Saindo da coluna Concluído? Pede confirmação antes de zerar data_final.
+    if (fromStatus === PROJECT_STATUS.CONCLUIDO && newStatus !== PROJECT_STATUS.CONCLUIDO) {
+      setPendingReopen({
+        projetoId: draggableId,
+        newStatus,
+        projetoNome: projeto?.nome ?? "Projeto",
+        dataFinal: projeto?.data_final,
       });
+      return;
+    }
 
-      queryClient.invalidateQueries({ queryKey: ["projetos"] });
-      const projeto = projetos.find((p) => p.id === draggableId);
+    const ok = await applyStatusMove(draggableId, newStatus);
+    if (!ok) return;
 
-      if (newStatus !== PROJECT_STATUS.CANCELADO) {
-        setPendingDrag({
-          projetoId: draggableId,
-          newStatus,
-          clienteEmail: projeto?.cliente_email ?? undefined,
-          clienteNome: projeto?.cliente_nome ?? undefined,
-          projetoNome: projeto?.nome ?? undefined,
-        });
-      }
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Erro desconhecido";
-      toast.error("Erro ao atualizar status", { description: message });
-      queryClient.invalidateQueries({ queryKey: ["projetos"] });
+    if (newStatus !== PROJECT_STATUS.CANCELADO) {
+      setPendingDrag({
+        projetoId: draggableId,
+        newStatus,
+        projetoNome: projeto?.nome ?? undefined,
+      });
     }
   };
 
@@ -458,21 +474,6 @@ export default function ProjetosKanban() {
       toast.success("Notificação por email enviada");
     } catch (err) {
       monitoring.captureException(err, { context: "notifyProjectStatusChange" });
-    }
-  };
-
-  const sendClientEmail = async (client: string, project: string) => {
-    try {
-      const { error } = await supabase.functions.invoke("send-completion-email", {
-        body: { email: client, name: project, type: "project" },
-      });
-      if (error) {
-        toast.error("Erro ao notificar cliente por email");
-        return;
-      }
-      toast.success("Email de conclusão enviado para o cliente");
-    } catch (err) {
-      monitoring.captureException(err, { context: "sendClientEmail" });
     }
   };
 
@@ -853,7 +854,7 @@ export default function ProjetosKanban() {
       <AlertDialog open={!!pendingDrag} onOpenChange={(open) => !open && setPendingDrag(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Notificar sobre a mudança de status?</AlertDialogTitle>
+            <AlertDialogTitle>Notificar a equipe sobre a mudança de status?</AlertDialogTitle>
             <AlertDialogDescription>
               Mover o projeto para{" "}
               <strong>
@@ -861,15 +862,7 @@ export default function ProjetosKanban() {
                   ? (statusConfig[pendingDrag.newStatus as keyof typeof statusConfig]?.label ?? pendingDrag.newStatus)
                   : ""}
               </strong>{" "}
-              enviará e-mails para:
-              <ul className="mt-2 list-disc pl-4 text-sm">
-                <li>Todos os membros alocados no projeto</li>
-                {pendingDrag?.newStatus === PROJECT_STATUS.CONCLUIDO && pendingDrag.clienteEmail && (
-                  <li>
-                    Cliente{pendingDrag.clienteNome ? ` ${pendingDrag.clienteNome}` : ""} ({pendingDrag.clienteEmail})
-                  </li>
-                )}
-              </ul>
+              enviará e-mail para todos os membros alocados no projeto. O cliente não será notificado.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -879,18 +872,48 @@ export default function ProjetosKanban() {
               onClick={async () => {
                 if (pendingDrag) {
                   await notifyProjectStatusChange(pendingDrag.projetoId, pendingDrag.newStatus);
-                  if (
-                    pendingDrag.newStatus === PROJECT_STATUS.CONCLUIDO &&
-                    pendingDrag.clienteEmail &&
-                    pendingDrag.projetoNome
-                  ) {
-                    await sendClientEmail(pendingDrag.clienteEmail, pendingDrag.projetoNome);
-                  }
                   setPendingDrag(null);
                 }
               }}
             >
-              Sim, enviar e-mails
+              Sim, notificar equipe
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!pendingReopen} onOpenChange={(open) => !open && setPendingReopen(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Reabrir projeto concluído?</AlertDialogTitle>
+            <AlertDialogDescription>
+              <strong>{pendingReopen?.projetoNome}</strong> está marcado como concluído
+              {pendingReopen?.dataFinal && (
+                <>
+                  {" "}em <strong>{new Date(pendingReopen.dataFinal + "T00:00:00").toLocaleDateString("pt-BR")}</strong>
+                </>
+              )}
+              . Movê-lo para{" "}
+              <strong>
+                {pendingReopen
+                  ? (statusConfig[pendingReopen.newStatus as keyof typeof statusConfig]?.label ?? pendingReopen.newStatus)
+                  : ""}
+              </strong>{" "}
+              vai <strong>remover a data de conclusão</strong>. Deseja continuar?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setPendingReopen(null)}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-brand hover:bg-brand/90 text-ink"
+              onClick={async () => {
+                if (!pendingReopen) return;
+                const { projetoId, newStatus } = pendingReopen;
+                setPendingReopen(null);
+                await applyStatusMove(projetoId, newStatus, true);
+              }}
+            >
+              Reabrir e remover data
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

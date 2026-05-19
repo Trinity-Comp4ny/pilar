@@ -20,7 +20,12 @@ interface ProjetoDetailTabsProps {
   disciplinasCatalog: { id: string; nome: string }[];
   pessoas: { id: string; nome: string }[];
   getDbDisc: (idx: number) => ProjetoDisciplinaDB | undefined;
-  applyDiscStatusChange: (idx: number, newStatus: string, justificativa?: string) => Promise<void>;
+  applyDiscStatusChange: (
+    idx: number,
+    newStatus: string,
+    justificativa?: string,
+    dataFimRealOverride?: string
+  ) => Promise<void>;
   handleRemoveDisc: (idx: number) => Promise<void>;
   handleAddDisc: (newDisc: { disciplina: string; responsavel_id: string }) => Promise<void>;
   handleSaveDiscChanges: (editingDiscLocal: ProjetoDisciplinaDB) => Promise<void>;
