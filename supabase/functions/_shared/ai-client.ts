@@ -313,6 +313,56 @@ export async function saveInsight(
 }
 
 /**
+ * Incrementa o contador mensal de uso (ai_usage — alimenta o rate limit) e
+ * registra o log granular por feature (ai_usage_logs). NÃO depende de ai_insights
+ * (dropada em 20260429400000). Use nos fluxos agênticos que gravam em agent_runs.
+ */
+export async function recordAiUsage(
+  supabaseAdmin: SupabaseClient,
+  empresaId: string,
+  featureKey: string,
+  tokensInput: number,
+  tokensOutput: number
+): Promise<void> {
+  const now = new Date();
+  const mes = now.getMonth() + 1;
+  const ano = now.getFullYear();
+
+  const { data: existingData } = await supabaseAdmin
+    .from("ai_usage")
+    .select("id, total_requests, total_tokens_entrada, total_tokens_saida")
+    .eq("empresa_id", empresaId)
+    .eq("mes", mes)
+    .eq("ano", ano)
+    .maybeSingle();
+
+  const existing = existingData as AiUsageDetailRow | null;
+
+  if (existing) {
+    await supabaseAdmin
+      .from("ai_usage")
+      .update({
+        total_requests: existing.total_requests + 1,
+        total_tokens_entrada: existing.total_tokens_entrada + tokensInput,
+        total_tokens_saida: existing.total_tokens_saida + tokensOutput,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", existing.id);
+  } else {
+    await supabaseAdmin.from("ai_usage").insert({
+      empresa_id: empresaId,
+      mes,
+      ano,
+      total_requests: 1,
+      total_tokens_entrada: tokensInput,
+      total_tokens_saida: tokensOutput,
+    });
+  }
+
+  await logAiUsage(supabaseAdmin, empresaId, featureKey, tokensInput, tokensOutput);
+}
+
+/**
  * Cria um Supabase client admin (com service role key)
  */
 export function createAdminClient() {
