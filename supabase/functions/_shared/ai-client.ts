@@ -85,6 +85,30 @@ export async function checkRateLimit(supabaseAdmin: SupabaseClient, empresaId: s
 }
 
 /**
+ * Registra uso do Gemini na tabela ai_usage_logs para billing granular por feature.
+ * Falha silenciosa — nunca quebra o fluxo principal.
+ */
+async function logAiUsage(
+  supabaseAdmin: SupabaseClient,
+  empresaId: string,
+  featureKey: string,
+  tokensInput: number,
+  tokensOutput: number
+): Promise<void> {
+  try {
+    await supabaseAdmin.from("ai_usage_logs").insert({
+      empresa_id: empresaId,
+      feature_key: featureKey,
+      tokens_input: tokensInput,
+      tokens_output: tokensOutput,
+      created_at: new Date().toISOString(),
+    });
+  } catch {
+    // Tabela pode não existir ainda — falha silenciosa intencional
+  }
+}
+
+/**
  * Chama a API do Gemini e retorna a resposta parseada
  */
 export async function callGemini(request: AiRequest): Promise<AiResponse> {
@@ -205,6 +229,9 @@ export async function saveInsight(
       total_tokens_saida: aiResponse.tokensSaida,
     });
   }
+
+  // Registra em ai_usage_logs para billing granular por feature (falha silenciosa)
+  await logAiUsage(supabaseAdmin, request.empresaId, request.tipo, aiResponse.tokensEntrada, aiResponse.tokensSaida);
 
   return insight as AiInsightRow;
 }

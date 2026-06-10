@@ -18,6 +18,7 @@ import { FeatureRoute } from "./components/FeatureRoute";
 import { AdminOnlyRoute } from "./components/AdminOnlyRoute";
 import { RequireAal2 } from "./components/RequireAal2";
 import { ImpersonationBanner } from "./components/ImpersonationBanner";
+import { TrialBanner } from "./components/TrialBanner";
 
 const Landing = lazy(() => import("./pages/Landing"));
 const Planos = lazy(() => import("./pages/planos"));
@@ -38,6 +39,7 @@ const Company = lazy(() => import("./pages/Company"));
 const CompanySetup = lazy(() => import("./pages/CompanySetup"));
 const ProfileSetup = lazy(() => import("./pages/ProfileSetup"));
 const Templates = lazy(() => import("./pages/templates"));
+const Timesheet = lazy(() => import("./pages/Timesheet"));
 const MapaObras = lazy(() => import("./pages/mapa"));
 const Propostas = lazy(() => import("./pages/propostas"));
 const Capacidade = lazy(() => import("./pages/capacidade"));
@@ -99,6 +101,7 @@ const App = () => {
             <AuthProvider>
               <ImpersonationProvider>
                 <ImpersonationBanner />
+                <TrialBanner />
                 <Suspense fallback={<PageSkeleton />}>
                   <Routes>
                     <Route path="/" element={<Landing />} />
@@ -148,6 +151,10 @@ const App = () => {
                         <Route path="/templates" element={<Templates />} />
                       </Route>
 
+                      <Route element={<FeatureRoute feature="timesheet" />}>
+                        <Route path="/timesheet" element={<Timesheet />} />
+                      </Route>
+
                       <Route element={<FeatureRoute feature="mapa" />}>
                         <Route path="/mapa" element={<MapaObras />} />
                       </Route>
@@ -190,6 +197,7 @@ const App = () => {
                     <Route path="/rentabilidade" element={<Navigate to="/financeiro?tab=rentabilidade" replace />} />
 
                     {/* Portal do Cliente — Autenticado */}
+                    <Route path="/portal" element={<Navigate to="/cliente/login" replace />} />
                     <Route path="/cliente/login" element={<ClienteLogin />} />
                     <Route path="/cliente" element={<ClientePrivateRoute />}>
                       <Route path="dashboard" element={<ClienteDashboard />} />

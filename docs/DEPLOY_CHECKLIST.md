@@ -152,6 +152,62 @@ Todas as ações que **precisam** ser feitas manualmente (config de dashboards) 
 
 ---
 
+## 🕐 Edge Functions — Agendamentos (Cron)
+
+### trial-expiry-cron
+
+A edge function `trial-expiry-cron` expira trials vencidos e envia emails de aviso (7d, 3d, 1d).
+A migration `20260514300002_setup_trial_expiry_cron.sql` tenta criar o job via `pg_cron` automaticamente.
+Se `pg_cron` não estiver disponível, configure manualmente:
+
+**Opção A — Supabase Dashboard (recomendado)**
+
+1. Acessar **Supabase Dashboard → Edge Functions → trial-expiry-cron**
+2. Aba **Schedule**
+3. Cron expression: `0 7 * * *` (07:00 UTC = 04:00 BRT)
+4. Method: `POST`
+5. Body: `{}`
+6. Headers: `Authorization: Bearer <SUPABASE_SERVICE_ROLE_KEY>`
+
+**Opção B — pg_cron manual via SQL Editor**
+
+```sql
+-- Configurar variáveis de runtime (uma única vez, usuário postgres)
+ALTER DATABASE postgres SET app.supabase_url = 'https://<project-ref>.supabase.co';
+ALTER DATABASE postgres SET app.service_role_key = '<service_role_key>';
+
+-- Criar job
+SELECT cron.schedule(
+  'trial-expiry-daily',
+  '0 7 * * *',
+  $$
+  SELECT net.http_post(
+    url        := current_setting('app.supabase_url') || '/functions/v1/trial-expiry-cron',
+    headers    := jsonb_build_object(
+      'Content-Type',  'application/json',
+      'Authorization', 'Bearer ' || current_setting('app.service_role_key')
+    ),
+    body       := '{}'::jsonb
+  );
+  $$
+);
+```
+
+**Variáveis de ambiente obrigatórias na Edge Function**
+
+- [ ] `RESEND_API_KEY` — chave da Resend para envio de emails
+- [ ] `SUPABASE_SERVICE_ROLE_KEY` — gerado automaticamente pelo Supabase (já disponível em Edge Functions)
+- [ ] `SUPABASE_URL` — gerado automaticamente pelo Supabase (já disponível em Edge Functions)
+- [ ] `ALLOWED_ORIGINS` — ex: `https://app.pilarsoft.com.br` (para montar billingUrl no email)
+
+**Validação**
+
+- [ ] Invocar manualmente via Dashboard: body `{}`, header `Authorization: Bearer <service_role_key>`
+- [ ] Checar resposta `{ "processed": N, "expired": N, "warned": N }`
+- [ ] Verificar `admin_audit_logs` para entradas de `trial_expired` / `trial_warning_sent_d*`
+
+---
+
 ## 🧪 Validação final
 
 Após tudo acima, rodar:

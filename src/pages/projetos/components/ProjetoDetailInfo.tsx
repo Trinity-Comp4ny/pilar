@@ -1,16 +1,50 @@
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { User, DollarSign, Calendar, Ruler } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { User, DollarSign, Calendar, Ruler, TrendingUp, ArrowRight, Clock } from "lucide-react";
+import { Link } from "react-router-dom";
+import { cn } from "@/lib/utils";
 import type { Projeto } from "@/types/projetos";
 import { formatCurrency, formatDate } from "@/types/projetos";
+import type { ProjetoRentabilidade } from "@/hooks/useRentabilidade";
+import { useTimesheetLancamentos } from "@/hooks/useTimesheet";
 
 interface ProjetoDetailInfoProps {
   projeto: Projeto;
   progress: number;
   margemBrutaPct: number | null;
+  rentabilidade: ProjetoRentabilidade | null;
 }
 
-export function ProjetoDetailInfo({ projeto, progress, margemBrutaPct }: ProjetoDetailInfoProps) {
+function margemColor(pct: number): string {
+  if (pct >= 20) return "text-positive";
+  if (pct >= 10) return "text-yellow-600";
+  return "text-red-600";
+}
+
+function HorasLancadas({ projetoId }: { projetoId: string }) {
+  const { data: lancamentos = [], isLoading } = useTimesheetLancamentos({
+    projetoId,
+    status: "aprovado",
+  });
+
+  const totalHoras = lancamentos.reduce((acc: number, l: { horas: number }) => acc + l.horas, 0);
+
+  if (isLoading) return <Skeleton className="h-8 w-24 rounded-md" />;
+
+  return (
+    <div>
+      <p className="text-[10px] uppercase text-muted-foreground mb-1 flex items-center gap-1">
+        <Clock className="h-3 w-3" />
+        Horas lançadas
+      </p>
+      <p className="text-sm font-semibold">{totalHoras.toFixed(1)}h aprovadas</p>
+      <p className="text-[11px] text-muted-foreground">{lancamentos.length} lançamento{lancamentos.length !== 1 ? "s" : ""}</p>
+    </div>
+  );
+}
+
+export function ProjetoDetailInfo({ projeto, progress, margemBrutaPct, rentabilidade }: ProjetoDetailInfoProps) {
   return (
     <>
       {/* KPI Cards */}
@@ -79,6 +113,78 @@ export function ProjetoDetailInfo({ projeto, progress, margemBrutaPct }: Projeto
         </div>
         <Progress value={progress} className="h-2" indicatorClassName="bg-brand" />
       </div>
+
+      {/* Card Resultado do Projeto */}
+      <Card className="mb-6">
+        <CardHeader className="pb-2 pt-4 px-4">
+          <CardTitle className="text-sm font-medium flex items-center gap-2">
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            Resultado do Projeto
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="px-4 pb-4">
+          {rentabilidade === null ? (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <Skeleton key={i} className="h-10 w-full rounded-md" />
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {/* Receitas */}
+              <div>
+                <p className="text-[10px] uppercase text-muted-foreground mb-1">Receitas</p>
+                <p className="text-sm font-semibold text-positive">
+                  {formatCurrency(rentabilidade.receitas_recebidas)}
+                </p>
+                {rentabilidade.receitas_total > rentabilidade.receitas_recebidas && (
+                  <p className="text-[11px] text-muted-foreground">
+                    + {formatCurrency(rentabilidade.receitas_total - rentabilidade.receitas_recebidas)} pendente
+                  </p>
+                )}
+              </div>
+
+              {/* Custo estimado */}
+              <div>
+                <p className="text-[10px] uppercase text-muted-foreground mb-1">Custo estimado</p>
+                <p className="text-sm font-semibold">
+                  {formatCurrency(rentabilidade.despesas_diretas)}
+                </p>
+              </div>
+
+              {/* Margem bruta */}
+              <div>
+                <p className="text-[10px] uppercase text-muted-foreground mb-1">Margem atual</p>
+                <p
+                  className={cn(
+                    "text-sm font-bold",
+                    margemColor(rentabilidade.margem_bruta_pct)
+                  )}
+                >
+                  {rentabilidade.margem_bruta_pct.toFixed(1)}%
+                </p>
+                <p className="text-[11px] text-muted-foreground">
+                  {formatCurrency(rentabilidade.margem_bruta)}
+                </p>
+              </div>
+
+              {/* Horas lançadas */}
+              <HorasLancadas projetoId={projeto.id} />
+            </div>
+          )}
+          {rentabilidade !== null && (
+            <div className="mt-3 pt-3 border-t">
+              <Link
+                to={`/financeiro?tab=rentabilidade&projeto=${projeto.id}`}
+                className="inline-flex items-center gap-1 text-xs text-brand hover:underline font-medium"
+              >
+                Ver análise completa
+                <ArrowRight className="h-3 w-3" />
+              </Link>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </>
   );
 }

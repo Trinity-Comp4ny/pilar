@@ -18,7 +18,7 @@ import {
   BarChart3,
   Target,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, lazy, Suspense } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   startOfMonth,
@@ -37,10 +37,10 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CalendarDays, CalendarIcon } from "lucide-react";
-import { ResponsiveContainer, Area, XAxis, YAxis, CartesianGrid, Tooltip, ComposedChart, Legend, Line } from "recharts";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
-import { CustomTooltip } from "./financeiro/components/CustomTooltip";
+
+const DashboardFinanceChart = lazy(() => import("@/components/charts/DashboardFinanceChart"));
 import {
   useDashboardData,
   type DashboardProjeto,
@@ -48,6 +48,8 @@ import {
   type DashboardAlerta,
   type LeadsPipeline,
 } from "@/hooks/useDashboardData";
+import { useFinanceChartData } from "@/hooks/useFinanceChartData";
+import { useAuth } from "@/contexts/AuthContext";
 import { PROJECT_STATUS_CONFIG, PROJECT_PRIORITY_CONFIG, type ProjectStatus, type ProjectPriority } from "@/constants";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -361,7 +363,15 @@ export default function Dashboard() {
     }
   };
 
+  const { profile } = useAuth();
+  const empresaId = profile?.empresa_id ?? null;
+
   const { data, isLoading, error } = useDashboardData(dateFrom, dateTo);
+
+  // Intervalo dos últimos 11 meses + mês atual para o gráfico de fluxo
+  const chartInicio = useMemo(() => startOfMonth(subMonths(new Date(), 11)), []);
+  const chartFim = useMemo(() => new Date(), []);
+  const { data: chartDataRpc } = useFinanceChartData(empresaId, chartInicio, chartFim);
 
   const canFin = can("financeiro", "view");
   const canProj = can("projetos", "view");
@@ -467,7 +477,10 @@ export default function Dashboard() {
     );
   }
 
-  const { kpis, projetos, proximosVencimentos, leadsPipeline, leadsTotal, alertas, alertasNaoLidos, chartData } = data;
+  const { kpis, projetos, proximosVencimentos, leadsPipeline, leadsTotal, alertas, alertasNaoLidos, chartData: chartDataFallback } = data;
+
+  // Usa dados da RPC quando disponível; fallback para a query legada
+  const chartData = chartDataRpc && chartDataRpc.length > 0 ? chartDataRpc : chartDataFallback;
 
   const nothingVisible = !canFin && !canProj && !canLeads;
 
@@ -586,62 +599,9 @@ export default function Dashboard() {
               </CardHeader>
               <CardContent>
                 <div className="h-[280px] w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <ComposedChart data={chartData} margin={{ top: 5, right: 5, left: -15, bottom: 0 }}>
-                      <defs>
-                        <linearGradient id="gReceitas" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="hsl(var(--chart-success))" stopOpacity={0.15} />
-                          <stop offset="95%" stopColor="hsl(var(--chart-success))" stopOpacity={0} />
-                        </linearGradient>
-                        <linearGradient id="gDespesas" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="hsl(var(--chart-danger))" stopOpacity={0.15} />
-                          <stop offset="95%" stopColor="hsl(var(--chart-danger))" stopOpacity={0} />
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--chart-grid))" vertical={false} />
-                      <XAxis
-                        dataKey="mes"
-                        stroke="hsl(var(--chart-neutral))"
-                        fontSize={11}
-                        tickLine={false}
-                        axisLine={false}
-                      />
-                      <YAxis
-                        stroke="hsl(var(--chart-neutral))"
-                        fontSize={11}
-                        tickLine={false}
-                        axisLine={false}
-                        tickFormatter={(v) => fmtCompact.format(v)}
-                      />
-                      <Tooltip content={<CustomTooltip />} />
-                      <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 11 }} />
-                      <Area
-                        type="monotone"
-                        dataKey="receitas"
-                        name="Receitas"
-                        stroke="hsl(var(--chart-success))"
-                        fill="url(#gReceitas)"
-                        strokeWidth={2}
-                      />
-                      <Area
-                        type="monotone"
-                        dataKey="despesas"
-                        name="Despesas"
-                        stroke="hsl(var(--chart-danger))"
-                        fill="url(#gDespesas)"
-                        strokeWidth={2}
-                      />
-                      <Line
-                        type="monotone"
-                        dataKey="saldo"
-                        name="Saldo"
-                        stroke="hsl(var(--c-indigo-500))"
-                        strokeWidth={1.5}
-                        strokeDasharray="4 4"
-                        dot={false}
-                      />
-                    </ComposedChart>
-                  </ResponsiveContainer>
+                  <Suspense fallback={<Skeleton className="h-full w-full" />}>
+                    <DashboardFinanceChart data={chartData} />
+                  </Suspense>
                 </div>
               </CardContent>
             </Card>

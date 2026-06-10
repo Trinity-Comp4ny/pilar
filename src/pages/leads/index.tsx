@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { ChevronDown, ChevronLeft, ChevronRight, Plus, TrendingUp, Search } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
 import { cn } from "@/lib/utils";
@@ -83,6 +84,7 @@ export default function Leads() {
   const [leadToDelete, setLeadToDelete] = useState<{ id: string; nome: string } | null>(null);
   const [collapsedColumns, setCollapsedColumns] = useState<Set<string>>(new Set());
   const [filterProximos, setFilterProximos] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const leadNome = (lead: Lead) => (lead.sobrenome ? `${lead.nome} ${lead.sobrenome}` : lead.nome);
 
@@ -100,12 +102,21 @@ export default function Leads() {
     today.setHours(0, 0, 0, 0);
     const in7 = new Date(today);
     in7.setDate(in7.getDate() + 7);
+    const q = searchQuery.trim().toLowerCase();
     return leads.filter((lead) => {
       if (lead.status !== status) return false;
-      if (!filterProximos) return true;
-      if (!lead.previsao_fechamento) return false;
-      const d = new Date(lead.previsao_fechamento + "T00:00:00");
-      return d >= today && d <= in7;
+      if (filterProximos) {
+        if (!lead.previsao_fechamento) return false;
+        const d = new Date(lead.previsao_fechamento + "T00:00:00");
+        if (d < today || d > in7) return false;
+      }
+      if (!q) return true;
+      const fullName = leadNome(lead).toLowerCase();
+      return (
+        fullName.includes(q) ||
+        (lead.empresa_lead ?? "").toLowerCase().includes(q) ||
+        (lead.email ?? "").toLowerCase().includes(q)
+      );
     });
   };
 
@@ -114,11 +125,19 @@ export default function Leads() {
     setIsDetailOpen(true);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.nome) {
       toast.error("Campo obrigatório", { description: "O nome do lead é obrigatório" });
       return;
+    }
+    if (formData.email) {
+      const emailLower = formData.email.toLowerCase();
+      const duplicate = leads.find((l) => (l.email ?? "").toLowerCase() === emailLower);
+      if (duplicate) {
+        toast.error("Email duplicado", { description: "Já existe um lead com este email." });
+        return;
+      }
     }
     createLead.mutate(
       {
@@ -129,6 +148,7 @@ export default function Leads() {
         origem: formData.origem,
         valor_estimado: formData.valor_estimado ? parseCurrencyString(formData.valor_estimado) : undefined,
         empresa_lead: formData.empresa_lead || undefined,
+        cnpj: formData.cnpj || undefined,
         previsao_fechamento: formData.previsao_fechamento || undefined,
         responsavel_id: formData.responsavel_id || undefined,
         notas: formData.notas || undefined,
@@ -142,9 +162,19 @@ export default function Leads() {
     );
   };
 
-  const handleEditSubmit = async (e: React.FormEvent) => {
+  const handleEditSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedLead) return;
+    if (editFormData.email) {
+      const emailLower = editFormData.email.toLowerCase();
+      const duplicate = leads.find(
+        (l) => (l.email ?? "").toLowerCase() === emailLower && l.id !== selectedLead.id
+      );
+      if (duplicate) {
+        toast.error("Email duplicado", { description: "Já existe um lead com este email." });
+        return;
+      }
+    }
     const payload = {
       nome: editFormData.nome,
       sobrenome: editFormData.sobrenome || undefined,
@@ -153,6 +183,7 @@ export default function Leads() {
       origem: editFormData.origem,
       valor_estimado: editFormData.valor_estimado ? parseCurrencyString(editFormData.valor_estimado) : undefined,
       empresa_lead: editFormData.empresa_lead || undefined,
+      cnpj: editFormData.cnpj || undefined,
       previsao_fechamento: editFormData.previsao_fechamento || undefined,
       responsavel_id: editFormData.responsavel_id || undefined,
       notas: editFormData.notas || undefined,
@@ -177,6 +208,7 @@ export default function Leads() {
       origem: lead.origem ?? "",
       valor_estimado: lead.valor_estimado ? formatCurrency(lead.valor_estimado) : "",
       empresa_lead: lead.empresa_lead ?? "",
+      cnpj: lead.cnpj ?? "",
       previsao_fechamento: lead.previsao_fechamento ?? "",
       responsavel_id: lead.responsavel_id ?? "",
       notas: lead.notas ?? "",
@@ -184,7 +216,7 @@ export default function Leads() {
     setIsEditOpen(true);
   };
 
-  const onDragEnd = async (result: DropResult) => {
+  const onDragEnd = (result: DropResult) => {
     const { source, destination, draggableId } = result;
     if (!destination) return;
     if (source.droppableId === destination.droppableId) return;
@@ -310,6 +342,11 @@ export default function Leads() {
   const visibleCount = Object.keys(statusConfig).reduce((sum, s) => sum + getLeadsByStatus(s).length, 0);
   const hasNoResults = !hasNoLeads && visibleCount === 0;
 
+  const handleClearFilters = () => {
+    setFilterProximos(false);
+    setSearchQuery("");
+  };
+
   return (
     <PageLayout
       className="overflow-y-hidden"
@@ -334,6 +371,16 @@ export default function Leads() {
       }
     >
       <LeadsKPIs leads={leads} onFilterProximos={() => setFilterProximos((v) => !v)} />
+
+      <div className="relative mb-2 mt-1 max-w-sm">
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+        <Input
+          placeholder="Buscar por nome, empresa ou email..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="pl-9 h-9 text-sm"
+        />
+      </div>
 
       {filterProximos && (
         <div className="flex items-center gap-2 mb-2 px-1">
@@ -361,7 +408,7 @@ export default function Leads() {
             icon={Search}
             title="Nenhum resultado para esses filtros"
             description="Tente ajustar ou limpar os filtros aplicados para ver seus leads."
-            action={{ label: "Limpar filtros", onClick: () => setFilterProximos(false), variant: "outline" }}
+            action={{ label: "Limpar filtros", onClick: handleClearFilters, variant: "outline" }}
           />
         </div>
       ) : (

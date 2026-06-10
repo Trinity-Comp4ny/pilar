@@ -3,7 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { untypedFrom } from "@/lib/supabaseRpc";
 import { toast } from "sonner";
-import { Building2, CreditCard, ShieldCheck, SlidersHorizontal, Sparkles, Users, Zap } from "lucide-react";
+import { Building2, CreditCard, Link2, ShieldCheck, SlidersHorizontal, Sparkles, Users, Zap } from "lucide-react";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
@@ -18,6 +18,7 @@ import { ParametrosTab } from "./tabs/Parametros";
 import { AutomacoesTab } from "./tabs/Automacoes";
 import { AuditoriaTab } from "./tabs/Auditoria";
 import { PlanoTab } from "./tabs/Plano";
+import { IntegracoesTab } from "./tabs/Integracoes";
 
 type RawUser = {
   id: string;
@@ -29,7 +30,7 @@ type RawUser = {
   isPending?: boolean;
 };
 
-const VALID_TABS = ["usuarios", "features", "empresa", "parametros", "automacoes", "auditoria", "plano"] as const;
+const VALID_TABS = ["usuarios", "features", "empresa", "parametros", "automacoes", "auditoria", "plano", "integracoes"] as const;
 type AdminTab = (typeof VALID_TABS)[number];
 
 const ADMIN_TABS: SecondSidebarTab[] = [
@@ -38,6 +39,7 @@ const ADMIN_TABS: SecondSidebarTab[] = [
   { id: "empresa", label: "Empresa", icon: Building2 },
   { id: "parametros", label: "Parâmetros", icon: SlidersHorizontal },
   { id: "automacoes", label: "Automações", icon: Zap },
+  { id: "integracoes", label: "Integrações", icon: Link2 },
   { id: "auditoria", label: "Auditoria", icon: ShieldCheck },
   { id: "plano", label: "Plano", icon: CreditCard },
 ];
@@ -225,12 +227,16 @@ export default function Admin() {
           <AutomacoesTab />
         </TabsContent>
 
+        <TabsContent value="integracoes" className="mt-6">
+          <IntegracoesTab />
+        </TabsContent>
+
         <TabsContent value="auditoria" className="mt-6">
           <AuditoriaTab />
         </TabsContent>
 
         <TabsContent value="plano" className="mt-6">
-          <PlanoTab empresaId={companyId} />
+          <PlanoTab empresaId={companyId} currentPlan={currentPlan} />
         </TabsContent>
       </Tabs>
     </PageLayout>

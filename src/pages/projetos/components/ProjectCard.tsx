@@ -13,7 +13,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreVertical, ExternalLink, Edit, Trash2, ArrowRight } from "lucide-react";
+import { AlertTriangle, MoreVertical, ExternalLink, Edit, Trash2, ArrowRight } from "lucide-react";
 import { PROJECT_STATUS_CONFIG } from "@/constants";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -36,6 +36,7 @@ interface ProjectCardProps {
   onMoveStatus?: (id: string, newStatus: string) => void;
   canEdit?: boolean;
   isDragging?: boolean;
+  margemBrutaPct?: number | null;
 }
 
 export function ProjectCard({
@@ -46,6 +47,7 @@ export function ProjectCard({
   onMoveStatus,
   canEdit = false,
   isDragging = false,
+  margemBrutaPct = null,
 }: ProjectCardProps) {
   const navigate = useNavigate();
   const priorityConfig = PROJECT_PRIORITY_CONFIG[projeto.prioridade as ProjectPriority];
@@ -57,6 +59,7 @@ export function ProjectCard({
         : "bg-status-progress";
   const progress = getProjectProgress(projeto.disciplinas);
   const deadline = getDeadlineStatus(projeto);
+  const showMargemAlert = progress > 80 && margemBrutaPct !== null && margemBrutaPct < 15;
 
   return (
     <HoverCard openDelay={500} closeDelay={100}>
@@ -68,7 +71,7 @@ export function ProjectCard({
             isDragging && "shadow-md rotate-1"
           )}
         >
-          {/* Linha 1: dot prioridade + código + kebab */}
+          {/* Linha 1: dot prioridade + código + badge alerta + kebab */}
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-1.5 min-w-0">
               <span
@@ -78,6 +81,12 @@ export function ProjectCard({
               <span className="text-[10px] font-mono text-muted-foreground tracking-tight truncate">
                 {projeto.codigo_projeto}
               </span>
+              {showMargemAlert && (
+                <span className="inline-flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-yellow-100 text-yellow-700 flex-shrink-0">
+                  <AlertTriangle className="h-2.5 w-2.5" />
+                  Margem baixa
+                </span>
+              )}
             </div>
             {canEdit && (
               <DropdownMenu>

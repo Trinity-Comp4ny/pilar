@@ -1,4 +1,5 @@
-import { differenceInDays } from "date-fns";
+import { differenceInDays, parseISO, format, isValid } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { getDisplayDate } from "@/lib/dateUtils";
 import { LEAD_STATUS } from "@/constants";
 import type {
@@ -171,6 +172,7 @@ export function buildAlertas(data: unknown[]): DashboardAlerta[] {
 }
 
 export function processChartData(receitas: ReceitaChartRow[], despesas: DespesaChartRow[]): ChartDataPoint[] {
+  // Map keyed by sortKey ("YYYY-MM") for stable grouping independent of locale
   const monthsMap = new Map<string, ChartDataPoint>();
 
   const addToMonth = (item: ReceitaChartRow | DespesaChartRow, type: "receitas" | "despesas") => {
@@ -179,17 +181,21 @@ export function processChartData(receitas: ReceitaChartRow[], despesas: DespesaC
     const displayDate = getDisplayDate(dateReceived, item.data_vencimento, item.status);
     if (!displayDate) return;
 
-    const date = new Date(displayDate);
-    const monthName = date.toLocaleString("pt-BR", { month: "short" });
-    const year = date.getFullYear().toString().slice(-2);
-    const key = `${monthName.charAt(0).toUpperCase() + monthName.slice(1).replace(".", "")}/${year}`;
-    const sortKey = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, "0")}`;
+    // Use parseISO so that "YYYY-MM-DD" strings are parsed as local midnight (not UTC),
+    // avoiding off-by-one month errors in UTC-3 timezones.
+    const dateStr = displayDate.split("T")[0]; // strip time component if present
+    const date = parseISO(dateStr);
+    if (!isValid(date)) return;
 
-    if (!monthsMap.has(key)) {
-      monthsMap.set(key, { mes: key, receitas: 0, despesas: 0, saldo: 0, sortKey });
+    const sortKey = format(date, "yyyy-MM");
+    const mesLabel = format(date, "MMM/yy", { locale: ptBR }).replace(".", "");
+    const mes = mesLabel.charAt(0).toUpperCase() + mesLabel.slice(1);
+
+    if (!monthsMap.has(sortKey)) {
+      monthsMap.set(sortKey, { mes, receitas: 0, despesas: 0, saldo: 0, sortKey });
     }
 
-    const entry = monthsMap.get(key)!;
+    const entry = monthsMap.get(sortKey)!;
     entry[type] += Number(item.valor);
     entry.saldo = entry.receitas - entry.despesas;
   };

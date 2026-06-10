@@ -140,6 +140,10 @@ function MapController({ mapRef }: { mapRef: React.MutableRefObject<L.Map | null
   const map = useMap();
   useEffect(() => {
     mapRef.current = map;
+    // Tiles ficam em branco quando o container ainda não tem dimensões finais.
+    // invalidateSize força o Leaflet a recalcular após o layout estabilizar.
+    const t = setTimeout(() => map.invalidateSize(), 100);
+    return () => clearTimeout(t);
   }, [map, mapRef]);
   return null;
 }

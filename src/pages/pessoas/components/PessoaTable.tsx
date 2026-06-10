@@ -218,7 +218,7 @@ export function PessoaTable({ pessoas, isLoading, isAdmin, onRowClick, onEditCli
                         {PESSOA_STATUS_LABELS[(pessoa.status || "ativo") as PessoaStatus]}
                       </Badge>
                     </TableCell>
-                    <TableCell>{pessoa.cpf || "-"}</TableCell>
+                    <TableCell>{pessoa.cpf ? `***.***.***-${pessoa.cpf.replace(/\D/g, "").slice(-2)}` : "-"}</TableCell>
                     <TableCell>{pessoa.cargo}</TableCell>
                     <TableCell className="hidden md:table-cell">{pessoa.telefone || "-"}</TableCell>
                     {isAdmin && (

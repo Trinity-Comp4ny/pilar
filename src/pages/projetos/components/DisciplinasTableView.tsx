@@ -35,7 +35,12 @@ interface DisciplinasTableViewProps {
   dbDisciplinas: ProjetoDisciplinaDB[];
   disciplinasCatalog: { id: string; nome: string }[];
   pessoas: { id: string; nome: string }[];
-  applyDiscStatusChange: (idx: number, newStatus: string, justificativa?: string) => Promise<void>;
+  applyDiscStatusChange: (
+    idx: number,
+    newStatus: string,
+    justificativa?: string,
+    dataFimRealOverride?: string
+  ) => Promise<void>;
   handleRemoveDisc: (idx: number) => Promise<void>;
   handleAddDisc: (newDisc: { disciplina: string; responsavel_id: string }) => Promise<void>;
   handleSaveDiscChanges: (editingDiscLocal: ProjetoDisciplinaDB) => Promise<void>;
@@ -68,6 +73,7 @@ export function DisciplinasTableView({
   const [justificativaDialog, setJustificativaDialog] = useState<{ idx: number; newStatus: string } | null>(null);
   const [justificativaText, setJustificativaText] = useState("");
   const [concludingIdx, setConcludingIdx] = useState<number | null>(null);
+  const [concludingDate, setConcludingDate] = useState<string>("");
   const [obsDrafts, setObsDrafts] = useState<Record<string, string>>({});
 
   const quickUpdate = async (idx: number, patch: Partial<ProjetoDisciplinaDB>) => {
@@ -78,6 +84,8 @@ export function DisciplinasTableView({
 
   const handleStatusChange = async (idx: number, newStatus: string) => {
     if (newStatus === "Concluído") {
+      const existing = dbDisciplinas[idx]?.data_fim_real;
+      setConcludingDate(existing || new Date().toISOString().split("T")[0]);
       setConcludingIdx(idx);
       return;
     }
@@ -481,19 +489,31 @@ export function DisciplinasTableView({
             <AlertDialogTitle>Confirmar conclusão</AlertDialogTitle>
             <AlertDialogDescription>
               A disciplina <strong>{concludingIdx !== null && disciplinasLegacy[concludingIdx]?.disciplina}</strong>{" "}
-              será marcada como <strong>Concluída</strong> e a data final será definida como{" "}
-              <strong>{new Date().toLocaleDateString("pt-BR")}</strong>.
+              será marcada como <strong>Concluída</strong>. Informe a data real da entrega abaixo.
             </AlertDialogDescription>
           </AlertDialogHeader>
+          <div className="space-y-1.5 py-2">
+            <Label className="text-xs">Data final</Label>
+            <DatePicker
+              value={concludingDate || undefined}
+              onChange={(v) => setConcludingDate(v || "")}
+              maxDate={new Date().toISOString().split("T")[0]}
+            />
+            <p className="text-[11px] text-muted-foreground">
+              Use a data em que o trabalho foi de fato entregue, não a data administrativa de hoje.
+            </p>
+          </div>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
               className="bg-positive hover:bg-positive/90"
+              disabled={!concludingDate}
               onClick={async () => {
-                if (concludingIdx === null) return;
+                if (concludingIdx === null || !concludingDate) return;
                 const idx = concludingIdx;
+                const date = concludingDate;
                 setConcludingIdx(null);
-                await applyDiscStatusChange(idx, "Concluído");
+                await applyDiscStatusChange(idx, "Concluído", undefined, date);
               }}
             >
               Confirmar
