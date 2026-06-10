@@ -1,7 +1,8 @@
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { z } from "./schemas.ts";
 
 const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY") || "";
-const GEMINI_MODEL = "gemini-2.0-flash";
+export const GEMINI_MODEL = "gemini-2.5-flash";
 const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 
 export interface AiRequest {
@@ -109,17 +110,21 @@ async function logAiUsage(
 }
 
 /**
- * Chama a API do Gemini e retorna a resposta parseada
+ * Chamada bruta ao Gemini. Retorna o texto cru + tokens, sem parsear nem validar.
+ * Base compartilhada por callGemini (legado) e callGeminiStructured.
  */
-export async function callGemini(request: AiRequest): Promise<AiResponse> {
+async function fetchGeminiRaw(
+  systemPrompt: string,
+  userMessage: string
+): Promise<{ text: string; tokensEntrada: number; tokensSaida: number }> {
   const body = {
     system_instruction: {
-      parts: [{ text: request.systemPrompt }],
+      parts: [{ text: systemPrompt }],
     },
     contents: [
       {
         role: "user",
-        parts: [{ text: request.userMessage }],
+        parts: [{ text: userMessage }],
       },
     ],
     generationConfig: {
@@ -144,23 +149,94 @@ export async function callGemini(request: AiRequest): Promise<AiResponse> {
   }
 
   const result: GeminiApiResponse = await response.json();
+  const text = result.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
+  const usage = result.usageMetadata || {};
+  return {
+    text,
+    tokensEntrada: usage.promptTokenCount || 0,
+    tokensSaida: usage.candidatesTokenCount || 0,
+  };
+}
 
-  const textContent = result.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
-  const usageMetadata = result.usageMetadata || {};
+/**
+ * Chama o Gemini e retorna a resposta parseada (LEGADO).
+ * Mantém o fallback tolerante ({ texto }) para os copilots existentes que apenas
+ * exibem o JSON ao usuário. Para fluxos agênticos que GRAVAM no banco, use
+ * callGeminiStructured — que valida e nunca silencia erro.
+ */
+export async function callGemini(request: AiRequest): Promise<AiResponse> {
+  const { text, tokensEntrada, tokensSaida } = await fetchGeminiRaw(request.systemPrompt, request.userMessage);
 
   let parsed: Record<string, unknown>;
   try {
-    parsed = JSON.parse(textContent) as Record<string, unknown>;
+    parsed = JSON.parse(text) as Record<string, unknown>;
   } catch {
-    parsed = { texto: textContent };
+    parsed = { texto: text };
   }
 
   return {
     conteudo: parsed,
-    resumo: (parsed.resumo as string) || (parsed.summary as string) || textContent.substring(0, 200),
-    tokensEntrada: usageMetadata.promptTokenCount || 0,
-    tokensSaida: usageMetadata.candidatesTokenCount || 0,
+    resumo: (parsed.resumo as string) || (parsed.summary as string) || text.substring(0, 200),
+    tokensEntrada,
+    tokensSaida,
   };
+}
+
+export interface StructuredResult<T> {
+  data: T;
+  tokensEntrada: number;
+  tokensSaida: number;
+  attempts: number;
+}
+
+/**
+ * Chama o Gemini exigindo uma saída que satisfaça `schema` (Zod).
+ *
+ * Diferença crítica vs. callGemini: NÃO há fallback silencioso. Se o modelo
+ * devolver JSON inválido ou que não bate no schema, faz retry (até `maxRetries`)
+ * reinjetando o erro no prompt; esgotadas as tentativas, LANÇA erro explícito.
+ *
+ * Use em qualquer fluxo agêntico cujo resultado vá ser persistido (orçamento,
+ * proposta, medição) — onde um JSON malformado viraria lixo no banco.
+ */
+export async function callGeminiStructured<T>(
+  request: AiRequest,
+  schema: z.ZodType<T>,
+  opts: { maxRetries?: number } = {}
+): Promise<StructuredResult<T>> {
+  const maxRetries = opts.maxRetries ?? 2;
+  let lastError = "";
+  let tokensEntrada = 0;
+  let tokensSaida = 0;
+
+  for (let attempt = 1; attempt <= maxRetries + 1; attempt++) {
+    const userMessage =
+      attempt === 1
+        ? request.userMessage
+        : `${request.userMessage}\n\n[Tentativa ${attempt}] A resposta anterior foi rejeitada: ${lastError}. Responda APENAS com JSON válido que satisfaça exatamente o schema exigido.`;
+
+    const raw = await fetchGeminiRaw(request.systemPrompt, userMessage);
+    tokensEntrada += raw.tokensEntrada;
+    tokensSaida += raw.tokensSaida;
+
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(raw.text);
+    } catch (e) {
+      lastError = `JSON inválido (${e instanceof Error ? e.message : "erro de parse"})`;
+      continue;
+    }
+
+    const result = schema.safeParse(parsed);
+    if (result.success) {
+      return { data: result.data, tokensEntrada, tokensSaida, attempts: attempt };
+    }
+    lastError = result.error.issues.map((i) => `${i.path.join(".") || "(raiz)"}: ${i.message}`).join("; ");
+  }
+
+  throw new Error(
+    `Gemini structured output falhou após ${maxRetries + 1} tentativas. Último erro de validação: ${lastError}`
+  );
 }
 
 /**
@@ -234,6 +310,56 @@ export async function saveInsight(
   await logAiUsage(supabaseAdmin, request.empresaId, request.tipo, aiResponse.tokensEntrada, aiResponse.tokensSaida);
 
   return insight as AiInsightRow;
+}
+
+/**
+ * Incrementa o contador mensal de uso (ai_usage — alimenta o rate limit) e
+ * registra o log granular por feature (ai_usage_logs). NÃO depende de ai_insights
+ * (dropada em 20260429400000). Use nos fluxos agênticos que gravam em agent_runs.
+ */
+export async function recordAiUsage(
+  supabaseAdmin: SupabaseClient,
+  empresaId: string,
+  featureKey: string,
+  tokensInput: number,
+  tokensOutput: number
+): Promise<void> {
+  const now = new Date();
+  const mes = now.getMonth() + 1;
+  const ano = now.getFullYear();
+
+  const { data: existingData } = await supabaseAdmin
+    .from("ai_usage")
+    .select("id, total_requests, total_tokens_entrada, total_tokens_saida")
+    .eq("empresa_id", empresaId)
+    .eq("mes", mes)
+    .eq("ano", ano)
+    .maybeSingle();
+
+  const existing = existingData as AiUsageDetailRow | null;
+
+  if (existing) {
+    await supabaseAdmin
+      .from("ai_usage")
+      .update({
+        total_requests: existing.total_requests + 1,
+        total_tokens_entrada: existing.total_tokens_entrada + tokensInput,
+        total_tokens_saida: existing.total_tokens_saida + tokensOutput,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", existing.id);
+  } else {
+    await supabaseAdmin.from("ai_usage").insert({
+      empresa_id: empresaId,
+      mes,
+      ano,
+      total_requests: 1,
+      total_tokens_entrada: tokensInput,
+      total_tokens_saida: tokensOutput,
+    });
+  }
+
+  await logAiUsage(supabaseAdmin, empresaId, featureKey, tokensInput, tokensOutput);
 }
 
 /**
