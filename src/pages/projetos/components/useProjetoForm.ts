@@ -485,11 +485,47 @@ export function useProjetoForm({
       return;
     }
 
+    // Safety net: se o usuário preencheu disciplina temp mas esqueceu de clicar
+    // em "Incluir na lista", inclui automaticamente antes de salvar.
+    let finalDisciplinas = projetosDisciplinas;
+    if (tempDisciplina.disciplina) {
+      const pessoa = pessoas.find((p) => p.id === tempDisciplina.responsavel_id);
+      const novaDisciplina: DisciplinaResponsavel = {
+        disciplina: tempDisciplina.disciplina,
+        responsavel_id: tempDisciplina.responsavel_id || "",
+        responsavel_nome: pessoa?.nome || "",
+        data_inicio: tempDisciplina.data_inicio,
+        data_previsao: tempDisciplina.data_previsao,
+        data_final: tempDisciplina.data_final,
+        status: tempDisciplina.status || "Não Iniciado",
+        prioridade: tempDisciplina.prioridade || PROJECT_PRIORITY.MEDIA,
+        observacoes: tempDisciplina.observacoes || [],
+        responsaveis: tempDisciplina.responsavel_id
+          ? [
+              {
+                responsavel_id: tempDisciplina.responsavel_id,
+                responsavel_nome: pessoa?.nome || "",
+                data_inicio: tempDisciplina.data_inicio,
+                data_previsao: tempDisciplina.data_previsao,
+                data_final: tempDisciplina.data_final,
+                status: tempDisciplina.status || "Não Iniciado",
+              },
+            ]
+          : [],
+      };
+      finalDisciplinas = [...projetosDisciplinas, novaDisciplina];
+      setProjetosDisciplinas(finalDisciplinas);
+      setTempDisciplina(EMPTY_TEMP_DISCIPLINA);
+      toast.info("Disciplina pendente incluída automaticamente", {
+        description: `"${tempDisciplina.disciplina}" foi adicionada à lista antes de salvar.`,
+      });
+    }
+
     // Validação de datas das disciplinas vs prazo do projeto
     const projetoPrevisao = formData.data_previsao;
     const projetoFinal = formData.data_final;
     const projetoInicio = formData.data_inicio;
-    for (const disc of projetosDisciplinas) {
+    for (const disc of finalDisciplinas) {
       const resps = getResponsaveisList(disc);
       const datas = resps.length > 0 ? resps : [{ data_inicio: disc.data_inicio, data_previsao: disc.data_previsao, data_final: disc.data_final }];
       for (const d of datas) {
@@ -532,7 +568,7 @@ export function useProjetoForm({
           p_localizacao: localizacaoComposta,
           p_parcelas: formData.parcelas || undefined,
           p_area_m2: parseFloat(formData.area_m2) || 0,
-          p_disciplinas: projetosDisciplinas as unknown as never,
+          p_disciplinas: finalDisciplinas as unknown as never,
           p_status: formData.status,
           p_prioridade: formData.prioridade,
         });
@@ -542,7 +578,7 @@ export function useProjetoForm({
         // Sincroniza disciplinas relacionais. State foi hidratado de
         // existingDisciplinas preservando IDs, então bulkSave faz upsert das
         // existentes, insert das novas e delete das removidas.
-        const discsForBulk = projetosDisciplinas.map((d) => {
+        const discsForBulk = finalDisciplinas.map((d) => {
           const resps = getResponsaveisList(d);
           return {
             id: d.id,
@@ -575,7 +611,7 @@ export function useProjetoForm({
           p_localizacao: localizacaoComposta,
           p_parcelas: formData.parcelas || undefined,
           p_area_m2: parseFloat(formData.area_m2) || 0,
-          p_disciplinas: projetosDisciplinas as unknown as never,
+          p_disciplinas: finalDisciplinas as unknown as never,
           p_prioridade: formData.prioridade,
         });
 
@@ -583,8 +619,8 @@ export function useProjetoForm({
 
         // Sync disciplinas to relational table for new project.
         // Se falhar, faz rollback do projeto pra não deixar registro órfão sem disciplinas.
-        if (newProjetoId && projetosDisciplinas.length > 0) {
-          const discsForBulk = projetosDisciplinas.map((d) => {
+        if (newProjetoId && finalDisciplinas.length > 0) {
+          const discsForBulk = finalDisciplinas.map((d) => {
             const resps = getResponsaveisList(d);
             return {
               nome: d.disciplina,
