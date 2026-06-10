@@ -7,6 +7,7 @@ import {
   checkRateLimit,
   callGeminiStructured,
   recordAiUsage,
+  GEMINI_MODEL,
   type AiRequest,
 } from "../_shared/ai-client.ts";
 import { OrcamentoSchema } from "../_shared/agent-schemas.ts";
@@ -129,7 +130,7 @@ Retorne APENAS JSON neste formato exato:
           entity_id: projeto_id ?? null,
           input: { briefing, area_m2, tipologia, disciplinas, prazo_dias },
           result: gen.data,
-          model: "gemini-2.0-flash",
+          model: GEMINI_MODEL,
           tokens_input: gen.tokensEntrada,
           tokens_output: gen.tokensSaida,
           created_by: user.id,
