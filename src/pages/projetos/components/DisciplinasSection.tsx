@@ -620,10 +620,10 @@ export function DisciplinasSection({
                   onAddDisciplina();
                   setShowAddForm(false);
                 }}
-                className="flex-1"
-                variant="secondary"
+                className="flex-1 h-11 text-sm font-semibold bg-brand hover:bg-brand/90 text-ink"
+                disabled={!tempDisciplina.disciplina}
               >
-                <Plus size={16} className="mr-2" /> Adicionar
+                <Plus size={18} className="mr-2" /> Incluir na lista
               </Button>
               <Button type="button" variant="ghost" onClick={() => setShowAddForm(false)}>
                 Cancelar
@@ -634,10 +634,10 @@ export function DisciplinasSection({
           <Button
             type="button"
             variant="outline"
-            className="w-full border-dashed text-muted-foreground"
+            className="w-full border-dashed border-2 h-12 text-sm font-medium hover:bg-muted/50"
             onClick={() => setShowAddForm(true)}
           >
-            <Plus size={16} className="mr-2" /> Adicionar Disciplina
+            <Plus size={18} className="mr-2" /> Adicionar nova disciplina
           </Button>
         )}
       </div>
