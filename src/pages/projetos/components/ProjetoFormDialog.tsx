@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -62,7 +62,10 @@ export function ProjetoFormDialog({
   const { data: fetchedDisciplinas } = useProjetoDisciplinas(
     existingDisciplinasProp === undefined && editProjeto ? editProjeto.id : undefined
   );
-  const existingDisciplinas: ProjetoDisciplinaDB[] = existingDisciplinasProp ?? fetchedDisciplinas ?? [];
+  const existingDisciplinas: ProjetoDisciplinaDB[] = useMemo(
+    () => existingDisciplinasProp ?? fetchedDisciplinas ?? [],
+    [existingDisciplinasProp, fetchedDisciplinas]
+  );
 
   // Fallback: se o caller não populou pessoas (ou carregou tardio), busca aqui.
   // Evita Step 3 com select de Responsável vazio quando o catalog ainda não carregou.
