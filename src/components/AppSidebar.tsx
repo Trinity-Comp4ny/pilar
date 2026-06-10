@@ -7,6 +7,7 @@ import {
   Copy,
   FileText,
   Home,
+  Inbox,
   LayoutGrid,
   MapPin,
   ShieldCheck,
@@ -85,6 +86,7 @@ const menu: MenuGroup[] = [
   {
     label: "Inteligência",
     items: [
+      { title: "Revisão IA", url: "/revisao-ia", icon: Inbox, feature: "projetos", badge: "novo" },
       { title: "AI Hub", url: "/ai", icon: Sparkles, feature: "ai_hub" as Feature },
     ],
   },
