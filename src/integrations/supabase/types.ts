@@ -5,12 +5,31 @@ export type Json =
   | null
   | { [key: string]: Json | undefined }
   | Json[]
-
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "13.0.5"
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
   }
   public: {
     Tables: {
@@ -61,6 +80,118 @@ export type Database = {
           target_type?: string | null
         }
         Relationships: []
+      }
+      agent_actions: {
+        Row: {
+          args: Json | null
+          created_at: string
+          id: number
+          result: Json | null
+          run_id: string
+          tool_name: string
+        }
+        Insert: {
+          args?: Json | null
+          created_at?: string
+          id?: never
+          result?: Json | null
+          run_id: string
+          tool_name: string
+        }
+        Update: {
+          args?: Json | null
+          created_at?: string
+          id?: never
+          result?: Json | null
+          run_id?: string
+          tool_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_actions_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "agent_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agent_runs: {
+        Row: {
+          agent_type: string
+          confidence: number | null
+          created_at: string
+          created_by: string | null
+          empresa_id: string
+          entity_id: string | null
+          entity_type: string | null
+          error: string | null
+          id: string
+          idempotency_key: string | null
+          input: Json | null
+          model: string | null
+          result: Json | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: Database["public"]["Enums"]["agent_run_status"]
+          tokens_input: number
+          tokens_output: number
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          agent_type: string
+          confidence?: number | null
+          created_at?: string
+          created_by?: string | null
+          empresa_id: string
+          entity_id?: string | null
+          entity_type?: string | null
+          error?: string | null
+          id?: string
+          idempotency_key?: string | null
+          input?: Json | null
+          model?: string | null
+          result?: Json | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["agent_run_status"]
+          tokens_input?: number
+          tokens_output?: number
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          agent_type?: string
+          confidence?: number | null
+          created_at?: string
+          created_by?: string | null
+          empresa_id?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          error?: string | null
+          id?: string
+          idempotency_key?: string | null
+          input?: Json | null
+          model?: string | null
+          result?: Json | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["agent_run_status"]
+          tokens_input?: number
+          tokens_output?: number
+          updated_at?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_runs_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       ai_usage_logs: {
         Row: {
@@ -3959,6 +4090,7 @@ export type Database = {
         Args: { p_company_name?: string; p_email: string; p_nome: string }
         Returns: Json
       }
+      aprovar_orcamento_agente: { Args: { p_run_id: string }; Returns: Json }
       audit_log_cleanup: { Args: never; Returns: number }
       audit_logs_archive_old: { Args: never; Returns: number }
       check_convite_rate_limit: {
@@ -4373,6 +4505,14 @@ export type Database = {
       }
     }
     Enums: {
+      agent_run_status:
+        | "queued"
+        | "running"
+        | "pending_review"
+        | "approved"
+        | "executed"
+        | "rejected"
+        | "failed"
       status_empresa: "active" | "suspended" | "cancelled"
       status_financeiro:
         | "Pendente"
@@ -4396,11 +4536,8 @@ export type Database = {
     }
   }
 }
-
 type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
-
 type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
-
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
@@ -4429,7 +4566,6 @@ export type Tables<
       ? R
       : never
     : never
-
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
@@ -4454,7 +4590,6 @@ export type TablesInsert<
       ? I
       : never
     : never
-
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
@@ -4479,7 +4614,6 @@ export type TablesUpdate<
       ? U
       : never
     : never
-
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
@@ -4496,7 +4630,6 @@ export type Enums<
   : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
     ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
     : never
-
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
@@ -4513,10 +4646,21 @@ export type CompositeTypes<
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
     ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never
-
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
+      agent_run_status: [
+        "queued",
+        "running",
+        "pending_review",
+        "approved",
+        "executed",
+        "rejected",
+        "failed",
+      ],
       status_empresa: ["active", "suspended", "cancelled"],
       status_financeiro: [
         "Pendente",
