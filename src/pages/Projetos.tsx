@@ -354,26 +354,23 @@ export default function ProjetosKanban() {
   // Aplica a mudança de status no cache e no banco.
   // clearDataFinal=true zera data_final (usado na reabertura de projeto concluído).
   const applyStatusMove = async (projetoId: string, newStatus: string, clearDataFinal = false) => {
-    const todayStr = new Date().toISOString().slice(0, 10);
+    // NÃO forçamos data_final=hoje ao concluir: o trigger auto_complete_disciplinas
+    // (mig 20260519000000) preenche com MAX(data_fim_real) das disciplinas — a entrega
+    // real, não o momento administrativo do toggle. Forçar "hoje" aqui gerava
+    // "Concluído com Atraso" falso. Deixamos o banco decidir e o refetch traz o valor.
     queryClient.setQueryData(["projetos"], (old: Projeto[] | undefined) =>
       (old || []).map((p) =>
         p.id === projetoId
           ? {
               ...p,
               status: newStatus as Projeto["status"],
-              data_final:
-                newStatus === PROJECT_STATUS.CONCLUIDO
-                  ? todayStr
-                  : clearDataFinal
-                    ? undefined
-                    : p.data_final,
+              data_final: clearDataFinal ? undefined : p.data_final,
             }
           : p
       )
     );
     const updateData: Record<string, string | null> = { status: newStatus };
-    if (newStatus === PROJECT_STATUS.CONCLUIDO) updateData.data_final = todayStr;
-    else if (clearDataFinal) updateData.data_final = null;
+    if (clearDataFinal) updateData.data_final = null;
 
     const { error } = await supabase.from("projetos").update(updateData).eq("id", projetoId);
     if (error) {
