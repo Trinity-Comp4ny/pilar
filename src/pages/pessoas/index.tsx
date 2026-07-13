@@ -81,6 +81,8 @@ export default function Pessoas() {
       toast.success("Pessoa excluída");
       setIsDetailOpen(false);
       queryClient.invalidateQueries({ queryKey: ["pessoas"] });
+    } else {
+      toast.error("Não foi possível excluir a pessoa. Tente novamente.");
     }
     setConfirmDeleteOpen(false);
     setPessoaToDelete(null);

@@ -299,6 +299,8 @@ export default function Configuracoes() {
         toast.success("Conta excluída");
         fetchContas();
         setPanelConta(null);
+      } else {
+        toast.error("Não foi possível excluir a conta. Tente novamente.");
       }
     } else {
       const { count: faturasCount } = await supabase
@@ -316,6 +318,8 @@ export default function Configuracoes() {
         toast.success("Cartão excluído");
         fetchCartoes();
         setPanelCartao(null);
+      } else {
+        toast.error("Não foi possível excluir o cartão. Tente novamente.");
       }
     }
   };
