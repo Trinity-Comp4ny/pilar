@@ -302,6 +302,10 @@ export default function UltraAdmin() {
       toast.error("Informe o nome da empresa e o e-mail do dono");
       return;
     }
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(form.ownerEmail.trim())) {
+      toast.error("E-mail do dono inválido");
+      return;
+    }
     setCreating(true);
     try {
       const res = (await edgeFetch("ultra-admin-empresas", {
@@ -586,11 +590,25 @@ export default function UltraAdmin() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setCreateOpen(false)} disabled={creating}>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setCreateOpen(false);
+                resetForm();
+              }}
+              disabled={creating}
+            >
               Cancelar
             </Button>
             <Button onClick={handleCreateEmpresa} disabled={creating}>
-              {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : "Criar e convidar dono"}
+              {creating ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Criando…
+                </>
+              ) : (
+                "Criar e convidar dono"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
