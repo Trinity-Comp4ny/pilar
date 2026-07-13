@@ -183,12 +183,15 @@ export default function VisaoGeral() {
     <div className="space-y-6 w-full max-w-none">
       {/* KPIs */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 w-full">
-        <Card className="vrz-card bg-positive/10 border-positive/10 w-full min-w-0">
+        <Card className="vrz-card bg-positive/10 border-positive/20 w-full min-w-0">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-green-700 truncate">Receitas Totais</CardTitle>
           </CardHeader>
           <CardContent className="min-w-0">
-            <div className="text-xl md:text-2xl font-bold text-green-700 tabular-nums truncate">
+            <div
+              className="text-base sm:text-lg xl:text-xl font-bold text-green-700 tabular-nums whitespace-nowrap"
+              title={formatCurrency(stats.receitasTotal)}
+            >
               {formatCurrency(stats.receitasTotal)}
             </div>
             <p
@@ -209,7 +212,10 @@ export default function VisaoGeral() {
             <CardTitle className="text-sm font-medium text-red-800 truncate">Despesas Totais</CardTitle>
           </CardHeader>
           <CardContent className="min-w-0">
-            <div className="text-xl md:text-2xl font-bold text-red-700 tabular-nums truncate">
+            <div
+              className="text-base sm:text-lg xl:text-xl font-bold text-red-700 tabular-nums whitespace-nowrap"
+              title={formatCurrency(stats.despesasTotal)}
+            >
               {formatCurrency(stats.despesasTotal)}
             </div>
             <p
@@ -230,7 +236,10 @@ export default function VisaoGeral() {
             <CardTitle className="text-sm font-medium text-blue-800 truncate">Lucro Líquido</CardTitle>
           </CardHeader>
           <CardContent className="min-w-0">
-            <div className="text-xl md:text-2xl font-bold text-blue-700 tabular-nums truncate">
+            <div
+              className="text-base sm:text-lg xl:text-xl font-bold text-blue-700 tabular-nums whitespace-nowrap"
+              title={formatCurrency(stats.saldo)}
+            >
               {formatCurrency(stats.saldo)}
             </div>
             <p className="text-xs text-blue-600 mt-1 flex items-center min-w-0">
@@ -245,7 +254,10 @@ export default function VisaoGeral() {
             <CardTitle className="text-sm font-medium text-emerald-800 truncate">A receber</CardTitle>
           </CardHeader>
           <CardContent className="min-w-0">
-            <div className="text-xl md:text-2xl font-bold text-emerald-700 tabular-nums truncate">
+            <div
+              className="text-base sm:text-lg xl:text-xl font-bold text-emerald-700 tabular-nums whitespace-nowrap"
+              title={formatCurrency(stats.aReceber.total)}
+            >
               {formatCurrency(stats.aReceber.total)}
             </div>
             <p className="text-xs text-emerald-600 mt-1 flex items-center min-w-0">
@@ -260,7 +272,10 @@ export default function VisaoGeral() {
             <CardTitle className="text-sm font-medium text-amber-800 truncate">A pagar</CardTitle>
           </CardHeader>
           <CardContent className="min-w-0">
-            <div className="text-xl md:text-2xl font-bold text-amber-700 tabular-nums truncate">
+            <div
+              className="text-base sm:text-lg xl:text-xl font-bold text-amber-700 tabular-nums whitespace-nowrap"
+              title={formatCurrency(stats.aPagar.total)}
+            >
               {formatCurrency(stats.aPagar.total)}
             </div>
             <p className="text-xs text-amber-600 mt-1 flex items-center min-w-0">
