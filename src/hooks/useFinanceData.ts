@@ -3,7 +3,7 @@
 // usuário sempre veja números próximos da realidade ao voltar pra aba.
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { subMonths, startOfMonth, endOfMonth } from "date-fns";
+import { subMonths, startOfMonth, endOfMonth, format, parseISO } from "date-fns";
 import { getDisplayDate } from "@/lib/dateUtils";
 import type { Tables } from "@/integrations/supabase/types";
 
@@ -30,8 +30,8 @@ export const useFinanceData = (dateFrom?: Date, dateTo?: Date) => {
 
       const previousStart = subMonths(start, 1);
 
-      const prevFromStr = previousStart.toISOString().split("T")[0];
-      const dateToStr = end.toISOString().split("T")[0];
+      const prevFromStr = format(previousStart, "yyyy-MM-dd");
+      const dateToStr = format(end, "yyyy-MM-dd");
 
       const [categoriesRes, receitasRes, despesasRes] = await Promise.all([
         supabase.from("categorias_financeiras").select("id, nome, tipo"),
@@ -68,9 +68,9 @@ export const useFinanceData = (dateFrom?: Date, dateTo?: Date) => {
         categorias_financeiras: d.categoria_id ? categoriesMap.get(d.categoria_id) : undefined,
       }));
 
-      const startStr = start.toISOString().split("T")[0];
-      const endStr = end.toISOString().split("T")[0];
-      const prevStartStr = previousStart.toISOString().split("T")[0];
+      const startStr = format(start, "yyyy-MM-dd");
+      const endStr = format(end, "yyyy-MM-dd");
+      const prevStartStr = format(previousStart, "yyyy-MM-dd");
 
       const inMainPeriod = (dateStr: string) => {
         if (!dateStr) return false;
@@ -212,7 +212,7 @@ export const processChartData = (receitas: ReceitaChartItem[], despesas: Despesa
     );
     if (!displayDate) return;
 
-    const date = new Date(displayDate);
+    const date = parseISO(displayDate);
     const monthName = date.toLocaleString("pt-BR", { month: "short" });
     const year = date.getFullYear().toString().slice(-2);
     const key = `${monthName.charAt(0).toUpperCase() + monthName.slice(1).replace(".", "")}/${year}`;

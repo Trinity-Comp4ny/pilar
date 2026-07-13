@@ -50,7 +50,7 @@ const getReceitaDisplayDate = (r: ReceitaItem): string =>
 
 export default function Receitas() {
   const { canEdit } = useFeatureAccess("financeiro");
-  const { items: receitasRaw, aux, refetch } = useFinanceItems("receita");
+  const { items: receitasRaw, aux, refetch, isError } = useFinanceItems("receita");
   const { categorias, contas, projetos, clientes } = aux;
 
   const { saveReceita, deleteOne, deleteGroup, marcarRecebida, marcarPendente } = useFinanceItemMutations("receita");
@@ -464,6 +464,12 @@ export default function Receitas() {
           </div>
         </CardHeader>
         <CardContent className="p-0">
+          {isError && (
+            <div className="mx-4 mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              Não foi possível carregar as receitas. Verifique a conexão e recarregue a página — os
+              valores abaixo podem estar incompletos.
+            </div>
+          )}
           <div className="flex items-center gap-3 px-4 py-3 border-b bg-gray-50/50">
             <Input
               placeholder="Buscar por descrição ou cliente..."
