@@ -1,11 +1,20 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Building2, CircleOff, Loader2, Search, Users2, Layers } from "lucide-react";
+import { ArrowLeft, Building2, CircleOff, Loader2, Plus, Search, Users2, Layers } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { CompanyFeatureToggles } from "@/components/admin/CompanyFeatureToggles";
 import { UsersAccessManager, type ManagedUser } from "@/components/admin/UsersAccessManager";
 import { PageLayout } from "@/components/PageLayout";
@@ -282,6 +291,46 @@ export default function UltraAdmin() {
     [detail]
   );
 
+  const [createOpen, setCreateOpen] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [form, setForm] = useState({ nome: "", cnpj: "", ownerEmail: "", ownerNome: "" });
+
+  const resetForm = () => setForm({ nome: "", cnpj: "", ownerEmail: "", ownerNome: "" });
+
+  const handleCreateEmpresa = useCallback(async () => {
+    if (!form.nome.trim() || !form.ownerEmail.trim()) {
+      toast.error("Informe o nome da empresa e o e-mail do dono");
+      return;
+    }
+    setCreating(true);
+    try {
+      const res = (await edgeFetch("ultra-admin-empresas", {
+        method: "POST",
+        body: {
+          nome: form.nome.trim(),
+          cnpj: form.cnpj.trim() || undefined,
+          owner_email: form.ownerEmail.trim(),
+          owner_nome: form.ownerNome.trim() || undefined,
+        },
+      })) as { warning?: string | null };
+
+      if (res.warning) {
+        toast.warning("Empresa criada com ressalva", { description: res.warning });
+      } else {
+        toast.success("Empresa criada", { description: "Convite enviado ao dono por e-mail." });
+      }
+      setCreateOpen(false);
+      resetForm();
+      await fetchEmpresas();
+    } catch (err) {
+      toast.error("Erro ao criar empresa", {
+        description: err instanceof Error ? err.message : "Erro inesperado",
+      });
+    } finally {
+      setCreating(false);
+    }
+  }, [form, fetchEmpresas]);
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return empresas;
@@ -378,10 +427,12 @@ export default function UltraAdmin() {
   return (
     <PageLayout
       header={
-        <PageHeader
-          title="Gestão Pilar"
-          description="Visão cross-empresa. Apenas ultra admins têm acesso."
-        ></PageHeader>
+        <PageHeader title="Gestão Pilar" description="Visão cross-empresa. Apenas ultra admins têm acesso.">
+          <Button className="rounded-full gap-2" onClick={() => setCreateOpen(true)}>
+            <Plus size={16} />
+            Criar empresa
+          </Button>
+        </PageHeader>
       }
     >
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -479,6 +530,71 @@ export default function UltraAdmin() {
           )}
         </CardContent>
       </Card>
+
+      <Dialog
+        open={createOpen}
+        onOpenChange={(o) => {
+          if (creating) return;
+          setCreateOpen(o);
+          if (!o) resetForm();
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Criar empresa</DialogTitle>
+            <DialogDescription>
+              A empresa é criada com o plano Starter ativo e o dono recebe um convite de administrador por e-mail.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="empresa-nome">Nome da empresa *</Label>
+              <Input
+                id="empresa-nome"
+                value={form.nome}
+                onChange={(e) => setForm((f) => ({ ...f, nome: e.target.value }))}
+                placeholder="Ex.: Alfa Engenharia"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="empresa-cnpj">CNPJ (opcional)</Label>
+              <Input
+                id="empresa-cnpj"
+                value={form.cnpj}
+                onChange={(e) => setForm((f) => ({ ...f, cnpj: e.target.value }))}
+                placeholder="00.000.000/0000-00"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="owner-email">E-mail do dono/admin *</Label>
+              <Input
+                id="owner-email"
+                type="email"
+                value={form.ownerEmail}
+                onChange={(e) => setForm((f) => ({ ...f, ownerEmail: e.target.value }))}
+                placeholder="dono@empresa.com.br"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="owner-nome">Nome do dono (opcional)</Label>
+              <Input
+                id="owner-nome"
+                value={form.ownerNome}
+                onChange={(e) => setForm((f) => ({ ...f, ownerNome: e.target.value }))}
+                placeholder="Como aparecerá no convite"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCreateOpen(false)} disabled={creating}>
+              Cancelar
+            </Button>
+            <Button onClick={handleCreateEmpresa} disabled={creating}>
+              {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : "Criar e convidar dono"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </PageLayout>
   );
 }

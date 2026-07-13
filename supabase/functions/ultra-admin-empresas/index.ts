@@ -3,6 +3,7 @@
  *
  * GET    /ultra-admin-empresas           → lista empresas (com contagem de usuários)
  * GET    /ultra-admin-empresas?id=<uuid> → detalhe: empresa + usuários
+ * POST   /ultra-admin-empresas           → criar empresa + assinatura Starter + convidar dono
  * PUT    /ultra-admin-empresas           → atualizar features de uma empresa
  *
  * Requer role = ultra_admin.
@@ -10,7 +11,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
-import { isUUID, jsonResponse, optionsResponse, safeErrorResponse } from "../_shared/cors.ts";
+import { isUUID, jsonResponse, optionsResponse, safeErrorResponse, getTrustedOrigin } from "../_shared/cors.ts";
 import { requireUltraAdmin } from "../_shared/admin-auth.ts";
 import { logAction } from "../_shared/audit.ts";
 import { withSentry } from "../_shared/sentry.ts";
@@ -93,6 +94,81 @@ serve(
       }));
 
       return jsonResponse(result, 200, req);
+    }
+
+    // ─── POST: criar empresa + assinatura Starter + convidar dono ─────────
+    if (req.method === "POST") {
+      const body = await req.json();
+      const nome = typeof body?.nome === "string" ? body.nome.trim() : "";
+      const cnpj = typeof body?.cnpj === "string" && body.cnpj.trim() ? body.cnpj.trim() : null;
+      const ownerEmail = typeof body?.owner_email === "string" ? body.owner_email.trim().toLowerCase() : "";
+      const ownerNome = typeof body?.owner_nome === "string" && body.owner_nome.trim() ? body.owner_nome.trim() : null;
+
+      if (!nome) return safeErrorResponse(400, "Nome da empresa é obrigatório", req);
+      if (!ownerEmail || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(ownerEmail)) {
+        return safeErrorResponse(400, "E-mail do dono inválido", req);
+      }
+
+      // 1. Cria a empresa (service_role bypassa RLS)
+      const { data: empresa, error: empErr } = await svc
+        .from("empresas")
+        .insert({ nome, cnpj, email: ownerEmail, status: "active", created_by: userId })
+        .select("id, nome")
+        .single();
+
+      if (empErr || !empresa) return safeErrorResponse(400, empErr?.message ?? "Falha ao criar empresa", req);
+
+      // 2. Assinatura Starter ativa (plano resolvido por slug em runtime)
+      const { data: plan } = await svc
+        .from("pilar_subscription_plans")
+        .select("id")
+        .eq("slug", "starter")
+        .maybeSingle();
+
+      if (plan?.id) {
+        await svc.from("pilar_subscriptions").insert({ empresa_id: empresa.id, plan_id: plan.id, status: "active" });
+      }
+
+      // 3. Convida o dono como admin (reusa convites + inviteUserByEmail)
+      let inviteWarning: string | null = null;
+      const redirectOrigin = getTrustedOrigin(req);
+      if (!redirectOrigin) {
+        inviteWarning = "Empresa criada, mas o convite não foi enviado (origin não permitido). Reenvie pelo detalhe.";
+      } else {
+        const { data: convite, error: convErr } = await svc
+          .from("convites")
+          .insert({ empresa_id: empresa.id, email: ownerEmail, cargo: "admin", nome: ownerNome, features: {}, criado_por: userId })
+          .select("token")
+          .single();
+
+        if (convErr || !convite) {
+          inviteWarning = "Empresa criada, mas falha ao gerar o convite do dono. Convide pelo detalhe da empresa.";
+        } else {
+          const { error: inviteError } = await svc.auth.admin.inviteUserByEmail(ownerEmail, {
+            redirectTo: `${redirectOrigin}/profile-setup`,
+            data: { invite_token: convite.token, nome: ownerNome ?? "" },
+          });
+          if (inviteError) {
+            inviteWarning = "Empresa criada, mas o e-mail de convite ao dono falhou. Reenvie pelo detalhe da empresa.";
+          }
+        }
+      }
+
+      await logAction(svc, {
+        actorId: userId,
+        actorEmail,
+        actorRole: "ultra_admin",
+        action: "create_company",
+        category: "empresa",
+        targetType: "empresa",
+        targetId: empresa.id,
+        targetName: empresa.nome,
+        empresaId: empresa.id,
+        metadata: { owner_email: ownerEmail, plano: "starter", invite_warning: inviteWarning },
+        req,
+      });
+
+      return jsonResponse({ success: true, empresa_id: empresa.id, warning: inviteWarning }, 200, req);
     }
 
     // ─── PUT: atualizar features da empresa ───────────────────────────────
