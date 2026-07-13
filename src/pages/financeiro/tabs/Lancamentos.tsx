@@ -167,7 +167,7 @@ function KPICard({ label, value, icon: Icon, tone, loading }: KPICardProps) {
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <p className="text-xs text-muted-foreground uppercase tracking-wider">{label}</p>
-          <p className="text-xl font-bold mt-1 truncate">
+          <p className="text-lg font-bold mt-1 whitespace-nowrap">
             {loading ? <span className="inline-block h-6 w-24 bg-muted rounded animate-pulse" /> : formatBRL(value)}
           </p>
         </div>

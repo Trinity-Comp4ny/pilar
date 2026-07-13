@@ -133,6 +133,7 @@ export default function Login() {
                         <Input
                           {...field}
                           type="email"
+                          autoFocus
                           placeholder="seu@empresa.com"
                           className="pl-10 h-11 bg-paper-alt border-paper-border focus:border-brand focus:ring-brand/20 transition-all"
                         />
