@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Layers, Building2 } from "lucide-react";
+import { Layers, Building2, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { type Projeto, type DisciplinaResponsavel, getResponsaveisList } from "@/types/projetos";
@@ -194,23 +194,37 @@ export function CalendarioPrazosTab({ projetos, cursor, filtroProjeto, filtroRes
                         </span>
                       </div>
                       <div className="space-y-0.5">
-                        {eventosDoDia.slice(0, 3).map((e, i) => (
-                          <div
-                            key={i}
-                            className={cn(
-                              "text-[10px] px-1.5 py-0.5 rounded truncate",
-                              e.atrasado && "bg-red-100 text-red-700",
-                              !e.atrasado && e.proximo && "bg-amber-100 text-amber-700",
-                              !e.atrasado && !e.proximo && e.concluido && "bg-positive/10 text-positive",
-                              !e.atrasado && !e.proximo && !e.concluido && "bg-blue-100 text-blue-700"
-                            )}
-                          >
-                            {e.tipo === "projeto" ? "● " : "○ "}
-                            {e.disciplinaNome || e.projetoNome}
-                          </div>
-                        ))}
+                        {eventosDoDia.slice(0, 3).map((e, i) => {
+                          const statusSymbol = e.atrasado ? "⚠" : e.proximo ? "»" : e.concluido ? "✓" : "•";
+                          const statusLabel = e.atrasado
+                            ? "Em atraso"
+                            : e.proximo
+                              ? "Próximos 7 dias"
+                              : e.concluido
+                                ? "Concluído"
+                                : "Futuro";
+                          return (
+                            <div
+                              key={i}
+                              title={`${statusLabel} · ${e.tipo === "projeto" ? "Projeto" : "Disciplina"}`}
+                              className={cn(
+                                "text-[11px] px-1.5 py-0.5 rounded truncate border-l-2",
+                                e.atrasado && "bg-red-100 text-red-700 border-red-500",
+                                !e.atrasado && e.proximo && "bg-amber-100 text-amber-700 border-amber-500",
+                                !e.atrasado && !e.proximo && e.concluido && "bg-positive/10 text-positive border-positive",
+                                !e.atrasado && !e.proximo && !e.concluido && "bg-blue-100 text-blue-700 border-blue-500"
+                              )}
+                            >
+                              <span aria-hidden className="font-semibold">
+                                {statusSymbol}
+                              </span>{" "}
+                              {e.tipo === "projeto" ? "● " : "○ "}
+                              {e.disciplinaNome || e.projetoNome}
+                            </div>
+                          );
+                        })}
                         {eventosDoDia.length > 3 && (
-                          <div className="text-[10px] text-muted-foreground px-1.5">+{eventosDoDia.length - 3}</div>
+                          <div className="text-[11px] text-muted-foreground px-1.5">+{eventosDoDia.length - 3}</div>
                         )}
                       </div>
                     </button>
@@ -226,9 +240,10 @@ export function CalendarioPrazosTab({ projetos, cursor, filtroProjeto, filtroRes
                             key={i}
                             type="button"
                             onClick={() => navigate(`/projetos/${e.projetoId}`)}
-                            className="w-full text-left p-2 rounded hover:bg-muted/50 border"
+                            className="group w-full text-left p-2 rounded hover:bg-muted/50 border flex items-center gap-2"
+                            title="Abrir projeto"
                           >
-                            <div className="flex items-start gap-2">
+                            <div className="flex items-start gap-2 flex-1 min-w-0">
                               {e.tipo === "projeto" ? (
                                 <Building2 className="h-3.5 w-3.5 mt-0.5 text-blue-600 flex-shrink-0" />
                               ) : (
@@ -240,17 +255,17 @@ export function CalendarioPrazosTab({ projetos, cursor, filtroProjeto, filtroRes
                                     {e.disciplinaNome || e.projetoNome}
                                   </span>
                                   {e.atrasado && (
-                                    <Badge variant="destructive" className="text-[9px] px-1 py-0">
+                                    <Badge variant="destructive" className="text-[10px] px-1 py-0">
                                       atraso
                                     </Badge>
                                   )}
                                   {e.proximo && !e.atrasado && (
-                                    <Badge className="text-[9px] px-1 py-0 bg-amber-500 hover:bg-amber-500 text-white">
+                                    <Badge className="text-[10px] px-1 py-0 bg-amber-500 hover:bg-amber-500 text-white">
                                       próximo
                                     </Badge>
                                   )}
                                   {e.concluido && (
-                                    <Badge className="text-[9px] px-1 py-0 bg-positive hover:bg-positive text-white">
+                                    <Badge className="text-[10px] px-1 py-0 bg-positive hover:bg-positive text-white">
                                       OK
                                     </Badge>
                                   )}
@@ -265,6 +280,7 @@ export function CalendarioPrazosTab({ projetos, cursor, filtroProjeto, filtroRes
                                 )}
                               </div>
                             </div>
+                            <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/50 group-hover:text-muted-foreground" />
                           </button>
                         ))}
                       </div>

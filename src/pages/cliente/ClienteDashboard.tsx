@@ -37,7 +37,7 @@ export default function ClienteDashboard() {
       <div className="space-y-6">
         {/* Saudação */}
         <div>
-          <h2 className="text-xl font-semibold text-slate-900">Olá, {account.nome.split(" ")[0]}</h2>
+          <h1 className="text-xl font-semibold text-slate-900">Olá, {account.nome.split(" ")[0]}</h1>
           <p className="text-sm text-muted-foreground mt-1">Acompanhe o andamento dos seus projetos.</p>
         </div>
 
@@ -51,7 +51,10 @@ export default function ClienteDashboard() {
         {/* Erro */}
         {error && (
           <Card>
-            <CardContent className="p-6 text-center text-sm text-red-600">{error}</CardContent>
+            <CardContent className="p-6 text-center text-sm text-red-600">
+              Não foi possível carregar seus projetos agora. Atualize a página em instantes ou fale com o escritório se
+              o problema continuar.
+            </CardContent>
           </Card>
         )}
 
@@ -92,7 +95,7 @@ export default function ClienteDashboard() {
                       {/* Barra de progresso */}
                       <div>
                         <div className="flex items-center justify-between mb-1.5">
-                          <span className="text-xs text-muted-foreground">Progresso</span>
+                          <span className="text-xs text-muted-foreground">Etapas concluídas</span>
                           <span className="text-xs font-medium">{progress}%</span>
                         </div>
                         <div className="w-full bg-gray-200 rounded-full h-2">
@@ -106,7 +109,10 @@ export default function ClienteDashboard() {
                         <span>Previsão: {formatDate(projeto.data_previsao)}</span>
                       </div>
 
-                      <div className="inline-flex items-center gap-1 bg-brand text-ink text-xs font-medium px-3 py-1.5 rounded-lg transition-all group-hover:bg-brand/90">
+                      <div
+                        aria-hidden="true"
+                        className="inline-flex items-center gap-1 bg-brand text-ink text-xs font-medium px-3 py-1.5 rounded-lg transition-all group-hover:bg-brand/90"
+                      >
                         Ver detalhes
                         <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" />
                       </div>

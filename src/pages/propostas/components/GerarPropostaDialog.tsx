@@ -21,9 +21,19 @@ import { AUTO_VARIABLES, buildVariableData, generateDocx } from "@/lib/docxUtils
 import { sanitizeHtml } from "@/lib/sanitize";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import mammoth from "mammoth";
 
 type Step = "config" | "preview" | "send";
+
+const STEP_ORDER: Step[] = ["config", "preview", "send"];
+const STEP_LABELS: Record<Step, string> = { config: "Configurar", preview: "Visualizar", send: "Enviar" };
+
+// Converte um token de variável (ex.: "nome_cliente") num rótulo legível ("Nome cliente").
+const humanizeVar = (v: string) => {
+  const clean = v.replace(/[{}]/g, "").replace(/[_.]+/g, " ").trim();
+  return clean.charAt(0).toUpperCase() + clean.slice(1);
+};
 
 interface GerarPropostaDialogProps {
   open: boolean;
@@ -55,6 +65,7 @@ export function GerarPropostaDialog({
   disciplinas = [],
   onSent,
 }: GerarPropostaDialogProps) {
+  const navigate = useNavigate();
   const { data: templates = [] } = usePropostaTemplates(mode);
   const label = mode === "contrato" ? "Contrato" : "Proposta";
 
@@ -271,7 +282,7 @@ export function GerarPropostaDialog({
           )}
           {step === "preview" && (
             <DialogDescription>
-              Revise o documento. Se precisar corrigir algo, volte e edite a proposta.
+              Revise o documento. Se precisar corrigir algo, volte e edite {mode === "contrato" ? "o contrato" : "a proposta"}.
             </DialogDescription>
           )}
           {step === "send" && (
@@ -280,6 +291,31 @@ export function GerarPropostaDialog({
               automaticamente.
             </DialogDescription>
           )}
+          {/* Indicador de passo do wizard */}
+          <div className="flex items-center gap-1.5 pt-1" aria-label={`Passo ${STEP_ORDER.indexOf(step) + 1} de ${STEP_ORDER.length}`}>
+            {STEP_ORDER.map((s, i) => {
+              const current = STEP_ORDER.indexOf(step);
+              const done = i < current;
+              const active = i === current;
+              return (
+                <div key={s} className="flex items-center gap-1.5">
+                  <span
+                    className={
+                      "text-[11px] font-medium px-2 py-0.5 rounded-full " +
+                      (active
+                        ? "bg-brand text-ink"
+                        : done
+                          ? "bg-positive/15 text-positive"
+                          : "bg-muted text-muted-foreground")
+                    }
+                  >
+                    {i + 1}. {STEP_LABELS[s]}
+                  </span>
+                  {i < STEP_ORDER.length - 1 && <span className="text-muted-foreground/40 text-xs">›</span>}
+                </div>
+              );
+            })}
+          </div>
         </DialogHeader>
 
         {/* STEP 1 — Config */}
@@ -288,9 +324,23 @@ export function GerarPropostaDialog({
             <div className="space-y-2">
               <Label>Template *</Label>
               {templates.length === 0 ? (
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm text-amber-700">
-                  Nenhum template do tipo <strong>{mode}</strong> cadastrado. Vá em Gerenciar Templates para fazer
-                  upload.
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm text-amber-700 space-y-2">
+                  <p>
+                    Nenhum template do tipo <strong>{label.toLowerCase()}</strong> cadastrado. Cadastre um template
+                    para poder gerar o documento.
+                  </p>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="bg-white border-amber-300 text-amber-800 hover:bg-amber-100"
+                    onClick={() => {
+                      onOpenChange(false);
+                      navigate("/templates");
+                    }}
+                  >
+                    <FileText className="h-3.5 w-3.5 mr-1.5" />
+                    Gerenciar Templates
+                  </Button>
                 </div>
               ) : (
                 <Select value={selectedTemplateId} onValueChange={setSelectedTemplateId}>
@@ -339,14 +389,15 @@ export function GerarPropostaDialog({
                     {manualVars.map((v) => (
                       <div key={v} className="space-y-1.5">
                         <Label className="text-sm flex items-center gap-2">
+                          {humanizeVar(v)}
                           <Badge variant="secondary" className="text-[10px] bg-amber-50 text-amber-700 font-mono">
-                            {v}
+                            {`{{${v.replace(/[{}]/g, "")}}}`}
                           </Badge>
                         </Label>
                         <Input
                           value={manualFields[v] || ""}
                           onChange={(e) => setManualFields((prev) => ({ ...prev, [v]: e.target.value }))}
-                          placeholder={`Valor para {{${v}}}`}
+                          placeholder={`Valor para ${humanizeVar(v)}`}
                         />
                       </div>
                     ))}

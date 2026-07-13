@@ -60,6 +60,9 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
   const form = useForm<PessoaFormData>({
     resolver: zodResolver(pessoaSchema),
     defaultValues: pessoaDefaultValues,
+    // Sem isto, os erros disparados via form.trigger() no wizard ficam "presos"
+    // (reValidateMode só age após submit). onChange limpa o erro ao corrigir o campo.
+    mode: "onChange",
   });
 
   const { isSubmitting } = form.formState;
@@ -308,18 +311,36 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
                   <Label htmlFor="primeiro_nome" className="text-xs">
                     Nome *
                   </Label>
-                  <Input id="primeiro_nome" {...form.register("primeiro_nome")} placeholder="Nome" />
+                  <Input
+                    id="primeiro_nome"
+                    {...form.register("primeiro_nome")}
+                    placeholder="Nome"
+                    aria-invalid={!!form.formState.errors.primeiro_nome}
+                    aria-describedby={form.formState.errors.primeiro_nome ? "primeiro_nome-error" : undefined}
+                    className={cn(form.formState.errors.primeiro_nome && "border-red-500 focus-visible:ring-red-500")}
+                  />
                   {form.formState.errors.primeiro_nome && (
-                    <p className="text-xs text-red-500">{form.formState.errors.primeiro_nome.message}</p>
+                    <p id="primeiro_nome-error" className="text-xs text-red-600">
+                      {form.formState.errors.primeiro_nome.message}
+                    </p>
                   )}
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="sobrenome" className="text-xs">
                     Sobrenome *
                   </Label>
-                  <Input id="sobrenome" {...form.register("sobrenome")} placeholder="Sobrenome" />
+                  <Input
+                    id="sobrenome"
+                    {...form.register("sobrenome")}
+                    placeholder="Sobrenome"
+                    aria-invalid={!!form.formState.errors.sobrenome}
+                    aria-describedby={form.formState.errors.sobrenome ? "sobrenome-error" : undefined}
+                    className={cn(form.formState.errors.sobrenome && "border-red-500 focus-visible:ring-red-500")}
+                  />
                   {form.formState.errors.sobrenome && (
-                    <p className="text-xs text-red-500">{form.formState.errors.sobrenome.message}</p>
+                    <p id="sobrenome-error" className="text-xs text-red-600">
+                      {form.formState.errors.sobrenome.message}
+                    </p>
                   )}
                 </div>
                 <div className="space-y-1.5">
@@ -329,9 +350,12 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
                   <Input
                     id="cpf"
                     value={form.watch("cpf")}
-                    onChange={(e) => form.setValue("cpf", formatCPF(e.target.value))}
+                    onChange={(e) => form.setValue("cpf", formatCPF(e.target.value), { shouldValidate: true })}
                     maxLength={14}
                     placeholder="000.000.000-00"
+                    aria-invalid={!!form.formState.errors.cpf}
+                    aria-describedby={form.formState.errors.cpf ? "cpf-error" : undefined}
+                    className={cn(form.formState.errors.cpf && "border-red-500 focus-visible:ring-red-500")}
                   />
                   {form.formState.errors.cpf && (
                     <p className="text-xs text-red-500">{form.formState.errors.cpf.message}</p>
@@ -367,9 +391,18 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
                   <Label htmlFor="cargo" className="text-xs">
                     Cargo/Função *
                   </Label>
-                  <Input id="cargo" {...form.register("cargo")} placeholder="Ex: Arquiteto, Projetista" />
+                  <Input
+                    id="cargo"
+                    {...form.register("cargo")}
+                    placeholder="Ex: Arquiteto, Projetista"
+                    aria-invalid={!!form.formState.errors.cargo}
+                    aria-describedby={form.formState.errors.cargo ? "cargo-error" : undefined}
+                    className={cn(form.formState.errors.cargo && "border-red-500 focus-visible:ring-red-500")}
+                  />
                   {form.formState.errors.cargo && (
-                    <p className="text-xs text-red-500">{form.formState.errors.cargo.message}</p>
+                    <p id="cargo-error" className="text-xs text-red-600">
+                      {form.formState.errors.cargo.message}
+                    </p>
                   )}
                 </div>
                 <div className="space-y-1.5">
@@ -388,9 +421,19 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
                   <Label htmlFor="email" className="text-xs">
                     Email *
                   </Label>
-                  <Input id="email" type="email" {...form.register("email")} placeholder="email@exemplo.com" />
+                  <Input
+                    id="email"
+                    type="email"
+                    {...form.register("email")}
+                    placeholder="email@exemplo.com"
+                    aria-invalid={!!form.formState.errors.email}
+                    aria-describedby={form.formState.errors.email ? "email-error" : undefined}
+                    className={cn(form.formState.errors.email && "border-red-500 focus-visible:ring-red-500")}
+                  />
                   {form.formState.errors.email && (
-                    <p className="text-xs text-red-500">{form.formState.errors.email.message}</p>
+                    <p id="email-error" className="text-xs text-red-600">
+                      {form.formState.errors.email.message}
+                    </p>
                   )}
                 </div>
                 <div className="md:col-span-2 space-y-1.5">
@@ -463,12 +506,17 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
                       <Input
                         id="cnpj"
                         value={form.watch("cnpj")}
-                        onChange={(e) => form.setValue("cnpj", formatCNPJ(e.target.value))}
+                        onChange={(e) => form.setValue("cnpj", formatCNPJ(e.target.value), { shouldValidate: true })}
                         maxLength={18}
                         placeholder="00.000.000/0000-00"
+                        aria-invalid={!!form.formState.errors.cnpj}
+                        aria-describedby={form.formState.errors.cnpj ? "cnpj-error" : undefined}
+                        className={cn(form.formState.errors.cnpj && "border-red-500 focus-visible:ring-red-500")}
                       />
                       {form.formState.errors.cnpj && (
-                        <p className="text-xs text-red-500">{form.formState.errors.cnpj.message}</p>
+                        <p id="cnpj-error" className="text-xs text-red-600">
+                          {form.formState.errors.cnpj.message}
+                        </p>
                       )}
                     </div>
                     <div className="space-y-1.5">
@@ -551,7 +599,7 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
                       placeholder="dd/mm/aaaa"
                     />
                     {form.formState.errors.data_demissao && (
-                      <p className="text-xs text-red-500">{form.formState.errors.data_demissao.message}</p>
+                      <p className="text-xs text-red-600">{form.formState.errors.data_demissao.message}</p>
                     )}
                   </div>
                 </div>

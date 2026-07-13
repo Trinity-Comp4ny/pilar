@@ -65,7 +65,7 @@ export function useProjetoDetail(id: string | undefined) {
   });
 
   // ---- Rentabilidade ----
-  const { data: rentabilidade } = useProjetoRentabilidade(id);
+  const { data: rentabilidade, isLoading: rentabilidadeLoading } = useProjetoRentabilidade(id);
 
   // ---- Relational disciplinas ----
   const { data: dbDisciplinas = [] } = useProjetoDisciplinas(id);
@@ -327,6 +327,7 @@ export function useProjetoDetail(id: string | undefined) {
     progress,
     margemBrutaPct,
     rentabilidade,
+    rentabilidadeLoading,
 
     // Mutations
     applyDiscStatusChange,

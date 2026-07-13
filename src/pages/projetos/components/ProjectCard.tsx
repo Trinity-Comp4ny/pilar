@@ -171,8 +171,32 @@ export function ProjectCard({
                 return allNames.length > 0 ? <AvatarStack names={allNames} max={3} size="xs" /> : null;
               })()}
               {deadline && (
-                <Badge className={cn("text-[10px] px-1.5 py-0 font-normal", deadline.color)}>
-                  {deadline.days > 0 ? `${deadline.days}d` : deadline.label}
+                <Badge
+                  className={cn(
+                    "inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0 font-normal",
+                    deadline.color
+                  )}
+                  title={
+                    deadline.status_data === "em_atraso"
+                      ? `Em atraso há ${deadline.days} dia(s)`
+                      : deadline.status_data === "atencao"
+                        ? `Vence em ${deadline.days} dia(s)`
+                        : `No prazo — faltam ${deadline.days} dia(s)`
+                  }
+                >
+                  {deadline.status_data === "em_atraso" ? (
+                    <>
+                      <AlertTriangle className="h-2.5 w-2.5" aria-hidden="true" />
+                      {`-${deadline.days}d`}
+                    </>
+                  ) : deadline.status_data === "atencao" ? (
+                    <>
+                      <AlertTriangle className="h-2.5 w-2.5" aria-hidden="true" />
+                      {`${deadline.days}d`}
+                    </>
+                  ) : (
+                    `${deadline.days}d`
+                  )}
                 </Badge>
               )}
             </div>

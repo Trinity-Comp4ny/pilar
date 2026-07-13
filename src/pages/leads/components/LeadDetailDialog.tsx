@@ -1,4 +1,4 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -83,6 +83,7 @@ export function LeadDetailDialog({
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <DialogTitle className="text-lg">{nomeCompleto}</DialogTitle>
+                  <DialogDescription className="sr-only">Detalhes do lead {nomeCompleto}</DialogDescription>
                   <Badge className={statusConfig?.color}>{statusConfig?.label ?? lead.status}</Badge>
                   {lead.status === "Perdido" && (
                     <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-danger-soft text-danger-strong flex items-center gap-1">
@@ -158,7 +159,7 @@ export function LeadDetailDialog({
           {lead.origem && (
             <div className="space-y-1.5">
               <Label className="text-[10px] uppercase text-muted-foreground tracking-wider">Origem</Label>
-              <p className="text-sm text-muted-foreground bg-black/5 p-3 rounded-lg">{lead.origem}</p>
+              <p className="text-sm text-foreground border-l-2 border-border pl-3 py-0.5">{lead.origem}</p>
             </div>
           )}
 
@@ -187,7 +188,7 @@ export function LeadDetailDialog({
           {lead.notas && (
             <div className="space-y-1.5">
               <Label className="text-[10px] uppercase text-muted-foreground tracking-wider">Notas</Label>
-              <p className="text-sm text-muted-foreground bg-black/5 p-3 rounded-lg whitespace-pre-wrap">
+              <p className="text-sm text-foreground border-l-2 border-border pl-3 py-0.5 whitespace-pre-wrap">
                 {lead.notas}
               </p>
             </div>

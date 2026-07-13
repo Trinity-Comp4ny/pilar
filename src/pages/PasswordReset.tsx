@@ -7,10 +7,13 @@ import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Check, CheckCircle2, Eye, EyeOff, Loader2, Lock, ShieldCheck } from "lucide-react";
+import { ArrowLeft, Check, CheckCircle2, Eye, EyeOff, HelpCircle, KeyRound, Loader2, Lock, ShieldCheck } from "lucide-react";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { translateAuthError } from "@/lib/authErrors";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
+import { MfaHelpModal } from "@/components/MfaHelpModal";
+import { useMfa } from "@/hooks/useMfa";
+import { callUntypedRpc } from "@/lib/supabaseRpc";
 import { passwordResetSchema, passwordResetDefaultValues, type PasswordResetFormData } from "@/schemas";
 
 type Step = "loading" | "mfa" | "password" | "expired";
@@ -18,6 +21,7 @@ type Step = "loading" | "mfa" | "password" | "expired";
 export default function PasswordReset() {
   usePageTitle("Redefinir senha");
   const navigate = useNavigate();
+  const { resetAllFactors } = useMfa();
 
   const [step, setStep] = useState<Step>("loading");
   const [mfaFactorId, setMfaFactorId] = useState<string | null>(null);
@@ -25,6 +29,10 @@ export default function PasswordReset() {
   const [submitting, setSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
+  const [backupMode, setBackupMode] = useState(false);
+  const [backupCode, setBackupCode] = useState("");
+  const [backupSubmitting, setBackupSubmitting] = useState(false);
 
   const form = useForm<PasswordResetFormData>({
     resolver: zodResolver(passwordResetSchema),
@@ -101,8 +109,37 @@ export default function PasswordReset() {
     if (value.length === 6) handleVerifyMfa(value);
   };
 
+  const handleBackupCode = async () => {
+    const normalized = backupCode.trim().toUpperCase().replace(/\s/g, "");
+    if (!normalized) {
+      toast.error("Informe o código de recuperação");
+      return;
+    }
+    setBackupSubmitting(true);
+    try {
+      const { data: valid, error } = await callUntypedRpc<boolean>("mfa_consume_backup_code", {
+        p_code: normalized,
+      });
+      if (error) throw error;
+      if (!valid) {
+        toast.error("Código inválido ou já utilizado");
+        return;
+      }
+      // Consome o backup, desregistra todos os fatores e envia para reconfigurar o MFA.
+      await resetAllFactors();
+      toast.success("Código de recuperação aceito", {
+        description: "Configure um novo autenticador para continuar.",
+      });
+      navigate("/mfa/setup", { replace: true });
+    } catch (err) {
+      toast.error("Erro ao validar código", { description: translateAuthError(err) });
+    } finally {
+      setBackupSubmitting(false);
+    }
+  };
+
   const requirements = [
-    { label: "8+ caracteres", ok: (password?.length ?? 0) > 8 },
+    { label: "12+ caracteres", ok: (password?.length ?? 0) >= 12 },
     { label: "Letra maiúscula", ok: /[A-Z]/.test(password ?? "") },
     { label: "Número", ok: /\d/.test(password ?? "") },
     { label: "Caractere especial", ok: /[!@#$%^&*(),.?":{}|<>_\-+=/\\[\]`~';]/.test(password ?? "") },
@@ -173,8 +210,62 @@ export default function PasswordReset() {
             </div>
           )}
 
-          {step === "mfa" && (
+          {step === "mfa" && backupMode && (
             <div className="space-y-8">
+              <div className="text-center space-y-2">
+                <div className="flex justify-center mb-4">
+                  <div className="p-3 rounded-2xl bg-amber-100 border border-amber-200">
+                    <KeyRound className="h-8 w-8 text-amber-600" />
+                  </div>
+                </div>
+                <h1 className="text-2xl font-semibold tracking-tight text-ink">Código de recuperação</h1>
+                <p className="text-sm text-ink-soft leading-relaxed">
+                  Digite um dos códigos de recuperação gerados durante o setup do MFA.
+                  <br />
+                  <span className="text-ink/40 text-xs">O código será invalidado após o uso.</span>
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                <Input
+                  value={backupCode}
+                  onChange={(e) => setBackupCode(e.target.value)}
+                  placeholder="XXXX-XXXX"
+                  className="text-center font-mono text-lg tracking-widest h-12"
+                  disabled={backupSubmitting}
+                  onKeyDown={(e) => e.key === "Enter" && handleBackupCode()}
+                  autoFocus
+                />
+
+                <Button
+                  onClick={handleBackupCode}
+                  className="w-full h-11 bg-amber-500 hover:bg-amber-600 text-white font-medium"
+                  disabled={backupSubmitting || !backupCode.trim()}
+                >
+                  {backupSubmitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                  Usar código de recuperação
+                </Button>
+
+                <div className="flex justify-center">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setBackupMode(false);
+                      setBackupCode("");
+                    }}
+                    className="text-xs text-ink-soft hover:text-ink transition-colors underline"
+                  >
+                    Voltar para autenticador
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {step === "mfa" && !backupMode && (
+            <div className="space-y-8">
+              <MfaHelpModal open={helpOpen} onOpenChange={setHelpOpen} />
+
               <div className="text-center space-y-2">
                 <div className="flex justify-center mb-4">
                   <div className="p-3 rounded-2xl bg-brand/10 border border-brand/20">
@@ -211,6 +302,25 @@ export default function PasswordReset() {
                 {submitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                 Verificar
               </Button>
+
+              <div className="flex flex-col items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setHelpOpen(true)}
+                  className="inline-flex items-center gap-1.5 text-xs font-medium text-ink hover:text-ink/70 transition-colors border border-paper-border hover:border-ink/30 bg-paper-alt hover:bg-paper-border px-3 py-1.5 rounded-full"
+                >
+                  <HelpCircle className="h-3.5 w-3.5" />
+                  Como usar o app autenticador?
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setBackupMode(true)}
+                  className="inline-flex items-center gap-1.5 text-xs text-ink-soft hover:text-ink transition-colors"
+                >
+                  <KeyRound className="h-3 w-3" />
+                  Não tenho acesso ao autenticador
+                </button>
+              </div>
             </div>
           )}
 
