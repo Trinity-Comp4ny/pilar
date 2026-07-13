@@ -44,7 +44,7 @@ export default function ClienteLogin() {
       });
 
       if (error) throw error;
-      if (!data) throw new Error("Resposta inválida");
+      if (!data) throw new Error("credencial");
 
       // RPC portal_login retorna Json no schema; estrutura { token, nome } é contrato do backend.
       const result = data as { token: string; nome: string };
@@ -53,8 +53,17 @@ export default function ClienteLogin() {
       toast.success("Login realizado!", { description: `Bem-vindo, ${result.nome}.` });
 
       navigate("/cliente/dashboard");
-    } catch {
-      toast.error("Erro ao fazer login", { description: "Email ou senha inválidos." });
+    } catch (err) {
+      const isNetwork =
+        err instanceof TypeError ||
+        (err instanceof Error && /fetch|network|failed to fetch|timeout/i.test(err.message));
+      if (isNetwork) {
+        toast.error("Falha na conexão", {
+          description: "Verifique sua internet e tente novamente.",
+        });
+      } else {
+        toast.error("Erro ao fazer login", { description: "Email ou senha inválidos." });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -129,8 +138,9 @@ export default function ClienteLogin() {
                         <button
                           type="button"
                           onClick={() => setShowPassword((v) => !v)}
+                          aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
+                          aria-pressed={showPassword}
                           className="absolute right-3 top-3 text-ink/40 hover:text-ink-soft transition-colors"
-                          tabIndex={-1}
                         >
                           {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                         </button>
@@ -157,8 +167,9 @@ export default function ClienteLogin() {
             </form>
           </Form>
 
-          <div className="text-center">
-            <p className="text-xs text-ink/40">Acesso exclusivo para clientes convidados pelo escritório.</p>
+          <div className="text-center space-y-1.5">
+            <p className="text-xs text-ink-soft">Esqueceu a senha? Fale com o escritório para recuperar seu acesso.</p>
+            <p className="text-xs text-ink/60">Acesso exclusivo para clientes convidados pelo escritório.</p>
           </div>
         </div>
       </div>

@@ -491,7 +491,7 @@ export default function Leads() {
                                     lead={lead}
                                     leadNome={leadNome}
                                     onClick={() => handleCardClick(lead)}
-                                    canEdit={false}
+                                    canEdit={canEdit}
                                     onMoveStatus={handleMobileMove}
                                     dragging={snapshot.isDragging}
                                   />

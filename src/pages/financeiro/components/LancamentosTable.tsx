@@ -83,6 +83,21 @@ export function LancamentosTable({
   const { canEdit } = useFeatureAccess("financeiro");
   const aux = useLancamentosFiltersData();
 
+  // Distingue "sem resultados neste filtro" de "nenhum dado ainda".
+  // O período "mes-atual" (padrão) já é um recorte, então também conta como filtro ativo.
+  const hasActiveFilters =
+    filters.search.trim() !== "" ||
+    filters.tipo !== "todos" ||
+    filters.status !== "todos" ||
+    filters.periodo !== "tudo" ||
+    filters.categorias.length > 0 ||
+    filters.projetos.length > 0 ||
+    filters.clientes.length > 0 ||
+    filters.fornecedores.length > 0 ||
+    filters.formasPagamento.length > 0 ||
+    filters.valorMin.trim() !== "" ||
+    filters.valorMax.trim() !== "";
+
   const [sort, setSort] = useState<SortState>({ key: "data", dir: "desc" });
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [grouped, setGrouped] = useState<boolean>(() => localStorage.getItem("lancamentos.grouped") !== "false");
@@ -479,11 +494,15 @@ export function LancamentosTable({
                   <td colSpan={colCount}>
                     <div className="flex flex-col items-center gap-3 py-12 text-center">
                       <ArrowDownCircle className="h-8 w-8 text-muted-foreground/30" />
-                      <p className="text-sm font-medium text-muted-foreground">Nenhum lançamento encontrado</p>
-                      <p className="text-xs text-muted-foreground/70">
-                        {data.length > 0 ? "Ajuste os filtros para ver mais resultados" : "Crie uma receita ou despesa para começar"}
+                      <p className="text-sm font-medium text-muted-foreground">
+                        {hasActiveFilters ? "Nenhum lançamento neste filtro" : "Nenhum lançamento ainda"}
                       </p>
-                      {data.length > 0 && (
+                      <p className="text-xs text-muted-foreground/70">
+                        {hasActiveFilters
+                          ? "Ajuste ou limpe os filtros para ver mais resultados"
+                          : "Crie uma receita ou despesa para começar"}
+                      </p>
+                      {hasActiveFilters && (
                         <button
                           onClick={() => onFiltersChange(defaultFilters)}
                           className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground transition-colors"

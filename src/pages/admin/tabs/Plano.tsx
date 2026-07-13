@@ -51,7 +51,7 @@ export function PlanoTab({ empresaId, currentPlan }: { empresaId: string | null;
             <div>
               <CardTitle className="text-lg font-medium tracking-tight flex items-center gap-3">
                 Plano Atual
-                <Badge className="bg-brand/10 text-brand hover:bg-brand/10 border-transparent">
+                <Badge className="bg-brand/10 text-emerald-700 hover:bg-brand/10 border-transparent">
                   {PLAN_LABELS[currentPlan]}
                 </Badge>
               </CardTitle>
@@ -85,7 +85,7 @@ export function PlanoTab({ empresaId, currentPlan }: { empresaId: string | null;
               "Financeiro completo",
               "Portal do cliente",
               "Mapa de projetos",
-              "Convite de usuários ilimitados",
+              "Gestão de usuários e permissões",
               "Relatórios",
             ].map((item) => (
               <li key={item} className="flex items-center gap-2 text-black/70">

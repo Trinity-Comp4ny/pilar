@@ -53,7 +53,8 @@ export function LeadsKPIs({ leads, onFilterProximos }: LeadsKPIsProps) {
         label="Fecham em 7 dias"
         value={stats.proximos.toString()}
         color="text-warning"
-        onClick={stats.proximos > 0 ? onFilterProximos : undefined}
+        onClick={onFilterProximos}
+        title="Filtrar leads que fecham nos próximos 7 dias"
       />
       <KpiCard
         icon={PercentCircle}
@@ -77,14 +78,16 @@ interface KpiCardProps {
   value: string;
   color: string;
   onClick?: () => void;
+  title?: string;
 }
 
-function KpiCard({ icon: Icon, label, value, color, onClick }: KpiCardProps) {
+function KpiCard({ icon: Icon, label, value, color, onClick, title }: KpiCardProps) {
   const Component = onClick ? "button" : "div";
   return (
     <Component
       type={onClick ? "button" : undefined}
       onClick={onClick}
+      title={title}
       className={cn(
         "flex items-center gap-3 px-3 py-2 rounded-lg border bg-white text-left transition-colors",
         onClick && "hover:bg-muted/40 cursor-pointer"

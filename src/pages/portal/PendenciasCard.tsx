@@ -61,7 +61,9 @@ export function PendenciasCard({ baseUrl, receitas, portalEntregasPendentes }: P
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-amber-900">Você tem pendências</p>
-            <p className="text-xs text-amber-700/80">{totalPendencias} item(ns) precisa(m) da sua atenção.</p>
+            <p className="text-xs text-amber-700/80">
+              {totalPendencias} {totalPendencias === 1 ? "item precisa" : "itens precisam"} da sua atenção.
+            </p>
           </div>
         </div>
 
@@ -90,7 +92,7 @@ export function PendenciasCard({ baseUrl, receitas, portalEntregasPendentes }: P
                 <div className="flex items-center gap-2">
                   <Clock className="h-3.5 w-3.5 text-red-700" />
                   <span className="text-red-800">
-                    {pendencias.faturasAtrasadas} fatura{pendencias.faturasAtrasadas === 1 ? "" : "s"} em atraso
+                    {pendencias.faturasAtrasadas} parcela{pendencias.faturasAtrasadas === 1 ? "" : "s"} em atraso
                   </span>
                 </div>
                 <ChevronRight className="h-3.5 w-3.5 text-red-700" />
@@ -100,7 +102,7 @@ export function PendenciasCard({ baseUrl, receitas, portalEntregasPendentes }: P
                   href={paymentLinkAtrasada}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1 px-2.5 py-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium transition-colors whitespace-nowrap"
+                  className="flex items-center gap-1 px-3 min-h-11 sm:min-h-0 sm:py-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium transition-colors whitespace-nowrap"
                 >
                   Pagar
                   <ExternalLink className="h-3 w-3" />
@@ -118,8 +120,8 @@ export function PendenciasCard({ baseUrl, receitas, portalEntregasPendentes }: P
                 <div className="flex items-center gap-2">
                   <Clock className="h-3.5 w-3.5 text-amber-700" />
                   <span>
-                    {pendencias.faturasProximasVencimento} fatura{pendencias.faturasProximasVencimento === 1 ? "" : "s"}{" "}
-                    vencendo em 7 dias
+                    {pendencias.faturasProximasVencimento} parcela
+                    {pendencias.faturasProximasVencimento === 1 ? "" : "s"} vencendo em 7 dias
                   </span>
                 </div>
                 <ChevronRight className="h-3.5 w-3.5 text-amber-700" />
@@ -129,7 +131,7 @@ export function PendenciasCard({ baseUrl, receitas, portalEntregasPendentes }: P
                   href={paymentLinkProxima}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1 px-2.5 py-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium transition-colors whitespace-nowrap"
+                  className="flex items-center gap-1 px-3 min-h-11 sm:min-h-0 sm:py-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium transition-colors whitespace-nowrap"
                 >
                   Pagar
                   <ExternalLink className="h-3 w-3" />

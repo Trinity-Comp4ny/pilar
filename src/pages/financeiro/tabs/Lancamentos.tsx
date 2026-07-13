@@ -62,7 +62,7 @@ export default function Lancamentos() {
     <div className="space-y-6 w-full">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">Lançamentos</h1>
+          <h2 className="text-2xl font-bold">Lançamentos</h2>
           <p className="text-sm text-muted-foreground">Receitas e despesas em um só lugar</p>
         </div>
         <div className="flex items-center gap-2">

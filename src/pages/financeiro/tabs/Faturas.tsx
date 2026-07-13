@@ -158,6 +158,26 @@ export default function Faturas() {
                   <div className="text-xs text-gray-500 mt-1">
                     Usado: R$ {cartao.usado?.toLocaleString("pt-BR")} / R$ {cartao.limite?.toLocaleString("pt-BR")}
                   </div>
+                  {(() => {
+                    const usado = Number(cartao.usado ?? 0);
+                    const limite = Number(cartao.limite ?? 0);
+                    const pct = limite > 0 ? Math.min(100, (usado / limite) * 100) : 0;
+                    return (
+                      <div
+                        className="mt-1.5 h-1.5 w-full rounded-full bg-gray-200 overflow-hidden"
+                        role="progressbar"
+                        aria-valuenow={Math.round(pct)}
+                        aria-valuemin={0}
+                        aria-valuemax={100}
+                        aria-label="Uso do limite do cartão"
+                      >
+                        <div
+                          className={cn("h-full rounded-full", pct >= 90 ? "bg-red-500" : "bg-brand")}
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                    );
+                  })()}
                 </button>
               ))}
             </div>
