@@ -81,13 +81,15 @@ const QK = {
 };
 
 async function fetchDespesas(): Promise<DespesaItem[]> {
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("despesas")
     .select(`*, projetos (codigo_projeto), fornecedores (nome)`)
     .eq("is_fatura_payment", false)
     .is("deleted_at", null)
     .order("data_pagamento", { ascending: false })
     .order("data_vencimento", { ascending: false });
+
+  if (error) throw error;
 
   return (
     (data ?? []) as unknown as Array<
@@ -102,12 +104,14 @@ async function fetchDespesas(): Promise<DespesaItem[]> {
 }
 
 async function fetchReceitas(): Promise<ReceitaItem[]> {
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("receitas")
     .select(`*, categorias_financeiras (nome), clientes (nome), projetos (codigo_projeto)`)
     .is("deleted_at", null)
     .order("data_recebimento", { ascending: false })
     .order("data_vencimento", { ascending: false });
+
+  if (error) throw error;
 
   return (
     (data ?? []) as unknown as Array<
@@ -128,6 +132,24 @@ async function fetchReceitas(): Promise<ReceitaItem[]> {
 
 async function fetchAuxData(tipo: FinanceItemTipo): Promise<AuxData> {
   const tipoCategoria = tipo === "despesa" ? "Despesa" : "Receita";
+  const results = await Promise.all([
+    supabase.from("categorias_financeiras").select("id, nome").eq("tipo", tipoCategoria).order("nome"),
+    supabase.from("contas").select("id, nome").is("deleted_at", null).order("nome"),
+    tipo === "despesa"
+      ? supabase.from("cartoes").select("id, nome, tipo, dia_fechamento").is("deleted_at", null)
+      : Promise.resolve({ data: [] as never[], error: null }),
+    supabase.from("projetos").select("id, nome, codigo_projeto").order("nome"),
+    tipo === "despesa"
+      ? supabase.from("fornecedores").select("id, nome").order("nome")
+      : Promise.resolve({ data: [] as never[], error: null }),
+    tipo === "receita"
+      ? supabase.from("clientes").select("id, nome, chaves_pix").order("nome")
+      : Promise.resolve({ data: [] as never[], error: null }),
+  ]);
+
+  const auxError = results.find((r) => "error" in r && r.error)?.error;
+  if (auxError) throw auxError;
+
   const [
     { data: categoriasData },
     { data: contasData },
@@ -135,20 +157,7 @@ async function fetchAuxData(tipo: FinanceItemTipo): Promise<AuxData> {
     { data: projetosData },
     { data: fornecedoresData },
     { data: clientesData },
-  ] = await Promise.all([
-    supabase.from("categorias_financeiras").select("id, nome").eq("tipo", tipoCategoria).order("nome"),
-    supabase.from("contas").select("id, nome").is("deleted_at", null).order("nome"),
-    tipo === "despesa"
-      ? supabase.from("cartoes").select("id, nome, tipo, dia_fechamento").is("deleted_at", null)
-      : Promise.resolve({ data: [] as never[] }),
-    supabase.from("projetos").select("id, nome, codigo_projeto").order("nome"),
-    tipo === "despesa"
-      ? supabase.from("fornecedores").select("id, nome").order("nome")
-      : Promise.resolve({ data: [] as never[] }),
-    tipo === "receita"
-      ? supabase.from("clientes").select("id, nome, chaves_pix").order("nome")
-      : Promise.resolve({ data: [] as never[] }),
-  ]);
+  ] = results;
 
   return {
     categorias: (categoriasData ?? []).map((c) => ({ id: c.id, name: c.nome })),
@@ -168,18 +177,21 @@ export function useFinanceItems(tipo: "despesa"): {
   items: DespesaItem[];
   aux: AuxData;
   isLoading: boolean;
+  isError: boolean;
   refetch: () => Promise<unknown>;
 };
 export function useFinanceItems(tipo: "receita"): {
   items: ReceitaItem[];
   aux: AuxData;
   isLoading: boolean;
+  isError: boolean;
   refetch: () => Promise<unknown>;
 };
 export function useFinanceItems(tipo: FinanceItemTipo): {
   items: DespesaItem[] | ReceitaItem[];
   aux: AuxData;
   isLoading: boolean;
+  isError: boolean;
   refetch: () => Promise<unknown>;
 } {
   const itemsQuery = useQuery<DespesaItem[] | ReceitaItem[]>({
@@ -208,6 +220,7 @@ export function useFinanceItems(tipo: FinanceItemTipo): {
     items: (itemsQuery.data ?? []) as DespesaItem[] | ReceitaItem[],
     aux: auxQuery.data ?? emptyAux,
     isLoading: itemsQuery.isLoading || auxQuery.isLoading,
+    isError: itemsQuery.isError || auxQuery.isError,
     refetch: async () => {
       await Promise.all([itemsQuery.refetch(), auxQuery.refetch()]);
     },
