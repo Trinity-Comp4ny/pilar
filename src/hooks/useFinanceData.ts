@@ -38,6 +38,7 @@ export const useFinanceData = (dateFrom?: Date, dateTo?: Date) => {
         supabase
           .from("receitas")
           .select("*")
+          .neq("status", "Cancelado")
           .gte("data_vencimento", prevFromStr)
           .lte("data_vencimento", dateToStr)
           .order("data_recebimento", { ascending: false })
@@ -46,6 +47,7 @@ export const useFinanceData = (dateFrom?: Date, dateTo?: Date) => {
           .from("despesas")
           .select("*")
           .eq("is_fatura_payment", false)
+          .neq("status", "Cancelado")
           .gte("data_vencimento", prevFromStr)
           .lte("data_vencimento", dateToStr)
           .order("data_vencimento", { ascending: true }),

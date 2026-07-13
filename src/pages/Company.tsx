@@ -220,6 +220,12 @@ export default function Company() {
   };
 
   const openEditUser = (u: CompanyUser) => {
+    if (u.role === "ultra_admin") {
+      toast.error("Usuário protegido", {
+        description: "Ultra admin não pode ser editado aqui (seria rebaixado). Use /ultra-admin ou SQL.",
+      });
+      return;
+    }
     setEditUserId(u.id);
     const [primeiro, ...resto] = (u.name || "").split(" ");
     setEditUserFirstName(primeiro || "");

@@ -12,6 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { FeatureAccessGrid } from "@/components/admin/FeatureAccessGrid";
 import { AccessBadges } from "@/components/admin/AccessBadges";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 
 export type ManagedUser = {
   id: string;
@@ -61,6 +62,7 @@ export function UsersAccessManager({
 }: UsersAccessManagerProps) {
   const [inviteOpen, setInviteOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<ManagedUser | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<ManagedUser | null>(null);
 
   return (
     <Card className="border border-black/5">
@@ -140,7 +142,7 @@ export function UsersAccessManager({
                               variant="outline"
                               size="sm"
                               className="rounded-full text-red-600"
-                              onClick={() => onDelete(u.id)}
+                              onClick={() => setDeleteTarget(u)}
                               disabled={u.id === currentUserId}
                               title={u.id === currentUserId ? "Você não pode remover a si mesmo" : "Remover"}
                             >
@@ -225,6 +227,22 @@ export function UsersAccessManager({
           onUpdate(payload);
           setEditTarget(null);
         }}
+      />
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null);
+        }}
+        onConfirm={() => {
+          if (deleteTarget) onDelete(deleteTarget.id);
+          setDeleteTarget(null);
+        }}
+        title="Remover usuário"
+        description="Isto revoga o acesso deste usuário. Esta ação não pode ser desfeita."
+        itemName={deleteTarget?.name || deleteTarget?.email}
+        variant="destructive"
+        confirmText="Remover"
       />
     </Card>
   );
