@@ -32,6 +32,16 @@ interface DashboardFinanceChartProps {
 }
 
 export default function DashboardFinanceChart({ data }: DashboardFinanceChartProps) {
+  const hasData = data.some((d) => d.receitas > 0 || d.despesas > 0);
+
+  if (!hasData) {
+    return (
+      <div className="flex h-full w-full items-center justify-center">
+        <p className="text-sm text-muted-foreground">Sem dados no período</p>
+      </div>
+    );
+  }
+
   return (
     <ResponsiveContainer width="100%" height="100%">
       <ComposedChart data={data} margin={{ top: 5, right: 5, left: -15, bottom: 0 }}>

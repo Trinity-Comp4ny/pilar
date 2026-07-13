@@ -23,7 +23,14 @@ import {
   Search,
   Trash2,
   ArrowUpDown,
+  MoreVertical,
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { DialogDescription as DD, DialogFooter } from "@/components/ui/dialog";
 import { useNavigate } from "react-router-dom";
 import { PageLayout } from "@/components/PageLayout";
@@ -317,7 +324,7 @@ export default function Propostas() {
             <div>
               <CardTitle className="text-lg font-medium tracking-tight">Lista de Documentos</CardTitle>
               <CardDescription className="text-sm text-muted-foreground mt-1">
-                Total de {filteredPropostas.length} de {propostas.length} proposta(s)
+                Total de {filteredPropostas.length} de {propostas.length} documento(s)
               </CardDescription>
             </div>
             <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
@@ -452,18 +459,26 @@ export default function Propostas() {
                         </TableCell>
                         {canEdit && (
                           <TableCell className="text-right py-4">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setConfirmDelete({ id: p.id, titulo: p.titulo });
-                              }}
-                              aria-label="Excluir proposta"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                                  aria-label="Mais opções"
+                                >
+                                  <MoreVertical className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                                <DropdownMenuItem
+                                  className="text-destructive focus:text-destructive"
+                                  onClick={() => setConfirmDelete({ id: p.id, titulo: p.titulo })}
+                                >
+                                  <Trash2 className="h-3.5 w-3.5 mr-2" /> Excluir
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </TableCell>
                         )}
                       </TableRow>
@@ -489,11 +504,35 @@ export default function Propostas() {
                           <p className="text-sm font-medium truncate">{p.titulo}</p>
                           {p.codigo && <p className="text-[11px] text-muted-foreground font-mono">{p.codigo}</p>}
                         </div>
-                        <Badge
-                          className={`text-[10px] flex-shrink-0 ${PROPOSTA_STATUS_CONFIG[displayStatus]?.color || ""}`}
-                        >
-                          {PROPOSTA_STATUS_CONFIG[displayStatus]?.label || displayStatus}
-                        </Badge>
+                        <div className="flex items-center gap-1 flex-shrink-0">
+                          <Badge
+                            className={`text-[10px] ${PROPOSTA_STATUS_CONFIG[displayStatus]?.color || ""}`}
+                          >
+                            {PROPOSTA_STATUS_CONFIG[displayStatus]?.label || displayStatus}
+                          </Badge>
+                          {canEdit && (
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7 text-muted-foreground hover:text-foreground -mr-1"
+                                  aria-label="Mais opções"
+                                >
+                                  <MoreVertical className="h-3.5 w-3.5" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                                <DropdownMenuItem
+                                  className="text-destructive focus:text-destructive"
+                                  onClick={() => setConfirmDelete({ id: p.id, titulo: p.titulo })}
+                                >
+                                  <Trash2 className="h-3.5 w-3.5 mr-2" /> Excluir
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          )}
+                        </div>
                       </div>
 
                       <div className="space-y-1.5">
@@ -519,22 +558,6 @@ export default function Propostas() {
                         )}
                       </div>
 
-                      {canEdit && (
-                        <div className="flex justify-end pt-1 border-t">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setConfirmDelete({ id: p.id, titulo: p.titulo });
-                            }}
-                            aria-label="Excluir proposta"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      )}
                     </CardContent>
                   </Card>
                 );

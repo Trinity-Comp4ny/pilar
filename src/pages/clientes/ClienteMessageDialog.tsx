@@ -49,9 +49,6 @@ export function ClienteMessageDialog({
               placeholder="Assunto"
             />
           </div>
-        </div>
-
-        <div className="space-y-4 py-4">
           <div className="space-y-2">
             <Label htmlFor="message">Mensagem</Label>
             <Textarea

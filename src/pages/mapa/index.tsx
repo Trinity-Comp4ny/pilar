@@ -67,6 +67,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { supabase } from "@/integrations/supabase/client";
 import { PROJECT_STATUS, PROJECT_STATUS_CONFIG, type ProjectStatus } from "@/constants";
 import { usePageTitle } from "@/hooks/usePageTitle";
+import { cn } from "@/lib/utils";
 
 delete (L.Icon.Default.prototype as unknown as Record<string, unknown>)._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -84,12 +85,25 @@ const STATUS_MARKER_COLORS: Record<string, string> = {
   Cancelado: "hsl(var(--status-cancelled))",
 };
 
+// Símbolo por status para não depender só da cor (WCAG 1.4.1 — daltônicos).
+const STATUS_SYMBOLS: Record<string, string> = {
+  Planejamento: "◷",
+  "Em andamento": "▸",
+  Revisão: "◎",
+  Concluído: "✓",
+  Paralisado: "‖",
+  Cancelado: "✕",
+};
+
+const markerHtml = (color: string, symbol: string) =>
+  `<div style="background:${color};width:24px;height:24px;border-radius:50%;border:3px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;color:white;font-size:12px;font-weight:700;line-height:1;">${symbol}</div>`;
+
 const STATUS_ICONS: Record<string, L.DivIcon> = Object.fromEntries(
   Object.entries(STATUS_MARKER_COLORS).map(([status, color]) => [
     status,
     L.divIcon({
       className: "custom-marker",
-      html: `<div style="background:${color};width:24px;height:24px;border-radius:50%;border:3px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.3);"></div>`,
+      html: markerHtml(color, STATUS_SYMBOLS[status] ?? ""),
       iconSize: [24, 24],
       iconAnchor: [12, 12],
       popupAnchor: [0, -12],
@@ -99,7 +113,7 @@ const STATUS_ICONS: Record<string, L.DivIcon> = Object.fromEntries(
 
 const FALLBACK_ICON = L.divIcon({
   className: "custom-marker",
-  html: `<div style="background:hsl(var(--status-unknown));width:24px;height:24px;border-radius:50%;border:3px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.3);"></div>`,
+  html: markerHtml("hsl(var(--status-unknown))", "?"),
   iconSize: [24, 24],
   iconAnchor: [12, 12],
   popupAnchor: [0, -12],
@@ -343,7 +357,7 @@ export default function MapaObras() {
                   <CommandList>
                     <CommandEmpty>Nenhum resultado encontrado.</CommandEmpty>
                     <CommandGroup heading="Projetos">
-                      {projetos.map((p) => (
+                      {filtrados.map((p) => (
                         <CommandItem
                           key={p.id}
                           value={`${p.codigo_projeto} ${p.nome}`}
@@ -460,22 +474,29 @@ export default function MapaObras() {
                   key={status}
                   type="button"
                   onClick={() => handleLegendClick(status)}
-                  className={`flex items-center gap-1.5 text-xs transition-opacity ${
+                  aria-pressed={isActive}
+                  title={isActive ? "Clique para limpar o filtro" : `Clique para filtrar por ${status}`}
+                  className={cn(
+                    "flex items-center gap-1.5 text-xs px-2 py-1.5 rounded-md cursor-pointer border border-transparent transition-colors hover:bg-muted",
                     isActive
-                      ? "text-foreground font-medium"
+                      ? "text-foreground font-medium bg-muted border-border"
                       : statusFilter !== "todos"
                         ? "text-muted-foreground/40"
                         : "text-muted-foreground"
-                  } hover:opacity-80`}
+                  )}
                 >
-                  <div
-                    className="w-3 h-3 rounded-full shrink-0 transition-transform"
+                  <span
+                    className="w-3.5 h-3.5 rounded-full shrink-0 flex items-center justify-center text-white transition-transform"
                     style={{
                       background: color,
-                      transform: isActive ? "scale(1.3)" : "scale(1)",
+                      fontSize: "9px",
+                      lineHeight: 1,
+                      transform: isActive ? "scale(1.2)" : "scale(1)",
                       boxShadow: isActive ? `0 0 0 2px ${color}40` : "none",
                     }}
-                  />
+                  >
+                    {STATUS_SYMBOLS[status] ?? ""}
+                  </span>
                   {status} ({count})
                 </button>
               );
@@ -485,7 +506,7 @@ export default function MapaObras() {
 
           <div
             ref={wrapperRef}
-            className="rounded-lg overflow-hidden border relative"
+            className="rounded-lg overflow-hidden border relative bg-muted"
             style={{ height: isFullscreen ? "100dvh" : "calc(100vh - 260px)" }}
           >
             {/* Seletor de camada */}
@@ -587,8 +608,13 @@ export default function MapaObras() {
                     eventHandlers={{ click: () => handleMarkerClick(projeto) }}
                   >
                     <Tooltip direction="top" offset={[0, -14]} opacity={0.95}>
-                      <span className="text-xs font-medium">
-                        {projeto.codigo_projeto} — {projeto.nome}
+                      <span className="flex flex-col">
+                        <span className="text-xs font-medium">
+                          {projeto.codigo_projeto} — {projeto.nome}
+                        </span>
+                        <span className="text-[11px] text-muted-foreground">
+                          {STATUS_SYMBOLS[projeto.status] ?? ""} {projeto.status}
+                        </span>
                       </span>
                     </Tooltip>
                   </Marker>

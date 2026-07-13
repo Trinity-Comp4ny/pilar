@@ -3,14 +3,24 @@ import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { useLancarHoras } from "@/hooks/useTimesheet";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { DatePicker } from "@/components/ui/date-picker";
-import { Loader2 } from "lucide-react";
+import { Loader2, Check, ChevronsUpDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface LancarHorasDialogProps {
   open: boolean;
@@ -21,7 +31,10 @@ interface LancarHorasDialogProps {
 interface ProjetoOption {
   id: string;
   nome: string;
+  codigo_projeto: string | null;
 }
+
+const NENHUMA_FASE = "__nenhuma__";
 
 interface FaseOption {
   id: string;
@@ -32,6 +45,7 @@ export function LancarHorasDialog({ open, onOpenChange, projetoIdInicial }: Lanc
   const hoje = format(new Date(), "yyyy-MM-dd");
 
   const [projetoId, setProjetoId] = useState(projetoIdInicial ?? "");
+  const [projetoOpen, setProjetoOpen] = useState(false);
   const [faseId, setFaseId] = useState("");
   const [data, setData] = useState(hoje);
   const [horas, setHoras] = useState("");
@@ -44,13 +58,16 @@ export function LancarHorasDialog({ open, onOpenChange, projetoIdInicial }: Lanc
     queryFn: async () => {
       const { data, error } = await supabase
         .from("projetos")
-        .select("id, nome")
+        .select("id, nome, codigo_projeto")
         .order("nome");
       if (error) throw error;
       return (data ?? []) as ProjetoOption[];
     },
     staleTime: 1000 * 60 * 5,
   });
+
+  const projetoLabel = (p: ProjetoOption) => (p.codigo_projeto ? `${p.codigo_projeto} — ${p.nome}` : p.nome);
+  const projetoSelecionado = projetos.find((p) => p.id === projetoId);
 
   const { data: fases = [] } = useQuery<FaseOption[]>({
     queryKey: ["orcamento-fases-select", projetoId],
@@ -99,31 +116,69 @@ export function LancarHorasDialog({ open, onOpenChange, projetoIdInicial }: Lanc
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Lançar horas</DialogTitle>
+          <DialogDescription>
+            Registre as horas trabalhadas em um projeto. Os campos com * são obrigatórios.
+          </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-1.5">
             <Label htmlFor="projeto">Projeto *</Label>
-            <Select value={projetoId} onValueChange={(v) => { setProjetoId(v); setFaseId(""); }}>
-              <SelectTrigger id="projeto">
-                <SelectValue placeholder="Selecione o projeto" />
-              </SelectTrigger>
-              <SelectContent>
-                {projetos.map((p) => (
-                  <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Popover open={projetoOpen} onOpenChange={setProjetoOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  id="projeto"
+                  type="button"
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={projetoOpen}
+                  className={cn("w-full justify-between font-normal", !projetoSelecionado && "text-muted-foreground")}
+                >
+                  <span className="truncate">
+                    {projetoSelecionado ? projetoLabel(projetoSelecionado) : "Selecione o projeto"}
+                  </span>
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+                <Command>
+                  <CommandInput placeholder="Buscar por código ou nome..." />
+                  <CommandList>
+                    <CommandEmpty>Nenhum projeto encontrado.</CommandEmpty>
+                    <CommandGroup>
+                      {projetos.map((p) => (
+                        <CommandItem
+                          key={p.id}
+                          value={projetoLabel(p)}
+                          onSelect={() => {
+                            setProjetoId(p.id);
+                            setFaseId("");
+                            setProjetoOpen(false);
+                          }}
+                        >
+                          <Check className={cn("mr-2 h-4 w-4", projetoId === p.id ? "opacity-100" : "opacity-0")} />
+                          <span className="truncate">{projetoLabel(p)}</span>
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
           </div>
 
           {projetoId && (
             <div className="space-y-1.5">
               <Label htmlFor="fase">Fase / Disciplina</Label>
-              <Select value={faseId} onValueChange={setFaseId}>
+              <Select
+                value={faseId || NENHUMA_FASE}
+                onValueChange={(v) => setFaseId(v === NENHUMA_FASE ? "" : v)}
+              >
                 <SelectTrigger id="fase">
                   <SelectValue placeholder="Selecione a fase (opcional)" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value={NENHUMA_FASE}>Nenhuma fase</SelectItem>
                   {fases.map((f) => (
                     <SelectItem key={f.id} value={f.id}>{f.disciplina}</SelectItem>
                   ))}

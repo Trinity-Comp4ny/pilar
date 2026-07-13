@@ -318,28 +318,30 @@ export const processCategoryData = (
 ) => {
   const categoryMap = new Map<string, { name: string; value: number; color: string }>();
 
-  const greenShades = [
+  // Matizes distintos (não monocromáticos) para diferenciar fatias adjacentes.
+  // Receitas: paleta fria/verde; Despesas: paleta quente/vermelha.
+  const receitasColors = [
     "hsl(var(--c-green-600))",
-    "hsl(var(--c-green-500))",
-    "hsl(var(--c-green-400))",
-    "hsl(var(--c-green-700))",
-    "hsl(var(--c-green-900))",
-    "hsl(var(--c-green-200))",
-    "hsl(var(--c-green-100))",
-    "hsl(var(--c-green-200))",
+    "hsl(var(--c-emerald-500))",
+    "hsl(var(--c-cyan-500))",
+    "hsl(var(--c-lime-500))",
+    "hsl(var(--c-blue-500))",
+    "hsl(var(--c-indigo-500))",
+    "hsl(var(--c-violet-500))",
+    "hsl(var(--c-purple-500))",
   ];
-  const redShades = [
+  const despesasColors = [
     "hsl(var(--c-red-600))",
-    "hsl(var(--c-red-500))",
+    "hsl(var(--c-orange-500))",
+    "hsl(var(--c-amber-500))",
+    "hsl(var(--c-pink-500))",
     "hsl(var(--c-red-400))",
-    "hsl(var(--c-red-700))",
-    "hsl(var(--c-red-900))",
-    "hsl(var(--c-red-200))",
-    "hsl(var(--c-red-100))",
-    "hsl(var(--c-red-50))",
+    "hsl(var(--c-orange-700))",
+    "hsl(var(--c-yellow-600))",
+    "hsl(var(--c-purple-600))",
   ];
 
-  const colors = type === "receitas" ? greenShades : redShades;
+  const colors = type === "receitas" ? receitasColors : despesasColors;
 
   items.forEach((item) => {
     const categoryName = item.categorias_financeiras?.nome || "Outros";

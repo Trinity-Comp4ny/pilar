@@ -1,13 +1,20 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { format, subDays } from "date-fns";
-import { Clock, Plus, CheckCircle } from "lucide-react";
+import { Clock, Plus, CheckCircle, XCircle, RotateCcw } from "lucide-react";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { usePageTitle } from "@/hooks/usePageTitle";
-import { useTimesheetLancamentos, useAprovarHoras } from "@/hooks/useTimesheet";
+import {
+  useTimesheetLancamentos,
+  useAprovarHoras,
+  useAprovarHorasLote,
+  useRejeitarHoras,
+  useReabrirHoras,
+} from "@/hooks/useTimesheet";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import { useAuth } from "@/contexts/AuthContext";
 import { LancarHorasDialog } from "@/components/LancarHorasDialog";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -42,16 +49,22 @@ function LancamentosTable({
   lancamentos,
   isLoading,
   showUser,
-  showAprovar,
+  showAcoes,
   onAprovar,
-  isAprovando,
+  onRejeitar,
+  onReabrir,
+  onLancar,
+  isMutando,
 }: {
   lancamentos: TimesheetLancamento[];
   isLoading: boolean;
   showUser?: boolean;
-  showAprovar?: boolean;
-  onAprovar?: (id: string) => void;
-  isAprovando?: boolean;
+  showAcoes?: boolean;
+  onAprovar?: (l: TimesheetLancamento) => void;
+  onRejeitar?: (l: TimesheetLancamento) => void;
+  onReabrir?: (l: TimesheetLancamento) => void;
+  onLancar?: () => void;
+  isMutando?: boolean;
 }) {
   if (isLoading) {
     return (
@@ -70,6 +83,12 @@ function LancamentosTable({
           <Clock className="h-8 w-8 text-muted-foreground" />
         </div>
         <p className="text-sm text-muted-foreground">Nenhum lançamento encontrado</p>
+        {onLancar && (
+          <Button size="sm" onClick={onLancar}>
+            <Plus className="h-4 w-4 mr-2" />
+            Lançar horas
+          </Button>
+        )}
       </div>
     );
   }
@@ -86,7 +105,7 @@ function LancamentosTable({
             <TableHead>Descrição</TableHead>
             <TableHead className="text-right">Horas</TableHead>
             <TableHead>Status</TableHead>
-            {showAprovar && <TableHead />}
+            {showAcoes && <TableHead className="text-right">Ações</TableHead>}
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -113,20 +132,51 @@ function LancamentosTable({
               <TableCell>
                 <StatusBadge status={l.status} />
               </TableCell>
-              {showAprovar && (
-                <TableCell>
-                  {l.status === "pendente" && onAprovar && (
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="h-7 px-2 text-xs"
-                      disabled={isAprovando}
-                      onClick={() => onAprovar(l.id)}
-                    >
-                      <CheckCircle className="h-3.5 w-3.5 mr-1" />
-                      Aprovar
-                    </Button>
-                  )}
+              {showAcoes && (
+                <TableCell className="text-right">
+                  <div className="flex justify-end gap-1">
+                    {l.status === "pendente" ? (
+                      <>
+                        {onAprovar && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 px-2 text-xs text-emerald-700"
+                            disabled={isMutando}
+                            onClick={() => onAprovar(l)}
+                          >
+                            <CheckCircle className="h-3.5 w-3.5 mr-1" />
+                            Aprovar
+                          </Button>
+                        )}
+                        {onRejeitar && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 px-2 text-xs text-red-600"
+                            disabled={isMutando}
+                            onClick={() => onRejeitar(l)}
+                          >
+                            <XCircle className="h-3.5 w-3.5 mr-1" />
+                            Rejeitar
+                          </Button>
+                        )}
+                      </>
+                    ) : (
+                      onReabrir && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 px-2 text-xs text-muted-foreground"
+                          disabled={isMutando}
+                          onClick={() => onReabrir(l)}
+                        >
+                          <RotateCcw className="h-3.5 w-3.5 mr-1" />
+                          Reabrir
+                        </Button>
+                      )
+                    )}
+                  </div>
                 </TableCell>
               )}
             </TableRow>
@@ -183,8 +233,37 @@ export default function Timesheet() {
   const { user } = useAuth();
   const { canEdit: podeGerirEquipe } = useFeatureAccess("pessoas");
   const { mutate: aprovarHoras, isPending: isAprovando } = useAprovarHoras();
+  const { mutate: aprovarLote, isPending: isAprovandoLote } = useAprovarHorasLote();
+  const { mutate: rejeitarHoras, isPending: isRejeitando } = useRejeitarHoras();
+  const { mutate: reabrirHoras, isPending: isReabrindo } = useReabrirHoras();
+
+  const isMutando = isAprovando || isAprovandoLote || isRejeitando || isReabrindo;
 
   const [dialogAberto, setDialogAberto] = useState(false);
+
+  // Confirmação leve para ações que mudam o estado de um lançamento.
+  type ConfirmAction =
+    | { type: "aprovar"; id: string; nome: string }
+    | { type: "rejeitar"; id: string; nome: string }
+    | { type: "reabrir"; id: string; nome: string }
+    | { type: "aprovar-lote"; ids: string[] };
+  const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(null);
+
+  const handleConfirm = () => {
+    if (!confirmAction) return;
+    if (confirmAction.type === "aprovar") aprovarHoras(confirmAction.id);
+    else if (confirmAction.type === "rejeitar") rejeitarHoras(confirmAction.id);
+    else if (confirmAction.type === "reabrir") reabrirHoras(confirmAction.id);
+    else if (confirmAction.type === "aprovar-lote") aprovarLote(confirmAction.ids);
+    setConfirmAction(null);
+  };
+
+  const confirmCopy: Record<ConfirmAction["type"], { title: string; description: string; variant: "default" | "destructive"; confirmText: string }> = {
+    aprovar: { title: "Aprovar lançamento", description: "Confirmar a aprovação destas horas? Você poderá reabrir depois.", variant: "default", confirmText: "Aprovar" },
+    rejeitar: { title: "Rejeitar lançamento", description: "As horas serão marcadas como rejeitadas. Você poderá reabrir depois.", variant: "destructive", confirmText: "Rejeitar" },
+    reabrir: { title: "Reabrir lançamento", description: "As horas voltarão para pendente e precisarão de nova análise.", variant: "default", confirmText: "Reabrir" },
+    "aprovar-lote": { title: "Aprovar pendentes", description: "Confirmar a aprovação de todos os lançamentos pendentes filtrados?", variant: "default", confirmText: "Aprovar todos" },
+  };
 
   const hoje = format(new Date(), "yyyy-MM-dd");
   const trintaDiasAtras = format(subDays(new Date(), 30), "yyyy-MM-dd");
@@ -216,6 +295,11 @@ export default function Timesheet() {
   );
 
   const totalHorasMeus = meusLancamentos.reduce((acc: number, l: TimesheetLancamento) => acc + l.horas, 0);
+  const totalHorasEquipe = equipeData.reduce((acc: number, l: TimesheetLancamento) => acc + l.horas, 0);
+  const pendentesEquipe = useMemo(
+    () => equipeData.filter((l: TimesheetLancamento) => l.status === "pendente"),
+    [equipeData]
+  );
 
   return (
     <PageLayout>
@@ -252,33 +336,72 @@ export default function Timesheet() {
           <LancamentosTable
             lancamentos={meusLancamentos}
             isLoading={loadingMeus}
+            onLancar={() => setDialogAberto(true)}
           />
         </TabsContent>
 
         {podeGerirEquipe && (
           <TabsContent value="equipe" className="space-y-4">
-            <FiltrosBar
-              dataInicio={equipeDataInicio}
-              dataFim={equipeDataFim}
-              status={equipeStatus}
-              onDataInicio={setEquipeDataInicio}
-              onDataFim={setEquipeDataFim}
-              onStatus={setEquipeStatus}
-            />
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <FiltrosBar
+                dataInicio={equipeDataInicio}
+                dataFim={equipeDataFim}
+                status={equipeStatus}
+                onDataInicio={setEquipeDataInicio}
+                onDataFim={setEquipeDataFim}
+                onStatus={setEquipeStatus}
+              />
+              <div className="flex items-center gap-3">
+                {!loadingEquipe && equipeData.length > 0 && (
+                  <p className="text-sm text-muted-foreground whitespace-nowrap">
+                    Total: <span className="font-semibold text-foreground">{totalHorasEquipe.toFixed(1)}h</span>
+                    {pendentesEquipe.length > 0 && (
+                      <span className="ml-2 text-amber-600">{pendentesEquipe.length} pendente(s)</span>
+                    )}
+                  </p>
+                )}
+                {pendentesEquipe.length > 0 && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={isMutando}
+                    onClick={() =>
+                      setConfirmAction({ type: "aprovar-lote", ids: pendentesEquipe.map((l: TimesheetLancamento) => l.id) })
+                    }
+                  >
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    Aprovar pendentes ({pendentesEquipe.length})
+                  </Button>
+                )}
+              </div>
+            </div>
 
             <LancamentosTable
               lancamentos={equipeData}
               isLoading={loadingEquipe}
               showUser
-              showAprovar
-              onAprovar={(id) => aprovarHoras(id)}
-              isAprovando={isAprovando}
+              showAcoes
+              onAprovar={(l) => setConfirmAction({ type: "aprovar", id: l.id, nome: l.projeto_nome ?? "" })}
+              onRejeitar={(l) => setConfirmAction({ type: "rejeitar", id: l.id, nome: l.projeto_nome ?? "" })}
+              onReabrir={(l) => setConfirmAction({ type: "reabrir", id: l.id, nome: l.projeto_nome ?? "" })}
+              isMutando={isMutando}
             />
           </TabsContent>
         )}
       </Tabs>
 
       <LancarHorasDialog open={dialogAberto} onOpenChange={setDialogAberto} />
+
+      <ConfirmDialog
+        open={confirmAction !== null}
+        onOpenChange={(open) => !open && setConfirmAction(null)}
+        onConfirm={handleConfirm}
+        title={confirmAction ? confirmCopy[confirmAction.type].title : ""}
+        description={confirmAction ? confirmCopy[confirmAction.type].description : ""}
+        itemName={confirmAction && "nome" in confirmAction ? confirmAction.nome : undefined}
+        confirmText={confirmAction ? confirmCopy[confirmAction.type].confirmText : "Confirmar"}
+        variant={confirmAction ? confirmCopy[confirmAction.type].variant : "default"}
+      />
     </PageLayout>
   );
 }

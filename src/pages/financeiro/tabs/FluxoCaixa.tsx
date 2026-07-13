@@ -1,5 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowUpRight, ArrowDownRight, TrendingUp, TrendingDown, Loader2 } from "lucide-react";
+import { ArrowUpRight, ArrowDownRight, TrendingUp, TrendingDown } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   ResponsiveContainer,
   ComposedChart,
@@ -65,8 +66,29 @@ export default function FluxoCaixa({ dateFrom, dateTo }: FluxoCaixaProps) {
 
   if (isLoadingDashboard || isLoadingTop) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      <div className="space-y-6 w-full max-w-none">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
+          {[1, 2, 3].map((i) => (
+            <Card key={i} className="vrz-card w-full">
+              <CardHeader className="pb-2">
+                <Skeleton className="h-3 w-24" />
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <Skeleton className="h-8 w-40" />
+                <Skeleton className="h-3 w-32" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+        <Card className="vrz-card w-full">
+          <CardHeader>
+            <Skeleton className="h-5 w-40" />
+            <Skeleton className="h-3 w-64" />
+          </CardHeader>
+          <CardContent>
+            <Skeleton className="h-[360px] w-full" />
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -99,9 +121,15 @@ export default function FluxoCaixa({ dateFrom, dateTo }: FluxoCaixaProps) {
             <div className="text-xl md:text-2xl font-bold text-green-700 tabular-nums truncate">
               {formatCurrency(stats.receitasTotal)}
             </div>
-            <p className="text-xs text-green-600 mt-1 flex items-center min-w-0">
-              <ArrowUpRight size={12} className="mr-1 flex-shrink-0" />
-              <span className="truncate">{stats.receitasMes}% vs mês anterior</span>
+            <p
+              className={`text-xs mt-1 flex items-center min-w-0 ${Number(stats.receitasMes) < 0 ? "text-red-600" : "text-green-600"}`}
+            >
+              {Number(stats.receitasMes) < 0 ? (
+                <ArrowDownRight size={12} className="mr-1 flex-shrink-0" />
+              ) : (
+                <ArrowUpRight size={12} className="mr-1 flex-shrink-0" />
+              )}
+              <span className="truncate">{stats.receitasMes}% vs período anterior</span>
             </p>
           </CardContent>
         </Card>
@@ -114,9 +142,15 @@ export default function FluxoCaixa({ dateFrom, dateTo }: FluxoCaixaProps) {
             <div className="text-xl md:text-2xl font-bold text-red-700 tabular-nums truncate">
               {formatCurrency(stats.despesasTotal)}
             </div>
-            <p className="text-xs text-red-600 mt-1 flex items-center min-w-0">
-              <ArrowDownRight size={12} className="mr-1 flex-shrink-0" />
-              <span className="truncate">{stats.despesasMes}% vs mês anterior</span>
+            <p
+              className={`text-xs mt-1 flex items-center min-w-0 ${Number(stats.despesasMes) > 0 ? "text-red-600" : "text-green-600"}`}
+            >
+              {Number(stats.despesasMes) > 0 ? (
+                <ArrowUpRight size={12} className="mr-1 flex-shrink-0" />
+              ) : (
+                <ArrowDownRight size={12} className="mr-1 flex-shrink-0" />
+              )}
+              <span className="truncate">{stats.despesasMes}% vs período anterior</span>
             </p>
           </CardContent>
         </Card>
@@ -146,7 +180,7 @@ export default function FluxoCaixa({ dateFrom, dateTo }: FluxoCaixaProps) {
           <div className="h-[360px] w-full relative">
             {!hasMonthlyData && (
               <div className="absolute inset-0 flex items-center justify-center bg-white/50 z-10">
-                <p className="text-muted-foreground text-sm">Não possui registros de dados ainda</p>
+                <p className="text-muted-foreground text-sm">Sem registros no período</p>
               </div>
             )}
             <ResponsiveContainer width="100%" height="100%">
@@ -194,7 +228,7 @@ export default function FluxoCaixa({ dateFrom, dateTo }: FluxoCaixaProps) {
           <div className="h-[300px] w-full relative">
             {!hasDailyData && (
               <div className="absolute inset-0 flex items-center justify-center bg-white/50 z-10">
-                <p className="text-muted-foreground text-sm">Não possui registros de dados ainda</p>
+                <p className="text-muted-foreground text-sm">Sem registros no período</p>
               </div>
             )}
             <ResponsiveContainer width="100%" height="100%">

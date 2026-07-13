@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Loader2, Building2, FileSignature, CheckCircle2 } from "lucide-react";
 import { ClienteShell } from "./ClienteShell";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { useClienteProjetoData } from "./useClienteProjetoData";
 import { FinanceiroContent } from "@/pages/portal/PortalFinanceiro";
 import { EntregasContent } from "@/pages/portal/PortalEntregas";
@@ -29,6 +30,7 @@ function AprovarPropostaCard({
   refresh: () => void;
 }) {
   const [loading, setLoading] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const { toast } = useToast();
 
   const formatCurrency = (v: number | null) =>
@@ -86,19 +88,38 @@ function AprovarPropostaCard({
           )}
         </div>
 
-        <Button
-          className="w-full gap-2 bg-brand hover:bg-brand/90 text-ink"
-          onClick={handleAprovar}
-          disabled={loading}
-        >
-          {loading ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <CheckCircle2 className="h-4 w-4" />
-          )}
-          {loading ? "Aprovando…" : "Aprovar proposta"}
-        </Button>
+        <div className="space-y-2">
+          <Button
+            className="w-full gap-2 bg-brand hover:bg-brand/90 text-ink"
+            onClick={() => setConfirmOpen(true)}
+            disabled={loading}
+          >
+            {loading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <CheckCircle2 className="h-4 w-4" />
+            )}
+            {loading ? "Aprovando…" : "Aprovar proposta"}
+          </Button>
+          <p className="text-center text-xs text-ink/60">
+            Precisa de ajustes? Fale com o escritório antes de aprovar.
+          </p>
+        </div>
       </CardContent>
+
+      <ConfirmDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        onConfirm={handleAprovar}
+        variant="default"
+        title="Aprovar esta proposta?"
+        itemName={projeto.projeto_nome}
+        description={`Ao confirmar, o projeto será iniciado com o valor de ${formatCurrency(
+          projeto.valor_contrato
+        )}. Esta ação confirma o contrato — se precisar de alterações, fale com o escritório antes.`}
+        confirmText="Confirmar aprovação"
+        cancelText="Voltar"
+      />
     </Card>
   );
 }

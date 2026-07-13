@@ -22,7 +22,7 @@ import { usePageTitle } from "@/hooks/usePageTitle";
 import { usePermissions } from "@/hooks/usePermissions";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { formatCNPJ, formatPhone, onlyDigits } from "@/lib/maskUtils";
+import { formatCNPJ, formatPhone, onlyDigits, validateEmail } from "@/lib/maskUtils";
 import { isValidCNPJ } from "@/lib/brasilApi";
 
 interface Fornecedor {
@@ -47,6 +47,9 @@ const EMPTY_FORM: FormState = { nome: "", cnpj: "", contato: "", email: "", tele
 export default function Fornecedores() {
   usePageTitle("Fornecedores");
   const { can } = usePermissions();
+  // Decisão de produto: fornecedores é intencionalmente gated pela feature "financeiro"
+  // (contas a pagar/fornecedores fazem parte do módulo financeiro). Não há feature própria
+  // "fornecedores" no controle de acesso — mudar isso exige alteração central de permissões.
   const canEdit = can("financeiro", "edit");
 
   const [fornecedores, setFornecedores] = useState<Fornecedor[]>([]);
@@ -56,6 +59,7 @@ export default function Fornecedores() {
   const [currentId, setCurrentId] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [cnpjError, setCnpjError] = useState("");
+  const [emailError, setEmailError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [toDelete, setToDelete] = useState<{ id: string; nome: string } | null>(null);
@@ -82,6 +86,7 @@ export default function Fornecedores() {
     setCurrentId(null);
     setIsEditMode(false);
     setCnpjError("");
+    setEmailError("");
   };
 
   const handleOpenNew = () => { resetForm(); setIsDialogOpen(true); };
@@ -96,6 +101,7 @@ export default function Fornecedores() {
       telefone: f.telefone ? formatPhone(f.telefone) : "",
     });
     setCnpjError("");
+    setEmailError("");
     setCurrentId(f.id);
     setIsEditMode(true);
     setIsDialogOpen(true);
@@ -117,12 +123,21 @@ export default function Fornecedores() {
       toast.error("O nome do fornecedor é obrigatório");
       return false;
     }
+    let valid = true;
     const cnpjDigits = onlyDigits(form.cnpj);
     if (cnpjDigits.length > 0 && !isValidCNPJ(form.cnpj)) {
       setCnpjError("CNPJ inválido");
-      return false;
+      valid = false;
+    } else {
+      setCnpjError("");
     }
-    return true;
+    if (form.email.trim() && !validateEmail(form.email.trim())) {
+      setEmailError("E-mail inválido");
+      valid = false;
+    } else {
+      setEmailError("");
+    }
+    return valid;
   };
 
   const handleSave = async () => {
@@ -251,10 +266,11 @@ export default function Fornecedores() {
                       onChange={(e) => handleCnpjChange(e.target.value)}
                       placeholder="00.000.000/0000-00"
                       aria-invalid={!!cnpjError}
+                      aria-describedby={cnpjError ? "fornecedor-cnpj-error" : undefined}
                       className={cnpjError ? "border-red-500 focus-visible:ring-red-500" : ""}
                     />
                     {cnpjError && (
-                      <p className="text-xs text-red-500">{cnpjError}</p>
+                      <p id="fornecedor-cnpj-error" role="alert" className="text-xs text-red-600">{cnpjError}</p>
                     )}
                   </div>
                   <div className="grid grid-cols-2 gap-3">
@@ -283,9 +299,18 @@ export default function Fornecedores() {
                       id="email"
                       type="email"
                       value={form.email}
-                      onChange={(e) => setForm({ ...form, email: e.target.value })}
+                      onChange={(e) => {
+                        setForm({ ...form, email: e.target.value });
+                        if (emailError) setEmailError("");
+                      }}
                       placeholder="email@exemplo.com"
+                      aria-invalid={!!emailError}
+                      aria-describedby={emailError ? "fornecedor-email-error" : undefined}
+                      className={emailError ? "border-red-500 focus-visible:ring-red-500" : ""}
                     />
+                    {emailError && (
+                      <p id="fornecedor-email-error" role="alert" className="text-xs text-red-600">{emailError}</p>
+                    )}
                   </div>
                   <div className="flex items-center gap-2 pt-2">
                     <Button type="button" variant="ghost" onClick={() => setIsDialogOpen(false)} disabled={isSaving}>
@@ -377,7 +402,7 @@ export default function Fornecedores() {
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8"
+                              className="h-9 w-9"
                               onClick={(e) => handleEditClick(f, e)}
                               aria-label="Editar fornecedor"
                             >
@@ -387,7 +412,7 @@ export default function Fornecedores() {
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-8 w-8 text-red-500"
+                                className="h-9 w-9 text-red-500"
                                 onClick={(e) => handleDeleteClick(f, e)}
                                 aria-label="Excluir fornecedor"
                               >

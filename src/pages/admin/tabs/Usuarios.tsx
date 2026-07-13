@@ -122,6 +122,7 @@ export function UsuariosTab({ users, setUsers, currentUserId, companyFeatures }:
       companyFeatures={companyFeatures}
       currentUserId={currentUserId}
       canManage
+      onRequireAuth={requireAal2}
       onInvite={handleInvite}
       onUpdate={handleUpdate}
       onDelete={handleDelete}

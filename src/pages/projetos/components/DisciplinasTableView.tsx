@@ -163,6 +163,12 @@ export function DisciplinasTableView({
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
+                                {disc.disciplina &&
+                                  !disciplinasCatalog.some((d) => d.nome === disc.disciplina) && (
+                                    <SelectItem value={disc.disciplina} className="text-xs">
+                                      {disc.disciplina}
+                                    </SelectItem>
+                                  )}
                                 {disciplinasCatalog.map((d) => (
                                   <SelectItem key={d.id} value={d.nome} className="text-xs">
                                     {d.nome}

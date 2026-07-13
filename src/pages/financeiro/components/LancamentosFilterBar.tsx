@@ -54,10 +54,10 @@ interface Props {
 }
 
 const PERIODO_LABEL: Record<Periodo | "custom", string> = {
-  "mes-atual": "Mês atual",
-  "mes-anterior": "Mês anterior",
+  "mes-atual": "Este Mês",
+  "mes-anterior": "Mês Passado",
   "ultimos-30": "Últimos 30 dias",
-  ano: "Este ano",
+  ano: "Este Ano",
   tudo: "Todo período",
   custom: "Personalizado",
 };
