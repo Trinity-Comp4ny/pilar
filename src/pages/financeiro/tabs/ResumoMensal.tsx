@@ -84,7 +84,7 @@ export default function ResumoMensal({ dateFrom, dateTo }: ResumoMensalProps) {
             <CardTitle className="text-sm font-medium text-positive truncate">Receitas</CardTitle>
           </CardHeader>
           <CardContent className="min-w-0">
-            <div className="text-xl md:text-2xl font-bold text-positive tabular-nums truncate">
+            <div className="text-base sm:text-lg xl:text-xl font-bold text-positive tabular-nums whitespace-nowrap">
               {formatCurrency(stats.receitasTotal)}
             </div>
             <p className="text-xs text-positive mt-1 flex items-center min-w-0">
@@ -98,7 +98,7 @@ export default function ResumoMensal({ dateFrom, dateTo }: ResumoMensalProps) {
             <CardTitle className="text-sm font-medium text-red-800 truncate">Despesas</CardTitle>
           </CardHeader>
           <CardContent className="min-w-0">
-            <div className="text-xl md:text-2xl font-bold text-red-700 tabular-nums truncate">
+            <div className="text-base sm:text-lg xl:text-xl font-bold text-red-700 tabular-nums whitespace-nowrap">
               {formatCurrency(stats.despesasTotal)}
             </div>
             <p className="text-xs text-positive mt-1 flex items-center min-w-0">
@@ -112,7 +112,7 @@ export default function ResumoMensal({ dateFrom, dateTo }: ResumoMensalProps) {
             <CardTitle className="text-sm font-medium text-blue-800 truncate">Lucro Líquido</CardTitle>
           </CardHeader>
           <CardContent className="min-w-0">
-            <div className="text-xl md:text-2xl font-bold text-blue-700 tabular-nums truncate">
+            <div className="text-base sm:text-lg xl:text-xl font-bold text-blue-700 tabular-nums whitespace-nowrap">
               {formatCurrency(stats.saldo)}
             </div>
             <p className="text-xs text-blue-600 mt-1 truncate">
@@ -136,7 +136,7 @@ export default function ResumoMensal({ dateFrom, dateTo }: ResumoMensalProps) {
               );
               const projection = (stats.saldo / elapsedDays) * totalDays;
               return (
-                <div className="text-xl md:text-2xl font-bold text-foreground tabular-nums truncate">
+                <div className="text-base sm:text-lg xl:text-xl font-bold text-foreground tabular-nums whitespace-nowrap">
                   {formatCurrency(projection)}
                 </div>
               );

@@ -12,6 +12,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { ArrowLeft, ArrowRight, Loader2, Lock, Phone, User } from "lucide-react";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { PasswordStrengthIndicator } from "@/components/PasswordStrengthIndicator";
+import { getSafeErrorMessage } from "@/lib/safeError";
 import { profileSetupSchema, profileSetupDefaultValues, type ProfileSetupFormData } from "@/schemas";
 
 export default function ProfileSetup() {
@@ -115,7 +116,7 @@ export default function ProfileSetup() {
 
       navigate(needsCompanySetup ? "/company-setup" : "/dashboard");
     } catch (err: unknown) {
-      toast.error("Erro ao salvar");
+      toast.error("Erro ao salvar", { description: getSafeErrorMessage(err) });
     } finally {
       setIsLoading(false);
     }
