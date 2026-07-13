@@ -118,6 +118,7 @@ export const useCreateLead = () => {
           responsavel_id: lead.responsavel_id ?? null,
           previsao_fechamento: lead.previsao_fechamento ?? null,
           empresa_lead: lead.empresa_lead ?? null,
+          cnpj: lead.cnpj ?? null,
           notas: lead.notas ?? null,
           status: "Novo",
           empresa_id: empresaId,
