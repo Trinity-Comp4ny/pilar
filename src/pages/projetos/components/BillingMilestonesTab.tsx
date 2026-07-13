@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { formatCurrencyInput, parseCurrencyString, formatCurrency } from "@/lib/currencyUtils";
 import { DatePicker } from "@/components/ui/date-picker";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 
 interface BillingMilestonesTabProps {
   projetoId: string;
@@ -38,6 +39,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; icon: typeof
 export function BillingMilestonesTab({ projetoId, canEdit }: BillingMilestonesTabProps) {
   const queryClient = useQueryClient();
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [deleteMarcoId, setDeleteMarcoId] = useState<string | null>(null);
   const [formNome, setFormNome] = useState("");
   const [formValor, setFormValor] = useState("");
   const [formData, setFormData] = useState("");
@@ -116,8 +118,11 @@ export function BillingMilestonesTab({ projetoId, canEdit }: BillingMilestonesTa
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["marcos-faturamento", projetoId] });
+      queryClient.invalidateQueries({ queryKey: ["receitas"] });
+      setDeleteMarcoId(null);
       toast.success("Marco removido");
     },
+    onError: () => toast.error("Erro ao remover marco", { description: "Tente novamente." }),
   });
 
   const gerarParcelasMutation = useMutation({
@@ -232,7 +237,7 @@ export function BillingMilestonesTab({ projetoId, canEdit }: BillingMilestonesTa
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8 text-red-500"
-                        onClick={() => deleteMutation.mutate(marco.id)}
+                        onClick={() => setDeleteMarcoId(marco.id)}
                         aria-label="Excluir marco"
                       >
                         <Trash2 className="h-4 w-4" />
@@ -244,6 +249,19 @@ export function BillingMilestonesTab({ projetoId, canEdit }: BillingMilestonesTa
             })}
           </div>
         )}
+
+        <ConfirmDialog
+          open={!!deleteMarcoId}
+          onOpenChange={(open) => {
+            if (!open) setDeleteMarcoId(null);
+          }}
+          onConfirm={() => {
+            if (deleteMarcoId) deleteMutation.mutate(deleteMarcoId);
+          }}
+          title="Excluir marco de faturamento"
+          description="Se este marco já foi faturado, a receita gerada por ele fica órfã. Esta ação não pode ser desfeita."
+          variant="destructive"
+        />
 
         {/* Dialog de criação */}
         <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
