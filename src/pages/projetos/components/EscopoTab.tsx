@@ -11,6 +11,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { formatCurrency } from "@/lib/currencyUtils";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 
 interface EscopoTabProps {
   projetoId: string;
@@ -51,6 +52,11 @@ export function EscopoTab({ projetoId, canEdit }: EscopoTabProps) {
   const queryClient = useQueryClient();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [confirmAditivo, setConfirmAditivo] = useState<{
+    id: string;
+    status: "aprovado" | "rejeitado";
+    descricao: string;
+  } | null>(null);
 
   // Form state
   const [formTipo, setFormTipo] = useState<"original" | "aditivo">("aditivo");
@@ -180,6 +186,7 @@ export function EscopoTab({ projetoId, canEdit }: EscopoTabProps) {
         toast.success("Status atualizado");
       }
     },
+    onError: () => toast.error("Não foi possível atualizar o status. Tente novamente."),
   });
 
   const resetForm = () => {
@@ -343,7 +350,9 @@ export function EscopoTab({ projetoId, canEdit }: EscopoTabProps) {
                             <Button
                               size="sm"
                               className="text-xs h-7 bg-positive hover:bg-positive/90"
-                              onClick={() => updateStatusMutation.mutate({ id: escopo.id, status: "aprovado" })}
+                              onClick={() =>
+                                setConfirmAditivo({ id: escopo.id, status: "aprovado", descricao: escopo.descricao })
+                              }
                             >
                               <CheckCircle2 className="h-3 w-3 mr-1" /> Aprovar
                             </Button>
@@ -351,7 +360,9 @@ export function EscopoTab({ projetoId, canEdit }: EscopoTabProps) {
                               size="sm"
                               variant="destructive"
                               className="text-xs h-7"
-                              onClick={() => updateStatusMutation.mutate({ id: escopo.id, status: "rejeitado" })}
+                              onClick={() =>
+                                setConfirmAditivo({ id: escopo.id, status: "rejeitado", descricao: escopo.descricao })
+                              }
                             >
                               <XCircle className="h-3 w-3 mr-1" /> Rejeitar
                             </Button>
@@ -472,6 +483,26 @@ export function EscopoTab({ projetoId, canEdit }: EscopoTabProps) {
           </div>
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        open={!!confirmAditivo}
+        onOpenChange={(o) => !o && setConfirmAditivo(null)}
+        onConfirm={() => {
+          if (confirmAditivo) {
+            updateStatusMutation.mutate({ id: confirmAditivo.id, status: confirmAditivo.status });
+          }
+          setConfirmAditivo(null);
+        }}
+        title={confirmAditivo?.status === "aprovado" ? "Aprovar aditivo?" : "Rejeitar aditivo?"}
+        description={
+          confirmAditivo?.status === "aprovado"
+            ? "Ao aprovar, o orçamento e o valor de contrato do projeto são atualizados automaticamente. Esta ação não pode ser desfeita."
+            : "O aditivo será marcado como rejeitado e não entrará no orçamento do projeto."
+        }
+        itemName={confirmAditivo?.descricao}
+        confirmText={confirmAditivo?.status === "aprovado" ? "Aprovar" : "Rejeitar"}
+        variant={confirmAditivo?.status === "aprovado" ? "default" : "destructive"}
+      />
     </div>
   );
 }

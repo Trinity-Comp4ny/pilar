@@ -67,6 +67,7 @@ export function TemplatesManager() {
         toast.success("Template removido");
         setDeleteId(null);
       },
+      onError: (err: Error) => toast.error("Não foi possível remover o template", { description: err.message }),
     });
   };
 
