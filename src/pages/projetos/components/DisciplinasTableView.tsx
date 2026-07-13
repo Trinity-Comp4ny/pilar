@@ -73,6 +73,7 @@ export function DisciplinasTableView({
   const [justificativaDialog, setJustificativaDialog] = useState<{ idx: number; newStatus: string } | null>(null);
   const [justificativaText, setJustificativaText] = useState("");
   const [concludingIdx, setConcludingIdx] = useState<number | null>(null);
+  const [deleteDiscIdx, setDeleteDiscIdx] = useState<number | null>(null);
   const [concludingDate, setConcludingDate] = useState<string>("");
   const [obsDrafts, setObsDrafts] = useState<Record<string, string>>({});
 
@@ -393,7 +394,7 @@ export function DisciplinasTableView({
                             variant="ghost"
                             size="icon"
                             className="h-8 w-8 text-muted-foreground hover:text-red-600"
-                            onClick={() => handleRemoveDisc(idx)}
+                            onClick={() => setDeleteDiscIdx(idx)}
                             aria-label="Excluir disciplina"
                           >
                             <Trash2 className="h-4 w-4" />
@@ -478,6 +479,34 @@ export function DisciplinasTableView({
       </div>
 
       {/* Confirmação de conclusão */}
+      <AlertDialog
+        open={deleteDiscIdx !== null}
+        onOpenChange={(o) => {
+          if (!o) setDeleteDiscIdx(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir disciplina</AlertDialogTitle>
+            <AlertDialogDescription>
+              Remove a disciplina do projeto junto com os responsáveis, status e datas vinculados (em cascata). Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700"
+              onClick={() => {
+                if (deleteDiscIdx !== null) handleRemoveDisc(deleteDiscIdx);
+                setDeleteDiscIdx(null);
+              }}
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <AlertDialog
         open={concludingIdx !== null}
         onOpenChange={(o) => {
