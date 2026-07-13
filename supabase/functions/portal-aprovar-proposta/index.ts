@@ -59,26 +59,16 @@ serve(
         return safeErrorResponse(422, "Nenhuma proposta enviada encontrada para este projeto", req);
       }
 
-      // Aprova a proposta
-      const { error: updatePropostaError } = await admin
-        .from("propostas")
-        .update({ status: "aceita", updated_at: new Date().toISOString() })
-        .eq("id", proposta.id);
+      // Aprova a proposta E avança o projeto de forma ATÔMICA (uma transação).
+      // Se qualquer passo falhar, a RPC faz rollback → proposta continua "enviada" → retry funciona.
+      const { error: aprovarError } = await admin.rpc("portal_aprovar_proposta_atomica", {
+        p_proposta_id: proposta.id,
+        p_projeto_id: projeto_id,
+      });
 
-      if (updatePropostaError) {
-        log.error("Erro ao atualizar proposta", updatePropostaError, {});
+      if (aprovarError) {
+        log.error("Erro ao aprovar proposta (RPC atômica)", aprovarError, {});
         return safeErrorResponse(500, "Erro ao aprovar proposta", req);
-      }
-
-      // Avança status do projeto para Planejamento
-      const { error: updateProjetoError } = await admin
-        .from("projetos")
-        .update({ status: "Planejamento", updated_at: new Date().toISOString() })
-        .eq("id", projeto_id);
-
-      if (updateProjetoError) {
-        log.error("Erro ao atualizar status do projeto", updateProjetoError, {});
-        return safeErrorResponse(500, "Erro ao atualizar projeto", req);
       }
 
       // Registra em admin_audit_logs
