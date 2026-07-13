@@ -130,7 +130,12 @@ serve(
           }),
         });
       } catch (emailErr) {
-        log.error("sendEmail failed", emailErr, { cliente_id });
+        log.error("sendEmail failed — convite criado mas e-mail não enviado", emailErr, { cliente_id });
+        return safeErrorResponse(
+          502,
+          "Conta do portal criada, mas o e-mail com as credenciais não foi enviado. Reenvie o convite ou redefina a senha.",
+          req
+        );
       }
 
       return jsonResponse({ success: true, email: normalizedEmail }, 200, req);
