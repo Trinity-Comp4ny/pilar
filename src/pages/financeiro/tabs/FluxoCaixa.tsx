@@ -118,7 +118,7 @@ export default function FluxoCaixa({ dateFrom, dateTo }: FluxoCaixaProps) {
             <CardTitle className="text-sm font-medium text-green-700 truncate">Receitas</CardTitle>
           </CardHeader>
           <CardContent className="min-w-0">
-            <div className="text-xl md:text-2xl font-bold text-green-700 tabular-nums truncate">
+            <div className="text-base sm:text-lg xl:text-xl font-bold text-green-700 tabular-nums whitespace-nowrap">
               {formatCurrency(stats.receitasTotal)}
             </div>
             <p
@@ -139,7 +139,7 @@ export default function FluxoCaixa({ dateFrom, dateTo }: FluxoCaixaProps) {
             <CardTitle className="text-sm font-medium text-red-800 truncate">Despesas</CardTitle>
           </CardHeader>
           <CardContent className="min-w-0">
-            <div className="text-xl md:text-2xl font-bold text-red-700 tabular-nums truncate">
+            <div className="text-base sm:text-lg xl:text-xl font-bold text-red-700 tabular-nums whitespace-nowrap">
               {formatCurrency(stats.despesasTotal)}
             </div>
             <p
@@ -160,7 +160,7 @@ export default function FluxoCaixa({ dateFrom, dateTo }: FluxoCaixaProps) {
             <CardTitle className="text-sm font-medium text-blue-800 truncate">Lucro Líquido</CardTitle>
           </CardHeader>
           <CardContent className="min-w-0">
-            <div className="text-xl md:text-2xl font-bold text-blue-700 tabular-nums truncate">
+            <div className="text-base sm:text-lg xl:text-xl font-bold text-blue-700 tabular-nums whitespace-nowrap">
               {formatCurrency(stats.saldo)}
             </div>
             <p className="text-xs text-blue-600 mt-1 truncate">
