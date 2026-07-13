@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Skeleton } from "@/components/ui/skeleton";
 import { CompanyFeatureToggles } from "@/components/admin/CompanyFeatureToggles";
 import { UsersAccessManager, type ManagedUser } from "@/components/admin/UsersAccessManager";
 import { PageLayout } from "@/components/PageLayout";
@@ -89,6 +90,7 @@ export default function UltraAdmin() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [detail, setDetail] = useState<EmpresaDetail | null>(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
+  const [savingFeatures, setSavingFeatures] = useState(false);
   const [query, setQuery] = useState("");
 
   const fetchEmpresas = useCallback(async () => {
@@ -166,7 +168,8 @@ export default function UltraAdmin() {
 
   const handleChangeFeatures = useCallback(
     async (next: CompanyFeatures) => {
-      if (!detail) return;
+      if (!detail || savingFeatures) return;
+      setSavingFeatures(true);
       try {
         await edgeFetch("ultra-admin-empresas", {
           method: "PUT",
@@ -179,9 +182,11 @@ export default function UltraAdmin() {
         toast.error("Erro ao salvar features", {
           description: err instanceof Error ? err.message : "Erro inesperado",
         });
+      } finally {
+        setSavingFeatures(false);
       }
     },
-    [detail]
+    [detail, savingFeatures]
   );
 
   const handleUpdateUser = useCallback(
@@ -352,6 +357,7 @@ export default function UltraAdmin() {
               onChange={handleChangeFeatures}
               currentPlan={detail.plano}
               usersByFeature={usersByFeature}
+              disabled={savingFeatures}
             />
           </CardContent>
         </Card>
@@ -379,10 +385,16 @@ export default function UltraAdmin() {
       }
     >
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard icon={Layers} label="Total de empresas" value={`${totals.total}`} />
-        <StatCard icon={Building2} label="Empresas ativas" value={`${totals.active}`} />
-        <StatCard icon={CircleOff} label="Suspensas" value={`${totals.suspended}`} />
-        <StatCard icon={Users2} label="Usuários totais" value={`${totals.users}`} />
+        {loading ? (
+          Array.from({ length: 4 }).map((_, i) => <StatCardSkeleton key={i} />)
+        ) : (
+          <>
+            <StatCard icon={Layers} label="Total de empresas" value={`${totals.total}`} />
+            <StatCard icon={Building2} label="Empresas ativas" value={`${totals.active}`} />
+            <StatCard icon={CircleOff} label="Suspensas" value={`${totals.suspended}`} />
+            <StatCard icon={Users2} label="Usuários totais" value={`${totals.users}`} />
+          </>
+        )}
       </div>
 
       <Card className="border border-black/5">
@@ -487,6 +499,20 @@ function StatCard({ icon: Icon, label, value }: StatCardProps) {
         <div>
           <p className="text-[11px] uppercase tracking-wider text-black/40">{label}</p>
           <p className="text-lg font-semibold">{value}</p>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function StatCardSkeleton() {
+  return (
+    <Card className="border border-black/5">
+      <CardContent className="flex items-center gap-3 p-4">
+        <Skeleton className="h-10 w-10 rounded-full" />
+        <div className="space-y-2">
+          <Skeleton className="h-3 w-24" />
+          <Skeleton className="h-5 w-10" />
         </div>
       </CardContent>
     </Card>

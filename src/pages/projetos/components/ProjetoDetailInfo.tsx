@@ -14,6 +14,7 @@ interface ProjetoDetailInfoProps {
   progress: number;
   margemBrutaPct: number | null;
   rentabilidade: ProjetoRentabilidade | null;
+  rentabilidadeLoading?: boolean;
 }
 
 function margemColor(pct: number): string {
@@ -44,7 +45,7 @@ function HorasLancadas({ projetoId }: { projetoId: string }) {
   );
 }
 
-export function ProjetoDetailInfo({ projeto, progress, margemBrutaPct, rentabilidade }: ProjetoDetailInfoProps) {
+export function ProjetoDetailInfo({ projeto, progress, margemBrutaPct, rentabilidade, rentabilidadeLoading = false }: ProjetoDetailInfoProps) {
   return (
     <>
       {/* KPI Cards */}
@@ -123,11 +124,19 @@ export function ProjetoDetailInfo({ projeto, progress, margemBrutaPct, rentabili
           </CardTitle>
         </CardHeader>
         <CardContent className="px-4 pb-4">
-          {rentabilidade === null ? (
+          {rentabilidadeLoading ? (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {Array.from({ length: 4 }).map((_, i) => (
                 <Skeleton key={i} className="h-10 w-full rounded-md" />
               ))}
+            </div>
+          ) : rentabilidade === null ? (
+            <div className="flex flex-col items-center justify-center py-6 text-center">
+              <TrendingUp className="h-8 w-8 text-muted-foreground/40 mb-2" />
+              <p className="text-sm font-medium">Sem dados financeiros ainda</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Lançamentos de receita e despesa deste projeto aparecerão aqui.
+              </p>
             </div>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

@@ -57,21 +57,29 @@ export function EntregasContent({
 }) {
   const [entregas, setEntregas] = useState<Entrega[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [respondingId, setRespondingId] = useState<string | null>(null);
   const [resposta, setResposta] = useState("");
   const [saving, setSaving] = useState(false);
 
   const fetchEntregas = useCallback(async () => {
-    const { data } = await supabase
-      .from("portal_entregas")
-      .select(
-        "id, titulo, descricao, tipo, status, versao, disciplina, fase, arquivo_path, arquivo_nome, drive_url, entregavel_pai_id, resposta_cliente, resposta_empresa, respondido_em, created_at"
-      )
-      .eq("projeto_id", projetoId)
-      .order("created_at", { ascending: true });
-    if (data) setEntregas(data as unknown as Entrega[]);
-    setLoading(false);
+    setLoadError(false);
+    try {
+      const { data, error: fetchError } = await supabase
+        .from("portal_entregas")
+        .select(
+          "id, titulo, descricao, tipo, status, versao, disciplina, fase, arquivo_path, arquivo_nome, drive_url, entregavel_pai_id, resposta_cliente, resposta_empresa, respondido_em, created_at"
+        )
+        .eq("projeto_id", projetoId)
+        .order("created_at", { ascending: true });
+      if (fetchError) throw fetchError;
+      if (data) setEntregas(data as unknown as Entrega[]);
+    } catch {
+      setLoadError(true);
+    } finally {
+      setLoading(false);
+    }
   }, [projetoId]);
 
   useEffect(() => {
@@ -86,7 +94,10 @@ export function EntregasContent({
       .from("portal_entregas")
       .update({ status: "aprovado", respondido_em: new Date().toISOString() })
       .eq("id", id);
-    if (error) toast.error("Erro ao aprovar");
+    if (error)
+      toast.error("Não foi possível aprovar", {
+        description: "Tente novamente em instantes ou fale com o escritório.",
+      });
     else toast.success("Entregável aprovado");
     await fetchEntregas();
     setSaving(false);
@@ -103,7 +114,10 @@ export function EntregasContent({
         respondido_em: new Date().toISOString(),
       })
       .eq("id", id);
-    if (error) toast.error("Erro ao enviar solicitação");
+    if (error)
+      toast.error("Não foi possível enviar a solicitação", {
+        description: "Tente novamente em instantes ou fale com o escritório.",
+      });
     else toast.success("Solicitação de revisão enviada");
     setRespondingId(null);
     setResposta("");
@@ -117,6 +131,17 @@ export function EntregasContent({
         <Loader2 className="h-5 w-5 animate-spin" />
       </div>
     );
+
+  if (loadError) {
+    return (
+      <Card>
+        <CardContent className="p-6 text-center text-sm text-muted-foreground">
+          Não foi possível carregar as entregas agora. Atualize a página em instantes ou fale com o escritório se o
+          problema continuar.
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (threads.length === 0) {
     return (
@@ -260,7 +285,19 @@ function ThreadPortalCard({
   return (
     <Card className={cn(!historico && current.status === "pendente" && "border-yellow-200")}>
       <CardContent className="p-4">
-        <div className="flex items-start gap-3 cursor-pointer" onClick={onToggle}>
+        <div
+          role="button"
+          tabIndex={0}
+          aria-expanded={expanded}
+          className="flex items-start gap-3 cursor-pointer rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          onClick={onToggle}
+          onKeyDown={(ev) => {
+            if (ev.key === "Enter" || ev.key === " ") {
+              ev.preventDefault();
+              onToggle();
+            }
+          }}
+        >
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <p className="text-sm font-medium">{current.titulo}</p>
@@ -326,20 +363,31 @@ function ThreadPortalCard({
                   className="text-sm"
                 />
                 <div className="flex gap-2">
-                  <Button size="sm" variant="outline" onClick={onCancelRevisao}>
+                  <Button size="sm" variant="outline" className="h-11 sm:h-9" onClick={onCancelRevisao}>
                     Cancelar
                   </Button>
-                  <Button size="sm" variant="destructive" onClick={onSolicitar} disabled={saving || !resposta.trim()}>
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    className="h-11 sm:h-9"
+                    onClick={onSolicitar}
+                    disabled={saving || !resposta.trim()}
+                  >
                     <RotateCcw className="h-3 w-3 mr-1" /> Solicitar revisão
                   </Button>
                 </div>
               </div>
             ) : (
               <div className="flex gap-2 flex-wrap">
-                <Button size="sm" className="bg-positive hover:bg-positive/90" onClick={onAprovar} disabled={saving}>
+                <Button
+                  size="sm"
+                  className="h-11 sm:h-9 bg-positive hover:bg-positive/90"
+                  onClick={onAprovar}
+                  disabled={saving}
+                >
                   <CheckCircle2 className="h-3 w-3 mr-1" /> Aprovar
                 </Button>
-                <Button size="sm" variant="outline" onClick={onStartRevisao}>
+                <Button size="sm" variant="outline" className="h-11 sm:h-9" onClick={onStartRevisao}>
                   <RotateCcw className="h-3 w-3 mr-1" /> Solicitar revisão
                 </Button>
               </div>
@@ -370,7 +418,7 @@ function VersionBlock({ entrega, isLatest, token }: { entrega: Entrega; isLatest
               asChild
               size="sm"
               variant="outline"
-              className="h-7 text-[11px] border-blue-200 text-blue-700 hover:bg-blue-50"
+              className="h-11 sm:h-7 text-[11px] border-blue-200 text-blue-700 hover:bg-blue-50"
             >
               <a href={entrega.drive_url} target="_blank" rel="noopener noreferrer">
                 <ExternalLink className="h-3 w-3" />
@@ -460,7 +508,13 @@ function PortalDownloadButton({
   };
 
   return (
-    <Button size="sm" variant="outline" className="h-7 text-[11px]" onClick={handleDownload} disabled={downloading}>
+    <Button
+      size="sm"
+      variant="outline"
+      className="h-11 sm:h-7 text-[11px]"
+      onClick={handleDownload}
+      disabled={downloading}
+    >
       {downloading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Download className="h-3 w-3" />}
       <span className="ml-1">Baixar</span>
     </Button>

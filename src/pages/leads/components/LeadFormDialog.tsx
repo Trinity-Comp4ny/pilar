@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
-import { formatPhone, formatCNPJ } from "@/lib/maskUtils";
+import { formatPhone, formatCNPJ, validateCNPJ, validateEmail, onlyDigits } from "@/lib/maskUtils";
 import { formatCurrencyInput } from "@/lib/currencyUtils";
 
 export type LeadFormData = {
@@ -53,8 +54,39 @@ type Props = {
 export function LeadFormDialog({ open, onOpenChange, mode, formData, onFormChange, onSubmit, isPending, members }: Props) {
   const isEdit = mode === "edit";
   const prefix = isEdit ? "edit-" : "";
+  const emailErrorId = `${prefix}email-error`;
+  const cnpjErrorId = `${prefix}cnpj-error`;
 
-  const set = (field: keyof LeadFormData, value: string) => onFormChange({ ...formData, [field]: value });
+  const [emailError, setEmailError] = useState("");
+  const [cnpjError, setCnpjError] = useState("");
+
+  const set = (field: keyof LeadFormData, value: string) => {
+    if (field === "email" && emailError) setEmailError("");
+    if (field === "cnpj" && cnpjError) setCnpjError("");
+    onFormChange({ ...formData, [field]: value });
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    let hasError = false;
+
+    if (formData.email && !validateEmail(formData.email)) {
+      setEmailError("E-mail inválido");
+      hasError = true;
+    } else {
+      setEmailError("");
+    }
+
+    if (onlyDigits(formData.cnpj).length > 0 && !validateCNPJ(formData.cnpj)) {
+      setCnpjError("CNPJ inválido");
+      hasError = true;
+    } else {
+      setCnpjError("");
+    }
+
+    if (hasError) return;
+    onSubmit(e);
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -68,7 +100,7 @@ export function LeadFormDialog({ open, onOpenChange, mode, formData, onFormChang
           </DialogHeader>
         </div>
 
-        <form onSubmit={onSubmit}>
+        <form onSubmit={handleSubmit}>
           <div className="px-6 py-4 space-y-3">
             <Label className="text-[10px] uppercase text-muted-foreground tracking-wider">Informações do Lead</Label>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -108,7 +140,13 @@ export function LeadFormDialog({ open, onOpenChange, mode, formData, onFormChang
                   onChange={(e) => set("cnpj", formatCNPJ(e.target.value))}
                   maxLength={18}
                   placeholder="00.000.000/0000-00"
+                  aria-invalid={!!cnpjError}
+                  aria-describedby={cnpjError ? cnpjErrorId : undefined}
+                  className={cnpjError ? "border-red-500 focus-visible:ring-red-500" : ""}
                 />
+                {cnpjError && (
+                  <p id={cnpjErrorId} role="alert" className="text-xs text-red-600">{cnpjError}</p>
+                )}
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor={`${prefix}email`} className="text-xs">Email</Label>
@@ -118,10 +156,16 @@ export function LeadFormDialog({ open, onOpenChange, mode, formData, onFormChang
                   value={formData.email}
                   onChange={(e) => set("email", e.target.value)}
                   placeholder="email@exemplo.com"
+                  aria-invalid={!!emailError}
+                  aria-describedby={emailError ? emailErrorId : undefined}
+                  className={emailError ? "border-red-500 focus-visible:ring-red-500" : ""}
                 />
+                {emailError && (
+                  <p id={emailErrorId} role="alert" className="text-xs text-red-600">{emailError}</p>
+                )}
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor={`${prefix}contato`} className="text-xs">Celular</Label>
+                <Label htmlFor={`${prefix}contato`} className="text-xs">Telefone</Label>
                 <Input
                   id={`${prefix}contato`}
                   value={formData.contato}

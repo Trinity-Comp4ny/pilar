@@ -82,6 +82,19 @@ const tipoConfig: Record<string, { className: string }> = {
   Despesa: { className: "bg-red-100 text-red-800 border-red-200" },
 };
 
+// Em relatório misto (receitas + despesas) somar tudo produz um número sem sentido.
+// Nesse caso mostramos o Saldo (receitas − despesas); em relatório de tipo único, o Total.
+const computeReportTotal = (data: ReportRow[]): { label: string; value: number } => {
+  const hasReceita = data.some((r) => r.Tipo === "Receita");
+  const hasDespesa = data.some((r) => r.Tipo === "Despesa");
+  if (hasReceita && hasDespesa) {
+    const receitas = data.filter((r) => r.Tipo === "Receita").reduce((a, r) => a + (r.Valor ?? 0), 0);
+    const despesas = data.filter((r) => r.Tipo === "Despesa").reduce((a, r) => a + (r.Valor ?? 0), 0);
+    return { label: "Saldo", value: receitas - despesas };
+  }
+  return { label: "Total", value: data.reduce((a, r) => a + (r.Valor ?? 0), 0) };
+};
+
 function parseDDMMYYYY(str: string): Date | null {
   if (str === "-") return null;
   const [d, m, y] = str.split("/").map(Number);
@@ -293,12 +306,12 @@ export default function Relatorios() {
         .join(",")
     );
 
-    // Linha de total
-    const totalValue = data.reduce((acc, r) => acc + (r.Valor ?? 0), 0);
+    // Linha de total (Saldo em relatório misto, Total em tipo único)
+    const totalInfo = computeReportTotal(data);
     const totalRow = columns
       .map((col) => {
-        if (col === "Tipo") return escapeCSV("TOTAL");
-        if (col === "Valor") return escapeCSV(toCurrency(totalValue));
+        if (col === "Tipo") return escapeCSV(totalInfo.label.toUpperCase());
+        if (col === "Valor") return escapeCSV(toCurrency(totalInfo.value));
         return "";
       })
       .join(",");
@@ -402,11 +415,11 @@ export default function Relatorios() {
       })
     );
 
-    // Linha de total
-    const totalValue = data.reduce((acc, r) => acc + (r.Valor ?? 0), 0);
+    // Linha de total (Saldo em relatório misto, Total em tipo único)
+    const totalInfo = computeReportTotal(data);
     const totalRow = columns.map((col) => {
-      if (col === "Tipo") return "TOTAL";
-      if (col === "Valor") return toCurrency(totalValue);
+      if (col === "Tipo") return totalInfo.label.toUpperCase();
+      if (col === "Valor") return toCurrency(totalInfo.value);
       return "";
     });
     tableData.push(totalRow);
@@ -931,12 +944,16 @@ export default function Relatorios() {
                 {(() => {
                   const cols = ALL_COLUMNS.filter((c) => visibleColumns.has(c));
                   const valorIdx = cols.indexOf("Valor");
+                  const footerTotal = computeReportTotal(filteredData);
                   return (
                     <Table>
                       <TableHeader>
                         <TableRow>
                           {cols.map((key) => (
-                            <TableHead key={key} className="whitespace-nowrap text-xs">
+                            <TableHead
+                              key={key}
+                              className="whitespace-nowrap text-xs sticky top-0 z-10 bg-white"
+                            >
                               {key}
                             </TableHead>
                           ))}
@@ -969,7 +986,7 @@ export default function Relatorios() {
                           <TableRow className="bg-black/[0.02] font-semibold">
                             {cols.map((key, i) => (
                               <TableCell key={key} className="text-xs">
-                                {i === 0 ? "Total" : i === valorIdx ? toCurrency(summary.total) : ""}
+                                {i === 0 ? footerTotal.label : i === valorIdx ? toCurrency(footerTotal.value) : ""}
                               </TableCell>
                             ))}
                           </TableRow>

@@ -4,6 +4,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, Key, Copy, RefreshCw, CheckCircle2 } from "lucide-react";
+import { toast } from "sonner";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { useAsaasConfig, type AsaasAmbiente } from "@/hooks/useAsaas";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
@@ -14,6 +16,7 @@ export function AsaasConfigForm() {
   const [ambiente, setAmbiente] = useState<AsaasAmbiente>("sandbox");
   const [jaConfigurado, setJaConfigurado] = useState(false);
   const [webhookToken, setWebhookToken] = useState("");
+  const [confirmRegenOpen, setConfirmRegenOpen] = useState(false);
 
   const webhookUrl = `${SUPABASE_URL}/functions/v1/asaas-webhook`;
 
@@ -36,8 +39,9 @@ export function AsaasConfigForm() {
     }
   };
 
-  const handleCopiar = (valor: string) => {
-    navigator.clipboard.writeText(valor);
+  const handleCopiar = async (valor: string) => {
+    await navigator.clipboard.writeText(valor);
+    toast.success("Copiado");
   };
 
   const handleRegenerarToken = async () => {
@@ -56,9 +60,11 @@ export function AsaasConfigForm() {
   return (
     <div className="space-y-5">
       <div className="space-y-2">
-        <Label className="text-xs">Ambiente</Label>
+        <Label htmlFor="asaas-ambiente" className="text-xs">
+          Ambiente
+        </Label>
         <Select value={ambiente} onValueChange={(v) => setAmbiente(v as AsaasAmbiente)}>
-          <SelectTrigger>
+          <SelectTrigger id="asaas-ambiente" aria-label="Ambiente">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -69,7 +75,9 @@ export function AsaasConfigForm() {
       </div>
 
       <div className="space-y-2">
-        <Label className="text-xs">API Key</Label>
+        <Label htmlFor="asaas-apikey" className="text-xs">
+          API Key
+        </Label>
         {jaConfigurado && !apiKey && (
           <div className="flex items-center gap-2 rounded-md border border-positive/20 bg-positive/10 px-3 py-2 text-xs text-positive">
             <CheckCircle2 className="h-4 w-4 shrink-0" />
@@ -79,6 +87,7 @@ export function AsaasConfigForm() {
         <div className="relative">
           <Key className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
+            id="asaas-apikey"
             type="password"
             value={apiKey}
             onChange={(e) => setApiKey(e.target.value)}
@@ -150,10 +159,10 @@ export function AsaasConfigForm() {
                 type="button"
                 variant="outline"
                 size="icon"
-                onClick={handleRegenerarToken}
+                onClick={() => setConfirmRegenOpen(true)}
                 disabled={isRegenerando}
                 title="Regenerar token"
-                aria-label="Atualizar"
+                aria-label="Regenerar token do webhook"
               >
                 <RefreshCw className={`h-4 w-4 ${isRegenerando ? "animate-spin" : ""}`} />
               </Button>
@@ -165,6 +174,16 @@ export function AsaasConfigForm() {
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        open={confirmRegenOpen}
+        onOpenChange={setConfirmRegenOpen}
+        onConfirm={handleRegenerarToken}
+        title="Regenerar token do webhook"
+        description="O token atual será invalidado imediatamente. O webhook já configurado no Asaas vai parar de funcionar até você atualizar o novo token lá. Deseja continuar?"
+        variant="destructive"
+        confirmText="Regenerar"
+      />
     </div>
   );
 }

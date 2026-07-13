@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import {
@@ -174,6 +174,10 @@ export function PropostaDetailDialog({
   const stage = STAGE_CONFIG[displayStatus] ?? STAGE_CONFIG.rascunho;
   const StageIcon = stage.icon;
   const isExpiredValidity = proposta.validade && proposta.validade < hoje;
+  const stageMessage =
+    displayStatus === "aceita" && proposta.projeto_id
+      ? "Proposta aceita e já convertida em projeto. Formalize o contrato para concluir a negociação."
+      : stage.message;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -183,6 +187,9 @@ export function PropostaDetailDialog({
             <div className="min-w-0">
               <DialogTitle className="text-base leading-snug">{proposta.titulo}</DialogTitle>
               {proposta.codigo && <p className="text-xs text-muted-foreground font-mono mt-0.5">{proposta.codigo}</p>}
+              <DialogDescription className="sr-only">
+                Detalhes e ações da proposta {proposta.titulo}
+              </DialogDescription>
             </div>
             <Badge className={`text-[11px] flex-shrink-0 mt-0.5 ${PROPOSTA_STATUS_CONFIG[displayStatus]?.color || ""}`}>
               {PROPOSTA_STATUS_CONFIG[displayStatus]?.label || displayStatus}
@@ -194,7 +201,7 @@ export function PropostaDetailDialog({
           {/* Banner de contexto do estágio */}
           <div className={`flex items-start gap-2.5 rounded-lg border p-3 ${stage.bg} ${stage.border}`}>
             <StageIcon className={`h-4 w-4 flex-shrink-0 mt-0.5 ${stage.iconColor}`} />
-            <p className="text-xs text-foreground/80">{stage.message}</p>
+            <p className="text-xs text-foreground/80">{stageMessage}</p>
           </div>
 
           {/* Info */}
@@ -239,7 +246,7 @@ export function PropostaDetailDialog({
               <div className="flex flex-wrap gap-2">
                 <Button size="sm" variant="outline" className="gap-1.5" onClick={onGerarDocx}>
                   <FileOutput className="h-3.5 w-3.5" />
-                  Gerar Documento
+                  Baixar DOCX
                 </Button>
                 {canEdit && (
                   <Button size="sm" variant="outline" className="gap-1.5" onClick={onEdit}>
@@ -416,13 +423,17 @@ export function PropostaDetailDialog({
 
               <div className="flex flex-wrap gap-2">
                 {canEdit && !proposta.projeto_id && (
-                  <Button className="gap-1.5 bg-blue-600 hover:bg-blue-700 text-white" onClick={onConverter}>
+                  <Button className="gap-1.5" onClick={onConverter}>
                     <FolderPlus className="h-4 w-4" />
                     Criar Projeto
                   </Button>
                 )}
                 {!proposta.contrato_assinado && (
-                  <Button className="gap-1.5 bg-purple-600 hover:bg-purple-700 text-white" onClick={onGerarContrato}>
+                  <Button
+                    variant={proposta.projeto_id ? "default" : "outline"}
+                    className="gap-1.5"
+                    onClick={onGerarContrato}
+                  >
                     <FileSignature className="h-4 w-4" />
                     {proposta.contrato_recusado ? "Gerar Novo Contrato" : "Gerar Contrato"}
                   </Button>
@@ -448,7 +459,7 @@ export function PropostaDetailDialog({
               {canEdit && (
                 <div className="flex flex-wrap gap-2">
                   <Button
-                    className="gap-1.5 bg-positive hover:bg-positive/90 text-white"
+                    className="gap-1.5"
                     disabled={isUpdating}
                     onClick={() => onStatusChange(proposta.id, "rascunho")}
                   >

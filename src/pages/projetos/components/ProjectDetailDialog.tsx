@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -179,7 +179,7 @@ export function ProjectDetailDialog({
                       </Badge>
                     )}
                   </div>
-                  <p className="text-sm text-muted-foreground mt-1">{projeto.nome}</p>
+                  <DialogDescription className="text-sm text-muted-foreground mt-1">{projeto.nome}</DialogDescription>
                 </div>
                 {canEdit && (
                   <DropdownMenu>

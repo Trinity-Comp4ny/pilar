@@ -60,12 +60,17 @@ export function ClienteShell({ account, children, projetoId, projetoNome, projet
                 Voltar ao painel
               </Button>
             )}
-            <span className="text-sm text-muted-foreground hidden sm:block">{account.nome}</span>
+            <span className="text-sm text-muted-foreground truncate max-w-[8rem] sm:max-w-[14rem]">
+              <span className="sm:hidden">{account.nome.split(" ")[0]}</span>
+              <span className="hidden sm:inline">{account.nome}</span>
+            </span>
             <Button
               variant="ghost"
               size="sm"
               onClick={handleLogout}
-              className="text-muted-foreground hover:text-foreground"
+              aria-label="Sair"
+              title="Sair"
+              className="text-muted-foreground hover:text-foreground h-11 w-11 sm:h-9 sm:w-9"
             >
               <LogOut className="h-4 w-4" />
             </Button>
@@ -87,17 +92,19 @@ export function ClienteShell({ account, children, projetoId, projetoNome, projet
                 <ArrowLeft className="h-4 w-4 mr-1" />
                 Projetos
               </Button>
-              <div className="h-4 w-px bg-border" />
-              <div>
-                {projetoCodigo && <span className="text-xs text-muted-foreground mr-2">{projetoCodigo}</span>}
-                <span className="text-sm font-medium">{projetoNome}</span>
+              <div className="h-4 w-px bg-border shrink-0" />
+              <div className="min-w-0 flex items-baseline gap-2">
+                {projetoCodigo && (
+                  <span className="text-xs text-muted-foreground shrink-0">{projetoCodigo}</span>
+                )}
+                <span className="text-sm font-medium truncate">{projetoNome}</span>
               </div>
             </div>
           </div>
 
           {/* Nav do projeto */}
           <nav className="bg-white border-b">
-            <div className="max-w-7xl mx-auto flex gap-1 px-6">
+            <div className="max-w-7xl mx-auto flex gap-1 px-6 overflow-x-auto">
               {projetoNavItems.map((item) => (
                 <NavLink
                   key={item.path}

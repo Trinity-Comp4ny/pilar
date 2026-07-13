@@ -562,10 +562,12 @@ export default function Clientes() {
                               }}
                               placeholder="000.000.000-00"
                               maxLength={18}
+                              aria-invalid={!!cpfCnpjError}
+                              aria-describedby={cpfCnpjError ? "cpf-error" : undefined}
                               className={cpfCnpjError ? "border-red-500 focus-visible:ring-red-500" : ""}
                             />
                             {cpfCnpjError && (
-                              <p className="text-xs text-red-500">{cpfCnpjError}</p>
+                              <p id="cpf-error" role="alert" className="text-xs text-red-600">{cpfCnpjError}</p>
                             )}
                           </div>
                           <div className="space-y-1.5">
@@ -574,21 +576,24 @@ export default function Clientes() {
                             </Label>
                             <Input
                               id="email"
+                              type="email"
                               value={email}
                               onChange={(e) => {
                                 setEmail(e.target.value);
                                 if (emailError) setEmailError("");
                               }}
                               placeholder="email@exemplo.com"
+                              aria-invalid={!!emailError}
+                              aria-describedby={emailError ? "email-error" : undefined}
                               className={emailError ? "border-red-500 focus-visible:ring-red-500" : ""}
                             />
                             {emailError && (
-                              <p className="text-xs text-red-500">{emailError}</p>
+                              <p id="email-error" role="alert" className="text-xs text-red-600">{emailError}</p>
                             )}
                           </div>
                           <div className="space-y-1.5">
                             <Label htmlFor="contato" className="text-xs">
-                              Contato
+                              Telefone
                             </Label>
                             <Input
                               id="contato"
@@ -839,26 +844,6 @@ export default function Clientes() {
                       <Button type="button" onClick={goNext} className="bg-brand hover:bg-brand/90 text-ink">
                         Próximo →
                       </Button>
-                    ) : step === 1 && isEditMode ? (
-                      <>
-                        <Button type="button" onClick={goNext} variant="outline">
-                          Próximo →
-                        </Button>
-                        <Button
-                          type="button"
-                          onClick={handleSave}
-                          className="bg-brand hover:bg-brand/90 text-ink"
-                          disabled={isSaving}
-                        >
-                          {isSaving ? (
-                            <>
-                              <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Salvando...
-                            </>
-                          ) : (
-                            "Atualizar"
-                          )}
-                        </Button>
-                      </>
                     ) : (
                       <Button
                         type="button"
@@ -1015,20 +1000,22 @@ export default function Clientes() {
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8"
+                              className="h-9 w-9"
+                              disabled={!cliente.email}
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setSelectedClienteForMessage(cliente);
                                 setIsMessageModalOpen(true);
                               }}
                               aria-label="Enviar mensagem"
+                              title={cliente.email ? "Enviar mensagem" : "Cliente sem e-mail cadastrado"}
                             >
                               <Mail className="h-4 w-4" />
                             </Button>
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8"
+                              className="h-9 w-9"
                               onClick={(e) => handleEditClick(cliente, e)}
                               aria-label="Editar cliente"
                             >
@@ -1038,7 +1025,7 @@ export default function Clientes() {
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-8 w-8 text-red-500"
+                                className="h-9 w-9 text-red-500"
                                 onClick={(e) => handleDeleteClick(cliente.id, e)}
                                 aria-label="Excluir cliente"
                               >

@@ -38,6 +38,8 @@ export type CompanyFeatureTogglesProps = {
   usersByFeature?: Partial<Record<FeatureKey, number>>;
   onChangePlan?: () => void;
   className?: string;
+  /** Desabilita todos os toggles (ex.: enquanto uma alteração é salva). */
+  disabled?: boolean;
 };
 
 export function CompanyFeatureToggles({
@@ -47,8 +49,10 @@ export function CompanyFeatureToggles({
   usersByFeature,
   onChangePlan,
   className,
+  disabled = false,
 }: CompanyFeatureTogglesProps) {
   const [pendingDisable, setPendingDisable] = useState<FeatureDefinition | null>(null);
+  const [pendingEnable, setPendingEnable] = useState<FeatureDefinition | null>(null);
 
   const grouped = useMemo(() => {
     const map = FEATURE_GROUP_ORDER.reduce(
@@ -81,10 +85,17 @@ export function CompanyFeatureToggles({
     onChange(next);
   };
 
+  const isPaidAddon = (feature: FeatureDefinition) =>
+    feature.addon && !feature.includedInPlans.includes(currentPlan);
+
   const handleToggle = (feature: FeatureDefinition, nextEnabled: boolean) => {
     const usersAffected = usersByFeature?.[feature.key] ?? 0;
     if (!nextEnabled && usersAffected > 0) {
       setPendingDisable(feature);
+      return;
+    }
+    if (nextEnabled && isPaidAddon(feature)) {
+      setPendingEnable(feature);
       return;
     }
     applyToggle(feature, nextEnabled);
@@ -94,6 +105,12 @@ export function CompanyFeatureToggles({
     if (!pendingDisable) return;
     applyToggle(pendingDisable, false);
     setPendingDisable(null);
+  };
+
+  const confirmEnable = () => {
+    if (!pendingEnable) return;
+    applyToggle(pendingEnable, true);
+    setPendingEnable(null);
   };
 
   return (
@@ -146,6 +163,7 @@ export function CompanyFeatureToggles({
                     usersAffected={usersByFeature?.[feature.key] ?? 0}
                     onChange={(next) => handleToggle(feature, next)}
                     isLast={idx === features.length - 1}
+                    disabled={disabled}
                   />
                 ))}
               </div>
@@ -186,6 +204,42 @@ export function CompanyFeatureToggles({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <AlertDialog
+        open={pendingEnable !== null}
+        onOpenChange={(open) => {
+          if (!open) setPendingEnable(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Sparkles size={18} className="text-brand" strokeWidth={1.5} />
+              Ativar {pendingEnable?.label}?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {pendingEnable && (
+                <>
+                  Esse add-on <strong>não está incluso</strong> no plano {PLAN_LABEL[currentPlan]}.
+                  {pendingEnable.addonPriceLabel && (
+                    <>
+                      {" "}
+                      Custo adicional: <strong>{pendingEnable.addonPriceLabel}</strong>.
+                    </>
+                  )}{" "}
+                  Ele passa a ser cobrado desta empresa a partir da ativação.
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction className="bg-brand text-ink hover:bg-brand/90" onClick={confirmEnable}>
+              Ativar add-on
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
@@ -197,6 +251,7 @@ type FeatureToggleRowProps = {
   usersAffected: number;
   onChange: (next: boolean) => void;
   isLast: boolean;
+  disabled?: boolean;
 };
 
 function FeatureToggleRow({
@@ -206,8 +261,11 @@ function FeatureToggleRow({
   usersAffected,
   onChange,
   isLast,
+  disabled = false,
 }: FeatureToggleRowProps) {
   const Icon = feature.icon;
+  // Feature ainda não lançada ("Em breve"): permite desligar, mas nunca ligar.
+  const lockedOn = feature.dormant && !enabled;
   return (
     <div
       className={cn(
@@ -266,7 +324,15 @@ function FeatureToggleRow({
         </div>
       </div>
 
-      <Switch checked={enabled} onCheckedChange={onChange} aria-label={`Toggle ${feature.label}`} />
+      <Switch
+        checked={enabled}
+        onCheckedChange={onChange}
+        disabled={disabled || lockedOn}
+        aria-label={
+          lockedOn ? `${feature.label} (em breve, indisponível)` : `Ativar ou desativar ${feature.label}`
+        }
+        title={lockedOn ? "Feature ainda não lançada" : undefined}
+      />
     </div>
   );
 }

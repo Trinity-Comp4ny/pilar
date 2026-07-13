@@ -78,7 +78,7 @@ export default function Financeiro() {
       <FinanceFilterProvider value={filterValue}>
         <Tabs value={activeTab} onValueChange={handleTabChange} className="flex flex-col flex-1 overflow-hidden">
           <div className="sticky top-0 z-20 w-full bg-white border-b">
-            <FinanceiroHeader />
+            <FinanceiroHeader activeTab={activeTab} />
           </div>
 
           <div className="flex flex-col md:flex-row flex-1 overflow-hidden">

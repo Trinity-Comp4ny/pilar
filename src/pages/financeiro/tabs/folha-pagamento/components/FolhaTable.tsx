@@ -46,7 +46,7 @@ export function FolhaTable({
             <Table>
               <TableHeader>
                 <TableRow>
-                  {statusFolha === "preview" && <TableHead className="w-[50px] text-center">Conf.</TableHead>}
+                  {statusFolha === "preview" && <TableHead className="w-[80px] text-center">Confirmar</TableHead>}
                   <TableHead>Colaborador</TableHead>
                   <TableHead>Cargo</TableHead>
                   <TableHead className="text-right">Salário Fixo</TableHead>

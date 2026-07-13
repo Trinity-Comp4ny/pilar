@@ -156,3 +156,77 @@ export function useAprovarHoras() {
     },
   });
 }
+
+// Aprova em lote todos os lançamentos pendentes informados.
+export function useAprovarHorasLote() {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+
+  return useMutation({
+    mutationFn: async (ids: string[]) => {
+      if (ids.length === 0) return;
+      const { error } = await db
+        .from("timesheet_lancamentos")
+        .update({ status: "aprovado", aprovado_por: user!.id })
+        .in("id", ids);
+
+      if (error) throw error;
+    },
+    onSuccess: (_data, ids) => {
+      queryClient.invalidateQueries({ queryKey: ["timesheet-lancamentos"] });
+      toast.success(`${ids.length} lançamento(s) aprovado(s)`);
+    },
+    onError: (error: unknown) => {
+      const err = error as { message?: string };
+      toast.error("Erro ao aprovar", { description: err.message });
+    },
+  });
+}
+
+export function useRejeitarHoras() {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await db
+        .from("timesheet_lancamentos")
+        .update({ status: "rejeitado", aprovado_por: user!.id })
+        .eq("id", id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["timesheet-lancamentos"] });
+      toast.success("Lançamento rejeitado");
+    },
+    onError: (error: unknown) => {
+      const err = error as { message?: string };
+      toast.error("Erro ao rejeitar", { description: err.message });
+    },
+  });
+}
+
+// Reabre (desfaz aprovação/rejeição) devolvendo o lançamento a pendente.
+export function useReabrirHoras() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await db
+        .from("timesheet_lancamentos")
+        .update({ status: "pendente", aprovado_por: null })
+        .eq("id", id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["timesheet-lancamentos"] });
+      toast.success("Lançamento reaberto");
+    },
+    onError: (error: unknown) => {
+      const err = error as { message?: string };
+      toast.error("Erro ao reabrir", { description: err.message });
+    },
+  });
+}

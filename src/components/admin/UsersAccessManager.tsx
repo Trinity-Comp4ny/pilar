@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { FeatureAccessGrid } from "@/components/admin/FeatureAccessGrid";
 import { AccessBadges } from "@/components/admin/AccessBadges";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
@@ -45,6 +45,8 @@ export type UsersAccessManagerProps = {
   currentUserId: string | null;
   canManage: boolean;
   isInviting?: boolean;
+  /** Executado antes de abrir os modais de convite/edição (ex.: gate AAL2). Retorna false para cancelar. */
+  onRequireAuth?: () => Promise<boolean>;
   onInvite: (payload: InvitePayload) => void;
   onUpdate: (payload: UpdatePayload) => void;
   onDelete: (userId: string) => void;
@@ -56,6 +58,7 @@ export function UsersAccessManager({
   currentUserId,
   canManage,
   isInviting = false,
+  onRequireAuth,
   onInvite,
   onUpdate,
   onDelete,
@@ -63,6 +66,16 @@ export function UsersAccessManager({
   const [inviteOpen, setInviteOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<ManagedUser | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<ManagedUser | null>(null);
+
+  // Gate de auth (AAL2) roda ANTES de abrir o modal, para não perder o formulário preenchido.
+  const openInvite = async () => {
+    if (onRequireAuth && !(await onRequireAuth())) return;
+    setInviteOpen(true);
+  };
+  const openEdit = async (user: ManagedUser) => {
+    if (onRequireAuth && !(await onRequireAuth())) return;
+    setEditTarget(user);
+  };
 
   return (
     <Card className="border border-black/5">
@@ -77,7 +90,7 @@ export function UsersAccessManager({
         {canManage && (
           <Button
             type="button"
-            onClick={() => setInviteOpen(true)}
+            onClick={openInvite}
             className="rounded-full bg-brand text-ink hover:bg-brand/90"
           >
             <UserPlus size={16} strokeWidth={1.75} />
@@ -134,7 +147,8 @@ export function UsersAccessManager({
                               variant="outline"
                               size="sm"
                               className="rounded-full"
-                              onClick={() => setEditTarget(u)}
+                              onClick={() => openEdit(u)}
+                              aria-label={`Editar acessos de ${u.name}`}
                             >
                               <Pencil className="h-4 w-4" />
                             </Button>
@@ -144,6 +158,7 @@ export function UsersAccessManager({
                               className="rounded-full text-red-600"
                               onClick={() => setDeleteTarget(u)}
                               disabled={u.id === currentUserId}
+                              aria-label={`Remover ${u.name}`}
                               title={u.id === currentUserId ? "Você não pode remover a si mesmo" : "Remover"}
                             >
                               <Trash2 className="h-4 w-4" />
@@ -184,14 +199,14 @@ export function UsersAccessManager({
                       </div>
                       {canManage && !u.isPending && !isUltra && (
                         <div className="flex flex-col gap-2">
-                          <Button variant="outline" size="sm" className="rounded-full" onClick={() => setEditTarget(u)}>
+                          <Button variant="outline" size="sm" className="rounded-full" onClick={() => openEdit(u)}>
                             Editar
                           </Button>
                           <Button
                             variant="outline"
                             size="sm"
                             className="rounded-full text-red-600"
-                            onClick={() => onDelete(u.id)}
+                            onClick={() => setDeleteTarget(u)}
                             disabled={u.id === currentUserId}
                           >
                             Remover
@@ -283,6 +298,11 @@ function InviteDialog({ open, onClose, companyFeatures, isSubmitting, onSubmit }
     if (emailError) setEmailError("");
   };
 
+  const handleEmailBlur = () => {
+    const trimmed = email.trim();
+    if (trimmed && !EMAIL_REGEX.test(trimmed)) setEmailError("Email inválido");
+  };
+
   const handleSubmit = () => {
     const trimmed = email.trim();
     if (!trimmed || !EMAIL_REGEX.test(trimmed)) {
@@ -297,12 +317,17 @@ function InviteDialog({ open, onClose, companyFeatures, isSubmitting, onSubmit }
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle>Convidar usuário</DialogTitle>
+          <DialogDescription>
+            Envie um convite por email e defina o nível de acesso deste usuário aos módulos da empresa.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-5">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="invite-name">Nome completo</Label>
+              <Label htmlFor="invite-name">
+                Nome completo <span className="text-destructive">*</span>
+              </Label>
               <Input
                 id="invite-name"
                 value={name}
@@ -311,12 +336,15 @@ function InviteDialog({ open, onClose, companyFeatures, isSubmitting, onSubmit }
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="invite-email">Email</Label>
+              <Label htmlFor="invite-email">
+                Email <span className="text-destructive">*</span>
+              </Label>
               <Input
                 id="invite-email"
                 type="email"
                 value={email}
                 onChange={(e) => handleEmailChange(e.target.value)}
+                onBlur={handleEmailBlur}
                 placeholder="email@empresa.com"
                 aria-invalid={!!emailError}
                 className={emailError ? "border-destructive focus-visible:ring-destructive" : ""}
@@ -391,6 +419,7 @@ function EditDialog({ user, onClose, companyFeatures, onSubmit }: EditDialogProp
               <ShieldAlert size={18} className="text-destructive" strokeWidth={1.5} />
               Usuário protegido
             </DialogTitle>
+            <DialogDescription>Este usuário só pode ser alterado via SQL no Supabase.</DialogDescription>
           </DialogHeader>
           <p className="text-sm text-black/70">
             <strong>{user.name}</strong> é ultra admin e só pode ser editado via SQL direto no Supabase. Esta proteção
@@ -411,6 +440,7 @@ function EditDialog({ user, onClose, companyFeatures, onSubmit }: EditDialogProp
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle>Editar acessos — {user.name}</DialogTitle>
+          <DialogDescription>Ajuste o tipo de conta e o nível de acesso por módulo.</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-5">
@@ -468,8 +498,10 @@ const ROLE_OPTIONS: readonly {
 function RoleSelector({ value, onChange }: RoleSelectorProps) {
   return (
     <div>
-      <Label className="text-sm font-medium">Tipo de conta</Label>
-      <div className="mt-2 grid gap-2 sm:grid-cols-2">
+      <Label className="text-sm font-medium" id="role-selector-label">
+        Tipo de conta
+      </Label>
+      <div className="mt-2 grid gap-2 sm:grid-cols-2" role="radiogroup" aria-labelledby="role-selector-label">
         {ROLE_OPTIONS.map((option) => {
           const active = value === option.value;
           const Icon = option.icon;
@@ -477,6 +509,8 @@ function RoleSelector({ value, onChange }: RoleSelectorProps) {
             <button
               key={option.value}
               type="button"
+              role="radio"
+              aria-checked={active}
               onClick={() => onChange(option.value)}
               className={cn(
                 "flex items-start gap-3 rounded-lg border p-3 text-left transition-colors",

@@ -31,6 +31,13 @@ import { toast } from "sonner";
 import { formatCurrencyInput, formatValorToInput, parseCurrencyString } from "@/lib/currencyUtils";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 
+const fmtCompactBRL = new Intl.NumberFormat("pt-BR", {
+  style: "currency",
+  currency: "BRL",
+  notation: "compact",
+  maximumFractionDigits: 1,
+});
+
 interface ContaItem {
   id: string;
   nome: string;
@@ -497,7 +504,7 @@ export default function Configuracoes() {
                       </div>
                       <span className="text-sm font-medium truncate flex-1">{conta.nome}</span>
                       <span className="text-xs text-muted-foreground shrink-0 tabular-nums">
-                        {(conta.saldo_atual / 1000).toLocaleString("pt-BR", { maximumFractionDigits: 1 })}k
+                        {fmtCompactBRL.format(conta.saldo_atual)}
                       </span>
                     </button>
                   ))}
