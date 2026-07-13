@@ -1,7 +1,9 @@
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import {
   CheckCircle2,
   FileOutput,
@@ -153,6 +155,8 @@ export function PropostaDetailDialog({
   onRecusarContrato,
   isUpdating,
 }: PropostaDetailDialogProps) {
+  const [confirmRecusar, setConfirmRecusar] = useState(false);
+
   if (!proposta) return null;
 
   const getDisplayStatus = () => {
@@ -288,13 +292,25 @@ export function PropostaDetailDialog({
                     variant="outline"
                     className="gap-1.5 border-red-300 text-red-600 hover:bg-red-500 hover:text-white hover:border-red-500 transition-colors"
                     disabled={isUpdating}
-                    onClick={() => onStatusChange(proposta.id, "recusada")}
+                    onClick={() => setConfirmRecusar(true)}
                   >
                     {isUpdating ? <Loader2 className="h-4 w-4 animate-spin" /> : <XCircle className="h-4 w-4" />}
                     Recusada
                   </Button>
                 </div>
               </div>
+              <ConfirmDialog
+                open={confirmRecusar}
+                onOpenChange={setConfirmRecusar}
+                onConfirm={() => {
+                  onStatusChange(proposta.id, "recusada");
+                  setConfirmRecusar(false);
+                }}
+                title="Marcar proposta como recusada?"
+                description="A proposta sairá do fluxo de negociação. Você pode reverter o status depois, se precisar."
+                itemName={proposta.titulo}
+                confirmText="Marcar recusada"
+              />
               <div className="flex flex-wrap gap-2">
                 {canEdit && (
                   <Button
