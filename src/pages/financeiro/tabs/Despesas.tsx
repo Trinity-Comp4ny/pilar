@@ -41,7 +41,7 @@ const getDespesaDisplayDate = (d: DespesaItem): string =>
 
 export default function Despesas() {
   const { canEdit } = useFeatureAccess("financeiro");
-  const { items: despesasRaw, aux } = useFinanceItems("despesa");
+  const { items: despesasRaw, aux, isError } = useFinanceItems("despesa");
   const { categorias, contas, cartoes, projetos, fornecedores } = aux;
 
   const { saveDespesa, deleteOne, deleteGroup } = useFinanceItemMutations("despesa");
@@ -507,6 +507,12 @@ export default function Despesas() {
           </div>
         </CardHeader>
         <CardContent className="p-0">
+          {isError && (
+            <div className="mx-4 mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              Não foi possível carregar as despesas. Verifique a conexão e recarregue a página — os
+              valores abaixo podem estar incompletos.
+            </div>
+          )}
           <div className="flex items-center gap-3 px-4 py-3 border-b bg-gray-50/50">
             <Input
               placeholder="Buscar por descrição ou fornecedor..."
