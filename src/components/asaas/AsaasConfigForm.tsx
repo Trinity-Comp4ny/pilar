@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Key, Copy, RefreshCw, CheckCircle2 } from "lucide-react";
+import { Loader2, Key, Copy, RefreshCw, CheckCircle2, Trash2, PlugZap } from "lucide-react";
 import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { useAsaasConfig, type AsaasAmbiente } from "@/hooks/useAsaas";
@@ -11,12 +11,24 @@ import { useAsaasConfig, type AsaasAmbiente } from "@/hooks/useAsaas";
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
 
 export function AsaasConfigForm() {
-  const { carregarConfig, salvarConfig, regenerarToken, isSaving, isLoading, isRegenerando } = useAsaasConfig();
+  const {
+    carregarConfig,
+    salvarConfig,
+    regenerarToken,
+    removerConfig,
+    testarConexao,
+    isSaving,
+    isLoading,
+    isRegenerando,
+    isRemovendo,
+    isTestando,
+  } = useAsaasConfig();
   const [apiKey, setApiKey] = useState("");
   const [ambiente, setAmbiente] = useState<AsaasAmbiente>("sandbox");
   const [jaConfigurado, setJaConfigurado] = useState(false);
   const [webhookToken, setWebhookToken] = useState("");
   const [confirmRegenOpen, setConfirmRegenOpen] = useState(false);
+  const [confirmRemoveOpen, setConfirmRemoveOpen] = useState(false);
 
   const webhookUrl = `${SUPABASE_URL}/functions/v1/asaas-webhook`;
 
@@ -47,6 +59,16 @@ export function AsaasConfigForm() {
   const handleRegenerarToken = async () => {
     const novoToken = await regenerarToken();
     if (novoToken) setWebhookToken(novoToken);
+  };
+
+  const handleRemover = async () => {
+    const ok = await removerConfig();
+    if (ok) {
+      setJaConfigurado(false);
+      setWebhookToken("");
+      setApiKey("");
+      setAmbiente("sandbox");
+    }
   };
 
   if (isLoading) {
@@ -116,6 +138,25 @@ export function AsaasConfigForm() {
       </Button>
 
       {jaConfigurado && (
+        <div className="flex flex-wrap gap-2">
+          <Button type="button" variant="outline" onClick={() => testarConexao()} disabled={isTestando}>
+            {isTestando ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <PlugZap className="mr-2 h-4 w-4" />}
+            Testar conexão
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            className="text-red-600 hover:text-red-700"
+            onClick={() => setConfirmRemoveOpen(true)}
+            disabled={isRemovendo}
+          >
+            {isRemovendo ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
+            Remover integração
+          </Button>
+        </div>
+      )}
+
+      {jaConfigurado && (
         <div className="space-y-4 border-t pt-4">
           <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Configuração de Webhook</p>
 
@@ -183,6 +224,16 @@ export function AsaasConfigForm() {
         description="O token atual será invalidado imediatamente. O webhook já configurado no Asaas vai parar de funcionar até você atualizar o novo token lá. Deseja continuar?"
         variant="destructive"
         confirmText="Regenerar"
+      />
+
+      <ConfirmDialog
+        open={confirmRemoveOpen}
+        onOpenChange={setConfirmRemoveOpen}
+        onConfirm={handleRemover}
+        title="Remover integração Asaas"
+        description="A chave e a configuração de webhook serão apagadas. Novas cobranças pelo Asaas deixarão de funcionar até reconfigurar. Deseja continuar?"
+        variant="destructive"
+        confirmText="Remover"
       />
     </div>
   );
