@@ -15,6 +15,27 @@ Racional de fundo em [SAAS_IS_DEAD_ANALISE_PILAR.md](./SAAS_IS_DEAD_ANALISE_PILA
 
 ---
 
+## ⚠️ Estado real vs proposto (verificado em produção 2026-07-13)
+
+Um red team verificou este modelo contra o banco de produção. **Os números abaixo, nas seções seguintes, são PROPOSTA — não é o que o sistema cobra hoje.** Reconciliar antes de qualquer conversa de preço.
+
+| Item | Proposto neste doc | Cobrado/estado HOJE (produção) |
+|---|---|---|
+| Preço mensal | R$ 297 / 497 / 897 | **R$ 97 / 197 / 397** (`pilar_subscription_plans`) |
+| Preço anual | — | R$ 970 / 1.970 / 3.970 |
+| Nome do 3º plano | "Plus" | **`enterprise`** (o "Plus" não existe) |
+| Limite do Pro | até 30 projetos | **50 projetos + 10 usuários** (limita por ambos, não só projeto) |
+| Métrica de cota | projetos ativos | por **usuário E projeto** (`max_usuarios` + `max_projetos`) |
+| Tiering aplicado | feature-flags por plano | **NÃO aplicado** — as 5 empresas têm as mesmas 13 features ligadas por default; **0 assinaturas** em `pilar_subscriptions`; trocar de plano não muda acesso |
+| Créditos de IA | 20 / 100 / 500 + medição | `ai_usage_logs` existe mas tem **0 linhas** (IA nunca rodou em prod); não há ledger de créditos |
+
+**Decisões pré-requisito (do CEO), antes de fixar preço:**
+1. Qual régua vale — subir o banco para a proposta (297/497/897) ou ajustar a proposta ao banco (97/197/397)? Os docs de estratégia sugerem que 197 está subvalorizado.
+2. A cota é por projeto, por usuário, ou ambos? (hoje o banco usa ambos; este doc propunha só projeto).
+3. Só então: ligar o elo plano→features e unificar os mapas divergentes (ver "Dependências técnicas").
+
+---
+
 ## Por que NÃO por usuário (seat)
 
 Quase todo concorrente cobra por assento (ver comparativo abaixo). Na era da IA, o valor escala com **o trabalho que o software executa**, não com o número de pessoas. Cobrar por seat penaliza justamente a automação que se vende — coloca a empresa "torcendo para o cliente não usar o produto" (a16z, `research/a16z/ai-is-upending-saas-pricing.md`). **Projeto ativo** é a métrica que o escritório já entende e que mantém o custo previsível.
@@ -23,13 +44,15 @@ Quase todo concorrente cobra por assento (ver comparativo abaixo). Na era da IA,
 
 ## Camada 1 — Assinatura por faixa de projetos ativos
 
-Preço **flat/mês**. A faixa de projetos é o gatilho de upgrade — passou da cota, sobe de plano (não cobra por unidade extra).
+Preço **flat/mês**. A faixa é o gatilho de upgrade — passou da cota, sobe de plano (não cobra por unidade extra).
 
-| Plano | Projetos ativos | Preço/mês | Módulos incluídos | Créditos IA/mês |
-|---|---|---|---|---|
-| **Starter** | até 10 | R$ 297 | Projetos+escopos, Financeiro, Propostas, Leads, Clientes, Relatórios, Mapa, Portal cliente | 20 |
-| **Pro** *(popular)* | até 30 | R$ 497 | Tudo do Starter + **margem real por projeto**, Timesheet, Capacidade, alerta de prejuízo, Portal premium (aprovar+pagar) | 100 |
-| **Plus** | ilimitado | R$ 897 | Tudo do Pro + IA Hub completo, Templates, Relatórios avançados, usuários ilimitados, suporte prioritário | 500 |
+> **Preço PROPOSTO abaixo ≠ cobrado hoje.** Ver "Estado real" no topo: o banco cobra R$ 97/197/397 e o 3º plano se chama `enterprise`. A coluna "hoje" mostra o vigente.
+
+| Plano (slug) | Projetos | Preço HOJE | Preço PROPOSTO | Módulos incluídos | Créditos IA/mês |
+|---|---|---|---|---|---|
+| **`starter`** | até 10 (3 usuários) | R$ 97 | R$ 297 | Projetos+escopos, Financeiro, Propostas, Leads, Clientes, Relatórios, Mapa, Portal cliente | 20 |
+| **`pro`** *(popular)* | até 50 (10 usuários) | R$ 197 | R$ 497 | Tudo do Starter + **margem real por projeto**, Timesheet, Capacidade, alerta de prejuízo, Portal premium (aprovar+pagar) | 100 |
+| **`enterprise`** | ilimitado | R$ 397 | R$ 897 | Tudo do Pro + IA Hub completo, Templates, Relatórios avançados, usuários ilimitados, suporte prioritário | 500 |
 
 **Definição de "projeto ativo":** projeto não-arquivado e não-concluído. Arquivar libera a cota. Essa é a métrica de cobrança — a definição precisa ficar cristalina na UI para o cliente confiar nela.
 
@@ -51,7 +74,7 @@ O cliente **nunca vê "token"**. Vê **crédito por ação concluída** — a un
 - **Pacote extra:** R$ 49 por 50 créditos (~R$ 0,98/crédito).
 - **Margem no crédito extra:** ~60% (preço ≈ 2,5× o custo). IA é pass-through de custo — margem AI-native fica em 50–60%, não 80% (`research/a16z/the-new-business-of-ai-economics.md`). Precificar o crédito como defesa de margem, não 1:1.
 
-**Pré-requisito técnico:** a tabela `ai_usage_logs` (pendência P2 crítica em [PLANO_MELHORIAS_2026-05.md](./PLANO_MELHORIAS_2026-05.md)) precisa existir para medir consumo. Sem medir, não há como cobrar uso.
+**Pré-requisito técnico (corrigido 2026-07-13):** a tabela `ai_usage_logs` **já existe e loga** `tokens_input`/`tokens_output` (COGS) via `_shared/ai-client.ts` — mas em produção tem **0 linhas** (a IA nunca rodou). O que falta NÃO é a tabela: é (a) *uso real* para medir o custo por ação, e (b) o **ledger de créditos** (contador de ações, cota 20/100/500 por plano, decremento, item extra no Asaas) — nada disso existe. Logar token ≠ metrificar e cobrar crédito.
 
 ---
 
@@ -97,10 +120,11 @@ Pricing certo se acha iterando com 1–3 clientes reais, não na planilha. Pergu
 Estado atual verificado no código (2026-07-13):
 
 1. **Motor de feature-flags: existe e funciona.** `src/lib/permissions.ts` (`canDo`), `src/hooks/usePermissions.ts`, `src/components/FeatureRoute.tsx`; colunas `empresas.features` / `profiles.features` / `convites.features` (migration `20260425000001_features_columns_and_rls.sql`). **Manter** — é o que empacota os tiers.
-2. **Elo plano → features: FALTA ligar.** Hoje o plano escolhido no checkout define só o **preço** (Asaas); as features são setadas por um objeto **hardcoded fixo** na criação da empresa e ajustadas na mão (Admin tab Features ou Ultra-Admin). `pilar-subscription-manage` **não** toca `empresas.features`. Para cobrança por tier automática, falta (a) o webhook/subscription-manage escrever `empresas.features` a partir do slug do plano, e (b) `canDo` consultar o plano ativo.
-3. **Dois mapas divergentes a unificar:** `src/lib/planFeatures.ts` (código morto, tem `TODO(billing)`) vs `src/lib/features.ts` (`includedInPlans`). Contradizem-se sobre o que cada plano inclui.
-4. **Ultra-admin: manter** (`src/pages/ultra-admin/`) — é o backoffice cross-empresa do operador do SaaS, necessário para provisionar features enquanto o elo acima não existe. Não é legado.
-5. **`ai_usage_logs`: construir** — pré-requisito da Camada 2.
+2. **Elo plano → features: FALTA ligar — e o vazamento está confirmado em produção.** As features são setadas por um objeto **hardcoded fixo** na criação da empresa; `pilar-subscription-manage` **não** toca `empresas.features` e `canDo` **nunca lê o plano**. Prova (prod, 2026-07-13): as **5 empresas têm as mesmas 13 features ligadas** (incl. portal_cliente, relatorios, mapa, timesheet, metas, planejamento — que o doc queria vender como Pro/Enterprise), e há **0 assinaturas** em `pilar_subscriptions`. Ou seja: todo mundo já tem quase tudo de graça; downgrade não tira, upgrade não dá. Falta (a) `subscription-manage` escrever `empresas.features := getFeaturesForPlan(slug)`, e (b) `canDo` consultar o plano.
+3. **Três mapas divergentes a unificar:** `src/lib/planFeatures.ts` (código morto, `TODO(billing)`) vs `src/lib/features.ts` (`includedInPlans`) vs `supabase/migrations/*seed_plan_features.sql` — contradizem-se sobre o que cada plano inclui, e nenhum bate com este doc.
+4. **Ultra-admin: manter** (`src/pages/ultra-admin/`) — backoffice cross-empresa, necessário para provisionar features enquanto o elo acima não existe. Não é legado.
+5. **`ai_usage_logs`: JÁ existe** (`20260514200003_ai_usage_logs.sql`), loga tokens/COGS, mas com **0 uso em prod**. O que falta é o **ledger de créditos** (cota/decremento/cobrança), não a tabela — ver Camada 2.
+6. **Preços do banco (`027_pilar_saas_subscriptions.sql`): R$ 97/197/397**, com limites `max_usuarios` (3/10/∞) e `max_projetos` (10/50/∞). Divergem da proposta 297/497/897 — reconciliar (ver "Estado real" no topo).
 
 ---
 

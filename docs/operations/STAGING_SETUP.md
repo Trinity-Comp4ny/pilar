@@ -21,10 +21,25 @@ Nenhum `supabase db push` ou `functions deploy` manual.
 2. Guarde o **Project ref** (ex.: `abcd...`) e a **Database password**.
 3. Replicar o schema no projeto novo (uma vez):
    ```bash
+   brew upgrade supabase   # use CLI ≥ 2.109 — versões antigas quebram no split de migrations
    supabase link --project-ref <REF_STAGING>
    supabase db push        # aplica as 141 migrations do zero
    supabase functions deploy
    ```
+
+   > **Dois tropeços conhecidos em projeto novo (PG17), já mapeados:**
+   >
+   > a) `ERROR: function gen_random_bytes(integer) does not exist` — o pgcrypto fica no
+   >    schema `extensions`, fora do search_path do role de migration. Rode uma vez no
+   >    **SQL Editor** de staging e re-rode o push (é resumível):
+   >    ```sql
+   >    ALTER DATABASE postgres SET search_path TO "$user", public, extensions;
+   >    ```
+   >
+   > b) `ERROR: cannot insert multiple commands into a prepared statement (42601)` — bug de
+   >    CLI antigo em migrations com `CREATE FUNCTION` + `GRANT` juntos. Resolve com
+   >    `brew upgrade supabase` (CLI ≥ 2.109). Plano B: rodar a migration no SQL Editor +
+   >    `supabase migration repair --status applied <version>`.
 4. Configurar os **secrets das funções** em staging (o CD **não** gerencia isso, de
    propósito, pra não vazar segredo em log). No dashboard do projeto staging, em
    *Edge Functions → Secrets*, replicar as chaves de prod com valores de **sandbox**:
