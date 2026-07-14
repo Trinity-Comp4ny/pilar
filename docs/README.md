@@ -3,6 +3,10 @@
 > Mapa de toda a documentação, organizada por tema. Ponto de partida para humanos e agentes.
 > Convenção: cada subpasta tem um `README.md` com o índice do tema. Comece pelo tema, depois abra o arquivo.
 
+## Meta
+
+- 🤖 [`AGENTS_TEAM.md`](./AGENTS_TEAM.md) — blueprint da equipe de agentes (organograma CEO→VP Ops→Heads→especialistas, roster e núcleo a contratar)
+
 ## Temas
 
 | Tema | Pasta | O que contém |
