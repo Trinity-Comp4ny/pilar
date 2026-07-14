@@ -42,7 +42,7 @@ Template em `docs/templates/DPA_TEMPLATE.md` (TODO)
 ### Incidentes e notificação
 
 - Vazamento de dados pessoais → notificar ANPD em **até 2 dias úteis** (Art. 48)
-- Ver `docs/INCIDENT_RESPONSE.md` seção 6
+- Ver `../operations/INCIDENT_RESPONSE.md` seção 6
 
 ### Transferência internacional
 

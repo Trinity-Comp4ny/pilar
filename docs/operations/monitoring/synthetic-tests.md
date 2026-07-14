@@ -70,6 +70,6 @@ Recomendado: começar 2min × 2 regiões, subir pra 1min quando tiver paying cus
 
 ## Integração com IR (Incident Response)
 
-`docs/INCIDENT_RESPONSE.md` é a fonte de verdade pra severidade e comunicação. Synthetic é o **trigger**, não o playbook.
+`../INCIDENT_RESPONSE.md` é a fonte de verdade pra severidade e comunicação. Synthetic é o **trigger**, não o playbook.
 
 Checkly alert → Slack `#incidents` → on-call abre incident em BetterStack → segue runbook.

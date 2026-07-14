@@ -70,4 +70,4 @@ Free 50 monitors, 5min interval. Setup análogo. Status page em `stats.uptimerob
 - **Down (P0)**: post no status page em <5min, update a cada 15min.
 - **Degraded (P1)**: post em <15min, update a cada 30min.
 - **Maintenance**: agendar com 48h de antecedência, post 24h antes.
-- Postmortem público em incidentes >30min, em até 5 dias úteis (ver `docs/INCIDENT_RESPONSE.md`).
+- Postmortem público em incidentes >30min, em até 5 dias úteis (ver `../INCIDENT_RESPONSE.md`).

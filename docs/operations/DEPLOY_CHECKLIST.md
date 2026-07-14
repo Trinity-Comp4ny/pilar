@@ -49,7 +49,7 @@ Todas as ações que **precisam** ser feitas manualmente (config de dashboards) 
 
 - [ ] Confirmar **daily backup ON** (Pro plan)
 - [ ] Configurar **retention 7 dias** PITR
-- [ ] Script mensal de dump para S3/Backblaze (ver `docs/DISASTER_RECOVERY.md`)
+- [ ] Script mensal de dump para S3/Backblaze (ver `./DISASTER_RECOVERY.md`)
 
 ---
 

@@ -17,9 +17,9 @@ aceleradoras do Pilar, em `research/`.
 Pilar = SaaS de gestão para escritórios de engenharia/arquitetura (AEC), reposicionando-se
 para **vertical AI agents** ("agentes que executam o trabalho do escritório"). Toda análise
 tem lente dupla: sabedoria ampla de startups **+** foco em vertical SaaS / AI-native / pricing
-B2B / fundraising / GTM aplicável ao Pilar. Contexto adicional: `STRATEGY_V2.md`,
-`docs/SAAS_IS_DEAD_ANALISE_PILAR.md`, `docs/ANALISE_COMPETITIVA_VOBI.md`,
-`docs/ICP_E_PLANO_DESIGN_PARTNER_2026-05.md`.
+B2B / fundraising / GTM aplicável ao Pilar. Contexto adicional: `docs/strategy/STRATEGY_V2.md`,
+`docs/strategy/SAAS_IS_DEAD_ANALISE_PILAR.md`, `docs/strategy/ANALISE_COMPETITIVA_VOBI.md`,
+`docs/strategy/ICP_E_PLANO_DESIGN_PARTNER_2026-05.md`.
 
 ## Ao iniciar QUALQUER tarefa
 1. Leia `research/INDEX.md` e `research/SOURCES.md` para saber o que já existe.
