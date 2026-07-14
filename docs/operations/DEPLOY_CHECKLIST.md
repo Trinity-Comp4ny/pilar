@@ -121,11 +121,14 @@ Todas as ações que **precisam** ser feitas manualmente (config de dashboards) 
 
 ## 🔵 GitHub
 
-### Repository Settings → Secrets
+### Environments → Secrets (deploy automatizado)
 
-- [ ] `VITE_SUPABASE_URL` (para E2E em CI)
-- [ ] `VITE_SUPABASE_PUBLISHABLE_KEY` (projeto **staging**, não prod)
-- [ ] `SUPABASE_ACCESS_TOKEN` (para `supabase db push` via CI, se usar)
+O deploy do backend é feito por `.github/workflows/deploy-supabase.yml` (CD).
+Configurar os Environments `staging` e `production` conforme
+[`STAGING_SETUP.md`](./STAGING_SETUP.md):
+
+- [ ] Environment `staging`: `SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_REF`, `SUPABASE_DB_PASSWORD`, `STAGING_SUPABASE_URL`, `STAGING_SUPABASE_ANON_KEY`, `E2E_TEST_EMAIL/PASSWORD`
+- [ ] Environment `production`: `SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_REF` (prod), `SUPABASE_DB_PASSWORD` (prod) + **Required reviewers** ON
 
 ### Settings → Branch Protection (main)
 
@@ -210,15 +213,17 @@ SELECT cron.schedule(
 
 ## 🧪 Validação final
 
-Após tudo acima, rodar:
+O deploy do backend é **automático** (push → CI → `Deploy Supabase`). Não rode
+`db push` / `functions deploy` à mão — deixe o CD fazer. Após o merge:
 
 ```bash
-supabase db push
-supabase functions deploy create-company-owner invite-user invite-cliente-portal reset-cliente-portal-password asaas-webhook turnstile-verify upload-portal-entrega
-npm run gen:types
-git add -A && git commit -m "feat(security): hardening 10/10"
-git push
+npm run gen:types   # regenerar tipos após migration (local)
+git add -A && git commit -m "chore: regen types" && git push
 ```
+
+> Se precisar de deploy manual de emergência (CD fora do ar), os `verify_jwt`
+> já vivem em `config.toml`, então basta `supabase db push` + `supabase functions deploy`
+> (sem `--no-verify-jwt`).
 
 Smoke test:
 
