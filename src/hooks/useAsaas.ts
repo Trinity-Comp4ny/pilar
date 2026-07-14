@@ -66,6 +66,8 @@ export function useAsaasConfig() {
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isRegenerando, setIsRegenerando] = useState(false);
+  const [isRemovendo, setIsRemovendo] = useState(false);
+  const [isTestando, setIsTestando] = useState(false);
 
   const carregarConfig = async (): Promise<AsaasConfig | null> => {
     setIsLoading(true);
@@ -138,5 +140,63 @@ export function useAsaasConfig() {
     }
   };
 
-  return { carregarConfig, salvarConfig, regenerarToken, isSaving, isLoading, isRegenerando };
+  const removerConfig = async (): Promise<boolean> => {
+    setIsRemovendo(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("asaas-config", {
+        body: { action: "remover" },
+      });
+      if (error) throw error;
+      const result = data as { success?: boolean; error?: string };
+      if (result?.error) throw new Error(result.error);
+      toast.success("Integração removida");
+      return true;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Erro ao remover integração";
+      toast.error("Erro ao remover", { description: message });
+      return false;
+    } finally {
+      setIsRemovendo(false);
+    }
+  };
+
+  const testarConexao = async (): Promise<boolean | null> => {
+    setIsTestando(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("asaas-config", {
+        body: { action: "testar" },
+      });
+      if (error) throw error;
+      const result = data as { success?: boolean; valido?: boolean; conta?: string | null; mensagem?: string; error?: string };
+      if (result?.error) throw new Error(result.error);
+
+      if (result.valido) {
+        toast.success("Conexão OK", {
+          description: result.conta ? `Conta Asaas: ${result.conta}` : "Chave válida.",
+        });
+        return true;
+      }
+      toast.error("Conexão falhou", { description: result.mensagem ?? "Verifique a chave e o ambiente." });
+      return false;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Erro ao testar conexão";
+      toast.error("Erro ao testar", { description: message });
+      return null;
+    } finally {
+      setIsTestando(false);
+    }
+  };
+
+  return {
+    carregarConfig,
+    salvarConfig,
+    regenerarToken,
+    removerConfig,
+    testarConexao,
+    isSaving,
+    isLoading,
+    isRegenerando,
+    isRemovendo,
+    isTestando,
+  };
 }
