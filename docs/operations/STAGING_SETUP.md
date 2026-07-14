@@ -23,9 +23,15 @@ Nenhum `supabase db push` ou `functions deploy` manual.
    ```bash
    brew upgrade supabase   # use CLI ≥ 2.109 — versões antigas quebram no split de migrations
    supabase link --project-ref <REF_STAGING>
-   supabase db push        # aplica as 141 migrations do zero
-   supabase functions deploy
+   # SEMPRE passe --db-url / --project-ref explícitos: sem eles, o CLI usa o
+   # project_id do config.toml (= PRODUÇÃO) e você deploya no lugar errado.
+   supabase db push --db-url "postgresql://postgres.<REF_STAGING>:<SENHA>@aws-1-<REGIAO>.pooler.supabase.com:5432/postgres"
+   supabase functions deploy --project-ref <REF_STAGING>
    ```
+
+   > ⚠️ **Nunca** rode `db push`/`functions deploy` sem alvo explícito durante o bootstrap:
+   > o `config.toml` aponta pro prod, então o comando "pelado" vai pra produção.
+   > Use `--db-url` (pooler IPv4, contorna o IPv6) no push e `--project-ref` no deploy.
 
    > **Dois tropeços conhecidos em projeto novo (PG17), já mapeados:**
    >
@@ -70,7 +76,7 @@ marcar **Required reviewers** (você) — assim todo deploy de prod pede 1 cliqu
 |---|---|
 | `SUPABASE_ACCESS_TOKEN` | token de acesso da conta (Account → Access Tokens) |
 | `SUPABASE_PROJECT_REF` | ref do projeto **staging** |
-| `SUPABASE_DB_PASSWORD` | senha do banco **staging** |
+| `SUPABASE_DB_URL` | URI do Session Pooler (IPv4) de staging c/ senha embutida — runner do GitHub é IPv4-only |
 | `STAGING_SUPABASE_URL` | URL do projeto staging (pro E2E) |
 | `STAGING_SUPABASE_ANON_KEY` | anon key staging (pro E2E) |
 | `E2E_TEST_EMAIL` / `E2E_TEST_PASSWORD` | usuário de teste |
@@ -82,7 +88,7 @@ marcar **Required reviewers** (você) — assim todo deploy de prod pede 1 cliqu
 |---|---|
 | `SUPABASE_ACCESS_TOKEN` | mesmo token (ou um específico de prod) |
 | `SUPABASE_PROJECT_REF` | `vepnsonbnsimqcsfcagm` (prod atual) |
-| `SUPABASE_DB_PASSWORD` | senha do banco de **produção** |
+| `SUPABASE_DB_URL` | URI do Session Pooler (IPv4) de **produção** c/ senha embutida |
 
 ## Passo 4 — Pronto
 
