@@ -12,7 +12,10 @@ name: Deploy Supabase
 # Secrets necessários (por GitHub Environment: `staging` e `production`):
 #   SUPABASE_ACCESS_TOKEN   — token de acesso (conta/org) do Supabase
 #   SUPABASE_PROJECT_REF    — ref do projeto (ex.: vepnsonbnsimqcsfcagm)
-#   SUPABASE_DB_PASSWORD    — senha do banco (para `db push` não-interativo)
+#   SUPABASE_DB_URL         — URI do Session Pooler (IPv4) c/ senha embutida.
+#                             Runners do GitHub são IPv4-only e a conexão direta
+#                             do Supabase é IPv6-only → o pooler é obrigatório.
+#                             Ex.: postgresql://postgres.<ref>:<senha>@aws-1-<regiao>.pooler.supabase.com:5432/postgres
 # Ver docs/operations/STAGING_SETUP.md para o passo a passo.
 
 on:
@@ -45,20 +48,17 @@ jobs:
         with:
           version: latest
 
-      - name: Link ao projeto
-        run: supabase link --project-ref "$SUPABASE_PROJECT_REF"
+      - name: Aplicar migrations (db push via pooler IPv4)
+        # `--db-url` aponta pro Session Pooler (IPv4). Sem isso o push tenta a
+        # conexão direta (IPv6) e falha no runner IPv4-only do GitHub.
+        run: supabase db push --db-url "$SUPABASE_DB_URL"
         env:
-          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
-          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
-
-      - name: Aplicar migrations (db push)
-        run: supabase db push
-        env:
-          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
 
       - name: Deploy de todas as edge functions
         # Sem nome = deploy de todas as funções em supabase/functions,
-        # respeitando verify_jwt de config.toml por função.
+        # respeitando verify_jwt de config.toml por função. Vai por HTTPS
+        # (não usa a porta do banco), então IPv4 do runner basta.
         run: supabase functions deploy --project-ref "$SUPABASE_PROJECT_REF"
         env:
           SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
