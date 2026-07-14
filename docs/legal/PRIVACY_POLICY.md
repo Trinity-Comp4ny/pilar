@@ -87,7 +87,7 @@ Você pode a qualquer momento solicitar:
 - Multi-fator obrigatório para administradores
 - Audit log imutável
 - Backup cifrado em múltiplas regiões
-- Detalhes técnicos: `docs/SECURITY.md`
+- Detalhes técnicos: `../security/SECURITY.md`
 
 ## 8. Cookies
 
