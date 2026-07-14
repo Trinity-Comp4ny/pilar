@@ -50,4 +50,4 @@ Não oferecemos bounty monetário no momento, mas reconhecemos publicamente com 
 
 ## Incidente detectado?
 
-Ver `docs/INCIDENT_RESPONSE.md`.
+Ver `../operations/INCIDENT_RESPONSE.md`.

@@ -20,6 +20,8 @@ export type ManagedUser = {
   email: string;
   role: PilarRole;
   isPending?: boolean;
+  /** id do convite (quando isPending) — necessário para reenviar/cancelar */
+  inviteId?: string | null;
   features: UserFeatures;
 };
 
@@ -50,6 +52,10 @@ export type UsersAccessManagerProps = {
   onInvite: (payload: InvitePayload) => void;
   onUpdate: (payload: UpdatePayload) => void;
   onDelete: (userId: string) => void;
+  /** Reenviar convite pendente (opcional — só habilita a ação se fornecido) */
+  onResendInvite?: (user: ManagedUser) => void;
+  /** Cancelar convite pendente (opcional) */
+  onCancelInvite?: (user: ManagedUser) => void;
 };
 
 export function UsersAccessManager({
@@ -62,6 +68,8 @@ export function UsersAccessManager({
   onInvite,
   onUpdate,
   onDelete,
+  onResendInvite,
+  onCancelInvite,
 }: UsersAccessManagerProps) {
   const [inviteOpen, setInviteOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<ManagedUser | null>(null);
@@ -141,7 +149,32 @@ export function UsersAccessManager({
                         <AccessBadges role={u.role} features={u.features} />
                       </TableCell>
                       <TableCell className="text-right">
-                        {canManage && !u.isPending && !isUltra ? (
+                        {canManage && u.isPending ? (
+                          <div className="flex justify-end gap-2">
+                            {onResendInvite && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="rounded-full"
+                                onClick={() => onResendInvite(u)}
+                                aria-label={`Reenviar convite para ${u.email}`}
+                              >
+                                Reenviar
+                              </Button>
+                            )}
+                            {onCancelInvite && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="rounded-full text-red-600"
+                                onClick={() => onCancelInvite(u)}
+                                aria-label={`Cancelar convite de ${u.email}`}
+                              >
+                                Cancelar
+                              </Button>
+                            )}
+                          </div>
+                        ) : canManage && !isUltra ? (
                           <div className="flex justify-end gap-2">
                             <Button
                               variant="outline"
@@ -197,21 +230,42 @@ export function UsersAccessManager({
                         </div>
                         <p className="mt-1 break-all text-xs text-black/60">{u.email}</p>
                       </div>
-                      {canManage && !u.isPending && !isUltra && (
+                      {canManage && u.isPending ? (
                         <div className="flex flex-col gap-2">
-                          <Button variant="outline" size="sm" className="rounded-full" onClick={() => openEdit(u)}>
-                            Editar
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="rounded-full text-red-600"
-                            onClick={() => setDeleteTarget(u)}
-                            disabled={u.id === currentUserId}
-                          >
-                            Remover
-                          </Button>
+                          {onResendInvite && (
+                            <Button variant="outline" size="sm" className="rounded-full" onClick={() => onResendInvite(u)}>
+                              Reenviar
+                            </Button>
+                          )}
+                          {onCancelInvite && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="rounded-full text-red-600"
+                              onClick={() => onCancelInvite(u)}
+                            >
+                              Cancelar
+                            </Button>
+                          )}
                         </div>
+                      ) : (
+                        canManage &&
+                        !isUltra && (
+                          <div className="flex flex-col gap-2">
+                            <Button variant="outline" size="sm" className="rounded-full" onClick={() => openEdit(u)}>
+                              Editar
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="rounded-full text-red-600"
+                              onClick={() => setDeleteTarget(u)}
+                              disabled={u.id === currentUserId}
+                            >
+                              Remover
+                            </Button>
+                          </div>
+                        )
                       )}
                     </div>
                     <AccessBadges role={u.role} features={u.features} />

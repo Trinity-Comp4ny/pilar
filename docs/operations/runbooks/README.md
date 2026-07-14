@@ -5,9 +5,9 @@ auto-contido: severidade, sintomas, diagnóstico, mitigação, solução,
 comunicação e pós-mortem.
 
 > Para o **processo geral** de incident response (papéis, fluxo, LGPD),
-> ver [`docs/INCIDENT_RESPONSE.md`](../INCIDENT_RESPONSE.md).
+> ver [`../INCIDENT_RESPONSE.md`](../INCIDENT_RESPONSE.md).
 > Para **disaster recovery** (PITR, backup), ver
-> [`docs/DISASTER_RECOVERY.md`](../DISASTER_RECOVERY.md).
+> [`../DISASTER_RECOVERY.md`](../DISASTER_RECOVERY.md).
 
 ## Índice
 
