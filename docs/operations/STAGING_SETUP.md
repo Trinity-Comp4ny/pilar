@@ -1,0 +1,83 @@
+# Staging isolado + CD do backend
+
+Objetivo: parar de deployar migrations e edge functions à mão, e isolar staging
+de produção. Hoje o front de staging aponta para o Supabase de **produção** — este
+setup corrige isso com um **segundo projeto Supabase** (cabe no free tier: 2 projetos).
+
+Depois de configurado, o fluxo passa a ser 100% git-driven:
+
+```
+push staging → CI verde → deploy no Supabase de STAGING → E2E contra staging
+merge  main  → CI verde → deploy no Supabase de PRODUÇÃO (com aprovação, opcional)
+```
+
+Nenhum `supabase db push` ou `functions deploy` manual.
+
+---
+
+## Passo 1 — Criar o projeto de staging (~10 min, feito 1 vez)
+
+1. Supabase → **New project** → `pilar-staging` (mesma região do prod).
+2. Guarde o **Project ref** (ex.: `abcd...`) e a **Database password**.
+3. Replicar o schema no projeto novo (uma vez):
+   ```bash
+   supabase link --project-ref <REF_STAGING>
+   supabase db push        # aplica as 141 migrations do zero
+   supabase functions deploy
+   ```
+4. Configurar os **secrets das funções** em staging (o CD **não** gerencia isso, de
+   propósito, pra não vazar segredo em log). No dashboard do projeto staging, em
+   *Edge Functions → Secrets*, replicar as chaves de prod com valores de **sandbox**:
+   `RESEND_API_KEY`, `AUTH_HOOK_SEND_EMAIL_SECRET`, `ASAAS_API_KEY` (sandbox),
+   `TURNSTILE_SECRET`, `SENTRY_DSN`, etc.
+5. Auth → URL Configuration: apontar `Site URL` e redirect URLs pro domínio de staging.
+6. Criar o usuário de teste E2E (`E2E_TEST_EMAIL`) neste projeto.
+
+## Passo 2 — Apontar o front de staging pro Supabase de staging
+
+Na Vercel, no ambiente **Preview/staging** do projeto, setar:
+
+| Variável | Valor |
+|---|---|
+| `VITE_SUPABASE_URL` | URL do projeto **staging** |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` | anon key do **staging** |
+
+Produção continua com as chaves de prod. Isso encerra o risco de staging→prod.
+
+## Passo 3 — Secrets do GitHub (por Environment)
+
+Em *Settings → Environments*, criar **`staging`** e **`production`**. Em produção,
+marcar **Required reviewers** (você) — assim todo deploy de prod pede 1 clique de aprovação.
+
+**Environment `staging`:**
+
+| Secret | Valor |
+|---|---|
+| `SUPABASE_ACCESS_TOKEN` | token de acesso da conta (Account → Access Tokens) |
+| `SUPABASE_PROJECT_REF` | ref do projeto **staging** |
+| `SUPABASE_DB_PASSWORD` | senha do banco **staging** |
+| `STAGING_SUPABASE_URL` | URL do projeto staging (pro E2E) |
+| `STAGING_SUPABASE_ANON_KEY` | anon key staging (pro E2E) |
+| `E2E_TEST_EMAIL` / `E2E_TEST_PASSWORD` | usuário de teste |
+| `E2E_PORTAL_EMAIL` / `E2E_PORTAL_PASSWORD` | opcional (portal) |
+
+**Environment `production`:**
+
+| Secret | Valor |
+|---|---|
+| `SUPABASE_ACCESS_TOKEN` | mesmo token (ou um específico de prod) |
+| `SUPABASE_PROJECT_REF` | `vepnsonbnsimqcsfcagm` (prod atual) |
+| `SUPABASE_DB_PASSWORD` | senha do banco de **produção** |
+
+## Passo 4 — Pronto
+
+- `.github/workflows/deploy-supabase.yml` já faz o deploy por branch.
+- `.github/workflows/e2e-staging.yml` roda Playwright contra staging após cada deploy.
+- `verify_jwt` por função vive em `supabase/config.toml` — deploy respeita, sem flags manuais.
+
+### Verificação
+
+- Push numa branch → PR pra `staging` → merge → ver o run "Deploy Supabase" (staging).
+- Confirmar no dashboard de staging que migrations e funções subiram.
+- Um webhook (ex.: `asaas-webhook`) deve responder **sem** exigir JWT — se der 401,
+  revisar o bloco `[functions.*]` em `config.toml`.

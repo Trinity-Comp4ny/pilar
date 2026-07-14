@@ -28,6 +28,7 @@ type RawUser = {
   features?: unknown;
   contato?: string | null;
   isPending?: boolean;
+  inviteId?: string | null;
 };
 
 const VALID_TABS = ["usuarios", "features", "empresa", "parametros", "automacoes", "auditoria", "plano", "integracoes"] as const;
@@ -153,6 +154,7 @@ export default function Admin() {
 
           const pendingList: RawUser[] = (pendingConvites ?? []).map((c) => ({
             id: `pending-${c.id}`,
+            inviteId: c.id,
             nome: c.nome ?? c.email,
             email: c.email,
             role: c.cargo,
