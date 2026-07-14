@@ -36,7 +36,7 @@ const formatCurrency = (val: number) =>
 function VisaoGeralSkeleton() {
   return (
     <div className="space-y-6 w-full max-w-none">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 w-full">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5 gap-4 w-full">
         {[1, 2, 3, 4, 5].map((i) => (
           <Card key={i} className="vrz-card w-full">
             <CardHeader className="pb-2">
@@ -182,7 +182,7 @@ export default function VisaoGeral() {
   return (
     <div className="space-y-6 w-full max-w-none">
       {/* KPIs */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 w-full">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5 gap-4 w-full">
         <Card className="vrz-card bg-positive/10 border-positive/20 w-full min-w-0">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-green-700 truncate">Receitas Totais</CardTitle>
