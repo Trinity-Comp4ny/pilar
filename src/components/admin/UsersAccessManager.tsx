@@ -49,13 +49,13 @@ export type UsersAccessManagerProps = {
   isInviting?: boolean;
   /** Executado antes de abrir os modais de convite/edição (ex.: gate AAL2). Retorna false para cancelar. */
   onRequireAuth?: () => Promise<boolean>;
-  onInvite: (payload: InvitePayload) => void;
+  onInvite: (payload: InvitePayload) => void | Promise<void>;
   onUpdate: (payload: UpdatePayload) => void;
   onDelete: (userId: string) => void;
   /** Reenviar convite pendente (opcional — só habilita a ação se fornecido) */
-  onResendInvite?: (user: ManagedUser) => void;
+  onResendInvite?: (user: ManagedUser) => void | Promise<void>;
   /** Cancelar convite pendente (opcional) */
-  onCancelInvite?: (user: ManagedUser) => void;
+  onCancelInvite?: (user: ManagedUser) => void | Promise<void>;
 };
 
 export function UsersAccessManager({
@@ -282,9 +282,13 @@ export function UsersAccessManager({
         onClose={() => setInviteOpen(false)}
         companyFeatures={companyFeatures}
         isSubmitting={isInviting}
-        onSubmit={(payload) => {
-          onInvite(payload);
-          setInviteOpen(false);
+        onSubmit={async (payload) => {
+          try {
+            await onInvite(payload);
+            setInviteOpen(false); // só fecha em sucesso; no erro o handler lançou e o modal fica aberto
+          } catch {
+            /* mantém o modal aberto com o formulário preenchido */
+          }
         }}
       />
 

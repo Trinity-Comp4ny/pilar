@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { callUntypedRpc } from "@/lib/supabaseRpc";
 import { toast } from "sonner";
@@ -14,6 +14,7 @@ type RawUser = {
   role: string | null;
   features?: unknown;
   isPending?: boolean;
+  inviteId?: string | null;
 };
 
 type Props = {
@@ -31,6 +32,7 @@ function normalizeRole(role: string | null | undefined): PilarRole {
 
 export function UsuariosTab({ users, setUsers, currentUserId, companyFeatures }: Props) {
   const requireAal2 = useRequireAal2();
+  const [isInviting, setIsInviting] = useState(false);
 
   const managed = useMemo<ManagedUser[]>(
     () =>
@@ -41,6 +43,7 @@ export function UsuariosTab({ users, setUsers, currentUserId, companyFeatures }:
         role: normalizeRole(u.role),
         features: parseUserFeatures(u.features),
         isPending: u.isPending ?? u.id.startsWith("pending-"),
+        inviteId: u.inviteId,
       })),
     [users]
   );
@@ -52,6 +55,7 @@ export function UsuariosTab({ users, setUsers, currentUserId, companyFeatures }:
     features: UserFeatures;
   }) => {
     if (!(await requireAal2())) return;
+    setIsInviting(true);
     try {
       const { error } = await supabase.functions.invoke("invite-user", {
         body: {
@@ -78,6 +82,43 @@ export function UsuariosTab({ users, setUsers, currentUserId, companyFeatures }:
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Erro inesperado";
       toast.error("Erro ao convidar", { description: msg });
+      throw err; // mantém o modal aberto com o formulário preenchido
+    } finally {
+      setIsInviting(false);
+    }
+  };
+
+  const handleResendInvite = async (u: ManagedUser) => {
+    if (!u.inviteId) {
+      toast.error("Recarregue a página para reenviar este convite");
+      return;
+    }
+    try {
+      const { error } = await supabase.functions.invoke("invite-user", {
+        body: { action: "resend", convite_id: u.inviteId },
+      });
+      if (error) throw error;
+      toast.success("Convite reenviado", { description: `Novo e-mail enviado para ${u.email}` });
+    } catch (err) {
+      toast.error("Erro ao reenviar", { description: err instanceof Error ? err.message : "Erro inesperado" });
+    }
+  };
+
+  const handleCancelInvite = async (u: ManagedUser) => {
+    if (!u.inviteId) {
+      setUsers((prev) => prev.filter((x) => x.id !== u.id));
+      return;
+    }
+    try {
+      const { error } = await supabase.functions.invoke("invite-user", {
+        method: "DELETE",
+        body: { convite_id: u.inviteId },
+      });
+      if (error) throw error;
+      setUsers((prev) => prev.filter((x) => x.inviteId !== u.inviteId));
+      toast.success("Convite cancelado");
+    } catch (err) {
+      toast.error("Erro ao cancelar", { description: err instanceof Error ? err.message : "Erro inesperado" });
     }
   };
 
@@ -122,10 +163,13 @@ export function UsuariosTab({ users, setUsers, currentUserId, companyFeatures }:
       companyFeatures={companyFeatures}
       currentUserId={currentUserId}
       canManage
+      isInviting={isInviting}
       onRequireAuth={requireAal2}
       onInvite={handleInvite}
       onUpdate={handleUpdate}
       onDelete={handleDelete}
+      onResendInvite={handleResendInvite}
+      onCancelInvite={handleCancelInvite}
     />
   );
 }
