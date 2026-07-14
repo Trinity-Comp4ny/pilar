@@ -48,7 +48,7 @@ Contatos: security@labrynth.ai · Slack #security
 
 ### 5. Recuperação
 
-- Restaurar de backup se data loss (Supabase PITR — ver `docs/DISASTER_RECOVERY.md`).
+- Restaurar de backup se data loss (Supabase PITR — ver `./DISASTER_RECOVERY.md`).
 - Validar integridade: `audit_log_verify_chain()`, diff com último backup bom.
 
 ### 6. Comunicação
@@ -95,4 +95,4 @@ Contatos: security@labrynth.ai · Slack #security
 - Revisar `critical_alerts` diariamente (UI em `/admin/auditoria`)
 - Rodar `audit_log_verify_chain()` semanalmente
 - npm audit mensal
-- Pentest anual externo (ver `docs/COMPLIANCE.md`)
+- Pentest anual externo (ver `../security/COMPLIANCE.md`)

@@ -62,7 +62,7 @@
 ## Solução definitiva
 
 - **Outage Supabase:** aguardar resolução, ativar PITR se houve perda de dados
-  (ver `docs/DISASTER_RECOVERY.md`).
+  (ver `../DISASTER_RECOVERY.md`).
 - **Connection saturation:** subir pool no Supabase (Pro ↑), revisar
   edge functions sem `await client.from(...).limit()`, adicionar PgBouncer.
 - **Disk cheio:** `VACUUM FULL` em tabelas grandes (`audit_logs`,

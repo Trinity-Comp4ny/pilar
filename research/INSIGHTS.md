@@ -5,7 +5,7 @@ Não é resumo de fonte (isso fica nas notas) — é "o que isso significa pra g
 
 Formato: cada insight = título + tese de 1 linha + evidência (links `[[]]`) + ação Pilar.
 
-Ligações ao trabalho existente: [STRATEGY_V2.md](../STRATEGY_V2.md) · [docs/SAAS_IS_DEAD_ANALISE_PILAR.md](../docs/SAAS_IS_DEAD_ANALISE_PILAR.md) · [docs/ANALISE_COMPETITIVA_VOBI.md](../docs/ANALISE_COMPETITIVA_VOBI.md) · memory `agentic-strategy-2026-06`.
+Ligações ao trabalho existente: [STRATEGY_V2.md](../docs/strategy/STRATEGY_V2.md) · [docs/SAAS_IS_DEAD_ANALISE_PILAR.md](../docs/strategy/SAAS_IS_DEAD_ANALISE_PILAR.md) · [docs/ANALISE_COMPETITIVA_VOBI.md](../docs/strategy/ANALISE_COMPETITIVA_VOBI.md) · memory `agentic-strategy-2026-06`.
 
 ---
 

@@ -33,10 +33,17 @@ serve(
       if (id) {
         if (!isUUID(id)) return safeErrorResponse(400, "id inválido", req);
 
-        const [{ data: empresa, error: empErr }, { data: usuarios, error: usrErr }] = await Promise.all([
-          svc.from("empresas").select("*").eq("id", id).single(),
-          svc.from("profiles").select("id, nome, email, role, features").eq("empresa_id", id),
-        ]);
+        const [{ data: empresa, error: empErr }, { data: usuarios, error: usrErr }, { data: convites }] =
+          await Promise.all([
+            svc.from("empresas").select("*").eq("id", id).single(),
+            svc.from("profiles").select("id, nome, email, role, features").eq("empresa_id", id),
+            svc
+              .from("convites")
+              .select("id, email, nome, cargo, features, expira_em")
+              .eq("empresa_id", id)
+              .is("usado_em", null)
+              .gt("expira_em", new Date().toISOString()),
+          ]);
 
         if (empErr || !empresa) return safeErrorResponse(404, "Empresa não encontrada", req);
         if (usrErr) return safeErrorResponse(500, "Falha ao buscar usuários da empresa", req);
@@ -53,6 +60,7 @@ serve(
             empresa,
             plano: (sub?.pilar_subscription_plans as { slug?: string } | null)?.slug ?? "starter",
             usuarios: usuarios ?? [],
+            convites: convites ?? [],
           },
           200,
           req
@@ -171,31 +179,77 @@ serve(
       return jsonResponse({ success: true, empresa_id: empresa.id, warning: inviteWarning }, 200, req);
     }
 
-    // ─── PUT: atualizar features da empresa ───────────────────────────────
+    // ─── PUT: atualizar empresa (features, dados cadastrais, status, plano) ─
     if (req.method === "PUT") {
       const body = await req.json();
-      const { empresa_id, features } = body ?? {};
+      const { empresa_id, features, nome, cnpj, status, plano } = body ?? {};
 
       if (!isUUID(empresa_id)) return safeErrorResponse(400, "empresa_id inválido", req);
-      if (!features || typeof features !== "object") return safeErrorResponse(400, "features obrigatório", req);
 
-      const { data: emp } = await svc.from("empresas").select("nome, features").eq("id", empresa_id).single();
+      const { data: emp } = await svc
+        .from("empresas")
+        .select("nome, features, status")
+        .eq("id", empresa_id)
+        .single();
+      if (!emp) return safeErrorResponse(404, "Empresa não encontrada", req);
 
-      const { error } = await svc.from("empresas").update({ features }).eq("id", empresa_id);
+      // Monta o update de empresas só com os campos enviados
+      const empresaUpdate: Record<string, unknown> = {};
+      if (features && typeof features === "object") empresaUpdate.features = features;
+      if (typeof nome === "string" && nome.trim()) empresaUpdate.nome = nome.trim();
+      if (typeof cnpj === "string") empresaUpdate.cnpj = cnpj.trim() || null;
+      if (typeof status === "string") {
+        if (!["active", "suspended", "cancelled"].includes(status)) {
+          return safeErrorResponse(400, "status inválido", req);
+        }
+        empresaUpdate.status = status;
+      }
 
-      if (error) return safeErrorResponse(400, error.message, req);
+      if (Object.keys(empresaUpdate).length > 0) {
+        const { error } = await svc.from("empresas").update(empresaUpdate).eq("id", empresa_id);
+        if (error) return safeErrorResponse(400, error.message, req);
+      }
+
+      // Troca de plano (opcional): resolve o slug e faz upsert da assinatura
+      if (typeof plano === "string") {
+        if (!["starter", "pro", "enterprise"].includes(plano)) {
+          return safeErrorResponse(400, "plano inválido", req);
+        }
+        const { data: plan } = await svc
+          .from("pilar_subscription_plans")
+          .select("id")
+          .eq("slug", plano)
+          .maybeSingle();
+        if (!plan?.id) return safeErrorResponse(400, "plano não encontrado", req);
+
+        const { data: existingSub } = await svc
+          .from("pilar_subscriptions")
+          .select("id")
+          .eq("empresa_id", empresa_id)
+          .maybeSingle();
+
+        if (existingSub?.id) {
+          await svc.from("pilar_subscriptions").update({ plan_id: plan.id }).eq("id", existingSub.id);
+        } else {
+          await svc.from("pilar_subscriptions").insert({ empresa_id, plan_id: plan.id, status: "active" });
+        }
+      }
 
       await logAction(svc, {
         actorId: userId,
         actorEmail,
         actorRole: "ultra_admin",
-        action: "update_company_features",
+        action: "update_company",
         category: "empresa",
         targetType: "empresa",
         targetId: empresa_id,
-        targetName: emp?.nome ?? empresa_id,
+        targetName: (typeof nome === "string" && nome.trim()) || emp.nome || empresa_id,
         empresaId: empresa_id,
-        metadata: { old: emp?.features, new: features },
+        metadata: {
+          fields: Object.keys(empresaUpdate),
+          plano: typeof plano === "string" ? plano : undefined,
+          old_status: emp.status,
+        },
         req,
       });
 

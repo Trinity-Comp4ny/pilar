@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Building2, CircleOff, Loader2, Plus, Search, Users2, Layers } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState, type Dispatch, type SetStateAction } from "react";
+import { ArrowLeft, Building2, CircleOff, Loader2, Pencil, Plus, Search, Users2, Layers } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +15,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CompanyFeatureToggles } from "@/components/admin/CompanyFeatureToggles";
 import { UsersAccessManager, type ManagedUser } from "@/components/admin/UsersAccessManager";
 import { PageLayout } from "@/components/PageLayout";
@@ -137,6 +138,13 @@ export default function UltraAdmin() {
           role: string | null;
           features: unknown;
         }>;
+        convites?: Array<{
+          id: string;
+          email: string;
+          nome: string | null;
+          cargo: string | null;
+          features: unknown;
+        }>;
       };
 
       const emp: EmpresaDetail = {
@@ -163,6 +171,20 @@ export default function UltraAdmin() {
           features: parseUserFeatures(u.features),
         })),
       };
+
+      // Convites pendentes entram na mesma lista como "Pendente"
+      for (const c of raw.convites ?? []) {
+        emp.usuarios.push({
+          id: `convite-${c.id}`,
+          inviteId: c.id,
+          name: c.nome ?? c.email,
+          email: c.email,
+          role: normalizeRole(c.cargo),
+          features: parseUserFeatures(c.features),
+          isPending: true,
+        });
+      }
+      emp.usersCount = emp.usuarios.filter((u) => !u.isPending).length;
 
       setDetail(emp);
       setSelectedId(id);
@@ -263,27 +285,75 @@ export default function UltraAdmin() {
             features: payload.features,
           },
         });
-        setDetail((prev) =>
-          prev
-            ? {
-                ...prev,
-                usuarios: [
-                  ...prev.usuarios,
-                  {
-                    id: `pending-${Date.now()}`,
-                    name: payload.name,
-                    email: payload.email,
-                    role: payload.role,
-                    features: payload.features,
-                    isPending: true,
-                  },
-                ],
-              }
-            : prev
-        );
         toast.success("Convite enviado");
+        await fetchDetail(detail.id);
       } catch (err) {
         toast.error("Erro ao convidar usuário", {
+          description: err instanceof Error ? err.message : "Erro inesperado",
+        });
+      }
+    },
+    [detail, fetchDetail]
+  );
+
+  const handleResendInvite = useCallback(
+    async (user: ManagedUser) => {
+      if (!detail || !user.inviteId) return;
+      try {
+        await edgeFetch("ultra-admin-usuarios", {
+          method: "POST",
+          body: { resend: true, convite_id: user.inviteId },
+        });
+        toast.success("Convite reenviado", { description: `Novo e-mail enviado para ${user.email}.` });
+      } catch (err) {
+        toast.error("Erro ao reenviar convite", {
+          description: err instanceof Error ? err.message : "Erro inesperado",
+        });
+      }
+    },
+    [detail]
+  );
+
+  const handleCancelInvite = useCallback(
+    async (user: ManagedUser) => {
+      if (!detail || !user.inviteId) return;
+      try {
+        await edgeFetch("ultra-admin-usuarios", {
+          method: "DELETE",
+          body: { convite_id: user.inviteId, empresa_id: detail.id },
+        });
+        setDetail((prev) =>
+          prev ? { ...prev, usuarios: prev.usuarios.filter((u) => u.inviteId !== user.inviteId) } : prev
+        );
+        toast.success("Convite cancelado");
+      } catch (err) {
+        toast.error("Erro ao cancelar convite", {
+          description: err instanceof Error ? err.message : "Erro inesperado",
+        });
+      }
+    },
+    [detail]
+  );
+
+  const handleUpdateCompany = useCallback(
+    async (patch: { nome?: string; cnpj?: string | null; status?: EmpresaStatus; plano?: SubscriptionPlanSlug }) => {
+      if (!detail) return;
+      try {
+        await edgeFetch("ultra-admin-empresas", {
+          method: "PUT",
+          body: { empresa_id: detail.id, ...patch },
+        });
+        setDetail((prev) => (prev ? { ...prev, ...patch } : prev));
+        setEmpresas((prev) =>
+          prev.map((e) =>
+            e.id === detail.id
+              ? { ...e, ...(patch.nome ? { nome: patch.nome } : {}), ...(patch.status ? { status: patch.status } : {}), ...(patch.plano ? { plano: patch.plano } : {}), ...(patch.cnpj !== undefined ? { cnpj: patch.cnpj } : {}) }
+              : e
+          )
+        );
+        toast.success("Empresa atualizada");
+      } catch (err) {
+        toast.error("Erro ao atualizar empresa", {
           description: err instanceof Error ? err.message : "Erro inesperado",
         });
       }
@@ -294,6 +364,14 @@ export default function UltraAdmin() {
   const [createOpen, setCreateOpen] = useState(false);
   const [creating, setCreating] = useState(false);
   const [form, setForm] = useState({ nome: "", cnpj: "", ownerEmail: "", ownerNome: "" });
+
+  const [editCompanyOpen, setEditCompanyOpen] = useState(false);
+  const [companyForm, setCompanyForm] = useState<{
+    nome: string;
+    cnpj: string;
+    status: EmpresaStatus;
+    plano: SubscriptionPlanSlug;
+  }>({ nome: "", cnpj: "", status: "active", plano: "starter" });
 
   const resetForm = () => setForm({ nome: "", cnpj: "", ownerEmail: "", ownerNome: "" });
 
@@ -384,6 +462,23 @@ export default function UltraAdmin() {
               <Button
                 variant="outline"
                 size="sm"
+                className="rounded-full gap-1.5"
+                onClick={() => {
+                  setCompanyForm({
+                    nome: detail.nome,
+                    cnpj: detail.cnpj ?? "",
+                    status: detail.status as EmpresaStatus,
+                    plano: detail.plano,
+                  });
+                  setEditCompanyOpen(true);
+                }}
+              >
+                <Pencil size={14} />
+                Editar empresa
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
                 className="rounded-full"
                 onClick={() => {
                   setSelectedId(null);
@@ -423,6 +518,24 @@ export default function UltraAdmin() {
           onInvite={handleInviteUser}
           onUpdate={handleUpdateUser}
           onDelete={handleDeleteUser}
+          onResendInvite={handleResendInvite}
+          onCancelInvite={handleCancelInvite}
+        />
+
+        <EditCompanyDialog
+          open={editCompanyOpen}
+          onOpenChange={setEditCompanyOpen}
+          form={companyForm}
+          setForm={setCompanyForm}
+          onSave={async () => {
+            await handleUpdateCompany({
+              nome: companyForm.nome.trim() || undefined,
+              cnpj: companyForm.cnpj.trim() || null,
+              status: companyForm.status,
+              plano: companyForm.plano,
+            });
+            setEditCompanyOpen(false);
+          }}
         />
       </PageLayout>
     );
@@ -663,5 +776,103 @@ function StatusBadge({ status }: { status: EmpresaStatus }) {
     <Badge variant="outline" className={`h-6 rounded-full text-[11px] ${variants[status] ?? ""}`}>
       {STATUS_LABEL[status] ?? status}
     </Badge>
+  );
+}
+
+type CompanyForm = { nome: string; cnpj: string; status: EmpresaStatus; plano: SubscriptionPlanSlug };
+
+function EditCompanyDialog({
+  open,
+  onOpenChange,
+  form,
+  setForm,
+  onSave,
+}: {
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+  form: CompanyForm;
+  setForm: Dispatch<SetStateAction<CompanyForm>>;
+  onSave: () => Promise<void>;
+}) {
+  const [saving, setSaving] = useState(false);
+  const dangerous = form.status !== "active";
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => !saving && onOpenChange(o)}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Editar empresa</DialogTitle>
+          <DialogDescription>
+            Dados cadastrais, status de acesso e plano. Suspender ou cancelar bloqueia o acesso da empresa.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-3 py-2">
+          <div className="space-y-1.5">
+            <Label htmlFor="edit-nome">Nome</Label>
+            <Input id="edit-nome" value={form.nome} onChange={(e) => setForm((f) => ({ ...f, nome: e.target.value }))} />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="edit-cnpj">CNPJ</Label>
+            <Input id="edit-cnpj" value={form.cnpj} onChange={(e) => setForm((f) => ({ ...f, cnpj: e.target.value }))} />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label>Status</Label>
+              <Select value={form.status} onValueChange={(v) => setForm((f) => ({ ...f, status: v as EmpresaStatus }))}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="active">Ativa</SelectItem>
+                  <SelectItem value="suspended">Suspensa</SelectItem>
+                  <SelectItem value="cancelled">Cancelada</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Plano</Label>
+              <Select
+                value={form.plano}
+                onValueChange={(v) => setForm((f) => ({ ...f, plano: v as SubscriptionPlanSlug }))}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="starter">Starter</SelectItem>
+                  <SelectItem value="pro">Pro</SelectItem>
+                  <SelectItem value="enterprise">Enterprise</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          {dangerous && (
+            <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-3 py-2">
+              {form.status === "suspended"
+                ? "Suspensa: os usuários da empresa perdem o acesso até reativar."
+                : "Cancelada: o acesso é encerrado. Use com cuidado."}
+            </p>
+          )}
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
+            Cancelar
+          </Button>
+          <Button
+            onClick={async () => {
+              setSaving(true);
+              try {
+                await onSave();
+              } finally {
+                setSaving(false);
+              }
+            }}
+            disabled={saving || !form.nome.trim()}
+          >
+            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Salvar"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
