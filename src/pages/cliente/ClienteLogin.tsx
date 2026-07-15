@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
@@ -12,11 +12,27 @@ import { getPortalToken, setPortalToken } from "@/hooks/useClienteAuth";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { clienteLoginSchema, clienteLoginDefaultValues, type ClienteLoginFormData } from "@/schemas";
 
+// Sem contexto de empresa antes do login, a recuperação de acesso cai no suporte
+// do Pilar, que encaminha ao escritório responsável pela conta.
+const SUPORTE_EMAIL = "suporte@pilarsoft.com.br";
+
 export default function ClienteLogin() {
   usePageTitle("Portal | Login");
   const navigate = useNavigate();
+  const location = useLocation();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
+  useEffect(() => {
+    // Sessão expirou e o ClientePrivateRoute redirecionou pra cá: explica o motivo
+    // em vez de deixar o cliente sem saber por que caiu no login.
+    const reason = (location.state as { reason?: string } | null)?.reason;
+    if (reason === "expired") {
+      toast.info("Sua sessão expirou", { description: "Entre novamente para continuar." });
+      // Limpa o state pra não repetir a mensagem ao recarregar ou voltar.
+      window.history.replaceState({}, "");
+    }
+  }, [location.state]);
 
   const form = useForm<ClienteLoginFormData>({
     resolver: zodResolver(clienteLoginSchema),
@@ -176,7 +192,19 @@ export default function ClienteLogin() {
           </Form>
 
           <div className="text-center space-y-1.5">
-            <p className="text-xs text-ink-soft">Esqueceu a senha? Fale com o escritório para recuperar seu acesso.</p>
+            <p className="text-xs text-ink-soft">
+              Esqueceu a senha?{" "}
+              <a
+                href={`mailto:${SUPORTE_EMAIL}?subject=${encodeURIComponent(
+                  "Recuperar acesso ao portal do cliente"
+                )}&body=${encodeURIComponent(
+                  "Olá, preciso recuperar o acesso ao portal. Meu e-mail de cadastro é: "
+                )}`}
+                className="font-medium text-brand hover:underline"
+              >
+                Recuperar acesso
+              </a>
+            </p>
             <p className="text-xs text-ink/60">Acesso exclusivo para clientes convidados pelo escritório.</p>
           </div>
         </div>

@@ -14,7 +14,10 @@ export function ClientePrivateRoute() {
   }
 
   if (error || !account) {
-    return <Navigate to="/cliente/login" replace />;
+    // Sinaliza sessão expirada pro login mostrar o motivo, em vez de jogar o
+    // cliente pra tela de login sem explicação.
+    const reason = error === "session_expired" ? "expired" : undefined;
+    return <Navigate to="/cliente/login" replace state={{ reason }} />;
   }
 
   return <Outlet context={account} />;
