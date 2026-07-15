@@ -52,9 +52,16 @@ export function FinanceiroContent({ receitas }: { receitas: ClienteReceita[] }) 
               <span className="text-sm font-medium">Progresso de Pagamento</span>
               <span className="text-sm font-bold">{((totalPago / totalPrevisto) * 100).toFixed(0)}% pago</span>
             </div>
-            <div className="w-full bg-gray-200 rounded-full h-3">
+            <div
+              className="w-full bg-gray-200 rounded-full h-3"
+              role="progressbar"
+              aria-valuenow={Math.round((totalPago / totalPrevisto) * 100)}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-label="Progresso de pagamento"
+            >
               <div
-                className="bg-positive/100 h-3 rounded-full transition-all"
+                className="bg-positive h-3 rounded-full transition-all"
                 style={{ width: `${(totalPago / totalPrevisto) * 100}%` }}
               />
             </div>
@@ -105,7 +112,7 @@ export function FinanceiroContent({ receitas }: { receitas: ClienteReceita[] }) 
                         <Button
                           asChild
                           size="sm"
-                          className="h-11 sm:h-8 text-xs px-3 bg-blue-600 hover:bg-blue-700 text-white"
+                          className="h-11 sm:h-8 text-xs px-3 bg-brand hover:bg-brand/90 text-ink"
                         >
                           <a href={r.asaas_payment_url} target="_blank" rel="noopener noreferrer">
                             Pagar agora
