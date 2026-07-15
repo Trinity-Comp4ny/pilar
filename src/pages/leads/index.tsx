@@ -3,8 +3,9 @@ import { useQueryClient } from "@tanstack/react-query";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ChevronDown, ChevronLeft, ChevronRight, Plus, TrendingUp, Search } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, Plus, TrendingUp, Search, AlertCircle } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -55,9 +56,37 @@ const STATUS_DOT: Record<string, string> = {
   Perdido: "bg-status-cancelled",
 };
 
+function KanbanSkeleton() {
+  const columns = Object.values(statusConfig);
+  return (
+    <div className="flex-1 min-h-0" aria-hidden="true">
+      <div className="hidden md:flex gap-3 w-full h-full min-h-0 overflow-x-auto pb-2">
+        {columns.map((config, colIndex) => (
+          <div key={config.label} className="flex flex-col min-w-[280px] w-[280px] flex-shrink-0 min-h-0">
+            <div className="flex items-center gap-2 px-2 py-2.5">
+              <Skeleton className="h-2 w-2 rounded-full" />
+              <Skeleton className="h-3 w-24" />
+            </div>
+            <div className="flex-1 min-h-0 p-2 space-y-2 rounded-lg bg-muted/30">
+              {Array.from({ length: colIndex % 2 === 0 ? 3 : 2 }).map((_, i) => (
+                <Skeleton key={i} className="h-24 w-full rounded-md" />
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="md:hidden space-y-3">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <Skeleton key={i} className="h-16 w-full rounded-lg" />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function Leads() {
   usePageTitle("Leads");
-  const { data: leads = [] } = useLeads();
+  const { data: leads = [], isLoading, isError, refetch } = useLeads();
   const createLead = useCreateLead();
   const updateStatus = useUpdateLeadStatus();
   const convertToClient = useConvertLeadToClient();
@@ -127,10 +156,6 @@ export default function Leads() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.nome) {
-      toast.error("Campo obrigatório", { description: "O nome do lead é obrigatório" });
-      return;
-    }
     if (formData.email) {
       const emailLower = formData.email.toLowerCase();
       const duplicate = leads.find((l) => (l.email ?? "").toLowerCase() === emailLower);
@@ -393,7 +418,18 @@ export default function Leads() {
         </div>
       )}
 
-      {hasNoLeads ? (
+      {isLoading ? (
+        <KanbanSkeleton />
+      ) : isError ? (
+        <div className="flex-1 min-h-0 flex items-center justify-center">
+          <EmptyState
+            icon={AlertCircle}
+            title="Não foi possível carregar os leads"
+            description="Verifique sua conexão e tente novamente."
+            action={{ label: "Tentar de novo", onClick: () => refetch(), variant: "outline" }}
+          />
+        </div>
+      ) : hasNoLeads ? (
         <div className="flex-1 min-h-0 flex items-center justify-center">
           <EmptyState
             icon={TrendingUp}
@@ -624,7 +660,7 @@ export default function Leads() {
         onConfirm={handleDeleteConfirm}
         title="Excluir Lead"
         itemName={leadToDelete?.nome}
-        description="Esta ação não pode ser desfeita."
+        description="O lead sai do pipeline. Você pode desfazer logo após excluir."
         confirmText="Excluir"
         cancelText="Cancelar"
       />

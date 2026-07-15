@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -19,11 +19,12 @@ import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/EmptyState";
 import { supabase } from "@/integrations/supabase/client";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from "recharts";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { RelatoriosSummary } from "./relatorios/RelatoriosSummary";
+
+// recharts é pesado e esta é uma página secundária: só carrega o chunk do
+// gráfico quando há dados suficientes para renderizá-lo (ver renderChart).
+const RelatoriosChart = lazy(() => import("./relatorios/RelatoriosChart"));
 
 interface ReportRow {
   Tipo: string;
@@ -295,13 +296,14 @@ export default function Relatorios() {
       return str.includes(",") || str.includes('"') ? `"${str.replace(/"/g, '""')}"` : str;
     };
 
-    const columns = Object.keys(data[0]);
+    // Exporta só as colunas visíveis, na ordem canônica: o que se vê é o que se exporta.
+    const columns = ALL_COLUMNS.filter((c) => visibleColumns.has(c));
     const headers = columns.join(",");
     const rows = data.map((row) =>
       columns
         .map((c) => {
           if (c === "Valor") return escapeCSV(toCurrency(row.Valor));
-          return escapeCSV(row[c as keyof ReportRow]);
+          return escapeCSV(row[c]);
         })
         .join(",")
     );
@@ -360,22 +362,28 @@ export default function Relatorios() {
           q = q.order("data_pagamento", { ascending: false }).order("data_vencimento", { ascending: false });
         }
 
-        if (dateFrom) {
-          const start = startOfDay(dateFrom).toISOString();
-          if (tipo === "receitas") {
-            q = q.or(`data_recebimento.gte.${start},data_vencimento.gte.${start}`);
-          } else {
-            q = q.or(`data_pagamento.gte.${start},data_vencimento.gte.${start}`);
-          }
-        }
+        // Filtro de período por UMA única data de referência por registro:
+        // efetivado (recebido/pago) filtra pela data efetiva; pendente filtra
+        // pelo vencimento. Antes eram dois .or() (gte e lte) combinados por AND
+        // no topo, o que deixava entrar registro com uma data dentro e a outra
+        // fora, inflando os totais. Aqui cada intervalo (início E fim) recai
+        // sobre a mesma coluna dentro de um único .or().
+        const effCol = tipo === "receitas" ? "data_recebimento" : "data_pagamento";
+        const dueCol = "data_vencimento";
+        const start = dateFrom ? startOfDay(dateFrom).toISOString() : null;
+        const end = dateTo ? endOfDay(dateTo).toISOString() : null;
 
-        if (dateTo) {
-          const end = endOfDay(dateTo).toISOString();
-          if (tipo === "receitas") {
-            q = q.or(`data_recebimento.lte.${end},data_vencimento.lte.${end}`);
-          } else {
-            q = q.or(`data_pagamento.lte.${end},data_vencimento.lte.${end}`);
-          }
+        if (start || end) {
+          const effBounds = [
+            start && `${effCol}.gte.${start}`,
+            end && `${effCol}.lte.${end}`,
+          ].filter(Boolean) as string[];
+          const dueBounds = [
+            `${effCol}.is.null`,
+            start && `${dueCol}.gte.${start}`,
+            end && `${dueCol}.lte.${end}`,
+          ].filter(Boolean) as string[];
+          q = q.or(`and(${effBounds.join(",")}),and(${dueBounds.join(",")})`);
         }
 
         return q.range(page * pageLimit, page * pageLimit + pageLimit - 1);
@@ -392,7 +400,12 @@ export default function Relatorios() {
     return all;
   };
 
-  const generatePDF = (data: ReportRow[], title: string, filename: string) => {
+  const generatePDF = async (data: ReportRow[], title: string, filename: string) => {
+    // jsPDF (+autotable) pesa >300kb: só baixa o chunk ao exportar de fato.
+    const [{ default: jsPDF }, { default: autoTable }] = await Promise.all([
+      import("jspdf"),
+      import("jspdf-autotable"),
+    ]);
     const doc = new jsPDF({ orientation: "landscape" });
 
     doc.setFontSize(16);
@@ -407,11 +420,12 @@ export default function Relatorios() {
     );
     doc.text(`Gerado em: ${format(new Date(), "dd/MM/yyyy HH:mm")}`, 14, 29);
 
-    const columns = Object.keys(data[0] || {});
+    // Exporta só as colunas visíveis, na ordem canônica: o que se vê é o que se exporta.
+    const columns = ALL_COLUMNS.filter((c) => visibleColumns.has(c));
     const tableData = data.map((row) =>
       columns.map((c) => {
         if (c === "Valor") return toCurrency(row.Valor);
-        return String(row?.[c as keyof ReportRow] ?? "-");
+        return String(row?.[c] ?? "-");
       })
     );
 
@@ -519,7 +533,9 @@ export default function Relatorios() {
         description: `${finalData.length} registros carregados. Exporte em CSV ou PDF.`,
       });
     } catch (err: unknown) {
-      toast.error("Erro ao gerar");
+      const message = err instanceof Error ? err.message : String(err);
+      console.error("Erro ao gerar relatório:", err);
+      toast.error("Erro ao gerar", { description: message });
     } finally {
       setIsLoading(false);
     }
@@ -570,12 +586,14 @@ export default function Relatorios() {
       if (formatType === "csv") {
         generateCSV(filteredData, filename);
       } else {
-        generatePDF(filteredData, titleForPdf, filename);
+        await generatePDF(filteredData, titleForPdf, filename);
       }
 
       toast.success("Exportação iniciada", { description: "O download deve iniciar automaticamente." });
     } catch (e: unknown) {
-      toast.error("Erro ao exportar");
+      const message = e instanceof Error ? e.message : String(e);
+      console.error("Erro ao exportar relatório:", e);
+      toast.error("Erro ao exportar", { description: message });
     } finally {
       setIsLoading(false);
     }
@@ -600,35 +618,10 @@ export default function Relatorios() {
   const renderChart = () => {
     if (chartData.length < 2) return null;
 
-    const hasBoth = tipoRelatorio === "financeiro";
-
     return (
-      <div className="rounded-xl border border-black/5 bg-white p-4">
-        <p className="text-sm font-medium text-muted-foreground mb-3">Evolução mensal</p>
-        <ResponsiveContainer width="100%" height={220}>
-          <BarChart data={chartData} barGap={4}>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--chart-grid))" />
-            <XAxis dataKey="mes" tick={{ fontSize: 12 }} />
-            <YAxis
-              tick={{ fontSize: 11 }}
-              tickFormatter={(v: number) =>
-                new Intl.NumberFormat("pt-BR", { notation: "compact", compactDisplay: "short" }).format(v)
-              }
-            />
-            <Tooltip
-              formatter={(value: number) => toCurrency(value)}
-              contentStyle={{ borderRadius: 12, border: "1px solid hsl(var(--chart-grid))" }}
-            />
-            {tipoRelatorio !== "despesas" && (
-              <Bar dataKey="Receitas" fill="hsl(var(--chart-success-alt))" radius={[4, 4, 0, 0]} />
-            )}
-            {tipoRelatorio !== "receitas" && (
-              <Bar dataKey="Despesas" fill="hsl(var(--chart-danger))" radius={[4, 4, 0, 0]} />
-            )}
-            {hasBoth && <Legend />}
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
+      <Suspense fallback={<Skeleton className="h-[220px] rounded-xl" />}>
+        <RelatoriosChart chartData={chartData} tipoRelatorio={tipoRelatorio} />
+      </Suspense>
     );
   };
 

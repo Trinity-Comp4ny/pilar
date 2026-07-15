@@ -33,14 +33,18 @@ export const useFinanceData = (dateFrom?: Date, dateTo?: Date) => {
       const prevFromStr = format(previousStart, "yyyy-MM-dd");
       const dateToStr = format(end, "yyyy-MM-dd");
 
+      // Busca por vencimento OU pagamento/recebimento dentro da janela. Um item
+      // pago no período mas com vencimento fora dela precisa aparecer no caixa
+      // (getDisplayDate agrupa pela data de pagamento/recebimento).
       const [categoriesRes, receitasRes, despesasRes] = await Promise.all([
         supabase.from("categorias_financeiras").select("id, nome, tipo"),
         supabase
           .from("receitas")
           .select("*")
           .neq("status", "Cancelado")
-          .gte("data_vencimento", prevFromStr)
-          .lte("data_vencimento", dateToStr)
+          .or(
+            `and(data_vencimento.gte.${prevFromStr},data_vencimento.lte.${dateToStr}),and(data_recebimento.gte.${prevFromStr},data_recebimento.lte.${dateToStr})`
+          )
           .order("data_recebimento", { ascending: false })
           .order("data_vencimento", { ascending: false }),
         supabase
@@ -48,8 +52,9 @@ export const useFinanceData = (dateFrom?: Date, dateTo?: Date) => {
           .select("*")
           .eq("is_fatura_payment", false)
           .neq("status", "Cancelado")
-          .gte("data_vencimento", prevFromStr)
-          .lte("data_vencimento", dateToStr)
+          .or(
+            `and(data_vencimento.gte.${prevFromStr},data_vencimento.lte.${dateToStr}),and(data_pagamento.gte.${prevFromStr},data_pagamento.lte.${dateToStr})`
+          )
           .order("data_vencimento", { ascending: true }),
       ]);
 
@@ -297,14 +302,18 @@ export const processDailyChartData = (
     if (bucket) bucket[type] += valor;
   };
 
+  // Coluna date vem como "yyyy-MM-dd"; parse local (T00:00:00) para não cair no
+  // dia anterior por causa do fuso ao comparar com start/end (que são locais).
+  const parseLocalDate = (dateStr: string) => new Date(dateStr.slice(0, 10) + "T00:00:00");
+
   receitas.forEach((r) => {
     const displayDate = getDisplayDate(r.data_recebimento, r.data_vencimento, r.status);
-    if (displayDate) addTo(new Date(displayDate), "receitas", Number(r.valor));
+    if (displayDate) addTo(parseLocalDate(displayDate), "receitas", Number(r.valor));
   });
 
   despesas.forEach((d) => {
     const displayDate = getDisplayDate(d.data_pagamento, d.data_vencimento, d.status);
-    if (displayDate) addTo(new Date(displayDate), "despesas", Number(d.valor));
+    if (displayDate) addTo(parseLocalDate(displayDate), "despesas", Number(d.valor));
   });
 
   return Array.from(bucketsMap.entries())

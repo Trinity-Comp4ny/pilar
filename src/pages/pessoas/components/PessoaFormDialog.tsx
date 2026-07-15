@@ -56,6 +56,11 @@ const STEPS: { id: Step; label: string; icon: typeof User; desc: string }[] = [
 
 export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: PessoaFormDialogProps) {
   const isEditMode = editPessoa !== null;
+  // Na criação todos veem/gravam os campos sensíveis. Na edição, quem não
+  // tem acesso à folha abre o registro mascarado (salário/contas/PIX/CPF vêm
+  // nulos/mascarados da view pessoas_safe); esconder e NÃO gravar esses campos
+  // evita sobrescrever os valores reais com o placeholder.
+  const canEditSensitive = !isEditMode || (editPessoa?.pode_ver_sensivel ?? false);
 
   const form = useForm<PessoaFormData>({
     resolver: zodResolver(pessoaSchema),
@@ -187,6 +192,40 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
 
   const handleSubmit = form.handleSubmit(
     async (formData: PessoaFormData) => {
+      // Flush de input pendente: se o usuário digitou uma conta ou PIX e não
+      // clicou "+", não perder o dado em silêncio. Comita o que está completo;
+      // bloqueia e avisa se estiver incompleto/inválido.
+      let finalContas = contasBancarias;
+      const contaTouched = newConta.banco || newConta.agencia || newConta.conta;
+      if (contaTouched) {
+        if (!newConta.banco || !newConta.agencia || !newConta.conta) {
+          setStep(3);
+          toast.error("Conta bancária incompleta", {
+            description: "Preencha banco, agência e conta ou limpe o campo antes de salvar",
+          });
+          return;
+        }
+        finalContas = [...contasBancarias, { ...newConta, is_primary: contasBancarias.length === 0 }];
+        setContasBancarias(finalContas);
+        setNewConta({ banco: "", agencia: "", conta: "", tipo: "corrente" });
+      }
+
+      let finalPix = chavesPix;
+      if (newChavePix.trim()) {
+        const tipoPix = detectTipoChavePix(newChavePix);
+        if (!tipoPix) {
+          setStep(3);
+          toast.error("Chave PIX inválida", { description: "Corrija ou limpe o campo antes de salvar" });
+          return;
+        }
+        const normalizada = normalizarChavePix(newChavePix, tipoPix);
+        finalPix = chavesPix.some((c) => c.chave === normalizada)
+          ? chavesPix
+          : [...chavesPix, { chave: normalizada, tipo: tipoPix }];
+        setChavesPix(finalPix);
+        setNewChavePix("");
+      }
+
       try {
         const primeiroNome = formData.primeiro_nome.trim();
         const sobrenome = formData.sobrenome.trim();
@@ -205,8 +244,8 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
           endereco: formData.endereco?.trim() || null,
           data_admissao: formData.data_admissao || null,
           data_demissao: formData.data_demissao || null,
-          contas_bancarias: contasBancarias,
-          chaves_pix: chavesPix,
+          contas_bancarias: finalContas,
+          chaves_pix: finalPix,
           salario_fixo: formData.salario_fixo ? parseCurrencyString(formData.salario_fixo) : null,
           valor_m2: formData.valor_m2 ? parseCurrencyString(formData.valor_m2) : null,
           cnpj: formData.tipo_contrato === CONTRACT_TYPES.PJ ? formData.cnpj || null : null,
@@ -215,16 +254,30 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
         };
 
         if (isEditMode && editPessoa) {
+          // Quem não vê folha não pode sobrescrever os campos sensíveis: remove
+          // do UPDATE para o banco preservar os valores existentes.
+          const updatePayload: Record<string, unknown> = { ...payload };
+          if (!canEditSensitive) {
+            delete updatePayload.cpf;
+            delete updatePayload.salario_fixo;
+            delete updatePayload.valor_m2;
+            delete updatePayload.contas_bancarias;
+            delete updatePayload.chaves_pix;
+          }
           const { error } = await supabase
             .from("pessoas")
-            .update(payload as never)
+            .update(updatePayload as never)
             .eq("id", editPessoa.id);
           if (error) throw error;
           toast.success("Pessoa atualizada", { description: "Dados atualizados com sucesso" });
         } else {
+          const { data: empresaId, error: empresaError } = await supabase.rpc("get_user_empresa_id");
+          if (empresaError || !empresaId) {
+            throw empresaError ?? new Error("Não foi possível identificar sua empresa. Recarregue a página e tente de novo.");
+          }
           const { error } = await supabase.from("pessoas").insert({
             ...payload,
-            empresa_id: (await supabase.rpc("get_user_empresa_id")).data,
+            empresa_id: empresaId,
           } as never);
           if (error) throw error;
           toast.success("Pessoa cadastrada", { description: "Nova pessoa adicionada com sucesso" });
@@ -353,10 +406,14 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
                     onChange={(e) => form.setValue("cpf", formatCPF(e.target.value), { shouldValidate: true })}
                     maxLength={14}
                     placeholder="000.000.000-00"
+                    disabled={!canEditSensitive}
                     aria-invalid={!!form.formState.errors.cpf}
                     aria-describedby={form.formState.errors.cpf ? "cpf-error" : undefined}
                     className={cn(form.formState.errors.cpf && "border-red-500 focus-visible:ring-red-500")}
                   />
+                  {!canEditSensitive && (
+                    <p className="text-[10px] text-muted-foreground">CPF completo restrito a quem tem acesso à folha</p>
+                  )}
                   {form.formState.errors.cpf && (
                     <p className="text-xs text-red-500">{form.formState.errors.cpf.message}</p>
                   )}
@@ -548,30 +605,34 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
                   Remuneração e Datas
                 </Label>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="salario_fixo" className="text-xs">
-                      {isEstagio ? "Bolsa (R$)" : "Salário Fixo (R$)"}
-                    </Label>
-                    <Input
-                      id="salario_fixo"
-                      type="text"
-                      value={form.watch("salario_fixo")}
-                      onChange={(e) => form.setValue("salario_fixo", formatCurrencyInput(e.target.value))}
-                      placeholder="R$ 0,00"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="valor_m2" className="text-xs">
-                      Valor m² (R$)
-                    </Label>
-                    <Input
-                      id="valor_m2"
-                      type="text"
-                      value={form.watch("valor_m2")}
-                      onChange={(e) => form.setValue("valor_m2", formatCurrencyInput(e.target.value))}
-                      placeholder="R$ 0,00"
-                    />
-                  </div>
+                  {canEditSensitive && (
+                    <>
+                      <div className="space-y-1.5">
+                        <Label htmlFor="salario_fixo" className="text-xs">
+                          {isEstagio ? "Bolsa (R$)" : "Salário Fixo (R$)"}
+                        </Label>
+                        <Input
+                          id="salario_fixo"
+                          type="text"
+                          value={form.watch("salario_fixo")}
+                          onChange={(e) => form.setValue("salario_fixo", formatCurrencyInput(e.target.value))}
+                          placeholder="R$ 0,00"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label htmlFor="valor_m2" className="text-xs">
+                          Valor m² (R$)
+                        </Label>
+                        <Input
+                          id="valor_m2"
+                          type="text"
+                          value={form.watch("valor_m2")}
+                          onChange={(e) => form.setValue("valor_m2", formatCurrencyInput(e.target.value))}
+                          placeholder="R$ 0,00"
+                        />
+                      </div>
+                    </>
+                  )}
                   <div className="space-y-1.5">
                     <Label htmlFor="data_admissao_picker" className="text-xs">
                       Admissão
@@ -608,7 +669,8 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
           )}
 
           {/* STEP 3 — Dados Bancários */}
-          {step === 3 && (
+          {step === 3 &&
+            (canEditSensitive ? (
             <>
               <div className="px-6 py-4 space-y-3">
                 <div className="flex items-center justify-between">
@@ -757,7 +819,13 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
                 )}
               </div>
             </>
-          )}
+            ) : (
+              <div className="px-6 py-8 text-center">
+                <p className="text-sm text-muted-foreground">
+                  Dados bancários e PIX são restritos a quem tem acesso à folha.
+                </p>
+              </div>
+            ))}
 
           {/* Footer */}
           <div className="flex items-center gap-2 px-6 py-4 bg-gray-50/30">

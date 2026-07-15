@@ -57,11 +57,14 @@ export function LeadFormDialog({ open, onOpenChange, mode, formData, onFormChang
   const isEdit = mode === "edit";
   const prefix = isEdit ? "edit-" : "";
   const cnpjErrorId = `${prefix}cnpj-error`;
+  const nomeErrorId = `${prefix}nome-error`;
 
+  const [nomeError, setNomeError] = useState("");
   const [emailError, setEmailError] = useState("");
   const [cnpjError, setCnpjError] = useState("");
 
   const set = (field: keyof LeadFormData, value: string) => {
+    if (field === "nome" && nomeError) setNomeError("");
     if (field === "email" && emailError) setEmailError("");
     if (field === "cnpj" && cnpjError) setCnpjError("");
     onFormChange({ ...formData, [field]: value });
@@ -70,6 +73,13 @@ export function LeadFormDialog({ open, onOpenChange, mode, formData, onFormChang
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     let hasError = false;
+
+    if (!formData.nome.trim()) {
+      setNomeError("Informe o nome do lead");
+      hasError = true;
+    } else {
+      setNomeError("");
+    }
 
     if (formData.email && !validateEmail(formData.email)) {
       setEmailError("E-mail inválido");
@@ -113,7 +123,13 @@ export function LeadFormDialog({ open, onOpenChange, mode, formData, onFormChang
                   onChange={(e) => set("nome", e.target.value)}
                   placeholder="Primeiro nome"
                   required
+                  aria-invalid={!!nomeError}
+                  aria-describedby={nomeError ? nomeErrorId : undefined}
+                  className={nomeError ? "border-red-500 focus-visible:ring-red-500" : ""}
                 />
+                {nomeError && (
+                  <p id={nomeErrorId} role="alert" className="text-xs text-red-600">{nomeError}</p>
+                )}
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor={`${prefix}sobrenome`} className="text-xs">Sobrenome</Label>

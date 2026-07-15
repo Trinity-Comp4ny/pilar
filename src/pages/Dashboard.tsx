@@ -49,6 +49,7 @@ import {
   type LeadsPipeline,
 } from "@/hooks/useDashboardData";
 import { useFinanceChartData } from "@/hooks/useFinanceChartData";
+import { useFinanceChartFallback } from "@/hooks/useFinanceChartFallback";
 import { useAuth } from "@/contexts/AuthContext";
 import { PROJECT_STATUS_CONFIG, PROJECT_PRIORITY_CONFIG, type ProjectStatus, type ProjectPriority } from "@/constants";
 import { usePageTitle } from "@/hooks/usePageTitle";
@@ -72,6 +73,7 @@ function KPICard({
   valueColor,
   subtitleColor,
   variacao,
+  invertVariacao,
   subtitle,
   onClick,
 }: {
@@ -82,13 +84,18 @@ function KPICard({
   valueColor: string;
   subtitleColor: string;
   variacao?: number;
+  // Quando true, cair é bom (ex.: despesa): a cor da variação inverte, mas a seta
+  // continua indicando a direção real do valor (subiu/caiu).
+  invertVariacao?: boolean;
   subtitle?: string;
   onClick?: () => void;
 }) {
+  const subiu = (variacao ?? 0) > 0;
+  const isBom = invertVariacao ? !subiu : subiu;
   const variacaoNode =
     variacao !== undefined && variacao !== 0 ? (
-      <span className={`flex items-center gap-0.5 ${variacao > 0 ? "text-success-mid" : "text-danger-mid"}`}>
-        {variacao > 0 ? <TrendingUp size={12} className="mr-0.5" /> : <TrendingDown size={12} className="mr-0.5" />}
+      <span className={`flex items-center gap-0.5 ${isBom ? "text-success-mid" : "text-danger-mid"}`}>
+        {subiu ? <TrendingUp size={12} className="mr-0.5" /> : <TrendingDown size={12} className="mr-0.5" />}
         {Math.abs(variacao).toFixed(1)}% vs período anterior
       </span>
     ) : null;
@@ -399,7 +406,15 @@ export default function Dashboard() {
   // Intervalo dos últimos 11 meses + mês atual para o gráfico de fluxo
   const chartInicio = useMemo(() => startOfMonth(subMonths(new Date(), 11)), []);
   const chartFim = useMemo(() => new Date(), []);
-  const { data: chartDataRpc } = useFinanceChartData(empresaId, chartInicio, chartFim);
+  const { data: chartDataRpc, isError: chartRpcError } = useFinanceChartData(empresaId, chartInicio, chartFim);
+  // Fallback só dispara quando a RPC agregada falha (evita full-scan no caminho feliz).
+  const { data: chartDataFallback, isError: chartFallbackError } = useFinanceChartFallback(
+    empresaId,
+    chartInicio,
+    chartRpcError
+  );
+  // Sem dado utilizável de nenhuma fonte: RPC falhou e o fallback também (ou ainda não retornou).
+  const chartFailed = chartRpcError && chartFallbackError;
 
   const canFin = can("financeiro", "view");
   const canProj = can("projetos", "view");
@@ -516,10 +531,10 @@ export default function Dashboard() {
     );
   }
 
-  const { kpis, projetos, proximosVencimentos, leadsPipeline, leadsTotal, alertas, alertasNaoLidos, chartData: chartDataFallback } = data;
+  const { kpis, projetos, proximosVencimentos, leadsPipeline, leadsTotal, alertas, alertasNaoLidos } = data;
 
-  // Usa dados da RPC quando disponível; fallback para a query legada
-  const chartData = chartDataRpc && chartDataRpc.length > 0 ? chartDataRpc : chartDataFallback;
+  // Usa dados da RPC quando disponível; fallback só carrega quando a RPC falha.
+  const chartData = chartDataRpc && chartDataRpc.length > 0 ? chartDataRpc : chartDataFallback ?? [];
 
   const nothingVisible = !canFin && !canProj && !canLeads;
 
@@ -564,6 +579,7 @@ export default function Dashboard() {
                   valueColor="text-danger-mid"
                   subtitleColor="text-danger"
                   variacao={kpis.despesaVariacao}
+                  invertVariacao
                 />
                 <KPICard
                   title="Saldo do período"
@@ -585,7 +601,7 @@ export default function Dashboard() {
                   titleColor="text-warning-strong"
                   valueColor="text-warning-mid"
                   subtitleColor="text-warning"
-                  subtitle="total pendente"
+                  subtitle="vence no período"
                 />
               </>
             )}
@@ -638,9 +654,20 @@ export default function Dashboard() {
               </CardHeader>
               <CardContent>
                 <div className="h-[280px] w-full">
-                  <Suspense fallback={<Skeleton className="h-full w-full" />}>
-                    <DashboardFinanceChart data={chartData} />
-                  </Suspense>
+                  {chartFailed ? (
+                    <div
+                      className="flex h-full flex-col items-center justify-center text-center text-ink-disabled"
+                      role="alert"
+                    >
+                      <AlertTriangle size={24} className="mb-2 text-warning-mid" />
+                      <p className="text-sm text-ink-soft">Não foi possível carregar o fluxo financeiro.</p>
+                      <p className="text-xs mt-0.5">Atualize a página para tentar de novo.</p>
+                    </div>
+                  ) : (
+                    <Suspense fallback={<Skeleton className="h-full w-full" />}>
+                      <DashboardFinanceChart data={chartData} />
+                    </Suspense>
+                  )}
                 </div>
               </CardContent>
             </Card>

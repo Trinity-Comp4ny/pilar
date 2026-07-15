@@ -2,6 +2,8 @@ import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from "@tansta
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { Json } from "@/integrations/supabase/types";
+import { onlyDigits } from "@/lib/maskUtils";
+import { errorMessage } from "@/lib/errors";
 
 export interface ContaBancaria {
   banco: string;
@@ -64,6 +66,7 @@ export function useClientesPaginados(options: UseClientesPaginadosOptions = {}) 
       let query = supabase
         .from("clientes")
         .select("*", { count: "exact" })
+        .is("deleted_at", null)
         .order("nome")
         .range(pageParam * pageSize, (pageParam + 1) * pageSize - 1);
 
@@ -93,7 +96,11 @@ export const useClientes = () => {
   const clientesQuery = useQuery({
     queryKey: ["clientes"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("clientes").select("*").order("nome");
+      const { data, error } = await supabase
+        .from("clientes")
+        .select("*")
+        .is("deleted_at", null)
+        .order("nome");
 
       if (error) throw error;
       // Tipos gerados marcam campos opcionais como `string | null`, mas a interface
@@ -107,10 +114,13 @@ export const useClientes = () => {
   const upsertMutation = useMutation({
     mutationFn: async ({ id, data }: { id?: string; data: ClienteFormData }) => {
       const nullIfEmpty = (v: string) => v?.trim() || null;
+      // Persistir só dígitos: a máscara é aplicada só na exibição. Assim a
+      // unicidade por empresa e a deduplicação não dependem da formatação.
+      const cpfCnpjDigits = onlyDigits(data.cpf_cnpj);
       const payload = {
         nome: data.nome,
         sobrenome: data.sobrenome || null,
-        cpf_cnpj: nullIfEmpty(data.cpf_cnpj),
+        cpf_cnpj: cpfCnpjDigits || null,
         endereco: nullIfEmpty(data.endereco),
         contato: nullIfEmpty(data.contato),
         email: nullIfEmpty(data.email),
@@ -158,19 +168,42 @@ export const useClientes = () => {
     },
   });
 
-  const deleteMutation = useMutation({
+  // Restaura um cliente soft-deletado (usado pelo "Desfazer" do toast).
+  const restoreMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("clientes").delete().eq("id", id);
+      const { error } = await supabase.from("clientes").update({ deleted_at: null }).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["clientes"] });
-      toast.success("Cliente excluído");
+      toast.success("Cliente restaurado");
     },
-    onError: () => {
-      toast.error("Erro ao excluir", {
-        description: "Verifique se existem registros vinculados.",
+    onError: (error: unknown) => {
+      toast.error("Erro ao restaurar", { description: errorMessage(error) });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    // Soft delete: preserva receitas/propostas/leads históricos (FK ON DELETE
+    // SET NULL orfanaria esses registros num hard delete).
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("clientes")
+        .update({ deleted_at: new Date().toISOString() })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: (_data, id) => {
+      queryClient.invalidateQueries({ queryKey: ["clientes"] });
+      toast.success("Cliente excluído", {
+        action: {
+          label: "Desfazer",
+          onClick: () => restoreMutation.mutate(id),
+        },
       });
+    },
+    onError: (error: unknown) => {
+      toast.error("Erro ao excluir", { description: errorMessage(error) });
     },
   });
 
@@ -261,6 +294,8 @@ export const useClientes = () => {
   return {
     clientes: clientesQuery.data ?? [],
     isLoading: clientesQuery.isLoading,
+    isError: clientesQuery.isError,
+    refetch: clientesQuery.refetch,
     portalClienteIds: portalClienteIdsQuery.data ?? new Set<string>(),
     upsertCliente: upsertMutation.mutateAsync,
     isSaving: upsertMutation.isPending,
