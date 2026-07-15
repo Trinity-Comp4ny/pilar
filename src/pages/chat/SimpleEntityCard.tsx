@@ -278,7 +278,7 @@ export function SimpleEntityCard({ index, draft, entidade, onConfirmar, onCancel
     return (
       <div className="w-full max-w-lg rounded-2xl border border-positive/30 bg-positive/5 p-4">
         <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-positive/15 text-positive">
+          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-positive/15 text-positive-strong">
             <Check className="h-3.5 w-3.5" />
           </span>
           {cfg.titulo} criado
@@ -347,7 +347,7 @@ export function SimpleEntityCard({ index, draft, entidade, onConfirmar, onCancel
           const val = form[f.key];
           const label = (
             <Label htmlFor={fieldId(f.key)} className="text-xs text-muted-foreground">
-              {f.label} {f.required && <span className="text-negative">*</span>}
+              {f.label} {f.required && <span className="text-negative-strong">*</span>}
             </Label>
           );
           const wrap = (node: React.ReactNode) => (

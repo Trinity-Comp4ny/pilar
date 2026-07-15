@@ -94,7 +94,7 @@ export function DespesaDetailDialog({
               {despesa.data_pagamento && despesa.data_pagamento !== despesa.data_vencimento && (
                 <div>
                   <Label className="text-xs text-muted-foreground">Data Pagamento</Label>
-                  <p className="text-sm font-medium text-positive">{formatDateDisplay(despesa.data_pagamento)}</p>
+                  <p className="text-sm font-medium text-positive-strong">{formatDateDisplay(despesa.data_pagamento)}</p>
                 </div>
               )}
               <div>

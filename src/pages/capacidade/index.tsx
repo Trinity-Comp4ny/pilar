@@ -44,8 +44,8 @@ function formatDateISO(date: Date): string {
 
 function getCellColor(pct: number): string {
   if (pct === 0) return "bg-gray-100 text-gray-400";
-  if (pct <= 60) return "bg-positive/10 text-positive";
-  if (pct <= 80) return "bg-positive/15 text-positive";
+  if (pct <= 60) return "bg-positive/10 text-positive-strong";
+  if (pct <= 80) return "bg-positive/15 text-positive-strong";
   if (pct <= 100) return "bg-yellow-200 text-yellow-900";
   return "bg-red-200 text-red-900 font-semibold";
 }

@@ -101,7 +101,7 @@ export function AsaasConfigForm() {
           API Key
         </Label>
         {jaConfigurado && !apiKey && (
-          <div className="flex items-center gap-2 rounded-md border border-positive/20 bg-positive/10 px-3 py-2 text-xs text-positive">
+          <div className="flex items-center gap-2 rounded-md border border-positive/20 bg-positive/10 px-3 py-2 text-xs text-positive-strong">
             <CheckCircle2 className="h-4 w-4 shrink-0" />
             Configurada. Digite uma nova chave abaixo apenas para substituí-la.
           </div>

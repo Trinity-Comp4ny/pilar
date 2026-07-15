@@ -352,7 +352,7 @@ function VisaoGeralTab({ cliente, isAdmin }: { cliente: Cliente; isAdmin: boolea
 
             {!isLoadingPortal && (portalStatus?.exists || !!portalCredentials) && (
               <div className="space-y-3">
-                <div className="flex items-center gap-2 bg-positive/10 border border-positive/20 rounded-lg px-3 py-2 text-sm text-positive">
+                <div className="flex items-center gap-2 bg-positive/10 border border-positive/20 rounded-lg px-3 py-2 text-sm text-positive-strong">
                   <Globe className="h-4 w-4" />
                   <span className="flex-1">Cliente possui acesso ao portal</span>
                 </div>
@@ -395,7 +395,7 @@ function VisaoGeralTab({ cliente, isAdmin }: { cliente: Cliente; isAdmin: boolea
             )}
 
             {!isLoadingPortal && portalCredentials && (
-              <div className="border border-positive/20 bg-positive/10 rounded-lg p-3 text-sm text-positive">
+              <div className="border border-positive/20 bg-positive/10 rounded-lg p-3 text-sm text-positive-strong">
                 Acesso criado! Credenciais enviadas para <strong>{portalCredentials.email}</strong>.
               </div>
             )}

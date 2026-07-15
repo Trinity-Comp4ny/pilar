@@ -272,7 +272,7 @@ export default function Privacidade() {
 
           {user ? (
             exportRequested ? (
-              <p className="text-sm text-positive font-medium">
+              <p className="text-sm text-positive-strong font-medium">
                 ✓ Solicitação registrada — aguarde contato em até 15 dias úteis.
               </p>
             ) : (

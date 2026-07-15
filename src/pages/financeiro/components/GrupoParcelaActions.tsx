@@ -37,7 +37,7 @@ export function GrupoParcelaActions({ lancamento: l, onChanged }: Props) {
 
   const grupoStatusColor =
     l.grupo_status === "quitado"
-      ? "bg-positive/10 text-positive"
+      ? "bg-positive/10 text-positive-strong"
       : l.grupo_status === "parcial"
         ? "bg-amber-100 text-amber-700"
         : l.grupo_status === "cancelado"

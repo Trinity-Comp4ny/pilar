@@ -156,7 +156,7 @@ export function LancamentoCard({ index, draft, tipo, onConfirmar, onCancelar, on
     return (
       <div className="w-full max-w-lg rounded-2xl border border-positive/30 bg-positive/5 p-4">
         <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-positive/15 text-positive">
+          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-positive/15 text-positive-strong">
             <Check className="h-3.5 w-3.5" />
           </span>
           {isReceita ? "Receita lançada" : "Despesa lançada"}
@@ -214,7 +214,7 @@ export function LancamentoCard({ index, draft, tipo, onConfirmar, onCancelar, on
       <div className="grid gap-3 px-4 py-4 sm:grid-cols-2">
         <div className="space-y-1.5 sm:col-span-2">
           <Label htmlFor={`${p}-desc`} className="text-xs text-muted-foreground">
-            Descrição <span className="text-negative">*</span>
+            Descrição <span className="text-negative-strong">*</span>
           </Label>
           <Input
             id={`${p}-desc`}
@@ -228,7 +228,7 @@ export function LancamentoCard({ index, draft, tipo, onConfirmar, onCancelar, on
 
         <div className="space-y-1.5">
           <Label htmlFor={`${p}-valor`} className="text-xs text-muted-foreground">
-            Valor <span className="text-negative">*</span>
+            Valor <span className="text-negative-strong">*</span>
           </Label>
           <Input
             id={`${p}-valor`}
@@ -396,7 +396,7 @@ export function LancamentoCard({ index, draft, tipo, onConfirmar, onCancelar, on
         ) : (
           <div className="space-y-1.5">
             <Label htmlFor={`${p}-conta`} className="text-xs text-muted-foreground">
-              Conta {!parcelado && form.status === statusQuitado && <span className="text-negative">*</span>}
+              Conta {!parcelado && form.status === statusQuitado && <span className="text-negative-strong">*</span>}
             </Label>
             <Select value={form.conta_id ?? ""} onValueChange={(v) => set("conta_id", v)}>
               <SelectTrigger id={`${p}-conta`} className="h-9">
@@ -416,7 +416,7 @@ export function LancamentoCard({ index, draft, tipo, onConfirmar, onCancelar, on
         <div className="space-y-1.5">
           <Label htmlFor={`${p}-venc`} className="text-xs text-muted-foreground">
             {cartaoMode ? "Data da compra" : parcelado ? "Venc. da 1ª parcela" : "Vencimento"}
-            {parcelado && !cartaoMode && <span className="text-negative"> *</span>}
+            {parcelado && !cartaoMode && <span className="text-negative-strong"> *</span>}
           </Label>
           <DatePicker
             id={`${p}-venc`}

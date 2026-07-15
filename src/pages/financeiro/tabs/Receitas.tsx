@@ -528,7 +528,7 @@ export default function Receitas() {
                             className={
                               receita.asaas_payment_status === "RECEIVED" ||
                               receita.asaas_payment_status === "CONFIRMED"
-                                ? "border-status-done text-positive text-[10px] px-1 py-0"
+                                ? "border-status-done text-positive-strong text-[10px] px-1 py-0"
                                 : receita.asaas_payment_status === "PENDING"
                                   ? "border-yellow-500 text-yellow-700 text-[10px] px-1 py-0"
                                   : receita.asaas_payment_status === "OVERDUE"
@@ -550,7 +550,7 @@ export default function Receitas() {
                         ? `${receita.parcela_numero}/${receita.parcela_total}`
                         : "1/1"}
                     </TableCell>
-                    <TableCell className="text-positive font-medium">
+                    <TableCell className="text-positive-strong font-medium">
                       R$ {receita.valor.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                     </TableCell>
                     <TableCell>
@@ -582,7 +582,7 @@ export default function Receitas() {
                             </DropdownMenuItem>
                             {receita.status !== "Recebido" && receita.status !== "Recebida" ? (
                               <DropdownMenuItem onClick={() => setConfirmRecebidaId(receita.id)}>
-                                <CheckCircle2 className="mr-2 h-4 w-4 text-positive" />
+                                <CheckCircle2 className="mr-2 h-4 w-4 text-positive-strong" />
                                 Marcar como recebida
                               </DropdownMenuItem>
                             ) : (
@@ -629,14 +629,14 @@ export default function Receitas() {
                   selectedReceita.data_recebimento !== selectedReceita.data_vencimento && (
                     <div>
                       <Label className="text-xs text-muted-foreground">Data Recebimento</Label>
-                      <p className="text-sm font-medium text-positive">
+                      <p className="text-sm font-medium text-positive-strong">
                         {formatDateDisplay(selectedReceita.data_recebimento)}
                       </p>
                     </div>
                   )}
                 <div>
                   <Label className="text-xs text-muted-foreground">Valor</Label>
-                  <p className="text-sm font-bold text-positive">
+                  <p className="text-sm font-bold text-positive-strong">
                     R$ {selectedReceita.valor.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                   </p>
                 </div>

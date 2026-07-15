@@ -575,9 +575,9 @@ export function LancamentosTable({
           <div className="border-t border-black/10 bg-gray-50/60 px-4 py-3 flex flex-wrap items-center justify-between gap-3 text-xs">
             <span className="text-muted-foreground">{footerLabel}</span>
             <div className="flex flex-wrap items-center gap-4 tabular-nums">
-              <span className="text-positive">+ {formatBRL(totals.receitas)}</span>
+              <span className="text-positive-strong">+ {formatBRL(totals.receitas)}</span>
               <span className="text-red-600">− {formatBRL(totals.despesas)}</span>
-              <span className={cn("font-bold", totals.saldo >= 0 ? "text-positive" : "text-red-600")}>
+              <span className={cn("font-bold", totals.saldo >= 0 ? "text-positive-strong" : "text-red-600")}>
                 = {formatBRL(totals.saldo)}
               </span>
             </div>

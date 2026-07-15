@@ -97,7 +97,7 @@ export function AditivoCard({ index, draft, onConfirmar, onCancelar, onDesfazer 
     return (
       <div className="w-full max-w-lg rounded-2xl border border-positive/30 bg-positive/5 p-4">
         <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-positive/15 text-positive">
+          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-positive/15 text-positive-strong">
             <Check className="h-3.5 w-3.5" />
           </span>
           Aditivo criado como rascunho ({formatCurrency(valorAditivo)})
@@ -132,7 +132,7 @@ export function AditivoCard({ index, draft, onConfirmar, onCancelar, onDesfazer 
       <div className="space-y-3 px-4 py-4">
         <div className="space-y-1.5">
           <Label htmlFor={`aditivo-${index}-projeto`} className="text-xs text-muted-foreground">
-            Projeto <span className="text-negative">*</span>
+            Projeto <span className="text-negative-strong">*</span>
           </Label>
           <Select value={projetoId} onValueChange={setProjetoId}>
             <SelectTrigger id={`aditivo-${index}-projeto`} className="h-9"><SelectValue placeholder={projetos.isLoading ? "Carregando…" : "Selecione…"} /></SelectTrigger>
@@ -143,7 +143,7 @@ export function AditivoCard({ index, draft, onConfirmar, onCancelar, onDesfazer 
         </div>
         <div className="space-y-1.5">
           <Label htmlFor={`aditivo-${index}-desc`} className="text-xs text-muted-foreground">
-            Descrição <span className="text-negative">*</span>
+            Descrição <span className="text-negative-strong">*</span>
           </Label>
           <Input id={`aditivo-${index}-desc`} value={descricao} onChange={(e) => setDescricao(e.target.value)} disabled={salvando} className="h-9" placeholder="Resumo do aditivo" />
         </div>
@@ -159,7 +159,7 @@ export function AditivoCard({ index, draft, onConfirmar, onCancelar, onDesfazer 
               <Input value={it.descricao ?? ""} onChange={(e) => setItem(i, "descricao", e.target.value)} placeholder="Descrição" aria-label={`Item ${i + 1} descrição`} disabled={salvando} className="h-9" />
               <Input value={it.disciplina ?? ""} onChange={(e) => setItem(i, "disciplina", e.target.value)} placeholder="Disciplina" aria-label={`Item ${i + 1} disciplina`} disabled={salvando} className="h-9 w-28" />
               <Input type="number" value={it.custo ?? ""} onChange={(e) => setItem(i, "custo", e.target.value)} placeholder="Custo" aria-label={`Item ${i + 1} custo`} disabled={salvando} className="h-9 w-24" />
-              <button type="button" onClick={() => setItens((p) => p.filter((_, idx) => idx !== i))} disabled={salvando} aria-label={`Remover item ${i + 1}`} className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-negative">
+              <button type="button" onClick={() => setItens((p) => p.filter((_, idx) => idx !== i))} disabled={salvando} aria-label={`Remover item ${i + 1}`} className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-negative-strong">
                 <Trash2 className="h-4 w-4" />
               </button>
             </div>

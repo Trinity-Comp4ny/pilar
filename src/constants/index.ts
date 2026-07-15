@@ -136,7 +136,7 @@ export const CONTRACT_TYPE_LABELS: Record<ContractType, string> = {
 export const CONTRACT_TYPE_COLORS: Record<ContractType, string> = {
   [CONTRACT_TYPES.CLT]: "bg-blue-100 text-blue-700 border-blue-200",
   [CONTRACT_TYPES.PJ]: "bg-purple-100 text-purple-700 border-purple-200",
-  [CONTRACT_TYPES.ESTAGIARIO]: "bg-positive/10 text-positive border-positive/20",
+  [CONTRACT_TYPES.ESTAGIARIO]: "bg-positive/10 text-positive-strong border-positive/20",
   [CONTRACT_TYPES.SOCIO]: "bg-amber-100 text-amber-700 border-amber-200",
   [CONTRACT_TYPES.TERCEIRIZADO]: "bg-gray-100 text-gray-700 border-gray-200",
 };
@@ -157,7 +157,7 @@ export const PESSOA_STATUS_LABELS: Record<PessoaStatus, string> = {
 };
 
 export const PESSOA_STATUS_COLORS: Record<PessoaStatus, string> = {
-  [PESSOA_STATUS.ATIVO]: "bg-positive/10 text-positive border-positive/20",
+  [PESSOA_STATUS.ATIVO]: "bg-positive/10 text-positive-strong border-positive/20",
   [PESSOA_STATUS.INATIVO]: "bg-gray-100 text-gray-600 border-gray-200",
   [PESSOA_STATUS.AFASTADO]: "bg-yellow-100 text-yellow-700 border-yellow-200",
 };

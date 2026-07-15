@@ -34,7 +34,7 @@ const MESES = [
 function getStatusBadge(status: string, dataVencimento: string) {
   const isOverdue = status !== "Paga" && new Date(dataVencimento) < new Date();
 
-  if (status === "Paga") return <Badge className="bg-positive/10 text-positive hover:bg-positive/10">Paga</Badge>;
+  if (status === "Paga") return <Badge className="bg-positive/10 text-positive-strong hover:bg-positive/10">Paga</Badge>;
   if (isOverdue) return <Badge className="bg-red-100 text-red-800 hover:bg-red-100">Vencida</Badge>;
   if (status === "Parcial") return <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">Parcial</Badge>;
   if (status === "Fechada") return <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">Fechada</Badge>;
@@ -347,7 +347,7 @@ export default function Faturas() {
               </div>
 
               {selectedFatura.data_pagamento && (
-                <div className="p-3 bg-positive/10 rounded-lg text-sm text-positive">
+                <div className="p-3 bg-positive/10 rounded-lg text-sm text-positive-strong">
                   Paga em {format(new Date(selectedFatura.data_pagamento + "T00:00:00"), "dd/MM/yyyy")}
                   {selectedFatura.conta_pagamento_nome && ` via ${selectedFatura.conta_pagamento_nome}`}
                 </div>
@@ -441,7 +441,7 @@ export default function Faturas() {
                   <>
                     <div className="flex justify-between text-sm mt-1">
                       <span className="text-muted-foreground">Já pago</span>
-                      <span className="text-positive">
+                      <span className="text-positive-strong">
                         - R$ {selectedFatura.valor_pago.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                       </span>
                     </div>
