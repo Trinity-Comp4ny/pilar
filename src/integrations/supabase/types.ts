@@ -4091,6 +4091,23 @@ export type Database = {
         Returns: Json
       }
       aprovar_orcamento_agente: { Args: { p_run_id: string }; Returns: Json }
+      criar_lead_agente: { Args: { p_run_id: string }; Returns: Json }
+      criar_projeto_agente: { Args: { p_run_id: string }; Returns: Json }
+      criar_receita_agente: { Args: { p_run_id: string }; Returns: Json }
+      criar_despesa_agente: { Args: { p_run_id: string }; Returns: Json }
+      criar_cartao_agente: { Args: { p_run_id: string }; Returns: Json }
+      fechar_folha_agente: { Args: { p_run_id: string }; Returns: Json }
+      criar_cliente_agente: { Args: { p_run_id: string }; Returns: Json }
+      criar_fornecedor_agente: { Args: { p_run_id: string }; Returns: Json }
+      criar_categoria_agente: { Args: { p_run_id: string }; Returns: Json }
+      criar_conta_agente: { Args: { p_run_id: string }; Returns: Json }
+      criar_centro_custo_agente: { Args: { p_run_id: string }; Returns: Json }
+      criar_pessoa_agente: { Args: { p_run_id: string }; Returns: Json }
+      criar_proposta_agente: { Args: { p_run_id: string }; Returns: Json }
+      criar_marco_agente: { Args: { p_run_id: string }; Returns: Json }
+      criar_disciplina_agente: { Args: { p_run_id: string }; Returns: Json }
+      criar_aditivo_agente: { Args: { p_run_id: string }; Returns: Json }
+      executar_acao_agente: { Args: { p_run_id: string }; Returns: Json }
       audit_log_cleanup: { Args: never; Returns: number }
       audit_logs_archive_old: { Args: never; Returns: number }
       check_convite_rate_limit: {

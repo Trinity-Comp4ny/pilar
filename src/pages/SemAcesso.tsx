@@ -40,6 +40,7 @@ const FEATURE_LABEL: Record<Feature, string> = {
   capacidade: "Capacidade",
   templates: "Templates",
   ai_hub: "IA",
+  ai_chat: "Agentes",
   timesheet: "Timesheet",
   admin_portal: "Admin Portal",
   billing: "Assinatura",
