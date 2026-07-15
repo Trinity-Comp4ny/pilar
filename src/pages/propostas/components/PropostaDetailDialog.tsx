@@ -120,7 +120,7 @@ const STAGE_CONFIG: Record<string, StageConfig> = {
     bg: "bg-positive/10",
     border: "border-positive/20",
     icon: ThumbsUp,
-    iconColor: "text-positive",
+    iconColor: "text-positive-strong",
     message: "Proposta aceita! Formalize o contrato ou converta em projeto para iniciar o trabalho.",
   },
   recusada: {
@@ -246,7 +246,7 @@ export function PropostaDetailDialog({
               <div className="flex flex-wrap gap-2">
                 <Button size="sm" variant="outline" className="gap-1.5" onClick={onGerarDocx}>
                   <FileOutput className="h-3.5 w-3.5" />
-                  Baixar DOCX
+                  Baixar documento
                 </Button>
                 {canEdit && (
                   <Button size="sm" variant="outline" className="gap-1.5" onClick={onEdit}>
@@ -288,7 +288,7 @@ export function PropostaDetailDialog({
                 <div className="flex flex-wrap gap-2">
                   <Button
                     variant="outline"
-                    className="gap-1.5 border-positive/30 text-positive hover:bg-positive hover:text-white hover:border-positive transition-colors"
+                    className="gap-1.5 border-positive/30 text-positive-strong hover:bg-positive hover:text-white hover:border-positive transition-colors"
                     disabled={isUpdating}
                     onClick={() => onStatusChange(proposta.id, "aceita")}
                   >
@@ -332,7 +332,7 @@ export function PropostaDetailDialog({
                 )}
                 <Button size="sm" variant="outline" className="gap-1.5" onClick={onGerarDocx}>
                   <FileOutput className="h-3.5 w-3.5" />
-                  Baixar DOCX
+                  Baixar documento
                 </Button>
                 {canEdit && (
                   <>
@@ -372,10 +372,10 @@ export function PropostaDetailDialog({
               {/* Status do contrato */}
               {proposta.contrato_assinado ? (
                 <div className="flex items-center gap-2 rounded-lg border border-positive/20 bg-positive/10 px-3 py-2.5">
-                  <CheckCircle2 className="h-4 w-4 text-positive flex-shrink-0" />
+                  <CheckCircle2 className="h-4 w-4 text-positive-strong flex-shrink-0" />
                   <div>
-                    <p className="text-xs font-medium text-positive">Contrato assinado</p>
-                    <p className="text-[11px] text-positive">O cliente assinou o contrato.</p>
+                    <p className="text-xs font-medium text-positive-strong">Contrato assinado</p>
+                    <p className="text-[11px] text-positive-strong">O cliente assinou o contrato.</p>
                   </div>
                 </div>
               ) : proposta.contrato_recusado ? (
@@ -396,7 +396,7 @@ export function PropostaDetailDialog({
                   <div className="flex flex-wrap gap-2">
                     <Button
                       variant="outline"
-                      className="gap-1.5 border-positive/30 text-positive hover:bg-positive hover:text-white hover:border-positive transition-colors"
+                      className="gap-1.5 border-positive/30 text-positive-strong hover:bg-positive hover:text-white hover:border-positive transition-colors"
                       disabled={isUpdating}
                       onClick={onMarcarContratoAssinado}
                     >
@@ -442,7 +442,7 @@ export function PropostaDetailDialog({
               <div className="flex flex-wrap gap-2">
                 <Button size="sm" variant="outline" className="gap-1.5" onClick={onGerarDocx}>
                   <FileOutput className="h-3.5 w-3.5" />
-                  Baixar DOCX
+                  Baixar documento
                 </Button>
                 {canEdit && (
                   <Button size="sm" variant="outline" className="gap-1.5" onClick={onEdit}>
@@ -471,7 +471,7 @@ export function PropostaDetailDialog({
               <div className="flex flex-wrap gap-2">
                 <Button size="sm" variant="outline" className="gap-1.5" onClick={onGerarDocx}>
                   <FileOutput className="h-3.5 w-3.5" />
-                  Baixar DOCX
+                  Baixar documento
                 </Button>
                 {canEdit && (
                   <Button
@@ -501,7 +501,7 @@ export function PropostaDetailDialog({
               <div className="flex flex-wrap gap-2">
                 <Button size="sm" variant="outline" className="gap-1.5" onClick={onGerarDocx}>
                   <FileOutput className="h-3.5 w-3.5" />
-                  Baixar DOCX
+                  Baixar documento
                 </Button>
                 {canEdit && (
                   <Button

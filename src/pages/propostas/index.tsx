@@ -24,6 +24,7 @@ import {
   Trash2,
   ArrowUpDown,
   MoreVertical,
+  SlidersHorizontal,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -31,6 +32,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { DialogDescription as DD, DialogFooter } from "@/components/ui/dialog";
 import { useNavigate } from "react-router-dom";
 import { PageLayout } from "@/components/PageLayout";
@@ -44,6 +46,7 @@ import {
   useCreateProposta,
   useUpdateProposta,
   useDeleteProposta,
+  useRestoreProposta,
   useConverterProposta,
   usePropostaDisciplinas,
   useSalvarPropostaDisciplinas,
@@ -83,14 +86,26 @@ const emptyForm: PropostaInsert = {
   observacao: "",
 };
 
+// Sugere o próximo código sequencial no padrão PROP-001 a partir dos existentes.
+// O usuário pode editar livremente.
+const suggestNextCodigo = (list: { codigo: string | null }[]) => {
+  let max = 0;
+  for (const p of list) {
+    const m = /^PROP-(\d+)$/i.exec((p.codigo || "").trim());
+    if (m) max = Math.max(max, parseInt(m[1], 10));
+  }
+  return `PROP-${String(max + 1).padStart(3, "0")}`;
+};
+
 export default function Propostas() {
-  usePageTitle("Documentos");
+  usePageTitle("Propostas");
   const queryClient = useQueryClient();
   const { data: userRole } = useUserRole();
   const { data: propostas = [], isLoading } = usePropostas();
   const createProposta = useCreateProposta();
   const updateProposta = useUpdateProposta();
   const deleteProposta = useDeleteProposta();
+  const restoreProposta = useRestoreProposta();
   const converterProposta = useConverterProposta();
   const salvarDisciplinas = useSalvarPropostaDisciplinas();
   const navigate = useNavigate();
@@ -113,6 +128,11 @@ export default function Propostas() {
   const [detailPropostaId, setDetailPropostaId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
+  const [filterCliente, setFilterCliente] = useState("all");
+  const [filterTipo, setFilterTipo] = useState<"all" | "proposta" | "contrato">("all");
+  const [filterDateField, setFilterDateField] = useState<"created_at" | "validade">("created_at");
+  const [filterDateFrom, setFilterDateFrom] = useState("");
+  const [filterDateTo, setFilterDateTo] = useState("");
   const [sortField, setSortField] = useState<"titulo" | "valor_proposto" | "validade" | "created_at" | null>(null);
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
 
@@ -153,6 +173,11 @@ export default function Propostas() {
   const disciplinasTotais = calcDisciplinasTotais(disciplinasRows);
   const valorPropostoNum = parseCurrencyString(valorDisplay);
   const valorDiverge = valorDivergeDaSoma(valorPropostoNum, disciplinasTotais.totalValor);
+
+  const codigoTrim = (form.codigo || "").trim();
+  const codigoDuplicado =
+    codigoTrim.length > 0 &&
+    propostas.some((p) => p.id !== editingId && (p.codigo || "").trim().toLowerCase() === codigoTrim.toLowerCase());
 
   const { data: clientes = [] } = useQuery({
     queryKey: ["clientes-select"],
@@ -281,13 +306,24 @@ export default function Propostas() {
 
   const handleDelete = () => {
     if (!confirmDelete) return;
-    deleteProposta.mutate(confirmDelete.id, {
+    const { id, titulo } = confirmDelete;
+    deleteProposta.mutate(id, {
       onSuccess: () => {
-        toast.success("Proposta removida");
+        toast.success("Proposta removida", {
+          description: `"${titulo}" saiu da lista.`,
+          action: {
+            label: "Desfazer",
+            onClick: () =>
+              restoreProposta.mutate(id, {
+                onSuccess: () => toast.success("Proposta restaurada"),
+                onError: () => toast.error("Erro ao restaurar"),
+              }),
+          },
+        });
         setConfirmDelete(null);
         setDetailPropostaId(null);
       },
-      onError: () => toast.error("Erro"),
+      onError: () => toast.error("Erro ao remover"),
     });
   };
 
@@ -338,6 +374,28 @@ export default function Propostas() {
     }
   };
 
+  const clearFilters = () => {
+    setSearchTerm("");
+    setFilterStatus("all");
+    setFilterCliente("all");
+    setFilterTipo("all");
+    setFilterDateField("created_at");
+    setFilterDateFrom("");
+    setFilterDateTo("");
+  };
+
+  // Contagem de filtros avançados ativos (fora status e busca, que têm controle próprio).
+  const activeAdvancedFilters =
+    (filterCliente !== "all" ? 1 : 0) + (filterTipo !== "all" ? 1 : 0) + (filterDateFrom || filterDateTo ? 1 : 0);
+
+  const openDetail = (id: string) => setDetailPropostaId(id);
+  const handleRowKeyDown = (e: React.KeyboardEvent, id: string) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      openDetail(id);
+    }
+  };
+
   const filteredPropostas = useMemo(() => {
     const term = normalize(searchTerm.trim());
     let list = propostas.filter((p) => {
@@ -346,6 +404,19 @@ export default function Propostas() {
         if (!haystack.includes(term)) return false;
       }
       if (filterStatus !== "all" && getDisplayStatus(p) !== filterStatus) return false;
+      if (filterCliente !== "all" && p.cliente_id !== filterCliente) return false;
+      if (filterTipo !== "all") {
+        const isContrato = !!(p.contrato_enviado || p.contrato_assinado || p.contrato_recusado);
+        if (filterTipo === "contrato" && !isContrato) return false;
+        if (filterTipo === "proposta" && isContrato) return false;
+      }
+      if (filterDateFrom || filterDateTo) {
+        const raw = filterDateField === "validade" ? p.validade : p.created_at;
+        const d = raw ? raw.slice(0, 10) : "";
+        if (!d) return false;
+        if (filterDateFrom && d < filterDateFrom) return false;
+        if (filterDateTo && d > filterDateTo) return false;
+      }
       return true;
     });
     if (sortField) {
@@ -358,10 +429,22 @@ export default function Propostas() {
     }
     return list;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [propostas, searchTerm, filterStatus, sortField, sortDir, hoje]);
+  }, [
+    propostas,
+    searchTerm,
+    filterStatus,
+    filterCliente,
+    filterTipo,
+    filterDateField,
+    filterDateFrom,
+    filterDateTo,
+    sortField,
+    sortDir,
+    hoje,
+  ]);
 
   const header = (
-    <PageHeader title="Documentos" description="Gerencie propostas e contratos">
+    <PageHeader title="Propostas" description="Gerencie propostas e contratos">
       <div className="flex items-center gap-2">
         <Button variant="outline" className="rounded-full px-5 py-2.5 text-sm" onClick={() => setIsTemplatesOpen(true)}>
           <LayoutTemplate className="h-4 w-4 mr-1.5" />
@@ -372,6 +455,7 @@ export default function Propostas() {
             className="rounded-full bg-brand hover:bg-brand/90 text-ink transition-colors px-5 py-2.5 text-sm"
             onClick={() => {
               resetForm();
+              setForm({ ...emptyForm, codigo: suggestNextCodigo(propostas) });
               setIsFormOpen(true);
             }}
           >
@@ -398,9 +482,9 @@ export default function Propostas() {
         <CardHeader>
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-              <CardTitle className="text-lg font-medium tracking-tight">Lista de Documentos</CardTitle>
+              <CardTitle className="text-lg font-medium tracking-tight">Lista de Propostas</CardTitle>
               <CardDescription className="text-sm text-muted-foreground mt-1">
-                Total de {filteredPropostas.length} de {propostas.length} documento(s)
+                Total de {filteredPropostas.length} de {propostas.length} proposta(s)
               </CardDescription>
             </div>
             <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
@@ -426,11 +510,79 @@ export default function Propostas() {
                   <SelectItem value="expirada">Expirada</SelectItem>
                 </SelectContent>
               </Select>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="h-9 rounded-full text-sm relative gap-1.5">
+                    <SlidersHorizontal className="h-4 w-4" />
+                    Filtros
+                    {activeAdvancedFilters > 0 && (
+                      <Badge className="ml-0.5 h-5 min-w-5 justify-center rounded-full bg-brand px-1.5 text-[11px] text-ink">
+                        {activeAdvancedFilters}
+                      </Badge>
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent align="end" className="w-80 space-y-4">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Cliente</Label>
+                    <Select value={filterCliente} onValueChange={setFilterCliente}>
+                      <SelectTrigger className="h-9 text-sm">
+                        <SelectValue placeholder="Todos os clientes" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todos os clientes</SelectItem>
+                        {clientes.map((c) => (
+                          <SelectItem key={c.id} value={c.id}>
+                            {c.nome}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Tipo</Label>
+                    <Select value={filterTipo} onValueChange={(v) => setFilterTipo(v as typeof filterTipo)}>
+                      <SelectTrigger className="h-9 text-sm">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todos os tipos</SelectItem>
+                        <SelectItem value="proposta">Só propostas</SelectItem>
+                        <SelectItem value="contrato">Com contrato</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <Label className="text-xs">Período</Label>
+                      <Select
+                        value={filterDateField}
+                        onValueChange={(v) => setFilterDateField(v as typeof filterDateField)}
+                      >
+                        <SelectTrigger className="h-7 w-32 text-xs">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="created_at">Criação</SelectItem>
+                          <SelectItem value="validade">Validade</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <DatePicker value={filterDateFrom} onChange={setFilterDateFrom} placeholder="De" />
+                      <DatePicker value={filterDateTo} onChange={setFilterDateTo} placeholder="Até" />
+                    </div>
+                  </div>
+                  <Button variant="ghost" size="sm" className="w-full text-muted-foreground" onClick={clearFilters}>
+                    Limpar filtros
+                  </Button>
+                </PopoverContent>
+              </Popover>
               <div className="flex items-center gap-1">
                 <Button
                   variant={viewMode === "table" ? "secondary" : "ghost"}
                   size="icon"
-                  className="h-9 w-9"
+                  className="h-11 w-11"
                   onClick={() => setViewMode("table")}
                   aria-label="Visualizar em tabela"
                 >
@@ -439,7 +591,7 @@ export default function Propostas() {
                 <Button
                   variant={viewMode === "cards" ? "secondary" : "ghost"}
                   size="icon"
-                  className="h-9 w-9"
+                  className="h-11 w-11"
                   onClick={() => setViewMode("cards")}
                   aria-label="Visualizar em cards"
                 >
@@ -465,10 +617,7 @@ export default function Propostas() {
               action={{
                 label: "Limpar filtros",
                 variant: "outline",
-                onClick: () => {
-                  setSearchTerm("");
-                  setFilterStatus("all");
-                },
+                onClick: clearFilters,
               }}
             />
           ) : viewMode === "table" ? (
@@ -479,7 +628,7 @@ export default function Propostas() {
                     <TableHead>
                       <Button
                         variant="ghost"
-                        className="-ml-3 h-8 font-medium text-xs"
+                        className="-ml-3 h-11 font-medium text-xs"
                         onClick={() => handleSort("titulo")}
                       >
                         Título <ArrowUpDown className="ml-2 h-3 w-3" />
@@ -489,7 +638,7 @@ export default function Propostas() {
                     <TableHead>
                       <Button
                         variant="ghost"
-                        className="-ml-3 h-8 font-medium text-xs"
+                        className="-ml-3 h-11 font-medium text-xs"
                         onClick={() => handleSort("valor_proposto")}
                       >
                         Valor <ArrowUpDown className="ml-2 h-3 w-3" />
@@ -499,7 +648,7 @@ export default function Propostas() {
                     <TableHead>
                       <Button
                         variant="ghost"
-                        className="-ml-3 h-8 font-medium text-xs"
+                        className="-ml-3 h-11 font-medium text-xs"
                         onClick={() => handleSort("validade")}
                       >
                         Validade <ArrowUpDown className="ml-2 h-3 w-3" />
@@ -514,8 +663,12 @@ export default function Propostas() {
                     return (
                       <TableRow
                         key={p.id}
-                        className="cursor-pointer hover:bg-gray-50"
-                        onClick={() => setDetailPropostaId(p.id)}
+                        role="button"
+                        tabIndex={0}
+                        aria-label={`Ver detalhes da proposta ${p.titulo}`}
+                        className="cursor-pointer hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
+                        onClick={() => openDetail(p.id)}
+                        onKeyDown={(e) => handleRowKeyDown(e, p.id)}
                       >
                         <TableCell className="py-4">
                           <p className="text-sm font-medium">{p.titulo}</p>
@@ -540,7 +693,7 @@ export default function Propostas() {
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                                  className="h-11 w-11 text-muted-foreground hover:text-foreground"
                                   aria-label="Mais opções"
                                 >
                                   <MoreVertical className="h-4 w-4" />
@@ -571,8 +724,12 @@ export default function Propostas() {
                 return (
                   <Card
                     key={p.id}
-                    className="hover:shadow-md transition-shadow cursor-pointer"
-                    onClick={() => setDetailPropostaId(p.id)}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`Ver detalhes da proposta ${p.titulo}`}
+                    className="hover:shadow-md transition-shadow cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    onClick={() => openDetail(p.id)}
+                    onKeyDown={(e) => handleRowKeyDown(e, p.id)}
                   >
                     <CardContent className="p-4 space-y-3">
                       <div className="flex items-start justify-between gap-2">
@@ -592,7 +749,7 @@ export default function Propostas() {
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  className="h-7 w-7 text-muted-foreground hover:text-foreground -mr-1"
+                                  className="h-11 w-11 text-muted-foreground hover:text-foreground -mr-1"
                                   aria-label="Mais opções"
                                 >
                                   <MoreVertical className="h-3.5 w-3.5" />
@@ -725,6 +882,9 @@ export default function Propostas() {
                   onChange={(e) => setForm({ ...form, codigo: e.target.value })}
                   placeholder="PROP-001"
                 />
+                {codigoDuplicado && (
+                  <p className="text-[11px] text-amber-600">Já existe uma proposta com este código.</p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label>Título *</Label>
@@ -736,8 +896,9 @@ export default function Propostas() {
               </div>
             </div>
             <div className="space-y-3">
-              <div className="flex items-center gap-4">
-                <Label className="text-sm font-medium">Vincular a:</Label>
+              <fieldset className="flex flex-wrap items-center gap-4">
+                <legend className="sr-only">Vincular a cliente ou lead</legend>
+                <span className="text-sm font-medium">Vincular a:</span>
                 <div className="flex items-center gap-3">
                   <label className="flex items-center gap-1.5 text-sm cursor-pointer">
                     <input
@@ -766,7 +927,7 @@ export default function Propostas() {
                     Lead (prospecto)
                   </label>
                 </div>
-              </div>
+              </fieldset>
               {vinculoTipo === "lead" ? (
                 <div className="space-y-1">
                   <Select
@@ -923,7 +1084,8 @@ export default function Propostas() {
         }}
         title="Excluir Proposta"
         itemName={confirmDelete?.titulo}
-        description="Esta ação não pode ser desfeita."
+        description="A proposta sai da lista. Você poderá restaurá-la logo em seguida pelo aviso de desfazer."
+        confirmText="Excluir"
         onConfirm={handleDelete}
       />
 
@@ -937,7 +1099,7 @@ export default function Propostas() {
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <FolderPlus className="h-5 w-5 text-blue-600" />
+              <FolderPlus className="h-5 w-5 text-brand" />
               Converter em Projeto
             </DialogTitle>
             <DD>Um novo projeto será criado automaticamente com os dados desta proposta.</DD>
@@ -1019,7 +1181,7 @@ export default function Propostas() {
             <Button
               onClick={handleConverterEmProjeto}
               disabled={converterProposta.isPending}
-              className="bg-blue-600 hover:bg-blue-700 text-white"
+              className="bg-brand hover:bg-brand/90 text-ink"
             >
               {converterProposta.isPending ? (
                 <>
