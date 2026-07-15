@@ -80,7 +80,7 @@ export function VariaveisGuideDialog({ open, onOpenChange }: VariaveisGuideDialo
                 className="grid grid-cols-[1fr_1fr_auto] gap-0 items-center px-3 py-2.5 border-b last:border-b-0 hover:bg-muted/30 transition-colors"
               >
                 <div className="space-y-0.5">
-                  <Badge variant="secondary" className="font-mono text-xs bg-positive/10 text-positive">
+                  <Badge variant="secondary" className="font-mono text-xs bg-positive/10 text-positive-strong">
                     {`{{${varName}}}`}
                   </Badge>
                   <p className="text-[11px] text-muted-foreground">{description}</p>
@@ -94,7 +94,7 @@ export function VariaveisGuideDialog({ open, onOpenChange }: VariaveisGuideDialo
                   aria-label="Copiar variável"
                 >
                   {copiedVar === varName ? (
-                    <Check className="h-3.5 w-3.5 text-positive" />
+                    <Check className="h-3.5 w-3.5 text-positive-strong" />
                   ) : (
                     <Copy className="h-3.5 w-3.5" />
                   )}

@@ -148,7 +148,7 @@ export function TemplatesManager() {
             <Badge
               key={v}
               variant="secondary"
-              className={`text-[10px] ${v in AUTO_VARIABLES ? "bg-positive/10 text-positive" : "bg-amber-50 text-amber-700"}`}
+              className={`text-[10px] ${v in AUTO_VARIABLES ? "bg-positive/10 text-positive-strong" : "bg-amber-50 text-amber-700"}`}
             >
               {v}
             </Badge>
@@ -295,7 +295,7 @@ export function TemplatesManager() {
                   <Badge
                     key={v}
                     variant="secondary"
-                    className={`text-[10px] ${v in AUTO_VARIABLES ? "bg-positive/10 text-positive" : "bg-amber-50 text-amber-700"}`}
+                    className={`text-[10px] ${v in AUTO_VARIABLES ? "bg-positive/10 text-positive-strong" : "bg-amber-50 text-amber-700"}`}
                   >
                     {`{{${v}}}`}
                   </Badge>
