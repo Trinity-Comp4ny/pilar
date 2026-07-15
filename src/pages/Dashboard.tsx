@@ -74,6 +74,7 @@ function KPICard({
   subtitleColor,
   variacao,
   invertVariacao,
+  novo,
   subtitle,
   onClick,
 }: {
@@ -87,18 +88,21 @@ function KPICard({
   // Quando true, cair é bom (ex.: despesa): a cor da variação inverte, mas a seta
   // continua indicando a direção real do valor (subiu/caiu).
   invertVariacao?: boolean;
+  // Sem base no período anterior: não dá para calcular %, então mostramos "novo".
+  novo?: boolean;
   subtitle?: string;
   onClick?: () => void;
 }) {
   const subiu = (variacao ?? 0) > 0;
   const isBom = invertVariacao ? !subiu : subiu;
-  const variacaoNode =
-    variacao !== undefined && variacao !== 0 ? (
-      <span className={`flex items-center gap-0.5 ${isBom ? "text-success-mid" : "text-danger-mid"}`}>
-        {subiu ? <TrendingUp size={12} className="mr-0.5" /> : <TrendingDown size={12} className="mr-0.5" />}
-        {Math.abs(variacao).toFixed(1)}% vs período anterior
-      </span>
-    ) : null;
+  const variacaoNode = novo ? (
+    <span className="flex items-center gap-0.5 font-medium text-ink-soft">novo neste período</span>
+  ) : variacao !== undefined && variacao !== 0 ? (
+    <span className={`flex items-center gap-0.5 ${isBom ? "text-success-mid" : "text-danger-mid"}`}>
+      {subiu ? <TrendingUp size={12} className="mr-0.5" /> : <TrendingDown size={12} className="mr-0.5" />}
+      {Math.abs(variacao).toFixed(1)}% vs período anterior
+    </span>
+  ) : null;
 
   return (
     <Card
@@ -127,7 +131,8 @@ function KPICard({
       </CardHeader>
       <CardContent>
         <div className={`text-2xl font-bold ${valueColor}`}>{value}</div>
-        <p className={`text-xs mt-1 flex items-center gap-1 ${subtitleColor}`}>{variacaoNode ?? subtitle}</p>
+        {variacaoNode && <p className="text-xs mt-1 flex items-center gap-1">{variacaoNode}</p>}
+        {subtitle && <p className={`text-xs mt-1 ${subtitleColor}`}>{subtitle}</p>}
       </CardContent>
     </Card>
   );
@@ -279,15 +284,16 @@ function LeadsFunnel({ pipeline, total }: { pipeline: LeadsPipeline[]; total: nu
         return (
           <div key={step.status} className="flex items-center gap-2">
             <span className="text-[11px] text-muted-foreground w-20 shrink-0 truncate">{step.status}</span>
-            <div className="flex-1 h-5 bg-muted rounded overflow-hidden relative">
+            <div className="flex-1 h-5 bg-muted rounded overflow-hidden">
               <div
                 className={`h-full rounded transition-all ${PIPELINE_COLORS[step.status] || "bg-pipeline-perdido"}`}
                 style={{ width: `${Math.max(pct, 4)}%` }}
               />
-              <span className="absolute inset-0 flex items-center justify-center text-[10px] font-semibold text-ink-soft mix-blend-darken">
-                {step.count}
-              </span>
             </div>
+            {/* Contagem fora da barra: cor fixa com contraste garantido, sem depender da cor da barra. */}
+            <span className="text-[11px] font-semibold text-ink-soft w-6 shrink-0 text-right tabular-nums">
+              {step.count}
+            </span>
           </div>
         );
       })}
@@ -361,6 +367,30 @@ const PERIOD_LABEL: Record<DashPreset, string> = {
   custom: "Personalizado",
 };
 
+// Separa falha de acesso (RLS/permissão/sessão) de falha de rede para não culpar sempre a conexão.
+function describeDashboardError(error: unknown): { title: string; detail: string } {
+  const e = error as { code?: string; message?: string } | null;
+  const code = e?.code ?? "";
+  const msg = (e?.message ?? "").toLowerCase();
+  const isAccessError =
+    code === "42501" || // insufficient_privilege (Postgres)
+    code === "PGRST301" || // JWT ausente/expirado (PostgREST)
+    msg.includes("permission") ||
+    msg.includes("row-level security") ||
+    msg.includes("not authorized") ||
+    msg.includes("jwt");
+  if (isAccessError) {
+    return {
+      title: "Sem acesso a estes dados.",
+      detail: "Sua sessão pode ter expirado ou faltam permissões. Recarregue ou peça acesso ao administrador.",
+    };
+  }
+  return {
+    title: "Erro ao carregar dados.",
+    detail: "Verifique sua conexão e tente novamente.",
+  };
+}
+
 export default function Dashboard() {
   usePageTitle("Dashboard");
   const navigate = useNavigate();
@@ -403,9 +433,11 @@ export default function Dashboard() {
 
   const { data, isLoading, error, refetch, isFetching } = useDashboardData(dateFrom, dateTo);
 
-  // Intervalo dos últimos 11 meses + mês atual para o gráfico de fluxo
-  const chartInicio = useMemo(() => startOfMonth(subMonths(new Date(), 11)), []);
-  const chartFim = useMemo(() => new Date(), []);
+  // Intervalo dos últimos 11 meses + mês atual para o gráfico de fluxo.
+  // Ancorado em todayKey (dia local) para não congelar o "hoje" da montagem em sessões longas.
+  const todayKey = format(new Date(), "yyyy-MM-dd");
+  const chartInicio = useMemo(() => startOfMonth(subMonths(parseISO(todayKey), 11)), [todayKey]);
+  const chartFim = useMemo(() => parseISO(todayKey), [todayKey]);
   const { data: chartDataRpc, isError: chartRpcError } = useFinanceChartData(empresaId, chartInicio, chartFim);
   // Fallback só dispara quando a RPC agregada falha (evita full-scan no caminho feliz).
   const { data: chartDataFallback, isError: chartFallbackError } = useFinanceChartFallback(
@@ -421,6 +453,10 @@ export default function Dashboard() {
   const canProjCreate = can("projetos", "create");
   const canLeads = can("leads", "view");
   const canRel = can("relatorios", "view");
+
+  // Drill-down dos KPIs financeiros: leva ao Financeiro já filtrado pelo período do dashboard.
+  const goFinanceiro = () =>
+    navigate(`/financeiro?from=${format(dateFrom, "yyyy-MM-dd")}&to=${format(dateTo, "yyyy-MM-dd")}`);
 
   const periodoLabel =
     preset === "custom" ? `${format(dateFrom, "dd/MM/yyyy")} → ${format(dateTo, "dd/MM/yyyy")}` : PERIOD_LABEL[preset];
@@ -497,6 +533,7 @@ export default function Dashboard() {
   );
 
   if (error) {
+    const { title: errorTitle, detail: errorDetail } = describeDashboardError(error);
     return (
       <PageLayout header={header}>
         <div className="p-6">
@@ -504,8 +541,8 @@ export default function Dashboard() {
             className="bg-danger-soft border border-danger-mid-border text-danger-mid px-4 py-3 rounded-lg"
             role="alert"
           >
-            <strong className="font-bold">Erro ao carregar dados.</strong>
-            <span className="block sm:inline ml-1">Verifique sua conexão e tente novamente.</span>
+            <strong className="font-bold">{errorTitle}</strong>
+            <span className="block sm:inline ml-1">{errorDetail}</span>
             <div className="mt-3">
               <Button
                 variant="outline"
@@ -570,6 +607,9 @@ export default function Dashboard() {
                   valueColor="text-success-mid"
                   subtitleColor="text-success"
                   variacao={kpis.receitaVariacao}
+                  novo={kpis.receitaNovo}
+                  subtitle="recebido + previsto"
+                  onClick={goFinanceiro}
                 />
                 <KPICard
                   title="Despesa do período"
@@ -580,6 +620,9 @@ export default function Dashboard() {
                   subtitleColor="text-danger"
                   variacao={kpis.despesaVariacao}
                   invertVariacao
+                  novo={kpis.despesaNovo}
+                  subtitle="pago + previsto"
+                  onClick={goFinanceiro}
                 />
                 <KPICard
                   title="Saldo do período"
@@ -593,6 +636,7 @@ export default function Dashboard() {
                   valueColor={kpis.saldoMes >= 0 ? "text-info-mid" : "text-danger-mid"}
                   subtitleColor={kpis.saldoMes >= 0 ? "text-info" : "text-danger"}
                   subtitle="receitas − despesas"
+                  onClick={goFinanceiro}
                 />
                 <KPICard
                   title="A Receber"
@@ -602,6 +646,7 @@ export default function Dashboard() {
                   valueColor="text-warning-mid"
                   subtitleColor="text-warning"
                   subtitle="vence no período"
+                  onClick={goFinanceiro}
                 />
               </>
             )}
