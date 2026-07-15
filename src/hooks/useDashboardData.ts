@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { startOfMonth, endOfMonth, subMonths, differenceInCalendarDays, addDays, format } from "date-fns";
+import { startOfMonth, endOfMonth, differenceInCalendarDays, addDays, format } from "date-fns";
 import { buildDashboardQueries } from "./dashboard/queries";
 import {
   buildKPIs,
@@ -7,9 +7,8 @@ import {
   buildLeadsPipeline,
   buildVencimentos,
   buildAlertas,
-  processChartData,
 } from "./dashboard/processors";
-import type { DashboardData, ReceitaChartRow, DespesaChartRow } from "./dashboard/types";
+import type { DashboardData } from "./dashboard/types";
 
 // Re-export types para manter API pública compatível
 export type {
@@ -38,9 +37,7 @@ export const useDashboardData = (dateFrom?: Date, dateTo?: Date) => {
       const prevEnd = addDays(periodoStart, -1);
       const prevStart = addDays(prevEnd, -duracao);
 
-      const chartStart = subMonths(now, 11);
-
-      const results = await buildDashboardQueries(now, periodoStart, periodoEnd, prevStart, prevEnd, chartStart);
+      const results = await buildDashboardQueries(now, periodoStart, periodoEnd, prevStart, prevEnd);
 
       // supabase-js resolve com { data, error } mesmo em falha (não rejeita a promise).
       // Sem isto, uma query que falha (RLS/rede) viraria "tudo zerado" na tela em vez de erro.
@@ -48,7 +45,7 @@ export const useDashboardData = (dateFrom?: Date, dateTo?: Date) => {
       if (firstError) throw firstError;
 
       const projetosData = results[6].data || [];
-      const projetosAtivos = results[14].count ?? 0;
+      const projetosAtivos = results[12].count ?? 0;
 
       const kpis = buildKPIs(
         results[0].data,
@@ -66,12 +63,8 @@ export const useDashboardData = (dateFrom?: Date, dateTo?: Date) => {
 
       const projetos = buildProjetos(projetosData, now);
       const { pipeline: leadsPipeline, total: leadsTotal } = buildLeadsPipeline(results[7].data || []);
-      const proximosVencimentos = buildVencimentos(results[12].data || [], results[13].data || [], now);
+      const proximosVencimentos = buildVencimentos(results[10].data || [], results[11].data || [], now);
       const alertas = buildAlertas(results[8].data || []);
-      const chartData = processChartData(
-        (results[10].data || []) as ReceitaChartRow[],
-        (results[11].data || []) as DespesaChartRow[]
-      );
 
       return {
         kpis,
@@ -81,7 +74,6 @@ export const useDashboardData = (dateFrom?: Date, dateTo?: Date) => {
         leadsTotal,
         alertas,
         alertasNaoLidos: results[9].count || 0,
-        chartData,
       };
     },
     staleTime: 1000 * 60 * 5,
