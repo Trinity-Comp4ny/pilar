@@ -10,17 +10,18 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CalendarIcon, Download, Plus, FileBarChart, Filter, X, Columns3 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
-import { format, startOfDay, endOfDay, subDays, startOfMonth, endOfMonth, subMonths } from "date-fns";
+import { format, subDays, startOfMonth, endOfMonth, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { getDisplayDate, formatDateDisplay } from "@/lib/dateUtils";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/EmptyState";
-import { supabase } from "@/integrations/supabase/client";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { RelatoriosSummary } from "./relatorios/RelatoriosSummary";
+import { useRelatorioData, parseDDMMYYYY, type ReportRow } from "./relatorios/useRelatorioData";
+import { toCurrency, computeReportTotal, generateCSV, generatePDF } from "./relatorios/relatorioExport";
+import { applyFilters, computeFilterOptions, type ColumnFilters } from "./relatorios/relatorioFilters";
 
 // recharts é pesado e esta é uma página secundária: só carrega o chunk do
 // gráfico quando há dados suficientes para renderizá-lo (ver renderChart).
@@ -31,50 +32,6 @@ const RelatoriosChart = lazy(() => import("./relatorios/RelatoriosChart"));
 const RelatoriosRentabilidade = lazy(() => import("./relatorios/RelatoriosRentabilidade"));
 
 type RentabilidadeMode = "projeto" | "cliente";
-
-interface ReportRow {
-  Tipo: string;
-  Descrição: string;
-  Valor: number;
-  "Dt. Vencimento": string;
-  "Dt. Efetiva": string;
-  Status: string;
-  Projeto: string;
-  "Cliente / Fornecedor": string;
-  Categoria: string;
-  Conta: string;
-  "Forma Pgto": string;
-  "Nota Fiscal": string;
-  Parcela: string;
-}
-
-interface FinancialRecord {
-  descricao: string | null;
-  valor: number | null;
-  data_recebimento?: string | null;
-  data_pagamento?: string | null;
-  data_vencimento: string | null;
-  status: string | null;
-  nota_fiscal: string | null;
-  forma_pagamento?: string | null;
-  observacao: string | null;
-  parcela_numero: number | null;
-  parcela_total: number | null;
-  projetos: { nome: string } | null;
-  clientes?: { nome: string } | null;
-  fornecedores?: { nome: string } | null;
-  categorias_financeiras: { nome: string } | null;
-  contas: { nome: string } | null;
-}
-
-const toCurrency = (value: string | number | null | undefined) => {
-  const n = Number(value);
-  if (!Number.isFinite(n)) return "-";
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  }).format(n);
-};
 
 const statusConfig: Record<string, { label: string; className: string }> = {
   Pendente: { label: "Pendente", className: "bg-amber-100 text-amber-800 border-amber-200" },
@@ -89,26 +46,6 @@ const tipoConfig: Record<string, { className: string }> = {
   Despesa: { className: "bg-red-100 text-red-800 border-red-200" },
 };
 
-// Em relatório misto (receitas + despesas) somar tudo produz um número sem sentido.
-// Nesse caso mostramos o Saldo (receitas − despesas); em relatório de tipo único, o Total.
-const computeReportTotal = (data: ReportRow[]): { label: string; value: number } => {
-  const hasReceita = data.some((r) => r.Tipo === "Receita");
-  const hasDespesa = data.some((r) => r.Tipo === "Despesa");
-  if (hasReceita && hasDespesa) {
-    const receitas = data.filter((r) => r.Tipo === "Receita").reduce((a, r) => a + (r.Valor ?? 0), 0);
-    const despesas = data.filter((r) => r.Tipo === "Despesa").reduce((a, r) => a + (r.Valor ?? 0), 0);
-    return { label: "Saldo", value: receitas - despesas };
-  }
-  return { label: "Total", value: data.reduce((a, r) => a + (r.Valor ?? 0), 0) };
-};
-
-function parseDDMMYYYY(str: string): Date | null {
-  if (str === "-") return null;
-  const [d, m, y] = str.split("/").map(Number);
-  if (!d || !m || !y) return null;
-  return new Date(y, m - 1, d);
-}
-
 export default function Relatorios() {
   usePageTitle("Relatórios");
   const [tipoRelatorio, setTipoRelatorio] = useState("");
@@ -117,9 +54,7 @@ export default function Relatorios() {
   );
   const [dateFrom, setDateFrom] = useState<Date>();
   const [dateTo, setDateTo] = useState<Date>();
-  const [isLoading, setIsLoading] = useState(false);
-  const [reportData, setReportData] = useState<ReportRow[]>([]);
-  const [reportTitle, setReportTitle] = useState<string>("");
+  const { isLoading, setIsLoading, reportData, reportTitle, generateReport, clearReport } = useRelatorioData();
   const [rentabilidadeMode, setRentabilidadeMode] = useState<RentabilidadeMode | null>(null);
 
   const isRentabilidade = tipoRelatorio === "rentabilidade_projeto" || tipoRelatorio === "rentabilidade_cliente";
@@ -177,6 +112,14 @@ export default function Relatorios() {
   const [filterProjeto, setFilterProjeto] = useState<string>("");
   const [filterConta, setFilterConta] = useState<string>("");
 
+  const filters: ColumnFilters = {
+    categoria: filterCategoria,
+    cliente: filterCliente,
+    status: filterStatus,
+    projeto: filterProjeto,
+    conta: filterConta,
+  };
+
   const hasActiveFilters = !!(filterCategoria || filterCliente || filterStatus || filterProjeto || filterConta);
 
   const clearAllFilters = () => {
@@ -187,39 +130,19 @@ export default function Relatorios() {
     setFilterConta("");
   };
 
-  // Aplica todos os filtros exceto o indicado em `exclude`
-  const applyFilters = (data: ReportRow[], exclude?: string) => {
-    return data.filter((row) => {
-      if (exclude !== "categoria" && filterCategoria && row.Categoria !== filterCategoria) return false;
-      if (exclude !== "cliente" && filterCliente && row["Cliente / Fornecedor"] !== filterCliente) return false;
-      if (exclude !== "status" && filterStatus && row.Status !== filterStatus) return false;
-      if (exclude !== "projeto" && filterProjeto && row.Projeto !== filterProjeto) return false;
-      if (exclude !== "conta" && filterConta && row.Conta !== filterConta) return false;
-      return true;
-    });
-  };
-
   // Dados filtrados (todos os filtros aplicados)
   const filteredData = useMemo(
-    () => applyFilters(reportData),
+    () => applyFilters(reportData, filters),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [reportData, filterCategoria, filterCliente, filterStatus, filterProjeto, filterConta]
   );
 
   // Opções inteligentes: cada select mostra apenas valores compatíveis com os demais filtros
-  const filterOptions = useMemo(() => {
-    const unique = (data: ReportRow[], key: keyof ReportRow) =>
-      Array.from(new Set(data.map((r) => r[key]).filter((v) => v && v !== "-"))).sort() as string[];
-
-    return {
-      categorias: unique(applyFilters(reportData, "categoria"), "Categoria"),
-      clientes: unique(applyFilters(reportData, "cliente"), "Cliente / Fornecedor"),
-      status: unique(applyFilters(reportData, "status"), "Status"),
-      projetos: unique(applyFilters(reportData, "projeto"), "Projeto"),
-      contas: unique(applyFilters(reportData, "conta"), "Conta"),
-    };
+  const filterOptions = useMemo(
+    () => computeFilterOptions(reportData, filters),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [reportData, filterCategoria, filterCliente, filterStatus, filterProjeto, filterConta]);
+    [reportData, filterCategoria, filterCliente, filterStatus, filterProjeto, filterConta]
+  );
 
   // Limpa filtros órfãos (valor selecionado não existe mais nas opções disponíveis)
   useEffect(() => {
@@ -271,210 +194,6 @@ export default function Relatorios() {
 
   // --- Helpers ---
 
-  const processData = (data: FinancialRecord[], tipo: "receitas" | "despesas"): ReportRow[] => {
-    return (data || []).map((item) => {
-      const dataEfetiva = tipo === "receitas" ? item.data_recebimento : item.data_pagamento;
-      const parcela = item.parcela_numero && item.parcela_total ? `${item.parcela_numero}/${item.parcela_total}` : "-";
-
-      return {
-        Tipo: tipo === "receitas" ? "Receita" : "Despesa",
-        Descrição: item.descricao ?? "-",
-        Valor: item.valor ?? 0,
-        "Dt. Vencimento": formatDateDisplay(item.data_vencimento) || "-",
-        "Dt. Efetiva": formatDateDisplay(getDisplayDate(dataEfetiva, item.data_vencimento, item.status)) || "-",
-        Status: item.status ?? "-",
-        Projeto: item.projetos?.nome ?? "-",
-        "Cliente / Fornecedor": tipo === "receitas" ? (item.clientes?.nome ?? "-") : (item.fornecedores?.nome ?? "-"),
-        Categoria: item.categorias_financeiras?.nome ?? "-",
-        Conta: item.contas?.nome ?? "-",
-        "Forma Pgto": item.forma_pagamento ?? "-",
-        "Nota Fiscal": item.nota_fiscal ?? "-",
-        Parcela: parcela,
-      };
-    });
-  };
-
-  const generateCSV = (data: ReportRow[], filename: string) => {
-    if (!data.length) {
-      toast.error("Sem dados", { description: "Não há dados para exportar." });
-      return;
-    }
-
-    const escapeCSV = (value: unknown) => {
-      const str = value === null || value === undefined ? "" : String(value);
-      return str.includes(",") || str.includes('"') ? `"${str.replace(/"/g, '""')}"` : str;
-    };
-
-    // Exporta só as colunas visíveis, na ordem canônica: o que se vê é o que se exporta.
-    const columns = ALL_COLUMNS.filter((c) => visibleColumns.has(c));
-    const headers = columns.join(",");
-    const rows = data.map((row) =>
-      columns
-        .map((c) => {
-          if (c === "Valor") return escapeCSV(toCurrency(row.Valor));
-          return escapeCSV(row[c]);
-        })
-        .join(",")
-    );
-
-    // Linha de total (Saldo em relatório misto, Total em tipo único)
-    const totalInfo = computeReportTotal(data);
-    const totalRow = columns
-      .map((col) => {
-        if (col === "Tipo") return escapeCSV(totalInfo.label.toUpperCase());
-        if (col === "Valor") return escapeCSV(toCurrency(totalInfo.value));
-        return "";
-      })
-      .join(",");
-
-    const csvContent = [headers, ...rows, totalRow].join("\n");
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const link = document.createElement("a");
-    const url = URL.createObjectURL(blob);
-
-    link.setAttribute("href", url);
-    link.setAttribute("download", `${filename}.csv`);
-    link.style.visibility = "hidden";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
-  const fetchFinancialData = async (tipo: "receitas" | "despesas") => {
-    const pageLimit = 1000;
-    let page = 0;
-    const all: FinancialRecord[] = [];
-
-    while (true) {
-      // Build separate typed query branches to avoid redundant .select() override
-      // and to apply is_fatura_payment only on despesas
-      const { data, error } = await (() => {
-        let q =
-          tipo === "receitas"
-            ? supabase
-                .from("receitas")
-                .select(
-                  "*, projetos (nome), categorias_financeiras (nome), contas (nome), clientes (nome)"
-                )
-                .is("deleted_at", null)
-            : supabase
-                .from("despesas")
-                .select(
-                  "*, projetos (nome), categorias_financeiras (nome), contas (nome), fornecedores (nome)"
-                )
-                .is("deleted_at", null)
-                .eq("is_fatura_payment", false);
-
-        if (tipo === "receitas") {
-          q = q.order("data_recebimento", { ascending: false }).order("data_vencimento", { ascending: false });
-        } else {
-          q = q.order("data_pagamento", { ascending: false }).order("data_vencimento", { ascending: false });
-        }
-
-        // Filtro de período por UMA única data de referência por registro:
-        // efetivado (recebido/pago) filtra pela data efetiva; pendente filtra
-        // pelo vencimento. Antes eram dois .or() (gte e lte) combinados por AND
-        // no topo, o que deixava entrar registro com uma data dentro e a outra
-        // fora, inflando os totais. Aqui cada intervalo (início E fim) recai
-        // sobre a mesma coluna dentro de um único .or().
-        const effCol = tipo === "receitas" ? "data_recebimento" : "data_pagamento";
-        const dueCol = "data_vencimento";
-        const start = dateFrom ? startOfDay(dateFrom).toISOString() : null;
-        const end = dateTo ? endOfDay(dateTo).toISOString() : null;
-
-        if (start || end) {
-          const effBounds = [
-            start && `${effCol}.gte.${start}`,
-            end && `${effCol}.lte.${end}`,
-          ].filter(Boolean) as string[];
-          const dueBounds = [
-            `${effCol}.is.null`,
-            start && `${dueCol}.gte.${start}`,
-            end && `${dueCol}.lte.${end}`,
-          ].filter(Boolean) as string[];
-          q = q.or(`and(${effBounds.join(",")}),and(${dueBounds.join(",")})`);
-        }
-
-        return q.range(page * pageLimit, page * pageLimit + pageLimit - 1);
-      })();
-
-      if (error) throw error;
-
-      const chunk = (data as FinancialRecord[]) || [];
-      all.push(...chunk);
-      if (chunk.length < pageLimit) break;
-      page += 1;
-    }
-
-    return all;
-  };
-
-  const generatePDF = async (data: ReportRow[], title: string, filename: string) => {
-    // jsPDF (+autotable) pesa >300kb: só baixa o chunk ao exportar de fato.
-    const [{ default: jsPDF }, { default: autoTable }] = await Promise.all([
-      import("jspdf"),
-      import("jspdf-autotable"),
-    ]);
-    const doc = new jsPDF({ orientation: "landscape" });
-
-    doc.setFontSize(16);
-    doc.text(title, 14, 16);
-
-    doc.setFontSize(10);
-    doc.setTextColor(90);
-    doc.text(
-      `Período: ${dateFrom ? format(dateFrom, "dd/MM/yyyy") : "Início"} a ${dateTo ? format(dateTo, "dd/MM/yyyy") : "Fim"}`,
-      14,
-      23
-    );
-    doc.text(`Gerado em: ${format(new Date(), "dd/MM/yyyy HH:mm")}`, 14, 29);
-
-    // Exporta só as colunas visíveis, na ordem canônica: o que se vê é o que se exporta.
-    const columns = ALL_COLUMNS.filter((c) => visibleColumns.has(c));
-    const tableData = data.map((row) =>
-      columns.map((c) => {
-        if (c === "Valor") return toCurrency(row.Valor);
-        return String(row?.[c] ?? "-");
-      })
-    );
-
-    // Linha de total (Saldo em relatório misto, Total em tipo único)
-    const totalInfo = computeReportTotal(data);
-    const totalRow = columns.map((col) => {
-      if (col === "Tipo") return totalInfo.label.toUpperCase();
-      if (col === "Valor") return toCurrency(totalInfo.value);
-      return "";
-    });
-    tableData.push(totalRow);
-
-    autoTable(doc, {
-      head: [columns],
-      body: tableData,
-      startY: 36,
-      theme: "grid",
-      headStyles: {
-        fillColor: [249, 115, 22],
-        textColor: 255,
-        fontSize: 8,
-        fontStyle: "bold",
-      },
-      styles: {
-        fontSize: 7,
-        cellPadding: 2,
-        overflow: "linebreak",
-      },
-      didParseCell: (hookData) => {
-        // Destaca a linha de total
-        if (hookData.section === "body" && hookData.row.index === tableData.length - 1) {
-          hookData.cell.styles.fontStyle = "bold";
-          hookData.cell.styles.fillColor = [245, 245, 245];
-        }
-      },
-    });
-
-    doc.save(`${filename}.pdf`);
-  };
-
   const getReportTypeLabel = (value: string) => {
     switch (value) {
       case "financeiro":
@@ -507,61 +226,15 @@ export default function Relatorios() {
     // Rentabilidade tem fluxo próprio (componente com react-query): não passa
     // pelo pipeline financeiro de receitas/despesas.
     if (isRentabilidade) {
-      setReportData([]);
-      setReportTitle("");
+      clearReport();
       setRentabilidadeMode(tipoRelatorio === "rentabilidade_cliente" ? "cliente" : "projeto");
       return;
     }
 
     setRentabilidadeMode(null);
-    setIsLoading(true);
     clearAllFilters();
 
-    try {
-      let finalData: ReportRow[] = [];
-
-      if (tipoRelatorio === "financeiro") {
-        const [receitas, despesas] = await Promise.all([
-          fetchFinancialData("receitas"),
-          fetchFinancialData("despesas"),
-        ]);
-
-        const receitasProc = processData(receitas || [], "receitas");
-        const despesasProc = processData(despesas || [], "despesas");
-        finalData = [...receitasProc, ...despesasProc];
-
-        finalData.sort((a, b) => {
-          const dateA = parseDDMMYYYY(a["Dt. Efetiva"]);
-          const dateB = parseDDMMYYYY(b["Dt. Efetiva"]);
-          return (dateB?.getTime() ?? 0) - (dateA?.getTime() ?? 0);
-        });
-      } else if (["receitas", "despesas"].includes(tipoRelatorio)) {
-        const data = await fetchFinancialData(tipoRelatorio as "receitas" | "despesas");
-        finalData = processData(data || [], tipoRelatorio as "receitas" | "despesas");
-      }
-
-      if (finalData.length === 0) {
-        toast.error("Sem dados", { description: "Não foram encontrados dados para os filtros selecionados." });
-        setIsLoading(false);
-        setReportData([]);
-        setReportTitle("");
-        return;
-      }
-
-      const title = getSuggestedTitle();
-      setReportTitle(title);
-      setReportData(finalData);
-
-      toast.success("Relatório gerado", {
-        description: `${finalData.length} registros carregados. Exporte em CSV ou PDF.`,
-      });
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : String(err);
-      console.error("Erro ao gerar relatório:", err);
-      toast.error("Erro ao gerar", { description: message });
-    } finally {
-      setIsLoading(false);
-    }
+    await generateReport({ tipoRelatorio, dateFrom, dateTo, title: getSuggestedTitle() });
   };
 
   const applyPreset = (preset: "7d" | "this_month" | "last_month" | "30d" | "all" | "custom") => {
@@ -605,11 +278,13 @@ export default function Relatorios() {
       setIsLoading(true);
       const filename = `relatorio-${tipoRelatorio || "geral"}-${format(new Date(), "yyyy-MM-dd")}`;
       const titleForPdf = reportTitle || getReportTypeLabel(tipoRelatorio) || "Relatório";
+      // Exporta só as colunas visíveis, na ordem canônica: o que se vê é o que se exporta.
+      const columns = ALL_COLUMNS.filter((c) => visibleColumns.has(c));
 
       if (formatType === "csv") {
-        generateCSV(filteredData, filename);
+        generateCSV(filteredData, columns, filename);
       } else {
-        await generatePDF(filteredData, titleForPdf, filename);
+        await generatePDF(filteredData, columns, { title: titleForPdf, filename, dateFrom, dateTo });
       }
 
       toast.success("Exportação iniciada", { description: "O download deve iniciar automaticamente." });
