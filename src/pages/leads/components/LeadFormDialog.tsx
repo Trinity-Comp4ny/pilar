@@ -9,6 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Loader2 } from "lucide-react";
 import { formatPhone, formatCNPJ, validateCNPJ, validateEmail, onlyDigits } from "@/lib/maskUtils";
 import { formatCurrencyInput } from "@/lib/currencyUtils";
+import { ValidatedField } from "@/components/forms/ValidatedField";
+import { emailFormatValidator, isPersonalEmail } from "@/lib/emailValidator";
 
 export type LeadFormData = {
   nome: string;
@@ -54,7 +56,6 @@ type Props = {
 export function LeadFormDialog({ open, onOpenChange, mode, formData, onFormChange, onSubmit, isPending, members }: Props) {
   const isEdit = mode === "edit";
   const prefix = isEdit ? "edit-" : "";
-  const emailErrorId = `${prefix}email-error`;
   const cnpjErrorId = `${prefix}cnpj-error`;
 
   const [emailError, setEmailError] = useState("");
@@ -148,22 +149,22 @@ export function LeadFormDialog({ open, onOpenChange, mode, formData, onFormChang
                   <p id={cnpjErrorId} role="alert" className="text-xs text-red-600">{cnpjError}</p>
                 )}
               </div>
-              <div className="space-y-1.5">
-                <Label htmlFor={`${prefix}email`} className="text-xs">Email</Label>
-                <Input
-                  id={`${prefix}email`}
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => set("email", e.target.value)}
-                  placeholder="email@exemplo.com"
-                  aria-invalid={!!emailError}
-                  aria-describedby={emailError ? emailErrorId : undefined}
-                  className={emailError ? "border-red-500 focus-visible:ring-red-500" : ""}
-                />
-                {emailError && (
-                  <p id={emailErrorId} role="alert" className="text-xs text-red-600">{emailError}</p>
-                )}
-              </div>
+              <ValidatedField
+                label="Email"
+                name={`${prefix}email`}
+                type="email"
+                value={formData.email}
+                onChange={(v) => set("email", v)}
+                placeholder="email@exemplo.com"
+                autoComplete="email"
+                onValidate={emailFormatValidator}
+                error={emailError}
+                hint={
+                  isPersonalEmail(formData.email)
+                    ? "E-mail pessoal (Gmail, Hotmail...). Se possível, use o e-mail corporativo do contato."
+                    : undefined
+                }
+              />
               <div className="space-y-1.5">
                 <Label htmlFor={`${prefix}contato`} className="text-xs">Telefone</Label>
                 <Input
