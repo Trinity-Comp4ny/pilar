@@ -1,0 +1,1058 @@
+// ai-chat — Copiloto conversacional do Pilar (MVP consultivo, read-only).
+//
+// Fluxo: mensagem do usuário → ORQUESTRADOR classifica a intenção → aciona o
+// AGENTE DE DOMÍNIO (read-only, via RLS/JWT do usuário) que coleta os dados →
+// gera a resposta em linguagem natural. NADA é gravado no domínio — só o histórico
+// do chat. Escrita de dados virá numa próxima fase, com card de confirmação + gate.
+//
+// Segurança: todas as leituras de domínio usam o client autenticado (RLS ativa),
+// nunca service_role. Isolamento por empresa é garantido pelas policies, não por
+// filtro manual. (Corrige por construção o padrão service_role dos ai-* legados.)
+
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { withSentry } from "../_shared/sentry.ts";
+import { getCorsHeaders, jsonResponse, optionsResponse } from "../_shared/cors.ts";
+import {
+  createAuthClient,
+  createAdminClient,
+  checkRateLimit,
+  callGeminiStructured,
+  recordAiUsage,
+  GEMINI_MODEL,
+} from "../_shared/ai-client.ts";
+import { z } from "../_shared/schemas.ts";
+import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const FEATURE_KEY = "ai_chat";
+
+// ---------------------------------------------------------------------------
+// Schemas
+// ---------------------------------------------------------------------------
+const RequestSchema = z.object({
+  message: z.string().trim().min(1, "mensagem vazia").max(2000),
+  sessionId: z.string().uuid().optional(),
+});
+
+const AGENTES = ["financeiro", "projetos", "comercial", "geral"] as const;
+type Agente = (typeof AGENTES)[number];
+
+const ENTIDADES_CRIAVEIS = [
+  "lead", "projeto", "receita", "despesa", "cartao", "folha",
+  "cliente", "fornecedor", "categoria", "conta", "centro_custo", "pessoa", "proposta", "marco", "disciplina", "aditivo",
+] as const;
+
+const OPERACOES = [
+  "converter_lead", "converter_proposta", "marcar_recebido", "marcar_pago", "quitar_parcela", "pagar_fatura", "convidar_portal",
+] as const;
+
+const IntentSchema = z.object({
+  agente: z.enum(AGENTES),
+  modo: z.enum(["consulta", "acao", "operacao"]),
+  entidade: z.enum(ENTIDADES_CRIAVEIS).nullish(),
+  operacao: z.enum(OPERACOES).nullish(),
+  motivo: z.string().max(300),
+});
+
+const RespostaSchema = z.object({
+  resposta: z.string().min(1),
+});
+
+// Extração de lead (modo ação). O agente devolve os campos que conseguiu inferir;
+// se não houver nome, sinaliza para perguntarmos ao usuário em vez de criar rascunho.
+// nullish() em todos os campos: o Gemini devolve `null` (não `undefined`) para o que não preencheu.
+const LeadExtractionSchema = z.object({
+  tem_nome: z.boolean(),
+  pergunta: z.string().max(300).nullish(),
+  lead: z.object({
+    nome: z.string().max(200).nullish(),
+    sobrenome: z.string().max(200).nullish(),
+    email: z.string().max(200).nullish(),
+    contato: z.string().max(100).nullish(),
+    origem: z.string().max(200).nullish(),
+    valor_estimado: z.number().nonnegative().nullish(),
+    empresa_lead: z.string().max(200).nullish(),
+    cnpj: z.string().max(40).nullish(),
+    notas: z.string().max(1000).nullish(),
+  }),
+});
+
+// Extração de projeto (modo ação). cliente_nome é uma DICA textual — o card resolve para cliente_id.
+const ProjetoExtractionSchema = z.object({
+  tem_nome: z.boolean(),
+  pergunta: z.string().max(300).nullish(),
+  projeto: z.object({
+    nome: z.string().max(200).nullish(),
+    codigo_projeto: z.string().max(60).nullish(),
+    cliente_nome: z.string().max(200).nullish(),
+    localizacao: z.string().max(300).nullish(),
+    valor_contrato: z.number().nonnegative().nullish(),
+    prioridade: z.enum(["Alta", "Media", "Baixa"]).nullish(),
+    area_m2: z.number().nonnegative().nullish(),
+    data_inicio: z.string().max(20).nullish(),
+    data_previsao: z.string().max(20).nullish(),
+    data_final: z.string().max(20).nullish(),
+    parcelas: z.string().max(10).nullish(),
+    observacao: z.string().max(1000).nullish(),
+  }),
+});
+
+// Financeiro (fase 1 — à vista). *_nome são dicas textuais; o card resolve para *_id.
+const ReceitaExtractionSchema = z.object({
+  tem_nome: z.boolean(),
+  pergunta: z.string().max(300).nullish(),
+  receita: z.object({
+    descricao: z.string().max(300).nullish(),
+    valor: z.number().nonnegative().nullish(),
+    status: z.enum(["Pendente", "Recebido"]).nullish(),
+    data_vencimento: z.string().max(20).nullish(),
+    data_recebimento: z.string().max(20).nullish(),
+    forma_pagamento: z.string().max(60).nullish(),
+    categoria_nome: z.string().max(120).nullish(),
+    projeto_nome: z.string().max(200).nullish(),
+    cliente_nome: z.string().max(200).nullish(),
+    observacao: z.string().max(1000).nullish(),
+    parcelas: z.number().int().min(1).max(360).nullish(),
+  }),
+});
+
+const DespesaExtractionSchema = z.object({
+  tem_nome: z.boolean(),
+  pergunta: z.string().max(300).nullish(),
+  despesa: z.object({
+    descricao: z.string().max(300).nullish(),
+    valor: z.number().nonnegative().nullish(),
+    status: z.enum(["Pendente", "Pago"]).nullish(),
+    data_vencimento: z.string().max(20).nullish(),
+    data_pagamento: z.string().max(20).nullish(),
+    forma_pagamento: z.string().max(60).nullish(),
+    categoria_nome: z.string().max(120).nullish(),
+    projeto_nome: z.string().max(200).nullish(),
+    fornecedor_nome: z.string().max(200).nullish(),
+    cartao_nome: z.string().max(120).nullish(),
+    data_competencia: z.string().max(20).nullish(),
+    observacao: z.string().max(1000).nullish(),
+    parcelas: z.number().int().min(1).max(360).nullish(),
+  }),
+});
+
+const CartaoExtractionSchema = z.object({
+  tem_nome: z.boolean(),
+  pergunta: z.string().max(300).nullish(),
+  cartao: z.object({
+    nome: z.string().max(120).nullish(),
+    limite: z.number().nonnegative().nullish(),
+    dia_fechamento: z.number().int().nullish(),
+    dia_vencimento: z.number().int().nullish(),
+    tipo: z.enum(["credito", "debito"]).nullish(),
+  }),
+});
+
+const FolhaExtractionSchema = z.object({
+  tem_nome: z.boolean(),
+  pergunta: z.string().max(300).nullish(),
+  folha: z.object({
+    mes: z.number().int().min(1).max(12).nullish(),
+    ano: z.number().int().min(2000).max(2100).nullish(),
+  }),
+});
+
+// ── Onda 1: cadastros atômicos ──
+const S = () => z.string().max(300).nullish();
+const N = () => z.number().nonnegative().nullish();
+
+const ClienteExtractionSchema = z.object({
+  tem_nome: z.boolean(),
+  pergunta: z.string().max(300).nullish(),
+  cliente: z.object({
+    nome: S(), sobrenome: S(), cpf_cnpj: S(), email: S(), contato: S(),
+    tipo_nf: z.enum(["servico", "produto", "misto"]).nullish(), origem: S(), endereco: S(),
+  }),
+});
+const FornecedorExtractionSchema = z.object({
+  tem_nome: z.boolean(),
+  pergunta: z.string().max(300).nullish(),
+  fornecedor: z.object({ nome: S(), cnpj: S(), contato: S(), email: S(), telefone: S() }),
+});
+const CategoriaExtractionSchema = z.object({
+  tem_nome: z.boolean(),
+  pergunta: z.string().max(300).nullish(),
+  categoria: z.object({ nome: S(), tipo: z.enum(["Receita", "Despesa"]).nullish() }),
+});
+const ContaExtractionSchema = z.object({
+  tem_nome: z.boolean(),
+  pergunta: z.string().max(300).nullish(),
+  conta: z.object({ nome: S(), banco: S(), saldo_inicial: N(), chave_pix: S(), tipo_chave_pix: S() }),
+});
+const CentroCustoExtractionSchema = z.object({
+  tem_nome: z.boolean(),
+  pergunta: z.string().max(300).nullish(),
+  centro_custo: z.object({ nome: S(), codigo: S(), descricao: S() }),
+});
+const PessoaExtractionSchema = z.object({
+  tem_nome: z.boolean(),
+  pergunta: z.string().max(300).nullish(),
+  pessoa: z.object({
+    primeiro_nome: S(), sobrenome: S(), email: S(), cargo: S(), cpf: S(), telefone: S(),
+    tipo_contrato: S(), salario_fixo: N(), valor_m2: N(), cnpj: S(), razao_social: S(), pis_nit: S(),
+  }),
+});
+const PropostaExtractionSchema = z.object({
+  tem_nome: z.boolean(),
+  pergunta: z.string().max(300).nullish(),
+  proposta: z.object({
+    titulo: S(), cliente_nome: S(), lead_nome: S(), valor_proposto: N(), area_m2: N(),
+    localizacao: S(), prazo_estimado_dias: z.number().int().nullish(), validade: S(), observacao: S(),
+  }),
+});
+const MarcoExtractionSchema = z.object({
+  tem_nome: z.boolean(),
+  pergunta: z.string().max(300).nullish(),
+  marco: z.object({
+    nome: S(), valor: N(), projeto_nome: S(), disciplina: S(), percentual: N(), data_prevista: S(),
+  }),
+});
+const DisciplinaExtractionSchema = z.object({
+  tem_nome: z.boolean(),
+  pergunta: z.string().max(300).nullish(),
+  disciplina: z.object({
+    nome: S(), projeto_nome: S(), prioridade: S(), horas_estimadas: N(), custo_hora: N(),
+    data_inicio: S(), data_fim: S(),
+  }),
+});
+
+const AditivoExtractionSchema = z.object({
+  tem_nome: z.boolean(),
+  pergunta: z.string().max(300).nullish(),
+  aditivo: z.object({
+    projeto_nome: S(),
+    descricao: S(),
+    justificativa: S(),
+    itens: z.array(z.object({ descricao: S(), disciplina: S(), horas: N(), custo: N() })).nullish(),
+  }),
+});
+
+const AGENTE_LABEL: Record<Agente, string> = {
+  financeiro: "Agente Financeiro",
+  projetos: "Agente de Projetos",
+  comercial: "Agente Comercial",
+  geral: "Agente",
+};
+
+// ---------------------------------------------------------------------------
+// Orquestrador — classifica a intenção
+// ---------------------------------------------------------------------------
+const ORQUESTRADOR_PROMPT = `Você é o ORQUESTRADOR do Pilar, um SaaS de gestão para escritórios de engenharia.
+Sua tarefa: classificar a mensagem do usuário no domínio (agente) e no modo. Responda APENAS em JSON.
+
+Domínios:
+- "financeiro": receitas, despesas, lucro, margem, caixa, faturas, contas a pagar/receber, quanto ganhou/gastou.
+- "projetos": projetos, status, prazos, disciplinas, andamento, quantos projetos.
+- "comercial": propostas, leads, vendas, novos clientes, pipeline.
+- "geral": saudação, ajuda, ou algo fora dos domínios acima.
+
+Modo:
+- "consulta": o usuário quer SABER/ver algo (pergunta, relatório, número). É o padrão.
+- "acao": o usuário quer CRIAR/cadastrar/registrar/lançar algo NOVO.
+- "operacao": o usuário quer AGIR sobre algo QUE JÁ EXISTE (converter, marcar, quitar, pagar, convidar).
+
+Se modo="operacao", defina "operacao":
+- "converter_lead": transformar um lead em cliente. "converter_proposta": transformar proposta em projeto.
+- "marcar_recebido": marcar uma receita como recebida. "marcar_pago": marcar uma despesa como paga.
+- "quitar_parcela": quitar parcelas antecipadamente. "pagar_fatura": pagar a fatura de um cartão.
+- "convidar_portal": convidar um cliente para o portal.
+
+Se modo="acao", defina também "entidade" (o que criar):
+- "lead": contato/oportunidade comercial. "projeto": projeto de engenharia.
+- "receita": entrada de dinheiro (recebi, honorário a receber, faturamento).
+- "despesa": saída de dinheiro (gastei, paguei, compra, conta a pagar).
+- "cartao": cadastrar um cartão de crédito (metadados: nome, limite, dias).
+- "folha": fechar/gerar a folha de pagamento de um mês (ex.: "fechar folha de julho", "gerar folha de 08/2026").
+- "cliente": cadastrar um cliente. "fornecedor": cadastrar um fornecedor. "pessoa": cadastrar um membro da equipe.
+- "categoria": criar categoria financeira. "conta": cadastrar conta bancária. "centro_custo": criar centro de custo.
+- "proposta": criar uma proposta (comercial). "marco": criar um marco de faturamento de um projeto.
+- "disciplina": adicionar uma disciplina a um projeto existente.
+- "aditivo": criar um aditivo de escopo (itens extras) para um projeto.
+Se modo="consulta", "entidade" e "operacao" ficam null. Se modo="acao", defina "entidade". Se modo="operacao", defina "operacao".
+
+IMPORTANTE — use o CONTEXTO da conversa: se o assistente pediu um dado para completar uma ação em andamento
+(ex.: perguntou o nome do lead) e o usuário está respondendo, MANTENHA o mesmo agente e modo "acao" dessa ação —
+não reclassifique a resposta isolada como consulta. Classifique a intenção REAL do usuário na conversa, não só a
+última frase literal.
+
+Formato: {"agente": "<domínio>", "modo": "<consulta|acao|operacao>", "entidade": "<...|aditivo|null>", "operacao": "<converter_lead|converter_proposta|marcar_recebido|marcar_pago|quitar_parcela|pagar_fatura|convidar_portal|null>", "motivo": "<breve motivo>"}`;
+
+const EXTRAIR_LEAD_PROMPT = `Você é o Agente Comercial do Pilar. O usuário quer CADASTRAR UM LEAD.
+Um lead é um contato/oportunidade comercial (pessoa ou empresa).
+
+Considere TODA a conversa (o usuário pode ter dado os campos em mensagens diferentes — ex.: disse "quero criar um lead",
+você perguntou o nome, e ele respondeu depois). COMBINE as informações de todos os turnos do usuário.
+
+Regras:
+- "nome": primeiro nome/nome da PESSOA de contato (OBRIGATÓRIO). "empresa_lead": nome da empresa/cliente potencial (opcional).
+- "contato": telefone/WhatsApp. "email": e-mail. "origem": como chegou (ex.: indicação, site, evento, LinkedIn).
+- "valor_estimado": número em reais, se citado (sem R$, sem pontuação de milhar). "cnpj": só dígitos ou formatado.
+- "notas": qualquer contexto extra relevante.
+- Interprete rótulos como "Nome: Junior", "Empresa Y", "tel 11 9...". Só preencha o que aparecer na conversa. NÃO invente dados.
+- O único campo obrigatório é o "nome" da PESSOA de contato. Nome de empresa NÃO substitui o nome da pessoa.
+- Se, considerando toda a conversa, houver o nome da PESSOA → "tem_nome": true.
+- Se NÃO houver o nome da pessoa (mesmo que já tenha a empresa ou outros dados) → "tem_nome": false e escreva em "pergunta"
+  uma pergunta curta e cordial pedindo o NOME DO CONTATO, citando a empresa se ela já foi informada
+  (ex.: "Qual o nome do contato na Empresa Y?"). Ainda assim, preencha "empresa_lead" e os demais campos já conhecidos.
+
+Responda APENAS em JSON no formato:
+{"tem_nome": <bool>, "pergunta": "<texto se tem_nome=false>", "lead": {"nome": "...", "empresa_lead": "...", "contato": "...", "email": "...", "origem": "...", "valor_estimado": <número>, "cnpj": "...", "notas": "..."}}`;
+
+const EXTRAIR_PROJETO_PROMPT = `Você é o Agente de Projetos do Pilar. O usuário quer CRIAR UM PROJETO (de engenharia).
+
+Considere TODA a conversa (o usuário pode dar os campos em mensagens diferentes) e COMBINE as informações.
+
+Regras:
+- "nome": nome do projeto (OBRIGATÓRIO). "cliente_nome": nome do cliente/empresa para quem é o projeto (dica textual).
+- "codigo_projeto": código, só se o usuário informar (senão será gerado automaticamente). "localizacao": endereço/cidade da obra.
+- "valor_contrato": valor do contrato em reais (número, sem R$/pontuação). "prioridade": "Alta", "Media" ou "Baixa" só se citado.
+- "area_m2": área em m² (número). "parcelas": nº de parcelas (texto). "observacao": contexto extra.
+- "data_inicio"/"data_previsao"/"data_final": datas no formato YYYY-MM-DD, só se claramente informadas.
+- Só preencha o que aparecer na conversa. NÃO invente dados (nem datas, nem valores).
+- O único campo obrigatório é o "nome" do projeto.
+- Se NÃO houver o nome do projeto → "tem_nome": false e escreva em "pergunta" uma pergunta curta pedindo o nome do projeto
+  (cite o cliente se já souber). Caso contrário, "tem_nome": true. Ainda assim, preencha os demais campos já conhecidos.
+
+Responda APENAS em JSON no formato:
+{"tem_nome": <bool>, "pergunta": "<texto se tem_nome=false>", "projeto": {"nome": "...", "codigo_projeto": "...", "cliente_nome": "...", "localizacao": "...", "valor_contrato": <número>, "prioridade": "Media", "area_m2": <número>, "data_inicio": "YYYY-MM-DD", "data_previsao": "YYYY-MM-DD", "data_final": "YYYY-MM-DD", "parcelas": "...", "observacao": "..."}}`;
+
+const REGRA_PARCELAS =
+  'PARCELAMENTO: se o usuário pedir parcelado (ex.: "em 3x", "3 parcelas", "parcelar em 6"), defina "parcelas" com o número ' +
+  '(inteiro). O "valor" continua sendo o VALOR TOTAL (não o da parcela). Para parcelado, "data_vencimento" é a data da 1ª ' +
+  'parcela — capture se citada; se não, ainda assim retorne o rascunho (o usuário informa a data no card). À vista → "parcelas": 1 ou omita.';
+
+const EXTRAIR_RECEITA_PROMPT = `Você é o Agente Financeiro do Pilar. O usuário quer LANÇAR UMA RECEITA (entrada de dinheiro).
+Considere TODA a conversa e combine as informações. Valores em reais (número, sem R$/pontuação de milhar).
+
+Campos: "descricao" (o que é a receita), "valor" (>0, TOTAL), "status" ("Recebido" se já entrou/"recebi"; senão "Pendente"),
+"data_vencimento"/"data_recebimento" (YYYY-MM-DD, se citadas), "forma_pagamento", "categoria_nome" (dica),
+"projeto_nome" (dica), "cliente_nome" (dica de quem paga), "observacao", "parcelas" (inteiro).
+Obrigatórios: "descricao" E "valor". ${REGRA_PARCELAS}
+Se faltar descrição OU valor, "tem_nome": false e pergunte o que falta. Não invente dados.
+
+Responda APENAS em JSON: {"tem_nome": <bool>, "pergunta": "<...>", "receita": {"descricao": "...", "valor": <número>, "status": "Pendente", "data_vencimento": "YYYY-MM-DD", "data_recebimento": "YYYY-MM-DD", "forma_pagamento": "...", "categoria_nome": "...", "projeto_nome": "...", "cliente_nome": "...", "observacao": "...", "parcelas": <int>}}`;
+
+const EXTRAIR_DESPESA_PROMPT = `Você é o Agente Financeiro do Pilar. O usuário quer LANÇAR UMA DESPESA (saída de dinheiro).
+Considere TODA a conversa e combine as informações. Valores em reais (número, sem R$/pontuação de milhar).
+
+Campos: "descricao" (o que foi a despesa), "valor" (>0, TOTAL), "status" ("Pago" se já pagou/"paguei/gastei"; senão "Pendente"),
+"data_vencimento"/"data_pagamento" (YYYY-MM-DD, se citadas), "forma_pagamento", "categoria_nome" (dica),
+"projeto_nome" (dica), "fornecedor_nome" (dica), "observacao", "parcelas" (inteiro).
+CARTÃO: se a despesa foi no cartão (ex.: "no cartão Nubank"), defina "cartao_nome" com o apelido citado e "data_competencia"
+(YYYY-MM-DD) = data da COMPRA (decide em qual fatura cai). Não misture cartão com conta.
+Obrigatórios: "descricao" E "valor". ${REGRA_PARCELAS}
+Se faltar descrição OU valor, "tem_nome": false e pergunte o que falta. Não invente dados.
+
+Responda APENAS em JSON: {"tem_nome": <bool>, "pergunta": "<...>", "despesa": {"descricao": "...", "valor": <número>, "status": "Pendente", "data_vencimento": "YYYY-MM-DD", "data_pagamento": "YYYY-MM-DD", "forma_pagamento": "...", "categoria_nome": "...", "projeto_nome": "...", "fornecedor_nome": "...", "cartao_nome": "...", "data_competencia": "YYYY-MM-DD", "observacao": "...", "parcelas": <int>}}`;
+
+const EXTRAIR_CARTAO_PROMPT = `Você é o Agente Financeiro do Pilar. O usuário quer CADASTRAR UM CARTÃO de crédito/débito.
+Campos: "nome" (apelido do cartão, obrigatório), "limite" (número em reais), "dia_fechamento" (1-31), "dia_vencimento" (1-31),
+"tipo" ("credito" ou "debito"; default credito). Só preencha o que aparecer. Não invente.
+Se não houver o nome do cartão, "tem_nome": false e pergunte o nome.
+
+Responda APENAS em JSON: {"tem_nome": <bool>, "pergunta": "<...>", "cartao": {"nome": "...", "limite": <número>, "dia_fechamento": <int>, "dia_vencimento": <int>, "tipo": "credito"}}`;
+
+const EXTRAIR_FOLHA_PROMPT = `Você é o Agente Financeiro do Pilar. O usuário quer FECHAR/GERAR A FOLHA DE PAGAMENTO de um mês.
+Extraia "mes" (1-12) e "ano" (4 dígitos). Use a data de hoje (informada no contexto) para resolver:
+- mês por nome ("julho" → 7); se o ano não for dito, use o ANO CORRENTE do contexto.
+- "mês passado"/"este mês" relativos à data de hoje.
+Se não der para identificar o mês, "tem_nome": false e pergunte de qual mês/ano é a folha.
+
+Responda APENAS em JSON: {"tem_nome": <bool>, "pergunta": "<...>", "folha": {"mes": <int 1-12>, "ano": <int>}}`;
+
+// Builder compacto de prompt de cadastro (Onda 1).
+function promptCadastro(oQue: string, entityKey: string, campos: string, obrig: string): string {
+  return `Você é o Agente do Pilar. O usuário quer ${oQue}. Considere TODA a conversa e a data de hoje.
+Extraia SÓ o que aparecer (não invente). Campos: ${campos}.
+Obrigatório(s): ${obrig}. Se faltar obrigatório, "tem_nome": false e pergunte o que falta; senão "tem_nome": true.
+Responda APENAS em JSON: {"tem_nome": <bool>, "pergunta": "<texto se faltar>", "${entityKey}": { ...campos preenchidos... }}`;
+}
+
+const EXTRAIR_CLIENTE_PROMPT = promptCadastro(
+  "CADASTRAR UM CLIENTE",
+  "cliente",
+  'nome (pessoa/empresa), sobrenome, cpf_cnpj, email, contato (telefone), tipo_nf ("servico"|"produto"|"misto"), origem, endereco',
+  "nome"
+);
+const EXTRAIR_FORNECEDOR_PROMPT = promptCadastro(
+  "CADASTRAR UM FORNECEDOR",
+  "fornecedor",
+  "nome, cnpj, contato (telefone), email, telefone",
+  "nome"
+);
+const EXTRAIR_CATEGORIA_PROMPT = promptCadastro(
+  "CRIAR UMA CATEGORIA FINANCEIRA",
+  "categoria",
+  'nome, tipo ("Receita" ou "Despesa" — infira pelo contexto)',
+  "nome e tipo"
+);
+const EXTRAIR_CONTA_PROMPT = promptCadastro(
+  "CADASTRAR UMA CONTA BANCÁRIA",
+  "conta",
+  "nome (apelido da conta), banco, saldo_inicial (número), chave_pix, tipo_chave_pix",
+  "nome e banco"
+);
+const EXTRAIR_CENTRO_CUSTO_PROMPT = promptCadastro(
+  "CRIAR UM CENTRO DE CUSTO",
+  "centro_custo",
+  "nome, codigo, descricao",
+  "nome"
+);
+const EXTRAIR_PESSOA_PROMPT = promptCadastro(
+  "CADASTRAR UMA PESSOA da equipe",
+  "pessoa",
+  'primeiro_nome, sobrenome, email, cargo, cpf, telefone, tipo_contrato ("PJ"|"CLT"|"estagio"...), salario_fixo (número), valor_m2 (número), cnpj, razao_social, pis_nit',
+  "primeiro_nome, sobrenome e email"
+);
+const EXTRAIR_PROPOSTA_PROMPT = promptCadastro(
+  "CRIAR UMA PROPOSTA (rascunho)",
+  "proposta",
+  "titulo, cliente_nome (dica), lead_nome (dica), valor_proposto (número), area_m2 (número), localizacao, prazo_estimado_dias (int), validade (YYYY-MM-DD), observacao",
+  "titulo"
+);
+const EXTRAIR_MARCO_PROMPT = promptCadastro(
+  "CRIAR UM MARCO DE FATURAMENTO de um projeto",
+  "marco",
+  "nome, valor (número), projeto_nome (dica de qual projeto), disciplina, percentual (número), data_prevista (YYYY-MM-DD)",
+  "nome e valor"
+);
+const EXTRAIR_DISCIPLINA_PROMPT = promptCadastro(
+  "ADICIONAR UMA DISCIPLINA a um projeto existente",
+  "disciplina",
+  "nome (da disciplina), projeto_nome (dica de qual projeto), prioridade, horas_estimadas (número), custo_hora (número), data_inicio (YYYY-MM-DD), data_fim (YYYY-MM-DD)",
+  "nome"
+);
+
+const EXTRAIR_ADITIVO_PROMPT = `Você é o Agente de Projetos do Pilar. O usuário quer CRIAR UM ADITIVO DE ESCOPO (trabalho extra) de um projeto.
+Considere TODA a conversa. Extraia: "projeto_nome" (dica de qual projeto), "descricao" (resumo do aditivo), "justificativa",
+e "itens" = lista de trabalhos extras, cada um {descricao, disciplina, horas (número), custo (número em reais)}.
+Obrigatório: "descricao". Se não houver descrição, "tem_nome": false e peça um resumo do aditivo. Não invente valores.
+Responda APENAS em JSON: {"tem_nome": <bool>, "pergunta": "<...>", "aditivo": {"projeto_nome": "...", "descricao": "...", "justificativa": "...", "itens": [{"descricao": "...", "disciplina": "...", "horas": <n>, "custo": <n>}]}}`;
+
+// Config estática por entidade criável. Runtime (db/admin/req/...) é injetado no dispatch.
+type EntidadeCfg = {
+  agente: string;
+  label: string;
+  entidade: string;
+  agentType: string;
+  entityKey: string;
+  prompt: string;
+  schema: z.ZodType<ExtracaoBase>;
+  requiredKeys: string[];
+  instrucao: string;
+  perguntaFallback: string;
+  revisarMsg: string;
+};
+
+const ENTIDADE_CFG: Record<string, EntidadeCfg> = {
+  lead: {
+    agente: "comercial",
+    label: AGENTE_LABEL.comercial,
+    entidade: "lead",
+    agentType: "criar_lead",
+    entityKey: "lead",
+    prompt: EXTRAIR_LEAD_PROMPT,
+    schema: LeadExtractionSchema,
+    requiredKeys: ["nome"],
+    instrucao: "Extraia os campos do lead combinando TODAS as mensagens do usuário na conversa.",
+    perguntaFallback: "Qual o nome do contato do lead?",
+    revisarMsg: "Revise os dados do lead e confirme para criar.",
+  },
+  projeto: {
+    agente: "projetos",
+    label: AGENTE_LABEL.projetos,
+    entidade: "projeto",
+    agentType: "criar_projeto",
+    entityKey: "projeto",
+    prompt: EXTRAIR_PROJETO_PROMPT,
+    schema: ProjetoExtractionSchema,
+    requiredKeys: ["nome"],
+    instrucao: "Extraia os campos do projeto combinando TODAS as mensagens do usuário na conversa.",
+    perguntaFallback: "Qual o nome do projeto?",
+    revisarMsg: "Revise os dados do projeto e confirme para criar.",
+  },
+  receita: {
+    agente: "financeiro",
+    label: AGENTE_LABEL.financeiro,
+    entidade: "receita",
+    agentType: "criar_receita",
+    entityKey: "receita",
+    prompt: EXTRAIR_RECEITA_PROMPT,
+    schema: ReceitaExtractionSchema,
+    requiredKeys: ["descricao", "valor"],
+    instrucao: "Extraia os campos da receita combinando TODAS as mensagens do usuário na conversa.",
+    perguntaFallback: "Qual a descrição e o valor da receita?",
+    revisarMsg: "Revise a receita e confirme para lançar.",
+  },
+  despesa: {
+    agente: "financeiro",
+    label: AGENTE_LABEL.financeiro,
+    entidade: "despesa",
+    agentType: "criar_despesa",
+    entityKey: "despesa",
+    prompt: EXTRAIR_DESPESA_PROMPT,
+    schema: DespesaExtractionSchema,
+    requiredKeys: ["descricao", "valor"],
+    instrucao: "Extraia os campos da despesa combinando TODAS as mensagens do usuário na conversa.",
+    perguntaFallback: "Qual a descrição e o valor da despesa?",
+    revisarMsg: "Revise a despesa e confirme para lançar.",
+  },
+  cartao: {
+    agente: "financeiro",
+    label: AGENTE_LABEL.financeiro,
+    entidade: "cartao",
+    agentType: "criar_cartao",
+    entityKey: "cartao",
+    prompt: EXTRAIR_CARTAO_PROMPT,
+    schema: CartaoExtractionSchema,
+    requiredKeys: ["nome"],
+    instrucao: "Extraia os dados do cartão da conversa.",
+    perguntaFallback: "Qual o nome (apelido) do cartão?",
+    revisarMsg: "Revise os dados do cartão e confirme para cadastrar.",
+  },
+  folha: {
+    agente: "financeiro",
+    label: AGENTE_LABEL.financeiro,
+    entidade: "folha",
+    agentType: "fechar_folha",
+    entityKey: "folha",
+    prompt: EXTRAIR_FOLHA_PROMPT,
+    schema: FolhaExtractionSchema,
+    requiredKeys: ["mes", "ano"],
+    instrucao: "Identifique o mês e o ano da folha a partir da conversa e da data de hoje.",
+    perguntaFallback: "De qual mês e ano é a folha?",
+    revisarMsg: "Revise o preview da folha e confirme para fechar.",
+  },
+  cliente: {
+    agente: "comercial", label: AGENTE_LABEL.comercial, entidade: "cliente", agentType: "criar_cliente",
+    entityKey: "cliente", prompt: EXTRAIR_CLIENTE_PROMPT, schema: ClienteExtractionSchema, requiredKeys: ["nome"],
+    instrucao: "Extraia os dados do cliente da conversa.", perguntaFallback: "Qual o nome do cliente?",
+    revisarMsg: "Revise os dados do cliente e confirme para criar.",
+  },
+  fornecedor: {
+    agente: "financeiro", label: AGENTE_LABEL.financeiro, entidade: "fornecedor", agentType: "criar_fornecedor",
+    entityKey: "fornecedor", prompt: EXTRAIR_FORNECEDOR_PROMPT, schema: FornecedorExtractionSchema, requiredKeys: ["nome"],
+    instrucao: "Extraia os dados do fornecedor.", perguntaFallback: "Qual o nome do fornecedor?",
+    revisarMsg: "Revise os dados do fornecedor e confirme para criar.",
+  },
+  categoria: {
+    agente: "financeiro", label: AGENTE_LABEL.financeiro, entidade: "categoria", agentType: "criar_categoria",
+    entityKey: "categoria", prompt: EXTRAIR_CATEGORIA_PROMPT, schema: CategoriaExtractionSchema, requiredKeys: ["nome", "tipo"],
+    instrucao: "Extraia o nome e o tipo (Receita/Despesa) da categoria.", perguntaFallback: "Qual o nome e o tipo (receita ou despesa) da categoria?",
+    revisarMsg: "Revise a categoria e confirme para criar.",
+  },
+  conta: {
+    agente: "financeiro", label: AGENTE_LABEL.financeiro, entidade: "conta", agentType: "criar_conta",
+    entityKey: "conta", prompt: EXTRAIR_CONTA_PROMPT, schema: ContaExtractionSchema, requiredKeys: ["nome", "banco"],
+    instrucao: "Extraia os dados da conta bancária.", perguntaFallback: "Qual o nome e o banco da conta?",
+    revisarMsg: "Revise a conta e confirme para cadastrar.",
+  },
+  centro_custo: {
+    agente: "financeiro", label: AGENTE_LABEL.financeiro, entidade: "centro_custo", agentType: "criar_centro_custo",
+    entityKey: "centro_custo", prompt: EXTRAIR_CENTRO_CUSTO_PROMPT, schema: CentroCustoExtractionSchema, requiredKeys: ["nome"],
+    instrucao: "Extraia os dados do centro de custo.", perguntaFallback: "Qual o nome do centro de custo?",
+    revisarMsg: "Revise o centro de custo e confirme para criar.",
+  },
+  pessoa: {
+    agente: "projetos", label: "Agente de Pessoas", entidade: "pessoa", agentType: "criar_pessoa",
+    entityKey: "pessoa", prompt: EXTRAIR_PESSOA_PROMPT, schema: PessoaExtractionSchema,
+    requiredKeys: ["primeiro_nome", "sobrenome", "email"],
+    instrucao: "Extraia os dados da pessoa.", perguntaFallback: "Qual o nome, sobrenome e e-mail da pessoa?",
+    revisarMsg: "Revise os dados da pessoa e confirme para cadastrar.",
+  },
+  proposta: {
+    agente: "comercial", label: AGENTE_LABEL.comercial, entidade: "proposta", agentType: "criar_proposta",
+    entityKey: "proposta", prompt: EXTRAIR_PROPOSTA_PROMPT, schema: PropostaExtractionSchema, requiredKeys: ["titulo"],
+    instrucao: "Extraia os dados da proposta.", perguntaFallback: "Qual o título da proposta?",
+    revisarMsg: "Revise a proposta e confirme para criar.",
+  },
+  marco: {
+    agente: "financeiro", label: AGENTE_LABEL.financeiro, entidade: "marco", agentType: "criar_marco",
+    entityKey: "marco", prompt: EXTRAIR_MARCO_PROMPT, schema: MarcoExtractionSchema, requiredKeys: ["nome", "valor"],
+    instrucao: "Extraia os dados do marco de faturamento.", perguntaFallback: "Qual o nome e o valor do marco?",
+    revisarMsg: "Revise o marco e confirme para criar.",
+  },
+  disciplina: {
+    agente: "projetos", label: AGENTE_LABEL.projetos, entidade: "disciplina", agentType: "criar_disciplina",
+    entityKey: "disciplina", prompt: EXTRAIR_DISCIPLINA_PROMPT, schema: DisciplinaExtractionSchema, requiredKeys: ["nome"],
+    instrucao: "Extraia a disciplina e o projeto-alvo da conversa.", perguntaFallback: "Qual disciplina e em qual projeto?",
+    revisarMsg: "Revise a disciplina e confirme para adicionar.",
+  },
+  aditivo: {
+    agente: "projetos", label: AGENTE_LABEL.projetos, entidade: "aditivo", agentType: "criar_aditivo",
+    entityKey: "aditivo", prompt: EXTRAIR_ADITIVO_PROMPT, schema: AditivoExtractionSchema, requiredKeys: ["descricao"],
+    instrucao: "Extraia o aditivo (descrição, justificativa, itens) e o projeto-alvo.",
+    perguntaFallback: "Qual o resumo do aditivo e em qual projeto?",
+    revisarMsg: "Revise o aditivo e confirme para criar (como rascunho).",
+  },
+};
+
+// Hash curto e estável (djb2) para idempotência do enfileiramento — evita 2 rascunhos do mesmo pedido.
+function djb2(str: string): string {
+  let h = 5381;
+  for (let i = 0; i < str.length; i++) h = ((h << 5) + h + str.charCodeAt(i)) | 0;
+  return (h >>> 0).toString(36);
+}
+
+// Transcript recente da sessão (contexto conversacional para o orquestrador e os agentes).
+async function carregarHistorico(db: SupabaseClient, sessionId: string): Promise<string> {
+  const { data } = await db
+    .from("chat_messages")
+    .select("role, content")
+    .eq("session_id", sessionId)
+    .order("created_at", { ascending: false })
+    .limit(12);
+  const msgs = ((data ?? []) as { role: string; content: string }[]).reverse();
+  if (!msgs.length) return "(sem histórico — início da conversa)";
+  return msgs.map((m) => `${m.role === "user" ? "Usuário" : "Assistente"}: ${m.content}`).join("\n");
+}
+
+// Monta o input do agente: data de hoje + transcript + destaque da mensagem atual.
+function comContexto(historico: string, message: string, instrucao: string): string {
+  const hoje = new Date().toISOString().slice(0, 10);
+  return `Data de hoje: ${hoje}\n\nConversa até agora:\n${historico}\n\nMensagem atual do usuário: "${message}"\n\n${instrucao}`;
+}
+
+// ---------------------------------------------------------------------------
+// Agentes de domínio (read-only) — coletam dados via RLS
+// ---------------------------------------------------------------------------
+function inicioDoMes(): string {
+  const now = new Date();
+  return new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
+}
+
+async function coletarFinanceiro(db: SupabaseClient, empresaId: string): Promise<Record<string, unknown>> {
+  const inicio = inicioDoMes();
+  const [receitasMes, aReceber, despesasMes] = await Promise.all([
+    db.from("receitas").select("valor").eq("empresa_id", empresaId).eq("status", "Recebido").gte("data_recebimento", inicio),
+    db.from("receitas").select("valor").eq("empresa_id", empresaId).eq("status", "Pendente"),
+    db
+      .from("despesas")
+      .select("valor")
+      .eq("empresa_id", empresaId)
+      .in("status", ["Pago"])
+      .eq("is_fatura_payment", false)
+      .gte("data_pagamento", inicio),
+  ]);
+  const soma = (rows: { valor: number }[] | null) => (rows ?? []).reduce((s, r) => s + Number(r.valor || 0), 0);
+  const recebido = soma(receitasMes.data as { valor: number }[] | null);
+  const despesas = soma(despesasMes.data as { valor: number }[] | null);
+  return {
+    mes_atual: {
+      recebido_no_mes: recebido,
+      despesas_pagas_no_mes: despesas,
+      saldo_no_mes: recebido - despesas,
+    },
+    a_receber_pendente_total: soma(aReceber.data as { valor: number }[] | null),
+  };
+}
+
+const STATUS_ATIVOS = ["Planejamento", "Execução", "Em andamento", "Revisão"];
+
+async function coletarProjetos(db: SupabaseClient, empresaId: string): Promise<Record<string, unknown>> {
+  const { data } = await db
+    .from("projetos")
+    .select("nome, status, valor_contrato")
+    .eq("empresa_id", empresaId)
+    .is("deleted_at", null);
+  const projetos = (data ?? []) as { nome: string; status: string; valor_contrato: number | null }[];
+  const porStatus: Record<string, number> = {};
+  for (const p of projetos) porStatus[p.status] = (porStatus[p.status] ?? 0) + 1;
+  const ativos = projetos.filter((p) => STATUS_ATIVOS.includes(p.status));
+  const topAtivos = [...ativos]
+    .sort((a, b) => Number(b.valor_contrato || 0) - Number(a.valor_contrato || 0))
+    .slice(0, 10)
+    .map((p) => ({ nome: p.nome, status: p.status, valor_contrato: Number(p.valor_contrato || 0) }));
+  return {
+    total_projetos: projetos.length,
+    projetos_ativos: ativos.length,
+    por_status: porStatus,
+    valor_em_contratos_ativos: ativos.reduce((s, p) => s + Number(p.valor_contrato || 0), 0),
+    top_projetos_ativos: topAtivos,
+  };
+}
+
+async function coletarComercial(db: SupabaseClient, empresaId: string): Promise<Record<string, unknown>> {
+  const [propostas, leads] = await Promise.all([
+    db.from("propostas").select("status").eq("empresa_id", empresaId).is("deleted_at", null),
+    db.from("leads").select("id").eq("empresa_id", empresaId).is("deleted_at", null),
+  ]);
+  const props = (propostas.data ?? []) as { status: string }[];
+  const porStatus: Record<string, number> = {};
+  for (const p of props) porStatus[p.status] = (porStatus[p.status] ?? 0) + 1;
+  return {
+    total_propostas: props.length,
+    propostas_por_status: porStatus,
+    total_leads: (leads.data ?? []).length,
+  };
+}
+
+async function coletarDados(agente: Agente, db: SupabaseClient, empresaId: string): Promise<Record<string, unknown>> {
+  switch (agente) {
+    case "financeiro":
+      return coletarFinanceiro(db, empresaId);
+    case "projetos":
+      return coletarProjetos(db, empresaId);
+    case "comercial":
+      return coletarComercial(db, empresaId);
+    case "geral":
+      return {};
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Resposta em linguagem natural (por domínio)
+// ---------------------------------------------------------------------------
+function respostaPrompt(agente: Agente): string {
+  const base = `Você é o ${AGENTE_LABEL[agente]} do Pilar, um copiloto para escritórios de engenharia.
+Responda à pergunta do usuário de forma direta, clara e em português do Brasil, usando SOMENTE os dados fornecidos.
+Valores em reais (R$). Se os dados não permitirem responder, diga isso com honestidade e sugira o que o usuário pode registrar.
+Não invente números. Seja conciso. Responda APENAS em JSON no formato {"resposta": "<texto>"}.`;
+  if (agente === "geral") {
+    return `${base}
+Você pode ajudar com: finanças (receitas, despesas, lucro do mês), projetos (status, quantos ativos) e comercial (propostas, leads). Oriente o usuário sobre isso quando fizer sentido.`;
+  }
+  return base;
+}
+
+// ---------------------------------------------------------------------------
+// Handler
+// ---------------------------------------------------------------------------
+serve(
+  withSentry("ai-chat", async (req: Request) => {
+    if (req.method === "OPTIONS") return optionsResponse(req);
+
+    try {
+      const authClient = createAuthClient(req);
+      const adminClient = createAdminClient();
+
+      const {
+        data: { user },
+        error: userError,
+      } = await authClient.auth.getUser();
+      if (userError || !user) return jsonResponse({ error: "Não autenticado" }, 401, req);
+
+      const { data: profile } = await authClient.from("profiles").select("empresa_id").eq("id", user.id).single();
+      if (!profile?.empresa_id) return jsonResponse({ error: "Perfil não encontrado" }, 403, req);
+      const empresaId = profile.empresa_id as string;
+
+      if (!(await checkRateLimit(adminClient, empresaId))) {
+        return jsonResponse({ error: "Limite mensal de IA atingido" }, 429, req);
+      }
+
+      const body = await req.json().catch(() => ({}));
+      const parsed = RequestSchema.safeParse(body);
+      if (!parsed.success) {
+        return jsonResponse({ error: parsed.error.issues[0]?.message ?? "payload inválido" }, 400, req);
+      }
+      const { message } = parsed.data;
+
+      // Sessão: cria se não veio (via RLS — o usuário é o dono).
+      let sessionId = parsed.data.sessionId;
+      if (!sessionId) {
+        const { data: sess, error: sessErr } = await authClient
+          .from("chat_sessions")
+          .insert({ empresa_id: empresaId, user_id: user.id, titulo: message.slice(0, 60) })
+          .select("id")
+          .single();
+        if (sessErr || !sess) return jsonResponse({ error: "Falha ao criar sessão" }, 500, req);
+        sessionId = sess.id as string;
+      }
+
+      // Carrega o transcript ANTES de gravar a mensagem atual (contexto = turnos anteriores).
+      const historico = await carregarHistorico(authClient, sessionId);
+
+      // Grava a mensagem do usuário.
+      await authClient.from("chat_messages").insert({ session_id: sessionId, role: "user", content: message });
+
+      // 1) Orquestrador classifica a intenção (considerando o contexto da conversa).
+      const rota = await callGeminiStructured(
+        {
+          systemPrompt: ORQUESTRADOR_PROMPT,
+          userMessage: comContexto(historico, message, "Classifique a intenção real do usuário (agente + modo)."),
+          empresaId,
+          tipo: FEATURE_KEY,
+        },
+        IntentSchema
+      );
+      const agente = rota.data.agente;
+      const modo = rota.data.modo;
+
+      // ─── MODO AÇÃO ─── Dispatch por entidade (config em ENTIDADE_CFG).
+      if (modo === "acao") {
+        const cfg = rota.data.entidade ? ENTIDADE_CFG[rota.data.entidade] : undefined;
+        if (cfg) {
+          return await processarCriacao({
+            db: authClient,
+            admin: adminClient,
+            req,
+            sessionId,
+            empresaId,
+            userId: user.id,
+            historico,
+            message,
+            motivo: rota.data.motivo,
+            rotaTok: { in: rota.tokensEntrada, out: rota.tokensSaida },
+            ...cfg,
+          });
+        }
+
+        const aviso =
+          "Ainda não sei criar isso. Sei criar: lead, projeto, receita, despesa e cartão. " +
+          "Para consultar dados, é só perguntar.";
+        await authClient.from("chat_messages").insert({
+          session_id: sessionId,
+          role: "assistant",
+          content: aviso,
+          meta: { agente, agente_label: AGENTE_LABEL[agente], motivo: rota.data.motivo, model: GEMINI_MODEL },
+        });
+        await recordAiUsageSafe(adminClient, empresaId, rota.tokensEntrada, rota.tokensSaida);
+        return jsonResponse(
+          { sessionId, tipo: "resposta", resposta: aviso, agentes: [{ agente, agente_label: AGENTE_LABEL[agente] }] },
+          200,
+          req
+        );
+      }
+
+      // ─── MODO OPERAÇÃO ─── Ação sobre entidade existente. O card lista candidatos e escolhe o alvo.
+      if (modo === "operacao" && rota.data.operacao) {
+        const label = AGENTE_LABEL[agente];
+        const { data: run, error: runErr } = await authClient
+          .from("agent_runs")
+          .insert({
+            empresa_id: empresaId,
+            agent_type: "acao",
+            status: "pending_review",
+            entity_type: rota.data.operacao,
+            input: { message },
+            result: { acao: rota.data.operacao },
+            model: GEMINI_MODEL,
+            tokens_input: rota.tokensEntrada,
+            tokens_output: rota.tokensSaida,
+            created_by: user.id,
+          })
+          .select("id")
+          .single();
+        if (runErr || !run) return jsonResponse({ error: "Falha ao preparar a ação" }, 500, req);
+        await authClient.from("chat_messages").insert({
+          session_id: sessionId,
+          role: "assistant",
+          content: "Escolha o alvo e confirme a ação.",
+          meta: { agente, agente_label: label, model: GEMINI_MODEL, acao_run_id: run.id, operacao: rota.data.operacao },
+        });
+        await recordAiUsageSafe(adminClient, empresaId, rota.tokensEntrada, rota.tokensSaida);
+        return jsonResponse(
+          {
+            sessionId,
+            tipo: "acao",
+            operacao: rota.data.operacao,
+            runId: run.id,
+            custoCreditos: 1,
+            agentes: [{ agente, agente_label: label, motivo: rota.data.motivo }],
+          },
+          200,
+          req
+        );
+      }
+
+      // 2) Agente de domínio coleta os dados (read-only, RLS).
+      const dados = await coletarDados(agente, authClient, empresaId);
+
+      // 3) Resposta em linguagem natural (com o contexto da conversa).
+      const resp = await callGeminiStructured(
+        {
+          systemPrompt: respostaPrompt(agente),
+          userMessage: comContexto(
+            historico,
+            message,
+            `Responda à mensagem atual do usuário usando SOMENTE os dados abaixo.\n\nDados disponíveis (JSON):\n${JSON.stringify(dados)}`
+          ),
+          empresaId,
+          tipo: FEATURE_KEY,
+        },
+        RespostaSchema
+      );
+
+      const tokensIn = rota.tokensEntrada + resp.tokensEntrada;
+      const tokensOut = rota.tokensSaida + resp.tokensSaida;
+      const meta = {
+        agente,
+        agente_label: AGENTE_LABEL[agente],
+        motivo: rota.data.motivo,
+        model: GEMINI_MODEL,
+      };
+
+      // Grava a resposta do assistente.
+      await authClient.from("chat_messages").insert({
+        session_id: sessionId,
+        role: "assistant",
+        content: resp.data.resposta,
+        meta,
+        tokens_input: tokensIn,
+        tokens_output: tokensOut,
+      });
+
+      // Contabiliza uso (rate limit + log granular por feature).
+      await recordAiUsageSafe(adminClient, empresaId, tokensIn, tokensOut);
+
+      return jsonResponse(
+        {
+          sessionId,
+          tipo: "resposta",
+          resposta: resp.data.resposta,
+          agentes: [meta],
+        },
+        200,
+        req
+      );
+    } catch (e) {
+      console.error("[ai-chat]", e);
+      const headers = { ...getCorsHeaders(req), "Content-Type": "application/json" };
+      return new Response(JSON.stringify({ error: "Erro ao processar a conversa" }), { status: 500, headers });
+    }
+  })
+);
+
+async function recordAiUsageSafe(admin: SupabaseClient, empresaId: string, tokIn: number, tokOut: number) {
+  try {
+    await recordAiUsage(admin, empresaId, FEATURE_KEY, tokIn, tokOut);
+  } catch {
+    // não bloqueia a resposta ao usuário
+  }
+}
+
+// Fluxo genérico de criação (extrair → perguntar se faltar nome → rascunho editável).
+// Reutilizado por lead e projeto; novas entidades só passam schema/prompt/labels.
+type ExtracaoBase = { tem_nome: boolean; pergunta?: string | null; [k: string]: unknown };
+
+async function processarCriacao(o: {
+  db: SupabaseClient;
+  admin: SupabaseClient;
+  req: Request;
+  sessionId: string;
+  empresaId: string;
+  userId: string;
+  historico: string;
+  message: string;
+  motivo: string;
+  rotaTok: { in: number; out: number };
+  agente: string;
+  label: string;
+  entidade: string;
+  agentType: string;
+  entityKey: string;
+  prompt: string;
+  schema: z.ZodType<ExtracaoBase>;
+  requiredKeys: string[];
+  instrucao: string;
+  perguntaFallback: string;
+  revisarMsg: string;
+}): Promise<Response> {
+  const extr = await callGeminiStructured(
+    {
+      systemPrompt: o.prompt,
+      userMessage: comContexto(o.historico, o.message, o.instrucao),
+      empresaId: o.empresaId,
+      tipo: FEATURE_KEY,
+    },
+    o.schema
+  );
+  const tokIn = o.rotaTok.in + extr.tokensEntrada;
+  const tokOut = o.rotaTok.out + extr.tokensSaida;
+  const dados = extr.data;
+  const entidadeObj = (dados[o.entityKey] ?? {}) as Record<string, unknown>;
+
+  // Faltando campo obrigatório → pergunta ao usuário (não cria rascunho).
+  const faltaObrigatorio = o.requiredKeys.some((k) => {
+    const v = entidadeObj[k];
+    return v === null || v === undefined || String(v).trim() === "";
+  });
+  if (!dados.tem_nome || faltaObrigatorio) {
+    const pergunta = (dados.pergunta ?? "").toString().trim() || o.perguntaFallback;
+    await o.db.from("chat_messages").insert({
+      session_id: o.sessionId,
+      role: "assistant",
+      content: pergunta,
+      meta: { agente: o.agente, agente_label: o.label, model: GEMINI_MODEL },
+      tokens_input: tokIn,
+      tokens_output: tokOut,
+    });
+    await recordAiUsageSafe(o.admin, o.empresaId, tokIn, tokOut);
+    return jsonResponse(
+      { sessionId: o.sessionId, tipo: "resposta", resposta: pergunta, agentes: [{ agente: o.agente, agente_label: o.label }] },
+      200,
+      o.req
+    );
+  }
+
+  // Remove null/vazio que o Gemini devolve para campos não preenchidos.
+  const campos = Object.fromEntries(
+    Object.entries(entidadeObj).filter(([, v]) => v !== null && v !== undefined && v !== "")
+  );
+  const idempotencyKey = `${o.entidade}:${o.sessionId}:${djb2(o.message)}`;
+
+  // Dedupe: o mesmo pedido reenviado devolve o rascunho existente, não cria outro.
+  const { data: existente } = await o.db
+    .from("agent_runs")
+    .select("id, status")
+    .eq("empresa_id", o.empresaId)
+    .eq("idempotency_key", idempotencyKey)
+    .maybeSingle();
+
+  let runId: string;
+  if (existente?.id && existente.status === "pending_review") {
+    runId = existente.id as string;
+  } else {
+    const { data: run, error: runErr } = await o.db
+      .from("agent_runs")
+      .insert({
+        empresa_id: o.empresaId,
+        agent_type: o.agentType,
+        status: "pending_review",
+        entity_type: o.entidade,
+        input: { message: o.message },
+        result: campos,
+        idempotency_key: idempotencyKey,
+        model: GEMINI_MODEL,
+        tokens_input: tokIn,
+        tokens_output: tokOut,
+        created_by: o.userId,
+      })
+      .select("id")
+      .single();
+    if (runErr || !run) return jsonResponse({ error: "Falha ao preparar o rascunho" }, 500, o.req);
+    runId = run.id as string;
+    await o.db
+      .from("agent_actions")
+      .insert({ run_id: runId, tool_name: `extrair_${o.entidade}`, args: { message: o.message }, result: campos });
+  }
+
+  // Marca a mensagem no chat (o card editável é renderizado no front a partir do draft).
+  await o.db.from("chat_messages").insert({
+    session_id: o.sessionId,
+    role: "assistant",
+    content: o.revisarMsg,
+    meta: { agente: o.agente, agente_label: o.label, model: GEMINI_MODEL, draft_run_id: runId, entity_type: o.entidade },
+    tokens_input: tokIn,
+    tokens_output: tokOut,
+  });
+  await recordAiUsageSafe(o.admin, o.empresaId, tokIn, tokOut);
+
+  return jsonResponse(
+    {
+      sessionId: o.sessionId,
+      tipo: "draft",
+      runId,
+      entidade: o.entidade,
+      campos,
+      custoCreditos: 1,
+      agentes: [{ agente: o.agente, agente_label: o.label, motivo: o.motivo }],
+    },
+    200,
+    o.req
+  );
+}
