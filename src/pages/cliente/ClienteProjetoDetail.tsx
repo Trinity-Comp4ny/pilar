@@ -18,7 +18,7 @@ import { getPortalToken } from "@/hooks/useClienteAuth";
 import type { ClienteProjetoData } from "./useClienteProjetoData";
 
 function formatDate(d: string | null | undefined): string {
-  if (!d) return "—";
+  if (!d) return "A definir";
   return new Date(d + "T00:00:00").toLocaleDateString("pt-BR");
 }
 
@@ -35,8 +35,13 @@ function AprovarPropostaCard({
 
   const formatCurrency = (v: number | null) =>
     v == null
-      ? "—"
+      ? "R$ 0,00"
       : new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
+
+  const escopo = (projeto.disciplinas ?? [])
+    .map((d) => d.disciplina)
+    .filter((nome): nome is string => !!nome);
+  const parcelas = projeto.receitas ?? [];
 
   const handleAprovar = async () => {
     const token = getPortalToken();
@@ -75,15 +80,64 @@ function AprovarPropostaCard({
           </div>
         </div>
 
-        <div className="flex items-center justify-between rounded-lg bg-white border px-4 py-3">
-          <div>
-            <p className="text-xs text-muted-foreground">Projeto</p>
-            <p className="text-sm font-semibold">{projeto.projeto_nome}</p>
+        {/* Resumo do que está sendo contratado: escopo, prazo e pagamento,
+            para o cliente não confirmar um contrato vendo só nome + valor. */}
+        <div className="rounded-lg bg-white border divide-y">
+          <div className="flex items-center justify-between px-4 py-3">
+            <div>
+              <p className="text-xs text-muted-foreground">Projeto</p>
+              <p className="text-sm font-semibold">{projeto.projeto_nome}</p>
+            </div>
+            {projeto.valor_contrato != null && (
+              <div className="text-right">
+                <p className="text-xs text-muted-foreground">Valor total</p>
+                <p className="text-sm font-bold">{formatCurrency(projeto.valor_contrato)}</p>
+              </div>
+            )}
           </div>
-          {projeto.valor_contrato != null && (
-            <div className="text-right">
-              <p className="text-xs text-muted-foreground">Valor do contrato</p>
-              <p className="text-sm font-bold">{formatCurrency(projeto.valor_contrato)}</p>
+
+          {escopo.length > 0 && (
+            <div className="px-4 py-3">
+              <p className="text-xs text-muted-foreground mb-1.5">Escopo do projeto</p>
+              <ul className="flex flex-wrap gap-1.5">
+                {escopo.map((nome, i) => (
+                  <li key={i} className="text-xs rounded-full bg-muted px-2.5 py-1 text-ink/80">
+                    {nome}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          <div className="grid grid-cols-2 gap-4 px-4 py-3">
+            <div>
+              <p className="text-xs text-muted-foreground">Início</p>
+              <p className="text-sm font-medium">{formatDate(projeto.data_inicio)}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Previsão de conclusão</p>
+              <p className="text-sm font-medium">{formatDate(projeto.data_previsao)}</p>
+            </div>
+          </div>
+
+          {parcelas.length > 0 && (
+            <div className="px-4 py-3">
+              <div className="mb-1.5 flex items-center justify-between">
+                <p className="text-xs text-muted-foreground">Condições de pagamento</p>
+                <p className="text-xs text-muted-foreground">
+                  {parcelas.length === 1 ? "1 parcela" : `${parcelas.length} parcelas`}
+                </p>
+              </div>
+              <ul className="space-y-1">
+                {parcelas.map((r) => (
+                  <li key={r.id} className="flex items-center justify-between gap-3 text-xs">
+                    <span className="text-ink/70">
+                      {r.descricao || "Parcela"} · vence {formatDate(r.data_vencimento)}
+                    </span>
+                    <span className="font-medium">{formatCurrency(r.valor)}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
         </div>
