@@ -29,6 +29,7 @@ import {
   User,
   Check,
   UsersRound,
+  AlertCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -42,6 +43,7 @@ import { usePageTitle } from "@/hooks/usePageTitle";
 import { useClientes, type Cliente, type ContaBancaria, type ChavePix } from "@/hooks/useClientes";
 import { detectTipoChavePix, normalizarChavePix, TIPO_CHAVE_PIX_LABEL } from "@/lib/pixUtils";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { ClienteMessageDialog } from "./ClienteMessageDialog";
 import { EmptyState } from "@/components/EmptyState";
 
@@ -70,7 +72,8 @@ export default function Clientes() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { can } = usePermissions();
   const canShowActions = can("clientes", "edit");
-  const { clientes, portalClienteIds, upsertCliente, isSaving, deleteCliente } = useClientes();
+  const { clientes, isLoading, isError, refetch, portalClienteIds, upsertCliente, isSaving, deleteCliente } =
+    useClientes();
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
@@ -239,7 +242,8 @@ export default function Clientes() {
     e?.stopPropagation();
     setNome(cliente.nome);
     setSobrenome(cliente.sobrenome ?? "");
-    setCpfCnpj(cliente.cpf_cnpj);
+    // O documento é salvo só com dígitos: formatar para exibição.
+    setCpfCnpj(cliente.cpf_cnpj ? formatDocument(cliente.cpf_cnpj) : "");
     setEndereco(cliente.endereco || "");
     setContato(cliente.contato || "");
     setEmail(cliente.email || "");
@@ -948,7 +952,40 @@ export default function Clientes() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredAndSortedClientes.length === 0 ? (
+                {isLoading ? (
+                  Array.from({ length: 5 }).map((_, i) => (
+                    <TableRow key={`skeleton-${i}`}>
+                      <TableCell>
+                        <Skeleton className="h-4 w-40" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-4 w-32" />
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        <Skeleton className="h-4 w-48" />
+                      </TableCell>
+                      <TableCell className="hidden lg:table-cell">
+                        <Skeleton className="h-4 w-28" />
+                      </TableCell>
+                      {canShowActions && (
+                        <TableCell className="text-right">
+                          <Skeleton className="ml-auto h-4 w-16" />
+                        </TableCell>
+                      )}
+                    </TableRow>
+                  ))
+                ) : isError ? (
+                  <TableRow>
+                    <TableCell colSpan={canShowActions ? 5 : 4}>
+                      <EmptyState
+                        icon={AlertCircle}
+                        title="Erro ao carregar clientes"
+                        description="Não foi possível carregar a lista. Verifique sua conexão e tente novamente."
+                        action={{ label: "Tentar novamente", variant: "outline", onClick: () => refetch() }}
+                      />
+                    </TableCell>
+                  </TableRow>
+                ) : filteredAndSortedClientes.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={canShowActions ? 5 : 4}>
                       {clientes.length === 0 ? (
@@ -1062,7 +1099,7 @@ export default function Clientes() {
         onConfirm={handleDeleteConfirm}
         title="Excluir Cliente"
         itemName={clienteToDelete?.nome}
-        description="Esta ação não pode ser desfeita."
+        description="O cliente sai da lista, mas o histórico é preservado. Você pode desfazer logo após excluir."
         confirmText="Excluir"
         cancelText="Cancelar"
       />
