@@ -54,17 +54,17 @@ interface Props {
 }
 
 const PERIODO_LABEL: Record<Periodo | "custom", string> = {
-  "mes-atual": "Este Mês",
-  "mes-anterior": "Mês Passado",
+  "mes-atual": "Este mês",
+  "mes-anterior": "Mês passado",
   "ultimos-30": "Últimos 30 dias",
-  ano: "Este Ano",
+  ano: "Este ano",
   tudo: "Todo período",
   custom: "Personalizado",
 };
 
 const STATUS_LABEL: Record<StatusFilter, string> = {
   todos: "Todos status",
-  pagos: "Pagos/Recebidos",
+  pagos: "Pagos/recebidos",
   pendentes: "Pendentes",
   atrasados: "Atrasados",
 };
@@ -508,7 +508,7 @@ function SegBtn({
       variant="ghost"
       onClick={onClick}
       className={cn(
-        "rounded-full h-7 px-3 gap-1.5 text-xs transition-colors",
+        "rounded-full h-9 sm:h-7 px-3 gap-1.5 text-xs transition-colors",
         active
           ? tone === "positive"
             ? "bg-positive/10 text-positive-strong shadow-sm"

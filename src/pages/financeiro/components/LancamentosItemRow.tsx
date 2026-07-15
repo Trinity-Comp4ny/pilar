@@ -98,7 +98,7 @@ function StatusBadge({
         ))}
         <DropdownMenuSeparator />
         <DropdownMenuItem disabled className="text-[10px] text-muted-foreground">
-          Click rápido para alterar
+          Clique para alterar
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -220,7 +220,7 @@ export function LancamentosItemRow({
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 text-blue-600 hover:bg-blue-50"
+              className="h-10 w-10 sm:h-8 sm:w-8 text-blue-600 hover:bg-blue-50"
               onClick={() => onEdit(l)}
               aria-label="Editar lançamento"
             >
@@ -229,7 +229,7 @@ export function LancamentosItemRow({
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 text-red-600 hover:bg-red-50"
+              className="h-10 w-10 sm:h-8 sm:w-8 text-red-600 hover:bg-red-50"
               onClick={() => onDelete(l)}
               aria-label="Excluir lançamento"
             >

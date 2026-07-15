@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
@@ -13,8 +14,12 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { useCartoesResumo, useContas, useFaturas, useDespesasFatura, useInvalidateFaturas, gerarFaturasCartao, type Fatura } from "../hooks/useFaturas";
 import { usePagarFatura } from "../hooks/usePagarFatura";
+import { FinanceErrorState } from "../components/FinanceErrorState";
 import { DataTable, type ColumnDef } from "@/components/data/DataTable";
 import { toDataSourceResult } from "@/types/dataSource";
+
+const formatBRL = (v: number) =>
+  new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 2 }).format(v);
 
 const MESES = [
   "Janeiro",
@@ -42,7 +47,12 @@ function getStatusBadge(status: string, dataVencimento: string) {
 }
 
 export default function Faturas() {
-  const { data: cartoes = [] } = useCartoesResumo();
+  const {
+    data: cartoes = [],
+    isLoading: loadingCartoes,
+    isError: errorCartoes,
+    refetch: refetchCartoes,
+  } = useCartoesResumo();
   const { data: contas = [] } = useContas();
 
   const [selectedCartaoId, setSelectedCartaoId] = useState<string>("");
@@ -225,7 +235,15 @@ export default function Faturas() {
           <CardDescription>Selecione um cartão para ver suas faturas</CardDescription>
         </CardHeader>
         <CardContent>
-          {cartoes.length === 0 ? (
+          {loadingCartoes ? (
+            <div className="flex gap-3">
+              {[1, 2, 3].map((i) => (
+                <Skeleton key={i} className="h-[104px] w-[200px] flex-shrink-0 rounded-lg" />
+              ))}
+            </div>
+          ) : errorCartoes ? (
+            <FinanceErrorState onRetry={() => void refetchCartoes()} />
+          ) : cartoes.length === 0 ? (
             <p className="text-sm text-muted-foreground">Nenhum cartão cadastrado. Cadastre um cartão na aba Contas.</p>
           ) : (
             <div className="flex gap-3 overflow-x-auto pb-2">
@@ -249,7 +267,7 @@ export default function Faturas() {
                     Fecha: dia {cartao.dia_fechamento} | Vence: dia {cartao.dia_vencimento}
                   </div>
                   <div className="text-xs text-gray-500 mt-1">
-                    Usado: R$ {cartao.usado?.toLocaleString("pt-BR")} / R$ {cartao.limite?.toLocaleString("pt-BR")}
+                    Usado: {formatBRL(Number(cartao.usado ?? 0))} / {formatBRL(Number(cartao.limite ?? 0))}
                   </div>
                   {(() => {
                     const usado = Number(cartao.usado ?? 0);

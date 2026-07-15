@@ -53,14 +53,23 @@ export default function Financeiro() {
   const [dateFrom, setDateFrom] = useState<Date | undefined>(initial.from);
   const [dateTo, setDateTo] = useState<Date | undefined>(initial.to);
 
-  // Sync state → URL
+  // Sync state → URL. Preserva os demais params (ex.: filtros de Lançamentos)
+  // em vez de reescrever a query inteira.
   useEffect(() => {
-    const params = new URLSearchParams();
-    params.set("tab", activeTab);
-    if (dateFrom) params.set("from", format(dateFrom, "yyyy-MM-dd"));
-    if (dateTo) params.set("to", format(dateTo, "yyyy-MM-dd"));
-    if (visualizacao !== "mes") params.set("viz", visualizacao);
-    setSearchParams(params, { replace: true });
+    setSearchParams(
+      (prev) => {
+        const params = new URLSearchParams(prev);
+        params.set("tab", activeTab);
+        if (dateFrom) params.set("from", format(dateFrom, "yyyy-MM-dd"));
+        else params.delete("from");
+        if (dateTo) params.set("to", format(dateTo, "yyyy-MM-dd"));
+        else params.delete("to");
+        if (visualizacao !== "mes") params.set("viz", visualizacao);
+        else params.delete("viz");
+        return params;
+      },
+      { replace: true }
+    );
   }, [activeTab, dateFrom, dateTo, visualizacao, setSearchParams]);
 
   const handleTabChange = (v: string) => setActiveTab(v);
