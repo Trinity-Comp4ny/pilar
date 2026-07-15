@@ -689,24 +689,16 @@ export function useProjetoForm({
       onSaved();
 
       if (localizacaoComposta.trim()) {
-        // Cancela geocodificação anterior se ainda estiver em andamento
+        // Marca esta geocodificação como a mais recente. Se o usuário salvar de
+        // novo antes desta terminar, a anterior não sobrescreve as coordenadas.
         geocodeAbortRef.current?.abort();
         const abortController = new AbortController();
         geocodeAbortRef.current = abortController;
         const { signal } = abortController;
 
-        const nominatimBase = "https://nominatim.openstreetmap.org/search";
-        const headers = { Accept: "application/json" };
         const street = [formData.loc_logradouro, formData.loc_numero].filter(Boolean).join(" ");
         const cepDigits = formData.loc_cep.replace(/\D/g, "");
         const postalcode = cepDigits.length === 8 ? `${cepDigits.slice(0, 5)}-${cepDigits.slice(5)}` : "";
-
-        // Structured query: street + city + state + postalcode + country
-        const params = new URLSearchParams({ format: "json", limit: "1", country: "Brazil" });
-        if (street) params.set("street", street);
-        if (formData.loc_cidade) params.set("city", formData.loc_cidade);
-        if (formData.loc_estado) params.set("state", formData.loc_estado);
-        if (postalcode) params.set("postalcode", postalcode);
 
         const saveCoords = (lat: number, lng: number) => {
           if (signal.aborted) return;
@@ -723,45 +715,38 @@ export function useProjetoForm({
           });
         };
 
-        const extractCoords = (results: { lat: string; lon: string }[]) => {
-          if (!results || results.length === 0) return null;
-          const lat = parseFloat(results[0].lat);
-          const lng = parseFloat(results[0].lon);
-          return !isNaN(lat) && !isNaN(lng) ? { lat, lng } : null;
-        };
-
-        fetch(`${nominatimBase}?${params}`, { headers, signal })
-          .then((res) => res.json())
-          .then((results) => {
-            const coords = extractCoords(results);
-            if (coords) {
-              saveCoords(coords.lat, coords.lng);
+        // Geocodifica via edge function (User-Agent + fair-use do Nominatim no
+        // servidor). A edge já faz o fallback cidade+estado internamente.
+        supabase.functions
+          .invoke("geocode-address", {
+            body: {
+              street: street || undefined,
+              city: formData.loc_cidade || undefined,
+              state: formData.loc_estado || undefined,
+              postalcode: postalcode || undefined,
+              address: localizacaoComposta,
+            },
+          })
+          .then(({ data, error }) => {
+            if (signal.aborted) return;
+            if (error) {
+              toast.warning("Geocodificação falhou", {
+                description: "Não foi possível obter coordenadas do endereço. O projeto não aparecerá no mapa.",
+              });
               return;
             }
-            // Fallback: city + state only (at least place on the map at city level)
-            if (formData.loc_cidade) {
-              const fallback = new URLSearchParams({ format: "json", limit: "1", country: "Brazil" });
-              fallback.set("city", formData.loc_cidade);
-              if (formData.loc_estado) fallback.set("state", formData.loc_estado);
-              return fetch(`${nominatimBase}?${fallback}`, { headers, signal })
-                .then((res) => res.json())
-                .then((fallbackResults) => {
-                  const fallbackCoords = extractCoords(fallbackResults);
-                  if (fallbackCoords) {
-                    saveCoords(fallbackCoords.lat, fallbackCoords.lng);
-                  } else {
-                    toast.warning("Endereço não localizado", {
-                      description: "Não foi possível encontrar as coordenadas. O projeto não aparecerá no mapa.",
-                    });
-                  }
-                });
+            const lat = typeof data?.lat === "number" ? data.lat : NaN;
+            const lng = typeof data?.lng === "number" ? data.lng : NaN;
+            if (data?.found && !isNaN(lat) && !isNaN(lng)) {
+              saveCoords(lat, lng);
+              return;
             }
             toast.warning("Endereço não localizado", {
               description: "Não foi possível encontrar as coordenadas do endereço. O projeto não aparecerá no mapa.",
             });
           })
-          .catch((err: unknown) => {
-            if (err instanceof DOMException && err.name === "AbortError") return;
+          .catch(() => {
+            if (signal.aborted) return;
             toast.warning("Geocodificação falhou", {
               description: "Não foi possível obter coordenadas do endereço. O projeto não aparecerá no mapa.",
             });
