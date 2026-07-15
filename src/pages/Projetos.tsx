@@ -208,7 +208,12 @@ export default function ProjetosKanban() {
     },
   });
 
-  const { data: projetos = [], isLoading: loadingProjetos } = useQuery({
+  const {
+    data: projetos = [],
+    isLoading: loadingProjetos,
+    isError: projetosError,
+    refetch: refetchProjetos,
+  } = useQuery({
     queryKey: ["projetos"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -565,8 +570,8 @@ export default function ProjetosKanban() {
     { id: "cronograma", label: "Cronograma", icon: CalendarIcon },
   ];
 
-  const noProjetos = !loadingProjetos && projetos.length === 0;
-  const noResults = !loadingProjetos && projetos.length > 0 && filteredProjetos.length === 0;
+  const noProjetos = !loadingProjetos && !projetosError && projetos.length === 0;
+  const noResults = !loadingProjetos && !projetosError && projetos.length > 0 && filteredProjetos.length === 0;
 
   return (
     <PageLayout
@@ -651,12 +656,15 @@ export default function ProjetosKanban() {
         ))}
       </div>
 
+      {/* Erro de carregamento: estado distinto do empty, com opção de tentar de novo */}
+      {projetosError && <ProjetosEmptyState variant="error" onRetry={() => refetchProjetos()} />}
+
       {/* Empty states globais */}
-      {noProjetos && activeTab === "kanban" && (
+      {!projetosError && noProjetos && activeTab === "kanban" && (
         <ProjetosEmptyState variant="no-projetos" onCreate={canEdit ? handleNewProjeto : undefined} />
       )}
 
-      {activeTab === "kanban" && !noProjetos ? (
+      {projetosError ? null : activeTab === "kanban" && !noProjetos ? (
         <>
           {noResults ? (
             <ProjetosEmptyState variant="no-results" onClearFilters={() => setFilters(EMPTY_FILTERS)} />
