@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
@@ -39,6 +39,7 @@ import {
   FolderOpen,
   Banknote,
   Package,
+  FileSignature,
 } from "lucide-react";
 import { formatDocument } from "@/lib/maskUtils";
 import { useClienteDetalhe } from "@/hooks/useClienteDetalhe";
@@ -48,14 +49,16 @@ import { usePageTitle } from "@/hooks/usePageTitle";
 import { useClientes } from "@/hooks/useClientes";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { ClienteMessageDialog } from "@/pages/clientes/ClienteMessageDialog";
+import { ClienteFormDialog } from "@/pages/clientes/ClienteFormDialog";
 import { FinanceiroContent } from "@/pages/portal/PortalFinanceiro";
 import type { ClienteReceita } from "@/pages/cliente/useClienteProjetoData";
 import { EntregasContent } from "@/pages/portal/PortalEntregas";
 import { PROJECT_STATUS_CONFIG } from "@/constants";
+import { PROPOSTA_STATUS_CONFIG } from "@/hooks/usePropostas";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import type { Cliente } from "@/hooks/useClientes";
-import type { ProjetoResumo } from "@/hooks/useClienteDetalhe";
+import type { ProjetoResumo, PropostaResumo } from "@/hooks/useClienteDetalhe";
 
 const formatCurrency = (v: number | null) =>
   v != null ? new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v) : "—";
@@ -137,6 +140,40 @@ function ProjetoCard({ projeto }: { projeto: ProjetoResumo }) {
   );
 }
 
+// ─── Proposta Card ─────────────────────────────────────────────────────────
+
+function PropostaCard({ proposta, onOpen }: { proposta: PropostaResumo; onOpen: () => void }) {
+  const config = PROPOSTA_STATUS_CONFIG[proposta.status];
+
+  return (
+    <button type="button" onClick={onOpen} className="text-left">
+      <Card className="hover:shadow-md transition-shadow cursor-pointer group h-full">
+        <CardContent className="p-4 space-y-3">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              {proposta.codigo && (
+                <p className="text-[10px] font-mono text-muted-foreground">{proposta.codigo}</p>
+              )}
+              <p className="text-sm font-medium truncate group-hover:text-brand transition-colors">{proposta.titulo}</p>
+            </div>
+            {config && <Badge className={cn("text-[10px] shrink-0", config.color)}>{config.label}</Badge>}
+          </div>
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <span>{proposta.valor_proposto != null ? formatCurrency(proposta.valor_proposto) : "Sem valor"}</span>
+            <span>
+              {proposta.validade
+                ? `Validade: ${formatDate(proposta.validade)}`
+                : proposta.created_at
+                  ? new Date(proposta.created_at).toLocaleDateString("pt-BR")
+                  : "—"}
+            </span>
+          </div>
+        </CardContent>
+      </Card>
+    </button>
+  );
+}
+
 // ─── Projeto Accordion ───────────────────────────────────────────────────────
 
 function ProjetoAccordion({ projeto, children }: { projeto: ProjetoResumo; children: React.ReactNode }) {
@@ -180,75 +217,49 @@ function VisaoGeralTab({ cliente, isAdmin }: { cliente: Cliente; isAdmin: boolea
   const [resetCredentials, setResetCredentials] = useState<{ email: string } | null>(null);
 
   const { portalStatus, isLoadingPortal } = useClienteDetalhe(cliente.id);
-
-  const inviteMutation = useMutation({
-    mutationFn: async () => {
-      const { data, error } = await supabase.functions.invoke("invite-cliente-portal", {
-        body: { cliente_id: cliente.id, email: cliente.email },
-      });
-      if (error) {
-        const body = error.context ? await error.context.json?.().catch(() => null) : null;
-        throw new Error(body?.error || error.message);
-      }
-      if (data?.error) throw new Error(data.error);
-      return { email: data.email as string };
-    },
-    onSuccess: (data) => {
-      setPortalCredentials(data);
-      queryClient.invalidateQueries({ queryKey: ["portal-status", cliente.id] });
-    },
-    onError: (err: Error) => toast.error(err.message || "Erro ao criar acesso"),
-  });
-
-  const resetMutation = useMutation({
-    mutationFn: async () => {
-      const { data, error } = await supabase.functions.invoke("reset-cliente-portal-password", {
-        body: {
-          cliente_id: cliente.id,
-          nome_cliente: `${cliente.nome}${cliente.sobrenome ? " " + cliente.sobrenome : ""}`,
-        },
-      });
-      if (error) {
-        const body = error.context ? await error.context.json?.().catch(() => null) : null;
-        throw new Error(body?.error || error.message);
-      }
-      if (data?.error) throw new Error(data.error);
-      return { email: data.email as string };
-    },
-    onSuccess: (data) => setResetCredentials(data),
-    onError: (err: Error) => toast.error(err.message || "Erro ao redefinir senha"),
-  });
-
-  const revokeMutation = useMutation({
-    mutationFn: async () => {
-      const { error } = await supabase
-        .from("cliente_portal_accounts")
-        .update({ ativo: false })
-        .eq("cliente_id", cliente.id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      toast.success("Acesso ao portal revogado");
-      setPortalCredentials(null);
-      setResetCredentials(null);
-      queryClient.invalidateQueries({ queryKey: ["portal-status", cliente.id] });
-    },
-    onError: () => toast.error("Erro ao revogar acesso"),
-  });
+  const {
+    invitePortal,
+    isInvitingPortal,
+    resetPortalPassword,
+    isResettingPortal,
+    revokePortalAccess,
+    isRevokingPortal,
+  } = useClientes();
 
   const handleInvite = async () => {
     if (!(await requireAal2())) return;
-    inviteMutation.mutate();
+    try {
+      const { email } = await invitePortal({ clienteId: cliente.id, email: cliente.email });
+      setPortalCredentials({ email });
+      queryClient.invalidateQueries({ queryKey: ["portal-status", cliente.id] });
+    } catch {
+      // erro tratado pelo onError do hook
+    }
   };
 
   const handleReset = async () => {
     if (!(await requireAal2())) return;
-    resetMutation.mutate();
+    try {
+      const { email } = await resetPortalPassword({
+        clienteId: cliente.id,
+        nomeCliente: `${cliente.nome}${cliente.sobrenome ? " " + cliente.sobrenome : ""}`,
+      });
+      setResetCredentials({ email });
+    } catch {
+      // erro tratado pelo onError do hook
+    }
   };
 
   const handleRevoke = async () => {
     if (!(await requireAal2())) return;
-    revokeMutation.mutate();
+    try {
+      await revokePortalAccess(cliente.id);
+      setPortalCredentials(null);
+      setResetCredentials(null);
+      queryClient.invalidateQueries({ queryKey: ["portal-status", cliente.id] });
+    } catch {
+      // erro tratado pelo onError do hook
+    }
   };
 
   return (
@@ -361,29 +372,29 @@ function VisaoGeralTab({ cliente, isAdmin }: { cliente: Cliente; isAdmin: boolea
                     size="sm"
                     variant="outline"
                     onClick={handleReset}
-                    disabled={resetMutation.isPending || revokeMutation.isPending}
+                    disabled={isResettingPortal || isRevokingPortal}
                     className="flex-1"
                   >
-                    {resetMutation.isPending ? (
+                    {isResettingPortal ? (
                       <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
                     ) : (
                       <KeyRound className="h-3.5 w-3.5 mr-1.5" />
                     )}
-                    {resetMutation.isPending ? "Redefinindo..." : "Redefinir senha"}
+                    {isResettingPortal ? "Redefinindo..." : "Redefinir senha"}
                   </Button>
                   <Button
                     size="sm"
                     variant="outline"
                     onClick={handleRevoke}
-                    disabled={revokeMutation.isPending || resetMutation.isPending}
+                    disabled={isRevokingPortal || isResettingPortal}
                     className="border-red-200 text-red-700 hover:bg-red-50"
                   >
-                    {revokeMutation.isPending ? (
+                    {isRevokingPortal ? (
                       <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
                     ) : (
                       <ShieldOff className="h-3.5 w-3.5 mr-1.5" />
                     )}
-                    {revokeMutation.isPending ? "Revogando..." : "Revogar"}
+                    {isRevokingPortal ? "Revogando..." : "Revogar"}
                   </Button>
                 </div>
                 {resetCredentials && (
@@ -410,15 +421,15 @@ function VisaoGeralTab({ cliente, isAdmin }: { cliente: Cliente; isAdmin: boolea
                     <Button
                       size="sm"
                       onClick={() => setConfirmPortalOpen(true)}
-                      disabled={inviteMutation.isPending}
+                      disabled={isInvitingPortal}
                       className="bg-brand hover:bg-brand/90 text-ink"
                     >
-                      {inviteMutation.isPending ? (
+                      {isInvitingPortal ? (
                         <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
                       ) : (
                         <Globe className="h-3.5 w-3.5 mr-1.5" />
                       )}
-                      {inviteMutation.isPending ? "Criando..." : "Criar acesso ao portal"}
+                      {isInvitingPortal ? "Criando..." : "Criar acesso ao portal"}
                     </Button>
                   </>
                 ) : (
@@ -480,7 +491,8 @@ export default function ClienteDetalhePage() {
   const { isAdmin, can } = usePermissions();
   const canEdit = can("clientes", "edit");
 
-  const { cliente, projetos, isLoadingCliente, isLoadingProjetos } = useClienteDetalhe(id!);
+  const { cliente, projetos, isLoadingProjetos, propostas, isLoadingPropostas, isLoadingCliente } =
+    useClienteDetalhe(id!);
 
   const clienteNomeCompleto = cliente
     ? `${cliente.nome}${cliente.sobrenome ? " " + cliente.sobrenome : ""}`
@@ -493,6 +505,7 @@ export default function ClienteDetalhePage() {
   const [messageSubject, setMessageSubject] = useState("");
   const [messageText, setMessageText] = useState("");
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
 
   const handleSendMessage = async () => {
     if (!cliente || !messageText || !messageSubject) return;
@@ -562,7 +575,7 @@ export default function ClienteDetalhePage() {
             )}
             {isAdmin && (
               <>
-                <Button variant="outline" size="sm" onClick={() => navigate(`/clientes?edit=${cliente.id}`)}>
+                <Button variant="outline" size="sm" onClick={() => setIsEditOpen(true)}>
                   <Pencil className="h-4 w-4 mr-1.5" />
                   Editar
                 </Button>
@@ -592,6 +605,13 @@ export default function ClienteDetalhePage() {
             Projetos
             {!isLoadingProjetos && projetos.length > 0 && (
               <span className="text-[10px] bg-muted rounded-full px-1.5">{projetos.length}</span>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="propostas" className="flex items-center gap-1.5">
+            <FileSignature className="h-3.5 w-3.5" />
+            Propostas
+            {!isLoadingPropostas && propostas.length > 0 && (
+              <span className="text-[10px] bg-muted rounded-full px-1.5">{propostas.length}</span>
             )}
           </TabsTrigger>
           <TabsTrigger value="financeiro" className="flex items-center gap-1.5">
@@ -628,6 +648,30 @@ export default function ClienteDetalhePage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {projetos.map((p) => (
                 <ProjetoCard key={p.id} projeto={p} />
+              ))}
+            </div>
+          )}
+        </TabsContent>
+
+        {/* Propostas */}
+        <TabsContent value="propostas">
+          {isLoadingPropostas ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {[1, 2, 3].map((i) => (
+                <Skeleton key={i} className="h-28 w-full rounded-xl" />
+              ))}
+            </div>
+          ) : propostas.length === 0 ? (
+            <Card>
+              <CardContent className="p-8 text-center text-muted-foreground">
+                <FileSignature className="h-8 w-8 mx-auto mb-2 opacity-40" />
+                <p className="text-sm">Nenhuma proposta vinculada a este cliente.</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {propostas.map((p) => (
+                <PropostaCard key={p.id} proposta={p} onOpen={() => navigate("/documentos")} />
               ))}
             </div>
           )}
@@ -693,6 +737,8 @@ export default function ClienteDetalhePage() {
         onSend={handleSendMessage}
         onOpenChange={setIsMessageOpen}
       />
+
+      <ClienteFormDialog open={isEditOpen} onOpenChange={setIsEditOpen} cliente={cliente} />
 
       <ConfirmDialog
         open={confirmDeleteOpen}
