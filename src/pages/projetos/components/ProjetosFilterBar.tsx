@@ -16,9 +16,17 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
-import { PROJECT_PRIORITY, PROJECT_PRIORITY_CONFIG, PRIORITY_OPTIONS, type ProjectPriority } from "@/constants";
+import { PROJECT_PRIORITY_CONFIG, PRIORITY_OPTIONS, type ProjectPriority } from "@/constants";
+import { getPriorityDotColor } from "../lib/priorityColors";
 
 export type DeadlineFilter = "em_atraso" | "atencao" | "no_prazo";
+export type DateField = "previsao" | "inicio" | "final";
+
+export const DATE_FIELD_OPTIONS: { id: DateField; label: string }[] = [
+  { id: "previsao", label: "Previsão" },
+  { id: "inicio", label: "Início" },
+  { id: "final", label: "Conclusão" },
+];
 
 export interface ProjetosFilters {
   search: string;
@@ -27,6 +35,7 @@ export interface ProjetosFilters {
   clienteIds: string[];
   disciplinaIds: string[];
   deadlineStatus: DeadlineFilter[];
+  dataCampo: DateField;
   dataInicio: string;
   dataFim: string;
 }
@@ -38,6 +47,7 @@ export const EMPTY_FILTERS: ProjetosFilters = {
   clienteIds: [],
   disciplinaIds: [],
   deadlineStatus: [],
+  dataCampo: "previsao",
   dataInicio: "",
   dataFim: "",
 };
@@ -237,12 +247,7 @@ function FiltersPanel({
           <div className="flex flex-wrap gap-1">
             {PRIORITY_OPTIONS.map((p) => {
               const active = filters.prioridades.includes(p);
-              const dot =
-                p === PROJECT_PRIORITY.ALTA
-                  ? "bg-red-500"
-                  : p === PROJECT_PRIORITY.MEDIA
-                    ? "bg-amber-400"
-                    : "bg-blue-400";
+              const dot = getPriorityDotColor(p);
               return (
                 <button
                   key={p}
@@ -534,12 +539,33 @@ function PeriodoSection({
   const hasDate = !!(filters.dataInicio || filters.dataFim);
   return (
     <FilterSection
-      title="Período (previsão)"
+      title="Período"
       count={hasDate ? 1 : 0}
       icon={<CalendarIcon className="h-3.5 w-3.5 text-muted-foreground" />}
       defaultOpen={false}
     >
       <div className="space-y-2">
+        {/* Campo de data a considerar no intervalo */}
+        <div className="flex flex-wrap gap-1">
+          {DATE_FIELD_OPTIONS.map((opt) => {
+            const active = filters.dataCampo === opt.id;
+            return (
+              <button
+                key={opt.id}
+                type="button"
+                onClick={() => onChange({ ...filters, dataCampo: opt.id })}
+                className={cn(
+                  "px-3 h-7 rounded-full text-xs border transition-colors",
+                  active
+                    ? "bg-foreground text-background border-foreground"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted border-transparent"
+                )}
+              >
+                {opt.label}
+              </button>
+            );
+          })}
+        </div>
         <div className="grid grid-cols-2 gap-2">
           <div>
             <label className="text-[10px] uppercase text-muted-foreground">De</label>

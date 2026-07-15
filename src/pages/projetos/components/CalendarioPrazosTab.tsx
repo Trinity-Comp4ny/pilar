@@ -211,7 +211,7 @@ export function CalendarioPrazosTab({ projetos, cursor, filtroProjeto, filtroRes
                                 "text-[11px] px-1.5 py-0.5 rounded truncate border-l-2",
                                 e.atrasado && "bg-red-100 text-red-700 border-red-500",
                                 !e.atrasado && e.proximo && "bg-amber-100 text-amber-700 border-amber-500",
-                                !e.atrasado && !e.proximo && e.concluido && "bg-positive/10 text-positive border-positive",
+                                !e.atrasado && !e.proximo && e.concluido && "bg-positive/10 text-positive-strong border-positive",
                                 !e.atrasado && !e.proximo && !e.concluido && "bg-blue-100 text-blue-700 border-blue-500"
                               )}
                             >
