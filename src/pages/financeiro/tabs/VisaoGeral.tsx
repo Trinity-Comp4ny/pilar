@@ -27,6 +27,7 @@ import {
   Label,
 } from "recharts";
 import { CustomTooltip } from "../components/CustomTooltip";
+import { FinanceErrorState } from "../components/FinanceErrorState";
 import { useFinanceData } from "@/hooks/useFinanceData";
 import { useFinanceFilter } from "../hooks/useFinanceFilter";
 
@@ -153,9 +154,11 @@ function DonutChart({ data, totalLabel }: DonutProps) {
 
 export default function VisaoGeral() {
   const { visualizacao, dateFrom, dateTo } = useFinanceFilter();
-  const { data: dashboardData, isLoading } = useFinanceData(dateFrom, dateTo);
+  const { data: dashboardData, isLoading, isError, refetch } = useFinanceData(dateFrom, dateTo);
 
   if (isLoading) return <VisaoGeralSkeleton />;
+
+  if (isError) return <FinanceErrorState onRetry={() => void refetch()} />;
 
   const stats = dashboardData?.stats || {
     receitasTotal: 0,

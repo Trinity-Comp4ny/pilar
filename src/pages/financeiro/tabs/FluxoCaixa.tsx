@@ -15,10 +15,9 @@ import {
   Line,
 } from "recharts";
 import { CustomTooltip } from "../components/CustomTooltip";
+import { FinanceErrorState } from "../components/FinanceErrorState";
 import { useFinanceData } from "@/hooks/useFinanceData";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { startOfMonth, endOfMonth } from "date-fns";
+import { useTopTransactions } from "../hooks/useTopTransactions";
 
 interface FluxoCaixaProps {
   dateFrom?: Date;
@@ -29,40 +28,19 @@ const formatCurrency = (val: number) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(val);
 
 export default function FluxoCaixa({ dateFrom, dateTo }: FluxoCaixaProps) {
-  const { data: dashboardData, isLoading: isLoadingDashboard } = useFinanceData(dateFrom, dateTo);
+  const {
+    data: dashboardData,
+    isLoading: isLoadingDashboard,
+    isError: isErrorDashboard,
+    refetch: refetchDashboard,
+  } = useFinanceData(dateFrom, dateTo);
 
-  const { data: topTransactions, isLoading: isLoadingTop } = useQuery({
-    queryKey: ["top-transactions-month", dateFrom, dateTo],
-    queryFn: async () => {
-      const today = new Date();
-      const start = dateFrom || startOfMonth(today);
-      const end = dateTo || endOfMonth(today);
-
-      const firstDay = start.toISOString();
-      const lastDay = end.toISOString();
-
-      const { data: receitas } = await supabase
-        .from("receitas")
-        .select("*")
-        .gte("data_recebimento", firstDay)
-        .lte("data_recebimento", lastDay)
-        .order("valor", { ascending: false })
-        .limit(5);
-
-      const { data: despesas } = await supabase
-        .from("despesas")
-        .select("*, categorias_financeiras(nome)")
-        .gte("data_pagamento", firstDay)
-        .lte("data_pagamento", lastDay)
-        .order("valor", { ascending: false })
-        .limit(5);
-
-      return {
-        receitas: receitas || [],
-        despesas: despesas || [],
-      };
-    },
-  });
+  const {
+    data: topTransactions,
+    isLoading: isLoadingTop,
+    isError: isErrorTop,
+    refetch: refetchTop,
+  } = useTopTransactions(dateFrom, dateTo);
 
   if (isLoadingDashboard || isLoadingTop) {
     return (
@@ -90,6 +68,17 @@ export default function FluxoCaixa({ dateFrom, dateTo }: FluxoCaixaProps) {
           </CardContent>
         </Card>
       </div>
+    );
+  }
+
+  if (isErrorDashboard || isErrorTop) {
+    return (
+      <FinanceErrorState
+        onRetry={() => {
+          void refetchDashboard();
+          void refetchTop();
+        }}
+      />
     );
   }
 
