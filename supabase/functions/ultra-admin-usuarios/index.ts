@@ -159,21 +159,21 @@ serve(
 
         const { data: conv } = await svc
           .from("convites")
-          .select("email, nome, token, empresa_id")
+          .select("email, nome, empresa_id")
           .eq("id", convite_id)
           .is("usado_em", null)
           .maybeSingle();
         if (!conv) return safeErrorResponse(404, "Convite não encontrado ou já usado", req);
 
-        // Renova a validade (+7 dias) para o token não expirar
-        await svc
-          .from("convites")
-          .update({ expira_em: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() })
-          .eq("id", convite_id);
+        // Gera um novo token (plaintext não é armazenado) e renova a validade.
+        const { data: newToken, error: regenErr } = await svc.rpc("regenerate_convite_token", {
+          p_convite_id: convite_id,
+        });
+        if (regenErr || !newToken) return safeErrorResponse(400, "Falha ao reenviar o convite", req);
 
         const { error: inviteError } = await svc.auth.admin.inviteUserByEmail(conv.email, {
           redirectTo: `${redirectOriginResend}/profile-setup`,
-          data: { invite_token: conv.token, nome: conv.nome ?? "" },
+          data: { invite_token: newToken, nome: conv.nome ?? "" },
         });
         if (inviteError) return safeErrorResponse(400, "Falha ao reenviar o convite", req);
 
@@ -202,25 +202,20 @@ serve(
       const redirectOrigin = getTrustedOrigin(req);
       if (!redirectOrigin) return safeErrorResponse(500, "Server CORS misconfigured", req);
 
-      // Inserir convite diretamente via service_role (bypassa RLS)
-      const { data: convite, error: convErr } = await svc
-        .from("convites")
-        .insert({
-          empresa_id,
-          email,
-          cargo: safeRole,
-          nome: nome || null,
-          features: safeFeatures,
-          criado_por: userId,
-        })
-        .select("token")
-        .single();
+      // Cria o convite guardando SÓ o hash; retorna o plaintext para o e-mail.
+      const { data: inviteToken, error: convErr } = await svc.rpc("admin_create_convite", {
+        p_empresa_id: empresa_id,
+        p_email: email,
+        p_cargo: safeRole,
+        p_nome: nome || null,
+        p_features: safeFeatures,
+      });
 
-      if (convErr || !convite) return safeErrorResponse(400, convErr?.message ?? "Falha ao criar convite", req);
+      if (convErr || !inviteToken) return safeErrorResponse(400, convErr?.message ?? "Falha ao criar convite", req);
 
       const { error: inviteError } = await svc.auth.admin.inviteUserByEmail(email, {
         redirectTo: `${redirectOrigin}/profile-setup`,
-        data: { invite_token: convite.token, nome: nome || "" },
+        data: { invite_token: inviteToken, nome: nome || "" },
       });
 
       if (inviteError) return safeErrorResponse(400, "Falha ao enviar convite", req);
