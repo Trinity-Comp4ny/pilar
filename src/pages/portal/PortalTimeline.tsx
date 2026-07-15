@@ -22,11 +22,18 @@ export function TimelineContent({ disciplinas }: { disciplinas: TimelineDiscipli
       <Card>
         <CardContent className="p-6">
           <h3 className="text-sm font-semibold mb-3">Progresso Geral</h3>
-          <div className="w-full bg-gray-200 rounded-full h-3 mb-2">
+          <div
+            className="w-full bg-gray-200 rounded-full h-3 mb-2"
+            role="progressbar"
+            aria-valuenow={progress}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-label="Progresso geral do projeto"
+          >
             <div className="bg-brand h-3 rounded-full transition-all" style={{ width: `${progress}%` }} />
           </div>
           <p className="text-xs text-muted-foreground">
-            {progress}% concluído — {concluidas} de {total} etapas
+            {progress}% concluído · {concluidas} de {total} etapas
           </p>
         </CardContent>
       </Card>
@@ -52,7 +59,9 @@ export function TimelineContent({ disciplinas }: { disciplinas: TimelineDiscipli
                     </div>
                     <div className="flex-1 pb-4">
                       <div className="flex items-center justify-between">
-                        <p className="text-sm font-medium">{d.disciplina}</p>
+                        <p className="text-sm font-medium" title="Área do projeto">
+                          {d.disciplina}
+                        </p>
                         <Badge variant={isConcluido ? "default" : "secondary"} className="text-[10px]">
                           {d.status || "Não iniciado"}
                         </Badge>
