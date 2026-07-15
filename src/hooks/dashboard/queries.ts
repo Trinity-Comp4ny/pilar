@@ -2,7 +2,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { addDays, format } from "date-fns";
 import { PROJECT_STATUS } from "@/constants";
 
-export function buildDashboardQueries(
+export async function buildDashboardQueries(
   now: Date,
   mesAtualStart: Date,
   mesAtualEnd: Date,
@@ -14,8 +14,22 @@ export function buildDashboardQueries(
   const mesAnteriorStartStr = format(mesAnteriorStart, "yyyy-MM-dd");
   const mesAnteriorEndStr = format(mesAnteriorEnd, "yyyy-MM-dd");
 
-  return Promise.all([
-    // 0: receitasMes — busca por data_recebimento OU data_vencimento no mês atual
+  const [
+    receitasMes,
+    receitasMesAnt,
+    despesasMes,
+    despesasMesAnt,
+    receitasPendentes,
+    despesasPendentes,
+    projetos,
+    leads,
+    alertas,
+    alertasCount,
+    proximasReceitas,
+    proximasDespesas,
+    projetosAtivosCount,
+  ] = await Promise.all([
+    // receitasMes — busca por data_recebimento OU data_vencimento no mês atual
     supabase
       .from("receitas")
       .select("valor, status, data_recebimento, data_vencimento")
@@ -25,7 +39,7 @@ export function buildDashboardQueries(
       )
       .is("deleted_at", null),
 
-    // 1: receitasMesAnt — mês anterior
+    // receitasMesAnt — mês anterior
     supabase
       .from("receitas")
       .select("valor, status, data_recebimento, data_vencimento")
@@ -35,7 +49,7 @@ export function buildDashboardQueries(
       )
       .is("deleted_at", null),
 
-    // 2: despesasMes — busca por data_pagamento OU data_vencimento no mês atual
+    // despesasMes — busca por data_pagamento OU data_vencimento no mês atual
     supabase
       .from("despesas")
       .select("valor, status, data_pagamento, data_vencimento")
@@ -46,7 +60,7 @@ export function buildDashboardQueries(
       )
       .is("deleted_at", null),
 
-    // 3: despesasMesAnt — mês anterior
+    // despesasMesAnt — mês anterior
     supabase
       .from("despesas")
       .select("valor, status, data_pagamento, data_vencimento")
@@ -57,7 +71,7 @@ export function buildDashboardQueries(
       )
       .is("deleted_at", null),
 
-    // 4: receitasPendentes (A Receber) — escopado por data_vencimento no período
+    // receitasPendentes (A Receber) — escopado por data_vencimento no período
     supabase
       .from("receitas")
       .select("valor")
@@ -66,7 +80,7 @@ export function buildDashboardQueries(
       .lte("data_vencimento", mesAtualEndStr)
       .is("deleted_at", null),
 
-    // 5: despesasPendentes (A Pagar) — escopado por data_vencimento no período
+    // despesasPendentes (A Pagar) — escopado por data_vencimento no período
     supabase
       .from("despesas")
       .select("valor")
@@ -75,7 +89,7 @@ export function buildDashboardQueries(
       .lte("data_vencimento", mesAtualEndStr)
       .is("deleted_at", null),
 
-    // 6: projetos para listagem (planejamento + em andamento, limite 8)
+    // projetos para listagem (planejamento + em andamento, limite 8)
     supabase
       .from("projetos")
       .select(
@@ -86,10 +100,10 @@ export function buildDashboardQueries(
       .order("created_at", { ascending: false })
       .limit(8),
 
-    // 7: leads
+    // leads
     supabase.from("leads").select("id, status, nome").is("deleted_at", null),
 
-    // 8: alertas
+    // alertas (últimos não lidos)
     supabase
       .from("alertas")
       .select("id, tipo, severidade, titulo, mensagem, created_at")
@@ -97,10 +111,10 @@ export function buildDashboardQueries(
       .order("created_at", { ascending: false })
       .limit(5),
 
-    // 9: alertasNaoLidos count
+    // alertasCount — total de não lidos
     supabase.from("alertas").select("*", { count: "exact", head: true }).eq("lido", false),
 
-    // 10: proximasReceitas
+    // proximasReceitas
     supabase
       .from("receitas")
       .select(
@@ -113,7 +127,7 @@ export function buildDashboardQueries(
       .order("data_vencimento", { ascending: true })
       .limit(5),
 
-    // 11: proximasDespesas
+    // proximasDespesas
     supabase
       .from("despesas")
       .select(
@@ -126,11 +140,27 @@ export function buildDashboardQueries(
       .order("data_vencimento", { ascending: true })
       .limit(5),
 
-    // 12: count exato de projetos Em andamento (sem limit)
+    // projetosAtivosCount — count exato de projetos Em andamento (sem limit)
     supabase
       .from("projetos")
       .select("*", { count: "exact", head: true })
       .is("deleted_at", null)
       .eq("status", PROJECT_STATUS.EM_ANDAMENTO),
   ]);
+
+  return {
+    receitasMes,
+    receitasMesAnt,
+    despesasMes,
+    despesasMesAnt,
+    receitasPendentes,
+    despesasPendentes,
+    projetos,
+    leads,
+    alertas,
+    alertasCount,
+    proximasReceitas,
+    proximasDespesas,
+    projetosAtivosCount,
+  };
 }
