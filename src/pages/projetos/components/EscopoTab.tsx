@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Plus, Trash2, Loader2, FileText, CheckCircle2, XCircle, Clock, ChevronDown } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -44,7 +45,7 @@ interface EscopoItem {
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: typeof Clock }> = {
   rascunho: { label: "Rascunho", color: "bg-gray-100 text-gray-800", icon: FileText },
   pendente_aprovacao: { label: "Pendente", color: "bg-yellow-100 text-yellow-800", icon: Clock },
-  aprovado: { label: "Aprovado", color: "bg-positive/10 text-positive", icon: CheckCircle2 },
+  aprovado: { label: "Aprovado", color: "bg-positive/10 text-positive-strong", icon: CheckCircle2 },
   rejeitado: { label: "Rejeitado", color: "bg-red-100 text-red-800", icon: XCircle },
 };
 
@@ -62,9 +63,32 @@ export function EscopoTab({ projetoId, canEdit }: EscopoTabProps) {
   const [formTipo, setFormTipo] = useState<"original" | "aditivo">("aditivo");
   const [formDescricao, setFormDescricao] = useState("");
   const [formJustificativa, setFormJustificativa] = useState("");
+  const [formValorAditivo, setFormValorAditivo] = useState("");
+  const [valorAditivoTouched, setValorAditivoTouched] = useState(false);
   const [formItens, setFormItens] = useState<
     Array<{ descricao: string; disciplina: string; horas: number; custo: number }>
   >([]);
+
+  const totalCustoForm = formItens.reduce((s, i) => s + i.custo, 0);
+  const sugeridoAditivo = totalCustoForm * 1.3;
+
+  // Enquanto o usuário não editar o valor manualmente, ele acompanha a sugestão
+  // (custo + 30%). Depois de tocado, respeita o valor informado.
+  useEffect(() => {
+    if (formTipo === "aditivo" && !valorAditivoTouched) {
+      setFormValorAditivo(sugeridoAditivo > 0 ? String(sugeridoAditivo) : "");
+    }
+  }, [sugeridoAditivo, formTipo, valorAditivoTouched]);
+
+  // Catálogo de disciplinas para o Select dos itens (antes era texto livre).
+  const { data: disciplinasCatalogo = [] } = useQuery({
+    queryKey: ["disciplinas"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("disciplinas").select("id, nome").order("nome");
+      if (error) throw error;
+      return data || [];
+    },
+  });
 
   const { data: escopos = [], isLoading } = useQuery({
     queryKey: ["escopos", projetoId],
@@ -97,12 +121,39 @@ export function EscopoTab({ projetoId, canEdit }: EscopoTabProps) {
     enabled: escopos.length > 0,
   });
 
+  // Quem aprovou/rejeitou cada escopo (o nome vem do histórico; a data, do próprio escopo).
+  const { data: aprovacaoMap = {} } = useQuery({
+    queryKey: ["escopo-aprovacoes", projetoId],
+    queryFn: async () => {
+      const escopoIds = escopos.map((e) => e.id);
+      if (escopoIds.length === 0) return {};
+      const { data, error } = await supabase
+        .from("escopo_historico")
+        .select("escopo_id, usuario_nome, created_at, acao")
+        .in("escopo_id", escopoIds)
+        .in("acao", ["aprovado", "rejeitado"])
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      const map: Record<string, string> = {};
+      (data || []).forEach((h) => {
+        if (h.escopo_id && !map[h.escopo_id] && h.usuario_nome) map[h.escopo_id] = h.usuario_nome;
+      });
+      return map;
+    },
+    enabled: escopos.length > 0,
+  });
+
   const createMutation = useMutation({
     mutationFn: async () => {
       if (!formDescricao.trim()) throw new Error("Descrição é obrigatória");
 
       const totalHoras = formItens.reduce((s, i) => s + i.horas, 0);
       const totalCusto = formItens.reduce((s, i) => s + i.custo, 0);
+      // Valor do aditivo é editável: usa o informado; se vazio, cai na sugestão (custo + 30%).
+      const valorAditivo =
+        formTipo === "aditivo"
+          ? parseFloat(formValorAditivo) || totalCusto * 1.3
+          : totalCusto * 1.3;
 
       const { data: escopo, error } = await supabase
         .from("escopos")
@@ -113,7 +164,7 @@ export function EscopoTab({ projetoId, canEdit }: EscopoTabProps) {
           status: formTipo === "original" ? "aprovado" : "rascunho",
           horas_estimadas: totalHoras,
           custo_estimado: totalCusto,
-          valor_aditivo: totalCusto * 1.3,
+          valor_aditivo: valorAditivo,
           justificativa: formJustificativa.trim() || null,
         } as never)
         .select()
@@ -193,6 +244,8 @@ export function EscopoTab({ projetoId, canEdit }: EscopoTabProps) {
     setIsFormOpen(false);
     setFormDescricao("");
     setFormJustificativa("");
+    setFormValorAditivo("");
+    setValorAditivoTouched(false);
     setFormItens([]);
     setFormTipo("aditivo");
   };
@@ -302,6 +355,13 @@ export function EscopoTab({ projetoId, canEdit }: EscopoTabProps) {
                         </span>
                       )}
                       {escopo.impacto_prazo_dias > 0 && <span>+{escopo.impacto_prazo_dias} dias</span>}
+                      {(escopo.status === "aprovado" || escopo.status === "rejeitado") && escopo.aprovado_em && (
+                        <span>
+                          {escopo.status === "aprovado" ? "Aprovado" : "Rejeitado"}
+                          {aprovacaoMap[escopo.id] ? ` por ${aprovacaoMap[escopo.id]}` : ""} em{" "}
+                          {new Date(escopo.aprovado_em).toLocaleDateString("pt-BR")}
+                        </span>
+                      )}
                     </div>
                   </div>
                   <ChevronDown
@@ -428,12 +488,21 @@ export function EscopoTab({ projetoId, canEdit }: EscopoTabProps) {
                     value={item.descricao}
                     onChange={(e) => updateItem(i, "descricao", e.target.value)}
                   />
-                  <Input
-                    className="w-24 h-8 text-xs"
-                    placeholder="Disciplina"
-                    value={item.disciplina}
-                    onChange={(e) => updateItem(i, "disciplina", e.target.value)}
-                  />
+                  <Select
+                    value={item.disciplina || undefined}
+                    onValueChange={(v) => updateItem(i, "disciplina", v)}
+                  >
+                    <SelectTrigger className="w-28 h-8 text-xs">
+                      <SelectValue placeholder="Disciplina" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {disciplinasCatalogo.map((d) => (
+                        <SelectItem key={d.id} value={d.nome}>
+                          {d.nome}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <Input
                     className="w-16 h-8 text-xs"
                     type="number"
@@ -461,16 +530,32 @@ export function EscopoTab({ projetoId, canEdit }: EscopoTabProps) {
               ))}
               {formItens.length > 0 && (
                 <div className="text-xs text-muted-foreground mt-1">
-                  Total: {formItens.reduce((s, i) => s + i.horas, 0)}h ·{" "}
-                  {formatCurrency(formItens.reduce((s, i) => s + i.custo, 0))}
-                  {formTipo === "aditivo" && (
-                    <span className="ml-2 font-medium text-orange-700">
-                      Valor sugerido (30% margem): {formatCurrency(formItens.reduce((s, i) => s + i.custo, 0) * 1.3)}
-                    </span>
-                  )}
+                  Total: {formItens.reduce((s, i) => s + i.horas, 0)}h · {formatCurrency(totalCustoForm)}
                 </div>
               )}
             </div>
+
+            {/* Valor do aditivo: editável, com sugestão de custo + 30% de margem. */}
+            {formTipo === "aditivo" && (
+              <div className="space-y-1.5">
+                <Label htmlFor="valorAditivo">Valor do aditivo (R$)</Label>
+                <Input
+                  id="valorAditivo"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={formValorAditivo}
+                  onChange={(e) => {
+                    setFormValorAditivo(e.target.value);
+                    setValorAditivoTouched(true);
+                  }}
+                  placeholder={sugeridoAditivo > 0 ? String(sugeridoAditivo) : "0,00"}
+                />
+                <p className="text-[10px] text-muted-foreground">
+                  Sugestão (custo + 30% de margem): {formatCurrency(sugeridoAditivo)}. Ajuste conforme o negociado.
+                </p>
+              </div>
+            )}
 
             <div className="flex justify-end gap-2 pt-2">
               <Button variant="outline" onClick={resetForm}>

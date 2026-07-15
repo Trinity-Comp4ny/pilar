@@ -1,20 +1,30 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar, Check, DollarSign, FileText, Layers, Loader2, MapPin } from "lucide-react";
 import { DatePicker } from "@/components/ui/date-picker";
 import { cn } from "@/lib/utils";
 import { formatCurrencyInput } from "@/lib/currencyUtils";
-import { toast } from "sonner";
-import { PROJECT_PRIORITY, PRIORITY_OPTIONS, PROJECT_PRIORITY_CONFIG } from "@/constants";
+import { PRIORITY_OPTIONS, PROJECT_PRIORITY_CONFIG } from "@/constants";
 import { type Projeto, type ProjetoDisciplinaDB } from "@/types/projetos";
 import { type TemplateProjeto } from "@/hooks/useTemplates";
 import type { FluxoDisciplinas } from "@/types/fluxoDisciplinas";
 import { useProjetoForm, ESTADOS_BR } from "./useProjetoForm";
+import { getPriorityDotColor } from "../lib/priorityColors";
 import { DisciplinasSection } from "./DisciplinasSection";
 import { DisciplinaDetailDialog } from "./DisciplinaDetailDialog";
 import { useProjetoDisciplinas } from "@/hooks/useProjetoDisciplinas";
@@ -93,20 +103,60 @@ export function ProjetoFormDialog({
   });
 
   const [step, setStep] = useState<Step>(1);
+  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
+  const [errors, setErrors] = useState<{ codigo_projeto?: string; nome?: string; cliente_id?: string }>({});
+  const codigoRef = useRef<HTMLInputElement>(null);
+  const nomeRef = useRef<HTMLInputElement>(null);
+  const clienteTriggerRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
-    if (open) setStep(1);
+    if (open) {
+      setStep(1);
+      setErrors({});
+    }
   }, [open]);
 
   const selectedDisciplina =
     form.selectedDisciplinaIndex !== null ? form.projetosDisciplinas[form.selectedDisciplinaIndex] : null;
 
+  // Limpa o erro de um campo assim que o usuário começa a corrigi-lo.
+  const clearError = (field: keyof typeof errors) => {
+    setErrors((prev) => (prev[field] ? { ...prev, [field]: undefined } : prev));
+  };
+
   const validateStep1 = () => {
-    if (!form.formData.codigo_projeto || !form.formData.nome || !form.formData.cliente_id) {
-      toast.error("Preencha código, nome e cliente para continuar");
+    const next: typeof errors = {};
+    if (!form.formData.codigo_projeto.trim()) next.codigo_projeto = "Informe o código do projeto";
+    if (!form.formData.nome.trim()) next.nome = "Informe o nome do projeto";
+    if (!form.formData.cliente_id) next.cliente_id = "Selecione um cliente";
+    setErrors(next);
+    if (Object.keys(next).length > 0) {
+      if (next.codigo_projeto) codigoRef.current?.focus();
+      else if (next.nome) nomeRef.current?.focus();
+      else clienteTriggerRef.current?.focus();
       return false;
     }
     return true;
+  };
+
+  // Fecha pedindo confirmação se houver alterações não salvas.
+  const attemptClose = () => {
+    if (form.isSaving) return;
+    if (form.isDirty()) {
+      setShowDiscardConfirm(true);
+      return;
+    }
+    onOpenChange(false);
+  };
+
+  const handleFinalSubmit = () => {
+    // Se algum obrigatório do passo 1 ficou vazio, volta e sinaliza inline
+    // em vez de só disparar o toast genérico no submit.
+    if (!validateStep1()) {
+      setStep(1);
+      return;
+    }
+    form.handleSubmit();
   };
 
   const goNext = () => {
@@ -132,7 +182,14 @@ export function ProjetoFormDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <>
+    <Dialog
+      open={open}
+      onOpenChange={(o) => {
+        if (!o) attemptClose();
+        else onOpenChange(true);
+      }}
+    >
       <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{form.isEditMode ? "Editar Projeto" : "Novo Projeto"}</DialogTitle>
@@ -191,7 +248,7 @@ export function ProjetoFormDialog({
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            if (step === 3) form.handleSubmit();
+            if (step === 3) handleFinalSubmit();
           }}
           className="space-y-4 mt-4"
         >
@@ -221,19 +278,39 @@ export function ProjetoFormDialog({
                   <Label htmlFor="codigo_projeto">Código do Projeto *</Label>
                   <Input
                     id="codigo_projeto"
+                    ref={codigoRef}
                     value={form.formData.codigo_projeto}
-                    onChange={(e) => form.handleInputChange("codigo_projeto", e.target.value)}
+                    onChange={(e) => {
+                      form.handleInputChange("codigo_projeto", e.target.value);
+                      clearError("codigo_projeto");
+                    }}
                     placeholder="PRJ-2024-001"
-                    required
+                    aria-invalid={!!errors.codigo_projeto}
+                    aria-describedby={errors.codigo_projeto ? "codigo_projeto-error" : undefined}
+                    className={cn(errors.codigo_projeto && "border-destructive focus-visible:ring-destructive")}
                   />
+                  {errors.codigo_projeto && (
+                    <p id="codigo_projeto-error" className="text-xs text-destructive">
+                      {errors.codigo_projeto}
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="cliente">Cliente *</Label>
                   <Select
                     value={form.formData.cliente_id}
-                    onValueChange={(value) => form.handleInputChange("cliente_id", value)}
+                    onValueChange={(value) => {
+                      form.handleInputChange("cliente_id", value);
+                      clearError("cliente_id");
+                    }}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger
+                      id="cliente"
+                      ref={clienteTriggerRef}
+                      aria-invalid={!!errors.cliente_id}
+                      aria-describedby={errors.cliente_id ? "cliente-error" : undefined}
+                      className={cn(errors.cliente_id && "border-destructive focus-visible:ring-destructive")}
+                    >
                       <SelectValue placeholder="Selecione" />
                     </SelectTrigger>
                     <SelectContent>
@@ -244,6 +321,11 @@ export function ProjetoFormDialog({
                       ))}
                     </SelectContent>
                   </Select>
+                  {errors.cliente_id && (
+                    <p id="cliente-error" className="text-xs text-destructive">
+                      {errors.cliente_id}
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -252,11 +334,22 @@ export function ProjetoFormDialog({
                   <Label htmlFor="nome">Nome do Projeto *</Label>
                   <Input
                     id="nome"
+                    ref={nomeRef}
                     value={form.formData.nome}
-                    onChange={(e) => form.handleInputChange("nome", e.target.value)}
+                    onChange={(e) => {
+                      form.handleInputChange("nome", e.target.value);
+                      clearError("nome");
+                    }}
                     placeholder="Ex: Residência Silva - Reforma Completa"
-                    required
+                    aria-invalid={!!errors.nome}
+                    aria-describedby={errors.nome ? "nome-error" : undefined}
+                    className={cn(errors.nome && "border-destructive focus-visible:ring-destructive")}
                   />
+                  {errors.nome && (
+                    <p id="nome-error" className="text-xs text-destructive">
+                      {errors.nome}
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label>Prioridade</Label>
@@ -271,15 +364,7 @@ export function ProjetoFormDialog({
                       {PRIORITY_OPTIONS.map((p) => (
                         <SelectItem key={p} value={p}>
                           <span className="flex items-center gap-2">
-                            <span
-                              className={`h-2 w-2 rounded-full ${
-                                p === PROJECT_PRIORITY.ALTA
-                                  ? "bg-red-500"
-                                  : p === PROJECT_PRIORITY.MEDIA
-                                    ? "bg-amber-400"
-                                    : "bg-blue-400"
-                              }`}
-                            />
+                            <span className={cn("h-2 w-2 rounded-full", getPriorityDotColor(p))} />
                             {PROJECT_PRIORITY_CONFIG[p].label}
                           </span>
                         </SelectItem>
@@ -565,7 +650,7 @@ export function ProjetoFormDialog({
               <div />
             )}
             <div className="flex-1" />
-            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} disabled={form.isSaving}>
+            <Button type="button" variant="ghost" onClick={attemptClose} disabled={form.isSaving}>
               Cancelar
             </Button>
             {step < 3 ? (
@@ -575,7 +660,7 @@ export function ProjetoFormDialog({
             ) : (
               <Button
                 type="button"
-                onClick={() => form.handleSubmit()}
+                onClick={handleFinalSubmit}
                 className="bg-brand hover:bg-brand/90 text-ink"
                 disabled={form.isSaving}
               >
@@ -594,5 +679,29 @@ export function ProjetoFormDialog({
         </form>
       </DialogContent>
     </Dialog>
+
+    <AlertDialog open={showDiscardConfirm} onOpenChange={setShowDiscardConfirm}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Descartar alterações?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Você tem alterações não salvas neste projeto. Se sair agora, elas serão perdidas.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Continuar editando</AlertDialogCancel>
+          <AlertDialogAction
+            className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+            onClick={() => {
+              setShowDiscardConfirm(false);
+              onOpenChange(false);
+            }}
+          >
+            Descartar alterações
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 }

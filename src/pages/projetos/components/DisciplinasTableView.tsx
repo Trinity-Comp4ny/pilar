@@ -305,7 +305,7 @@ export function DisciplinasTableView({
                             className="h-7 text-xs border-0 bg-transparent hover:bg-muted"
                           />
                         ) : (
-                          <span className={cn("text-xs", disc.data_final && "text-positive font-medium")}>
+                          <span className={cn("text-xs", disc.data_final && "text-positive-strong font-medium")}>
                             {disc.data_final ? formatDateShort(disc.data_final) : "—"}
                           </span>
                         )}
