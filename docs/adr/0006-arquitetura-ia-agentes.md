@@ -206,12 +206,15 @@ fica explícito no comentário da coluna para ninguém confundir com horas crono
 Esta rodada entrega **só o design (este ADR) + scaffolding de banco**, sem edge
 function nova (evita conflito com trabalho paralelo):
 
-- Migration `030_jobs_queue.sql` — tabela `jobs` (fila + estado de pipeline) com RLS
-  por `empresa_id`, claim atômico via RPC e trigger `pg_notify('jobs_pending', ...)`.
-- Migration `031_ai_usage_logs.sql` — tabela `ai_usage_logs` (custo + equivalente
-  humano) com RLS por `empresa_id`.
-- Stub de tipos TS em `src/integrations/supabase/ai-jobs.types.ts` (escrito à mão;
-  `gen:types` deve ser rodado contra o banco depois de aplicar as migrations).
+- Migration `20260715000010_jobs_queue.sql` — tabela `jobs` (fila + estado de
+  pipeline) com RLS por `empresa_id`, claim atômico via RPC e trigger
+  `pg_notify('jobs_pending', ...)`.
+- `ai_usage_logs` **já existe em staging** (migration `20260514200003`) com
+  `feature_key`/`tokens_input`/`tokens_output`/`model`. As colunas de pricing
+  (custo, `human_equivalent_hours`, `job_id`) entram por ALTER junto com o
+  consumidor real, para não recriar a tabela nem divergir o schema.
+- Stub de tipos TS em `src/integrations/supabase/ai-jobs.types.ts` (só `jobs`,
+  escrito à mão; `gen:types` deve ser rodado depois de aplicar a migration).
 
 As migrations **não foram aplicadas em nenhum banco** e `gen:types` **não foi
 rodado** nesta rodada.

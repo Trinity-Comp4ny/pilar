@@ -1,11 +1,14 @@
 /**
- * Tipos manuais para as tabelas de IA/agentes do ADR 0006 (migrations 030 e 031).
+ * Tipos manuais para a tabela `jobs` do ADR 0006 (migration 20260715000010).
  *
- * Stub temporário: estas tabelas ainda NÃO foram aplicadas em banco, então não
- * estão em `types.ts` (gerado). Depois de aplicar as migrations, rode
- * `npm run gen:types` e migre estes tipos para o `Database` gerado, removendo este
- * arquivo. Enquanto isso, importe daqui para tipar código que fala com `jobs` /
- * `ai_usage_logs`.
+ * Stub temporário: a tabela ainda NÃO foi aplicada em banco, então não está em
+ * `types.ts` (gerado). Depois de aplicar a migration, rode `npm run gen:types` e
+ * migre estes tipos para o `Database` gerado, removendo este arquivo. Enquanto
+ * isso, importe daqui para tipar código que fala com `jobs`.
+ *
+ * `ai_usage_logs` já existe em staging (migration 20260514200003) com outro
+ * schema, então NÃO é tipada aqui: sai do `types.ts` gerado. As colunas de
+ * pricing (custo, human_equivalent_hours) entram junto com o consumidor real.
  *
  * Formato espelha a saída do `supabase gen types` (Row/Insert/Update + Json).
  */
@@ -63,35 +66,3 @@ export interface JobInsert {
 }
 
 export type JobUpdate = Partial<JobInsert>;
-
-export interface AiUsageLogRow {
-  id: string;
-  empresa_id: string;
-  function: string;
-  job_id: string | null;
-  model: string;
-  tokens_in: number;
-  tokens_out: number;
-  /** Custo real da inferência em USD. */
-  cost: number;
-  /** Estimativa de horas de trabalho humano substituídas (não medição). */
-  human_equivalent_hours: number | null;
-  created_by: string | null;
-  created_at: string;
-}
-
-export interface AiUsageLogInsert {
-  id?: string;
-  empresa_id: string;
-  function: string;
-  job_id?: string | null;
-  model: string;
-  tokens_in?: number;
-  tokens_out?: number;
-  cost?: number;
-  human_equivalent_hours?: number | null;
-  created_by?: string | null;
-  created_at?: string;
-}
-
-export type AiUsageLogUpdate = Partial<AiUsageLogInsert>;
