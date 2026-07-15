@@ -12,4 +12,8 @@ Um ADR documenta uma decisão técnica relevante, seu contexto e consequências.
 | [0004](./adr/0004-edge-function-observability.md) | Observabilidade de edge functions via HTTP Envelope |
 | [0005](./adr/0005-permissoes-feature-flags.md) | Modelo de permissões em dois níveis (role + features) |
 
+## Guias de reúso
+
+- [`REUSO_LABRYNTH.md`](./REUSO_LABRYNTH.md) — o que adaptar dos repos internos da Labrynth (segurança/tenancy, frontend, RBAC, design system, IA), com caminhos-fonte e esforço de porte.
+
 > **Novo ADR?** Numere sequencialmente e siga o formato dos existentes (contexto → decisão → consequências).

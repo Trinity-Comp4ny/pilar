@@ -12,5 +12,8 @@ Posicionamento, cliente-alvo, roadmap, precificação e concorrência. ← [volt
 | [PLANO_MELHORIAS_2026-05.md](./PLANO_MELHORIAS_2026-05.md) | Sprint entregue + backlog priorizado (P1–P10 + segurança) | 2026-05-13 |
 | [PRICING.md](./PRICING.md) | **Modelo de cobrança v1** — 3 camadas (projetos + créditos IA + outcome) + comparativo | 2026-07-13 |
 | [ANALISE_COMPETITIVA_VOBI.md](./ANALISE_COMPETITIVA_VOBI.md) | Concorrência (Vobi em detalhe + benchmark AEC) | 2026-05-14 |
+| [DISCUSSAO_TIME_2026-07-14.md](./DISCUSSAO_TIME_2026-07-14.md) | **Discussão multi-agente do time** — diagnóstico, contradição do Timesheet, custo por alocação, sequência 90 dias | 2026-07-14 |
+| [SWOT_E_FOUNDER_2026-07-14.md](./SWOT_E_FOUNDER_2026-07-14.md) | **Pontos fortes/fracos + leitura de founder** — A1 preso na branch, testes de dinheiro, moat = dado conectado, margem automática | 2026-07-14 |
+| [TODO_CONFIG_ADMIN_2026-07-14.md](./TODO_CONFIG_ADMIN_2026-07-14.md) | **TODO config/admin/super-admin** — backlog de profissionalismo (subtração, 3 configs do ICP, 3 mínimos do super-admin) | 2026-07-14 |
 
 **Base de apoio:** inteligência de mercado em `../../research/` (índice em `research/INDEX.md`).
