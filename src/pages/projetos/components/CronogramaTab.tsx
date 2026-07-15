@@ -50,7 +50,7 @@ interface MarkerDef {
 }
 
 const STATUS_COLORS: Record<string, { bar: string; text: string; bg: string }> = {
-  Concluído: { bar: "bg-positive/100", text: "text-positive", bg: "bg-positive/10" },
+  Concluído: { bar: "bg-positive/100", text: "text-positive-strong", bg: "bg-positive/10" },
   "Em Andamento": { bar: "bg-blue-500", text: "text-blue-700", bg: "bg-blue-50" },
   Pendente: { bar: "bg-amber-500", text: "text-amber-700", bg: "bg-amber-50" },
   "Não Iniciado": { bar: "bg-gray-400", text: "text-gray-600", bg: "bg-gray-50" },

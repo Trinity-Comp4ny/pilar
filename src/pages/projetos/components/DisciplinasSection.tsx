@@ -260,7 +260,7 @@ export function DisciplinasSection({
                         <span
                           className={`ml-auto text-[10px] font-medium ${
                             pd.status === "Concluído"
-                              ? "text-positive"
+                              ? "text-positive-strong"
                               : pd.status === "Em Andamento"
                                 ? "text-blue-600"
                                 : "text-gray-500"

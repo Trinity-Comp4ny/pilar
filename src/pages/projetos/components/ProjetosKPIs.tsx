@@ -55,7 +55,7 @@ export function ProjetosKPIs({ projetos, onFilterAtraso, onFilterProximos }: Pro
         icon={TrendingUp}
         label="Valor pipeline"
         value={formatCurrency(stats.valorPipeline)}
-        color="text-positive"
+        color="text-positive-strong"
       />
     </div>
   );

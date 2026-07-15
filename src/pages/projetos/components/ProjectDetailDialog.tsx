@@ -210,7 +210,7 @@ export function ProjectDetailDialog({
               <span className="flex items-center gap-1">
                 <User className="h-3 w-3" /> {projeto.cliente_nome || "—"}
               </span>
-              <span className="flex items-center gap-1 text-positive font-medium">
+              <span className="flex items-center gap-1 text-positive-strong font-medium">
                 <DollarSign className="h-3 w-3" /> {formatCurrency(projeto.valor_contrato)}
               </span>
               {projeto.area_m2 !== undefined && (

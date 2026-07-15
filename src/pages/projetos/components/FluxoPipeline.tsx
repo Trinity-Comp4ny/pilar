@@ -31,7 +31,7 @@ const STATUS_CONFIG = {
   concluido: {
     bg: "bg-positive/100",
     border: "border-status-done",
-    text: "text-positive",
+    text: "text-positive-strong",
     icon: CheckCircle2,
     label: "Concluído",
   },

@@ -62,13 +62,13 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; bgCard: stri
   },
   Recebido: {
     label: "Recebido",
-    color: "bg-positive/10 text-positive",
+    color: "bg-positive/10 text-positive-strong",
     bgCard: "border-l-green-500",
     icon: CheckCircle2,
   },
   Pago: {
     label: "Pago",
-    color: "bg-positive/10 text-positive",
+    color: "bg-positive/10 text-positive-strong",
     bgCard: "border-l-green-500",
     icon: CheckCircle2,
   },
@@ -178,7 +178,7 @@ export function PagamentosTab({ projetoId, canEdit }: PagamentosTabProps) {
                 label="Total Recebido"
                 valor={formatCurrency(resumo.totalRecebido)}
                 icon={TrendingUp}
-                color="bg-positive/10 text-positive"
+                color="bg-positive/10 text-positive-strong"
                 subtitle={`${resumo.percentualRecebido}% do contrato`}
               />
               <SummaryCard
@@ -286,7 +286,7 @@ export function PagamentosTab({ projetoId, canEdit }: PagamentosTabProps) {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem onClick={() => setConfirmId(pag.id)}>
-                          <CheckCircle2 className="mr-2 h-4 w-4 text-positive" />
+                          <CheckCircle2 className="mr-2 h-4 w-4 text-positive-strong" />
                           Marcar como recebido
                         </DropdownMenuItem>
                       </DropdownMenuContent>
