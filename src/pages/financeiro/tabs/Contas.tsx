@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { CreditCard, Wallet, Plus, Pencil, Trash2, TrendingUp, TrendingDown } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { detectTipoChavePix, TIPO_CHAVE_PIX_LABEL, type TipoChavePix } from "@/lib/pixUtils";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
@@ -30,6 +31,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { formatCurrencyInput, formatValorToInput, parseCurrencyString } from "@/lib/currencyUtils";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
+import { FinanceErrorState } from "../components/FinanceErrorState";
 
 const fmtCompactBRL = new Intl.NumberFormat("pt-BR", {
   style: "currency",
@@ -67,6 +69,8 @@ interface CartaoItem {
 export default function Configuracoes() {
   const [cartoes, setCartoes] = useState<CartaoItem[]>([]);
   const [contas, setContas] = useState<ContaItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
 
   const [isNewCartaoOpen, setIsNewCartaoOpen] = useState(false);
   const [isNewContaOpen, setIsNewContaOpen] = useState(false);
@@ -92,13 +96,28 @@ export default function Configuracoes() {
   const [tipoCartao, setTipoCartao] = useState<"credito" | "debito">("credito");
 
   useEffect(() => {
-    fetchContas();
-    fetchCartoes();
+    void reload();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const reload = async () => {
+    setLoading(true);
+    setLoadError(false);
+    await Promise.all([fetchContas(), fetchCartoes()]);
+    setLoading(false);
+  };
+
   const fetchContas = async () => {
-    const { data: viewData } = await supabase.from("view_financas_resumo").select("*");
-    if (!viewData) return;
+    const { data: viewData, error } = await supabase.from("view_financas_resumo").select("*");
+    if (error) {
+      setLoadError(true);
+      toast.error("Erro ao carregar contas", { description: error.message });
+      return;
+    }
+    if (!viewData) {
+      setContas([]);
+      return;
+    }
 
     const ids = viewData.map((c) => c.conta_id).filter(Boolean) as string[];
     const { data: pixData = [] } = ids.length
@@ -125,8 +144,13 @@ export default function Configuracoes() {
   };
 
   const fetchCartoes = async () => {
-    const { data } = await supabase.from("view_cartao_resumo").select("*");
-    if (data) setCartoes(data as CartaoItem[]);
+    const { data, error } = await supabase.from("view_cartao_resumo").select("*");
+    if (error) {
+      setLoadError(true);
+      toast.error("Erro ao carregar cartões", { description: error.message });
+      return;
+    }
+    setCartoes((data ?? []) as CartaoItem[]);
   };
 
   const handleSaveConta = async () => {
@@ -301,28 +325,38 @@ export default function Configuracoes() {
         });
         return;
       }
-      const { error } = await supabase.from("contas").delete().eq("id", id);
+      // Soft delete: mantém histórico; a view_financas_resumo filtra deleted_at.
+      const { error } = await supabase
+        .from("contas")
+        .update({ deleted_at: new Date().toISOString() })
+        .eq("id", id);
       if (!error) {
-        toast.success("Conta excluída");
+        toast.success("Conta desativada");
         fetchContas();
         setPanelConta(null);
       } else {
         toast.error("Não foi possível excluir a conta. Tente novamente.");
       }
     } else {
+      // Ignora faturas vazias pré-criadas (valor_total 0 e ainda Aberta).
       const { count: faturasCount } = await supabase
         .from("faturas")
         .select("id", { count: "exact", head: true })
-        .eq("cartao_id", id);
+        .eq("cartao_id", id)
+        .or("valor_total.gt.0,status.neq.Aberta");
       if ((faturasCount ?? 0) > 0) {
         toast.error("Cartão com faturas", {
           description: `Existem ${faturasCount} fatura(s) vinculada(s). Quite-as antes de excluir o cartão.`,
         });
         return;
       }
-      const { error } = await supabase.from("cartoes").delete().eq("id", id);
+      // Soft delete: a view_cartao_resumo filtra deleted_at.
+      const { error } = await supabase
+        .from("cartoes")
+        .update({ deleted_at: new Date().toISOString() })
+        .eq("id", id);
       if (!error) {
-        toast.success("Cartão excluído");
+        toast.success("Cartão desativado");
         fetchCartoes();
         setPanelCartao(null);
       } else {
@@ -370,6 +404,26 @@ export default function Configuracoes() {
     <>
       <Card className="vrz-card w-full">
         <CardContent className="p-0">
+          {loading ? (
+            <div className="flex min-h-[480px]">
+              <div className="w-64 shrink-0 border-r p-4 space-y-2">
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-9 w-full" />
+                <Skeleton className="h-9 w-full" />
+                <Skeleton className="h-4 w-20 mt-4" />
+                <Skeleton className="h-9 w-full" />
+              </div>
+              <div className="flex-1 p-6 space-y-4">
+                <Skeleton className="h-12 w-48" />
+                <Skeleton className="h-8 w-40" />
+                <Skeleton className="h-24 w-full" />
+              </div>
+            </div>
+          ) : loadError ? (
+            <div className="min-h-[480px] flex items-center justify-center">
+              <FinanceErrorState onRetry={() => void reload()} />
+            </div>
+          ) : (
           <div className="flex min-h-[480px]">
             {/* Sidebar esquerda */}
             <div className="w-64 shrink-0 border-r flex flex-col">
@@ -878,6 +932,7 @@ export default function Configuracoes() {
               )}
             </div>
           </div>
+          )}
         </CardContent>
       </Card>
 

@@ -106,6 +106,7 @@ export function LancamentosTable({
   const [deleteTarget, setDeleteTarget] = useState<Lancamento | null>(null);
   const [deleteGroupTarget, setDeleteGroupTarget] = useState<Lancamento[] | null>(null);
   const [bulkConfirm, setBulkConfirm] = useState(false);
+  const [bulkPaidConfirm, setBulkPaidConfirm] = useState(false);
   const [detailTarget, setDetailTarget] = useState<Lancamento | null>(null);
   const [editTarget, setEditTarget] = useState<Lancamento | null>(null);
   const [editTransferencia, setEditTransferencia] = useState<Lancamento | null>(null);
@@ -356,7 +357,14 @@ export function LancamentosTable({
     if (selectedRows.length === 0) return;
     await markItemsPaid(selectedRows);
     setSelected(new Set());
+    setBulkPaidConfirm(false);
   };
+
+  // Quantos dos selecionados ainda não estão efetivados (os que serão movidos).
+  const selectedUnpaidCount = useMemo(
+    () => selectedRows.filter((l) => l.tipo !== "transferencia" && !isPaidStatus(l)).length,
+    [selectedRows]
+  );
 
   const deleteItems = async (items: Lancamento[]) => {
     const recIds = items.filter((l) => l.tipo === "receita").map((l) => l.id);
@@ -450,7 +458,7 @@ export function LancamentosTable({
       <LancamentosBulkBar
         count={selected.size}
         canEdit={canEdit}
-        onMarkPaid={bulkMarkPaid}
+        onMarkPaid={() => setBulkPaidConfirm(true)}
         onDelete={() => setBulkConfirm(true)}
         onClear={() => setSelected(new Set())}
       />
@@ -646,6 +654,20 @@ export function LancamentosTable({
         description="Esta ação não pode ser desfeita."
         confirmText="Excluir todos"
         variant="destructive"
+      />
+
+      <ConfirmDialog
+        open={bulkPaidConfirm}
+        onOpenChange={setBulkPaidConfirm}
+        onConfirm={bulkMarkPaid}
+        title={`Marcar ${selectedUnpaidCount} lançamento(s) como pago/recebido?`}
+        description={
+          selectedUnpaidCount > 0
+            ? "Vão receber a data de hoje como efetivação e entrar no caixa. Você pode reverter o status depois."
+            : "Nenhum dos selecionados está pendente — nada será alterado."
+        }
+        confirmText="Marcar pago/recebido"
+        variant="default"
       />
 
       <ConfirmDialog
