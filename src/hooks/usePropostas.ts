@@ -169,3 +169,40 @@ export const usePropostaDisciplinas = (propostaId: string | null) => {
     enabled: !!propostaId,
   });
 };
+
+export interface PropostaDisciplinaInput {
+  disciplina: string;
+  horas_estimadas: number;
+  custo_hora: number;
+  valor_venda: number;
+}
+
+/**
+ * Substitui, de forma atômica, as disciplinas de uma proposta e recalcula
+ * custo_estimado / margem_estimada_pct via RPC transacional.
+ */
+export const useSalvarPropostaDisciplinas = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      propostaId,
+      disciplinas,
+    }: {
+      propostaId: string;
+      disciplinas: PropostaDisciplinaInput[];
+    }) => {
+      // RPC ainda não está nos tipos gerados (migration não aplicada ao remoto);
+      // cast segue o padrão de useFinanceChartData.
+      const { error } = await (supabase as unknown as { rpc: (fn: string, args: unknown) => Promise<{ error: unknown }> }).rpc(
+        "rpc_salvar_proposta_disciplinas",
+        { p_proposta_id: propostaId, p_disciplinas: disciplinas }
+      );
+      if (error) throw error;
+    },
+    onSuccess: (_data, { propostaId }) => {
+      queryClient.invalidateQueries({ queryKey: ["proposta-disciplinas", propostaId] });
+      queryClient.invalidateQueries({ queryKey: ["propostas"] });
+    },
+  });
+};

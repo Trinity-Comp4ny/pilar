@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -46,10 +46,13 @@ import {
   useDeleteProposta,
   useConverterProposta,
   usePropostaDisciplinas,
+  useSalvarPropostaDisciplinas,
   PROPOSTA_STATUS_CONFIG,
   type PropostaInsert,
 } from "@/hooks/usePropostas";
-import { formatCurrencyInput, parseCurrencyString } from "@/lib/currencyUtils";
+import { formatCurrencyInput, parseCurrencyString, formatCurrency as formatCurrencyBRL } from "@/lib/currencyUtils";
+import { DisciplinasEditor } from "./components/DisciplinasEditor";
+import { calcDisciplinasTotais, valorDivergeDaSoma, type DisciplinaLinha } from "./lib/disciplinasCalc";
 import { DatePicker } from "@/components/ui/date-picker";
 import { addDays, format } from "date-fns";
 import { CapacidadeSimulacao } from "./components/CapacidadeSimulacao";
@@ -89,6 +92,7 @@ export default function Propostas() {
   const updateProposta = useUpdateProposta();
   const deleteProposta = useDeleteProposta();
   const converterProposta = useConverterProposta();
+  const salvarDisciplinas = useSalvarPropostaDisciplinas();
   const navigate = useNavigate();
 
   const canEdit = userRole === "admin" || userRole === "ultra_admin";
@@ -122,6 +126,33 @@ export default function Propostas() {
 
   const [form, setForm] = useState<PropostaInsert>(emptyForm);
   const [valorDisplay, setValorDisplay] = useState("");
+  const [disciplinasRows, setDisciplinasRows] = useState<DisciplinaLinha[]>([]);
+
+  // Carrega as disciplinas da proposta em edição uma única vez por proposta,
+  // sem sobrescrever o que o usuário já editou no formulário aberto.
+  const { data: editDisciplinasData = [], isFetched: editDisciplinasFetched } = usePropostaDisciplinas(editingId);
+  const hydratedFor = useRef<string | null>(null);
+  useEffect(() => {
+    if (!editingId) {
+      hydratedFor.current = null;
+      return;
+    }
+    if (hydratedFor.current === editingId || !editDisciplinasFetched) return;
+    setDisciplinasRows(
+      editDisciplinasData.map((d) => ({
+        id: d.id,
+        disciplina: d.disciplina,
+        horas_estimadas: Number(d.horas_estimadas) || 0,
+        custo_hora: Number(d.custo_hora) || 0,
+        valor_venda: Number(d.valor_venda) || 0,
+      }))
+    );
+    hydratedFor.current = editingId;
+  }, [editingId, editDisciplinasFetched, editDisciplinasData]);
+
+  const disciplinasTotais = calcDisciplinasTotais(disciplinasRows);
+  const valorPropostoNum = parseCurrencyString(valorDisplay);
+  const valorDiverge = valorDivergeDaSoma(valorPropostoNum, disciplinasTotais.totalValor);
 
   const { data: clientes = [] } = useQuery({
     queryKey: ["clientes-select"],
@@ -138,6 +169,8 @@ export default function Propostas() {
     setValorDisplay("");
     setVinculoTipo("cliente");
     setEditingId(null);
+    setDisciplinasRows([]);
+    hydratedFor.current = null;
   };
 
   const openEdit = (id: string) => {
@@ -169,17 +202,49 @@ export default function Propostas() {
       toast.error("Título é obrigatório");
       return;
     }
-    const valorProposto = parseCurrencyString(valorDisplay);
-    const payload = { ...form, valor_proposto: valorProposto || undefined };
+    const disciplinasValidas = disciplinasRows.filter((d) => d.disciplina.trim() !== "");
+    // Se não há valor digitado, usa a soma das disciplinas como valor proposto.
+    const valorManual = parseCurrencyString(valorDisplay);
+    const valorProposto = valorManual || (disciplinasTotais.totalValor > 0 ? disciplinasTotais.totalValor : undefined);
+    const payload = { ...form, valor_proposto: valorProposto };
+
+    const disciplinasPayload = disciplinasValidas.map((d) => ({
+      disciplina: d.disciplina.trim(),
+      horas_estimadas: d.horas_estimadas,
+      custo_hora: d.custo_hora,
+      valor_venda: d.valor_venda,
+    }));
+
+    // Persiste as disciplinas via RPC transacional (delete + insert + recálculo de
+    // custo/margem). Só chama quando há linhas ou quando estamos editando (para
+    // refletir remoções). Falha aqui não invalida a proposta já salva.
+    const persistDisciplinas = (propostaId: string, done: () => void) => {
+      if (disciplinasPayload.length === 0 && !editingId) {
+        done();
+        return;
+      }
+      salvarDisciplinas.mutate(
+        { propostaId, disciplinas: disciplinasPayload },
+        {
+          onSuccess: done,
+          onError: () => {
+            toast.error("Proposta salva, mas houve erro ao salvar as disciplinas");
+            done();
+          },
+        }
+      );
+    };
 
     if (editingId) {
       updateProposta.mutate(
         { id: editingId, ...payload },
         {
           onSuccess: () => {
-            toast.success("Proposta atualizada");
-            setIsFormOpen(false);
-            resetForm();
+            persistDisciplinas(editingId, () => {
+              toast.success("Proposta atualizada");
+              setIsFormOpen(false);
+              resetForm();
+            });
           },
           onError: () => toast.error("Erro ao atualizar"),
         }
@@ -192,10 +257,12 @@ export default function Propostas() {
         validade: form.validade || format(addDays(new Date(), 30), "yyyy-MM-dd"),
       };
       createProposta.mutate(createPayload, {
-        onSuccess: () => {
-          toast.success("Proposta criada");
-          setIsFormOpen(false);
-          resetForm();
+        onSuccess: (data) => {
+          persistDisciplinas(data.id, () => {
+            toast.success("Proposta criada");
+            setIsFormOpen(false);
+            resetForm();
+          });
         },
         onError: () => toast.error("Erro ao criar"),
       });
@@ -770,6 +837,39 @@ export default function Propostas() {
                 />
               </div>
             </div>
+
+            {disciplinasTotais.totalValor > 0 && (
+              <div className="flex flex-wrap items-center gap-2 -mt-2 text-[11px] text-muted-foreground">
+                <span>Soma das disciplinas: {formatCurrencyBRL(disciplinasTotais.totalValor)}</span>
+                {valorDiverge && (
+                  <>
+                    <span className="text-amber-600">difere do valor digitado</span>
+                    <button
+                      type="button"
+                      className="text-brand underline underline-offset-2"
+                      onClick={() =>
+                        setValorDisplay(
+                          new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2 }).format(
+                            disciplinasTotais.totalValor
+                          )
+                        )
+                      }
+                    >
+                      usar a soma
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label>Disciplinas</Label>
+                <span className="text-[11px] text-muted-foreground">Opcional. Detalha horas, custo e valor.</span>
+              </div>
+              <DisciplinasEditor rows={disciplinasRows} onChange={setDisciplinasRows} disabled={!canEdit} />
+            </div>
+
             <div className="space-y-2">
               <Label>Validade da proposta</Label>
               <DatePicker
@@ -805,7 +905,10 @@ export default function Propostas() {
               >
                 Cancelar
               </Button>
-              <Button onClick={handleSubmit} disabled={createProposta.isPending || updateProposta.isPending}>
+              <Button
+                onClick={handleSubmit}
+                disabled={createProposta.isPending || updateProposta.isPending || salvarDisciplinas.isPending}
+              >
                 {editingId ? "Salvar Alterações" : "Criar Proposta"}
               </Button>
             </div>
