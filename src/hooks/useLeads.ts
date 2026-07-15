@@ -2,6 +2,7 @@ import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from "@tansta
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { getSafeErrorMessage } from "@/lib/safeError";
+import { onlyDigits } from "@/lib/maskUtils";
 
 export interface Lead {
   id: string;
@@ -200,6 +201,25 @@ export type ConvertEnrichment = {
   endereco: string | null;
 };
 
+/**
+ * Monta o objeto de update aplicado no cliente recém-criado a partir dos dados
+ * enriquecidos (consulta de CNPJ). A tabela `clientes` guarda o documento em
+ * `cpf_cnpj` (não `cnpj`) e só com dígitos, então o CNPJ é normalizado aqui.
+ */
+export function buildClienteEnrichmentUpdate(
+  enrichment: ConvertEnrichment | null | undefined
+): Record<string, unknown> {
+  const updates: Record<string, unknown> = {};
+  if (!enrichment) return updates;
+  if (enrichment.cnpj) {
+    const digits = onlyDigits(enrichment.cnpj);
+    if (digits) updates.cpf_cnpj = digits;
+  }
+  if (enrichment.razao_social) updates.nome = enrichment.razao_social;
+  if (enrichment.endereco) updates.endereco = enrichment.endereco;
+  return updates;
+}
+
 export const useConvertLeadToClient = () => {
   const queryClient = useQueryClient();
 
@@ -212,12 +232,13 @@ export const useConvertLeadToClient = () => {
       if (error) throw error;
 
       if (enrichment && data) {
-        const updates: Record<string, unknown> = {};
-        if (enrichment.cnpj) updates.cnpj = enrichment.cnpj;
-        if (enrichment.razao_social) updates.nome = enrichment.razao_social;
-        if (enrichment.endereco) updates.endereco = enrichment.endereco;
+        const updates = buildClienteEnrichmentUpdate(enrichment);
         if (Object.keys(updates).length > 0) {
-          await supabase.from("clientes").update(updates).eq("id", data as string);
+          const { error: updateError } = await supabase
+            .from("clientes")
+            .update(updates)
+            .eq("id", data as string);
+          if (updateError) throw updateError;
         }
       }
 
@@ -264,9 +285,25 @@ export const useDeleteLead = () => {
 
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_data, id) => {
       queryClient.invalidateQueries({ queryKey: ["leads"] });
-      toast.success("Lead excluído");
+      toast.success("Lead excluído", {
+        action: {
+          label: "Desfazer",
+          onClick: async () => {
+            const { error } = await supabase.from("leads").update({ deleted_at: null }).eq("id", id);
+            if (error) {
+              toast.error("Erro ao desfazer", { description: getSafeErrorMessage(error) });
+              return;
+            }
+            queryClient.invalidateQueries({ queryKey: ["leads"] });
+            toast.success("Exclusão desfeita");
+          },
+        },
+      });
+    },
+    onError: (err: unknown) => {
+      toast.error("Erro ao excluir", { description: getSafeErrorMessage(err) });
     },
   });
 };
