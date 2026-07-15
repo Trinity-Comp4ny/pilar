@@ -14,8 +14,8 @@ import type { Acao } from "./useChat";
 type Props = {
   index: number;
   acao: Acao;
-  onExecutar: (index: number, runId: string, operacao: string, payload: Record<string, unknown>) => Promise<void>;
-  onCancelar: (index: number, runId: string) => Promise<void>;
+  onExecutar: (runId: string, operacao: string, payload: Record<string, unknown>) => Promise<void>;
+  onCancelar: (runId: string) => Promise<void>;
 };
 
 type Candidato = { id: string; label: string; email?: string };
@@ -103,7 +103,7 @@ export function AcaoCard({ index, acao, onExecutar, onCancelar }: Props) {
     if (permiteQtd && quantidade) payload.quantidade = Number(quantidade);
     setSalvando(true);
     try {
-      await onExecutar(index, acao.runId, acao.operacao, payload);
+      await onExecutar(acao.runId, acao.operacao, payload);
       toast.success("Ação concluída");
     } catch (e) {
       toast.error("Não foi possível concluir", { description: msgErro(e) });
@@ -115,7 +115,7 @@ export function AcaoCard({ index, acao, onExecutar, onCancelar }: Props) {
   const cancelar = async () => {
     setSalvando(true);
     try {
-      await onCancelar(index, acao.runId);
+      await onCancelar(acao.runId);
     } finally {
       setSalvando(false);
     }

@@ -11,11 +11,10 @@ import { msgErro } from "./erros";
 import type { Draft, DraftCampos, FolhaLinhaPayload } from "./useChat";
 
 type Props = {
-  index: number;
   draft: Draft;
-  onConfirmar: (index: number, runId: string, entidade: "folha", campos: DraftCampos) => Promise<string | undefined>;
-  onCancelar: (index: number, runId: string) => Promise<void>;
-  onDesfazerFolha: (index: number, runId: string, mes: number, ano: number) => Promise<void>;
+  onConfirmar: (runId: string, entidade: "folha", campos: DraftCampos) => Promise<string | undefined>;
+  onCancelar: (runId: string) => Promise<void>;
+  onDesfazerFolha: (runId: string, mes: number, ano: number) => Promise<void>;
 };
 
 const MESES = ["", "jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
@@ -29,7 +28,7 @@ type Linha = {
   adicional_variavel: number;
 };
 
-export function FolhaCard({ index, draft, onConfirmar, onCancelar, onDesfazerFolha }: Props) {
+export function FolhaCard({ draft, onConfirmar, onCancelar, onDesfazerFolha }: Props) {
   const mes = Number(draft.campos.mes);
   const ano = Number(draft.campos.ano);
   const [rows, setRows] = useState<Linha[]>([]);
@@ -84,7 +83,7 @@ export function FolhaCard({ index, draft, onConfirmar, onCancelar, onDesfazerFol
     }));
     setSalvando(true);
     try {
-      await onConfirmar(index, draft.runId, "folha", { mes, ano, linhas });
+      await onConfirmar(draft.runId, "folha", { mes, ano, linhas });
       toast.success("Folha fechada");
     } catch (e) {
       toast.error("Não foi possível fechar a folha", { description: msgErro(e) });
@@ -96,7 +95,7 @@ export function FolhaCard({ index, draft, onConfirmar, onCancelar, onDesfazerFol
   const cancelar = async () => {
     setSalvando(true);
     try {
-      await onCancelar(index, draft.runId);
+      await onCancelar(draft.runId);
     } finally {
       setSalvando(false);
     }
@@ -105,7 +104,7 @@ export function FolhaCard({ index, draft, onConfirmar, onCancelar, onDesfazerFol
   const desfazer = async () => {
     setDesfazendo(true);
     try {
-      await onDesfazerFolha(index, draft.runId, mes, ano);
+      await onDesfazerFolha(draft.runId, mes, ano);
       toast.success("Fechamento desfeito");
     } catch {
       toast.error("Não foi possível desfazer");
