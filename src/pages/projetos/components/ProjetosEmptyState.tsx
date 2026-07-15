@@ -1,13 +1,33 @@
 import { Button } from "@/components/ui/button";
-import { Layers, Plus, SearchX } from "lucide-react";
+import { AlertTriangle, Layers, Plus, SearchX } from "lucide-react";
 
 interface ProjetosEmptyStateProps {
-  variant: "no-projetos" | "no-results";
+  variant: "no-projetos" | "no-results" | "error";
   onCreate?: () => void;
   onClearFilters?: () => void;
+  onRetry?: () => void;
 }
 
-export function ProjetosEmptyState({ variant, onCreate, onClearFilters }: ProjetosEmptyStateProps) {
+export function ProjetosEmptyState({ variant, onCreate, onClearFilters, onRetry }: ProjetosEmptyStateProps) {
+  if (variant === "error") {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 text-center">
+        <div className="h-12 w-12 rounded-full bg-destructive/10 flex items-center justify-center mb-3">
+          <AlertTriangle className="h-6 w-6 text-destructive" />
+        </div>
+        <p className="text-sm font-medium">Não foi possível carregar os projetos</p>
+        <p className="text-xs text-muted-foreground mt-1 max-w-sm">
+          Verifique sua conexão e tente novamente.
+        </p>
+        {onRetry && (
+          <Button variant="outline" size="sm" className="mt-4" onClick={onRetry}>
+            Tentar novamente
+          </Button>
+        )}
+      </div>
+    );
+  }
+
   if (variant === "no-results") {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">

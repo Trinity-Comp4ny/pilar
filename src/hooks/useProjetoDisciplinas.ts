@@ -1,6 +1,20 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { callUntypedRpc } from "@/lib/supabaseRpc";
 import type { ProjetoDisciplinaDB } from "@/types/projetos";
+
+/**
+ * Sincroniza responsáveis de uma disciplina de forma transacional (insere só os novos,
+ * remove só os que saíram). Substitui o antigo DELETE all + INSERT fora de transação,
+ * que deixava a disciplina sem responsável se o INSERT falhasse.
+ */
+async function syncResponsaveis(disciplinaId: string, responsavelIds: string[]) {
+  const { error } = await callUntypedRpc("sync_disciplina_responsaveis", {
+    p_disciplina_id: disciplinaId,
+    p_pessoa_ids: responsavelIds,
+  });
+  if (error) throw error;
+}
 
 interface RawDisciplinaRow {
   id: string;
@@ -118,22 +132,27 @@ export function useUpsertDisciplina() {
       let disciplinaId = id;
 
       if (disciplinaId) {
+        const updatePayload: Record<string, unknown> = {
+          nome,
+          status,
+          data_inicio: data_inicio || null,
+          data_fim: data_fim || null,
+          data_fim_real: data_fim_real || null,
+          prioridade: prioridade || null,
+          justificativa_atraso: justificativa_atraso || null,
+          horas_estimadas,
+          custo_hora,
+          ...(ordem_etapa !== null && ordem_etapa !== undefined ? { ordem_etapa } : {}),
+          updated_at: new Date().toISOString(),
+        };
+        // observacoes só é sobrescrito quando explicitamente informado.
+        // Assim adicionar/remover responsável (que não passa observacoes) não apaga
+        // as observações já gravadas na disciplina.
+        if (observacoes !== undefined) updatePayload.observacoes = observacoes || null;
+
         const { error } = await supabase
           .from("projeto_disciplinas")
-          .update({
-            nome,
-            status,
-            data_inicio: data_inicio || null,
-            data_fim: data_fim || null,
-            data_fim_real: data_fim_real || null,
-            observacoes: observacoes || null,
-            prioridade: prioridade || null,
-            justificativa_atraso: justificativa_atraso || null,
-            horas_estimadas,
-            custo_hora,
-            ...(ordem_etapa !== null && ordem_etapa !== undefined ? { ordem_etapa } : {}),
-            updated_at: new Date().toISOString(),
-          } as never)
+          .update(updatePayload as never)
           .eq("id", disciplinaId);
 
         if (error) throw error;
@@ -161,20 +180,9 @@ export function useUpsertDisciplina() {
         disciplinaId = data.id;
       }
 
-      // Sync responsaveis: delete all then re-insert
+      // Sync responsaveis transacional (insere novos, remove os que saíram)
       if (disciplinaId) {
-        await supabase.from("projeto_disciplina_responsaveis").delete().eq("projeto_disciplina_id", disciplinaId);
-
-        if (responsavel_ids.length > 0) {
-          const rows = responsavel_ids.map((pessoa_id) => ({
-            projeto_disciplina_id: disciplinaId!,
-            pessoa_id,
-          }));
-
-          const { error: respError } = await supabase.from("projeto_disciplina_responsaveis").insert(rows);
-
-          if (respError) throw respError;
-        }
+        await syncResponsaveis(disciplinaId, responsavel_ids);
       }
 
       return disciplinaId;
@@ -363,17 +371,8 @@ export function useBulkSaveDisciplinas() {
           discId = data.id;
         }
 
-        // Sync responsaveis
-        await supabase.from("projeto_disciplina_responsaveis").delete().eq("projeto_disciplina_id", discId!);
-
-        if (disc.responsavel_ids.length > 0) {
-          const rows = disc.responsavel_ids.map((pessoa_id) => ({
-            projeto_disciplina_id: discId!,
-            pessoa_id,
-          }));
-          const { error: respError } = await supabase.from("projeto_disciplina_responsaveis").insert(rows);
-          if (respError) throw respError;
-        }
+        // Sync responsaveis transacional (insere novos, remove os que saíram)
+        await syncResponsaveis(discId!, disc.responsavel_ids);
       }
 
       return projetoId;
