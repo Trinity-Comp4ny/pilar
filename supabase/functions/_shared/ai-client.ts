@@ -4,6 +4,11 @@ import { z } from "./schemas.ts";
 const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY") || "";
 export const GEMINI_MODEL = "gemini-2.5-flash";
 const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
+// streamGenerateContent + alt=sse: cada chunk chega como um evento SSE ("data: {json}\n\n").
+const GEMINI_STREAM_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:streamGenerateContent?alt=sse`;
+
+// Teto mensal padrão quando ainda não há linha em ai_usage (mesmo default da coluna limite_requests).
+const DEFAULT_LIMITE_REQUESTS = 100;
 
 // Timeouts do Gemini. Cada chamada tem um teto próprio (AbortController); o orçamento
 // total limita a soma das tentativas (retry) para não estourar o wall-clock da edge.
@@ -105,6 +110,36 @@ export async function checkRateLimit(supabaseAdmin: SupabaseClient, empresaId: s
   return true;
 }
 
+export interface AiSaldo {
+  usados: number;
+  limite: number;
+  restante: number;
+}
+
+/**
+ * Saldo de uso de IA do mês corrente: teto mensal (limite_requests) menos o já usado
+ * (total_requests) em ai_usage. Sem linha ainda → usa o teto padrão e zero usado.
+ * `restante` nunca fica negativo. Usa o client admin (bypassa RLS de ai_usage).
+ */
+export async function getAiSaldo(supabaseAdmin: SupabaseClient, empresaId: string): Promise<AiSaldo> {
+  const now = new Date();
+  const mes = now.getMonth() + 1;
+  const ano = now.getFullYear();
+
+  const { data } = await supabaseAdmin
+    .from("ai_usage")
+    .select("total_requests, limite_requests")
+    .eq("empresa_id", empresaId)
+    .eq("mes", mes)
+    .eq("ano", ano)
+    .maybeSingle();
+
+  const row = data as AiUsageRow | null;
+  const usados = row?.total_requests ?? 0;
+  const limite = row?.limite_requests ?? DEFAULT_LIMITE_REQUESTS;
+  return { usados, limite, restante: Math.max(0, limite - usados) };
+}
+
 /**
  * Registra uso do Gemini na tabela ai_usage_logs para billing granular por feature.
  * Falha silenciosa — nunca quebra o fluxo principal.
@@ -197,6 +232,117 @@ async function fetchGeminiRaw(
     tokensEntrada: usage.promptTokenCount || 0,
     tokensSaida: usage.candidatesTokenCount || 0,
   };
+}
+
+export interface GeminiStreamUsage {
+  tokensEntrada: number;
+  tokensSaida: number;
+}
+
+/**
+ * Chama o Gemini em modo STREAMING (streamGenerateContent) e emite o texto em pedaços,
+ * conforme o modelo gera. Devolve, no retorno do generator, a contagem de tokens (a
+ * usageMetadata só chega, cumulativa, nos chunks finais).
+ *
+ * Saída em TEXTO PURO (sem responseMimeType JSON) — pensada para a etapa de resposta
+ * em linguagem natural do chat, onde o token-a-token dá feedback incremental ao usuário.
+ * Fluxos que gravam no banco continuam em callGeminiStructured (validação + retry).
+ */
+export async function* streamGeminiText(
+  systemPrompt: string,
+  userMessage: string,
+  opts: { deadline?: number } = {}
+): AsyncGenerator<string, GeminiStreamUsage, unknown> {
+  const body = {
+    system_instruction: {
+      parts: [{ text: systemPrompt }],
+    },
+    contents: [
+      {
+        role: "user",
+        parts: [{ text: userMessage }],
+      },
+    ],
+    generationConfig: {
+      temperature: 0.7,
+      maxOutputTokens: 4096,
+    },
+  };
+
+  const restante = opts.deadline ? opts.deadline - Date.now() : GEMINI_CALL_TIMEOUT_MS;
+  const timeoutMs = Math.min(GEMINI_CALL_TIMEOUT_MS, restante);
+  if (timeoutMs <= 0) {
+    throw new Error("Orçamento de tempo do Gemini esgotado antes da chamada");
+  }
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  let tokensEntrada = 0;
+  let tokensSaida = 0;
+
+  try {
+    let response: Response;
+    try {
+      response = await fetch(GEMINI_STREAM_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-goog-api-key": GEMINI_API_KEY,
+        },
+        body: JSON.stringify(body),
+        signal: controller.signal,
+      });
+    } catch (e) {
+      if (e instanceof DOMException && e.name === "AbortError") {
+        throw new Error(`Gemini API timeout após ${timeoutMs}ms`);
+      }
+      throw e;
+    }
+
+    if (!response.ok || !response.body) {
+      const errorText = response.body ? await response.text() : "sem corpo";
+      throw new Error(`Gemini API error (${response.status}): ${errorText}`);
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+
+      // Cada evento SSE é uma linha "data: {json}". Processa linha a linha.
+      let nl: number;
+      while ((nl = buffer.indexOf("\n")) >= 0) {
+        const line = buffer.slice(0, nl).trim();
+        buffer = buffer.slice(nl + 1);
+        if (!line.startsWith("data:")) continue;
+        const payload = line.slice(5).trim();
+        if (!payload || payload === "[DONE]") continue;
+        let parsed: GeminiApiResponse;
+        try {
+          parsed = JSON.parse(payload) as GeminiApiResponse;
+        } catch {
+          // Chunk parcial/partido — ignora (o próximo read completa a linha).
+          continue;
+        }
+        const txt = parsed.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (txt) yield txt;
+        const usage = parsed.usageMetadata;
+        if (usage) {
+          // usageMetadata é cumulativa: fica com o último valor visto.
+          tokensEntrada = usage.promptTokenCount ?? tokensEntrada;
+          tokensSaida = usage.candidatesTokenCount ?? tokensSaida;
+        }
+      }
+    }
+  } finally {
+    clearTimeout(timer);
+  }
+
+  return { tokensEntrada, tokensSaida };
 }
 
 /**
