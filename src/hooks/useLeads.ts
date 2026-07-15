@@ -4,6 +4,23 @@ import { toast } from "sonner";
 import { getSafeErrorMessage } from "@/lib/safeError";
 import { onlyDigits } from "@/lib/maskUtils";
 
+// Detecta violação do índice único de email por empresa (leads_empresa_email_uidx).
+// Backstop do DB para a corrida que a checagem em JS não cobre.
+function isDuplicateEmailError(err: unknown): boolean {
+  if (typeof err !== "object" || err === null) return false;
+  const e = err as { code?: string; message?: string };
+  return e.code === "23505" && (e.message ?? "").includes("leads_empresa_email_uidx");
+}
+
+// Campos derivados do estágio destino: sair de "Perdido" limpa o motivo,
+// entrar em "Ganho" carimba a data de conversão.
+export function statusSideEffects(status: Lead["status"]): Record<string, unknown> {
+  const fields: Record<string, unknown> = {};
+  if (status !== "Perdido") fields.motivo_perda = null;
+  if (status === "Ganho") fields.convertido_em = new Date().toISOString();
+  return fields;
+}
+
 export interface Lead {
   id: string;
   nome: string;
@@ -107,16 +124,23 @@ export const useCreateLead = () => {
     mutationFn: async (lead: LeadInsert) => {
       const { data: empresaId } = await supabase.rpc("get_user_empresa_id");
 
+      // Sem responsável escolhido, o lead fica com quem o criou (evita órfãos).
+      let responsavelId = lead.responsavel_id ?? null;
+      if (!responsavelId) {
+        const { data: auth } = await supabase.auth.getUser();
+        responsavelId = auth.user?.id ?? null;
+      }
+
       const { data, error } = await supabase
         .from("leads")
         .insert({
           nome: lead.nome ?? "",
           sobrenome: lead.sobrenome ?? null,
-          email: lead.email,
+          email: lead.email?.trim() || null,
           contato: lead.contato,
           origem: lead.origem,
           valor_estimado: lead.valor_estimado ?? null,
-          responsavel_id: lead.responsavel_id ?? null,
+          responsavel_id: responsavelId,
           previsao_fechamento: lead.previsao_fechamento ?? null,
           empresa_lead: lead.empresa_lead ?? null,
           cnpj: lead.cnpj ?? null,
@@ -138,7 +162,9 @@ export const useCreateLead = () => {
     },
     onError: (err: unknown) => {
       toast.error("Erro ao salvar", {
-        description: getSafeErrorMessage(err),
+        description: isDuplicateEmailError(err)
+          ? "Já existe um lead ativo com este email."
+          : getSafeErrorMessage(err),
       });
     },
   });
@@ -154,12 +180,12 @@ export const useUpdateLeadStatus = () => {
       extraFields,
     }: {
       leadId: string;
-      newStatus: string;
+      newStatus: Lead["status"];
       extraFields?: Record<string, unknown>;
     }) => {
       const { error } = await supabase
         .from("leads")
-        .update({ status: newStatus, ...extraFields })
+        .update({ status: newStatus, ...statusSideEffects(newStatus), ...extraFields })
         .eq("id", leadId);
 
       if (error) throw error;
@@ -172,7 +198,9 @@ export const useUpdateLeadStatus = () => {
 
       queryClient.setQueryData(["leads"], (old: Lead[] | undefined) =>
         (old || []).map((lead) =>
-          lead.id === leadId ? { ...lead, status: newStatus as Lead["status"], ...extraFields } : lead
+          lead.id === leadId
+            ? { ...lead, status: newStatus, ...statusSideEffects(newStatus), ...extraFields }
+            : lead
         )
       );
 
@@ -263,7 +291,10 @@ export const useUpdateLead = () => {
 
   return useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<LeadInsert> }) => {
-      const { error } = await supabase.from("leads").update(data).eq("id", id);
+      const payload: Record<string, unknown> = { ...data };
+      // Email vazio vira null para não colidir no índice único por empresa.
+      if ("email" in payload) payload.email = (payload.email as string | undefined)?.trim() || null;
+      const { error } = await supabase.from("leads").update(payload as never).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -271,7 +302,11 @@ export const useUpdateLead = () => {
       toast.success("Lead atualizado");
     },
     onError: (err: unknown) => {
-      toast.error("Erro ao atualizar", { description: getSafeErrorMessage(err) });
+      toast.error("Erro ao atualizar", {
+        description: isDuplicateEmailError(err)
+          ? "Já existe um lead ativo com este email."
+          : getSafeErrorMessage(err),
+      });
     },
   });
 };
