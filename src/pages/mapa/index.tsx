@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -12,10 +12,6 @@ import {
   MapPin,
   ExternalLink,
   Search,
-  Map as MapIcon,
-  Satellite,
-  Sun,
-  Moon,
   Layers,
   Crosshair,
   Maximize,
@@ -26,41 +22,15 @@ import {
   DollarSign,
 } from "lucide-react";
 
-const TILE_LAYERS = {
-  rua: {
-    label: "Rua",
-    icon: MapIcon,
-    url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-  },
-  satelite: {
-    label: "Satélite",
-    icon: Satellite,
-    url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-    attribution:
-      "Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community",
-  },
-  claro: {
-    label: "Claro",
-    icon: Sun,
-    url: "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
-    attribution:
-      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
-  },
-  escuro: {
-    label: "Escuro",
-    icon: Moon,
-    url: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
-    attribution:
-      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
-  },
-} as const;
-
-type TileLayerKey = keyof typeof TILE_LAYERS;
-import { MapContainer, TileLayer, Marker, Tooltip, useMap } from "react-leaflet";
-import MarkerClusterGroup from "react-leaflet-cluster";
-import L from "leaflet";
-import "leaflet/dist/leaflet.css";
+import type { Map as LeafletMap } from "leaflet";
+import {
+  STATUS_MARKER_COLORS,
+  STATUS_SYMBOLS,
+  TILE_LAYERS,
+  temCoordenadaValida,
+  type ProjetoMapa,
+  type TileLayerKey,
+} from "./constants";
 import { EmptyState } from "@/components/EmptyState";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
@@ -69,127 +39,9 @@ import { PROJECT_STATUS, PROJECT_STATUS_CONFIG, type ProjectStatus } from "@/con
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { cn } from "@/lib/utils";
 
-delete (L.Icon.Default.prototype as unknown as Record<string, unknown>)._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png",
-  iconUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png",
-  shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
-});
-
-const STATUS_MARKER_COLORS: Record<string, string> = {
-  Planejamento: "hsl(var(--status-planning))",
-  "Em andamento": "hsl(var(--status-progress))",
-  Revisão: "hsl(var(--status-review))",
-  Concluído: "hsl(var(--status-done))",
-  Paralisado: "hsl(var(--status-paused))",
-  Cancelado: "hsl(var(--status-cancelled))",
-};
-
-// Símbolo por status para não depender só da cor (WCAG 1.4.1 — daltônicos).
-const STATUS_SYMBOLS: Record<string, string> = {
-  Planejamento: "◷",
-  "Em andamento": "▸",
-  Revisão: "◎",
-  Concluído: "✓",
-  Paralisado: "‖",
-  Cancelado: "✕",
-};
-
-const markerHtml = (color: string, symbol: string) =>
-  `<div style="background:${color};width:24px;height:24px;border-radius:50%;border:3px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;color:white;font-size:12px;font-weight:700;line-height:1;">${symbol}</div>`;
-
-const STATUS_ICONS: Record<string, L.DivIcon> = Object.fromEntries(
-  Object.entries(STATUS_MARKER_COLORS).map(([status, color]) => [
-    status,
-    L.divIcon({
-      className: "custom-marker",
-      html: markerHtml(color, STATUS_SYMBOLS[status] ?? ""),
-      iconSize: [24, 24],
-      iconAnchor: [12, 12],
-      popupAnchor: [0, -12],
-    }),
-  ])
-);
-
-const FALLBACK_ICON = L.divIcon({
-  className: "custom-marker",
-  html: markerHtml("hsl(var(--status-unknown))", "?"),
-  iconSize: [24, 24],
-  iconAnchor: [12, 12],
-  popupAnchor: [0, -12],
-});
-
-function getStatusIcon(status: string): L.DivIcon {
-  return STATUS_ICONS[status] ?? FALLBACK_ICON;
-}
-
-function createClusterIcon(cluster: { getChildCount: () => number }) {
-  const count = cluster.getChildCount();
-  const size = count < 10 ? 36 : count < 50 ? 44 : 52;
-  return L.divIcon({
-    html: `<div style="background:hsl(var(--chart-info));color:white;width:${size}px;height:${size}px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:${size < 40 ? 13 : 14}px;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.3);">${count}</div>`,
-    className: "custom-cluster-icon",
-    iconSize: L.point(size, size),
-  });
-}
-
-interface ProjetoMapa {
-  id: string;
-  nome: string;
-  codigo_projeto: string;
-  status: ProjectStatus;
-  localizacao: string | null;
-  latitude: number;
-  longitude: number;
-  valor_contrato: number | null;
-  cliente_nome: string | null;
-  cliente_id: string | null;
-  data_inicio: string | null;
-  data_previsao: string | null;
-  area_m2: number | null;
-  prioridade: string | null;
-}
-
-function MapController({ mapRef }: { mapRef: React.MutableRefObject<L.Map | null> }) {
-  const map = useMap();
-  useEffect(() => {
-    mapRef.current = map;
-    // Tiles ficam em branco quando o container ainda não tem dimensões finais.
-    // invalidateSize força o Leaflet a recalcular após o layout estabilizar.
-    const t = setTimeout(() => map.invalidateSize(), 100);
-    return () => clearTimeout(t);
-  }, [map, mapRef]);
-  return null;
-}
-
-function FitBounds({ projetos }: { projetos: ProjetoMapa[] }) {
-  const map = useMap();
-  useEffect(() => {
-    if (projetos.length === 0) return;
-    const bounds = L.latLngBounds(projetos.map((p) => [p.latitude, p.longitude]));
-    map.fitBounds(bounds, { padding: [40, 40], maxZoom: 14 });
-  }, [map, projetos]);
-  return null;
-}
-
-function FlyToProject({
-  projeto,
-  onMarkerClick,
-}: {
-  projeto: ProjetoMapa | null;
-  onMarkerClick: (p: ProjetoMapa) => void;
-}) {
-  const map = useMap();
-  useEffect(() => {
-    if (!projeto) return;
-    map.flyTo([projeto.latitude, projeto.longitude], 16, { duration: 1.2 });
-    const timer = setTimeout(() => {
-      onMarkerClick(projeto);
-    }, 1300);
-    return () => clearTimeout(timer);
-  }, [map, projeto, onMarkerClick]);
-  return null;
-}
+// Leaflet + react-leaflet + cluster + CSS vivem em MapCanvas, carregado sob
+// demanda: só entram no bundle quando a página do Mapa monta, não no inicial.
+const MapCanvas = lazy(() => import("./MapCanvas"));
 
 function formatCurrency(v: number | null) {
   return v ? new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v) : null;
@@ -209,7 +61,7 @@ export default function MapaObras() {
   const [sheetProjeto, setSheetProjeto] = useState<ProjetoMapa | null>(null);
   const [tileKey, setTileKey] = useState<TileLayerKey>("rua");
   const [tileMenuOpen, setTileMenuOpen] = useState(false);
-  const mapRef = useRef<L.Map | null>(null);
+  const mapRef = useRef<LeafletMap | null>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [semCoordenadasExpanded, setSemCoordenadasExpanded] = useState(false);
@@ -264,7 +116,7 @@ export default function MapaObras() {
     const com: ProjetoMapa[] = [];
     const sem: typeof todosOsProjetos = [];
     for (const p of todosOsProjetos) {
-      if (typeof p.latitude === "number" && typeof p.longitude === "number") {
+      if (temCoordenadaValida(p.latitude, p.longitude)) {
         com.push(p as ProjetoMapa);
       } else {
         sem.push(p);
@@ -303,7 +155,7 @@ export default function MapaObras() {
 
   const handleFitBounds = useCallback(() => {
     if (!mapRef.current || filtrados.length === 0) return;
-    const bounds = L.latLngBounds(filtrados.map((p) => [p.latitude, p.longitude]));
+    const bounds = filtrados.map((p) => [p.latitude, p.longitude] as [number, number]);
     mapRef.current.flyToBounds(bounds, { padding: [40, 40], maxZoom: 14, duration: 0.8 });
   }, [filtrados]);
 
@@ -324,7 +176,7 @@ export default function MapaObras() {
       const clienteProjetos = clientesAgrupados.find((c) => (c.id ?? "__sem_cliente__") === key)?.projetos ?? [];
       setSearchOpen(false);
       if (!mapRef.current || clienteProjetos.length === 0) return;
-      const bounds = L.latLngBounds(clienteProjetos.map((p) => [p.latitude, p.longitude]));
+      const bounds = clienteProjetos.map((p) => [p.latitude, p.longitude] as [number, number]);
       mapRef.current.flyToBounds(bounds, { padding: [60, 60], maxZoom: 14, duration: 1 });
     },
     [clientesAgrupados]
@@ -432,10 +284,10 @@ export default function MapaObras() {
                 className="w-full flex items-center gap-2 px-3 py-2 text-muted-foreground hover:bg-muted/80 transition-colors"
               >
                 <AlertCircle className="h-3.5 w-3.5 shrink-0" />
-                <span>
+                <span className="text-left">
                   <span className="font-medium text-foreground">{semCoordenadas.length}</span>{" "}
-                  {semCoordenadas.length === 1 ? "projeto não aparece" : "projetos não aparecem"} no mapa por falta de
-                  coordenadas geográficas.
+                  {semCoordenadas.length === 1 ? "projeto não aparece" : "projetos não aparecem"} no mapa: o endereço
+                  cadastrado ainda não tem latitude e longitude. Abra o projeto e salve o endereço para posicioná-lo.
                 </span>
                 <span className="ml-auto text-[10px] text-muted-foreground/70">
                   {semCoordenadasExpanded ? "ocultar ▲" : "ver projetos ▼"}
@@ -583,44 +435,21 @@ export default function MapaObras() {
               </div>
             )}
 
-            <MapContainer
-              center={[-15.78, -47.93]}
-              zoom={4}
-              style={{ height: "100%", width: "100%" }}
-              scrollWheelZoom={true}
+            <Suspense
+              fallback={
+                <div className="absolute inset-0 z-[500] flex items-center justify-center">
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                </div>
+              }
             >
-              <MapController mapRef={mapRef} />
-              <TileLayer key={tileKey} attribution={TILE_LAYERS[tileKey].attribution} url={TILE_LAYERS[tileKey].url} />
-              <FitBounds projetos={filtrados} />
-              <FlyToProject projeto={selectedProjeto} onMarkerClick={handleMarkerClick} />
-              <MarkerClusterGroup
-                chunkedLoading
-                iconCreateFunction={createClusterIcon}
-                maxClusterRadius={50}
-                spiderfyOnMaxZoom
-                showCoverageOnHover={false}
-              >
-                {filtrados.map((projeto) => (
-                  <Marker
-                    key={projeto.id}
-                    position={[projeto.latitude, projeto.longitude]}
-                    icon={getStatusIcon(projeto.status)}
-                    eventHandlers={{ click: () => handleMarkerClick(projeto) }}
-                  >
-                    <Tooltip direction="top" offset={[0, -14]} opacity={0.95}>
-                      <span className="flex flex-col">
-                        <span className="text-xs font-medium">
-                          {projeto.codigo_projeto} — {projeto.nome}
-                        </span>
-                        <span className="text-[11px] text-muted-foreground">
-                          {STATUS_SYMBOLS[projeto.status] ?? ""} {projeto.status}
-                        </span>
-                      </span>
-                    </Tooltip>
-                  </Marker>
-                ))}
-              </MarkerClusterGroup>
-            </MapContainer>
+              <MapCanvas
+                filtrados={filtrados}
+                tileKey={tileKey}
+                selectedProjeto={selectedProjeto}
+                mapRef={mapRef}
+                onMarkerClick={handleMarkerClick}
+              />
+            </Suspense>
           </div>
         </>
       )}
