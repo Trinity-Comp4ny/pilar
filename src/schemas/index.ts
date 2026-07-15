@@ -23,6 +23,8 @@ export {
   profileEditDefaultValues,
   clienteLoginSchema,
   clienteLoginDefaultValues,
+  trocarSenhaPortalSchema,
+  trocarSenhaPortalDefaultValues,
   type LoginFormData,
   type ForgotPasswordFormData,
   type PasswordResetFormData,
@@ -30,4 +32,5 @@ export {
   type CompanySetupFormData,
   type ProfileEditFormData,
   type ClienteLoginFormData,
+  type TrocarSenhaPortalFormData,
 } from "./authSchemas";

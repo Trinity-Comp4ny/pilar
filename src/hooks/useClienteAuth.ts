@@ -10,6 +10,7 @@ export interface ClienteAccount {
   empresa_id: string;
   nome: string;
   email: string;
+  must_change_password?: boolean;
 }
 
 interface VerifySessionResponse extends ClienteAccount {
@@ -89,5 +90,8 @@ export function useClienteAuth() {
     verify();
   }, [verify]);
 
-  return { account, loading, error };
+  // refresh re-valida a sessão contra o servidor. Usado após a troca forçada de
+  // senha para recarregar account.must_change_password (agora false) e liberar a
+  // navegação sem exigir novo login.
+  return { account, loading, error, refresh: verify };
 }

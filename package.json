@@ -15,6 +15,7 @@
     "format:check": "prettier --check \"src/**/*.{ts,tsx,css,json}\"",
     "preview": "vite preview",
     "gen:types": "supabase gen types typescript --project-id vepnsonbnsimqcsfcagm > src/integrations/supabase/types.ts",
+    "gen:types:staging": "supabase gen types typescript --project-id rizaklgstyfrwgmdsldf > src/integrations/supabase/types.ts",
     "audit:ci": "npm audit --audit-level=high",
     "check:bundle-size": "node scripts/check-bundle-size.mjs",
     "test": "vitest",

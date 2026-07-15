@@ -1,4 +1,4 @@
-import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { Json } from "@/integrations/supabase/types";
@@ -51,48 +51,105 @@ export interface ClienteFormData {
 }
 
 // ---------------------------------------------------------------------------
-// Hook paginado — use para listagens grandes (1000+ clientes).
-// O hook original useClientes() continua funcionando sem alterações.
+// Hook paginado — paginação REAL no servidor via RPC listar_clientes_paginado.
+// Filtros (busca, origem, tipo PF/PJ, com/sem portal, com/sem projeto),
+// ordenação e limit/offset rodam no Postgres, escopados por empresa (RLS).
+// O hook original useClientes() continua disponível para mutations e para
+// consumidores que ainda precisam da lista completa.
 // ---------------------------------------------------------------------------
 
+export type ClienteSortField = "nome" | "cpf_cnpj" | "created_at";
+
+// "all" -> todos; "com"/"sem" -> filtro booleano no servidor.
+export type FiltroTriplo = "all" | "com" | "sem";
+
 export interface UseClientesPaginadosOptions {
+  page?: number; // 0-based
   pageSize?: number;
-  searchTerm?: string;
+  search?: string;
+  origem?: string; // "all" ou o valor da origem
+  tipoPessoa?: string; // "all" | "PF" | "PJ"
+  portal?: FiltroTriplo;
+  projeto?: FiltroTriplo;
+  sortField?: ClienteSortField;
+  sortDir?: "asc" | "desc";
   enabled?: boolean;
 }
 
+const triploToBool = (v: FiltroTriplo | undefined): boolean | null =>
+  v === "com" ? true : v === "sem" ? false : null;
+
 export function useClientesPaginados(options: UseClientesPaginadosOptions = {}) {
-  const { pageSize = 20, searchTerm = "", enabled = true } = options;
+  const {
+    page = 0,
+    pageSize = 20,
+    search = "",
+    origem = "all",
+    tipoPessoa = "all",
+    portal = "all",
+    projeto = "all",
+    sortField = "nome",
+    sortDir = "asc",
+    enabled = true,
+  } = options;
 
-  return useInfiniteQuery({
-    queryKey: ["clientes-paginados", pageSize, searchTerm],
-    queryFn: async ({ pageParam = 0 }) => {
-      let query = supabase
-        .from("clientes")
-        .select("*", { count: "exact" })
-        .is("deleted_at", null)
-        .order("nome")
-        .range(pageParam * pageSize, (pageParam + 1) * pageSize - 1);
-
-      if (searchTerm) {
-        // Busca no servidor por nome, documento e e-mail. O documento é gravado
-        // só com dígitos, então filtramos pelos dígitos digitados.
-        const escaped = searchTerm.replace(/[%,]/g, " ").trim();
-        const docDigits = onlyDigits(searchTerm);
-        const ors = [`nome.ilike.%${escaped}%`, `email.ilike.%${escaped}%`];
-        if (docDigits) ors.push(`cpf_cnpj.ilike.%${docDigits}%`);
-        query = query.or(ors.join(","));
-      }
-
-      const { data, error, count } = await query;
+  const query = useQuery({
+    // Prefixo ["clientes"] para que as invalidações das mutations (upsert/delete/
+    // restore, que invalidam ["clientes"]) também atualizem esta lista.
+    queryKey: [
+      "clientes",
+      "lista",
+      { page, pageSize, search, origem, tipoPessoa, portal, projeto, sortField, sortDir },
+    ],
+    queryFn: async () => {
+      // RPC ainda não está em types.ts (rodar gen:types após deploy da migration).
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase as any).rpc("listar_clientes_paginado", {
+        p_search: search.trim() || null,
+        p_origem: origem === "all" ? null : origem,
+        p_tipo_pessoa: tipoPessoa === "all" ? null : tipoPessoa,
+        p_tem_portal: triploToBool(portal),
+        p_com_projeto: triploToBool(projeto),
+        p_sort_field: sortField,
+        p_sort_dir: sortDir,
+        p_limit: pageSize,
+        p_offset: page * pageSize,
+      });
       if (error) throw error;
-      return { data: (data ?? []) as unknown as Cliente[], count: count ?? 0, page: pageParam };
+
+      const rows = (data ?? []) as (Cliente & { total_count: number })[];
+      const total = rows.length > 0 ? Number(rows[0].total_count) : 0;
+      // Remove total_count de cada linha para expor Cliente puro.
+      const clientes = rows.map(({ total_count: _tc, ...c }) => c as Cliente);
+      return { clientes, total };
     },
-    getNextPageParam: (lastPage, allPages) => {
-      const loaded = allPages.reduce((acc, p) => acc + p.data.length, 0);
-      return loaded < lastPage.count ? allPages.length : undefined;
+    enabled,
+    // Mantém a página anterior visível durante a troca de página/filtro,
+    // evitando o flash de skeleton a cada navegação.
+    placeholderData: keepPreviousData,
+    staleTime: 1000 * 60 * 3,
+  });
+
+  return {
+    clientes: query.data?.clientes ?? [],
+    total: query.data?.total ?? 0,
+    isLoading: query.isLoading,
+    isFetching: query.isFetching,
+    isError: query.isError,
+    refetch: query.refetch,
+  };
+}
+
+// Origens distintas (para o filtro), via RPC — sem baixar a lista inteira.
+export function useOrigensClientes(enabled = true) {
+  return useQuery({
+    queryKey: ["clientes", "origens"],
+    queryFn: async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase as any).rpc("listar_origens_clientes");
+      if (error) throw error;
+      return ((data ?? []) as { origem: string }[]).map((r) => r.origem);
     },
-    initialPageParam: 0,
     enabled,
     staleTime: 1000 * 60 * 3,
   });
@@ -100,7 +157,15 @@ export function useClientesPaginados(options: UseClientesPaginadosOptions = {}) 
 
 // ---------------------------------------------------------------------------
 
-export const useClientes = () => {
+export interface UseClientesOptions {
+  // Quando false, não dispara as consultas que baixam a lista completa e os
+  // conjuntos auxiliares (portal/projeto). A lista de Clientes usa a paginação
+  // server-side e só precisa das mutations deste hook.
+  enableListQueries?: boolean;
+}
+
+export const useClientes = (options: UseClientesOptions = {}) => {
+  const { enableListQueries = true } = options;
   const queryClient = useQueryClient();
 
   const clientesQuery = useQuery({
@@ -118,6 +183,7 @@ export const useClientes = () => {
       // os consumidores neste momento.
       return (data ?? []) as unknown as Cliente[];
     },
+    enabled: enableListQueries,
     staleTime: 1000 * 60 * 3,
   });
 
@@ -232,6 +298,7 @@ export const useClientes = () => {
       const { data } = await supabase.from("cliente_portal_accounts").select("cliente_id").eq("ativo", true);
       return new Set((data ?? []).map((r) => r.cliente_id as string));
     },
+    enabled: enableListQueries,
     staleTime: 1000 * 60 * 3,
   });
 
@@ -242,6 +309,7 @@ export const useClientes = () => {
       const { data } = await supabase.from("projetos").select("cliente_id").is("deleted_at", null);
       return new Set((data ?? []).map((r) => r.cliente_id).filter(Boolean) as string[]);
     },
+    enabled: enableListQueries,
     staleTime: 1000 * 60 * 3,
   });
 
