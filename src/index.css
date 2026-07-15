@@ -146,3 +146,32 @@
   box-decoration-break: clone;
   -webkit-box-decoration-break: clone;
 }
+
+/* ============================================================
+ * prefers-reduced-motion — padrão do design system
+ * ============================================================
+ * Quem pede menos movimento recebe uma UI utilizável, sem decoração:
+ * loops infinitos (float/aurora), reveals e sheen viram quase-instantâneos.
+ * Componentes novos que animam devem também usar as utilities motion-reduce:*.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* Reveal on scroll: mostra direto no lugar final */
+  .reveal-up {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  /* Grão animado da landing: mantém a textura, corta o movimento */
+  .landing-grain::after {
+    animation: none !important;
+  }
+}
