@@ -42,7 +42,10 @@ serve(
         projeto_id = (data as { projeto_id?: string }).projeto_id;
         empresa_id = (data as { empresa_id?: string }).empresa_id;
       } else if (typeof session_token === "string" && session_token.length > 0) {
-        const { data, error } = await anonClient.rpc("portal_verify_session", { p_token: session_token });
+        // Verificador read-only: NÃO rotaciona o token. O portal_verify_session
+        // rotaciona e devolve new_token; como este endpoint de download descartava
+        // o new_token, cada download invalidava a sessão e deslogava o cliente.
+        const { data, error } = await anonClient.rpc("portal_verify_session_readonly", { p_token: session_token });
         if (error || !data) return safeErrorResponse(401, "Sessão inválida", req);
         empresa_id = (data as { empresa_id?: string }).empresa_id;
       }
