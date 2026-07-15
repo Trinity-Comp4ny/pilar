@@ -99,39 +99,42 @@ export default function ResumoMensal({ dateFrom, dateTo }: ResumoMensalProps) {
         </Card>
         <Card className="vrz-card bg-blue-50 border-blue-100 w-full min-w-0">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-blue-800 truncate">Lucro Líquido</CardTitle>
+            <CardTitle className="text-sm font-medium text-blue-800 truncate">Saldo do período</CardTitle>
           </CardHeader>
           <CardContent className="min-w-0">
             <div className="text-base sm:text-lg xl:text-xl font-bold text-blue-700 tabular-nums whitespace-nowrap">
               {formatCurrency(stats.saldo)}
             </div>
-            <p className="text-xs text-blue-600 mt-1 truncate">
-              Margem de {stats.receitasTotal > 0 ? ((stats.saldo / stats.receitasTotal) * 100).toFixed(1) : 0}%
-            </p>
+            <p className="text-xs text-blue-600 mt-1 truncate">Entradas menos saídas no caixa</p>
           </CardContent>
         </Card>
         <Card className="vrz-card border-black/5 w-full min-w-0">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground truncate">Projeção Final</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground truncate">Projeção final</CardTitle>
           </CardHeader>
           <CardContent className="min-w-0">
             {(() => {
               const today = new Date();
               const start = dateFrom || startOfMonth(today);
               const end = dateTo || endOfMonth(today);
-              const totalDays = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1);
-              const elapsedDays = Math.min(
-                totalDays,
-                Math.max(1, Math.ceil((today.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1)
-              );
-              const projection = (stats.saldo / elapsedDays) * totalDays;
+              // Só faz sentido projetar um período em andamento. Período já encerrado
+              // ou totalmente no futuro mostra o saldo real, sem extrapolar.
+              const isOngoing = today >= start && today <= end;
+              const dayMs = 1000 * 60 * 60 * 24;
+              const totalDays = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / dayMs) + 1);
+              const elapsedDays = Math.max(1, Math.ceil((today.getTime() - start.getTime()) / dayMs) + 1);
+              const projection = isOngoing ? (stats.saldo / elapsedDays) * totalDays : stats.saldo;
               return (
-                <div className="text-base sm:text-lg xl:text-xl font-bold text-foreground tabular-nums whitespace-nowrap">
-                  {formatCurrency(projection)}
-                </div>
+                <>
+                  <div className="text-base sm:text-lg xl:text-xl font-bold text-foreground tabular-nums whitespace-nowrap">
+                    {formatCurrency(projection)}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1 truncate">
+                    {isOngoing ? "Baseado na média diária" : "Período encerrado, saldo real"}
+                  </p>
+                </>
               );
             })()}
-            <p className="text-xs text-muted-foreground mt-1 truncate">Baseado na média diária</p>
           </CardContent>
         </Card>
       </div>
