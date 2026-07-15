@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { errorMessage } from "@/lib/errors";
@@ -30,7 +31,14 @@ async function getEmpresaId(): Promise<string> {
 
 async function saveDespesaImpl({ formData, selected, cartoes }: SaveDespesaArgs) {
   const empresaId = await getEmpresaId();
-  const despesasToInsert = buildDespesaPayloads({ formData, empresaId, selectedParcela: selected });
+  // Na edição só existe UMA parcela em jogo (a selecionada). Força parcelas=1 para
+  // gravar o valor cheio do formulário, não o rateio, e não gerar payloads extras
+  // que seriam silenciosamente descartados (só o [0] era usado no update).
+  const despesasToInsert = buildDespesaPayloads({
+    formData: selected ? { ...formData, parcelas: "1" } : formData,
+    empresaId,
+    selectedParcela: selected,
+  });
 
   if (selected) {
     const dataChanged = despesasToInsert[0].data_vencimento !== selected.data_vencimento;
@@ -81,7 +89,14 @@ async function saveDespesaImpl({ formData, selected, cartoes }: SaveDespesaArgs)
 
 async function saveReceitaImpl({ formData, selected }: SaveReceitaArgs) {
   const empresaId = await getEmpresaId();
-  const receitasToInsert = buildReceitaPayloads({ formData, empresaId, selectedParcela: selected });
+  // Na edição só existe UMA parcela em jogo (a selecionada). Força parcelas=1 para
+  // gravar o valor cheio do formulário, não o rateio, e não gerar payloads extras
+  // que seriam silenciosamente descartados (só o [0] era usado no update).
+  const receitasToInsert = buildReceitaPayloads({
+    formData: selected ? { ...formData, parcelas: "1" } : formData,
+    empresaId,
+    selectedParcela: selected,
+  });
 
   if (selected) {
     const { error } = await supabase.from("receitas").update(receitasToInsert[0]).eq("id", selected.id);
@@ -132,7 +147,7 @@ export function useFinanceItemMutations(tipo: FinanceItemTipo) {
     mutationFn: async (id: string) => {
       const { error } = await supabase
         .from("receitas")
-        .update({ status: "Recebido", data_recebimento: new Date().toISOString().split("T")[0] })
+        .update({ status: "Recebido", data_recebimento: format(new Date(), "yyyy-MM-dd") })
         .eq("id", id);
       if (error) throw new Error(error.message + (error.details ? ` (${error.details})` : ""));
     },
@@ -164,7 +179,11 @@ export function useFinanceItemMutations(tipo: FinanceItemTipo) {
 
   const deleteOne = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from(tableName).delete().eq("id", id);
+      // Soft-delete: marca deleted_at (as listas filtram is("deleted_at", null)).
+      const { error } = await supabase
+        .from(tableName)
+        .update({ deleted_at: new Date().toISOString() })
+        .eq("id", id);
       if (error) throw new Error(error.message + (error.details ? ` (${error.details})` : ""));
     },
     onSuccess: () => {
@@ -179,16 +198,18 @@ export function useFinanceItemMutations(tipo: FinanceItemTipo) {
 
   const deleteGroup = useMutation({
     mutationFn: async ({ id, grupoId, mode }: { id: string; grupoId: string; mode: "single" | "all" }) => {
+      // Soft-delete: marca deleted_at (as listas filtram is("deleted_at", null)).
+      const deletedAt = new Date().toISOString();
       if (mode === "all") {
         const { error } = await supabase
           .from(tableName)
-          .delete()
+          .update({ deleted_at: deletedAt })
           .eq("grupo_parcela", grupoId)
           .is("deleted_at", null);
         if (error) throw error;
         return "all" as const;
       }
-      const { error } = await supabase.from(tableName).delete().eq("id", id);
+      const { error } = await supabase.from(tableName).update({ deleted_at: deletedAt }).eq("id", id);
       if (error) throw error;
       return "single" as const;
     },
