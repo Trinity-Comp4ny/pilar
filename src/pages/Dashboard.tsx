@@ -1,15 +1,9 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  TrendingUp,
-  TrendingDown,
   DollarSign,
   Briefcase,
-  ArrowUpRight,
-  ArrowDownRight,
-  Clock,
   AlertTriangle,
   Users,
   CalendarClock,
@@ -41,291 +35,21 @@ import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
 
 const DashboardFinanceChart = lazy(() => import("@/components/charts/DashboardFinanceChart"));
-import {
-  useDashboardData,
-  type DashboardProjeto,
-  type DashboardVencimento,
-  type DashboardAlerta,
-  type LeadsPipeline,
-} from "@/hooks/useDashboardData";
+import { useDashboardData } from "@/hooks/useDashboardData";
 import { useFinanceChartData } from "@/hooks/useFinanceChartData";
 import { useFinanceChartFallback } from "@/hooks/useFinanceChartFallback";
 import { useAuth } from "@/contexts/AuthContext";
-import { PROJECT_STATUS_CONFIG, PROJECT_PRIORITY_CONFIG, type ProjectStatus, type ProjectPriority } from "@/constants";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { usePermissions } from "@/hooks/usePermissions";
 import { cn } from "@/lib/utils";
 import { CalendarioPreview } from "@/pages/projetos/components/CalendarioPreview";
-
-const fmt = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
-const fmtCompact = new Intl.NumberFormat("pt-BR", {
-  style: "currency",
-  currency: "BRL",
-  notation: "compact",
-  maximumFractionDigits: 1,
-});
-
-function KPICard({
-  title,
-  value,
-  cardBg,
-  titleColor,
-  valueColor,
-  subtitleColor,
-  variacao,
-  invertVariacao,
-  novo,
-  subtitle,
-  onClick,
-}: {
-  title: string;
-  value: string;
-  cardBg: string;
-  titleColor: string;
-  valueColor: string;
-  subtitleColor: string;
-  variacao?: number;
-  // Quando true, cair é bom (ex.: despesa): a cor da variação inverte, mas a seta
-  // continua indicando a direção real do valor (subiu/caiu).
-  invertVariacao?: boolean;
-  // Sem base no período anterior: não dá para calcular %, então mostramos "novo".
-  novo?: boolean;
-  subtitle?: string;
-  onClick?: () => void;
-}) {
-  const subiu = (variacao ?? 0) > 0;
-  const isBom = invertVariacao ? !subiu : subiu;
-  const variacaoNode = novo ? (
-    <span className="flex items-center gap-0.5 font-medium text-ink-soft">novo neste período</span>
-  ) : variacao !== undefined && variacao !== 0 ? (
-    <span className={`flex items-center gap-0.5 ${isBom ? "text-success-mid" : "text-danger-mid"}`}>
-      {subiu ? <TrendingUp size={12} className="mr-0.5" /> : <TrendingDown size={12} className="mr-0.5" />}
-      {Math.abs(variacao).toFixed(1)}% vs período anterior
-    </span>
-  ) : null;
-
-  return (
-    <Card
-      className={cn(
-        "vrz-card w-full",
-        cardBg,
-        onClick &&
-          "cursor-pointer hover:shadow-md transition-all hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-      )}
-      onClick={onClick}
-      role={onClick ? "button" : undefined}
-      tabIndex={onClick ? 0 : undefined}
-      onKeyDown={
-        onClick
-          ? (e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                onClick();
-              }
-            }
-          : undefined
-      }
-    >
-      <CardHeader className="pb-2">
-        <CardTitle className={`text-sm font-medium ${titleColor}`}>{title}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className={`text-2xl font-bold ${valueColor}`}>{value}</div>
-        {variacaoNode && <p className="text-xs mt-1 flex items-center gap-1">{variacaoNode}</p>}
-        {subtitle && <p className={`text-xs mt-1 ${subtitleColor}`}>{subtitle}</p>}
-      </CardContent>
-    </Card>
-  );
-}
-
-function ProjectRow({ project, onClick }: { project: DashboardProjeto; onClick: () => void }) {
-  const statusConfig = PROJECT_STATUS_CONFIG[project.status as ProjectStatus];
-  const priorityConfig = PROJECT_PRIORITY_CONFIG[project.prioridade as ProjectPriority];
-  const isAtrasado = project.statusData === "em_atraso" || project.progressoPrazo > 100;
-
-  return (
-    <div
-      className={cn(
-        "flex items-center gap-3 p-3 rounded-lg hover:bg-muted transition-colors cursor-pointer group border-l-[3px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-        priorityConfig?.borderColor || "border-l-transparent"
-      )}
-      onClick={onClick}
-      role="button"
-      tabIndex={0}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          onClick();
-        }
-      }}
-    >
-      <div className="h-9 w-9 rounded-lg bg-muted flex items-center justify-center text-ink-soft font-semibold text-sm shrink-0">
-        {project.nome.charAt(0)}
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <h4 className="text-sm font-medium text-ink truncate">{project.nome}</h4>
-          <Badge className={`text-[10px] px-1.5 py-0 h-4 ${statusConfig?.color || "bg-muted text-ink-soft"}`}>
-            {project.status}
-          </Badge>
-          {priorityConfig && (
-            <span
-              className={`text-[10px] px-1.5 py-0 h-4 rounded-full font-medium inline-flex items-center ${priorityConfig.bgColor} ${priorityConfig.color}`}
-            >
-              {priorityConfig.label}
-            </span>
-          )}
-        </div>
-        <div className="flex items-center gap-3 mt-1">
-          <span className="text-xs text-ink-disabled">{project.cliente}</span>
-          {project.dataPrevisao && (
-            <span
-              className={`text-xs flex items-center gap-0.5 ${isAtrasado ? "text-chart-danger" : "text-ink-disabled"}`}
-            >
-              <Clock size={10} />
-              {new Date(project.dataPrevisao).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}
-            </span>
-          )}
-        </div>
-      </div>
-      <div className="text-right shrink-0 hidden sm:block">
-        <div className="text-sm font-medium">
-          {project.valorContrato > 0 ? fmtCompact.format(project.valorContrato) : "—"}
-        </div>
-        {project.dataInicio && project.dataPrevisao && (
-          <div className="w-16 mt-1">
-            <div className="h-1 bg-muted rounded-full overflow-hidden">
-              <div
-                className={`h-full rounded-full transition-all ${isAtrasado ? "bg-chart-danger" : project.progressoPrazo > 75 ? "bg-chart-warning" : "bg-status-done"}`}
-                style={{ width: `${Math.min(project.progressoPrazo, 100)}%` }}
-              />
-            </div>
-          </div>
-        )}
-      </div>
-      <ChevronRight size={14} className="text-ink-disabled group-hover:text-muted-foreground shrink-0" />
-    </div>
-  );
-}
-
-function VencimentoRow({ item }: { item: DashboardVencimento }) {
-  const isReceita = item.tipo === "receita";
-  return (
-    <div className="flex items-center gap-3 py-2.5 border-b border-border/50 last:border-0">
-      <div
-        className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 ${isReceita ? "bg-positive/10" : "bg-negative/10"}`}
-      >
-        {isReceita ? (
-          <ArrowUpRight size={14} className="text-positive-strong" />
-        ) : (
-          <ArrowDownRight size={14} className="text-negative-strong" />
-        )}
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-ink-soft truncate">{item.entidade || item.descricao}</p>
-        <p className="text-[11px] text-ink-disabled truncate">{item.projeto || item.descricao}</p>
-      </div>
-      <div className="text-right shrink-0">
-        <p className={`text-sm font-semibold ${isReceita ? "text-positive-strong" : "text-negative-strong"}`}>
-          {isReceita ? "+" : "-"}
-          {fmt.format(item.valor)}
-        </p>
-        <p className="text-[11px] text-ink-disabled">
-          {item.diasRestantes === 0 ? "Hoje" : item.diasRestantes === 1 ? "Amanhã" : `${item.diasRestantes}d`}
-        </p>
-      </div>
-    </div>
-  );
-}
-
-function AlertaRow({ alerta }: { alerta: DashboardAlerta }) {
-  const sevConfig: Record<string, { bg: string; icon: string }> = {
-    critical: { bg: "bg-danger-soft border-danger-mid-border", icon: "text-chart-danger" },
-    high: { bg: "bg-attention-soft border-attention-mid-border", icon: "text-status-paused" },
-    medium: { bg: "bg-warning-soft border-warning-mid-border", icon: "text-warning-mid" },
-    low: { bg: "bg-info-soft border-info-mid-border", icon: "text-chart-info" },
-  };
-  const config = sevConfig[alerta.severidade] || sevConfig.low;
-
-  return (
-    <div className={`flex items-start gap-2 p-2.5 rounded-lg border ${config.bg}`}>
-      <AlertTriangle size={14} className={`mt-0.5 shrink-0 ${config.icon}`} />
-      <div className="min-w-0">
-        <p className="text-xs font-medium text-ink-soft">{alerta.titulo}</p>
-        <p className="text-[11px] text-muted-foreground truncate">{alerta.mensagem}</p>
-      </div>
-    </div>
-  );
-}
-
-const PIPELINE_COLORS: Record<string, string> = {
-  Novo: "bg-pipeline-novo",
-  "Em contato": "bg-pipeline-contato",
-  Proposta: "bg-pipeline-proposta",
-  Negociação: "bg-pipeline-negociacao",
-  Ganho: "bg-status-done",
-  Perdido: "bg-pipeline-perdido",
-};
-
-function LeadsFunnel({ pipeline, total }: { pipeline: LeadsPipeline[]; total: number }) {
-  if (total === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center py-8 text-ink-disabled">
-        <Users size={24} className="mb-2" />
-        <p className="text-sm">Nenhum lead cadastrado</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-2">
-      {pipeline.map((step) => {
-        const pct = total > 0 ? (step.count / total) * 100 : 0;
-        return (
-          <div key={step.status} className="flex items-center gap-2">
-            <span className="text-[11px] text-muted-foreground w-20 shrink-0 truncate">{step.status}</span>
-            <div className="flex-1 h-5 bg-muted rounded overflow-hidden">
-              <div
-                className={`h-full rounded transition-all ${PIPELINE_COLORS[step.status] || "bg-pipeline-perdido"}`}
-                style={{ width: `${Math.max(pct, 4)}%` }}
-              />
-            </div>
-            {/* Contagem fora da barra: cor fixa com contraste garantido, sem depender da cor da barra. */}
-            <span className="text-[11px] font-semibold text-ink-soft w-6 shrink-0 text-right tabular-nums">
-              {step.count}
-            </span>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-function DashboardSkeleton() {
-  return (
-    <div className="space-y-6 w-full animate-pulse">
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {[1, 2, 3, 4].map((i) => (
-          <Card key={i}>
-            <CardContent className="p-4">
-              <Skeleton className="h-3 w-20 mb-4" />
-              <Skeleton className="h-6 w-28 mb-2" />
-              <Skeleton className="h-3 w-16" />
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Skeleton className="h-[350px] lg:col-span-2 rounded-xl" />
-        <Skeleton className="h-[350px] rounded-xl" />
-      </div>
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Skeleton className="h-[300px] lg:col-span-2 rounded-xl" />
-        <Skeleton className="h-[300px] rounded-xl" />
-      </div>
-    </div>
-  );
-}
+import { fmt } from "@/pages/dashboard/components/format";
+import { KPICard } from "@/pages/dashboard/components/KPICard";
+import { ProjectRow } from "@/pages/dashboard/components/ProjectRow";
+import { VencimentoRow } from "@/pages/dashboard/components/VencimentoRow";
+import { AlertaRow } from "@/pages/dashboard/components/AlertaRow";
+import { LeadsFunnel } from "@/pages/dashboard/components/LeadsFunnel";
+import { DashboardSkeleton } from "@/pages/dashboard/components/DashboardSkeleton";
 
 type DashPreset = "this-month" | "last-month" | "this-quarter" | "this-year" | "custom";
 
