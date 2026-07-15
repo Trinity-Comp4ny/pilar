@@ -31,6 +31,7 @@ export interface DisciplinaResponsavel {
   responsaveis?: ResponsavelDatas[];
   justificativa_atraso?: string;
   etapa?: number;
+  horas_estimadas?: number;
 }
 
 export function isDiscAtrasada(disc: DisciplinaResponsavel): boolean {
@@ -181,6 +182,7 @@ export function dbDisciplinaToLegacy(d: ProjetoDisciplinaDB): DisciplinaResponsa
     status: d.status,
     prioridade: (d.prioridade as ProjectPriority) || undefined,
     justificativa_atraso: d.justificativa_atraso || undefined,
+    horas_estimadas: d.horas_estimadas,
     responsaveis: resps,
     observacoes: [],
   };
@@ -244,6 +246,19 @@ export const getDeadlineStatus = (projeto: { data_previsao?: string; data_final?
 
 export const getProjectProgress = (disciplinas: DisciplinaResponsavel[]) => {
   if (!disciplinas || disciplinas.length === 0) return 0;
-  const completed = disciplinas.filter((d) => d.status === "Concluído").length;
+
+  const isConcluida = (d: DisciplinaResponsavel) => d.status === "Concluído";
+
+  // Pondera pelas horas estimadas quando houver; assim uma disciplina grande pesa mais
+  // que uma pequena. Sem horas registradas, cai para contagem simples de disciplinas.
+  const totalHoras = disciplinas.reduce((acc, d) => acc + (d.horas_estimadas || 0), 0);
+  if (totalHoras > 0) {
+    const concluidasHoras = disciplinas
+      .filter(isConcluida)
+      .reduce((acc, d) => acc + (d.horas_estimadas || 0), 0);
+    return Math.round((concluidasHoras / totalHoras) * 100);
+  }
+
+  const completed = disciplinas.filter(isConcluida).length;
   return Math.round((completed / disciplinas.length) * 100);
 };
