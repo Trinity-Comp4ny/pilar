@@ -19,10 +19,13 @@ export interface ChavePix {
   tipo: string;
 }
 
+export type TipoPessoa = "PF" | "PJ";
+
 export interface Cliente {
   id: string;
   nome: string;
   sobrenome?: string;
+  tipo_pessoa?: TipoPessoa | null;
   cpf_cnpj: string;
   endereco: string;
   contato: string;
@@ -36,6 +39,7 @@ export interface Cliente {
 export interface ClienteFormData {
   nome: string;
   sobrenome: string;
+  tipo_pessoa: TipoPessoa;
   cpf_cnpj: string;
   endereco: string;
   contato: string;
@@ -71,7 +75,13 @@ export function useClientesPaginados(options: UseClientesPaginadosOptions = {}) 
         .range(pageParam * pageSize, (pageParam + 1) * pageSize - 1);
 
       if (searchTerm) {
-        query = query.ilike("nome", `%${searchTerm}%`);
+        // Busca no servidor por nome, documento e e-mail. O documento é gravado
+        // só com dígitos, então filtramos pelos dígitos digitados.
+        const escaped = searchTerm.replace(/[%,]/g, " ").trim();
+        const docDigits = onlyDigits(searchTerm);
+        const ors = [`nome.ilike.%${escaped}%`, `email.ilike.%${escaped}%`];
+        if (docDigits) ors.push(`cpf_cnpj.ilike.%${docDigits}%`);
+        query = query.or(ors.join(","));
       }
 
       const { data, error, count } = await query;
@@ -120,6 +130,8 @@ export const useClientes = () => {
       const payload = {
         nome: data.nome,
         sobrenome: data.sobrenome || null,
+        // tipo_pessoa é coluna nova, ainda fora dos tipos gerados: ver cast abaixo.
+        tipo_pessoa: data.tipo_pessoa || null,
         cpf_cnpj: cpfCnpjDigits || null,
         endereco: nullIfEmpty(data.endereco),
         contato: nullIfEmpty(data.contato),
@@ -130,12 +142,17 @@ export const useClientes = () => {
         chaves_pix: data.chaves_pix as unknown as Json,
       };
 
+      // tipo_pessoa ainda não está em types.ts (rodar gen:types após deploy da
+      // migration). Cast para evitar o erro de tipo até lá.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const clientesTable = supabase.from("clientes") as any;
+
       if (id) {
-        const { error } = await supabase.from("clientes").update(payload).eq("id", id);
+        const { error } = await clientesTable.update(payload).eq("id", id);
         if (error) throw error;
       } else {
         const { data: empresaData } = await supabase.rpc("get_user_empresa_id");
-        const { error } = await supabase.from("clientes").insert({
+        const { error } = await clientesTable.insert({
           ...payload,
           empresa_id: empresaData as string,
         });
@@ -144,6 +161,8 @@ export const useClientes = () => {
     },
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["clientes"] });
+      // Página de detalhe usa ["cliente", id]: invalida para refletir a edição.
+      queryClient.invalidateQueries({ queryKey: ["cliente"] });
       toast.success(variables.id ? "Cliente atualizado" : "Cliente cadastrado", {
         description: variables.id
           ? "Dados do cliente atualizados com sucesso"
@@ -212,6 +231,16 @@ export const useClientes = () => {
     queryFn: async () => {
       const { data } = await supabase.from("cliente_portal_accounts").select("cliente_id").eq("ativo", true);
       return new Set((data ?? []).map((r) => r.cliente_id as string));
+    },
+    staleTime: 1000 * 60 * 3,
+  });
+
+  // Ids de clientes que têm ao menos um projeto ativo (para o filtro com/sem projeto).
+  const clienteIdsComProjetoQuery = useQuery({
+    queryKey: ["cliente-ids-com-projeto"],
+    queryFn: async () => {
+      const { data } = await supabase.from("projetos").select("cliente_id").is("deleted_at", null);
+      return new Set((data ?? []).map((r) => r.cliente_id).filter(Boolean) as string[]);
     },
     staleTime: 1000 * 60 * 3,
   });
@@ -297,6 +326,7 @@ export const useClientes = () => {
     isError: clientesQuery.isError,
     refetch: clientesQuery.refetch,
     portalClienteIds: portalClienteIdsQuery.data ?? new Set<string>(),
+    clienteIdsComProjeto: clienteIdsComProjetoQuery.data ?? new Set<string>(),
     upsertCliente: upsertMutation.mutateAsync,
     isSaving: upsertMutation.isPending,
     deleteCliente: deleteMutation.mutateAsync,

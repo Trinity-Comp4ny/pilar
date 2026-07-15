@@ -15,6 +15,16 @@ export interface ProjetoResumo {
   disciplinas_concluidas: number;
 }
 
+export interface PropostaResumo {
+  id: string;
+  codigo: string | null;
+  titulo: string;
+  status: string;
+  valor_proposto: number | null;
+  validade: string | null;
+  created_at: string | null;
+}
+
 export function useClienteDetalhe(clienteId: string) {
   const clienteQuery = useQuery({
     queryKey: ["cliente", clienteId],
@@ -57,6 +67,21 @@ export function useClienteDetalhe(clienteId: string) {
     enabled: !!clienteId,
   });
 
+  const propostasQuery = useQuery({
+    queryKey: ["cliente-propostas", clienteId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("propostas")
+        .select("id, codigo, titulo, status, valor_proposto, validade, created_at")
+        .eq("cliente_id", clienteId)
+        .is("deleted_at", null)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as PropostaResumo[];
+    },
+    enabled: !!clienteId,
+  });
+
   const portalStatusQuery = useQuery({
     queryKey: ["portal-status", clienteId],
     queryFn: async () => {
@@ -76,6 +101,8 @@ export function useClienteDetalhe(clienteId: string) {
     isLoadingCliente: clienteQuery.isLoading,
     projetos: projetosQuery.data ?? [],
     isLoadingProjetos: projetosQuery.isLoading,
+    propostas: propostasQuery.data ?? [],
+    isLoadingPropostas: propostasQuery.isLoading,
     portalStatus: portalStatusQuery.data,
     isLoadingPortal: portalStatusQuery.isLoading,
     refetchPortal: portalStatusQuery.refetch,
