@@ -17,6 +17,9 @@ import { type TemplateProjeto } from "@/hooks/useTemplates";
 import type { FluxoDisciplinas } from "@/types/fluxoDisciplinas";
 import { toast } from "sonner";
 import { useBulkSaveDisciplinas } from "@/hooks/useProjetoDisciplinas";
+import { useFormPersist, clearFormPersist } from "@/hooks/useFormPersist";
+
+const PROJETO_DRAFT_KEY = "projeto-novo";
 
 export const ESTADOS_BR = [
   "AC",
@@ -242,6 +245,15 @@ export function useProjetoForm({
     setNewObservation("");
     setIsSaving(false);
   }, [open, editProjeto, existingDisciplinas]);
+
+  // Rascunho de novo projeto: restaura ao abrir (create) e salva a cada mudança.
+  // Só ativo no modo criação; edição nunca persiste. TTL de 24h no hook.
+  useFormPersist({
+    storageKey: PROJETO_DRAFT_KEY,
+    values: formData,
+    enabled: open && !isEditMode,
+    onRestore: ({ values }) => setFormData({ ...EMPTY_FORM, ...values }),
+  });
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => {
@@ -670,6 +682,7 @@ export function useProjetoForm({
         }
 
         toast.success("Projeto cadastrado", { description: "Novo projeto foi adicionado com sucesso" });
+        clearFormPersist(PROJETO_DRAFT_KEY);
       }
 
       onOpenChange(false);
