@@ -78,8 +78,15 @@ export default {
         brand: {
           DEFAULT: "hsl(var(--brand-accent) / <alpha-value>)",
         },
-        positive: "hsl(var(--positive) / <alpha-value>)",
-        negative: "hsl(var(--negative) / <alpha-value>)",
+        // DEFAULT = fill (bg/barras); strong = texto (WCAG AA). Ver tokens.css.
+        positive: {
+          DEFAULT: "hsl(var(--positive) / <alpha-value>)",
+          strong: "hsl(var(--positive-strong) / <alpha-value>)",
+        },
+        negative: {
+          DEFAULT: "hsl(var(--negative) / <alpha-value>)",
+          strong: "hsl(var(--negative-strong) / <alpha-value>)",
+        },
         chart: {
           success: "hsl(var(--chart-success) / <alpha-value>)",
           "success-alt": "hsl(var(--chart-success-alt) / <alpha-value>)",

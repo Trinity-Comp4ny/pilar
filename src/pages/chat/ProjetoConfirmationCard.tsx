@@ -148,7 +148,7 @@ export function ProjetoConfirmationCard({ index, draft, onConfirmar, onCancelar,
     return (
       <div className="w-full max-w-lg rounded-2xl border border-positive/30 bg-positive/5 p-4">
         <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-positive/15 text-positive">
+          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-positive/15 text-positive-strong">
             <Check className="h-3.5 w-3.5" />
           </span>
           Projeto criado
@@ -236,7 +236,7 @@ export function ProjetoConfirmationCard({ index, draft, onConfirmar, onCancelar,
 
           <div className="space-y-1.5">
             <Label htmlFor={`${p}-nome`} className="text-xs text-muted-foreground">
-              Nome <span className="text-negative">*</span>
+              Nome <span className="text-negative-strong">*</span>
             </Label>
             <Input
               id={`${p}-nome`}

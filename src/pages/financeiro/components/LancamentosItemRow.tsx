@@ -159,7 +159,7 @@ export function LancamentosItemRow({
             isTransf
               ? "bg-blue-100 text-blue-600"
               : isReceita
-                ? "bg-positive/10 text-positive"
+                ? "bg-positive/10 text-positive-strong"
                 : "bg-red-50 text-red-600"
           )}
           title={isTransf ? "Transferência" : isReceita ? "Receita" : "Despesa"}
@@ -200,7 +200,7 @@ export function LancamentosItemRow({
           cellPad,
           "text-right font-semibold tabular-nums",
           cellTextSize,
-          isTransf ? "text-blue-600" : isReceita ? "text-positive" : "text-red-600"
+          isTransf ? "text-blue-600" : isReceita ? "text-positive-strong" : "text-red-600"
         )}
       >
         {isTransf ? "⇄" : isReceita ? "+" : "−"} {formatBRL(l.valor)}

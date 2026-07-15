@@ -445,7 +445,7 @@ export default function FolhaPagamento() {
             {statusFolha === "closed" && (
               <Badge
                 variant="secondary"
-                className="bg-positive/10 text-positive px-3 py-1 text-sm flex gap-1 items-center"
+                className="bg-positive/10 text-positive-strong px-3 py-1 text-sm flex gap-1 items-center"
               >
                 <CheckCircle2 className="h-3 w-3" />
                 Folha Fechada

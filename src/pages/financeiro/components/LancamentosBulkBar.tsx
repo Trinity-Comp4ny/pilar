@@ -22,7 +22,7 @@ export function LancamentosBulkBar({ count, canEdit, onMarkPaid, onDelete, onCle
             variant="outline"
             size="sm"
             onClick={onMarkPaid}
-            className="h-7 text-xs gap-1 bg-white border-positive text-positive hover:bg-positive/10"
+            className="h-7 text-xs gap-1 bg-white border-positive text-positive-strong hover:bg-positive/10"
           >
             <Check className="h-3 w-3" />
             Marcar pago/recebido

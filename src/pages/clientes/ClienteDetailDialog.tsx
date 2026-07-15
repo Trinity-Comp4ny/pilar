@@ -59,7 +59,7 @@ interface ClienteDetailDialogProps {
 function CredentialsBox({ credentials, variant }: { credentials: PortalCredentials; variant: "success" | "reset" }) {
   const styles =
     variant === "success"
-      ? { box: "bg-positive/10 border-positive/20", title: "text-positive", desc: "text-positive" }
+      ? { box: "bg-positive/10 border-positive/20", title: "text-positive-strong", desc: "text-positive-strong" }
       : { box: "bg-amber-50 border-amber-200", title: "text-amber-800", desc: "text-amber-700" };
 
   return (
@@ -163,7 +163,7 @@ export function ClienteDetailDialog({
 
                 {portalStatus === "exists" && !portalCredentials && (
                   <div className="space-y-3">
-                    <div className="flex items-center gap-2 bg-positive/10 border border-positive/20 rounded-lg px-3 py-2 text-sm text-positive">
+                    <div className="flex items-center gap-2 bg-positive/10 border border-positive/20 rounded-lg px-3 py-2 text-sm text-positive-strong">
                       <Globe size={14} />
                       <span className="flex-1">Cliente possui acesso ao portal</span>
                     </div>

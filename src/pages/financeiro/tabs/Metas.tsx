@@ -180,7 +180,7 @@ export default function Metas() {
   const getIcon = (categoria: string) => {
     switch (categoria) {
       case "receita":
-        return <TrendingUp className="h-5 w-5 text-positive" />;
+        return <TrendingUp className="h-5 w-5 text-positive-strong" />;
       case "lucro":
         return <Wallet className="h-5 w-5 text-blue-500" />;
       case "investimento":
@@ -404,7 +404,7 @@ export default function Metas() {
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className={cn("text-2xl font-bold", isCompleted && "text-positive")}>{percent}%</span>
+                        <span className={cn("text-2xl font-bold", isCompleted && "text-positive-strong")}>{percent}%</span>
                         <Button
                           variant="ghost"
                           size="icon"

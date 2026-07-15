@@ -96,7 +96,7 @@ export function LeadConfirmationCard({ index, draft, onConfirmar, onCancelar, on
     return (
       <div className="w-full max-w-lg rounded-2xl border border-positive/30 bg-positive/5 p-4">
         <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-positive/15 text-positive">
+          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-positive/15 text-positive-strong">
             <Check className="h-3.5 w-3.5" />
           </span>
           Lead criado
@@ -155,7 +155,7 @@ export function LeadConfirmationCard({ index, draft, onConfirmar, onCancelar, on
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="space-y-1.5">
             <Label htmlFor={`${p}-nome`} className="text-xs text-muted-foreground">
-              Nome <span className="text-negative">*</span>
+              Nome <span className="text-negative-strong">*</span>
             </Label>
             <Input
               id={`${p}-nome`}
@@ -210,7 +210,7 @@ export function LeadConfirmationCard({ index, draft, onConfirmar, onCancelar, on
               aria-invalid={!!cnpjError}
               className={`h-9 ${cnpjError ? "border-negative focus-visible:ring-negative" : ""}`}
             />
-            {cnpjError && <p className="text-xs text-negative">{cnpjError}</p>}
+            {cnpjError && <p className="text-xs text-negative-strong">{cnpjError}</p>}
           </div>
 
           <div className="space-y-1.5">
@@ -227,7 +227,7 @@ export function LeadConfirmationCard({ index, draft, onConfirmar, onCancelar, on
               aria-invalid={!!emailError}
               className={`h-9 ${emailError ? "border-negative focus-visible:ring-negative" : ""}`}
             />
-            {emailError && <p className="text-xs text-negative">{emailError}</p>}
+            {emailError && <p className="text-xs text-negative-strong">{emailError}</p>}
           </div>
 
           <div className="space-y-1.5">

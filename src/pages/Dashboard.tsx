@@ -211,9 +211,9 @@ function VencimentoRow({ item }: { item: DashboardVencimento }) {
         className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 ${isReceita ? "bg-positive/10" : "bg-negative/10"}`}
       >
         {isReceita ? (
-          <ArrowUpRight size={14} className="text-positive" />
+          <ArrowUpRight size={14} className="text-positive-strong" />
         ) : (
-          <ArrowDownRight size={14} className="text-negative" />
+          <ArrowDownRight size={14} className="text-negative-strong" />
         )}
       </div>
       <div className="flex-1 min-w-0">
@@ -221,7 +221,7 @@ function VencimentoRow({ item }: { item: DashboardVencimento }) {
         <p className="text-[11px] text-ink-disabled truncate">{item.projeto || item.descricao}</p>
       </div>
       <div className="text-right shrink-0">
-        <p className={`text-sm font-semibold ${isReceita ? "text-positive" : "text-negative"}`}>
+        <p className={`text-sm font-semibold ${isReceita ? "text-positive-strong" : "text-negative-strong"}`}>
           {isReceita ? "+" : "-"}
           {fmt.format(item.valor)}
         </p>

@@ -113,7 +113,7 @@ export function FolhaTable({
                           </div>
                         </TableCell>
                         <TableCell
-                          className={`text-right font-medium ${isEdited(item, "variavel") ? "text-brand" : "text-positive"}`}
+                          className={`text-right font-medium ${isEdited(item, "variavel") ? "text-brand" : "text-positive-strong"}`}
                         >
                           {isEdited(item, "variavel") ? "" : "+"} {formatCurrency(item.v_variavel)}{" "}
                           {isEdited(item, "variavel") && "*"}

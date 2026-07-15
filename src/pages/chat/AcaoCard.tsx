@@ -126,7 +126,7 @@ export function AcaoCard({ index, acao, onExecutar, onCancelar }: Props) {
   if (acao.status === "feito") {
     return (
       <div className="w-full max-w-md rounded-2xl border border-positive/30 bg-positive/5 p-4 text-sm font-medium text-foreground">
-        <span className="mr-2 inline-flex h-6 w-6 items-center justify-center rounded-full bg-positive/15 align-middle text-positive">
+        <span className="mr-2 inline-flex h-6 w-6 items-center justify-center rounded-full bg-positive/15 align-middle text-positive-strong">
           <Check className="h-3.5 w-3.5" />
         </span>
         {meta.titulo}: concluído

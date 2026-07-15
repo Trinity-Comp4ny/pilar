@@ -69,7 +69,7 @@ export default function MetasDashboard() {
       color: "text-brand",
       bg: "bg-brand/10",
     },
-    { label: "Concluídas", value: stats.completed, icon: CheckCircle2, color: "text-positive", bg: "bg-positive/10" },
+    { label: "Concluídas", value: stats.completed, icon: CheckCircle2, color: "text-positive-strong", bg: "bg-positive/10" },
     { label: "Progresso Médio", value: `${stats.avgProgress}%`, icon: Clock, color: "text-blue-600", bg: "bg-blue-50" },
     { label: "Atrasadas", value: stats.overdue, icon: AlertTriangle, color: "text-red-600", bg: "bg-red-50" },
   ];
@@ -179,7 +179,7 @@ export default function MetasDashboard() {
       {/* Resumo por tipo */}
       <div className="grid md:grid-cols-3 gap-4">
         {[
-          { label: "Financeiras", icon: TrendingUp, stats: finStats, color: "text-positive", bg: "bg-positive/10" },
+          { label: "Financeiras", icon: TrendingUp, stats: finStats, color: "text-positive-strong", bg: "bg-positive/10" },
           { label: "Pessoais", icon: Users, stats: pesStats, color: "text-blue-600", bg: "bg-blue-50" },
           { label: "Projetos", icon: Calendar, stats: projStats, color: "text-purple-600", bg: "bg-purple-50" },
         ].map((item) => {

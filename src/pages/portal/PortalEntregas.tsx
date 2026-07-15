@@ -42,7 +42,7 @@ interface Entrega {
 
 const STATUS_CONFIG: Record<Entrega["status"], { label: string; color: string; icon: typeof Clock }> = {
   pendente: { label: "Aguardando resposta", color: "bg-yellow-100 text-yellow-800", icon: Clock },
-  aprovado: { label: "Aprovado", color: "bg-positive/10 text-positive", icon: CheckCircle2 },
+  aprovado: { label: "Aprovado", color: "bg-positive/10 text-positive-strong", icon: CheckCircle2 },
   revisao_solicitada: { label: "Revisão solicitada", color: "bg-orange-100 text-orange-800", icon: RotateCcw },
 };
 

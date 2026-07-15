@@ -412,14 +412,14 @@ export default function VisaoGeral() {
               <ul className="divide-y divide-black/5">
                 {topReceitas.map((r, i) => (
                   <li key={r.id} className="flex items-center gap-3 py-2.5">
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-positive/10 text-positive text-xs font-bold flex-shrink-0">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-positive/10 text-positive-strong text-xs font-bold flex-shrink-0">
                       {i + 1}
                     </span>
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium truncate">{r.descricao}</p>
                       <p className="text-xs text-muted-foreground">{formatDateDisplay(r.data)}</p>
                     </div>
-                    <span className="text-sm font-semibold text-positive tabular-nums whitespace-nowrap">
+                    <span className="text-sm font-semibold text-positive-strong tabular-nums whitespace-nowrap">
                       {formatCurrency(r.valor)}
                     </span>
                   </li>

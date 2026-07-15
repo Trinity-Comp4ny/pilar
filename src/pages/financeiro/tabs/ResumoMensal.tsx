@@ -71,13 +71,13 @@ export default function ResumoMensal({ dateFrom, dateTo }: ResumoMensalProps) {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
         <Card className="vrz-card bg-positive/10 border-positive/10 w-full min-w-0">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-positive truncate">Receitas</CardTitle>
+            <CardTitle className="text-sm font-medium text-positive-strong truncate">Receitas</CardTitle>
           </CardHeader>
           <CardContent className="min-w-0">
-            <div className="text-base sm:text-lg xl:text-xl font-bold text-positive tabular-nums whitespace-nowrap">
+            <div className="text-base sm:text-lg xl:text-xl font-bold text-positive-strong tabular-nums whitespace-nowrap">
               {formatCurrency(stats.receitasTotal)}
             </div>
-            <p className="text-xs text-positive mt-1 flex items-center min-w-0">
+            <p className="text-xs text-positive-strong mt-1 flex items-center min-w-0">
               <ArrowUpRight size={12} className="mr-1 flex-shrink-0" />
               <span className="truncate">{stats.receitasMes}% vs mês anterior</span>
             </p>
@@ -91,7 +91,7 @@ export default function ResumoMensal({ dateFrom, dateTo }: ResumoMensalProps) {
             <div className="text-base sm:text-lg xl:text-xl font-bold text-red-700 tabular-nums whitespace-nowrap">
               {formatCurrency(stats.despesasTotal)}
             </div>
-            <p className="text-xs text-positive mt-1 flex items-center min-w-0">
+            <p className="text-xs text-positive-strong mt-1 flex items-center min-w-0">
               <ArrowDownRight size={12} className="mr-1 flex-shrink-0" />
               <span className="truncate">{stats.despesasMes}% vs mês anterior</span>
             </p>
@@ -187,7 +187,7 @@ export default function ResumoMensal({ dateFrom, dateTo }: ResumoMensalProps) {
         <Card className="vrz-card w-full">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-positive" />
+              <TrendingUp className="h-5 w-5 text-positive-strong" />
               Principais Receitas do Mês
             </CardTitle>
             <CardDescription>Top 5 entradas de receita</CardDescription>
@@ -205,7 +205,7 @@ export default function ResumoMensal({ dateFrom, dateTo }: ResumoMensalProps) {
                       {item.data_recebimento ? new Date(item.data_recebimento).toLocaleDateString("pt-BR") : "—"}
                     </p>
                   </div>
-                  <span className="text-sm font-bold text-positive">{formatCurrency(item.valor)}</span>
+                  <span className="text-sm font-bold text-positive-strong">{formatCurrency(item.valor)}</span>
                 </div>
               ))}
               {topTransactions?.receitas.length === 0 && (
@@ -215,7 +215,7 @@ export default function ResumoMensal({ dateFrom, dateTo }: ResumoMensalProps) {
             <div className="mt-4 pt-4 border-t border-black/10">
               <div className="flex justify-between items-center">
                 <span className="text-sm font-medium text-muted-foreground">Total das 5 principais</span>
-                <span className="text-lg font-bold text-positive">{formatCurrency(totalTopReceitas)}</span>
+                <span className="text-lg font-bold text-positive-strong">{formatCurrency(totalTopReceitas)}</span>
               </div>
             </div>
           </CardContent>
