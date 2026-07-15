@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { startOfMonth, addDays, format } from "date-fns";
+import { addDays, format } from "date-fns";
 import { PROJECT_STATUS } from "@/constants";
 
 export function buildDashboardQueries(
@@ -7,8 +7,7 @@ export function buildDashboardQueries(
   mesAtualStart: Date,
   mesAtualEnd: Date,
   mesAnteriorStart: Date,
-  mesAnteriorEnd: Date,
-  chartStart: Date
+  mesAnteriorEnd: Date
 ) {
   const mesAtualStartStr = format(mesAtualStart, "yyyy-MM-dd");
   const mesAtualEndStr = format(mesAtualEnd, "yyyy-MM-dd");
@@ -58,11 +57,23 @@ export function buildDashboardQueries(
       )
       .is("deleted_at", null),
 
-    // 4: receitasPendentes (A Receber)
-    supabase.from("receitas").select("valor").eq("status", "Pendente").is("deleted_at", null),
+    // 4: receitasPendentes (A Receber) — escopado por data_vencimento no período
+    supabase
+      .from("receitas")
+      .select("valor")
+      .eq("status", "Pendente")
+      .gte("data_vencimento", mesAtualStartStr)
+      .lte("data_vencimento", mesAtualEndStr)
+      .is("deleted_at", null),
 
-    // 5: despesasPendentes (A Pagar)
-    supabase.from("despesas").select("valor").eq("status", "Pendente").is("deleted_at", null),
+    // 5: despesasPendentes (A Pagar) — escopado por data_vencimento no período
+    supabase
+      .from("despesas")
+      .select("valor")
+      .eq("status", "Pendente")
+      .gte("data_vencimento", mesAtualStartStr)
+      .lte("data_vencimento", mesAtualEndStr)
+      .is("deleted_at", null),
 
     // 6: projetos para listagem (planejamento + em andamento, limite 8)
     supabase
@@ -89,22 +100,7 @@ export function buildDashboardQueries(
     // 9: alertasNaoLidos count
     supabase.from("alertas").select("*", { count: "exact", head: true }).eq("lido", false),
 
-    // 10: receitasChart
-    supabase
-      .from("receitas")
-      .select("valor, data_recebimento, data_vencimento, status")
-      .gte("data_vencimento", format(startOfMonth(chartStart), "yyyy-MM-dd"))
-      .is("deleted_at", null),
-
-    // 11: despesasChart
-    supabase
-      .from("despesas")
-      .select("valor, data_pagamento, data_vencimento, status")
-      .eq("is_fatura_payment", false)
-      .gte("data_vencimento", format(startOfMonth(chartStart), "yyyy-MM-dd"))
-      .is("deleted_at", null),
-
-    // 12: proximasReceitas
+    // 10: proximasReceitas
     supabase
       .from("receitas")
       .select(
@@ -117,7 +113,7 @@ export function buildDashboardQueries(
       .order("data_vencimento", { ascending: true })
       .limit(5),
 
-    // 13: proximasDespesas
+    // 11: proximasDespesas
     supabase
       .from("despesas")
       .select(
@@ -130,7 +126,7 @@ export function buildDashboardQueries(
       .order("data_vencimento", { ascending: true })
       .limit(5),
 
-    // 14: count exato de projetos Em andamento (sem limit)
+    // 12: count exato de projetos Em andamento (sem limit)
     supabase
       .from("projetos")
       .select("*", { count: "exact", head: true })

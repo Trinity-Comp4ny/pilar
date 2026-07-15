@@ -134,5 +134,4 @@ export interface DashboardData {
   leadsTotal: number;
   alertas: DashboardAlerta[];
   alertasNaoLidos: number;
-  chartData: ChartDataPoint[];
 }
