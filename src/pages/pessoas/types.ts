@@ -34,4 +34,7 @@ export interface Pessoa {
   pis_nit?: string;
   contas_bancarias?: ContaBancaria[];
   chaves_pix?: ChavePix[];
+  // Vem da view pessoas_safe: true quando o papel pode ver folha (salário,
+  // contas, PIX, CPF completo). Para os demais, esses campos chegam mascarados.
+  pode_ver_sensivel?: boolean;
 }

@@ -26,7 +26,14 @@ export default function Pessoas() {
   } = useQuery({
     queryKey: ["pessoas"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("pessoas").select("*").is("deleted_at", null).order("nome");
+      // Lê da view pessoas_safe: campos sensíveis (salário, contas, PIX, CPF
+      // completo) vêm mascarados no banco para quem não tem can_view_folha().
+      // Nunca confiar em ocultar no cliente. Escritas continuam na tabela.
+      const { data, error } = await supabase
+        .from("pessoas_safe" as never)
+        .select("*")
+        .is("deleted_at", null)
+        .order("nome");
       if (error) throw error;
       return (data || []) as unknown as Pessoa[];
     },
