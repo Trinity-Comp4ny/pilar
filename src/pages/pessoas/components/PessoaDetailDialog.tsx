@@ -42,6 +42,9 @@ export function PessoaDetailDialog({ open, onOpenChange, pessoa, isAdmin, onEdit
   if (!pessoa) return null;
 
   const maskedCpf = pessoa.cpf ? `***.***.***-${pessoa.cpf.replace(/\D/g, "").slice(-2)}` : "-";
+  // Dados sensíveis (salário, contas, PIX, CPF completo) só chegam do banco
+  // para quem tem can_view_folha(). A view pessoas_safe já mascara o resto.
+  const podeVerSensivel = pessoa.pode_ver_sensivel ?? false;
 
   const tipo = pessoa.tipo_contrato as ContractType;
   const status = (pessoa.status || "ativo") as PessoaStatus;
@@ -70,7 +73,7 @@ export function PessoaDetailDialog({ open, onOpenChange, pessoa, isAdmin, onEdit
               <Label className="text-xs text-muted-foreground">CPF</Label>
               <div className="flex items-center gap-1.5">
                 <p className="font-medium">{pessoa.cpf ? (showCpf ? pessoa.cpf : maskedCpf) : "-"}</p>
-                {pessoa.cpf && (
+                {pessoa.cpf && podeVerSensivel && (
                   <button
                     type="button"
                     onClick={() => setShowCpf((v) => !v)}
@@ -104,7 +107,7 @@ export function PessoaDetailDialog({ open, onOpenChange, pessoa, isAdmin, onEdit
                 <p className="font-medium">{formatDateBR(pessoa.data_demissao)}</p>
               </div>
             )}
-            {isAdmin && (
+            {podeVerSensivel && (
               <>
                 <div>
                   <Label className="text-xs text-muted-foreground">Salário Fixo</Label>
@@ -170,7 +173,7 @@ export function PessoaDetailDialog({ open, onOpenChange, pessoa, isAdmin, onEdit
             </div>
           </div>
 
-          {isAdmin && (
+          {podeVerSensivel && (
             <div className="border-t pt-4 space-y-2">
               <h4 className="font-medium text-sm text-muted-foreground mb-2">Contas Bancárias</h4>
               {pessoa.contas_bancarias && pessoa.contas_bancarias.length > 0 ? (
