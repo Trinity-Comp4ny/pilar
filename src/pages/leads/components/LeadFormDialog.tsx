@@ -8,6 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Loader2 } from "lucide-react";
 import { formatPhone } from "@/lib/maskUtils";
 import { formatCurrencyInput } from "@/lib/currencyUtils";
+import { ValidatedField } from "@/components/forms/ValidatedField";
+import { emailFormatValidator, isPersonalEmail } from "@/lib/emailValidator";
 
 export type LeadFormData = {
   nome: string;
@@ -98,16 +100,21 @@ export function LeadFormDialog({ open, onOpenChange, mode, formData, onFormChang
                   placeholder="Nome da empresa"
                 />
               </div>
-              <div className="space-y-1.5">
-                <Label htmlFor={`${prefix}email`} className="text-xs">Email</Label>
-                <Input
-                  id={`${prefix}email`}
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => set("email", e.target.value)}
-                  placeholder="email@exemplo.com"
-                />
-              </div>
+              <ValidatedField
+                label="Email"
+                name={`${prefix}email`}
+                type="email"
+                value={formData.email}
+                onChange={(v) => set("email", v)}
+                placeholder="email@exemplo.com"
+                autoComplete="email"
+                onValidate={emailFormatValidator}
+                hint={
+                  isPersonalEmail(formData.email)
+                    ? "E-mail pessoal (Gmail, Hotmail...). Se possível, use o e-mail corporativo do contato."
+                    : undefined
+                }
+              />
               <div className="space-y-1.5">
                 <Label htmlFor={`${prefix}contato`} className="text-xs">Celular</Label>
                 <Input
