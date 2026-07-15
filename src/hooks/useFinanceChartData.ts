@@ -4,8 +4,9 @@ import { useQuery } from "@tanstack/react-query";
 import { format, parseISO, isValid } from "date-fns";
 import { ptBR } from "date-fns/locale";
 // Importa como `any` para contornar tipos gerados incompletos enquanto a migration não é aplicada remotamente.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 import { supabase } from "@/integrations/supabase/client";
+import { monitoring } from "@/lib/monitoring";
 import type { ChartDataPoint } from "@/hooks/dashboard/types";
 
 interface RpcPorMesRow {
@@ -84,7 +85,14 @@ export function useFinanceChartData(empresaId: string | null | undefined, dataIn
         p_data_fim: fimStr,
       });
 
-      if (error) throw error;
+      if (error) {
+        monitoring.captureException(error, {
+          context: "useFinanceChartData.rpc",
+          rpc: "get_financial_chart_data",
+          empresaId,
+        });
+        throw error;
+      }
 
       const result = (data ?? null) as RpcResult | null;
       if (!result) return [];

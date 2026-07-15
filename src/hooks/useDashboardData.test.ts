@@ -30,8 +30,6 @@ const buildDashboardDataFromInputs = (overrides: {
   proxReceitas?: unknown[];
   proxDespesas?: unknown[];
   alertasData?: unknown[];
-  receitaChart?: ReceitaChartRow[];
-  despesaChart?: DespesaChartRow[];
   alertasNaoLidos?: number;
   now?: Date;
 }): DashboardData => {
@@ -59,7 +57,6 @@ const buildDashboardDataFromInputs = (overrides: {
   const { pipeline: leadsPipeline, total: leadsTotal } = buildLeadsPipeline(overrides.leadsData ?? []);
   const proximosVencimentos = buildVencimentos(overrides.proxReceitas ?? [], overrides.proxDespesas ?? [], now);
   const alertas = buildAlertas(overrides.alertasData ?? []);
-  const chartData = processChartData(overrides.receitaChart ?? [], overrides.despesaChart ?? []);
 
   return {
     kpis,
@@ -69,7 +66,6 @@ const buildDashboardDataFromInputs = (overrides: {
     leadsTotal,
     alertas,
     alertasNaoLidos: overrides.alertasNaoLidos ?? 0,
-    chartData,
   };
 };
 
@@ -95,10 +91,9 @@ describe("useDashboardData (contract)", () => {
     expect(data.leadsTotal).toBe(0);
     expect(data.alertas).toEqual([]);
     expect(data.alertasNaoLidos).toBe(0);
-    expect(data.chartData).toEqual([]);
   });
 
-  it("returns chart data and projetos arrays", () => {
+  it("returns projetos array and aggregates chart data", () => {
     const projeto: ProjetoWithCliente = {
       id: "p1",
       codigo_projeto: "PRJ-100",
@@ -124,8 +119,6 @@ describe("useDashboardData (contract)", () => {
     const data = buildDashboardDataFromInputs({
       projetosData: [projeto],
       projetosAtivos: 1,
-      receitaChart,
-      despesaChart,
     });
 
     // projetos: array com shape correto
@@ -139,17 +132,14 @@ describe("useDashboardData (contract)", () => {
     });
     expect(typeof data.projetos[0].progressoPrazo).toBe("number");
 
-    // chartData: array com saldo agregado
-    expect(Array.isArray(data.chartData)).toBe(true);
-    expect(data.chartData).toHaveLength(1);
-    expect(data.chartData[0]).toMatchObject({
-      receitas: 1000,
-      despesas: 400,
-      saldo: 600,
-    });
-    expect(data.chartData[0].mes).toMatch(/\/\d{2}$/);
-
     // KPI projetosAtivos é repassado
     expect(data.kpis.projetosAtivos).toBe(1);
+
+    // O gráfico agora vem de hooks dedicados (RPC + fallback); a agregação
+    // continua sendo responsabilidade de processChartData.
+    const chartData = processChartData(receitaChart, despesaChart);
+    expect(chartData).toHaveLength(1);
+    expect(chartData[0]).toMatchObject({ receitas: 1000, despesas: 400, saldo: 600 });
+    expect(chartData[0].mes).toMatch(/\/\d{2}$/);
   });
 });
