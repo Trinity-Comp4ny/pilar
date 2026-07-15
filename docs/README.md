@@ -34,6 +34,7 @@
 - **"Quem é o cliente e qual o plano de go-to-market?"** → [`strategy/ICP_E_PLANO_DESIGN_PARTNER_2026-05.md`](./strategy/ICP_E_PLANO_DESIGN_PARTNER_2026-05.md)
 - **"Qual a estratégia de produto atual?"** → [`strategy/STRATEGY_V2.md`](./strategy/STRATEGY_V2.md) (substitui `PRODUCT_STRATEGY.md`)
 - **"O que a concorrência faz?"** → [`strategy/ANALISE_COMPETITIVA_VOBI.md`](./strategy/ANALISE_COMPETITIVA_VOBI.md)
+- **"O que melhorar em config/admin/super-admin?"** → [`strategy/TODO_CONFIG_ADMIN_2026-07-14.md`](./strategy/TODO_CONFIG_ADMIN_2026-07-14.md)
 - **"Está tudo seguro?"** → [`security/SECURITY.md`](./security/SECURITY.md) + [`security/AUDITORIA_BANCO_2026-05-19.md`](./security/AUDITORIA_BANCO_2026-05-19.md)
 - **"Deu incidente, e agora?"** → [`operations/INCIDENT_RESPONSE.md`](./operations/INCIDENT_RESPONSE.md) + [`operations/runbooks/`](./operations/runbooks/)
 - **"Por que decidimos X na arquitetura?"** → [`architecture/adr/`](./architecture/adr/)
