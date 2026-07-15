@@ -259,7 +259,7 @@ export default function FluxoCaixa({ dateFrom, dateTo }: FluxoCaixaProps) {
         <Card className="vrz-card w-full">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-positive" />
+              <TrendingUp className="h-5 w-5 text-positive-strong" />
               Principais Receitas
             </CardTitle>
             <CardDescription>Top 5 entradas no período</CardDescription>
@@ -277,7 +277,7 @@ export default function FluxoCaixa({ dateFrom, dateTo }: FluxoCaixaProps) {
                       {item.data_recebimento ? new Date(item.data_recebimento).toLocaleDateString("pt-BR") : "—"}
                     </p>
                   </div>
-                  <span className="text-sm font-bold text-positive">{formatCurrency(item.valor)}</span>
+                  <span className="text-sm font-bold text-positive-strong">{formatCurrency(item.valor)}</span>
                 </div>
               ))}
               {topTransactions?.receitas.length === 0 && (
@@ -287,7 +287,7 @@ export default function FluxoCaixa({ dateFrom, dateTo }: FluxoCaixaProps) {
             <div className="mt-4 pt-4 border-t border-black/10">
               <div className="flex justify-between items-center">
                 <span className="text-sm font-medium text-muted-foreground">Total das 5 principais</span>
-                <span className="text-lg font-bold text-positive">{formatCurrency(totalTopReceitas)}</span>
+                <span className="text-lg font-bold text-positive-strong">{formatCurrency(totalTopReceitas)}</span>
               </div>
             </div>
           </CardContent>

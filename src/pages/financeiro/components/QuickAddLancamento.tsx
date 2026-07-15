@@ -84,7 +84,7 @@ export function QuickAddLancamento({ onCreated }: Props) {
           onClick={() => setTipo("receita")}
           className={cn(
             "h-7 px-3 rounded-full text-xs font-medium inline-flex items-center gap-1 transition",
-            tipo === "receita" ? "bg-positive/10 text-positive" : "text-muted-foreground hover:text-foreground"
+            tipo === "receita" ? "bg-positive/10 text-positive-strong" : "text-muted-foreground hover:text-foreground"
           )}
         >
           <ArrowUpCircle className="h-3.5 w-3.5" />

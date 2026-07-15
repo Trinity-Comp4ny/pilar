@@ -69,7 +69,7 @@ export default function Lancamentos() {
           <Button
             size="sm"
             variant="outline"
-            className="h-9 rounded-full gap-1 border-positive text-positive hover:bg-positive/10"
+            className="h-9 rounded-full gap-1 border-positive text-positive-strong hover:bg-positive/10"
             onClick={() => setNewTipo("receita")}
           >
             <Plus className="h-3.5 w-3.5" />
@@ -156,7 +156,7 @@ interface KPICardProps {
 
 function KPICard({ label, value, icon: Icon, tone, loading }: KPICardProps) {
   const toneClass = {
-    positive: "text-positive bg-positive/10",
+    positive: "text-positive-strong bg-positive/10",
     negative: "text-red-600 bg-red-50",
     "neutral-positive": "text-emerald-700 bg-emerald-50",
     "neutral-negative": "text-amber-700 bg-amber-50",

@@ -107,7 +107,7 @@ export function ValidatedField({
         />
         {isValid && (
           <Check
-            className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-positive"
+            className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-positive-strong"
             aria-hidden
           />
         )}

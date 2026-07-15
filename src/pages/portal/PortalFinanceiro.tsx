@@ -33,7 +33,7 @@ export function FinanceiroContent({ receitas }: { receitas: ClienteReceita[] }) 
         <Card>
           <CardContent className="p-4 text-center">
             <p className="text-xs text-muted-foreground">Pago</p>
-            <p className="text-lg font-bold text-positive">{formatCurrency(totalPago)}</p>
+            <p className="text-lg font-bold text-positive-strong">{formatCurrency(totalPago)}</p>
           </CardContent>
         </Card>
         <Card>
@@ -76,7 +76,7 @@ export function FinanceiroContent({ receitas }: { receitas: ClienteReceita[] }) 
                 return (
                   <div key={r.id} className="flex items-center gap-3 p-3 border rounded-lg">
                     <div
-                      className={`p-1.5 rounded ${isRecebido ? "bg-positive/10 text-positive" : isAtrasado ? "bg-red-100 text-red-700" : "bg-yellow-100 text-yellow-700"}`}
+                      className={`p-1.5 rounded ${isRecebido ? "bg-positive/10 text-positive-strong" : isAtrasado ? "bg-red-100 text-red-700" : "bg-yellow-100 text-yellow-700"}`}
                     >
                       {isRecebido ? <CheckCircle2 className="h-4 w-4" /> : <Clock className="h-4 w-4" />}
                     </div>
@@ -96,7 +96,7 @@ export function FinanceiroContent({ receitas }: { receitas: ClienteReceita[] }) 
                           </Badge>
                         )}
                         <Badge
-                          className={`text-[10px] ${isRecebido ? "bg-positive/10 text-positive" : isAtrasado ? "bg-red-100 text-red-800" : "bg-yellow-100 text-yellow-800"}`}
+                          className={`text-[10px] ${isRecebido ? "bg-positive/10 text-positive-strong" : isAtrasado ? "bg-red-100 text-red-800" : "bg-yellow-100 text-yellow-800"}`}
                         >
                           {isRecebido ? "Pago" : isAtrasado ? "Atrasado" : "Pendente"}
                         </Badge>

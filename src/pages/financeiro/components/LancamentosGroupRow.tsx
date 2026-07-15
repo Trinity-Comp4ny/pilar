@@ -104,7 +104,7 @@ export function LancamentosGroupRow({
         <span
           className={cn(
             "inline-flex items-center justify-center h-7 w-7 rounded-full",
-            isReceita ? "bg-positive/10 text-positive" : "bg-red-50 text-red-600"
+            isReceita ? "bg-positive/10 text-positive-strong" : "bg-red-50 text-red-600"
           )}
         >
           {isReceita ? <ArrowUpCircle className="h-4 w-4" /> : <ArrowDownCircle className="h-4 w-4" />}
@@ -139,7 +139,7 @@ export function LancamentosGroupRow({
           cellPad,
           "text-right font-semibold tabular-nums",
           cellTextSize,
-          isReceita ? "text-positive" : "text-red-600"
+          isReceita ? "text-positive-strong" : "text-red-600"
         )}
       >
         {isReceita ? "+" : "−"} {formatBRL(total)}
@@ -172,7 +172,7 @@ export function LancamentosGroupRow({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="text-xs">
               <DropdownMenuItem className="text-xs gap-2" onSelect={() => onMarkPaid(items)}>
-                <Check className="h-3.5 w-3.5 text-positive" />
+                <Check className="h-3.5 w-3.5 text-positive-strong" />
                 Marcar todas como pagas
               </DropdownMenuItem>
               <DropdownMenuSeparator />
