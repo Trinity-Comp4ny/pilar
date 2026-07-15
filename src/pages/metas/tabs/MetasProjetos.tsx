@@ -184,7 +184,7 @@ export default function MetasProjetos() {
       case "prazo":
         return { icon: "text-orange-500", bg: "bg-orange-50" };
       case "custo":
-        return { icon: "text-positive", bg: "bg-positive/10" };
+        return { icon: "text-positive-strong", bg: "bg-positive/10" };
       case "qualidade":
         return { icon: "text-blue-500", bg: "bg-blue-50" };
       case "escopo":
@@ -394,7 +394,7 @@ export default function MetasProjetos() {
                     <div className="flex justify-between items-start">
                       <div className="flex items-center gap-3 flex-1">
                         <div className={cn("p-2 rounded-lg", isCompleted ? "bg-positive/10" : colors.bg)}>
-                          <Calendar className={cn("h-5 w-5", isCompleted ? "text-positive" : colors.icon)} />
+                          <Calendar className={cn("h-5 w-5", isCompleted ? "text-positive-strong" : colors.icon)} />
                         </div>
                         <div>
                           <CardTitle className="text-base">{meta.nome}</CardTitle>
@@ -405,7 +405,7 @@ export default function MetasProjetos() {
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className={cn("text-2xl font-bold", isCompleted && "text-positive")}>{percent}%</span>
+                        <span className={cn("text-2xl font-bold", isCompleted && "text-positive-strong")}>{percent}%</span>
                         <Button
                           variant="ghost"
                           size="icon"

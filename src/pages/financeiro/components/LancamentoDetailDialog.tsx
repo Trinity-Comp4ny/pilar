@@ -42,7 +42,7 @@ export function LancamentoDetailDialog({
             <span
               className={cn(
                 "inline-flex h-7 w-7 items-center justify-center rounded-full",
-                isReceita ? "bg-positive/10 text-positive" : "bg-red-50 text-red-600"
+                isReceita ? "bg-positive/10 text-positive-strong" : "bg-red-50 text-red-600"
               )}
             >
               {isReceita ? <ArrowUpCircle className="h-4 w-4" /> : <ArrowDownCircle className="h-4 w-4" />}
@@ -54,7 +54,7 @@ export function LancamentoDetailDialog({
 
         <div className="grid grid-cols-2 gap-4 pt-2">
           <Field label="Valor">
-            <span className={cn("font-bold", isReceita ? "text-positive" : "text-red-600")}>
+            <span className={cn("font-bold", isReceita ? "text-positive-strong" : "text-red-600")}>
               {isReceita ? "+" : "−"} {formatBRL(l.valor)}
             </span>
           </Field>

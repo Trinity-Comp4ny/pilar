@@ -120,7 +120,7 @@ export function FolhaCard({ index, draft, onConfirmar, onCancelar, onDesfazerFol
     return (
       <div className="w-full max-w-2xl rounded-2xl border border-positive/30 bg-positive/5 p-4">
         <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-positive/15 text-positive">
+          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-positive/15 text-positive-strong">
             <Check className="h-3.5 w-3.5" />
           </span>
           Folha de {competencia} fechada · {rows.length} pessoa{rows.length === 1 ? "" : "s"}

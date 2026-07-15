@@ -124,7 +124,7 @@ export function ConfirmPersonDialog({ open, onOpenChange, person, onConfirm }: C
             </div>
             <div className="flex justify-between text-lg pt-1">
               <span className="font-semibold">Total a Receber: </span>
-              <span className="font-bold text-positive">{formatCurrency(person.v_total)}</span>
+              <span className="font-bold text-positive-strong">{formatCurrency(person.v_total)}</span>
             </div>
           </div>
         )}
@@ -271,7 +271,7 @@ function EditableField({
       {isEditing ? (
         <Input type="number" value={editValue} onChange={(e) => onChange(parseFloat(e.target.value) || 0)} />
       ) : (
-        <p className={isBold ? "font-bold text-lg text-positive" : ""}>
+        <p className={isBold ? "font-bold text-lg text-positive-strong" : ""}>
           {isCurrency ? formatCurrency(value) : `${value?.toLocaleString("pt-BR")}${suffix || ""}`}
         </p>
       )}
@@ -324,7 +324,7 @@ export function HistoryDetailDialog({ open, onOpenChange, selectedHistory, loadi
                     <TableCell>{item.p_cargo}</TableCell>
                     <TableCell className="text-right">{formatCurrency(item.p_salario_fixo)}</TableCell>
                     <TableCell className="text-center">{(item.soma_area ?? 0).toLocaleString("pt-BR")} m²</TableCell>
-                    <TableCell className="text-right text-positive font-medium">
+                    <TableCell className="text-right text-positive-strong font-medium">
                       {formatCurrency(item.v_variavel)}
                     </TableCell>
                     <TableCell className="text-right font-bold">{formatCurrency(item.v_total)}</TableCell>

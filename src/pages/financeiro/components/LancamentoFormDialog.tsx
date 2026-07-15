@@ -369,7 +369,7 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
     return (
       <Badge
         variant="secondary"
-        className={cn("tabular-nums", ok ? "bg-positive/10 text-positive" : "bg-amber-100 text-amber-700")}
+        className={cn("tabular-nums", ok ? "bg-positive/10 text-positive-strong" : "bg-amber-100 text-amber-700")}
       >
         Soma: {soma.toFixed(2)}%
       </Badge>

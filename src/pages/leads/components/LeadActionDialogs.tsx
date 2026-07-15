@@ -62,7 +62,7 @@ export function LeadAutoConvertDialog({ open, onOpenChange, isPending, onConvert
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <UserPlus className="h-5 w-5 text-positive" />
+            <UserPlus className="h-5 w-5 text-positive-strong" />
             Lead Ganho!
           </DialogTitle>
           <DialogDescription>

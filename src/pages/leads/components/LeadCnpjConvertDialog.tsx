@@ -76,7 +76,7 @@ export function LeadCnpjConvertDialog({ open, onOpenChange, isPending, onConvert
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <UserPlus className="h-5 w-5 text-positive" />
+            <UserPlus className="h-5 w-5 text-positive-strong" />
             Lead Ganho!
           </DialogTitle>
           <DialogDescription>
@@ -110,7 +110,7 @@ export function LeadCnpjConvertDialog({ open, onOpenChange, isPending, onConvert
 
           {lookup && (
             <div className="rounded-lg border border-positive/20 bg-positive/5 p-3 text-sm">
-              <div className="flex items-center gap-2 mb-2 text-positive font-medium">
+              <div className="flex items-center gap-2 mb-2 text-positive-strong font-medium">
                 <Building2 className="h-4 w-4" />
                 {lookup.razao_social}
               </div>
@@ -121,7 +121,7 @@ export function LeadCnpjConvertDialog({ open, onOpenChange, isPending, onConvert
               <div className="text-xs text-black/60">
                 {lookup.municipio}/{lookup.uf} · CEP {lookup.cep}
               </div>
-              <div className="flex items-center gap-1 mt-2 text-xs text-positive">
+              <div className="flex items-center gap-1 mt-2 text-xs text-positive-strong">
                 <Check className="h-3 w-3" /> Dados serão copiados ao cliente
               </div>
             </div>
