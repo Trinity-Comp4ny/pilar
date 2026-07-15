@@ -13,8 +13,9 @@
 --   1. REVOGA o SELECT das 5 colunas sensíveis na tabela base para
 --      authenticated/anon. A partir daqui, ninguém lê essas colunas
 --      direto de public.pessoas via API (select('*') passa a falhar nelas).
---   2. Cria a view pessoas_safe (SECURITY DEFINER) que é o ÚNICO caminho de
---      leitura dessas colunas: expõe os valores reais só quando
+--   2. Cria a view pessoas_safe (roda com o privilégio do dono, por omitir
+--      security_invoker) que é o ÚNICO caminho de leitura dessas colunas:
+--      expõe os valores reais só quando
 --      can_view_folha() (owner/admin/ultra_admin); para os demais papéis
 --      retorna NULL / '[]' / CPF mascarado.
 --
@@ -23,11 +24,12 @@
 -- CNPJ, data de nascimento e endereço seguem legíveis pelo viewer como
 -- hoje (fora do escopo desta auditoria).
 --
--- Por que SECURITY DEFINER (e não security_invoker): a view PRECISA ler as
--- colunas sensíveis para poder mascará-las condicionalmente; com o SELECT
+-- Por que privilégio do dono (omitindo security_invoker): a view PRECISA ler
+-- as colunas sensíveis para poder mascará-las condicionalmente; com o SELECT
 -- revogado do invoker, uma view security_invoker não conseguiria lê-las nem
--- para o admin. Como definer bypassa a RLS da base, o predicado multi-tenant
--- (empresa + feature viewer) é replicado no WHERE da view. can_view_folha(),
+-- para o admin. Como a view roda com o privilégio do dono, ela bypassa a RLS
+-- da base, então o predicado multi-tenant (empresa + feature viewer) é
+-- replicado no WHERE da view. can_view_folha(),
 -- get_user_empresa_id() e user_has_feature() são SECURITY DEFINER e resolvem
 -- o usuário real via auth.uid() (o JWT não muda por a view ser definer).
 --
@@ -69,7 +71,10 @@ GRANT SELECT (
 -- ---------------------------------------------------------------------
 DROP VIEW IF EXISTS public.pessoas_safe;
 
-CREATE VIEW public.pessoas_safe AS
+-- security_barrier: a view é fronteira de segurança (roda com o privilégio
+-- do dono e mascara colunas). Impede que um predicado do chamador "vaze" para
+-- dentro (ex.: função LEAKPROOF-falsa avaliada antes do filtro de tenant).
+CREATE VIEW public.pessoas_safe WITH (security_barrier = true) AS
 SELECT
   p.id,
   p.empresa_id,
@@ -108,8 +113,8 @@ SELECT
   CASE WHEN public.can_view_folha() THEN p.contas_bancarias ELSE '[]'::jsonb END AS contas_bancarias,
   CASE WHEN public.can_view_folha() THEN p.chaves_pix ELSE '[]'::jsonb END AS chaves_pix
 FROM public.pessoas p
--- View é SECURITY DEFINER (bypassa RLS da base): replicar o predicado da
--- policy pessoas_select para manter o multi-tenant e o gate de feature.
+-- View roda com privilégio do dono (bypassa a RLS da base): replicar o
+-- predicado da policy pessoas_select para manter o multi-tenant e o gate.
 WHERE p.empresa_id = public.get_user_empresa_id()
   AND public.user_has_feature('pessoas', 'viewer');
 
