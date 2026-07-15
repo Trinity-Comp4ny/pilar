@@ -18,7 +18,7 @@ interface ProjetoDetailInfoProps {
 }
 
 function margemColor(pct: number): string {
-  if (pct >= 20) return "text-positive";
+  if (pct >= 20) return "text-positive-strong";
   if (pct >= 10) return "text-yellow-600";
   return "text-red-600";
 }
@@ -93,7 +93,7 @@ export function ProjetoDetailInfo({ projeto, progress, margemBrutaPct, rentabili
               className={`text-sm font-bold ${
                 margemBrutaPct !== null
                   ? margemBrutaPct >= 20
-                    ? "text-positive"
+                    ? "text-positive-strong"
                     : margemBrutaPct >= 0
                       ? "text-yellow-600"
                       : "text-red-600"
@@ -143,7 +143,7 @@ export function ProjetoDetailInfo({ projeto, progress, margemBrutaPct, rentabili
               {/* Receitas */}
               <div>
                 <p className="text-[10px] uppercase text-muted-foreground mb-1">Receitas</p>
-                <p className="text-sm font-semibold text-positive">
+                <p className="text-sm font-semibold text-positive-strong">
                   {formatCurrency(rentabilidade.receitas_recebidas)}
                 </p>
                 {rentabilidade.receitas_total > rentabilidade.receitas_recebidas && (

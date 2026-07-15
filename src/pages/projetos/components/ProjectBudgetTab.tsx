@@ -150,7 +150,7 @@ export function ProjectBudgetTab({ projetoId, canEdit, disciplinas }: ProjectBud
           <Badge variant="secondary">Custo: {formatCurrency(totalCusto)}</Badge>
           <Badge variant="secondary">Venda: {formatCurrency(totalVenda)}</Badge>
           {totalVenda > 0 && (
-            <Badge className={totalVenda - totalCusto > 0 ? "bg-positive/10 text-positive" : "bg-red-100 text-red-800"}>
+            <Badge className={totalVenda - totalCusto > 0 ? "bg-positive/10 text-positive-strong" : "bg-red-100 text-red-800"}>
               Margem: {(((totalVenda - totalCusto) / totalVenda) * 100).toFixed(1)}%
             </Badge>
           )}

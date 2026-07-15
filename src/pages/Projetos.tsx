@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
   AlertDialog,
@@ -62,6 +62,7 @@ import {
   EMPTY_FILTERS,
   type ProjetosFilters,
   type DeadlineFilter,
+  type DateField,
 } from "@/pages/projetos/components/ProjetosFilterBar";
 import { ProjetosKPIs } from "@/pages/projetos/components/ProjetosKPIs";
 import { ProjetoColumnSkeleton } from "@/pages/projetos/components/ProjetoCardSkeleton";
@@ -106,6 +107,7 @@ function filtersToParams(filters: ProjetosFilters, sort: { key: SortKey; dir: So
   if (filters.clienteIds.length) params.set("c", filters.clienteIds.join(","));
   if (filters.disciplinaIds.length) params.set("disc", filters.disciplinaIds.join(","));
   if (filters.deadlineStatus.length) params.set("d", filters.deadlineStatus.join(","));
+  if (filters.dataCampo !== "previsao") params.set("dc", filters.dataCampo);
   if (filters.dataInicio) params.set("di", filters.dataInicio);
   if (filters.dataFim) params.set("df", filters.dataFim);
   if (sort.key !== "priority" || sort.dir !== "asc") params.set("sort", `${sort.key}.${sort.dir}`);
@@ -128,6 +130,9 @@ function parseFiltersFromParams(params: URLSearchParams): {
       clienteIds: params.get("c")?.split(",").filter(Boolean) || [],
       disciplinaIds: params.get("disc")?.split(",").filter(Boolean) || [],
       deadlineStatus: (params.get("d")?.split(",").filter(Boolean) as DeadlineFilter[]) || [],
+      dataCampo: (["previsao", "inicio", "final"] as DateField[]).includes(params.get("dc") as DateField)
+        ? (params.get("dc") as DateField)
+        : "previsao",
       dataInicio: params.get("di") || "",
       dataFim: params.get("df") || "",
     },
@@ -380,11 +385,16 @@ export default function ProjetosKanban() {
     const { error } = await supabase.from("projetos").update(updateData).eq("id", projetoId);
     if (error) {
       toast.error("Erro ao mover projeto");
+      // Reverte o cache otimista buscando o estado real do servidor.
       queryClient.invalidateQueries({ queryKey: ["projetos"] });
       return false;
     }
     toast.success(`Movido para ${statusConfig[newStatus as keyof typeof statusConfig]?.label}`);
-    queryClient.invalidateQueries({ queryKey: ["projetos"] });
+    // Confia no update otimista. Só revalida quando o servidor pode ter mexido
+    // em data_final: ao concluir (trigger preenche) ou reabrir (limpamos).
+    if (newStatus === PROJECT_STATUS.CONCLUIDO || clearDataFinal) {
+      queryClient.invalidateQueries({ queryKey: ["projetos"] });
+    }
     return true;
   };
 
@@ -515,10 +525,18 @@ export default function ProjetosKanban() {
       if (!key || !filters.deadlineStatus.includes(key as DeadlineFilter)) return false;
     }
     if (filters.dataInicio || filters.dataFim) {
-      const prev = projeto.data_previsao;
-      if (!prev) return false;
-      if (filters.dataInicio && prev < filters.dataInicio) return false;
-      if (filters.dataFim && prev > filters.dataFim) return false;
+      const val =
+        filters.dataCampo === "inicio"
+          ? projeto.data_inicio
+          : filters.dataCampo === "final"
+            ? projeto.data_final
+            : projeto.data_previsao;
+      // Não descarta projetos sem a data escolhida: só aplica o intervalo aos
+      // que a possuem, evitando esconder projetos por falta de uma data.
+      if (val) {
+        if (filters.dataInicio && val < filters.dataInicio) return false;
+        if (filters.dataFim && val > filters.dataFim) return false;
+      }
     }
     return true;
   };
@@ -552,8 +570,19 @@ export default function ProjetosKanban() {
     [projetos, filters, disciplinaNomesSelected]
   );
 
-  const getProjetosByStatus = (status: string) =>
-    filteredProjetos.filter((p) => p.status === status).sort(sortProjetos);
+  // Agrupa e ordena por status uma única vez por render, em vez de rodar
+  // filter().sort() para cada coluna (12 varreduras da lista a cada render).
+  const projetosByStatus = useMemo(() => {
+    const groups: Record<string, Projeto[]> = {};
+    for (const p of filteredProjetos) {
+      (groups[p.status] ||= []).push(p);
+    }
+    for (const key of Object.keys(groups)) groups[key].sort(sortProjetos);
+    return groups;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filteredProjetos, sort]);
+
+  const getProjetosByStatus = (status: string) => projetosByStatus[status] || [];
 
   const toggleColumn = (status: string) => {
     setCollapsedColumns((prev) => {
@@ -569,6 +598,22 @@ export default function ProjetosKanban() {
     { id: "disciplinas", label: "Disciplinas", icon: Layers },
     { id: "cronograma", label: "Cronograma", icon: CalendarIcon },
   ];
+
+  // Navegação por teclado nas abas (padrão ARIA tablist: setas, Home/End).
+  const tabRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const handleTabKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) => {
+    const order = tabs.map((t) => t.id);
+    const idx = order.indexOf(activeTab);
+    let next: Tab | null = null;
+    if (e.key === "ArrowRight" || e.key === "ArrowDown") next = order[(idx + 1) % order.length];
+    else if (e.key === "ArrowLeft" || e.key === "ArrowUp") next = order[(idx - 1 + order.length) % order.length];
+    else if (e.key === "Home") next = order[0];
+    else if (e.key === "End") next = order[order.length - 1];
+    if (!next) return;
+    e.preventDefault();
+    setActiveTab(next);
+    tabRefs.current[next]?.focus();
+  };
 
   const noProjetos = !loadingProjetos && !projetosError && projetos.length === 0;
   const noResults = !loadingProjetos && !projetosError && projetos.length > 0 && filteredProjetos.length === 0;
@@ -590,6 +635,8 @@ export default function ProjetosKanban() {
                 filters={filters}
                 onChange={setFilters}
               />
+
+              {activeTab === "kanban" && <SortControl sort={sort} onChange={setSort} />}
 
               <Can feature="projetos" action="edit">
                 <Button variant="outline" className="rounded-full text-sm" onClick={() => setIsDisciplinasOpen(true)}>
@@ -638,22 +685,32 @@ export default function ProjetosKanban() {
       )}
 
       {/* Abas */}
-      <div className="flex items-center gap-0 border-b mb-4">
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            type="button"
-            onClick={() => setActiveTab(tab.id)}
-            className={cn(
-              "px-4 py-2 text-sm transition-colors -mb-px rounded-t-md border border-transparent",
-              activeTab === tab.id
-                ? "bg-brand border-brand text-foreground font-medium"
-                : "text-muted-foreground hover:text-foreground hover:bg-muted"
-            )}
-          >
-            {tab.label}
-          </button>
-        ))}
+      <div role="tablist" aria-label="Visualização de projetos" className="flex items-center gap-0 border-b mb-4">
+        {tabs.map((tab) => {
+          const selected = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              ref={(el) => (tabRefs.current[tab.id] = el)}
+              role="tab"
+              id={`projetos-tab-${tab.id}`}
+              aria-selected={selected}
+              aria-controls={`projetos-tabpanel-${tab.id}`}
+              tabIndex={selected ? 0 : -1}
+              type="button"
+              onClick={() => setActiveTab(tab.id)}
+              onKeyDown={handleTabKeyDown}
+              className={cn(
+                "px-4 py-2 text-sm transition-colors -mb-px rounded-t-md border border-transparent",
+                selected
+                  ? "bg-brand border-brand text-foreground font-medium"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
+              )}
+            >
+              {tab.label}
+            </button>
+          );
+        })}
       </div>
 
       {/* Erro de carregamento: estado distinto do empty, com opção de tentar de novo */}
@@ -670,7 +727,12 @@ export default function ProjetosKanban() {
             <ProjetosEmptyState variant="no-results" onClearFilters={() => setFilters(EMPTY_FILTERS)} />
           ) : (
             <DragDropContext onDragEnd={onDragEnd}>
-              <div className="flex-1 min-h-0">
+              <div
+                role="tabpanel"
+                id="projetos-tabpanel-kanban"
+                aria-labelledby="projetos-tab-kanban"
+                className="flex-1 min-h-0"
+              >
                 {/* Desktop kanban */}
                 <div className="hidden md:flex gap-3 w-full h-full min-h-0 overflow-x-auto pb-2">
                   {Object.entries(statusConfig).map(([status, config]) => {
@@ -703,25 +765,22 @@ export default function ProjetosKanban() {
 
                     return (
                       <div key={status} className="flex flex-col min-w-[280px] w-[280px] flex-shrink-0 min-h-0">
-                        <div className="flex items-center gap-2 px-2 py-2.5 group">
+                        <div className="flex items-center gap-2 px-2 py-2.5">
                           <span className={cn("h-2 w-2 rounded-full flex-shrink-0", dotColor)} />
                           <h3 className="text-xs font-medium text-foreground/80 uppercase tracking-wide">
                             {config.label}
                           </h3>
                           <span className="text-[11px] text-muted-foreground tabular-nums">{items.length}</span>
-                          <div className="ml-auto flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <ColumnSortMenu sort={sort} onChange={setSort} />
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-6 w-6 text-muted-foreground"
-                              onClick={() => toggleColumn(status)}
-                              title="Minimizar coluna"
-                              aria-label="Minimizar coluna"
-                            >
-                              <ChevronLeft className="h-3.5 w-3.5" />
-                            </Button>
-                          </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="ml-auto h-11 w-11 -my-2 text-muted-foreground"
+                            onClick={() => toggleColumn(status)}
+                            title="Minimizar coluna"
+                            aria-label="Minimizar coluna"
+                          >
+                            <ChevronLeft className="h-4 w-4" />
+                          </Button>
                         </div>
 
                         <Droppable droppableId={status}>
@@ -814,9 +873,13 @@ export default function ProjetosKanban() {
           )}
         </>
       ) : activeTab === "disciplinas" ? (
-        <DisciplinasTab projetos={filteredProjetos} />
+        <div role="tabpanel" id="projetos-tabpanel-disciplinas" aria-labelledby="projetos-tab-disciplinas">
+          <DisciplinasTab projetos={filteredProjetos} />
+        </div>
       ) : activeTab === "cronograma" ? (
-        <CronogramaProjetosTab projetos={filteredProjetos} />
+        <div role="tabpanel" id="projetos-tabpanel-cronograma" aria-labelledby="projetos-tab-cronograma">
+          <CronogramaProjetosTab projetos={filteredProjetos} />
+        </div>
       ) : null}
 
       <ProjectDetailDialog
@@ -938,23 +1001,21 @@ export default function ProjetosKanban() {
   );
 }
 
-interface ColumnSortMenuProps {
+interface SortControlProps {
   sort: { key: SortKey; dir: SortDir };
   onChange: (sort: { key: SortKey; dir: SortDir }) => void;
 }
 
-function ColumnSortMenu({ sort, onChange }: ColumnSortMenuProps) {
+// Ordenação global do quadro, sempre visível na barra de topo (antes ficava
+// escondida por coluna, aparecendo só no hover e inalcançável por toque/teclado).
+function SortControl({ sort, onChange }: SortControlProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-6 w-6 text-muted-foreground"
-          title="Ordenar"
-          aria-label="Ordenar"
-        >
-          <ArrowUpDown className="h-3.5 w-3.5" />
+        <Button variant="outline" className="h-9 rounded-full text-sm gap-2" aria-label="Ordenar projetos">
+          <ArrowUpDown className="h-4 w-4" />
+          <span className="hidden sm:inline">Ordenar: {SORT_LABELS[sort.key]}</span>
+          {sort.dir === "asc" ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">

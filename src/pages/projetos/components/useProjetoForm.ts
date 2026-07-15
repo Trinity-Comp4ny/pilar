@@ -159,6 +159,9 @@ export function useProjetoForm({
   const [isSaving, setIsSaving] = useState(false);
   const [isFetchingCep, setIsFetchingCep] = useState(false);
   const geocodeAbortRef = useRef<AbortController | null>(null);
+  // Snapshot do estado inicial do formulário ao abrir, para detectar alterações
+  // não salvas e confirmar antes de descartar.
+  const initialSnapshotRef = useRef<string>("");
 
   const [formData, setFormData] = useState(EMPTY_FORM);
   const [projetosDisciplinas, setProjetosDisciplinas] = useState<DisciplinaResponsavel[]>([]);
@@ -209,7 +212,7 @@ export function useProjetoForm({
 
     if (editProjeto) {
       const parsed = parseLocalizacao(editProjeto.localizacao || "");
-      setFormData({
+      const nextForm = {
         codigo_projeto: editProjeto.codigo_projeto,
         nome: editProjeto.nome,
         cliente_id: editProjeto.cliente_id,
@@ -226,7 +229,8 @@ export function useProjetoForm({
         prioridade: editProjeto.prioridade || PROJECT_PRIORITY.MEDIA,
         prazo_dias_uteis: "",
         dia_pagamento: "",
-      });
+      };
+      setFormData(nextForm);
       // editProjeto.disciplinas é legado (sempre []). Hidrata da tabela relacional
       // preservando os IDs para que bulkSave faça update/delete coerentes.
       const hydrated =
@@ -234,9 +238,11 @@ export function useProjetoForm({
           ? existingDisciplinas.map(dbDisciplinaToLegacy)
           : editProjeto.disciplinas || [];
       setProjetosDisciplinas(hydrated);
+      initialSnapshotRef.current = JSON.stringify({ form: nextForm, disc: hydrated });
     } else {
       setFormData(EMPTY_FORM);
       setProjetosDisciplinas([]);
+      initialSnapshotRef.current = JSON.stringify({ form: EMPTY_FORM, disc: [] });
     }
 
     setTempDisciplina(EMPTY_TEMP_DISCIPLINA);
@@ -766,11 +772,17 @@ export function useProjetoForm({
     }
   };
 
+  const isDirty = useCallback(
+    () => JSON.stringify({ form: formData, disc: projetosDisciplinas }) !== initialSnapshotRef.current,
+    [formData, projetosDisciplinas]
+  );
+
   return {
     isEditMode,
     isSaving,
     isFetchingCep,
     formData,
+    isDirty,
     handleInputChange,
     fetchCep,
     // Disciplinas
