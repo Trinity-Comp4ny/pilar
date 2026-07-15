@@ -11,14 +11,17 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { withSentry } from "../_shared/sentry.ts";
-import { getCorsHeaders, jsonResponse, optionsResponse } from "../_shared/cors.ts";
+import { getCorsHeaders, SECURITY_HEADERS, jsonResponse, optionsResponse } from "../_shared/cors.ts";
 import {
   createAuthClient,
   createAdminClient,
   checkRateLimit,
   callGeminiStructured,
+  streamGeminiText,
   recordAiUsage,
+  getAiSaldo,
   GEMINI_MODEL,
+  type AiSaldo,
 } from "../_shared/ai-client.ts";
 import { z } from "../_shared/schemas.ts";
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -759,12 +762,77 @@ Você pode ajudar com: finanças (receitas, despesas, lucro do mês), projetos (
   return base;
 }
 
+// Variante do prompt de resposta para o modo STREAMING: pede TEXTO PURO (sem JSON),
+// para que o token-a-token chegue como prosa legível ao usuário.
+function respostaPromptStream(agente: Agente): string {
+  const base = `Você é o ${AGENTE_LABEL[agente]} do Pilar, um copiloto para escritórios de engenharia.
+Responda à pergunta do usuário em TEXTO PURO (sem JSON, sem blocos de código), de forma direta, clara e em português do Brasil, usando SOMENTE os dados fornecidos.
+Valores em reais (R$). Se os dados não permitirem responder, diga isso com honestidade e sugira o que o usuário pode registrar.
+Não invente números. Seja conciso.`;
+  if (agente === "geral") {
+    return `${base}
+Você pode ajudar com: finanças (receitas, despesas, lucro do mês), projetos (status, quantos ativos) e comercial (propostas, leads). Oriente o usuário sobre isso quando fizer sentido.`;
+  }
+  return base;
+}
+
+// ---------------------------------------------------------------------------
+// SSE — entrega via text/event-stream
+// ---------------------------------------------------------------------------
+function sseHeaders(req: Request): Record<string, string> {
+  return {
+    ...getCorsHeaders(req),
+    ...SECURITY_HEADERS,
+    "Content-Type": "text/event-stream; charset=utf-8",
+    "Cache-Control": "no-cache",
+    Connection: "keep-alive",
+    // Evita buffering em proxies (mantém o stream saindo em tempo real).
+    "X-Accel-Buffering": "no",
+  };
+}
+
+// Serializa um evento SSE ("event: <nome>\ndata: <json>\n\n").
+function sseEvent(event: string, data: unknown): string {
+  return `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
+}
+
+// Resposta SSE de um único evento "final" — para os fluxos sem texto incremental
+// (rascunho, ação, pergunta de campo faltante, aviso). O client trata igual ao stream.
+function sseFinal(payload: Record<string, unknown>, req: Request): Response {
+  return new Response(sseEvent("final", payload), { headers: sseHeaders(req) });
+}
+
+// Entrega o payload como SSE (single "final") quando o client pediu stream, ou como JSON.
+function respondFinal(payload: Record<string, unknown>, req: Request, wantsStream: boolean): Response {
+  return wantsStream ? sseFinal(payload, req) : jsonResponse(payload, 200, req);
+}
+
+// Registra o uso e devolve o saldo restante (best-effort — nunca quebra o fluxo).
+async function recordAndSaldo(
+  admin: SupabaseClient,
+  empresaId: string,
+  tokIn: number,
+  tokOut: number,
+  calls: number
+): Promise<AiSaldo | null> {
+  await recordAiUsageSafe(admin, empresaId, tokIn, tokOut, calls);
+  try {
+    return await getAiSaldo(admin, empresaId);
+  } catch {
+    return null;
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Handler
 // ---------------------------------------------------------------------------
 serve(
   withSentry("ai-chat", async (req: Request) => {
     if (req.method === "OPTIONS") return optionsResponse(req);
+
+    // O client sinaliza streaming via Accept: text/event-stream (fetch direto).
+    // functions.invoke (fallback buffered) não manda esse header → resposta JSON.
+    const wantsStream = (req.headers.get("accept") ?? "").includes("text/event-stream");
 
     try {
       const authClient = createAuthClient(req);
@@ -830,6 +898,7 @@ serve(
             db: authClient,
             admin: adminClient,
             req,
+            wantsStream,
             sessionId,
             empresaId,
             userId: user.id,
@@ -850,11 +919,11 @@ serve(
           content: aviso,
           meta: { agente, agente_label: AGENTE_LABEL[agente], motivo: rota.data.motivo, model: GEMINI_MODEL },
         });
-        await recordAiUsageSafe(adminClient, empresaId, rota.tokensEntrada, rota.tokensSaida, rota.attempts);
-        return jsonResponse(
-          { sessionId, tipo: "resposta", resposta: aviso, agentes: [{ agente, agente_label: AGENTE_LABEL[agente] }] },
-          200,
-          req
+        const saldo = await recordAndSaldo(adminClient, empresaId, rota.tokensEntrada, rota.tokensSaida, rota.attempts);
+        return respondFinal(
+          { sessionId, tipo: "resposta", resposta: aviso, agentes: [{ agente, agente_label: AGENTE_LABEL[agente] }], saldo },
+          req,
+          wantsStream
         );
       }
 
@@ -884,8 +953,8 @@ serve(
           content: "Escolha o alvo e confirme a ação.",
           meta: { agente, agente_label: label, model: GEMINI_MODEL, acao_run_id: run.id, operacao: rota.data.operacao },
         });
-        await recordAiUsageSafe(adminClient, empresaId, rota.tokensEntrada, rota.tokensSaida, rota.attempts);
-        return jsonResponse(
+        const saldo = await recordAndSaldo(adminClient, empresaId, rota.tokensEntrada, rota.tokensSaida, rota.attempts);
+        return respondFinal(
           {
             sessionId,
             tipo: "acao",
@@ -893,24 +962,48 @@ serve(
             runId: run.id,
             custoCreditos: 1,
             agentes: [{ agente, agente_label: label, motivo: rota.data.motivo }],
+            saldo,
           },
-          200,
-          req
+          req,
+          wantsStream
         );
       }
 
       // 2) Agente de domínio coleta os dados (read-only, RLS).
       const dados = await coletarDados(agente, authClient, empresaId);
 
-      // 3) Resposta em linguagem natural (com o contexto da conversa).
+      const userMessage = comContexto(
+        historico,
+        message,
+        `Responda à mensagem atual do usuário usando SOMENTE os dados abaixo.\n\nDados disponíveis (JSON):\n${JSON.stringify(dados)}`
+      );
+      const meta = {
+        agente,
+        agente_label: AGENTE_LABEL[agente],
+        motivo: rota.data.motivo,
+        model: GEMINI_MODEL,
+      };
+
+      // 3a) Streaming (SSE): resposta em linguagem natural token-a-token.
+      if (wantsStream) {
+        return streamConsulta({
+          db: authClient,
+          admin: adminClient,
+          req,
+          sessionId,
+          empresaId,
+          agente,
+          meta,
+          userMessage,
+          rotaTok: { in: rota.tokensEntrada, out: rota.tokensSaida, calls: rota.attempts },
+        });
+      }
+
+      // 3b) Buffered (fallback): resposta em linguagem natural de uma vez.
       const resp = await callGeminiStructured(
         {
           systemPrompt: respostaPrompt(agente),
-          userMessage: comContexto(
-            historico,
-            message,
-            `Responda à mensagem atual do usuário usando SOMENTE os dados abaixo.\n\nDados disponíveis (JSON):\n${JSON.stringify(dados)}`
-          ),
+          userMessage,
           empresaId,
           tipo: FEATURE_KEY,
         },
@@ -920,12 +1013,6 @@ serve(
       const tokensIn = rota.tokensEntrada + resp.tokensEntrada;
       const tokensOut = rota.tokensSaida + resp.tokensSaida;
       const chamadas = rota.attempts + resp.attempts;
-      const meta = {
-        agente,
-        agente_label: AGENTE_LABEL[agente],
-        motivo: rota.data.motivo,
-        model: GEMINI_MODEL,
-      };
 
       // Grava a resposta do assistente.
       await authClient.from("chat_messages").insert({
@@ -937,8 +1024,8 @@ serve(
         tokens_output: tokensOut,
       });
 
-      // Contabiliza uso (rate limit + log granular por feature).
-      await recordAiUsageSafe(adminClient, empresaId, tokensIn, tokensOut, chamadas);
+      // Contabiliza uso (rate limit + log granular por feature) e lê o saldo restante.
+      const saldo = await recordAndSaldo(adminClient, empresaId, tokensIn, tokensOut, chamadas);
 
       return jsonResponse(
         {
@@ -946,6 +1033,7 @@ serve(
           tipo: "resposta",
           resposta: resp.data.resposta,
           agentes: [meta],
+          saldo,
         },
         200,
         req
@@ -972,6 +1060,96 @@ async function recordAiUsageSafe(
   }
 }
 
+type ChatMeta = {
+  agente: string;
+  agente_label: string;
+  motivo: string;
+  model: string;
+};
+
+// Fluxo de consulta em STREAMING: emite o texto token-a-token via SSE e, ao fim, um
+// evento "final" com o saldo. Se o stream falhar ANTES de emitir qualquer token, cai
+// no buffered (callGeminiStructured) e entrega a resposta de uma vez. Falha depois de
+// já ter emitido tokens vira um evento "error" (o client mostra o que houve).
+function streamConsulta(o: {
+  db: SupabaseClient;
+  admin: SupabaseClient;
+  req: Request;
+  sessionId: string;
+  empresaId: string;
+  agente: Agente;
+  meta: ChatMeta;
+  userMessage: string;
+  rotaTok: { in: number; out: number; calls: number };
+}): Response {
+  const encoder = new TextEncoder();
+  const stream = new ReadableStream({
+    async start(controller) {
+      const emit = (event: string, data: unknown) => controller.enqueue(encoder.encode(sseEvent(event, data)));
+      let full = "";
+      let tokIn = o.rotaTok.in;
+      let tokOut = o.rotaTok.out;
+      let chamadas = o.rotaTok.calls;
+
+      try {
+        try {
+          const gen = streamGeminiText(respostaPromptStream(o.agente), o.userMessage);
+          let r = await gen.next();
+          while (!r.done) {
+            full += r.value;
+            emit("token", { text: r.value });
+            r = await gen.next();
+          }
+          tokIn += r.value.tokensEntrada;
+          tokOut += r.value.tokensSaida;
+          chamadas += 1;
+        } catch (streamErr) {
+          // Já emitiu tokens → não dá pra refazer limpo: propaga para virar "error".
+          if (full !== "") throw streamErr;
+          // Nada emitido ainda: fallback buffered no próprio servidor.
+          const resp = await callGeminiStructured(
+            { systemPrompt: respostaPrompt(o.agente), userMessage: o.userMessage, empresaId: o.empresaId, tipo: FEATURE_KEY },
+            RespostaSchema
+          );
+          full = resp.data.resposta;
+          tokIn += resp.tokensEntrada;
+          tokOut += resp.tokensSaida;
+          chamadas += resp.attempts;
+          emit("token", { text: full });
+        }
+
+        const resposta = full.trim() || "Não consegui gerar uma resposta agora.";
+
+        await o.db.from("chat_messages").insert({
+          session_id: o.sessionId,
+          role: "assistant",
+          content: resposta,
+          meta: o.meta,
+          tokens_input: tokIn,
+          tokens_output: tokOut,
+        });
+
+        const saldo = await recordAndSaldo(o.admin, o.empresaId, tokIn, tokOut, chamadas);
+
+        emit("final", {
+          sessionId: o.sessionId,
+          tipo: "resposta",
+          resposta,
+          agentes: [o.meta],
+          saldo,
+        });
+      } catch (e) {
+        console.error("[ai-chat stream]", e);
+        emit("error", { error: "Erro ao gerar a resposta" });
+      } finally {
+        controller.close();
+      }
+    },
+  });
+
+  return new Response(stream, { headers: sseHeaders(o.req) });
+}
+
 // Fluxo genérico de criação (extrair → perguntar se faltar nome → rascunho editável).
 // Reutilizado por lead e projeto; novas entidades só passam schema/prompt/labels.
 type ExtracaoBase = { tem_nome: boolean; pergunta?: string | null; [k: string]: unknown };
@@ -980,6 +1158,7 @@ async function processarCriacao(o: {
   db: SupabaseClient;
   admin: SupabaseClient;
   req: Request;
+  wantsStream: boolean;
   sessionId: string;
   empresaId: string;
   userId: string;
@@ -1029,11 +1208,11 @@ async function processarCriacao(o: {
       tokens_input: tokIn,
       tokens_output: tokOut,
     });
-    await recordAiUsageSafe(o.admin, o.empresaId, tokIn, tokOut, chamadas);
-    return jsonResponse(
-      { sessionId: o.sessionId, tipo: "resposta", resposta: pergunta, agentes: [{ agente: o.agente, agente_label: o.label }] },
-      200,
-      o.req
+    const saldo = await recordAndSaldo(o.admin, o.empresaId, tokIn, tokOut, chamadas);
+    return respondFinal(
+      { sessionId: o.sessionId, tipo: "resposta", resposta: pergunta, agentes: [{ agente: o.agente, agente_label: o.label }], saldo },
+      o.req,
+      o.wantsStream
     );
   }
 
@@ -1088,9 +1267,9 @@ async function processarCriacao(o: {
     tokens_input: tokIn,
     tokens_output: tokOut,
   });
-  await recordAiUsageSafe(o.admin, o.empresaId, tokIn, tokOut, chamadas);
+  const saldo = await recordAndSaldo(o.admin, o.empresaId, tokIn, tokOut, chamadas);
 
-  return jsonResponse(
+  return respondFinal(
     {
       sessionId: o.sessionId,
       tipo: "draft",
@@ -1099,8 +1278,9 @@ async function processarCriacao(o: {
       campos,
       custoCreditos: 1,
       agentes: [{ agente: o.agente, agente_label: o.label, motivo: o.motivo }],
+      saldo,
     },
-    200,
-    o.req
+    o.req,
+    o.wantsStream
   );
 }

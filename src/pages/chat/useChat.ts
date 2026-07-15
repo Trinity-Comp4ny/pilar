@@ -183,8 +183,11 @@ export type ChatMessage = {
   acao?: Acao;
 };
 
+/** Saldo de créditos de IA do mês: teto, usado e restante. Vem no payload da edge. */
+export type Saldo = { usados: number; limite: number; restante: number };
+
 type ChatResponse =
-  | { sessionId: string; tipo: "resposta"; resposta: string; agentes: AgenteMeta[] }
+  | { sessionId: string; tipo: "resposta"; resposta: string; agentes: AgenteMeta[]; saldo?: Saldo | null }
   | {
       sessionId: string;
       tipo: "draft";
@@ -193,6 +196,7 @@ type ChatResponse =
       campos: DraftCampos;
       custoCreditos: number;
       agentes: AgenteMeta[];
+      saldo?: Saldo | null;
     }
   | {
       sessionId: string;
@@ -201,11 +205,182 @@ type ChatResponse =
       runId: string;
       custoCreditos: number;
       agentes: AgenteMeta[];
+      saldo?: Saldo | null;
     };
 
 const STORAGE_KEY = "pilar.chat.v1";
 /** Corta o loading se a edge function travar (evita spinner infinito). */
 const SEND_TIMEOUT_MS = 45_000;
+
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
+const AI_CHAT_URL = `${SUPABASE_URL}/functions/v1/ai-chat`;
+
+// Sinaliza que o SSE não pôde ser usado (não deu para abrir o stream ou veio vazio):
+// quem chama cai no fluxo buffered (functions.invoke).
+class StreamIndisponivel extends Error {}
+
+/** Erro com status HTTP, para reaproveitar o mapeamento de msgErroChat (429/402/401...). */
+function erroComStatus(status: number): Error {
+  return Object.assign(new Error(`HTTP ${status}`), { context: { status } });
+}
+
+type SseEvento = { event: string; data: unknown };
+
+/** Parseia um bloco de evento SSE ("event: x\ndata: {json}"). */
+function parseSse(bloco: string): SseEvento | null {
+  let event = "";
+  const dataLinhas: string[] = [];
+  for (const linha of bloco.split("\n")) {
+    if (linha.startsWith("event:")) event = linha.slice(6).trim();
+    else if (linha.startsWith("data:")) dataLinhas.push(linha.slice(5).trim());
+  }
+  if (!event) return null;
+  const raw = dataLinhas.join("\n");
+  try {
+    return { event, data: raw ? JSON.parse(raw) : null };
+  } catch {
+    return null;
+  }
+}
+
+type SetMessages = (updater: (prev: ChatMessage[]) => ChatMessage[]) => void;
+
+/**
+ * Envia a mensagem via SSE (fetch direto na URL da function — functions.invoke não faz
+ * streaming) e renderiza o texto token-a-token. Eventos: "token" (pedaço de texto),
+ * "final" (payload completo com saldo) e "error". Consulta chega em texto incremental;
+ * rascunho/ação chegam só no "final". Lança StreamIndisponivel quando o SSE não pôde
+ * ser usado, para o chamador cair no fluxo buffered.
+ */
+async function enviarStream(
+  message: string,
+  sessionId: string | undefined,
+  signal: AbortSignal,
+  cb: {
+    setMessages: SetMessages;
+    setSessionId: (id: string) => void;
+    setSaldo: (s: Saldo) => void;
+    aplicarResposta: (res: ChatResponse) => void;
+  }
+): Promise<void> {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  const token = session?.access_token;
+  if (!token) throw new StreamIndisponivel("sem sessão");
+
+  let res: Response;
+  try {
+    res = await fetch(AI_CHAT_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+        apikey: SUPABASE_ANON_KEY,
+        Accept: "text/event-stream",
+      },
+      body: JSON.stringify({ message, sessionId }),
+      signal,
+    });
+  } catch (e) {
+    if (signal.aborted) throw e; // cancelamento/timeout: não faz fallback buffered
+    throw new StreamIndisponivel("falha ao abrir o stream");
+  }
+
+  if (!res.ok) {
+    // Auth/limite: definitivo — mostra o erro (buffered daria o mesmo).
+    if ([401, 402, 403, 429].includes(res.status)) throw erroComStatus(res.status);
+    throw new StreamIndisponivel(`status ${res.status}`);
+  }
+  if (!res.body) throw new StreamIndisponivel("sem corpo no stream");
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  let assistantId: string | null = null;
+  let recebeuToken = false;
+  let finalRecebido = false;
+  let erroRecebido = false;
+
+  const appendToken = (texto: string) => {
+    recebeuToken = true;
+    if (!assistantId) {
+      const id = novoId();
+      assistantId = id;
+      cb.setMessages((prev) => [...prev, { id, role: "assistant", content: texto }]);
+      return;
+    }
+    const id = assistantId;
+    cb.setMessages((prev) => prev.map((m) => (m.id === id ? { ...m, content: m.content + texto } : m)));
+  };
+
+  const processar = (ev: SseEvento) => {
+    if (ev.event === "token") {
+      appendToken((ev.data as { text?: string })?.text ?? "");
+      return;
+    }
+    if (ev.event === "final") {
+      finalRecebido = true;
+      const payload = ev.data as ChatResponse;
+      cb.setSessionId(payload.sessionId);
+      if (payload.saldo) cb.setSaldo(payload.saldo);
+      if (payload.tipo === "resposta") {
+        // Texto já veio via tokens: finaliza o placeholder (conteúdo + agentes).
+        if (!assistantId) {
+          const id = novoId();
+          assistantId = id;
+          cb.setMessages((prev) => [...prev, { id, role: "assistant", content: payload.resposta, agentes: payload.agentes }]);
+        } else {
+          const id = assistantId;
+          cb.setMessages((prev) =>
+            prev.map((m) => (m.id === id ? { ...m, content: m.content || payload.resposta, agentes: payload.agentes } : m))
+          );
+        }
+      } else {
+        // Rascunho/ação: sem tokens — cria a mensagem-card.
+        cb.aplicarResposta(payload);
+      }
+      return;
+    }
+    if (ev.event === "error") {
+      erroRecebido = true;
+      const texto = (ev.data as { error?: string })?.error || "Não consegui gerar a resposta.";
+      if (assistantId) {
+        const id = assistantId;
+        cb.setMessages((prev) => prev.map((m) => (m.id === id ? { ...m, erro: true, content: m.content || texto } : m)));
+      } else {
+        cb.setMessages((prev) => [...prev, { id: novoId(), role: "assistant", content: texto, erro: true }]);
+      }
+    }
+  };
+
+  try {
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      let sep: number;
+      while ((sep = buffer.indexOf("\n\n")) >= 0) {
+        const bloco = buffer.slice(0, sep);
+        buffer = buffer.slice(sep + 2);
+        const ev = parseSse(bloco);
+        if (ev) processar(ev);
+      }
+    }
+  } catch (e) {
+    // Erro de leitura sem nada recebido (e não foi cancelamento) → tenta buffered.
+    if (!recebeuToken && !finalRecebido && !erroRecebido && !signal.aborted) {
+      throw new StreamIndisponivel("stream interrompido sem dados");
+    }
+    throw e;
+  }
+
+  // Stream terminou sem entregar nada útil → cai no buffered.
+  if (!finalRecebido && !erroRecebido && !recebeuToken) {
+    throw new StreamIndisponivel("stream vazio");
+  }
+}
 
 function novoId(): string {
   return typeof crypto !== "undefined" && "randomUUID" in crypto
@@ -238,6 +413,8 @@ export function useChat() {
   const [messages, setMessages] = useState<ChatMessage[]>(() => carregarSnapshot().messages);
   const [sessionId, setSessionId] = useState<string | undefined>(() => carregarSnapshot().sessionId);
   const [loading, setLoading] = useState(false);
+  // Saldo real de créditos de IA do mês (teto - usado), atualizado a cada resposta da edge.
+  const [saldo, setSaldo] = useState<Saldo | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const canceladoRef = useRef(false);
 
@@ -280,16 +457,10 @@ export function useChat() {
         controller.abort();
       }, SEND_TIMEOUT_MS);
 
-      try {
-        const { data, error } = await supabase.functions.invoke("ai-chat", {
-          body: { message, sessionId },
-          signal: controller.signal,
-        });
-        if (error) throw error;
-
-        const res = data as ChatResponse;
+      // Cria a mensagem-resposta a partir de um payload final (draft/ação/consulta buffered).
+      const aplicarResposta = (res: ChatResponse) => {
         setSessionId(res.sessionId);
-
+        if (res.saldo) setSaldo(res.saldo);
         if (res.tipo === "draft") {
           setMessages((prev) => [
             ...prev,
@@ -321,15 +492,39 @@ export function useChat() {
         } else {
           setMessages((prev) => [...prev, { id: novoId(), role: "assistant", content: res.resposta, agentes: res.agentes }]);
         }
-      } catch (e) {
+      };
+
+      const tratarErro = (err: unknown) => {
         // Parada manual (botão "Parar"): encerra sem card de erro alarmante.
         if (canceladoRef.current && !porTimeout) {
           setMessages((prev) => [...prev, { id: novoId(), role: "assistant", content: "Geração interrompida." }]);
+          return;
+        }
+        setMessages((prev) => [...prev, { id: novoId(), role: "assistant", content: msgErroChat(err, porTimeout), erro: true }]);
+      };
+
+      try {
+        await enviarStream(message, sessionId, controller.signal, {
+          setMessages,
+          setSessionId,
+          setSaldo,
+          aplicarResposta,
+        });
+      } catch (e) {
+        // SSE indisponível → cai no fluxo buffered atual (functions.invoke, sem streaming).
+        if (e instanceof StreamIndisponivel && !canceladoRef.current) {
+          try {
+            const { data, error } = await supabase.functions.invoke("ai-chat", {
+              body: { message, sessionId },
+              signal: controller.signal,
+            });
+            if (error) throw error;
+            aplicarResposta(data as ChatResponse);
+          } catch (e2) {
+            tratarErro(e2);
+          }
         } else {
-          setMessages((prev) => [
-            ...prev,
-            { id: novoId(), role: "assistant", content: msgErroChat(e, porTimeout), erro: true },
-          ]);
+          tratarErro(e);
         }
       } finally {
         clearTimeout(timeoutId);
@@ -493,7 +688,7 @@ export function useChat() {
   }, 0);
 
   return {
-    messages, send, stop, loading, reset, creditosUsados,
+    messages, send, stop, loading, reset, creditosUsados, saldo,
     confirmarDraft, cancelarDraft, desfazer, desfazerFolha,
     executarAcao, cancelarAcao,
   };
