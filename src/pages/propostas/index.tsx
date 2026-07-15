@@ -50,6 +50,8 @@ import {
   type PropostaInsert,
 } from "@/hooks/usePropostas";
 import { formatCurrencyInput, parseCurrencyString } from "@/lib/currencyUtils";
+import { DatePicker } from "@/components/ui/date-picker";
+import { addDays, format } from "date-fns";
 import { CapacidadeSimulacao } from "./components/CapacidadeSimulacao";
 import { TemplatesManager } from "./components/TemplatesManager";
 import { GerarPropostaDialog } from "./components/GerarPropostaDialog";
@@ -151,6 +153,7 @@ export default function Propostas() {
       valor_proposto: p.valor_proposto ?? undefined,
       prazo_estimado_dias: p.prazo_estimado_dias ?? undefined,
       observacao: p.observacao || "",
+      validade: p.validade || undefined,
       cliente_id: p.cliente_id || undefined,
       lead_id: p.lead_id || undefined,
     });
@@ -182,7 +185,13 @@ export default function Propostas() {
         }
       );
     } else {
-      createProposta.mutate(payload, {
+      // Default de validade: 30 dias a partir de hoje (data local, não UTC), para
+      // a lógica de expiração ter uma data com que trabalhar desde a criação.
+      const createPayload = {
+        ...payload,
+        validade: form.validade || format(addDays(new Date(), 30), "yyyy-MM-dd"),
+      };
+      createProposta.mutate(createPayload, {
         onSuccess: () => {
           toast.success("Proposta criada");
           setIsFormOpen(false);
@@ -760,6 +769,16 @@ export default function Propostas() {
                   onChange={(e) => setForm({ ...form, prazo_estimado_dias: parseInt(e.target.value) || undefined })}
                 />
               </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Validade da proposta</Label>
+              <DatePicker
+                value={form.validade || ""}
+                onChange={(v) => setForm({ ...form, validade: v || undefined })}
+              />
+              <p className="text-[11px] text-muted-foreground">
+                Após esta data a proposta aparece como expirada. Padrão: 30 dias a partir da criação.
+              </p>
             </div>
             <div className="space-y-2">
               <Label>Localização</Label>
