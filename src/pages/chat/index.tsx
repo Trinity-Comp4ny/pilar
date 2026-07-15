@@ -57,7 +57,7 @@ export default function ChatPage() {
   const { state, isMobile } = useSidebar();
   const left = isMobile ? "0px" : state === "collapsed" ? "64px" : "240px";
   const { profile } = useAuth();
-  const { messages, send, stop, loading, reset, creditosUsados, confirmarDraft, cancelarDraft, desfazer, desfazerFolha, executarAcao, cancelarAcao } =
+  const { messages, send, stop, loading, reset, creditosUsados, saldo, confirmarDraft, cancelarDraft, desfazer, desfazerFolha, executarAcao, cancelarAcao } =
     useChat();
   const [input, setInput] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -133,13 +133,22 @@ export default function ChatPage() {
             <h1 className="text-sm font-semibold leading-none text-foreground">Agentes</h1>
             <p className="mt-1 text-xs text-muted-foreground">Pergunte ou peça uma ação · nada grava sem você confirmar</p>
           </div>
+          {saldo && (
+            <span
+              className="flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground"
+              title={`Créditos de IA restantes este mês (${saldo.usados} de ${saldo.limite} usados)`}
+            >
+              <Coins className="h-3.5 w-3.5" />
+              {saldo.restante} crédito{saldo.restante === 1 ? "" : "s"} restantes
+            </span>
+          )}
           {creditosUsados > 0 && (
             <span
               className="flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground"
               title="Créditos de IA debitados nesta conversa"
             >
               <Coins className="h-3.5 w-3.5" />
-              {creditosUsados} crédito{creditosUsados === 1 ? "" : "s"} usados
+              {creditosUsados} usado{creditosUsados === 1 ? "" : "s"} agora
             </span>
           )}
           <button
