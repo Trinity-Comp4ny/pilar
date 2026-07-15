@@ -115,19 +115,20 @@ serve(
         if (!convite_id) return safeErrorResponse(400, "convite_id obrigatório", req);
         const { data: conv } = await supabaseClient
           .from("convites")
-          .select("id, email, nome, token, empresa_id, usado_em")
+          .select("id, email, nome, empresa_id, usado_em")
           .eq("id", convite_id)
           .maybeSingle();
         if (!conv || conv.empresa_id !== profile.empresa_id || conv.usado_em) {
           return safeErrorResponse(404, "Convite não encontrado ou já usado", req);
         }
-        await svc
-          .from("convites")
-          .update({ expira_em: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() })
-          .eq("id", convite_id);
+        // Gera um novo token (o plaintext antigo não é mais armazenado) e renova a validade.
+        const { data: newToken, error: regenErr } = await svc.rpc("regenerate_convite_token", {
+          p_convite_id: convite_id,
+        });
+        if (regenErr || !newToken) return safeErrorResponse(400, "Falha ao reenviar o convite", req);
         const { error: resendErr } = await svc.auth.admin.inviteUserByEmail(conv.email, {
           redirectTo: `${redirectOrigin}/profile-setup`,
-          data: { invite_token: conv.token, nome: conv.nome ?? "" },
+          data: { invite_token: newToken, nome: conv.nome ?? "" },
         });
         if (resendErr) return safeErrorResponse(400, "Falha ao reenviar o convite", req);
         await logAction(svc, {

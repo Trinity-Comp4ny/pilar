@@ -143,18 +143,20 @@ serve(
       if (!redirectOrigin) {
         inviteWarning = "Empresa criada, mas o convite não foi enviado (origin não permitido). Reenvie pelo detalhe.";
       } else {
-        const { data: convite, error: convErr } = await svc
-          .from("convites")
-          .insert({ empresa_id: empresa.id, email: ownerEmail, cargo: "admin", nome: ownerNome, features: {}, criado_por: userId })
-          .select("token")
-          .single();
+        const { data: inviteToken, error: convErr } = await svc.rpc("admin_create_convite", {
+          p_empresa_id: empresa.id,
+          p_email: ownerEmail,
+          p_cargo: "admin",
+          p_nome: ownerNome,
+          p_features: {},
+        });
 
-        if (convErr || !convite) {
+        if (convErr || !inviteToken) {
           inviteWarning = "Empresa criada, mas falha ao gerar o convite do dono. Convide pelo detalhe da empresa.";
         } else {
           const { error: inviteError } = await svc.auth.admin.inviteUserByEmail(ownerEmail, {
             redirectTo: `${redirectOrigin}/profile-setup`,
-            data: { invite_token: convite.token, nome: ownerNome ?? "" },
+            data: { invite_token: inviteToken, nome: ownerNome ?? "" },
           });
           if (inviteError) {
             inviteWarning = "Empresa criada, mas o e-mail de convite ao dono falhou. Reenvie pelo detalhe da empresa.";
@@ -182,7 +184,7 @@ serve(
     // ─── PUT: atualizar empresa (features, dados cadastrais, status, plano) ─
     if (req.method === "PUT") {
       const body = await req.json();
-      const { empresa_id, features, nome, cnpj, status, plano } = body ?? {};
+      const { empresa_id, features, nome, cnpj, status, plano, confirm_name } = body ?? {};
 
       if (!isUUID(empresa_id)) return safeErrorResponse(400, "empresa_id inválido", req);
 
@@ -201,6 +203,19 @@ serve(
       if (typeof status === "string") {
         if (!["active", "suspended", "cancelled"].includes(status)) {
           return safeErrorResponse(400, "status inválido", req);
+        }
+        // Guard destrutivo: suspender/cancelar exige confirmar digitando o nome.
+        const isDestructive =
+          (status === "suspended" || status === "cancelled") && status !== emp.status;
+        if (isDestructive) {
+          const typed = typeof confirm_name === "string" ? confirm_name.trim() : "";
+          if (typed !== (emp.nome ?? "").trim()) {
+            return safeErrorResponse(
+              422,
+              "Digite o nome exato da empresa para confirmar a suspensão ou cancelamento.",
+              req
+            );
+          }
         }
         empresaUpdate.status = status;
       }
