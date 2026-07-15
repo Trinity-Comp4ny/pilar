@@ -54,10 +54,11 @@ serve(
         return safeErrorResponse(400, `Mensagem excede ${MAX_MESSAGE_LEN} caracteres`, req);
       }
 
-      // Buscar nome da empresa do usuário autenticado
+      // Buscar a empresa do usuário autenticado (via JWT, não do corpo da request)
       const { data: empresaId } = await supabase.rpc("get_user_empresa_id", undefined, {
         headers: { Authorization: req.headers.get("Authorization") ?? "" },
       });
+      if (!empresaId) return safeErrorResponse(403, "Empresa não identificada", req);
       const { data: empresa } = await supabase.from("empresas").select("nome").eq("id", empresaId).single();
 
       const empresaNome = empresa?.nome ?? "Pilar";
@@ -76,13 +77,22 @@ serve(
 
       // Atualizar proposta após envio
       if (proposta_id) {
+        // Escopa o update pela empresa do caller: sem isto, um usuário da empresa A
+        // forçaria status/contrato_enviado numa proposta da empresa B (roda com
+        // service_role, que bypassa a RLS).
         if (doc_mode === "contrato") {
           await supabase
             .from("propostas")
             .update({ contrato_enviado: true } as never)
-            .eq("id", proposta_id);
+            .eq("id", proposta_id)
+            .eq("empresa_id", empresaId);
         } else {
-          await supabase.from("propostas").update({ status: "enviada" }).eq("id", proposta_id).eq("status", "rascunho");
+          await supabase
+            .from("propostas")
+            .update({ status: "enviada" })
+            .eq("id", proposta_id)
+            .eq("empresa_id", empresaId)
+            .eq("status", "rascunho");
         }
       }
 
