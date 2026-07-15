@@ -79,6 +79,8 @@ describe("useDashboardData (contract)", () => {
       saldoMes: 0,
       receitaVariacao: 0,
       despesaVariacao: 0,
+      receitaNovo: false,
+      despesaNovo: false,
       aReceber: 0,
       aPagar: 0,
       projetosAtivos: 0,
