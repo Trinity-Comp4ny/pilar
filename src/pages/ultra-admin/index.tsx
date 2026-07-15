@@ -336,7 +336,13 @@ export default function UltraAdmin() {
   );
 
   const handleUpdateCompany = useCallback(
-    async (patch: { nome?: string; cnpj?: string | null; status?: EmpresaStatus; plano?: SubscriptionPlanSlug }) => {
+    async (patch: {
+      nome?: string;
+      cnpj?: string | null;
+      status?: EmpresaStatus;
+      plano?: SubscriptionPlanSlug;
+      confirm_name?: string;
+    }) => {
       if (!detail) return;
       try {
         await edgeFetch("ultra-admin-empresas", {
@@ -527,12 +533,14 @@ export default function UltraAdmin() {
           onOpenChange={setEditCompanyOpen}
           form={companyForm}
           setForm={setCompanyForm}
-          onSave={async () => {
+          confirmName={detail.nome}
+          onSave={async (confirmName) => {
             await handleUpdateCompany({
               nome: companyForm.nome.trim() || undefined,
               cnpj: companyForm.cnpj.trim() || null,
               status: companyForm.status,
               plano: companyForm.plano,
+              confirm_name: confirmName,
             });
             setEditCompanyOpen(false);
           }}
@@ -786,16 +794,25 @@ function EditCompanyDialog({
   onOpenChange,
   form,
   setForm,
+  confirmName,
   onSave,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
   form: CompanyForm;
   setForm: Dispatch<SetStateAction<CompanyForm>>;
-  onSave: () => Promise<void>;
+  confirmName: string;
+  onSave: (confirmName?: string) => Promise<void>;
 }) {
   const [saving, setSaving] = useState(false);
+  const [confirmText, setConfirmText] = useState("");
   const dangerous = form.status !== "active";
+  const confirmMatches = confirmText.trim() === (confirmName ?? "").trim();
+
+  // Reseta o campo de confirmação sempre que o dialog abre/fecha.
+  useEffect(() => {
+    if (!open) setConfirmText("");
+  }, [open]);
 
   return (
     <Dialog open={open} onOpenChange={(o) => !saving && onOpenChange(o)}>
@@ -847,11 +864,25 @@ function EditCompanyDialog({
             </div>
           </div>
           {dangerous && (
-            <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-3 py-2">
-              {form.status === "suspended"
-                ? "Suspensa: os usuários da empresa perdem o acesso até reativar."
-                : "Cancelada: o acesso é encerrado. Use com cuidado."}
-            </p>
+            <div className="space-y-2 rounded-md border border-red-200 bg-red-50 px-3 py-2.5">
+              <p className="text-xs text-red-700">
+                {form.status === "suspended"
+                  ? "Suspensa: os usuários da empresa perdem o acesso até reativar."
+                  : "Cancelada: o acesso é encerrado. Use com cuidado."}
+              </p>
+              <div className="space-y-1.5">
+                <Label htmlFor="confirm-empresa" className="text-xs text-red-800">
+                  Digite <span className="font-semibold">{confirmName}</span> para confirmar
+                </Label>
+                <Input
+                  id="confirm-empresa"
+                  value={confirmText}
+                  onChange={(e) => setConfirmText(e.target.value)}
+                  placeholder={confirmName}
+                  autoComplete="off"
+                />
+              </div>
+            </div>
           )}
         </div>
         <DialogFooter>
@@ -862,12 +893,12 @@ function EditCompanyDialog({
             onClick={async () => {
               setSaving(true);
               try {
-                await onSave();
+                await onSave(dangerous ? confirmText : undefined);
               } finally {
                 setSaving(false);
               }
             }}
-            disabled={saving || !form.nome.trim()}
+            disabled={saving || !form.nome.trim() || (dangerous && !confirmMatches)}
           >
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Salvar"}
           </Button>
