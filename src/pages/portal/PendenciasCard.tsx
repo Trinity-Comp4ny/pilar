@@ -102,7 +102,7 @@ export function PendenciasCard({ baseUrl, receitas, portalEntregasPendentes }: P
                   href={paymentLinkAtrasada}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1 px-3 min-h-11 sm:min-h-0 sm:py-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium transition-colors whitespace-nowrap"
+                  className="flex items-center gap-1 px-3 min-h-11 sm:min-h-0 sm:py-2 rounded-md bg-brand hover:bg-brand/90 text-ink text-xs font-medium transition-colors whitespace-nowrap"
                 >
                   Pagar
                   <ExternalLink className="h-3 w-3" />
@@ -131,7 +131,7 @@ export function PendenciasCard({ baseUrl, receitas, portalEntregasPendentes }: P
                   href={paymentLinkProxima}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1 px-3 min-h-11 sm:min-h-0 sm:py-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium transition-colors whitespace-nowrap"
+                  className="flex items-center gap-1 px-3 min-h-11 sm:min-h-0 sm:py-2 rounded-md bg-brand hover:bg-brand/90 text-ink text-xs font-medium transition-colors whitespace-nowrap"
                 >
                   Pagar
                   <ExternalLink className="h-3 w-3" />
