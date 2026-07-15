@@ -62,23 +62,38 @@ export function PessoaTable({ pessoas, isLoading, isAdmin, onRowClick, onEditCli
   const [sortField, setSortField] = useState<keyof Pessoa | null>(null);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 
+  // Dedup de cargos por valor normalizado ('Arquiteto' e 'arquiteto ' viram um).
   const cargos = useMemo(() => {
-    return Array.from(new Set(pessoas.map((p) => p.cargo)));
+    const porNormalizado = new Map<string, string>();
+    for (const p of pessoas) {
+      const raw = (p.cargo ?? "").trim();
+      if (!raw) continue;
+      const key = normalize(raw);
+      if (!porNormalizado.has(key)) porNormalizado.set(key, raw);
+    }
+    return Array.from(porNormalizado.values()).sort((a, b) => a.localeCompare(b, "pt-BR"));
   }, [pessoas]);
 
   const filteredAndSortedPessoas = useMemo(() => {
     const term = searchTerm.trim();
-    const filtered = pessoas.filter((pessoa) => {
-      if (!term) return filterCargo === "todos" || pessoa.cargo === filterCargo;
+    const matchesCargoFilter = (pessoa: Pessoa) =>
+      filterCargo === "todos" || normalize(pessoa.cargo ?? "") === normalize(filterCargo);
 
-      const digits = pessoa.cpf ? pessoa.cpf.replace(/\D/g, "") : "";
+    const filtered = pessoas.filter((pessoa) => {
+      if (!term) return matchesCargoFilter(pessoa);
+
+      const cpfDigits = pessoa.cpf ? pessoa.cpf.replace(/\D/g, "") : "";
+      const telDigits = pessoa.telefone ? pessoa.telefone.replace(/\D/g, "") : "";
       const termDigits = term.replace(/\D/g, "");
 
       const matchesText =
-        fuzzyMatch(pessoa.nome, term) || fuzzyMatch(pessoa.cargo, term) || (termDigits && digits.includes(termDigits));
+        fuzzyMatch(pessoa.nome, term) ||
+        fuzzyMatch(pessoa.cargo ?? "", term) ||
+        fuzzyMatch(pessoa.email ?? "", term) ||
+        fuzzyMatch(pessoa.telefone ?? "", term) ||
+        (!!termDigits && (cpfDigits.includes(termDigits) || telDigits.includes(termDigits)));
 
-      const matchesCargo = filterCargo === "todos" || pessoa.cargo === filterCargo;
-      return matchesText && matchesCargo;
+      return matchesText && matchesCargoFilter(pessoa);
     });
 
     if (sortField) {
@@ -116,7 +131,7 @@ export function PessoaTable({ pessoas, isLoading, isAdmin, onRowClick, onEditCli
             <div className="relative w-full sm:w-64">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
               <Input
-                placeholder="Buscar por nome ou cargo..."
+                placeholder="Buscar por nome, cargo, email ou telefone..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="h-9 pl-9 rounded-full text-sm"

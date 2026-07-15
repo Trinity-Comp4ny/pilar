@@ -187,6 +187,40 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
 
   const handleSubmit = form.handleSubmit(
     async (formData: PessoaFormData) => {
+      // Flush de input pendente: se o usuário digitou uma conta ou PIX e não
+      // clicou "+", não perder o dado em silêncio. Comita o que está completo;
+      // bloqueia e avisa se estiver incompleto/inválido.
+      let finalContas = contasBancarias;
+      const contaTouched = newConta.banco || newConta.agencia || newConta.conta;
+      if (contaTouched) {
+        if (!newConta.banco || !newConta.agencia || !newConta.conta) {
+          setStep(3);
+          toast.error("Conta bancária incompleta", {
+            description: "Preencha banco, agência e conta ou limpe o campo antes de salvar",
+          });
+          return;
+        }
+        finalContas = [...contasBancarias, { ...newConta, is_primary: contasBancarias.length === 0 }];
+        setContasBancarias(finalContas);
+        setNewConta({ banco: "", agencia: "", conta: "", tipo: "corrente" });
+      }
+
+      let finalPix = chavesPix;
+      if (newChavePix.trim()) {
+        const tipoPix = detectTipoChavePix(newChavePix);
+        if (!tipoPix) {
+          setStep(3);
+          toast.error("Chave PIX inválida", { description: "Corrija ou limpe o campo antes de salvar" });
+          return;
+        }
+        const normalizada = normalizarChavePix(newChavePix, tipoPix);
+        finalPix = chavesPix.some((c) => c.chave === normalizada)
+          ? chavesPix
+          : [...chavesPix, { chave: normalizada, tipo: tipoPix }];
+        setChavesPix(finalPix);
+        setNewChavePix("");
+      }
+
       try {
         const primeiroNome = formData.primeiro_nome.trim();
         const sobrenome = formData.sobrenome.trim();
@@ -205,8 +239,8 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
           endereco: formData.endereco?.trim() || null,
           data_admissao: formData.data_admissao || null,
           data_demissao: formData.data_demissao || null,
-          contas_bancarias: contasBancarias,
-          chaves_pix: chavesPix,
+          contas_bancarias: finalContas,
+          chaves_pix: finalPix,
           salario_fixo: formData.salario_fixo ? parseCurrencyString(formData.salario_fixo) : null,
           valor_m2: formData.valor_m2 ? parseCurrencyString(formData.valor_m2) : null,
           cnpj: formData.tipo_contrato === CONTRACT_TYPES.PJ ? formData.cnpj || null : null,
@@ -222,9 +256,13 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
           if (error) throw error;
           toast.success("Pessoa atualizada", { description: "Dados atualizados com sucesso" });
         } else {
+          const { data: empresaId, error: empresaError } = await supabase.rpc("get_user_empresa_id");
+          if (empresaError || !empresaId) {
+            throw empresaError ?? new Error("Não foi possível identificar sua empresa. Recarregue a página e tente de novo.");
+          }
           const { error } = await supabase.from("pessoas").insert({
             ...payload,
-            empresa_id: (await supabase.rpc("get_user_empresa_id")).data,
+            empresa_id: empresaId,
           } as never);
           if (error) throw error;
           toast.success("Pessoa cadastrada", { description: "Nova pessoa adicionada com sucesso" });
