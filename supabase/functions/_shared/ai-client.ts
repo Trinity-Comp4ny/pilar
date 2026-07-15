@@ -5,6 +5,15 @@ const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY") || "";
 export const GEMINI_MODEL = "gemini-2.5-flash";
 const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 
+// Timeouts do Gemini. Cada chamada tem um teto próprio (AbortController); o orçamento
+// total limita a soma das tentativas (retry) para não estourar o wall-clock da edge.
+const GEMINI_CALL_TIMEOUT_MS = 30_000;
+const GEMINI_TOTAL_BUDGET_MS = 55_000;
+
+// Janela curta de rate limit: trava rajadas/loops (ex.: agente em retry) além do teto mensal.
+const SHORT_WINDOW_SECONDS = 60;
+const SHORT_WINDOW_MAX_CALLS = 30;
+
 export interface AiRequest {
   systemPrompt: string;
   userMessage: string;
@@ -66,6 +75,17 @@ export interface AiInsightRow {
  * Verifica rate limit e retorna se pode prosseguir
  */
 export async function checkRateLimit(supabaseAdmin: SupabaseClient, empresaId: string): Promise<boolean> {
+  // Janela curta: barra rajada/loop de chamadas antes de olhar o teto mensal.
+  const desde = new Date(Date.now() - SHORT_WINDOW_SECONDS * 1000).toISOString();
+  const { count } = await supabaseAdmin
+    .from("ai_usage_logs")
+    .select("id", { count: "exact", head: true })
+    .eq("empresa_id", empresaId)
+    .gte("created_at", desde);
+  if ((count ?? 0) >= SHORT_WINDOW_MAX_CALLS) {
+    return false;
+  }
+
   const now = new Date();
   const mes = now.getMonth() + 1;
   const ano = now.getFullYear();
@@ -115,7 +135,8 @@ async function logAiUsage(
  */
 async function fetchGeminiRaw(
   systemPrompt: string,
-  userMessage: string
+  userMessage: string,
+  opts: { deadline?: number } = {}
 ): Promise<{ text: string; tokensEntrada: number; tokensSaida: number }> {
   const body = {
     system_instruction: {
@@ -134,14 +155,34 @@ async function fetchGeminiRaw(
     },
   };
 
-  const response = await fetch(GEMINI_API_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-goog-api-key": GEMINI_API_KEY,
-    },
-    body: JSON.stringify(body),
-  });
+  // Teto desta chamada: o menor entre o limite por chamada e o que resta do orçamento total.
+  const restante = opts.deadline ? opts.deadline - Date.now() : GEMINI_CALL_TIMEOUT_MS;
+  const timeoutMs = Math.min(GEMINI_CALL_TIMEOUT_MS, restante);
+  if (timeoutMs <= 0) {
+    throw new Error("Orçamento de tempo do Gemini esgotado antes da chamada");
+  }
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  let response: Response;
+  try {
+    response = await fetch(GEMINI_API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-goog-api-key": GEMINI_API_KEY,
+      },
+      body: JSON.stringify(body),
+      signal: controller.signal,
+    });
+  } catch (e) {
+    if (e instanceof DOMException && e.name === "AbortError") {
+      throw new Error(`Gemini API timeout após ${timeoutMs}ms`);
+    }
+    throw e;
+  } finally {
+    clearTimeout(timer);
+  }
 
   if (!response.ok) {
     const errorText = await response.text();
@@ -165,7 +206,9 @@ async function fetchGeminiRaw(
  * callGeminiStructured — que valida e nunca silencia erro.
  */
 export async function callGemini(request: AiRequest): Promise<AiResponse> {
-  const { text, tokensEntrada, tokensSaida } = await fetchGeminiRaw(request.systemPrompt, request.userMessage);
+  const { text, tokensEntrada, tokensSaida } = await fetchGeminiRaw(request.systemPrompt, request.userMessage, {
+    deadline: Date.now() + GEMINI_CALL_TIMEOUT_MS,
+  });
 
   let parsed: Record<string, unknown>;
   try {
@@ -209,13 +252,24 @@ export async function callGeminiStructured<T>(
   let tokensEntrada = 0;
   let tokensSaida = 0;
 
+  // Orçamento total de tempo: o retry sequencial não pode estourar o wall-clock da edge.
+  const deadline = Date.now() + GEMINI_TOTAL_BUDGET_MS;
+
   for (let attempt = 1; attempt <= maxRetries + 1; attempt++) {
+    if (Date.now() >= deadline) {
+      throw new Error(
+        `Gemini structured output esgotou o orçamento de tempo (${GEMINI_TOTAL_BUDGET_MS}ms) após ${
+          attempt - 1
+        } tentativa(s). Último erro: ${lastError || "nenhum"}`
+      );
+    }
+
     const userMessage =
       attempt === 1
         ? request.userMessage
         : `${request.userMessage}\n\n[Tentativa ${attempt}] A resposta anterior foi rejeitada: ${lastError}. Responda APENAS com JSON válido que satisfaça exatamente o schema exigido.`;
 
-    const raw = await fetchGeminiRaw(request.systemPrompt, userMessage);
+    const raw = await fetchGeminiRaw(request.systemPrompt, userMessage, { deadline });
     tokensEntrada += raw.tokensEntrada;
     tokensSaida += raw.tokensSaida;
 
@@ -313,16 +367,15 @@ export async function saveInsight(
 }
 
 /**
- * Incrementa o contador mensal de uso (ai_usage — alimenta o rate limit) e
- * registra o log granular por feature (ai_usage_logs). NÃO depende de ai_insights
- * (dropada em 20260429400000). Use nos fluxos agênticos que gravam em agent_runs.
+ * Fallback não-atômico do incremento de uso (read-then-update). Usado só quando o RPC
+ * atômico increment_ai_usage ainda não existe no banco. Nunca deve ser o caminho normal.
  */
-export async function recordAiUsage(
+async function recordAiUsageFallback(
   supabaseAdmin: SupabaseClient,
   empresaId: string,
-  featureKey: string,
   tokensInput: number,
-  tokensOutput: number
+  tokensOutput: number,
+  calls: number
 ): Promise<void> {
   const now = new Date();
   const mes = now.getMonth() + 1;
@@ -342,7 +395,7 @@ export async function recordAiUsage(
     await supabaseAdmin
       .from("ai_usage")
       .update({
-        total_requests: existing.total_requests + 1,
+        total_requests: existing.total_requests + calls,
         total_tokens_entrada: existing.total_tokens_entrada + tokensInput,
         total_tokens_saida: existing.total_tokens_saida + tokensOutput,
         updated_at: new Date().toISOString(),
@@ -353,10 +406,39 @@ export async function recordAiUsage(
       empresa_id: empresaId,
       mes,
       ano,
-      total_requests: 1,
+      total_requests: calls,
       total_tokens_entrada: tokensInput,
       total_tokens_saida: tokensOutput,
     });
+  }
+}
+
+/**
+ * Incrementa o contador mensal de uso (ai_usage — alimenta o rate limit) e
+ * registra o log granular por feature (ai_usage_logs). NÃO depende de ai_insights
+ * (dropada em 20260429400000). Use nos fluxos agênticos que gravam em agent_runs.
+ *
+ * `calls` = nº REAL de chamadas ao Gemini no turno (cada retry conta). O padrão 1 mantém
+ * o comportamento antigo dos callers que ainda não passam a contagem. O incremento é
+ * atômico (RPC increment_ai_usage com col = col + delta) — evita a corrida read-then-update.
+ */
+export async function recordAiUsage(
+  supabaseAdmin: SupabaseClient,
+  empresaId: string,
+  featureKey: string,
+  tokensInput: number,
+  tokensOutput: number,
+  calls = 1
+): Promise<void> {
+  const { error } = await supabaseAdmin.rpc("increment_ai_usage", {
+    p_empresa_id: empresaId,
+    p_calls: calls,
+    p_tokens_input: tokensInput,
+    p_tokens_output: tokensOutput,
+  });
+  if (error) {
+    // RPC ainda não aplicado no banco → cai no caminho legado, sem quebrar o fluxo.
+    await recordAiUsageFallback(supabaseAdmin, empresaId, tokensInput, tokensOutput, calls);
   }
 
   await logAiUsage(supabaseAdmin, empresaId, featureKey, tokensInput, tokensOutput);
@@ -373,7 +455,10 @@ export function createAdminClient() {
  * Cria um Supabase client autenticado (com token do request)
  */
 export function createAuthClient(req: Request) {
+  // Header ausente vira string vazia — o getUser() falha e o handler responde 401,
+  // em vez de estourar por causa do non-null assertion.
+  const authHeader = req.headers.get("Authorization") ?? "";
   return createClient(Deno.env.get("SUPABASE_URL") ?? "", Deno.env.get("SUPABASE_ANON_KEY") ?? "", {
-    global: { headers: { Authorization: req.headers.get("Authorization")! } },
+    global: { headers: { Authorization: authHeader } },
   });
 }
