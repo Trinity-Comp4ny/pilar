@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,7 +10,12 @@ import { LancamentosTable } from "../components/LancamentosTable";
 import { useLancamentosPaginados } from "../hooks/useLancamentosPaginados";
 import { LancamentoFormDialog } from "../components/LancamentoFormDialog";
 import { TransferenciaFormDialog } from "../components/TransferenciaFormDialog";
-import { defaultFilters, periodoRange, type LancamentosFilters } from "../components/lancamentosFilters";
+import {
+  periodoRange,
+  readFiltersFromParams,
+  writeFiltersToParams,
+  type LancamentosFilters,
+} from "../components/lancamentosFilters";
 import type { TipoLancamento } from "../hooks/useLancamentosUnified";
 
 interface KPIs {
@@ -25,7 +31,23 @@ const formatBRL = (v: number) =>
 const EMPTY_KPIS: KPIs = { recebido: 0, pago: 0, aReceber: 0, aPagar: 0 };
 
 export default function Lancamentos() {
-  const [filters, setFilters] = useState<LancamentosFilters>(defaultFilters);
+  // Filtros vivem na URL para persistir em refresh e compartilhamento de link.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const filters = useMemo(() => readFiltersFromParams(searchParams), [searchParams]);
+  const setFilters = useCallback(
+    (next: LancamentosFilters) => {
+      setSearchParams(
+        (prev) => {
+          const params = new URLSearchParams(prev);
+          writeFiltersToParams(params, next);
+          return params;
+        },
+        { replace: true }
+      );
+    },
+    [setSearchParams]
+  );
+
   const [newTipo, setNewTipo] = useState<TipoLancamento | null>(null);
   const [newTransferencia, setNewTransferencia] = useState(false);
 

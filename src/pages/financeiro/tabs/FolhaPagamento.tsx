@@ -10,6 +10,7 @@ import { MONTHS, getMonthLabel, buildYearRange } from "./folha-pagamento/types";
 import { FolhaSummaryCards } from "./folha-pagamento/components/FolhaSummaryCards";
 import { FolhaTable } from "./folha-pagamento/components/FolhaTable";
 import { FolhaHistory } from "./folha-pagamento/components/FolhaHistory";
+import { FinanceErrorState } from "../components/FinanceErrorState";
 import {
   CloseMonthDialog,
   ConfirmPersonDialog,
@@ -19,6 +20,7 @@ import {
 
 export default function FolhaPagamento() {
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [saving, setSaving] = useState(false);
   const [data, setData] = useState<FolhaItem[]>([]);
   const [statusFolha, setStatusFolha] = useState<"preview" | "closed">("preview");
@@ -87,6 +89,7 @@ export default function FolhaPagamento() {
 
   const fetchData = async () => {
     setLoading(true);
+    setLoadError(false);
     setConfirmedUsers(new Set());
     try {
       const { data: projectsData } = await supabase
@@ -171,6 +174,7 @@ export default function FolhaPagamento() {
         );
       }
     } catch (err: unknown) {
+      setLoadError(true);
       toast.error("Erro ao carregar dados");
     } finally {
       setLoading(false);
@@ -454,17 +458,23 @@ export default function FolhaPagamento() {
           </div>
         </div>
 
-        <FolhaSummaryCards totalFolha={totalFolha} peopleCount={data.length} totalUniqueArea={totalUniqueArea} />
+        {loadError && !loading ? (
+          <FinanceErrorState onRetry={() => void fetchData()} />
+        ) : (
+          <>
+            <FolhaSummaryCards totalFolha={totalFolha} peopleCount={data.length} totalUniqueArea={totalUniqueArea} />
 
-        <FolhaTable
-          data={data}
-          loading={loading}
-          statusFolha={statusFolha}
-          confirmedUsers={confirmedUsers}
-          onCheckboxChange={handleCheckboxChange}
-          onRowClick={openDetailDialog}
-          onStatusChange={handleStatusChange}
-        />
+            <FolhaTable
+              data={data}
+              loading={loading}
+              statusFolha={statusFolha}
+              confirmedUsers={confirmedUsers}
+              onCheckboxChange={handleCheckboxChange}
+              onRowClick={openDetailDialog}
+              onStatusChange={handleStatusChange}
+            />
+          </>
+        )}
       </div>
 
       <FolhaHistory
