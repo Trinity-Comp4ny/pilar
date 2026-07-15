@@ -18,7 +18,7 @@ export function FormSuccess({
   return (
     <div className="flex flex-col items-center justify-center px-8 py-12 text-center" role="status">
       <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-success-soft">
-        <CheckCircle2 className="h-8 w-8 text-positive" aria-hidden />
+        <CheckCircle2 className="h-8 w-8 text-positive-strong" aria-hidden />
       </div>
       <h3 className="mb-2 text-xl font-semibold text-ink">{title}</h3>
       <p className="mb-8 max-w-xs text-sm text-ink-soft">{description}</p>

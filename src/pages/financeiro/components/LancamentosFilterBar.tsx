@@ -511,7 +511,7 @@ function SegBtn({
         "rounded-full h-7 px-3 gap-1.5 text-xs transition-colors",
         active
           ? tone === "positive"
-            ? "bg-positive/10 text-positive shadow-sm"
+            ? "bg-positive/10 text-positive-strong shadow-sm"
             : tone === "negative"
               ? "bg-red-50 text-red-600 shadow-sm"
               : "bg-white shadow-sm text-foreground"

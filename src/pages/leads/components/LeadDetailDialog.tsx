@@ -32,7 +32,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
   "Em contato": { label: "Em Contato", color: "bg-highlight-soft text-highlight-strong" },
   Proposta: { label: "Proposta Enviada", color: "bg-warning-soft text-warning-strong" },
   Negociação: { label: "Em Negociação", color: "bg-brand/10 text-brand" },
-  Ganho: { label: "Ganho", color: "bg-positive/10 text-positive" },
+  Ganho: { label: "Ganho", color: "bg-positive/10 text-positive-strong" },
   Perdido: { label: "Perdido", color: "bg-danger-soft text-danger-strong" },
 };
 
@@ -136,7 +136,7 @@ export function LeadDetailDialog({
               </span>
             )}
             {lead.valor_estimado != null && (
-              <span className="flex items-center gap-1 text-positive font-medium">
+              <span className="flex items-center gap-1 text-positive-strong font-medium">
                 <DollarSign className="h-3 w-3" /> {formatCurrency(lead.valor_estimado)}
               </span>
             )}
@@ -176,10 +176,10 @@ export function LeadDetailDialog({
 
           {lead.status === "Ganho" && lead.convertido_em && (
             <div className="space-y-1.5">
-              <Label className="text-[10px] uppercase text-muted-foreground tracking-wider text-positive">
+              <Label className="text-[10px] uppercase text-muted-foreground tracking-wider text-positive-strong">
                 Convertido em
               </Label>
-              <p className="text-sm text-positive bg-positive/10 p-3 rounded-lg border border-positive/10">
+              <p className="text-sm text-positive-strong bg-positive/10 p-3 rounded-lg border border-positive/10">
                 {new Date(lead.convertido_em).toLocaleDateString("pt-BR")}
               </p>
             </div>

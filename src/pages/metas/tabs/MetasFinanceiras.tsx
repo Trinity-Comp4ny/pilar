@@ -142,7 +142,7 @@ export default function MetasFinanceiras() {
   const getIcon = (categoria: string) => {
     switch (categoria) {
       case "receita":
-        return <TrendingUp className="h-5 w-5 text-positive" />;
+        return <TrendingUp className="h-5 w-5 text-positive-strong" />;
       case "lucro":
         return <Wallet className="h-5 w-5 text-blue-500" />;
       case "investimento":
@@ -421,7 +421,7 @@ export default function MetasFinanceiras() {
                       <span
                         className={cn(
                           "text-2xl font-bold tabular-nums leading-none shrink-0",
-                          isCompleted ? "text-positive" : "text-foreground"
+                          isCompleted ? "text-positive-strong" : "text-foreground"
                         )}
                       >
                         {percent}%

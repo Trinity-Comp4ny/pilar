@@ -146,8 +146,17 @@
   --shadow-popover: 0 8px 32px -4px hsl(var(--c-ink-900) / 0.12);
 
   /* ── Financeiro ──────────────────────────────────────────── */
-  --positive: var(--c-green-500); /* receita, saldo positivo, ativo */
-  --negative: var(--c-red-500); /* despesa, saldo negativo */
+  /* FILL — fundos, barras de progresso, ícones sobre superfície escura.
+   * NÃO usar como cor de texto sobre fundo claro: verde-500 dá ~2.3:1 e
+   * vermelho-500 ~3.8:1, ambos reprovam no WCAG AA (4.5:1). */
+  --positive: var(--c-green-500); /* receita, saldo positivo, ativo (fill) */
+  --negative: var(--c-red-500); /* despesa, saldo negativo (fill) */
+
+  /* TEXTO — mesma intenção semântica, contraste garantido (WCAG AA 4.5:1).
+   * Usar em valores monetários, badges ("Pago"/"Aceita"), setas e qualquer
+   * texto/ícone informativo. Ratios medidos sobre os fundos claros do app: */
+  --positive-strong: var(--c-green-700); /* 5.07:1 s/ branco, 4.86:1 s/ verde-50 */
+  --negative-strong: var(--c-red-700); /* 6.41:1 s/ branco, 5.22:1 s/ vermelho-50 */
 
   /* ── Charts ───────────────────────────────────────────────── */
   --chart-success: var(--c-green-500);
@@ -273,4 +282,18 @@
   /* ── Larguras de conteúdo nomeadas ────────────────────────── */
   --container-content: 1080px; /* coluna de leitura/marketing */
   --container-wide: clamp(1080px, 80vw, 1600px); /* heros, grids largos */
+}
+
+/* ============================================================
+ * DARK — overrides de cor sobre fundo escuro
+ * ============================================================
+ * No tema escuro o texto de valor precisa clarear (o verde/vermelho 700
+ * some no fundo quase-preto). Verde/vermelho 500 já passam, mas o 400
+ * dá mais folga de leitura mantendo a mesma família.
+ * Ratios sobre --background dark (222 84% 4.9%):
+ *   verde-400 → 11.45:1 · vermelho-400 → 7.27:1 (WCAG AAA)
+ */
+.dark {
+  --positive-strong: var(--c-green-400);
+  --negative-strong: var(--c-red-400);
 }

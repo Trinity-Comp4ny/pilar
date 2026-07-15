@@ -46,7 +46,7 @@ export function LeadsKPIs({ leads, onFilterProximos }: LeadsKPIsProps) {
         icon={TrendingUp}
         label="Valor estimado"
         value={stats.valorPipeline > 0 ? formatCurrency(stats.valorPipeline) : "—"}
-        color="text-positive"
+        color="text-positive-strong"
       />
       <KpiCard
         icon={CalendarClock}
@@ -64,7 +64,7 @@ export function LeadsKPIs({ leads, onFilterProximos }: LeadsKPIsProps) {
           stats.taxaConversao === null
             ? "text-muted-foreground"
             : stats.taxaConversao >= 50
-              ? "text-positive"
+              ? "text-positive-strong"
               : "text-warning"
         }
       />

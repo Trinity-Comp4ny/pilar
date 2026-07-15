@@ -723,7 +723,7 @@ export default function Configuracoes() {
                         <p
                           className={cn(
                             "text-sm mt-1 flex items-center gap-1",
-                            variacao >= 0 ? "text-positive" : "text-red-600"
+                            variacao >= 0 ? "text-positive-strong" : "text-red-600"
                           )}
                         >
                           {variacao >= 0 ? (
@@ -746,8 +746,8 @@ export default function Configuracoes() {
                       </p>
                     </div>
                     <div className="p-4 rounded-lg bg-positive/5 border border-positive/20">
-                      <p className="text-xs text-positive mb-1">Entradas</p>
-                      <p className="text-sm font-semibold text-positive">
+                      <p className="text-xs text-positive-strong mb-1">Entradas</p>
+                      <p className="text-sm font-semibold text-positive-strong">
                         + R$ {panelConta.total_entradas?.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                       </p>
                     </div>
@@ -811,7 +811,7 @@ export default function Configuracoes() {
 
                   <div className="border-t pt-5">
                     <p className="text-xs text-muted-foreground mb-1">Disponível</p>
-                    <p className="text-3xl font-bold text-positive">
+                    <p className="text-3xl font-bold text-positive-strong">
                       R$ {panelCartao.disponivel?.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                     </p>
                   </div>

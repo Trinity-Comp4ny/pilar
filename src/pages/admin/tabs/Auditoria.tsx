@@ -27,7 +27,7 @@ interface AuditLog {
 }
 
 const ACTION_COLOR: Record<AuditLog["action"], string> = {
-  INSERT: "bg-positive/10 text-positive",
+  INSERT: "bg-positive/10 text-positive-strong",
   UPDATE: "bg-blue-100 text-blue-700",
   DELETE: "bg-red-100 text-red-700",
 };
@@ -49,7 +49,7 @@ interface AdminAuditLog {
 const CATEGORY_COLOR: Record<string, string> = {
   user: "bg-blue-100 text-blue-700",
   empresa: "bg-purple-100 text-purple-700",
-  member: "bg-positive/10 text-positive",
+  member: "bg-positive/10 text-positive-strong",
   billing: "bg-yellow-100 text-yellow-700",
   impersonation: "bg-orange-100 text-orange-700",
 };

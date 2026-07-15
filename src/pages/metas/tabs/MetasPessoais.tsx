@@ -378,7 +378,7 @@ export default function MetasPessoais() {
                     <div className="flex justify-between items-start">
                       <div className="flex items-center gap-3 flex-1">
                         <div className={cn("p-2 rounded-lg", isCompleted ? "bg-positive/10" : "bg-blue-50")}>
-                          <User className={cn("h-5 w-5", isCompleted ? "text-positive" : "text-blue-500")} />
+                          <User className={cn("h-5 w-5", isCompleted ? "text-positive-strong" : "text-blue-500")} />
                         </div>
                         <div>
                           <CardTitle className="text-base">{meta.nome}</CardTitle>
@@ -389,7 +389,7 @@ export default function MetasPessoais() {
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className={cn("text-2xl font-bold", isCompleted && "text-positive")}>{percent}%</span>
+                        <span className={cn("text-2xl font-bold", isCompleted && "text-positive-strong")}>{percent}%</span>
                         <Button
                           variant="ghost"
                           size="icon"
