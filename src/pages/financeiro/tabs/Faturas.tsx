@@ -13,6 +13,8 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { useCartoesResumo, useContas, useFaturas, useDespesasFatura, useInvalidateFaturas, gerarFaturasCartao, type Fatura } from "../hooks/useFaturas";
 import { usePagarFatura } from "../hooks/usePagarFatura";
+import { DataTable, type ColumnDef } from "@/components/data/DataTable";
+import { toDataSourceResult } from "@/types/dataSource";
 
 const MESES = [
   "Janeiro",
@@ -52,7 +54,7 @@ export default function Faturas() {
     }
   }, [cartoes, selectedCartaoId]);
 
-  const { data: faturas = [], isLoading: loadingFaturas } = useFaturas(selectedCartaoId || null);
+  const { data: faturas = [], isLoading: loadingFaturas, error: faturasError } = useFaturas(selectedCartaoId || null);
   const invalidateFaturas = useInvalidateFaturas();
 
   useEffect(() => {
@@ -119,6 +121,97 @@ export default function Faturas() {
   };
 
   const selectedCartao = cartoes.find((c) => c.id === selectedCartaoId);
+
+  const faturaColumns: ColumnDef<Fatura>[] = [
+    {
+      key: "referencia",
+      header: "Referência",
+      stickyLeft: true,
+      getSortValue: (f) => f.ano_referencia * 100 + f.mes_referencia,
+      cell: (f) => (
+        <span className="font-medium">
+          {MESES[f.mes_referencia - 1]} {f.ano_referencia}
+        </span>
+      ),
+    },
+    {
+      key: "ciclo",
+      header: "Ciclo",
+      cell: (f) => (
+        <span className="flex items-center gap-1 text-muted-foreground">
+          <Calendar className="h-3 w-3" />
+          {format(new Date(f.data_inicio + "T00:00:00"), "dd/MM")} a{" "}
+          {format(new Date(f.data_fim + "T00:00:00"), "dd/MM")}
+        </span>
+      ),
+    },
+    {
+      key: "vencimento",
+      header: "Vencimento",
+      getSortValue: (f) => f.data_vencimento,
+      cell: (f) => format(new Date(f.data_vencimento + "T00:00:00"), "dd/MM/yyyy"),
+    },
+    {
+      key: "despesas",
+      header: "Despesas",
+      align: "center",
+      getSortValue: (f) => f.qtd_despesas,
+      cell: (f) => f.qtd_despesas,
+    },
+    {
+      key: "valor",
+      header: "Valor total",
+      align: "end",
+      getSortValue: (f) => f.valor_total,
+      cell: (f) => {
+        const restante = f.valor_total - f.valor_pago;
+        return (
+          <div className="text-right">
+            <p className="font-semibold">
+              R$ {f.valor_total.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+            </p>
+            {f.valor_pago > 0 && f.status !== "Paga" && (
+              <p className="text-xs text-muted-foreground">
+                Restante: R$ {restante.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+              </p>
+            )}
+          </div>
+        );
+      },
+    },
+    {
+      key: "status",
+      header: "Status",
+      align: "center",
+      cell: (f) => getStatusBadge(f.status, f.data_vencimento),
+    },
+    {
+      key: "acao",
+      header: "",
+      align: "end",
+      cell: (f) => {
+        const isPagavel = f.status !== "Paga" && f.status !== "Aberta" && f.valor_total > 0;
+        return (
+          <div className="flex items-center justify-end gap-2">
+            {isPagavel && (
+              <Button
+                size="sm"
+                className="rounded-full bg-brand text-ink hover:bg-brand/90"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleOpenPagamento(f);
+                }}
+              >
+                <DollarSign className="mr-1 h-4 w-4" />
+                Pagar
+              </Button>
+            )}
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          </div>
+        );
+      },
+    },
+  ];
 
   return (
     <div className="space-y-6 w-full max-w-none">
@@ -198,72 +291,17 @@ export default function Faturas() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {loadingFaturas ? (
-              <p className="text-sm text-muted-foreground py-4">Carregando faturas...</p>
-            ) : faturas.length === 0 ? (
-              <p className="text-sm text-muted-foreground py-4">Nenhuma fatura encontrada para este cartão.</p>
-            ) : (
-              <div className="space-y-3">
-                {faturas.map((fatura) => {
-                  const restante = fatura.valor_total - fatura.valor_pago;
-                  const isPagavel = fatura.status !== "Paga" && fatura.status !== "Aberta" && fatura.valor_total > 0;
-
-                  return (
-                    <div
-                      key={fatura.id}
-                      className="p-4 border rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
-                      onClick={() => handleOpenDetail(fatura)}
-                    >
-                      <div className="flex justify-between items-start">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-1">
-                            <h4 className="font-medium text-sm">
-                              {MESES[fatura.mes_referencia - 1]} {fatura.ano_referencia}
-                            </h4>
-                            {getStatusBadge(fatura.status, fatura.data_vencimento)}
-                          </div>
-                          <div className="flex gap-4 text-xs text-muted-foreground mt-1">
-                            <span className="flex items-center gap-1">
-                              <Calendar className="h-3 w-3" />
-                              {format(new Date(fatura.data_inicio + "T00:00:00"), "dd/MM")} a{" "}
-                              {format(new Date(fatura.data_fim + "T00:00:00"), "dd/MM")}
-                            </span>
-                            <span>Vence: {format(new Date(fatura.data_vencimento + "T00:00:00"), "dd/MM/yyyy")}</span>
-                            <span>{fatura.qtd_despesas} despesa(s)</span>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-3">
-                          <div className="text-right">
-                            <p className="text-lg font-bold">
-                              R$ {fatura.valor_total.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                            </p>
-                            {fatura.valor_pago > 0 && fatura.status !== "Paga" && (
-                              <p className="text-xs text-muted-foreground">
-                                Restante: R$ {restante.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                              </p>
-                            )}
-                          </div>
-                          {isPagavel && (
-                            <Button
-                              className="rounded-full bg-brand hover:bg-brand/90 text-ink transition-colors px-5 py-2.5 text-sm"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleOpenPagamento(fatura);
-                              }}
-                            >
-                              <DollarSign className="h-4 w-4 mr-1" />
-                              Pagar
-                            </Button>
-                          )}
-                          <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+            <DataTable
+              columns={faturaColumns}
+              data={toDataSourceResult<Fatura>({ data: faturas, isLoading: loadingFaturas, error: faturasError })}
+              rowKey={(f) => f.id}
+              onRowClick={handleOpenDetail}
+              defaultSortKey="referencia"
+              defaultSortDir="desc"
+              emptyMessage="Nenhuma fatura encontrada para este cartão."
+              errorTitle="Não foi possível carregar as faturas"
+              minWidth="720px"
+            />
           </CardContent>
         </Card>
       )}
