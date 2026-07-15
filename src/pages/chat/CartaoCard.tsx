@@ -12,9 +12,9 @@ import type { CartaoCampos, Draft } from "./useChat";
 type Props = {
   index: number;
   draft: Draft;
-  onConfirmar: (index: number, runId: string, entidade: "cartao", campos: CartaoCampos) => Promise<string | undefined>;
-  onCancelar: (index: number, runId: string) => Promise<void>;
-  onDesfazer: (index: number, runId: string, entidade: "cartao", entityId: string) => Promise<void>;
+  onConfirmar: (runId: string, entidade: "cartao", campos: CartaoCampos) => Promise<string | undefined>;
+  onCancelar: (runId: string) => Promise<void>;
+  onDesfazer: (runId: string, entidade: "cartao", entityId: string) => Promise<void>;
 };
 
 export function CartaoCard({ index, draft, onConfirmar, onCancelar, onDesfazer }: Props) {
@@ -34,7 +34,7 @@ export function CartaoCard({ index, draft, onConfirmar, onCancelar, onDesfazer }
     }
     setSalvando(true);
     try {
-      await onConfirmar(index, draft.runId, "cartao", form);
+      await onConfirmar(draft.runId, "cartao", form);
       toast.success("Cartão cadastrado");
     } catch {
       toast.error("Não foi possível cadastrar o cartão", { description: "Verifique suas permissões e tente de novo." });
@@ -46,7 +46,7 @@ export function CartaoCard({ index, draft, onConfirmar, onCancelar, onDesfazer }
   const cancelar = async () => {
     setSalvando(true);
     try {
-      await onCancelar(index, draft.runId);
+      await onCancelar(draft.runId);
     } finally {
       setSalvando(false);
     }
@@ -56,7 +56,7 @@ export function CartaoCard({ index, draft, onConfirmar, onCancelar, onDesfazer }
     if (!draft.entityId) return;
     setDesfazendo(true);
     try {
-      await onDesfazer(index, draft.runId, "cartao", draft.entityId);
+      await onDesfazer(draft.runId, "cartao", draft.entityId);
       toast.success("Cartão removido");
     } catch {
       toast.error("Não foi possível desfazer");

@@ -1,5 +1,6 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { msgErroChat } from "./erros";
 
 export type AgenteMeta = {
   agente: string;
@@ -172,6 +173,8 @@ export type Draft = {
 };
 
 export type ChatMessage = {
+  /** Chave estável (React keys + reidratação); não muda com a posição na lista. */
+  id: string;
   role: "user" | "assistant";
   content: string;
   agentes?: AgenteMeta[];
@@ -200,25 +203,63 @@ type ChatResponse =
       agentes: AgenteMeta[];
     };
 
+const STORAGE_KEY = "pilar.chat.v1";
+/** Corta o loading se a edge function travar (evita spinner infinito). */
+const SEND_TIMEOUT_MS = 45_000;
+
+function novoId(): string {
+  return typeof crypto !== "undefined" && "randomUUID" in crypto
+    ? crypto.randomUUID()
+    : `m_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+}
+
+type ChatSnapshot = { sessionId?: string; messages: ChatMessage[] };
+
+/** Lê a conversa persistida. Tolera localStorage indisponível/corrompido começando vazio. */
+function carregarSnapshot(): ChatSnapshot {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const s = JSON.parse(raw) as ChatSnapshot;
+      if (Array.isArray(s.messages)) return { sessionId: s.sessionId, messages: s.messages };
+    }
+  } catch {
+    // modo privado / quota estourada / JSON inválido: começa do zero
+  }
+  return { messages: [] };
+}
+
 /**
  * Estado e envio do chat conversacional (edge function ai-chat).
  * Consulta (read-only) responde em texto; ação (criar lead) devolve um rascunho
  * que vira um card de confirmação editável — nada é gravado sem o humano aprovar.
  */
 export function useChat() {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [sessionId, setSessionId] = useState<string | undefined>();
+  const [messages, setMessages] = useState<ChatMessage[]>(() => carregarSnapshot().messages);
+  const [sessionId, setSessionId] = useState<string | undefined>(() => carregarSnapshot().sessionId);
   const [loading, setLoading] = useState(false);
+  const abortRef = useRef<AbortController | null>(null);
+  const canceladoRef = useRef(false);
 
-  const patchDraft = useCallback((index: number, patch: Partial<Draft>) => {
+  // Persiste a conversa por sessão para sobreviver a refresh (inclui os atalhos de "Desfazer").
+  useEffect(() => {
+    try {
+      if (messages.length === 0) localStorage.removeItem(STORAGE_KEY);
+      else localStorage.setItem(STORAGE_KEY, JSON.stringify({ sessionId, messages }));
+    } catch {
+      // sem persistência disponível: segue só em memória
+    }
+  }, [messages, sessionId]);
+
+  const patchDraft = useCallback((runId: string, patch: Partial<Draft>) => {
     setMessages((prev) =>
-      prev.map((m, i) => (i === index && m.draft ? { ...m, draft: { ...m.draft, ...patch } } : m))
+      prev.map((m) => (m.draft?.runId === runId ? { ...m, draft: { ...m.draft, ...patch } } : m))
     );
   }, []);
 
-  const patchAcao = useCallback((index: number, patch: Partial<Acao>) => {
+  const patchAcao = useCallback((runId: string, patch: Partial<Acao>) => {
     setMessages((prev) =>
-      prev.map((m, i) => (i === index && m.acao ? { ...m, acao: { ...m.acao, ...patch } } : m))
+      prev.map((m) => (m.acao?.runId === runId ? { ...m, acao: { ...m.acao, ...patch } } : m))
     );
   }, []);
 
@@ -227,12 +268,22 @@ export function useChat() {
       const message = raw.trim();
       if (!message || loading) return;
 
-      setMessages((prev) => [...prev, { role: "user", content: message }]);
+      setMessages((prev) => [...prev, { id: novoId(), role: "user", content: message }]);
       setLoading(true);
+
+      const controller = new AbortController();
+      abortRef.current = controller;
+      canceladoRef.current = false;
+      let porTimeout = false;
+      const timeoutId = window.setTimeout(() => {
+        porTimeout = true;
+        controller.abort();
+      }, SEND_TIMEOUT_MS);
 
       try {
         const { data, error } = await supabase.functions.invoke("ai-chat", {
           body: { message, sessionId },
+          signal: controller.signal,
         });
         if (error) throw error;
 
@@ -243,6 +294,7 @@ export function useChat() {
           setMessages((prev) => [
             ...prev,
             {
+              id: novoId(),
               role: "assistant",
               content: "",
               agentes: res.agentes,
@@ -259,6 +311,7 @@ export function useChat() {
           setMessages((prev) => [
             ...prev,
             {
+              id: novoId(),
               role: "assistant",
               content: "",
               agentes: res.agentes,
@@ -266,23 +319,34 @@ export function useChat() {
             },
           ]);
         } else {
-          setMessages((prev) => [...prev, { role: "assistant", content: res.resposta, agentes: res.agentes }]);
+          setMessages((prev) => [...prev, { id: novoId(), role: "assistant", content: res.resposta, agentes: res.agentes }]);
         }
-      } catch {
-        setMessages((prev) => [
-          ...prev,
-          {
-            role: "assistant",
-            content: "Não consegui processar agora. Tente reformular ou tente de novo em instantes.",
-            erro: true,
-          },
-        ]);
+      } catch (e) {
+        // Parada manual (botão "Parar"): encerra sem card de erro alarmante.
+        if (canceladoRef.current && !porTimeout) {
+          setMessages((prev) => [...prev, { id: novoId(), role: "assistant", content: "Geração interrompida." }]);
+        } else {
+          setMessages((prev) => [
+            ...prev,
+            { id: novoId(), role: "assistant", content: msgErroChat(e, porTimeout), erro: true },
+          ]);
+        }
       } finally {
+        clearTimeout(timeoutId);
+        abortRef.current = null;
         setLoading(false);
       }
     },
     [loading, sessionId]
   );
+
+  /** Aborta a geração em curso (liga no botão "Parar"). */
+  const stop = useCallback(() => {
+    if (abortRef.current) {
+      canceladoRef.current = true;
+      abortRef.current.abort();
+    }
+  }, []);
 
   /**
    * Persiste as edições no run e materializa a entidade via RPC (gate server-side).
@@ -291,7 +355,6 @@ export function useChat() {
    */
   const confirmarDraft = useCallback(
     async (
-      index: number,
       runId: string,
       entidade: Entidade,
       campos: DraftCampos,
@@ -322,16 +385,16 @@ export function useChat() {
         res?.despesa_id ??
         res?.cartao_id;
       if (entityId && onAfterCreate) await onAfterCreate(entityId);
-      patchDraft(index, { status: "criado", campos, entityId });
+      patchDraft(runId, { status: "criado", campos, entityId });
       return entityId;
     },
     [patchDraft]
   );
 
   const cancelarDraft = useCallback(
-    async (index: number, runId: string) => {
+    async (runId: string) => {
       await supabase.from("agent_runs").update({ status: "rejected" }).eq("id", runId);
-      patchDraft(index, { status: "cancelado" });
+      patchDraft(runId, { status: "cancelado" });
     },
     [patchDraft]
   );
@@ -341,14 +404,14 @@ export function useChat() {
    * `porGrupo` (parcelado): apaga todas as parcelas do grupo (entityId = grupo_parcela).
    */
   const desfazer = useCallback(
-    async (index: number, runId: string, entidade: Entidade, entityId: string, porGrupo = false) => {
+    async (runId: string, entidade: Entidade, entityId: string, porGrupo = false) => {
       const table = TABELA_BY_ENTIDADE[entidade] as Parameters<typeof supabase.from>[0];
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const q = supabase.from(table).update({ deleted_at: new Date().toISOString() } as any);
       const { error } = await (porGrupo ? q.eq("grupo_parcela", entityId) : q.eq("id", entityId));
       if (error) throw error;
       await supabase.from("agent_runs").update({ status: "rejected" }).eq("id", runId);
-      patchDraft(index, { status: "cancelado" });
+      patchDraft(runId, { status: "cancelado" });
     },
     [patchDraft]
   );
@@ -359,7 +422,7 @@ export function useChat() {
    * Fallback (runs antigas sem linhas_ids): remove as pendentes do mês.
    */
   const desfazerFolha = useCallback(
-    async (index: number, runId: string, mes: number, ano: number) => {
+    async (runId: string, mes: number, ano: number) => {
       const { data: run } = await supabase.from("agent_runs").select("result").eq("id", runId).single();
       const ids = (run?.result as { linhas_ids?: string[] } | null)?.linhas_ids;
       if (ids && ids.length > 0) {
@@ -377,7 +440,7 @@ export function useChat() {
         if (error) throw error;
       }
       await supabase.from("agent_runs").update({ status: "rejected" }).eq("id", runId);
-      patchDraft(index, { status: "cancelado" });
+      patchDraft(runId, { status: "cancelado" });
     },
     [patchDraft]
   );
@@ -387,7 +450,7 @@ export function useChat() {
    * convidar_portal usa a edge function (gera senha + e-mail); o resto vai pelo dispatcher gated.
    */
   const executarAcao = useCallback(
-    async (index: number, runId: string, operacao: string, payload: Record<string, unknown>) => {
+    async (runId: string, operacao: string, payload: Record<string, unknown>) => {
       if (operacao === "convidar_portal") {
         const { error } = await supabase.functions.invoke("invite-cliente-portal", {
           body: { cliente_id: payload.cliente_id, email: payload.email },
@@ -403,15 +466,15 @@ export function useChat() {
         const { error } = await supabase.rpc("executar_acao_agente", { p_run_id: runId });
         if (error) throw error;
       }
-      patchAcao(index, { status: "feito" });
+      patchAcao(runId, { status: "feito" });
     },
     [patchAcao]
   );
 
   const cancelarAcao = useCallback(
-    async (index: number, runId: string) => {
+    async (runId: string) => {
       await supabase.from("agent_runs").update({ status: "rejected" }).eq("id", runId);
-      patchAcao(index, { status: "cancelado" });
+      patchAcao(runId, { status: "cancelado" });
     },
     [patchAcao]
   );
@@ -422,8 +485,15 @@ export function useChat() {
     setSessionId(undefined);
   }, [loading]);
 
+  // Créditos de IA debitados nesta conversa (só o que foi de fato criado/executado).
+  const creditosUsados = messages.reduce((total, m) => {
+    if (m.draft?.status === "criado") return total + (m.draft.custoCreditos ?? 0);
+    if (m.acao?.status === "feito") return total + (m.acao.custoCreditos ?? 0);
+    return total;
+  }, 0);
+
   return {
-    messages, send, loading, reset,
+    messages, send, stop, loading, reset, creditosUsados,
     confirmarDraft, cancelarDraft, desfazer, desfazerFolha,
     executarAcao, cancelarAcao,
   };

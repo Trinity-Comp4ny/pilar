@@ -20,9 +20,9 @@ type Props = {
   index: number;
   draft: Draft;
   tipo: Tipo;
-  onConfirmar: (index: number, runId: string, entidade: Tipo, campos: Campos) => Promise<string | undefined>;
-  onCancelar: (index: number, runId: string) => Promise<void>;
-  onDesfazer: (index: number, runId: string, entidade: Tipo, entityId: string, porGrupo?: boolean) => Promise<void>;
+  onConfirmar: (runId: string, entidade: Tipo, campos: Campos) => Promise<string | undefined>;
+  onCancelar: (runId: string) => Promise<void>;
+  onDesfazer: (runId: string, entidade: Tipo, entityId: string, porGrupo?: boolean) => Promise<void>;
 };
 
 const matchNome = <T extends { id: string; nome: string }>(lista: T[], hint?: string): string | undefined => {
@@ -119,7 +119,7 @@ export function LancamentoCard({ index, draft, tipo, onConfirmar, onCancelar, on
       : { ...form, cartao_id: undefined };
     setSalvando(true);
     try {
-      await onConfirmar(index, draft.runId, tipo, payload);
+      await onConfirmar(draft.runId, tipo, payload);
       toast.success(isReceita ? "Receita lançada" : "Despesa lançada");
     } catch (e) {
       toast.error(`Não foi possível lançar ${isReceita ? "a receita" : "a despesa"}`, { description: msgErro(e) });
@@ -131,7 +131,7 @@ export function LancamentoCard({ index, draft, tipo, onConfirmar, onCancelar, on
   const cancelar = async () => {
     setSalvando(true);
     try {
-      await onCancelar(index, draft.runId);
+      await onCancelar(draft.runId);
     } finally {
       setSalvando(false);
     }
@@ -141,7 +141,7 @@ export function LancamentoCard({ index, draft, tipo, onConfirmar, onCancelar, on
     if (!draft.entityId) return;
     setDesfazendo(true);
     try {
-      await onDesfazer(index, draft.runId, tipo, draft.entityId, parcelado);
+      await onDesfazer(draft.runId, tipo, draft.entityId, parcelado);
       toast.success("Lançamento desfeito");
     } catch {
       toast.error("Não foi possível desfazer");

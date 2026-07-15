@@ -16,9 +16,9 @@ import type { AditivoItem, Draft, DraftCampos, Entidade } from "./useChat";
 type Props = {
   index: number;
   draft: Draft;
-  onConfirmar: (index: number, runId: string, entidade: Entidade, campos: DraftCampos) => Promise<string | undefined>;
-  onCancelar: (index: number, runId: string) => Promise<void>;
-  onDesfazer: (index: number, runId: string, entidade: Entidade, entityId: string) => Promise<void>;
+  onConfirmar: (runId: string, entidade: Entidade, campos: DraftCampos) => Promise<string | undefined>;
+  onCancelar: (runId: string) => Promise<void>;
+  onDesfazer: (runId: string, entidade: Entidade, entityId: string) => Promise<void>;
 };
 
 export function AditivoCard({ index, draft, onConfirmar, onCancelar, onDesfazer }: Props) {
@@ -62,7 +62,7 @@ export function AditivoCard({ index, draft, onConfirmar, onCancelar, onDesfazer 
     const itensValidos = itens.filter((i) => i.descricao?.trim());
     setSalvando(true);
     try {
-      await onConfirmar(index, draft.runId, "aditivo", { projeto_id: projetoId, descricao, justificativa, itens: itensValidos });
+      await onConfirmar(draft.runId, "aditivo", { projeto_id: projetoId, descricao, justificativa, itens: itensValidos });
       toast.success("Aditivo criado (rascunho)");
     } catch (e) {
       toast.error("Não foi possível criar o aditivo", { description: msgErro(e) });
@@ -74,7 +74,7 @@ export function AditivoCard({ index, draft, onConfirmar, onCancelar, onDesfazer 
   const cancelar = async () => {
     setSalvando(true);
     try {
-      await onCancelar(index, draft.runId);
+      await onCancelar(draft.runId);
     } finally {
       setSalvando(false);
     }
@@ -84,7 +84,7 @@ export function AditivoCard({ index, draft, onConfirmar, onCancelar, onDesfazer 
     if (!draft.entityId) return;
     setDesfazendo(true);
     try {
-      await onDesfazer(index, draft.runId, "aditivo", draft.entityId);
+      await onDesfazer(draft.runId, "aditivo", draft.entityId);
       toast.success("Aditivo desfeito");
     } catch {
       toast.error("Não foi possível desfazer");
