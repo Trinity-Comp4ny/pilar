@@ -25,12 +25,20 @@ export default function ClienteLogin() {
   });
 
   useEffect(() => {
-    // Se já tem token válido, redireciona
+    // Se já tem token válido, redireciona. Usa o verificador read-only: o
+    // portal_verify_session rotaciona o token e devolve new_token; como esta
+    // checagem descartava o new_token, o token guardado ficava obsoleto e o
+    // dashboard revalidava com token velho, deslogando o cliente.
     const token = getPortalToken();
     if (token) {
-      supabase.rpc("portal_verify_session", { p_token: token }).then(({ data }) => {
-        if (data) navigate("/cliente/dashboard");
-      });
+      // (supabase as any): RPC nova ainda não está no types.ts gerado (rodar
+      // gen:types pós-merge). Mesmo padrão de useFinanceChartData.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (supabase as any)
+        .rpc("portal_verify_session_readonly", { p_token: token })
+        .then(({ data }: { data: unknown }) => {
+          if (data) navigate("/cliente/dashboard");
+        });
     }
   }, [navigate]);
 

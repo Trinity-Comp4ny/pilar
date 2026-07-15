@@ -18,14 +18,12 @@ serve(
 
       const admin = createClient(Deno.env.get("SUPABASE_URL") ?? "", Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "");
 
-      // Valida sessão
-      const { data: account } = await admin
-        .from("cliente_portal_accounts")
-        .select("cliente_id, empresa_id")
-        .eq("token_sessao", token)
-        .gt("token_expira_em", new Date().toISOString())
-        .eq("ativo", true)
-        .single();
+      // Valida sessão via RPC read-only (hash do token + expiração deslizante, sem
+      // rotacionar). Comparar o token puro na coluna hasheada nunca bate.
+      const { data: session } = await admin.rpc("portal_verify_session_readonly", {
+        p_token: token,
+      });
+      const account = session as { cliente_id: string; empresa_id: string } | null;
 
       if (!account) return safeErrorResponse(401, "Sessão inválida", req);
 
