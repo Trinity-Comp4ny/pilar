@@ -1,12 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 import {
+  ArrowDown,
   ArrowUp,
   Calendar,
+  Coins,
   FileText,
   Loader2,
   PenLine,
   ShieldCheck,
   Sparkles,
+  Square,
   Wallet,
   type LucideIcon,
 } from "lucide-react";
@@ -54,12 +57,31 @@ export default function ChatPage() {
   const { state, isMobile } = useSidebar();
   const left = isMobile ? "0px" : state === "collapsed" ? "64px" : "240px";
   const { profile } = useAuth();
-  const { messages, send, loading, reset, confirmarDraft, cancelarDraft, desfazer, desfazerFolha, executarAcao, cancelarAcao } =
+  const { messages, send, stop, loading, reset, creditosUsados, confirmarDraft, cancelarDraft, desfazer, desfazerFolha, executarAcao, cancelarAcao } =
     useChat();
   const [input, setInput] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
+  // Só auto-rola quando o usuário já está perto do fim; senão, mostra o botão "descer".
+  const pertoDoFimRef = useRef(true);
+  const [mostrarDescer, setMostrarDescer] = useState(false);
+
+  const aoRolar = () => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const distanciaDoFim = el.scrollHeight - el.scrollTop - el.clientHeight;
+    const perto = distanciaDoFim < 120;
+    pertoDoFimRef.current = perto;
+    setMostrarDescer(!perto);
+  };
+
+  const descer = () => {
+    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
+    pertoDoFimRef.current = true;
+    setMostrarDescer(false);
+  };
 
   useEffect(() => {
+    if (!pertoDoFimRef.current) return;
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, loading]);
 
@@ -90,6 +112,7 @@ export default function ChatPage() {
       value={input}
       onChange={setInput}
       onSend={handleSend}
+      onStop={stop}
       loading={loading}
       autoFocus={vazio}
     />
@@ -110,11 +133,20 @@ export default function ChatPage() {
             <h1 className="text-sm font-semibold leading-none text-foreground">Agentes</h1>
             <p className="mt-1 text-xs text-muted-foreground">Pergunte ou peça uma ação · nada grava sem você confirmar</p>
           </div>
+          {creditosUsados > 0 && (
+            <span
+              className="flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground"
+              title="Créditos de IA debitados nesta conversa"
+            >
+              <Coins className="h-3.5 w-3.5" />
+              {creditosUsados} crédito{creditosUsados === 1 ? "" : "s"} usados
+            </span>
+          )}
           <button
             type="button"
             onClick={handleReset}
             disabled={loading}
-            className="flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-40"
+            className="flex min-h-11 items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-40"
           >
             <PenLine className="h-3.5 w-3.5" />
             Nova conversa
@@ -150,7 +182,7 @@ export default function ChatPage() {
                     key={s.texto}
                     type="button"
                     onClick={() => send(s.texto)}
-                    className="flex items-center gap-2 rounded-full border border-border bg-card px-3.5 py-2 text-sm text-foreground transition-colors hover:border-brand hover:bg-muted"
+                    className="flex min-h-11 items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-sm text-foreground transition-colors hover:border-brand hover:bg-muted"
                   >
                     {Icon && <Icon className="h-3.5 w-3.5 text-muted-foreground" />}
                     {s.texto}
@@ -164,11 +196,16 @@ export default function ChatPage() {
       ) : (
         /* ── Estado com conversa ── */
         <>
-          <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-6">
-            <div className="mx-auto flex max-w-2xl flex-col gap-5">
+          <div ref={scrollRef} onScroll={aoRolar} className="flex-1 overflow-y-auto px-4 py-6">
+            <div
+              className="mx-auto flex max-w-2xl flex-col gap-5"
+              role="log"
+              aria-live="polite"
+              aria-relevant="additions text"
+            >
               {messages.map((m, i) => (
                 <div
-                  key={i}
+                  key={m.id}
                   className={m.role === "user" ? "flex justify-end" : "flex justify-start"}
                 >
                   {m.role === "assistant" ? (
@@ -197,7 +234,6 @@ export default function ChatPage() {
                             case "folha":
                               return (
                                 <FolhaCard
-                                  index={i}
                                   draft={m.draft}
                                   onConfirmar={confirmarDraft}
                                   onCancelar={cancelarDraft}
@@ -276,7 +312,17 @@ export default function ChatPage() {
           </div>
 
           <div className="border-t border-border px-4 py-3">
-            <div className="mx-auto max-w-2xl">
+            <div className="relative mx-auto max-w-2xl">
+              {mostrarDescer && (
+                <button
+                  type="button"
+                  onClick={descer}
+                  className="absolute -top-14 left-1/2 flex h-11 min-w-11 -translate-x-1/2 items-center justify-center rounded-full border border-border bg-card px-3 text-muted-foreground shadow-elegant transition-colors hover:bg-muted"
+                  aria-label="Descer para a mensagem mais recente"
+                >
+                  <ArrowDown className="h-4 w-4" />
+                </button>
+              )}
               {inputPanel}
               <p className="mt-2 text-center text-[11px] text-muted-foreground">
                 Os agentes respondem e executam ações com sua confirmação. Confira os valores antes de aprovar.
@@ -294,12 +340,14 @@ function InputPanel({
   value,
   onChange,
   onSend,
+  onStop,
   loading,
   autoFocus,
 }: {
   value: string;
   onChange: (v: string) => void;
   onSend: () => void;
+  onStop: () => void;
   loading: boolean;
   autoFocus?: boolean;
 }) {
@@ -327,16 +375,26 @@ function InputPanel({
           <ShieldCheck className="h-3.5 w-3.5" />
           Nada grava sem você confirmar
         </span>
-        <button
-          type="button"
-          onClick={onSend}
-          disabled={!podeEnviar}
-          aria-label="Enviar"
-          aria-busy={loading}
-          className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand text-ink transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowUp className="h-4 w-4" />}
-        </button>
+        {loading ? (
+          <button
+            type="button"
+            onClick={onStop}
+            aria-label="Parar geração"
+            className="flex h-11 w-11 items-center justify-center rounded-lg bg-brand text-ink transition-opacity hover:opacity-90"
+          >
+            <Square className="h-4 w-4 fill-current" />
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={onSend}
+            disabled={!podeEnviar}
+            aria-label="Enviar"
+            className="flex h-11 w-11 items-center justify-center rounded-lg bg-brand text-ink transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            <ArrowUp className="h-4 w-4" />
+          </button>
+        )}
       </div>
     </div>
   );

@@ -10,3 +10,30 @@ export function msgErro(e: unknown, fallback = "Tente de novo em instantes."): s
   }
   return fallback;
 }
+
+/**
+ * Mensagem de erro para o envio ao ai-chat. Diz o que houve e o próximo passo.
+ * `functions.invoke` devolve FunctionsHttpError (com `context` = Response e o status
+ * real da edge function) ou FunctionsFetchError (rede/abort). Em timeout ou cancelamento
+ * o fetch é abortado; quem chama sinaliza via `porTimeout`.
+ */
+export function msgErroChat(e: unknown, porTimeout = false): string {
+  if (porTimeout) {
+    return "A resposta demorou demais e foi interrompida. Tente de novo ou simplifique o pedido.";
+  }
+  const err = e as { name?: string; context?: { status?: number } } | null;
+  const status = err?.context?.status;
+  if (status === 429) {
+    return "Você atingiu o limite de IA deste mês. Fale com o admin da empresa para liberar mais.";
+  }
+  if (status === 402) {
+    return "Sem créditos de IA suficientes para concluir. Fale com o admin da empresa para recarregar.";
+  }
+  if (status === 401 || status === 403) {
+    return "Você não tem permissão para essa ação. Fale com um administrador da empresa.";
+  }
+  if (err?.name === "FunctionsFetchError") {
+    return "Sem conexão com o servidor. Verifique sua internet e tente de novo.";
+  }
+  return "Não consegui processar agora. Tente reformular ou tente de novo em instantes.";
+}

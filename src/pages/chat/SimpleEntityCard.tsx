@@ -153,9 +153,9 @@ type Props = {
   index: number;
   draft: Draft;
   entidade: Entidade;
-  onConfirmar: (index: number, runId: string, entidade: Entidade, campos: DraftCampos) => Promise<string | undefined>;
-  onCancelar: (index: number, runId: string) => Promise<void>;
-  onDesfazer: (index: number, runId: string, entidade: Entidade, entityId: string) => Promise<void>;
+  onConfirmar: (runId: string, entidade: Entidade, campos: DraftCampos) => Promise<string | undefined>;
+  onCancelar: (runId: string) => Promise<void>;
+  onDesfazer: (runId: string, entidade: Entidade, entityId: string) => Promise<void>;
 };
 
 type FormState = Record<string, string | number | undefined>;
@@ -243,7 +243,7 @@ export function SimpleEntityCard({ index, draft, entidade, onConfirmar, onCancel
     }
     setSalvando(true);
     try {
-      await onConfirmar(index, draft.runId, entidade, form as DraftCampos);
+      await onConfirmar(draft.runId, entidade, form as DraftCampos);
       toast.success(`${cfg.titulo} criado`);
     } catch (e) {
       toast.error("Não foi possível criar", { description: msgErro(e) });
@@ -255,7 +255,7 @@ export function SimpleEntityCard({ index, draft, entidade, onConfirmar, onCancel
   const cancelar = async () => {
     setSalvando(true);
     try {
-      await onCancelar(index, draft.runId);
+      await onCancelar(draft.runId);
     } finally {
       setSalvando(false);
     }
@@ -265,7 +265,7 @@ export function SimpleEntityCard({ index, draft, entidade, onConfirmar, onCancel
     if (!draft.entityId) return;
     setDesfazendo(true);
     try {
-      await onDesfazer(index, draft.runId, entidade, draft.entityId);
+      await onDesfazer(draft.runId, entidade, draft.entityId);
       toast.success("Desfeito");
     } catch {
       toast.error("Não foi possível desfazer");

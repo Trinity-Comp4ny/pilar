@@ -25,14 +25,13 @@ type Props = {
   index: number;
   draft: Draft;
   onConfirmar: (
-    index: number,
     runId: string,
     entidade: "projeto",
     campos: ProjetoCampos,
     onAfterCreate?: (entityId: string) => Promise<void>
   ) => Promise<string | undefined>;
-  onCancelar: (index: number, runId: string) => Promise<void>;
-  onDesfazer: (index: number, runId: string, entidade: "projeto", entityId: string) => Promise<void>;
+  onCancelar: (runId: string) => Promise<void>;
+  onDesfazer: (runId: string, entidade: "projeto", entityId: string) => Promise<void>;
 };
 
 const PRIORIDADES = ["Alta", "Media", "Baixa"];
@@ -103,7 +102,7 @@ export function ProjetoConfirmationCard({ index, draft, onConfirmar, onCancelar,
     try {
       // Após criar o projeto (RPC), grava as disciplinas relacionais pelo mesmo caminho da
       // plataforma. Se falhar, desfaz o projeto (soft-delete) para não deixar registro órfão.
-      await onConfirmar(index, draft.runId, "projeto", form, async (projetoId) => {
+      await onConfirmar(draft.runId, "projeto", form, async (projetoId) => {
         const disciplinas = disc.buildDiscsForBulk();
         if (disciplinas.length === 0) return;
         try {
@@ -124,7 +123,7 @@ export function ProjetoConfirmationCard({ index, draft, onConfirmar, onCancelar,
   const cancelar = async () => {
     setSalvando(true);
     try {
-      await onCancelar(index, draft.runId);
+      await onCancelar(draft.runId);
     } finally {
       setSalvando(false);
     }
@@ -134,7 +133,7 @@ export function ProjetoConfirmationCard({ index, draft, onConfirmar, onCancelar,
     if (!draft.entityId) return;
     setDesfazendo(true);
     try {
-      await onDesfazer(index, draft.runId, "projeto", draft.entityId);
+      await onDesfazer(draft.runId, "projeto", draft.entityId);
       toast.success("Projeto desfeito");
     } catch {
       toast.error("Não foi possível desfazer");
