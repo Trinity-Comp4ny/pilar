@@ -19,9 +19,9 @@ export function useClienteDetalhe(clienteId: string) {
   const clienteQuery = useQuery({
     queryKey: ["cliente", clienteId],
     queryFn: async () => {
-      const { data, error } = await supabase.from("clientes").select("*").eq("id", clienteId).single();
+      const { data, error } = await supabase.from("clientes").select("*").eq("id", clienteId).maybeSingle();
       if (error) throw error;
-      return data as unknown as Cliente;
+      return data ? (data as unknown as Cliente) : null;
     },
     enabled: !!clienteId,
   });
