@@ -155,6 +155,23 @@ describe("processDailyChartData", () => {
     const result = processDailyChartData([fora], [], start, end);
     result.forEach((r) => expect(r.receitas).toBe(0));
   });
+
+  it("inclui item no primeiro dia do intervalo (boundary, sem off-by-one de fuso)", () => {
+    // start em meia-noite local, como startOfMonth. Parse UTC do "yyyy-MM-dd"
+    // jogaria o item pro dia anterior em UTC-3 e ele sumiria do caixa.
+    const start = new Date(2026, 6, 1);
+    const end = new Date(2026, 6, 7);
+    const item = {
+      valor: 500 as unknown as ReceitaRow["valor"],
+      data_vencimento: "2026-07-01",
+      data_recebimento: null,
+      status: "Pendente",
+      categorias_financeiras: undefined,
+    } as unknown as Parameters<typeof processDailyChartData>[0][number];
+    const result = processDailyChartData([item], [], start, end);
+    const totalReceitas = result.reduce((acc, r) => acc + r.receitas, 0);
+    expect(totalReceitas).toBe(500);
+  });
 });
 
 // ────────────────────────────────────────────────────────────────
