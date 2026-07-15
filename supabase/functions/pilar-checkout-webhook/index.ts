@@ -190,30 +190,75 @@ serve(
             throw new Error(`falha ao criar empresa_owners_pending: ${ownerErr?.message}`);
           }
 
-          // Dispara email com magic link
-          const { error: inviteErr } = await admin.auth.admin.inviteUserByEmail(signup.email, {
-            redirectTo: `${appOrigin()}/profile-setup`,
-            data: {
-              invite_token: ownerPending.token,
-              nome: signup.nome,
-              is_pilar_subscriber: true,
-            },
-          });
+          // Dispara email com magic link — falha não bloqueia o 200 (cron vai retentar)
+          let inviteDispatched = false;
+          try {
+            const { error: inviteErr } = await admin.auth.admin.inviteUserByEmail(signup.email, {
+              redirectTo: `${appOrigin()}/profile-setup`,
+              data: {
+                invite_token: ownerPending.token,
+                nome: signup.nome,
+                is_pilar_subscriber: true,
+              },
+            });
 
-          if (inviteErr) {
-            throw new Error(`inviteUserByEmail: ${inviteErr.message}`);
+            if (inviteErr) {
+              throw new Error(`inviteUserByEmail: ${inviteErr.message}`);
+            }
+
+            inviteDispatched = true;
+          } catch (inviteEx) {
+            const errMsg = inviteEx instanceof Error ? inviteEx.message : "invite dispatch failed";
+            log.error("invite dispatch failed — will retry via cron", inviteEx, {
+              email: signup.email,
+              signup_id: signup.id,
+            });
+            // Registra falha no audit log para visibilidade operacional
+            await admin.from("admin_audit_logs").insert({
+              actor_id: null,
+              actor_email: "system@pilar",
+              actor_role: "ultra_admin",
+              action: "invite_dispatch_failed",
+              category: "billing",
+              target_type: "pending_signup",
+              target_id: signup.id,
+              target_name: signup.email,
+              empresa_id: null,
+              metadata: { error: errMsg, owner_pending_id: ownerPending.id },
+            });
           }
 
           await admin
             .from("pilar_pending_signups")
             .update({
               empresa_owner_pending_id: ownerPending.id,
-              invite_dispatched_at: new Date().toISOString(),
+              ...(inviteDispatched && { invite_dispatched_at: new Date().toISOString() }),
             })
             .eq("id", signup.id);
         }
 
-        // 3. Renovação de subscription ativa → estender período
+        // 3. trial_ends_at para novos signups
+        // Para signups novos, a subscription é criada pelo trigger
+        // tg_pilar_link_subscription_on_owner_used (migration 027) durante o profile-setup,
+        // não no momento do pagamento. Por isso, buscamos a subscription pelo pending_signup_id
+        // e definimos trial_ends_at se ainda não estiver preenchido.
+        if (signup) {
+          const { data: newSub } = await admin
+            .from("pilar_subscriptions")
+            .select("id, trial_ends_at")
+            .eq("pending_signup_id", signup.id)
+            .maybeSingle();
+
+          if (newSub && !newSub.trial_ends_at) {
+            const trialEnd = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString();
+            await admin
+              .from("pilar_subscriptions")
+              .update({ trial_ends_at: trialEnd })
+              .eq("id", newSub.id);
+          }
+        }
+
+        // 4. Renovação de subscription ativa → estender período
         if (activeSub && !signup) {
           const periodEnd =
             activeSub.billing_cycle === "yearly"

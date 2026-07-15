@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { startOfMonth, addDays } from "date-fns";
+import { startOfMonth, addDays, format } from "date-fns";
 import { PROJECT_STATUS } from "@/constants";
 
 export function buildDashboardQueries(
@@ -10,10 +10,10 @@ export function buildDashboardQueries(
   mesAnteriorEnd: Date,
   chartStart: Date
 ) {
-  const mesAtualStartStr = mesAtualStart.toISOString().split("T")[0];
-  const mesAtualEndStr = mesAtualEnd.toISOString().split("T")[0];
-  const mesAnteriorStartStr = mesAnteriorStart.toISOString().split("T")[0];
-  const mesAnteriorEndStr = mesAnteriorEnd.toISOString().split("T")[0];
+  const mesAtualStartStr = format(mesAtualStart, "yyyy-MM-dd");
+  const mesAtualEndStr = format(mesAtualEnd, "yyyy-MM-dd");
+  const mesAnteriorStartStr = format(mesAnteriorStart, "yyyy-MM-dd");
+  const mesAnteriorEndStr = format(mesAnteriorEnd, "yyyy-MM-dd");
 
   return Promise.all([
     // 0: receitasMes — busca por data_recebimento OU data_vencimento no mês atual
@@ -93,14 +93,15 @@ export function buildDashboardQueries(
     supabase
       .from("receitas")
       .select("valor, data_recebimento, data_vencimento, status")
-      .gte("data_vencimento", startOfMonth(chartStart).toISOString())
+      .gte("data_vencimento", format(startOfMonth(chartStart), "yyyy-MM-dd"))
       .is("deleted_at", null),
 
     // 11: despesasChart
     supabase
       .from("despesas")
       .select("valor, data_pagamento, data_vencimento, status")
-      .gte("data_vencimento", startOfMonth(chartStart).toISOString())
+      .eq("is_fatura_payment", false)
+      .gte("data_vencimento", format(startOfMonth(chartStart), "yyyy-MM-dd"))
       .is("deleted_at", null),
 
     // 12: proximasReceitas
@@ -110,8 +111,8 @@ export function buildDashboardQueries(
         "id, descricao, valor, data_vencimento, status, projeto_id, projetos(codigo_projeto), cliente_id, clientes(nome)"
       )
       .eq("status", "Pendente")
-      .gte("data_vencimento", now.toISOString())
-      .lte("data_vencimento", addDays(now, 30).toISOString())
+      .gte("data_vencimento", format(now, "yyyy-MM-dd"))
+      .lte("data_vencimento", format(addDays(now, 30), "yyyy-MM-dd"))
       .is("deleted_at", null)
       .order("data_vencimento", { ascending: true })
       .limit(5),
@@ -123,8 +124,8 @@ export function buildDashboardQueries(
         "id, descricao, valor, data_vencimento, status, projeto_id, projetos(codigo_projeto), fornecedor_id, fornecedores(nome)"
       )
       .eq("status", "Pendente")
-      .gte("data_vencimento", now.toISOString())
-      .lte("data_vencimento", addDays(now, 30).toISOString())
+      .gte("data_vencimento", format(now, "yyyy-MM-dd"))
+      .lte("data_vencimento", format(addDays(now, 30), "yyyy-MM-dd"))
       .is("deleted_at", null)
       .order("data_vencimento", { ascending: true })
       .limit(5),

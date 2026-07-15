@@ -1,6 +1,5 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 
 export interface TimelineDisciplina {
   disciplina: string;
@@ -23,7 +22,9 @@ export function TimelineContent({ disciplinas }: { disciplinas: TimelineDiscipli
       <Card>
         <CardContent className="p-6">
           <h3 className="text-sm font-semibold mb-3">Progresso Geral</h3>
-          <Progress value={progress} className="h-3 mb-2" />
+          <div className="w-full bg-gray-200 rounded-full h-3 mb-2">
+            <div className="bg-brand h-3 rounded-full transition-all" style={{ width: `${progress}%` }} />
+          </div>
           <p className="text-xs text-muted-foreground">
             {progress}% concluído — {concluidas} de {total} etapas
           </p>
@@ -38,8 +39,9 @@ export function TimelineContent({ disciplinas }: { disciplinas: TimelineDiscipli
           ) : (
             <div className="relative">
               {disciplinas.map((d, i) => {
-                const isConcluido = d.status === "Concluído";
-                const isAndamento = d.status === "Em Andamento";
+                const statusNorm = (d.status ?? "").toLowerCase();
+                const isConcluido = statusNorm === "concluído";
+                const isAndamento = statusNorm === "em andamento";
                 return (
                   <div key={d.disciplina ?? i} className="flex gap-4 mb-4 last:mb-0">
                     <div className="flex flex-col items-center">

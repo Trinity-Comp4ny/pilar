@@ -62,6 +62,12 @@ const formatCurrency = (v: number | null) =>
 
 const formatDate = (d: string | null) => (d ? new Date(d + "T00:00:00").toLocaleDateString("pt-BR") : "—");
 
+const TIPO_NF_LABELS: Record<string, string> = {
+  servico: "Serviço",
+  produto: "Produto",
+  misto: "Misto",
+};
+
 // ─── Admin Financeiro Wrapper ────────────────────────────────────────────────
 
 function AdminFinanceiroContent({ projetoId }: { projetoId: string }) {
@@ -264,7 +270,7 @@ function VisaoGeralTab({ cliente, isAdmin }: { cliente: Cliente; isAdmin: boolea
             {cliente.tipo_nf && (
               <div>
                 <p className="text-[10px] uppercase text-muted-foreground tracking-wider mb-1">Tipo NF</p>
-                <p className="text-sm font-medium capitalize">{cliente.tipo_nf}</p>
+                <p className="text-sm font-medium capitalize">{TIPO_NF_LABELS[cliente.tipo_nf.toLowerCase()] ?? cliente.tipo_nf}</p>
               </div>
             )}
           </div>
@@ -344,7 +350,7 @@ function VisaoGeralTab({ cliente, isAdmin }: { cliente: Cliente; isAdmin: boolea
               </div>
             )}
 
-            {!isLoadingPortal && portalStatus?.exists && !portalCredentials && (
+            {!isLoadingPortal && (portalStatus?.exists || !!portalCredentials) && (
               <div className="space-y-3">
                 <div className="flex items-center gap-2 bg-positive/10 border border-positive/20 rounded-lg px-3 py-2 text-sm text-positive">
                   <Globe className="h-4 w-4" />

@@ -3,10 +3,15 @@ import {
   BarChart,
   Calendar,
   CalendarDays,
+  Clock,
+  Copy,
   FileText,
   Home,
+  Inbox,
+  LayoutGrid,
   MapPin,
   ShieldCheck,
+  Sparkles,
   Zap,
   Users,
   User,
@@ -54,6 +59,7 @@ const menu: MenuGroup[] = [
   {
     label: "Visão",
     items: [
+      { title: "Agentes", url: "/agentes", icon: Sparkles, feature: "ai_chat" as Feature, badge: "novo" },
       { title: "Dashboard", url: "/dashboard", icon: Home, feature: "dashboard" },
       { title: "Relatórios", url: "/relatorios", icon: BarChart, feature: "relatorios" },
     ],
@@ -73,6 +79,16 @@ const menu: MenuGroup[] = [
       { title: "Projetos", url: "/projetos", icon: Calendar, feature: "projetos" },
       { title: "Calendário", url: "/calendario", icon: CalendarDays, feature: "projetos" },
       { title: "Mapa", url: "/mapa", icon: MapPin, feature: "mapa" },
+      { title: "Timesheet", url: "/timesheet", icon: Clock, feature: "timesheet" as Feature },
+      { title: "Capacidade", url: "/capacidade", icon: LayoutGrid, feature: "capacidade" as Feature },
+      { title: "Templates", url: "/templates", icon: Copy, feature: "templates" as Feature },
+    ],
+  },
+  {
+    label: "Inteligência",
+    items: [
+      { title: "Revisão IA", url: "/revisao-ia", icon: Inbox, feature: "projetos", badge: "novo" },
+      { title: "AI Hub", url: "/ai", icon: Sparkles, feature: "ai_hub" as Feature },
     ],
   },
   {

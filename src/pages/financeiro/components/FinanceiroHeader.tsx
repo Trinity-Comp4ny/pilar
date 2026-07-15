@@ -34,10 +34,15 @@ function detectPreset(from: Date | undefined, to: Date | undefined): PresetKey {
   return "custom";
 }
 
-export function FinanceiroHeader() {
+// Apenas estas abas são regidas pelo "Período:" do header.
+// As demais têm filtros próprios (Lançamentos, Folha) ou não usam período (Faturas, Contas).
+const TABS_WITH_PERIOD = new Set(["visao-geral", "fluxo-caixa"]);
+
+export function FinanceiroHeader({ activeTab }: { activeTab?: string }) {
   const { dateFrom, setDateFrom, dateTo, setDateTo, visualizacao, setVisualizacao } = useFinanceFilter();
   const { isMobile } = useSidebar();
   const filterType = useMemo(() => detectPreset(dateFrom, dateTo), [dateFrom, dateTo]);
+  const showPeriod = !activeTab || TABS_WITH_PERIOD.has(activeTab);
 
   const handleFilterChange = (value: string) => {
     if (value === "custom") return;
@@ -63,6 +68,7 @@ export function FinanceiroHeader() {
 
           </div>
 
+          {showPeriod && (
           <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-end">
             <div className="flex items-center gap-2 flex-wrap">
               <CalendarDays className="h-4 w-4 text-muted-foreground" />
@@ -138,6 +144,7 @@ export function FinanceiroHeader() {
               </div>
             </div>
           </div>
+          )}
         </div>
       </div>
     </div>

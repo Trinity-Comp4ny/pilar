@@ -26,6 +26,8 @@ export default function ProjetoDetail() {
     deadline,
     progress,
     margemBrutaPct,
+    rentabilidade,
+    rentabilidadeLoading,
     applyDiscStatusChange,
     handleRemoveDisc,
     handleAddDisc,
@@ -60,7 +62,7 @@ export default function ProjetoDetail() {
         onEdit={() => setIsEditDialogOpen(true)}
       />
 
-      <ProjetoDetailInfo projeto={projeto} progress={progress} margemBrutaPct={margemBrutaPct} />
+      <ProjetoDetailInfo projeto={projeto} progress={progress} margemBrutaPct={margemBrutaPct} rentabilidade={rentabilidade ?? null} rentabilidadeLoading={rentabilidadeLoading} />
 
       <ProjetoDetailTabs
         projeto={projeto}
@@ -88,6 +90,7 @@ export default function ProjetoDetail() {
         templatesData={templatesData}
         currentUser={currentUser}
         onSaved={refetchProjeto}
+        existingDisciplinas={dbDisciplinas}
       />
     </PageLayout>
   );

@@ -1,8 +1,9 @@
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Pencil, Trash2, Landmark } from "lucide-react";
+import { Pencil, Trash2, Landmark, Eye, EyeOff } from "lucide-react";
 import {
   CONTRACT_TYPES,
   CONTRACT_TYPE_LABELS,
@@ -31,7 +32,16 @@ interface PessoaDetailDialogProps {
 }
 
 export function PessoaDetailDialog({ open, onOpenChange, pessoa, isAdmin, onEdit, onDelete }: PessoaDetailDialogProps) {
+  // CPF é PII: mascarado por padrão, revelado só sob ação explícita.
+  const [showCpf, setShowCpf] = useState(false);
+
+  useEffect(() => {
+    setShowCpf(false);
+  }, [pessoa?.id, open]);
+
   if (!pessoa) return null;
+
+  const maskedCpf = pessoa.cpf ? `***.***.***-${pessoa.cpf.replace(/\D/g, "").slice(-2)}` : "-";
 
   const tipo = pessoa.tipo_contrato as ContractType;
   const status = (pessoa.status || "ativo") as PessoaStatus;
@@ -58,7 +68,19 @@ export function PessoaDetailDialog({ open, onOpenChange, pessoa, isAdmin, onEdit
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label className="text-xs text-muted-foreground">CPF</Label>
-              <p className="font-medium">{pessoa.cpf || "-"}</p>
+              <div className="flex items-center gap-1.5">
+                <p className="font-medium">{pessoa.cpf ? (showCpf ? pessoa.cpf : maskedCpf) : "-"}</p>
+                {pessoa.cpf && (
+                  <button
+                    type="button"
+                    onClick={() => setShowCpf((v) => !v)}
+                    className="text-muted-foreground hover:text-foreground"
+                    aria-label={showCpf ? "Ocultar CPF" : "Mostrar CPF"}
+                  >
+                    {showCpf ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                  </button>
+                )}
+              </div>
             </div>
             <div>
               <Label className="text-xs text-muted-foreground">RG</Label>

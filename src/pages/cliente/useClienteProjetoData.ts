@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getPortalToken } from "@/hooks/useClienteAuth";
 
@@ -9,6 +9,8 @@ export interface ClienteReceita {
   data_vencimento: string;
   data_recebimento: string | null;
   status: string;
+  asaas_payment_url?: string | null;
+  asaas_billing_type?: string | null;
 }
 
 export interface ClienteProjetoData {
@@ -41,30 +43,31 @@ export function useClienteProjetoData(projetoId: string | undefined) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  const load = useCallback(async () => {
     if (!projetoId) return;
+    setLoading(true);
+    try {
+      const token = getPortalToken();
+      if (!token) throw new Error("Não autenticado");
 
-    const load = async () => {
-      try {
-        const token = getPortalToken();
-        if (!token) throw new Error("Não autenticado");
-
-        const { data: result, error: rpcError } = await supabase.rpc("get_cliente_projeto_detail", {
-          p_projeto_id: projetoId,
-          p_token: token,
-        });
-        if (rpcError) throw rpcError;
-        setData(result as unknown as ClienteProjetoData);
-      } catch (e: unknown) {
-        const msg =
-          e instanceof Error ? e.message : ((e as { message?: string } | null)?.message ?? "Erro ao carregar projeto");
-        setError(msg);
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
+      const { data: result, error: rpcError } = await supabase.rpc("get_cliente_projeto_detail", {
+        p_projeto_id: projetoId,
+        p_token: token,
+      });
+      if (rpcError) throw rpcError;
+      setData(result as unknown as ClienteProjetoData);
+    } catch (e: unknown) {
+      const msg =
+        e instanceof Error ? e.message : ((e as { message?: string } | null)?.message ?? "Erro ao carregar projeto");
+      setError(msg);
+    } finally {
+      setLoading(false);
+    }
   }, [projetoId]);
 
-  return { data, loading, error };
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  return { data, loading, error, refresh: load };
 }

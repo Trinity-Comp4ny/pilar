@@ -1,7 +1,9 @@
 import { useNavigate, NavLink } from "react-router-dom";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { LogOut, ArrowLeft, FolderKanban, DollarSign, FileCheck } from "lucide-react";
+import { LogOut, ArrowLeft, FolderKanban, DollarSign, FileCheck, LayoutDashboard } from "lucide-react";
 import { portalLogout, type ClienteAccount } from "@/hooks/useClienteAuth";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ClienteShellProps {
   account: ClienteAccount;
@@ -19,6 +21,13 @@ const projetoNavItems = [
 
 export function ClienteShell({ account, children, projetoId, projetoNome, projetoCodigo }: ClienteShellProps) {
   const navigate = useNavigate();
+  const [isAdminSession, setIsAdminSession] = useState(false);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      setIsAdminSession(!!data.session);
+    });
+  }, []);
 
   const handleLogout = async () => {
     await portalLogout();
@@ -40,12 +49,28 @@ export function ClienteShell({ account, children, projetoId, projetoNome, projet
             </div>
           </div>
           <div className="flex items-center gap-4">
-            <span className="text-sm text-muted-foreground hidden sm:block">{account.nome}</span>
+            {isAdminSession && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate("/clientes")}
+                className="text-xs"
+              >
+                <LayoutDashboard className="h-3.5 w-3.5 mr-1" />
+                Voltar ao painel
+              </Button>
+            )}
+            <span className="text-sm text-muted-foreground truncate max-w-[8rem] sm:max-w-[14rem]">
+              <span className="sm:hidden">{account.nome.split(" ")[0]}</span>
+              <span className="hidden sm:inline">{account.nome}</span>
+            </span>
             <Button
               variant="ghost"
               size="sm"
               onClick={handleLogout}
-              className="text-muted-foreground hover:text-foreground"
+              aria-label="Sair"
+              title="Sair"
+              className="text-muted-foreground hover:text-foreground h-11 w-11 sm:h-9 sm:w-9"
             >
               <LogOut className="h-4 w-4" />
             </Button>
@@ -67,17 +92,19 @@ export function ClienteShell({ account, children, projetoId, projetoNome, projet
                 <ArrowLeft className="h-4 w-4 mr-1" />
                 Projetos
               </Button>
-              <div className="h-4 w-px bg-border" />
-              <div>
-                {projetoCodigo && <span className="text-xs text-muted-foreground mr-2">{projetoCodigo}</span>}
-                <span className="text-sm font-medium">{projetoNome}</span>
+              <div className="h-4 w-px bg-border shrink-0" />
+              <div className="min-w-0 flex items-baseline gap-2">
+                {projetoCodigo && (
+                  <span className="text-xs text-muted-foreground shrink-0">{projetoCodigo}</span>
+                )}
+                <span className="text-sm font-medium truncate">{projetoNome}</span>
               </div>
             </div>
           </div>
 
           {/* Nav do projeto */}
           <nav className="bg-white border-b">
-            <div className="max-w-7xl mx-auto flex gap-1 px-6">
+            <div className="max-w-7xl mx-auto flex gap-1 px-6 overflow-x-auto">
               {projetoNavItems.map((item) => (
                 <NavLink
                   key={item.path}

@@ -151,10 +151,37 @@ export function PessoaTable({ pessoas, isLoading, isAdmin, onRowClick, onEditCli
                     <ArrowUpDown className="ml-2 h-3 w-3" />
                   </Button>
                 </TableHead>
-                <TableHead>Tipo</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead>
+                  <Button
+                    variant="ghost"
+                    onClick={() => handleSort("tipo_contrato")}
+                    className="-ml-3 h-8 font-medium text-xs"
+                  >
+                    Tipo
+                    <ArrowUpDown className="ml-2 h-3 w-3" />
+                  </Button>
+                </TableHead>
+                <TableHead>
+                  <Button
+                    variant="ghost"
+                    onClick={() => handleSort("status")}
+                    className="-ml-3 h-8 font-medium text-xs"
+                  >
+                    Status
+                    <ArrowUpDown className="ml-2 h-3 w-3" />
+                  </Button>
+                </TableHead>
                 <TableHead>CPF</TableHead>
-                <TableHead>Cargo</TableHead>
+                <TableHead>
+                  <Button
+                    variant="ghost"
+                    onClick={() => handleSort("cargo")}
+                    className="-ml-3 h-8 font-medium text-xs"
+                  >
+                    Cargo
+                    <ArrowUpDown className="ml-2 h-3 w-3" />
+                  </Button>
+                </TableHead>
                 <TableHead className="hidden md:table-cell">Telefone</TableHead>
                 {isAdmin && <TableHead className="text-right">Ações</TableHead>}
               </TableRow>
@@ -218,7 +245,7 @@ export function PessoaTable({ pessoas, isLoading, isAdmin, onRowClick, onEditCli
                         {PESSOA_STATUS_LABELS[(pessoa.status || "ativo") as PessoaStatus]}
                       </Badge>
                     </TableCell>
-                    <TableCell>{pessoa.cpf || "-"}</TableCell>
+                    <TableCell>{pessoa.cpf ? `***.***.***-${pessoa.cpf.replace(/\D/g, "").slice(-2)}` : "-"}</TableCell>
                     <TableCell>{pessoa.cargo}</TableCell>
                     <TableCell className="hidden md:table-cell">{pessoa.telefone || "-"}</TableCell>
                     {isAdmin && (

@@ -62,7 +62,11 @@ export default function Metas() {
   const { data: metas, isLoading } = useQuery({
     queryKey: ["metas"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("metas").select("*").order("created_at", { ascending: false });
+      const { data, error } = await supabase
+        .from("metas")
+        .select("*")
+        .is("deleted_at", null)
+        .order("created_at", { ascending: false });
       if (error) throw error;
       return data as Meta[];
     },
@@ -358,7 +362,7 @@ export default function Metas() {
               <AlertDialogHeader>
                 <AlertDialogTitle>Tem certeza?</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Esta ação não pode ser desfeita. Esta meta será permanentemente excluída.
+                  Esta meta será excluída e deixará de aparecer na sua lista.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>

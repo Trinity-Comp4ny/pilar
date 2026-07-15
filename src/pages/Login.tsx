@@ -17,7 +17,6 @@ export default function Login() {
   usePageTitle("Login");
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
-  const [isResetting, setIsResetting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
 
@@ -92,37 +91,13 @@ export default function Login() {
     setIsLoading(false);
   };
 
-  const handleResetPassword = async () => {
-    const email = form.getValues("email");
-    if (!email.trim()) {
-      toast.error("Informe o email", {
-        description: "Digite seu email no campo acima para receber o link de redefinição.",
-      });
-      return;
-    }
-    setIsResetting(true);
-    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-      redirectTo: `${window.location.origin}/reset-password`,
-    });
-    if (error) {
-      toast.error("Erro ao enviar", {
-        description: "Tente novamente em alguns instantes.",
-      });
-    } else {
-      toast.success("Email enviado!", {
-        description: "Verifique sua caixa de entrada para redefinir a senha.",
-      });
-    }
-    setIsResetting(false);
-  };
-
   return (
-    <div className="min-h-screen w-full flex overflow-hidden bg-white">
+    <div className="min-h-screen w-full flex overflow-hidden bg-paper">
       {/* Lado Esquerdo - Formulário de Login */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 lg:p-16 bg-white relative">
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 lg:p-16 bg-paper relative">
         <Link
           to="/"
-          className="absolute top-8 left-8 lg:left-12 flex items-center gap-2 text-slate-500 hover:text-brand transition-colors font-medium text-sm group"
+          className="absolute top-8 left-8 lg:left-12 flex items-center gap-2 text-ink-soft hover:text-brand transition-colors font-medium text-sm group"
         >
           <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
           Voltar
@@ -138,8 +113,8 @@ export default function Login() {
                 className="h-12 w-auto hover:rotate-12 transition-transform duration-300"
               />
             </div>
-            <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-slate-900">Bem-vindo</h1>
-            <p className="text-sm text-slate-500">Acesse sua conta</p>
+            <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-ink">Bem-vindo</h1>
+            <p className="text-sm text-ink-soft">Acesse sua conta</p>
           </div>
 
           <Form {...form}>
@@ -149,17 +124,18 @@ export default function Login() {
                 name="email"
                 render={({ field }) => (
                   <FormItem className="space-y-2">
-                    <FormLabel className="text-slate-700 font-medium">
+                    <FormLabel className="text-ink-soft font-medium">
                       Email <span className="text-red-500">*</span>
                     </FormLabel>
                     <FormControl>
                       <div className="relative group">
-                        <Mail className="absolute left-3 top-3 h-4 w-4 text-slate-400 group-focus-within:text-brand transition-colors" />
+                        <Mail className="absolute left-3 top-3 h-4 w-4 text-ink/40 group-focus-within:text-brand transition-colors" />
                         <Input
                           {...field}
                           type="email"
+                          autoFocus
                           placeholder="seu@empresa.com"
-                          className="pl-10 h-11 bg-slate-50 border-slate-200 focus:border-brand focus:ring-brand/20 transition-all"
+                          className="pl-10 h-11 bg-paper-alt border-paper-border focus:border-brand focus:ring-brand/20 transition-all"
                         />
                       </div>
                     </FormControl>
@@ -174,32 +150,29 @@ export default function Login() {
                 render={({ field }) => (
                   <FormItem className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <FormLabel className="text-slate-700 font-medium">
+                      <FormLabel className="text-ink-soft font-medium">
                         Senha <span className="text-red-500">*</span>
                       </FormLabel>
-                      <button
-                        type="button"
-                        onClick={handleResetPassword}
-                        disabled={isResetting}
-                        className="text-xs font-medium text-slate-700 decoration-brand underline-offset-2 hover:underline disabled:opacity-50"
+                      <Link
+                        to="/forgot-password"
+                        className="text-xs font-medium text-ink-soft decoration-brand underline-offset-2 hover:underline"
                       >
-                        {isResetting ? "Enviando..." : "Esqueceu a senha?"}
-                      </button>
+                        Esqueceu a senha?
+                      </Link>
                     </div>
                     <FormControl>
                       <div className="relative group">
-                        <Lock className="absolute left-3 top-3 h-4 w-4 text-slate-400 group-focus-within:text-brand transition-colors" />
+                        <Lock className="absolute left-3 top-3 h-4 w-4 text-ink/40 group-focus-within:text-brand transition-colors" />
                         <Input
                           {...field}
                           type={showPassword ? "text" : "password"}
                           placeholder="••••••••"
-                          className="pl-10 pr-10 h-11 bg-slate-50 border-slate-200 focus:border-brand focus:ring-brand/20 transition-all"
+                          className="pl-10 pr-10 h-11 bg-paper-alt border-paper-border focus:border-brand focus:ring-brand/20 transition-all"
                         />
                         <button
                           type="button"
                           onClick={() => setShowPassword((v) => !v)}
-                          className="absolute right-3 top-3 text-slate-400 hover:text-brand transition-colors"
-                          tabIndex={-1}
+                          className="absolute right-3 top-3 text-ink/40 hover:text-brand transition-colors"
                           aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
                         >
                           {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -218,7 +191,7 @@ export default function Login() {
                   onCheckedChange={(v) => setRememberMe(!!v)}
                   className="data-[state=checked]:bg-brand data-[state=checked]:border-brand data-[state=checked]:text-ink"
                 />
-                <label htmlFor="remember-me" className="text-sm text-slate-600 cursor-pointer select-none leading-none">
+                <label htmlFor="remember-me" className="text-sm text-ink-soft cursor-pointer select-none leading-none">
                   Lembre-me
                 </label>
               </div>
@@ -241,17 +214,17 @@ export default function Login() {
 
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t border-slate-100" />
+              <span className="w-full border-t border-paper-border" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-white px-2 text-slate-400">Ainda não tem conta?</span>
+              <span className="bg-paper px-2 text-ink/40">Ainda não tem conta?</span>
             </div>
           </div>
 
           <div className="text-center pt-2">
             <Button
               variant="outline"
-              className="w-full h-10 border-slate-200 text-slate-600 hover:text-brand hover:border-brand/50 hover:bg-brand/10 transition-all text-sm font-medium"
+              className="w-full h-10 border-paper-border text-ink-soft hover:text-brand hover:border-brand/50 hover:bg-brand/10 transition-all text-sm font-medium"
               asChild
             >
               <a href="https://trnty.com.br" target="_blank" rel="noopener noreferrer">

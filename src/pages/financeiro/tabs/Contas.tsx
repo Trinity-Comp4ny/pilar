@@ -31,6 +31,13 @@ import { toast } from "sonner";
 import { formatCurrencyInput, formatValorToInput, parseCurrencyString } from "@/lib/currencyUtils";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 
+const fmtCompactBRL = new Intl.NumberFormat("pt-BR", {
+  style: "currency",
+  currency: "BRL",
+  notation: "compact",
+  maximumFractionDigits: 1,
+});
+
 interface ContaItem {
   id: string;
   nome: string;
@@ -299,6 +306,8 @@ export default function Configuracoes() {
         toast.success("Conta excluída");
         fetchContas();
         setPanelConta(null);
+      } else {
+        toast.error("Não foi possível excluir a conta. Tente novamente.");
       }
     } else {
       const { count: faturasCount } = await supabase
@@ -316,6 +325,8 @@ export default function Configuracoes() {
         toast.success("Cartão excluído");
         fetchCartoes();
         setPanelCartao(null);
+      } else {
+        toast.error("Não foi possível excluir o cartão. Tente novamente.");
       }
     }
   };
@@ -493,7 +504,7 @@ export default function Configuracoes() {
                       </div>
                       <span className="text-sm font-medium truncate flex-1">{conta.nome}</span>
                       <span className="text-xs text-muted-foreground shrink-0 tabular-nums">
-                        {(conta.saldo_atual / 1000).toLocaleString("pt-BR", { maximumFractionDigits: 1 })}k
+                        {fmtCompactBRL.format(conta.saldo_atual)}
                       </span>
                     </button>
                   ))}
@@ -880,7 +891,7 @@ export default function Configuracoes() {
           <AlertDialogHeader>
             <AlertDialogTitle>Excluir {deleteTarget?.type === "conta" ? "conta" : "cartão"}?</AlertDialogTitle>
             <AlertDialogDescription>
-              Confirme a exclusão de <strong>{deleteTarget?.nome}</strong>. Esta ação não pode ser desfeita.
+              Deseja excluir <strong>{deleteTarget?.nome}</strong>? A conta será desativada e não aparecerá mais nos lançamentos.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

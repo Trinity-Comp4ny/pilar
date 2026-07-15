@@ -6,6 +6,7 @@ import { ShieldCheck, Loader2, Trash2, HelpCircle, Copy, Check, RefreshCw } from
 import { useMfa, type MfaEnrollResult } from "@/hooks/useMfa";
 import { translateAuthError } from "@/lib/authErrors";
 import { MfaHelpModal } from "@/components/MfaHelpModal";
+import { MfaBackupCodes } from "@/components/MfaBackupCodes";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 
 // ─── OTP Input ────────────────────────────────────────────────────────────────
@@ -328,6 +329,9 @@ export function MfaSetup() {
           </Button>
         </div>
       </div>
+
+      {/* Códigos de recuperação — indispensáveis se o autenticador for perdido */}
+      {verifiedFactor && <MfaBackupCodes />}
 
       {enrollment && <MfaEnrollModal open enrollment={enrollment} onClose={handleClose} onVerified={handleVerified} />}
 

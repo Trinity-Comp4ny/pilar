@@ -7,13 +7,13 @@
   "display": "standalone",
   "orientation": "portrait-primary",
   "background_color": "#ffffff",
-  "theme_color": "#FF4000",
+  "theme_color": "#A4EC86",
   "lang": "pt-BR",
   "dir": "ltr",
   "categories": ["productivity", "business"],
   "icons": [
     {
-      "src": "/pilar-logo.svg",
+      "src": "/favicon.svg",
       "type": "image/svg+xml",
       "sizes": "any",
       "purpose": "any maskable"
@@ -25,14 +25,14 @@
       "short_name": "Horas",
       "description": "Lançar horas rapidamente",
       "url": "/timesheet",
-      "icons": [{ "src": "/pilar-logo.svg", "sizes": "any" }]
+      "icons": [{ "src": "/favicon.svg", "sizes": "any" }]
     },
     {
       "name": "Dashboard",
       "short_name": "Dashboard",
       "description": "Visão geral do escritório",
       "url": "/dashboard",
-      "icons": [{ "src": "/pilar-logo.svg", "sizes": "any" }]
+      "icons": [{ "src": "/favicon.svg", "sizes": "any" }]
     }
   ]
 }

@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { startOfMonth, endOfMonth, subMonths, differenceInCalendarDays, addDays } from "date-fns";
+import { startOfMonth, endOfMonth, subMonths, differenceInCalendarDays, addDays, format } from "date-fns";
 import { buildDashboardQueries } from "./dashboard/queries";
 import {
   buildKPIs,
@@ -42,6 +42,11 @@ export const useDashboardData = (dateFrom?: Date, dateTo?: Date) => {
 
       const results = await buildDashboardQueries(now, periodoStart, periodoEnd, prevStart, prevEnd, chartStart);
 
+      // supabase-js resolve com { data, error } mesmo em falha (não rejeita a promise).
+      // Sem isto, uma query que falha (RLS/rede) viraria "tudo zerado" na tela em vez de erro.
+      const firstError = results.find((r) => "error" in r && r.error)?.error;
+      if (firstError) throw firstError;
+
       const projetosData = results[6].data || [];
       const projetosAtivos = results[14].count ?? 0;
 
@@ -53,10 +58,10 @@ export const useDashboardData = (dateFrom?: Date, dateTo?: Date) => {
         results[4].data,
         results[5].data,
         projetosAtivos,
-        periodoStart.toISOString().split("T")[0],
-        periodoEnd.toISOString().split("T")[0],
-        prevStart.toISOString().split("T")[0],
-        prevEnd.toISOString().split("T")[0]
+        format(periodoStart, "yyyy-MM-dd"),
+        format(periodoEnd, "yyyy-MM-dd"),
+        format(prevStart, "yyyy-MM-dd"),
+        format(prevEnd, "yyyy-MM-dd")
       );
 
       const projetos = buildProjetos(projetosData, now);

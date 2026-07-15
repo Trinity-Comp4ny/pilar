@@ -24,6 +24,7 @@ import {
   PieChart,
   Pie,
   Cell,
+  Label,
 } from "recharts";
 import { CustomTooltip } from "../components/CustomTooltip";
 import { useFinanceData } from "@/hooks/useFinanceData";
@@ -35,7 +36,7 @@ const formatCurrency = (val: number) =>
 function VisaoGeralSkeleton() {
   return (
     <div className="space-y-6 w-full max-w-none">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 w-full">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5 gap-4 w-full">
         {[1, 2, 3, 4, 5].map((i) => (
           <Card key={i} className="vrz-card w-full">
             <CardHeader className="pb-2">
@@ -98,32 +99,53 @@ function DonutChart({ data, totalLabel }: DonutProps) {
           {data.map((entry, index) => (
             <Cell key={`cell-${index}`} fill={entry.color} />
           ))}
-          <text
-            x="50%"
-            y="47%"
-            textAnchor="middle"
-            dominantBaseline="middle"
-            fontSize={10}
-            fontWeight={600}
-            fill="hsl(220 9% 46%)"
-            style={{ textTransform: "uppercase", letterSpacing: "0.05em" }}
-          >
-            {totalLabel}
-          </text>
-          <text
-            x="50%"
-            y="56%"
-            textAnchor="middle"
-            dominantBaseline="middle"
-            fontSize={13}
-            fontWeight={700}
-            fill="hsl(0 0% 10%)"
-          >
-            {formatCurrency(total)}
-          </text>
+          <Label
+            position="center"
+            content={({ viewBox }) => {
+              const { cx, cy } = (viewBox as { cx: number; cy: number }) ?? { cx: 0, cy: 0 };
+              return (
+                <>
+                  <text
+                    x={cx}
+                    y={cy - 8}
+                    textAnchor="middle"
+                    dominantBaseline="middle"
+                    fontSize={10}
+                    fontWeight={600}
+                    fill="hsl(var(--chart-neutral))"
+                    style={{ textTransform: "uppercase", letterSpacing: "0.05em" }}
+                  >
+                    {totalLabel}
+                  </text>
+                  <text
+                    x={cx}
+                    y={cy + 10}
+                    textAnchor="middle"
+                    dominantBaseline="middle"
+                    fontSize={13}
+                    fontWeight={700}
+                    fill="hsl(var(--foreground))"
+                  >
+                    {formatCurrency(total)}
+                  </text>
+                </>
+              );
+            }}
+          />
         </Pie>
         <Tooltip content={<CustomTooltip />} />
-        <Legend verticalAlign="bottom" height={36} />
+        <Legend
+          verticalAlign="bottom"
+          height={36}
+          formatter={(value, entry) => {
+            const v = (entry?.payload as { value?: number } | undefined)?.value ?? 0;
+            return (
+              <span className="text-xs text-foreground">
+                {value} — {formatCurrency(v)}
+              </span>
+            );
+          }}
+        />
       </PieChart>
     </ResponsiveContainer>
   );
@@ -160,17 +182,26 @@ export default function VisaoGeral() {
   return (
     <div className="space-y-6 w-full max-w-none">
       {/* KPIs */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 w-full">
-        <Card className="vrz-card bg-positive/10 border-positive/10 w-full min-w-0">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5 gap-4 w-full">
+        <Card className="vrz-card bg-positive/10 border-positive/20 w-full min-w-0">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-green-700 truncate">Receitas Totais</CardTitle>
           </CardHeader>
           <CardContent className="min-w-0">
-            <div className="text-xl md:text-2xl font-bold text-green-700 tabular-nums truncate">
+            <div
+              className="text-base sm:text-lg xl:text-xl font-bold text-green-700 tabular-nums whitespace-nowrap"
+              title={formatCurrency(stats.receitasTotal)}
+            >
               {formatCurrency(stats.receitasTotal)}
             </div>
-            <p className="text-xs text-green-600 mt-1 flex items-center min-w-0">
-              <ArrowUpRight size={12} className="mr-1 flex-shrink-0" />
+            <p
+              className={`text-xs mt-1 flex items-center min-w-0 ${Number(stats.receitasMes) < 0 ? "text-red-600" : "text-green-600"}`}
+            >
+              {Number(stats.receitasMes) < 0 ? (
+                <TrendingDown size={12} className="mr-1 flex-shrink-0" />
+              ) : (
+                <TrendingUp size={12} className="mr-1 flex-shrink-0" />
+              )}
               <span className="truncate">{stats.receitasMes}% vs período anterior</span>
             </p>
           </CardContent>
@@ -181,7 +212,10 @@ export default function VisaoGeral() {
             <CardTitle className="text-sm font-medium text-red-800 truncate">Despesas Totais</CardTitle>
           </CardHeader>
           <CardContent className="min-w-0">
-            <div className="text-xl md:text-2xl font-bold text-red-700 tabular-nums truncate">
+            <div
+              className="text-base sm:text-lg xl:text-xl font-bold text-red-700 tabular-nums whitespace-nowrap"
+              title={formatCurrency(stats.despesasTotal)}
+            >
               {formatCurrency(stats.despesasTotal)}
             </div>
             <p
@@ -202,7 +236,10 @@ export default function VisaoGeral() {
             <CardTitle className="text-sm font-medium text-blue-800 truncate">Lucro Líquido</CardTitle>
           </CardHeader>
           <CardContent className="min-w-0">
-            <div className="text-xl md:text-2xl font-bold text-blue-700 tabular-nums truncate">
+            <div
+              className="text-base sm:text-lg xl:text-xl font-bold text-blue-700 tabular-nums whitespace-nowrap"
+              title={formatCurrency(stats.saldo)}
+            >
               {formatCurrency(stats.saldo)}
             </div>
             <p className="text-xs text-blue-600 mt-1 flex items-center min-w-0">
@@ -217,7 +254,10 @@ export default function VisaoGeral() {
             <CardTitle className="text-sm font-medium text-emerald-800 truncate">A receber</CardTitle>
           </CardHeader>
           <CardContent className="min-w-0">
-            <div className="text-xl md:text-2xl font-bold text-emerald-700 tabular-nums truncate">
+            <div
+              className="text-base sm:text-lg xl:text-xl font-bold text-emerald-700 tabular-nums whitespace-nowrap"
+              title={formatCurrency(stats.aReceber.total)}
+            >
               {formatCurrency(stats.aReceber.total)}
             </div>
             <p className="text-xs text-emerald-600 mt-1 flex items-center min-w-0">
@@ -232,7 +272,10 @@ export default function VisaoGeral() {
             <CardTitle className="text-sm font-medium text-amber-800 truncate">A pagar</CardTitle>
           </CardHeader>
           <CardContent className="min-w-0">
-            <div className="text-xl md:text-2xl font-bold text-amber-700 tabular-nums truncate">
+            <div
+              className="text-base sm:text-lg xl:text-xl font-bold text-amber-700 tabular-nums whitespace-nowrap"
+              title={formatCurrency(stats.aPagar.total)}
+            >
               {formatCurrency(stats.aPagar.total)}
             </div>
             <p className="text-xs text-amber-600 mt-1 flex items-center min-w-0">
@@ -258,7 +301,7 @@ export default function VisaoGeral() {
           <div className="h-[350px] w-full relative">
             {!hasChartData && (
               <div className="absolute inset-0 flex items-center justify-center bg-white/50 z-10">
-                <p className="text-muted-foreground text-sm">Não possui registros de dados ainda</p>
+                <p className="text-muted-foreground text-sm">Sem registros no período</p>
               </div>
             )}
             <ResponsiveContainer width="100%" height="100%">
@@ -276,14 +319,14 @@ export default function VisaoGeral() {
                 <Legend />
                 <Bar
                   dataKey="receitas"
-                  name="Entradas"
+                  name="Receitas"
                   fill="hsl(var(--chart-success))"
                   radius={[4, 4, 0, 0]}
                   barSize={20}
                 />
                 <Bar
                   dataKey="despesas"
-                  name="Saídas"
+                  name="Despesas"
                   fill="hsl(var(--chart-danger))"
                   radius={[4, 4, 0, 0]}
                   barSize={20}
@@ -308,7 +351,7 @@ export default function VisaoGeral() {
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               <ArrowUpRight className="h-4 w-4 text-green-600" />
-              Detalhamento de Entradas
+              Detalhamento de Receitas
             </CardTitle>
             <CardDescription>Receitas por categoria</CardDescription>
           </CardHeader>
@@ -316,7 +359,7 @@ export default function VisaoGeral() {
             <div className="relative h-[320px] w-full">
               {!hasReceitasData ? (
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <p className="text-muted-foreground text-sm">Não possui registros de dados ainda</p>
+                  <p className="text-muted-foreground text-sm">Sem registros no período</p>
                 </div>
               ) : (
                 <DonutChart data={categoriaData} totalLabel="Total" />
@@ -329,7 +372,7 @@ export default function VisaoGeral() {
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               <ArrowDownRight className="h-4 w-4 text-red-600" />
-              Detalhamento de Saídas
+              Detalhamento de Despesas
             </CardTitle>
             <CardDescription>Despesas por categoria</CardDescription>
           </CardHeader>
@@ -337,7 +380,7 @@ export default function VisaoGeral() {
             <div className="relative h-[320px] w-full">
               {!hasDespesasData ? (
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <p className="text-muted-foreground text-sm">Não possui registros de dados ainda</p>
+                  <p className="text-muted-foreground text-sm">Sem registros no período</p>
                 </div>
               ) : (
                 <DonutChart data={despesasCategoriaData} totalLabel="Total" />

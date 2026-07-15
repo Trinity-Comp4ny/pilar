@@ -150,8 +150,16 @@ export function MfaChallenge({ onVerified }: MfaChallengeProps) {
         <ShieldCheck className="h-12 w-12 mx-auto text-brand" />
         <h2 className="text-xl font-semibold text-ink">MFA não configurado</h2>
         <p className="text-sm text-ink-soft">
-          Esta conta exige autenticação de dois fatores. Configure em Perfil &gt; Segurança.
+          Esta conta exige autenticação de dois fatores para continuar.
         </p>
+        <Button
+          onClick={handleResetAndSetup}
+          disabled={resetting}
+          className="w-full h-11 bg-brand hover:bg-brand/90 text-ink font-medium"
+        >
+          {resetting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <ShieldCheck className="h-4 w-4 mr-2" />}
+          Configurar agora
+        </Button>
       </div>
     );
   }

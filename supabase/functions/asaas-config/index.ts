@@ -26,7 +26,7 @@ serve(
       const empresaId = profile.empresa_id as string;
 
       const { action, api_key, ambiente } = (await req.json()) as {
-        action: "get" | "save" | "regenerar_token";
+        action: "get" | "save" | "regenerar_token" | "remover" | "testar";
         api_key?: string;
         ambiente?: string;
       };
@@ -107,6 +107,59 @@ serve(
           headers: { ...corsH, "Content-Type": "application/json" },
           status: 200,
         });
+      }
+
+      // Remove a integração (desconecta o Asaas desta empresa)
+      if (action === "remover") {
+        const { error } = await adminClient.from("asaas_config").delete().eq("empresa_id", empresaId);
+        if (error) throw error;
+        return new Response(JSON.stringify({ success: true }), {
+          headers: { ...corsH, "Content-Type": "application/json" },
+          status: 200,
+        });
+      }
+
+      // Testa a conexão com o Asaas usando a chave salva (server-side)
+      if (action === "testar") {
+        const { data: cfg } = await adminClient
+          .from("asaas_config")
+          .select("api_key, ambiente")
+          .eq("empresa_id", empresaId)
+          .maybeSingle();
+
+        if (!cfg?.api_key) throw new Error("Nenhuma integração configurada para testar");
+
+        const base =
+          cfg.ambiente === "producao" ? "https://api.asaas.com/v3" : "https://sandbox.asaas.com/api/v3";
+
+        let res: Response;
+        try {
+          res = await fetch(`${base}/myAccount`, {
+            headers: { access_token: cfg.api_key as string, "Content-Type": "application/json" },
+          });
+        } catch {
+          return new Response(
+            JSON.stringify({ success: true, valido: false, mensagem: "Não foi possível conectar ao Asaas." }),
+            { headers: { ...corsH, "Content-Type": "application/json" }, status: 200 }
+          );
+        }
+
+        if (!res.ok) {
+          const mensagem =
+            res.status === 401
+              ? "Chave inválida ou sem permissão."
+              : `Falha na conexão (HTTP ${res.status}).`;
+          return new Response(JSON.stringify({ success: true, valido: false, mensagem }), {
+            headers: { ...corsH, "Content-Type": "application/json" },
+            status: 200,
+          });
+        }
+
+        const acc = (await res.json().catch(() => ({}))) as { name?: string; email?: string };
+        return new Response(
+          JSON.stringify({ success: true, valido: true, conta: acc?.name ?? acc?.email ?? null }),
+          { headers: { ...corsH, "Content-Type": "application/json" }, status: 200 }
+        );
       }
 
       throw new Error("action inválida");

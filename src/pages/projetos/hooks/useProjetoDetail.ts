@@ -65,7 +65,7 @@ export function useProjetoDetail(id: string | undefined) {
   });
 
   // ---- Rentabilidade ----
-  const { data: rentabilidade } = useProjetoRentabilidade(id);
+  const { data: rentabilidade, isLoading: rentabilidadeLoading } = useProjetoRentabilidade(id);
 
   // ---- Relational disciplinas ----
   const { data: dbDisciplinas = [] } = useProjetoDisciplinas(id);
@@ -108,12 +108,19 @@ export function useProjetoDetail(id: string | undefined) {
 
   // ---- Disciplina mutations ----
   const applyDiscStatusChange = useCallback(
-    async (idx: number, newStatus: string, justificativa?: string) => {
+    async (idx: number, newStatus: string, justificativa?: string, dataFimRealOverride?: string) => {
       if (!projeto) return;
       const dbDisc = dbDisciplinas[idx];
       if (!dbDisc) return;
 
       const isFinished = newStatus === "Concluído" && dbDisc.status !== "Concluído";
+
+      // Prioridade: override explícito do dialog > data_fim_real já gravada > hoje.
+      // Permite o usuário registrar entrega passada sem o sistema forçar "hoje".
+      const resolvedDataFim =
+        newStatus === "Concluído"
+          ? dataFimRealOverride || (!dbDisc.data_fim_real ? new Date().toISOString().split("T")[0] : undefined)
+          : undefined;
 
       try {
         await updateStatusMut.mutateAsync({
@@ -121,13 +128,13 @@ export function useProjetoDetail(id: string | undefined) {
           projetoId: projeto.id,
           status: newStatus,
           justificativa_atraso: justificativa,
-          data_fim_real:
-            newStatus === "Concluído" && !dbDisc.data_fim_real ? new Date().toISOString().split("T")[0] : undefined,
+          data_fim_real: resolvedDataFim,
         });
         toast.success(`${dbDisc.nome}: ${newStatus}`);
 
+        // Ao concluir, notifica APENAS responsáveis da próxima etapa do fluxo.
+        // Não dispara email ao cliente — comunicação com cliente é manual.
         if (isFinished) {
-          void sendDisciplinaEmail(dbDisc.nome);
           void notifyNextStage(dbDisc.id);
         }
       } catch (err: unknown) {
@@ -153,28 +160,6 @@ export function useProjetoDetail(id: string | undefined) {
       }
     } catch (err) {
       monitoring.captureException(err, { context: "notify-next-stage unexpected" });
-    }
-  };
-
-  const sendDisciplinaEmail = async (disc: string) => {
-    try {
-      const { error } = await supabase.functions.invoke("send-completion-email", {
-        body: {
-          email: projeto?.cliente_email,
-          name: disc,
-          type: "subject",
-        },
-      });
-
-      if (error) {
-        toast.error(`Erro ao enviar email para o cliente ${projeto?.cliente_nome}.`);
-        monitoring.captureException(error, { context: "sendDisciplinaEmail" });
-        return;
-      }
-
-      toast.success(`Email enviado com sucesso para o cliente ${projeto?.cliente_nome}.`);
-    } catch (err) {
-      monitoring.captureException(err, { context: "sendDisciplinaEmail unexpected" });
     }
   };
 
@@ -341,6 +326,8 @@ export function useProjetoDetail(id: string | undefined) {
     deadline,
     progress,
     margemBrutaPct,
+    rentabilidade,
+    rentabilidadeLoading,
 
     // Mutations
     applyDiscStatusChange,

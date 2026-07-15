@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,12 +11,15 @@ import { cn } from "@/lib/utils";
 import { formatCurrencyInput } from "@/lib/currencyUtils";
 import { toast } from "sonner";
 import { PROJECT_PRIORITY, PRIORITY_OPTIONS, PROJECT_PRIORITY_CONFIG } from "@/constants";
-import { type Projeto } from "@/types/projetos";
+import { type Projeto, type ProjetoDisciplinaDB } from "@/types/projetos";
 import { type TemplateProjeto } from "@/hooks/useTemplates";
 import type { FluxoDisciplinas } from "@/types/fluxoDisciplinas";
 import { useProjetoForm, ESTADOS_BR } from "./useProjetoForm";
 import { DisciplinasSection } from "./DisciplinasSection";
 import { DisciplinaDetailDialog } from "./DisciplinaDetailDialog";
+import { useProjetoDisciplinas } from "@/hooks/useProjetoDisciplinas";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ProjetoFormDialogProps {
   open: boolean;
@@ -29,6 +32,8 @@ interface ProjetoFormDialogProps {
   fluxosData?: FluxoDisciplinas[];
   currentUser: { name: string; email: string } | null;
   onSaved: () => void;
+  /** Disciplinas existentes do banco (usadas em modo edição para exibição read-only) */
+  existingDisciplinas?: ProjetoDisciplinaDB[];
 }
 
 type Step = 1 | 2 | 3;
@@ -50,11 +55,36 @@ export function ProjetoFormDialog({
   fluxosData = [],
   currentUser,
   onSaved,
+  existingDisciplinas: existingDisciplinasProp,
 }: ProjetoFormDialogProps) {
+  // Garante hidratação em edição mesmo quando o caller (ex: Projetos.tsx lista)
+  // não passa existingDisciplinas — busca direto pelo id do projeto editado.
+  const { data: fetchedDisciplinas } = useProjetoDisciplinas(
+    existingDisciplinasProp === undefined && editProjeto ? editProjeto.id : undefined
+  );
+  const existingDisciplinas: ProjetoDisciplinaDB[] = useMemo(
+    () => existingDisciplinasProp ?? fetchedDisciplinas ?? [],
+    [existingDisciplinasProp, fetchedDisciplinas]
+  );
+
+  // Fallback: se o caller não populou pessoas (ou carregou tardio), busca aqui.
+  // Evita Step 3 com select de Responsável vazio quando o catalog ainda não carregou.
+  const { data: fetchedPessoas = [] } = useQuery({
+    queryKey: ["pessoas-form-fallback"],
+    queryFn: async () => {
+      const { data } = await supabase.from("pessoas").select("id, nome").is("deleted_at", null).order("nome");
+      return data || [];
+    },
+    enabled: open && pessoas.length === 0,
+    staleTime: 1000 * 60 * 5,
+  });
+  const effectivePessoas = pessoas.length > 0 ? pessoas : fetchedPessoas;
+
   const form = useProjetoForm({
     open,
     onOpenChange,
     editProjeto,
+    existingDisciplinas,
     pessoas,
     templatesData,
     fluxosData,
@@ -484,30 +514,32 @@ export function ProjetoFormDialog({
 
           {/* STEP 3 — Disciplinas */}
           {step === 3 && (
-            <DisciplinasSection
-              disciplinas={disciplinas}
-              pessoas={pessoas}
-              fluxosData={fluxosData}
-              onApplyFluxo={form.applyFluxo}
-              projetosDisciplinas={form.projetosDisciplinas}
-              tempDisciplina={form.tempDisciplina}
-              onTempDisciplinaChange={form.setTempDisciplina}
-              onAddDisciplina={form.addProjetoDisciplina}
-              onRemoveDisciplina={form.removeProjetoDisciplina}
-              onOpenDetail={form.handleOpenDisciplinaDetail}
-              expandedFormDiscIdx={form.expandedFormDiscIdx}
-              onExpandToggle={form.setExpandedFormDiscIdx}
-              addingRespToFormDisc={form.addingRespToFormDisc}
-              onSetAddingResp={form.setAddingRespToFormDisc}
-              newFormResp={form.newFormResp}
-              onNewFormRespChange={form.setNewFormResp}
-              onAddResponsavel={form.addResponsavelToDisc}
-              onRemoveResponsavel={form.removeResponsavelFromDisc}
-              onUpdateRespDatas={form.updateRespDatasInForm}
-              projetoDataInicio={form.formData.data_inicio || undefined}
-              projetoDataPrevisao={form.formData.data_previsao || undefined}
-              projetoDataFinal={form.formData.data_final || undefined}
-            />
+            <>
+              <DisciplinasSection
+                  disciplinas={disciplinas}
+                  pessoas={effectivePessoas}
+                  fluxosData={fluxosData}
+                  onApplyFluxo={form.applyFluxo}
+                  projetosDisciplinas={form.projetosDisciplinas}
+                  tempDisciplina={form.tempDisciplina}
+                  onTempDisciplinaChange={form.setTempDisciplina}
+                  onAddDisciplina={form.addProjetoDisciplina}
+                  onRemoveDisciplina={form.removeProjetoDisciplina}
+                  onOpenDetail={form.handleOpenDisciplinaDetail}
+                  expandedFormDiscIdx={form.expandedFormDiscIdx}
+                  onExpandToggle={form.setExpandedFormDiscIdx}
+                  addingRespToFormDisc={form.addingRespToFormDisc}
+                  onSetAddingResp={form.setAddingRespToFormDisc}
+                  newFormResp={form.newFormResp}
+                  onNewFormRespChange={form.setNewFormResp}
+                  onAddResponsavel={form.addResponsavelToDisc}
+                  onRemoveResponsavel={form.removeResponsavelFromDisc}
+                  onUpdateRespDatas={form.updateRespDatasInForm}
+                  projetoDataInicio={form.formData.data_inicio || undefined}
+                  projetoDataPrevisao={form.formData.data_previsao || undefined}
+                  projetoDataFinal={form.formData.data_final || undefined}
+                />
+            </>
           )}
 
           <DisciplinaDetailDialog
@@ -515,7 +547,7 @@ export function ProjetoFormDialog({
             onOpenChange={form.setIsDisciplinaDetailOpen}
             disciplina={selectedDisciplina}
             disciplinas={disciplinas}
-            pessoas={pessoas}
+            pessoas={effectivePessoas}
             onUpdateField={form.updateDisciplinaField}
             onUpdateResponsavel={form.updateDisciplinaResponsavel}
             newObservation={form.newObservation}

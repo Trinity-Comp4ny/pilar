@@ -509,16 +509,23 @@ export function DisciplinasSection({
               <Select
                 value={tempDisciplina.responsavel_id}
                 onValueChange={(val) => onTempDisciplinaChange({ ...tempDisciplina, responsavel_id: val })}
+                disabled={pessoas.length === 0}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione" />
+                  <SelectValue placeholder={pessoas.length === 0 ? "Nenhuma pessoa cadastrada" : "Selecione"} />
                 </SelectTrigger>
                 <SelectContent>
-                  {pessoas.map((pessoa) => (
-                    <SelectItem key={pessoa.id} value={pessoa.id}>
-                      {pessoa.nome}
-                    </SelectItem>
-                  ))}
+                  {pessoas.length === 0 ? (
+                    <div className="px-2 py-3 text-xs text-muted-foreground">
+                      Cadastre membros em <strong>Pessoas</strong> para atribuir responsáveis.
+                    </div>
+                  ) : (
+                    pessoas.map((pessoa) => (
+                      <SelectItem key={pessoa.id} value={pessoa.id}>
+                        {pessoa.nome}
+                      </SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -613,10 +620,10 @@ export function DisciplinasSection({
                   onAddDisciplina();
                   setShowAddForm(false);
                 }}
-                className="flex-1"
-                variant="secondary"
+                className="flex-1 h-11 text-sm font-semibold bg-brand hover:bg-brand/90 text-ink"
+                disabled={!tempDisciplina.disciplina}
               >
-                <Plus size={16} className="mr-2" /> Adicionar
+                <Plus size={18} className="mr-2" /> Incluir na lista
               </Button>
               <Button type="button" variant="ghost" onClick={() => setShowAddForm(false)}>
                 Cancelar
@@ -627,10 +634,10 @@ export function DisciplinasSection({
           <Button
             type="button"
             variant="outline"
-            className="w-full border-dashed text-muted-foreground"
+            className="w-full border-dashed border-2 h-12 text-sm font-medium hover:bg-muted/50"
             onClick={() => setShowAddForm(true)}
           >
-            <Plus size={16} className="mr-2" /> Adicionar Disciplina
+            <Plus size={18} className="mr-2" /> Adicionar nova disciplina
           </Button>
         )}
       </div>

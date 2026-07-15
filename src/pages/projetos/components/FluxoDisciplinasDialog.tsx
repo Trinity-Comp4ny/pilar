@@ -135,7 +135,15 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
     setForm((prev) => {
       const etapas = [...prev.etapas];
       [etapas[index], etapas[target]] = [etapas[target], etapas[index]];
-      return { ...prev, etapas };
+      // Rename default labels to match new positions
+      return {
+        ...prev,
+        etapas: etapas.map((e, i) =>
+          e.nome === `Etapa ${index + 1}` || e.nome === `Etapa ${target + 1}`
+            ? { ...e, nome: `Etapa ${i + 1}` }
+            : e
+        ),
+      };
     });
   };
 

@@ -6,10 +6,12 @@ import { addBusinessDays, formatDateLocal, parseDateLocal } from "@/lib/business
 import { PROJECT_STATUS, PROJECT_PRIORITY, type ProjectPriority } from "@/constants";
 import {
   type Projeto,
+  type ProjetoDisciplinaDB,
   type DisciplinaResponsavel,
   type DisciplinaObservacao,
   type ResponsavelDatas,
   getResponsaveisList,
+  dbDisciplinaToLegacy,
 } from "@/types/projetos";
 import { type TemplateProjeto } from "@/hooks/useTemplates";
 import type { FluxoDisciplinas } from "@/types/fluxoDisciplinas";
@@ -131,6 +133,8 @@ interface UseProjetoFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   editProjeto: Projeto | null;
+  /** Disciplinas relacionais já persistidas — usadas para hidratar o state em modo edição. */
+  existingDisciplinas?: ProjetoDisciplinaDB[];
   pessoas: { id: string; nome: string }[];
   templatesData: TemplateProjeto[];
   fluxosData?: FluxoDisciplinas[];
@@ -142,6 +146,7 @@ export function useProjetoForm({
   open,
   onOpenChange,
   editProjeto,
+  existingDisciplinas = [],
   pessoas,
   templatesData,
   fluxosData = [],
@@ -222,7 +227,13 @@ export function useProjetoForm({
         prazo_dias_uteis: "",
         dia_pagamento: "",
       });
-      setProjetosDisciplinas(editProjeto.disciplinas || []);
+      // editProjeto.disciplinas é legado (sempre []). Hidrata da tabela relacional
+      // preservando os IDs para que bulkSave faça update/delete coerentes.
+      const hydrated =
+        existingDisciplinas.length > 0
+          ? existingDisciplinas.map(dbDisciplinaToLegacy)
+          : editProjeto.disciplinas || [];
+      setProjetosDisciplinas(hydrated);
     } else {
       setFormData(EMPTY_FORM);
       setProjetosDisciplinas([]);
@@ -233,7 +244,7 @@ export function useProjetoForm({
     setIsDisciplinaDetailOpen(false);
     setNewObservation("");
     setIsSaving(false);
-  }, [open, editProjeto]);
+  }, [open, editProjeto, existingDisciplinas]);
 
   // Rascunho de novo projeto: restaura ao abrir (create) e salva a cada mudança.
   // Só ativo no modo criação; edição nunca persiste. TTL de 24h no hook.
@@ -486,11 +497,47 @@ export function useProjetoForm({
       return;
     }
 
+    // Safety net: se o usuário preencheu disciplina temp mas esqueceu de clicar
+    // em "Incluir na lista", inclui automaticamente antes de salvar.
+    let finalDisciplinas = projetosDisciplinas;
+    if (tempDisciplina.disciplina) {
+      const pessoa = pessoas.find((p) => p.id === tempDisciplina.responsavel_id);
+      const novaDisciplina: DisciplinaResponsavel = {
+        disciplina: tempDisciplina.disciplina,
+        responsavel_id: tempDisciplina.responsavel_id || "",
+        responsavel_nome: pessoa?.nome || "",
+        data_inicio: tempDisciplina.data_inicio,
+        data_previsao: tempDisciplina.data_previsao,
+        data_final: tempDisciplina.data_final,
+        status: tempDisciplina.status || "Não Iniciado",
+        prioridade: tempDisciplina.prioridade || PROJECT_PRIORITY.MEDIA,
+        observacoes: tempDisciplina.observacoes || [],
+        responsaveis: tempDisciplina.responsavel_id
+          ? [
+              {
+                responsavel_id: tempDisciplina.responsavel_id,
+                responsavel_nome: pessoa?.nome || "",
+                data_inicio: tempDisciplina.data_inicio,
+                data_previsao: tempDisciplina.data_previsao,
+                data_final: tempDisciplina.data_final,
+                status: tempDisciplina.status || "Não Iniciado",
+              },
+            ]
+          : [],
+      };
+      finalDisciplinas = [...projetosDisciplinas, novaDisciplina];
+      setProjetosDisciplinas(finalDisciplinas);
+      setTempDisciplina(EMPTY_TEMP_DISCIPLINA);
+      toast.info("Disciplina pendente incluída automaticamente", {
+        description: `"${tempDisciplina.disciplina}" foi adicionada à lista antes de salvar.`,
+      });
+    }
+
     // Validação de datas das disciplinas vs prazo do projeto
     const projetoPrevisao = formData.data_previsao;
     const projetoFinal = formData.data_final;
     const projetoInicio = formData.data_inicio;
-    for (const disc of projetosDisciplinas) {
+    for (const disc of finalDisciplinas) {
       const resps = getResponsaveisList(disc);
       const datas = resps.length > 0 ? resps : [{ data_inicio: disc.data_inicio, data_previsao: disc.data_previsao, data_final: disc.data_final }];
       for (const d of datas) {
@@ -533,16 +580,34 @@ export function useProjetoForm({
           p_localizacao: localizacaoComposta,
           p_parcelas: formData.parcelas || undefined,
           p_area_m2: parseFloat(formData.area_m2) || 0,
-          p_disciplinas: projetosDisciplinas as unknown as never,
+          p_disciplinas: finalDisciplinas as unknown as never,
           p_status: formData.status,
           p_prioridade: formData.prioridade,
         });
 
         if (error) throw error;
 
-        // Disciplinas em edição são gerenciadas inline (DisciplinasTableView).
-        // Não chamamos bulkSave aqui para não apagar disciplinas existentes
-        // (editProjeto.disciplinas é sempre [] em useProjetoDetail).
+        // Sincroniza disciplinas relacionais. State foi hidratado de
+        // existingDisciplinas preservando IDs, então bulkSave faz upsert das
+        // existentes, insert das novas e delete das removidas.
+        const discsForBulk = finalDisciplinas.map((d) => {
+          const resps = getResponsaveisList(d);
+          return {
+            id: d.id,
+            nome: d.disciplina,
+            status: d.status || "Não Iniciado",
+            data_inicio: d.data_inicio || null,
+            data_fim: d.data_previsao || null,
+            data_fim_real: d.data_final || null,
+            prioridade: d.prioridade || null,
+            justificativa_atraso: d.justificativa_atraso || null,
+            responsavel_ids: resps.map((r) => r.responsavel_id).filter(Boolean),
+          };
+        });
+        await bulkSaveDisciplinas.mutateAsync({
+          projetoId: editProjeto.id,
+          disciplinas: discsForBulk,
+        });
 
         toast.success("Projeto atualizado", { description: "Projeto foi atualizado com sucesso" });
       } else {
@@ -558,7 +623,7 @@ export function useProjetoForm({
           p_localizacao: localizacaoComposta,
           p_parcelas: formData.parcelas || undefined,
           p_area_m2: parseFloat(formData.area_m2) || 0,
-          p_disciplinas: projetosDisciplinas as unknown as never,
+          p_disciplinas: finalDisciplinas as unknown as never,
           p_prioridade: formData.prioridade,
         });
 
@@ -566,8 +631,8 @@ export function useProjetoForm({
 
         // Sync disciplinas to relational table for new project.
         // Se falhar, faz rollback do projeto pra não deixar registro órfão sem disciplinas.
-        if (newProjetoId && projetosDisciplinas.length > 0) {
-          const discsForBulk = projetosDisciplinas.map((d) => {
+        if (newProjetoId && finalDisciplinas.length > 0) {
+          const discsForBulk = finalDisciplinas.map((d) => {
             const resps = getResponsaveisList(d);
             return {
               nome: d.disciplina,

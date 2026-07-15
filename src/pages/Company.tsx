@@ -14,6 +14,7 @@ import { CompanyDataTab } from "./company/components/CompanyDataTab";
 import { CompanyUsersTab } from "./company/components/CompanyUsersTab";
 import { CompanyVisualTab } from "./company/components/CompanyVisualTab";
 import { LogoPreviewDialog, EditUserDialog, DeleteUserDialog } from "./company/components/CompanyDialogs";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useRequireAal2 } from "@/hooks/useRequireAal2";
 
@@ -58,6 +59,7 @@ export default function Company() {
   const [isDeleteUserOpen, setIsDeleteUserOpen] = useState(false);
   const [deleteUserId, setDeleteUserId] = useState<string | null>(null);
   const [pendingLogoFile, setPendingLogoFile] = useState<File | null>(null);
+  const [isStatusConfirmOpen, setIsStatusConfirmOpen] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -157,6 +159,15 @@ export default function Company() {
   };
 
   const handleSaveCompany = async () => {
+    // Status que interrompem o acesso da própria empresa exigem confirmação forte (risco de auto-lockout).
+    if (companyData.status === "suspended" || companyData.status === "cancelled") {
+      setIsStatusConfirmOpen(true);
+      return;
+    }
+    await performSaveCompany();
+  };
+
+  const performSaveCompany = async () => {
     try {
       const {
         data: { user },
@@ -220,6 +231,12 @@ export default function Company() {
   };
 
   const openEditUser = (u: CompanyUser) => {
+    if (u.role === "ultra_admin") {
+      toast.error("Usuário protegido", {
+        description: "Ultra admin não pode ser editado aqui (seria rebaixado). Use /ultra-admin ou SQL.",
+      });
+      return;
+    }
     setEditUserId(u.id);
     const [primeiro, ...resto] = (u.name || "").split(" ");
     setEditUserFirstName(primeiro || "");
@@ -436,6 +453,24 @@ export default function Company() {
         onSave={handleSaveUser}
       />
       <DeleteUserDialog open={isDeleteUserOpen} onOpenChange={setIsDeleteUserOpen} onConfirm={confirmDeleteUser} />
+      <ConfirmDialog
+        open={isStatusConfirmOpen}
+        onOpenChange={setIsStatusConfirmOpen}
+        onConfirm={() => {
+          setIsStatusConfirmOpen(false);
+          performSaveCompany();
+        }}
+        title={companyData.status === "cancelled" ? "Cancelar a empresa?" : "Suspender a empresa?"}
+        description={
+          companyData.status === "cancelled"
+            ? "A empresa será marcada como cancelada. Isso pode bloquear o acesso de todos os usuários, inclusive o seu. Tem certeza?"
+            : "A empresa será marcada como suspensa. Isso pode bloquear o acesso de todos os usuários, inclusive o seu. Tem certeza?"
+        }
+        itemName={companyData.nomeEmpresa}
+        variant="destructive"
+        confirmText={companyData.status === "cancelled" ? "Cancelar empresa" : "Suspender empresa"}
+        cancelText="Voltar"
+      />
     </PageLayout>
   );
 }

@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { type DisciplinaResponsavel } from "@/types/projetos";
 import { formatCurrency } from "@/lib/currencyUtils";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 
 interface ProjectBudgetTabProps {
   projetoId: string;
@@ -46,6 +47,7 @@ export function ProjectBudgetTab({ projetoId, canEdit, disciplinas }: ProjectBud
 
   const [editRow, setEditRow] = useState<Partial<OrcamentoFase> & { isNew?: boolean }>({});
   const [isEditing, setIsEditing] = useState(false);
+  const [deleteRow, setDeleteRow] = useState<OrcamentoFase | null>(null);
 
   const upsertMutation = useMutation({
     mutationFn: async (row: {
@@ -97,6 +99,7 @@ export function ProjectBudgetTab({ projetoId, canEdit, disciplinas }: ProjectBud
       queryClient.invalidateQueries({ queryKey: ["orcamento-fases", projetoId] });
       toast.success("Linha removida");
     },
+    onError: () => toast.error("Não foi possível remover a linha. Tente novamente."),
   });
 
   const handleSave = () => {
@@ -183,7 +186,7 @@ export function ProjectBudgetTab({ projetoId, canEdit, disciplinas }: ProjectBud
                       className="h-6 w-6 text-red-500"
                       onClick={(e) => {
                         e.stopPropagation();
-                        deleteMutation.mutate(o.id);
+                        setDeleteRow(o);
                       }}
                       aria-label="Excluir"
                     >
@@ -267,6 +270,19 @@ export function ProjectBudgetTab({ projetoId, canEdit, disciplinas }: ProjectBud
           </p>
         )}
       </CardContent>
+
+      <ConfirmDialog
+        open={!!deleteRow}
+        onOpenChange={(o) => !o && setDeleteRow(null)}
+        onConfirm={() => {
+          if (deleteRow) deleteMutation.mutate(deleteRow.id);
+          setDeleteRow(null);
+        }}
+        title="Excluir linha do orçamento?"
+        description="Esta linha do orçamento será removida. Esta ação não pode ser desfeita."
+        itemName={deleteRow?.disciplina}
+        confirmText="Excluir"
+      />
     </Card>
   );
 }
