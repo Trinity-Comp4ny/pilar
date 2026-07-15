@@ -1,9 +1,27 @@
 import { useNavigate, NavLink } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { LogOut, ArrowLeft, FolderKanban, DollarSign, FileCheck, LayoutDashboard } from "lucide-react";
+import {
+  LogOut,
+  ArrowLeft,
+  FolderKanban,
+  DollarSign,
+  FileCheck,
+  LayoutDashboard,
+  ChevronDown,
+  KeyRound,
+} from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { portalLogout, type ClienteAccount } from "@/hooks/useClienteAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { TrocarSenhaForm } from "./TrocarSenhaForm";
 
 interface ClienteShellProps {
   account: ClienteAccount;
@@ -22,6 +40,7 @@ const projetoNavItems = [
 export function ClienteShell({ account, children, projetoId, projetoNome, projetoCodigo }: ClienteShellProps) {
   const navigate = useNavigate();
   const [isAdminSession, setIsAdminSession] = useState(false);
+  const [senhaDialogOpen, setSenhaDialogOpen] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -60,20 +79,32 @@ export function ClienteShell({ account, children, projetoId, projetoNome, projet
                 Voltar ao painel
               </Button>
             )}
-            <span className="text-sm text-muted-foreground truncate max-w-[8rem] sm:max-w-[14rem]">
-              <span className="sm:hidden">{account.nome.split(" ")[0]}</span>
-              <span className="hidden sm:inline">{account.nome}</span>
-            </span>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleLogout}
-              aria-label="Sair"
-              title="Sair"
-              className="text-muted-foreground hover:text-foreground h-11 w-11 sm:h-9 sm:w-9"
-            >
-              <LogOut className="h-4 w-4" />
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-muted-foreground hover:text-foreground gap-1.5 h-11 sm:h-9"
+                >
+                  <span className="truncate max-w-[8rem] sm:max-w-[14rem]">
+                    <span className="sm:hidden">{account.nome.split(" ")[0]}</span>
+                    <span className="hidden sm:inline">{account.nome}</span>
+                  </span>
+                  <ChevronDown className="h-4 w-4 opacity-60" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem onClick={() => setSenhaDialogOpen(true)}>
+                  <KeyRound className="h-4 w-4 mr-2" />
+                  Trocar senha
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout}>
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Sair
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </header>
@@ -138,6 +169,19 @@ export function ClienteShell({ account, children, projetoId, projetoNome, projet
           </p>
         </div>
       </footer>
+
+      <Dialog open={senhaDialogOpen} onOpenChange={setSenhaDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Trocar senha</DialogTitle>
+            <DialogDescription>Defina uma nova senha de acesso ao portal.</DialogDescription>
+          </DialogHeader>
+          <TrocarSenhaForm
+            onSuccess={() => setSenhaDialogOpen(false)}
+            onCancel={() => setSenhaDialogOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
