@@ -3,7 +3,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ChevronDown, ChevronLeft, ChevronRight, Plus, TrendingUp, Search, AlertCircle } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ChevronDown, ChevronLeft, ChevronRight, Plus, TrendingUp, Search, AlertCircle, X } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
@@ -21,7 +22,6 @@ import { LeadFormDialog, EMPTY_LEAD_FORM, type LeadFormData } from "./components
 import { LeadKanbanCard } from "./components/LeadKanbanCard";
 import {
   LeadMotivoPerdasDialog,
-  LeadConvertDialog,
   LeadCreatePropostaDialog,
 } from "./components/LeadActionDialogs";
 import { LeadCnpjConvertDialog, type ConvertEnrichment } from "./components/LeadCnpjConvertDialog";
@@ -55,6 +55,26 @@ const STATUS_DOT: Record<string, string> = {
   Ganho: "bg-status-done",
   Perdido: "bg-status-cancelled",
 };
+
+type PeriodoFilter = "todos" | "prox7" | "atrasados" | "mes";
+type SortBy = "padrao" | "valor_desc" | "valor_asc" | "previsao_asc" | "previsao_desc";
+
+const PERIODO_OPTIONS: { value: PeriodoFilter; label: string }[] = [
+  { value: "todos", label: "Qualquer previsão" },
+  { value: "prox7", label: "Fecham em 7 dias" },
+  { value: "atrasados", label: "Previsão vencida" },
+  { value: "mes", label: "Fecham este mês" },
+];
+
+const SORT_OPTIONS: { value: SortBy; label: string }[] = [
+  { value: "padrao", label: "Mais recentes" },
+  { value: "valor_desc", label: "Maior valor" },
+  { value: "valor_asc", label: "Menor valor" },
+  { value: "previsao_asc", label: "Previsão mais próxima" },
+  { value: "previsao_desc", label: "Previsão mais distante" },
+];
+
+const SEM_RESPONSAVEL = "__sem__";
 
 function KanbanSkeleton() {
   const columns = Object.values(statusConfig);
@@ -101,19 +121,22 @@ export default function Leads() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
-  const [isConvertOpen, setIsConvertOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [formData, setFormData] = useState<LeadFormData>(EMPTY_LEAD_FORM);
   const [editFormData, setEditFormData] = useState<LeadFormData>(EMPTY_LEAD_FORM);
-  const [pendingDrop, setPendingDrop] = useState<{ leadId: string; newStatus: string } | null>(null);
+  const [pendingDrop, setPendingDrop] = useState<{ leadId: string; newStatus: Lead["status"] } | null>(null);
   const [isMotivoPerdasOpen, setIsMotivoPerdasOpen] = useState(false);
   const [motivoPerda, setMotivoPerda] = useState("");
   const [isAutoConvertOpen, setIsAutoConvertOpen] = useState(false);
   const [isCreatePropostaOpen, setIsCreatePropostaOpen] = useState(false);
   const [leadToDelete, setLeadToDelete] = useState<{ id: string; nome: string } | null>(null);
   const [collapsedColumns, setCollapsedColumns] = useState<Set<string>>(new Set());
-  const [filterProximos, setFilterProximos] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [estagioFilter, setEstagioFilter] = useState<Set<string>>(new Set());
+  const [origemFilter, setOrigemFilter] = useState("");
+  const [responsavelFilter, setResponsavelFilter] = useState("");
+  const [periodo, setPeriodo] = useState<PeriodoFilter>("todos");
+  const [sortBy, setSortBy] = useState<SortBy>("padrao");
 
   const leadNome = (lead: Lead) => (lead.sobrenome ? `${lead.nome} ${lead.sobrenome}` : lead.nome);
 
@@ -126,19 +149,66 @@ export default function Leads() {
     });
   };
 
-  const getLeadsByStatus = (status: string) => {
+  const origemOptions = Array.from(
+    new Set(leads.map((l) => l.origem).filter((o): o is string => !!o && o.trim() !== ""))
+  ).sort((a, b) => a.localeCompare(b, "pt-BR"));
+
+  const toggleEstagio = (status: string) => {
+    setEstagioFilter((prev) => {
+      const next = new Set(prev);
+      if (next.has(status)) next.delete(status);
+      else next.add(status);
+      return next;
+    });
+  };
+
+  const matchesPeriodo = (lead: Lead) => {
+    if (periodo === "todos") return true;
+    if (!lead.previsao_fechamento) return false;
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const in7 = new Date(today);
-    in7.setDate(in7.getDate() + 7);
+    const d = new Date(lead.previsao_fechamento + "T00:00:00");
+    if (periodo === "prox7") {
+      const in7 = new Date(today);
+      in7.setDate(in7.getDate() + 7);
+      return d >= today && d <= in7;
+    }
+    if (periodo === "atrasados") return d < today;
+    // "mes": mesmo mês/ano do dia atual.
+    return d.getFullYear() === today.getFullYear() && d.getMonth() === today.getMonth();
+  };
+
+  const sortLeads = (items: Lead[]) => {
+    if (sortBy === "padrao") return items;
+    const arr = [...items];
+    const prev = (l: Lead) => (l.previsao_fechamento ? new Date(l.previsao_fechamento + "T00:00:00").getTime() : null);
+    if (sortBy === "valor_desc") return arr.sort((a, b) => (b.valor_estimado ?? 0) - (a.valor_estimado ?? 0));
+    if (sortBy === "valor_asc") return arr.sort((a, b) => (a.valor_estimado ?? 0) - (b.valor_estimado ?? 0));
+    // Ordenação por previsão: leads sem data vão para o fim em ambas as direções.
+    const dir = sortBy === "previsao_asc" ? 1 : -1;
+    return arr.sort((a, b) => {
+      const da = prev(a);
+      const db = prev(b);
+      if (da === null && db === null) return 0;
+      if (da === null) return 1;
+      if (db === null) return -1;
+      return (da - db) * dir;
+    });
+  };
+
+  const getLeadsByStatus = (status: string) => {
     const q = searchQuery.trim().toLowerCase();
-    return leads.filter((lead) => {
+    const filtered = leads.filter((lead) => {
       if (lead.status !== status) return false;
-      if (filterProximos) {
-        if (!lead.previsao_fechamento) return false;
-        const d = new Date(lead.previsao_fechamento + "T00:00:00");
-        if (d < today || d > in7) return false;
+      if (origemFilter && (lead.origem ?? "") !== origemFilter) return false;
+      if (responsavelFilter) {
+        if (responsavelFilter === SEM_RESPONSAVEL) {
+          if (lead.responsavel_id) return false;
+        } else if (lead.responsavel_id !== responsavelFilter) {
+          return false;
+        }
       }
+      if (!matchesPeriodo(lead)) return false;
       if (!q) return true;
       const fullName = leadNome(lead).toLowerCase();
       return (
@@ -147,7 +217,20 @@ export default function Leads() {
         (lead.email ?? "").toLowerCase().includes(q)
       );
     });
+    return sortLeads(filtered);
   };
+
+  const visibleStatuses = Object.keys(statusConfig).filter(
+    (s) => estagioFilter.size === 0 || estagioFilter.has(s)
+  );
+
+  const filtersActive =
+    !!searchQuery.trim() ||
+    estagioFilter.size > 0 ||
+    !!origemFilter ||
+    !!responsavelFilter ||
+    periodo !== "todos" ||
+    sortBy !== "padrao";
 
   const handleCardClick = (lead: Lead) => {
     setSelectedLead(lead);
@@ -245,7 +328,7 @@ export default function Leads() {
     const { source, destination, draggableId } = result;
     if (!destination) return;
     if (source.droppableId === destination.droppableId) return;
-    const newStatus = destination.droppableId;
+    const newStatus = destination.droppableId as Lead["status"];
 
     if (newStatus === "Perdido") {
       setPendingDrop({ leadId: draggableId, newStatus });
@@ -264,7 +347,7 @@ export default function Leads() {
     updateStatus.mutate({ leadId: draggableId, newStatus });
   };
 
-  const handleMobileMove = (leadId: string, newStatus: string) => {
+  const handleMobileMove = (leadId: string, newStatus: Lead["status"]) => {
     if (newStatus === "Perdido") {
       setPendingDrop({ leadId, newStatus });
       setMotivoPerda("");
@@ -306,6 +389,7 @@ export default function Leads() {
       onSuccess: () => {
         setIsAutoConvertOpen(false);
         setPendingDrop(null);
+        setIsDetailOpen(false);
       },
     });
   };
@@ -323,20 +407,16 @@ export default function Leads() {
     );
   };
 
-  const handleConvertToClient = () => {
+  // Conversão a partir do detalhe usa o mesmo fluxo do arrastar para "Ganho"
+  // (dialog de CNPJ com enriquecimento), em vez de um caminho separado sem CNPJ.
+  const handleOpenConvert = () => {
     if (!selectedLead) return;
     if (selectedLead.cliente_id) {
       toast.error("Já convertido", { description: "Este lead já foi convertido em cliente." });
-      setIsConvertOpen(false);
       return;
     }
-    convertToClient.mutate({ leadId: selectedLead.id }, {
-      onSuccess: () => {
-        toast.success("Sucesso!", { description: `${leadNome(selectedLead)} foi convertido em cliente.` });
-        setIsConvertOpen(false);
-        setIsDetailOpen(false);
-      },
-    });
+    setPendingDrop({ leadId: selectedLead.id, newStatus: "Ganho" });
+    setIsAutoConvertOpen(true);
   };
 
   const handleDelete = (id: string) => {
@@ -368,8 +448,12 @@ export default function Leads() {
   const hasNoResults = !hasNoLeads && visibleCount === 0;
 
   const handleClearFilters = () => {
-    setFilterProximos(false);
     setSearchQuery("");
+    setEstagioFilter(new Set());
+    setOrigemFilter("");
+    setResponsavelFilter("");
+    setPeriodo("todos");
+    setSortBy("padrao");
   };
 
   return (
@@ -395,28 +479,113 @@ export default function Leads() {
         />
       }
     >
-      <LeadsKPIs leads={leads} onFilterProximos={() => setFilterProximos((v) => !v)} />
+      <LeadsKPIs
+        leads={leads}
+        onFilterProximos={() => setPeriodo((p) => (p === "prox7" ? "todos" : "prox7"))}
+        proximosAtivo={periodo === "prox7"}
+      />
 
-      <div className="relative mb-2 mt-1 max-w-sm">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-        <Input
-          placeholder="Buscar por nome, empresa ou email..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-9 h-9 text-sm"
-        />
-      </div>
+      <div className="flex flex-col gap-2 mb-2 mt-1">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="relative w-full max-w-xs">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+            <Input
+              placeholder="Buscar por nome, empresa ou email..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 h-9 text-sm"
+            />
+          </div>
 
-      {filterProximos && (
-        <div className="flex items-center gap-2 mb-2 px-1">
-          <span className="text-xs text-warning-mid bg-warning-soft border border-warning-mid-border rounded-full px-3 py-0.5">
-            Filtro: fechamentos nos próximos 7 dias
-          </span>
-          <button onClick={() => setFilterProximos(false)} className="text-xs text-muted-foreground underline">
-            limpar
-          </button>
+          <Select value={origemFilter || "todas"} onValueChange={(v) => setOrigemFilter(v === "todas" ? "" : v)}>
+            <SelectTrigger className="h-9 w-auto min-w-[140px] text-sm" aria-label="Filtrar por origem">
+              <SelectValue placeholder="Origem" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todas">Todas as origens</SelectItem>
+              {origemOptions.map((o) => (
+                <SelectItem key={o} value={o}>
+                  {o}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select
+            value={responsavelFilter || "todos"}
+            onValueChange={(v) => setResponsavelFilter(v === "todos" ? "" : v)}
+          >
+            <SelectTrigger className="h-9 w-auto min-w-[150px] text-sm" aria-label="Filtrar por responsável">
+              <SelectValue placeholder="Responsável" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Todos os responsáveis</SelectItem>
+              <SelectItem value={SEM_RESPONSAVEL}>Sem responsável</SelectItem>
+              {members.map((m) => (
+                <SelectItem key={m.id} value={m.id}>
+                  {m.first_name} {m.last_name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={periodo} onValueChange={(v) => setPeriodo(v as PeriodoFilter)}>
+            <SelectTrigger className="h-9 w-auto min-w-[150px] text-sm" aria-label="Filtrar por previsão de fechamento">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {PERIODO_OPTIONS.map((o) => (
+                <SelectItem key={o.value} value={o.value}>
+                  {o.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortBy)}>
+            <SelectTrigger className="h-9 w-auto min-w-[150px] text-sm" aria-label="Ordenar leads">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {SORT_OPTIONS.map((o) => (
+                <SelectItem key={o.value} value={o.value}>
+                  {o.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {filtersActive && (
+            <Button variant="ghost" size="sm" onClick={handleClearFilters} className="h-9 text-sm text-muted-foreground">
+              <X className="mr-1 h-3.5 w-3.5" />
+              Limpar
+            </Button>
+          )}
         </div>
-      )}
+
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="text-[11px] uppercase tracking-wide text-muted-foreground mr-1">Estágio</span>
+          {Object.entries(statusConfig).map(([status, config]) => {
+            const active = estagioFilter.has(status);
+            return (
+              <button
+                key={status}
+                type="button"
+                onClick={() => toggleEstagio(status)}
+                aria-pressed={active}
+                className={cn(
+                  "text-xs rounded-full border px-2.5 py-1 transition-colors",
+                  active
+                    ? "border-brand bg-brand/10 text-brand font-medium"
+                    : "border-border text-muted-foreground hover:bg-muted/40"
+                )}
+              >
+                {config.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
 
       {isLoading ? (
         <KanbanSkeleton />
@@ -452,7 +621,8 @@ export default function Leads() {
           <div className="flex-1 min-h-0">
             {/* Desktop kanban */}
             <div className="hidden md:flex gap-3 w-full h-full min-h-0 overflow-x-auto pb-2">
-              {Object.entries(statusConfig).map(([status, config]) => {
+              {visibleStatuses.map((status) => {
+                const config = statusConfig[status];
                 const items = getLeadsByStatus(status);
                 const isCollapsed = collapsedColumns.has(status);
                 const dotColor = STATUS_DOT[status] || "bg-pipeline-perdido";
@@ -482,22 +652,20 @@ export default function Leads() {
 
                 return (
                   <div key={status} className="flex flex-col min-w-[280px] w-[280px] flex-shrink-0 min-h-0">
-                    <div className="flex items-center gap-2 px-2 py-2.5 group">
+                    <div className="flex items-center gap-2 px-2 py-2.5">
                       <span className={cn("h-2 w-2 rounded-full flex-shrink-0", dotColor)} />
                       <h3 className="text-xs font-medium text-foreground/80 uppercase tracking-wide">{config.label}</h3>
                       <span className="text-[11px] text-muted-foreground tabular-nums">{items.length}</span>
-                      <div className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6 text-muted-foreground"
-                          onClick={() => toggleColumn(status)}
-                          title="Minimizar coluna"
-                          aria-label="Minimizar coluna"
-                        >
-                          <ChevronLeft className="h-3.5 w-3.5" />
-                        </Button>
-                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="ml-auto min-h-[44px] min-w-[44px] text-muted-foreground"
+                        onClick={() => toggleColumn(status)}
+                        title="Minimizar coluna"
+                        aria-label="Minimizar coluna"
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </Button>
                     </div>
 
                     <Droppable droppableId={status}>
@@ -546,7 +714,8 @@ export default function Leads() {
 
             {/* Mobile list view */}
             <div className="md:hidden space-y-3">
-              {Object.entries(statusConfig).map(([status, config]) => {
+              {visibleStatuses.map((status) => {
+                const config = statusConfig[status];
                 const items = getLeadsByStatus(status);
                 const dotColor = STATUS_DOT[status] || "bg-pipeline-perdido";
                 if (items.length === 0) return null;
@@ -610,7 +779,7 @@ export default function Leads() {
         onEdit={handleOpenEdit}
         onDelete={handleDelete}
         onCreateProposta={() => setIsCreatePropostaOpen(true)}
-        onConvert={() => setIsConvertOpen(true)}
+        onConvert={handleOpenConvert}
         createPropostaPending={createProposta.isPending}
       />
 
@@ -635,12 +804,6 @@ export default function Leads() {
         isPending={convertToClient.isPending}
         onConvert={handleAutoConvert}
         onSkip={handleSkipConvert}
-      />
-
-      <LeadConvertDialog
-        open={isConvertOpen}
-        onOpenChange={setIsConvertOpen}
-        onConfirm={handleConvertToClient}
       />
 
       <LeadCreatePropostaDialog

@@ -9,9 +9,10 @@ const ATIVOS = new Set(["Novo", "Em contato", "Proposta", "Negociação"]);
 interface LeadsKPIsProps {
   leads: Lead[];
   onFilterProximos?: () => void;
+  proximosAtivo?: boolean;
 }
 
-export function LeadsKPIs({ leads, onFilterProximos }: LeadsKPIsProps) {
+export function LeadsKPIs({ leads, onFilterProximos, proximosAtivo = false }: LeadsKPIsProps) {
   const stats = useMemo(() => {
     const ativos = leads.filter((l) => ATIVOS.has(l.status));
     const valorPipeline = ativos.reduce((sum, l) => sum + (l.valor_estimado ?? 0), 0);
@@ -45,7 +46,7 @@ export function LeadsKPIs({ leads, onFilterProximos }: LeadsKPIsProps) {
       <KpiCard
         icon={TrendingUp}
         label="Valor estimado"
-        value={stats.valorPipeline > 0 ? formatCurrency(stats.valorPipeline) : "—"}
+        value={formatCurrency(stats.valorPipeline)}
         color="text-positive-strong"
       />
       <KpiCard
@@ -55,11 +56,12 @@ export function LeadsKPIs({ leads, onFilterProximos }: LeadsKPIsProps) {
         color="text-warning"
         onClick={onFilterProximos}
         title="Filtrar leads que fecham nos próximos 7 dias"
+        pressed={proximosAtivo}
       />
       <KpiCard
         icon={PercentCircle}
         label="Taxa de conversão"
-        value={stats.taxaConversao !== null ? `${stats.taxaConversao}%` : "—"}
+        value={stats.taxaConversao !== null ? `${stats.taxaConversao}%` : "0%"}
         color={
           stats.taxaConversao === null
             ? "text-muted-foreground"
@@ -79,18 +81,21 @@ interface KpiCardProps {
   color: string;
   onClick?: () => void;
   title?: string;
+  pressed?: boolean;
 }
 
-function KpiCard({ icon: Icon, label, value, color, onClick, title }: KpiCardProps) {
+function KpiCard({ icon: Icon, label, value, color, onClick, title, pressed }: KpiCardProps) {
   const Component = onClick ? "button" : "div";
   return (
     <Component
       type={onClick ? "button" : undefined}
       onClick={onClick}
       title={title}
+      aria-pressed={onClick ? pressed : undefined}
       className={cn(
         "flex items-center gap-3 px-3 py-2 rounded-lg border bg-white text-left transition-colors",
-        onClick && "hover:bg-muted/40 cursor-pointer"
+        onClick && "hover:bg-muted/40 cursor-pointer",
+        pressed && "border-brand ring-1 ring-brand bg-brand/5"
       )}
     >
       <div className={cn("h-8 w-8 rounded-md flex items-center justify-center bg-muted/50", color)}>
