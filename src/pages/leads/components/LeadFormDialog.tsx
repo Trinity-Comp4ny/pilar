@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,6 +25,21 @@ export type LeadFormData = {
   responsavel_id: string;
   notas: string;
 };
+
+// Origens padronizadas do lead. "Outro" libera um campo de texto livre.
+// Evita a bagunça de 'Instagram'/'instagram'/'IG' apontando pra mesma coisa.
+const LEAD_ORIGENS = [
+  "Indicação",
+  "Instagram",
+  "LinkedIn",
+  "Site",
+  "Google",
+  "WhatsApp",
+  "Evento",
+  "Outro",
+] as const;
+
+const ORIGEM_OUTRO = "Outro";
 
 export const EMPTY_LEAD_FORM: LeadFormData = {
   nome: "",
@@ -63,11 +78,51 @@ export function LeadFormDialog({ open, onOpenChange, mode, formData, onFormChang
   const [emailError, setEmailError] = useState("");
   const [cnpjError, setCnpjError] = useState("");
 
+  // Origem: escolha padronizada + campo livre quando "Outro".
+  const KNOWN_ORIGENS = LEAD_ORIGENS.filter((o) => o !== ORIGEM_OUTRO) as readonly string[];
+  const [origemChoice, setOrigemChoice] = useState("");
+  const [origemCustom, setOrigemCustom] = useState("");
+
+  // Sincroniza a origem local ao abrir (create = vazio, edit = valor do lead).
+  useEffect(() => {
+    if (!open) return;
+    const val = formData.origem ?? "";
+    if (!val) {
+      setOrigemChoice("");
+      setOrigemCustom("");
+    } else if (KNOWN_ORIGENS.includes(val)) {
+      setOrigemChoice(val);
+      setOrigemCustom("");
+    } else {
+      setOrigemChoice(ORIGEM_OUTRO);
+      setOrigemCustom(val);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
   const set = (field: keyof LeadFormData, value: string) => {
     if (field === "nome" && nomeError) setNomeError("");
     if (field === "email" && emailError) setEmailError("");
     if (field === "cnpj" && cnpjError) setCnpjError("");
     onFormChange({ ...formData, [field]: value });
+  };
+
+  const handleOrigemSelect = (v: string) => {
+    setOrigemChoice(v);
+    set("origem", v === ORIGEM_OUTRO ? origemCustom : v);
+  };
+
+  const handleOrigemCustom = (v: string) => {
+    setOrigemCustom(v);
+    set("origem", v);
+  };
+
+  const handleCnpjBlur = () => {
+    if (onlyDigits(formData.cnpj).length > 0 && !validateCNPJ(formData.cnpj)) {
+      setCnpjError("CNPJ inválido");
+    } else {
+      setCnpjError("");
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -125,10 +180,10 @@ export function LeadFormDialog({ open, onOpenChange, mode, formData, onFormChang
                   required
                   aria-invalid={!!nomeError}
                   aria-describedby={nomeError ? nomeErrorId : undefined}
-                  className={nomeError ? "border-red-500 focus-visible:ring-red-500" : ""}
+                  className={nomeError ? "border-destructive focus-visible:ring-destructive/40" : ""}
                 />
                 {nomeError && (
-                  <p id={nomeErrorId} role="alert" className="text-xs text-red-600">{nomeError}</p>
+                  <p id={nomeErrorId} role="alert" className="text-xs text-destructive">{nomeError}</p>
                 )}
               </div>
               <div className="space-y-1.5">
@@ -155,14 +210,15 @@ export function LeadFormDialog({ open, onOpenChange, mode, formData, onFormChang
                   id={`${prefix}cnpj`}
                   value={formData.cnpj}
                   onChange={(e) => set("cnpj", formatCNPJ(e.target.value))}
+                  onBlur={handleCnpjBlur}
                   maxLength={18}
                   placeholder="00.000.000/0000-00"
                   aria-invalid={!!cnpjError}
                   aria-describedby={cnpjError ? cnpjErrorId : undefined}
-                  className={cnpjError ? "border-red-500 focus-visible:ring-red-500" : ""}
+                  className={cnpjError ? "border-destructive focus-visible:ring-destructive/40" : ""}
                 />
                 {cnpjError && (
-                  <p id={cnpjErrorId} role="alert" className="text-xs text-red-600">{cnpjError}</p>
+                  <p id={cnpjErrorId} role="alert" className="text-xs text-destructive">{cnpjError}</p>
                 )}
               </div>
               <ValidatedField
@@ -225,12 +281,27 @@ export function LeadFormDialog({ open, onOpenChange, mode, formData, onFormChang
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor={`${prefix}origem`} className="text-xs">Origem</Label>
-                <Input
-                  id={`${prefix}origem`}
-                  value={formData.origem}
-                  onChange={(e) => set("origem", e.target.value)}
-                  placeholder="Ex: Instagram, LinkedIn, Indicação..."
-                />
+                <Select value={origemChoice} onValueChange={handleOrigemSelect}>
+                  <SelectTrigger id={`${prefix}origem`}>
+                    <SelectValue placeholder="Selecione..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {LEAD_ORIGENS.map((o) => (
+                      <SelectItem key={o} value={o}>
+                        {o}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {origemChoice === ORIGEM_OUTRO && (
+                  <Input
+                    aria-label="Origem (outro)"
+                    value={origemCustom}
+                    onChange={(e) => handleOrigemCustom(e.target.value)}
+                    placeholder="Qual origem?"
+                    className="mt-1.5"
+                  />
+                )}
               </div>
             </div>
             <div className="space-y-1.5">

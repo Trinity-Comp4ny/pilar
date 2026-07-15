@@ -80,36 +80,6 @@ export function LeadAutoConvertDialog({ open, onOpenChange, isPending, onConvert
   );
 }
 
-// --- Confirmar Conversão (via detalhe) ---
-
-type ConvertProps = {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onConfirm: () => void;
-};
-
-export function LeadConvertDialog({ open, onOpenChange, onConfirm }: ConvertProps) {
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Confirmar Conversão</DialogTitle>
-          <DialogDescription>
-            Deseja realmente transformar este lead em um cliente? Isso criará um novo registro na base de clientes e
-            marcará o lead como Ganho.
-          </DialogDescription>
-        </DialogHeader>
-        <DialogFooter className="mt-4">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-          <Button onClick={onConfirm} className="bg-positive hover:bg-positive/90 text-white">
-            Confirmar Conversão
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
 // --- Criar Proposta ---
 
 type CreatePropostaProps = {
