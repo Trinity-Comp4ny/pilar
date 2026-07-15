@@ -1,8 +1,10 @@
+import { useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Loader2 } from "lucide-react";
 import type { Cliente } from "@/hooks/useClientes";
 
 interface ClienteMessageDialogProps {
@@ -13,7 +15,7 @@ interface ClienteMessageDialogProps {
   onSubjectChange: (v: string) => void;
   onMessageChange: (v: string) => void;
   onCancel: () => void;
-  onSend: () => void;
+  onSend: () => void | Promise<void>;
   onOpenChange: (open: boolean) => void;
 }
 
@@ -28,6 +30,18 @@ export function ClienteMessageDialog({
   onSend,
   onOpenChange,
 }: ClienteMessageDialogProps) {
+  const [isSending, setIsSending] = useState(false);
+
+  const handleSend = async () => {
+    if (isSending) return;
+    setIsSending(true);
+    try {
+      await onSend();
+    } finally {
+      setIsSending(false);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
@@ -62,15 +76,21 @@ export function ClienteMessageDialog({
         </div>
 
         <div className="flex gap-2 pt-4">
-          <Button variant="outline" onClick={onCancel} className="flex-1">
+          <Button variant="outline" onClick={onCancel} className="flex-1" disabled={isSending}>
             Cancelar
           </Button>
           <Button
-            onClick={onSend}
+            onClick={handleSend}
             className="flex-1 bg-brand hover:bg-brand/90 text-ink"
-            disabled={!message || !subject || !cliente}
+            disabled={!message || !subject || !cliente || isSending}
           >
-            Enviar
+            {isSending ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Enviando...
+              </>
+            ) : (
+              "Enviar"
+            )}
           </Button>
         </div>
       </DialogContent>

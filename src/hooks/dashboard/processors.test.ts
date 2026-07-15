@@ -47,6 +47,8 @@ describe("buildKPIs", () => {
       saldoMes: 0,
       receitaVariacao: 0,
       despesaVariacao: 0,
+      receitaNovo: false,
+      despesaNovo: false,
       aReceber: 0,
       aPagar: 0,
       projetosAtivos: 0,
@@ -76,6 +78,31 @@ describe("buildKPIs", () => {
     expect(kpis.aReceber).toBe(1500);
     expect(kpis.aPagar).toBe(700);
     expect(kpis.projetosAtivos).toBe(4);
+  });
+
+  it("marca como novo quando não havia base no período anterior", () => {
+    const kpis = buildKPIs(
+      [{ valor: 1000, status: "Recebido", data_recebimento: "2026-05-10", data_vencimento: "2026-05-15" }],
+      null,
+      [{ valor: 300, status: "Pendente", data_pagamento: null, data_vencimento: "2026-05-20" }],
+      null,
+      null,
+      null,
+      0,
+      mesStart,
+      mesEnd,
+      antStart,
+      antEnd
+    );
+    expect(kpis.receitaVariacao).toBe(0);
+    expect(kpis.receitaNovo).toBe(true);
+    expect(kpis.despesaNovo).toBe(true);
+  });
+
+  it("não marca como novo quando não há valor no período atual", () => {
+    const kpis = buildKPIs(null, null, null, null, null, null, 0, mesStart, mesEnd, antStart, antEnd);
+    expect(kpis.receitaNovo).toBe(false);
+    expect(kpis.despesaNovo).toBe(false);
   });
 
   it("ignora linhas fora da janela do mês", () => {

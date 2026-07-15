@@ -168,9 +168,13 @@ function AprovarPropostaCard({
         variant="default"
         title="Aprovar esta proposta?"
         itemName={projeto.projeto_nome}
-        description={`Ao confirmar, o projeto será iniciado com o valor de ${formatCurrency(
-          projeto.valor_contrato
-        )}. Esta ação confirma o contrato — se precisar de alterações, fale com o escritório antes.`}
+        description={
+          projeto.valor_contrato != null
+            ? `Ao confirmar, o projeto será iniciado com o valor de ${formatCurrency(
+                projeto.valor_contrato
+              )}. Esta ação confirma o contrato: se precisar de alterações, fale com o escritório antes.`
+            : "Ao confirmar, o projeto será iniciado conforme a proposta enviada. Esta ação confirma o contrato: se precisar de alterações, fale com o escritório antes."
+        }
         confirmText="Confirmar aprovação"
         cancelText="Voltar"
       />

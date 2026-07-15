@@ -75,6 +75,9 @@ export function buildKPIs(
     saldoMes: receitaMes - despesaMes,
     receitaVariacao: receitaMesAnt > 0 ? ((receitaMes - receitaMesAnt) / receitaMesAnt) * 100 : 0,
     despesaVariacao: despesaMesAnt > 0 ? ((despesaMes - despesaMesAnt) / despesaMesAnt) * 100 : 0,
+    // "Novo": não havia base no período anterior (não dá para calcular %), mas há valor agora.
+    receitaNovo: receitaMesAnt === 0 && receitaMes > 0,
+    despesaNovo: despesaMesAnt === 0 && despesaMes > 0,
     aReceber: sumValues(receitasPendentes),
     aPagar: sumValues(despesasPendentes),
     projetosAtivos,

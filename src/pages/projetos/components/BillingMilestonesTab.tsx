@@ -32,7 +32,7 @@ interface Marco {
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: typeof Clock }> = {
   pendente: { label: "Pendente", color: "bg-yellow-100 text-yellow-800", icon: Clock },
   faturado: { label: "Faturado", color: "bg-blue-100 text-blue-800", icon: CheckCircle2 },
-  recebido: { label: "Recebido", color: "bg-positive/10 text-positive", icon: CheckCircle2 },
+  recebido: { label: "Recebido", color: "bg-positive/10 text-positive-strong", icon: CheckCircle2 },
   cancelado: { label: "Cancelado", color: "bg-red-100 text-red-800", icon: XCircle },
 };
 
@@ -164,7 +164,7 @@ export function BillingMilestonesTab({ projetoId, canEdit }: BillingMilestonesTa
           <div className="flex items-center gap-3 text-sm">
             <Badge variant="secondary">Total: {formatCurrency(totalMarcos)}</Badge>
             <Badge className="bg-blue-100 text-blue-800">Faturado: {formatCurrency(totalFaturado)}</Badge>
-            <Badge className="bg-positive/10 text-positive">Recebido: {formatCurrency(totalRecebido)}</Badge>
+            <Badge className="bg-positive/10 text-positive-strong">Recebido: {formatCurrency(totalRecebido)}</Badge>
           </div>
           {canEdit && (
             <div className="flex gap-2">
@@ -226,7 +226,7 @@ export function BillingMilestonesTab({ projetoId, canEdit }: BillingMilestonesTa
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8 text-positive"
+                          className="h-8 w-8 text-positive-strong"
                           onClick={() => updateStatusMutation.mutate({ id: marco.id, status: "recebido" })}
                           aria-label="Marcar como recebido"
                         >

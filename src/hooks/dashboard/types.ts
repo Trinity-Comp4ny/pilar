@@ -72,6 +72,8 @@ export interface DashboardKPI {
   saldoMes: number;
   receitaVariacao: number;
   despesaVariacao: number;
+  receitaNovo: boolean;
+  despesaNovo: boolean;
   aReceber: number;
   aPagar: number;
   projetosAtivos: number;

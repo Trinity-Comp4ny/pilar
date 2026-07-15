@@ -29,7 +29,7 @@ type Props = {
   leadNome: (lead: Lead) => string;
   onClick: () => void;
   canEdit: boolean;
-  onMoveStatus: (leadId: string, status: string) => void;
+  onMoveStatus: (leadId: string, status: Lead["status"]) => void;
   dragging?: boolean;
 };
 
@@ -89,7 +89,7 @@ export function LeadKanbanCard({ lead, leadNome, onClick, canEdit, onMoveStatus,
           <div className="flex justify-end pt-2 mt-1 border-t" onClick={(e) => e.stopPropagation()}>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="h-7 text-xs gap-1 text-muted-foreground">
+                <Button variant="ghost" size="sm" className="min-h-[44px] px-3 text-xs gap-1 text-muted-foreground">
                   <MoreVertical className="h-3.5 w-3.5" />
                   Ações
                 </Button>
@@ -103,7 +103,7 @@ export function LeadKanbanCard({ lead, leadNome, onClick, canEdit, onMoveStatus,
                     {Object.keys(statusLabels)
                       .filter((s) => s !== lead.status)
                       .map((s) => (
-                        <DropdownMenuItem key={s} onClick={() => onMoveStatus(lead.id, s)}>
+                        <DropdownMenuItem key={s} onClick={() => onMoveStatus(lead.id, s as Lead["status"])}>
                           {statusLabels[s]}
                         </DropdownMenuItem>
                       ))}

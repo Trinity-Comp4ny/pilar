@@ -62,6 +62,79 @@ function formatTimeAgo(dateStr: string): string {
   return `${days}d atrás`;
 }
 
+/** Chave técnica (snake_case) em rótulo legível. */
+function humanizarChave(k: string): string {
+  const s = k.replace(/_/g, " ").trim();
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+/** Renderiza um valor do conteúdo do insight (recursivo) em vez de JSON cru. */
+function ValorInsight({ valor }: { valor: unknown }) {
+  if (valor === null || valor === undefined || valor === "") {
+    return <span className="text-muted-foreground">—</span>;
+  }
+  if (typeof valor === "boolean") return <span>{valor ? "Sim" : "Não"}</span>;
+  if (typeof valor === "number" || typeof valor === "string") {
+    return <span className="whitespace-pre-wrap">{String(valor)}</span>;
+  }
+  if (Array.isArray(valor)) {
+    if (valor.length === 0) return <span className="text-muted-foreground">—</span>;
+    const soPrimitivos = valor.every((v) => v === null || typeof v !== "object");
+    if (soPrimitivos) {
+      return (
+        <ul className="list-disc space-y-0.5 pl-5">
+          {valor.map((v, i) => (
+            <li key={i}>
+              <ValorInsight valor={v} />
+            </li>
+          ))}
+        </ul>
+      );
+    }
+    return (
+      <div className="space-y-2">
+        {valor.map((v, i) => (
+          <div key={i} className="rounded-lg border border-border p-3">
+            <ObjetoInsight obj={v as Record<string, unknown>} />
+          </div>
+        ))}
+      </div>
+    );
+  }
+  return <ObjetoInsight obj={valor as Record<string, unknown>} />;
+}
+
+function ObjetoInsight({ obj }: { obj: Record<string, unknown> }) {
+  const entradas = Object.entries(obj ?? {});
+  if (entradas.length === 0) return <span className="text-muted-foreground">—</span>;
+  return (
+    <div className="space-y-2.5">
+      {entradas.map(([k, v]) => (
+        <div key={k}>
+          <p className="text-xs font-medium text-muted-foreground">{humanizarChave(k)}</p>
+          <div className="mt-0.5 text-sm text-foreground">
+            <ValorInsight valor={v} />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function InsightContent({ conteudo }: { conteudo: unknown }) {
+  if (conteudo === null || conteudo === undefined) {
+    return <p className="text-sm text-muted-foreground">Sem conteúdo.</p>;
+  }
+  if (typeof conteudo === "string") {
+    return <p className="whitespace-pre-wrap text-sm text-foreground">{conteudo}</p>;
+  }
+  return (
+    <div className="text-sm">
+      <ValorInsight valor={conteudo} />
+    </div>
+  );
+}
+
 export default function AiHub() {
   usePageTitle("IA");
   const { data: insights = [], isLoading: loadingInsights } = useAiInsights(undefined, 20);
@@ -128,7 +201,7 @@ export default function AiHub() {
       case "pauta_reuniao":
         params = {
           tipo_reuniao: pautaForm.tipo_reuniao,
-          projeto_id: pautaForm.projeto_id || undefined,
+          projeto_id: pautaForm.projeto_id && pautaForm.projeto_id !== "none" ? pautaForm.projeto_id : undefined,
           participantes_contexto: pautaForm.participantes_contexto || undefined,
         };
         break;
@@ -169,14 +242,33 @@ export default function AiHub() {
       </PageHeader>
 
       {/* Quota bar */}
-      <div className="mb-6">
-        <div className="w-full bg-gray-200 rounded-full h-2">
-          <div
-            className={`h-2 rounded-full transition-all ${usagePct > 80 ? "bg-red-500" : usagePct > 60 ? "bg-yellow-500" : "bg-positive/100"}`}
-            style={{ width: `${Math.min(usagePct, 100)}%` }}
-          />
-        </div>
-      </div>
+      {(() => {
+        const usadas = usage?.total_requests ?? 0;
+        const limite = usage?.limite_requests ?? 100;
+        return (
+          <div className="mb-6">
+            <div className="mb-1.5 flex items-center justify-between text-xs text-muted-foreground">
+              <span>Consultas de IA usadas este mês</span>
+              <span className="font-medium text-foreground">
+                {usadas}/{limite}
+              </span>
+            </div>
+            <div
+              className="h-2 w-full rounded-full bg-muted"
+              role="progressbar"
+              aria-valuenow={usadas}
+              aria-valuemin={0}
+              aria-valuemax={limite}
+              aria-valuetext={`${usadas} de ${limite} consultas usadas`}
+            >
+              <div
+                className={`h-2 rounded-full transition-all ${usagePct > 80 ? "bg-negative" : usagePct > 60 ? "bg-chart-warning" : "bg-positive"}`}
+                style={{ width: `${Math.min(usagePct, 100)}%` }}
+              />
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Feature Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
@@ -469,7 +561,7 @@ export default function AiHub() {
                       <SelectValue placeholder="Selecione se for reunião de projeto" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Nenhum (geral)</SelectItem>
+                      <SelectItem value="none">Nenhum (geral)</SelectItem>
                       {projetosOptions.map((p) => (
                         <SelectItem key={p.id} value={p.id}>
                           {p.nome}
@@ -586,9 +678,15 @@ export default function AiHub() {
                   <p className="text-sm">{selectedInsight.resumo}</p>
                 </div>
               )}
-              <pre className="text-xs bg-muted p-4 rounded-lg overflow-x-auto whitespace-pre-wrap">
-                {JSON.stringify(selectedInsight.conteudo, null, 2)}
-              </pre>
+              <div className="rounded-lg border border-border p-4">
+                <InsightContent conteudo={selectedInsight.conteudo} />
+              </div>
+              <details className="rounded-lg bg-muted/50 p-2">
+                <summary className="cursor-pointer text-xs text-muted-foreground">Ver dados brutos</summary>
+                <pre className="mt-2 overflow-x-auto whitespace-pre-wrap text-xs text-muted-foreground">
+                  {JSON.stringify(selectedInsight.conteudo, null, 2)}
+                </pre>
+              </details>
               <div className="flex items-center gap-4 text-xs text-muted-foreground">
                 <span>Modelo: {selectedInsight.modelo_ia}</span>
                 <span>Tokens: {(selectedInsight.tokens_entrada || 0) + (selectedInsight.tokens_saida || 0)}</span>

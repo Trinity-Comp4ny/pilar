@@ -13,7 +13,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { AlertTriangle, MoreVertical, ExternalLink, Edit, Trash2, ArrowRight } from "lucide-react";
+import { AlertTriangle, Clock, MoreVertical, ExternalLink, Edit, Trash2, ArrowRight } from "lucide-react";
 import { PROJECT_STATUS_CONFIG } from "@/constants";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -27,6 +27,7 @@ import {
 } from "@/types/projetos";
 import { PROJECT_PRIORITY_CONFIG, type ProjectPriority } from "@/constants";
 import { AvatarStack } from "./AvatarStack";
+import { getPriorityDotColor } from "../lib/priorityColors";
 
 interface ProjectCardProps {
   projeto: Projeto;
@@ -51,15 +52,20 @@ export function ProjectCard({
 }: ProjectCardProps) {
   const navigate = useNavigate();
   const priorityConfig = PROJECT_PRIORITY_CONFIG[projeto.prioridade as ProjectPriority];
-  const priorityDot =
-    projeto.prioridade === "Alta"
-      ? "bg-status-cancelled"
-      : projeto.prioridade === "Media"
-        ? "bg-status-planning"
-        : "bg-status-progress";
+  const priorityDot = getPriorityDotColor(projeto.prioridade);
   const progress = getProjectProgress(projeto.disciplinas);
   const deadline = getDeadlineStatus(projeto);
   const showMargemAlert = progress > 80 && margemBrutaPct !== null && margemBrutaPct < 15;
+
+  // Planejamento pendente: disciplinas criadas (ex.: ao converter proposta em
+  // projeto) sem datas nem responsáveis. Sem isso o progresso fica preso em 0%
+  // e não há como saber que falta planejar. Sinalizamos para o usuário agir.
+  const disciplinas = projeto.disciplinas || [];
+  const planningPending =
+    disciplinas.length > 0 &&
+    disciplinas.every(
+      (d) => !d.data_inicio && !d.data_previsao && getResponsaveisList(d).length === 0
+    );
 
   return (
     <HoverCard openDelay={500} closeDelay={100}>
@@ -87,6 +93,15 @@ export function ProjectCard({
                   Margem baixa
                 </span>
               )}
+              {planningPending && (
+                <span
+                  className="inline-flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-800 flex-shrink-0"
+                  title="Disciplinas sem datas nem responsáveis. Edite o projeto para planejar."
+                >
+                  <Clock className="h-2.5 w-2.5" />
+                  Planejamento pendente
+                </span>
+              )}
             </div>
             {canEdit && (
               <DropdownMenu>
@@ -94,10 +109,10 @@ export function ProjectCard({
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-6 w-6 text-muted-foreground hover:text-foreground -mr-1"
+                    className="h-11 w-11 -my-2 -mr-2 text-muted-foreground hover:text-foreground"
                     aria-label="Mais opções"
                   >
-                    <MoreVertical className="h-3.5 w-3.5" />
+                    <MoreVertical className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
@@ -237,7 +252,7 @@ export function ProjectCard({
             </div>
             <div>
               <p className="text-[10px] uppercase text-muted-foreground">Valor</p>
-              <p className="font-medium text-positive">{formatCurrency(projeto.valor_contrato)}</p>
+              <p className="font-medium text-positive-strong">{formatCurrency(projeto.valor_contrato)}</p>
             </div>
             {projeto.area_m2 !== undefined && projeto.area_m2 > 0 && (
               <div>
@@ -272,7 +287,7 @@ export function ProjectCard({
                     key={i}
                     className={cn(
                       "text-[10px] px-1.5 py-0.5 rounded",
-                      disc.status === "Concluído" ? "bg-positive/10 text-positive" : "bg-muted text-muted-foreground"
+                      disc.status === "Concluído" ? "bg-positive/10 text-positive-strong" : "bg-muted text-muted-foreground"
                     )}
                   >
                     {disc.disciplina}

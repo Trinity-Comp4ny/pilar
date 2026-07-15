@@ -38,7 +38,7 @@ const DISCIPLINA_STATUS_CONFIG: Record<
 > = {
   Concluído: {
     label: "Concluído",
-    color: "text-positive",
+    color: "text-positive-strong",
     icon: CheckCircle2,
     bgColor: "bg-positive/10 border-positive/20",
   },
@@ -288,11 +288,11 @@ export function DisciplinasTab({ projetos, isLoading }: DisciplinasTabProps) {
           <Card className="border-l-4 border-l-green-500">
             <CardContent className="p-4">
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
-                <CheckCircle2 className="h-3.5 w-3.5 text-positive" />
+                <CheckCircle2 className="h-3.5 w-3.5 text-positive-strong" />
                 Concluídas
               </div>
               <div className="flex items-baseline gap-2">
-                <p className="text-2xl font-bold text-positive">{metrics.concluidas}</p>
+                <p className="text-2xl font-bold text-positive-strong">{metrics.concluidas}</p>
                 <p className="text-xs text-muted-foreground">{metrics.progressoPct}%</p>
               </div>
             </CardContent>
@@ -485,7 +485,7 @@ export function DisciplinasTab({ projetos, isLoading }: DisciplinasTabProps) {
                         {grupo.totalConcluido > 0 && (
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <span className="flex items-center gap-0.5 text-xs text-positive bg-positive/10 rounded-full px-2 py-0.5">
+                              <span className="flex items-center gap-0.5 text-xs text-positive-strong bg-positive/10 rounded-full px-2 py-0.5">
                                 <CheckCircle2 className="h-3 w-3" />
                                 {grupo.totalConcluido}
                               </span>

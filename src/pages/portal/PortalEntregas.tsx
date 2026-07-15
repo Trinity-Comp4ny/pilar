@@ -302,7 +302,7 @@ function ThreadPortalCard({
             <div className="flex items-center gap-2 flex-wrap">
               <p className="text-sm font-medium">{current.titulo}</p>
               {current.disciplina && (
-                <Badge variant="secondary" className="text-[10px]">
+                <Badge variant="secondary" className="text-[10px]" title="Área do projeto">
                   {current.disciplina}
                 </Badge>
               )}

@@ -26,6 +26,12 @@ import { RelatoriosSummary } from "./relatorios/RelatoriosSummary";
 // gráfico quando há dados suficientes para renderizá-lo (ver renderChart).
 const RelatoriosChart = lazy(() => import("./relatorios/RelatoriosChart"));
 
+// Relatório de rentabilidade: fluxo próprio (react-query + RPC agregada),
+// carregado sob demanda só quando o usuário escolhe esse tipo.
+const RelatoriosRentabilidade = lazy(() => import("./relatorios/RelatoriosRentabilidade"));
+
+type RentabilidadeMode = "projeto" | "cliente";
+
 interface ReportRow {
   Tipo: string;
   Descrição: string;
@@ -114,6 +120,9 @@ export default function Relatorios() {
   const [isLoading, setIsLoading] = useState(false);
   const [reportData, setReportData] = useState<ReportRow[]>([]);
   const [reportTitle, setReportTitle] = useState<string>("");
+  const [rentabilidadeMode, setRentabilidadeMode] = useState<RentabilidadeMode | null>(null);
+
+  const isRentabilidade = tipoRelatorio === "rentabilidade_projeto" || tipoRelatorio === "rentabilidade_cliente";
 
   const ALL_COLUMNS: (keyof ReportRow)[] = [
     "Tipo",
@@ -474,6 +483,10 @@ export default function Relatorios() {
         return "Relatório de Receitas";
       case "despesas":
         return "Relatório de Despesas";
+      case "rentabilidade_projeto":
+        return "Rentabilidade por projeto";
+      case "rentabilidade_cliente":
+        return "Rentabilidade por cliente";
       default:
         return "Relatório";
     }
@@ -491,6 +504,16 @@ export default function Relatorios() {
       return;
     }
 
+    // Rentabilidade tem fluxo próprio (componente com react-query): não passa
+    // pelo pipeline financeiro de receitas/despesas.
+    if (isRentabilidade) {
+      setReportData([]);
+      setReportTitle("");
+      setRentabilidadeMode(tipoRelatorio === "rentabilidade_cliente" ? "cliente" : "projeto");
+      return;
+    }
+
+    setRentabilidadeMode(null);
     setIsLoading(true);
     clearAllFilters();
 
@@ -603,6 +626,8 @@ export default function Relatorios() {
     { value: "financeiro", label: "Financeiro (Receitas e Despesas)" },
     { value: "receitas", label: "Receitas" },
     { value: "despesas", label: "Despesas" },
+    { value: "rentabilidade_projeto", label: "Rentabilidade por projeto" },
+    { value: "rentabilidade_cliente", label: "Rentabilidade por cliente" },
   ];
 
   // --- Render helpers ---
@@ -721,7 +746,8 @@ export default function Relatorios() {
                 </Select>
               </div>
 
-              {/* Período */}
+              {/* Período (não se aplica a rentabilidade, que é acumulada por projeto) */}
+              {!isRentabilidade && (
               <div className="space-y-1.5 xl:w-48 shrink-0">
                 <Label className="text-xs font-medium text-muted-foreground">Período</Label>
                 <Select value={periodoPreset} onValueChange={(v) => applyPreset(v as typeof periodoPreset)}>
@@ -738,9 +764,10 @@ export default function Relatorios() {
                   </SelectContent>
                 </Select>
               </div>
+              )}
 
               {/* Datas customizadas (só aparecem quando "Personalizado") */}
-              {periodoPreset === "custom" && (
+              {!isRentabilidade && periodoPreset === "custom" && (
                 <div className="flex items-end gap-1.5">
                   <div className="space-y-1.5">
                     <Label className="text-xs font-medium text-muted-foreground">De</Label>
@@ -838,7 +865,11 @@ export default function Relatorios() {
 
         {/* ═══ Resultado ═══ */}
         <div className="flex flex-col gap-5">
-          {isLoading ? (
+          {rentabilidadeMode ? (
+            <Suspense fallback={renderLoadingSkeleton()}>
+              <RelatoriosRentabilidade modo={rentabilidadeMode} />
+            </Suspense>
+          ) : isLoading ? (
             renderLoadingSkeleton()
           ) : reportData.length === 0 ? (
             renderEmptyState()

@@ -7,6 +7,9 @@ import { useClienteProjetos, type ClienteProjeto } from "./useClienteProjetos";
 import type { ClienteAccount } from "@/hooks/useClienteAuth";
 import { usePageTitle } from "@/hooks/usePageTitle";
 
+// Suporte do Pilar encaminha o cliente ao escritório responsável pela conta.
+const SUPORTE_EMAIL = "suporte@pilarsoft.com.br";
+
 const STATUS_COLORS: Record<string, string> = {
   Planejamento: "bg-blue-100 text-blue-800",
   "Em andamento": "bg-positive/10 text-positive-strong",
@@ -63,7 +66,17 @@ export default function ClienteDashboard() {
           <Card>
             <CardContent className="p-12 text-center">
               <FolderKanban className="h-10 w-10 mx-auto mb-3 text-muted-foreground opacity-40" />
-              <p className="text-sm text-muted-foreground">Nenhum projeto encontrado.</p>
+              <p className="text-sm font-medium text-slate-900">Você ainda não tem projetos liberados</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                Fale com o escritório para liberar seu acesso ou{" "}
+                <a
+                  href={`mailto:${SUPORTE_EMAIL}?subject=${encodeURIComponent("Liberar acesso ao portal do cliente")}`}
+                  className="font-medium text-brand hover:underline"
+                >
+                  entre em contato com o suporte
+                </a>
+                .
+              </p>
             </CardContent>
           </Card>
         )}
@@ -98,7 +111,14 @@ export default function ClienteDashboard() {
                           <span className="text-xs text-muted-foreground">Etapas concluídas</span>
                           <span className="text-xs font-medium">{progress}%</span>
                         </div>
-                        <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div
+                          className="w-full bg-gray-200 rounded-full h-2"
+                          role="progressbar"
+                          aria-valuenow={progress}
+                          aria-valuemin={0}
+                          aria-valuemax={100}
+                          aria-label="Etapas concluídas"
+                        >
                           <div className="bg-brand h-2 rounded-full transition-all" style={{ width: `${progress}%` }} />
                         </div>
                       </div>

@@ -37,23 +37,23 @@ export const useDashboardData = (dateFrom?: Date, dateTo?: Date) => {
       const prevEnd = addDays(periodoStart, -1);
       const prevStart = addDays(prevEnd, -duracao);
 
-      const results = await buildDashboardQueries(now, periodoStart, periodoEnd, prevStart, prevEnd);
+      const q = await buildDashboardQueries(now, periodoStart, periodoEnd, prevStart, prevEnd);
 
       // supabase-js resolve com { data, error } mesmo em falha (não rejeita a promise).
       // Sem isto, uma query que falha (RLS/rede) viraria "tudo zerado" na tela em vez de erro.
-      const firstError = results.find((r) => "error" in r && r.error)?.error;
+      const firstError = Object.values(q).find((r) => r.error)?.error;
       if (firstError) throw firstError;
 
-      const projetosData = results[6].data || [];
-      const projetosAtivos = results[12].count ?? 0;
+      const projetosData = q.projetos.data || [];
+      const projetosAtivos = q.projetosAtivosCount.count ?? 0;
 
       const kpis = buildKPIs(
-        results[0].data,
-        results[1].data,
-        results[2].data,
-        results[3].data,
-        results[4].data,
-        results[5].data,
+        q.receitasMes.data,
+        q.receitasMesAnt.data,
+        q.despesasMes.data,
+        q.despesasMesAnt.data,
+        q.receitasPendentes.data,
+        q.despesasPendentes.data,
         projetosAtivos,
         format(periodoStart, "yyyy-MM-dd"),
         format(periodoEnd, "yyyy-MM-dd"),
@@ -62,9 +62,9 @@ export const useDashboardData = (dateFrom?: Date, dateTo?: Date) => {
       );
 
       const projetos = buildProjetos(projetosData, now);
-      const { pipeline: leadsPipeline, total: leadsTotal } = buildLeadsPipeline(results[7].data || []);
-      const proximosVencimentos = buildVencimentos(results[10].data || [], results[11].data || [], now);
-      const alertas = buildAlertas(results[8].data || []);
+      const { pipeline: leadsPipeline, total: leadsTotal } = buildLeadsPipeline(q.leads.data || []);
+      const proximosVencimentos = buildVencimentos(q.proximasReceitas.data || [], q.proximasDespesas.data || [], now);
+      const alertas = buildAlertas(q.alertas.data || []);
 
       return {
         kpis,
@@ -73,7 +73,7 @@ export const useDashboardData = (dateFrom?: Date, dateTo?: Date) => {
         leadsPipeline,
         leadsTotal,
         alertas,
-        alertasNaoLidos: results[9].count || 0,
+        alertasNaoLidos: q.alertasCount.count || 0,
       };
     },
     staleTime: 1000 * 60 * 5,
