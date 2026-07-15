@@ -91,3 +91,24 @@ export const clienteLoginSchema = z.object({
 });
 export type ClienteLoginFormData = z.infer<typeof clienteLoginSchema>;
 export const clienteLoginDefaultValues: ClienteLoginFormData = { email: "", password: "" };
+
+export const trocarSenhaPortalSchema = z
+  .object({
+    senhaAtual: z.string().min(1, "Informe a senha atual"),
+    novaSenha: passwordSchema,
+    confirmarSenha: z.string().min(1, "Confirme a nova senha"),
+  })
+  .refine((d) => d.novaSenha === d.confirmarSenha, {
+    message: "As senhas não coincidem",
+    path: ["confirmarSenha"],
+  })
+  .refine((d) => d.novaSenha !== d.senhaAtual, {
+    message: "A nova senha deve ser diferente da atual",
+    path: ["novaSenha"],
+  });
+export type TrocarSenhaPortalFormData = z.infer<typeof trocarSenhaPortalSchema>;
+export const trocarSenhaPortalDefaultValues: TrocarSenhaPortalFormData = {
+  senhaAtual: "",
+  novaSenha: "",
+  confirmarSenha: "",
+};
