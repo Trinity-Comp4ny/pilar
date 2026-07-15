@@ -31,6 +31,13 @@ DECLARE
   v_mes int := EXTRACT(MONTH FROM now())::int;
   v_ano int := EXTRACT(YEAR FROM now())::int;
 BEGIN
+  -- Defesa em profundidade: só service_role (edge) escreve billing. Se algum dia
+  -- for chamada por outro papel, não deixa passar empresa_id de outro tenant
+  -- (tamper de billing cross-tenant). O grant abaixo já restringe a service_role.
+  IF auth.role() <> 'service_role' AND p_empresa_id IS DISTINCT FROM get_user_empresa_id() THEN
+    RAISE EXCEPTION 'increment_ai_usage: empresa fora do escopo' USING ERRCODE = '42501';
+  END IF;
+
   INSERT INTO public.ai_usage (empresa_id, mes, ano, total_requests, total_tokens_entrada, total_tokens_saida)
   VALUES (
     p_empresa_id, v_mes, v_ano,
@@ -46,8 +53,12 @@ BEGIN
 END;
 $$;
 
--- Edge usa service_role (bypassa RLS); authenticated recebe grant por consistência.
-GRANT EXECUTE ON FUNCTION public.increment_ai_usage(uuid, int, int, int) TO authenticated, service_role;
+-- Só service_role (edge) escreve billing. NUNCA authenticated/anon/PUBLIC: senão
+-- qualquer usuário chamaria a RPC com o empresa_id de outro tenant e inflaria o
+-- billing dele (a função é SECURITY DEFINER e bypassa a RLS de ai_usage).
+REVOKE ALL ON FUNCTION public.increment_ai_usage(uuid, int, int, int) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.increment_ai_usage(uuid, int, int, int) FROM anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.increment_ai_usage(uuid, int, int, int) TO service_role;
 
 -- ---------------------------------------------------------------------------
 -- 2. Trilha de auditoria das transições de estado do agent_run
