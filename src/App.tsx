@@ -16,8 +16,10 @@ import { AdminRoute } from "./components/AdminRoute";
 import { UltraAdminRoute } from "./components/UltraAdminRoute";
 import { FeatureRoute } from "./components/FeatureRoute";
 import { AdminOnlyRoute } from "./components/AdminOnlyRoute";
+import { RequireRole } from "./components/RequireRole";
 import { RequireAal2 } from "./components/RequireAal2";
 import { ImpersonationBanner } from "./components/ImpersonationBanner";
+import { TrialBanner } from "./components/TrialBanner";
 
 const Landing = lazy(() => import("./pages/Landing"));
 const Planos = lazy(() => import("./pages/planos"));
@@ -38,9 +40,12 @@ const Company = lazy(() => import("./pages/Company"));
 const CompanySetup = lazy(() => import("./pages/CompanySetup"));
 const ProfileSetup = lazy(() => import("./pages/ProfileSetup"));
 const Templates = lazy(() => import("./pages/templates"));
+const Timesheet = lazy(() => import("./pages/Timesheet"));
+const Chat = lazy(() => import("./pages/chat"));
 const MapaObras = lazy(() => import("./pages/mapa"));
 const Propostas = lazy(() => import("./pages/propostas"));
 const Capacidade = lazy(() => import("./pages/capacidade"));
+const RevisaoIA = lazy(() => import("./pages/revisao-ia"));
 const AiHub = lazy(() => import("./pages/ai"));
 const ProjetoDetail = lazy(() => import("./pages/projetos/ProjetoDetail"));
 const Calendario = lazy(() => import("./pages/Calendario"));
@@ -99,6 +104,7 @@ const App = () => {
             <AuthProvider>
               <ImpersonationProvider>
                 <ImpersonationBanner />
+                <TrialBanner />
                 <Suspense fallback={<PageSkeleton />}>
                   <Routes>
                     <Route path="/" element={<Landing />} />
@@ -116,8 +122,12 @@ const App = () => {
                         <Route path="/leads" element={<Leads />} />
                       </Route>
 
+                      {/* Financeiro (inclui aba Folha) escondido de coordenador/colaborador.
+                          Guard de UX; a barreira real é a RLS do Cluster 1. */}
                       <Route element={<FeatureRoute feature="financeiro" />}>
-                        <Route path="/financeiro" element={<Financeiro />} />
+                        <Route element={<RequireRole roles={["owner"]} />}>
+                          <Route path="/financeiro" element={<Financeiro />} />
+                        </Route>
                       </Route>
 
                       <Route element={<FeatureRoute feature="projetos" />}>
@@ -132,7 +142,9 @@ const App = () => {
                       </Route>
 
                       <Route element={<FeatureRoute feature="financeiro" />}>
-                        <Route path="/fornecedores" element={<Fornecedores />} />
+                        <Route element={<RequireRole roles={["owner"]} />}>
+                          <Route path="/fornecedores" element={<Fornecedores />} />
+                        </Route>
                       </Route>
 
                       <Route element={<AdminOnlyRoute />}>
@@ -147,6 +159,16 @@ const App = () => {
                       <Route element={<FeatureRoute feature="templates" />}>
                         <Route path="/templates" element={<Templates />} />
                       </Route>
+
+                      <Route element={<FeatureRoute feature="timesheet" />}>
+                        <Route path="/timesheet" element={<Timesheet />} />
+                      </Route>
+
+                      <Route element={<FeatureRoute feature="ai_chat" />}>
+                        <Route path="/agentes" element={<Chat />} />
+                      </Route>
+                      <Route path="/chat" element={<Navigate to="/agentes" replace />} />
+
 
                       <Route element={<FeatureRoute feature="mapa" />}>
                         <Route path="/mapa" element={<MapaObras />} />
@@ -164,6 +186,8 @@ const App = () => {
                       <Route element={<FeatureRoute feature="ai_hub" />}>
                         <Route path="/ai" element={<AiHub />} />
                       </Route>
+
+                      <Route path="/revisao-ia" element={<RevisaoIA />} />
                       <Route path="/profile" element={<Profile />} />
                       <Route path="/company-setup" element={<CompanySetup />} />
                       <Route path="/profile-setup" element={<ProfileSetup />} />
@@ -190,6 +214,7 @@ const App = () => {
                     <Route path="/rentabilidade" element={<Navigate to="/financeiro?tab=rentabilidade" replace />} />
 
                     {/* Portal do Cliente — Autenticado */}
+                    <Route path="/portal" element={<Navigate to="/cliente/login" replace />} />
                     <Route path="/cliente/login" element={<ClienteLogin />} />
                     <Route path="/cliente" element={<ClientePrivateRoute />}>
                       <Route path="dashboard" element={<ClienteDashboard />} />

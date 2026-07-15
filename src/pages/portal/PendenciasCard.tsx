@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { AlertCircle, FileCheck, Clock, ChevronRight } from "lucide-react";
+import { AlertCircle, FileCheck, Clock, ChevronRight, ExternalLink } from "lucide-react";
 import type { ClienteReceita } from "@/pages/cliente/useClienteProjetoData";
 
 interface PendenciasCardProps {
@@ -17,10 +17,15 @@ export function PendenciasCard({ baseUrl, receitas, portalEntregasPendentes }: P
   const em7dias = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
 
   const naoRecebidas = receitas.filter((r) => r.status !== "Recebido" && r.data_vencimento);
-  const faturasAtrasadas = naoRecebidas.filter((r) => r.data_vencimento < hoje).length;
-  const faturasProximasVencimento = naoRecebidas.filter(
+  const faturasAtrasadasList = naoRecebidas.filter((r) => r.data_vencimento < hoje);
+  const faturasAtrasadas = faturasAtrasadasList.length;
+  const faturasProximasVencimentoList = naoRecebidas.filter(
     (r) => r.data_vencimento >= hoje && r.data_vencimento <= em7dias
-  ).length;
+  );
+  const faturasProximasVencimento = faturasProximasVencimentoList.length;
+
+  const paymentLinkAtrasada = faturasAtrasadasList.find((r) => r.asaas_payment_url)?.asaas_payment_url ?? null;
+  const paymentLinkProxima = faturasProximasVencimentoList.find((r) => r.asaas_payment_url)?.asaas_payment_url ?? null;
 
   const pendencias = {
     entregasPendentes: portalEntregasPendentes,
@@ -56,7 +61,9 @@ export function PendenciasCard({ baseUrl, receitas, portalEntregasPendentes }: P
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-amber-900">Você tem pendências</p>
-            <p className="text-xs text-amber-700/80">{totalPendencias} item(ns) precisa(m) da sua atenção.</p>
+            <p className="text-xs text-amber-700/80">
+              {totalPendencias} {totalPendencias === 1 ? "item precisa" : "itens precisam"} da sua atenção.
+            </p>
           </div>
         </div>
 
@@ -77,34 +84,60 @@ export function PendenciasCard({ baseUrl, receitas, portalEntregasPendentes }: P
           )}
 
           {pendencias.faturasAtrasadas > 0 && (
-            <button
-              onClick={() => navigate(`${baseUrl}/financeiro`)}
-              className="w-full flex items-center justify-between gap-3 px-3 py-2 rounded-md bg-white hover:bg-red-50 border border-red-200 text-sm transition-colors"
-            >
-              <div className="flex items-center gap-2">
-                <Clock className="h-3.5 w-3.5 text-red-700" />
-                <span className="text-red-800">
-                  {pendencias.faturasAtrasadas} fatura{pendencias.faturasAtrasadas === 1 ? "" : "s"} em atraso
-                </span>
-              </div>
-              <ChevronRight className="h-3.5 w-3.5 text-red-700" />
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => navigate(`${baseUrl}/financeiro`)}
+                className="flex-1 flex items-center justify-between gap-3 px-3 py-2 rounded-md bg-white hover:bg-red-50 border border-red-200 text-sm transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <Clock className="h-3.5 w-3.5 text-red-700" />
+                  <span className="text-red-800">
+                    {pendencias.faturasAtrasadas} parcela{pendencias.faturasAtrasadas === 1 ? "" : "s"} em atraso
+                  </span>
+                </div>
+                <ChevronRight className="h-3.5 w-3.5 text-red-700" />
+              </button>
+              {paymentLinkAtrasada && (
+                <a
+                  href={paymentLinkAtrasada}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1 px-3 min-h-11 sm:min-h-0 sm:py-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium transition-colors whitespace-nowrap"
+                >
+                  Pagar
+                  <ExternalLink className="h-3 w-3" />
+                </a>
+              )}
+            </div>
           )}
 
           {pendencias.faturasProximasVencimento > 0 && (
-            <button
-              onClick={() => navigate(`${baseUrl}/financeiro`)}
-              className="w-full flex items-center justify-between gap-3 px-3 py-2 rounded-md bg-white hover:bg-amber-50 border border-amber-100 text-sm transition-colors"
-            >
-              <div className="flex items-center gap-2">
-                <Clock className="h-3.5 w-3.5 text-amber-700" />
-                <span>
-                  {pendencias.faturasProximasVencimento} fatura{pendencias.faturasProximasVencimento === 1 ? "" : "s"}{" "}
-                  vencendo em 7 dias
-                </span>
-              </div>
-              <ChevronRight className="h-3.5 w-3.5 text-amber-700" />
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => navigate(`${baseUrl}/financeiro`)}
+                className="flex-1 flex items-center justify-between gap-3 px-3 py-2 rounded-md bg-white hover:bg-amber-50 border border-amber-100 text-sm transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <Clock className="h-3.5 w-3.5 text-amber-700" />
+                  <span>
+                    {pendencias.faturasProximasVencimento} parcela
+                    {pendencias.faturasProximasVencimento === 1 ? "" : "s"} vencendo em 7 dias
+                  </span>
+                </div>
+                <ChevronRight className="h-3.5 w-3.5 text-amber-700" />
+              </button>
+              {paymentLinkProxima && (
+                <a
+                  href={paymentLinkProxima}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1 px-3 min-h-11 sm:min-h-0 sm:py-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium transition-colors whitespace-nowrap"
+                >
+                  Pagar
+                  <ExternalLink className="h-3 w-3" />
+                </a>
+              )}
+            </div>
           )}
         </div>
       </CardContent>

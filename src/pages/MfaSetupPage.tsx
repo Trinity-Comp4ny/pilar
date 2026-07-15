@@ -17,6 +17,7 @@ import { useMfa, type MfaEnrollResult } from "@/hooks/useMfa";
 import { useAuth } from "@/contexts/AuthContext";
 import { translateAuthError } from "@/lib/authErrors";
 import { MfaHelpModal } from "@/components/MfaHelpModal";
+import { MfaBackupCodes } from "@/components/MfaBackupCodes";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -115,7 +116,7 @@ export default function MfaSetupPage() {
   const { signOut, refreshMfaLevel } = useAuth();
   const { enrollTotp, resetAllFactors, verifyTotp } = useMfa();
 
-  const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
+  const [step, setStep] = useState<1 | 2 | 3 | 4 | 5>(1);
   const [enrollment, setEnrollment] = useState<MfaEnrollResult | null>(null);
   const [starting, setStarting] = useState(true);
   const [startError, setStartError] = useState<string | null>(null);
@@ -174,7 +175,9 @@ export default function MfaSetupPage() {
         clearEnrollment();
         await refreshMfaLevel();
         toast.success("MFA configurado com sucesso");
-        navigate("/dashboard", { replace: true });
+        // Passo 5: exibir códigos de recuperação ANTES de liberar o app.
+        // Sem isto, quem perde o autenticador fica trancado para sempre.
+        setStep(5);
       } catch (err) {
         toast.error("Código inválido", { description: translateAuthError(err) });
         setCode("");
@@ -239,7 +242,7 @@ export default function MfaSetupPage() {
 
             {/* Progress dots */}
             <div className="flex items-center justify-center gap-2">
-              {([1, 2, 3, 4] as const).map((s) => (
+              {([1, 2, 3, 4, 5] as const).map((s) => (
                 <div
                   key={s}
                   className={`h-1.5 rounded-full transition-all duration-300 ${
@@ -259,7 +262,7 @@ export default function MfaSetupPage() {
                     <ShieldCheck className="h-7 w-7 text-brand" />
                   </div>
                 </div>
-                <h1 className="text-xl font-semibold text-ink">Passo 1 de 4 — Instalar o app</h1>
+                <h1 className="text-xl font-semibold text-ink">Passo 1 de 5 — Instalar o app</h1>
                 <p className="text-sm text-ink-soft">
                   Escolha <strong className="text-ink">qualquer um</strong> dos apps abaixo e instale no seu celular.
                   Todos funcionam da mesma forma.
@@ -302,7 +305,7 @@ export default function MfaSetupPage() {
                     <ShieldCheck className="h-7 w-7 text-brand" />
                   </div>
                 </div>
-                <h1 className="text-xl font-semibold text-ink">Passo 2 de 4 — Abrir o app</h1>
+                <h1 className="text-xl font-semibold text-ink">Passo 2 de 5 — Abrir o app</h1>
                 <p className="text-sm text-ink-soft">Prepare o app para escanear o QR Code.</p>
               </div>
 
@@ -360,7 +363,7 @@ export default function MfaSetupPage() {
           {step === 3 && (
             <div className="space-y-5 animate-in fade-in duration-300">
               <div className="text-center space-y-2">
-                <h1 className="text-xl font-semibold text-ink">Passo 3 de 4 — Escanear</h1>
+                <h1 className="text-xl font-semibold text-ink">Passo 3 de 5 — Escanear</h1>
                 <p className="text-sm text-ink-soft">Aponte o app para o QR Code abaixo.</p>
               </div>
 
@@ -433,7 +436,7 @@ export default function MfaSetupPage() {
           {step === 4 && enrollment && (
             <div className="space-y-6 animate-in fade-in duration-300">
               <div className="text-center space-y-2">
-                <h1 className="text-xl font-semibold text-ink">Passo 4 de 4 — Confirmar</h1>
+                <h1 className="text-xl font-semibold text-ink">Passo 4 de 5 — Confirmar</h1>
                 <p className="text-sm text-ink-soft">Digite o código de 6 dígitos que aparece no app agora.</p>
               </div>
 
@@ -467,6 +470,33 @@ export default function MfaSetupPage() {
                   Precisa de ajuda?
                 </button>
               </div>
+            </div>
+          )}
+
+          {/* ── Etapa 5: Códigos de recuperação (obrigatório) ────── */}
+          {step === 5 && (
+            <div className="space-y-6 animate-in fade-in duration-300">
+              <div className="text-center space-y-2">
+                <div className="flex justify-center mb-3">
+                  <div className="p-3 rounded-full bg-brand/10">
+                    <ShieldCheck className="h-7 w-7 text-brand" />
+                  </div>
+                </div>
+                <h1 className="text-xl font-semibold text-ink">Passo 5 de 5 — Salve seus códigos</h1>
+                <p className="text-sm text-ink-soft">
+                  Se você perder o acesso ao autenticador, estes códigos são a{" "}
+                  <strong className="text-ink">única forma</strong> de entrar. Gere agora e guarde num lugar seguro.
+                </p>
+              </div>
+
+              <MfaBackupCodes />
+
+              <Button
+                className="w-full h-11 bg-brand hover:bg-brand/90 text-ink font-medium"
+                onClick={() => navigate("/dashboard", { replace: true })}
+              >
+                Já salvei — acessar o Pilar
+              </Button>
             </div>
           )}
         </div>

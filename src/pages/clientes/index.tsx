@@ -32,7 +32,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { formatPhone, formatDocument, formatAgency, formatBankAccount } from "@/lib/maskUtils";
+import { formatPhone, formatDocument, formatAgency, formatBankAccount, validateEmail, validateCPF, validateCNPJ, onlyDigits } from "@/lib/maskUtils";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -91,6 +91,9 @@ export default function Clientes() {
   const [newChavePix, setNewChavePix] = useState("");
   const [currentId, setCurrentId] = useState<string | null>(null);
 
+  const [emailError, setEmailError] = useState("");
+  const [cpfCnpjError, setCpfCnpjError] = useState("");
+
   const [step, setStep] = useState<1 | 2>(1);
 
   useEffect(() => {
@@ -113,6 +116,32 @@ export default function Clientes() {
       toast.error("Preencha o nome do cliente para continuar");
       return;
     }
+
+    let hasError = false;
+
+    if (email && !validateEmail(email)) {
+      setEmailError("E-mail inválido");
+      hasError = true;
+    } else {
+      setEmailError("");
+    }
+
+    if (cpfCnpj) {
+      const digits = onlyDigits(cpfCnpj);
+      const isCpf = digits.length <= 11;
+      const valid = isCpf ? validateCPF(digits) : validateCNPJ(digits);
+      if (!valid) {
+        setCpfCnpjError(isCpf ? "CPF inválido" : "CNPJ inválido");
+        hasError = true;
+      } else {
+        setCpfCnpjError("");
+      }
+    } else {
+      setCpfCnpjError("");
+    }
+
+    if (hasError) return;
+
     setStep(2);
   };
 
@@ -197,6 +226,8 @@ export default function Clientes() {
     setNewChavePix("");
     setCurrentId(null);
     setIsEditMode(false);
+    setEmailError("");
+    setCpfCnpjError("");
   };
 
   const handleOpenDialog = () => {
@@ -279,6 +310,34 @@ export default function Clientes() {
       return;
     }
 
+    let hasError = false;
+
+    if (email && !validateEmail(email)) {
+      setEmailError("E-mail inválido");
+      hasError = true;
+    } else {
+      setEmailError("");
+    }
+
+    if (cpfCnpj) {
+      const digits = onlyDigits(cpfCnpj);
+      const isCpf = digits.length <= 11;
+      const valid = isCpf ? validateCPF(digits) : validateCNPJ(digits);
+      if (!valid) {
+        setCpfCnpjError(isCpf ? "CPF inválido" : "CNPJ inválido");
+        hasError = true;
+      } else {
+        setCpfCnpjError("");
+      }
+    } else {
+      setCpfCnpjError("");
+    }
+
+    if (hasError) {
+      if (step !== 1) setStep(1);
+      return;
+    }
+
     try {
       await upsertCliente({
         id: isEditMode && currentId ? currentId : undefined,
@@ -347,8 +406,10 @@ export default function Clientes() {
         const digits = cliente.cpf_cnpj ? cliente.cpf_cnpj.replace(/\D/g, "") : "";
         const termDigits = term.replace(/\D/g, "");
         const nomeCompleto = `${cliente.nome}${cliente.sobrenome ? " " + cliente.sobrenome : ""}`;
-        const matchSearch = fuzzyMatch(nomeCompleto, term) || (termDigits && digits.includes(termDigits));
-        if (!matchSearch) return false;
+        const matchNome = fuzzyMatch(nomeCompleto, term);
+        const matchDoc = termDigits.length > 0 && digits.includes(termDigits);
+        const matchEmail = cliente.email ? normalize(cliente.email).includes(normalize(term)) : false;
+        if (!matchNome && !matchDoc && !matchEmail) return false;
       }
       if (filterOrigem !== "all" && cliente.origem !== filterOrigem) return false;
       if (filterPortal === "com" && !portalClienteIds.has(cliente.id)) return false;
@@ -495,10 +556,19 @@ export default function Clientes() {
                             <Input
                               id="cpf"
                               value={cpfCnpj}
-                              onChange={(e) => setCpfCnpj(formatDocument(e.target.value))}
+                              onChange={(e) => {
+                                setCpfCnpj(formatDocument(e.target.value));
+                                if (cpfCnpjError) setCpfCnpjError("");
+                              }}
                               placeholder="000.000.000-00"
                               maxLength={18}
+                              aria-invalid={!!cpfCnpjError}
+                              aria-describedby={cpfCnpjError ? "cpf-error" : undefined}
+                              className={cpfCnpjError ? "border-red-500 focus-visible:ring-red-500" : ""}
                             />
+                            {cpfCnpjError && (
+                              <p id="cpf-error" role="alert" className="text-xs text-red-600">{cpfCnpjError}</p>
+                            )}
                           </div>
                           <div className="space-y-1.5">
                             <Label htmlFor="email" className="text-xs">
@@ -508,13 +578,22 @@ export default function Clientes() {
                               id="email"
                               type="email"
                               value={email}
-                              onChange={(e) => setEmail(e.target.value)}
+                              onChange={(e) => {
+                                setEmail(e.target.value);
+                                if (emailError) setEmailError("");
+                              }}
                               placeholder="email@exemplo.com"
+                              aria-invalid={!!emailError}
+                              aria-describedby={emailError ? "email-error" : undefined}
+                              className={emailError ? "border-red-500 focus-visible:ring-red-500" : ""}
                             />
+                            {emailError && (
+                              <p id="email-error" role="alert" className="text-xs text-red-600">{emailError}</p>
+                            )}
                           </div>
                           <div className="space-y-1.5">
                             <Label htmlFor="contato" className="text-xs">
-                              Contato
+                              Telefone
                             </Label>
                             <Input
                               id="contato"
@@ -765,26 +844,6 @@ export default function Clientes() {
                       <Button type="button" onClick={goNext} className="bg-brand hover:bg-brand/90 text-ink">
                         Próximo →
                       </Button>
-                    ) : step === 1 && isEditMode ? (
-                      <>
-                        <Button type="button" onClick={goNext} variant="outline">
-                          Próximo →
-                        </Button>
-                        <Button
-                          type="button"
-                          onClick={handleSave}
-                          className="bg-brand hover:bg-brand/90 text-ink"
-                          disabled={isSaving}
-                        >
-                          {isSaving ? (
-                            <>
-                              <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Salvando...
-                            </>
-                          ) : (
-                            "Atualizar"
-                          )}
-                        </Button>
-                      </>
                     ) : (
                       <Button
                         type="button"
@@ -941,20 +1000,22 @@ export default function Clientes() {
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8"
+                              className="h-9 w-9"
+                              disabled={!cliente.email}
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setSelectedClienteForMessage(cliente);
                                 setIsMessageModalOpen(true);
                               }}
                               aria-label="Enviar mensagem"
+                              title={cliente.email ? "Enviar mensagem" : "Cliente sem e-mail cadastrado"}
                             >
                               <Mail className="h-4 w-4" />
                             </Button>
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8"
+                              className="h-9 w-9"
                               onClick={(e) => handleEditClick(cliente, e)}
                               aria-label="Editar cliente"
                             >
@@ -964,7 +1025,7 @@ export default function Clientes() {
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-8 w-8 text-red-500"
+                                className="h-9 w-9 text-red-500"
                                 onClick={(e) => handleDeleteClick(cliente.id, e)}
                                 aria-label="Excluir cliente"
                               >

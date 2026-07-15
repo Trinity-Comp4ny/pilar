@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -43,9 +44,14 @@ export function CloseMonthDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
         <Button
-          className="bg-brand hover:bg-brand/90"
+          className={cn(
+            "disabled:opacity-100",
+            allConfirmed
+              ? "bg-brand text-ink-on-brand hover:bg-brand/90"
+              : "bg-muted text-ink-soft border border-border"
+          )}
           disabled={!allConfirmed}
-          title={!allConfirmed ? "Confirme todos os colaboradores para fechar a folha" : ""}
+          title={!allConfirmed ? "Confirme todos os colaboradores para fechar a folha" : undefined}
         >
           <CheckCircle2 className="mr-2 h-4 w-4" />
           Fechar Folha

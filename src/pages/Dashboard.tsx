@@ -18,7 +18,7 @@ import {
   BarChart3,
   Target,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, lazy, Suspense } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   startOfMonth,
@@ -37,10 +37,10 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CalendarDays, CalendarIcon } from "lucide-react";
-import { ResponsiveContainer, Area, XAxis, YAxis, CartesianGrid, Tooltip, ComposedChart, Legend, Line } from "recharts";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
-import { CustomTooltip } from "./financeiro/components/CustomTooltip";
+
+const DashboardFinanceChart = lazy(() => import("@/components/charts/DashboardFinanceChart"));
 import {
   useDashboardData,
   type DashboardProjeto,
@@ -48,6 +48,8 @@ import {
   type DashboardAlerta,
   type LeadsPipeline,
 } from "@/hooks/useDashboardData";
+import { useFinanceChartData } from "@/hooks/useFinanceChartData";
+import { useAuth } from "@/contexts/AuthContext";
 import { PROJECT_STATUS_CONFIG, PROJECT_PRIORITY_CONFIG, type ProjectStatus, type ProjectPriority } from "@/constants";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -93,8 +95,25 @@ function KPICard({
 
   return (
     <Card
-      className={`vrz-card w-full ${cardBg} ${onClick ? "cursor-pointer hover:shadow-md transition-all hover:-translate-y-0.5" : ""}`}
+      className={cn(
+        "vrz-card w-full",
+        cardBg,
+        onClick &&
+          "cursor-pointer hover:shadow-md transition-all hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      )}
       onClick={onClick}
+      role={onClick ? "button" : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onKeyDown={
+        onClick
+          ? (e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                onClick();
+              }
+            }
+          : undefined
+      }
     >
       <CardHeader className="pb-2">
         <CardTitle className={`text-sm font-medium ${titleColor}`}>{title}</CardTitle>
@@ -114,8 +133,19 @@ function ProjectRow({ project, onClick }: { project: DashboardProjeto; onClick: 
 
   return (
     <div
-      className={`flex items-center gap-3 p-3 rounded-lg hover:bg-muted transition-colors cursor-pointer group border-l-[3px] ${priorityConfig?.borderColor || "border-l-transparent"}`}
+      className={cn(
+        "flex items-center gap-3 p-3 rounded-lg hover:bg-muted transition-colors cursor-pointer group border-l-[3px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+        priorityConfig?.borderColor || "border-l-transparent"
+      )}
       onClick={onClick}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onClick();
+        }
+      }}
     >
       <div className="h-9 w-9 rounded-lg bg-muted flex items-center justify-center text-ink-soft font-semibold text-sm shrink-0">
         {project.nome.charAt(0)}
@@ -361,7 +391,15 @@ export default function Dashboard() {
     }
   };
 
-  const { data, isLoading, error } = useDashboardData(dateFrom, dateTo);
+  const { profile } = useAuth();
+  const empresaId = profile?.empresa_id ?? null;
+
+  const { data, isLoading, error, refetch, isFetching } = useDashboardData(dateFrom, dateTo);
+
+  // Intervalo dos últimos 11 meses + mês atual para o gráfico de fluxo
+  const chartInicio = useMemo(() => startOfMonth(subMonths(new Date(), 11)), []);
+  const chartFim = useMemo(() => new Date(), []);
+  const { data: chartDataRpc } = useFinanceChartData(empresaId, chartInicio, chartFim);
 
   const canFin = can("financeiro", "view");
   const canProj = can("projetos", "view");
@@ -452,7 +490,18 @@ export default function Dashboard() {
             role="alert"
           >
             <strong className="font-bold">Erro ao carregar dados.</strong>
-            <span className="block sm:inline ml-1">Verifique sua conexão e tente recarregar a página.</span>
+            <span className="block sm:inline ml-1">Verifique sua conexão e tente novamente.</span>
+            <div className="mt-3">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => refetch()}
+                disabled={isFetching}
+                className="rounded-full"
+              >
+                {isFetching ? "Recarregando…" : "Tentar novamente"}
+              </Button>
+            </div>
           </div>
         </div>
       </PageLayout>
@@ -467,7 +516,10 @@ export default function Dashboard() {
     );
   }
 
-  const { kpis, projetos, proximosVencimentos, leadsPipeline, leadsTotal, alertas, alertasNaoLidos, chartData } = data;
+  const { kpis, projetos, proximosVencimentos, leadsPipeline, leadsTotal, alertas, alertasNaoLidos, chartData: chartDataFallback } = data;
+
+  // Usa dados da RPC quando disponível; fallback para a query legada
+  const chartData = chartDataRpc && chartDataRpc.length > 0 ? chartDataRpc : chartDataFallback;
 
   const nothingVisible = !canFin && !canProj && !canLeads;
 
@@ -496,7 +548,7 @@ export default function Dashboard() {
             {canFin && (
               <>
                 <KPICard
-                  title="Receita do Mês"
+                  title="Receita do período"
                   value={fmt.format(kpis.receitaMes)}
                   cardBg="bg-success-soft border-success-soft-border"
                   titleColor="text-success-strong"
@@ -505,7 +557,7 @@ export default function Dashboard() {
                   variacao={kpis.receitaVariacao}
                 />
                 <KPICard
-                  title="Despesa do Mês"
+                  title="Despesa do período"
                   value={fmt.format(kpis.despesaMes)}
                   cardBg="bg-danger-soft border-danger-soft-border"
                   titleColor="text-danger-strong"
@@ -514,7 +566,7 @@ export default function Dashboard() {
                   variacao={kpis.despesaVariacao}
                 />
                 <KPICard
-                  title="Saldo do Mês"
+                  title="Saldo do período"
                   value={fmt.format(kpis.saldoMes)}
                   cardBg={
                     kpis.saldoMes >= 0
@@ -533,7 +585,7 @@ export default function Dashboard() {
                   titleColor="text-warning-strong"
                   valueColor="text-warning-mid"
                   subtitleColor="text-warning"
-                  subtitle="pendente"
+                  subtitle="total pendente"
                 />
               </>
             )}
@@ -586,62 +638,9 @@ export default function Dashboard() {
               </CardHeader>
               <CardContent>
                 <div className="h-[280px] w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <ComposedChart data={chartData} margin={{ top: 5, right: 5, left: -15, bottom: 0 }}>
-                      <defs>
-                        <linearGradient id="gReceitas" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="hsl(var(--chart-success))" stopOpacity={0.15} />
-                          <stop offset="95%" stopColor="hsl(var(--chart-success))" stopOpacity={0} />
-                        </linearGradient>
-                        <linearGradient id="gDespesas" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="hsl(var(--chart-danger))" stopOpacity={0.15} />
-                          <stop offset="95%" stopColor="hsl(var(--chart-danger))" stopOpacity={0} />
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--chart-grid))" vertical={false} />
-                      <XAxis
-                        dataKey="mes"
-                        stroke="hsl(var(--chart-neutral))"
-                        fontSize={11}
-                        tickLine={false}
-                        axisLine={false}
-                      />
-                      <YAxis
-                        stroke="hsl(var(--chart-neutral))"
-                        fontSize={11}
-                        tickLine={false}
-                        axisLine={false}
-                        tickFormatter={(v) => fmtCompact.format(v)}
-                      />
-                      <Tooltip content={<CustomTooltip />} />
-                      <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 11 }} />
-                      <Area
-                        type="monotone"
-                        dataKey="receitas"
-                        name="Receitas"
-                        stroke="hsl(var(--chart-success))"
-                        fill="url(#gReceitas)"
-                        strokeWidth={2}
-                      />
-                      <Area
-                        type="monotone"
-                        dataKey="despesas"
-                        name="Despesas"
-                        stroke="hsl(var(--chart-danger))"
-                        fill="url(#gDespesas)"
-                        strokeWidth={2}
-                      />
-                      <Line
-                        type="monotone"
-                        dataKey="saldo"
-                        name="Saldo"
-                        stroke="hsl(var(--c-indigo-500))"
-                        strokeWidth={1.5}
-                        strokeDasharray="4 4"
-                        dot={false}
-                      />
-                    </ComposedChart>
-                  </ResponsiveContainer>
+                  <Suspense fallback={<Skeleton className="h-full w-full" />}>
+                    <DashboardFinanceChart data={chartData} />
+                  </Suspense>
                 </div>
               </CardContent>
             </Card>

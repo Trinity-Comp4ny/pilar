@@ -1,0 +1,54 @@
+name: E2E (staging)
+
+# Roda a suíte Playwright contra o Supabase de STAGING, depois que o deploy
+# de staging conclui. Fica FORA do CI de PR de propósito: E2E autenticado muta
+# dados, então não deve bloquear PRs nem rodar contra produção.
+#
+# Secrets necessários (GitHub Environment `staging`):
+#   STAGING_SUPABASE_URL         — VITE_SUPABASE_URL do projeto de staging
+#   STAGING_SUPABASE_ANON_KEY    — chave publishable/anon de staging
+#   E2E_TEST_EMAIL / E2E_TEST_PASSWORD           — usuário de teste (admin/gestor)
+#   E2E_PORTAL_EMAIL / E2E_PORTAL_PASSWORD       — usuário do portal (opcional)
+
+on:
+  workflow_run:
+    workflows: ["Deploy Supabase"]
+    types: [completed]
+    branches: [staging]
+  workflow_dispatch: {}
+
+jobs:
+  e2e:
+    name: Playwright → staging
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    environment: staging
+    env:
+      CI: "true"
+      VITE_SUPABASE_URL: ${{ secrets.STAGING_SUPABASE_URL }}
+      VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.STAGING_SUPABASE_ANON_KEY }}
+      E2E_TEST_EMAIL: ${{ secrets.E2E_TEST_EMAIL }}
+      E2E_TEST_PASSWORD: ${{ secrets.E2E_TEST_PASSWORD }}
+      E2E_PORTAL_EMAIL: ${{ secrets.E2E_PORTAL_EMAIL }}
+      E2E_PORTAL_PASSWORD: ${{ secrets.E2E_PORTAL_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Build (apontando pro Supabase de staging)
+        run: npm run build
+      - name: Instalar browsers do Playwright
+        run: npx playwright install --with-deps chromium
+      - name: Rodar E2E
+        run: npx playwright test
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7

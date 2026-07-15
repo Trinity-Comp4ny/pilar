@@ -3,7 +3,7 @@
 // usuário sempre veja números próximos da realidade ao voltar pra aba.
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { subMonths, startOfMonth, endOfMonth } from "date-fns";
+import { subMonths, startOfMonth, endOfMonth, format, parseISO } from "date-fns";
 import { getDisplayDate } from "@/lib/dateUtils";
 import type { Tables } from "@/integrations/supabase/types";
 
@@ -30,14 +30,15 @@ export const useFinanceData = (dateFrom?: Date, dateTo?: Date) => {
 
       const previousStart = subMonths(start, 1);
 
-      const prevFromStr = previousStart.toISOString().split("T")[0];
-      const dateToStr = end.toISOString().split("T")[0];
+      const prevFromStr = format(previousStart, "yyyy-MM-dd");
+      const dateToStr = format(end, "yyyy-MM-dd");
 
       const [categoriesRes, receitasRes, despesasRes] = await Promise.all([
         supabase.from("categorias_financeiras").select("id, nome, tipo"),
         supabase
           .from("receitas")
           .select("*")
+          .neq("status", "Cancelado")
           .gte("data_vencimento", prevFromStr)
           .lte("data_vencimento", dateToStr)
           .order("data_recebimento", { ascending: false })
@@ -46,6 +47,7 @@ export const useFinanceData = (dateFrom?: Date, dateTo?: Date) => {
           .from("despesas")
           .select("*")
           .eq("is_fatura_payment", false)
+          .neq("status", "Cancelado")
           .gte("data_vencimento", prevFromStr)
           .lte("data_vencimento", dateToStr)
           .order("data_vencimento", { ascending: true }),
@@ -66,9 +68,9 @@ export const useFinanceData = (dateFrom?: Date, dateTo?: Date) => {
         categorias_financeiras: d.categoria_id ? categoriesMap.get(d.categoria_id) : undefined,
       }));
 
-      const startStr = start.toISOString().split("T")[0];
-      const endStr = end.toISOString().split("T")[0];
-      const prevStartStr = previousStart.toISOString().split("T")[0];
+      const startStr = format(start, "yyyy-MM-dd");
+      const endStr = format(end, "yyyy-MM-dd");
+      const prevStartStr = format(previousStart, "yyyy-MM-dd");
 
       const inMainPeriod = (dateStr: string) => {
         if (!dateStr) return false;
@@ -210,7 +212,7 @@ export const processChartData = (receitas: ReceitaChartItem[], despesas: Despesa
     );
     if (!displayDate) return;
 
-    const date = new Date(displayDate);
+    const date = parseISO(displayDate);
     const monthName = date.toLocaleString("pt-BR", { month: "short" });
     const year = date.getFullYear().toString().slice(-2);
     const key = `${monthName.charAt(0).toUpperCase() + monthName.slice(1).replace(".", "")}/${year}`;
@@ -316,28 +318,30 @@ export const processCategoryData = (
 ) => {
   const categoryMap = new Map<string, { name: string; value: number; color: string }>();
 
-  const greenShades = [
+  // Matizes distintos (não monocromáticos) para diferenciar fatias adjacentes.
+  // Receitas: paleta fria/verde; Despesas: paleta quente/vermelha.
+  const receitasColors = [
     "hsl(var(--c-green-600))",
-    "hsl(var(--c-green-500))",
-    "hsl(var(--c-green-400))",
-    "hsl(var(--c-green-700))",
-    "hsl(var(--c-green-900))",
-    "hsl(var(--c-green-200))",
-    "hsl(var(--c-green-100))",
-    "hsl(var(--c-green-200))",
+    "hsl(var(--c-emerald-500))",
+    "hsl(var(--c-cyan-500))",
+    "hsl(var(--c-lime-500))",
+    "hsl(var(--c-blue-500))",
+    "hsl(var(--c-indigo-500))",
+    "hsl(var(--c-violet-500))",
+    "hsl(var(--c-purple-500))",
   ];
-  const redShades = [
+  const despesasColors = [
     "hsl(var(--c-red-600))",
-    "hsl(var(--c-red-500))",
+    "hsl(var(--c-orange-500))",
+    "hsl(var(--c-amber-500))",
+    "hsl(var(--c-pink-500))",
     "hsl(var(--c-red-400))",
-    "hsl(var(--c-red-700))",
-    "hsl(var(--c-red-900))",
-    "hsl(var(--c-red-200))",
-    "hsl(var(--c-red-100))",
-    "hsl(var(--c-red-50))",
+    "hsl(var(--c-orange-700))",
+    "hsl(var(--c-yellow-600))",
+    "hsl(var(--c-purple-600))",
   ];
 
-  const colors = type === "receitas" ? greenShades : redShades;
+  const colors = type === "receitas" ? receitasColors : despesasColors;
 
   items.forEach((item) => {
     const categoryName = item.categorias_financeiras?.nome || "Outros";

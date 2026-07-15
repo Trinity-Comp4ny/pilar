@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Building2, QrCode } from "lucide-react";
 import type { CompanyData } from "../types";
 import { STATUS_OPTIONS, getStatusBadge } from "../types";
@@ -67,138 +68,161 @@ export function CompanyDataTab({
         )}
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label>Nome da Empresa</Label>
-            <Input
-              value={companyData.nomeEmpresa}
-              onChange={(e) => onChange("nomeEmpresa", e.target.value)}
-              readOnly={!editing}
-              className={inputClass}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label>CNPJ</Label>
-            <Input
-              value={companyData.cnpj}
-              onChange={(e) => onChange("cnpj", e.target.value)}
-              readOnly={!editing}
-              className={inputClass}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label>Email</Label>
-            <Input
-              type="email"
-              value={companyData.email}
-              onChange={(e) => onChange("email", e.target.value)}
-              readOnly={!editing}
-              className={inputClass}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label>Contato</Label>
-            <Input
-              value={companyData.contato}
-              onChange={(e) => onChange("contato", e.target.value)}
-              readOnly={!editing}
-              className={inputClass}
-            />
-          </div>
-          <div className="space-y-2 md:col-span-2">
-            <Label>Status</Label>
-            {editing ? (
-              <Select value={companyData.status} onValueChange={onStatusChange}>
-                <SelectTrigger className={inputClass}>
-                  <SelectValue placeholder="Selecione" />
-                </SelectTrigger>
-                <SelectContent>
-                  {STATUS_OPTIONS.map((s) => (
-                    <SelectItem key={s.value} value={s.value}>
-                      {s.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            ) : (
-              <div className={"h-10 rounded-md px-3 flex items-center " + readonlyClass}>
-                <Badge className={"rounded-full " + getStatusBadge(companyData.status).className}>
-                  {getStatusBadge(companyData.status).label}
-                </Badge>
-              </div>
-            )}
-          </div>
-          <div className="space-y-2 md:col-span-2">
-            <Label>Endereço</Label>
-            <Input
-              value={companyData.endereco}
-              onChange={(e) => onChange("endereco", e.target.value)}
-              readOnly={!editing}
-              className={inputClass}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label>Cidade</Label>
-            <Input
-              value={companyData.cidade}
-              onChange={(e) => onChange("cidade", e.target.value)}
-              readOnly={!editing}
-              className={inputClass}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label>Estado</Label>
-            <Input
-              value={companyData.estado}
-              onChange={(e) => onChange("estado", e.target.value)}
-              readOnly={!editing}
-              className={inputClass}
-              maxLength={2}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label>CEP</Label>
-            <Input
-              value={companyData.cep}
-              onChange={(e) => onChange("cep", e.target.value)}
-              readOnly={!editing}
-              className={inputClass}
-            />
-          </div>
-        </div>
-
-        <div className="mt-6 pt-6 border-t">
-          <div className="flex items-center gap-2 mb-3">
-            <QrCode size={16} className="text-brand" />
-            <Label className="text-sm font-semibold">Cobrança direta (sem Asaas)</Label>
-          </div>
-          <p className="text-xs text-muted-foreground mb-4">
-            Dados enviados nos emails de cobrança manual. Mantém seu 100% — zero taxa de gateway.
-          </p>
+        {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Chave Pix</Label>
-              <Input
-                value={companyData.pixChave || ""}
-                onChange={(e) => onChange("pixChave", e.target.value)}
-                readOnly={!editing}
-                className={inputClass}
-                placeholder="CPF, CNPJ, email, telefone ou aleatória"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Instruções (opcional)</Label>
-              <Textarea
-                value={companyData.pixInstrucoes || ""}
-                onChange={(e) => onChange("pixInstrucoes", e.target.value)}
-                readOnly={!editing}
-                className={inputClass}
-                placeholder="Ex: Titular João Silva, Itaú"
-                rows={2}
-              />
-            </div>
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="space-y-2">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+            ))}
           </div>
-        </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="company-nome">Nome da Empresa</Label>
+                <Input
+                  id="company-nome"
+                  value={companyData.nomeEmpresa}
+                  onChange={(e) => onChange("nomeEmpresa", e.target.value)}
+                  readOnly={!editing}
+                  className={inputClass}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="company-cnpj">CNPJ</Label>
+                <Input
+                  id="company-cnpj"
+                  value={companyData.cnpj}
+                  onChange={(e) => onChange("cnpj", e.target.value)}
+                  readOnly={!editing}
+                  className={inputClass}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="company-email">Email</Label>
+                <Input
+                  id="company-email"
+                  type="email"
+                  value={companyData.email}
+                  onChange={(e) => onChange("email", e.target.value)}
+                  readOnly={!editing}
+                  className={inputClass}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="company-contato">Contato</Label>
+                <Input
+                  id="company-contato"
+                  value={companyData.contato}
+                  onChange={(e) => onChange("contato", e.target.value)}
+                  readOnly={!editing}
+                  className={inputClass}
+                />
+              </div>
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="company-status">Status</Label>
+                {editing ? (
+                  <Select value={companyData.status} onValueChange={onStatusChange}>
+                    <SelectTrigger id="company-status" className={inputClass}>
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {STATUS_OPTIONS.map((s) => (
+                        <SelectItem key={s.value} value={s.value}>
+                          {s.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <div className={"h-10 rounded-md px-3 flex items-center " + readonlyClass}>
+                    <Badge className={"rounded-full " + getStatusBadge(companyData.status).className}>
+                      {getStatusBadge(companyData.status).label}
+                    </Badge>
+                  </div>
+                )}
+              </div>
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="company-endereco">Endereço</Label>
+                <Input
+                  id="company-endereco"
+                  value={companyData.endereco}
+                  onChange={(e) => onChange("endereco", e.target.value)}
+                  readOnly={!editing}
+                  className={inputClass}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="company-cidade">Cidade</Label>
+                <Input
+                  id="company-cidade"
+                  value={companyData.cidade}
+                  onChange={(e) => onChange("cidade", e.target.value)}
+                  readOnly={!editing}
+                  className={inputClass}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="company-estado">Estado</Label>
+                <Input
+                  id="company-estado"
+                  value={companyData.estado}
+                  onChange={(e) => onChange("estado", e.target.value)}
+                  readOnly={!editing}
+                  className={inputClass}
+                  maxLength={2}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="company-cep">CEP</Label>
+                <Input
+                  id="company-cep"
+                  value={companyData.cep}
+                  onChange={(e) => onChange("cep", e.target.value)}
+                  readOnly={!editing}
+                  className={inputClass}
+                />
+              </div>
+            </div>
+
+            <div className="mt-6 pt-6 border-t">
+              <div className="flex items-center gap-2 mb-3">
+                <QrCode size={16} className="text-brand" />
+                <span className="text-sm font-semibold">Cobrança direta (sem Asaas)</span>
+              </div>
+              <p className="text-xs text-muted-foreground mb-4">
+                Dados enviados nos emails de cobrança manual. Mantém seu 100% — zero taxa de gateway.
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="company-pix-chave">Chave Pix</Label>
+                  <Input
+                    id="company-pix-chave"
+                    value={companyData.pixChave || ""}
+                    onChange={(e) => onChange("pixChave", e.target.value)}
+                    readOnly={!editing}
+                    className={inputClass}
+                    placeholder="CPF, CNPJ, email, telefone ou aleatória"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="company-pix-instrucoes">Instruções (opcional)</Label>
+                  <Textarea
+                    id="company-pix-instrucoes"
+                    value={companyData.pixInstrucoes || ""}
+                    onChange={(e) => onChange("pixInstrucoes", e.target.value)}
+                    readOnly={!editing}
+                    className={inputClass}
+                    placeholder="Ex: Titular João Silva, Itaú"
+                    rows={2}
+                  />
+                </div>
+              </div>
+            </div>
+          </>
+        )}
       </CardContent>
     </Card>
   );

@@ -8,6 +8,7 @@ import {
   Home,
   LayoutTemplate,
   MapPin,
+  Sparkles,
   Target,
   UserPlus,
   Users,
@@ -30,7 +31,9 @@ export type FeatureKey =
   | "portal_cliente"
   | "ai_hub"
   | "capacidade"
-  | "templates";
+  | "templates"
+  | "timesheet"
+  | "ai_chat";
 
 export type FeatureGroup = "visao" | "comercial" | "operacao" | "financeiro" | "equipe" | "extras";
 
@@ -183,6 +186,17 @@ export const FEATURES: readonly FeatureDefinition[] = [
     includedInPlans: ["pro", "enterprise"],
   },
   {
+    key: "ai_chat",
+    label: "Agentes",
+    description: "Converse em linguagem natural — os agentes respondem sobre finanças, projetos e comercial",
+    group: "visao",
+    icon: Sparkles,
+    core: false,
+    addon: false,
+    dormant: false,
+    includedInPlans: ["pro", "enterprise"],
+  },
+  {
     key: "ai_hub",
     label: "IA Hub",
     description: "Assistentes de IA para propostas, relatórios e análises",
@@ -215,6 +229,18 @@ export const FEATURES: readonly FeatureDefinition[] = [
     core: false,
     addon: true,
     addonPriceLabel: "+R$ 29/mês",
+    dormant: true,
+    includedInPlans: ["enterprise"],
+  },
+  {
+    key: "timesheet",
+    label: "Timesheet",
+    description: "Registro de horas por projeto e colaborador",
+    group: "operacao",
+    icon: Workflow,
+    core: false,
+    addon: true,
+    addonPriceLabel: "+R$ 49/mês",
     dormant: true,
     includedInPlans: ["enterprise"],
   },

@@ -70,6 +70,40 @@ entrypoint = "./functions/auth-email-hook/index.ts"
 [functions.portal-get-projeto]
 verify_jwt = false
 
+# ── Funções públicas / com autenticação própria ──────────────────────────────
+# Estas NÃO validam o JWT do Supabase no gateway. A verdade de auth vive dentro
+# de cada função (token do portal, assinatura de webhook, captcha, cron secret).
+# Declarar aqui torna o deploy automatizado seguro: `supabase functions deploy`
+# passa a respeitar estes flags — sem depender de `--no-verify-jwt` manual.
+
+# Webhooks externos (não conseguem enviar JWT do Supabase)
+[functions.asaas-webhook]
+verify_jwt = false
+
+[functions.pilar-checkout-webhook]
+verify_jwt = false
+
+[functions.pilar-checkout-create]
+verify_jwt = false
+
+[functions.pilar-checkout-status]
+verify_jwt = false
+
+# Cron (chamada agendada, sem usuário)
+[functions.trial-expiry-cron]
+verify_jwt = false
+
+# Captcha pré-login (roda antes de existir sessão)
+[functions.turnstile-verify]
+verify_jwt = false
+
+# Portal do cliente (auth própria via cliente_portal_accounts / portal token)
+[functions.portal-aprovar-proposta]
+verify_jwt = false
+
+[functions.portal-entrega-download]
+verify_jwt = false
+
 [auth.sms]
 enable_signup = false
 

@@ -50,6 +50,25 @@ Relatórios, Portal Cliente.
 - RLS em toda tabela nova; testar com `auth.uid()` correto
 - Edge Functions seguem padrão `_shared/cors.ts` + rate limiting por empresa
 
+## Documentação
+
+Toda a documentação vive em `docs/`, organizada por tema com índices navegáveis.
+Comece por `docs/README.md` (índice mestre). Temas: `strategy/` (produto, ICP,
+roadmap, **pricing**, concorrência), `security/` (segurança, compliance, auditoria),
+`operations/` (deploy, DR, incident, runbooks, monitoring), `architecture/` (ADRs),
+`legal/`. Inteligência de mercado em `research/` (índice `research/INDEX.md`).
+
+## Marca (copy, landing, UI text, material de venda)
+
+Antes de escrever QUALQUER texto voltado ao usuário — landing, microcopy de UI,
+e-mail, deck, anúncio — consultar `brand/BRAND.md` (índice) e o arquivo específico:
+voz/tom → `brand/voice-tone.md`, visual → `brand/visual.md`, mensagens → `brand/messaging.md`,
+público → `brand/personas.md`. Cor/token: a verdade é `src/styles/tokens.css`.
+
+- Tagline: "Saiba se cada projeto está dando lucro antes de terminar."
+- ICP: engenharia multidisciplinar (civil/estrutural/MEP) — NÃO arquitetura nem construtora.
+- Voz: direta, técnica na medida, confiante, sem hype. Ver palavras banidas em voice-tone.md.
+
 ## DB
 
 26 migrations em `supabase/migrations/`. Tipos gerados em `src/integrations/supabase/types.ts`.

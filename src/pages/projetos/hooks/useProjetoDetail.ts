@@ -7,6 +7,7 @@ import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import { toast } from "sonner";
 import { useProjetoRentabilidade } from "@/hooks/useRentabilidade";
 import { useTemplates } from "@/hooks/useTemplates";
+import { errorMessage } from "@/lib/errors";
 import {
   useProjetoDisciplinas,
   useUpsertDisciplina,
@@ -65,7 +66,7 @@ export function useProjetoDetail(id: string | undefined) {
   });
 
   // ---- Rentabilidade ----
-  const { data: rentabilidade } = useProjetoRentabilidade(id);
+  const { data: rentabilidade, isLoading: rentabilidadeLoading } = useProjetoRentabilidade(id);
 
   // ---- Relational disciplinas ----
   const { data: dbDisciplinas = [] } = useProjetoDisciplinas(id);
@@ -108,12 +109,19 @@ export function useProjetoDetail(id: string | undefined) {
 
   // ---- Disciplina mutations ----
   const applyDiscStatusChange = useCallback(
-    async (idx: number, newStatus: string, justificativa?: string) => {
+    async (idx: number, newStatus: string, justificativa?: string, dataFimRealOverride?: string) => {
       if (!projeto) return;
       const dbDisc = dbDisciplinas[idx];
       if (!dbDisc) return;
 
       const isFinished = newStatus === "Concluído" && dbDisc.status !== "Concluído";
+
+      // Prioridade: override explícito do dialog > data_fim_real já gravada > hoje.
+      // Permite o usuário registrar entrega passada sem o sistema forçar "hoje".
+      const resolvedDataFim =
+        newStatus === "Concluído"
+          ? dataFimRealOverride || (!dbDisc.data_fim_real ? new Date().toISOString().split("T")[0] : undefined)
+          : undefined;
 
       try {
         await updateStatusMut.mutateAsync({
@@ -121,13 +129,13 @@ export function useProjetoDetail(id: string | undefined) {
           projetoId: projeto.id,
           status: newStatus,
           justificativa_atraso: justificativa,
-          data_fim_real:
-            newStatus === "Concluído" && !dbDisc.data_fim_real ? new Date().toISOString().split("T")[0] : undefined,
+          data_fim_real: resolvedDataFim,
         });
         toast.success(`${dbDisc.nome}: ${newStatus}`);
 
+        // Ao concluir, notifica APENAS responsáveis da próxima etapa do fluxo.
+        // Não dispara email ao cliente — comunicação com cliente é manual.
         if (isFinished) {
-          void sendDisciplinaEmail(dbDisc.nome);
           void notifyNextStage(dbDisc.id);
         }
       } catch (err: unknown) {
@@ -156,28 +164,6 @@ export function useProjetoDetail(id: string | undefined) {
     }
   };
 
-  const sendDisciplinaEmail = async (disc: string) => {
-    try {
-      const { error } = await supabase.functions.invoke("send-completion-email", {
-        body: {
-          email: projeto?.cliente_email,
-          name: disc,
-          type: "subject",
-        },
-      });
-
-      if (error) {
-        toast.error(`Erro ao enviar email para o cliente ${projeto?.cliente_nome}.`);
-        monitoring.captureException(error, { context: "sendDisciplinaEmail" });
-        return;
-      }
-
-      toast.success(`Email enviado com sucesso para o cliente ${projeto?.cliente_nome}.`);
-    } catch (err) {
-      monitoring.captureException(err, { context: "sendDisciplinaEmail unexpected" });
-    }
-  };
-
   const handleRemoveDisc = useCallback(
     async (idx: number) => {
       if (!projeto) return;
@@ -187,8 +173,7 @@ export function useProjetoDetail(id: string | undefined) {
         await deleteDisciplinaMut.mutateAsync({ id: dbDisc.id, projetoId: projeto.id });
         toast.success("Disciplina removida");
       } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : String(err);
-        toast.error("Erro ao remover", { description: message });
+        toast.error("Erro ao remover", { description: errorMessage(err) });
       }
     },
     [projeto, dbDisciplinas, deleteDisciplinaMut, toast]
@@ -206,8 +191,7 @@ export function useProjetoDetail(id: string | undefined) {
         });
         toast.success("Disciplina adicionada");
       } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : String(err);
-        toast.error("Erro ao adicionar disciplina", { description: message });
+        toast.error("Erro ao adicionar disciplina", { description: errorMessage(err) });
       }
     },
     [projeto, upsertDisciplina, toast]
@@ -235,8 +219,7 @@ export function useProjetoDetail(id: string | undefined) {
         });
         toast.success("Disciplina atualizada");
       } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : String(err);
-        toast.error("Erro ao salvar", { description: message });
+        toast.error("Erro ao salvar", { description: errorMessage(err) });
       }
     },
     [projeto, upsertDisciplina, toast]
@@ -341,6 +324,8 @@ export function useProjetoDetail(id: string | undefined) {
     deadline,
     progress,
     margemBrutaPct,
+    rentabilidade,
+    rentabilidadeLoading,
 
     // Mutations
     applyDiscStatusChange,

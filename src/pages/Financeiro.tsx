@@ -1,19 +1,21 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, lazy, Suspense } from "react";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { useSidebar } from "@/components/ui/sidebar";
 import { useSearchParams } from "react-router-dom";
 import { startOfMonth, endOfMonth, parseISO, format, isValid } from "date-fns";
 import { LayoutDashboard, TrendingUp, Receipt, Users2, CreditCard, Landmark } from "lucide-react";
 import { FinanceiroHeader } from "./financeiro/components/FinanceiroHeader";
-import VisaoGeral from "./financeiro/tabs/VisaoGeral";
-import FluxoCaixa from "./financeiro/tabs/FluxoCaixa";
-import Contas from "./financeiro/tabs/Contas";
-import Lancamentos from "./financeiro/tabs/Lancamentos";
-import FolhaPagamento from "./financeiro/tabs/FolhaPagamento";
-import Faturas from "./financeiro/tabs/Faturas";
+import { Skeleton } from "@/components/ui/skeleton";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { SecondSidebar, type SecondSidebarTab } from "@/components/SecondSidebar";
 import { FinanceFilterProvider, type Visualizacao } from "./financeiro/contexts/FinanceFilterContext";
+
+const VisaoGeral = lazy(() => import("./financeiro/tabs/VisaoGeral"));
+const FluxoCaixa = lazy(() => import("./financeiro/tabs/FluxoCaixa"));
+const Contas = lazy(() => import("./financeiro/tabs/Contas"));
+const Lancamentos = lazy(() => import("./financeiro/tabs/Lancamentos"));
+const FolhaPagamento = lazy(() => import("./financeiro/tabs/FolhaPagamento"));
+const Faturas = lazy(() => import("./financeiro/tabs/Faturas"));
 
 const FINANCEIRO_TABS_ALL: SecondSidebarTab[] = [
   { id: "visao-geral", label: "Visão Geral", icon: LayoutDashboard },
@@ -76,7 +78,7 @@ export default function Financeiro() {
       <FinanceFilterProvider value={filterValue}>
         <Tabs value={activeTab} onValueChange={handleTabChange} className="flex flex-col flex-1 overflow-hidden">
           <div className="sticky top-0 z-20 w-full bg-white border-b">
-            <FinanceiroHeader />
+            <FinanceiroHeader activeTab={activeTab} />
           </div>
 
           <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
@@ -84,27 +86,51 @@ export default function Financeiro() {
             <div className="flex-1 overflow-y-auto w-full bg-gray-50/50 p-6 md:p-8">
               <div className="w-full mx-auto space-y-6">
                 <TabsContent value="visao-geral" className="mt-0 w-full focus-visible:ring-0">
-                  {activeTab === "visao-geral" && <VisaoGeral />}
+                  {activeTab === "visao-geral" && (
+                    <Suspense fallback={<Skeleton className="h-64 w-full" />}>
+                      <VisaoGeral />
+                    </Suspense>
+                  )}
                 </TabsContent>
 
                 <TabsContent value="fluxo-caixa" className="mt-0 w-full focus-visible:ring-0">
-                  {activeTab === "fluxo-caixa" && <FluxoCaixa dateFrom={dateFrom} dateTo={dateTo} />}
+                  {activeTab === "fluxo-caixa" && (
+                    <Suspense fallback={<Skeleton className="h-64 w-full" />}>
+                      <FluxoCaixa dateFrom={dateFrom} dateTo={dateTo} />
+                    </Suspense>
+                  )}
                 </TabsContent>
 
                 <TabsContent value="lancamentos" className="mt-0 w-full focus-visible:ring-0">
-                  {activeTab === "lancamentos" && <Lancamentos />}
+                  {activeTab === "lancamentos" && (
+                    <Suspense fallback={<Skeleton className="h-64 w-full" />}>
+                      <Lancamentos />
+                    </Suspense>
+                  )}
                 </TabsContent>
 
                 <TabsContent value="folha-pagamento" className="mt-0 w-full focus-visible:ring-0">
-                  {activeTab === "folha-pagamento" && <FolhaPagamento />}
+                  {activeTab === "folha-pagamento" && (
+                    <Suspense fallback={<Skeleton className="h-64 w-full" />}>
+                      <FolhaPagamento />
+                    </Suspense>
+                  )}
                 </TabsContent>
 
                 <TabsContent value="faturas" className="mt-0 w-full focus-visible:ring-0">
-                  {activeTab === "faturas" && <Faturas />}
+                  {activeTab === "faturas" && (
+                    <Suspense fallback={<Skeleton className="h-64 w-full" />}>
+                      <Faturas />
+                    </Suspense>
+                  )}
                 </TabsContent>
 
                 <TabsContent value="contas" className="mt-0 w-full focus-visible:ring-0">
-                  {activeTab === "contas" && <Contas />}
+                  {activeTab === "contas" && (
+                    <Suspense fallback={<Skeleton className="h-64 w-full" />}>
+                      <Contas />
+                    </Suspense>
+                  )}
                 </TabsContent>
               </div>
             </div>

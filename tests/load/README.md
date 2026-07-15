@@ -97,4 +97,4 @@ tests/load/
 
 ## Veja tambem
 
-- `docs/load-testing.md` — estrategia, quando rodar, baseline.
+- `docs/operations/load-testing.md` — estrategia, quando rodar, baseline.

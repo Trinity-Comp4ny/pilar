@@ -6,7 +6,7 @@
  * - When a client sends `X-API-Version`, we validate it against SUPPORTED_VERSIONS.
  * - All responses include `X-API-Version` so clients can pin to known versions.
  *
- * See `docs/api-versioning.md` for the full strategy and bump policy.
+ * See `docs/operations/api-versioning.md` for the full strategy and bump policy.
  */
 
 import { getCorsHeaders, SECURITY_HEADERS } from "./cors.ts";

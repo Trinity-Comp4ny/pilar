@@ -56,24 +56,12 @@ serve(
 
       const novaSenha = generatePassword(10);
 
-      const { error: resetError } = await supabaseAdmin.rpc("_portal_reset_password", {
-        p_account_id: account.id,
-        p_nova_senha: novaSenha,
-      });
-
-      if (resetError) {
-        log.error("_portal_reset_password failed", resetError, {
-          account_id: account.id,
-          empresa_id: profile.empresa_id,
-          user_id: user.id,
-        });
-        return safeErrorResponse(400, `Falha ao redefinir senha: ${resetError.message}`, req);
-      }
-
       const siteUrl = Deno.env.get("PUBLIC_SITE_URL");
       if (!siteUrl) log.error("PUBLIC_SITE_URL secret not set — email button will be broken", null, {});
       const loginUrl = `${siteUrl ?? "https://www.pilarsoft.com.br"}/cliente/login`;
 
+      // Envia o e-mail ANTES de trocar a senha: se o envio falhar, a senha atual do cliente
+      // continua válida (não fica trancado fora) e o admin recebe erro claro para reenviar.
       try {
         await sendEmail({
           to: account.email,
@@ -87,7 +75,29 @@ serve(
           }),
         });
       } catch (emailErr) {
-        log.error("sendEmail failed", emailErr, { account_id: account.id, empresa_id: profile.empresa_id });
+        log.error("sendEmail failed — senha NÃO alterada", emailErr, {
+          account_id: account.id,
+          empresa_id: profile.empresa_id,
+        });
+        return safeErrorResponse(
+          502,
+          "Não foi possível enviar o e-mail com a nova senha. A senha atual foi mantida — tente novamente.",
+          req
+        );
+      }
+
+      const { error: resetError } = await supabaseAdmin.rpc("_portal_reset_password", {
+        p_account_id: account.id,
+        p_nova_senha: novaSenha,
+      });
+
+      if (resetError) {
+        log.error("_portal_reset_password failed", resetError, {
+          account_id: account.id,
+          empresa_id: profile.empresa_id,
+          user_id: user.id,
+        });
+        return safeErrorResponse(400, `Falha ao redefinir senha: ${resetError.message}`, req);
       }
 
       return jsonResponse({ success: true, email: account.email }, 200, req);

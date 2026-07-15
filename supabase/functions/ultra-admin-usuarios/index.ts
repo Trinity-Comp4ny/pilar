@@ -90,10 +90,37 @@ serve(
       return jsonResponse({ success: true }, 200, req);
     }
 
-    // ─── DELETE: remover usuário ───────────────────────────────────────────
+    // ─── DELETE: remover usuário OU cancelar convite pendente ─────────────
     if (req.method === "DELETE") {
       const body = await req.json();
-      const { user_id, empresa_id } = body ?? {};
+      const { user_id, empresa_id, convite_id } = body ?? {};
+
+      // Cancelar convite pendente (não é um usuário ainda)
+      if (convite_id) {
+        if (!isUUID(convite_id)) return safeErrorResponse(400, "convite_id inválido", req);
+        const { data: conv } = await svc
+          .from("convites")
+          .select("email, empresa_id")
+          .eq("id", convite_id)
+          .maybeSingle();
+        const { error } = await svc.from("convites").delete().eq("id", convite_id);
+        if (error) return safeErrorResponse(400, error.message, req);
+
+        await logAction(svc, {
+          actorId: userId,
+          actorEmail,
+          actorRole: "ultra_admin",
+          action: "cancel_invite",
+          category: "member",
+          targetType: "convite",
+          targetId: convite_id,
+          targetName: conv?.email ?? convite_id,
+          empresaId: empresa_id ?? conv?.empresa_id ?? null,
+          req,
+        });
+
+        return jsonResponse({ success: true }, 200, req);
+      }
 
       if (!isUUID(user_id)) return safeErrorResponse(400, "user_id inválido", req);
 
@@ -118,10 +145,53 @@ serve(
       return jsonResponse({ success: true }, 200, req);
     }
 
-    // ─── POST: convidar usuário para empresa específica ───────────────────
+    // ─── POST: convidar usuário OU reenviar convite pendente ──────────────
     if (req.method === "POST") {
       const body = await req.json();
-      const { empresa_id, email, nome, role, features: rawFeatures } = body ?? {};
+      const { empresa_id, email, nome, role, features: rawFeatures, resend, convite_id } = body ?? {};
+
+      const redirectOriginResend = getTrustedOrigin(req);
+
+      // Reenviar convite pendente: renova a validade e reenvia o e-mail
+      if (resend && convite_id) {
+        if (!isUUID(convite_id)) return safeErrorResponse(400, "convite_id inválido", req);
+        if (!redirectOriginResend) return safeErrorResponse(500, "Server CORS misconfigured", req);
+
+        const { data: conv } = await svc
+          .from("convites")
+          .select("email, nome, token, empresa_id")
+          .eq("id", convite_id)
+          .is("usado_em", null)
+          .maybeSingle();
+        if (!conv) return safeErrorResponse(404, "Convite não encontrado ou já usado", req);
+
+        // Renova a validade (+7 dias) para o token não expirar
+        await svc
+          .from("convites")
+          .update({ expira_em: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() })
+          .eq("id", convite_id);
+
+        const { error: inviteError } = await svc.auth.admin.inviteUserByEmail(conv.email, {
+          redirectTo: `${redirectOriginResend}/profile-setup`,
+          data: { invite_token: conv.token, nome: conv.nome ?? "" },
+        });
+        if (inviteError) return safeErrorResponse(400, "Falha ao reenviar o convite", req);
+
+        await logAction(svc, {
+          actorId: userId,
+          actorEmail,
+          actorRole: "ultra_admin",
+          action: "resend_invite",
+          category: "member",
+          targetType: "convite",
+          targetId: convite_id,
+          targetName: conv.email,
+          empresaId: conv.empresa_id,
+          req,
+        });
+
+        return jsonResponse({ success: true }, 200, req);
+      }
 
       if (!isUUID(empresa_id)) return safeErrorResponse(400, "empresa_id inválido", req);
       if (!email || typeof email !== "string") return safeErrorResponse(400, "email obrigatório", req);

@@ -5,10 +5,12 @@ import {
   createAuthClient,
   createAdminClient,
   checkRateLimit,
-  callGemini,
-  saveInsight,
+  callGeminiStructured,
+  recordAiUsage,
+  GEMINI_MODEL,
   type AiRequest,
 } from "../_shared/ai-client.ts";
+import { OrcamentoSchema } from "../_shared/agent-schemas.ts";
 
 serve(
   withSentry("ai-proposta-copilot", async (req) => {
@@ -35,7 +37,7 @@ serve(
         });
       }
 
-      const { briefing, area_m2, tipologia, disciplinas, prazo_dias } = await req.json();
+      const { briefing, area_m2, tipologia, disciplinas, prazo_dias, projeto_id } = await req.json();
 
       // Busca projetos históricos similares
       const { data: historicos } = await adminClient
@@ -98,26 +100,65 @@ Valor médio por m² do escritório: R$ ${valorMedioM2.toFixed(2)}/m²
 `.trim();
 
       const aiRequest: AiRequest = {
-        systemPrompt: `Você é um consultor especializado em escritórios de engenharia e arquitetura no Brasil.
-Com base no briefing e histórico, sugira uma proposta comercial completa.
-Responda em português brasileiro. Retorne JSON:
+        systemPrompt: `Você é um consultor especializado em orçamento de honorários para escritórios de engenharia e arquitetura no Brasil.
+Com base no briefing e no histórico do escritório, monte um orçamento de honorários detalhado por disciplina.
+Use o histórico para calibrar horas e custo/hora realistas. Responda em português brasileiro.
+Retorne APENAS JSON neste formato exato:
 {
-  "resumo": "resumo da sugestão",
-  "estrutura_escopo": [{ "fase": string, "disciplinas": [string], "entregaveis": [string] }],
-  "estimativa_horas": { "total": number, "por_disciplina": [{ "disciplina": string, "horas": number }] },
-  "riscos": [{ "risco": string, "probabilidade": "baixa|media|alta", "mitigacao": string }],
-  "perguntas_faltantes": [string],
-  "faixa_preco": { "minimo": number, "recomendado": number, "maximo": number, "justificativa": string }
+  "resumo": "resumo executivo do orçamento",
+  "fases": [{ "disciplina": "Arquitetura", "horas_estimadas": 120, "custo_hora": 90, "margem_alvo_pct": 30, "observacao": "opcional" }],
+  "premissas": ["premissa adotada"],
+  "riscos": ["risco identificado"],
+  "perguntas_faltantes": ["informação que falta para refinar"]
 }`,
         userMessage: contexto,
         empresaId,
-        tipo: "proposta_copilot",
+        tipo: "orcamento_honorarios",
       };
 
-      const aiResponse = await callGemini(aiRequest);
-      const insight = await saveInsight(adminClient, aiRequest, aiResponse, user.id);
+      // Gera o orçamento com saída validada por schema (retry + erro explícito, sem fallback silencioso)
+      const gen = await callGeminiStructured(aiRequest, OrcamentoSchema);
 
-      return new Response(JSON.stringify(insight), {
+      // Grava o draft em agent_runs aguardando revisão humana no cockpit
+      const { data: run, error: runErr } = await adminClient
+        .from("agent_runs")
+        .insert({
+          empresa_id: empresaId,
+          agent_type: "orcamento_honorarios",
+          status: "pending_review",
+          entity_type: projeto_id ? "projeto" : null,
+          entity_id: projeto_id ?? null,
+          input: { briefing, area_m2, tipologia, disciplinas, prazo_dias },
+          result: gen.data,
+          model: GEMINI_MODEL,
+          tokens_input: gen.tokensEntrada,
+          tokens_output: gen.tokensSaida,
+          created_by: user.id,
+        })
+        .select()
+        .single();
+      if (runErr) throw runErr;
+
+      const runId = (run as { id: string }).id;
+
+      // Audit trail dos passos do agente (exibido como log de raciocínio no cockpit)
+      await adminClient.from("agent_actions").insert([
+        {
+          run_id: runId,
+          tool_name: "get_project_context",
+          args: { projetos_historicos: projetosHist.length, valor_medio_m2: Number(valorMedioM2.toFixed(2)) },
+        },
+        {
+          run_id: runId,
+          tool_name: "generate_orcamento",
+          args: { attempts: gen.attempts, fases: gen.data.fases.length },
+        },
+      ]);
+
+      // Contabiliza uso (alimenta rate limit mensal + log granular por feature)
+      await recordAiUsage(adminClient, empresaId, "orcamento_honorarios", gen.tokensEntrada, gen.tokensSaida);
+
+      return new Response(JSON.stringify(run), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
       });
@@ -125,7 +166,7 @@ Responda em português brasileiro. Retorne JSON:
       const isAuthError =
         error instanceof Error && (error.message === "Não autenticado" || error.message === "Perfil não encontrado");
       const status = isAuthError ? 401 : 400;
-      const message = isAuthError ? (error as Error).message : "Erro ao gerar proposta";
+      const message = isAuthError ? (error as Error).message : "Erro ao gerar orçamento";
       return new Response(JSON.stringify({ error: message }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status,

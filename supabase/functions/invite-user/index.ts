@@ -56,7 +56,7 @@ function sanitizeFeatures(raw: unknown): Record<string, "viewer" | "editor"> {
 serve(
   withSentry("invite-user", async (req) => {
     if (req.method === "OPTIONS") return optionsResponse(req);
-    if (req.method !== "POST") return safeErrorResponse(405, "Method not allowed", req);
+    if (req.method !== "POST" && req.method !== "DELETE") return safeErrorResponse(405, "Method not allowed", req);
 
     const auth = await authenticateUser(req);
     if (auth.error) return auth.error;
@@ -75,7 +75,76 @@ serve(
       }
       if (!profile.empresa_id) return safeErrorResponse(403, "You must belong to a company to invite users", req);
 
-      const body = await req.json();
+      const body = await req.json().catch(() => ({}));
+      const redirectOrigin = getTrustedOrigin(req);
+      if (!redirectOrigin) return safeErrorResponse(500, "Server CORS misconfigured", req);
+      const svc = adminClient();
+
+      // ── Cancelar convite pendente (escopo: própria empresa) ──────────────
+      if (req.method === "DELETE") {
+        const { convite_id } = body ?? {};
+        if (!convite_id) return safeErrorResponse(400, "convite_id obrigatório", req);
+        const { data: conv } = await supabaseClient
+          .from("convites")
+          .select("id, email, empresa_id")
+          .eq("id", convite_id)
+          .maybeSingle();
+        if (!conv || conv.empresa_id !== profile.empresa_id) {
+          return safeErrorResponse(404, "Convite não encontrado", req);
+        }
+        const { error: delErr } = await svc.from("convites").delete().eq("id", convite_id);
+        if (delErr) return safeErrorResponse(400, delErr.message, req);
+        await logAction(svc, {
+          actorId: user.id,
+          actorEmail: profile.email ?? user.email ?? "",
+          actorRole: profile.role as "ultra_admin" | "admin",
+          action: "cancel_invite",
+          category: "member",
+          targetType: "convite",
+          targetId: convite_id,
+          targetName: conv.email,
+          empresaId: profile.empresa_id,
+          req,
+        });
+        return jsonResponse({ success: true }, 200, req);
+      }
+
+      // ── Reenviar convite pendente (escopo: própria empresa) ──────────────
+      if (body?.action === "resend") {
+        const { convite_id } = body ?? {};
+        if (!convite_id) return safeErrorResponse(400, "convite_id obrigatório", req);
+        const { data: conv } = await supabaseClient
+          .from("convites")
+          .select("id, email, nome, token, empresa_id, usado_em")
+          .eq("id", convite_id)
+          .maybeSingle();
+        if (!conv || conv.empresa_id !== profile.empresa_id || conv.usado_em) {
+          return safeErrorResponse(404, "Convite não encontrado ou já usado", req);
+        }
+        await svc
+          .from("convites")
+          .update({ expira_em: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() })
+          .eq("id", convite_id);
+        const { error: resendErr } = await svc.auth.admin.inviteUserByEmail(conv.email, {
+          redirectTo: `${redirectOrigin}/profile-setup`,
+          data: { invite_token: conv.token, nome: conv.nome ?? "" },
+        });
+        if (resendErr) return safeErrorResponse(400, "Falha ao reenviar o convite", req);
+        await logAction(svc, {
+          actorId: user.id,
+          actorEmail: profile.email ?? user.email ?? "",
+          actorRole: profile.role as "ultra_admin" | "admin",
+          action: "resend_invite",
+          category: "member",
+          targetType: "convite",
+          targetId: convite_id,
+          targetName: conv.email,
+          empresaId: profile.empresa_id,
+          req,
+        });
+        return jsonResponse({ success: true }, 200, req);
+      }
+
       const { email, nome, role, features: rawFeatures } = body ?? {};
 
       if (!email || !EMAIL_RE.test(String(email))) {
@@ -85,8 +154,37 @@ serve(
       const safeRole: AssignableRole = ASSIGNABLE_ROLES.includes(role) ? role : "user";
       const safeFeatures = safeRole === "admin" ? {} : sanitizeFeatures(rawFeatures);
 
-      const redirectOrigin = getTrustedOrigin(req);
-      if (!redirectOrigin) return safeErrorResponse(500, "Server CORS misconfigured", req);
+      // Verificar limite de usuários do plano da empresa
+      const { data: planLimit } = await supabaseClient
+        .from("pilar_subscriptions")
+        .select("pilar_subscription_plans(max_usuarios)")
+        .eq("empresa_id", profile.empresa_id)
+        .eq("status", "active")
+        .maybeSingle();
+
+      const maxUsuarios = (planLimit as { pilar_subscription_plans?: { max_usuarios?: number | null } } | null)
+        ?.pilar_subscription_plans?.max_usuarios ?? null;
+
+      if (maxUsuarios !== null) {
+        const { count: activeCount, error: countErr } = await supabaseClient
+          .from("profiles")
+          .select("id", { count: "exact", head: true })
+          .eq("empresa_id", profile.empresa_id)
+          .is("deleted_at", null);
+
+        if (countErr) {
+          log.error("failed to count active users", countErr, { empresa_id: profile.empresa_id });
+          return safeErrorResponse(500, "Erro ao verificar limite de usuários", req);
+        }
+
+        if ((activeCount ?? 0) >= maxUsuarios) {
+          return safeErrorResponse(
+            422,
+            `Limite de usuários atingido para o plano atual (${maxUsuarios} usuário${maxUsuarios === 1 ? "" : "s"})`,
+            req
+          );
+        }
+      }
 
       // Rate limit anti-spam: 5/min, 50/hour por empresa
       const { error: rateLimitError } = await supabaseClient.rpc("check_convite_rate_limit", {
@@ -126,7 +224,6 @@ serve(
         return safeErrorResponse(400, "Falha ao enviar convite", req);
       }
 
-      const svc = adminClient();
       await logAction(svc, {
         actorId: user.id,
         actorEmail: profile.email ?? user.email ?? "",

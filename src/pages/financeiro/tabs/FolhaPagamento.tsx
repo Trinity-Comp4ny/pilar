@@ -81,7 +81,7 @@ export default function FolhaPagamento() {
       });
       setHistory(Array.from(grouped.values()));
     } catch {
-      toast.error("Erro ao gerar folha de pagamento");
+      toast.error("Erro ao carregar histórico da folha");
     }
   };
 
@@ -305,7 +305,7 @@ export default function FolhaPagamento() {
           .maybeSingle();
 
         if (!existingDespesa) {
-          await supabase.from("despesas").insert([
+          const { error: despesaError } = await supabase.from("despesas").insert([
             {
               data_vencimento: dateStr,
               data_pagamento: dateStr,
@@ -321,13 +321,18 @@ export default function FolhaPagamento() {
               observacao: "Lançamento automático de Folha de Pagamento",
             },
           ] as never);
+          if (despesaError) throw despesaError;
         }
       }
 
       toast.success("Status atualizado", { description: `O status foi alterado para ${newStatus}.` });
       fetchHistory();
     } catch (err: unknown) {
-      toast.error("Erro ao atualizar status");
+      // Reverte o status (DB + estado local) para não deixar a folha "paga" sem a despesa
+      // correspondente — assim o próximo "Marcar Pago" recria a despesa corretamente.
+      await supabase.from("folha_pagamento").update({ status: previousStatus }).eq("id", folhaId);
+      setData((prev) => prev.map((item) => (item.folha_id === folhaId ? { ...item, status: previousStatus } : item)));
+      toast.error("Erro ao atualizar status. A alteração foi revertida — tente novamente.");
     }
   };
 
