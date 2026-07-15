@@ -1,56 +1,16 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { useSearchParams } from "react-router-dom";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  ArrowDownAZ,
-  ArrowUpDown,
-  Calendar as CalendarIcon,
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight,
-  ChevronUp,
-  GitBranch,
-  Layers,
-  Plus,
-  Settings2,
-} from "lucide-react";
+import { useMemo, useRef, useState } from "react";
+import { Calendar as CalendarIcon, GitBranch, Layers, Plus, Settings2 } from "lucide-react";
 import { toast } from "sonner";
-import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
-import { monitoring } from "@/lib/monitoring";
+import { DragDropContext } from "@hello-pangea/dnd";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { Can } from "@/components/Can";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { usePermissions } from "@/hooks/usePermissions";
-import {
-  PROJECT_STATUS,
-  PROJECT_STATUS_CONFIG,
-  PROJECT_PRIORITY,
-  PROJECT_PRIORITY_CONFIG,
-  type ProjectPriority,
-  type ProjectStatus,
-} from "@/constants";
-import { type Projeto, type ProjetoDisciplinaDB, dbDisciplinaToLegacy, getDeadlineStatus } from "@/types/projetos";
+import { PROJECT_PRIORITY_CONFIG, type ProjectPriority } from "@/constants";
+import { type Projeto, getDeadlineStatus } from "@/types/projetos";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
-import { ProjectCard } from "@/pages/projetos/components/ProjectCard";
 import { ProjectDetailDialog } from "@/pages/projetos/components/ProjectDetailDialog";
 import { ProjetoFormDialog } from "@/pages/projetos/components/ProjetoFormDialog";
 import { ManageDisciplinasDialog } from "@/pages/projetos/components/ManageDisciplinasDialog";
@@ -60,120 +20,44 @@ import { CronogramaProjetosTab } from "@/pages/projetos/components/CronogramaPro
 import {
   ProjetosFilterBar,
   EMPTY_FILTERS,
-  type ProjetosFilters,
   type DeadlineFilter,
-  type DateField,
 } from "@/pages/projetos/components/ProjetosFilterBar";
 import { ProjetosKPIs } from "@/pages/projetos/components/ProjetosKPIs";
-import { ProjetoColumnSkeleton } from "@/pages/projetos/components/ProjetoCardSkeleton";
 import { ProjetosEmptyState } from "@/pages/projetos/components/ProjetosEmptyState";
-import { QuickAddCard } from "@/pages/projetos/components/QuickAddCard";
-import { useTemplates } from "@/hooks/useTemplates";
-import { useFluxosDisciplinas } from "@/hooks/useFluxosDisciplinas";
-import { useDashboardRentabilidade } from "@/hooks/useRentabilidade";
+import { KanbanBoard } from "@/pages/projetos/components/KanbanBoard";
+import { ProjetosMobileList } from "@/pages/projetos/components/ProjetosMobileList";
+import { SortControl } from "@/pages/projetos/components/SortControl";
+import { NotifyTeamDialog, ReopenProjetoDialog } from "@/pages/projetos/components/ProjetoStatusDialogs";
+import { useProjetosData } from "@/pages/projetos/hooks/useProjetosData";
+import { useProjetosUrlState } from "@/pages/projetos/hooks/useProjetosUrlState";
+import { useProjetoStatusMove } from "@/pages/projetos/hooks/useProjetoStatusMove";
 import { cn } from "@/lib/utils";
 import { usePageTitle } from "@/hooks/usePageTitle";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-
-const statusConfig = PROJECT_STATUS_CONFIG;
+import { useQueryClient } from "@tanstack/react-query";
 
 type Tab = "kanban" | "disciplinas" | "cronograma";
-type SortKey = "priority" | "dueDate" | "value" | "name" | "created";
-type SortDir = "asc" | "desc";
-
-const SORT_LABELS: Record<SortKey, string> = {
-  priority: "Prioridade",
-  dueDate: "Previsão",
-  value: "Valor",
-  name: "Nome",
-  created: "Criação",
-};
-
-const STATUS_DOT: Record<string, string> = {
-  [PROJECT_STATUS.PLANEJAMENTO]: "bg-status-planning",
-  [PROJECT_STATUS.EM_ANDAMENTO]: "bg-status-progress",
-  [PROJECT_STATUS.REVISAO]: "bg-status-review",
-  [PROJECT_STATUS.PARALISADO]: "bg-brand",
-  [PROJECT_STATUS.CONCLUIDO]: "bg-status-done",
-  [PROJECT_STATUS.CANCELADO]: "bg-status-cancelled",
-};
-
-// ---------- URL persistence helpers ----------
-function filtersToParams(filters: ProjetosFilters, sort: { key: SortKey; dir: SortDir }, collapsed: Set<string>) {
-  const params = new URLSearchParams();
-  if (filters.search) params.set("q", filters.search);
-  if (filters.prioridades.length) params.set("prio", filters.prioridades.join(","));
-  if (filters.pessoaIds.length) params.set("p", filters.pessoaIds.join(","));
-  if (filters.clienteIds.length) params.set("c", filters.clienteIds.join(","));
-  if (filters.disciplinaIds.length) params.set("disc", filters.disciplinaIds.join(","));
-  if (filters.deadlineStatus.length) params.set("d", filters.deadlineStatus.join(","));
-  if (filters.dataCampo !== "previsao") params.set("dc", filters.dataCampo);
-  if (filters.dataInicio) params.set("di", filters.dataInicio);
-  if (filters.dataFim) params.set("df", filters.dataFim);
-  if (sort.key !== "priority" || sort.dir !== "asc") params.set("sort", `${sort.key}.${sort.dir}`);
-  if (collapsed.size > 0) params.set("col", [...collapsed].join(","));
-  return params;
-}
-
-function parseFiltersFromParams(params: URLSearchParams): {
-  filters: ProjetosFilters;
-  sort: { key: SortKey; dir: SortDir };
-  collapsed: Set<string>;
-} {
-  const sortRaw = params.get("sort");
-  const [sk, sd] = (sortRaw || "priority.asc").split(".");
-  return {
-    filters: {
-      search: params.get("q") || "",
-      prioridades: (params.get("prio")?.split(",").filter(Boolean) as ProjectPriority[]) || [],
-      pessoaIds: params.get("p")?.split(",").filter(Boolean) || [],
-      clienteIds: params.get("c")?.split(",").filter(Boolean) || [],
-      disciplinaIds: params.get("disc")?.split(",").filter(Boolean) || [],
-      deadlineStatus: (params.get("d")?.split(",").filter(Boolean) as DeadlineFilter[]) || [],
-      dataCampo: (["previsao", "inicio", "final"] as DateField[]).includes(params.get("dc") as DateField)
-        ? (params.get("dc") as DateField)
-        : "previsao",
-      dataInicio: params.get("di") || "",
-      dataFim: params.get("df") || "",
-    },
-    sort: {
-      key: (["priority", "dueDate", "value", "name", "created"] as SortKey[]).includes(sk as SortKey)
-        ? (sk as SortKey)
-        : "priority",
-      dir: sd === "desc" ? "desc" : "asc",
-    },
-    collapsed: new Set(params.get("col")?.split(",").filter(Boolean) || []),
-  };
-}
 
 export default function ProjetosKanban() {
   usePageTitle("Projetos");
   const { can } = usePermissions();
   const queryClient = useQueryClient();
-  const { data: templatesData = [] } = useTemplates();
-  const { data: fluxosData = [] } = useFluxosDisciplinas();
-  const { data: rentabilidadeData } = useDashboardRentabilidade();
   const canEdit = can("projetos", "create");
 
-  const rentabilidadeMap = useMemo<Record<string, number>>(() => {
-    if (!rentabilidadeData?.projetos) return {};
-    return Object.fromEntries(
-      rentabilidadeData.projetos.map((p) => [p.projeto_id, p.margem_bruta_pct])
-    );
-  }, [rentabilidadeData]);
+  const {
+    templatesData,
+    fluxosData,
+    rentabilidadeMap,
+    currentUser,
+    projetos,
+    loadingProjetos,
+    projetosError,
+    refetchProjetos,
+    clientes,
+    pessoas,
+    disciplinas,
+  } = useProjetosData();
 
-  const [searchParams, setSearchParams] = useSearchParams();
-  const initial = useMemo(() => parseFiltersFromParams(searchParams), []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const [filters, setFilters] = useState<ProjetosFilters>(initial.filters);
-  const [sort, setSort] = useState<{ key: SortKey; dir: SortDir }>(initial.sort);
-  const [collapsedColumns, setCollapsedColumns] = useState<Set<string>>(initial.collapsed);
-
-  // Sync state → URL
-  useEffect(() => {
-    const params = filtersToParams(filters, sort, collapsedColumns);
-    setSearchParams(params, { replace: true });
-  }, [filters, sort, collapsedColumns, setSearchParams]);
+  const { filters, setFilters, sort, setSort, collapsedColumns, toggleColumn } = useProjetosUrlState();
 
   const [isFormDialogOpen, setIsFormDialogOpen] = useState(false);
   const [editingProjeto, setEditingProjeto] = useState<Projeto | null>(null);
@@ -184,161 +68,16 @@ export default function ProjetosKanban() {
   const [isFluxosOpen, setIsFluxosOpen] = useState(false);
   const [projetoToDelete, setProjetoToDelete] = useState<{ id: string; nome: string } | null>(null);
 
-  const [pendingDrag, setPendingDrag] = useState<{
-    projetoId: string;
-    newStatus: string;
-    projetoNome?: string;
-  } | null>(null);
-
-  // Reabertura: quando projeto sai da coluna "Concluído", pede confirmação
-  // antes de remover a data_final registrada — evita perda silenciosa em drag acidental.
-  const [pendingReopen, setPendingReopen] = useState<{
-    projetoId: string;
-    newStatus: string;
-    projetoNome: string;
-    dataFinal?: string;
-  } | null>(null);
-
-  const { data: currentUser = null } = useQuery({
-    queryKey: ["currentUser"],
-    queryFn: async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) return null;
-      return {
-        name: user.user_metadata?.full_name || user.email?.split("@")[0] || "Usuário",
-        email: user.email || "",
-      };
-    },
-  });
-
   const {
-    data: projetos = [],
-    isLoading: loadingProjetos,
-    isError: projetosError,
-    refetch: refetchProjetos,
-  } = useQuery({
-    queryKey: ["projetos"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("projetos")
-        .select(
-          `
-          *,
-          clientes (nome, email),
-          projeto_disciplinas (
-            id, nome, status, data_inicio, data_fim, data_fim_real,
-            prioridade, justificativa_atraso, horas_estimadas, custo_hora,
-            observacoes, created_at, updated_at, projeto_id,
-            projeto_disciplina_responsaveis (
-              pessoa_id,
-              pessoas ( id, nome )
-            )
-          )
-        `
-        )
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-
-      return (data || []).map((p) => {
-        const proj = p as Record<string, unknown> & {
-          clientes?: { nome: string; email: string };
-          projeto_disciplinas?: Array<Record<string, unknown>>;
-        };
-        const rawDiscs = (proj.projeto_disciplinas || []) as Array<{
-          id: string;
-          projeto_id: string;
-          nome: string;
-          status: string;
-          data_inicio: string | null;
-          data_fim: string | null;
-          data_fim_real: string | null;
-          observacoes: string | null;
-          prioridade: string | null;
-          justificativa_atraso: string | null;
-          horas_estimadas: number;
-          custo_hora: number;
-          created_at: string;
-          updated_at: string;
-          projeto_disciplina_responsaveis: Array<{
-            pessoa_id: string;
-            pessoas: { id: string; nome: string };
-          }>;
-        }>;
-
-        const dbDiscs: ProjetoDisciplinaDB[] = rawDiscs.map((d) => ({
-          id: d.id,
-          projeto_id: d.projeto_id,
-          nome: d.nome,
-          status: d.status,
-          data_inicio: d.data_inicio,
-          data_fim: d.data_fim,
-          data_fim_real: d.data_fim_real,
-          observacoes: d.observacoes,
-          prioridade: d.prioridade,
-          justificativa_atraso: d.justificativa_atraso,
-          horas_estimadas: d.horas_estimadas,
-          custo_hora: d.custo_hora,
-          created_at: d.created_at,
-          updated_at: d.updated_at,
-          responsaveis:
-            d.projeto_disciplina_responsaveis?.map((r) => ({
-              id: r.pessoas.id,
-              nome: r.pessoas.nome,
-            })) || [],
-        }));
-
-        return {
-          id: proj.id as string,
-          codigo_projeto: proj.codigo_projeto as string,
-          nome: proj.nome as string,
-          cliente_id: proj.cliente_id as string,
-          cliente_nome: proj.clientes?.nome,
-          cliente_email: proj.clientes?.email,
-          localizacao: proj.localizacao as string | undefined,
-          parcelas: proj.parcelas as string | undefined,
-          area_m2: proj.area_m2 as number | undefined,
-          data_inicio: proj.data_inicio as string,
-          data_previsao: proj.data_previsao as string,
-          data_final: proj.data_final as string | undefined,
-          status: proj.status as Projeto["status"],
-          prioridade: (proj.prioridade as ProjectPriority) || PROJECT_PRIORITY.MEDIA,
-          valor_contrato: proj.valor_contrato as number,
-          observacao: proj.observacao as string,
-          disciplinas: dbDiscs.map(dbDisciplinaToLegacy),
-        };
-      }) as Projeto[];
-    },
-  });
-
-  const { data: clientes = [] } = useQuery({
-    queryKey: ["clientes"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("clientes").select("id, nome").order("nome");
-      if (error) throw error;
-      return data || [];
-    },
-  });
-
-  const { data: pessoas = [] } = useQuery({
-    queryKey: ["pessoas-select"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("pessoas").select("id, nome").is("deleted_at", null).order("nome");
-      if (error) throw error;
-      return data || [];
-    },
-  });
-
-  const { data: disciplinas = [] } = useQuery({
-    queryKey: ["disciplinas"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("disciplinas").select("id, nome").order("nome");
-      if (error) throw error;
-      return data || [];
-    },
-  });
+    pendingDrag,
+    setPendingDrag,
+    pendingReopen,
+    setPendingReopen,
+    applyStatusMove,
+    handleMoveStatus,
+    onDragEnd,
+    notifyProjectStatusChange,
+  } = useProjetoStatusMove(projetos, canEdit);
 
   const handleCardClick = (projeto: Projeto) => {
     setSelectedProjeto(projeto);
@@ -361,70 +100,6 @@ export default function ProjetosKanban() {
     setProjetoToDelete({ id, nome: projeto?.nome ?? "Projeto" });
   };
 
-  // Aplica a mudança de status no cache e no banco.
-  // clearDataFinal=true zera data_final (usado na reabertura de projeto concluído).
-  const applyStatusMove = async (projetoId: string, newStatus: string, clearDataFinal = false) => {
-    // NÃO forçamos data_final=hoje ao concluir: o trigger auto_complete_disciplinas
-    // (mig 20260519000000) preenche com MAX(data_fim_real) das disciplinas — a entrega
-    // real, não o momento administrativo do toggle. Forçar "hoje" aqui gerava
-    // "Concluído com Atraso" falso. Deixamos o banco decidir e o refetch traz o valor.
-    queryClient.setQueryData(["projetos"], (old: Projeto[] | undefined) =>
-      (old || []).map((p) =>
-        p.id === projetoId
-          ? {
-              ...p,
-              status: newStatus as Projeto["status"],
-              data_final: clearDataFinal ? undefined : p.data_final,
-            }
-          : p
-      )
-    );
-    const updateData: Record<string, string | null> = { status: newStatus };
-    if (clearDataFinal) updateData.data_final = null;
-
-    const { error } = await supabase.from("projetos").update(updateData).eq("id", projetoId);
-    if (error) {
-      toast.error("Erro ao mover projeto");
-      // Reverte o cache otimista buscando o estado real do servidor.
-      queryClient.invalidateQueries({ queryKey: ["projetos"] });
-      return false;
-    }
-    toast.success(`Movido para ${statusConfig[newStatus as keyof typeof statusConfig]?.label}`);
-    // Confia no update otimista. Só revalida quando o servidor pode ter mexido
-    // em data_final: ao concluir (trigger preenche) ou reabrir (limpamos).
-    if (newStatus === PROJECT_STATUS.CONCLUIDO || clearDataFinal) {
-      queryClient.invalidateQueries({ queryKey: ["projetos"] });
-    }
-    return true;
-  };
-
-  const handleMoveStatus = async (projetoId: string, newStatus: string) => {
-    const projeto = projetos.find((p) => p.id === projetoId);
-    const fromStatus = projeto?.status;
-
-    // Reabrindo um projeto concluído? Pede confirmação antes de zerar data_final.
-    if (fromStatus === PROJECT_STATUS.CONCLUIDO && newStatus !== PROJECT_STATUS.CONCLUIDO) {
-      setPendingReopen({
-        projetoId,
-        newStatus,
-        projetoNome: projeto?.nome ?? "Projeto",
-        dataFinal: projeto?.data_final,
-      });
-      return;
-    }
-
-    const ok = await applyStatusMove(projetoId, newStatus);
-    if (!ok) return;
-
-    if (newStatus !== PROJECT_STATUS.CANCELADO) {
-      setPendingDrag({
-        projetoId,
-        newStatus,
-        projetoNome: projeto?.nome ?? undefined,
-      });
-    }
-  };
-
   const handleDeleteConfirm = async () => {
     if (!projetoToDelete) return;
     const { error } = await supabase
@@ -439,54 +114,6 @@ export default function ProjetosKanban() {
       toast.error("Erro ao excluir", { description: error.message });
     }
     setProjetoToDelete(null);
-  };
-
-  const onDragEnd = async (result: DropResult) => {
-    const { source, destination, draggableId } = result;
-    if (!destination) return;
-    if (source.droppableId === destination.droppableId) return;
-    if (!canEdit) return;
-
-    const newStatus = destination.droppableId as Projeto["status"];
-    const fromStatus = source.droppableId;
-    const projeto = projetos.find((p) => p.id === draggableId);
-
-    // Saindo da coluna Concluído? Pede confirmação antes de zerar data_final.
-    if (fromStatus === PROJECT_STATUS.CONCLUIDO && newStatus !== PROJECT_STATUS.CONCLUIDO) {
-      setPendingReopen({
-        projetoId: draggableId,
-        newStatus,
-        projetoNome: projeto?.nome ?? "Projeto",
-        dataFinal: projeto?.data_final,
-      });
-      return;
-    }
-
-    const ok = await applyStatusMove(draggableId, newStatus);
-    if (!ok) return;
-
-    if (newStatus !== PROJECT_STATUS.CANCELADO) {
-      setPendingDrag({
-        projetoId: draggableId,
-        newStatus,
-        projetoNome: projeto?.nome ?? undefined,
-      });
-    }
-  };
-
-  const notifyProjectStatusChange = async (draggableId: string, newStatus: string) => {
-    try {
-      const { error } = await supabase.functions.invoke("notify-project-people", {
-        body: { projetoId: draggableId, novoStatus: newStatus },
-      });
-      if (error) {
-        toast.error("Erro ao enviar notificação por email");
-        return;
-      }
-      toast.success("Notificação por email enviada");
-    } catch (err) {
-      monitoring.captureException(err, { context: "notifyProjectStatusChange" });
-    }
   };
 
   // ---------- Filtros ----------
@@ -583,15 +210,6 @@ export default function ProjetosKanban() {
   }, [filteredProjetos, sort]);
 
   const getProjetosByStatus = (status: string) => projetosByStatus[status] || [];
-
-  const toggleColumn = (status: string) => {
-    setCollapsedColumns((prev) => {
-      const next = new Set(prev);
-      if (next.has(status)) next.delete(status);
-      else next.add(status);
-      return next;
-    });
-  };
 
   const tabs: { id: Tab; label: string; icon: typeof CalendarIcon }[] = [
     { id: "kanban", label: "Quadro", icon: CalendarIcon },
@@ -733,141 +351,29 @@ export default function ProjetosKanban() {
                 aria-labelledby="projetos-tab-kanban"
                 className="flex-1 min-h-0"
               >
-                {/* Desktop kanban */}
-                <div className="hidden md:flex gap-3 w-full h-full min-h-0 overflow-x-auto pb-2">
-                  {Object.entries(statusConfig).map(([status, config]) => {
-                    const items = getProjetosByStatus(status);
-                    const isCollapsed = collapsedColumns.has(status);
-                    const dotColor = STATUS_DOT[status] || "bg-status-unknown";
+                <KanbanBoard
+                  collapsedColumns={collapsedColumns}
+                  loadingProjetos={loadingProjetos}
+                  canEdit={canEdit}
+                  clientes={clientes}
+                  rentabilidadeMap={rentabilidadeMap}
+                  getProjetosByStatus={getProjetosByStatus}
+                  onToggleColumn={toggleColumn}
+                  onCardClick={handleCardClick}
+                  onEditClick={handleEditClick}
+                  onDelete={handleDelete}
+                  onQuickAddCreated={() => queryClient.invalidateQueries({ queryKey: ["projetos"] })}
+                />
 
-                    if (isCollapsed) {
-                      return (
-                        <div
-                          key={status}
-                          className="flex flex-col w-10 flex-shrink-0 min-h-0 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer"
-                          onClick={() => toggleColumn(status)}
-                        >
-                          <div className="flex flex-col items-center gap-2 py-3">
-                            <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                            <span className={cn("h-2 w-2 rounded-full", dotColor)} />
-                          </div>
-                          <div className="flex-1 flex items-center justify-center">
-                            <span
-                              className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide whitespace-nowrap"
-                              style={{ writingMode: "vertical-rl", transform: "rotate(180deg)" }}
-                            >
-                              {config.label} · {items.length}
-                            </span>
-                          </div>
-                        </div>
-                      );
-                    }
-
-                    return (
-                      <div key={status} className="flex flex-col min-w-[280px] w-[280px] flex-shrink-0 min-h-0">
-                        <div className="flex items-center gap-2 px-2 py-2.5">
-                          <span className={cn("h-2 w-2 rounded-full flex-shrink-0", dotColor)} />
-                          <h3 className="text-xs font-medium text-foreground/80 uppercase tracking-wide">
-                            {config.label}
-                          </h3>
-                          <span className="text-[11px] text-muted-foreground tabular-nums">{items.length}</span>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="ml-auto h-11 w-11 -my-2 text-muted-foreground"
-                            onClick={() => toggleColumn(status)}
-                            title="Minimizar coluna"
-                            aria-label="Minimizar coluna"
-                          >
-                            <ChevronLeft className="h-4 w-4" />
-                          </Button>
-                        </div>
-
-                        <Droppable droppableId={status}>
-                          {(provided, snapshot) => (
-                            <div
-                              ref={provided.innerRef}
-                              {...provided.droppableProps}
-                              className={cn(
-                                "flex-1 min-h-0 overflow-y-auto p-2 space-y-2 rounded-lg bg-muted/30 transition-all",
-                                snapshot.isDraggingOver && "ring-2 ring-brand/40 bg-brand/5"
-                              )}
-                            >
-                              {loadingProjetos && <ProjetoColumnSkeleton count={2} />}
-                              {!loadingProjetos && items.length === 0 && !snapshot.isDraggingOver && (
-                                <div className="flex items-center justify-center py-6 text-[11px] text-muted-foreground/60 text-center px-2">
-                                  Solte um projeto aqui
-                                </div>
-                              )}
-                              {items.map((projeto, index) => (
-                                <Draggable key={projeto.id} draggableId={projeto.id} index={index}>
-                                  {(provided, snapshot) => (
-                                    <div
-                                      ref={provided.innerRef}
-                                      {...provided.draggableProps}
-                                      {...provided.dragHandleProps}
-                                    >
-                                      <ProjectCard
-                                        projeto={projeto}
-                                        onClick={handleCardClick}
-                                        onEdit={handleEditClick}
-                                        onDelete={handleDelete}
-                                        canEdit={canEdit}
-                                        isDragging={snapshot.isDragging}
-                                        margemBrutaPct={rentabilidadeMap[projeto.id] ?? null}
-                                      />
-                                    </div>
-                                  )}
-                                </Draggable>
-                              ))}
-                              {provided.placeholder}
-                              {canEdit && !loadingProjetos && (
-                                <QuickAddCard
-                                  status={status as ProjectStatus}
-                                  clientes={clientes}
-                                  onCreated={() => queryClient.invalidateQueries({ queryKey: ["projetos"] })}
-                                />
-                              )}
-                            </div>
-                          )}
-                        </Droppable>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {/* Mobile list view */}
-                <div className="md:hidden space-y-3">
-                  {Object.entries(statusConfig).map(([status, config]) => {
-                    const items = getProjetosByStatus(status);
-                    const dotColor = STATUS_DOT[status] || "bg-status-unknown";
-                    if (items.length === 0) return null;
-                    return (
-                      <details key={status} open className="border rounded-lg bg-white">
-                        <summary className="flex items-center gap-2 px-3 py-2.5 cursor-pointer list-none">
-                          <span className={cn("h-2 w-2 rounded-full flex-shrink-0", dotColor)} />
-                          <span className="text-xs font-medium uppercase tracking-wide flex-1">{config.label}</span>
-                          <span className="text-[11px] text-muted-foreground tabular-nums">{items.length}</span>
-                          <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                        </summary>
-                        <div className="p-2 space-y-2 border-t bg-muted/20">
-                          {items.map((projeto) => (
-                            <ProjectCard
-                              key={projeto.id}
-                              projeto={projeto}
-                              onClick={handleCardClick}
-                              onEdit={handleEditClick}
-                              onDelete={handleDelete}
-                              onMoveStatus={canEdit ? handleMoveStatus : undefined}
-                              canEdit={canEdit}
-                              margemBrutaPct={rentabilidadeMap[projeto.id] ?? null}
-                            />
-                          ))}
-                        </div>
-                      </details>
-                    );
-                  })}
-                </div>
+                <ProjetosMobileList
+                  canEdit={canEdit}
+                  rentabilidadeMap={rentabilidadeMap}
+                  getProjetosByStatus={getProjetosByStatus}
+                  onCardClick={handleCardClick}
+                  onEditClick={handleEditClick}
+                  onDelete={handleDelete}
+                  onMoveStatus={handleMoveStatus}
+                />
               </div>
             </DragDropContext>
           )}
@@ -919,73 +425,29 @@ export default function ProjetosKanban() {
         pessoas={pessoas}
       />
 
-      <AlertDialog open={!!pendingDrag} onOpenChange={(open) => !open && setPendingDrag(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Notificar a equipe sobre a mudança de status?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Mover o projeto para{" "}
-              <strong>
-                {pendingDrag
-                  ? (statusConfig[pendingDrag.newStatus as keyof typeof statusConfig]?.label ?? pendingDrag.newStatus)
-                  : ""}
-              </strong>{" "}
-              enviará e-mail para todos os membros alocados no projeto. O cliente não será notificado.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setPendingDrag(null)}>Não notificar</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-brand hover:bg-brand/90 text-ink"
-              onClick={async () => {
-                if (pendingDrag) {
-                  await notifyProjectStatusChange(pendingDrag.projetoId, pendingDrag.newStatus);
-                  setPendingDrag(null);
-                }
-              }}
-            >
-              Sim, notificar equipe
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <NotifyTeamDialog
+        pending={pendingDrag}
+        onOpenChange={(open) => !open && setPendingDrag(null)}
+        onCancel={() => setPendingDrag(null)}
+        onConfirm={async () => {
+          if (pendingDrag) {
+            await notifyProjectStatusChange(pendingDrag.projetoId, pendingDrag.newStatus);
+            setPendingDrag(null);
+          }
+        }}
+      />
 
-      <AlertDialog open={!!pendingReopen} onOpenChange={(open) => !open && setPendingReopen(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Reabrir projeto concluído?</AlertDialogTitle>
-            <AlertDialogDescription>
-              <strong>{pendingReopen?.projetoNome}</strong> está marcado como concluído
-              {pendingReopen?.dataFinal && (
-                <>
-                  {" "}em <strong>{new Date(pendingReopen.dataFinal + "T00:00:00").toLocaleDateString("pt-BR")}</strong>
-                </>
-              )}
-              . Movê-lo para{" "}
-              <strong>
-                {pendingReopen
-                  ? (statusConfig[pendingReopen.newStatus as keyof typeof statusConfig]?.label ?? pendingReopen.newStatus)
-                  : ""}
-              </strong>{" "}
-              vai <strong>remover a data de conclusão</strong>. Deseja continuar?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setPendingReopen(null)}>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-brand hover:bg-brand/90 text-ink"
-              onClick={async () => {
-                if (!pendingReopen) return;
-                const { projetoId, newStatus } = pendingReopen;
-                setPendingReopen(null);
-                await applyStatusMove(projetoId, newStatus, true);
-              }}
-            >
-              Reabrir e remover data
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ReopenProjetoDialog
+        pending={pendingReopen}
+        onOpenChange={(open) => !open && setPendingReopen(null)}
+        onCancel={() => setPendingReopen(null)}
+        onConfirm={async () => {
+          if (!pendingReopen) return;
+          const { projetoId, newStatus } = pendingReopen;
+          setPendingReopen(null);
+          await applyStatusMove(projetoId, newStatus, true);
+        }}
+      />
 
       <ConfirmDialog
         open={!!projetoToDelete}
@@ -998,52 +460,5 @@ export default function ProjetosKanban() {
         cancelText="Cancelar"
       />
     </PageLayout>
-  );
-}
-
-interface SortControlProps {
-  sort: { key: SortKey; dir: SortDir };
-  onChange: (sort: { key: SortKey; dir: SortDir }) => void;
-}
-
-// Ordenação global do quadro, sempre visível na barra de topo (antes ficava
-// escondida por coluna, aparecendo só no hover e inalcançável por toque/teclado).
-function SortControl({ sort, onChange }: SortControlProps) {
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="outline" className="h-9 rounded-full text-sm gap-2" aria-label="Ordenar projetos">
-          <ArrowUpDown className="h-4 w-4" />
-          <span className="hidden sm:inline">Ordenar: {SORT_LABELS[sort.key]}</span>
-          {sort.dir === "asc" ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuLabel className="text-[10px] uppercase tracking-wide">Ordenar por</DropdownMenuLabel>
-        {(Object.keys(SORT_LABELS) as SortKey[]).map((k) => (
-          <DropdownMenuItem
-            key={k}
-            onClick={() => onChange({ ...sort, key: k })}
-            className={cn("text-xs", sort.key === k && "bg-muted font-medium")}
-          >
-            {k === "name" && <ArrowDownAZ className="h-3.5 w-3.5 mr-2" />}
-            {SORT_LABELS[k]}
-            {sort.key === k && <ChevronRight className="h-3.5 w-3.5 ml-auto" />}
-          </DropdownMenuItem>
-        ))}
-        <DropdownMenuSeparator />
-        <DropdownMenuItem
-          className="text-xs"
-          onClick={() => onChange({ ...sort, dir: sort.dir === "asc" ? "desc" : "asc" })}
-        >
-          {sort.dir === "asc" ? (
-            <ChevronUp className="h-3.5 w-3.5 mr-2" />
-          ) : (
-            <ChevronDown className="h-3.5 w-3.5 mr-2" />
-          )}
-          Direção: {sort.dir === "asc" ? "Crescente" : "Decrescente"}
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
   );
 }
