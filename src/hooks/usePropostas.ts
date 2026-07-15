@@ -126,8 +126,27 @@ export const useDeleteProposta = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
+    // Soft delete: marca deleted_at. A listagem já filtra deleted_at IS NULL,
+    // então a proposta some da lista mas continua recuperável (ver useRestoreProposta).
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("propostas").delete().eq("id", id);
+      const { error } = await supabase
+        .from("propostas")
+        .update({ deleted_at: new Date().toISOString() })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["propostas"] });
+    },
+  });
+};
+
+export const useRestoreProposta = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("propostas").update({ deleted_at: null }).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {

@@ -35,6 +35,8 @@ const humanizeVar = (v: string) => {
   return clean.charAt(0).toUpperCase() + clean.slice(1);
 };
 
+const isValidEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
+
 interface GerarPropostaDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -168,6 +170,7 @@ export function GerarPropostaDialog({
   }, [open]);
 
   const manualVars = selectedTemplate?.variaveis.filter((v) => !(v in AUTO_VARIABLES)) || [];
+  const emailInvalid = sendEmail.trim().length > 0 && !isValidEmail(sendEmail);
 
   const buildDocx = async (): Promise<{ blob: Blob; fileName: string }> => {
     const templateBuffer = await downloadTemplateFile(selectedTemplate!.arquivo_path);
@@ -212,12 +215,16 @@ export function GerarPropostaDialog({
     if (!generatedBlob) return;
     const fileName = `${label}_${proposta.codigo || proposta.titulo.replace(/\s+/g, "_")}.docx`;
     saveAs(generatedBlob, fileName);
-    toast.success("DOCX baixado");
+    toast.success("Documento baixado");
   };
 
   const handleSend = async () => {
     if (!sendEmail.trim()) {
       toast.error("Email do destinatário obrigatório");
+      return;
+    }
+    if (!isValidEmail(sendEmail)) {
+      toast.error("Email inválido", { description: "Verifique o endereço e tente novamente." });
       return;
     }
     if (!generatedBlob) return;
@@ -305,7 +312,7 @@ export function GerarPropostaDialog({
                       (active
                         ? "bg-brand text-ink"
                         : done
-                          ? "bg-positive/15 text-positive"
+                          ? "bg-positive/15 text-positive-strong"
                           : "bg-muted text-muted-foreground")
                     }
                   >
@@ -370,8 +377,8 @@ export function GerarPropostaDialog({
                       .map((v) => (
                         <div key={v} className="flex items-center justify-between text-sm">
                           <span className="flex items-center gap-2">
-                            <Check className="h-3 w-3 text-positive" />
-                            <span className="font-mono text-xs text-positive">{v}</span>
+                            <Check className="h-3 w-3 text-positive-strong" />
+                            <span className="font-mono text-xs text-positive-strong">{v}</span>
                           </span>
                           <span className="text-xs text-muted-foreground truncate max-w-[200px]">
                             {autoData[v] || "(vazio)"}
@@ -447,11 +454,18 @@ export function GerarPropostaDialog({
                 value={sendEmail}
                 onChange={(e) => setSendEmail(e.target.value)}
                 placeholder="cliente@email.com"
+                aria-invalid={emailInvalid}
               />
-              {!sendEmail && cliente?.email == null && lead?.email == null && (
-                <p className="text-xs text-amber-600">
-                  Nenhum email cadastrado para este cliente/lead. Preencha manualmente.
-                </p>
+              {emailInvalid ? (
+                <p className="text-xs text-negative-strong">Digite um email válido, ex.: nome@empresa.com.</p>
+              ) : (
+                !sendEmail &&
+                cliente?.email == null &&
+                lead?.email == null && (
+                  <p className="text-xs text-amber-600">
+                    Nenhum email cadastrado para este cliente/lead. Preencha manualmente.
+                  </p>
+                )
               )}
             </div>
             <div className="space-y-2">
@@ -508,21 +522,11 @@ export function GerarPropostaDialog({
                 <ArrowLeft className="h-4 w-4 mr-1.5" /> Voltar
               </Button>
               <Button variant="outline" className="gap-1.5" onClick={handleDownload}>
-                <Download className="h-4 w-4" /> Baixar DOCX
+                <Download className="h-4 w-4" /> Baixar documento
               </Button>
-              {mode === "proposta" && (
-                <Button className="gap-1.5 bg-positive hover:bg-positive/90 text-white" onClick={() => setStep("send")}>
-                  <Send className="h-4 w-4" /> Enviar por Email
-                </Button>
-              )}
-              {mode === "contrato" && (
-                <Button
-                  className="gap-1.5 bg-purple-600 hover:bg-purple-700 text-white"
-                  onClick={() => setStep("send")}
-                >
-                  <Send className="h-4 w-4" /> Enviar por Email
-                </Button>
-              )}
+              <Button className="gap-1.5 bg-brand hover:bg-brand/90 text-ink" onClick={() => setStep("send")}>
+                <Send className="h-4 w-4" /> Enviar por Email
+              </Button>
             </>
           )}
 
@@ -532,8 +536,8 @@ export function GerarPropostaDialog({
                 <ArrowLeft className="h-4 w-4 mr-1.5" /> Voltar ao Preview
               </Button>
               <Button
-                className="gap-1.5 bg-positive hover:bg-positive/90 text-white"
-                disabled={!sendEmail.trim() || isSending}
+                className="gap-1.5 bg-brand hover:bg-brand/90 text-ink"
+                disabled={!sendEmail.trim() || emailInvalid || isSending}
                 onClick={handleSend}
               >
                 {isSending ? (
