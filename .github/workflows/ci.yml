@@ -56,4 +56,37 @@ jobs:
       - name: Run gitleaks
         run: gitleaks detect --source . --redact --no-banner --verbose
 
+  # Deploy do backend no Supabase de STAGING.
+  # Roda como job do próprio CI (gatilho push do branch staging), então se
+  # registra a partir do branch staging e NÃO depende do arquivo estar no main
+  # (a pegadinha do workflow_run, que só liga a partir do branch default).
+  # Só dispara em push no staging E depois que lint/test/build, audit e secrets
+  # passarem. PRs não deployam (github.event_name != push).
+  # Secrets no GitHub Environment "Staging": SUPABASE_ACCESS_TOKEN,
+  # SUPABASE_DB_URL (Session Pooler IPv4), SUPABASE_PROJECT_REF.
+  deploy-staging:
+    name: Deploy → staging (Supabase)
+    needs: [lint-test-build, audit, secrets-scan]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/staging'
+    runs-on: ubuntu-latest
+    environment: Staging
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - name: Aplicar migrations (db push via pooler IPv4)
+        # --db-url aponta pro Session Pooler (IPv4). A conexão direta do Supabase
+        # é IPv6-only e falharia no runner IPv4-only do GitHub.
+        run: supabase db push --db-url "$SUPABASE_DB_URL"
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+      - name: Deploy das edge functions
+        # Sem nome = deploya todas em supabase/functions, respeitando verify_jwt
+        # de config.toml por função. Vai por HTTPS, IPv4 do runner basta.
+        run: supabase functions deploy --project-ref "$SUPABASE_PROJECT_REF"
+        env:
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
 
