@@ -16,9 +16,9 @@ import type { Draft, LeadCampos } from "./useChat";
 type Props = {
   index: number;
   draft: Draft;
-  onConfirmar: (index: number, runId: string, entidade: "lead", campos: LeadCampos) => Promise<string | undefined>;
-  onCancelar: (index: number, runId: string) => Promise<void>;
-  onDesfazer: (index: number, runId: string, entidade: "lead", entityId: string) => Promise<void>;
+  onConfirmar: (runId: string, entidade: "lead", campos: LeadCampos) => Promise<string | undefined>;
+  onCancelar: (runId: string) => Promise<void>;
+  onDesfazer: (runId: string, entidade: "lead", entityId: string) => Promise<void>;
 };
 
 export function LeadConfirmationCard({ index, draft, onConfirmar, onCancelar, onDesfazer }: Props) {
@@ -60,7 +60,7 @@ export function LeadConfirmationCard({ index, draft, onConfirmar, onCancelar, on
 
     setSalvando(true);
     try {
-      await onConfirmar(index, draft.runId, "lead", form);
+      await onConfirmar(draft.runId, "lead", form);
       toast.success("Lead criado");
     } catch {
       toast.error("Não foi possível criar o lead", { description: "Verifique suas permissões e tente de novo." });
@@ -72,7 +72,7 @@ export function LeadConfirmationCard({ index, draft, onConfirmar, onCancelar, on
   const cancelar = async () => {
     setSalvando(true);
     try {
-      await onCancelar(index, draft.runId);
+      await onCancelar(draft.runId);
     } finally {
       setSalvando(false);
     }
@@ -82,7 +82,7 @@ export function LeadConfirmationCard({ index, draft, onConfirmar, onCancelar, on
     if (!draft.entityId) return;
     setDesfazendo(true);
     try {
-      await onDesfazer(index, draft.runId, "lead", draft.entityId);
+      await onDesfazer(draft.runId, "lead", draft.entityId);
       toast.success("Lead desfeito");
     } catch {
       toast.error("Não foi possível desfazer");
