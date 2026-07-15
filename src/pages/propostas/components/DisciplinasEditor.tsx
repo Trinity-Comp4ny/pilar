@@ -182,7 +182,7 @@ export function DisciplinasEditor({ rows, onChange, disabled }: DisciplinasEdito
             Soma venda: {formatCurrency(totais.totalValor)}
           </Badge>
           {totais.margemPct !== null && (
-            <Badge className={`text-xs ${totais.margemPct >= 0 ? "bg-positive/10 text-positive" : "bg-red-100 text-red-800"}`}>
+            <Badge className={`text-xs ${totais.margemPct >= 0 ? "bg-positive/10 text-positive-strong" : "bg-red-100 text-red-800"}`}>
               Margem: {totais.margemPct.toFixed(1)}%
             </Badge>
           )}
