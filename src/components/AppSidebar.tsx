@@ -59,6 +59,7 @@ const menu: MenuGroup[] = [
   {
     label: "Visão",
     items: [
+      { title: "Agentes", url: "/agentes", icon: Sparkles, feature: "ai_chat" as Feature, badge: "novo" },
       { title: "Dashboard", url: "/dashboard", icon: Home, feature: "dashboard" },
       { title: "Relatórios", url: "/relatorios", icon: BarChart, feature: "relatorios" },
     ],

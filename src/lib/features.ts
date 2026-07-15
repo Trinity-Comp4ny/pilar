@@ -8,6 +8,7 @@ import {
   Home,
   LayoutTemplate,
   MapPin,
+  Sparkles,
   Target,
   UserPlus,
   Users,
@@ -31,7 +32,8 @@ export type FeatureKey =
   | "ai_hub"
   | "capacidade"
   | "templates"
-  | "timesheet";
+  | "timesheet"
+  | "ai_chat";
 
 export type FeatureGroup = "visao" | "comercial" | "operacao" | "financeiro" | "equipe" | "extras";
 
@@ -181,6 +183,17 @@ export const FEATURES: readonly FeatureDefinition[] = [
     icon: Globe,
     core: false,
     addon: false,
+    includedInPlans: ["pro", "enterprise"],
+  },
+  {
+    key: "ai_chat",
+    label: "Agentes",
+    description: "Converse em linguagem natural — os agentes respondem sobre finanças, projetos e comercial",
+    group: "visao",
+    icon: Sparkles,
+    core: false,
+    addon: false,
+    dormant: false,
     includedInPlans: ["pro", "enterprise"],
   },
   {
