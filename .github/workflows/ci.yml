@@ -72,6 +72,12 @@ jobs:
     environment: Staging
     env:
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      # A CLI valida o config.toml inteiro em db push / functions deploy, e o bloco
+      # [auth.hook.send_email] referencia env(AUTH_HOOK_SEND_EMAIL_SECRET). Sem essa
+      # var o parse aborta antes de aplicar migration. NENHUM destes comandos aplica
+      # config no servidor (db push = migrations; functions deploy = código), então
+      # isto é só para o parse passar. O hook real vive no GoTrue do projeto.
+      AUTH_HOOK_SEND_EMAIL_SECRET: ${{ secrets.AUTH_HOOK_SEND_EMAIL_SECRET }}
     steps:
       - uses: actions/checkout@v4
       - uses: supabase/setup-cli@v1
