@@ -7,6 +7,7 @@ import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import { toast } from "sonner";
 import { useProjetoRentabilidade } from "@/hooks/useRentabilidade";
 import { useTemplates } from "@/hooks/useTemplates";
+import { errorMessage } from "@/lib/errors";
 import {
   useProjetoDisciplinas,
   useUpsertDisciplina,
@@ -172,8 +173,7 @@ export function useProjetoDetail(id: string | undefined) {
         await deleteDisciplinaMut.mutateAsync({ id: dbDisc.id, projetoId: projeto.id });
         toast.success("Disciplina removida");
       } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : String(err);
-        toast.error("Erro ao remover", { description: message });
+        toast.error("Erro ao remover", { description: errorMessage(err) });
       }
     },
     [projeto, dbDisciplinas, deleteDisciplinaMut, toast]
@@ -191,8 +191,7 @@ export function useProjetoDetail(id: string | undefined) {
         });
         toast.success("Disciplina adicionada");
       } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : String(err);
-        toast.error("Erro ao adicionar disciplina", { description: message });
+        toast.error("Erro ao adicionar disciplina", { description: errorMessage(err) });
       }
     },
     [projeto, upsertDisciplina, toast]
@@ -220,8 +219,7 @@ export function useProjetoDetail(id: string | undefined) {
         });
         toast.success("Disciplina atualizada");
       } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : String(err);
-        toast.error("Erro ao salvar", { description: message });
+        toast.error("Erro ao salvar", { description: errorMessage(err) });
       }
     },
     [projeto, upsertDisciplina, toast]

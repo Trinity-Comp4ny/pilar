@@ -16,6 +16,7 @@ import { AdminRoute } from "./components/AdminRoute";
 import { UltraAdminRoute } from "./components/UltraAdminRoute";
 import { FeatureRoute } from "./components/FeatureRoute";
 import { AdminOnlyRoute } from "./components/AdminOnlyRoute";
+import { RequireRole } from "./components/RequireRole";
 import { RequireAal2 } from "./components/RequireAal2";
 import { ImpersonationBanner } from "./components/ImpersonationBanner";
 import { TrialBanner } from "./components/TrialBanner";
@@ -121,8 +122,12 @@ const App = () => {
                         <Route path="/leads" element={<Leads />} />
                       </Route>
 
+                      {/* Financeiro (inclui aba Folha) escondido de coordenador/colaborador.
+                          Guard de UX; a barreira real é a RLS do Cluster 1. */}
                       <Route element={<FeatureRoute feature="financeiro" />}>
-                        <Route path="/financeiro" element={<Financeiro />} />
+                        <Route element={<RequireRole roles={["owner"]} />}>
+                          <Route path="/financeiro" element={<Financeiro />} />
+                        </Route>
                       </Route>
 
                       <Route element={<FeatureRoute feature="projetos" />}>
@@ -137,7 +142,9 @@ const App = () => {
                       </Route>
 
                       <Route element={<FeatureRoute feature="financeiro" />}>
-                        <Route path="/fornecedores" element={<Fornecedores />} />
+                        <Route element={<RequireRole roles={["owner"]} />}>
+                          <Route path="/fornecedores" element={<Fornecedores />} />
+                        </Route>
                       </Route>
 
                       <Route element={<AdminOnlyRoute />}>

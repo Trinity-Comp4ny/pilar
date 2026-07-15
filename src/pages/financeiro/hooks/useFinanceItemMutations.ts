@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { errorMessage } from "@/lib/errors";
 import type { DespesaFormData } from "@/schemas/despesaSchema";
 import type { ReceitaFormData } from "@/schemas/receitaSchema";
 import { FINANCE_ITEMS_KEYS, type FinanceItemTipo, type DespesaItem, type ReceitaItem } from "./useFinanceItems";
@@ -110,8 +111,7 @@ export function useFinanceItemMutations(tipo: FinanceItemTipo) {
       invalidate();
     },
     onError: (err) => {
-      const msg = err instanceof Error ? err.message : (err as { message?: string })?.message ?? "Erro ao salvar";
-      toast.error("Erro ao salvar despesa", { description: msg });
+      toast.error("Erro ao salvar despesa", { description: errorMessage(err, "Erro ao salvar") });
     },
   });
 
@@ -124,8 +124,7 @@ export function useFinanceItemMutations(tipo: FinanceItemTipo) {
       invalidate();
     },
     onError: (err) => {
-      const msg = err instanceof Error ? err.message : (err as { message?: string })?.message ?? "Erro ao salvar";
-      toast.error("Erro ao salvar receita", { description: msg });
+      toast.error("Erro ao salvar receita", { description: errorMessage(err, "Erro ao salvar") });
     },
   });
 
@@ -142,8 +141,7 @@ export function useFinanceItemMutations(tipo: FinanceItemTipo) {
       invalidate();
     },
     onError: (err) => {
-      const msg = err instanceof Error ? err.message : (err as { message?: string })?.message ?? "Erro desconhecido";
-      toast.error("Erro ao atualizar", { description: msg });
+      toast.error("Erro ao atualizar", { description: errorMessage(err, "Erro desconhecido") });
     },
   });
 
@@ -160,8 +158,7 @@ export function useFinanceItemMutations(tipo: FinanceItemTipo) {
       invalidate();
     },
     onError: (err) => {
-      const msg = err instanceof Error ? err.message : (err as { message?: string })?.message ?? "Erro desconhecido";
-      toast.error("Erro ao atualizar", { description: msg });
+      toast.error("Erro ao atualizar", { description: errorMessage(err, "Erro desconhecido") });
     },
   });
 
@@ -176,7 +173,7 @@ export function useFinanceItemMutations(tipo: FinanceItemTipo) {
     },
     onError: (err) =>
       toast.error(`Falha ao excluir ${labelSingular.toLowerCase()}`, {
-        description: err instanceof Error ? err.message : "Tente novamente",
+        description: errorMessage(err, "Tente novamente"),
       }),
   });
 
@@ -201,7 +198,7 @@ export function useFinanceItemMutations(tipo: FinanceItemTipo) {
     },
     onError: (err) =>
       toast.error("Falha ao excluir", {
-        description: err instanceof Error ? err.message : "Tente novamente",
+        description: errorMessage(err, "Tente novamente"),
       }),
   });
 
