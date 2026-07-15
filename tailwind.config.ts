@@ -159,6 +159,40 @@ export default {
       fontFamily: {
         montserrat: ["Montserrat", "sans-serif"],
       },
+      // Escala tipográfica FLUIDA (clamp via tokens em tokens.css).
+      // Só landing + títulos de módulo — NÃO usar em tabelas de dados.
+      // font-size + line-height acoplados (o util Heading consome estes).
+      // ATENÇÃO: nomes registrados no extendTailwindMerge do cn (src/lib/utils.ts),
+      // senão o tailwind-merge descarta o tamanho quando há override de cor.
+      fontSize: {
+        display: ["var(--text-display)", { lineHeight: "var(--text-display-lh)" }],
+        h1: ["var(--text-h1)", { lineHeight: "var(--text-h1-lh)" }],
+        h2: ["var(--text-h2)", { lineHeight: "var(--text-h2-lh)" }],
+        h3: ["var(--text-h3)", { lineHeight: "var(--text-h3-lh)" }],
+        h4: ["var(--text-h4)", { lineHeight: "var(--text-h4-lh)" }],
+        lead: ["var(--text-lead)", { lineHeight: "var(--text-lead-lh)" }],
+      },
+      // Ritmo vertical de seção fluido → py-section / py-section-sm / py-section-lg
+      spacing: {
+        section: "var(--space-section)",
+        "section-sm": "var(--space-section-sm)",
+        "section-lg": "var(--space-section-lg)",
+      },
+      // Larguras de conteúdo nomeadas → max-w-content / max-w-wide
+      maxWidth: {
+        content: "var(--container-content)",
+        wide: "var(--container-wide)",
+      },
+      // Motion coeso (tokens em tokens.css) → ease-out-expo/quint, duration-fast/base/slow
+      transitionTimingFunction: {
+        "out-expo": "var(--ease-out-expo)",
+        "out-quint": "var(--ease-out-quint)",
+      },
+      transitionDuration: {
+        fast: "var(--dur-fast)",
+        base: "var(--dur-base)",
+        slow: "var(--dur-slow)",
+      },
       backgroundImage: {
         "gradient-primary": "var(--gradient-primary)",
         "gradient-subtle": "var(--gradient-subtle)",
