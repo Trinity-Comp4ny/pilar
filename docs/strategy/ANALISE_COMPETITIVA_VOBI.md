@@ -1,6 +1,6 @@
 # Análise Competitiva: Vobi
 
-> Atualizado em: 2026-05-14
+> Atualizado em: 2026-07-14
 
 ## O que é a Vobi
 
@@ -101,8 +101,35 @@ O maior diferencial estratégico. Solução de pagamentos integrada:
 | Relatórios | ✅ | ✅ |
 | Mapa geográfico de projetos | ❌ | ✅ |
 | Multi-empresa / impersonação admin | ❌ | ✅ |
-| Agentes de IA | ✅ 3 em produção | ❌ (infra pronta, UI zero) |
+| Agentes de IA | ✅ 3 em produção (reativo/automação) | ❌ (infra pronta, UI zero) |
 | ICP principal | Construção Civil | Engenharia multidisciplinar |
+
+---
+
+## Natureza dos Agentes de IA — reativo vs proativo (scan 2026-07-14)
+
+> Ver nota completa: `research/aec/proactive-margin-agent-landscape.md`
+
+Classificação em 3 níveis: **(1) reativo** (chat responde quando perguntado) → **(2) automação**
+(executa tarefa sob gatilho, ex.: ler nota e lançar) → **(3) proativo/monitor** (vigia continuamente
+e empurra alerta/ação sem ser chamado). O diferencial "agente de margem" do Pilar mira o **nível 3
+aplicado a margem por projeto**.
+
+| Player | Agente de IA | Nível | Foco | ICP/mercado |
+|---|---|---|---|---|
+| **Vobi** (BR, direto) | IA Financeiro | 2 (automação) | Lê nota/boleto no WhatsApp, lança, concilia (Open Finance/SEFAZ). "Protege margem" via bookkeeping, **não prevê/alerta margem** | Construção/arquitetura BR |
+| **Deltek Dela** (US) | Dela (orquestrador) | **3 (proativo)** | "Proactive Risk Prediction" de estouro de orçamento e miss de meta de lucro; "vê problemas antes de acontecer" | Enterprise AEC + govcon + prof. services |
+| **Procore Helix** (US) | Agents + Insights | 3 (proativo) | Alerta risco de **obra** (spec mismatch, submittal, RFI, cronograma) — **não margem financeira** | Enterprise construção |
+| **Monograph** (US) | IA de setup + MoneyGantt | 1-2 | Recomenda orçamento por histórico; saúde financeira visual. Sem push proativo | A&E SMB |
+| **BQE CORE** (US) | Relatórios/insights | 1 (reativo) | Accounting-first, relatórios sob medida | A&E SMB |
+| **Prevision/Sienge** (BR) | IA (tec. ChatGPT) | 2-3 (parcial) | Planejado×realizado×previsto; antecipa estouro mês a mês por avanço físico; sugere ações | Construtoras BR |
+
+**Conclusão competitiva:** o **agente proativo de margem por projeto para engenharia multidisciplinar
+SMB no Brasil está ABERTO** (mas não é campo virgem). Concorrente direto (Vobi) é reativo/automação;
+os únicos com monitor proativo de margem são enterprise US (Deltek) ou construção-cêntricos (Procore
+risco de obra, Prevision obra BR). É fronteira 2026 — janela existe, mas fecha. **Ação de maior ROI de
+diferenciação: tirar do papel o nível 3 (monitor que empurra alerta de margem), não ativar mais um
+chat reativo do IA Hub.**
 
 ---
 
@@ -138,6 +165,7 @@ O maior diferencial estratégico. Solução de pagamentos integrada:
 3. **Tagline mais preciso** — "saiba se o projeto dá lucro antes de terminar" é mais específico que o pitch genérico da Vobi
 4. **Financeiro profundo** — DRE, Aging, WIP (dormentes), quando ativados superam Vobi
 5. **Asaas já integrado** — ativar a UI seria paridade com Vobi Pay rapidamente
+6. **Agente PROATIVO de margem** — nível 3 (monitor que empurra alerta) é espaço aberto no nicho; a IA da Vobi é reativa/automação (ver seção "Natureza dos Agentes de IA")
 
 ---
 
@@ -170,3 +198,8 @@ Vobi é o competidor mais sério no segmento de construção civil brasileiro: Y
 2. Lançar Agentes de IA (infra pronta) — paridade com Vobi em inovação percebida
 
 Ambas existem no backend. É execução de produto, não desenvolvimento do zero.
+
+**Diferenciação de IA (não só paridade):** a IA da Vobi (e da maioria do AEC SMB) é reativa/automação.
+O espaço do **agente proativo de margem** (nível 3 — vigia projetos e empurra "vai fechar no vermelho")
+está aberto no nicho de engenharia. Ver seção "Natureza dos Agentes de IA" e
+`research/aec/proactive-margin-agent-landscape.md`.
