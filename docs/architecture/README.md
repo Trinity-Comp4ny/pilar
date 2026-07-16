@@ -16,4 +16,6 @@ Um ADR documenta uma decisão técnica relevante, seu contexto e consequências.
 
 - [`REUSO_LABRYNTH.md`](./REUSO_LABRYNTH.md) — o que adaptar dos repos internos da Labrynth (segurança/tenancy, frontend, RBAC, design system, IA), com caminhos-fonte e esforço de porte.
 
-> **Novo ADR?** Numere sequencialmente e siga o formato dos existentes (contexto → decisão → consequências).
+> **Novo ADR?** Copie [`adr/TEMPLATE.md`](./adr/TEMPLATE.md), numere sequencialmente e siga o formato (contexto → decisão → consequências). Registre na tabela acima.
+
+Para especificar uma feature antes de codar, veja [`../specs/`](../specs/) (Spec Driven Development).
