@@ -15,6 +15,7 @@
 | 🔒 **Segurança & Compliance** | [`security/`](./security/) | Segurança, LGPD/compliance, auditoria de banco, rotação de segredos |
 | 🛠️ **Operações** | [`operations/`](./operations/) | Deploy, disaster recovery, incident response, runbooks, monitoring, load/versionamento de API |
 | 🏛️ **Arquitetura** | [`architecture/`](./architecture/) | ADRs (decisões arquiteturais registradas) |
+| 📐 **Specs** | [`specs/`](./specs/) | Especificações de feature (Spec Driven Development): quê/porquê antes de codar |
 | ⚖️ **Legal** | [`legal/`](./legal/) | Política de privacidade e documentos legais |
 
 ## Fora de `docs/` (referência rápida)
@@ -37,4 +38,5 @@
 - **"O que melhorar em config/admin/super-admin?"** → [`strategy/TODO_CONFIG_ADMIN_2026-07-14.md`](./strategy/TODO_CONFIG_ADMIN_2026-07-14.md)
 - **"Está tudo seguro?"** → [`security/SECURITY.md`](./security/SECURITY.md) + [`security/AUDITORIA_BANCO_2026-05-19.md`](./security/AUDITORIA_BANCO_2026-05-19.md)
 - **"Deu incidente, e agora?"** → [`operations/INCIDENT_RESPONSE.md`](./operations/INCIDENT_RESPONSE.md) + [`operations/runbooks/`](./operations/runbooks/)
-- **"Por que decidimos X na arquitetura?"** → [`architecture/adr/`](./architecture/adr/)
+- **"Por que decidimos X na arquitetura?"** → [`architecture/adr/`](./architecture/adr/) (template em [`adr/TEMPLATE.md`](./architecture/adr/TEMPLATE.md))
+- **"Vou construir uma feature, por onde começo?"** → [`specs/`](./specs/) (template em [`specs/TEMPLATE.md`](./specs/TEMPLATE.md))
