@@ -2,6 +2,7 @@ import { useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { mfaDevBypass } from "@/lib/mfaDevBypass";
 
 /**
  * Gate for sensitive mutations (invite user, reset portal password, role change, delete).
@@ -22,6 +23,7 @@ export function useRequireAal2() {
   const { toast } = useToast();
 
   return useCallback(async (): Promise<boolean> => {
+    if (mfaDevBypass()) return true;
     if (mfaCurrentLevel === "aal2") return true;
 
     const needsEnroll = mfaNextLevel !== "aal2";
