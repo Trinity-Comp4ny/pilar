@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { isUltraAdmin } from "@/lib/roles";
+import { mfaDevBypass } from "@/lib/mfaDevBypass";
 import Layout from "./Layout";
 import { AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -48,6 +49,8 @@ function SubscriptionSuspendedScreen() {
 export function PrivateRoute() {
   const { isAuthenticated, profile, loading, mfaChallengeRequired, hasVerifiedMfaFactor } = useAuth();
   const location = useLocation();
+
+  const mfaBypass = mfaDevBypass();
   const [subStatus, setSubStatus] = useState<SubStatus | undefined>(subStatusCache.v);
 
   useEffect(() => {
@@ -81,7 +84,7 @@ export function PrivateRoute() {
     return <Navigate to="/" replace />;
   }
 
-  if (mfaChallengeRequired && location.pathname !== "/mfa") {
+  if (mfaChallengeRequired && !mfaBypass && location.pathname !== "/mfa") {
     return <Navigate to="/mfa" replace />;
   }
 
@@ -111,7 +114,7 @@ export function PrivateRoute() {
     }
 
     const onboardingComplete = profileDone && (!isAdmin || companyDone);
-    if (onboardingComplete && !hasVerifiedMfaFactor && !isMfaSetup) {
+    if (onboardingComplete && !hasVerifiedMfaFactor && !mfaBypass && !isMfaSetup) {
       return <Navigate to="/mfa/setup" replace />;
     }
   }

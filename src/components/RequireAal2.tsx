@@ -1,5 +1,6 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { mfaDevBypass } from "@/lib/mfaDevBypass";
 
 /**
  * Step-up: exige sessão AAL2 (MFA verificado nesta sessão).
@@ -15,6 +16,11 @@ export function RequireAal2() {
 
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center">Carregando...</div>;
+  }
+
+  // Dev local (banco local): libera sem MFA. Inerte em staging/prod.
+  if (mfaDevBypass()) {
+    return <Outlet />;
   }
 
   if (!hasVerifiedMfaFactor) {
