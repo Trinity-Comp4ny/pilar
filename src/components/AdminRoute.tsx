@@ -1,6 +1,7 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePermissions } from "@/hooks/usePermissions";
+import { mfaDevBypass } from "@/lib/mfaDevBypass";
 
 export function AdminRoute() {
   const { loading, mfaCurrentLevel } = useAuth();
@@ -15,7 +16,7 @@ export function AdminRoute() {
     return <Navigate to="/sem-acesso?recurso=admin_portal" replace />;
   }
 
-  if (mfaCurrentLevel !== "aal2") {
+  if (!mfaDevBypass() && mfaCurrentLevel !== "aal2") {
     return <Navigate to="/mfa" replace state={{ from: location, reason: "aal2-required" }} />;
   }
 
