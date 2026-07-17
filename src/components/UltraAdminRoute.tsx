@@ -1,6 +1,7 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { isUltraAdmin } from "@/lib/roles";
+import { mfaDevBypass } from "@/lib/mfaDevBypass";
 
 export function UltraAdminRoute() {
   const { loading, profile, mfaCurrentLevel } = useAuth();
@@ -14,7 +15,7 @@ export function UltraAdminRoute() {
     return <Navigate to="/sem-acesso?recurso=ultra_admin" replace />;
   }
 
-  if (mfaCurrentLevel !== "aal2") {
+  if (!mfaDevBypass() && mfaCurrentLevel !== "aal2") {
     return <Navigate to="/mfa" replace state={{ from: location, reason: "aal2-required" }} />;
   }
 
