@@ -22,7 +22,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { toast } from "sonner";
-import { formatDocument } from "@/lib/maskUtils";
+import { formatDocument, formatPhone } from "@/lib/maskUtils";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -438,7 +438,7 @@ export default function Clientes() {
                       <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
                         {cliente.email}
                       </TableCell>
-                      <TableCell className="hidden lg:table-cell">{cliente.contato}</TableCell>
+                      <TableCell className="hidden lg:table-cell">{formatPhone(cliente.contato)}</TableCell>
                       {canShowActions && (
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-1">

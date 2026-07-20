@@ -596,7 +596,7 @@ export function ClienteFormDialog({ open, onOpenChange, cliente, onSaved }: Clie
                   <div className="space-y-1.5">
                     {contasBancarias.map((conta, index) => (
                       <div
-                        key={index}
+                        key={`${conta.banco}|${conta.agencia}|${conta.conta}|${index}`}
                         className={`flex items-center justify-between gap-3 border rounded-lg px-3 py-2 text-sm ${conta.is_primary ? "border-brand/40" : ""}`}
                       >
                         <div className="flex items-center gap-3 flex-1 min-w-0">

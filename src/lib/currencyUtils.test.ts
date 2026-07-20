@@ -79,6 +79,11 @@ describe("parseCurrencyString — edge cases", () => {
     expect(parseCurrencyString("R$ 0,00")).toBe(0);
   });
 
+  it("parseia formato US colado (vírgula=milhar, ponto=decimal) — ACH-FIN-01", () => {
+    expect(parseCurrencyString("1,000.50")).toBe(1000.5);
+    expect(parseCurrencyString("R$ 2,500.99")).toBe(2500.99);
+  });
+
   it("parseia valor alto sem perder precisão", () => {
     expect(parseCurrencyString("R$ 999.999,99")).toBe(999999.99);
   });
