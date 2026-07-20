@@ -17,7 +17,10 @@ export function FinanceiroContent({ receitas }: { receitas: ClienteReceita[] }) 
   ).padStart(2, "0")}`;
 
   const totalPrevisto = receitas.reduce((s, r) => s + r.valor, 0);
-  const totalPago = receitas.filter((r) => r.status === "Recebido").reduce((s, r) => s + r.valor, 0);
+  // "Pago" e "Recebido" contam como recebido (mesmo critério do resto do app).
+  const totalPago = receitas
+    .filter((r) => r.status === "Recebido" || r.status === "Pago")
+    .reduce((s, r) => s + r.valor, 0);
   const totalPendente = receitas.filter((r) => r.status === "Pendente").reduce((s, r) => s + r.valor, 0);
 
   return (

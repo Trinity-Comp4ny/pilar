@@ -27,5 +27,6 @@ export function translateAuthError(input: unknown): string {
     if (raw.includes(needle)) return pt;
   }
 
-  return raw;
+  // Não vazar mensagem técnica crua (GoTrue/Postgres) no toast do usuário.
+  return "Erro inesperado. Tente novamente.";
 }
