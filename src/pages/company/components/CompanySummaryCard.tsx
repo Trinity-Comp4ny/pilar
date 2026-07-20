@@ -83,7 +83,7 @@ export function CompanySummaryCard({
             <p className="text-xs text-black/50">Equipe</p>
             <div className="flex items-center justify-between gap-3 mt-1">
               <p className="text-sm font-medium">{usersCount}</p>
-              <Link to="/equipe" className="text-sm text-brand hover:underline inline-flex items-center gap-1">
+              <Link to="/equipe" className="text-sm text-ink hover:underline inline-flex items-center gap-1">
                 Ver equipe
                 <ArrowUpRight className="h-4 w-4" />
               </Link>

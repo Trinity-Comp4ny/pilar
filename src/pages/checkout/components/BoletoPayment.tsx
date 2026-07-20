@@ -32,7 +32,7 @@ export function BoletoPayment({ bankSlipUrl, identificationField, value, isPolli
   return (
     <div className="space-y-6">
       <header className="text-center">
-        <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-brand/10 text-brand mb-3">
+        <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-brand/10 text-ink mb-3">
           <FileText className="w-6 h-6" />
         </div>
         <h2 className="text-2xl font-medium text-slate-900">Boleto gerado</h2>

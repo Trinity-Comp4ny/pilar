@@ -519,7 +519,7 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
                       <div className="rounded-md border border-dashed px-3 py-2 space-y-1 bg-muted/30">
                         {chavesPixCliente.map((c, i) => (
                           <div key={i} className="flex items-center gap-2 text-xs">
-                            <QrCode className="h-3 w-3 shrink-0 text-brand" />
+                            <QrCode className="h-3 w-3 shrink-0 text-muted-foreground" />
                             <span className="font-medium">{c.chave}</span>
                             <Badge variant="outline" className="text-[10px] h-4 px-1 ml-auto">
                               {TIPO_CHAVE_PIX_LABEL[c.tipo as keyof typeof TIPO_CHAVE_PIX_LABEL] ?? c.tipo}
@@ -676,7 +676,7 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
                       Centro de custo
                       <button
                         type="button"
-                        className="text-[10px] text-brand hover:underline inline-flex items-center gap-0.5"
+                        className="text-[10px] text-ink hover:underline inline-flex items-center gap-0.5"
                         onClick={() => setCcManagerOpen(true)}
                       >
                         <Settings2 className="h-3 w-3" /> gerenciar

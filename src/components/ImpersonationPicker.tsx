@@ -45,7 +45,7 @@ export function ImpersonationPicker() {
             <DropdownMenuItem
               key={r}
               onClick={() => handleStart(r)}
-              className={viewAsRole === r ? "bg-brand/10 text-brand" : ""}
+              className={viewAsRole === r ? "bg-brand text-ink" : ""}
             >
               {ROLE_LABEL[r]}
               {viewAsRole === r && <span className="ml-auto text-xs">ativo</span>}

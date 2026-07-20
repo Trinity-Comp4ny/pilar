@@ -1027,7 +1027,7 @@ export default function Propostas() {
                     <span className="text-amber-600">difere do valor digitado</span>
                     <button
                       type="button"
-                      className="text-brand underline underline-offset-2"
+                      className="text-ink underline underline-offset-2"
                       onClick={() =>
                         setValorDisplay(
                           new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2 }).format(
@@ -1119,7 +1119,7 @@ export default function Propostas() {
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <FolderPlus className="h-5 w-5 text-brand" />
+              <FolderPlus className="h-5 w-5 text-foreground" />
               Converter em Projeto
             </DialogTitle>
             <DD>Um novo projeto será criado automaticamente com os dados desta proposta.</DD>
