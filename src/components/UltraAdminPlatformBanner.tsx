@@ -21,7 +21,7 @@ export function UltraAdminPlatformBanner() {
     <div className="flex items-center justify-between gap-4 bg-amber-50 border-b border-amber-200 px-6 py-2 text-sm text-amber-800">
       <div className="flex items-center gap-2">
         <ShieldAlert size={14} className="shrink-0" />
-        <span>Modo plataforma ativo — você está visualizando como ultra admin.</span>
+        <span>Modo plataforma ativo: você está visualizando como ultra admin.</span>
       </div>
       <Button
         variant="outline"

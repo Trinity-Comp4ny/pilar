@@ -245,7 +245,7 @@ export default function ClienteLogin() {
               "Transparência e acompanhamento em cada etapa do seu projeto."
             </blockquote>
             <p className="text-sm text-white/60">
-              Acompanhe o progresso, visualize etapas e gerencie entregas — tudo em um só lugar.
+              Acompanhe o progresso, visualize etapas e gerencie entregas em um só lugar.
             </p>
           </div>
 
