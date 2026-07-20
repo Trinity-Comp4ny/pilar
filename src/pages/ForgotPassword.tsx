@@ -75,7 +75,7 @@ export default function ForgotPassword() {
 
           {sent ? (
             <div className="flex flex-col items-center gap-4 py-6 text-center animate-in fade-in duration-500">
-              <CheckCircle2 className="w-12 h-12 text-brand" />
+              <CheckCircle2 className="w-12 h-12 text-positive-strong" />
               <p className="text-base font-medium text-ink">Email enviado!</p>
               <p className="text-sm text-ink-soft">
                 Verifique sua caixa de entrada em <strong>{sentEmail}</strong> e clique no link para redefinir sua

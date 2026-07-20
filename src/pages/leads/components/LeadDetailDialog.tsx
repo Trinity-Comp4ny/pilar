@@ -31,7 +31,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
   Novo: { label: "Novo", color: "bg-info-soft text-info-strong" },
   "Em contato": { label: "Em Contato", color: "bg-highlight-soft text-highlight-strong" },
   Proposta: { label: "Proposta Enviada", color: "bg-warning-soft text-warning-strong" },
-  Negociação: { label: "Em Negociação", color: "bg-brand/10 text-brand" },
+  Negociação: { label: "Em Negociação", color: "bg-brand text-ink" },
   Ganho: { label: "Ganho", color: "bg-positive/10 text-positive-strong" },
   Perdido: { label: "Perdido", color: "bg-danger-soft text-danger-strong" },
 };

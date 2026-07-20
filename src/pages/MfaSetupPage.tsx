@@ -259,7 +259,7 @@ export default function MfaSetupPage() {
               <div className="text-center space-y-2">
                 <div className="flex justify-center mb-3">
                   <div className="p-3 rounded-full bg-brand/10">
-                    <ShieldCheck className="h-7 w-7 text-brand" />
+                    <ShieldCheck className="h-7 w-7 text-ink" />
                   </div>
                 </div>
                 <h1 className="text-xl font-semibold text-ink">Passo 1 de 5 — Instalar o app</h1>
@@ -302,7 +302,7 @@ export default function MfaSetupPage() {
               <div className="text-center space-y-2">
                 <div className="flex justify-center mb-3">
                   <div className="p-3 rounded-full bg-brand/10">
-                    <ShieldCheck className="h-7 w-7 text-brand" />
+                    <ShieldCheck className="h-7 w-7 text-ink" />
                   </div>
                 </div>
                 <h1 className="text-xl font-semibold text-ink">Passo 2 de 5 — Abrir o app</h1>
@@ -314,19 +314,19 @@ export default function MfaSetupPage() {
                   <p className="text-sm font-semibold text-ink">No app autenticador:</p>
                   <ol className="space-y-2 text-sm text-ink-soft">
                     <li className="flex items-start gap-2">
-                      <span className="flex-shrink-0 w-5 h-5 rounded-full bg-brand/20 text-brand text-xs font-bold flex items-center justify-center mt-0.5">
+                      <span className="flex-shrink-0 w-5 h-5 rounded-full bg-brand text-ink text-xs font-bold flex items-center justify-center mt-0.5">
                         1
                       </span>
                       Abra o app no celular
                     </li>
                     <li className="flex items-start gap-2">
-                      <span className="flex-shrink-0 w-5 h-5 rounded-full bg-brand/20 text-brand text-xs font-bold flex items-center justify-center mt-0.5">
+                      <span className="flex-shrink-0 w-5 h-5 rounded-full bg-brand text-ink text-xs font-bold flex items-center justify-center mt-0.5">
                         2
                       </span>
                       Toque no botão <strong className="text-ink">+</strong> ou "Adicionar conta"
                     </li>
                     <li className="flex items-start gap-2">
-                      <span className="flex-shrink-0 w-5 h-5 rounded-full bg-brand/20 text-brand text-xs font-bold flex items-center justify-center mt-0.5">
+                      <span className="flex-shrink-0 w-5 h-5 rounded-full bg-brand text-ink text-xs font-bold flex items-center justify-center mt-0.5">
                         3
                       </span>
                       Selecione <strong className="text-ink">"Escanear QR Code"</strong>
@@ -479,7 +479,7 @@ export default function MfaSetupPage() {
               <div className="text-center space-y-2">
                 <div className="flex justify-center mb-3">
                   <div className="p-3 rounded-full bg-brand/10">
-                    <ShieldCheck className="h-7 w-7 text-brand" />
+                    <ShieldCheck className="h-7 w-7 text-ink" />
                   </div>
                 </div>
                 <h1 className="text-xl font-semibold text-ink">Passo 5 de 5 — Salve seus códigos</h1>

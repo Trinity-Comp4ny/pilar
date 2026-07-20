@@ -419,7 +419,7 @@ export function CheckoutForm({
 
               {cepAddress && (
                 <div className="mt-3 flex items-start gap-2 px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-600">
-                  <MapPin className="w-3.5 h-3.5 text-brand shrink-0 mt-0.5" />
+                  <MapPin className="w-3.5 h-3.5 text-foreground shrink-0 mt-0.5" />
                   <span>
                     {cepAddress.logradouro && `${cepAddress.logradouro}, `}
                     {cepAddress.bairro && `${cepAddress.bairro} — `}

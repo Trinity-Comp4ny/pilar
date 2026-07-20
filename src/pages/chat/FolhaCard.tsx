@@ -170,7 +170,7 @@ export function FolhaCard({ draft, onConfirmar, onCancelar, onDesfazerFolha }: P
       <div className="px-4 py-4">
         {preview.isLoading ? (
           <div className="flex items-center gap-2 py-6 text-sm text-muted-foreground">
-            <Loader2 className="h-4 w-4 animate-spin text-brand" /> Calculando preview…
+            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /> Calculando preview…
           </div>
         ) : preview.data?.jaFechada ? (
           <p className="py-4 text-sm text-muted-foreground">A folha de {competencia} já foi fechada.</p>

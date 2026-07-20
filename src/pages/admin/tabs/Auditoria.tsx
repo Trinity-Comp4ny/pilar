@@ -431,7 +431,7 @@ export function AuditoriaTab() {
         <CardHeader>
           <div className="flex items-center gap-3">
             <div className="h-10 w-10 rounded-full bg-brand/10 flex items-center justify-center">
-              <ShieldCheck size={18} className="text-brand" />
+              <ShieldCheck size={18} className="text-ink" />
             </div>
             <div>
               <CardTitle className="text-lg font-medium tracking-tight">Auditoria</CardTitle>

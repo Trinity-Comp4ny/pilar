@@ -96,7 +96,7 @@ export function LeadCreatePropostaDialog({ open, onOpenChange, leadNome, isPendi
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <FileText className="h-5 w-5 text-brand" />
+            <FileText className="h-5 w-5 text-foreground" />
             Criar Proposta
           </DialogTitle>
           <DialogDescription>

@@ -39,7 +39,7 @@ export function FolhaHistory({ history, selectedMonth, selectedYear, onOpenDetai
                   <div className="text-sm text-muted-foreground">{h.count} colaboradores</div>
                 </div>
                 <div className="text-right">
-                  <div className="font-bold text-brand">{formatCurrency(h.total)}</div>
+                  <div className="font-bold text-foreground">{formatCurrency(h.total)}</div>
                   <Badge
                     variant="secondary"
                     className={`mt-1 capitalize text-[10px] h-5 px-2

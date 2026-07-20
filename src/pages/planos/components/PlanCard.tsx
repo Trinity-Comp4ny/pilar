@@ -48,7 +48,7 @@ export function PlanCard({ plan, cycle }: PlanCardProps) {
       <ul className="space-y-3 mb-8 flex-1">
         {plan.features.map((feature) => (
           <li key={feature} className="flex items-start gap-3 text-sm text-slate-700">
-            <Check aria-hidden="true" className="w-4 h-4 text-brand flex-shrink-0 mt-0.5" />
+            <Check aria-hidden="true" className="w-4 h-4 text-positive-strong flex-shrink-0 mt-0.5" />
             <span>{feature}</span>
           </li>
         ))}
