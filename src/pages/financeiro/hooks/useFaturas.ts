@@ -120,7 +120,7 @@ export function useFaturas(cartaoId: string | null) {
         .filter((f) => (f.valor_total ?? 0) > 0 || f.status !== "Aberta")
         .map((f) => {
           let status = f.status;
-          if (status === "Aberta" && new Date(f.data_fim) < today) status = "Fechada";
+          if (status === "Aberta" && new Date(f.data_fim + "T00:00:00") < today) status = "Fechada";
           return { ...f, status };
         });
     },
