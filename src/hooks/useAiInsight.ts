@@ -141,6 +141,12 @@ export const useGenerateInsight = () => {
       });
 
       if (error) throw error;
+      // Non-2xx com corpo de erro, ou 2xx sem payload: tratar como falha em vez
+      // de fingir sucesso (ACH-AI-01).
+      if (!data || (typeof data === "object" && "error" in data)) {
+        const msg = data && typeof data === "object" && "error" in data ? String((data as { error: unknown }).error) : "";
+        throw new Error(msg || "A IA não retornou um resultado válido.");
+      }
       return data as AiInsight;
     },
     onSuccess: () => {
