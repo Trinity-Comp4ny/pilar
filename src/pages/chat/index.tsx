@@ -175,7 +175,7 @@ export default function ChatPage() {
                 {saudacao(primeiroNome)}
               </h1>
               <p className="mt-2 max-w-md text-sm text-muted-foreground">
-                3 agentes prontos — Financeiro, Projetos e Comercial. Pergunte em linguagem natural
+                3 agentes prontos: Financeiro, Projetos e Comercial. Pergunte em linguagem natural
                 e eles consultam seus dados e respondem na hora.
               </p>
             </div>
