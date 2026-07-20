@@ -98,13 +98,13 @@ export function FolhaTable({
                         </TableCell>
                         <TableCell>{item.p_cargo}</TableCell>
                         <TableCell
-                          className={`text-right ${isEdited(item, "salario") ? "text-brand font-medium" : ""}`}
+                          className={`text-right ${isEdited(item, "salario") ? "text-foreground font-medium" : ""}`}
                         >
                           {formatCurrency(item.p_salario_fixo)} {isEdited(item, "salario") && "*"}
                         </TableCell>
                         <TableCell className="text-center">
                           <div className="flex flex-col items-center">
-                            <span className={`font-medium ${isEdited(item, "area") ? "text-brand" : ""}`}>
+                            <span className={`font-medium ${isEdited(item, "area") ? "text-foreground" : ""}`}>
                               {area.toLocaleString("pt-BR")} m² {isEdited(item, "area") && "*"}
                             </span>
                             <span className="text-xs text-muted-foreground">
@@ -113,13 +113,13 @@ export function FolhaTable({
                           </div>
                         </TableCell>
                         <TableCell
-                          className={`text-right font-medium ${isEdited(item, "variavel") ? "text-brand" : "text-positive-strong"}`}
+                          className={`text-right font-medium ${isEdited(item, "variavel") ? "text-foreground" : "text-positive-strong"}`}
                         >
                           {isEdited(item, "variavel") ? "" : "+"} {formatCurrency(item.v_variavel)}{" "}
                           {isEdited(item, "variavel") && "*"}
                         </TableCell>
                         <TableCell
-                          className={`text-right font-bold text-lg ${isEdited(item, "total") ? "text-brand" : ""}`}
+                          className={`text-right font-bold text-lg ${isEdited(item, "total") ? "text-foreground" : ""}`}
                         >
                           {formatCurrency(item.v_total)} {isEdited(item, "total") && "*"}
                         </TableCell>

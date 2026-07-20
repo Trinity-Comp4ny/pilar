@@ -742,7 +742,7 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
                             title="Definir como principal"
                           >
                             <Landmark
-                              className={`h-4 w-4 ${conta.is_primary ? "text-brand" : "text-muted-foreground/40"}`}
+                              className={`h-4 w-4 ${conta.is_primary ? "text-foreground" : "text-muted-foreground/40"}`}
                             />
                           </button>
                           <span className="font-medium truncate">{conta.banco}</span>
@@ -750,7 +750,7 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
                             Ag. {conta.agencia} / Cc. {conta.conta}
                           </span>
                           <span className="text-xs text-muted-foreground capitalize shrink-0">{conta.tipo}</span>
-                          {conta.is_primary && <span className="text-[10px] text-brand font-medium">Principal</span>}
+                          {conta.is_primary && <span className="text-[10px] text-foreground font-medium">Principal</span>}
                         </div>
                         <Button
                           type="button"

@@ -155,7 +155,7 @@ export default function Profile() {
             <CardHeader>
               <div className="flex flex-col items-center text-center space-y-4">
                 <div className="h-24 w-24 rounded-full bg-brand/10 flex items-center justify-center">
-                  <User size={40} className="text-brand" />
+                  <User size={40} className="text-ink" />
                 </div>
                 <div>
                   <CardTitle className="text-xl">{[firstName, lastName].filter(Boolean).join(" ") || "-"}</CardTitle>

@@ -279,7 +279,7 @@ export function GerarPropostaDialog({
       <DialogContent className="sm:max-w-2xl max-h-[90vh] flex flex-col">
         <DialogHeader className="flex-shrink-0">
           <DialogTitle className="flex items-center gap-2">
-            <FileText className="h-5 w-5 text-brand" />
+            <FileText className="h-5 w-5 text-foreground" />
             {stepTitle[step]}
           </DialogTitle>
           {step === "config" && (

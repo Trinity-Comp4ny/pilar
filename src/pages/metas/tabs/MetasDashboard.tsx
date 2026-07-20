@@ -66,7 +66,7 @@ export default function MetasDashboard() {
       label: "Total de Metas",
       value: stats.total,
       icon: Target,
-      color: "text-brand",
+      color: "text-ink",
       bg: "bg-brand/10",
     },
     { label: "Concluídas", value: stats.completed, icon: CheckCircle2, color: "text-positive-strong", bg: "bg-positive/10" },

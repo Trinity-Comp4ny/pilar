@@ -189,7 +189,7 @@ export function CompanyDataTab({
 
             <div className="mt-6 pt-6 border-t">
               <div className="flex items-center gap-2 mb-3">
-                <QrCode size={16} className="text-brand" />
+                <QrCode size={16} className="text-foreground" />
                 <span className="text-sm font-semibold">Cobrança direta (sem Asaas)</span>
               </div>
               <p className="text-xs text-muted-foreground mb-4">
