@@ -41,7 +41,7 @@ import {
   Package,
   FileSignature,
 } from "lucide-react";
-import { formatDocument } from "@/lib/maskUtils";
+import { formatDocument, formatPhone } from "@/lib/maskUtils";
 import { useClienteDetalhe } from "@/hooks/useClienteDetalhe";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useRequireAal2 } from "@/hooks/useRequireAal2";
@@ -297,7 +297,7 @@ function VisaoGeralTab({ cliente, isAdmin }: { cliente: Cliente; isAdmin: boolea
               </div>
               <div className="flex items-center gap-2 text-sm">
                 <Phone className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                {cliente.contato || <span className="text-muted-foreground italic">Não informado</span>}
+                {cliente.contato ? formatPhone(cliente.contato) : <span className="text-muted-foreground italic">Não informado</span>}
               </div>
               {cliente.endereco && (
                 <div className="flex items-center gap-2 text-sm">

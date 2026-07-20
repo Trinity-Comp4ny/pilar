@@ -53,6 +53,7 @@ export default function Fornecedores() {
   const canEdit = can("financeiro", "edit");
 
   const [fornecedores, setFornecedores] = useState<Fornecedor[]>([]);
+  const [loadError, setLoadError] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -66,7 +67,12 @@ export default function Fornecedores() {
 
   const fetchFornecedores = useCallback(async () => {
     const { data, error } = await supabase.from("fornecedores").select("*").order("nome");
-    if (error) { toast.error("Erro ao carregar fornecedores"); return; }
+    if (error) {
+      setLoadError(true);
+      toast.error("Erro ao carregar fornecedores");
+      return;
+    }
+    setLoadError(false);
     setFornecedores(
       (data ?? []).map((f) => ({
         id: f.id,
@@ -364,7 +370,7 @@ export default function Fornecedores() {
             <div className="relative w-full sm:w-56">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
               <Input
-                placeholder="Buscar por nome ou CNPJ..."
+                placeholder="Buscar por nome, CNPJ ou email..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="h-9 pl-9 rounded-full text-sm"
@@ -389,7 +395,14 @@ export default function Fornecedores() {
                 {filtered.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={canEdit ? 6 : 5}>
-                      {fornecedores.length === 0 ? (
+                      {loadError ? (
+                        <EmptyState
+                          icon={Truck}
+                          title="Não foi possível carregar os fornecedores"
+                          description="Atualize a página em instantes."
+                          action={{ label: "Tentar de novo", variant: "outline", onClick: () => fetchFornecedores() }}
+                        />
+                      ) : fornecedores.length === 0 ? (
                         <EmptyState
                           icon={Truck}
                           title="Nenhum fornecedor cadastrado"

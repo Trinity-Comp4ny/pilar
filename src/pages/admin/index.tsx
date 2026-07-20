@@ -19,6 +19,7 @@ import { AutomacoesTab } from "./tabs/Automacoes";
 import { AuditoriaTab } from "./tabs/Auditoria";
 import { PlanoTab } from "./tabs/Plano";
 import { IntegracoesTab } from "./tabs/Integracoes";
+import { monitoring } from "@/lib/monitoring";
 
 type RawUser = {
   id: string;
@@ -166,8 +167,9 @@ export default function Admin() {
           const profileEmails = new Set(profileList.map((u) => u.email.toLowerCase()));
           setUsers([...profileList, ...pendingList.filter((p) => !profileEmails.has(p.email.toLowerCase()))]);
         }
-      } catch {
-        toast.error("Erro ao carregar admin");
+      } catch (err) {
+        monitoring.captureException(err, { context: "admin-load" });
+        toast.error("Erro ao carregar admin", { description: "Atualize a página em instantes." });
       } finally {
         setIsLoading(false);
       }
