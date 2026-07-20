@@ -455,7 +455,7 @@ export default function ProjetosKanban() {
         onConfirm={handleDeleteConfirm}
         title="Excluir Projeto"
         itemName={projetoToDelete?.nome}
-        description="Esta ação não pode ser desfeita. Todos os dados do projeto serão removidos."
+        description="O projeto sai das listagens e o histórico é preservado. A exclusão é bloqueada se houver lançamentos financeiros vinculados."
         confirmText="Excluir"
         cancelText="Cancelar"
       />
