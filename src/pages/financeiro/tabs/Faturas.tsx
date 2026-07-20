@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Separator } from "@/components/ui/separator";
 import { CreditCard, Receipt, Calendar, DollarSign, ChevronRight, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { formatCurrency } from "@/lib/currencyUtils";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -109,11 +110,22 @@ export default function Faturas() {
       return;
     }
 
+    const valor = parseFloat(valorPagamento);
+    if (!valor || valor <= 0) {
+      toast.error("Informe um valor de pagamento válido");
+      return;
+    }
+    const restante = selectedFatura.valor_total - selectedFatura.valor_pago;
+    if (valor > restante) {
+      toast.error(`Valor acima do saldo devedor (${formatCurrency(restante)})`);
+      return;
+    }
+
     pagarMutation.mutate(
       {
         faturaId: selectedFatura.id,
         contaId: contaPagamentoId,
-        valor: parseFloat(valorPagamento),
+        valor,
         dataPagamento: new Date(),
       },
       {
