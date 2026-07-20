@@ -57,7 +57,7 @@ export function LeadKanbanCard({ lead, leadNome, onClick, canEdit, onMoveStatus,
               </Badge>
             )}
             {lead.valor_estimado != null && (
-              <span className="text-xs font-semibold text-brand tabular-nums">
+              <span className="text-xs font-semibold text-foreground tabular-nums">
                 {formatCurrency(lead.valor_estimado)}
               </span>
             )}

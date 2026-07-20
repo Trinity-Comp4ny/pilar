@@ -123,7 +123,7 @@ export default function Privacidade() {
             </Link>
           </Button>
           <div className="flex items-center gap-2">
-            <ShieldCheck className="w-5 h-5 text-brand" />
+            <ShieldCheck className="w-5 h-5 text-foreground" />
             <h1 className="text-lg font-medium tracking-tight">Política de Privacidade</h1>
           </div>
         </div>
@@ -250,7 +250,7 @@ export default function Privacidade() {
           ) : (
             <p className="text-sm text-muted-foreground">
               Para solicitar a exclusão pelo sistema, faça{" "}
-              <Link to="/login" className="text-brand underline">
+              <Link to="/login" className="text-ink underline">
                 login
               </Link>
               . Ou envie um email para privacidade@trnty.com.br.
@@ -260,7 +260,7 @@ export default function Privacidade() {
 
         <section className="rounded-lg border bg-muted/30 p-6 space-y-4">
           <div className="flex items-start gap-3">
-            <Download className="w-5 h-5 text-brand mt-0.5" />
+            <Download className="w-5 h-5 text-foreground mt-0.5" />
             <div className="flex-1">
               <h3 className="font-medium mb-1">Solicitar exportação dos meus dados</h3>
               <p className="text-sm text-muted-foreground">
@@ -284,7 +284,7 @@ export default function Privacidade() {
           ) : (
             <p className="text-sm text-muted-foreground">
               Para solicitar a exportação pelo sistema, faça{" "}
-              <Link to="/login" className="text-brand underline">
+              <Link to="/login" className="text-ink underline">
                 login
               </Link>
               . Ou envie um email para privacidade@trnty.com.br.

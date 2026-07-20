@@ -327,13 +327,13 @@ function VisaoGeralTab({ cliente, isAdmin }: { cliente: Cliente; isAdmin: boolea
                   )}
                 >
                   <Landmark
-                    className={cn("h-4 w-4 shrink-0", conta.is_primary ? "text-brand" : "text-muted-foreground")}
+                    className={cn("h-4 w-4 shrink-0", conta.is_primary ? "text-ink" : "text-muted-foreground")}
                   />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <span className="font-medium truncate">{conta.banco}</span>
                       {conta.is_primary && (
-                        <span className="text-[10px] bg-brand/10 text-brand px-1.5 py-0.5 rounded">Principal</span>
+                        <span className="text-[10px] bg-brand text-ink px-1.5 py-0.5 rounded">Principal</span>
                       )}
                     </div>
                     <p className="text-[11px] text-muted-foreground">

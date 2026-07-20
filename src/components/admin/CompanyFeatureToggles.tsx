@@ -118,18 +118,18 @@ export function CompanyFeatureToggles({
       <div className="flex flex-col gap-4 rounded-lg border border-black/10 bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand/10">
-            <Sparkles size={18} className="text-brand" strokeWidth={1.5} />
+            <Sparkles size={18} className="text-foreground" strokeWidth={1.5} />
           </div>
           <div>
             <div className="text-sm font-medium text-black/80">
-              Plano atual: <span className="text-brand">{PLAN_LABEL[currentPlan]}</span>
+              Plano atual: <span className="text-foreground">{PLAN_LABEL[currentPlan]}</span>
             </div>
             <p className="text-xs text-black/50">
               {totals.active} de {totals.total} features ativas
               {totals.addonsOn > 0 && (
                 <>
                   {" · "}
-                  <span className="font-medium text-brand">
+                  <span className="font-medium text-foreground">
                     {totals.addonsOn} add-on{totals.addonsOn > 1 ? "s" : ""}
                   </span>
                 </>
@@ -214,7 +214,7 @@ export function CompanyFeatureToggles({
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
-              <Sparkles size={18} className="text-brand" strokeWidth={1.5} />
+              <Sparkles size={18} className="text-foreground" strokeWidth={1.5} />
               Ativar {pendingEnable?.label}?
             </AlertDialogTitle>
             <AlertDialogDescription>
@@ -280,7 +280,7 @@ function FeatureToggleRow({
             enabled ? "bg-brand/10" : "bg-black/5"
           )}
         >
-          <Icon size={16} strokeWidth={1.5} className={enabled ? "text-brand" : "text-black/50"} />
+          <Icon size={16} strokeWidth={1.5} className={enabled ? "text-ink" : "text-black/50"} />
         </div>
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
@@ -296,7 +296,7 @@ function FeatureToggleRow({
             ) : feature.addon ? (
               <Badge
                 variant="outline"
-                className="h-5 rounded-full border-brand/30 bg-brand/10 px-2 text-[10px] font-medium text-brand"
+                className="h-5 rounded-full border-brand/30 bg-brand px-2 text-[10px] font-medium text-ink"
               >
                 Add-on {feature.addonPriceLabel}
               </Badge>

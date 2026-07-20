@@ -98,7 +98,7 @@ export function ChangePlanDialog({ open, onOpenChange, current }: ChangePlanDial
                 )}
                 {isSelected && !isCurrent && (
                   <span className="absolute top-2 right-2">
-                    <Check className="w-4 h-4 text-brand" />
+                    <Check className="w-4 h-4 text-ink" />
                   </span>
                 )}
                 <p className="text-sm font-medium text-slate-900">{plan.nome}</p>

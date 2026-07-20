@@ -69,7 +69,7 @@ function OrcamentoCard({ run }: { run: AgentRun }) {
         <div className="flex items-start justify-between gap-3">
           <div className="space-y-1">
             <CardTitle className="text-base flex items-center gap-2">
-              <FileText className="h-4 w-4 text-brand" />
+              <FileText className="h-4 w-4 text-foreground" />
               {AGENT_LABEL[run.agent_type] ?? run.agent_type}
             </CardTitle>
             <p className="text-sm text-muted-foreground">{orcamento.resumo}</p>

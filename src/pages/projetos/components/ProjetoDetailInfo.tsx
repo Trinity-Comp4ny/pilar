@@ -185,7 +185,7 @@ export function ProjetoDetailInfo({ projeto, progress, margemBrutaPct, rentabili
             <div className="mt-3 pt-3 border-t">
               <Link
                 to={`/financeiro?tab=rentabilidade&projeto=${projeto.id}`}
-                className="inline-flex items-center gap-1 text-xs text-brand hover:underline font-medium"
+                className="inline-flex items-center gap-1 text-xs text-ink hover:underline font-medium"
               >
                 Ver análise completa
                 <ArrowRight className="h-3 w-3" />

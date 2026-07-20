@@ -62,7 +62,7 @@ export function MultiSelectFilter({
           size="sm"
           className={cn(
             "h-8 rounded-full gap-1.5 text-xs font-normal max-w-[220px]",
-            hasSelection && "border-brand bg-brand/5 text-brand hover:bg-brand/10 hover:text-brand",
+            hasSelection && "border-brand bg-brand text-ink hover:bg-brand/90 hover:text-ink",
             className
           )}
         >

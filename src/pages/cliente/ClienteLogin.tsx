@@ -200,7 +200,7 @@ export default function ClienteLogin() {
                 )}&body=${encodeURIComponent(
                   "Olá, preciso recuperar o acesso ao portal. Meu e-mail de cadastro é: "
                 )}`}
-                className="font-medium text-brand hover:underline"
+                className="font-medium text-ink hover:underline"
               >
                 Recuperar acesso
               </a>

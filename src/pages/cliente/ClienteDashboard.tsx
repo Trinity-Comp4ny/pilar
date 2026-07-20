@@ -71,7 +71,7 @@ export default function ClienteDashboard() {
                 Fale com o escritório para liberar seu acesso ou{" "}
                 <a
                   href={`mailto:${SUPORTE_EMAIL}?subject=${encodeURIComponent("Liberar acesso ao portal do cliente")}`}
-                  className="font-medium text-brand hover:underline"
+                  className="font-medium text-ink hover:underline"
                 >
                   entre em contato com o suporte
                 </a>

@@ -147,7 +147,7 @@ export function MfaChallenge({ onVerified }: MfaChallengeProps) {
 
     return (
       <div className="space-y-4 text-center">
-        <ShieldCheck className="h-12 w-12 mx-auto text-brand" />
+        <ShieldCheck className="h-12 w-12 mx-auto text-foreground" />
         <h2 className="text-xl font-semibold text-ink">MFA não configurado</h2>
         <p className="text-sm text-ink-soft">
           Esta conta exige autenticação de dois fatores para continuar.
@@ -223,7 +223,7 @@ export function MfaChallenge({ onVerified }: MfaChallengeProps) {
         <div className="text-center space-y-2">
           <div className="flex justify-center mb-4">
             <div className="p-3 rounded-2xl bg-brand/10 border border-brand/20">
-              <ShieldCheck className="h-8 w-8 text-brand" />
+              <ShieldCheck className="h-8 w-8 text-ink" />
             </div>
           </div>
           <h2 className="text-2xl font-semibold tracking-tight text-ink">Verificação de dois fatores</h2>

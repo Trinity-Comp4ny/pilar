@@ -193,7 +193,7 @@ export default function PasswordReset() {
 
           {step === "loading" && (
             <div className="flex flex-col items-center gap-3 py-8">
-              <Loader2 className="h-8 w-8 animate-spin text-brand" />
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
               <p className="text-sm text-ink-soft">Validando link de recuperação...</p>
             </div>
           )}
@@ -272,7 +272,7 @@ export default function PasswordReset() {
               <div className="text-center space-y-2">
                 <div className="flex justify-center mb-4">
                   <div className="p-3 rounded-2xl bg-brand/10 border border-brand/20">
-                    <ShieldCheck className="h-8 w-8 text-brand" />
+                    <ShieldCheck className="h-8 w-8 text-ink" />
                   </div>
                 </div>
                 <h1 className="text-2xl font-semibold tracking-tight text-ink">Verificação em dois fatores</h1>
@@ -367,11 +367,11 @@ export default function PasswordReset() {
                         {requirements.map(({ label, ok }) => (
                           <li key={label} className="flex items-center gap-2">
                             <Check
-                              className={`w-3.5 h-3.5 flex-shrink-0 transition-all duration-200 ${ok ? "text-chart-success" : "text-ink/20"}`}
+                              className={`w-3.5 h-3.5 flex-shrink-0 transition-all duration-200 ${ok ? "text-positive-strong" : "text-ink/20"}`}
                               strokeWidth={2.5}
                             />
                             <span
-                              className={`text-xs transition-colors duration-200 ${ok ? "text-chart-success font-medium" : "text-ink-soft"}`}
+                              className={`text-xs transition-colors duration-200 ${ok ? "text-positive-strong font-medium" : "text-ink-soft"}`}
                             >
                               {label}
                             </span>

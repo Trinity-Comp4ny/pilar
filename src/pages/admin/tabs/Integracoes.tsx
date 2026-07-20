@@ -11,7 +11,7 @@ export function IntegracoesTab() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="h-10 w-10 rounded-full bg-brand/10 flex items-center justify-center">
-                <Zap size={18} className="text-brand" />
+                <Zap size={18} className="text-ink" />
               </div>
               <div>
                 <CardTitle className="text-base font-medium tracking-tight">Asaas</CardTitle>

@@ -19,7 +19,7 @@ export default function ForcarTrocaSenha({ onSuccess }: ForcarTrocaSenhaProps) {
         <CardContent className="p-6 sm:p-8 space-y-6">
           <div className="text-center space-y-3">
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-brand/10">
-              <ShieldCheck className="h-6 w-6 text-brand" />
+              <ShieldCheck className="h-6 w-6 text-ink" />
             </div>
             <div className="space-y-1">
               <h1 className="text-xl font-semibold text-slate-900">Defina sua senha</h1>

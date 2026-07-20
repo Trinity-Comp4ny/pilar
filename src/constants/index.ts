@@ -24,7 +24,7 @@ export const PROJECT_STATUS_CONFIG: Record<ProjectStatus, { label: string; color
   [PROJECT_STATUS.REVISAO]: { label: "Revisão", color: "bg-purple-100 text-purple-800", columnColor: "bg-purple-50" },
   [PROJECT_STATUS.PARALISADO]: {
     label: "Paralisado",
-    color: "bg-brand/10 text-brand",
+    color: "bg-brand text-ink",
     columnColor: "bg-brand/5",
   },
   [PROJECT_STATUS.CONCLUIDO]: {

@@ -167,7 +167,7 @@ export function LancamentosFilterBar({
               variant="outline"
               className={cn(
                 "h-9 rounded-full gap-1.5 text-sm font-normal",
-                filters.periodo !== "mes-atual" && "border-brand bg-brand/5 text-brand"
+                filters.periodo !== "mes-atual" && "border-brand bg-brand text-ink"
               )}
             >
               <CalendarIcon className="h-4 w-4" />
@@ -187,7 +187,7 @@ export function LancamentosFilterBar({
                     }}
                     className={cn(
                       "w-full text-left text-xs px-3 py-2 rounded hover:bg-muted transition-colors",
-                      filters.periodo === p && "bg-brand/10 text-brand font-medium"
+                      filters.periodo === p && "bg-brand text-ink font-medium"
                     )}
                   >
                     {PERIODO_LABEL[p]}
@@ -197,7 +197,7 @@ export function LancamentosFilterBar({
                 <div
                   className={cn(
                     "text-[10px] uppercase px-3 py-1 text-muted-foreground tracking-wider",
-                    filters.periodo === "custom" && "text-brand"
+                    filters.periodo === "custom" && "text-ink"
                   )}
                 >
                   Personalizado
@@ -228,7 +228,7 @@ export function LancamentosFilterBar({
               variant="outline"
               className={cn(
                 "h-9 rounded-full gap-1.5 text-sm font-normal",
-                advancedCount > 0 && "border-brand bg-brand/5 text-brand hover:bg-brand/10 hover:text-brand"
+                advancedCount > 0 && "border-brand bg-brand text-ink hover:bg-brand/90 hover:text-ink"
               )}
             >
               <SlidersHorizontal className="h-4 w-4" />
@@ -260,7 +260,7 @@ export function LancamentosFilterBar({
                       className={cn(
                         "h-8 px-3 rounded-full text-xs font-medium border transition-colors",
                         filters.status === s
-                          ? "bg-brand/10 text-brand border-brand"
+                          ? "bg-brand text-ink border-brand"
                           : "bg-white border-black/10 text-muted-foreground hover:text-foreground"
                       )}
                     >
@@ -477,7 +477,7 @@ function FilterSection({ title, hint, children }: { title: string; hint?: string
 
 function Chip({ label, onRemove }: { label: string; onRemove: () => void }) {
   return (
-    <span className="inline-flex items-center gap-1 h-6 pl-2.5 pr-1 rounded-full bg-brand/10 text-brand border border-brand/30 text-[11px] font-medium">
+    <span className="inline-flex items-center gap-1 h-6 pl-2.5 pr-1 rounded-full bg-brand text-ink border border-brand/30 text-[11px] font-medium">
       <span className="truncate max-w-[200px]">{label}</span>
       <button
         type="button"
