@@ -29,6 +29,7 @@ export function QuickAddLancamento({ onCreated }: Props) {
   };
 
   const submit = async () => {
+    if (saving) return; // evita inserts duplicados com Enter repetido
     if (!descricao.trim() || !valor) {
       toast.error("Preencha descrição e valor");
       return;
@@ -107,14 +108,14 @@ export function QuickAddLancamento({ onCreated }: Props) {
         placeholder="Descrição rápida…"
         value={descricao}
         onChange={(e) => setDescricao(e.target.value)}
-        onKeyDown={(e) => e.key === "Enter" && submit()}
+        onKeyDown={(e) => e.key === "Enter" && !saving && submit()}
         className="h-8 flex-1 min-w-[180px] bg-white text-sm"
       />
       <Input
         placeholder="R$ 0,00"
         value={valor}
         onChange={(e) => setValor(formatCurrencyInput(e.target.value))}
-        onKeyDown={(e) => e.key === "Enter" && submit()}
+        onKeyDown={(e) => e.key === "Enter" && !saving && submit()}
         className="h-8 w-[110px] bg-white text-sm tabular-nums"
       />
       <Popover>
