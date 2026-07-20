@@ -87,6 +87,23 @@ const PAYMENT_METHODS: { value: BillingType; label: string; icon: React.ReactNod
   { value: "BOLETO", label: "Boleto", icon: <FileText className="w-4 h-4" /> },
 ];
 
+// Algoritmo de Luhn: valida o dígito verificador do número do cartão.
+function luhnValid(digits: string): boolean {
+  if (!/^\d+$/.test(digits)) return false;
+  let sum = 0;
+  let double = false;
+  for (let i = digits.length - 1; i >= 0; i--) {
+    let d = digits.charCodeAt(i) - 48;
+    if (double) {
+      d *= 2;
+      if (d > 9) d -= 9;
+    }
+    sum += d;
+    double = !double;
+  }
+  return sum % 10 === 0;
+}
+
 export function CheckoutForm({
   planSlug,
   planNome,
@@ -155,9 +172,29 @@ export function CheckoutForm({
 
     if (billingType === "CREDIT_CARD") {
       const expiryDigits = onlyDigits(ccExpiry);
+      const cardDigits = onlyDigits(ccNumber);
+      const expMonth = parseInt(expiryDigits.slice(0, 2), 10);
+      const expYear = 2000 + parseInt(expiryDigits.slice(2, 4), 10);
+
+      // Validação local do cartão (ACH-AUTH-08): Luhn + comprimento + validade futura.
+      if (cardDigits.length < 13 || cardDigits.length > 19 || !luhnValid(cardDigits)) {
+        toast.error("Número do cartão inválido", { description: "Verifique os dígitos." });
+        return;
+      }
+      if (!(expMonth >= 1 && expMonth <= 12) || expiryDigits.length < 4) {
+        toast.error("Validade inválida", { description: "Use o formato MM/AA." });
+        return;
+      }
+      const now = new Date();
+      const lastValidDay = new Date(expYear, expMonth, 0, 23, 59, 59);
+      if (lastValidDay < now) {
+        toast.error("Cartão vencido", { description: "A validade informada já passou." });
+        return;
+      }
+
       const card: CreditCardData = {
         holderName: ccHolder.trim(),
-        number: onlyDigits(ccNumber),
+        number: cardDigits,
         expiryMonth: expiryDigits.slice(0, 2),
         expiryYear: `20${expiryDigits.slice(2, 4)}`,
         ccv: ccCcv.trim(),

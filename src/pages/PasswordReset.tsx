@@ -69,11 +69,14 @@ export default function PasswordReset() {
 
     checkSession().then((ready) => {
       if (ready) return;
+      // 8s (era 3s): hidratação lenta da sessão com link válido marcava
+      // "expirado" cedo demais. O onAuthStateChange acima ainda recupera se o
+      // evento chegar antes. ACH-AUTH-06.
       timeoutId = window.setTimeout(() => {
         checkSession().then((readyNow) => {
           if (!readyNow) setStep("expired");
         });
-      }, 3000);
+      }, 8000);
     });
 
     return () => {
