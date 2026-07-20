@@ -30,18 +30,15 @@ import {
   temCoordenadaValida,
   type ProjetoMapa,
   type TileLayerKey,
-} from "./constants";
+} from "@/pages/mapa/constants";
 import { EmptyState } from "@/components/EmptyState";
-import { PageLayout } from "@/components/PageLayout";
-import { PageHeader } from "@/components/PageHeader";
 import { supabase } from "@/integrations/supabase/client";
 import { PROJECT_STATUS, PROJECT_STATUS_CONFIG, type ProjectStatus } from "@/constants";
-import { usePageTitle } from "@/hooks/usePageTitle";
 import { cn } from "@/lib/utils";
 
 // Leaflet + react-leaflet + cluster + CSS vivem em MapCanvas, carregado sob
-// demanda: só entram no bundle quando a página do Mapa monta, não no inicial.
-const MapCanvas = lazy(() => import("./MapCanvas"));
+// demanda: só entram no bundle quando a aba do Mapa monta, não no inicial.
+const MapCanvas = lazy(() => import("@/pages/mapa/MapCanvas"));
 
 function formatCurrency(v: number | null) {
   return v ? new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v) : null;
@@ -53,8 +50,7 @@ function formatDate(d: string | null) {
   return new Date(d + "T00:00:00").toLocaleDateString("pt-BR");
 }
 
-export default function MapaObras() {
-  usePageTitle("Mapa");
+export function MapaTab() {
   const navigate = useNavigate();
   const [statusFilter, setStatusFilter] = useState<string>("todos");
   const [searchOpen, setSearchOpen] = useState(false);
@@ -189,83 +185,80 @@ export default function MapaObras() {
   }, []);
 
   return (
-    <PageLayout
-      header={
-        <PageHeader title="Mapa de Obras" description="Visualize a localização dos seus projetos">
-          <div className="flex items-center gap-2">
-            <Popover open={searchOpen} onOpenChange={setSearchOpen}>
-              <PopoverTrigger asChild>
-                <Button variant="outline" className="h-9 rounded-full text-sm gap-1.5">
-                  <Search className="h-4 w-4" />
-                  Localizar
-                  {filtrados.length > 0 && (
-                    <span className="ml-0.5 rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground leading-none">
-                      {filtrados.length}
-                    </span>
-                  )}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-[300px] p-0" align="end">
-                <Command>
-                  <CommandInput placeholder="Buscar projeto ou cliente..." />
-                  <CommandList>
-                    <CommandEmpty>Nenhum resultado encontrado.</CommandEmpty>
-                    <CommandGroup heading="Projetos">
-                      {filtrados.map((p) => (
-                        <CommandItem
-                          key={p.id}
-                          value={`${p.codigo_projeto} ${p.nome}`}
-                          onSelect={() => handleSearchSelect(p.id)}
-                          className="gap-2"
-                        >
-                          <div
-                            className="w-2.5 h-2.5 rounded-full shrink-0"
-                            style={{ background: STATUS_MARKER_COLORS[p.status] || "hsl(var(--status-unknown))" }}
-                          />
-                          <span className="truncate">
-                            {p.codigo_projeto} - {p.nome}
-                          </span>
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                    <CommandGroup heading="Clientes">
-                      {clientesAgrupados.map((c) => (
-                        <CommandItem
-                          key={c.id ?? "__sem_cliente__"}
-                          value={`cliente ${c.nome}`}
-                          onSelect={() => handleClienteSelect(c.id)}
-                          className="gap-2"
-                        >
-                          <Building2 className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                          <span className="truncate">{c.nome}</span>
-                          <span className="ml-auto text-[10px] text-muted-foreground shrink-0">
-                            {c.projetos.length}p
-                          </span>
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  </CommandList>
-                </Command>
-              </PopoverContent>
-            </Popover>
+    <div role="tabpanel" id="projetos-tabpanel-mapa" aria-labelledby="projetos-tab-mapa">
+      {/* Controles do mapa: busca + filtro de status */}
+      <div className="flex items-center justify-end gap-2 mb-3 flex-wrap">
+        <Popover open={searchOpen} onOpenChange={setSearchOpen}>
+          <PopoverTrigger asChild>
+            <Button variant="outline" className="h-9 rounded-full text-sm gap-1.5">
+              <Search className="h-4 w-4" />
+              Localizar
+              {filtrados.length > 0 && (
+                <span className="ml-0.5 rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground leading-none">
+                  {filtrados.length}
+                </span>
+              )}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-[300px] p-0" align="end">
+            <Command>
+              <CommandInput placeholder="Buscar projeto ou cliente..." />
+              <CommandList>
+                <CommandEmpty>Nenhum resultado encontrado.</CommandEmpty>
+                <CommandGroup heading="Projetos">
+                  {filtrados.map((p) => (
+                    <CommandItem
+                      key={p.id}
+                      value={`${p.codigo_projeto} ${p.nome}`}
+                      onSelect={() => handleSearchSelect(p.id)}
+                      className="gap-2"
+                    >
+                      <div
+                        className="w-2.5 h-2.5 rounded-full shrink-0"
+                        style={{ background: STATUS_MARKER_COLORS[p.status] || "hsl(var(--status-unknown))" }}
+                      />
+                      <span className="truncate">
+                        {p.codigo_projeto} - {p.nome}
+                      </span>
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+                <CommandGroup heading="Clientes">
+                  {clientesAgrupados.map((c) => (
+                    <CommandItem
+                      key={c.id ?? "__sem_cliente__"}
+                      value={`cliente ${c.nome}`}
+                      onSelect={() => handleClienteSelect(c.id)}
+                      className="gap-2"
+                    >
+                      <Building2 className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                      <span className="truncate">{c.nome}</span>
+                      <span className="ml-auto text-[10px] text-muted-foreground shrink-0">
+                        {c.projetos.length}p
+                      </span>
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
 
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[180px] h-9 rounded-full text-sm">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todos">Todos os status</SelectItem>
-                {Object.values(PROJECT_STATUS).map((s) => (
-                  <SelectItem key={s} value={s}>
-                    {s}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </PageHeader>
-      }
-    >
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-[180px] h-9 rounded-full text-sm">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="todos">Todos os status</SelectItem>
+            {Object.values(PROJECT_STATUS).map((s) => (
+              <SelectItem key={s} value={s}>
+                {s}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
       {isLoading ? (
         <div className="flex items-center justify-center py-12">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -367,7 +360,7 @@ export default function MapaObras() {
           <div
             ref={wrapperRef}
             className="rounded-lg overflow-hidden border relative bg-muted"
-            style={{ height: isFullscreen ? "100dvh" : "calc(100vh - 260px)" }}
+            style={{ height: isFullscreen ? "100dvh" : "calc(100vh - 320px)", minHeight: "420px" }}
           >
             {/* Seletor de camada */}
             <div className="absolute bottom-8 left-3 z-[1000]">
@@ -565,6 +558,6 @@ export default function MapaObras() {
           )}
         </SheetContent>
       </Sheet>
-    </PageLayout>
+    </div>
   );
 }
