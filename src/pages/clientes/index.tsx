@@ -187,6 +187,8 @@ export default function Clientes() {
       toast.success(`Mensagem enviada com sucesso para o cliente ${nomeCompleto}.`);
     } catch (error) {
       monitoring.captureException(error, { context: "sendClientMessage unexpected" });
+      toast.error("Não foi possível enviar a mensagem", { description: "Tente novamente em instantes." });
+      resetMessageModal();
     }
   };
 

@@ -239,6 +239,10 @@ export default function Propostas() {
       toast.error("Título é obrigatório");
       return;
     }
+    if (codigoDuplicado) {
+      toast.error("Já existe uma proposta com esse código");
+      return;
+    }
     const disciplinasValidas = disciplinasRows.filter((d) => d.disciplina.trim() !== "");
     // Se não há valor digitado, usa a soma das disciplinas como valor proposto.
     const valorManual = parseCurrencyString(valorDisplay);
