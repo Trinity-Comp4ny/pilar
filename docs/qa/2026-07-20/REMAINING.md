@@ -27,17 +27,26 @@ deixados de fora, cada um com o motivo. Não é esquecimento; é escopo.
 - **ACH-PROJ-07/13** — validação de datas do projeto no submit e rollback do valor da
   proposta quando disciplinas falham.
 
-## Latentes / baixo risco (armadilhas, não bugs ativos)
-- **ACH-FIN-01** (`parseCurrencyString` com formato US colado), **ACH-FIN-12/13** (regra de
-  ciclo de fatura diverge no dia exato do fechamento), **ACH-FIN-16/17** (guard de exclusão
-  de cartão lê coluna crua em vez da view), **ACH-FIN-18** (`view_cartao_resumo.usado` só
-  conta Pendente → "disponível" inflado), **ACH-FIN-20** (overload 4-arg de `pagar_fatura`),
-  **ACH-AUTH-04** (token de owner em plaintext — fluxo `create-company-owner` hoje bloqueado),
-  **ACH-AUTH-06** (timeout fixo no PasswordReset), **ACH-AUTH-08** (sem Luhn no cartão),
-  **ACH-AUTH-12** (preview ultra-admin via localStorage, dev-only), **ACH-AUTH-14** (otimismo
-  de role na lista de usuários), **ACH-CLI-02** (contato sem `formatPhone`), **ACH-CLI-05**
-  (`key={index}`), **ACH-FOR-02/03** (Fornecedores já mostra toast de erro; placeholder),
-  **ACH-ADM-11** (catch genérico no admin).
+## Latentes — resolvidos nesta rodada
+- **ACH-FIN-01** (parse aceita formato US colado), **ACH-AUTH-04** (token de owner agora
+  hasheado sha256), **ACH-AUTH-06** (timeout 8s), **ACH-AUTH-08** (Luhn no checkout),
+  **ACH-AUTH-14** (otimismo de role), **ACH-CLI-02** (`formatPhone`), **ACH-CLI-05** (key
+  estável), **ACH-FOR-02** (estado de erro dedicado), **ACH-FOR-03** (placeholder),
+  **ACH-ADM-11** (catch loga + mensagem).
+
+## Latentes — reavaliados como NÃO-bug (não mexer)
+- **ACH-FIN-20** — o overload 4-arg de `pagar_fatura` já não existe no banco (dropado antes).
+- **ACH-FIN-18** — o `usado` só somar `Pendente` é CORRETO: fatura paga restaura o limite do
+  cartão; incluir "Pago" é que seria o erro.
+- **ACH-FIN-16/17** — o guard de exclusão de cartão já bloqueia por `valor_total > 0` (o caso
+  real de fatura com gastos); sem cenário de falha demonstrável.
+- **ACH-AUTH-12** — preview de ultra-admin via localStorage é ferramenta de DEV intencional
+  (tree-shaken em produção, RLS barra no backend). Manter.
+
+## Latente ainda aberto (precisa análise SQL dedicada)
+- **ACH-FIN-12/13** — a regra de ciclo de fatura (qual mês uma despesa cai) diverge entre o
+  cliente e o trigger SQL SÓ no dia exato do fechamento. Borda de 1 dia; alinhar exige
+  comparar os dois lados com cuidado — não mexer às cegas em lógica de faturamento.
 
 ## Regressão paralela (fora do QA, descoberta durante o trabalho)
 - `fechar_folha_agente` perdeu o `linhas_ids` numa migration de merge (`20260715000033`),
