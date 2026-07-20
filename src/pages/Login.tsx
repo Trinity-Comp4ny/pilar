@@ -12,6 +12,7 @@ import { Mail, Lock, ArrowLeft, Loader2, CheckCircle2, Eye, EyeOff } from "lucid
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { loginSchema, loginDefaultValues, type LoginFormData } from "@/schemas";
 import { STORAGE_KEYS } from "@/constants";
+import { translateAuthError } from "@/lib/authErrors";
 
 export default function Login() {
   usePageTitle("Login");
@@ -63,7 +64,7 @@ export default function Login() {
 
     if (error) {
       toast.error("Erro ao fazer login", {
-        description: "Verifique suas credenciais e tente novamente.",
+        description: translateAuthError(error),
       });
       setIsLoading(false);
       return;

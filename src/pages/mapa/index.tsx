@@ -49,7 +49,8 @@ function formatCurrency(v: number | null) {
 
 function formatDate(d: string | null) {
   if (!d) return null;
-  return new Date(d).toLocaleDateString("pt-BR");
+  // Parse local (T00:00:00): sem isso, uma data-only em UTC-3 exibia o dia anterior.
+  return new Date(d + "T00:00:00").toLocaleDateString("pt-BR");
 }
 
 export default function MapaObras() {
@@ -80,7 +81,7 @@ export default function MapaObras() {
     }
   }, []);
 
-  const { data: todosOsProjetos = [], isLoading } = useQuery({
+  const { data: todosOsProjetos = [], isLoading, isError } = useQuery({
     queryKey: ["projetos-mapa"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -88,7 +89,8 @@ export default function MapaObras() {
         .select(
           "id, nome, codigo_projeto, status, localizacao, latitude, longitude, valor_contrato, area_m2, prioridade, data_inicio, data_previsao, cliente_id, clientes(nome)"
         )
-        .is("deleted_at", null);
+        .is("deleted_at", null)
+        .limit(1000);
 
       if (error) throw error;
 
@@ -268,6 +270,12 @@ export default function MapaObras() {
         <div className="flex items-center justify-center py-12">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
+      ) : isError ? (
+        <EmptyState
+          icon={MapPin}
+          title="Não foi possível carregar o mapa"
+          description="Houve um erro ao buscar os projetos. Atualize a página em instantes."
+        />
       ) : projetos.length === 0 ? (
         <EmptyState
           icon={MapPin}
