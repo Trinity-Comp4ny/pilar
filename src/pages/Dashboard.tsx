@@ -133,7 +133,11 @@ export default function Dashboard() {
   const [dateFrom, setDateFrom] = useState<Date>(initial.from);
   const [dateTo, setDateTo] = useState<Date>(initial.to);
 
-  const preset = useMemo(() => detectDashPreset(dateFrom, dateTo), [dateFrom, dateTo]);
+  // ACH-DASH-01: um range invertido (from > to), via URL ou seleção, zerava
+  // todos os KPIs silenciosamente. Consumimos sempre o intervalo ordenado.
+  const [effFrom, effTo] = dateFrom <= dateTo ? [dateFrom, dateTo] : [dateTo, dateFrom];
+
+  const preset = useMemo(() => detectDashPreset(effFrom, effTo), [effFrom, effTo]);
 
   useEffect(() => {
     const params = new URLSearchParams(searchParams);
@@ -155,7 +159,7 @@ export default function Dashboard() {
   const { profile } = useAuth();
   const empresaId = profile?.empresa_id ?? null;
 
-  const { data, isLoading, error, refetch, isFetching } = useDashboardData(dateFrom, dateTo);
+  const { data, isLoading, error, refetch, isFetching } = useDashboardData(effFrom, effTo);
 
   // Intervalo dos últimos 11 meses + mês atual para o gráfico de fluxo.
   // Ancorado em todayKey (dia local) para não congelar o "hoje" da montagem em sessões longas.
@@ -180,10 +184,10 @@ export default function Dashboard() {
 
   // Drill-down dos KPIs financeiros: leva ao Financeiro já filtrado pelo período do dashboard.
   const goFinanceiro = () =>
-    navigate(`/financeiro?from=${format(dateFrom, "yyyy-MM-dd")}&to=${format(dateTo, "yyyy-MM-dd")}`);
+    navigate(`/financeiro?from=${format(effFrom, "yyyy-MM-dd")}&to=${format(effTo, "yyyy-MM-dd")}`);
 
   const periodoLabel =
-    preset === "custom" ? `${format(dateFrom, "dd/MM/yyyy")} → ${format(dateTo, "dd/MM/yyyy")}` : PERIOD_LABEL[preset];
+    preset === "custom" ? `${format(effFrom, "dd/MM/yyyy")} → ${format(effTo, "dd/MM/yyyy")}` : PERIOD_LABEL[preset];
 
   const header = (
     <PageHeader title="Dashboard" description={`Visão geral — ${periodoLabel}`}>
@@ -212,7 +216,16 @@ export default function Dashboard() {
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar mode="single" selected={dateFrom} onSelect={(d) => d && setDateFrom(d)} initialFocus />
+                  <Calendar
+                    mode="single"
+                    selected={dateFrom}
+                    onSelect={(d) => {
+                      if (!d) return;
+                      setDateFrom(d);
+                      if (d > dateTo) setDateTo(d);
+                    }}
+                    initialFocus
+                  />
                 </PopoverContent>
               </Popover>
               <Popover>
@@ -223,7 +236,16 @@ export default function Dashboard() {
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar mode="single" selected={dateTo} onSelect={(d) => d && setDateTo(d)} initialFocus />
+                  <Calendar
+                    mode="single"
+                    selected={dateTo}
+                    onSelect={(d) => {
+                      if (!d) return;
+                      setDateTo(d);
+                      if (d < dateFrom) setDateFrom(d);
+                    }}
+                    initialFocus
+                  />
                 </PopoverContent>
               </Popover>
             </div>
