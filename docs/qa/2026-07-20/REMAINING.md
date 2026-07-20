@@ -5,24 +5,22 @@ branch `fix/qa-auth-and-tail`). Os achados abaixo foram triados e conscientement
 deixados de fora, cada um com o motivo. Não é esquecimento; é escopo.
 
 ## Precisa de decisão de produto (não corrigir sem definir)
-- **ACH-CLI-03** — índices únicos parciais em `(empresa_id, email)` e `(empresa_id, contato)`
-  bloqueiam cadastros legítimos (cônjuges com mesmo email, mesma central de telefone).
-  Remover a unicidade é decisão de produto + migration.
-- **ACH-FOR-01** — exclusão de fornecedor é recuperável (soft delete pelo trigger), mas
-  não tem botão "Desfazer" como cliente/lead. Adicionar undo é feature, não bug (a copy
-  enganosa já foi corrigida).
-- **ACH-AUTH-09** — remoção de usuário é hard delete; alinhar a soft delete + remover o
-  `auth.user` exige edge function. Decisão de como tratar o limite de plano.
+- **ACH-CLI-03** (AGUARDANDO CONFIRMAÇÃO) — índices únicos parciais em `(empresa_id, email)`
+  e `(empresa_id, contato)` bloqueiam cadastros legítimos (cônjuges com mesmo email, mesma
+  central de telefone). Remover a unicidade (manter só CPF/CNPJ) é decisão de produto + migration.
+
+## Resolvido nesta rodada (antes em "decisão de produto")
+- **ACH-FOR-01** — RESOLVIDO: delete de fornecedor virou soft delete explícito com "Desfazer".
+- **ACH-AUTH-09** — RESOLVIDO: remoção de usuário passou a usar a edge `delete-user`.
+- **ACH-FIN-07 / ACH-REL-01** — RESOLVIDO (mitigado): teto de 2000 linhas na listagem e 50k
+  no relatório, com aviso ao monitoring. Paginação server-side completa fica como refactor
+  futuro se o volume crescer (os filtros da tela são client-side).
 
 ## Módulos DORMENTES (CLAUDE.md manda avisar antes de mexer)
 - **ACH-FIN-09/10/14** (Folha), **ACH-ADM-05/06** (Timesheet), **ACH-ADM-08** (Capacidade),
   **ACH-ADM-02** (AI Hub stub), **ACH-ADM-04/12** (Templates), **ACH-ADM-10** (edge `ai-*`
   via service_role). Reais, mas em código dormente que o produto ainda não usa. Corrigir
   aqui é ativar/tocar módulo dormente — precisa de sinal verde antes.
-
-## Performance (aceitável na escala atual)
-- **ACH-FIN-07 / ACH-REL-01** — full-scan sem paginação em Despesas/Receitas/Relatório.
-  Sem impacto com o volume atual; vira gargalo em escala. Refactor de data-fetching.
 
 ## Refactor maior (não cabe num fix pontual)
 - **ACH-LEAD-01** — conversão lead→cliente não é 100% atômica: a causa mais comum (CNPJ

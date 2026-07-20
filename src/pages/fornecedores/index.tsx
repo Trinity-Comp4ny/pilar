@@ -196,9 +196,33 @@ export default function Fornecedores() {
 
   const handleDeleteConfirm = async () => {
     if (!toDelete) return;
-    const { error } = await supabase.from("fornecedores").delete().eq("id", toDelete.id);
-    if (error) { toast.error("Erro ao excluir fornecedor"); return; }
-    toast.success("Fornecedor excluído");
+    const id = toDelete.id;
+    // Soft delete (a RLS já esconde deleted_at da lista), com "Desfazer" no toast
+    // como cliente/lead — o delete é recuperável (ACH-FOR-01).
+    const { error } = await supabase
+      .from("fornecedores")
+      .update({ deleted_at: new Date().toISOString() })
+      .eq("id", id);
+    if (error) {
+      toast.error("Erro ao excluir fornecedor");
+      return;
+    }
+    toast.success("Fornecedor excluído", {
+      action: {
+        label: "Desfazer",
+        onClick: async () => {
+          const { error: restoreError } = await supabase
+            .from("fornecedores")
+            .update({ deleted_at: null })
+            .eq("id", id);
+          if (restoreError) toast.error("Erro ao restaurar fornecedor");
+          else {
+            toast.success("Fornecedor restaurado");
+            fetchFornecedores();
+          }
+        },
+      },
+    });
     setConfirmDeleteOpen(false);
     setToDelete(null);
     fetchFornecedores();
