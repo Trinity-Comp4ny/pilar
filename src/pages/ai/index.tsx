@@ -223,8 +223,10 @@ export default function AiHub() {
           setActiveGenerator(null);
           setSelectedInsight(data);
         },
-        onError: () => {
-          toast.error("Erro na IA");
+        onError: (err) => {
+          toast.error("Não foi possível gerar", {
+            description: err instanceof Error ? err.message : "Tente novamente em instantes.",
+          });
         },
       }
     );
