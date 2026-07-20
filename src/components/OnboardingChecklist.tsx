@@ -197,7 +197,7 @@ export function OnboardingChecklist() {
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
             <div className="h-9 w-9 rounded-full bg-brand/15 flex items-center justify-center flex-shrink-0">
-              <Rocket className="h-4.5 w-4.5 text-brand" />
+              <Rocket className="h-4.5 w-4.5 text-ink" />
             </div>
             <div className="min-w-0">
               <p className="text-sm font-semibold text-black">Primeiros passos no Pilar</p>
@@ -263,7 +263,7 @@ function StepRow({ step, onClick }: { step: StepConfig; onClick: () => void }) {
         {!done && <p className="text-xs text-black/50 mt-0.5">{step.description}</p>}
       </div>
       {!done && (
-        <div className="flex items-center gap-1 text-xs text-brand font-medium flex-shrink-0">
+        <div className="flex items-center gap-1 text-xs text-foreground font-medium flex-shrink-0">
           {step.cta}
           <ChevronRight className="h-3.5 w-3.5" />
         </div>

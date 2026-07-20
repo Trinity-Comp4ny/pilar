@@ -311,7 +311,7 @@ export default function ChatPage() {
                       aria-live="polite"
                       className="flex items-center gap-2 rounded-2xl rounded-tl-sm border border-border bg-card px-4 py-2.5 text-sm text-muted-foreground"
                     >
-                      <Loader2 className="h-4 w-4 animate-spin text-brand" />
+                      <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
                       <span>Orquestrador roteando · agentes trabalhando…</span>
                     </div>
                   </div>

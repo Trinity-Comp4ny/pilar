@@ -581,7 +581,7 @@ function RoleSelector({ value, onChange }: RoleSelectorProps) {
                   active ? "bg-brand/10" : "bg-black/5"
                 )}
               >
-                <Icon size={16} strokeWidth={1.5} className={active ? "text-brand" : "text-black/50"} />
+                <Icon size={16} strokeWidth={1.5} className={active ? "text-ink" : "text-black/50"} />
               </div>
               <div>
                 <div className="text-sm font-medium text-black/80">{option.title}</div>

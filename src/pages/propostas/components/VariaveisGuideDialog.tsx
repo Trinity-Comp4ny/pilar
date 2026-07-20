@@ -43,7 +43,7 @@ export function VariaveisGuideDialog({ open, onOpenChange }: VariaveisGuideDialo
       <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <BookOpen className="h-5 w-5 text-brand" />
+            <BookOpen className="h-5 w-5 text-foreground" />
             Guia de Variáveis para Templates
           </DialogTitle>
           <DialogDescription>

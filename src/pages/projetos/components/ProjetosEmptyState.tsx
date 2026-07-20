@@ -50,7 +50,7 @@ export function ProjetosEmptyState({ variant, onCreate, onClearFilters, onRetry 
   return (
     <div className="flex flex-col items-center justify-center py-16 text-center">
       <div className="h-14 w-14 rounded-full bg-brand/10 flex items-center justify-center mb-3">
-        <Layers className="h-7 w-7 text-brand" />
+        <Layers className="h-7 w-7 text-ink" />
       </div>
       <p className="text-base font-semibold">Nenhum projeto cadastrado</p>
       <p className="text-sm text-muted-foreground mt-1 max-w-sm">

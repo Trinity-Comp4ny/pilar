@@ -9,7 +9,7 @@ interface PaymentSuccessProps {
 export function PaymentSuccess({ email, planNome, inviteDispatched }: PaymentSuccessProps) {
   return (
     <div className="text-center space-y-6 py-8">
-      <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-brand/10 text-brand">
+      <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-brand/10 text-positive-strong">
         <CheckCircle2 className="w-8 h-8" />
       </div>
 
@@ -20,7 +20,7 @@ export function PaymentSuccess({ email, planNome, inviteDispatched }: PaymentSuc
 
       <div className="bg-slate-50 border border-slate-200 rounded-xl p-6 text-left space-y-3">
         <div className="flex items-center gap-3">
-          <Mail className="w-5 h-5 text-brand shrink-0" />
+          <Mail className="w-5 h-5 text-foreground shrink-0" />
           <div>
             <p className="text-sm font-medium text-slate-900">
               {inviteDispatched ? "Email enviado" : "Enviando email..."}
