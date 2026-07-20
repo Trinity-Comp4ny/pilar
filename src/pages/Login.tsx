@@ -43,8 +43,12 @@ export default function Login() {
 
     // guard_login_attempt não está nos tipos gerados ainda — usar cast seguro
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: loginAllowed } = await (supabase.rpc as any)("guard_login_attempt", { p_email: values.email });
-    if (loginAllowed !== true) {
+    const { data: loginAllowed, error: guardError } = await (supabase.rpc as any)("guard_login_attempt", {
+      p_email: values.email,
+    });
+    // Fail-open: só bloqueia quando o guard NEGA explicitamente. Se a RPC de
+    // rate-limit falha (erro de infra), não travar o login legítimo de todos.
+    if (!guardError && loginAllowed === false) {
       toast.error("Muitas tentativas", {
         description: "Aguarde 15 minutos antes de tentar novamente.",
       });

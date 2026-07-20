@@ -38,7 +38,9 @@ const MESES = [
 ];
 
 function getStatusBadge(status: string, dataVencimento: string) {
-  const isOverdue = status !== "Paga" && new Date(dataVencimento) < new Date();
+  // Parse local (T00:00:00): sem isso a fatura era marcada "Vencida" horas antes,
+  // no próprio dia do vencimento, em UTC-3.
+  const isOverdue = status !== "Paga" && new Date(dataVencimento + "T00:00:00") < new Date();
 
   if (status === "Paga") return <Badge className="bg-positive/10 text-positive-strong hover:bg-positive/10">Paga</Badge>;
   if (isOverdue) return <Badge className="bg-red-100 text-red-800 hover:bg-red-100">Vencida</Badge>;
