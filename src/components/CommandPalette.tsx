@@ -45,7 +45,7 @@ const NAV_COMMANDS: NavCmd[] = [
   { label: "Clientes", path: "/clientes", icon: Building2, keywords: "contatos empresas" },
   { label: "Equipe", path: "/equipe", icon: Users, keywords: "pessoas time membros" },
   { label: "Propostas", path: "/documentos", icon: FileText, keywords: "documentos contratos" },
-  { label: "Mapa", path: "/mapa", icon: MapPin, keywords: "obras geolocalizacao" },
+  { label: "Mapa", path: "/projetos?view=mapa", icon: MapPin, keywords: "obras geolocalizacao projetos" },
   { label: "Relatórios", path: "/relatorios", icon: BarChart, keywords: "metricas analise" },
   { label: "Configurações", path: "/profile", icon: Settings, keywords: "perfil ajustes preferencias" },
 ];
