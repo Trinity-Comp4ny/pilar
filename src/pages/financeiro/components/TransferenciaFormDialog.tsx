@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { formatCurrencyInput, formatValorToInput, parseCurrencyString } from "@/lib/currencyUtils";
 
 interface Conta {
   id: string;
@@ -64,7 +65,7 @@ export function TransferenciaFormDialog({ open, onOpenChange, transferencia, onS
       setForm({
         conta_origem_id: transferencia.conta_id ?? "",
         conta_destino_id: transferencia.contraparte_id ?? "",
-        valor: String(transferencia.valor),
+        valor: formatValorToInput(transferencia.valor),
         data: formatDateInput(transferencia.data_vencimento),
         descricao: transferencia.descricao ?? "",
         status: transferencia.status ?? "Concluída",
@@ -94,7 +95,7 @@ export function TransferenciaFormDialog({ open, onOpenChange, transferencia, onS
       toast.error("Origem e destino devem ser diferentes");
       return;
     }
-    const valor = parseFloat(form.valor.replace(",", "."));
+    const valor = parseCurrencyString(form.valor);
     if (!valor || valor <= 0) {
       toast.error("Valor inválido");
       return;
@@ -186,12 +187,10 @@ export function TransferenciaFormDialog({ open, onOpenChange, transferencia, onS
             <div>
               <Label>Valor *</Label>
               <Input
-                type="number"
-                min="0.01"
-                step="0.01"
+                inputMode="numeric"
                 value={form.valor}
-                onChange={(e) => set("valor", e.target.value)}
-                placeholder="0,00"
+                onChange={(e) => set("valor", formatCurrencyInput(e.target.value))}
+                placeholder="R$ 0,00"
               />
             </div>
             <div>
