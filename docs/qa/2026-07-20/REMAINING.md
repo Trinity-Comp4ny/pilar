@@ -4,12 +4,10 @@ Estado em 2026-07-20 após duas rodadas de correção (PR #125 mergeado em stagi
 branch `fix/qa-auth-and-tail`). Os achados abaixo foram triados e conscientemente
 deixados de fora, cada um com o motivo. Não é esquecimento; é escopo.
 
-## Precisa de decisão de produto (não corrigir sem definir)
-- **ACH-CLI-03** (AGUARDANDO CONFIRMAÇÃO) — índices únicos parciais em `(empresa_id, email)`
-  e `(empresa_id, contato)` bloqueiam cadastros legítimos (cônjuges com mesmo email, mesma
-  central de telefone). Remover a unicidade (manter só CPF/CNPJ) é decisão de produto + migration.
-
 ## Resolvido nesta rodada (antes em "decisão de produto")
+- **ACH-CLI-03** — RESOLVIDO: removida a unicidade por empresa de email e telefone
+  (migration `20260720000009`), mantendo só CPF/CNPJ. Cadastros que compartilham email/
+  telefone deixam de ser bloqueados.
 - **ACH-FOR-01** — RESOLVIDO: delete de fornecedor virou soft delete explícito com "Desfazer".
 - **ACH-AUTH-09** — RESOLVIDO: remoção de usuário passou a usar a edge `delete-user`.
 - **ACH-FIN-07 / ACH-REL-01** — RESOLVIDO (mitigado): teto de 2000 linhas na listagem e 50k
