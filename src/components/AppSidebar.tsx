@@ -204,7 +204,7 @@ export function AppSidebar() {
           <>
             <span className="tracking-tight flex-1">{item.title}</span>
             {item.badge === "novo" && (
-              <span className="text-[10px] font-medium tracking-wide uppercase px-1.5 py-0.5 rounded-full bg-brand/10 text-brand">
+              <span className="text-[10px] font-medium tracking-wide uppercase px-1.5 py-0.5 rounded-full bg-brand text-ink">
                 Novo
               </span>
             )}
