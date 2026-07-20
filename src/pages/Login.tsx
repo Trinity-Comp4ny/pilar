@@ -12,6 +12,7 @@ import { Mail, Lock, ArrowLeft, Loader2, CheckCircle2, Eye, EyeOff } from "lucid
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { loginSchema, loginDefaultValues, type LoginFormData } from "@/schemas";
 import { STORAGE_KEYS } from "@/constants";
+import { translateAuthError } from "@/lib/authErrors";
 
 export default function Login() {
   usePageTitle("Login");
@@ -43,8 +44,12 @@ export default function Login() {
 
     // guard_login_attempt não está nos tipos gerados ainda — usar cast seguro
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: loginAllowed } = await (supabase.rpc as any)("guard_login_attempt", { p_email: values.email });
-    if (loginAllowed !== true) {
+    const { data: loginAllowed, error: guardError } = await (supabase.rpc as any)("guard_login_attempt", {
+      p_email: values.email,
+    });
+    // Fail-open: só bloqueia quando o guard NEGA explicitamente. Se a RPC de
+    // rate-limit falha (erro de infra), não travar o login legítimo de todos.
+    if (!guardError && loginAllowed === false) {
       toast.error("Muitas tentativas", {
         description: "Aguarde 15 minutos antes de tentar novamente.",
       });
@@ -59,7 +64,7 @@ export default function Login() {
 
     if (error) {
       toast.error("Erro ao fazer login", {
-        description: "Verifique suas credenciais e tente novamente.",
+        description: translateAuthError(error),
       });
       setIsLoading(false);
       return;

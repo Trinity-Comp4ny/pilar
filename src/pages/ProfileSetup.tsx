@@ -80,8 +80,14 @@ export default function ProfileSetup() {
       } = await supabase.auth.getUser();
       if (!user) throw new Error("Usuário não logado");
 
-      // 1. Atualizar perfil PRIMEIRO — assim o onAuthStateChange que dispara
-      //    depois (pelo updateUser de senha) já lê onboarding_completed: true do banco.
+      // 1. Definir a senha PRIMEIRO. Marcar onboarding antes disso deixava o
+      //    usuário "onboarded sem senha" se o updateUser falhasse.
+      const { error: pwdError } = await supabase.auth.updateUser({
+        password: values.password,
+      });
+      if (pwdError) throw pwdError;
+
+      // 2. Só então gravar o perfil e concluir o onboarding.
       const { error } = await supabase
         .from("profiles")
         .update({
@@ -93,12 +99,6 @@ export default function ProfileSetup() {
         .eq("id", user.id);
 
       if (error) throw error;
-
-      // 2. Atualizar senha após o perfil — o onAuthStateChange lerá o perfil já atualizado
-      const { error: pwdError } = await supabase.auth.updateUser({
-        password: values.password,
-      });
-      if (pwdError) throw pwdError;
 
       // 3. Forçar refresh do contexto para garantir que PrivateRoute leia onboarding_completed: true
       await refreshProfile();

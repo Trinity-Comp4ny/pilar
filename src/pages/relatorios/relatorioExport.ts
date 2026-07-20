@@ -34,8 +34,11 @@ export function generateCSV(data: ReportRow[], columns: (keyof ReportRow)[], fil
   }
 
   const escapeCSV = (value: unknown) => {
-    const str = value === null || value === undefined ? "" : String(value);
-    return str.includes(",") || str.includes('"') ? `"${str.replace(/"/g, '""')}"` : str;
+    const raw = value === null || value === undefined ? "" : String(value);
+    // Neutraliza CSV/formula injection: célula iniciada por = + - @ é prefixada
+    // com aspa simples para o Excel/Sheets tratar como texto, não fórmula.
+    const str = /^[=+\-@]/.test(raw) ? `'${raw}` : raw;
+    return str.includes(",") || str.includes('"') || str.includes("\n") ? `"${str.replace(/"/g, '""')}"` : str;
   };
 
   // Exporta só as colunas visíveis, na ordem canônica: o que se vê é o que se exporta.

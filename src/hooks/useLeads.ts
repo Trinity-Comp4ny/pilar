@@ -242,7 +242,11 @@ export function buildClienteEnrichmentUpdate(
   if (!enrichment) return updates;
   if (enrichment.cnpj) {
     const digits = onlyDigits(enrichment.cnpj);
-    if (digits) updates.cpf_cnpj = digits;
+    if (digits) {
+      updates.cpf_cnpj = digits;
+      // Cliente com CNPJ é pessoa jurídica; sem isso nasce com tipo_pessoa NULL.
+      updates.tipo_pessoa = "juridica";
+    }
   }
   if (enrichment.razao_social) updates.nome = enrichment.razao_social;
   if (enrichment.endereco) updates.endereco = enrichment.endereco;

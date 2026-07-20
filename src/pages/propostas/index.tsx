@@ -239,6 +239,10 @@ export default function Propostas() {
       toast.error("Título é obrigatório");
       return;
     }
+    if (codigoDuplicado) {
+      toast.error("Já existe uma proposta com esse código");
+      return;
+    }
     const disciplinasValidas = disciplinasRows.filter((d) => d.disciplina.trim() !== "");
     // Se não há valor digitado, usa a soma das disciplinas como valor proposto.
     const valorManual = parseCurrencyString(valorDisplay);
@@ -1005,8 +1009,12 @@ export default function Propostas() {
                 <Label>Prazo (dias)</Label>
                 <Input
                   type="number"
+                  min={0}
                   value={form.prazo_estimado_dias || ""}
-                  onChange={(e) => setForm({ ...form, prazo_estimado_dias: parseInt(e.target.value) || undefined })}
+                  onChange={(e) => {
+                    const n = parseInt(e.target.value);
+                    setForm({ ...form, prazo_estimado_dias: Number.isNaN(n) ? undefined : Math.max(0, n) });
+                  }}
                 />
               </div>
             </div>

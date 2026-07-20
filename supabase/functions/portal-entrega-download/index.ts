@@ -35,6 +35,7 @@ serve(
 
       let projeto_id: string | undefined;
       let empresa_id: string | undefined;
+      let cliente_id: string | undefined;
 
       if (typeof token === "string" && token.length > 0) {
         const { data, error } = await anonClient.rpc("verify_portal_token", { p_token: token });
@@ -48,6 +49,7 @@ serve(
         const { data, error } = await anonClient.rpc("portal_verify_session_readonly", { p_token: session_token });
         if (error || !data) return safeErrorResponse(401, "Sessão inválida", req);
         empresa_id = (data as { empresa_id?: string }).empresa_id;
+        cliente_id = (data as { cliente_id?: string }).cliente_id;
       }
 
       if (!empresa_id) return safeErrorResponse(401, "Contexto sem escopo", req);
@@ -71,6 +73,19 @@ serve(
 
       if (token && projeto_id && entrega.projeto_id !== projeto_id) {
         return safeErrorResponse(403, "Entrega fora do escopo deste portal", req);
+      }
+
+      // Fluxo do cliente logado (session_token): a entrega precisa pertencer a um
+      // projeto DO cliente da sessão, não só à mesma empresa (evita IDOR entre
+      // clientes da mesma empresa). ACH-PORT-02.
+      if (cliente_id) {
+        const { data: proj } = await adminClient
+          .from("projetos")
+          .select("id")
+          .eq("id", entrega.projeto_id)
+          .eq("cliente_id", cliente_id)
+          .maybeSingle();
+        if (!proj) return safeErrorResponse(403, "Entrega fora do seu acesso", req);
       }
 
       if (!entrega.arquivo_path) return safeErrorResponse(404, "Entrega sem arquivo", req);

@@ -157,7 +157,11 @@ export default function RelatoriosRentabilidade({ modo }: Props) {
       toast.error("Sem dados", { description: "Não há dados para exportar." });
       return;
     }
-    const escape = (v: string) => (v.includes(",") || v.includes('"') ? `"${v.replace(/"/g, '""')}"` : v);
+    const escape = (v: string) => {
+      // Neutraliza formula injection: célula iniciada por = + - @ vira texto.
+      const s = /^[=+\-@]/.test(v) ? `'${v}` : v;
+      return s.includes(",") || s.includes('"') || s.includes("\n") ? `"${s.replace(/"/g, '""')}"` : s;
+    };
     const lines = [
       headers.join(","),
       ...rows.map((r) => r.map(escape).join(",")),
