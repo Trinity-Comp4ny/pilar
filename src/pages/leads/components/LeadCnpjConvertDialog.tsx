@@ -128,7 +128,7 @@ export function LeadCnpjConvertDialog({ open, onOpenChange, isPending, onConvert
           )}
         </div>
 
-        <DialogFooter className="flex flex-col sm:flex-row gap-2">
+        <DialogFooter className="flex flex-col sm:flex-row flex-wrap gap-2">
           <Button variant="outline" onClick={onSkip} disabled={isPending}>
             Apenas marcar como Ganho
           </Button>

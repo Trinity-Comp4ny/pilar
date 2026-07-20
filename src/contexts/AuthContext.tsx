@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
@@ -39,6 +40,7 @@ export function useAuth(): AuthContextValue {
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const queryClient = useQueryClient();
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<ProfileWithEmpresa | null>(null);
   const [loading, setLoading] = useState(true);
@@ -79,6 +81,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = useCallback(async () => {
     await supabase.auth.signOut();
+    // Limpa o cache do react-query para não vazar dados de uma role/sessão
+    // para a próxima que logar na mesma aba (bleed observado no QA).
+    queryClient.clear();
     localStorage.removeItem(STORAGE_KEYS.AUTH);
     localStorage.removeItem(STORAGE_KEYS.USER_NAME);
     localStorage.removeItem(STORAGE_KEYS.REMEMBER_ME);
@@ -88,7 +93,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setMfaNextLevel("aal1");
     setHasVerifiedMfaFactor(false);
     monitoring.setUser(null);
-  }, []);
+  }, [queryClient]);
 
   useEffect(() => {
     let mounted = true;

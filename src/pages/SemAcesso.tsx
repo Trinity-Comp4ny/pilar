@@ -59,7 +59,7 @@ export default function SemAcesso() {
   const recurso = isKnownFeature(recursoParam) ? recursoParam : null;
   const recursoLabel = recurso ? FEATURE_LABEL[recurso] : "esta página";
   const motivo = recurso ? reasonFor(recurso, "view") : "Seu perfil não tem acesso";
-  const roleLabel = role ? ROLE_LABEL[role] : "sem perfil";
+  const roleLabel = role ? (ROLE_LABEL[role] ?? role) : "sem perfil";
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-6">
