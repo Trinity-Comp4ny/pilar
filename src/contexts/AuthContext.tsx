@@ -51,8 +51,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const fetchProfile = useCallback(async (userId: string) => {
     const { data, error } = await supabase.from("profiles").select("*, empresas(*)").eq("id", userId).single();
     if (error) {
-      setProfile(null);
-      monitoring.setUser(null);
+      // "No rows" (PGRST116) é esperado (usuário sem profile ainda, ex.: durante
+      // o onboarding). Qualquer outro erro é de infra: não engolir e não apagar
+      // um profile já carregado por causa de uma falha transitória de rede.
+      if (error.code === "PGRST116") {
+        setProfile(null);
+        monitoring.setUser(null);
+      } else {
+        monitoring.captureException(error, { context: "fetchProfile", userId });
+      }
       return;
     }
     const p = data as ProfileWithEmpresa;

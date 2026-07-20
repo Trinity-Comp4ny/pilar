@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { PageLayout } from "@/components/PageLayout";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useProjetoDetail } from "./hooks/useProjetoDetail";
@@ -41,6 +42,19 @@ export default function ProjetoDetail() {
   } = useProjetoDetail(id);
 
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+
+  if (!loading && !projeto) {
+    return (
+      <PageLayout>
+        <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
+          <p className="text-sm text-muted-foreground">Projeto não encontrado ou sem acesso.</p>
+          <Button variant="outline" onClick={() => navigate("/projetos")}>
+            Voltar para projetos
+          </Button>
+        </div>
+      </PageLayout>
+    );
+  }
 
   if (loading || !projeto) {
     return (

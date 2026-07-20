@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { isUltraAdmin } from "@/lib/roles";
 import { mfaDevBypass } from "@/lib/mfaDevBypass";
+import { monitoring } from "@/lib/monitoring";
 import Layout from "./Layout";
 import { AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -68,8 +69,11 @@ export function PrivateRoute() {
         const s = data?.status ?? null;
         subStatusCache.v = s;
         setSubStatus(s);
-      } catch {
-        subStatusCache.v = null;
+      } catch (err) {
+        // Erro de infra não deve virar "sem assinatura" (que liberaria uma
+        // empresa suspensa). Reporta e NÃO cacheia, para re-checar na próxima
+        // navegação em vez de gravar um estado errado. ACH-AUTH-07.
+        monitoring.captureException(err, { context: "subscription-gate" });
         setSubStatus(null);
       }
     };
