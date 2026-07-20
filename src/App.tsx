@@ -41,7 +41,6 @@ const ProfileSetup = lazy(() => import("./pages/ProfileSetup"));
 const Templates = lazy(() => import("./pages/templates"));
 const Timesheet = lazy(() => import("./pages/Timesheet"));
 const Chat = lazy(() => import("./pages/chat"));
-const MapaObras = lazy(() => import("./pages/mapa"));
 const Propostas = lazy(() => import("./pages/propostas"));
 const Capacidade = lazy(() => import("./pages/capacidade"));
 const RevisaoIA = lazy(() => import("./pages/revisao-ia"));
@@ -171,9 +170,8 @@ const App = () => {
                       <Route path="/chat" element={<Navigate to="/agentes" replace />} />
 
 
-                      <Route element={<FeatureRoute feature="mapa" />}>
-                        <Route path="/mapa" element={<MapaObras />} />
-                      </Route>
+                      {/* Mapa virou aba dentro de Projetos; redireciona links antigos */}
+                      <Route path="/mapa" element={<Navigate to="/projetos?view=mapa" replace />} />
 
                       <Route element={<FeatureRoute feature="propostas" />}>
                         <Route path="/documentos" element={<Propostas />} />

@@ -9,7 +9,6 @@ import {
   Home,
   Inbox,
   LayoutGrid,
-  MapPin,
   ShieldCheck,
   Sparkles,
   Zap,
@@ -78,7 +77,6 @@ const menu: MenuGroup[] = [
     items: [
       { title: "Projetos", url: "/projetos", icon: Calendar, feature: "projetos" },
       { title: "Calendário", url: "/calendario", icon: CalendarDays, feature: "projetos" },
-      { title: "Mapa", url: "/mapa", icon: MapPin, feature: "mapa" },
       { title: "Timesheet", url: "/timesheet", icon: Clock, feature: "timesheet" as Feature },
       { title: "Capacidade", url: "/capacidade", icon: LayoutGrid, feature: "capacidade" as Feature },
       { title: "Templates", url: "/templates", icon: Copy, feature: "templates" as Feature },

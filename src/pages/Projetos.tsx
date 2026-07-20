@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState } from "react";
-import { Calendar as CalendarIcon, GitBranch, Layers, Plus, Settings2 } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
+import { Calendar as CalendarIcon, GitBranch, Layers, MapPin, Plus, Settings2 } from "lucide-react";
 import { toast } from "sonner";
 import { DragDropContext } from "@hello-pangea/dnd";
 import { PageLayout } from "@/components/PageLayout";
@@ -25,6 +26,7 @@ import {
 import { ProjetosKPIs } from "@/pages/projetos/components/ProjetosKPIs";
 import { ProjetosEmptyState } from "@/pages/projetos/components/ProjetosEmptyState";
 import { KanbanBoard } from "@/pages/projetos/components/KanbanBoard";
+import { MapaTab } from "@/pages/projetos/components/MapaTab";
 import { ProjetosMobileList } from "@/pages/projetos/components/ProjetosMobileList";
 import { SortControl } from "@/pages/projetos/components/SortControl";
 import { NotifyTeamDialog, ReopenProjetoDialog } from "@/pages/projetos/components/ProjetoStatusDialogs";
@@ -35,13 +37,15 @@ import { cn } from "@/lib/utils";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useQueryClient } from "@tanstack/react-query";
 
-type Tab = "kanban" | "disciplinas" | "cronograma";
+type Tab = "kanban" | "disciplinas" | "cronograma" | "mapa";
 
 export default function ProjetosKanban() {
   usePageTitle("Projetos");
   const { can } = usePermissions();
   const queryClient = useQueryClient();
   const canEdit = can("projetos", "create");
+  const canViewMapa = can("mapa", "view");
+  const [searchParams] = useSearchParams();
 
   const {
     templatesData,
@@ -64,7 +68,12 @@ export default function ProjetosKanban() {
   const [isDisciplinasOpen, setIsDisciplinasOpen] = useState(false);
   const [selectedProjeto, setSelectedProjeto] = useState<Projeto | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<Tab>("kanban");
+  const [activeTab, setActiveTab] = useState<Tab>(() => {
+    const view = searchParams.get("view");
+    if (view === "mapa" && canViewMapa) return "mapa";
+    if (view === "disciplinas" || view === "cronograma") return view;
+    return "kanban";
+  });
   const [isFluxosOpen, setIsFluxosOpen] = useState(false);
   const [projetoToDelete, setProjetoToDelete] = useState<{ id: string; nome: string } | null>(null);
 
@@ -215,6 +224,7 @@ export default function ProjetosKanban() {
     { id: "kanban", label: "Quadro", icon: CalendarIcon },
     { id: "disciplinas", label: "Disciplinas", icon: Layers },
     { id: "cronograma", label: "Cronograma", icon: CalendarIcon },
+    ...(canViewMapa ? [{ id: "mapa" as Tab, label: "Mapa", icon: MapPin }] : []),
   ];
 
   // Navegação por teclado nas abas (padrão ARIA tablist: setas, Home/End).
@@ -239,7 +249,7 @@ export default function ProjetosKanban() {
   return (
     <PageLayout
       className={activeTab === "kanban" ? "overflow-y-hidden" : undefined}
-      containerClassName={activeTab === "kanban" ? "h-full flex flex-col min-h-0" : undefined}
+      containerClassName={cn("flex flex-col", activeTab === "kanban" && "h-full min-h-0")}
       header={
         <PageHeader
           title="Projetos"
@@ -253,8 +263,6 @@ export default function ProjetosKanban() {
                 filters={filters}
                 onChange={setFilters}
               />
-
-              {activeTab === "kanban" && <SortControl sort={sort} onChange={setSort} />}
 
               <Can feature="projetos" action="edit">
                 <Button variant="outline" className="rounded-full text-sm" onClick={() => setIsDisciplinasOpen(true)}>
@@ -302,8 +310,10 @@ export default function ProjetosKanban() {
         />
       )}
 
-      {/* Abas */}
-      <div role="tablist" aria-label="Visualização de projetos" className="flex items-center gap-0 border-b mb-4">
+      {/* Abas. O SortControl fica nesta linha (não no header) para a altura do
+          header não variar entre abas e a barra de abas não "pular". */}
+      <div className="flex items-center justify-between gap-2 border-b mb-4">
+      <div role="tablist" aria-label="Visualização de projetos" className="flex items-center gap-0">
         {tabs.map((tab) => {
           const selected = activeTab === tab.id;
           return (
@@ -329,6 +339,8 @@ export default function ProjetosKanban() {
             </button>
           );
         })}
+      </div>
+        {activeTab === "kanban" && <SortControl sort={sort} onChange={setSort} />}
       </div>
 
       {/* Erro de carregamento: estado distinto do empty, com opção de tentar de novo */}
@@ -386,6 +398,8 @@ export default function ProjetosKanban() {
         <div role="tabpanel" id="projetos-tabpanel-cronograma" aria-labelledby="projetos-tab-cronograma">
           <CronogramaProjetosTab projetos={filteredProjetos} />
         </div>
+      ) : activeTab === "mapa" ? (
+        <MapaTab />
       ) : null}
 
       <ProjectDetailDialog
