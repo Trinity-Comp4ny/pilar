@@ -194,8 +194,8 @@ export const useClientes = (options: UseClientesOptions = {}) => {
       // unicidade por empresa e a deduplicação não dependem da formatação.
       const cpfCnpjDigits = onlyDigits(data.cpf_cnpj);
       const payload = {
-        nome: data.nome,
-        sobrenome: data.sobrenome || null,
+        nome: data.nome.trim(),
+        sobrenome: data.sobrenome?.trim() || null,
         // tipo_pessoa é coluna nova, ainda fora dos tipos gerados: ver cast abaixo.
         tipo_pessoa: data.tipo_pessoa || null,
         cpf_cnpj: cpfCnpjDigits || null,

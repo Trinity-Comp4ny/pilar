@@ -20,6 +20,7 @@ const KNOWN_FEATURES: Feature[] = [
   "capacidade",
   "templates",
   "ai_hub",
+  "ai_chat",
   "timesheet",
   "admin_portal",
   "billing",

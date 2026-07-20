@@ -407,7 +407,13 @@ export default function Relatorios() {
               {/* Tipo */}
               <div className="space-y-1.5 w-56 shrink-0">
                 <Label className="text-xs font-medium text-muted-foreground">Tipo de relatório</Label>
-                <Select value={tipoRelatorio} onValueChange={setTipoRelatorio}>
+                <Select
+                  value={tipoRelatorio}
+                  onValueChange={(v) => {
+                    setTipoRelatorio(v);
+                    setRentabilidadeMode(null);
+                  }}
+                >
                   <SelectTrigger className="h-9 bg-white">
                     <SelectValue placeholder="Selecione o tipo" />
                   </SelectTrigger>
