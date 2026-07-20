@@ -5,6 +5,12 @@
 //   pouco → staleTime 10min, sem refetchInterval.
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { monitoring } from "@/lib/monitoring";
+
+// Teto de segurança contra full-scan (ACH-FIN-07). A tela filtra/ordena no
+// client, então paginação server-side quebraria a busca; o teto evita puxar a
+// base inteira e avisa (via monitoring) quando for hora de paginar de verdade.
+const FINANCE_ITEMS_LIMIT = 2000;
 
 export type FinanceItemTipo = "despesa" | "receita";
 
@@ -87,9 +93,14 @@ async function fetchDespesas(): Promise<DespesaItem[]> {
     .eq("is_fatura_payment", false)
     .is("deleted_at", null)
     .order("data_pagamento", { ascending: false })
-    .order("data_vencimento", { ascending: false });
+    .order("data_vencimento", { ascending: false })
+    .limit(FINANCE_ITEMS_LIMIT);
 
   if (error) throw error;
+
+  if ((data?.length ?? 0) >= FINANCE_ITEMS_LIMIT) {
+    monitoring.captureMessage("Despesas atingiram o teto de listagem; considerar paginação server-side", "warning");
+  }
 
   return (
     (data ?? []) as unknown as Array<
@@ -109,9 +120,14 @@ async function fetchReceitas(): Promise<ReceitaItem[]> {
     .select(`*, categorias_financeiras (nome), clientes (nome), projetos (codigo_projeto)`)
     .is("deleted_at", null)
     .order("data_recebimento", { ascending: false })
-    .order("data_vencimento", { ascending: false });
+    .order("data_vencimento", { ascending: false })
+    .limit(FINANCE_ITEMS_LIMIT);
 
   if (error) throw error;
+
+  if ((data?.length ?? 0) >= FINANCE_ITEMS_LIMIT) {
+    monitoring.captureMessage("Receitas atingiram o teto de listagem; considerar paginação server-side", "warning");
+  }
 
   return (
     (data ?? []) as unknown as Array<

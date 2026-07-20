@@ -281,14 +281,21 @@ export default function Company() {
     if (!deleteUserId) return;
     if (!(await requireAal2())) return;
     try {
-      const { error } = await supabase.from("profiles").delete().eq("id", deleteUserId);
+      // Remoção via edge function: apaga o auth.user (invalida sessão/convites),
+      // valida tenancy e audita. O delete direto no profile deixava o auth.user
+      // órfão (usuário ainda logava, sem profile) e distorcia o limite de plano.
+      const { error } = await supabase.functions.invoke("delete-user", {
+        body: { user_id: deleteUserId },
+      });
       if (error) throw error;
       setUsers((prev) => prev.filter((u) => u.id !== deleteUserId));
       setIsDeleteUserOpen(false);
       setDeleteUserId(null);
       toast.success("Usuário removido");
-    } catch {
-      toast.error("Erro ao remover usuário");
+    } catch (err) {
+      toast.error("Erro ao remover usuário", {
+        description: err instanceof Error ? err.message : undefined,
+      });
     }
   };
 

@@ -7,6 +7,7 @@
 import { useState } from "react";
 import { startOfDay, endOfDay } from "date-fns";
 import { getDisplayDate, formatDateDisplay } from "@/lib/dateUtils";
+import { monitoring } from "@/lib/monitoring";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -86,10 +87,11 @@ export async function fetchFinancialData(
   dateTo?: Date
 ): Promise<FinancialRecord[]> {
   const pageLimit = 1000;
+  const MAX_PAGES = 50; // teto de segurança: até 50k registros por relatório (ACH-REL-01)
   let page = 0;
   const all: FinancialRecord[] = [];
 
-  while (true) {
+  while (page < MAX_PAGES) {
     // Build separate typed query branches to avoid redundant .select() override
     // and to apply is_fatura_payment only on despesas
     const { data, error } = await (() => {
@@ -148,6 +150,13 @@ export async function fetchFinancialData(
     all.push(...chunk);
     if (chunk.length < pageLimit) break;
     page += 1;
+  }
+
+  if (page >= MAX_PAGES) {
+    monitoring.captureMessage(
+      "Relatório atingiu o teto de 50k registros; resultado pode estar truncado",
+      "warning"
+    );
   }
 
   return all;
