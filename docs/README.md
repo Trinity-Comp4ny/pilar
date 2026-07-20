@@ -16,6 +16,7 @@
 | 🛠️ **Operações** | [`operations/`](./operations/) | Deploy, disaster recovery, incident response, runbooks, monitoring, load/versionamento de API |
 | 🏛️ **Arquitetura** | [`architecture/`](./architecture/) | ADRs (decisões arquiteturais registradas) |
 | 📐 **Specs** | [`specs/`](./specs/) | Especificações de feature (Spec Driven Development): quê/porquê antes de codar |
+| 🧪 **QA** | [`qa/`](./qa/) | Rodadas de QA: catálogos de teste, matriz RLS, achados e status das correções |
 | ⚖️ **Legal** | [`legal/`](./legal/) | Política de privacidade e documentos legais |
 
 ## Fora de `docs/` (referência rápida)
