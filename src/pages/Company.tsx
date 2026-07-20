@@ -213,9 +213,12 @@ export default function Company() {
       if (error) throw error;
 
       toast.success("Convite enviado", { description: `Um email foi enviado para ${inviteEmail}` });
+      // invite-user rebaixa qualquer papel fora de admin/user para "user"; refletir
+      // o que o servidor concede, não o escolhido, para o otimismo não mentir. ACH-AUTH-14.
+      const grantedRole = inviteRole === "admin" ? "admin" : "user";
       setUsers([
         ...users,
-        { id: "pending-" + Date.now(), name: fullName, email: inviteEmail.trim(), role: inviteRole },
+        { id: "pending-" + Date.now(), name: fullName, email: inviteEmail.trim(), role: grantedRole },
       ]);
       setInviteFirstName("");
       setInviteLastName("");

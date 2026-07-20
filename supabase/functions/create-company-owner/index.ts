@@ -13,6 +13,18 @@ const createOwnerSchema = z.object({
   nome: z.string().trim().min(1).max(200).optional(),
 });
 
+// Token de convite: 32 bytes aleatórios em hex. Só o hash é persistido.
+function generateInviteToken(): string {
+  const bytes = new Uint8Array(32);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+async function sha256Hex(input: string): Promise<string> {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(input));
+  return Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, "0")).join("");
+}
+
 // Cria convite para novo tenant (dono de empresa).
 // Requer header X-Super-Admin-Key matching SUPER_ADMIN_KEY (env).
 // Endpoint bootstrap — não acessível a usuários comuns.
@@ -141,21 +153,24 @@ serve(
         .eq("email", email)
         .is("usado_em", null);
 
-      // Cria novo token pendente
+      // Cria novo token pendente. O token cru só trafega no invite; no banco
+      // guardamos apenas o hash sha256 (ACH-AUTH-04), igual ao convite de equipe.
+      const rawToken = generateInviteToken();
+      const tokenHash = await sha256Hex(rawToken);
       const { data: pending, error: insertError } = await supabaseAdmin
         .from("empresa_owners_pending")
-        .insert({ email, company_name, nome: nome ?? null })
-        .select("token")
+        .insert({ email, company_name, nome: nome ?? null, token_hash: tokenHash })
+        .select("id")
         .single();
 
-      if (insertError || !pending?.token) {
+      if (insertError || !pending?.id) {
         throw new Error(insertError?.message ?? "Falha ao criar convite");
       }
 
       const { error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
         redirectTo: `${rawOrigin}/profile-setup`,
         data: {
-          invite_token: pending.token,
+          invite_token: rawToken,
           nome: nome ?? "",
         },
       });
