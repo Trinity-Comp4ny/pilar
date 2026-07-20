@@ -19,7 +19,7 @@ export function ImpersonationBanner() {
         <span className="font-medium">
           Visualizando como <span className="underline underline-offset-2">{ROLE_LABEL[viewAsRole]}</span>
         </span>
-        <span className="text-xs opacity-80 hidden sm:inline">— apenas UI; RLS mantém permissões reais</span>
+        <span className="text-xs opacity-80 hidden sm:inline">apenas UI; RLS mantém permissões reais</span>
         <Button size="sm" variant="ghost" className="h-7 px-2 text-black hover:bg-black/10" onClick={stopImpersonation}>
           <X className="w-3.5 h-3.5 mr-1" />
           Sair

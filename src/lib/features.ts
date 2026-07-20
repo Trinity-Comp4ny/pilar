@@ -188,7 +188,7 @@ export const FEATURES: readonly FeatureDefinition[] = [
   {
     key: "ai_chat",
     label: "Agentes",
-    description: "Converse em linguagem natural — os agentes respondem sobre finanças, projetos e comercial",
+    description: "Converse em linguagem natural: os agentes respondem sobre finanças, projetos e comercial",
     group: "visao",
     icon: Sparkles,
     core: false,
