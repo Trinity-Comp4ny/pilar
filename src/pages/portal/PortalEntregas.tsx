@@ -20,6 +20,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { getPortalToken } from "@/hooks/useClienteAuth";
 import { EmptyState } from "@/components/EmptyState";
+import { callUntypedRpc } from "@/lib/supabaseRpc";
 
 interface Entrega {
   id: string;
@@ -66,21 +67,33 @@ export function EntregasContent({
   const fetchEntregas = useCallback(async () => {
     setLoadError(false);
     try {
-      const { data, error: fetchError } = await supabase
-        .from("portal_entregas")
-        .select(
-          "id, titulo, descricao, tipo, status, versao, disciplina, fase, arquivo_path, arquivo_nome, drive_url, entregavel_pai_id, resposta_cliente, resposta_empresa, respondido_em, created_at"
-        )
-        .eq("projeto_id", projetoId)
-        .order("created_at", { ascending: true });
-      if (fetchError) throw fetchError;
-      if (data) setEntregas(data as unknown as Entrega[]);
+      const portalToken = token ?? getPortalToken();
+      if (portalToken) {
+        // Cliente do portal (auth por token): RLS não alcança, usa RPC por token.
+        const { data, error: rpcError } = await callUntypedRpc<Entrega[]>("portal_listar_entregas", {
+          p_token: portalToken,
+          p_projeto_id: projetoId,
+        });
+        if (rpcError) throw rpcError;
+        if (data) setEntregas(data);
+      } else {
+        // Staff autenticado (JWT): SELECT direto coberto por RLS.
+        const { data, error: fetchError } = await supabase
+          .from("portal_entregas")
+          .select(
+            "id, titulo, descricao, tipo, status, versao, disciplina, fase, arquivo_path, arquivo_nome, drive_url, entregavel_pai_id, resposta_cliente, resposta_empresa, respondido_em, created_at"
+          )
+          .eq("projeto_id", projetoId)
+          .order("created_at", { ascending: true });
+        if (fetchError) throw fetchError;
+        if (data) setEntregas(data as unknown as Entrega[]);
+      }
     } catch {
       setLoadError(true);
     } finally {
       setLoading(false);
     }
-  }, [projetoId]);
+  }, [projetoId, token]);
 
   useEffect(() => {
     fetchEntregas();
@@ -89,11 +102,13 @@ export function EntregasContent({
   const threads = useMemo(() => buildThreads(entregas), [entregas]);
 
   const handleAprovar = async (id: string) => {
+    const portalToken = token ?? getPortalToken();
+    if (!portalToken) return;
     setSaving(true);
-    const { error } = await supabase
-      .from("portal_entregas")
-      .update({ status: "aprovado", respondido_em: new Date().toISOString() })
-      .eq("id", id);
+    const { error } = await callUntypedRpc("portal_aprovar_entrega", {
+      p_token: portalToken,
+      p_entrega_id: id,
+    });
     if (error)
       toast.error("Não foi possível aprovar", {
         description: "Tente novamente em instantes ou fale com o escritório.",
@@ -105,15 +120,14 @@ export function EntregasContent({
 
   const handleSolicitarRevisao = async (id: string) => {
     if (!resposta.trim()) return;
+    const portalToken = token ?? getPortalToken();
+    if (!portalToken) return;
     setSaving(true);
-    const { error } = await supabase
-      .from("portal_entregas")
-      .update({
-        status: "revisao_solicitada",
-        resposta_cliente: resposta.trim(),
-        respondido_em: new Date().toISOString(),
-      })
-      .eq("id", id);
+    const { error } = await callUntypedRpc("portal_solicitar_revisao_entrega", {
+      p_token: portalToken,
+      p_entrega_id: id,
+      p_resposta: resposta.trim(),
+    });
     if (error)
       toast.error("Não foi possível enviar a solicitação", {
         description: "Tente novamente em instantes ou fale com o escritório.",

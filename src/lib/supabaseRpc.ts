@@ -13,11 +13,14 @@ export async function callUntypedRpc<TReturn = unknown>(
   args?: Record<string, unknown>
 ): Promise<{ data: TReturn | null; error: PostgrestError | null }> {
   // Cast deliberado: a função não está em Database['public']['Functions'].
-  const client = supabase.rpc as unknown as (
+  // IMPORTANTE: chamar `supabase.rpc(...)` direto — extrair o método para uma
+  // variável desliga o `this`, e o supabase-js quebra com "Cannot read
+  // properties of undefined (reading 'rest')".
+  const rpc = supabase.rpc.bind(supabase) as unknown as (
     name: string,
     args?: Record<string, unknown>
   ) => Promise<{ data: TReturn | null; error: PostgrestError | null }>;
-  return client(fnName, args);
+  return rpc(fnName, args);
 }
 
 /**

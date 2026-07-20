@@ -15,7 +15,6 @@ import { ClientePrivateRoute } from "./components/ClientePrivateRoute";
 import { AdminRoute } from "./components/AdminRoute";
 import { UltraAdminRoute } from "./components/UltraAdminRoute";
 import { FeatureRoute } from "./components/FeatureRoute";
-import { AdminOnlyRoute } from "./components/AdminOnlyRoute";
 import { RequireRole } from "./components/RequireRole";
 import { RequireAal2 } from "./components/RequireAal2";
 import { ImpersonationBanner } from "./components/ImpersonationBanner";
@@ -147,7 +146,9 @@ const App = () => {
                         </Route>
                       </Route>
 
-                      <Route element={<AdminOnlyRoute />}>
+                      {/* ACH-RBAC-OWNER-01: o dono (role de contrato "owner") precisa
+                          gerenciar a própria equipe. Antes só admin legado passava. */}
+                      <Route element={<RequireRole roles={["owner"]} />}>
                         <Route path="/equipe" element={<Pessoas />} />
                         <Route path="/pessoas" element={<Navigate to="/equipe" replace />} />
                       </Route>
@@ -187,7 +188,11 @@ const App = () => {
                         <Route path="/ai" element={<AiHub />} />
                       </Route>
 
-                      <Route path="/revisao-ia" element={<RevisaoIA />} />
+                      {/* ACH-ADM-01: aprovação de trabalho de agentes não pode
+                          ficar exposta a coordenador/colaborador. */}
+                      <Route element={<RequireRole roles={["owner"]} />}>
+                        <Route path="/revisao-ia" element={<RevisaoIA />} />
+                      </Route>
                       <Route path="/profile" element={<Profile />} />
                       <Route path="/company-setup" element={<CompanySetup />} />
                       <Route path="/profile-setup" element={<ProfileSetup />} />

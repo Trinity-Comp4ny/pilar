@@ -115,7 +115,18 @@ export function useFinanceItemMutations(tipo: FinanceItemTipo) {
   const tableName = tipo === "despesa" ? "despesas" : "receitas";
   const labelSingular = tipo === "despesa" ? "Despesa" : "Receita";
 
-  const invalidate = () => qc.invalidateQueries({ queryKey: itemsKey });
+  // ACH-CACHE-01: mudar uma receita/despesa (salvar, marcar recebida/pendente,
+  // excluir) precisa invalidar não só a lista, mas todos os números derivados
+  // (KPIs de topo, resumos, gráficos, dashboard) — senão o usuário vê valor
+  // defasado até recarregar a página.
+  const invalidate = () => {
+    qc.invalidateQueries({ queryKey: itemsKey });
+    qc.invalidateQueries({ queryKey: ["lancamentos-kpis"] });
+    qc.invalidateQueries({ queryKey: ["finance-data"] });
+    qc.invalidateQueries({ queryKey: ["dashboard-v2"] });
+    qc.invalidateQueries({ queryKey: ["finance-chart-rpc"] });
+    qc.invalidateQueries({ queryKey: ["finance-chart-fallback"] });
+  };
 
   const saveDespesa = useMutation({
     mutationFn: saveDespesaImpl,

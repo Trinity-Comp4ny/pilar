@@ -34,7 +34,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { DialogDescription as DD, DialogFooter } from "@/components/ui/dialog";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -109,6 +109,7 @@ export default function Propostas() {
   const converterProposta = useConverterProposta();
   const salvarDisciplinas = useSalvarPropostaDisciplinas();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const canEdit = userRole === "admin" || userRole === "ultra_admin";
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -221,6 +222,17 @@ export default function Propostas() {
     );
     setIsFormOpen(true);
   };
+
+  // Deep-link ?edit=<id> (ex.: vindo de "Criar Proposta" no lead): abre o editor
+  // assim que a proposta aparece na lista, depois limpa o parâmetro.
+  useEffect(() => {
+    const editId = searchParams.get("edit");
+    if (!editId) return;
+    if (!propostas.some((p) => p.id === editId)) return;
+    openEdit(editId);
+    setSearchParams({}, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, propostas]);
 
   const handleSubmit = () => {
     if (!form.titulo.trim()) {

@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { getSafeErrorMessage } from "@/lib/safeError";
 import { onlyDigits } from "@/lib/maskUtils";
+import { callUntypedRpc } from "@/lib/supabaseRpc";
 
 // Detecta violação do índice único de email por empresa (leads_empresa_email_uidx).
 // Backstop do DB para a corrida que a checagem em JS não cobre.
@@ -253,8 +254,12 @@ export const useConvertLeadToClient = () => {
 
   return useMutation({
     mutationFn: async ({ leadId, enrichment }: { leadId: string; enrichment?: ConvertEnrichment | null }) => {
-      const { data, error } = await supabase.rpc("rpc_converter_lead_cliente", {
+      // Nunca copia o CNPJ cru (formatado) do lead: ele colide com o unique
+      // parcial e tornava o lead inconvertível. O CNPJ limpo vem do enrichment
+      // (lookup da Receita), aplicado no update abaixo.
+      const { data, error } = await callUntypedRpc<string>("rpc_converter_lead_cliente", {
         p_lead_id: leadId,
+        p_omit_cnpj: true,
       });
 
       if (error) throw error;

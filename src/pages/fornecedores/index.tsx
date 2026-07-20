@@ -437,7 +437,7 @@ export default function Fornecedores() {
         onConfirm={handleDeleteConfirm}
         title="Excluir Fornecedor"
         itemName={toDelete?.nome}
-        description="Esta ação não pode ser desfeita."
+        description="O fornecedor sai das listagens e o histórico de despesas é preservado."
         confirmText="Excluir"
         cancelText="Cancelar"
       />
