@@ -238,12 +238,9 @@ export const useClientes = (options: UseClientesOptions = {}) => {
     onError: (error: unknown) => {
       const err = error as { code?: string; message?: string };
       if (err.code === "23505") {
+        // Só cpf_cnpj é único por empresa; email/telefone podem repetir (ACH-CLI-03).
         if (err.message?.includes("cpf_cnpj")) {
           toast.error("CPF/CNPJ já cadastrado", { description: "Este documento já pertence a outro cliente." });
-        } else if (err.message?.includes("contato")) {
-          toast.error("Contato já cadastrado", { description: "Este telefone já pertence a outro cliente." });
-        } else if (err.message?.includes("email")) {
-          toast.error("E-mail já cadastrado", { description: "Este e-mail já pertence a outro cliente." });
         } else {
           toast.error("Registro duplicado", { description: "Um dos campos já está em uso por outro cliente." });
         }
