@@ -28,66 +28,21 @@ export interface AiUsage {
   total_tokens_saida: number;
 }
 
+// Núcleo defensável (decisão de time 2026-07-20): só as tools na espinha
+// "lucro por projeto". As demais ai-* seguem no backend, dormentes, mas fora
+// do hub. Ver docs/strategy/DECISAO_IA_FEATURES_AGENTES_2026-07-20.md
 export const AI_TIPOS = {
-  fechamento_mensal: {
-    label: "Fechamento Mensal",
-    descricao: "Análise financeira do mês com insights e recomendações",
-    edgeFunction: "ai-fechamento-mensal",
-    icon: "BarChart3",
-  },
   proposta_copilot: {
     label: "Co-piloto de Proposta",
     descricao: "Sugestão de escopo, horas e preço para novas propostas",
     edgeFunction: "ai-proposta-copilot",
     icon: "FileText",
   },
-  previsao_atraso: {
-    label: "Previsão de Atraso",
-    descricao: "Análise de risco de atraso e estouro por projeto",
-    edgeFunction: "ai-previsao-atraso",
-    icon: "AlertTriangle",
-  },
-  radar_cliente: {
-    label: "Radar de Clientes",
-    descricao: "Classificação de clientes por nível de risco",
-    edgeFunction: "ai-radar-cliente",
-    icon: "Users",
-  },
-  relatorio_executivo: {
-    label: "Relatório Executivo",
-    descricao: "Resumo executivo semanal ou mensal para reunião de diretoria",
-    edgeFunction: "ai-relatorio-executivo",
-    icon: "FileCheck",
-  },
-  documentos: {
-    label: "Gerador de Documentos",
-    descricao: "Gere atas, relatórios de progresso, termos e memoriais descritivos",
-    edgeFunction: "ai-documentos",
-    icon: "FileStack",
-  },
   aditivo_copilot: {
     label: "Co-piloto de Aditivo",
     descricao: "Análise de impacto e sugestão de aditivo contratual",
     edgeFunction: "ai-aditivo-copilot",
     icon: "FilePlus2",
-  },
-  pauta_reuniao: {
-    label: "Pauta de Reunião",
-    descricao: "Gere pautas inteligentes com base nos dados da operação",
-    edgeFunction: "ai-pauta-reuniao",
-    icon: "CalendarCheck",
-  },
-  planejador_contratacao: {
-    label: "Planejador de Contratação",
-    descricao: "Análise de capacidade e recomendação de novas contratações",
-    edgeFunction: "ai-planejador-contratacao",
-    icon: "UserPlus",
-  },
-  simulacao_impacto: {
-    label: "Simulação de Impacto",
-    descricao: "Simule cenários (perda de cliente, novo projeto, aumento de custo)",
-    edgeFunction: "ai-simulacao-impacto",
-    icon: "FlaskConical",
   },
   diagnostico_precificacao: {
     label: "Diagnóstico de Precificação",
