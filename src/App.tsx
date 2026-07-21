@@ -43,7 +43,6 @@ const Timesheet = lazy(() => import("./pages/Timesheet"));
 const Chat = lazy(() => import("./pages/chat"));
 const Propostas = lazy(() => import("./pages/propostas"));
 const Capacidade = lazy(() => import("./pages/capacidade"));
-const RevisaoIA = lazy(() => import("./pages/revisao-ia"));
 const AiHub = lazy(() => import("./pages/ai"));
 const ProjetoDetail = lazy(() => import("./pages/projetos/ProjetoDetail"));
 const Calendario = lazy(() => import("./pages/Calendario"));
@@ -186,11 +185,9 @@ const App = () => {
                         <Route path="/ai" element={<AiHub />} />
                       </Route>
 
-                      {/* ACH-ADM-01: aprovação de trabalho de agentes não pode
-                          ficar exposta a coordenador/colaborador. */}
-                      <Route element={<RequireRole roles={["owner"]} />}>
-                        <Route path="/revisao-ia" element={<RevisaoIA />} />
-                      </Route>
+                      {/* Revisão IA virou aba dentro de Agentes; redireciona links antigos.
+                          O gate de owner (ACH-ADM-01) agora vive na própria aba. */}
+                      <Route path="/revisao-ia" element={<Navigate to="/agentes?tab=revisao" replace />} />
                       <Route path="/profile" element={<Profile />} />
                       <Route path="/company-setup" element={<CompanySetup />} />
                       <Route path="/profile-setup" element={<ProfileSetup />} />

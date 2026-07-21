@@ -23,8 +23,15 @@ export interface OrcamentoResult {
 
 const QUERY_KEY = ["agent-runs", "pending_review"];
 
+/**
+ * Tipos de run que esta fila sabe renderizar e aprovar. Filtra explicitamente:
+ * drafts do chat (criar_lead, criar_projeto, etc.) também nascem `pending_review`,
+ * e sem este filtro vazariam pra cá como "formato não reconhecido".
+ */
+const TIPOS_REVISAVEIS = ["orcamento_honorarios"];
+
 /** Fila de drafts aguardando revisão humana (cockpit). */
-export function useAgentInbox() {
+export function useAgentInbox(options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: QUERY_KEY,
     queryFn: async (): Promise<AgentRun[]> => {
@@ -32,11 +39,13 @@ export function useAgentInbox() {
         .from("agent_runs")
         .select("*")
         .eq("status", "pending_review")
+        .in("agent_type", TIPOS_REVISAVEIS)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data ?? [];
     },
     staleTime: 1000 * 30,
+    enabled: options?.enabled ?? true,
   });
 }
 
