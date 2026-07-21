@@ -1,7 +1,5 @@
 import { toast } from "sonner";
 import { Inbox, Check, X, Loader2, FileText, Clock } from "lucide-react";
-import { PageLayout } from "@/components/PageLayout";
-import { PageHeader } from "@/components/PageHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -143,37 +141,42 @@ function OrcamentoCard({ run }: { run: AgentRun }) {
   );
 }
 
-export default function RevisaoIA() {
-  const { data: runs, isLoading } = useAgentInbox();
+/**
+ * Fila de trabalho gerado por agentes aguardando aprovação. Vive dentro da tela
+ * Agentes (aba Revisão). `enabled` controla a query — o chamador passa false para
+ * quem não pode revisar (não-owner), evitando consultar a fila à toa.
+ */
+export function RevisaoInbox({ enabled = true }: { enabled?: boolean }) {
+  const { data: runs, isLoading } = useAgentInbox({ enabled });
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        <Skeleton className="h-48 w-full" />
+        <Skeleton className="h-48 w-full" />
+      </div>
+    );
+  }
+
+  if (!runs || runs.length === 0) {
+    return (
+      <Card>
+        <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+          <Inbox className="h-10 w-10 text-muted-foreground mb-3" />
+          <p className="font-medium">Nenhum item para revisar</p>
+          <p className="text-sm text-muted-foreground mt-1">
+            Quando um agente gerar um orçamento, ele aparecerá aqui para sua aprovação.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
-    <PageLayout
-      header={
-        <PageHeader title="Revisão da IA" description="Trabalho gerado por agentes, aguardando sua aprovação" />
-      }
-    >
-      {isLoading ? (
-        <div className="space-y-4">
-          <Skeleton className="h-48 w-full" />
-          <Skeleton className="h-48 w-full" />
-        </div>
-      ) : !runs || runs.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-            <Inbox className="h-10 w-10 text-muted-foreground mb-3" />
-            <p className="font-medium">Nenhum item para revisar</p>
-            <p className="text-sm text-muted-foreground mt-1">
-              Quando um agente gerar um orçamento, ele aparecerá aqui para sua aprovação.
-            </p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="space-y-4">
-          {runs.map((run) => (
-            <OrcamentoCard key={run.id} run={run} />
-          ))}
-        </div>
-      )}
-    </PageLayout>
+    <div className="space-y-4">
+      {runs.map((run) => (
+        <OrcamentoCard key={run.id} run={run} />
+      ))}
+    </div>
   );
 }
