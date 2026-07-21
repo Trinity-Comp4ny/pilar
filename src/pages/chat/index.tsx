@@ -5,7 +5,9 @@ import {
   Calendar,
   Coins,
   FileText,
+  Inbox,
   Loader2,
+  MessageSquare,
   PenLine,
   ShieldCheck,
   Sparkles,
@@ -14,9 +16,14 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useSearchParams } from "react-router-dom";
 import { useSidebar } from "@/components/ui/sidebar";
 import { useAuth } from "@/contexts/AuthContext";
+import { useRole } from "@/hooks/useRole";
+import { isContractRole } from "@/lib/rbac";
 import { cn } from "@/lib/utils";
+import { useAgentInbox } from "@/pages/revisao-ia/useAgentRuns";
+import { RevisaoInbox } from "@/pages/revisao-ia/RevisaoInbox";
 import { useChat } from "./useChat";
 import { LeadConfirmationCard } from "./LeadConfirmationCard";
 import { ProjetoConfirmationCard } from "./ProjetoConfirmationCard";
@@ -57,6 +64,23 @@ export default function ChatPage() {
   const { state, isMobile } = useSidebar();
   const left = isMobile ? "0px" : state === "collapsed" ? "64px" : "240px";
   const { profile } = useAuth();
+
+  // Revisão IA fundida como aba. Só owner (ou papéis legados) revisa — preserva
+  // o gate ACH-ADM-01 que antes era o RequireRole da rota /revisao-ia.
+  const role = useRole();
+  const podeRevisar = !isContractRole(role) || role === "owner";
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [aba, setAba] = useState<"conversa" | "revisao">(
+    podeRevisar && searchParams.get("tab") === "revisao" ? "revisao" : "conversa"
+  );
+  const { data: pendentes } = useAgentInbox({ enabled: podeRevisar });
+  const totalPendentes = pendentes?.length ?? 0;
+
+  const trocarAba = (nova: "conversa" | "revisao") => {
+    setAba(nova);
+    setSearchParams(nova === "revisao" ? { tab: "revisao" } : {}, { replace: true });
+  };
+
   const { messages, send, stop, loading, reset, creditosUsados, saldo, confirmarDraft, cancelarDraft, desfazer, desfazerFolha, executarAcao, cancelarAcao } =
     useChat();
   const [input, setInput] = useState("");
@@ -106,6 +130,8 @@ export default function ChatPage() {
 
   const vazio = messages.length === 0;
   const primeiroNome = profile?.first_name || profile?.nome?.split(" ")[0] || null;
+  // Header some no herói vazio, mas reaparece na aba Revisão ou quando há pendências.
+  const mostrarHeader = !vazio || aba === "revisao" || (podeRevisar && totalPendentes > 0);
 
   const inputPanel = (
     <InputPanel
@@ -123,47 +149,100 @@ export default function ChatPage() {
       className="fixed inset-y-0 right-0 z-40 flex flex-col bg-background transition-[left] duration-300 ease-in-out"
       style={{ left }}
     >
-      {/* Cabeçalho — some no estado vazio para o input virar o herói */}
-      {!vazio && (
+      {/* Cabeçalho — no herói vazio some para o input virar herói, mas reaparece
+          quando a aba Revisão está ativa ou há pendências a mostrar. */}
+      {mostrarHeader && (
         <header className="flex items-center gap-3 border-b border-border px-6 py-3.5">
           <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand text-ink">
             <Sparkles className="h-4 w-4" />
           </span>
           <div className="min-w-0 flex-1">
-            <h1 className="text-sm font-semibold leading-none text-foreground">Agentes</h1>
-            <p className="mt-1 text-xs text-muted-foreground">Pergunte ou peça uma ação · nada grava sem você confirmar</p>
+            <h1 className="text-sm font-semibold leading-none text-foreground">
+              {aba === "revisao" ? "Revisão da IA" : "Agentes"}
+            </h1>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {aba === "revisao"
+                ? "Trabalho gerado por agentes, aguardando sua aprovação"
+                : "Pergunte ou peça uma ação · nada grava sem você confirmar"}
+            </p>
           </div>
-          {saldo && (
-            <span
-              className="flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground"
-              title={`Créditos de IA restantes este mês (${saldo.usados} de ${saldo.limite} usados)`}
-            >
-              <Coins className="h-3.5 w-3.5" />
-              {saldo.restante} crédito{saldo.restante === 1 ? "" : "s"} restantes
-            </span>
+
+          {podeRevisar && (
+            <div className="inline-flex rounded-full bg-muted p-0.5 text-xs font-medium">
+              <button
+                type="button"
+                onClick={() => trocarAba("conversa")}
+                aria-current={aba === "conversa" ? "page" : undefined}
+                className={cn(
+                  "flex min-h-9 items-center gap-1.5 rounded-full px-3 py-1.5 transition-colors",
+                  aba === "conversa" ? "bg-brand text-ink" : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <MessageSquare className="h-3.5 w-3.5" />
+                Conversa
+              </button>
+              <button
+                type="button"
+                onClick={() => trocarAba("revisao")}
+                aria-current={aba === "revisao" ? "page" : undefined}
+                className={cn(
+                  "flex min-h-9 items-center gap-1.5 rounded-full px-3 py-1.5 transition-colors",
+                  aba === "revisao" ? "bg-brand text-ink" : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <Inbox className="h-3.5 w-3.5" />
+                Revisão
+                {totalPendentes > 0 && (
+                  <span className="ml-0.5 rounded-full bg-black/10 px-1.5 py-0.5 text-[10px] leading-none">
+                    {totalPendentes}
+                  </span>
+                )}
+              </button>
+            </div>
           )}
-          {creditosUsados > 0 && (
-            <span
-              className="flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground"
-              title="Créditos de IA debitados nesta conversa"
-            >
-              <Coins className="h-3.5 w-3.5" />
-              {creditosUsados} usado{creditosUsados === 1 ? "" : "s"} agora
-            </span>
+
+          {aba === "conversa" && (
+            <>
+              {saldo && (
+                <span
+                  className="flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground"
+                  title={`Créditos de IA restantes este mês (${saldo.usados} de ${saldo.limite} usados)`}
+                >
+                  <Coins className="h-3.5 w-3.5" />
+                  {saldo.restante} crédito{saldo.restante === 1 ? "" : "s"} restantes
+                </span>
+              )}
+              {creditosUsados > 0 && (
+                <span
+                  className="flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground"
+                  title="Créditos de IA debitados nesta conversa"
+                >
+                  <Coins className="h-3.5 w-3.5" />
+                  {creditosUsados} usado{creditosUsados === 1 ? "" : "s"} agora
+                </span>
+              )}
+              <button
+                type="button"
+                onClick={handleReset}
+                disabled={loading}
+                className="flex min-h-11 items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-40"
+              >
+                <PenLine className="h-3.5 w-3.5" />
+                Nova conversa
+              </button>
+            </>
           )}
-          <button
-            type="button"
-            onClick={handleReset}
-            disabled={loading}
-            className="flex min-h-11 items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-40"
-          >
-            <PenLine className="h-3.5 w-3.5" />
-            Nova conversa
-          </button>
         </header>
       )}
 
-      {vazio ? (
+      {aba === "revisao" ? (
+        /* ── Aba Revisão: fila persistente de trabalho aguardando aprovação ── */
+        <div className="flex-1 overflow-y-auto px-4 py-6">
+          <div className="mx-auto max-w-2xl">
+            <RevisaoInbox enabled={podeRevisar} />
+          </div>
+        </div>
+      ) : vazio ? (
         /* ── Estado vazio: herói centralizado (padrão agent-first) ── */
         <div className="flex flex-1 flex-col items-center justify-center overflow-y-auto px-4 py-10">
           <div className="w-full max-w-2xl">
