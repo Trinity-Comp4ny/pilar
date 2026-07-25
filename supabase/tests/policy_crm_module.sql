@@ -60,9 +60,12 @@ VALUES (
 -- =============================================
 SELECT test_set_auth('77777777-0000-0000-0000-000000000001');
 
+-- 'Novo' com maiúscula: leads_status_check aceita
+-- ARRAY['Novo','Em contato','Proposta','Negociação','Ganho','Perdido'], e o teste usava
+-- 'novo', então o INSERT batia no constraint e a falha parecia ser de policy.
 SELECT lives_ok(
   $$ INSERT INTO public.leads (empresa_id, nome, email, status)
-     VALUES ('00000000-0000-0000-0000-000000000ccc', 'Lead pgtap', 'lead@test.com', 'novo') $$,
+     VALUES ('00000000-0000-0000-0000-000000000ccc', 'Lead pgtap', 'lead@test.com', 'Novo') $$,
   'leads:editor INSERT lead funciona'
 );
 
