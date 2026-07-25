@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
 import { PageLayout } from "@/components/PageLayout";
@@ -102,18 +101,7 @@ export default function Pessoas() {
       header={
         <PageHeader
           title="Equipe"
-          description="Gerencie funcionários e terceirizados"
-          children={
-            isAdmin ? (
-              <Button
-                className="rounded-full bg-brand hover:bg-brand/90 text-ink transition-colors px-5 py-2.5 text-sm"
-                onClick={handleNewPessoa}
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                Nova Pessoa
-              </Button>
-            ) : undefined
-          }
+          primaryAction={isAdmin ? { label: "Nova pessoa", onClick: handleNewPessoa, icon: Plus } : undefined}
         />
       }
     >

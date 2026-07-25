@@ -4,12 +4,10 @@ import { monitoring } from "@/lib/monitoring";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Plus,
-  Search,
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
@@ -251,18 +249,8 @@ export default function Clientes() {
       header={
         <PageHeader
           title="Clientes"
-          description="Gerencie seus clientes"
-          children={
-            <Can feature="clientes" action="create">
-              <Button
-                className="rounded-full bg-brand hover:bg-brand/90 text-ink transition-colors px-5 py-2.5 text-sm"
-                onClick={handleOpenCreate}
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                Novo cliente
-              </Button>
-            </Can>
-          }
+          search={{ value: searchTerm, onChange: setSearchTerm, placeholder: "Buscar por nome, CPF/CNPJ ou email" }}
+          primaryAction={{ label: "Novo cliente", onClick: handleOpenCreate, icon: Plus, feature: "clientes" }}
         />
       }
     >
@@ -278,15 +266,7 @@ export default function Clientes() {
               </CardDescription>
             </div>
             <div className="flex flex-col sm:flex-row flex-wrap gap-2 w-full sm:w-auto">
-              <div className="relative w-full sm:w-56">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-                <Input
-                  placeholder="Buscar por nome, CPF/CNPJ ou email..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="h-9 pl-9 rounded-full text-sm"
-                />
-              </div>
+              {/* Busca de texto migrou para o PageHeader (spec 002). */}
               <Select value={filterTipo} onValueChange={setFilterTipo}>
                 <SelectTrigger className="h-9 w-full sm:w-32 rounded-full text-sm">
                   <SelectValue placeholder="Tipo" />
@@ -415,9 +395,7 @@ export default function Clientes() {
                           title="Nenhum cliente cadastrado"
                           description="Crie o primeiro cliente para começar."
                           action={
-                            can("clientes", "create")
-                              ? { label: "Novo cliente", onClick: handleOpenCreate }
-                              : undefined
+                            can("clientes", "create") ? { label: "Novo cliente", onClick: handleOpenCreate } : undefined
                           }
                         />
                       )}

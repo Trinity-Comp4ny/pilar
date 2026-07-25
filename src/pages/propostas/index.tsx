@@ -462,25 +462,24 @@ export default function Propostas() {
   ]);
 
   const header = (
-    <PageHeader title="Propostas" description="Gerencie propostas e contratos">
-      <div className="flex items-center gap-2">
-        <Button variant="outline" className="rounded-full px-5 py-2.5 text-sm" onClick={() => setIsTemplatesOpen(true)}>
-          <LayoutTemplate className="h-4 w-4 mr-1.5" />
-          Gerenciar Templates
-        </Button>
-        {canEdit && (
-          <Button
-            className="rounded-full bg-brand hover:bg-brand/90 text-ink transition-colors px-5 py-2.5 text-sm"
-            onClick={() => {
-              resetForm();
-              setForm({ ...emptyForm, codigo: suggestNextCodigo(propostas) });
-              setIsFormOpen(true);
-            }}
-          >
-            <Plus className="h-4 w-4 mr-1" /> Nova Proposta
-          </Button>
-        )}
-      </div>
+    <PageHeader
+      title="Documentos"
+      search={{ value: searchTerm, onChange: setSearchTerm, placeholder: "Buscar por título ou cliente" }}
+      primaryAction={{
+        label: "Nova proposta",
+        icon: Plus,
+        feature: "propostas",
+        onClick: () => {
+          resetForm();
+          setForm({ ...emptyForm, codigo: suggestNextCodigo(propostas) });
+          setIsFormOpen(true);
+        },
+      }}
+    >
+      <Button variant="outline" className="rounded-full text-sm h-9" onClick={() => setIsTemplatesOpen(true)}>
+        <LayoutTemplate className="h-4 w-4 mr-1.5" />
+        Templates
+      </Button>
     </PageHeader>
   );
 
@@ -506,15 +505,7 @@ export default function Propostas() {
               </CardDescription>
             </div>
             <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-              <div className="relative w-full sm:w-56">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-                <Input
-                  placeholder="Buscar por título, cliente..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="h-9 pl-9 rounded-full text-sm"
-                />
-              </div>
+              {/* Busca de texto migrou para o PageHeader (spec 002). */}
               <Select value={filterStatus} onValueChange={setFilterStatus}>
                 <SelectTrigger className="h-9 w-full sm:w-36 rounded-full text-sm">
                   <SelectValue placeholder="Status" />
