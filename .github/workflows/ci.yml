@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [main, staging]
 
+# Permissão mínima no topo, nenhum job eleva.
+permissions:
+  contents: read
+
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
@@ -14,6 +18,7 @@ jobs:
   lint-test-build:
     name: Lint + Test + Build
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -32,6 +37,7 @@ jobs:
   audit:
     name: Security audit
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -44,6 +50,7 @@ jobs:
   secrets-scan:
     name: Secrets scan (gitleaks)
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
         with:
@@ -56,20 +63,110 @@ jobs:
       - name: Run gitleaks
         run: gitleaks detect --source . --redact --no-banner --verbose
 
+  # Banco: aplica as migrations do zero, roda pgTAP e confere types.ts.
+  # Sobe o stack completo do Supabase via CLI (não a imagem supabase/postgres crua),
+  # porque foi exatamente isso que matou o job de pgTAP anterior em f5a86ea: sem
+  # GoTrue e Storage, auth.uid() e storage.buckets não existem e o schema nunca casa.
+  database:
+    name: Migrations + RLS + types
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # O guard compara com a base do PR, então precisa do histórico.
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+
+      # Antes de tocar em qualquer banco: nenhuma migration nova apaga dado sem
+      # autorização explícita. Roda primeiro porque é barato e é o achado mais caro.
+      - name: Guard de migration destrutiva
+        env:
+          ALLOW_DESTRUCTIVE_MIGRATION: ${{ vars.ALLOW_DESTRUCTIVE_MIGRATION }}
+        run: |
+          BASE="${{ github.event_name == 'pull_request' && format('origin/{0}', github.base_ref) || 'origin/main' }}"
+          node scripts/check-migration-safety.mjs --base "$BASE"
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Subir o stack local
+        run: supabase start
+
+      - name: Aplicar todas as migrations do zero
+        # Prova que a fila de 183 migrations funciona num banco vazio, não só por
+        # acidente do estado atual de produção.
+        run: supabase db reset --no-seed
+
+      - name: Rodar os testes pgTAP de RLS
+        # A extensão vive no schema extensions (mesma convenção do CONTRIBUTING).
+        run: |
+          PGPASSWORD=postgres psql -h 127.0.0.1 -p 54332 -U postgres -d postgres \
+            -v ON_ERROR_STOP=1 -c "CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;"
+          supabase test db
+
+      - name: types.ts em sync com as migrations
+        # Compara depois de passar os dois lados pelo prettier, para diferença de
+        # formatação não virar falso positivo.
+        run: |
+          supabase gen types typescript --local > /tmp/types-generated.ts
+          npx prettier --parser typescript /tmp/types-generated.ts > /tmp/a.ts
+          npx prettier --parser typescript src/integrations/supabase/types.ts > /tmp/b.ts
+          if ! diff -u /tmp/b.ts /tmp/a.ts; then
+            echo "::error::src/integrations/supabase/types.ts está fora de sync com as migrations. Rode 'npm run gen:types' e commite."
+            exit 1
+          fi
+
+  # Edge Functions Deno não tinham nenhuma verificação de compilação: erro de
+  # sintaxe ou import quebrado só aparecia no cold start, em produção.
+  edge-functions:
+    name: Edge Functions (deno check)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v1.45.x # acompanha o runtime que o Supabase executa hoje
+      - name: deno check
+        run: |
+          shopt -s globstar nullglob
+          deno check supabase/functions/**/index.ts
+        shell: bash
+
+  # Único required status check do branch protection. Adicionar ou renomear job
+  # deixa de exigir mexer na configuração do repositório.
+  ci-ok:
+    name: CI OK (aggregate gate)
+    needs: [lint-test-build, audit, secrets-scan, database, edge-functions]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - run: echo "Todos os gates obrigatórios passaram."
+
   # Deploy do backend no Supabase de STAGING.
   # Roda como job do próprio CI (gatilho push do branch staging), então se
   # registra a partir do branch staging e NÃO depende do arquivo estar no main
   # (a pegadinha do workflow_run, que só liga a partir do branch default).
-  # Só dispara em push no staging E depois que lint/test/build, audit e secrets
-  # passarem. PRs não deployam (github.event_name != push).
   # Secrets no GitHub Environment "Staging": SUPABASE_ACCESS_TOKEN,
   # SUPABASE_DB_URL (Session Pooler IPv4), SUPABASE_PROJECT_REF.
   deploy-staging:
     name: Deploy → staging (Supabase)
-    needs: [lint-test-build, audit, secrets-scan]
+    needs: [ci-ok]
     if: github.event_name == 'push' && github.ref == 'refs/heads/staging'
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     environment: Staging
+    # Dois pushes seguidos não podem aplicar migration ao mesmo tempo, e cancelar
+    # um db push no meio é pior que esperar o anterior terminar.
+    concurrency:
+      group: deploy-staging
+      cancel-in-progress: false
     env:
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
       # A CLI valida o config.toml inteiro em db push / functions deploy, e o bloco
@@ -95,18 +192,38 @@ jobs:
         run: supabase functions deploy --project-ref "$SUPABASE_PROJECT_REF"
         env:
           SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+      - name: Smoke test (health)
+        # Deploy verde precisa significar "responde", não só "aplicou".
+        # health não está declarado em config.toml, então exige JWT: usa a anon key.
+        # Se o secret ainda não existe no Environment, o step avisa e passa, em vez de
+        # deixar o CD vermelho por falta de provisionamento (o deploy em si já rodou).
+        env:
+          PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+          ANON_KEY: ${{ secrets.STAGING_SUPABASE_ANON_KEY }}
+        run: |
+          if [ -z "$ANON_KEY" ]; then
+            echo "::notice::STAGING_SUPABASE_ANON_KEY não configurado — smoke test pulado."
+            exit 0
+          fi
+          sleep 20
+          curl -sf --max-time 30 "https://${PROJECT_REF}.supabase.co/functions/v1/health" \
+            -H "Authorization: Bearer ${ANON_KEY}" | tee /tmp/health.json
+          grep -q '"status"' /tmp/health.json
 
   # Deploy do backend em PRODUÇÃO. DORMENTE até este ci.yml chegar no branch main:
   # só dispara em push no main (github.ref) E o job precisa existir no arquivo do
   # branch onde o push ocorre. Em staging nunca roda (o if barra). Espelha o
-  # deploy-staging, mas com o GitHub Environment "Production" (que pode exigir
-  # aprovação manual). Ativa sozinho quando você promover staging → main.
+  # deploy-staging, mas com o GitHub Environment "Production", que exige aprovação.
   deploy-production:
     name: Deploy → production (Supabase)
-    needs: [lint-test-build, audit, secrets-scan]
+    needs: [ci-ok]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     environment: Production
+    concurrency:
+      group: deploy-production
+      cancel-in-progress: false
     env:
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
       AUTH_HOOK_SEND_EMAIL_SECRET: ${{ secrets.AUTH_HOOK_SEND_EMAIL_SECRET }}
@@ -123,4 +240,16 @@ jobs:
         run: supabase functions deploy --project-ref "$SUPABASE_PROJECT_REF"
         env:
           SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
-
+      - name: Smoke test (health)
+        env:
+          PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+          ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          if [ -z "$ANON_KEY" ]; then
+            echo "::notice::SUPABASE_ANON_KEY não configurado no Environment Production — smoke test pulado."
+            exit 0
+          fi
+          sleep 20
+          curl -sf --max-time 30 "https://${PROJECT_REF}.supabase.co/functions/v1/health" \
+            -H "Authorization: Bearer ${ANON_KEY}" | tee /tmp/health.json
+          grep -q '"status"' /tmp/health.json
