@@ -102,14 +102,13 @@ ambiente, falha de cron notifica alguém.
 
 ### Fase 1: gates que impedem o erro caro — EM REVIEW (PR #137, 2026-07-25)
 
-Implementado: `ci-ok` agregado, job `database` (183 migrations do zero via `supabase start`
+Implementado: `ci-ok` agregado; job `database` (183 migrations do zero via `supabase start`,
+mais 9 suites pgTAP, mais `types.ts` em sync); guard de migration destrutiva com teste do
+próprio contrato do pipeline; `deno check` nas edge functions; `timeout-minutes` em todos os
+jobs; `permissions` no topo; concurrency de deploy com `cancel-in-progress: false`; e smoke
+de health pós-deploy que se pula com aviso se o secret não existir.
 
-- 9 suites pgTAP + `types.ts` em sync), guard de migration destrutiva com teste do próprio
-  contrato do pipeline, `deno check` nas 44 edge functions, `timeout-minutes` em todos os
-  jobs, `permissions` no topo, concurrency de deploy com `cancel-in-progress: false`, e smoke
-  de health pós-deploy que se pula com aviso se o secret não existir.
-
-Duas decisões que valem registro:
+Decisões que valem registro:
 
 - **O pgTAP volta com o stack completo, não com a imagem crua.** `f5a86ea` removeu o job
   por um motivo correto: sem GoTrue e Storage, `auth.uid()` e `storage.buckets` não
@@ -124,12 +123,34 @@ Duas decisões que valem registro:
   `DROP SCHEMA`, `TRUNCATE`, `DELETE` sem `WHERE`, `DISABLE ROW LEVEL SECURITY`. Nessa
   calibragem, 9 dos 183 arquivos bloqueariam, e todos os 9 são destrutivos de verdade.
 
+- **`deno check` virou ratchet, não gate binário.** Na primeira execução real (run 30174544332) apareceram 12 erros de tipo em 5 das 42 funções: `ai-pauta-reuniao`,
+  `ai-aditivo-copilot`, `ai-diagnostico-precificacao` (IA dormente) e as **ativas**
+  `portal-get-projeto` e `send-proposta-email`. A causa é a mesma em todas: builder do
+  `.from().select()` do supabase-js tratado como Promise já resolvida. Desligar o gate
+  jogaria o achado fora; bloquear congelaria o repo em dívida antiga. As 5 vivem em
+  `supabase/functions/TYPECHECK_DEBT.txt`, as outras 37 são bloqueantes, e
+  `scripts/typecheck-debt.test.ts` afirma que a lista nunca cresce. Sem esse teste,
+  "adiciona na lista" seria a saída fácil e o gate viraria decoração.
+
+Dois furos que apareceram durante a execução, ambos do mesmo tipo (regra escrita sem
+enforcement):
+
+- **`.husky/pre-commit` estava com modo 644**, então o git ignorava o hook por completo
+  ("hook was ignored because it's not set as executable"). Todo commit local passava
+  sem gitleaks, sem typecheck, sem lint-staged e sem teste.
+- **O `pre-commit` não tinha `set -e`**, então o `tsc` falhava e o script seguia; o exit
+  code do hook era o do último comando. Typecheck quebrado nunca bloqueou commit, embora
+  o `CONTRIBUTING.md` afirmasse que bloqueava. Os dois foram corrigidos.
+
 Pendências conhecidas do PR #137:
 
-- O gate de `types.ts` **vai falhar** até alguém com credencial rodar `npm run gen:types`
+- O gate de `types.ts` **deve falhar** até alguém com credencial rodar `npm run gen:types`
   e commitar. Isso não é defeito do gate, é o buraco R6 aparecendo.
 - Marcar `ci-ok` como required check no branch protection só **depois** do PR ficar verde.
   Nunca tornar obrigatório um check que ainda não passou.
+- Há 3 erros TS6133 no working tree vindos de trabalho paralelo (`src/App.tsx`,
+  `src/components/AppSidebar.tsx`, `src/pages/Login.tsx`, `src/pages/chat/index.tsx`).
+  Com o hook consertado, eles bloqueiam commit e reprovariam o job `lint-test-build`.
 
 Itens originais da fase, para registro:
 
