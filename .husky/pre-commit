@@ -1,4 +1,10 @@
 #!/usr/bin/env sh
+#
+# set -e é essencial: sem ele, o typecheck do passo 2 falhava e o script seguia,
+# e o exit code do hook era o do último comando (os testes). Resultado: de 2026-07
+# até aqui, `tsc` quebrado nunca bloqueou um commit, embora o CONTRIBUTING.md
+# afirmasse que bloqueava.
+set -e
 
 # 1. Scan de secrets (usa gitleaks se instalado localmente)
 if command -v gitleaks >/dev/null 2>&1; then
