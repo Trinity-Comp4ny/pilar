@@ -5,10 +5,15 @@ on:
     - cron: "0 4 * * *"
   workflow_dispatch:
 
+permissions:
+  contents: read
+  issues: write # abre issue quando o cron falha (notify-cron-failure)
+
 jobs:
   sync:
     runs-on: ubuntu-latest
     environment: bradesco-vrz
+    timeout-minutes: 15
 
     env:
       BRADESCO_CLIENT_ID: ${{ secrets.BRADESCO_CLIENT_ID }}
@@ -53,3 +58,12 @@ jobs:
 
       - name: Executar sincronização
         run: python scripts/bank-sync/bradesco.py
+
+      # Sem isto, uma falha de cron não notifica ninguém: foi assim que a sync ficou
+      # quebrada 30 dias seguidos (cert mTLS inválido) até alguém olhar a aba Actions.
+      - name: Notificar falha
+        if: failure()
+        uses: ./.github/actions/notify-cron-failure
+        with:
+          job-name: Extrato Bradesco
+          token: ${{ github.token }}

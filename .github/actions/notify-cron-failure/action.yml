@@ -1,0 +1,61 @@
+name: Notify cron failure
+description: >-
+  Abre (ou atualiza) uma issue quando um job agendado falha. Existe porque
+  itau-sync e bradesco-sync falharam 30 dias seguidos em silêncio: cron que quebra
+  não aparece em nenhum lugar, ninguém recebe e-mail, e a descoberta vem do cliente
+  reclamando que o extrato está defasado.
+
+inputs:
+  job-name:
+    description: Nome legível do job agendado (ex.- "Extrato Itaú")
+    required: true
+  token:
+    description: Token com permissão issues:write (use ${{ github.token }})
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Abrir ou atualizar issue de falha
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+        # Campos vindos do evento passam por env, nunca interpolados direto no run:
+        # (título de job é conteúdo controlado, mas a regra vale para todos).
+        JOB_NAME: ${{ inputs.job-name }}
+        REPO: ${{ github.repository }}
+        RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        RUN_ATTEMPT: ${{ github.run_attempt }}
+      run: |
+        set -euo pipefail
+        export TITLE="Cron falhando: ${JOB_NAME}"
+
+        # Idempotente: uma issue por job agendado. Enquanto ela estiver aberta, cada
+        # falha nova só acrescenta um comentário, então não vira enxurrada de issues.
+        # O título entra no jq por env, não por interpolação de string, para não
+        # quebrar se o nome do job tiver aspas.
+        EXISTING=$(gh issue list --repo "$REPO" --state open --limit 50 \
+          --json number,title --jq '[.[] | select(.title == env.TITLE)][0].number // empty')
+
+        if [ -n "$EXISTING" ]; then
+          gh issue comment "$EXISTING" --repo "$REPO" \
+            --body "Falhou de novo (tentativa ${RUN_ATTEMPT}). Run: ${RUN_URL}"
+          echo "::warning::${JOB_NAME} falhou. Comentado na issue #${EXISTING}."
+          exit 0
+        fi
+
+        BODY=$(cat <<EOF
+        O job agendado **${JOB_NAME}** falhou.
+
+        Run: ${RUN_URL}
+
+        Enquanto isto estiver quebrado, os dados que esse job traz estão **defasados**
+        e o produto mostra números velhos sem avisar ninguém.
+
+        Feche esta issue somente quando o job voltar a rodar verde. Cada nova falha
+        vira um comentário aqui, então o número de comentários indica há quantos dias
+        está caído.
+        EOF
+        )
+        gh issue create --repo "$REPO" --title "$TITLE" --body "$BODY"
+        echo "::warning::${JOB_NAME} falhou. Issue aberta."

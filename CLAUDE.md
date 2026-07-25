@@ -12,8 +12,13 @@ npm run build:strict # Build com typecheck
 npm run typecheck    # tsc sem emitir
 npm run test         # Vitest watch
 npm run test:run     # Vitest CI
-npm run gen:types    # supabase gen types typescript
+npm run gen:types    # tipos do banco de STAGING (default seguro, ADR 0007)
+npm run db:push:staging          # aplica migrations em staging
+npm run functions:deploy:staging # deploya edge functions em staging
 ```
+
+Comando que muta banco ou funções exige ambiente explícito e passa por
+`scripts/supabase-target.sh`. Produção só com `ALLOW_PROD_DB_PUSH=true`. Ver ADR 0007.
 
 ## Estrutura
 
@@ -26,7 +31,7 @@ src/
   integrations/supabase/  # client.ts + types.ts gerado
 supabase/
   functions/    # Edge Functions Deno (cada uma em sua pasta)
-  migrations/   # SQL numerado 001..026
+  migrations/   # 183 arquivos SQL, dois esquemas convivendo: 000..029 (antigo) e timestamp 2026*
 ```
 
 ## Módulos ativos (produção)
@@ -71,5 +76,8 @@ público → `brand/personas.md`. Cor/token: a verdade é `src/styles/tokens.css
 
 ## DB
 
-26 migrations em `supabase/migrations/`. Tipos gerados em `src/integrations/supabase/types.ts`.
-Rodar `npm run gen:types` após qualquer migration.
+183 migrations em `supabase/migrations/`. Tipos gerados em `src/integrations/supabase/types.ts`.
+Rodar `npm run gen:types` após qualquer migration, e commitar o `types.ts`: **nenhum job
+de CI valida isso hoje**, então esquecer gera código que passa no typecheck e quebra em
+runtime. Ver `docs/operations/PLANO_ENGENHARIA_2026-07.md` (Fase 1) para o gate que fecha
+esse buraco.
