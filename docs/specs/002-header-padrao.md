@@ -52,18 +52,17 @@ header escuro (`--header-bg`): o Pilar é paper claro, o header segue `bg-white`
 
 ```
 ┌──────────────────────────────────────────────────────────────────────┐
-│ [☰] Projetos · PROJETOS      [🔍 Buscar projetos…      ]  [⋯] [+ Novo projeto] │  h-14
+│ [☰] Projetos            [🔍 Buscar projetos…      ]  [⋯] [+ Novo projeto] │  h-14
 └──────────────────────────────────────────────────────────────────────┘
-  │      │         │                    │                   │        │
-  │      │         │                    │                   │        └ ação primária: bg-brand text-ink,
-  │      │         │                    │                   │          rounded-full, verbo de ação
-  │      │         │                    │                   └ ações secundárias (export, filtros) ou menu ⋯
-  │      │         │                    └ busca: controlada pela página (liga no filtro
-  │      │         │                      que a página JÁ tem), rounded-full, w-64,
-  │      │         │                      atalho "/" foca
-  │      │         └ rótulo do módulo ativo, text-[10px] uppercase tracking-wide
-  │      │           text-black/40 com border-l (padrão .module do labrynth)
-  │      └ título da página: text-base font-medium (era text-2xl/3xl)
+  │      │                    │                   │        │
+  │      │                    │                   │        └ ação primária: bg-brand text-ink,
+  │      │                    │                   │          rounded-full, verbo de ação
+  │      │                    │                   └ ações secundárias (export, filtros) ou menu ⋯
+  │      │                    └ busca: controlada pela página (liga no filtro
+  │      │                      que a página JÁ tem), rounded-full, w-64,
+  │      │                      atalho "/" foca
+  │      └ título da página: text-base font-medium (era text-2xl/3xl), só o nome
+  │        da página (sem rótulo de módulo; subnível vai no breadcrumb, spec 006)
   └ SidebarTrigger só no mobile (comportamento atual do PageHeader)
 ```
 
@@ -76,10 +75,10 @@ auxiliar da própria página.
 Funcionais:
 
 1. Evoluir `src/components/PageHeader.tsx` mantendo a API atual (`title`,
-   `description?`, `children?`) e adicionando props opcionais:
+   `children?`) e adicionando props opcionais:
    `search?: { value: string; onChange: (v: string) => void; placeholder?: string }`,
    `primaryAction?: { label: string; onClick: () => void; icon?: LucideIcon; feature?: Feature }`,
-   `moduleLabel?: boolean` (default true: mostra o módulo da rota via `routeToModule`).
+   `breadcrumbs?: Array<{ label; to?; onClick? }>` (trilha de ancestrais, ver ADR 0009).
    Páginas não migradas continuam renderizando sem quebrar (título encolhe, resto igual).
 2. A busca do header é **controlada pela página**: cada página liga `search` no
    estado de filtro que já possui (ex.: filtro de texto de Projetos/Clientes/Leads).
@@ -88,8 +87,8 @@ Funcionais:
    foco). Esc limpa e desfoca.
 4. `primaryAction` respeita permissão: se `feature` for passada, usa
    `usePermissions().getButtonProps(feature, "edit")` (disabled + tooltip padrão).
-5. `description` passa a renderizar como linha auxiliar de 1 linha `text-xs`
-   truncada, e só quando explicitamente passada (nenhum uso novo).
+5. O header é **título-só**: não há subtítulo/descrição. Contexto que a página
+   precise dar vai no corpo dela, não no header.
 6. Ações secundárias continuam via `children`, alinhadas à direita antes da primária.
 7. Migrar nesta spec as 6 páginas de maior tráfego: **Projetos, Clientes, Leads,
    Documentos (propostas), Fornecedores, Equipe (pessoas)**, ligando busca e "+" nos
@@ -133,11 +132,10 @@ Sem migration, sem tabela, sem RPC. Contrato do componente:
 ```ts
 type PageHeaderProps = {
   title: string;
-  description?: string;
   children?: React.ReactNode; // ações secundárias (compat)
   search?: { value: string; onChange: (v: string) => void; placeholder?: string };
   primaryAction?: { label: string; onClick: () => void; icon?: LucideIcon; feature?: Feature };
-  moduleLabel?: boolean; // default true
+  breadcrumbs?: Array<{ label: string; to?: string; onClick?: () => void }>; // ADR 0009
 };
 ```
 
@@ -161,5 +159,10 @@ Estimativa: 2 a 3 dias efetivos.
   unificação da toolbar dele fica para depois.
 - **Risco:** o atalho `/` pode colidir com inputs de valores; mitigado ignorando o
   atalho quando `document.activeElement` é input/textarea/contenteditable.
-- **Suposição:** o rótulo do módulo ao lado do título ajuda a orientação com o
-  switcher novo; se o QA achar ruído, `moduleLabel` desliga por página sem custo.
+- **Revisado (2026-07-30):** o rótulo do módulo ao lado do título virou ruído
+  (redundante com o título e com a sidebar). Primeiro `moduleLabel` passou a `false`
+  por padrão; depois o prop foi **removido de vez** para o header ser à prova de
+  regressão: todas as páginas mostram só o nome da página, sempre no mesmo tamanho e
+  peso (`text-base font-medium`). O `MetasHeader` (título `text-2xl/3xl` próprio) foi
+  aposentado e Metas passou a usar o `PageHeader`. Contexto de subnível agora é papel
+  do breadcrumb (spec 006 / ADR 0009).

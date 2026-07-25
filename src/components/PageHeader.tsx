@@ -1,32 +1,35 @@
 import { useEffect, useRef } from "react";
-import { useLocation } from "react-router-dom";
-import { Search, X, type LucideIcon } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Search, X, ChevronRight, type LucideIcon } from "lucide-react";
 import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { usePermissions } from "@/hooks/usePermissions";
 import type { Feature } from "@/lib/permissions";
-import { MODULES, routeToModule } from "@/lib/modules";
 import { cn } from "@/lib/utils";
 
 /**
  * Header fino padrão (spec 002-header-padrao).
- * Uma linha, 56px: título · rótulo do módulo · busca (controlada pela página) ·
- * ações secundárias (children) · ação primária gated por permissão.
- * Padrões emprestados do AppShell do labrynth-platform: linha única sticky,
- * rótulo de contexto uppercase com border-l, atalho de teclado para busca.
+ * Uma linha, 56px: título · busca (controlada pela página) · ações secundárias
+ * (children) · ação primária gated por permissão. Todas as páginas usam este
+ * mesmo componente, então o título tem sempre o mesmo tamanho e peso
+ * (text-base font-medium) e mostra só o nome da página (sem rótulo de módulo).
+ * Contexto de subnível fica a cargo do breadcrumb (spec 006 / ADR 0009).
  */
 interface PageHeaderProps {
   title: string;
-  /** Compat: vira linha auxiliar de 1 linha, truncada. Evitar em usos novos. */
-  description?: string;
+  /**
+   * Trilha de ancestrais clicáveis (spec 006). Renderiza `Ancestral › title` na
+   * mesma linha; o `title` continua sendo a folha (página atual). Cada item usa
+   * `to` (navega por rota) OU `onClick` (troca de contexto sem trocar de rota,
+   * ex.: aba do Financeiro). No mobile a trilha some e sobra só o título.
+   */
+  breadcrumbs?: Array<{ label: string; to?: string; onClick?: () => void }>;
   /** Ações secundárias, alinhadas à direita antes da primária. */
   children?: React.ReactNode;
   /** Busca controlada pela página: liga no estado de filtro que a página já tem. */
   search?: { value: string; onChange: (v: string) => void; placeholder?: string };
   /** Ação primária. Com `feature`, aplica getButtonProps(feature, "edit"). */
   primaryAction?: { label: string; onClick: () => void; icon?: LucideIcon; feature?: Feature };
-  /** Mostra o módulo da rota ao lado do título (default true). */
-  moduleLabel?: boolean;
 }
 
 function isTypingTarget(el: Element | null): boolean {
@@ -35,21 +38,13 @@ function isTypingTarget(el: Element | null): boolean {
   return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || (el as HTMLElement).isContentEditable;
 }
 
-export function PageHeader({
-  title,
-  description,
-  children,
-  search,
-  primaryAction,
-  moduleLabel = true,
-}: PageHeaderProps) {
+export function PageHeader({ title, breadcrumbs, children, search, primaryAction }: PageHeaderProps) {
   const { isMobile } = useSidebar();
-  const { pathname } = useLocation();
   const { getButtonProps } = usePermissions();
   const searchRef = useRef<HTMLInputElement>(null);
   const temBusca = !!search;
 
-  const modulo = moduleLabel ? routeToModule(pathname) : null;
+  const temTrilha = !!breadcrumbs?.length;
 
   // Atalho "/": foca a busca quando nenhum campo está em edição (spec 002, req. 3).
   useEffect(() => {
@@ -78,16 +73,38 @@ export function PageHeader({
         <SidebarTrigger className="text-black/80 hover:text-brand hover:bg-black/5 transition-colors rounded-full h-9 w-9 shrink-0" />
       )}
 
-      {/* Título + módulo + descrição compacta */}
-      <div className="flex items-baseline gap-2.5 min-w-0">
-        <h1 className="text-base font-medium tracking-tight text-ink truncate">{title}</h1>
-        {modulo && (
-          <span className="hidden sm:inline text-[10px] font-medium uppercase tracking-[0.08em] text-black/40 border-l border-black/10 pl-2.5 shrink-0">
-            {MODULES[modulo].label}
-          </span>
-        )}
-        {description && <span className="hidden lg:inline text-xs text-black/45 truncate">{description}</span>}
-      </div>
+      {/* Trilha (breadcrumb) ou título + descrição compacta */}
+      {temTrilha ? (
+        <nav aria-label="Trilha de navegação" className="flex items-baseline gap-1.5 min-w-0">
+          <ol className="hidden sm:flex items-baseline gap-1.5 shrink-0">
+            {breadcrumbs!.map((bc) => (
+              <li key={bc.label} className="flex items-baseline gap-1.5">
+                {bc.onClick ? (
+                  <button
+                    type="button"
+                    onClick={bc.onClick}
+                    className="text-sm text-black/45 hover:text-brand transition-colors"
+                  >
+                    {bc.label}
+                  </button>
+                ) : (
+                  <Link to={bc.to ?? "#"} className="text-sm text-black/45 hover:text-brand transition-colors">
+                    {bc.label}
+                  </Link>
+                )}
+                <ChevronRight size={13} className="self-center text-black/25" aria-hidden="true" />
+              </li>
+            ))}
+          </ol>
+          <h1 className="text-base font-medium tracking-tight text-ink truncate" aria-current="page">
+            {title}
+          </h1>
+        </nav>
+      ) : (
+        <div className="flex items-baseline gap-2.5 min-w-0">
+          <h1 className="text-base font-medium tracking-tight text-ink truncate">{title}</h1>
+        </div>
+      )}
 
       {/* Busca controlada pela página */}
       {search && (
