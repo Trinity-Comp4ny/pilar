@@ -1,18 +1,11 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
-import { Plus, Search, Pencil, Trash2, Loader2, Truck } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, Truck } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { Can } from "@/components/Can";
@@ -85,7 +78,9 @@ export default function Fornecedores() {
     );
   }, []);
 
-  useEffect(() => { fetchFornecedores(); }, [fetchFornecedores]);
+  useEffect(() => {
+    fetchFornecedores();
+  }, [fetchFornecedores]);
 
   const resetForm = () => {
     setForm(EMPTY_FORM);
@@ -95,7 +90,10 @@ export default function Fornecedores() {
     setEmailError("");
   };
 
-  const handleOpenNew = () => { resetForm(); setIsDialogOpen(true); };
+  const handleOpenNew = () => {
+    resetForm();
+    setIsDialogOpen(true);
+  };
 
   const handleEditClick = (f: Fornecedor, e?: React.MouseEvent) => {
     e?.stopPropagation();
@@ -205,10 +203,7 @@ export default function Fornecedores() {
     const id = toDelete.id;
     // Soft delete (a RLS já esconde deleted_at da lista), com "Desfazer" no toast
     // como cliente/lead — o delete é recuperável (ACH-FOR-01).
-    const { error } = await supabase
-      .from("fornecedores")
-      .update({ deleted_at: new Date().toISOString() })
-      .eq("id", id);
+    const { error } = await supabase.from("fornecedores").update({ deleted_at: new Date().toISOString() }).eq("id", id);
     if (error) {
       toast.error("Erro ao excluir fornecedor");
       return;
@@ -217,10 +212,7 @@ export default function Fornecedores() {
       action: {
         label: "Desfazer",
         onClick: async () => {
-          const { error: restoreError } = await supabase
-            .from("fornecedores")
-            .update({ deleted_at: null })
-            .eq("id", id);
+          const { error: restoreError } = await supabase.from("fornecedores").update({ deleted_at: null }).eq("id", id);
           if (restoreError) toast.error("Erro ao restaurar fornecedor");
           else {
             toast.success("Fornecedor restaurado");
@@ -256,20 +248,16 @@ export default function Fornecedores() {
       header={
         <PageHeader
           title="Fornecedores"
-          description="Gerencie os fornecedores da empresa"
+          search={{ value: searchTerm, onChange: setSearchTerm, placeholder: "Buscar fornecedores" }}
+          primaryAction={{ label: "Novo fornecedor", onClick: handleOpenNew, icon: Plus, feature: "financeiro" }}
           children={
-            <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) resetForm(); }}>
-              <Can feature="financeiro" action="create">
-                <DialogTrigger asChild>
-                  <Button
-                    className="rounded-full bg-brand hover:bg-brand/90 text-ink transition-colors px-5 py-2.5 text-sm"
-                    onClick={handleOpenNew}
-                  >
-                    <Plus className="mr-2 h-4 w-4" />
-                    Novo Fornecedor
-                  </Button>
-                </DialogTrigger>
-              </Can>
+            <Dialog
+              open={isDialogOpen}
+              onOpenChange={(open) => {
+                setIsDialogOpen(open);
+                if (!open) resetForm();
+              }}
+            >
               <DialogContent className="sm:max-w-md">
                 <DialogHeader>
                   <DialogTitle>{isEditMode ? "Editar Fornecedor" : "Novo Fornecedor"}</DialogTitle>
@@ -277,9 +265,17 @@ export default function Fornecedores() {
                     {isEditMode ? "Atualize os dados do fornecedor" : "Cadastre um novo fornecedor"}
                   </DialogDescription>
                 </DialogHeader>
-                <form onSubmit={(e) => { e.preventDefault(); handleSave(); }} className="space-y-3 pt-2">
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    handleSave();
+                  }}
+                  className="space-y-3 pt-2"
+                >
                   <div className="space-y-1.5">
-                    <Label htmlFor="nome" className="text-xs">Nome / Razão Social *</Label>
+                    <Label htmlFor="nome" className="text-xs">
+                      Nome / Razão Social *
+                    </Label>
                     <Input
                       id="nome"
                       value={form.nome}
@@ -289,7 +285,9 @@ export default function Fornecedores() {
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <Label htmlFor="cnpj" className="text-xs">CNPJ</Label>
+                    <Label htmlFor="cnpj" className="text-xs">
+                      CNPJ
+                    </Label>
                     <Input
                       id="cnpj"
                       value={form.cnpj}
@@ -300,12 +298,16 @@ export default function Fornecedores() {
                       className={cnpjError ? "border-red-500 focus-visible:ring-red-500" : ""}
                     />
                     {cnpjError && (
-                      <p id="fornecedor-cnpj-error" role="alert" className="text-xs text-red-600">{cnpjError}</p>
+                      <p id="fornecedor-cnpj-error" role="alert" className="text-xs text-red-600">
+                        {cnpjError}
+                      </p>
                     )}
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1.5">
-                      <Label htmlFor="contato" className="text-xs">Contato</Label>
+                      <Label htmlFor="contato" className="text-xs">
+                        Contato
+                      </Label>
                       <Input
                         id="contato"
                         value={form.contato}
@@ -314,7 +316,9 @@ export default function Fornecedores() {
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <Label htmlFor="telefone" className="text-xs">Telefone</Label>
+                      <Label htmlFor="telefone" className="text-xs">
+                        Telefone
+                      </Label>
                       <Input
                         id="telefone"
                         value={form.telefone}
@@ -324,7 +328,9 @@ export default function Fornecedores() {
                     </div>
                   </div>
                   <div className="space-y-1.5">
-                    <Label htmlFor="email" className="text-xs">Email</Label>
+                    <Label htmlFor="email" className="text-xs">
+                      Email
+                    </Label>
                     <Input
                       id="email"
                       type="email"
@@ -339,7 +345,9 @@ export default function Fornecedores() {
                       className={emailError ? "border-red-500 focus-visible:ring-red-500" : ""}
                     />
                     {emailError && (
-                      <p id="fornecedor-email-error" role="alert" className="text-xs text-red-600">{emailError}</p>
+                      <p id="fornecedor-email-error" role="alert" className="text-xs text-red-600">
+                        {emailError}
+                      </p>
                     )}
                   </div>
                   <div className="flex items-center gap-2 pt-2">
@@ -348,7 +356,16 @@ export default function Fornecedores() {
                     </Button>
                     <div className="flex-1" />
                     <Button type="submit" className="bg-brand hover:bg-brand/90 text-ink" disabled={isSaving}>
-                      {isSaving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Salvando...</> : isEditMode ? "Atualizar" : "Salvar"}
+                      {isSaving ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Salvando...
+                        </>
+                      ) : isEditMode ? (
+                        "Atualizar"
+                      ) : (
+                        "Salvar"
+                      )}
                     </Button>
                   </div>
                 </form>
@@ -367,15 +384,7 @@ export default function Fornecedores() {
                 Total de {filtered.length} de {fornecedores.length} fornecedor(es)
               </CardDescription>
             </div>
-            <div className="relative w-full sm:w-56">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-              <Input
-                placeholder="Buscar por nome, CNPJ ou email..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="h-9 pl-9 rounded-full text-sm"
-              />
-            </div>
+            {/* Busca de texto migrou para o PageHeader (spec 002). */}
           </div>
         </CardHeader>
         <CardContent className="flex-1 min-h-0">
@@ -428,11 +437,15 @@ export default function Fornecedores() {
                     <TableRow key={f.id}>
                       <TableCell className="font-medium">{f.nome}</TableCell>
                       <TableCell>{f.cnpj ? formatCNPJ(f.cnpj) : "-"}</TableCell>
-                      <TableCell className="hidden md:table-cell text-sm text-muted-foreground">{f.contato || "-"}</TableCell>
+                      <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
+                        {f.contato || "-"}
+                      </TableCell>
                       <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
                         {f.telefone ? formatPhone(f.telefone) : "-"}
                       </TableCell>
-                      <TableCell className="hidden md:table-cell text-sm text-muted-foreground">{f.email || "-"}</TableCell>
+                      <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
+                        {f.email || "-"}
+                      </TableCell>
                       {canEdit && (
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
