@@ -1,27 +1,5 @@
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
-import {
-  BarChart,
-  Calendar,
-  CalendarDays,
-  Clock,
-  Copy,
-  FileText,
-  Home,
-  LayoutGrid,
-  ShieldCheck,
-  Sparkles,
-  Zap,
-  Users,
-  User,
-  UserCircle,
-  Building2,
-  LogOut,
-  ChevronDown,
-  Wallet,
-  UserPlus,
-  Truck,
-  type LucideIcon,
-} from "lucide-react";
+import { Home, ShieldCheck, Zap, User, UserCircle, LogOut, ChevronDown, Check } from "lucide-react";
 import { useSidebar, SidebarTrigger } from "@/components/ui/sidebar";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import {
@@ -36,66 +14,21 @@ import { cn } from "@/lib/utils";
 import { useState, useEffect, useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePermissions } from "@/hooks/usePermissions";
-import type { Feature } from "@/lib/permissions";
 import { ImpersonationPicker } from "@/components/ImpersonationPicker";
+import {
+  EMPRESA_ITEMS,
+  MODULE_ORDER,
+  MODULES,
+  readUltimoModulo,
+  routeToModule,
+  saveUltimoModulo,
+  type ModuleId,
+  type ModuleMenuItem,
+} from "@/lib/modules";
 
-type MenuItem = {
-  title: string;
-  url: string;
-  icon: LucideIcon;
-  feature: Feature;
-  badge?: "novo";
-  adminOnly?: boolean;
-};
-
-type MenuGroup = {
-  label: string;
-  items: MenuItem[];
-};
-
-const menu: MenuGroup[] = [
-  {
-    label: "Visão",
-    items: [
-      { title: "Agentes", url: "/agentes", icon: Sparkles, feature: "ai_chat" as Feature, badge: "novo" },
-      { title: "Dashboard", url: "/dashboard", icon: Home, feature: "dashboard" },
-      { title: "Relatórios", url: "/relatorios", icon: BarChart, feature: "relatorios" },
-    ],
-  },
-  {
-    label: "Comercial",
-    items: [
-      { title: "Leads", url: "/leads", icon: UserPlus, feature: "leads" },
-      { title: "Documentos", url: "/documentos", icon: FileText, feature: "propostas" },
-      { title: "Clientes", url: "/clientes", icon: Building2, feature: "clientes" },
-      { title: "Fornecedores", url: "/fornecedores", icon: Truck, feature: "financeiro" },
-    ],
-  },
-  {
-    label: "Operação",
-    items: [
-      { title: "Projetos", url: "/projetos", icon: Calendar, feature: "projetos" },
-      { title: "Calendário", url: "/calendario", icon: CalendarDays, feature: "projetos" },
-      { title: "Timesheet", url: "/timesheet", icon: Clock, feature: "timesheet" as Feature },
-      { title: "Capacidade", url: "/capacidade", icon: LayoutGrid, feature: "capacidade" as Feature },
-      { title: "Templates", url: "/templates", icon: Copy, feature: "templates" as Feature },
-    ],
-  },
-  {
-    label: "Inteligência",
-    items: [
-      { title: "AI Hub", url: "/ai", icon: Sparkles, feature: "ai_hub" as Feature },
-    ],
-  },
-  {
-    label: "Financeiro",
-    items: [{ title: "Financeiro", url: "/financeiro", icon: Wallet, feature: "financeiro" }],
-  },
-  {
-    label: "Equipe",
-    items: [{ title: "Equipe", url: "/equipe", icon: Users, feature: "pessoas", adminOnly: true }],
-  },
-];
+// Shell dos 3 pilares (spec 001-shell-3-pilares): o menu vem do mapa central de
+// módulos. O switcher é apresentação; autorização continua em usePermissions.
+type MenuItem = ModuleMenuItem;
 
 export function AppSidebar() {
   const { state, isMobile, openMobile, setOpenMobile } = useSidebar();
@@ -144,18 +77,49 @@ export function AppSidebar() {
     }
   };
 
-  const visibleGroups = useMemo(
-    () =>
-      menu
-        .map((group) => ({
-          ...group,
-          items: group.items
-            .filter((item) => !item.adminOnly || isAdmin)
-            .map((item) => ({ item, nav: getNavItemProps(item.feature) })),
-        }))
-        .filter((group) => group.items.some(({ nav }) => !nav.disabled)),
+  // Módulo ativo: inferido da rota; rota transversal (/inicio, /agentes...) mantém o último usado.
+  const routeModule = routeToModule(currentPath);
+  const activeModule: ModuleId = routeModule ?? readUltimoModulo();
+
+  useEffect(() => {
+    if (routeModule) saveUltimoModulo(routeModule);
+  }, [routeModule]);
+
+  const navFor = (item: ModuleMenuItem) =>
+    item.feature ? getNavItemProps(item.feature) : { disabled: false, title: "" };
+
+  const withNav = (items: ModuleMenuItem[]) =>
+    items.filter((item) => !item.adminOnly || isAdmin).map((item) => ({ item, nav: navFor(item) }));
+
+  const moduleItems = useMemo(
+    () => withNav(MODULES[activeModule].items),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [activeModule, getNavItemProps, isAdmin]
+  );
+
+  const empresaItems = useMemo(
+    () => withNav(EMPRESA_ITEMS).filter(({ nav }) => !nav.disabled),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [getNavItemProps, isAdmin]
   );
+
+  // Módulo some do switcher se nenhuma feature dele está liberada; Obras (em breve) fica sempre.
+  const visibleModules = useMemo(
+    () =>
+      MODULE_ORDER.filter((id) => {
+        const m = MODULES[id];
+        if (m.emBreve) return true;
+        return withNav(m.items).some(({ nav }) => !nav.disabled);
+      }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [getNavItemProps, isAdmin]
+  );
+
+  const selectModule = (id: ModuleId) => {
+    saveUltimoModulo(id);
+    navigate(MODULES[id].homeRoute);
+    if (isMobile) setOpenMobile(false);
+  };
 
   const renderItem = (item: MenuItem, navProps: { disabled: boolean; title: string }) => {
     const isActive = currentPath === item.url;
@@ -206,6 +170,11 @@ export function AppSidebar() {
                 Novo
               </span>
             )}
+            {item.badge === "em breve" && (
+              <span className="text-[10px] font-medium tracking-wide uppercase px-1.5 py-0.5 rounded-full bg-black/5 text-black/50">
+                Em breve
+              </span>
+            )}
           </>
         )}
 
@@ -249,16 +218,90 @@ export function AppSidebar() {
 
       {/* Navigation */}
       <nav className="flex-1 p-3 overflow-y-auto">
-        {visibleGroups.map((group, groupIdx) => (
-          <div key={group.label} className={cn(groupIdx > 0 && (collapsed ? "mt-3" : "mt-5"))}>
+        {/* Início: transversal, acima do switcher */}
+        <div className="space-y-1">
+          <NavLink
+            to="/inicio"
+            onClick={handleNavClick}
+            className={cn(
+              "flex items-center gap-3 px-3 py-2 rounded-full text-sm transition-all duration-200",
+              collapsed && "justify-center",
+              currentPath === "/inicio" ? "bg-brand text-black/80 font-medium" : "text-black/70 hover:bg-brand/30"
+            )}
+            title={collapsed ? "Início" : ""}
+          >
+            <Home size={18} strokeWidth={1.5} className="w-[18px] h-[18px] flex-shrink-0" />
+            {!collapsed && <span className="tracking-tight">Início</span>}
+          </NavLink>
+        </div>
+
+        {/* Switcher de módulo (apresentação; autorização é dos gates) */}
+        <div className="mt-3">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                aria-label="Trocar de módulo"
+                className={cn(
+                  "w-full flex items-center gap-2.5 rounded-xl border border-black/10 bg-black/[0.03] px-3 py-2 text-sm font-medium text-ink hover:bg-black/[0.06] transition-colors",
+                  collapsed && "justify-center px-0"
+                )}
+                title={collapsed ? MODULES[activeModule].label : ""}
+              >
+                {(() => {
+                  const ActiveIcon = MODULES[activeModule].icon;
+                  return <ActiveIcon size={16} strokeWidth={1.6} className="flex-shrink-0" />;
+                })()}
+                {!collapsed && (
+                  <>
+                    <span className="flex-1 text-left tracking-tight">{MODULES[activeModule].label}</span>
+                    <ChevronDown size={14} className="text-black/40" />
+                  </>
+                )}
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="min-w-[200px]">
+              {visibleModules.map((id) => {
+                const m = MODULES[id];
+                const MIcon = m.icon;
+                return (
+                  <DropdownMenuItem key={id} onClick={() => selectModule(id)}>
+                    <MIcon size={14} className="mr-2" />
+                    <span className="flex-1">{m.label}</span>
+                    {id === activeModule && <Check size={14} className="text-ink" />}
+                    {m.emBreve && id !== activeModule && (
+                      <span className="text-[9px] font-medium uppercase tracking-wide rounded-full bg-black/5 text-black/50 px-1.5 py-0.5">
+                        em breve
+                      </span>
+                    )}
+                  </DropdownMenuItem>
+                );
+              })}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+
+        {/* Itens do módulo ativo */}
+        <div className={collapsed ? "mt-3" : "mt-4"}>
+          {!collapsed && (
+            <div className="px-3 mb-1.5 text-[10px] font-medium tracking-[0.08em] uppercase text-black/40">
+              {MODULES[activeModule].label}
+            </div>
+          )}
+          <div className="space-y-1">{moduleItems.map(({ item, nav }) => renderItem(item, nav))}</div>
+        </div>
+
+        {/* Empresa: transversal, fixo */}
+        {empresaItems.length > 0 && (
+          <div className={collapsed ? "mt-3" : "mt-5"}>
             {!collapsed && (
               <div className="px-3 mb-1.5 text-[10px] font-medium tracking-[0.08em] uppercase text-black/40">
-                {group.label}
+                Empresa
               </div>
             )}
-            <div className="space-y-1">{group.items.map(({ item, nav }) => renderItem(item, nav))}</div>
+            <div className="space-y-1">{empresaItems.map(({ item, nav }) => renderItem(item, nav))}</div>
           </div>
-        ))}
+        )}
       </nav>
 
       {/* User Menu */}

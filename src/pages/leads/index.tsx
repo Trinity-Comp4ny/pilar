@@ -16,14 +16,12 @@ import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { usePageTitle } from "@/hooks/usePageTitle";
+import { useRegistrarPagina } from "@/hooks/useRecentes";
 import { LeadsKPIs } from "./LeadsKPIs";
 import { LeadDetailDialog } from "./components/LeadDetailDialog";
 import { LeadFormDialog, EMPTY_LEAD_FORM, type LeadFormData } from "./components/LeadFormDialog";
 import { LeadKanbanCard } from "./components/LeadKanbanCard";
-import {
-  LeadMotivoPerdasDialog,
-  LeadCreatePropostaDialog,
-} from "./components/LeadActionDialogs";
+import { LeadMotivoPerdasDialog, LeadCreatePropostaDialog } from "./components/LeadActionDialogs";
 import { LeadCnpjConvertDialog, type ConvertEnrichment } from "./components/LeadCnpjConvertDialog";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import {
@@ -106,6 +104,7 @@ function KanbanSkeleton() {
 
 export default function Leads() {
   usePageTitle("Leads");
+  useRegistrarPagina("pagina", "/leads", "Leads");
   const { data: leads = [], isLoading, isError, refetch } = useLeads();
   const createLead = useCreateLead();
   const updateStatus = useUpdateLeadStatus();
@@ -220,9 +219,7 @@ export default function Leads() {
     return sortLeads(filtered);
   };
 
-  const visibleStatuses = Object.keys(statusConfig).filter(
-    (s) => estagioFilter.size === 0 || estagioFilter.has(s)
-  );
+  const visibleStatuses = Object.keys(statusConfig).filter((s) => estagioFilter.size === 0 || estagioFilter.has(s));
 
   const filtersActive =
     !!searchQuery.trim() ||
@@ -275,9 +272,7 @@ export default function Leads() {
     if (!selectedLead) return;
     if (editFormData.email) {
       const emailLower = editFormData.email.toLowerCase();
-      const duplicate = leads.find(
-        (l) => (l.email ?? "").toLowerCase() === emailLower && l.id !== selectedLead.id
-      );
+      const duplicate = leads.find((l) => (l.email ?? "").toLowerCase() === emailLower && l.id !== selectedLead.id);
       if (duplicate) {
         toast.error("Email duplicado", { description: "Já existe um lead com este email." });
         return;
@@ -385,13 +380,16 @@ export default function Leads() {
 
   const handleAutoConvert = (enrichment: ConvertEnrichment | null) => {
     if (!pendingDrop) return;
-    convertToClient.mutate({ leadId: pendingDrop.leadId, enrichment }, {
-      onSuccess: () => {
-        setIsAutoConvertOpen(false);
-        setPendingDrop(null);
-        setIsDetailOpen(false);
-      },
-    });
+    convertToClient.mutate(
+      { leadId: pendingDrop.leadId, enrichment },
+      {
+        onSuccess: () => {
+          setIsAutoConvertOpen(false);
+          setPendingDrop(null);
+          setIsDetailOpen(false);
+        },
+      }
+    );
   };
 
   const handleSkipConvert = () => {
@@ -556,7 +554,12 @@ export default function Leads() {
           </Select>
 
           {filtersActive && (
-            <Button variant="ghost" size="sm" onClick={handleClearFilters} className="h-9 text-sm text-muted-foreground">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleClearFilters}
+              className="h-9 text-sm text-muted-foreground"
+            >
               <X className="mr-1 h-3.5 w-3.5" />
               Limpar
             </Button>
@@ -686,11 +689,7 @@ export default function Leads() {
                           {items.map((lead, index) => (
                             <Draggable key={lead.id} draggableId={lead.id} index={index}>
                               {(provided, snapshot) => (
-                                <div
-                                  ref={provided.innerRef}
-                                  {...provided.draggableProps}
-                                  {...provided.dragHandleProps}
-                                >
+                                <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
                                   <LeadKanbanCard
                                     lead={lead}
                                     leadNome={leadNome}
@@ -786,19 +785,28 @@ export default function Leads() {
       <LeadMotivoPerdasDialog
         open={isMotivoPerdasOpen}
         onOpenChange={(open) => {
-          if (!open) { setPendingDrop(null); setMotivoPerda(""); }
+          if (!open) {
+            setPendingDrop(null);
+            setMotivoPerda("");
+          }
           setIsMotivoPerdasOpen(open);
         }}
         motivoPerda={motivoPerda}
         onMotivoChange={setMotivoPerda}
         onConfirm={handleConfirmMotivoPerdas}
-        onCancel={() => { setIsMotivoPerdasOpen(false); setPendingDrop(null); }}
+        onCancel={() => {
+          setIsMotivoPerdasOpen(false);
+          setPendingDrop(null);
+        }}
       />
 
       <LeadCnpjConvertDialog
         open={isAutoConvertOpen}
         onOpenChange={(open) => {
-          if (!open && pendingDrop) { queryClient.invalidateQueries({ queryKey: ["leads"] }); setPendingDrop(null); }
+          if (!open && pendingDrop) {
+            queryClient.invalidateQueries({ queryKey: ["leads"] });
+            setPendingDrop(null);
+          }
           setIsAutoConvertOpen(open);
         }}
         isPending={convertToClient.isPending}
