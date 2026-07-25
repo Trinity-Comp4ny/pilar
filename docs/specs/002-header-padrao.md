@@ -1,7 +1,7 @@
 # SPEC: Header fino padrão por página (search + ações)
 
 **Data:** 2026-07-25
-**Status:** Draft
+**Status:** Em implementação (aprovada 2026-07-25; PR aberto)
 **Autor:** Matheus (padrão extraído de labrynth-ai/labrynth-platform, `frontend/src/components/AppShell.tsx` + `.module.css`)
 **Módulo:** shell / UI compartilhada (transversal)
 
