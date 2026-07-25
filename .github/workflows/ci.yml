@@ -5,9 +5,12 @@ on:
     branches: [main, staging]
   pull_request:
     branches: [main, staging]
-  # Permite exercitar os gates numa branch qualquer, inclusive em PR encadeado cuja
-  # base não é main/staging (aí o gatilho pull_request não dispara). Os jobs de deploy
-  # têm `if` de push em branch específica, então dispatch nunca deploya.
+  # Dispatch manual para exercitar os gates numa branch sem abrir PR. Atenção: o
+  # GitHub só oferece o dispatch quando o workflow já existe na branch DEFAULT, e
+  # hoje o ci.yml de main é uma versão antiga sem este gatilho. Ou seja, isto passa
+  # a funcionar depois que staging chegar em main (é a mesma pegadinha que deixou o
+  # e2e-staging.yml sem nunca rodar). Os jobs de deploy têm `if` de push em branch
+  # específica, então dispatch nunca deploya.
   workflow_dispatch:
 
 # Permissão mínima no topo, nenhum job eleva.
