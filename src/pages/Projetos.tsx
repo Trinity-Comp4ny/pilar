@@ -18,11 +18,7 @@ import { ManageDisciplinasDialog } from "@/pages/projetos/components/ManageDisci
 import { FluxoDisciplinasDialog } from "@/pages/projetos/components/FluxoDisciplinasDialog";
 import { DisciplinasTab } from "@/pages/projetos/components/DisciplinasTab";
 import { CronogramaProjetosTab } from "@/pages/projetos/components/CronogramaProjetosTab";
-import {
-  ProjetosFilterBar,
-  EMPTY_FILTERS,
-  type DeadlineFilter,
-} from "@/pages/projetos/components/ProjetosFilterBar";
+import { ProjetosFilterBar, EMPTY_FILTERS, type DeadlineFilter } from "@/pages/projetos/components/ProjetosFilterBar";
 import { ProjetosKPIs } from "@/pages/projetos/components/ProjetosKPIs";
 import { ProjetosEmptyState } from "@/pages/projetos/components/ProjetosEmptyState";
 import { KanbanBoard } from "@/pages/projetos/components/KanbanBoard";
@@ -111,10 +107,7 @@ export default function ProjetosKanban() {
 
   const handleDeleteConfirm = async () => {
     if (!projetoToDelete) return;
-    const { error } = await supabase
-      .from("projetos")
-      .delete()
-      .eq("id", projetoToDelete.id);
+    const { error } = await supabase.from("projetos").delete().eq("id", projetoToDelete.id);
     if (!error) {
       toast.success("Projeto excluído");
       setIsDetailOpen(false);
@@ -253,43 +246,35 @@ export default function ProjetosKanban() {
       header={
         <PageHeader
           title="Projetos"
-          description="Gerencie seus projetos"
-          children={
-            <div className="flex gap-2 items-center flex-wrap">
-              <ProjetosFilterBar
-                pessoas={pessoas}
-                clientes={clientes}
-                disciplinas={disciplinas}
-                filters={filters}
-                onChange={setFilters}
-              />
+          search={{
+            value: filters.search,
+            onChange: (v) => setFilters((f) => ({ ...f, search: v })),
+            placeholder: "Buscar projetos",
+          }}
+          primaryAction={{ label: "Novo projeto", onClick: handleNewProjeto, icon: Plus, feature: "projetos" }}
+        >
+          <ProjetosFilterBar
+            pessoas={pessoas}
+            clientes={clientes}
+            disciplinas={disciplinas}
+            filters={filters}
+            onChange={setFilters}
+          />
 
-              <Can feature="projetos" action="edit">
-                <Button variant="outline" className="rounded-full text-sm" onClick={() => setIsDisciplinasOpen(true)}>
-                  <Settings2 className="mr-2 h-4 w-4" />
-                  Disciplinas
-                </Button>
-              </Can>
+          <Can feature="projetos" action="edit">
+            <Button variant="outline" className="rounded-full text-sm h-9" onClick={() => setIsDisciplinasOpen(true)}>
+              <Settings2 className="mr-2 h-4 w-4" />
+              Disciplinas
+            </Button>
+          </Can>
 
-              <Can feature="projetos" action="edit">
-                <Button variant="outline" className="rounded-full text-sm" onClick={() => setIsFluxosOpen(true)}>
-                  <GitBranch className="mr-2 h-4 w-4" />
-                  Fluxos
-                </Button>
-              </Can>
-
-              <Can feature="projetos" action="create">
-                <Button
-                  className="rounded-full bg-brand hover:bg-brand/90 text-ink transition-colors px-5 py-2.5 text-sm"
-                  onClick={handleNewProjeto}
-                >
-                  <Plus className="mr-2 h-4 w-4" />
-                  Novo Projeto
-                </Button>
-              </Can>
-            </div>
-          }
-        />
+          <Can feature="projetos" action="edit">
+            <Button variant="outline" className="rounded-full text-sm h-9" onClick={() => setIsFluxosOpen(true)}>
+              <GitBranch className="mr-2 h-4 w-4" />
+              Fluxos
+            </Button>
+          </Can>
+        </PageHeader>
       }
     >
       {/* KPIs */}
@@ -313,33 +298,33 @@ export default function ProjetosKanban() {
       {/* Abas. O SortControl fica nesta linha (não no header) para a altura do
           header não variar entre abas e a barra de abas não "pular". */}
       <div className="flex items-center justify-between gap-2 border-b mb-4">
-      <div role="tablist" aria-label="Visualização de projetos" className="flex items-center gap-0">
-        {tabs.map((tab) => {
-          const selected = activeTab === tab.id;
-          return (
-            <button
-              key={tab.id}
-              ref={(el) => (tabRefs.current[tab.id] = el)}
-              role="tab"
-              id={`projetos-tab-${tab.id}`}
-              aria-selected={selected}
-              aria-controls={`projetos-tabpanel-${tab.id}`}
-              tabIndex={selected ? 0 : -1}
-              type="button"
-              onClick={() => setActiveTab(tab.id)}
-              onKeyDown={handleTabKeyDown}
-              className={cn(
-                "px-4 py-2 text-sm transition-colors -mb-px rounded-t-md border border-transparent",
-                selected
-                  ? "bg-brand border-brand text-foreground font-medium"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
-              )}
-            >
-              {tab.label}
-            </button>
-          );
-        })}
-      </div>
+        <div role="tablist" aria-label="Visualização de projetos" className="flex items-center gap-0">
+          {tabs.map((tab) => {
+            const selected = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                ref={(el) => (tabRefs.current[tab.id] = el)}
+                role="tab"
+                id={`projetos-tab-${tab.id}`}
+                aria-selected={selected}
+                aria-controls={`projetos-tabpanel-${tab.id}`}
+                tabIndex={selected ? 0 : -1}
+                type="button"
+                onClick={() => setActiveTab(tab.id)}
+                onKeyDown={handleTabKeyDown}
+                className={cn(
+                  "px-4 py-2 text-sm transition-colors -mb-px rounded-t-md border border-transparent",
+                  selected
+                    ? "bg-brand border-brand text-foreground font-medium"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                )}
+              >
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
         {activeTab === "kanban" && <SortControl sort={sort} onChange={setSort} />}
       </div>
 

@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ChevronDown, ChevronLeft, ChevronRight, Plus, TrendingUp, Search, AlertCircle, X } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
@@ -12,18 +11,15 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { parseCurrencyString, formatCurrency } from "@/lib/currencyUtils";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
-import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { usePageTitle } from "@/hooks/usePageTitle";
+import { useRegistrarPagina } from "@/hooks/useRecentes";
 import { LeadsKPIs } from "./LeadsKPIs";
 import { LeadDetailDialog } from "./components/LeadDetailDialog";
 import { LeadFormDialog, EMPTY_LEAD_FORM, type LeadFormData } from "./components/LeadFormDialog";
 import { LeadKanbanCard } from "./components/LeadKanbanCard";
-import {
-  LeadMotivoPerdasDialog,
-  LeadCreatePropostaDialog,
-} from "./components/LeadActionDialogs";
+import { LeadMotivoPerdasDialog, LeadCreatePropostaDialog } from "./components/LeadActionDialogs";
 import { LeadCnpjConvertDialog, type ConvertEnrichment } from "./components/LeadCnpjConvertDialog";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import {
@@ -106,6 +102,7 @@ function KanbanSkeleton() {
 
 export default function Leads() {
   usePageTitle("Leads");
+  useRegistrarPagina("pagina", "/leads", "Leads");
   const { data: leads = [], isLoading, isError, refetch } = useLeads();
   const createLead = useCreateLead();
   const updateStatus = useUpdateLeadStatus();
@@ -220,9 +217,7 @@ export default function Leads() {
     return sortLeads(filtered);
   };
 
-  const visibleStatuses = Object.keys(statusConfig).filter(
-    (s) => estagioFilter.size === 0 || estagioFilter.has(s)
-  );
+  const visibleStatuses = Object.keys(statusConfig).filter((s) => estagioFilter.size === 0 || estagioFilter.has(s));
 
   const filtersActive =
     !!searchQuery.trim() ||
@@ -275,9 +270,7 @@ export default function Leads() {
     if (!selectedLead) return;
     if (editFormData.email) {
       const emailLower = editFormData.email.toLowerCase();
-      const duplicate = leads.find(
-        (l) => (l.email ?? "").toLowerCase() === emailLower && l.id !== selectedLead.id
-      );
+      const duplicate = leads.find((l) => (l.email ?? "").toLowerCase() === emailLower && l.id !== selectedLead.id);
       if (duplicate) {
         toast.error("Email duplicado", { description: "Já existe um lead com este email." });
         return;
@@ -385,13 +378,16 @@ export default function Leads() {
 
   const handleAutoConvert = (enrichment: ConvertEnrichment | null) => {
     if (!pendingDrop) return;
-    convertToClient.mutate({ leadId: pendingDrop.leadId, enrichment }, {
-      onSuccess: () => {
-        setIsAutoConvertOpen(false);
-        setPendingDrop(null);
-        setIsDetailOpen(false);
-      },
-    });
+    convertToClient.mutate(
+      { leadId: pendingDrop.leadId, enrichment },
+      {
+        onSuccess: () => {
+          setIsAutoConvertOpen(false);
+          setPendingDrop(null);
+          setIsDetailOpen(false);
+        },
+      }
+    );
   };
 
   const handleSkipConvert = () => {
@@ -463,19 +459,8 @@ export default function Leads() {
       header={
         <PageHeader
           title="Leads"
-          description="Gerencie seus leads"
-          children={
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              {canEdit && (
-                <DialogTrigger asChild>
-                  <Button className="rounded-full bg-brand hover:bg-brand/90 text-ink transition-colors px-5 py-2.5 text-sm">
-                    <Plus className="mr-2 h-4 w-4" />
-                    Novo Lead
-                  </Button>
-                </DialogTrigger>
-              )}
-            </Dialog>
-          }
+          search={{ value: searchQuery, onChange: setSearchQuery, placeholder: "Buscar por nome, empresa ou email" }}
+          primaryAction={{ label: "Novo lead", onClick: () => setIsDialogOpen(true), icon: Plus, feature: "leads" }}
         />
       }
     >
@@ -487,16 +472,7 @@ export default function Leads() {
 
       <div className="flex flex-col gap-2 mb-2 mt-1">
         <div className="flex flex-wrap items-center gap-2">
-          <div className="relative w-full max-w-xs">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-            <Input
-              placeholder="Buscar por nome, empresa ou email..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 h-9 text-sm"
-            />
-          </div>
-
+          {/* Busca de texto migrou para o PageHeader (spec 002). */}
           <Select value={origemFilter || "todas"} onValueChange={(v) => setOrigemFilter(v === "todas" ? "" : v)}>
             <SelectTrigger className="h-9 w-auto min-w-[140px] text-sm" aria-label="Filtrar por origem">
               <SelectValue placeholder="Origem" />
@@ -556,7 +532,12 @@ export default function Leads() {
           </Select>
 
           {filtersActive && (
-            <Button variant="ghost" size="sm" onClick={handleClearFilters} className="h-9 text-sm text-muted-foreground">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleClearFilters}
+              className="h-9 text-sm text-muted-foreground"
+            >
               <X className="mr-1 h-3.5 w-3.5" />
               Limpar
             </Button>
@@ -686,11 +667,7 @@ export default function Leads() {
                           {items.map((lead, index) => (
                             <Draggable key={lead.id} draggableId={lead.id} index={index}>
                               {(provided, snapshot) => (
-                                <div
-                                  ref={provided.innerRef}
-                                  {...provided.draggableProps}
-                                  {...provided.dragHandleProps}
-                                >
+                                <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
                                   <LeadKanbanCard
                                     lead={lead}
                                     leadNome={leadNome}
@@ -786,19 +763,28 @@ export default function Leads() {
       <LeadMotivoPerdasDialog
         open={isMotivoPerdasOpen}
         onOpenChange={(open) => {
-          if (!open) { setPendingDrop(null); setMotivoPerda(""); }
+          if (!open) {
+            setPendingDrop(null);
+            setMotivoPerda("");
+          }
           setIsMotivoPerdasOpen(open);
         }}
         motivoPerda={motivoPerda}
         onMotivoChange={setMotivoPerda}
         onConfirm={handleConfirmMotivoPerdas}
-        onCancel={() => { setIsMotivoPerdasOpen(false); setPendingDrop(null); }}
+        onCancel={() => {
+          setIsMotivoPerdasOpen(false);
+          setPendingDrop(null);
+        }}
       />
 
       <LeadCnpjConvertDialog
         open={isAutoConvertOpen}
         onOpenChange={(open) => {
-          if (!open && pendingDrop) { queryClient.invalidateQueries({ queryKey: ["leads"] }); setPendingDrop(null); }
+          if (!open && pendingDrop) {
+            queryClient.invalidateQueries({ queryKey: ["leads"] });
+            setPendingDrop(null);
+          }
           setIsAutoConvertOpen(open);
         }}
         isPending={convertToClient.isPending}

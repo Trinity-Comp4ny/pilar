@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PageLayout } from "@/components/PageLayout";
 import { usePageTitle } from "@/hooks/usePageTitle";
+import { useRecentes } from "@/hooks/useRecentes";
 import { useProjetoDetail } from "./hooks/useProjetoDetail";
 import { ProjetoDetailHeader } from "./components/ProjetoDetailHeader";
 import { ProjetoDetailInfo } from "./components/ProjetoDetailInfo";
@@ -43,6 +44,12 @@ export default function ProjetoDetail() {
 
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
+  // Recentes da home Início (spec 001): registra a visita quando o projeto carrega.
+  const { registrar } = useRecentes();
+  useEffect(() => {
+    if (id && projeto?.nome) registrar({ tipo: "projeto", rota: `/projetos/${id}`, label: projeto.nome });
+  }, [id, projeto?.nome, registrar]);
+
   if (!loading && !projeto) {
     return (
       <PageLayout>
@@ -76,7 +83,13 @@ export default function ProjetoDetail() {
         onEdit={() => setIsEditDialogOpen(true)}
       />
 
-      <ProjetoDetailInfo projeto={projeto} progress={progress} margemBrutaPct={margemBrutaPct} rentabilidade={rentabilidade ?? null} rentabilidadeLoading={rentabilidadeLoading} />
+      <ProjetoDetailInfo
+        projeto={projeto}
+        progress={progress}
+        margemBrutaPct={margemBrutaPct}
+        rentabilidade={rentabilidade ?? null}
+        rentabilidadeLoading={rentabilidadeLoading}
+      />
 
       <ProjetoDetailTabs
         projeto={projeto}

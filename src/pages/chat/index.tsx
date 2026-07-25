@@ -16,7 +16,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { toast } from "sonner";
-import { useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useSidebar } from "@/components/ui/sidebar";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRole } from "@/hooks/useRole";
@@ -81,10 +81,38 @@ export default function ChatPage() {
     setSearchParams(nova === "revisao" ? { tab: "revisao" } : {}, { replace: true });
   };
 
-  const { messages, send, stop, loading, reset, creditosUsados, saldo, confirmarDraft, cancelarDraft, desfazer, desfazerFolha, executarAcao, cancelarAcao } =
-    useChat();
+  const {
+    messages,
+    send,
+    stop,
+    loading,
+    reset,
+    creditosUsados,
+    saldo,
+    confirmarDraft,
+    cancelarDraft,
+    desfazer,
+    desfazerFolha,
+    executarAcao,
+    cancelarAcao,
+  } = useChat();
   const [input, setInput] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Hero do Início (spec 001): chega com a pergunta em location.state.prompt e envia
+  // uma vez. O state é limpo em seguida para refresh/back não reenviarem.
+  const location = useLocation();
+  const navigate = useNavigate();
+  const promptInicialEnviado = useRef(false);
+  useEffect(() => {
+    const prompt = (location.state as { prompt?: string } | null)?.prompt?.trim();
+    if (!prompt || promptInicialEnviado.current) return;
+    promptInicialEnviado.current = true;
+    send(prompt);
+    navigate(`${location.pathname}${location.search}`, { replace: true, state: null });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Só auto-rola quando o usuário já está perto do fim; senão, mostra o botão "descer".
   const pertoDoFimRef = useRef(true);
   const [mostrarDescer, setMostrarDescer] = useState(false);
@@ -250,12 +278,10 @@ export default function ChatPage() {
               <span className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-brand text-ink shadow-elegant">
                 <Sparkles className="h-6 w-6" />
               </span>
-              <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-                {saudacao(primeiroNome)}
-              </h1>
+              <h1 className="text-2xl font-semibold tracking-tight text-foreground">{saudacao(primeiroNome)}</h1>
               <p className="mt-2 max-w-md text-sm text-muted-foreground">
-                3 agentes prontos: Financeiro, Projetos e Comercial. Pergunte em linguagem natural
-                e eles consultam seus dados e respondem na hora.
+                3 agentes prontos: Financeiro, Projetos e Comercial. Pergunte em linguagem natural e eles consultam seus
+                dados e respondem na hora.
               </p>
             </div>
 
@@ -278,7 +304,6 @@ export default function ChatPage() {
                 );
               })}
             </div>
-
           </div>
         </div>
       ) : (
@@ -292,10 +317,7 @@ export default function ChatPage() {
               aria-relevant="additions text"
             >
               {messages.map((m, i) => (
-                <div
-                  key={m.id}
-                  className={m.role === "user" ? "flex justify-end" : "flex justify-start"}
-                >
+                <div key={m.id} className={m.role === "user" ? "flex justify-end" : "flex justify-start"}>
                   {m.role === "assistant" ? (
                     <div className="flex max-w-[90%] gap-3">
                       <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-brand text-ink">

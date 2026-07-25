@@ -10,11 +10,10 @@ import {
   Clock,
   Layers,
   SlidersHorizontal,
-  Search,
   Users,
   X,
 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { PROJECT_PRIORITY_CONFIG, PRIORITY_OPTIONS, type ProjectPriority } from "@/constants";
 import { getPriorityDotColor } from "../lib/priorityColors";
@@ -67,21 +66,8 @@ const DEADLINE_OPTIONS: { id: DeadlineFilter; label: string; dot: string }[] = [
 ];
 
 export function ProjetosFilterBar({ pessoas, clientes, disciplinas, filters, onChange }: ProjetosFilterBarProps) {
-  const searchRef = useRef<HTMLInputElement>(null);
-
-  // Atalho `/` foca a busca
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      const tag = document.activeElement?.tagName;
-      if (e.key === "/" && tag !== "INPUT" && tag !== "TEXTAREA") {
-        e.preventDefault();
-        searchRef.current?.focus();
-      }
-    };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
-  }, []);
-
+  // A busca de texto (filters.search) vive no PageHeader (spec 002); aqui ficam
+  // só os filtros estruturados. "Limpar" continua zerando tudo, busca incluída.
   const filtroCount =
     filters.pessoaIds.length +
     filters.prioridades.length +
@@ -106,27 +92,6 @@ export function ProjetosFilterBar({ pessoas, clientes, disciplinas, filters, onC
       >
         <X className="h-4 w-4 mr-1.5" /> Limpar ({totalActive})
       </Button>
-
-      {/* Busca */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-        <Input
-          ref={searchRef}
-          value={filters.search}
-          onChange={(e) => onChange({ ...filters, search: e.target.value })}
-          placeholder="Buscar (/)"
-          className="h-9 w-[240px] pl-9 pr-8 text-sm rounded-full"
-        />
-        {filters.search && (
-          <button
-            type="button"
-            onClick={() => onChange({ ...filters, search: "" })}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        )}
-      </div>
 
       {/* Filtros — botão único */}
       <Popover>
