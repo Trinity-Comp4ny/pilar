@@ -5,6 +5,10 @@ on:
     branches: [main, staging]
   pull_request:
     branches: [main, staging]
+  # Permite exercitar os gates numa branch qualquer, inclusive em PR encadeado cuja
+  # base não é main/staging (aí o gatilho pull_request não dispara). Os jobs de deploy
+  # têm `if` de push em branch específica, então dispatch nunca deploya.
+  workflow_dispatch:
 
 # Permissão mínima no topo, nenhum job eleva.
 permissions:
@@ -87,9 +91,15 @@ jobs:
       - name: Guard de migration destrutiva
         env:
           ALLOW_DESTRUCTIVE_MIGRATION: ${{ vars.ALLOW_DESTRUCTIVE_MIGRATION }}
+          # staging é o tronco de integração real deste repo, então é a base de
+          # comparação fora de PR. Comparar com main acusaria as migrations
+          # destrutivas já mergeadas (main está muito atrás), que não são deste diff.
+          BASE_REF: ${{ github.event_name == 'pull_request' && github.base_ref || 'staging' }}
         run: |
-          BASE="${{ github.event_name == 'pull_request' && format('origin/{0}', github.base_ref) || 'origin/main' }}"
-          node scripts/check-migration-safety.mjs --base "$BASE"
+          # actions/checkout não cria remote-tracking ref das outras branches nem com
+          # fetch-depth 0, então busca explicitamente a base antes de comparar.
+          git fetch --no-tags --depth=0 origin "$BASE_REF" || git fetch --no-tags origin "$BASE_REF"
+          node scripts/check-migration-safety.mjs --base FETCH_HEAD
 
       - uses: supabase/setup-cli@v1
         with:

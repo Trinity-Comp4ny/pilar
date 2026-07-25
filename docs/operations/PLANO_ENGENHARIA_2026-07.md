@@ -16,14 +16,14 @@ documentação continua descrevendo eles como ativos.
 
 ## 1. Risco ativo agora (antes de qualquer melhoria)
 
-| # | Fato verificado | Consequência |
-|---|---|---|
-| R1 | `supabase/config.toml:1` aponta `project_id` de **produção** | qualquer `supabase db push` ou `functions deploy` sem `--db-url`/`--project-ref` aplica no banco dos clientes. `npm run gen:types` (`package.json:17`) também gera do banco de prod |
-| R2 | `npm audit --audit-level=high` retorna 13 high **hoje** | o job `audit` é `needs` do `deploy-staging`: o próximo push em staging derruba o CI e congela o CD de backend |
-| R3 | `itau-sync` e `bradesco-sync` falham há 30 dias consecutivos (`SSLError ... PEM lib`, cert mTLS inválido) sem nenhum alerta | extrato do cliente que usa o produto de verdade está um mês defasado; a descoberta vem do cliente |
-| R4 | `main` está 177 commits atrás; o `ci.yml` de `main` não tem os jobs de deploy | promover para prod hoje = rodar `db push` na mão, do laptop, contra o ref que o `config.toml` já aponta |
-| R5 | Os 9 arquivos pgTAP de RLS (~80 asserts) não rodam desde `f5a86ea` | policy quebrada entra em staging com CI verde; é a camada que separa empresa A de empresa B |
-| R6 | `types.ts` fora de sincronia (`jobs_queue`, `pessoas_safe`, `clientes_listar_paginado` ausentes); `types-sync-check` removido em `83d62e4` | código chama tabela/RPC que o tipo não conhece, passa no typecheck via cast, quebra em runtime (mesmo padrão do incidente `_feature_catalog`) |
+| #   | Fato verificado                                                                                                                            | Consequência                                                                                                                                                                        |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| R1  | `supabase/config.toml:1` aponta `project_id` de **produção**                                                                               | qualquer `supabase db push` ou `functions deploy` sem `--db-url`/`--project-ref` aplica no banco dos clientes. `npm run gen:types` (`package.json:17`) também gera do banco de prod |
+| R2  | `npm audit --audit-level=high` retorna 13 high **hoje**                                                                                    | o job `audit` é `needs` do `deploy-staging`: o próximo push em staging derruba o CI e congela o CD de backend                                                                       |
+| R3  | `itau-sync` e `bradesco-sync` falham há 30 dias consecutivos (`SSLError ... PEM lib`, cert mTLS inválido) sem nenhum alerta                | extrato do cliente que usa o produto de verdade está um mês defasado; a descoberta vem do cliente                                                                                   |
+| R4  | `main` está 177 commits atrás; o `ci.yml` de `main` não tem os jobs de deploy                                                              | promover para prod hoje = rodar `db push` na mão, do laptop, contra o ref que o `config.toml` já aponta                                                                             |
+| R5  | Os 9 arquivos pgTAP de RLS (~80 asserts) não rodam desde `f5a86ea`                                                                         | policy quebrada entra em staging com CI verde; é a camada que separa empresa A de empresa B                                                                                         |
+| R6  | `types.ts` fora de sincronia (`jobs_queue`, `pessoas_safe`, `clientes_listar_paginado` ausentes); `types-sync-check` removido em `83d62e4` | código chama tabela/RPC que o tipo não conhece, passa no typecheck via cast, quebra em runtime (mesmo padrão do incidente `_feature_catalog`)                                       |
 
 R1, R2 e R3 são de hoje, não de roadmap.
 
@@ -33,25 +33,25 @@ R1, R2 e R3 são de hoje, não de roadmap.
 
 Comparação só dos itens replicáveis sem AWS.
 
-| Prática | plg-api / platform | Pilar | Ganho aqui |
-|---|---|---|---|
-| Um required check agregado (`ci-ok`) | sim (`platform/ci.yml:155`) | não, 3 checks nominais | job novo não exige mexer em branch protection |
-| Piso de cobertura por branch de destino | sim, 50% feature / 80% main (`plg/ci.yml:48-66`) | nenhum gate, 26 testes para 469 arquivos | rampa em vez de "80% ou nada" |
-| Migration aplicada em banco efêmero no CI | sim (`platform/ci.yml:73-87`, Postgres service) | não | migration quebrada aparece no PR, não no deploy |
-| Guard de plano destrutivo com allowlist por recurso | sim (`check-terraform-plan-safety.sh:14`) | não; 8 migrations com `DROP TABLE`/`DROP COLUMN`, zero reversível | deploy não apaga tabela sem alguém autorizar por nome |
-| Teste unitário sobre o próprio pipeline | sim (`test_deploy_safety_contract.py:33`, garante guard antes do apply) | não | remover um guard quebra o CI |
-| PR de promoção automática e idempotente com checklist | sim (`promote-to-staging.yml:24-36`) | não | promoção deixa de ser ato de memória |
-| Resultado do deploy comentado no PR de promoção | sim (`platform/cd.yml:437-454`) | não | a evidência chega onde a decisão é tomada |
-| Validação de env na fronteira | sim, pydantic-settings + `config.ts` único ponto de leitura | 23 acessos diretos a `import.meta.env` em 12 arquivos; 3 vars usadas fora do `.env.example` | deploy sem `VITE_TURNSTILE_SITE_KEY` para de subir login sem captcha silenciosamente |
-| Default de env que falha seguro | sim (`settings.py:26-33`, `data_classification="controlled"`) | não | flag ausente vira o comportamento restritivo, não o permissivo |
-| Comportamento por ambiente em arquivo declarativo | sim (`envs/staging.tfvars`, ambiente legível em 100 linhas) | não; app não distingue staging de prod por nenhum sinal próprio | mata a classe de bug "staging apontando pro Supabase de prod" |
-| Gate de compatibilidade de runtime | sim, compila no Python do runtime real (`platform/ci.yml:89-108`) | não; 47 Edge Functions Deno sem gate de compilação | erro de sintaxe Deno para de aparecer só no cold start |
-| Smoke test pós-deploy no pipeline | sim em plg (`cd.yml:171-196`, `/health` estático) | não; `health/index.ts` existe e nunca é chamado pelo CD | deploy verde deixa de significar "aplicou", passa a significar "responde" |
-| Health check estático por decisão | sim (`http_api.py:5-7`, nunca toca o banco) | health do Pilar agrega db/asaas/resend | soluço do banco não derruba o gate de deploy |
-| Suites caras isoladas por marker com o comando na descrição | sim (`pyproject.toml:148-156`, eval offline por default, `EVAL_LIVE=1` para live) | não; Playwright nunca rodou em CI | testar IA sem queimar crédito em cada push |
-| Secrets do CI: distinção secret vs variable proposital | sim; allowlists e opt-ins de destruição são **variables** auditáveis | tudo secret | opt-in de destruição fica visível no histórico |
-| Sourcemap e release no build | plg injeta `PLG_RELEASE_SHA` em toda Lambda | `build.sourcemap` não setado (default false); `health` reporta `version: "unknown"` | stack trace de prod no Sentry deixa de ser minificado |
-| Dependabot/Renovate | ausente lá também | ausente | (não é ganho, é dívida comum aos três) |
+| Prática                                                     | plg-api / platform                                                                | Pilar                                                                                       | Ganho aqui                                                                           |
+| ----------------------------------------------------------- | --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| Um required check agregado (`ci-ok`)                        | sim (`platform/ci.yml:155`)                                                       | não, 3 checks nominais                                                                      | job novo não exige mexer em branch protection                                        |
+| Piso de cobertura por branch de destino                     | sim, 50% feature / 80% main (`plg/ci.yml:48-66`)                                  | nenhum gate, 26 testes para 469 arquivos                                                    | rampa em vez de "80% ou nada"                                                        |
+| Migration aplicada em banco efêmero no CI                   | sim (`platform/ci.yml:73-87`, Postgres service)                                   | não                                                                                         | migration quebrada aparece no PR, não no deploy                                      |
+| Guard de plano destrutivo com allowlist por recurso         | sim (`check-terraform-plan-safety.sh:14`)                                         | não; 8 migrations com `DROP TABLE`/`DROP COLUMN`, zero reversível                           | deploy não apaga tabela sem alguém autorizar por nome                                |
+| Teste unitário sobre o próprio pipeline                     | sim (`test_deploy_safety_contract.py:33`, garante guard antes do apply)           | não                                                                                         | remover um guard quebra o CI                                                         |
+| PR de promoção automática e idempotente com checklist       | sim (`promote-to-staging.yml:24-36`)                                              | não                                                                                         | promoção deixa de ser ato de memória                                                 |
+| Resultado do deploy comentado no PR de promoção             | sim (`platform/cd.yml:437-454`)                                                   | não                                                                                         | a evidência chega onde a decisão é tomada                                            |
+| Validação de env na fronteira                               | sim, pydantic-settings + `config.ts` único ponto de leitura                       | 23 acessos diretos a `import.meta.env` em 12 arquivos; 3 vars usadas fora do `.env.example` | deploy sem `VITE_TURNSTILE_SITE_KEY` para de subir login sem captcha silenciosamente |
+| Default de env que falha seguro                             | sim (`settings.py:26-33`, `data_classification="controlled"`)                     | não                                                                                         | flag ausente vira o comportamento restritivo, não o permissivo                       |
+| Comportamento por ambiente em arquivo declarativo           | sim (`envs/staging.tfvars`, ambiente legível em 100 linhas)                       | não; app não distingue staging de prod por nenhum sinal próprio                             | mata a classe de bug "staging apontando pro Supabase de prod"                        |
+| Gate de compatibilidade de runtime                          | sim, compila no Python do runtime real (`platform/ci.yml:89-108`)                 | não; 47 Edge Functions Deno sem gate de compilação                                          | erro de sintaxe Deno para de aparecer só no cold start                               |
+| Smoke test pós-deploy no pipeline                           | sim em plg (`cd.yml:171-196`, `/health` estático)                                 | não; `health/index.ts` existe e nunca é chamado pelo CD                                     | deploy verde deixa de significar "aplicou", passa a significar "responde"            |
+| Health check estático por decisão                           | sim (`http_api.py:5-7`, nunca toca o banco)                                       | health do Pilar agrega db/asaas/resend                                                      | soluço do banco não derruba o gate de deploy                                         |
+| Suites caras isoladas por marker com o comando na descrição | sim (`pyproject.toml:148-156`, eval offline por default, `EVAL_LIVE=1` para live) | não; Playwright nunca rodou em CI                                                           | testar IA sem queimar crédito em cada push                                           |
+| Secrets do CI: distinção secret vs variable proposital      | sim; allowlists e opt-ins de destruição são **variables** auditáveis              | tudo secret                                                                                 | opt-in de destruição fica visível no histórico                                       |
+| Sourcemap e release no build                                | plg injeta `PLG_RELEASE_SHA` em toda Lambda                                       | `build.sourcemap` não setado (default false); `health` reporta `version: "unknown"`         | stack trace de prod no Sentry deixa de ser minificado                                |
+| Dependabot/Renovate                                         | ausente lá também                                                                 | ausente                                                                                     | (não é ganho, é dívida comum aos três)                                               |
 
 Padrão cultural que vale mais que qualquer job: **todo guard, exceção e flag carrega no
 arquivo o motivo, a data e a condição de saída**. É por isso que aqueles repos convivem
@@ -100,7 +100,38 @@ Itens originais da fase, para registro:
 Critério de aceite: CI verde em staging, `db push` impossível de rodar sem escolher
 ambiente, falha de cron notifica alguém.
 
-### Fase 1: gates que impedem o erro caro (1 a 2 dias)
+### Fase 1: gates que impedem o erro caro — EM REVIEW (PR #137, 2026-07-25)
+
+Implementado: `ci-ok` agregado, job `database` (183 migrations do zero via `supabase start`
+
+- 9 suites pgTAP + `types.ts` em sync), guard de migration destrutiva com teste do próprio
+  contrato do pipeline, `deno check` nas 44 edge functions, `timeout-minutes` em todos os
+  jobs, `permissions` no topo, concurrency de deploy com `cancel-in-progress: false`, e smoke
+  de health pós-deploy que se pula com aviso se o secret não existir.
+
+Duas decisões que valem registro:
+
+- **O pgTAP volta com o stack completo, não com a imagem crua.** `f5a86ea` removeu o job
+  por um motivo correto: sem GoTrue e Storage, `auth.uid()` e `storage.buckets` não
+  existem e o schema nunca casa. A própria mensagem do commit dizia que reconciliar
+  exigiria o stack inteiro. O job novo usa `supabase start`, que é esse stack.
+- **`DROP POLICY` órfão não bloqueia, por medição.** Rodando o analisador nas 183
+  migrations: 95 achados, e a amostra mostra que remover policy sem recriar é normalmente
+  o aperto de segurança (`016_policies_financeiro.sql` derruba as policies "Read Only"
+  permissivas de propósito). Se uma tabela ficou sem policy nenhuma depende do estado
+  acumulado do banco e não é decidível lendo um arquivo: quem responde isso é o pgTAP.
+  Bloqueiam: `DROP TABLE` (inclusive com recriação, que apaga as linhas), `DROP COLUMN`,
+  `DROP SCHEMA`, `TRUNCATE`, `DELETE` sem `WHERE`, `DISABLE ROW LEVEL SECURITY`. Nessa
+  calibragem, 9 dos 183 arquivos bloqueariam, e todos os 9 são destrutivos de verdade.
+
+Pendências conhecidas do PR #137:
+
+- O gate de `types.ts` **vai falhar** até alguém com credencial rodar `npm run gen:types`
+  e commitar. Isso não é defeito do gate, é o buraco R6 aparecendo.
+- Marcar `ci-ok` como required check no branch protection só **depois** do PR ficar verde.
+  Nunca tornar obrigatório um check que ainda não passou.
+
+Itens originais da fase, para registro:
 
 5. **`ci-ok` agregado** como único required check, com
    `needs: [lint, typecheck, test, migrations, rls, secrets-scan, audit]`.
@@ -113,7 +144,7 @@ ambiente, falha de cron notifica alguém.
    falha por padrão, e só passa com a repo variable `ALLOW_DESTRUCTIVE_MIGRATION=true`.
    Mais um teste que garante que o guard roda antes do `db push` (padrão
    `test_deploy_safety_contract.py`).
-9. **`deno check` em `supabase/functions/**`** como gate. 47 funções sem nenhuma
+9. **`deno check` em `supabase/functions/**`\*\* como gate. 47 funções sem nenhuma
    verificação de compilação hoje.
 10. **`timeout-minutes` e `permissions` explícitos** em todos os jobs. Nenhum workflow
     do repo tem os dois (nem lá, mas o custo de corrigir é uma linha por job).
@@ -178,17 +209,17 @@ Critério de aceite: falta de env var derruba o boot com o nome da chave, não g
 
 ## 4. Traduções dos padrões AWS para o nosso stack
 
-| Padrão lá | Equivalente aqui |
-|---|---|
-| `workflow_run` + filtro de branch + `if conclusion == success && event == push` | igual, trocando `terraform apply` por `supabase db push` + `functions deploy` |
-| Guard de plano destrutivo sobre `terraform show -json` | grep no diff das migrations novas, com opt-in por repo variable |
-| pydantic-settings com `Literal` | zod com `z.enum` em `env.ts`, parse no boot |
-| Secret shell no Terraform, valor por CLI | `supabase secrets set`, valor nunca em `config.toml`, inventário de nomes versionado |
-| Data source SSM falhando o plan (ordem de deploy) | step de pré-deploy que checa a existência dos secrets/migrations esperadas e sai não-zero |
-| Span processor detectando regressão de custo em runtime | wrapper nas Edge Functions `ai-*` gravando em `ai_usage_logs` e emitindo warn quando tokens por chamada saem de faixa |
-| CloudWatch como dead-man switch do Logfire | Checkly (já configurado em `checkly.config.ts`, deploy manual hoje) como camada independente do Sentry |
-| Marker `eval` com snapshot offline e `EVAL_LIVE=1` | `describe.skipIf(!process.env.EVAL_LIVE)` para as features de IA, projeto Vitest separado |
-| Compilar no runtime de destino | `deno check` nas Edge Functions com a versão que o Supabase roda; Node pinado em `engines` |
+| Padrão lá                                                                       | Equivalente aqui                                                                                                      |
+| ------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `workflow_run` + filtro de branch + `if conclusion == success && event == push` | igual, trocando `terraform apply` por `supabase db push` + `functions deploy`                                         |
+| Guard de plano destrutivo sobre `terraform show -json`                          | grep no diff das migrations novas, com opt-in por repo variable                                                       |
+| pydantic-settings com `Literal`                                                 | zod com `z.enum` em `env.ts`, parse no boot                                                                           |
+| Secret shell no Terraform, valor por CLI                                        | `supabase secrets set`, valor nunca em `config.toml`, inventário de nomes versionado                                  |
+| Data source SSM falhando o plan (ordem de deploy)                               | step de pré-deploy que checa a existência dos secrets/migrations esperadas e sai não-zero                             |
+| Span processor detectando regressão de custo em runtime                         | wrapper nas Edge Functions `ai-*` gravando em `ai_usage_logs` e emitindo warn quando tokens por chamada saem de faixa |
+| CloudWatch como dead-man switch do Logfire                                      | Checkly (já configurado em `checkly.config.ts`, deploy manual hoje) como camada independente do Sentry                |
+| Marker `eval` com snapshot offline e `EVAL_LIVE=1`                              | `describe.skipIf(!process.env.EVAL_LIVE)` para as features de IA, projeto Vitest separado                             |
+| Compilar no runtime de destino                                                  | `deno check` nas Edge Functions com a versão que o Supabase roda; Node pinado em `engines`                            |
 
 ## 5. O que não copiar
 

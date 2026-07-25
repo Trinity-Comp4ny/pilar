@@ -107,18 +107,30 @@ O que roda hoje (`.github/workflows/ci.yml`), em push e PR para `main` e `stagin
   e deploya edge functions no Supabase de staging.
 - **deploy-production** — só em push no `main`, com aprovação do Environment `Production`.
 
-O que **não** roda, apesar de existir no repo:
+- **database** — sobe o stack Supabase completo (`supabase start`), aplica as 183
+  migrations num banco vazio, roda as 9 suites pgTAP de `supabase/tests/` (~80 asserts em
+  RLS, impersonation e features) e confere que `types.ts` está em sync com as migrations.
+  Inclui o **guard de migration destrutiva**, que roda antes de qualquer `db push`.
+- **edge-functions** — `deno check` nas 44 funções de `supabase/functions/`.
+- **ci-ok** — job agregado, é o único required check do branch protection.
 
-- **pgTAP** — as 9 suites em `supabase/tests/` (RLS, impersonation, features, ~80 asserts)
-  foram desligadas do CI em `f5a86ea`. Estão no disco, sem executor.
-- **types-sync-check** — removido em `83d62e4`. Nada garante que `types.ts` esteja em
-  sync com as migrations, então rodar `npm run gen:types` depois de mudar schema é
-  disciplina manual até o gate voltar.
+Antes de abrir PR com migration nova, dá para rodar o guard local:
+
+```bash
+npm run check:migrations
+```
+
+Ele bloqueia `DROP TABLE`, `DROP COLUMN`, `DROP SCHEMA`, `TRUNCATE`, `DELETE` sem `WHERE`
+e `DISABLE ROW LEVEL SECURITY`. Se a perda de dado é intencional, rode com
+`ALLOW_DESTRUCTIVE_MIGRATION=true` (no CI, repository variable de mesmo nome) e explique
+o porquê no PR. `DROP POLICY` e `DROP FUNCTION` seguidos do `CREATE` correspondente
+passam limpo: são o padrão do repo.
+
+O que **não** roda:
+
 - **e2e** — `e2e-staging.yml` nunca executou: o `workflow_run` aponta para "Deploy
   Supabase", workflow que deixou de existir quando o deploy virou job do `ci.yml`.
-
-Os três estão na Fase 1 de `docs/operations/PLANO_ENGENHARIA_2026-07.md`. Até lá, não
-conte com eles ao revisar um PR.
+  Correção na Fase 2 de `docs/operations/PLANO_ENGENHARIA_2026-07.md`.
 
 ## Edge Functions
 
