@@ -12,6 +12,7 @@ Um ADR documenta uma decisão técnica relevante, seu contexto e consequências.
 | [0004](./adr/0004-edge-function-observability.md) | Observabilidade de edge functions via HTTP Envelope |
 | [0005](./adr/0005-permissoes-feature-flags.md) | Modelo de permissões em dois níveis (role + features) |
 | [0006](./adr/0006-soft-delete-restrito-por-filhos-financeiros.md) | Bloquear soft delete de projeto/cliente com filhos financeiros vivos |
+| [0007](./adr/0007-ambiente-explicito-em-comando-destrutivo.md) | Exigir ambiente explícito em todo comando que muta banco ou funções |
 
 ## Guias de reúso
 

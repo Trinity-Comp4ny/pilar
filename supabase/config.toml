@@ -1,4 +1,11 @@
-project_id = "vepnsonbnsimqcsfcagm"
+# Alvo padrão dos comandos da CLI que aceitam --linked. Aponta para STAGING
+# (rizaklgstyfrwgmdsldf) de propósito: até 2026-07-25 apontava para produção
+# (vepnsonbnsimqcsfcagm), então um `supabase db push` digitado por reflexo, sem
+# --db-url, aplicava migration não testada no banco dos clientes. Com staging como
+# default, o mesmo erro cai num ambiente descartável. Ver ADR 0007.
+# Produção só é alvo via `npm run db:push:prod` (exige ALLOW_PROD_DB_PUSH=true) ou
+# pelo job deploy-production do CI, que passa --db-url/--project-ref explícitos.
+project_id = "rizaklgstyfrwgmdsldf"
 
 [api]
 enabled = true

@@ -9,6 +9,8 @@ Deploy, resposta a incidentes, runbooks e monitoramento. ← [voltar ao índice]
 | [DISASTER_RECOVERY.md](./DISASTER_RECOVERY.md) | Plano de recuperação de desastres (PITR, restore, RTO/RPO) |
 | [load-testing.md](./load-testing.md) | Estratégia de teste de carga, quando rodar, baseline |
 | [api-versioning.md](./api-versioning.md) | Estratégia de versionamento de API das edge functions |
+| [STAGING_SETUP.md](./STAGING_SETUP.md) | Setup do ambiente de staging (2º projeto Supabase) |
+| [PLANO_ENGENHARIA_2026-07.md](./PLANO_ENGENHARIA_2026-07.md) | Gap de CI/CD, secrets, migrations e ambientes contra o padrão dos repos AWS da Labrynth, com plano em 5 fases |
 
 ## Subpastas
 

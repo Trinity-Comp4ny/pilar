@@ -98,12 +98,27 @@ Para pular em emergência: `git commit --no-verify` (use com discrição, CI ain
 
 ## CI
 
-- **lint-test-build** — sempre (push e PR).
+O que roda hoje (`.github/workflows/ci.yml`), em push e PR para `main` e `staging`:
+
+- **lint-test-build** — eslint, typecheck, vitest, build e budget de bundle.
 - **audit** — `npm audit --audit-level=high`.
-- **secrets-scan** — gitleaks.
-- **pgtap** — só em PR. Roda 9 suites cobrindo RLS + impersonation + features (~80 asserts).
-- **types-sync-check** — só em PR. Garante `types.ts` em sync com migrations.
-- **e2e** — só em PR. Playwright + 4 specs (segurança/redirect + skeleton autenticado).
+- **secrets-scan** — gitleaks sobre o histórico inteiro.
+- **deploy-staging** — só em push no `staging`, depois dos três acima. Aplica migrations
+  e deploya edge functions no Supabase de staging.
+- **deploy-production** — só em push no `main`, com aprovação do Environment `Production`.
+
+O que **não** roda, apesar de existir no repo:
+
+- **pgTAP** — as 9 suites em `supabase/tests/` (RLS, impersonation, features, ~80 asserts)
+  foram desligadas do CI em `f5a86ea`. Estão no disco, sem executor.
+- **types-sync-check** — removido em `83d62e4`. Nada garante que `types.ts` esteja em
+  sync com as migrations, então rodar `npm run gen:types` depois de mudar schema é
+  disciplina manual até o gate voltar.
+- **e2e** — `e2e-staging.yml` nunca executou: o `workflow_run` aponta para "Deploy
+  Supabase", workflow que deixou de existir quando o deploy virou job do `ci.yml`.
+
+Os três estão na Fase 1 de `docs/operations/PLANO_ENGENHARIA_2026-07.md`. Até lá, não
+conte com eles ao revisar um PR.
 
 ## Edge Functions
 
@@ -131,7 +146,11 @@ serve(
 - Nome: `YYYYMMDDhhmmss_descricao.sql` (timestamp = quando foi criada).
 - Idempotente quando possível (`CREATE OR REPLACE`, `IF NOT EXISTS`).
 - Cuidado com triggers: usam `session_replication_role = 'replica'` em pgTAP.
-- `npm run gen:types` após qualquer mudança de schema (CI valida).
+- `npm run gen:types` após qualquer mudança de schema, e commite o `types.ts`.
+  **O CI não valida isso** (o gate foi removido em `83d62e4`), então esquecer significa
+  código chamando tabela ou RPC que o tipo não conhece, passando no typecheck via cast e
+  quebrando em runtime. O comando gera de **staging** por default (ADR 0007); para prod,
+  `npm run gen:types:prod`.
 
 ## pgTAP
 
