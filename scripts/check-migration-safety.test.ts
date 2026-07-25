@@ -102,6 +102,10 @@ describe("contrato do pipeline", () => {
     expect(guard).toBeLessThan(firstPush);
   });
 
+  it("o deno check das edge functions roda no CI", () => {
+    expect(ci).toContain("scripts/deno-check.sh");
+  });
+
   it("todo job declara timeout, para um job travado não consumir 6h de runner", () => {
     // Conta só depois de `jobs:`, senão `push:` e `pull_request:` do bloco `on:`
     // entram na conta (têm a mesma indentação de um job).
