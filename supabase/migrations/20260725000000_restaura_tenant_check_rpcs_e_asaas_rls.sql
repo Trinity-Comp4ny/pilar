@@ -292,7 +292,16 @@ GRANT EXECUTE ON FUNCTION public.rpc_converter_lead_cliente(uuid, boolean) TO au
 -- usuário autenticado da empresa lia (não era vazamento entre empresas: o filtro de
 -- empresa estava correto; era escalada de privilégio dentro do tenant).
 --
--- has_role é VARIADIC user_role[], os literais são convertidos para o enum.
+-- NÃO usa has_role('admin','financeiro') como a 014 fazia: 'financeiro' não é mais
+-- valor do enum user_role (hoje: user, admin, ultra_admin, owner, coordenador,
+-- colaborador). O modelo virou role + feature (ADR 0005), e tentar o literal antigo
+-- falha com "invalid input value for enum user_role" no próprio deploy, que é
+-- exatamente como este erro apareceu no run 30175712017.
+--
+-- Segue o padrão vigente das outras tabelas financeiras, que é o que receitas e
+-- despesas usam hoje: empresa_id + user_has_feature('financeiro', <nível>).
+-- Aqui o nível é 'editor' inclusive para SELECT, porque ler a api_key é administrar
+-- a integração, não consultar financeiro.
 --
 -- NÃO reintroduz admin_mfa_required() das policies _mfa da 020: essa função não
 -- existe em nenhum dos dois bancos, então a 020 nunca chegou lá. Exigir MFA aqui
@@ -313,25 +322,25 @@ CREATE POLICY "asaas_config_admin_select" ON public.asaas_config
   FOR SELECT
   USING (
     empresa_id = public.get_user_empresa_id()
-    AND public.has_role('admin', 'financeiro')
+    AND public.user_has_feature('financeiro', 'editor')
   );
 
 CREATE POLICY "asaas_config_admin_insert" ON public.asaas_config
   FOR INSERT
   WITH CHECK (
     empresa_id = public.get_user_empresa_id()
-    AND public.has_role('admin', 'financeiro')
+    AND public.user_has_feature('financeiro', 'editor')
   );
 
 CREATE POLICY "asaas_config_admin_update" ON public.asaas_config
   FOR UPDATE
   USING (
     empresa_id = public.get_user_empresa_id()
-    AND public.has_role('admin', 'financeiro')
+    AND public.user_has_feature('financeiro', 'editor')
   )
   WITH CHECK (
     empresa_id = public.get_user_empresa_id()
-    AND public.has_role('admin', 'financeiro')
+    AND public.user_has_feature('financeiro', 'editor')
   );
 
 -- Não havia policy de DELETE, ou seja, ninguém conseguia apagar config errada pela API.
@@ -339,5 +348,5 @@ CREATE POLICY "asaas_config_admin_delete" ON public.asaas_config
   FOR DELETE
   USING (
     empresa_id = public.get_user_empresa_id()
-    AND public.has_role('admin', 'financeiro')
+    AND public.user_has_feature('financeiro', 'editor')
   );
