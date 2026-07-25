@@ -33,7 +33,7 @@ export default function Login() {
         data: { session },
       } = await supabase.auth.getSession();
       if (session) {
-        navigate("/dashboard");
+        navigate("/inicio");
       }
     };
     checkUser();
@@ -92,7 +92,7 @@ export default function Login() {
       description: "Bem-vindo de volta.",
     });
     sessionStorage.setItem("pilar_post_login", "1");
-    navigate("/dashboard");
+    navigate("/inicio");
     setIsLoading(false);
   };
 

@@ -4,6 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
+import { useRecentes } from "@/hooks/useRecentes";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -151,9 +152,7 @@ function PropostaCard({ proposta, onOpen }: { proposta: PropostaResumo; onOpen: 
         <CardContent className="p-4 space-y-3">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
-              {proposta.codigo && (
-                <p className="text-[10px] font-mono text-muted-foreground">{proposta.codigo}</p>
-              )}
+              {proposta.codigo && <p className="text-[10px] font-mono text-muted-foreground">{proposta.codigo}</p>}
               <p className="text-sm font-medium truncate group-hover:text-brand transition-colors">{proposta.titulo}</p>
             </div>
             {config && <Badge className={cn("text-[10px] shrink-0", config.color)}>{config.label}</Badge>}
@@ -281,7 +280,9 @@ function VisaoGeralTab({ cliente, isAdmin }: { cliente: Cliente; isAdmin: boolea
             {cliente.tipo_nf && (
               <div>
                 <p className="text-[10px] uppercase text-muted-foreground tracking-wider mb-1">Tipo NF</p>
-                <p className="text-sm font-medium capitalize">{TIPO_NF_LABELS[cliente.tipo_nf.toLowerCase()] ?? cliente.tipo_nf}</p>
+                <p className="text-sm font-medium capitalize">
+                  {TIPO_NF_LABELS[cliente.tipo_nf.toLowerCase()] ?? cliente.tipo_nf}
+                </p>
               </div>
             )}
           </div>
@@ -297,7 +298,11 @@ function VisaoGeralTab({ cliente, isAdmin }: { cliente: Cliente; isAdmin: boolea
               </div>
               <div className="flex items-center gap-2 text-sm">
                 <Phone className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                {cliente.contato ? formatPhone(cliente.contato) : <span className="text-muted-foreground italic">Não informado</span>}
+                {cliente.contato ? (
+                  formatPhone(cliente.contato)
+                ) : (
+                  <span className="text-muted-foreground italic">Não informado</span>
+                )}
               </div>
               {cliente.endereco && (
                 <div className="flex items-center gap-2 text-sm">
@@ -491,13 +496,20 @@ export default function ClienteDetalhePage() {
   const { isAdmin, can } = usePermissions();
   const canEdit = can("clientes", "edit");
 
-  const { cliente, projetos, isLoadingProjetos, propostas, isLoadingPropostas, isLoadingCliente } =
-    useClienteDetalhe(id!);
+  const { cliente, projetos, isLoadingProjetos, propostas, isLoadingPropostas, isLoadingCliente } = useClienteDetalhe(
+    id!
+  );
 
   const clienteNomeCompleto = cliente
     ? `${cliente.nome}${cliente.sobrenome ? " " + cliente.sobrenome : ""}`
     : "Cliente";
   usePageTitle(clienteNomeCompleto);
+
+  // Recentes da home Início (spec 001): registra a visita quando o cliente carrega.
+  const { registrar } = useRecentes();
+  useEffect(() => {
+    if (id && cliente) registrar({ tipo: "cliente", rota: `/clientes/${id}`, label: clienteNomeCompleto });
+  }, [id, cliente, clienteNomeCompleto, registrar]);
 
   const { deleteCliente } = useClientes();
 

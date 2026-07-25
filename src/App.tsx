@@ -25,6 +25,8 @@ const Planos = lazy(() => import("./pages/planos"));
 const Checkout = lazy(() => import("./pages/checkout"));
 const Billing = lazy(() => import("./pages/billing"));
 const Login = lazy(() => import("./pages/Login"));
+const Inicio = lazy(() => import("./pages/inicio"));
+const Obras = lazy(() => import("./pages/obras"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Leads = lazy(() => import("./pages/leads"));
 const Financeiro = lazy(() => import("./pages/Financeiro"));
@@ -113,6 +115,8 @@ const App = () => {
                     <Route path="/privacidade" element={<Privacidade />} />
 
                     <Route element={<PrivateRoute />}>
+                      <Route path="/inicio" element={<Inicio />} />
+                      <Route path="/obras" element={<Obras />} />
                       <Route path="/dashboard" element={<Dashboard />} />
 
                       <Route element={<FeatureRoute feature="leads" />}>
@@ -167,7 +171,6 @@ const App = () => {
                         <Route path="/agentes" element={<Chat />} />
                       </Route>
                       <Route path="/chat" element={<Navigate to="/agentes" replace />} />
-
 
                       {/* Mapa virou aba dentro de Projetos; redireciona links antigos */}
                       <Route path="/mapa" element={<Navigate to="/projetos?view=mapa" replace />} />

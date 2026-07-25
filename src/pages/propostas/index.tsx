@@ -65,6 +65,7 @@ import { PropostaDetailDialog } from "./components/PropostaDetailDialog";
 import { fetchClientesLookup, fetchLeadsLookup } from "@/lib/supabaseQueries";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { usePageTitle } from "@/hooks/usePageTitle";
+import { useRegistrarPagina } from "@/hooks/useRecentes";
 import { SmartInvoiceDialog } from "@/components/SmartInvoiceDialog";
 
 interface PropostaDisciplina {
@@ -99,6 +100,7 @@ const suggestNextCodigo = (list: { codigo: string | null }[]) => {
 
 export default function Propostas() {
   usePageTitle("Propostas");
+  useRegistrarPagina("pagina", "/documentos", "Documentos");
   const queryClient = useQueryClient();
   const { data: userRole } = useUserRole();
   const { data: propostas = [], isLoading } = usePropostas();
@@ -754,9 +756,7 @@ export default function Propostas() {
                           {p.codigo && <p className="text-[11px] text-muted-foreground font-mono">{p.codigo}</p>}
                         </div>
                         <div className="flex items-center gap-1 flex-shrink-0">
-                          <Badge
-                            className={`text-[10px] ${PROPOSTA_STATUS_CONFIG[displayStatus]?.color || ""}`}
-                          >
+                          <Badge className={`text-[10px] ${PROPOSTA_STATUS_CONFIG[displayStatus]?.color || ""}`}>
                             {PROPOSTA_STATUS_CONFIG[displayStatus]?.label || displayStatus}
                           </Badge>
                           {canEdit && (
@@ -806,7 +806,6 @@ export default function Propostas() {
                           </div>
                         )}
                       </div>
-
                     </CardContent>
                   </Card>
                 );

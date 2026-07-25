@@ -7,6 +7,7 @@ import { LayoutDashboard, TrendingUp, Receipt, Users2, CreditCard, Landmark } fr
 import { FinanceiroHeader } from "./financeiro/components/FinanceiroHeader";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePageTitle } from "@/hooks/usePageTitle";
+import { useRegistrarPagina } from "@/hooks/useRecentes";
 import { SecondSidebar, type SecondSidebarTab } from "@/components/SecondSidebar";
 import { FinanceFilterProvider, type Visualizacao } from "./financeiro/contexts/FinanceFilterContext";
 
@@ -34,6 +35,7 @@ function parseDateParam(v: string | null): Date | undefined {
 
 export default function Financeiro() {
   usePageTitle("Financeiro");
+  useRegistrarPagina("pagina", "/financeiro", "Financeiro");
   const { state, isMobile } = useSidebar();
   const [searchParams, setSearchParams] = useSearchParams();
 
