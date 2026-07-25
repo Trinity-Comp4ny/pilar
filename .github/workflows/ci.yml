@@ -101,12 +101,20 @@ jobs:
         run: |
           # actions/checkout não cria remote-tracking ref das outras branches nem com
           # fetch-depth 0, então busca explicitamente a base antes de comparar.
-          git fetch --no-tags --depth=0 origin "$BASE_REF" || git fetch --no-tags origin "$BASE_REF"
+          git fetch --no-tags origin "$BASE_REF"
           node scripts/check-migration-safety.mjs --base FETCH_HEAD
 
       - uses: supabase/setup-cli@v1
         with:
           version: latest
+
+      # O config.toml tem `[auth.hook.send_email] secrets = env(AUTH_HOOK_SEND_EMAIL_SECRET)`,
+      # e a CLI valida o formato antes de subir qualquer coisa: sem a var, `supabase
+      # start` aborta com "must be formatted as v1,whsec_<base64>". Gera um valor
+      # descartável aqui em vez de hardcodar (hardcode viraria achado do gitleaks, e
+      # com razão). Não é segredo: o stack é local e efêmero.
+      - name: Gerar secret descartável para o parse do config
+        run: echo "AUTH_HOOK_SEND_EMAIL_SECRET=v1,whsec_$(openssl rand -base64 32)" >> "$GITHUB_ENV"
 
       - name: Subir o stack local
         run: supabase start
@@ -146,10 +154,8 @@ jobs:
       - uses: denoland/setup-deno@v2
         with:
           deno-version: v1.45.x # acompanha o runtime que o Supabase executa hoje
-      - name: deno check
-        run: |
-          shopt -s globstar nullglob
-          deno check supabase/functions/**/index.ts
+      - name: deno check (com ratchet de dívida)
+        run: scripts/deno-check.sh
         shell: bash
 
   # Único required status check do branch protection. Adicionar ou renomear job

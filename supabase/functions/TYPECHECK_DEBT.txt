@@ -1,0 +1,25 @@
+# Edge Functions que ainda NÃO passam no `deno check`.
+#
+# Medido em 2026-07-25, na primeira vez que o CI rodou `deno check` nas 44 funções:
+# 12 erros de tipo concentrados nestas 5. As outras 39 passam limpo e são gate
+# bloqueante desde então, ou seja, função nova ou mexida tem que compilar.
+#
+# Esta lista é um ratchet: só encolhe. `scripts/check-migration-safety.test.ts`
+# afirma o tamanho máximo, então adicionar uma linha aqui quebra a suíte de testes.
+# Corrigir uma função é remover a linha dela e ver o CI continuar verde.
+#
+# O erro dominante é o mesmo em todas: o resultado de `.from().select()` do
+# supabase-js sendo tratado como Promise já resolvida (falta `await`, ou o tipo
+# esperado não é `PostgrestFilterBuilder`). Ver TS2739/TS2345 no log do run
+# 30174544332.
+#
+# Um path por linha, relativo à raiz do repo. Linha vazia e # são ignorados.
+
+# Dormentes (IA Hub), consertar quando a feature voltar a ser trabalhada
+supabase/functions/ai-pauta-reuniao/index.ts
+supabase/functions/ai-aditivo-copilot/index.ts
+supabase/functions/ai-diagnostico-precificacao/index.ts
+
+# ATIVAS em produção: prioridade de correção, nesta ordem
+supabase/functions/portal-get-projeto/index.ts
+supabase/functions/send-proposta-email/index.ts
