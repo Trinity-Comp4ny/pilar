@@ -23,15 +23,16 @@ Nenhum `supabase db push` ou `functions deploy` manual.
    ```bash
    brew upgrade supabase   # use CLI ≥ 2.109 — versões antigas quebram no split de migrations
    supabase link --project-ref <REF_STAGING>
-   # SEMPRE passe --db-url / --project-ref explícitos: sem eles, o CLI usa o
-   # project_id do config.toml (= PRODUÇÃO) e você deploya no lugar errado.
-   supabase db push --db-url "postgresql://postgres.<REF_STAGING>:<SENHA>@aws-1-<REGIAO>.pooler.supabase.com:5432/postgres"
-   supabase functions deploy --project-ref <REF_STAGING>
+   export SUPABASE_DB_URL_STAGING="postgresql://postgres.<REF_STAGING>:<SENHA>@aws-1-<REGIAO>.pooler.supabase.com:5432/postgres"
+   npm run db:push:staging
+   npm run functions:deploy:staging
    ```
 
-   > ⚠️ **Nunca** rode `db push`/`functions deploy` sem alvo explícito durante o bootstrap:
-   > o `config.toml` aponta pro prod, então o comando "pelado" vai pra produção.
-   > Use `--db-url` (pooler IPv4, contorna o IPv6) no push e `--project-ref` no deploy.
+   > Desde o [ADR 0007](../architecture/adr/0007-ambiente-explicito-em-comando-destrutivo.md),
+   > o `config.toml` aponta para **staging** e todo comando destrutivo passa por
+   > `scripts/supabase-target.sh`, que exige o ambiente como argumento. Produção só
+   > com `ALLOW_PROD_DB_PUSH=true`. Se for chamar a CLI na mão, continue passando
+   > `--db-url` (pooler IPv4, contorna o IPv6) no push e `--project-ref` no deploy.
 
    > **Dois tropeços conhecidos em projeto novo (PG17), já mapeados:**
    >
@@ -92,13 +93,20 @@ marcar **Required reviewers** (você) — assim todo deploy de prod pede 1 cliqu
 
 ## Passo 4 — Pronto
 
-- `.github/workflows/deploy-supabase.yml` já faz o deploy por branch.
-- `.github/workflows/e2e-staging.yml` roda Playwright contra staging após cada deploy.
-- `verify_jwt` por função vive em `supabase/config.toml` — deploy respeita, sem flags manuais.
+- O deploy do backend é o job **`deploy-staging` dentro de `.github/workflows/ci.yml`**,
+  não um workflow separado. (Existiu um `deploy-supabase.yml`, deletado em `bd77a39`
+  quando o deploy virou job do CI. Se você viu essa referência em algum lugar, está velha.)
+- `verify_jwt` por função vive em `supabase/config.toml`, e o deploy respeita, sem flags manuais.
+
+> ⚠️ **`e2e-staging.yml` nunca rodou.** O gatilho `workflow_run` aponta para o workflow
+> "Deploy Supabase", que não existe mais, e o `environment` está em minúscula enquanto o
+> configurado é `Staging`. A suíte Playwright está no repo e não é executada por ninguém.
+> Correção na Fase 2 de [PLANO_ENGENHARIA_2026-07.md](./PLANO_ENGENHARIA_2026-07.md).
 
 ### Verificação
 
-- Push numa branch → PR pra `staging` → merge → ver o run "Deploy Supabase" (staging).
+- Push numa branch → PR pra `staging` → merge → ver o job **"Deploy → staging (Supabase)"**
+  dentro do run do workflow **CI**.
 - Confirmar no dashboard de staging que migrations e funções subiram.
-- Um webhook (ex.: `asaas-webhook`) deve responder **sem** exigir JWT — se der 401,
+- Um webhook (ex.: `asaas-webhook`) deve responder **sem** exigir JWT. Se der 401,
   revisar o bloco `[functions.*]` em `config.toml`.
