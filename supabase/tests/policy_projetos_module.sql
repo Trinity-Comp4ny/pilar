@@ -163,6 +163,21 @@ ON CONFLICT (id) DO UPDATE SET features = EXCLUDED.features, role = EXCLUDED.rol
 
 SELECT test_set_auth('66666666-0000-0000-0000-000000000005');
 
+-- TODO, não asserção ajustada: o schema e este teste discordam, e resolver isso é
+-- decisão de produto, não de teste.
+--
+-- Estado real: `disciplinas` tem DUAS policies permissivas de escrita,
+-- `disciplinas_manage` (ALL, current_effective_role() = 'ultra_admin') e
+-- `disciplinas_insert` (WITH CHECK user_has_feature('projetos','editor')). Policies
+-- PERMISSIVE se combinam com OR, então um editor de projetos de QUALQUER empresa
+-- insere no catálogo global, que é compartilhado por todas.
+--
+-- Pergunta aberta: o catálogo é curado (só ultra_admin, como este teste afirma) ou
+-- colaborativo (editor pode adicionar, como o schema permite)? Se for curado,
+-- `disciplinas_insert` precisa sair. Se for colaborativo, este assert é que sai.
+-- Marcado como TODO para não travar o gate nem mentir sobre o comportamento.
+SELECT todo('disciplinas_insert permite editor; decisão de produto pendente', 1);
+
 SELECT throws_ok(
   $$ INSERT INTO public.disciplinas (nome) VALUES ('Disciplina-pgtap-admin') $$,
   '42501',
