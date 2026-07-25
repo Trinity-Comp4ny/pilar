@@ -229,10 +229,14 @@ SELECT throws_ok(
 -- handle_new_user, não a permissão de tabela.
 RESET ROLE;
 
-SELECT throws_ok(
+-- throws_like, não throws_ok: o trigger levanta "Cadastro não autorizado. Entre em
+-- contato com a equipe comercial." e throws_ok compara a mensagem inteira, então o
+-- teste reprovava por causa do sufixo, com o comportamento correto. Casar por padrão
+-- mantém o assert honesto sem prendê-lo à copy exata da mensagem.
+SELECT throws_like(
   $$ INSERT INTO auth.users (id, email, raw_user_meta_data, aud, role)
      VALUES ('cccccccc-0000-0000-0000-000000000001', 'hacker@evil.com', '{}'::jsonb, 'authenticated', 'authenticated') $$,
-  'Cadastro não autorizado',
+  '%Cadastro não autorizado%',
   'Signup sem invite_token é rejeitado'
 );
 
