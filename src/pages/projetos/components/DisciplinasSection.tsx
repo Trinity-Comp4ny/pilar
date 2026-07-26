@@ -372,7 +372,9 @@ export function DisciplinasSection({
                                       onChange={(v) => onUpdateRespDatas(idx, rIdx, "data_final", v)}
                                       minDate={minDate}
                                       maxDate={maxFinalDate}
-                                      className={isFinalOutOfRange(resp.data_final) ? "border-orange-400 bg-orange-50" : ""}
+                                      className={
+                                        isFinalOutOfRange(resp.data_final) ? "border-orange-400 bg-orange-50" : ""
+                                      }
                                     />
                                     {isFinalOutOfRange(resp.data_final) && (
                                       <p className="text-[9px] text-orange-600">
@@ -620,7 +622,8 @@ export function DisciplinasSection({
                   onAddDisciplina();
                   setShowAddForm(false);
                 }}
-                className="flex-1 h-11 text-sm font-semibold bg-brand hover:bg-brand/90 text-ink"
+                variant="brand"
+                className="flex-1 h-11 text-sm font-semibold"
                 disabled={!tempDisciplina.disciplina}
               >
                 <Plus size={18} className="mr-2" /> Incluir na lista

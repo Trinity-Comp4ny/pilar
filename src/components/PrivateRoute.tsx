@@ -33,7 +33,7 @@ function SubscriptionSuspendedScreen() {
           </p>
         </div>
         <div className="flex flex-col gap-3">
-          <Button asChild className="bg-brand hover:bg-brand/90 text-ink">
+          <Button asChild variant="brand">
             <Link to="/billing">Ver assinatura</Link>
           </Button>
           <Button variant="ghost" asChild className="text-slate-500">

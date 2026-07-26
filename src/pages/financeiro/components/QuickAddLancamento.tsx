@@ -135,7 +135,8 @@ export function QuickAddLancamento({ onCreated }: Props) {
         size="sm"
         onClick={submit}
         disabled={saving}
-        className="h-8 gap-1 rounded-full bg-brand hover:bg-brand/90 text-ink"
+        variant="brand"
+        className="h-8 gap-1 rounded-full"
       >
         {saving ? <Loader2 className="h-3 w-3 animate-spin" /> : <Plus className="h-3 w-3" />}
         Adicionar

@@ -52,7 +52,9 @@ export function TrocarSenhaForm({ forced = false, onSuccess, onCancel }: TrocarS
       });
 
       if (error) {
-        const msg = KNOWN_ERRORS.has(error.message) ? error.message : "Não foi possível trocar a senha. Tente novamente.";
+        const msg = KNOWN_ERRORS.has(error.message)
+          ? error.message
+          : "Não foi possível trocar a senha. Tente novamente.";
         if (error.message === "Senha atual incorreta") {
           form.setError("senhaAtual", { message: error.message });
         }
@@ -169,11 +171,7 @@ export function TrocarSenhaForm({ forced = false, onSuccess, onCancel }: TrocarS
               Cancelar
             </Button>
           )}
-          <Button
-            type="submit"
-            className="flex-1 h-11 bg-brand hover:bg-brand/90 text-ink font-medium"
-            disabled={isLoading}
-          >
+          <Button type="submit" variant="brand" className="flex-1 h-11 font-medium" disabled={isLoading}>
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Salvando...

@@ -1,6 +1,13 @@
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { AlertTriangle, FileText, Loader2, UserPlus } from "lucide-react";
 
 // --- Motivo de Perda ---
@@ -14,7 +21,14 @@ type MotivoPerdasProps = {
   onCancel: () => void;
 };
 
-export function LeadMotivoPerdasDialog({ open, onOpenChange, motivoPerda, onMotivoChange, onConfirm, onCancel }: MotivoPerdasProps) {
+export function LeadMotivoPerdasDialog({
+  open,
+  onOpenChange,
+  motivoPerda,
+  onMotivoChange,
+  onConfirm,
+  onCancel,
+}: MotivoPerdasProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
@@ -36,7 +50,9 @@ export function LeadMotivoPerdasDialog({ open, onOpenChange, motivoPerda, onMoti
           />
         </div>
         <DialogFooter className="mt-4">
-          <Button variant="outline" onClick={onCancel}>Cancelar</Button>
+          <Button variant="outline" onClick={onCancel}>
+            Cancelar
+          </Button>
           <Button onClick={onConfirm} variant="destructive" disabled={!motivoPerda.trim()}>
             Confirmar Perda
           </Button>
@@ -70,9 +86,17 @@ export function LeadAutoConvertDialog({ open, onOpenChange, isPending, onConvert
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="mt-4 flex gap-2">
-          <Button variant="outline" onClick={onSkip}>Apenas marcar como Ganho</Button>
+          <Button variant="outline" onClick={onSkip}>
+            Apenas marcar como Ganho
+          </Button>
           <Button onClick={onConvert} className="bg-positive hover:bg-positive/90 text-white" disabled={isPending}>
-            {isPending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Convertendo...</> : "Criar Cliente"}
+            {isPending ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Convertendo...
+              </>
+            ) : (
+              "Criar Cliente"
+            )}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -100,14 +124,22 @@ export function LeadCreatePropostaDialog({ open, onOpenChange, leadNome, isPendi
             Criar Proposta
           </DialogTitle>
           <DialogDescription>
-            Deseja criar uma proposta para{" "}
-            <span className="font-medium text-foreground">{leadNome}</span>? Você será redirecionado para o editor de propostas.
+            Deseja criar uma proposta para <span className="font-medium text-foreground">{leadNome}</span>? Você será
+            redirecionado para o editor de propostas.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="mt-4">
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>Cancelar</Button>
-          <Button className="bg-brand hover:bg-brand/90 text-ink" onClick={onConfirm} disabled={isPending}>
-            {isPending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Criando...</> : "Confirmar"}
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>
+            Cancelar
+          </Button>
+          <Button variant="brand" onClick={onConfirm} disabled={isPending}>
+            {isPending ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Criando...
+              </>
+            ) : (
+              "Confirmar"
+            )}
           </Button>
         </DialogFooter>
       </DialogContent>

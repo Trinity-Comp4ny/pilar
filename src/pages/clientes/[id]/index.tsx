@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { formatCurrency as fmtMoeda } from "@/lib/format";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -61,8 +62,7 @@ import { toast } from "sonner";
 import type { Cliente } from "@/hooks/useClientes";
 import type { ProjetoResumo, PropostaResumo } from "@/hooks/useClienteDetalhe";
 
-const formatCurrency = (v: number | null) =>
-  v != null ? new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v) : "—";
+const formatCurrency = (v: number | null) => (v != null ? fmtMoeda(v) : "—");
 
 const formatDate = (d: string | null) => (d ? new Date(d + "T00:00:00").toLocaleDateString("pt-BR") : "—");
 
@@ -427,7 +427,7 @@ function VisaoGeralTab({ cliente, isAdmin }: { cliente: Cliente; isAdmin: boolea
                       size="sm"
                       onClick={() => setConfirmPortalOpen(true)}
                       disabled={isInvitingPortal}
-                      className="bg-brand hover:bg-brand/90 text-ink"
+                      variant="brand"
                     >
                       {isInvitingPortal ? (
                         <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />

@@ -179,7 +179,7 @@ export function SupplierManager({ onSupplierChange }: SupplierManagerProps) {
 
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
-            <Button size="sm" className="bg-brand hover:bg-brand/90 text-ink">
+            <Button size="sm" variant="brand">
               <Plus className="h-4 w-4 mr-1" /> Adicionar
             </Button>
           </DialogTrigger>
@@ -247,11 +247,7 @@ export function SupplierManager({ onSupplierChange }: SupplierManagerProps) {
                 >
                   Cancelar
                 </Button>
-                <Button
-                  onClick={handleAddSupplier}
-                  className="flex-1 bg-brand hover:bg-brand/90 text-ink"
-                  disabled={isSaving}
-                >
+                <Button onClick={handleAddSupplier} variant="brand" className="flex-1" disabled={isSaving}>
                   {isSaving ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Salvando...
@@ -385,11 +381,7 @@ export function SupplierManager({ onSupplierChange }: SupplierManagerProps) {
               >
                 Cancelar
               </Button>
-              <Button
-                onClick={handleEditSupplier}
-                className="flex-1 bg-brand hover:bg-brand/90 text-ink"
-                disabled={isSaving}
-              >
+              <Button onClick={handleEditSupplier} variant="brand" className="flex-1" disabled={isSaving}>
                 {isSaving ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Salvando...

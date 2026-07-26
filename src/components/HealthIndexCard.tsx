@@ -29,7 +29,7 @@ export function HealthIndexCard() {
 
   if (isLoading || !health) {
     return (
-      <Card className="vrz-card w-full">
+      <Card className="w-full">
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle className="text-sm font-medium text-black/60">Saúde Operacional</CardTitle>
           <div className="p-2 rounded-full bg-muted text-ink-disabled">
@@ -44,7 +44,7 @@ export function HealthIndexCard() {
   }
 
   return (
-    <Card className="vrz-card w-full">
+    <Card className="w-full">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-sm font-medium text-black/60">Saúde Operacional</CardTitle>
         <div className="p-2 rounded-full" style={{ backgroundColor: `${health.color}20`, color: health.color }}>

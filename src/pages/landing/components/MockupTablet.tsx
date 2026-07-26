@@ -594,7 +594,7 @@ function ProjetosTab() {
               <LayoutList className="w-3 h-3" /> Lista
             </button>
           </div>
-          <Button className="bg-brand hover:bg-brand/90 text-ink rounded-full text-xs h-8 px-3 shadow-sm">
+          <Button variant="brand" className="rounded-full text-xs h-8 px-3 shadow-sm">
             <Plus className="w-3 h-3 mr-1" /> Novo
           </Button>
         </div>
@@ -881,7 +881,7 @@ function ClientesTab() {
               </button>
             )}
           </div>
-          <Button className="bg-brand hover:bg-brand/90 text-ink rounded-full h-8 px-3 text-xs shadow-sm">
+          <Button variant="brand" className="rounded-full h-8 px-3 text-xs shadow-sm">
             <Plus className="w-3 h-3 mr-1" /> Novo
           </Button>
         </div>
@@ -993,7 +993,7 @@ function FinanceiroTab() {
           <h2 className="text-lg font-semibold text-gray-900">Financeiro</h2>
           <p className="text-xs text-gray-500">Controle financeiro em tempo real</p>
         </div>
-        <Button className="bg-brand hover:bg-brand/90 text-ink rounded-full text-xs h-8 px-3 shadow-sm">
+        <Button variant="brand" className="rounded-full text-xs h-8 px-3 shadow-sm">
           <Plus className="w-3 h-3 mr-1" /> Lançamento
         </Button>
       </div>

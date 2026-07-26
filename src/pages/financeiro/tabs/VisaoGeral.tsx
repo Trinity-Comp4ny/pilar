@@ -1,4 +1,5 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { formatCurrency as fmtMoeda } from "@/lib/format";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   ArrowUpRight,
@@ -32,15 +33,14 @@ import { FinanceErrorState } from "../components/FinanceErrorState";
 import { useFinanceData } from "@/hooks/useFinanceData";
 import { useFinanceFilter } from "../hooks/useFinanceFilter";
 
-const formatCurrency = (val: number) =>
-  new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(val);
+const formatCurrency = (val: number) => fmtMoeda(val);
 
 function VisaoGeralSkeleton() {
   return (
     <div className="space-y-6 w-full max-w-none">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5 gap-4 w-full">
         {[1, 2, 3, 4, 5].map((i) => (
-          <Card key={i} className="vrz-card w-full">
+          <Card key={i} className="w-full">
             <CardHeader className="pb-2">
               <Skeleton className="h-3 w-24" />
             </CardHeader>
@@ -51,7 +51,7 @@ function VisaoGeralSkeleton() {
           </Card>
         ))}
       </div>
-      <Card className="vrz-card w-full">
+      <Card className="w-full">
         <CardHeader>
           <Skeleton className="h-5 w-40" />
           <Skeleton className="h-3 w-64" />
@@ -62,7 +62,7 @@ function VisaoGeralSkeleton() {
       </Card>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
         {[1, 2].map((i) => (
-          <Card key={i} className="vrz-card w-full">
+          <Card key={i} className="w-full">
             <CardHeader>
               <Skeleton className="h-5 w-48" />
               <Skeleton className="h-3 w-32" />
@@ -187,7 +187,7 @@ export default function VisaoGeral() {
     <div className="space-y-6 w-full max-w-none">
       {/* KPIs: Lucro líquido como card primário (métrica da tagline); demais neutros */}
       <div className="space-y-4 w-full">
-        <Card className="vrz-card w-full border-l-4 border-l-brand min-w-0">
+        <Card className="w-full border-l-4 border-l-brand min-w-0">
           <CardContent className="p-5 flex flex-wrap items-end justify-between gap-4">
             <div className="min-w-0">
               <p className="text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
@@ -213,7 +213,7 @@ export default function VisaoGeral() {
         </Card>
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 w-full">
-          <Card className="vrz-card w-full min-w-0">
+          <Card className="w-full min-w-0">
             <CardHeader className="pb-2">
               <CardTitle className="text-xs font-medium uppercase tracking-wider text-muted-foreground truncate">
                 Receitas totais
@@ -242,7 +242,7 @@ export default function VisaoGeral() {
             </CardContent>
           </Card>
 
-          <Card className="vrz-card w-full min-w-0">
+          <Card className="w-full min-w-0">
             <CardHeader className="pb-2">
               <CardTitle className="text-xs font-medium uppercase tracking-wider text-muted-foreground truncate">
                 Despesas totais
@@ -271,7 +271,7 @@ export default function VisaoGeral() {
             </CardContent>
           </Card>
 
-          <Card className="vrz-card w-full min-w-0">
+          <Card className="w-full min-w-0">
             <CardHeader className="pb-2">
               <CardTitle className="text-xs font-medium uppercase tracking-wider text-muted-foreground truncate">
                 A receber
@@ -291,7 +291,7 @@ export default function VisaoGeral() {
             </CardContent>
           </Card>
 
-          <Card className="vrz-card w-full min-w-0">
+          <Card className="w-full min-w-0">
             <CardHeader className="pb-2">
               <CardTitle className="text-xs font-medium uppercase tracking-wider text-muted-foreground truncate">
                 A pagar
@@ -314,7 +314,7 @@ export default function VisaoGeral() {
       </div>
 
       {/* Gráfico principal */}
-      <Card className="vrz-card w-full">
+      <Card className="w-full">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             <BarChart3 size={18} className="text-muted-foreground" />
@@ -374,7 +374,7 @@ export default function VisaoGeral() {
 
       {/* Detalhamento por categoria */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
-        <Card className="vrz-card w-full">
+        <Card className="w-full">
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               <ArrowUpRight className="h-4 w-4 text-green-600" />
@@ -395,7 +395,7 @@ export default function VisaoGeral() {
           </CardContent>
         </Card>
 
-        <Card className="vrz-card w-full">
+        <Card className="w-full">
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               <ArrowDownRight className="h-4 w-4 text-red-600" />
@@ -419,7 +419,7 @@ export default function VisaoGeral() {
 
       {/* Top 5 lançamentos do período */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
-        <Card className="vrz-card w-full">
+        <Card className="w-full">
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               <Trophy className="h-4 w-4 text-green-600" />
@@ -453,7 +453,7 @@ export default function VisaoGeral() {
           </CardContent>
         </Card>
 
-        <Card className="vrz-card w-full">
+        <Card className="w-full">
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               <Trophy className="h-4 w-4 text-red-600" />

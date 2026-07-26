@@ -86,7 +86,8 @@ export function ManageDisciplinasDialog({
               </div>
               <Button
                 size="sm"
-                className="bg-brand hover:bg-brand/90 text-on-brand h-9 px-3 gap-1.5 flex-shrink-0"
+                variant="brand"
+                className="h-9 px-3 gap-1.5 flex-shrink-0"
                 onClick={() => setAddOpen(true)}
               >
                 <Plus className="h-4 w-4" />
@@ -159,11 +160,7 @@ export function ManageDisciplinasDialog({
             <Button variant="outline" onClick={() => setAddOpen(false)}>
               Cancelar
             </Button>
-            <Button
-              className="bg-brand hover:bg-brand/90 text-on-brand"
-              onClick={handleAdd}
-              disabled={adding || !newDisciplina.trim()}
-            >
+            <Button variant="brand" onClick={handleAdd} disabled={adding || !newDisciplina.trim()}>
               {adding ? "Adicionando..." : "Adicionar"}
             </Button>
           </DialogFooter>

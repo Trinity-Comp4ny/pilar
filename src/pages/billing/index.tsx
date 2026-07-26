@@ -74,7 +74,7 @@ export default function Billing() {
               <h3 className="text-lg font-medium text-slate-900">Sem assinatura ativa</h3>
               <p className="text-sm text-slate-500 mt-1">Escolha um plano pra começar a usar o Pilar.</p>
             </div>
-            <Button onClick={() => navigate("/planos")} className="bg-brand hover:bg-brand/90 text-ink">
+            <Button onClick={() => navigate("/planos")} variant="brand">
               Ver planos
             </Button>
           </CardContent>

@@ -124,7 +124,8 @@ export function PageHeader({
         {primaryAction && (
           <Button
             onClick={primaryAction.onClick}
-            className="rounded-full bg-brand text-ink hover:bg-brand/85 h-9 px-4 text-[13px] font-medium"
+            variant="brand"
+            className="rounded-full h-9 px-4 text-[13px] font-medium"
             {...gate}
           >
             {PrimaryIcon && <PrimaryIcon size={14} className="mr-1.5" />}
