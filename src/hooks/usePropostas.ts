@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { statusBadgeClasses, statusLabel } from "@/lib/status";
 import { supabase } from "@/integrations/supabase/client";
 
 export interface Proposta {
@@ -53,12 +54,15 @@ export const PROPOSTA_STATUS = {
   EXPIRADA: "expirada",
 } as const;
 
+// Cores derivam do registry único (ADR 0008): mudar tom = src/lib/status.ts.
+const propStatus = (s: string) => ({ label: statusLabel("proposta", s), color: statusBadgeClasses("proposta", s) });
+
 export const PROPOSTA_STATUS_CONFIG: Record<string, { label: string; color: string }> = {
-  rascunho: { label: "Rascunho", color: "bg-gray-100 text-gray-800" },
-  enviada: { label: "Enviada", color: "bg-blue-100 text-blue-800" },
-  aceita: { label: "Aceita", color: "bg-positive/10 text-positive-strong" },
-  recusada: { label: "Recusada", color: "bg-red-100 text-red-800" },
-  expirada: { label: "Expirada", color: "bg-yellow-100 text-yellow-800" },
+  rascunho: propStatus("rascunho"),
+  enviada: propStatus("enviada"),
+  aceita: propStatus("aceita"),
+  recusada: propStatus("recusada"),
+  expirada: propStatus("expirada"),
 };
 
 export const usePropostas = () => {

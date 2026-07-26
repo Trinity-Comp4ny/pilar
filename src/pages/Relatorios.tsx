@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import { statusBadgeClasses, statusLabel } from "@/lib/status";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -33,17 +34,21 @@ const RelatoriosRentabilidade = lazy(() => import("./relatorios/RelatoriosRentab
 
 type RentabilidadeMode = "projeto" | "cliente";
 
+// Cores derivam do registry único (ADR 0008): "Pago" tem a MESMA cor em todas
+// as telas. Mudar tom = src/lib/status.ts.
+const finStatus = (s: string) => ({ label: statusLabel("financeiro", s), className: statusBadgeClasses("financeiro", s) });
+
 const statusConfig: Record<string, { label: string; className: string }> = {
-  Pendente: { label: "Pendente", className: "bg-amber-100 text-amber-800 border-amber-200" },
-  Pago: { label: "Pago", className: "bg-emerald-100 text-emerald-800 border-emerald-200" },
-  Recebido: { label: "Recebido", className: "bg-emerald-100 text-emerald-800 border-emerald-200" },
-  Atrasado: { label: "Atrasado", className: "bg-red-100 text-red-800 border-red-200" },
-  Cancelado: { label: "Cancelado", className: "bg-gray-100 text-gray-500 border-gray-200" },
+  Pendente: finStatus("Pendente"),
+  Pago: finStatus("Pago"),
+  Recebido: finStatus("Recebido"),
+  Atrasado: finStatus("Atrasado"),
+  Cancelado: finStatus("Cancelado"),
 };
 
 const tipoConfig: Record<string, { className: string }> = {
-  Receita: { className: "bg-emerald-100 text-emerald-800 border-emerald-200" },
-  Despesa: { className: "bg-red-100 text-red-800 border-red-200" },
+  Receita: { className: statusBadgeClasses("tipo", "Receita") },
+  Despesa: { className: statusBadgeClasses("tipo", "Despesa") },
 };
 
 export default function Relatorios() {
