@@ -106,6 +106,28 @@ describe("contrato do pipeline", () => {
     expect(ci).toContain("scripts/deno-check.sh");
   });
 
+  // O deploy já ficou preso uma vez por depender do gate de tipos (run 30177061938):
+  // types.ts só pode ser regenerado depois que a migration está no banco, e o deploy
+  // que aplica a migration exigia types.ts em sync. Deadlock.
+  it("nenhum deploy depende do gate de sincronia de tipos", () => {
+    const deployBlocks = ci.split(/^ {2}deploy-/m).slice(1);
+    expect(deployBlocks.length).toBeGreaterThanOrEqual(2);
+    for (const block of deployBlocks) {
+      const needs = block.match(/needs:\s*\[([^\]]*)\]/)?.[1] ?? "";
+      expect(needs).not.toContain("types-sync");
+      expect(needs).not.toContain("ci-ok");
+      // ...mas continua exigindo que migrations e RLS tenham passado.
+      expect(needs).toContain("database");
+    }
+  });
+
+  it("o gate agregado inclui a sincronia de tipos, que bloqueia merge", () => {
+    const ciOk = ci.slice(ci.indexOf("\n  ci-ok:"));
+    const needs = ciOk.match(/needs:\s*\[([^\]]*)\]/)?.[1] ?? "";
+    expect(needs).toContain("types-sync");
+    expect(needs).toContain("database");
+  });
+
   it("todo job declara timeout, para um job travado não consumir 6h de runner", () => {
     // Conta só depois de `jobs:`, senão `push:` e `pull_request:` do bloco `on:`
     // entram na conta (têm a mesma indentação de um job).
