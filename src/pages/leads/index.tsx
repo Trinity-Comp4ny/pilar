@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { statusBadgeClasses, statusLabel } from "@/lib/status";
 import { useQueryClient } from "@tanstack/react-query";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Button } from "@/components/ui/button";
@@ -34,13 +35,16 @@ import {
   type Lead,
 } from "@/hooks/useLeads";
 
+// Cores derivam do registry único (ADR 0008): mudar tom = src/lib/status.ts.
+const leadStatus = (s: string) => ({ label: statusLabel("lead", s), color: statusBadgeClasses("lead", s) });
+
 const statusConfig: Record<string, { label: string; color: string }> = {
-  Novo: { label: "Novo", color: "bg-info-soft text-info-strong" },
-  "Em contato": { label: "Em Contato", color: "bg-highlight-soft text-highlight-strong" },
-  Proposta: { label: "Proposta Enviada", color: "bg-warning-soft text-warning-strong" },
-  Negociação: { label: "Em Negociação", color: "bg-brand text-ink" },
-  Ganho: { label: "Ganho", color: "bg-positive/10 text-positive-strong" },
-  Perdido: { label: "Perdido", color: "bg-danger-soft text-danger-strong" },
+  Novo: leadStatus("Novo"),
+  "Em contato": leadStatus("Em contato"),
+  Proposta: leadStatus("Proposta"),
+  Negociação: leadStatus("Negociação"),
+  Ganho: leadStatus("Ganho"),
+  Perdido: leadStatus("Perdido"),
 };
 
 const STATUS_DOT: Record<string, string> = {

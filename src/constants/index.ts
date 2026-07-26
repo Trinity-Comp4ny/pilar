@@ -1,3 +1,5 @@
+import { statusBadgeClasses, statusColumnClasses, statusLabel } from "@/lib/status";
+
 // Project Status
 export const PROJECT_STATUS = {
   PLANEJAMENTO: "Planejamento",
@@ -10,29 +12,20 @@ export const PROJECT_STATUS = {
 
 export type ProjectStatus = (typeof PROJECT_STATUS)[keyof typeof PROJECT_STATUS];
 
+// Cores derivam do registry único (ADR 0008): mudar tom = src/lib/status.ts.
+const projStatus = (s: ProjectStatus) => ({
+  label: statusLabel("projeto", s),
+  color: statusBadgeClasses("projeto", s),
+  columnColor: statusColumnClasses("projeto", s),
+});
+
 export const PROJECT_STATUS_CONFIG: Record<ProjectStatus, { label: string; color: string; columnColor: string }> = {
-  [PROJECT_STATUS.PLANEJAMENTO]: {
-    label: "Planejamento",
-    color: "bg-yellow-100 text-yellow-800",
-    columnColor: "bg-yellow-50",
-  },
-  [PROJECT_STATUS.EM_ANDAMENTO]: {
-    label: "Em andamento",
-    color: "bg-blue-100 text-blue-800",
-    columnColor: "bg-blue-50",
-  },
-  [PROJECT_STATUS.REVISAO]: { label: "Revisão", color: "bg-purple-100 text-purple-800", columnColor: "bg-purple-50" },
-  [PROJECT_STATUS.PARALISADO]: {
-    label: "Paralisado",
-    color: "bg-brand text-ink",
-    columnColor: "bg-brand/5",
-  },
-  [PROJECT_STATUS.CONCLUIDO]: {
-    label: "Concluído",
-    color: "bg-status-done/10 text-status-done",
-    columnColor: "bg-status-done/5",
-  },
-  [PROJECT_STATUS.CANCELADO]: { label: "Cancelado", color: "bg-red-100 text-red-800", columnColor: "bg-red-50" },
+  [PROJECT_STATUS.PLANEJAMENTO]: projStatus(PROJECT_STATUS.PLANEJAMENTO),
+  [PROJECT_STATUS.EM_ANDAMENTO]: projStatus(PROJECT_STATUS.EM_ANDAMENTO),
+  [PROJECT_STATUS.REVISAO]: projStatus(PROJECT_STATUS.REVISAO),
+  [PROJECT_STATUS.PARALISADO]: projStatus(PROJECT_STATUS.PARALISADO),
+  [PROJECT_STATUS.CONCLUIDO]: projStatus(PROJECT_STATUS.CONCLUIDO),
+  [PROJECT_STATUS.CANCELADO]: projStatus(PROJECT_STATUS.CANCELADO),
 };
 
 export const KANBAN_COLUMN_ORDER: ProjectStatus[] = [
