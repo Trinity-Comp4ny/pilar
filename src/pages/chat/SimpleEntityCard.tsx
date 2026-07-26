@@ -32,7 +32,17 @@ import { msgErro } from "./erros";
 import type { Draft, DraftCampos, Entidade } from "./useChat";
 
 type FieldType =
-  | "text" | "textarea" | "number" | "currency" | "phone" | "cpf" | "cnpj" | "cpfcnpj" | "date" | "select" | "selectSource";
+  | "text"
+  | "textarea"
+  | "number"
+  | "currency"
+  | "phone"
+  | "cpf"
+  | "cnpj"
+  | "cpfcnpj"
+  | "date"
+  | "select"
+  | "selectSource";
 type SourceKey = "clientes" | "leads" | "projetos";
 
 type Field = {
@@ -50,7 +60,10 @@ type EntConfig = { titulo: string; icon: LucideIcon; verbo: string; link: string
 
 const CONFIG: Partial<Record<Entidade, EntConfig>> = {
   cliente: {
-    titulo: "Novo cliente", icon: Building2, verbo: "Criar cliente", link: "/clientes",
+    titulo: "Novo cliente",
+    icon: Building2,
+    verbo: "Criar cliente",
+    link: "/clientes",
     fields: [
       { key: "nome", label: "Nome", type: "text", required: true },
       { key: "sobrenome", label: "Sobrenome", type: "text" },
@@ -63,7 +76,10 @@ const CONFIG: Partial<Record<Entidade, EntConfig>> = {
     ],
   },
   fornecedor: {
-    titulo: "Novo fornecedor", icon: Truck, verbo: "Criar fornecedor", link: "/fornecedores",
+    titulo: "Novo fornecedor",
+    icon: Truck,
+    verbo: "Criar fornecedor",
+    link: "/fornecedores",
     fields: [
       { key: "nome", label: "Nome", type: "text", required: true },
       { key: "cnpj", label: "CNPJ", type: "cnpj" },
@@ -73,14 +89,20 @@ const CONFIG: Partial<Record<Entidade, EntConfig>> = {
     ],
   },
   categoria: {
-    titulo: "Nova categoria", icon: Tag, verbo: "Criar categoria", link: "/financeiro",
+    titulo: "Nova categoria",
+    icon: Tag,
+    verbo: "Criar categoria",
+    link: "/financeiro",
     fields: [
       { key: "nome", label: "Nome", type: "text", required: true },
       { key: "tipo", label: "Tipo", type: "select", options: ["Receita", "Despesa"], required: true },
     ],
   },
   conta: {
-    titulo: "Nova conta bancária", icon: Landmark, verbo: "Cadastrar conta", link: "/financeiro",
+    titulo: "Nova conta bancária",
+    icon: Landmark,
+    verbo: "Cadastrar conta",
+    link: "/financeiro",
     fields: [
       { key: "nome", label: "Nome", type: "text", required: true },
       { key: "banco", label: "Banco", type: "text", required: true },
@@ -89,7 +111,10 @@ const CONFIG: Partial<Record<Entidade, EntConfig>> = {
     ],
   },
   centro_custo: {
-    titulo: "Novo centro de custo", icon: LayoutGrid, verbo: "Criar centro de custo", link: "/financeiro",
+    titulo: "Novo centro de custo",
+    icon: LayoutGrid,
+    verbo: "Criar centro de custo",
+    link: "/financeiro",
     fields: [
       { key: "nome", label: "Nome", type: "text", required: true },
       { key: "codigo", label: "Código", type: "text" },
@@ -97,7 +122,10 @@ const CONFIG: Partial<Record<Entidade, EntConfig>> = {
     ],
   },
   pessoa: {
-    titulo: "Nova pessoa", icon: User, verbo: "Cadastrar pessoa", link: "/equipe",
+    titulo: "Nova pessoa",
+    icon: User,
+    verbo: "Cadastrar pessoa",
+    link: "/equipe",
     fields: [
       { key: "primeiro_nome", label: "Primeiro nome", type: "text", required: true },
       { key: "sobrenome", label: "Sobrenome", type: "text", required: true },
@@ -111,7 +139,10 @@ const CONFIG: Partial<Record<Entidade, EntConfig>> = {
     ],
   },
   proposta: {
-    titulo: "Nova proposta", icon: FileText, verbo: "Criar proposta", link: "/documentos",
+    titulo: "Nova proposta",
+    icon: FileText,
+    verbo: "Criar proposta",
+    link: "/documentos",
     fields: [
       { key: "titulo", label: "Título", type: "text", required: true, full: true },
       { key: "cliente_id", label: "Cliente", type: "selectSource", source: "clientes", hintKey: "cliente_nome" },
@@ -125,9 +156,19 @@ const CONFIG: Partial<Record<Entidade, EntConfig>> = {
     ],
   },
   marco: {
-    titulo: "Novo marco de faturamento", icon: Flag, verbo: "Criar marco", link: "/financeiro",
+    titulo: "Novo marco de faturamento",
+    icon: Flag,
+    verbo: "Criar marco",
+    link: "/financeiro",
     fields: [
-      { key: "projeto_id", label: "Projeto", type: "selectSource", source: "projetos", hintKey: "projeto_nome", required: true },
+      {
+        key: "projeto_id",
+        label: "Projeto",
+        type: "selectSource",
+        source: "projetos",
+        hintKey: "projeto_nome",
+        required: true,
+      },
       { key: "nome", label: "Nome", type: "text", required: true },
       { key: "valor", label: "Valor", type: "currency", required: true },
       { key: "disciplina", label: "Disciplina", type: "text" },
@@ -136,9 +177,19 @@ const CONFIG: Partial<Record<Entidade, EntConfig>> = {
     ],
   },
   disciplina: {
-    titulo: "Nova disciplina", icon: Layers, verbo: "Adicionar disciplina", link: "/projetos",
+    titulo: "Nova disciplina",
+    icon: Layers,
+    verbo: "Adicionar disciplina",
+    link: "/projetos",
     fields: [
-      { key: "projeto_id", label: "Projeto", type: "selectSource", source: "projetos", hintKey: "projeto_nome", required: true },
+      {
+        key: "projeto_id",
+        label: "Projeto",
+        type: "selectSource",
+        source: "projetos",
+        hintKey: "projeto_nome",
+        required: true,
+      },
       { key: "nome", label: "Disciplina", type: "text", required: true },
       { key: "prioridade", label: "Prioridade", type: "select", options: ["Alta", "Media", "Baixa"] },
       { key: "horas_estimadas", label: "Horas estimadas", type: "number" },
@@ -369,7 +420,11 @@ export function SimpleEntityCard({ index, draft, entidade, onConfirmar, onCancel
             );
           if (f.type === "date")
             return wrap(
-              <DatePicker id={fieldId(f.key)} value={String(val ?? "")} onChange={(v) => setForm((p) => ({ ...p, [f.key]: v }))} />
+              <DatePicker
+                id={fieldId(f.key)}
+                value={String(val ?? "")}
+                onChange={(v) => setForm((p) => ({ ...p, [f.key]: v }))}
+              />
             );
           if (f.type === "select")
             return wrap(
@@ -402,12 +457,20 @@ export function SimpleEntityCard({ index, draft, entidade, onConfirmar, onCancel
               </Select>
             );
 
-          const displayVal = f.type === "currency" ? display[f.key] ?? "" : String(val ?? "");
+          const displayVal = f.type === "currency" ? (display[f.key] ?? "") : String(val ?? "");
           return wrap(
             <Input
               id={fieldId(f.key)}
               type={f.type === "number" ? "number" : "text"}
-              inputMode={f.type === "currency" || f.type === "cpf" || f.type === "cnpj" || f.type === "cpfcnpj" || f.type === "phone" ? "numeric" : undefined}
+              inputMode={
+                f.type === "currency" ||
+                f.type === "cpf" ||
+                f.type === "cnpj" ||
+                f.type === "cpfcnpj" ||
+                f.type === "phone"
+                  ? "numeric"
+                  : undefined
+              }
               value={displayVal}
               onChange={(e) => setMasked(f, e.target.value)}
               disabled={salvando}
@@ -426,7 +489,7 @@ export function SimpleEntityCard({ index, draft, entidade, onConfirmar, onCancel
           <Button variant="ghost" size="sm" onClick={cancelar} disabled={salvando}>
             Cancelar
           </Button>
-          <Button size="sm" onClick={criar} disabled={salvando} className="gap-1.5 bg-brand text-ink hover:bg-brand/90">
+          <Button size="sm" onClick={criar} disabled={salvando} variant="brand" className="gap-1.5">
             {salvando ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
             {cfg.verbo}
           </Button>

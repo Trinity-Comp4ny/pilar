@@ -3,13 +3,7 @@ import { monitoring } from "@/lib/monitoring";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, X, Loader2, User, Building2, Landmark, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -615,7 +609,9 @@ export function ClienteFormDialog({ open, onOpenChange, cliente, onSaved }: Clie
                             Ag. {conta.agencia} / Cc. {conta.conta}
                           </span>
                           <span className="text-xs text-muted-foreground capitalize shrink-0">{conta.tipo}</span>
-                          {conta.is_primary && <span className="text-[10px] text-foreground font-medium">Principal</span>}
+                          {conta.is_primary && (
+                            <span className="text-[10px] text-foreground font-medium">Principal</span>
+                          )}
                         </div>
                         <Button
                           type="button"
@@ -712,16 +708,11 @@ export function ClienteFormDialog({ open, onOpenChange, cliente, onSaved }: Clie
               </Button>
             )}
             {step === 1 && !isEditMode ? (
-              <Button type="button" onClick={goNext} className="bg-brand hover:bg-brand/90 text-ink">
+              <Button type="button" onClick={goNext} variant="brand">
                 Próximo
               </Button>
             ) : (
-              <Button
-                type="button"
-                onClick={handleSave}
-                className="bg-brand hover:bg-brand/90 text-ink"
-                disabled={isSaving}
-              >
+              <Button type="button" onClick={handleSave} variant="brand" disabled={isSaving}>
                 {isSaving ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Salvando...

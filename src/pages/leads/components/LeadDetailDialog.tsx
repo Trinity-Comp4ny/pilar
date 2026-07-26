@@ -210,7 +210,7 @@ export function LeadDetailDialog({
 
           <Button
             size="sm"
-            className="bg-brand hover:bg-brand/90 text-ink"
+            variant="brand"
             onClick={onCreateProposta}
             disabled={createPropostaPending || lead.status === "Perdido" || lead.status === "Ganho"}
           >

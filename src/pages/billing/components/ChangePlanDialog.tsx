@@ -113,11 +113,7 @@ export function ChangePlanDialog({ open, onOpenChange, current }: ChangePlanDial
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={manage.isPending}>
             Cancelar
           </Button>
-          <Button
-            onClick={handleConfirm}
-            disabled={manage.isPending || !selectedSlug}
-            className="bg-brand hover:bg-brand/90 text-ink"
-          >
+          <Button onClick={handleConfirm} disabled={manage.isPending || !selectedSlug} variant="brand">
             {manage.isPending ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Atualizando...

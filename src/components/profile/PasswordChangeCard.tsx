@@ -108,7 +108,7 @@ export function PasswordChangeCard({ currentEmail }: Props) {
               <Button variant="outline" onClick={reset} disabled={saving}>
                 Cancelar
               </Button>
-              <Button onClick={handleSave} disabled={saving} className="bg-brand hover:bg-brand/90 text-ink">
+              <Button onClick={handleSave} disabled={saving} variant="brand">
                 {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Salvar"}
               </Button>
             </div>

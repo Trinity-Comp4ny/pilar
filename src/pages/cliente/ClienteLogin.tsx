@@ -176,7 +176,8 @@ export default function ClienteLogin() {
               />
 
               <Button
-                className="w-full h-11 bg-brand hover:bg-brand/90 text-ink font-medium shadow-lg shadow-brand/20 hover:shadow-brand/30 transition-all active:scale-[0.98] text-sm"
+                variant="brand"
+                className="w-full h-11 font-medium shadow-lg shadow-brand/20 hover:shadow-brand/30 transition-all active:scale-[0.98] text-sm"
                 type="submit"
                 disabled={isLoading}
               >
@@ -197,9 +198,7 @@ export default function ClienteLogin() {
               <a
                 href={`mailto:${SUPORTE_EMAIL}?subject=${encodeURIComponent(
                   "Recuperar acesso ao portal do cliente"
-                )}&body=${encodeURIComponent(
-                  "Olá, preciso recuperar o acesso ao portal. Meu e-mail de cadastro é: "
-                )}`}
+                )}&body=${encodeURIComponent("Olá, preciso recuperar o acesso ao portal. Meu e-mail de cadastro é: ")}`}
                 className="font-medium text-ink hover:underline"
               >
                 Recuperar acesso

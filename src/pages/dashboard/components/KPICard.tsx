@@ -44,7 +44,7 @@ export function KPICard({
   return (
     <Card
       className={cn(
-        "vrz-card w-full",
+        "w-full",
         cardBg,
         onClick &&
           "cursor-pointer hover:shadow-md transition-all hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"

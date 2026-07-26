@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { formatCurrency as fmtMoeda } from "@/lib/format";
 import { useParams, useOutletContext, useLocation } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,25 +23,14 @@ function formatDate(d: string | null | undefined): string {
   return new Date(d + "T00:00:00").toLocaleDateString("pt-BR");
 }
 
-function AprovarPropostaCard({
-  projeto,
-  refresh,
-}: {
-  projeto: ClienteProjetoData;
-  refresh: () => void;
-}) {
+function AprovarPropostaCard({ projeto, refresh }: { projeto: ClienteProjetoData; refresh: () => void }) {
   const [loading, setLoading] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const { toast } = useToast();
 
-  const formatCurrency = (v: number | null) =>
-    v == null
-      ? "R$ 0,00"
-      : new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
+  const formatCurrency = (v: number | null) => (v == null ? "R$ 0,00" : fmtMoeda(v));
 
-  const escopo = (projeto.disciplinas ?? [])
-    .map((d) => d.disciplina)
-    .filter((nome): nome is string => !!nome);
+  const escopo = (projeto.disciplinas ?? []).map((d) => d.disciplina).filter((nome): nome is string => !!nome);
   const parcelas = projeto.receitas ?? [];
 
   const handleAprovar = async () => {
@@ -58,10 +48,17 @@ function AprovarPropostaCard({
 
       if (error) throw error;
 
-      toast({ title: "Proposta aprovada!", description: "Seu projeto foi confirmado. Em breve entraremos em contato." });
+      toast({
+        title: "Proposta aprovada!",
+        description: "Seu projeto foi confirmado. Em breve entraremos em contato.",
+      });
       refresh();
     } catch {
-      toast({ title: "Erro ao aprovar proposta", description: "Tente novamente em instantes.", variant: "destructive" });
+      toast({
+        title: "Erro ao aprovar proposta",
+        description: "Tente novamente em instantes.",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
@@ -143,21 +140,11 @@ function AprovarPropostaCard({
         </div>
 
         <div className="space-y-2">
-          <Button
-            className="w-full gap-2 bg-brand hover:bg-brand/90 text-ink"
-            onClick={() => setConfirmOpen(true)}
-            disabled={loading}
-          >
-            {loading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <CheckCircle2 className="h-4 w-4" />
-            )}
+          <Button variant="brand" className="w-full gap-2" onClick={() => setConfirmOpen(true)} disabled={loading}>
+            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
             {loading ? "Aprovando…" : "Aprovar proposta"}
           </Button>
-          <p className="text-center text-xs text-ink/60">
-            Precisa de ajustes? Fale com o escritório antes de aprovar.
-          </p>
+          <p className="text-center text-xs text-ink/60">Precisa de ajustes? Fale com o escritório antes de aprovar.</p>
         </div>
       </CardContent>
 
@@ -182,13 +169,7 @@ function AprovarPropostaCard({
   );
 }
 
-function ProjetoOverview({
-  projeto,
-  refresh,
-}: {
-  projeto: ClienteProjetoData;
-  refresh: () => void;
-}) {
+function ProjetoOverview({ projeto, refresh }: { projeto: ClienteProjetoData; refresh: () => void }) {
   const mostrarAprovar = projeto.projeto_status === "Proposta";
 
   return (

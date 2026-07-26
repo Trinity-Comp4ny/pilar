@@ -13,14 +13,21 @@ import { formatCurrency } from "@/lib/currencyUtils";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { useCartoesResumo, useContas, useFaturas, useDespesasFatura, useInvalidateFaturas, gerarFaturasCartao, type Fatura } from "../hooks/useFaturas";
+import {
+  useCartoesResumo,
+  useContas,
+  useFaturas,
+  useDespesasFatura,
+  useInvalidateFaturas,
+  gerarFaturasCartao,
+  type Fatura,
+} from "../hooks/useFaturas";
 import { usePagarFatura } from "../hooks/usePagarFatura";
 import { FinanceErrorState } from "../components/FinanceErrorState";
 import { DataTable, type ColumnDef } from "@/components/data/DataTable";
 import { toDataSourceResult } from "@/types/dataSource";
 
-const formatBRL = (v: number) =>
-  new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 2 }).format(v);
+const formatBRL = (v: number) => formatCurrency(v);
 
 const MESES = [
   "Janeiro",
@@ -42,7 +49,8 @@ function getStatusBadge(status: string, dataVencimento: string) {
   // no próprio dia do vencimento, em UTC-3.
   const isOverdue = status !== "Paga" && new Date(dataVencimento + "T00:00:00") < new Date();
 
-  if (status === "Paga") return <Badge className="bg-positive/10 text-positive-strong hover:bg-positive/10">Paga</Badge>;
+  if (status === "Paga")
+    return <Badge className="bg-positive/10 text-positive-strong hover:bg-positive/10">Paga</Badge>;
   if (isOverdue) return <Badge className="bg-red-100 text-red-800 hover:bg-red-100">Vencida</Badge>;
   if (status === "Parcial") return <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">Parcial</Badge>;
   if (status === "Fechada") return <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">Fechada</Badge>;
@@ -75,7 +83,8 @@ export default function Faturas() {
     void gerarFaturasCartao(selectedCartaoId)
       .then(() => invalidateFaturas())
       .catch((err) => {
-        const msg = err instanceof Error ? err.message : (err as { message?: string })?.message ?? "Erro ao gerar faturas";
+        const msg =
+          err instanceof Error ? err.message : ((err as { message?: string })?.message ?? "Erro ao gerar faturas");
         toast.error("Erro ao carregar faturas", { description: msg });
       });
   }, [selectedCartaoId, invalidateFaturas]);
@@ -191,9 +200,7 @@ export default function Faturas() {
         const restante = f.valor_total - f.valor_pago;
         return (
           <div className="text-right">
-            <p className="font-semibold">
-              R$ {f.valor_total.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-            </p>
+            <p className="font-semibold">R$ {f.valor_total.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
             {f.valor_pago > 0 && f.status !== "Paga" && (
               <p className="text-xs text-muted-foreground">
                 Restante: R$ {restante.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
@@ -220,7 +227,8 @@ export default function Faturas() {
             {isPagavel && (
               <Button
                 size="sm"
-                className="rounded-full bg-brand text-ink hover:bg-brand/90"
+                variant="brand"
+                className="rounded-full"
                 onClick={(e) => {
                   e.stopPropagation();
                   handleOpenPagamento(f);
@@ -240,7 +248,7 @@ export default function Faturas() {
   return (
     <div className="space-y-6 w-full max-w-none">
       {/* Seletor de Cartão */}
-      <Card className="vrz-card w-full">
+      <Card className="w-full">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <CreditCard className="h-5 w-5" />
@@ -312,7 +320,7 @@ export default function Faturas() {
 
       {/* Lista de Faturas */}
       {selectedCartao && (
-        <Card className="vrz-card w-full">
+        <Card className="w-full">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Receipt className="h-5 w-5" />
@@ -436,7 +444,8 @@ export default function Faturas() {
                         </p>
                       </div>
                       <Button
-                        className="rounded-full bg-brand hover:bg-brand/90 text-ink transition-colors px-5 py-2.5 text-sm"
+                        variant="brand"
+                        className="rounded-full px-5 py-2.5 text-sm"
                         onClick={() => handleOpenPagamento(selectedFatura)}
                       >
                         <DollarSign className="h-4 w-4 mr-2" />
@@ -528,7 +537,8 @@ export default function Faturas() {
               )}
 
               <Button
-                className="w-full rounded-full bg-brand hover:bg-brand/90 text-ink transition-colors px-5 py-2.5 text-sm"
+                variant="brand"
+                className="w-full rounded-full px-5 py-2.5 text-sm"
                 onClick={handlePagar}
                 disabled={pagarMutation.isPending || !contaPagamentoId}
               >

@@ -273,7 +273,10 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
         } else {
           const { data: empresaId, error: empresaError } = await supabase.rpc("get_user_empresa_id");
           if (empresaError || !empresaId) {
-            throw empresaError ?? new Error("Não foi possível identificar sua empresa. Recarregue a página e tente de novo.");
+            throw (
+              empresaError ??
+              new Error("Não foi possível identificar sua empresa. Recarregue a página e tente de novo.")
+            );
           }
           const { error } = await supabase.from("pessoas").insert({
             ...payload,
@@ -671,154 +674,161 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
           {/* STEP 3 — Dados Bancários */}
           {step === 3 &&
             (canEditSensitive ? (
-            <>
-              <div className="px-6 py-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <Label className="text-[10px] uppercase text-muted-foreground tracking-wider">Contas Bancárias</Label>
-                  <span className="text-[10px] text-muted-foreground">Para pagamento</span>
+              <>
+                <div className="px-6 py-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-[10px] uppercase text-muted-foreground tracking-wider">
+                      Contas Bancárias
+                    </Label>
+                    <span className="text-[10px] text-muted-foreground">Para pagamento</span>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
+                    <div className="space-y-1">
+                      <Label className="text-xs">Banco *</Label>
+                      <Input
+                        placeholder="Nome do banco"
+                        value={newConta.banco}
+                        onChange={(e) => setNewConta({ ...newConta, banco: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Agência *</Label>
+                      <Input
+                        placeholder="0000"
+                        value={newConta.agencia}
+                        onChange={(e) => setNewConta({ ...newConta, agencia: formatAgency(e.target.value) })}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Conta *</Label>
+                      <Input
+                        placeholder="000000-0"
+                        value={newConta.conta}
+                        onChange={(e) => setNewConta({ ...newConta, conta: formatBankAccount(e.target.value) })}
+                      />
+                    </div>
+                    <div className="flex items-end gap-2">
+                      <Select
+                        value={newConta.tipo}
+                        onValueChange={(value) => setNewConta({ ...newConta, tipo: value })}
+                      >
+                        <SelectTrigger className="flex-1">
+                          <SelectValue placeholder="Tipo" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="corrente">Corrente</SelectItem>
+                          <SelectItem value="poupanca">Poupança</SelectItem>
+                          <SelectItem value="pj">PJ</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="outline"
+                        className="h-9 w-9 shrink-0"
+                        onClick={handleAddConta}
+                        aria-label="Adicionar conta"
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+
+                  {contasBancarias.length > 0 && (
+                    <div className="space-y-1.5">
+                      {contasBancarias.map((conta, index) => (
+                        <div
+                          key={index}
+                          className={`flex items-center justify-between gap-3 border rounded-lg px-3 py-2 text-sm ${conta.is_primary ? "border-brand/40" : ""}`}
+                        >
+                          <div className="flex items-center gap-3 flex-1 min-w-0">
+                            <button
+                              type="button"
+                              className="shrink-0"
+                              onClick={() => handleSetPrimaryConta(index)}
+                              title="Definir como principal"
+                            >
+                              <Landmark
+                                className={`h-4 w-4 ${conta.is_primary ? "text-foreground" : "text-muted-foreground/40"}`}
+                              />
+                            </button>
+                            <span className="font-medium truncate">{conta.banco}</span>
+                            <span className="hidden md:inline text-xs text-muted-foreground shrink-0">
+                              Ag. {conta.agencia} / Cc. {conta.conta}
+                            </span>
+                            <span className="text-xs text-muted-foreground capitalize shrink-0">{conta.tipo}</span>
+                            {conta.is_primary && (
+                              <span className="text-[10px] text-foreground font-medium">Principal</span>
+                            )}
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-red-500 shrink-0"
+                            onClick={() => handleRemoveConta(index)}
+                            aria-label="Remover conta"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
-                  <div className="space-y-1">
-                    <Label className="text-xs">Banco *</Label>
-                    <Input
-                      placeholder="Nome do banco"
-                      value={newConta.banco}
-                      onChange={(e) => setNewConta({ ...newConta, banco: e.target.value })}
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs">Agência *</Label>
-                    <Input
-                      placeholder="0000"
-                      value={newConta.agencia}
-                      onChange={(e) => setNewConta({ ...newConta, agencia: formatAgency(e.target.value) })}
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs">Conta *</Label>
-                    <Input
-                      placeholder="000000-0"
-                      value={newConta.conta}
-                      onChange={(e) => setNewConta({ ...newConta, conta: formatBankAccount(e.target.value) })}
-                    />
-                  </div>
-                  <div className="flex items-end gap-2">
-                    <Select value={newConta.tipo} onValueChange={(value) => setNewConta({ ...newConta, tipo: value })}>
-                      <SelectTrigger className="flex-1">
-                        <SelectValue placeholder="Tipo" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="corrente">Corrente</SelectItem>
-                        <SelectItem value="poupanca">Poupança</SelectItem>
-                        <SelectItem value="pj">PJ</SelectItem>
-                      </SelectContent>
-                    </Select>
+                <div className="px-6 py-4 space-y-3">
+                  <Label className="text-[10px] uppercase text-muted-foreground tracking-wider">Chaves PIX</Label>
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <Input
+                        placeholder="CPF, CNPJ, e-mail, celular ou chave aleatória"
+                        value={newChavePix}
+                        onChange={(e) => setNewChavePix(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleAddChavePix())}
+                      />
+                      {newChavePix && (
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground">
+                          {(() => {
+                            const t = detectTipoChavePix(newChavePix);
+                            return t ? TIPO_CHAVE_PIX_LABEL[t] : "...";
+                          })()}
+                        </span>
+                      )}
+                    </div>
                     <Button
                       type="button"
                       size="icon"
                       variant="outline"
                       className="h-9 w-9 shrink-0"
-                      onClick={handleAddConta}
-                      aria-label="Adicionar conta"
+                      onClick={handleAddChavePix}
+                      aria-label="Adicionar chave PIX"
                     >
                       <Plus className="h-4 w-4" />
                     </Button>
                   </div>
-                </div>
-
-                {contasBancarias.length > 0 && (
-                  <div className="space-y-1.5">
-                    {contasBancarias.map((conta, index) => (
-                      <div
-                        key={index}
-                        className={`flex items-center justify-between gap-3 border rounded-lg px-3 py-2 text-sm ${conta.is_primary ? "border-brand/40" : ""}`}
-                      >
-                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                  {chavesPix.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {chavesPix.map((c, i) => (
+                        <Badge key={i} variant="secondary" className="flex items-center gap-1.5 pl-2 pr-1 py-1 text-xs">
+                          <span className="text-[10px] text-muted-foreground">
+                            {TIPO_CHAVE_PIX_LABEL[c.tipo as keyof typeof TIPO_CHAVE_PIX_LABEL] ?? c.tipo}
+                          </span>
+                          <span className="font-medium">{c.chave}</span>
                           <button
                             type="button"
-                            className="shrink-0"
-                            onClick={() => handleSetPrimaryConta(index)}
-                            title="Definir como principal"
+                            onClick={() => handleRemoveChavePix(i)}
+                            className="ml-0.5 hover:text-red-500"
                           >
-                            <Landmark
-                              className={`h-4 w-4 ${conta.is_primary ? "text-foreground" : "text-muted-foreground/40"}`}
-                            />
+                            <X className="h-3 w-3" />
                           </button>
-                          <span className="font-medium truncate">{conta.banco}</span>
-                          <span className="hidden md:inline text-xs text-muted-foreground shrink-0">
-                            Ag. {conta.agencia} / Cc. {conta.conta}
-                          </span>
-                          <span className="text-xs text-muted-foreground capitalize shrink-0">{conta.tipo}</span>
-                          {conta.is_primary && <span className="text-[10px] text-foreground font-medium">Principal</span>}
-                        </div>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 text-red-500 shrink-0"
-                          onClick={() => handleRemoveConta(index)}
-                          aria-label="Remover conta"
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              <div className="px-6 py-4 space-y-3">
-                <Label className="text-[10px] uppercase text-muted-foreground tracking-wider">Chaves PIX</Label>
-                <div className="flex gap-2">
-                  <div className="relative flex-1">
-                    <Input
-                      placeholder="CPF, CNPJ, e-mail, celular ou chave aleatória"
-                      value={newChavePix}
-                      onChange={(e) => setNewChavePix(e.target.value)}
-                      onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleAddChavePix())}
-                    />
-                    {newChavePix && (
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground">
-                        {(() => {
-                          const t = detectTipoChavePix(newChavePix);
-                          return t ? TIPO_CHAVE_PIX_LABEL[t] : "...";
-                        })()}
-                      </span>
-                    )}
-                  </div>
-                  <Button
-                    type="button"
-                    size="icon"
-                    variant="outline"
-                    className="h-9 w-9 shrink-0"
-                    onClick={handleAddChavePix}
-                    aria-label="Adicionar chave PIX"
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
                 </div>
-                {chavesPix.length > 0 && (
-                  <div className="flex flex-wrap gap-2">
-                    {chavesPix.map((c, i) => (
-                      <Badge key={i} variant="secondary" className="flex items-center gap-1.5 pl-2 pr-1 py-1 text-xs">
-                        <span className="text-[10px] text-muted-foreground">
-                          {TIPO_CHAVE_PIX_LABEL[c.tipo as keyof typeof TIPO_CHAVE_PIX_LABEL] ?? c.tipo}
-                        </span>
-                        <span className="font-medium">{c.chave}</span>
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveChavePix(i)}
-                          className="ml-0.5 hover:text-red-500"
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                      </Badge>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </>
+              </>
             ) : (
               <div className="px-6 py-8 text-center">
                 <p className="text-sm text-muted-foreground">
@@ -841,21 +851,11 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
               Cancelar
             </Button>
             {step < 3 ? (
-              <Button
-                type="button"
-                onClick={goNext}
-                className="bg-brand hover:bg-brand/90 text-ink"
-                disabled={isSubmitting}
-              >
+              <Button type="button" onClick={goNext} variant="brand" disabled={isSubmitting}>
                 Próximo →
               </Button>
             ) : (
-              <Button
-                type="button"
-                onClick={() => handleSubmit()}
-                className="bg-brand hover:bg-brand/90 text-ink"
-                disabled={isSubmitting}
-              >
+              <Button type="button" onClick={() => handleSubmit()} variant="brand" disabled={isSubmitting}>
                 {isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Salvando...

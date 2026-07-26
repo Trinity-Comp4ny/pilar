@@ -199,11 +199,7 @@ export function CategoryManager({ title, description, type, onCategoryChange }: 
                 >
                   Cancelar
                 </Button>
-                <Button
-                  onClick={handleAddCategory}
-                  className="flex-1 bg-brand hover:bg-brand/90 text-ink"
-                  disabled={isSaving}
-                >
+                <Button onClick={handleAddCategory} variant="brand" className="flex-1" disabled={isSaving}>
                   {isSaving ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Salvando...
@@ -294,11 +290,7 @@ export function CategoryManager({ title, description, type, onCategoryChange }: 
               >
                 Cancelar
               </Button>
-              <Button
-                onClick={handleEditCategory}
-                className="flex-1 bg-brand hover:bg-brand/90 text-ink"
-                disabled={isSaving}
-              >
+              <Button onClick={handleEditCategory} variant="brand" className="flex-1" disabled={isSaving}>
                 {isSaving ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Salvando...

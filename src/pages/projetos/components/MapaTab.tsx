@@ -1,4 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { formatCurrency as fmtMoeda } from "@/lib/format";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -41,7 +42,7 @@ import { cn } from "@/lib/utils";
 const MapCanvas = lazy(() => import("@/pages/mapa/MapCanvas"));
 
 function formatCurrency(v: number | null) {
-  return v ? new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v) : null;
+  return v ? fmtMoeda(v) : null;
 }
 
 function formatDate(d: string | null) {
@@ -77,7 +78,11 @@ export function MapaTab() {
     }
   }, []);
 
-  const { data: todosOsProjetos = [], isLoading, isError } = useQuery({
+  const {
+    data: todosOsProjetos = [],
+    isLoading,
+    isError,
+  } = useQuery({
     queryKey: ["projetos-mapa"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -233,9 +238,7 @@ export function MapaTab() {
                     >
                       <Building2 className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                       <span className="truncate">{c.nome}</span>
-                      <span className="ml-auto text-[10px] text-muted-foreground shrink-0">
-                        {c.projetos.length}p
-                      </span>
+                      <span className="ml-auto text-[10px] text-muted-foreground shrink-0">{c.projetos.length}p</span>
                     </CommandItem>
                   ))}
                 </CommandGroup>

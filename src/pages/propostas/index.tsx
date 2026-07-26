@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from "react";
+import { formatCurrency as fmtMoeda, formatDecimal } from "@/lib/format";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -219,9 +220,7 @@ export default function Propostas() {
       lead_id: p.lead_id || undefined,
     });
     setVinculoTipo(p.lead_id ? "lead" : "cliente");
-    setValorDisplay(
-      p.valor_proposto ? new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2 }).format(p.valor_proposto) : ""
-    );
+    setValorDisplay(p.valor_proposto ? formatDecimal(p.valor_proposto) : "");
     setIsFormOpen(true);
   };
 
@@ -368,8 +367,7 @@ export default function Propostas() {
     });
   };
 
-  const formatCurrency = (v: number | null) =>
-    v ? new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v) : "—";
+  const formatCurrency = (v: number | null) => (v ? fmtMoeda(v) : "—");
 
   const formatDate = (d: string | null) => (d ? new Date(d + "T00:00:00").toLocaleDateString("pt-BR") : "—");
 
@@ -1018,13 +1016,7 @@ export default function Propostas() {
                     <button
                       type="button"
                       className="text-ink underline underline-offset-2"
-                      onClick={() =>
-                        setValorDisplay(
-                          new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2 }).format(
-                            disciplinasTotais.totalValor
-                          )
-                        )
-                      }
+                      onClick={() => setValorDisplay(formatDecimal(disciplinasTotais.totalValor))}
                     >
                       usar a soma
                     </button>
@@ -1188,11 +1180,7 @@ export default function Propostas() {
             <Button variant="outline" onClick={() => setConvertPropostaId(null)}>
               Cancelar
             </Button>
-            <Button
-              onClick={handleConverterEmProjeto}
-              disabled={converterProposta.isPending}
-              className="bg-brand hover:bg-brand/90 text-ink"
-            >
+            <Button onClick={handleConverterEmProjeto} disabled={converterProposta.isPending} variant="brand">
               {converterProposta.isPending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Criando...

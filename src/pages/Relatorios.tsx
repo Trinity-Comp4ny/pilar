@@ -429,22 +429,22 @@ export default function Relatorios() {
 
               {/* Período (não se aplica a rentabilidade, que é acumulada por projeto) */}
               {!isRentabilidade && (
-              <div className="space-y-1.5 xl:w-48 shrink-0">
-                <Label className="text-xs font-medium text-muted-foreground">Período</Label>
-                <Select value={periodoPreset} onValueChange={(v) => applyPreset(v as typeof periodoPreset)}>
-                  <SelectTrigger className="h-9 bg-white">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="7d">Últimos 7 dias</SelectItem>
-                    <SelectItem value="30d">Últimos 30 dias</SelectItem>
-                    <SelectItem value="this_month">Mês atual</SelectItem>
-                    <SelectItem value="last_month">Mês anterior</SelectItem>
-                    <SelectItem value="all">Todos</SelectItem>
-                    <SelectItem value="custom">Personalizado</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+                <div className="space-y-1.5 xl:w-48 shrink-0">
+                  <Label className="text-xs font-medium text-muted-foreground">Período</Label>
+                  <Select value={periodoPreset} onValueChange={(v) => applyPreset(v as typeof periodoPreset)}>
+                    <SelectTrigger className="h-9 bg-white">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="7d">Últimos 7 dias</SelectItem>
+                      <SelectItem value="30d">Últimos 30 dias</SelectItem>
+                      <SelectItem value="this_month">Mês atual</SelectItem>
+                      <SelectItem value="last_month">Mês anterior</SelectItem>
+                      <SelectItem value="all">Todos</SelectItem>
+                      <SelectItem value="custom">Personalizado</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               )}
 
               {/* Datas customizadas (só aparecem quando "Personalizado") */}
@@ -509,11 +509,7 @@ export default function Relatorios() {
               )}
 
               {/* Botão gerar */}
-              <Button
-                onClick={handleGerarRelatorio}
-                className="h-9 px-5 bg-brand hover:bg-brand/90 text-ink shrink-0"
-                disabled={isLoading}
-              >
+              <Button onClick={handleGerarRelatorio} variant="brand" className="h-9 px-5 shrink-0" disabled={isLoading}>
                 <Plus className="mr-1.5 h-4 w-4" />
                 {isLoading ? "Gerando..." : "Gerar relatório"}
               </Button>
@@ -631,7 +627,8 @@ export default function Relatorios() {
                   </Button>
                   <Button
                     size="sm"
-                    className="h-8 text-xs gap-1.5 bg-brand text-ink hover:bg-brand/90"
+                    variant="brand"
+                    className="h-8 text-xs gap-1.5"
                     onClick={() => handleExport("pdf")}
                     disabled={!filteredData.length}
                   >
@@ -655,10 +652,7 @@ export default function Relatorios() {
                       <TableHeader>
                         <TableRow>
                           {cols.map((key) => (
-                            <TableHead
-                              key={key}
-                              className="whitespace-nowrap text-xs sticky top-0 z-10 bg-white"
-                            >
+                            <TableHead key={key} className="whitespace-nowrap text-xs sticky top-0 z-10 bg-white">
                               {key}
                             </TableHead>
                           ))}

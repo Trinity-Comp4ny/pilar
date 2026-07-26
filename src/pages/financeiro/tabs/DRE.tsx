@@ -1,11 +1,12 @@
 import { useState, useMemo } from "react";
+import { formatCurrency as fmtMoeda } from "@/lib/format";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, TrendingUp, TrendingDown } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-const formatCurrency = (v: number) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
+const formatCurrency = (v: number) => fmtMoeda(v);
 
 const formatPct = (v: number) => `${v >= 0 ? "+" : ""}${v.toFixed(1)}%`;
 

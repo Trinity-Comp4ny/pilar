@@ -124,10 +124,7 @@ export function ContaFormDialog({
               placeholder="CPF, CNPJ, e-mail, celular ou chave aleatória"
             />
           </div>
-          <Button
-            className="w-full rounded-full bg-brand hover:bg-brand/90 text-ink transition-colors px-5 py-2.5 text-sm"
-            onClick={onSave}
-          >
+          <Button variant="brand" className="w-full rounded-full px-5 py-2.5 text-sm" onClick={onSave}>
             {selectedConta ? "Atualizar Conta" : "Salvar Conta"}
           </Button>
         </div>

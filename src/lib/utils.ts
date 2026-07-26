@@ -20,9 +20,5 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function formatCurrency(value: number) {
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  }).format(value);
-}
+/** @deprecated Importe de "@/lib/format" (ADR 0008). Delegate mantido pela migração. */
+export { formatCurrency } from "./format";

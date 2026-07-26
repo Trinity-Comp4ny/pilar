@@ -21,43 +21,132 @@ type Props = {
 type Candidato = { id: string; label: string; email?: string };
 
 const META: Record<string, { titulo: string; verbo: string; targetKey: string; vazio: string; alvoLabel: string }> = {
-  converter_lead: { titulo: "Converter lead em cliente", verbo: "Converter", targetKey: "lead_id", alvoLabel: "Lead", vazio: "Nenhum lead em aberto para converter." },
-  converter_proposta: { titulo: "Converter proposta em projeto", verbo: "Converter", targetKey: "proposta_id", alvoLabel: "Proposta", vazio: "Nenhuma proposta em aberto para converter." },
-  marcar_recebido: { titulo: "Marcar receita como recebida", verbo: "Marcar recebida", targetKey: "receita_id", alvoLabel: "Receita", vazio: "Nenhuma receita pendente." },
-  marcar_pago: { titulo: "Marcar despesa como paga", verbo: "Marcar paga", targetKey: "despesa_id", alvoLabel: "Despesa", vazio: "Nenhuma despesa pendente." },
-  quitar_parcela: { titulo: "Quitar parcelas antecipado", verbo: "Quitar", targetKey: "grupo_id", alvoLabel: "Parcelamento", vazio: "Nenhum parcelamento em aberto." },
-  pagar_fatura: { titulo: "Pagar fatura de cartão", verbo: "Pagar", targetKey: "fatura_id", alvoLabel: "Fatura", vazio: "Nenhuma fatura em aberto." },
-  convidar_portal: { titulo: "Convidar cliente ao portal", verbo: "Convidar", targetKey: "cliente_id", alvoLabel: "Cliente", vazio: "Nenhum cliente cadastrado ainda." },
+  converter_lead: {
+    titulo: "Converter lead em cliente",
+    verbo: "Converter",
+    targetKey: "lead_id",
+    alvoLabel: "Lead",
+    vazio: "Nenhum lead em aberto para converter.",
+  },
+  converter_proposta: {
+    titulo: "Converter proposta em projeto",
+    verbo: "Converter",
+    targetKey: "proposta_id",
+    alvoLabel: "Proposta",
+    vazio: "Nenhuma proposta em aberto para converter.",
+  },
+  marcar_recebido: {
+    titulo: "Marcar receita como recebida",
+    verbo: "Marcar recebida",
+    targetKey: "receita_id",
+    alvoLabel: "Receita",
+    vazio: "Nenhuma receita pendente.",
+  },
+  marcar_pago: {
+    titulo: "Marcar despesa como paga",
+    verbo: "Marcar paga",
+    targetKey: "despesa_id",
+    alvoLabel: "Despesa",
+    vazio: "Nenhuma despesa pendente.",
+  },
+  quitar_parcela: {
+    titulo: "Quitar parcelas antecipado",
+    verbo: "Quitar",
+    targetKey: "grupo_id",
+    alvoLabel: "Parcelamento",
+    vazio: "Nenhum parcelamento em aberto.",
+  },
+  pagar_fatura: {
+    titulo: "Pagar fatura de cartão",
+    verbo: "Pagar",
+    targetKey: "fatura_id",
+    alvoLabel: "Fatura",
+    vazio: "Nenhuma fatura em aberto.",
+  },
+  convidar_portal: {
+    titulo: "Convidar cliente ao portal",
+    verbo: "Convidar",
+    targetKey: "cliente_id",
+    alvoLabel: "Cliente",
+    vazio: "Nenhum cliente cadastrado ainda.",
+  },
 };
 
 async function fetchCandidatos(op: string): Promise<Candidato[]> {
   if (op === "converter_lead") {
-    const { data } = await supabase.from("leads").select("id, nome").is("cliente_id", null).is("deleted_at", null).order("nome");
+    const { data } = await supabase
+      .from("leads")
+      .select("id, nome")
+      .is("cliente_id", null)
+      .is("deleted_at", null)
+      .order("nome");
     return (data ?? []).map((l: { id: string; nome: string }) => ({ id: l.id, label: l.nome }));
   }
   if (op === "converter_proposta") {
-    const { data } = await supabase.from("propostas").select("id, titulo").is("projeto_id", null).is("deleted_at", null).order("titulo");
+    const { data } = await supabase
+      .from("propostas")
+      .select("id, titulo")
+      .is("projeto_id", null)
+      .is("deleted_at", null)
+      .order("titulo");
     return (data ?? []).map((p: { id: string; titulo: string }) => ({ id: p.id, label: p.titulo }));
   }
   if (op === "marcar_recebido") {
-    const { data } = await supabase.from("receitas").select("id, descricao, valor").eq("status", "Pendente").is("deleted_at", null).order("data_vencimento");
-    return (data ?? []).map((r: { id: string; descricao: string; valor: number }) => ({ id: r.id, label: `${r.descricao} · ${formatCurrency(Number(r.valor))}` }));
+    const { data } = await supabase
+      .from("receitas")
+      .select("id, descricao, valor")
+      .eq("status", "Pendente")
+      .is("deleted_at", null)
+      .order("data_vencimento");
+    return (data ?? []).map((r: { id: string; descricao: string; valor: number }) => ({
+      id: r.id,
+      label: `${r.descricao} · ${formatCurrency(Number(r.valor))}`,
+    }));
   }
   if (op === "marcar_pago") {
-    const { data } = await supabase.from("despesas").select("id, descricao, valor").eq("status", "Pendente").eq("is_fatura_payment", false).is("deleted_at", null).order("data_vencimento");
-    return (data ?? []).map((d: { id: string; descricao: string; valor: number }) => ({ id: d.id, label: `${d.descricao} · ${formatCurrency(Number(d.valor))}` }));
+    const { data } = await supabase
+      .from("despesas")
+      .select("id, descricao, valor")
+      .eq("status", "Pendente")
+      .eq("is_fatura_payment", false)
+      .is("deleted_at", null)
+      .order("data_vencimento");
+    return (data ?? []).map((d: { id: string; descricao: string; valor: number }) => ({
+      id: d.id,
+      label: `${d.descricao} · ${formatCurrency(Number(d.valor))}`,
+    }));
   }
   if (op === "quitar_parcela") {
-    const { data } = await supabase.from("grupos_parcela").select("id, descricao, tipo_lancamento").is("deleted_at", null).order("created_at", { ascending: false });
-    return (data ?? []).map((g: { id: string; descricao: string | null; tipo_lancamento: string }) => ({ id: g.id, label: `${g.descricao ?? "Parcelamento"} (${g.tipo_lancamento})` }));
+    const { data } = await supabase
+      .from("grupos_parcela")
+      .select("id, descricao, tipo_lancamento")
+      .is("deleted_at", null)
+      .order("created_at", { ascending: false });
+    return (data ?? []).map((g: { id: string; descricao: string | null; tipo_lancamento: string }) => ({
+      id: g.id,
+      label: `${g.descricao ?? "Parcelamento"} (${g.tipo_lancamento})`,
+    }));
   }
   if (op === "pagar_fatura") {
-    const { data } = await supabase.from("faturas").select("id, mes_referencia, ano_referencia, valor_total, status").neq("status", "Paga").order("ano_referencia", { ascending: false });
-    return (data ?? []).map((f: { id: string; mes_referencia: number; ano_referencia: number; valor_total: number }) => ({ id: f.id, label: `Fatura ${f.mes_referencia}/${f.ano_referencia} · ${formatCurrency(Number(f.valor_total))}` }));
+    const { data } = await supabase
+      .from("faturas")
+      .select("id, mes_referencia, ano_referencia, valor_total, status")
+      .neq("status", "Paga")
+      .order("ano_referencia", { ascending: false });
+    return (data ?? []).map(
+      (f: { id: string; mes_referencia: number; ano_referencia: number; valor_total: number }) => ({
+        id: f.id,
+        label: `Fatura ${f.mes_referencia}/${f.ano_referencia} · ${formatCurrency(Number(f.valor_total))}`,
+      })
+    );
   }
   if (op === "convidar_portal") {
     const { data } = await supabase.from("clientes").select("id, nome, email").is("deleted_at", null).order("nome");
-    return (data ?? []).map((c: { id: string; nome: string; email: string | null }) => ({ id: c.id, label: c.nome, email: c.email ?? undefined }));
+    return (data ?? []).map((c: { id: string; nome: string; email: string | null }) => ({
+      id: c.id,
+      label: c.nome,
+      email: c.email ?? undefined,
+    }));
   }
   return [];
 }
@@ -134,13 +223,19 @@ export function AcaoCard({ index, acao, onExecutar, onCancelar }: Props) {
     );
   }
   if (acao.status === "cancelado") {
-    return <div className="w-full max-w-md rounded-2xl border border-border bg-muted/40 p-4 text-sm text-muted-foreground">Ação cancelada.</div>;
+    return (
+      <div className="w-full max-w-md rounded-2xl border border-border bg-muted/40 p-4 text-sm text-muted-foreground">
+        Ação cancelada.
+      </div>
+    );
   }
 
   return (
     <div className="w-full max-w-md rounded-2xl border border-border bg-card shadow-elegant">
       <div className="flex items-center gap-2 border-b border-border px-4 py-3">
-        <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-brand text-ink"><Zap className="h-4 w-4" /></span>
+        <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-brand text-ink">
+          <Zap className="h-4 w-4" />
+        </span>
         <div>
           <p className="text-sm font-medium leading-none text-foreground">{meta.titulo}</p>
           <p className="mt-1 text-xs text-muted-foreground">Escolha o alvo e confirme</p>
@@ -155,12 +250,22 @@ export function AcaoCard({ index, acao, onExecutar, onCancelar }: Props) {
             <Label htmlFor={`${idBase}-alvo`} className="text-xs text-muted-foreground">
               {meta.alvoLabel}
             </Label>
-            <Select value={alvo} onValueChange={(v) => { setAlvo(v); setEmail(candidatos.data?.find((c) => c.id === v)?.email ?? ""); }}>
+            <Select
+              value={alvo}
+              onValueChange={(v) => {
+                setAlvo(v);
+                setEmail(candidatos.data?.find((c) => c.id === v)?.email ?? "");
+              }}
+            >
               <SelectTrigger id={`${idBase}-alvo`} className="h-9">
                 <SelectValue placeholder={candidatos.isLoading ? "Carregando…" : "Selecione…"} />
               </SelectTrigger>
               <SelectContent>
-                {(candidatos.data ?? []).map((c) => <SelectItem key={c.id} value={c.id}>{c.label}</SelectItem>)}
+                {(candidatos.data ?? []).map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    {c.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -168,36 +273,72 @@ export function AcaoCard({ index, acao, onExecutar, onCancelar }: Props) {
 
         {precisaConta && !semCandidatos && (
           <div className="space-y-1.5">
-            <Label htmlFor={`${idBase}-conta`} className="text-xs text-muted-foreground">Conta de pagamento</Label>
+            <Label htmlFor={`${idBase}-conta`} className="text-xs text-muted-foreground">
+              Conta de pagamento
+            </Label>
             <Select value={contaId} onValueChange={setContaId}>
-              <SelectTrigger id={`${idBase}-conta`} className="h-9"><SelectValue placeholder="Selecione…" /></SelectTrigger>
+              <SelectTrigger id={`${idBase}-conta`} className="h-9">
+                <SelectValue placeholder="Selecione…" />
+              </SelectTrigger>
               <SelectContent>
-                {(contas.data ?? []).map((c) => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
+                {(contas.data ?? []).map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    {c.nome}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
         )}
         {precisaEmail && !semCandidatos && (
           <div className="space-y-1.5">
-            <Label htmlFor={`${idBase}-email`} className="text-xs text-muted-foreground">E-mail do convite</Label>
-            <Input id={`${idBase}-email`} value={email} onChange={(e) => setEmail(e.target.value)} placeholder="email@cliente.com" disabled={salvando} className="h-9" />
+            <Label htmlFor={`${idBase}-email`} className="text-xs text-muted-foreground">
+              E-mail do convite
+            </Label>
+            <Input
+              id={`${idBase}-email`}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="email@cliente.com"
+              disabled={salvando}
+              className="h-9"
+            />
           </div>
         )}
         {permiteQtd && !semCandidatos && (
           <div className="space-y-1.5">
-            <Label htmlFor={`${idBase}-qtd`} className="text-xs text-muted-foreground">Quantidade de parcelas (vazio = todas em aberto)</Label>
-            <Input id={`${idBase}-qtd`} type="number" min={1} value={quantidade} onChange={(e) => setQuantidade(e.target.value)} disabled={salvando} className="h-9" />
+            <Label htmlFor={`${idBase}-qtd`} className="text-xs text-muted-foreground">
+              Quantidade de parcelas (vazio = todas em aberto)
+            </Label>
+            <Input
+              id={`${idBase}-qtd`}
+              type="number"
+              min={1}
+              value={quantidade}
+              onChange={(e) => setQuantidade(e.target.value)}
+              disabled={salvando}
+              className="h-9"
+            />
           </div>
         )}
       </div>
 
       <div className="flex items-center justify-between gap-2 border-t border-border px-4 py-3">
         <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          <Coins className="h-3.5 w-3.5" /> Debita {acao.custoCreditos} crédito{acao.custoCreditos === 1 ? "" : "s"} de IA
+          <Coins className="h-3.5 w-3.5" /> Debita {acao.custoCreditos} crédito{acao.custoCreditos === 1 ? "" : "s"} de
+          IA
         </span>
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm" onClick={cancelar} disabled={salvando}>Cancelar</Button>
-          <Button size="sm" onClick={executar} disabled={salvando || !alvo || semCandidatos} className="gap-1.5 bg-brand text-ink hover:bg-brand/90">
+          <Button variant="ghost" size="sm" onClick={cancelar} disabled={salvando}>
+            Cancelar
+          </Button>
+          <Button
+            size="sm"
+            onClick={executar}
+            disabled={salvando || !alvo || semCandidatos}
+            variant="brand"
+            className="gap-1.5"
+          >
             {salvando ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />} {meta.verbo}
           </Button>
         </div>

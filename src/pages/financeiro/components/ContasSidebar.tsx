@@ -1,14 +1,10 @@
 import type { ReactNode } from "react";
+import { formatCurrency } from "@/lib/format";
 import { CreditCard, Wallet } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ContaItem, CartaoItem } from "../hooks/useContasCartoes";
 
-const fmtCompactBRL = new Intl.NumberFormat("pt-BR", {
-  style: "currency",
-  currency: "BRL",
-  notation: "compact",
-  maximumFractionDigits: 1,
-});
+const fmtCompactBRL = { format: (v: number) => formatCurrency(v, { compact: true }) };
 
 interface ContasSidebarProps {
   contas: ContaItem[];

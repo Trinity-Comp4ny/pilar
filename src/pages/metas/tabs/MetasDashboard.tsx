@@ -69,7 +69,13 @@ export default function MetasDashboard() {
       color: "text-ink",
       bg: "bg-brand/10",
     },
-    { label: "Concluídas", value: stats.completed, icon: CheckCircle2, color: "text-positive-strong", bg: "bg-positive/10" },
+    {
+      label: "Concluídas",
+      value: stats.completed,
+      icon: CheckCircle2,
+      color: "text-positive-strong",
+      bg: "bg-positive/10",
+    },
     { label: "Progresso Médio", value: `${stats.avgProgress}%`, icon: Clock, color: "text-blue-600", bg: "bg-blue-50" },
     { label: "Atrasadas", value: stats.overdue, icon: AlertTriangle, color: "text-red-600", bg: "bg-red-50" },
   ];
@@ -89,7 +95,7 @@ export default function MetasDashboard() {
         {summaryCards.map((card) => {
           const Icon = card.icon;
           return (
-            <Card key={card.label} className="vrz-card">
+            <Card key={card.label} className="">
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
                   <div className={`p-2 rounded-lg ${card.bg}`}>
@@ -108,7 +114,7 @@ export default function MetasDashboard() {
 
       <div className="grid lg:grid-cols-2 gap-6">
         {/* Chart - Metas por Tipo */}
-        <Card className="vrz-card">
+        <Card className="">
           <CardHeader>
             <CardTitle className="text-base">Metas por Categoria</CardTitle>
             <CardDescription>Comparativo de progresso por tipo de meta</CardDescription>
@@ -135,7 +141,7 @@ export default function MetasDashboard() {
         </Card>
 
         {/* Top Metas */}
-        <Card className="vrz-card">
+        <Card className="">
           <CardHeader>
             <CardTitle className="text-base">Top 5 Metas</CardTitle>
             <CardDescription>Metas com maior progresso</CardDescription>
@@ -179,13 +185,19 @@ export default function MetasDashboard() {
       {/* Resumo por tipo */}
       <div className="grid md:grid-cols-3 gap-4">
         {[
-          { label: "Financeiras", icon: TrendingUp, stats: finStats, color: "text-positive-strong", bg: "bg-positive/10" },
+          {
+            label: "Financeiras",
+            icon: TrendingUp,
+            stats: finStats,
+            color: "text-positive-strong",
+            bg: "bg-positive/10",
+          },
           { label: "Pessoais", icon: Users, stats: pesStats, color: "text-blue-600", bg: "bg-blue-50" },
           { label: "Projetos", icon: Calendar, stats: projStats, color: "text-purple-600", bg: "bg-purple-50" },
         ].map((item) => {
           const Icon = item.icon;
           return (
-            <Card key={item.label} className="vrz-card">
+            <Card key={item.label} className="">
               <CardContent className="p-4">
                 <div className="flex items-center gap-3 mb-3">
                   <div className={`p-2 rounded-lg ${item.bg}`}>

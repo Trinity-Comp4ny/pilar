@@ -2,15 +2,8 @@
  * Utilitários para formatação de valores monetários
  */
 
-/**
- * Formata um valor numérico para o formato de moeda brasileira (R$)
- */
-export const formatCurrency = (value: number): string => {
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  }).format(value);
-};
+/** @deprecated Importe de "@/lib/format" (ADR 0008). Delegate mantido pela migração. */
+export { formatCurrency } from "./format";
 
 export const removeNonNumeric = (value: string): string => {
   return value.replace(/\D/g, "");

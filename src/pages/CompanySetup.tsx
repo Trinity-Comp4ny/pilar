@@ -188,7 +188,8 @@ export default function CompanySetup() {
               />
 
               <Button
-                className="w-full h-11 bg-brand hover:bg-brand/90 text-ink font-medium shadow-lg shadow-brand/20 hover:shadow-brand/30 transition-all active:scale-[0.98] text-sm"
+                variant="brand"
+                className="w-full h-11 font-medium shadow-lg shadow-brand/20 hover:shadow-brand/30 transition-all active:scale-[0.98] text-sm"
                 type="submit"
                 disabled={isLoading}
               >

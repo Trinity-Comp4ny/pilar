@@ -18,6 +18,8 @@ const buttonVariants = cva(
         secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "before:hidden hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 before:hidden hover:underline",
+        brand: "bg-brand text-ink hover:bg-brand/90",
+        /** @deprecated nome legado; use "brand" (ADR 0008). Remover após a onda 1. */
         orange: "bg-brand text-ink hover:bg-brand/90",
       },
       size: {
