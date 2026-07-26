@@ -49,11 +49,7 @@ export function CompanyDataTab({
           <CardDescription className="mt-1">Informações gerais sobre a empresa</CardDescription>
         </div>
         {!editing ? (
-          <Button
-            onClick={onEdit}
-            className="rounded-full bg-brand hover:bg-brand/90 text-ink"
-            disabled={!isAdmin || isLoading}
-          >
+          <Button onClick={onEdit} variant="brand" className="rounded-full" disabled={!isAdmin || isLoading}>
             Editar
           </Button>
         ) : (
@@ -61,7 +57,7 @@ export function CompanyDataTab({
             <Button variant="outline" onClick={onCancel} className="rounded-full">
               Cancelar
             </Button>
-            <Button onClick={onSave} className="rounded-full bg-brand hover:bg-brand/90 text-ink">
+            <Button onClick={onSave} variant="brand" className="rounded-full">
               Salvar
             </Button>
           </div>

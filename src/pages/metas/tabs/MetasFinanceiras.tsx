@@ -162,7 +162,7 @@ export default function MetasFinanceiras() {
 
   return (
     <div className="space-y-6 w-full max-w-none">
-      <Card className="vrz-card w-full">
+      <Card className="w-full">
         <CardHeader>
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
             <div>
@@ -171,7 +171,7 @@ export default function MetasFinanceiras() {
             </div>
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="bg-brand hover:bg-brand/90 text-ink rounded-full">
+                <Button variant="brand" className="rounded-full">
                   <Plus className="mr-2 h-4 w-4" />
                   Nova Meta
                 </Button>
@@ -265,7 +265,8 @@ export default function MetasFinanceiras() {
 
                   <Button
                     type="submit"
-                    className="w-full bg-brand hover:bg-brand/90 text-ink rounded-full"
+                    variant="brand"
+                    className="w-full rounded-full"
                     disabled={createMetaMutation.isPending}
                   >
                     {createMetaMutation.isPending ? "Salvando..." : "Salvar Meta"}
@@ -336,7 +337,8 @@ export default function MetasFinanceiras() {
                   </div>
                   <Button
                     type="submit"
-                    className="w-full bg-brand hover:bg-brand/90 text-ink rounded-full"
+                    variant="brand"
+                    className="w-full rounded-full"
                     disabled={updateMetaMutation.isPending}
                   >
                     {updateMetaMutation.isPending ? "Atualizando..." : "Atualizar Meta"}
@@ -379,7 +381,7 @@ export default function MetasFinanceiras() {
               return (
                 <Card
                   key={meta.id}
-                  className={cn("vrz-card border-2 transition-all", isCompleted && "border-status-done bg-positive/10")}
+                  className={cn("border-2 transition-all", isCompleted && "border-status-done bg-positive/10")}
                 >
                   <CardContent className="p-4 space-y-3">
                     {/* Linha 1: ações */}

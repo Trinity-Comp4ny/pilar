@@ -25,7 +25,7 @@ export default function MetasSummary() {
 
   if (isLoading) {
     return (
-      <Card className="vrz-card w-full h-full">
+      <Card className="w-full h-full">
         <CardHeader className="flex flex-row items-center justify-between pb-3">
           <div>
             <CardTitle className="flex items-center gap-2">
@@ -43,7 +43,7 @@ export default function MetasSummary() {
   }
 
   return (
-    <Card className="vrz-card w-full h-full">
+    <Card className="w-full h-full">
       <CardHeader className="flex flex-row items-center justify-between pb-3">
         <div>
           <CardTitle className="flex items-center gap-2">

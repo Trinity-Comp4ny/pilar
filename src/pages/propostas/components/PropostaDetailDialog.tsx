@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { formatCurrency as fmtMoeda } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -65,8 +66,7 @@ interface PropostaDetailDialogProps {
   isUpdating?: boolean;
 }
 
-const formatCurrency = (v: number | null) =>
-  v ? new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v) : "—";
+const formatCurrency = (v: number | null) => (v ? fmtMoeda(v) : "—");
 
 const formatDate = (d: string | null) => (d ? new Date(d + "T00:00:00").toLocaleDateString("pt-BR") : "—");
 
@@ -187,9 +187,7 @@ export function PropostaDetailDialog({
             <div className="min-w-0">
               <DialogTitle className="text-base leading-snug">{proposta.titulo}</DialogTitle>
               {proposta.codigo && <p className="text-xs text-muted-foreground font-mono mt-0.5">{proposta.codigo}</p>}
-              <DialogDescription className="sr-only">
-                Detalhes e ações da proposta {proposta.titulo}
-              </DialogDescription>
+              <DialogDescription className="sr-only">Detalhes e ações da proposta {proposta.titulo}</DialogDescription>
             </div>
             <Badge className={`text-[11px] flex-shrink-0 mt-0.5 ${PROPOSTA_STATUS_CONFIG[displayStatus]?.color || ""}`}>
               {PROPOSTA_STATUS_CONFIG[displayStatus]?.label || displayStatus}

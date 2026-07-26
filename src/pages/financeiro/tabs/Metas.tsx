@@ -200,7 +200,7 @@ export default function Metas() {
 
   return (
     <div className="space-y-6 w-full max-w-none">
-      <Card className="vrz-card w-full">
+      <Card className="w-full">
         <CardHeader>
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
             <div>
@@ -210,7 +210,7 @@ export default function Metas() {
 
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="bg-brand hover:bg-brand/90 text-ink rounded-full">
+                <Button variant="brand" className="rounded-full">
                   <Plus className="mr-2 h-4 w-4" />
                   Nova Meta
                 </Button>
@@ -271,7 +271,8 @@ export default function Metas() {
                   </div>
                   <Button
                     type="submit"
-                    className="w-full bg-brand hover:bg-brand/90 text-ink rounded-full"
+                    variant="brand"
+                    className="w-full rounded-full"
                     disabled={createMetaMutation.isPending}
                   >
                     {createMetaMutation.isPending ? "Salvando..." : "Salvar Meta"}
@@ -346,7 +347,8 @@ export default function Metas() {
                   </div>
                   <Button
                     type="submit"
-                    className="w-full bg-brand hover:bg-brand/90 text-ink rounded-full"
+                    variant="brand"
+                    className="w-full rounded-full"
                     disabled={updateMetaMutation.isPending}
                   >
                     {updateMetaMutation.isPending ? "Atualizando..." : "Atualizar Meta"}
@@ -390,7 +392,7 @@ export default function Metas() {
               return (
                 <Card
                   key={meta.id}
-                  className={cn("vrz-card border-2 transition-all", isCompleted && "border-status-done bg-positive/10")}
+                  className={cn("border-2 transition-all", isCompleted && "border-status-done bg-positive/10")}
                 >
                   <CardHeader className="pb-2">
                     <div className="flex justify-between items-start">
@@ -404,7 +406,9 @@ export default function Metas() {
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className={cn("text-2xl font-bold", isCompleted && "text-positive-strong")}>{percent}%</span>
+                        <span className={cn("text-2xl font-bold", isCompleted && "text-positive-strong")}>
+                          {percent}%
+                        </span>
                         <Button
                           variant="ghost"
                           size="icon"

@@ -136,7 +136,8 @@ export function MfaChallenge({ onVerified }: MfaChallengeProps) {
           <Button
             onClick={handleResetAndSetup}
             disabled={resetting}
-            className="w-full h-11 bg-brand hover:bg-brand/90 text-ink font-medium"
+            variant="brand"
+            className="w-full h-11 font-medium"
           >
             {resetting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <RefreshCw className="h-4 w-4 mr-2" />}
             Reiniciar configuração do MFA
@@ -149,14 +150,8 @@ export function MfaChallenge({ onVerified }: MfaChallengeProps) {
       <div className="space-y-4 text-center">
         <ShieldCheck className="h-12 w-12 mx-auto text-foreground" />
         <h2 className="text-xl font-semibold text-ink">MFA não configurado</h2>
-        <p className="text-sm text-ink-soft">
-          Esta conta exige autenticação de dois fatores para continuar.
-        </p>
-        <Button
-          onClick={handleResetAndSetup}
-          disabled={resetting}
-          className="w-full h-11 bg-brand hover:bg-brand/90 text-ink font-medium"
-        >
+        <p className="text-sm text-ink-soft">Esta conta exige autenticação de dois fatores para continuar.</p>
+        <Button onClick={handleResetAndSetup} disabled={resetting} variant="brand" className="w-full h-11 font-medium">
           {resetting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <ShieldCheck className="h-4 w-4 mr-2" />}
           Configurar agora
         </Button>
@@ -204,7 +199,10 @@ export function MfaChallenge({ onVerified }: MfaChallengeProps) {
           <div className="flex justify-center">
             <button
               type="button"
-              onClick={() => { setBackupMode(false); setBackupCode(""); }}
+              onClick={() => {
+                setBackupMode(false);
+                setBackupCode("");
+              }}
               className="text-xs text-ink-soft hover:text-ink transition-colors underline"
             >
               Voltar para autenticador
@@ -251,7 +249,8 @@ export function MfaChallenge({ onVerified }: MfaChallengeProps) {
 
           <Button
             onClick={() => handleVerify(code)}
-            className="w-full h-11 bg-brand hover:bg-brand/90 text-ink font-medium shadow-lg shadow-brand/20 hover:shadow-brand/30 transition-all active:scale-[0.98] text-sm"
+            variant="brand"
+            className="w-full h-11 font-medium shadow-lg shadow-brand/20 hover:shadow-brand/30 transition-all active:scale-[0.98] text-sm"
             disabled={submitting || code.length !== 6}
           >
             {submitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}

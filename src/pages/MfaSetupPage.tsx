@@ -287,10 +287,7 @@ export default function MfaSetupPage() {
                 ))}
               </div>
 
-              <Button
-                className="w-full h-11 bg-brand hover:bg-brand/90 text-ink font-medium"
-                onClick={() => setStep(2)}
-              >
+              <Button variant="brand" className="w-full h-11 font-medium" onClick={() => setStep(2)}>
                 Já tenho o app instalado →
               </Button>
             </div>
@@ -343,10 +340,7 @@ export default function MfaSetupPage() {
                 </div>
               </div>
 
-              <Button
-                className="w-full h-11 bg-brand hover:bg-brand/90 text-ink font-medium"
-                onClick={() => setStep(3)}
-              >
+              <Button variant="brand" className="w-full h-11 font-medium" onClick={() => setStep(3)}>
                 Estou com o app pronto para escanear →
               </Button>
 
@@ -414,10 +408,7 @@ export default function MfaSetupPage() {
                     </div>
                   </div>
 
-                  <Button
-                    className="w-full h-11 bg-brand hover:bg-brand/90 text-ink font-medium"
-                    onClick={() => setStep(4)}
-                  >
+                  <Button variant="brand" className="w-full h-11 font-medium" onClick={() => setStep(4)}>
                     Escanei o QR Code →
                   </Button>
                 </>
@@ -450,7 +441,8 @@ export default function MfaSetupPage() {
               </div>
 
               <Button
-                className="w-full h-11 bg-brand hover:bg-brand/90 text-ink font-medium shadow-lg shadow-brand/20 hover:shadow-brand/30 transition-all active:scale-[0.98]"
+                variant="brand"
+                className="w-full h-11 font-medium shadow-lg shadow-brand/20 hover:shadow-brand/30 transition-all active:scale-[0.98]"
                 onClick={() => handleVerify(code)}
                 disabled={code.length < 6 || submitting}
               >
@@ -492,7 +484,8 @@ export default function MfaSetupPage() {
               <MfaBackupCodes />
 
               <Button
-                className="w-full h-11 bg-brand hover:bg-brand/90 text-ink font-medium"
+                variant="brand"
+                className="w-full h-11 font-medium"
                 onClick={() => navigate("/dashboard", { replace: true })}
               >
                 Já salvei — acessar o Pilar

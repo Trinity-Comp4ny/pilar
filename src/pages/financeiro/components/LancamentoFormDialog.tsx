@@ -27,10 +27,10 @@ import { CentroCustoManager } from "./CentroCustoManager";
 const schema = z
   .object({
     descricao: z.string().min(1, "Descrição obrigatória"),
-    valorTotal: z.string().min(1, "Valor obrigatório").refine(
-      (v) => parseCurrencyString(v) > 0,
-      "Valor deve ser maior que zero"
-    ),
+    valorTotal: z
+      .string()
+      .min(1, "Valor obrigatório")
+      .refine((v) => parseCurrencyString(v) > 0, "Valor deve ser maior que zero"),
     dataVencimento: z.date({ required_error: "Data obrigatória" }),
     status: z.string(),
     formaPagamento: z.string().optional().default(""),
@@ -225,7 +225,10 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
             }
           : {
               data_vencimento: format(data.dataVencimento, "yyyy-MM-dd"),
-              data_pagamento: data.status === "Pago" ? (lancamento.data_efetivacao ?? format(data.dataVencimento, "yyyy-MM-dd")) : null,
+              data_pagamento:
+                data.status === "Pago"
+                  ? (lancamento.data_efetivacao ?? format(data.dataVencimento, "yyyy-MM-dd"))
+                  : null,
               data_competencia: dataCompetenciaStr,
               descricao: data.descricao,
               valor: valorNum,
@@ -320,7 +323,7 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
       onOpenChange(false);
       onSaved();
     } catch (e) {
-      const msg = e instanceof Error ? e.message : (e as { message?: string })?.message ?? "Erro desconhecido";
+      const msg = e instanceof Error ? e.message : ((e as { message?: string })?.message ?? "Erro desconhecido");
       toast.error("Erro ao salvar", { description: msg });
     } finally {
       setSaving(false);
@@ -816,7 +819,7 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
               <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} disabled={saving}>
                 Cancelar
               </Button>
-              <Button type="submit" className="bg-brand hover:bg-brand/90 text-ink" disabled={saving}>
+              <Button type="submit" variant="brand" disabled={saving}>
                 {saving ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />

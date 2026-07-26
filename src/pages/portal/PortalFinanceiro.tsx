@@ -1,4 +1,5 @@
 import { Card, CardContent } from "@/components/ui/card";
+import { formatCurrency as fmtMoeda } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, Clock, Receipt, ExternalLink } from "lucide-react";
@@ -6,8 +7,7 @@ import { EmptyState } from "@/components/EmptyState";
 import type { ClienteReceita } from "@/pages/cliente/useClienteProjetoData";
 
 export function FinanceiroContent({ receitas }: { receitas: ClienteReceita[] }) {
-  const formatCurrency = (v: number) =>
-    new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
+  const formatCurrency = (v: number) => fmtMoeda(v);
   const formatDate = (d: string | null) => (d ? new Date(d + "T00:00:00").toLocaleDateString("pt-BR") : "—");
 
   // Data local (BRT) no formato YYYY-MM-DD para comparar vencimento sem erro de fuso.
@@ -112,11 +112,7 @@ export function FinanceiroContent({ receitas }: { receitas: ClienteReceita[] }) 
                         </Badge>
                       </div>
                       {!isRecebido && r.asaas_payment_url && (
-                        <Button
-                          asChild
-                          size="sm"
-                          className="h-11 sm:h-8 text-xs px-3 bg-brand hover:bg-brand/90 text-ink"
-                        >
+                        <Button asChild size="sm" variant="brand" className="h-11 sm:h-8 text-xs px-3">
                           <a href={r.asaas_payment_url} target="_blank" rel="noopener noreferrer">
                             Pagar agora
                             <ExternalLink className="h-3 w-3 ml-1" />

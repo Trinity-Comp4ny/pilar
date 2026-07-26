@@ -79,7 +79,7 @@ export function CloseMonthDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancelar
           </Button>
-          <Button onClick={onConfirm} disabled={saving} className="bg-brand hover:bg-brand/90">
+          <Button onClick={onConfirm} disabled={saving} variant="brand">
             {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Confirmar Fechamento
           </Button>
@@ -132,7 +132,7 @@ export function ConfirmPersonDialog({ open, onOpenChange, person, onConfirm }: C
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancelar
           </Button>
-          <Button onClick={onConfirm} className="bg-brand hover:bg-brand/90">
+          <Button onClick={onConfirm} variant="brand">
             Confirmar Colaborador
           </Button>
         </DialogFooter>
@@ -231,7 +231,7 @@ export function DetailEditDialog({
               <Button variant="outline" onClick={onCancelEditing}>
                 Cancelar
               </Button>
-              <Button onClick={onSaveEditing} className="bg-brand hover:bg-brand/90">
+              <Button onClick={onSaveEditing} variant="brand">
                 Salvar Alterações
               </Button>
             </>

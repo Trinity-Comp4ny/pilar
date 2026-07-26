@@ -139,9 +139,7 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
       return {
         ...prev,
         etapas: etapas.map((e, i) =>
-          e.nome === `Etapa ${index + 1}` || e.nome === `Etapa ${target + 1}`
-            ? { ...e, nome: `Etapa ${i + 1}` }
-            : e
+          e.nome === `Etapa ${index + 1}` || e.nome === `Etapa ${target + 1}` ? { ...e, nome: `Etapa ${i + 1}` } : e
         ),
       };
     });
@@ -204,7 +202,7 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
 
           {mode === "list" ? (
             <div className="space-y-4 mt-2">
-              <Button onClick={handleNew} className="w-full bg-brand hover:bg-brand/90 text-on-brand">
+              <Button onClick={handleNew} variant="brand" className="w-full">
                 <Plus className="mr-2 h-4 w-4" /> Novo Fluxo
               </Button>
 
@@ -460,7 +458,8 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
               <div className="flex flex-col gap-2 pt-2">
                 <Button
                   onClick={handleSave}
-                  className="w-full bg-brand hover:bg-brand/90 text-on-brand"
+                  variant="brand"
+                  className="w-full"
                   disabled={createFluxo.isPending || updateFluxo.isPending}
                 >
                   {editingId ? "Salvar Alterações" : "Criar Fluxo"}

@@ -2,16 +2,14 @@
 // dados já filtrados e a lista de colunas visíveis (na ordem canônica), de modo
 // que o que se exporta é exatamente o que se vê na tela.
 import { format } from "date-fns";
+import { formatCurrency } from "@/lib/format";
 import { toast } from "sonner";
 import type { ReportRow } from "./useRelatorioData";
 
 export const toCurrency = (value: string | number | null | undefined) => {
   const n = Number(value);
   if (!Number.isFinite(n)) return "-";
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  }).format(n);
+  return formatCurrency(n);
 };
 
 // Em relatório misto (receitas + despesas) somar tudo produz um número sem sentido.
@@ -86,10 +84,7 @@ export async function generatePDF(data: ReportRow[], columns: (keyof ReportRow)[
   const { title, filename, dateFrom, dateTo } = opts;
 
   // jsPDF (+autotable) pesa >300kb: só baixa o chunk ao exportar de fato.
-  const [{ default: jsPDF }, { default: autoTable }] = await Promise.all([
-    import("jspdf"),
-    import("jspdf-autotable"),
-  ]);
+  const [{ default: jsPDF }, { default: autoTable }] = await Promise.all([import("jspdf"), import("jspdf-autotable")]);
   const doc = new jsPDF({ orientation: "landscape" });
 
   doc.setFontSize(16);

@@ -84,7 +84,7 @@ export function FeaturesEmpresaTab({ companyFeatures, setCompanyFeatures, curren
           <Button variant="outline" onClick={() => setDraft(companyFeatures)} disabled={!dirty || isSaving}>
             Reverter
           </Button>
-          <Button onClick={handleSave} disabled={!dirty || isSaving} className="bg-brand text-ink hover:bg-brand/90">
+          <Button onClick={handleSave} disabled={!dirty || isSaving} variant="brand">
             {isSaving ? "Salvando..." : "Salvar"}
           </Button>
         </div>

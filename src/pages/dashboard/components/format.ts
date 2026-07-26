@@ -1,10 +1,10 @@
-// Formatadores de moeda compartilhados pelos widgets do Dashboard.
-// Extraídos para módulo próprio para evitar import circular entre Dashboard e seus componentes.
-export const fmt = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
+/**
+ * @deprecated Delegates para "@/lib/format" (ADR 0008). Mantidos pela API
+ * `.format()` que os widgets do Dashboard consomem; migrar os widgets para
+ * formatCurrency direto e remover este módulo.
+ */
+import { formatCurrency } from "@/lib/format";
 
-export const fmtCompact = new Intl.NumberFormat("pt-BR", {
-  style: "currency",
-  currency: "BRL",
-  notation: "compact",
-  maximumFractionDigits: 1,
-});
+export const fmt = { format: (v: number) => formatCurrency(v) };
+
+export const fmtCompact = { format: (v: number) => formatCurrency(v, { compact: true }) };

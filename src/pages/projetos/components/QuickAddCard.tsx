@@ -117,7 +117,8 @@ export function QuickAddCard({ status, clientes, onCreated }: QuickAddCardProps)
       <div className="flex gap-1.5">
         <Button
           size="sm"
-          className="h-7 text-xs flex-1 bg-brand hover:bg-brand/90 text-ink"
+          variant="brand"
+          className="h-7 text-xs flex-1"
           onClick={submit}
           disabled={saving || !codigo.trim() || !nome.trim() || !clienteId}
         >

@@ -1,4 +1,5 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { formatCurrency as fmtMoeda } from "@/lib/format";
 import { ArrowUpRight, ArrowDownRight, TrendingUp, TrendingDown } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -24,8 +25,7 @@ interface FluxoCaixaProps {
   dateTo?: Date;
 }
 
-const formatCurrency = (val: number) =>
-  new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(val);
+const formatCurrency = (val: number) => fmtMoeda(val);
 
 export default function FluxoCaixa({ dateFrom, dateTo }: FluxoCaixaProps) {
   const {
@@ -47,7 +47,7 @@ export default function FluxoCaixa({ dateFrom, dateTo }: FluxoCaixaProps) {
       <div className="space-y-6 w-full max-w-none">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
           {[1, 2, 3].map((i) => (
-            <Card key={i} className="vrz-card w-full">
+            <Card key={i} className="w-full">
               <CardHeader className="pb-2">
                 <Skeleton className="h-3 w-24" />
               </CardHeader>
@@ -58,7 +58,7 @@ export default function FluxoCaixa({ dateFrom, dateTo }: FluxoCaixaProps) {
             </Card>
           ))}
         </div>
-        <Card className="vrz-card w-full">
+        <Card className="w-full">
           <CardHeader>
             <Skeleton className="h-5 w-40" />
             <Skeleton className="h-3 w-64" />
@@ -102,7 +102,7 @@ export default function FluxoCaixa({ dateFrom, dateTo }: FluxoCaixaProps) {
     <div className="space-y-6 w-full max-w-none">
       {/* KPIs */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
-        <Card className="vrz-card bg-positive/10 border-positive/10 w-full min-w-0">
+        <Card className="bg-positive/10 border-positive/10 w-full min-w-0">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-green-700 truncate">Receitas</CardTitle>
           </CardHeader>
@@ -123,7 +123,7 @@ export default function FluxoCaixa({ dateFrom, dateTo }: FluxoCaixaProps) {
           </CardContent>
         </Card>
 
-        <Card className="vrz-card bg-red-50 border-red-100 w-full min-w-0">
+        <Card className="bg-red-50 border-red-100 w-full min-w-0">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-red-800 truncate">Despesas</CardTitle>
           </CardHeader>
@@ -144,7 +144,7 @@ export default function FluxoCaixa({ dateFrom, dateTo }: FluxoCaixaProps) {
           </CardContent>
         </Card>
 
-        <Card className="vrz-card bg-blue-50 border-blue-100 w-full min-w-0">
+        <Card className="bg-blue-50 border-blue-100 w-full min-w-0">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-blue-800 truncate">Lucro Líquido</CardTitle>
           </CardHeader>
@@ -160,7 +160,7 @@ export default function FluxoCaixa({ dateFrom, dateTo }: FluxoCaixaProps) {
       </div>
 
       {/* Gráfico mensal — barras + saldo */}
-      <Card className="vrz-card w-full">
+      <Card className="w-full">
         <CardHeader>
           <CardTitle>Fluxo de Caixa</CardTitle>
           <CardDescription>Entradas, saídas e saldo líquido por período</CardDescription>
@@ -208,7 +208,7 @@ export default function FluxoCaixa({ dateFrom, dateTo }: FluxoCaixaProps) {
       </Card>
 
       {/* Performance diária */}
-      <Card className="vrz-card w-full">
+      <Card className="w-full">
         <CardHeader>
           <CardTitle>Performance Diária</CardTitle>
           <CardDescription>Acompanhamento do período selecionado</CardDescription>
@@ -256,7 +256,7 @@ export default function FluxoCaixa({ dateFrom, dateTo }: FluxoCaixaProps) {
 
       {/* Top 5 receitas e despesas */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
-        <Card className="vrz-card w-full">
+        <Card className="w-full">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="h-5 w-5 text-positive-strong" />
@@ -293,7 +293,7 @@ export default function FluxoCaixa({ dateFrom, dateTo }: FluxoCaixaProps) {
           </CardContent>
         </Card>
 
-        <Card className="vrz-card w-full">
+        <Card className="w-full">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <TrendingDown className="h-5 w-5 text-red-600" />

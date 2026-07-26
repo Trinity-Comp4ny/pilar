@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { formatCurrency } from "@/lib/format";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -27,13 +28,22 @@ interface Props {
   modo: Modo;
 }
 
-const toCurrency = (value: number) =>
-  new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(Number.isFinite(value) ? value : 0);
+const toCurrency = (value: number) => formatCurrency(Number.isFinite(value) ? value : 0);
 
 const toPct = (value: number) => `${(Number.isFinite(value) ? value : 0).toFixed(1)}%`;
 
 // Colunas por modo, na ordem canônica. O que se vê é o que se exporta.
-const COLS_PROJETO = ["Código", "Projeto", "Cliente", "Status", "Contrato", "Receita", "Custo", "Margem", "Margem %"] as const;
+const COLS_PROJETO = [
+  "Código",
+  "Projeto",
+  "Cliente",
+  "Status",
+  "Contrato",
+  "Receita",
+  "Custo",
+  "Margem",
+  "Margem %",
+] as const;
 const COLS_CLIENTE = ["Cliente", "Projetos", "Contrato", "Receita", "Custo", "Margem", "Margem %"] as const;
 
 function useRentabilidadeData() {
@@ -62,7 +72,10 @@ function useRentabilidadeData() {
 
       return rows
         .map((raw) =>
-          toRentabilidadeProjeto(raw, clientePorProjeto.get(String(raw.projeto_id ?? "")) ?? { id: null, nome: "Sem cliente" })
+          toRentabilidadeProjeto(
+            raw,
+            clientePorProjeto.get(String(raw.projeto_id ?? "")) ?? { id: null, nome: "Sem cliente" }
+          )
         )
         .sort((a, b) => b.margem - a.margem);
     },
@@ -186,7 +199,10 @@ export default function RelatoriosRentabilidade({ modo }: Props) {
       return;
     }
     // jsPDF (+autotable) pesa >300kb: só baixa o chunk ao exportar de fato.
-    const [{ default: jsPDF }, { default: autoTable }] = await Promise.all([import("jspdf"), import("jspdf-autotable")]);
+    const [{ default: jsPDF }, { default: autoTable }] = await Promise.all([
+      import("jspdf"),
+      import("jspdf-autotable"),
+    ]);
     const doc = new jsPDF({ orientation: "landscape" });
 
     const titulo = modo === "projeto" ? "Rentabilidade por projeto" : "Rentabilidade por cliente";
@@ -307,12 +323,7 @@ export default function RelatoriosRentabilidade({ modo }: Props) {
             <p className={cn("text-xs font-medium", totais.margem >= 0 ? "text-blue-600" : "text-orange-600")}>
               Margem ({toPct(totais.margem_pct)})
             </p>
-            <p
-              className={cn(
-                "text-lg font-bold truncate",
-                totais.margem >= 0 ? "text-blue-700" : "text-orange-700"
-              )}
-            >
+            <p className={cn("text-lg font-bold truncate", totais.margem >= 0 ? "text-blue-700" : "text-orange-700")}>
               {toCurrency(totais.margem)}
             </p>
           </div>
@@ -366,9 +377,7 @@ export default function RelatoriosRentabilidade({ modo }: Props) {
       {/* Header + export */}
       <div className="flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3">
-          <h3 className="text-sm font-medium text-muted-foreground">
-            {modo === "projeto" ? "Projetos" : "Clientes"}
-          </h3>
+          <h3 className="text-sm font-medium text-muted-foreground">{modo === "projeto" ? "Projetos" : "Clientes"}</h3>
           <Badge variant="secondary" className="text-xs">
             {modo === "projeto" ? projetosFiltrados.length : clientes.length}
             {modo === "projeto" && hasActiveFilters ? ` de ${projetos.length}` : ""}
@@ -379,11 +388,7 @@ export default function RelatoriosRentabilidade({ modo }: Props) {
             <Download size={13} />
             CSV
           </Button>
-          <Button
-            size="sm"
-            className="h-8 text-xs gap-1.5 bg-brand text-ink hover:bg-brand/90"
-            onClick={() => handleExport("pdf")}
-          >
+          <Button size="sm" variant="brand" className="h-8 text-xs gap-1.5" onClick={() => handleExport("pdf")}>
             <Download size={13} />
             PDF
           </Button>
@@ -425,7 +430,10 @@ function ProjetoTable({
           {COLS_PROJETO.map((c) => (
             <TableHead
               key={c}
-              className={cn("whitespace-nowrap text-xs sticky top-0 z-10 bg-white", c !== "Código" && c !== "Projeto" && c !== "Cliente" && c !== "Status" && "text-right")}
+              className={cn(
+                "whitespace-nowrap text-xs sticky top-0 z-10 bg-white",
+                c !== "Código" && c !== "Projeto" && c !== "Cliente" && c !== "Status" && "text-right"
+              )}
             >
               {c}
             </TableHead>
@@ -446,13 +454,21 @@ function ProjetoTable({
               <TableCell className="whitespace-nowrap text-xs font-medium">{p.projeto_nome}</TableCell>
               <TableCell className="whitespace-nowrap text-xs">{p.cliente_nome}</TableCell>
               <TableCell className="whitespace-nowrap text-xs">{p.status}</TableCell>
-              <TableCell className="whitespace-nowrap text-xs text-right tabular-nums">{toCurrency(p.valor_contrato)}</TableCell>
-              <TableCell className="whitespace-nowrap text-xs text-right tabular-nums">{toCurrency(p.receita)}</TableCell>
+              <TableCell className="whitespace-nowrap text-xs text-right tabular-nums">
+                {toCurrency(p.valor_contrato)}
+              </TableCell>
+              <TableCell className="whitespace-nowrap text-xs text-right tabular-nums">
+                {toCurrency(p.receita)}
+              </TableCell>
               <TableCell className="whitespace-nowrap text-xs text-right tabular-nums">{toCurrency(p.custo)}</TableCell>
-              <TableCell className={cn("whitespace-nowrap text-xs text-right tabular-nums font-medium", margemColor(p.margem))}>
+              <TableCell
+                className={cn("whitespace-nowrap text-xs text-right tabular-nums font-medium", margemColor(p.margem))}
+              >
                 {toCurrency(p.margem)}
               </TableCell>
-              <TableCell className={cn("whitespace-nowrap text-xs text-right tabular-nums font-medium", margemColor(p.margem))}>
+              <TableCell
+                className={cn("whitespace-nowrap text-xs text-right tabular-nums font-medium", margemColor(p.margem))}
+              >
                 {toPct(p.margem_pct)}
               </TableCell>
             </TableRow>
@@ -517,13 +533,21 @@ function ClienteTable({
             <TableRow key={c.cliente_id}>
               <TableCell className="whitespace-nowrap text-xs font-medium">{c.cliente_nome}</TableCell>
               <TableCell className="whitespace-nowrap text-xs text-right tabular-nums">{c.num_projetos}</TableCell>
-              <TableCell className="whitespace-nowrap text-xs text-right tabular-nums">{toCurrency(c.valor_contrato)}</TableCell>
-              <TableCell className="whitespace-nowrap text-xs text-right tabular-nums">{toCurrency(c.receita)}</TableCell>
+              <TableCell className="whitespace-nowrap text-xs text-right tabular-nums">
+                {toCurrency(c.valor_contrato)}
+              </TableCell>
+              <TableCell className="whitespace-nowrap text-xs text-right tabular-nums">
+                {toCurrency(c.receita)}
+              </TableCell>
               <TableCell className="whitespace-nowrap text-xs text-right tabular-nums">{toCurrency(c.custo)}</TableCell>
-              <TableCell className={cn("whitespace-nowrap text-xs text-right tabular-nums font-medium", margemColor(c.margem))}>
+              <TableCell
+                className={cn("whitespace-nowrap text-xs text-right tabular-nums font-medium", margemColor(c.margem))}
+              >
                 {toCurrency(c.margem)}
               </TableCell>
-              <TableCell className={cn("whitespace-nowrap text-xs text-right tabular-nums font-medium", margemColor(c.margem))}>
+              <TableCell
+                className={cn("whitespace-nowrap text-xs text-right tabular-nums font-medium", margemColor(c.margem))}
+              >
                 {toPct(c.margem_pct)}
               </TableCell>
             </TableRow>

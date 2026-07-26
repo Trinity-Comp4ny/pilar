@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { formatCurrency as fmtMoeda } from "@/lib/format";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, TrendingUp, TrendingDown, AlertTriangle } from "lucide-react";
@@ -14,8 +15,7 @@ interface ProjecaoItem {
   saldo: number;
 }
 
-const formatCurrency = (v: number) =>
-  new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 }).format(v);
+const formatCurrency = (v: number) => fmtMoeda(v, { decimals: 0 });
 
 export default function ProjecaoFluxoCaixa() {
   const [dias] = useState(90);

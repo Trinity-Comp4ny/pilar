@@ -16,9 +16,7 @@ export function ProjetosEmptyState({ variant, onCreate, onClearFilters, onRetry 
           <AlertTriangle className="h-6 w-6 text-destructive" />
         </div>
         <p className="text-sm font-medium">Não foi possível carregar os projetos</p>
-        <p className="text-xs text-muted-foreground mt-1 max-w-sm">
-          Verifique sua conexão e tente novamente.
-        </p>
+        <p className="text-xs text-muted-foreground mt-1 max-w-sm">Verifique sua conexão e tente novamente.</p>
         {onRetry && (
           <Button variant="outline" size="sm" className="mt-4" onClick={onRetry}>
             Tentar novamente
@@ -57,7 +55,7 @@ export function ProjetosEmptyState({ variant, onCreate, onClearFilters, onRetry 
         Cadastre seu primeiro projeto para começar a acompanhar disciplinas, prazos e pagamentos.
       </p>
       {onCreate && (
-        <Button className="mt-4 bg-brand hover:bg-brand/90 text-ink" onClick={onCreate}>
+        <Button variant="brand" className="mt-4" onClick={onCreate}>
           <Plus className="h-4 w-4 mr-2" /> Criar primeiro projeto
         </Button>
       )}

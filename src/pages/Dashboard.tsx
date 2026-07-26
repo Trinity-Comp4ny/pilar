@@ -268,7 +268,8 @@ export default function Dashboard() {
         )}
         {canProjCreate && (
           <Button
-            className="rounded-full bg-brand hover:bg-brand/90 text-ink-on-brand transition-colors px-5 py-2.5 text-sm"
+            variant="brand"
+            className="rounded-full text-ink-on-brand px-5 py-2.5 text-sm"
             onClick={() => navigate("/projetos")}
           >
             <Plus size={14} className="mr-1" /> Novo Projeto
@@ -317,7 +318,7 @@ export default function Dashboard() {
   const { kpis, projetos, proximosVencimentos, leadsPipeline, leadsTotal, alertas, alertasNaoLidos } = data;
 
   // Usa dados da RPC quando disponível; fallback só carrega quando a RPC falha.
-  const chartData = chartDataRpc && chartDataRpc.length > 0 ? chartDataRpc : chartDataFallback ?? [];
+  const chartData = chartDataRpc && chartDataRpc.length > 0 ? chartDataRpc : (chartDataFallback ?? []);
 
   const nothingVisible = !canFin && !canProj && !canLeads;
 
