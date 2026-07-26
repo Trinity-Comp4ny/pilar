@@ -70,14 +70,24 @@ jobs:
       - name: Run gitleaks
         run: gitleaks detect --source . --redact --no-banner --verbose
 
-  # Banco: aplica as migrations do zero, roda pgTAP e confere types.ts.
+  # Banco: aplica as migrations do zero e roda pgTAP.
   # Sobe o stack completo do Supabase via CLI (não a imagem supabase/postgres crua),
   # porque foi exatamente isso que matou o job de pgTAP anterior em f5a86ea: sem
   # GoTrue e Storage, auth.uid() e storage.buckets não existem e o schema nunca casa.
+  #
+  # A sincronia de types.ts é avaliada aqui (o stack já está de pé) mas o veredito sai
+  # como OUTPUT, não como falha do job. Motivo: types.ts fora de sync é problema de DX,
+  # não diz nada sobre a migration ser segura de aplicar. Quando este job era o único e
+  # falhava por causa dos tipos, o deploy de staging era skipado, e como types.ts só
+  # pode ser regenerado DEPOIS da migration chegar ao banco, o pipeline ficava preso
+  # num círculo (aconteceu no run 30177061938). Quem reprova por tipos é o job
+  # types-sync abaixo, que fica fora do needs do deploy.
   database:
-    name: Migrations + RLS + types
+    name: Migrations + RLS
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    outputs:
+      types_in_sync: ${{ steps.types.outputs.in_sync }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -131,17 +141,39 @@ jobs:
             -v ON_ERROR_STOP=1 -c "CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;"
           supabase test db
 
-      - name: types.ts em sync com as migrations
-        # Compara depois de passar os dois lados pelo prettier, para diferença de
-        # formatação não virar falso positivo.
+      - name: Avaliar sincronia de types.ts
+        id: types
+        # Não reprova o job: grava o veredito para o job types-sync decidir. Compara
+        # depois de passar os dois lados pelo prettier, para diferença de formatação
+        # não virar falso positivo.
         run: |
           supabase gen types typescript --local > /tmp/types-generated.ts
           npx prettier --parser typescript /tmp/types-generated.ts > /tmp/a.ts
           npx prettier --parser typescript src/integrations/supabase/types.ts > /tmp/b.ts
-          if ! diff -u /tmp/b.ts /tmp/a.ts; then
-            echo "::error::src/integrations/supabase/types.ts está fora de sync com as migrations. Rode 'npm run gen:types' e commite."
+          if diff -u /tmp/b.ts /tmp/a.ts; then
+            echo "in_sync=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "in_sync=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::types.ts está fora de sync com as migrations (o job types-sync vai reprovar)."
+          fi
+
+  # Check próprio para a sincronia de tipos, separado do deploy de propósito (ver o
+  # comentário do job database). Bloqueia merge, não bloqueia aplicar migration.
+  types-sync:
+    name: types.ts em sync
+    needs: [database]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Conferir veredito
+        env:
+          IN_SYNC: ${{ needs.database.outputs.types_in_sync }}
+        run: |
+          if [ "$IN_SYNC" != "true" ]; then
+            echo "::error::src/integrations/supabase/types.ts está fora de sync com as migrations. Rode 'npm run gen:types' e commite. O diff está no log do job Migrations + RLS."
             exit 1
           fi
+          echo "types.ts em sync."
 
   # Edge Functions Deno não tinham nenhuma verificação de compilação: erro de
   # sintaxe ou import quebrado só aparecia no cold start, em produção.
@@ -170,9 +202,13 @@ jobs:
 
   # Único required status check do branch protection. Adicionar ou renomear job
   # deixa de exigir mexer na configuração do repositório.
+  #
+  # Note que o conjunto que bloqueia MERGE (aqui) é maior que o que bloqueia DEPLOY
+  # (abaixo). São perguntas diferentes: "esta mudança está boa para entrar?" inclui
+  # sincronia de tipos; "é seguro aplicar no banco?" não.
   ci-ok:
     name: CI OK (aggregate gate)
-    needs: [lint-test-build, audit, secrets-scan, database, edge-functions]
+    needs: [lint-test-build, audit, secrets-scan, database, types-sync, edge-functions]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -186,7 +222,11 @@ jobs:
   # SUPABASE_DB_URL (Session Pooler IPv4), SUPABASE_PROJECT_REF.
   deploy-staging:
     name: Deploy → staging (Supabase)
-    needs: [ci-ok]
+    # Deliberadamente NÃO depende de ci-ok, e sim dos gates que dizem algo sobre a
+    # segurança de tocar o banco. types-sync fica fora: exigir types.ts em sync para
+    # aplicar migration cria um deadlock, porque types.ts só pode ser regenerado
+    # depois que a migration está no banco.
+    needs: [lint-test-build, audit, secrets-scan, database, edge-functions]
     if: github.event_name == 'push' && github.ref == 'refs/heads/staging'
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -245,7 +285,9 @@ jobs:
   # deploy-staging, mas com o GitHub Environment "Production", que exige aprovação.
   deploy-production:
     name: Deploy → production (Supabase)
-    needs: [ci-ok]
+    # Mesmo conjunto do deploy-staging, pelo mesmo motivo. O gate humano de produção é
+    # o required reviewer do Environment "Production", não a sincronia de tipos.
+    needs: [lint-test-build, audit, secrets-scan, database, edge-functions]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 20
