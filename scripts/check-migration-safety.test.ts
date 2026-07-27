@@ -121,6 +121,16 @@ describe("contrato do pipeline", () => {
     }
   });
 
+  // O CD do backend já caiu por 5xx do esm.sh durante o bundle (run 30288891918),
+  // depois de o mesmo CDN ter derrubado o deno check (run 30176697516).
+  it("o deploy das edge functions passa pelo retry de erro de rede", () => {
+    const deployLines = ci.split("\n").filter((l) => l.includes("supabase functions deploy"));
+    expect(deployLines.length).toBeGreaterThanOrEqual(2); // staging e production
+    for (const line of deployLines) {
+      expect(line).toContain("scripts/retry-on-network-error.sh");
+    }
+  });
+
   it("o gate agregado inclui a sincronia de tipos, que bloqueia merge", () => {
     const ciOk = ci.slice(ci.indexOf("\n  ci-ok:"));
     const needs = ciOk.match(/needs:\s*\[([^\]]*)\]/)?.[1] ?? "";

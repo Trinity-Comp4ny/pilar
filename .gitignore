@@ -39,3 +39,6 @@ backups/
 
 # Claude Code worktrees (temporary agent workspaces)
 .claude/worktrees/
+
+# temporários do gate de sincronia de tipos (job database do CI)
+/types-gate-*.ts
