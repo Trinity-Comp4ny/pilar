@@ -256,6 +256,33 @@ Critério de aceite: falta de env var derruba o boot com o nome da chave, não g
 - **Documentação obrigatoriamente em inglês** (regra D17 da skill): aqui a decisão é
   PT-BR em UI e docs, inglês em commits/branches/PRs. Divergência consciente.
 
+## 5b. Dívida do gate pgTAP (medida em 2026-07-27)
+
+O gate `Migrations + RLS + types` entrou na fase 1 e **falha em todo PR** desde então,
+inclusive em PRs 100% de UI ou de docs. Não é o PR: é a suíte desalinhada das migrations.
+Primeira execução real (run 30175159325, PR #138):
+
+- `supabase/tests/policy_audit_logs_impersonation.sql` aborta no setup:
+  `column "new_data" of relation "audit_logs" does not exist` → "Bad plan: you planned 6
+  tests but ran 0"
+- `supabase/tests/rls_security.sql`: **10 de 20 falham** (asaas_config protegido,
+  `update_projeto_completo` / `rpc_faturar_marco` / `rpc_converter_lead_cliente`
+  cross-empresa, signup sem invite_token, signup com token inválido)
+- `policy_crm_module.sql`: 1 de 8 (INSERT de lead como editor)
+- `policy_projetos_module.sql`: 1 de 8 (admin não escreve em disciplinas)
+
+Efeito prático: o gate virou ruído, e ruído constante ensina o time a ignorar sinal.
+Ele **não bloqueia merge** (o required é só `CI OK (aggregate gate)`), o que evita o
+deadlock mas também esconde o problema. Duas saídas honestas:
+
+1. Alinhar a suíte ao schema real (preferível: os asserts de cross-empresa e de signup
+   cobrem risco de tenancy que já custou incidente aqui)
+2. Marcar os arquivos quebrados como skip explícito com issue linkada, para o gate voltar
+   a significar algo enquanto a correção não vem
+
+Enquanto nenhuma das duas acontecer, ninguém deve interpretar esse check vermelho como
+"meu PR quebrou algo".
+
 ## 6. Achado colateral
 
 `.gitleaksignore` tem duas fingerprints de `.env` (`b1236fbc...`, `d3accb7d...`) e
