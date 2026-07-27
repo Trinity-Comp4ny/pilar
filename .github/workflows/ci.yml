@@ -294,6 +294,65 @@ jobs:
             -H "Authorization: Bearer ${ANON_KEY}" | tee /tmp/health.json
           grep -q '"status"' /tmp/health.json
 
+  # E2E contra o staging recém-deployado. Vive AQUI, e não num workflow próprio, pelo
+  # mesmo motivo do deploy: `workflow_run` só se registra a partir da branch DEFAULT, e
+  # foi essa armadilha que deixou o e2e-staging.yml sem NUNCA rodar (o gatilho dele
+  # apontava para "Deploy Supabase", workflow deletado em bd77a39).
+  #
+  # Fora do ci-ok de propósito: roda depois do deploy, muta dados em staging, e não faz
+  # sentido bloquear merge com ele. Falha aqui é sinal para investigar staging, não para
+  # impedir uma entrada.
+  e2e:
+    name: E2E → staging (Playwright)
+    needs: [deploy-staging]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/staging'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    environment: Staging
+    env:
+      CI: "true"
+      # O Playwright builda o front e sobe `npm run preview` local (ver
+      # playwright.config.ts), apontando para o Supabase de STAGING.
+      VITE_SUPABASE_URL: ${{ secrets.STAGING_SUPABASE_URL }}
+      VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.STAGING_SUPABASE_ANON_KEY }}
+      E2E_TEST_EMAIL: ${{ secrets.E2E_TEST_EMAIL }}
+      E2E_TEST_PASSWORD: ${{ secrets.E2E_TEST_PASSWORD }}
+      E2E_PORTAL_EMAIL: ${{ secrets.E2E_PORTAL_EMAIL }}
+      E2E_PORTAL_PASSWORD: ${{ secrets.E2E_PORTAL_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build
+
+      # Os 4 specs que não dependem de login (landing, login-validation,
+      # portal-cliente, security). Bloqueiam o job: são o mínimo que sempre pode rodar.
+      - name: Specs sem autenticação
+        run: npx playwright test --project=chromium
+
+      # Os 6 specs autenticados exigem um usuário de teste em staging, e os secrets
+      # E2E_TEST_EMAIL / E2E_TEST_PASSWORD ainda não existem no Environment. Avisa e
+      # pula, em vez de deixar o job vermelho por falta de provisionamento. Quando os
+      # secrets existirem, passa a rodar sozinho, sem mexer neste arquivo.
+      - name: Specs autenticados
+        if: env.E2E_TEST_EMAIL != ''
+        run: npx playwright test --project=authenticated
+      - name: Aviso quando o usuário de teste não está provisionado
+        if: env.E2E_TEST_EMAIL == ''
+        run: echo "::warning::E2E_TEST_EMAIL/E2E_TEST_PASSWORD ausentes no Environment Staging — os 6 specs autenticados foram pulados. Crie o usuário de teste em staging e adicione os secrets."
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report-${{ github.run_id }}
+          path: playwright-report/
+          retention-days: 7
+          if-no-files-found: ignore
+
   # Deploy do backend em PRODUÇÃO. DORMENTE até este ci.yml chegar no branch main:
   # só dispara em push no main (github.ref) E o job precisa existir no arquivo do
   # branch onde o push ocorre. Em staging nunca roda (o if barra). Espelha o

@@ -126,11 +126,18 @@ e `DISABLE ROW LEVEL SECURITY`. Se a perda de dado é intencional, rode com
 o porquê no PR. `DROP POLICY` e `DROP FUNCTION` seguidos do `CREATE` correspondente
 passam limpo: são o padrão do repo.
 
-O que **não** roda:
+Depois do deploy em staging (não em PR):
 
-- **e2e** — `e2e-staging.yml` nunca executou: o `workflow_run` aponta para "Deploy
-  Supabase", workflow que deixou de existir quando o deploy virou job do `ci.yml`.
-  Correção na Fase 2 de `docs/operations/PLANO_ENGENHARIA_2026-07.md`.
+- **e2e** — job `E2E → staging (Playwright)`, roda contra o staging recém-deployado.
+  Os 4 specs sem login (`landing`, `login-validation`, `portal-cliente`, `security`)
+  bloqueiam o job. Os 6 specs `*-authenticated.spec.ts` só rodam quando os secrets
+  `E2E_TEST_EMAIL` / `E2E_TEST_PASSWORD` existirem no Environment `Staging`; sem eles o
+  job avisa e segue. Não entra no `ci-ok`: falha aqui é sinal para investigar staging,
+  não para bloquear merge.
+
+  O antigo `e2e-staging.yml` foi removido. Ele nunca executou uma única vez: o
+  `workflow_run` apontava para "Deploy Supabase", workflow deletado em `bd77a39`, e
+  gatilho desse tipo só se registra a partir da branch default.
 
 ## Edge Functions
 
