@@ -7,6 +7,11 @@
 
 - 🤖 [`AGENTS_TEAM.md`](./AGENTS_TEAM.md) — blueprint da equipe de agentes (organograma CEO→VP Ops→Heads→especialistas, roster e núcleo a contratar)
 
+## Começe aqui
+
+📋 **[BACKLOG.md](./BACKLOG.md)** — índice único do que falta fazer (bugs, produto,
+design system, agentes, engavetados com gatilho). Cada item linka o doc com o detalhe.
+
 ## Temas
 
 | Tema | Pasta | O que contém |
@@ -41,3 +46,4 @@
 - **"Deu incidente, e agora?"** → [`operations/INCIDENT_RESPONSE.md`](./operations/INCIDENT_RESPONSE.md) + [`operations/runbooks/`](./operations/runbooks/)
 - **"Por que decidimos X na arquitetura?"** → [`architecture/adr/`](./architecture/adr/) (template em [`adr/TEMPLATE.md`](./architecture/adr/TEMPLATE.md))
 - **"Vou construir uma feature, por onde começo?"** → [`specs/`](./specs/) (template em [`specs/TEMPLATE.md`](./specs/TEMPLATE.md))
+- **"O que falta fazer / qual o próximo passo?"** → [`BACKLOG.md`](./BACKLOG.md)
