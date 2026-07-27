@@ -12,6 +12,7 @@
  */
 
 import posthog from "posthog-js";
+import { env } from "./env";
 
 type Props = Record<string, unknown>;
 
@@ -32,8 +33,8 @@ interface Analytics {
 }
 
 const DEV = import.meta.env.DEV;
-const KEY = import.meta.env.VITE_POSTHOG_KEY as string | undefined;
-const HOST = (import.meta.env.VITE_POSTHOG_HOST as string | undefined) ?? "https://us.i.posthog.com";
+const KEY = env.VITE_POSTHOG_KEY;
+const HOST = env.VITE_POSTHOG_HOST ?? "https://us.i.posthog.com";
 
 const SENSITIVE_KEYS =
   /password|senha|token|api_key|secret|authorization|cookie|cpf|cnpj|rg|pix|conta_bancaria|agencia|salario/i;
