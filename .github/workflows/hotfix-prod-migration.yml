@@ -91,16 +91,53 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y -qq postgresql-client
 
+      # A senha do SUPABASE_DB_URL contém `@`, e o psql quebra a URI no PRIMEIRO `@`:
+      # metade da senha virava nome de host ("could not translate host name
+      # 123456@aws-1-...", run 30304672354). A correção é percent-encodar user e senha
+      # aqui, e não pedir para reescrever o secret: o mesmo defeito voltaria na próxima
+      # rotação de senha, e mexer no secret exige expor o valor para alguém.
+      #
+      # O último `@` é o separador real entre credenciais e host, então é por ele que se
+      # divide. A URI normalizada entra mascarada no ambiente.
+      - name: Normalizar a URI do banco
+        env:
+          RAW_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          set -euo pipefail
+          NORM="$(python3 - <<'PY'
+          import os, sys, urllib.parse as up
+
+          raw = os.environ.get("RAW_DB_URL", "").strip()
+          if not raw:
+              sys.exit("SUPABASE_DB_URL vazio no Environment Production")
+          if "://" not in raw:
+              sys.exit("SUPABASE_DB_URL não parece uma URI (falta ://)")
+
+          scheme, rest = raw.split("://", 1)
+          if "@" not in rest:
+              sys.exit("SUPABASE_DB_URL não tem credenciais antes do host")
+
+          userinfo, hostpart = rest.rsplit("@", 1)
+          user, _, pwd = userinfo.partition(":")
+
+          print(f"{scheme}://{up.quote(user, safe='')}:{up.quote(pwd, safe='')}@{hostpart}")
+          PY
+          )"
+          echo "::add-mask::$NORM"
+          echo "PGURL_NORM=$NORM" >> "$GITHUB_ENV"
+          # Confere que dá para conectar antes de qualquer coisa, com uma query trivial.
+          psql "$NORM" -At -c "SELECT 'conexão ok, banco: ' || current_database();"
+
       - name: Estado ANTES (para comparar depois)
         env:
-          PGURL: ${{ secrets.SUPABASE_DB_URL }}
+          PGURL: ${{ env.PGURL_NORM }}
         run: |
           psql "$PGURL" -At -c "SELECT count(*) || ' migrations aplicadas, última: ' || max(version) FROM supabase_migrations.schema_migrations;"
           psql "$PGURL" -At -c "SELECT 'já aplicada? ' || EXISTS(SELECT 1 FROM supabase_migrations.schema_migrations WHERE version = '$MIGRATION_VERSION');"
 
       - name: Aplicar a migration (transação única)
         env:
-          PGURL: ${{ secrets.SUPABASE_DB_URL }}
+          PGURL: ${{ env.PGURL_NORM }}
         run: |
           set -euo pipefail
 
@@ -125,7 +162,7 @@ jobs:
 
       - name: Estado DEPOIS
         env:
-          PGURL: ${{ secrets.SUPABASE_DB_URL }}
+          PGURL: ${{ env.PGURL_NORM }}
         run: |
           psql "$PGURL" -At -c "SELECT count(*) || ' migrations aplicadas, última: ' || max(version) FROM supabase_migrations.schema_migrations;"
 
@@ -134,7 +171,7 @@ jobs:
         # do psql. Se a migration alvo for outra, estes asserts são apenas informativos.
         if: contains(env.MIGRATION_NAME, 'restaura_tenant_check')
         env:
-          PGURL: ${{ secrets.SUPABASE_DB_URL }}
+          PGURL: ${{ env.PGURL_NORM }}
         run: |
           set -euo pipefail
           echo "-- overloads de update_projeto_completo (esperado 1)"
