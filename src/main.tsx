@@ -1,11 +1,19 @@
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
-import { initMonitoring } from "./lib/monitoring";
+import { initMonitoring, monitoring } from "./lib/monitoring";
 import { initAnalytics } from "./lib/analytics";
+import { envWarnings } from "./lib/env";
 
 initMonitoring();
 initAnalytics();
+
+// Config ausente que degrada o produto sem impedir o boot (captcha, Sentry, analytics).
+// Reportado depois do initMonitoring para chegar no Sentry: antes, um deploy sem
+// VITE_TURNSTILE_SITE_KEY subia a tela de login sem captcha e ninguém ficava sabendo.
+for (const aviso of envWarnings()) {
+  monitoring.captureMessage(`[env] ${aviso}`, "warning");
+}
 
 // Redireciona recovery links para /reset-password antes do React montar,
 // evitando race condition com onAuthStateChange.

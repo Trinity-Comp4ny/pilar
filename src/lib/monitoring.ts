@@ -11,6 +11,7 @@
  */
 
 import * as Sentry from "@sentry/react";
+import { env, sentryTracesSampleRate } from "./env";
 
 type Extra = Record<string, unknown>;
 
@@ -30,11 +31,12 @@ interface Monitoring {
 }
 
 const DEV = import.meta.env.DEV;
-const DSN = import.meta.env.VITE_SENTRY_DSN as string | undefined;
-const ENV = (import.meta.env.VITE_SENTRY_ENV as string | undefined) ?? import.meta.env.MODE;
-const TRACES_RATE = Number(
-  import.meta.env.VITE_SENTRY_TRACES_RATE ?? import.meta.env.VITE_SENTRY_TRACES_SAMPLE_RATE ?? 0.1
-);
+const DSN = env.VITE_SENTRY_DSN;
+const ENV = env.VITE_SENTRY_ENV ?? import.meta.env.MODE;
+// Já validado como número em 0..1 por env.ts, que também resolve o nome legado
+// VITE_SENTRY_TRACES_RATE. Antes, `Number(undefined ?? ...)` podia render NaN e uma
+// var declarada vazia virava 0 sem ninguém notar.
+const TRACES_RATE = sentryTracesSampleRate;
 
 // Rotas públicas / pouco interessantes — drop transactions para economizar quota.
 const IGNORED_TX_ROUTES = [/^\/privacidade/, /^\/cliente\/login/, /^\/login/, /^\/forgot-password/];

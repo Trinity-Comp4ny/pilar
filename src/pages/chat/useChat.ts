@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { msgErroChat } from "./erros";
+import { env } from "@/lib/env";
 
 export type AgenteMeta = {
   agente: string;
@@ -102,8 +103,22 @@ export type FolhaLinhaPayload = {
 export type AditivoItem = { descricao?: string; disciplina?: string; horas?: number; custo?: number };
 
 export type Entidade =
-  | "lead" | "projeto" | "receita" | "despesa" | "cartao" | "folha"
-  | "cliente" | "fornecedor" | "categoria" | "conta" | "centro_custo" | "pessoa" | "proposta" | "marco" | "disciplina" | "aditivo";
+  | "lead"
+  | "projeto"
+  | "receita"
+  | "despesa"
+  | "cartao"
+  | "folha"
+  | "cliente"
+  | "fornecedor"
+  | "categoria"
+  | "conta"
+  | "centro_custo"
+  | "pessoa"
+  | "proposta"
+  | "marco"
+  | "disciplina"
+  | "aditivo";
 
 /** Ação sobre entidade existente (converter, marcar, quitar, pagar, convidar portal). */
 export type Acao = {
@@ -212,8 +227,8 @@ const STORAGE_KEY = "pilar.chat.v1";
 /** Corta o loading se a edge function travar (evita spinner infinito). */
 const SEND_TIMEOUT_MS = 45_000;
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
+const SUPABASE_URL = env.VITE_SUPABASE_URL;
+const SUPABASE_ANON_KEY = env.VITE_SUPABASE_PUBLISHABLE_KEY;
 const AI_CHAT_URL = `${SUPABASE_URL}/functions/v1/ai-chat`;
 
 // Sinaliza que o SSE não pôde ser usado (não deu para abrir o stream ou veio vazio):
@@ -330,11 +345,16 @@ async function enviarStream(
         if (!assistantId) {
           const id = novoId();
           assistantId = id;
-          cb.setMessages((prev) => [...prev, { id, role: "assistant", content: payload.resposta, agentes: payload.agentes }]);
+          cb.setMessages((prev) => [
+            ...prev,
+            { id, role: "assistant", content: payload.resposta, agentes: payload.agentes },
+          ]);
         } else {
           const id = assistantId;
           cb.setMessages((prev) =>
-            prev.map((m) => (m.id === id ? { ...m, content: m.content || payload.resposta, agentes: payload.agentes } : m))
+            prev.map((m) =>
+              m.id === id ? { ...m, content: m.content || payload.resposta, agentes: payload.agentes } : m
+            )
           );
         }
       } else {
@@ -348,7 +368,9 @@ async function enviarStream(
       const texto = (ev.data as { error?: string })?.error || "Não consegui gerar a resposta.";
       if (assistantId) {
         const id = assistantId;
-        cb.setMessages((prev) => prev.map((m) => (m.id === id ? { ...m, erro: true, content: m.content || texto } : m)));
+        cb.setMessages((prev) =>
+          prev.map((m) => (m.id === id ? { ...m, erro: true, content: m.content || texto } : m))
+        );
       } else {
         cb.setMessages((prev) => [...prev, { id: novoId(), role: "assistant", content: texto, erro: true }]);
       }
@@ -429,15 +451,11 @@ export function useChat() {
   }, [messages, sessionId]);
 
   const patchDraft = useCallback((runId: string, patch: Partial<Draft>) => {
-    setMessages((prev) =>
-      prev.map((m) => (m.draft?.runId === runId ? { ...m, draft: { ...m.draft, ...patch } } : m))
-    );
+    setMessages((prev) => prev.map((m) => (m.draft?.runId === runId ? { ...m, draft: { ...m.draft, ...patch } } : m)));
   }, []);
 
   const patchAcao = useCallback((runId: string, patch: Partial<Acao>) => {
-    setMessages((prev) =>
-      prev.map((m) => (m.acao?.runId === runId ? { ...m, acao: { ...m.acao, ...patch } } : m))
-    );
+    setMessages((prev) => prev.map((m) => (m.acao?.runId === runId ? { ...m, acao: { ...m.acao, ...patch } } : m)));
   }, []);
 
   const send = useCallback(
@@ -490,7 +508,10 @@ export function useChat() {
             },
           ]);
         } else {
-          setMessages((prev) => [...prev, { id: novoId(), role: "assistant", content: res.resposta, agentes: res.agentes }]);
+          setMessages((prev) => [
+            ...prev,
+            { id: novoId(), role: "assistant", content: res.resposta, agentes: res.agentes },
+          ]);
         }
       };
 
@@ -500,7 +521,10 @@ export function useChat() {
           setMessages((prev) => [...prev, { id: novoId(), role: "assistant", content: "Geração interrompida." }]);
           return;
         }
-        setMessages((prev) => [...prev, { id: novoId(), role: "assistant", content: msgErroChat(err, porTimeout), erro: true }]);
+        setMessages((prev) => [
+          ...prev,
+          { id: novoId(), role: "assistant", content: msgErroChat(err, porTimeout), erro: true },
+        ]);
       };
 
       try {
@@ -562,23 +586,16 @@ export function useChat() {
       const { data, error } = await supabase.rpc(rpcName, { p_run_id: runId });
       if (error) throw error;
 
-      const res = data as
-        | {
-            lead_id?: string;
-            projeto_id?: string;
-            receita_id?: string;
-            despesa_id?: string;
-            cartao_id?: string;
-            grupo_id?: string;
-          }
-        | null;
+      const res = data as {
+        lead_id?: string;
+        projeto_id?: string;
+        receita_id?: string;
+        despesa_id?: string;
+        cartao_id?: string;
+        grupo_id?: string;
+      } | null;
       const entityId =
-        res?.grupo_id ??
-        res?.projeto_id ??
-        res?.lead_id ??
-        res?.receita_id ??
-        res?.despesa_id ??
-        res?.cartao_id;
+        res?.grupo_id ?? res?.projeto_id ?? res?.lead_id ?? res?.receita_id ?? res?.despesa_id ?? res?.cartao_id;
       if (entityId && onAfterCreate) await onAfterCreate(entityId);
       patchDraft(runId, { status: "criado", campos, entityId });
       return entityId;
@@ -651,7 +668,10 @@ export function useChat() {
           body: { cliente_id: payload.cliente_id, email: payload.email },
         });
         if (error) throw error;
-        await supabase.from("agent_runs").update({ status: "executed", entity_type: "convidar_portal" }).eq("id", runId);
+        await supabase
+          .from("agent_runs")
+          .update({ status: "executed", entity_type: "convidar_portal" })
+          .eq("id", runId);
       } else {
         const { error: upErr } = await supabase
           .from("agent_runs")
@@ -688,8 +708,18 @@ export function useChat() {
   }, 0);
 
   return {
-    messages, send, stop, loading, reset, creditosUsados, saldo,
-    confirmarDraft, cancelarDraft, desfazer, desfazerFolha,
-    executarAcao, cancelarAcao,
+    messages,
+    send,
+    stop,
+    loading,
+    reset,
+    creditosUsados,
+    saldo,
+    confirmarDraft,
+    cancelarDraft,
+    desfazer,
+    desfazerFolha,
+    executarAcao,
+    cancelarAcao,
   };
 }
