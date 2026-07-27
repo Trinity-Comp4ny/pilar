@@ -1,4 +1,5 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { formatCurrency as fmtMoeda } from "@/lib/format";
 import { ArrowUpRight, ArrowDownRight, TrendingUp, TrendingDown, Loader2 } from "lucide-react";
 import { ResponsiveContainer, AreaChart, Area, CartesianGrid, XAxis, YAxis, Tooltip } from "recharts";
 import { CustomTooltip } from "../components/CustomTooltip";
@@ -63,13 +64,12 @@ export default function ResumoMensal({ dateFrom, dateTo }: ResumoMensalProps) {
   const totalTopDespesas = topTransactions?.despesas.reduce((acc: number, curr) => acc + Number(curr.valor), 0) || 0;
 
   // Format currency
-  const formatCurrency = (val: number) =>
-    new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(val);
+  const formatCurrency = (val: number) => fmtMoeda(val);
 
   return (
     <div className="space-y-6 w-full max-w-none">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
-        <Card className="vrz-card bg-positive/10 border-positive/10 w-full min-w-0">
+        <Card className="bg-positive/10 border-positive/10 w-full min-w-0">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-positive-strong truncate">Receitas</CardTitle>
           </CardHeader>
@@ -83,7 +83,7 @@ export default function ResumoMensal({ dateFrom, dateTo }: ResumoMensalProps) {
             </p>
           </CardContent>
         </Card>
-        <Card className="vrz-card bg-red-50 border-red-100 w-full min-w-0">
+        <Card className="bg-red-50 border-red-100 w-full min-w-0">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-red-800 truncate">Despesas</CardTitle>
           </CardHeader>
@@ -97,7 +97,7 @@ export default function ResumoMensal({ dateFrom, dateTo }: ResumoMensalProps) {
             </p>
           </CardContent>
         </Card>
-        <Card className="vrz-card bg-blue-50 border-blue-100 w-full min-w-0">
+        <Card className="bg-blue-50 border-blue-100 w-full min-w-0">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-blue-800 truncate">Saldo do período</CardTitle>
           </CardHeader>
@@ -108,7 +108,7 @@ export default function ResumoMensal({ dateFrom, dateTo }: ResumoMensalProps) {
             <p className="text-xs text-blue-600 mt-1 truncate">Entradas menos saídas no caixa</p>
           </CardContent>
         </Card>
-        <Card className="vrz-card border-black/5 w-full min-w-0">
+        <Card className="border-black/5 w-full min-w-0">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground truncate">Projeção final</CardTitle>
           </CardHeader>
@@ -139,7 +139,7 @@ export default function ResumoMensal({ dateFrom, dateTo }: ResumoMensalProps) {
         </Card>
       </div>
 
-      <Card className="vrz-card w-full">
+      <Card className="w-full">
         <CardHeader>
           <CardTitle>Performance Diária</CardTitle>
           <CardDescription>Acompanhamento do mês corrente</CardDescription>
@@ -187,7 +187,7 @@ export default function ResumoMensal({ dateFrom, dateTo }: ResumoMensalProps) {
 
       {/* Detalhamento de Receitas e Despesas do Mês */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
-        <Card className="vrz-card w-full">
+        <Card className="w-full">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="h-5 w-5 text-positive-strong" />
@@ -224,7 +224,7 @@ export default function ResumoMensal({ dateFrom, dateTo }: ResumoMensalProps) {
           </CardContent>
         </Card>
 
-        <Card className="vrz-card w-full">
+        <Card className="w-full">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <TrendingDown className="h-5 w-5 text-red-600" />

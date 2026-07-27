@@ -1,7 +1,7 @@
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from "recharts";
+import { formatCurrency, formatNumberCompact } from "@/lib/format";
 
-const toCurrency = (value: number) =>
-  new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
+const toCurrency = (value: number) => formatCurrency(value);
 
 interface ChartDatum {
   mes: string;
@@ -26,12 +26,7 @@ export default function RelatoriosChart({ chartData, tipoRelatorio }: Relatorios
         <BarChart data={chartData} barGap={4}>
           <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--chart-grid))" />
           <XAxis dataKey="mes" tick={{ fontSize: 12 }} />
-          <YAxis
-            tick={{ fontSize: 11 }}
-            tickFormatter={(v: number) =>
-              new Intl.NumberFormat("pt-BR", { notation: "compact", compactDisplay: "short" }).format(v)
-            }
-          />
+          <YAxis tick={{ fontSize: 11 }} tickFormatter={(v: number) => formatNumberCompact(v)} />
           <Tooltip
             formatter={(value: number) => toCurrency(value)}
             contentStyle={{ borderRadius: 12, border: "1px solid hsl(var(--chart-grid))" }}

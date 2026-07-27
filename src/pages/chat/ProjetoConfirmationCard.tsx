@@ -59,7 +59,10 @@ export function ProjetoConfirmationCard({ index, draft, onConfirmar, onCancelar,
   const currentUser = useMemo(
     () =>
       profile
-        ? { name: [profile.first_name, profile.last_name].filter(Boolean).join(" ") || "Usuário", email: user?.email ?? "" }
+        ? {
+            name: [profile.first_name, profile.last_name].filter(Boolean).join(" ") || "Usuário",
+            email: user?.email ?? "",
+          }
         : null,
     [profile, user]
   );
@@ -385,50 +388,50 @@ export function ProjetoConfirmationCard({ index, draft, onConfirmar, onCancelar,
           </button>
 
           {mostrarDisc && (
-          <div className="mt-3">
-          {templatesData.length > 0 && disc.projetosDisciplinas.length === 0 && (
-            <div className="mb-3 space-y-1.5 rounded-lg border border-dashed border-border bg-muted/40 p-3">
-              <Label className="text-xs text-muted-foreground">Criar a partir de template</Label>
-              <Select onValueChange={disc.applyTemplate}>
-                <SelectTrigger className="h-9">
-                  <SelectValue placeholder="Selecione um template (opcional)" />
-                </SelectTrigger>
-                <SelectContent>
-                  {templatesData.map((t) => (
-                    <SelectItem key={t.id} value={t.id}>
-                      {t.nome} ({t.tipo_servico})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
+            <div className="mt-3">
+              {templatesData.length > 0 && disc.projetosDisciplinas.length === 0 && (
+                <div className="mb-3 space-y-1.5 rounded-lg border border-dashed border-border bg-muted/40 p-3">
+                  <Label className="text-xs text-muted-foreground">Criar a partir de template</Label>
+                  <Select onValueChange={disc.applyTemplate}>
+                    <SelectTrigger className="h-9">
+                      <SelectValue placeholder="Selecione um template (opcional)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {templatesData.map((t) => (
+                        <SelectItem key={t.id} value={t.id}>
+                          {t.nome} ({t.tipo_servico})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
-          <DisciplinasSection
-            disciplinas={catalogoDisciplinas}
-            pessoas={pessoas}
-            fluxosData={fluxosData.data ?? []}
-            onApplyFluxo={disc.applyFluxo}
-            projetosDisciplinas={disc.projetosDisciplinas}
-            tempDisciplina={disc.tempDisciplina}
-            onTempDisciplinaChange={disc.setTempDisciplina}
-            onAddDisciplina={disc.addProjetoDisciplina}
-            onRemoveDisciplina={disc.removeProjetoDisciplina}
-            onOpenDetail={disc.handleOpenDisciplinaDetail}
-            expandedFormDiscIdx={disc.expandedFormDiscIdx}
-            onExpandToggle={disc.setExpandedFormDiscIdx}
-            addingRespToFormDisc={disc.addingRespToFormDisc}
-            onSetAddingResp={disc.setAddingRespToFormDisc}
-            newFormResp={disc.newFormResp}
-            onNewFormRespChange={disc.setNewFormResp}
-            onAddResponsavel={disc.addResponsavelToDisc}
-            onRemoveResponsavel={disc.removeResponsavelFromDisc}
-            onUpdateRespDatas={disc.updateRespDatasInForm}
-            projetoDataInicio={form.data_inicio || undefined}
-            projetoDataPrevisao={form.data_previsao || undefined}
-            projetoDataFinal={form.data_final || undefined}
-          />
-          </div>
+              <DisciplinasSection
+                disciplinas={catalogoDisciplinas}
+                pessoas={pessoas}
+                fluxosData={fluxosData.data ?? []}
+                onApplyFluxo={disc.applyFluxo}
+                projetosDisciplinas={disc.projetosDisciplinas}
+                tempDisciplina={disc.tempDisciplina}
+                onTempDisciplinaChange={disc.setTempDisciplina}
+                onAddDisciplina={disc.addProjetoDisciplina}
+                onRemoveDisciplina={disc.removeProjetoDisciplina}
+                onOpenDetail={disc.handleOpenDisciplinaDetail}
+                expandedFormDiscIdx={disc.expandedFormDiscIdx}
+                onExpandToggle={disc.setExpandedFormDiscIdx}
+                addingRespToFormDisc={disc.addingRespToFormDisc}
+                onSetAddingResp={disc.setAddingRespToFormDisc}
+                newFormResp={disc.newFormResp}
+                onNewFormRespChange={disc.setNewFormResp}
+                onAddResponsavel={disc.addResponsavelToDisc}
+                onRemoveResponsavel={disc.removeResponsavelFromDisc}
+                onUpdateRespDatas={disc.updateRespDatasInForm}
+                projetoDataInicio={form.data_inicio || undefined}
+                projetoDataPrevisao={form.data_previsao || undefined}
+                projetoDataFinal={form.data_final || undefined}
+              />
+            </div>
           )}
         </div>
       </div>
@@ -455,7 +458,7 @@ export function ProjetoConfirmationCard({ index, draft, onConfirmar, onCancelar,
           <Button variant="ghost" size="sm" onClick={cancelar} disabled={salvando}>
             Cancelar
           </Button>
-          <Button size="sm" onClick={criar} disabled={salvando} className="gap-1.5 bg-brand text-ink hover:bg-brand/90">
+          <Button size="sm" onClick={criar} disabled={salvando} variant="brand" className="gap-1.5">
             {salvando ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
             Criar projeto
           </Button>

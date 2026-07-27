@@ -28,16 +28,7 @@ export type LeadFormData = {
 
 // Origens padronizadas do lead. "Outro" libera um campo de texto livre.
 // Evita a bagunça de 'Instagram'/'instagram'/'IG' apontando pra mesma coisa.
-const LEAD_ORIGENS = [
-  "Indicação",
-  "Instagram",
-  "LinkedIn",
-  "Site",
-  "Google",
-  "WhatsApp",
-  "Evento",
-  "Outro",
-] as const;
+const LEAD_ORIGENS = ["Indicação", "Instagram", "LinkedIn", "Site", "Google", "WhatsApp", "Evento", "Outro"] as const;
 
 const ORIGEM_OUTRO = "Outro";
 
@@ -68,7 +59,16 @@ type Props = {
   members: Member[];
 };
 
-export function LeadFormDialog({ open, onOpenChange, mode, formData, onFormChange, onSubmit, isPending, members }: Props) {
+export function LeadFormDialog({
+  open,
+  onOpenChange,
+  mode,
+  formData,
+  onFormChange,
+  onSubmit,
+  isPending,
+  members,
+}: Props) {
   const isEdit = mode === "edit";
   const prefix = isEdit ? "edit-" : "";
   const cnpjErrorId = `${prefix}cnpj-error`;
@@ -171,7 +171,9 @@ export function LeadFormDialog({ open, onOpenChange, mode, formData, onFormChang
             <Label className="text-[10px] uppercase text-muted-foreground tracking-wider">Informações do Lead</Label>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label htmlFor={`${prefix}nome`} className="text-xs">Nome *</Label>
+                <Label htmlFor={`${prefix}nome`} className="text-xs">
+                  Nome *
+                </Label>
                 <Input
                   id={`${prefix}nome`}
                   value={formData.nome}
@@ -183,11 +185,15 @@ export function LeadFormDialog({ open, onOpenChange, mode, formData, onFormChang
                   className={nomeError ? "border-destructive focus-visible:ring-destructive/40" : ""}
                 />
                 {nomeError && (
-                  <p id={nomeErrorId} role="alert" className="text-xs text-destructive">{nomeError}</p>
+                  <p id={nomeErrorId} role="alert" className="text-xs text-destructive">
+                    {nomeError}
+                  </p>
                 )}
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor={`${prefix}sobrenome`} className="text-xs">Sobrenome</Label>
+                <Label htmlFor={`${prefix}sobrenome`} className="text-xs">
+                  Sobrenome
+                </Label>
                 <Input
                   id={`${prefix}sobrenome`}
                   value={formData.sobrenome}
@@ -196,7 +202,9 @@ export function LeadFormDialog({ open, onOpenChange, mode, formData, onFormChang
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor={`${prefix}empresa_lead`} className="text-xs">Empresa</Label>
+                <Label htmlFor={`${prefix}empresa_lead`} className="text-xs">
+                  Empresa
+                </Label>
                 <Input
                   id={`${prefix}empresa_lead`}
                   value={formData.empresa_lead}
@@ -205,7 +213,9 @@ export function LeadFormDialog({ open, onOpenChange, mode, formData, onFormChang
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor={`${prefix}cnpj`} className="text-xs">CNPJ</Label>
+                <Label htmlFor={`${prefix}cnpj`} className="text-xs">
+                  CNPJ
+                </Label>
                 <Input
                   id={`${prefix}cnpj`}
                   value={formData.cnpj}
@@ -218,7 +228,9 @@ export function LeadFormDialog({ open, onOpenChange, mode, formData, onFormChang
                   className={cnpjError ? "border-destructive focus-visible:ring-destructive/40" : ""}
                 />
                 {cnpjError && (
-                  <p id={cnpjErrorId} role="alert" className="text-xs text-destructive">{cnpjError}</p>
+                  <p id={cnpjErrorId} role="alert" className="text-xs text-destructive">
+                    {cnpjError}
+                  </p>
                 )}
               </div>
               <ValidatedField
@@ -238,7 +250,9 @@ export function LeadFormDialog({ open, onOpenChange, mode, formData, onFormChang
                 }
               />
               <div className="space-y-1.5">
-                <Label htmlFor={`${prefix}contato`} className="text-xs">Telefone</Label>
+                <Label htmlFor={`${prefix}contato`} className="text-xs">
+                  Telefone
+                </Label>
                 <Input
                   id={`${prefix}contato`}
                   value={formData.contato}
@@ -248,7 +262,9 @@ export function LeadFormDialog({ open, onOpenChange, mode, formData, onFormChang
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor={`${prefix}valor_estimado`} className="text-xs">Valor Estimado</Label>
+                <Label htmlFor={`${prefix}valor_estimado`} className="text-xs">
+                  Valor Estimado
+                </Label>
                 <Input
                   id={`${prefix}valor_estimado`}
                   value={formData.valor_estimado}
@@ -257,7 +273,9 @@ export function LeadFormDialog({ open, onOpenChange, mode, formData, onFormChang
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor={`${prefix}previsao_fechamento`} className="text-xs">Previsão de Fechamento</Label>
+                <Label htmlFor={`${prefix}previsao_fechamento`} className="text-xs">
+                  Previsão de Fechamento
+                </Label>
                 <DatePicker
                   id={`${prefix}previsao_fechamento`}
                   value={formData.previsao_fechamento}
@@ -265,7 +283,9 @@ export function LeadFormDialog({ open, onOpenChange, mode, formData, onFormChang
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor={`${prefix}responsavel_id`} className="text-xs">Responsável</Label>
+                <Label htmlFor={`${prefix}responsavel_id`} className="text-xs">
+                  Responsável
+                </Label>
                 <Select value={formData.responsavel_id} onValueChange={(v) => set("responsavel_id", v)}>
                   <SelectTrigger id={`${prefix}responsavel_id`}>
                     <SelectValue placeholder="Selecione..." />
@@ -280,7 +300,9 @@ export function LeadFormDialog({ open, onOpenChange, mode, formData, onFormChang
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor={`${prefix}origem`} className="text-xs">Origem</Label>
+                <Label htmlFor={`${prefix}origem`} className="text-xs">
+                  Origem
+                </Label>
                 <Select value={origemChoice} onValueChange={handleOrigemSelect}>
                   <SelectTrigger id={`${prefix}origem`}>
                     <SelectValue placeholder="Selecione..." />
@@ -305,7 +327,9 @@ export function LeadFormDialog({ open, onOpenChange, mode, formData, onFormChang
               </div>
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor={`${prefix}notas`} className="text-xs">Notas</Label>
+              <Label htmlFor={`${prefix}notas`} className="text-xs">
+                Notas
+              </Label>
               <Textarea
                 id={`${prefix}notas`}
                 value={formData.notas}
@@ -317,11 +341,23 @@ export function LeadFormDialog({ open, onOpenChange, mode, formData, onFormChang
           </div>
 
           <div className="flex gap-2 px-6 py-4 bg-muted/30">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="flex-1" disabled={isPending}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              className="flex-1"
+              disabled={isPending}
+            >
               Cancelar
             </Button>
-            <Button type="submit" className="flex-1 bg-brand hover:bg-brand/90 text-ink" disabled={isPending}>
-              {isPending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Salvando...</> : "Salvar"}
+            <Button type="submit" variant="brand" className="flex-1" disabled={isPending}>
+              {isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Salvando...
+                </>
+              ) : (
+                "Salvar"
+              )}
             </Button>
           </div>
         </form>

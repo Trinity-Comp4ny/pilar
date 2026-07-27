@@ -434,7 +434,8 @@ export default function Receitas() {
                   form.reset(receitaDefaultValues);
                   setIsDialogOpen(true);
                 }}
-                className="rounded-full bg-brand hover:bg-brand/90 text-ink transition-colors px-5 py-2.5 text-sm"
+                variant="brand"
+                className="rounded-full px-5 py-2.5 text-sm"
               >
                 <Plus className="mr-2 h-4 w-4" />
                 Nova Receita
@@ -466,8 +467,8 @@ export default function Receitas() {
         <CardContent className="p-0">
           {isError && (
             <div className="mx-4 mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-              Não foi possível carregar as receitas. Verifique a conexão e recarregue a página — os
-              valores abaixo podem estar incompletos.
+              Não foi possível carregar as receitas. Verifique a conexão e recarregue a página — os valores abaixo podem
+              estar incompletos.
             </div>
           )}
           <div className="flex items-center gap-3 px-4 py-3 border-b bg-gray-50/50">
@@ -739,9 +740,12 @@ export default function Receitas() {
 
       <ConfirmDialog
         open={confirmRecebidaId !== null}
-        onOpenChange={(v) => { if (!v) setConfirmRecebidaId(null); }}
+        onOpenChange={(v) => {
+          if (!v) setConfirmRecebidaId(null);
+        }}
         onConfirm={() => {
-          if (confirmRecebidaId) marcarRecebida.mutate(confirmRecebidaId, { onSettled: () => setConfirmRecebidaId(null) });
+          if (confirmRecebidaId)
+            marcarRecebida.mutate(confirmRecebidaId, { onSettled: () => setConfirmRecebidaId(null) });
         }}
         title="Confirmar recebimento?"
         description="Deseja marcar esta receita como recebida?"

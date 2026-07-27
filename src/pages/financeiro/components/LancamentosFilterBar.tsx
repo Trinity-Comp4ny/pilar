@@ -358,10 +358,7 @@ export function LancamentosFilterBar({
                   <X className="h-4 w-4" />
                   Limpar avançados
                 </Button>
-                <Button
-                  onClick={() => setAdvOpen(false)}
-                  className="rounded-full bg-brand hover:bg-brand/90 text-ink transition-colors px-5 py-2.5 text-sm"
-                >
+                <Button onClick={() => setAdvOpen(false)} variant="brand" className="rounded-full px-5 py-2.5 text-sm">
                   Aplicar
                 </Button>
               </div>

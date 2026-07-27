@@ -181,7 +181,7 @@ export function TemplatesManager() {
         </p>
         <div className="flex items-center gap-2">
           <VariaveisGuideButton />
-          <Button onClick={() => setIsUploadOpen(true)} className="bg-brand hover:bg-brand/90 text-ink">
+          <Button onClick={() => setIsUploadOpen(true)} variant="brand">
             <Upload className="h-4 w-4 mr-2" />
             Upload Template
           </Button>
@@ -373,11 +373,7 @@ export function TemplatesManager() {
             <Button variant="outline" onClick={resetForm}>
               Cancelar
             </Button>
-            <Button
-              onClick={handleUpload}
-              disabled={uploadTemplate.isPending}
-              className="bg-brand hover:bg-brand/90 text-ink"
-            >
+            <Button onClick={handleUpload} disabled={uploadTemplate.isPending} variant="brand">
               {uploadTemplate.isPending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Processando...

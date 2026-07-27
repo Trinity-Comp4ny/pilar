@@ -247,7 +247,8 @@ export function FolhaCard({ draft, onConfirmar, onCancelar, onDesfazerFolha }: P
             size="sm"
             onClick={fechar}
             disabled={salvando || preview.isLoading || preview.data?.jaFechada || rows.length === 0}
-            className="gap-1.5 bg-brand text-ink hover:bg-brand/90"
+            variant="brand"
+            className="gap-1.5"
           >
             {salvando ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
             Fechar folha

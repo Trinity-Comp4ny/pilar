@@ -104,11 +104,7 @@ export default function Profile() {
       header={
         <PageHeader title="Perfil" description="Gerencie suas informações">
           {!editing ? (
-            <Button
-              onClick={() => setEditing(true)}
-              className="rounded-full bg-brand hover:bg-brand/90 text-ink"
-              disabled={isLoading}
-            >
+            <Button onClick={() => setEditing(true)} variant="brand" className="rounded-full" disabled={isLoading}>
               Editar Perfil
             </Button>
           ) : (
@@ -116,10 +112,7 @@ export default function Profile() {
               <Button variant="outline" onClick={() => setEditing(false)} className="rounded-full">
                 Cancelar
               </Button>
-              <Button
-                onClick={form.handleSubmit(handleSave)}
-                className="rounded-full bg-brand hover:bg-brand/90 text-ink"
-              >
+              <Button onClick={form.handleSubmit(handleSave)} variant="brand" className="rounded-full">
                 Salvar Alterações
               </Button>
             </div>
@@ -150,125 +143,125 @@ export default function Profile() {
           </div>
         )}
         {!isLoading && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <Card className={"border border-black/5 lg:col-span-1 " + (editing ? "ring-1 ring-brand/25" : "")}>
-            <CardHeader>
-              <div className="flex flex-col items-center text-center space-y-4">
-                <div className="h-24 w-24 rounded-full bg-brand/10 flex items-center justify-center">
-                  <User size={40} className="text-ink" />
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <Card className={"border border-black/5 lg:col-span-1 " + (editing ? "ring-1 ring-brand/25" : "")}>
+              <CardHeader>
+                <div className="flex flex-col items-center text-center space-y-4">
+                  <div className="h-24 w-24 rounded-full bg-brand/10 flex items-center justify-center">
+                    <User size={40} className="text-ink" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-xl">{[firstName, lastName].filter(Boolean).join(" ") || "-"}</CardTitle>
+                    <CardDescription className="mt-1">{companyName || "-"}</CardDescription>
+                  </div>
                 </div>
-                <div>
-                  <CardTitle className="text-xl">{[firstName, lastName].filter(Boolean).join(" ") || "-"}</CardTitle>
-                  <CardDescription className="mt-1">{companyName || "-"}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {email && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <Mail size={16} className="text-black/40" />
+                      <span className="text-black/70 break-all">{email}</span>
+                    </div>
+                  )}
+                  {contact && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <Phone size={16} className="text-black/40" />
+                      <span className="text-black/70">{contact}</span>
+                    </div>
+                  )}
+                  {companyName && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <Building2 size={16} className="text-black/40" />
+                      <span className="text-black/70">{companyName}</span>
+                    </div>
+                  )}
                 </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {email && (
-                  <div className="flex items-center gap-2 text-sm">
-                    <Mail size={16} className="text-black/40" />
-                    <span className="text-black/70 break-all">{email}</span>
-                  </div>
-                )}
-                {contact && (
-                  <div className="flex items-center gap-2 text-sm">
-                    <Phone size={16} className="text-black/40" />
-                    <span className="text-black/70">{contact}</span>
-                  </div>
-                )}
-                {companyName && (
-                  <div className="flex items-center gap-2 text-sm">
-                    <Building2 size={16} className="text-black/40" />
-                    <span className="text-black/70">{companyName}</span>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
 
-          <Card className={"border border-black/5 lg:col-span-2 " + (editing ? "ring-1 ring-brand/25" : "")}>
-            <CardHeader className={editing ? "bg-brand/5" : ""}>
-              <CardTitle>Dados do Perfil</CardTitle>
-              <CardDescription>Atualize seus dados pessoais</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(handleSave)} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="firstName"
-                    render={({ field }) => (
-                      <FormItem className="space-y-2">
-                        <FormLabel>Nome *</FormLabel>
-                        <FormControl>
-                          <Input {...field} readOnly={!editing} className={inputReadonlyClass} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="lastName"
-                    render={({ field }) => (
-                      <FormItem className="space-y-2">
-                        <FormLabel>Sobrenome *</FormLabel>
-                        <FormControl>
-                          <Input {...field} readOnly={!editing} className={inputReadonlyClass} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <div className="space-y-2 md:col-span-2">
-                    <Label htmlFor="company">Empresa</Label>
-                    <Input id="company" value={companyName} readOnly className={alwaysReadonlyClass} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input id="email" value={email} readOnly className={alwaysReadonlyClass} />
-                  </div>
-                  <FormField
-                    control={form.control}
-                    name="contact"
-                    render={({ field }) => (
-                      <FormItem className="space-y-2">
-                        <FormLabel>Contato (Celular)</FormLabel>
-                        <FormControl>
-                          <Input
-                            {...field}
-                            onChange={(e) => field.onChange(formatPhone(e.target.value))}
-                            readOnly={!editing}
-                            className={inputReadonlyClass}
-                            placeholder="(11) 99999-9999"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </form>
-              </Form>
-            </CardContent>
-          </Card>
+            <Card className={"border border-black/5 lg:col-span-2 " + (editing ? "ring-1 ring-brand/25" : "")}>
+              <CardHeader className={editing ? "bg-brand/5" : ""}>
+                <CardTitle>Dados do Perfil</CardTitle>
+                <CardDescription>Atualize seus dados pessoais</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(handleSave)} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="firstName"
+                      render={({ field }) => (
+                        <FormItem className="space-y-2">
+                          <FormLabel>Nome *</FormLabel>
+                          <FormControl>
+                            <Input {...field} readOnly={!editing} className={inputReadonlyClass} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="lastName"
+                      render={({ field }) => (
+                        <FormItem className="space-y-2">
+                          <FormLabel>Sobrenome *</FormLabel>
+                          <FormControl>
+                            <Input {...field} readOnly={!editing} className={inputReadonlyClass} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <div className="space-y-2 md:col-span-2">
+                      <Label htmlFor="company">Empresa</Label>
+                      <Input id="company" value={companyName} readOnly className={alwaysReadonlyClass} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="email">Email</Label>
+                      <Input id="email" value={email} readOnly className={alwaysReadonlyClass} />
+                    </div>
+                    <FormField
+                      control={form.control}
+                      name="contact"
+                      render={({ field }) => (
+                        <FormItem className="space-y-2">
+                          <FormLabel>Contato (Celular)</FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              onChange={(e) => field.onChange(formatPhone(e.target.value))}
+                              readOnly={!editing}
+                              className={inputReadonlyClass}
+                              placeholder="(11) 99999-9999"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </form>
+                </Form>
+              </CardContent>
+            </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <ShieldCheck className="h-5 w-5" />
-                Segurança
-              </CardTitle>
-              <CardDescription>Autenticação de dois fatores (TOTP)</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <MfaSetup />
-            </CardContent>
-          </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <ShieldCheck className="h-5 w-5" />
+                  Segurança
+                </CardTitle>
+                <CardDescription>Autenticação de dois fatores (TOTP)</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <MfaSetup />
+              </CardContent>
+            </Card>
 
-          <EmailChangeCard currentEmail={email} onChanged={(newEmail) => setEmail(newEmail)} />
-          <PasswordChangeCard currentEmail={email} />
-        </div>
+            <EmailChangeCard currentEmail={email} onChanged={(newEmail) => setEmail(newEmail)} />
+            <PasswordChangeCard currentEmail={email} />
+          </div>
         )}
       </div>
     </PageLayout>

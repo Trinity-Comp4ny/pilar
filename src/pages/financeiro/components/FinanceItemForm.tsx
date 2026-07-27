@@ -140,11 +140,11 @@ export function FinanceItemForm({
               </Button>
             )}
             {step === 1 ? (
-              <Button type="button" onClick={onNext} className="bg-brand hover:bg-brand/90 text-ink">
+              <Button type="button" onClick={onNext} variant="brand">
                 Próximo →
               </Button>
             ) : (
-              <Button type="submit" className="bg-brand hover:bg-brand/90 text-ink" disabled={isSaving}>
+              <Button type="submit" variant="brand" disabled={isSaving}>
                 {isSaving ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Salvando...

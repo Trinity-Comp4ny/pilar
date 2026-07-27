@@ -212,7 +212,7 @@ export function CartaoCard({ index, draft, onConfirmar, onCancelar, onDesfazer }
           <Button variant="ghost" size="sm" onClick={cancelar} disabled={salvando}>
             Cancelar
           </Button>
-          <Button size="sm" onClick={criar} disabled={salvando} className="gap-1.5 bg-brand text-ink hover:bg-brand/90">
+          <Button size="sm" onClick={criar} disabled={salvando} variant="brand" className="gap-1.5">
             {salvando ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
             Cadastrar
           </Button>

@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { formatCurrency as fmtMoeda } from "@/lib/format";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Loader2, AlertTriangle, Clock } from "lucide-react";
@@ -6,8 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from "recharts";
 
-const formatCurrency = (v: number) =>
-  new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 }).format(v);
+const formatCurrency = (v: number) => fmtMoeda(v, { decimals: 0 });
 
 interface AgingBucket {
   cliente_id: string;

@@ -1,4 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { formatCurrency as fmtMoeda } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, TrendingUp } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
@@ -19,8 +20,7 @@ interface BurnRateChartProps {
   projetoId: string;
 }
 
-const formatCurrency = (v: number) =>
-  new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 }).format(v);
+const formatCurrency = (v: number) => fmtMoeda(v, { decimals: 0 });
 
 export function BurnRateChart({ projetoId }: BurnRateChartProps) {
   const { data, isLoading } = useQuery({

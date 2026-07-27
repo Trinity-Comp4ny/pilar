@@ -289,7 +289,8 @@ export function GerarPropostaDialog({
           )}
           {step === "preview" && (
             <DialogDescription>
-              Revise o documento. Se precisar corrigir algo, volte e edite {mode === "contrato" ? "o contrato" : "a proposta"}.
+              Revise o documento. Se precisar corrigir algo, volte e edite{" "}
+              {mode === "contrato" ? "o contrato" : "a proposta"}.
             </DialogDescription>
           )}
           {step === "send" && (
@@ -299,7 +300,10 @@ export function GerarPropostaDialog({
             </DialogDescription>
           )}
           {/* Indicador de passo do wizard */}
-          <div className="flex items-center gap-1.5 pt-1" aria-label={`Passo ${STEP_ORDER.indexOf(step) + 1} de ${STEP_ORDER.length}`}>
+          <div
+            className="flex items-center gap-1.5 pt-1"
+            aria-label={`Passo ${STEP_ORDER.indexOf(step) + 1} de ${STEP_ORDER.length}`}
+          >
             {STEP_ORDER.map((s, i) => {
               const current = STEP_ORDER.indexOf(step);
               const done = i < current;
@@ -333,8 +337,8 @@ export function GerarPropostaDialog({
               {templates.length === 0 ? (
                 <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm text-amber-700 space-y-2">
                   <p>
-                    Nenhum template do tipo <strong>{label.toLowerCase()}</strong> cadastrado. Cadastre um template
-                    para poder gerar o documento.
+                    Nenhum template do tipo <strong>{label.toLowerCase()}</strong> cadastrado. Cadastre um template para
+                    poder gerar o documento.
                   </p>
                   <Button
                     size="sm"
@@ -498,11 +502,7 @@ export function GerarPropostaDialog({
               <Button variant="outline" onClick={() => onOpenChange(false)}>
                 Cancelar
               </Button>
-              <Button
-                onClick={handleVisualize}
-                disabled={!selectedTemplateId || isGenerating}
-                className="bg-brand hover:bg-brand/90 text-ink"
-              >
+              <Button onClick={handleVisualize} disabled={!selectedTemplateId || isGenerating} variant="brand">
                 {isGenerating ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Gerando...
@@ -524,7 +524,7 @@ export function GerarPropostaDialog({
               <Button variant="outline" className="gap-1.5" onClick={handleDownload}>
                 <Download className="h-4 w-4" /> Baixar documento
               </Button>
-              <Button className="gap-1.5 bg-brand hover:bg-brand/90 text-ink" onClick={() => setStep("send")}>
+              <Button variant="brand" className="gap-1.5" onClick={() => setStep("send")}>
                 <Send className="h-4 w-4" /> Enviar por Email
               </Button>
             </>
@@ -536,7 +536,8 @@ export function GerarPropostaDialog({
                 <ArrowLeft className="h-4 w-4 mr-1.5" /> Voltar ao Preview
               </Button>
               <Button
-                className="gap-1.5 bg-brand hover:bg-brand/90 text-ink"
+                variant="brand"
+                className="gap-1.5"
                 disabled={!sendEmail.trim() || emailInvalid || isSending}
                 onClick={handleSend}
               >

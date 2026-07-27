@@ -7,7 +7,18 @@ import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Check, CheckCircle2, Eye, EyeOff, HelpCircle, KeyRound, Loader2, Lock, ShieldCheck } from "lucide-react";
+import {
+  ArrowLeft,
+  Check,
+  CheckCircle2,
+  Eye,
+  EyeOff,
+  HelpCircle,
+  KeyRound,
+  Loader2,
+  Lock,
+  ShieldCheck,
+} from "lucide-react";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { translateAuthError } from "@/lib/authErrors";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
@@ -204,10 +215,7 @@ export default function PasswordReset() {
               <p className="text-sm text-ink-soft">
                 O link de recuperação é válido por tempo limitado. Solicite um novo.
               </p>
-              <Button
-                className="w-full h-11 bg-brand hover:bg-brand/90 text-ink font-medium"
-                onClick={() => navigate("/forgot-password")}
-              >
+              <Button variant="brand" className="w-full h-11 font-medium" onClick={() => navigate("/forgot-password")}>
                 Solicitar novo link
               </Button>
             </div>
@@ -299,7 +307,8 @@ export default function PasswordReset() {
 
               <Button
                 onClick={() => handleVerifyMfa(mfaCode)}
-                className="w-full h-11 bg-brand hover:bg-brand/90 text-ink font-medium shadow-lg shadow-brand/20 hover:shadow-brand/30 transition-all active:scale-[0.98]"
+                variant="brand"
+                className="w-full h-11 font-medium shadow-lg shadow-brand/20 hover:shadow-brand/30 transition-all active:scale-[0.98]"
                 disabled={submitting || mfaCode.length !== 6}
               >
                 {submitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
@@ -417,7 +426,8 @@ export default function PasswordReset() {
 
                 <Button
                   type="submit"
-                  className="w-full h-11 bg-brand hover:bg-brand/90 text-ink font-medium shadow-lg shadow-brand/20 hover:shadow-brand/30 transition-all active:scale-[0.98]"
+                  variant="brand"
+                  className="w-full h-11 font-medium shadow-lg shadow-brand/20 hover:shadow-brand/30 transition-all active:scale-[0.98]"
                   disabled={submitting || !form.formState.isValid}
                 >
                   {submitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}

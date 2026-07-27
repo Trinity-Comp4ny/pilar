@@ -355,7 +355,7 @@ export default function Fornecedores() {
                       Cancelar
                     </Button>
                     <div className="flex-1" />
-                    <Button type="submit" className="bg-brand hover:bg-brand/90 text-ink" disabled={isSaving}>
+                    <Button type="submit" variant="brand" disabled={isSaving}>
                       {isSaving ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />

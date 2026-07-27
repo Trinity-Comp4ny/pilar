@@ -134,10 +134,7 @@ export function CartaoFormDialog({
             </Select>
             <p className="text-xs text-muted-foreground">Conta padrão usada ao pagar faturas deste cartão</p>
           </div>
-          <Button
-            className="w-full rounded-full bg-brand hover:bg-brand/90 text-ink transition-colors px-5 py-2.5 text-sm"
-            onClick={onSave}
-          >
+          <Button variant="brand" className="w-full rounded-full px-5 py-2.5 text-sm" onClick={onSave}>
             {selectedCartao ? "Atualizar Cartão" : "Salvar Cartão"}
           </Button>
         </div>

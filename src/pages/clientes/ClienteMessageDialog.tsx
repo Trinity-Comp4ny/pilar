@@ -81,7 +81,8 @@ export function ClienteMessageDialog({
           </Button>
           <Button
             onClick={handleSend}
-            className="flex-1 bg-brand hover:bg-brand/90 text-ink"
+            variant="brand"
+            className="flex-1"
             disabled={!message || !subject || !cliente || isSending}
           >
             {isSending ? (

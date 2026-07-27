@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import { statusBadgeClasses, statusLabel } from "@/lib/status";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -33,17 +34,21 @@ const RelatoriosRentabilidade = lazy(() => import("./relatorios/RelatoriosRentab
 
 type RentabilidadeMode = "projeto" | "cliente";
 
+// Cores derivam do registry único (ADR 0008): "Pago" tem a MESMA cor em todas
+// as telas. Mudar tom = src/lib/status.ts.
+const finStatus = (s: string) => ({ label: statusLabel("financeiro", s), className: statusBadgeClasses("financeiro", s) });
+
 const statusConfig: Record<string, { label: string; className: string }> = {
-  Pendente: { label: "Pendente", className: "bg-amber-100 text-amber-800 border-amber-200" },
-  Pago: { label: "Pago", className: "bg-emerald-100 text-emerald-800 border-emerald-200" },
-  Recebido: { label: "Recebido", className: "bg-emerald-100 text-emerald-800 border-emerald-200" },
-  Atrasado: { label: "Atrasado", className: "bg-red-100 text-red-800 border-red-200" },
-  Cancelado: { label: "Cancelado", className: "bg-gray-100 text-gray-500 border-gray-200" },
+  Pendente: finStatus("Pendente"),
+  Pago: finStatus("Pago"),
+  Recebido: finStatus("Recebido"),
+  Atrasado: finStatus("Atrasado"),
+  Cancelado: finStatus("Cancelado"),
 };
 
 const tipoConfig: Record<string, { className: string }> = {
-  Receita: { className: "bg-emerald-100 text-emerald-800 border-emerald-200" },
-  Despesa: { className: "bg-red-100 text-red-800 border-red-200" },
+  Receita: { className: statusBadgeClasses("tipo", "Receita") },
+  Despesa: { className: statusBadgeClasses("tipo", "Despesa") },
 };
 
 export default function Relatorios() {
@@ -429,22 +434,22 @@ export default function Relatorios() {
 
               {/* Período (não se aplica a rentabilidade, que é acumulada por projeto) */}
               {!isRentabilidade && (
-              <div className="space-y-1.5 xl:w-48 shrink-0">
-                <Label className="text-xs font-medium text-muted-foreground">Período</Label>
-                <Select value={periodoPreset} onValueChange={(v) => applyPreset(v as typeof periodoPreset)}>
-                  <SelectTrigger className="h-9 bg-white">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="7d">Últimos 7 dias</SelectItem>
-                    <SelectItem value="30d">Últimos 30 dias</SelectItem>
-                    <SelectItem value="this_month">Mês atual</SelectItem>
-                    <SelectItem value="last_month">Mês anterior</SelectItem>
-                    <SelectItem value="all">Todos</SelectItem>
-                    <SelectItem value="custom">Personalizado</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+                <div className="space-y-1.5 xl:w-48 shrink-0">
+                  <Label className="text-xs font-medium text-muted-foreground">Período</Label>
+                  <Select value={periodoPreset} onValueChange={(v) => applyPreset(v as typeof periodoPreset)}>
+                    <SelectTrigger className="h-9 bg-white">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="7d">Últimos 7 dias</SelectItem>
+                      <SelectItem value="30d">Últimos 30 dias</SelectItem>
+                      <SelectItem value="this_month">Mês atual</SelectItem>
+                      <SelectItem value="last_month">Mês anterior</SelectItem>
+                      <SelectItem value="all">Todos</SelectItem>
+                      <SelectItem value="custom">Personalizado</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               )}
 
               {/* Datas customizadas (só aparecem quando "Personalizado") */}
@@ -509,11 +514,7 @@ export default function Relatorios() {
               )}
 
               {/* Botão gerar */}
-              <Button
-                onClick={handleGerarRelatorio}
-                className="h-9 px-5 bg-brand hover:bg-brand/90 text-ink shrink-0"
-                disabled={isLoading}
-              >
+              <Button onClick={handleGerarRelatorio} variant="brand" className="h-9 px-5 shrink-0" disabled={isLoading}>
                 <Plus className="mr-1.5 h-4 w-4" />
                 {isLoading ? "Gerando..." : "Gerar relatório"}
               </Button>
@@ -631,7 +632,8 @@ export default function Relatorios() {
                   </Button>
                   <Button
                     size="sm"
-                    className="h-8 text-xs gap-1.5 bg-brand text-ink hover:bg-brand/90"
+                    variant="brand"
+                    className="h-8 text-xs gap-1.5"
                     onClick={() => handleExport("pdf")}
                     disabled={!filteredData.length}
                   >
@@ -655,10 +657,7 @@ export default function Relatorios() {
                       <TableHeader>
                         <TableRow>
                           {cols.map((key) => (
-                            <TableHead
-                              key={key}
-                              className="whitespace-nowrap text-xs sticky top-0 z-10 bg-white"
-                            >
+                            <TableHead key={key} className="whitespace-nowrap text-xs sticky top-0 z-10 bg-white">
                               {key}
                             </TableHead>
                           ))}

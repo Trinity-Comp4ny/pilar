@@ -73,7 +73,9 @@ export function LancamentoCard({ index, draft, tipo, onConfirmar, onCancelar, on
       const next = { ...prev };
       if (!next.categoria_id) next.categoria_id = matchNome(aux.categorias, campos.categoria_nome);
       if (!next.projeto_id) {
-        const proj = aux.projetos.find((p) => p.codigo?.toLowerCase().includes((campos.projeto_nome ?? "").toLowerCase()));
+        const proj = aux.projetos.find((p) =>
+          p.codigo?.toLowerCase().includes((campos.projeto_nome ?? "").toLowerCase())
+        );
         if (campos.projeto_nome && proj) next.projeto_id = proj.id;
       }
       if (!next[contraparteIdKey]) {
@@ -89,8 +91,7 @@ export function LancamentoCard({ index, draft, tipo, onConfirmar, onCancelar, on
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [aux.loading]);
 
-  const set = (key: keyof Campos, value: string | number | undefined) =>
-    setForm((prev) => ({ ...prev, [key]: value }));
+  const set = (key: keyof Campos, value: string | number | undefined) => setForm((prev) => ({ ...prev, [key]: value }));
 
   const criar = async () => {
     if (!form.descricao?.trim()) {
@@ -283,7 +284,8 @@ export function LancamentoCard({ index, draft, tipo, onConfirmar, onCancelar, on
 
         {parcelado && valorParcela != null && (
           <div className="sm:col-span-2 rounded-lg border border-dashed border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
-            {nParcelas}x de {formatCurrency(valorParcela)} · total {formatCurrency(form.valor ?? 0)} · parcelas mensais, criadas como Pendente
+            {nParcelas}x de {formatCurrency(valorParcela)} · total {formatCurrency(form.valor ?? 0)} · parcelas mensais,
+            criadas como Pendente
           </div>
         )}
 
@@ -464,13 +466,14 @@ export function LancamentoCard({ index, draft, tipo, onConfirmar, onCancelar, on
       <div className="flex items-center justify-between gap-2 border-t border-border px-4 py-3">
         <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <Coins className="h-3.5 w-3.5" />
-          {isReceita ? "Lançar" : "Lançar"} debita {draft.custoCreditos} crédito{draft.custoCreditos === 1 ? "" : "s"} de IA
+          {isReceita ? "Lançar" : "Lançar"} debita {draft.custoCreditos} crédito{draft.custoCreditos === 1 ? "" : "s"}{" "}
+          de IA
         </span>
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="sm" onClick={cancelar} disabled={salvando}>
             Cancelar
           </Button>
-          <Button size="sm" onClick={criar} disabled={salvando} className="gap-1.5 bg-brand text-ink hover:bg-brand/90">
+          <Button size="sm" onClick={criar} disabled={salvando} variant="brand" className="gap-1.5">
             {salvando ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
             {isReceita ? "Lançar receita" : "Lançar despesa"}
           </Button>

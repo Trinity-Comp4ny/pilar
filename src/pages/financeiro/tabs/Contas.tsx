@@ -151,7 +151,7 @@ export default function Contas() {
 
   return (
     <>
-      <Card className="vrz-card w-full">
+      <Card className="w-full">
         <CardContent className="p-0">
           {loading ? (
             <div className="flex min-h-[480px]">

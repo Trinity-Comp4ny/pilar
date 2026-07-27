@@ -9,7 +9,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { FeatureAccessGrid } from "@/components/admin/FeatureAccessGrid";
 import { AccessBadges } from "@/components/admin/AccessBadges";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
@@ -96,11 +103,7 @@ export function UsersAccessManager({
           <CardDescription>Controle quem acessa cada módulo e com que nível.</CardDescription>
         </div>
         {canManage && (
-          <Button
-            type="button"
-            onClick={openInvite}
-            className="rounded-full bg-brand text-ink hover:bg-brand/90"
-          >
+          <Button type="button" onClick={openInvite} variant="brand" className="rounded-full">
             <UserPlus size={16} strokeWidth={1.75} />
             Convidar usuário
           </Button>
@@ -233,7 +236,12 @@ export function UsersAccessManager({
                       {canManage && u.isPending ? (
                         <div className="flex flex-col gap-2">
                           {onResendInvite && (
-                            <Button variant="outline" size="sm" className="rounded-full" onClick={() => onResendInvite(u)}>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="rounded-full"
+                              onClick={() => onResendInvite(u)}
+                            >
                               Reenviar
                             </Button>
                           )}
@@ -435,11 +443,7 @@ function InviteDialog({ open, onClose, companyFeatures, isSubmitting, onSubmit }
           <Button variant="outline" onClick={onClose}>
             Cancelar
           </Button>
-          <Button
-            disabled={!canSubmit}
-            onClick={handleSubmit}
-            className="bg-brand text-ink hover:bg-brand/90"
-          >
+          <Button disabled={!canSubmit} onClick={handleSubmit} variant="brand">
             {isSubmitting ? "Enviando convite..." : "Enviar convite"}
           </Button>
         </DialogFooter>
@@ -516,10 +520,7 @@ function EditDialog({ user, onClose, companyFeatures, onSubmit }: EditDialogProp
           <Button variant="outline" onClick={onClose}>
             Cancelar
           </Button>
-          <Button
-            onClick={() => onSubmit({ id: user.id, role, features: isAdmin ? {} : features })}
-            className="bg-brand text-ink hover:bg-brand/90"
-          >
+          <Button onClick={() => onSubmit({ id: user.id, role, features: isAdmin ? {} : features })} variant="brand">
             Salvar alterações
           </Button>
         </DialogFooter>
