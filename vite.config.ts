@@ -42,5 +42,15 @@ export default defineConfig(({ mode }) => ({
     environment: "jsdom",
     setupFiles: "./src/test/setup.ts",
     exclude: ["node_modules", "dist", "e2e/**", "tests/**", ".next", ".git", ".claude/**"],
+    // Config mínima de ambiente para a suíte. `src/lib/env.ts` valida no import e
+    // aborta sem URL/chave do Supabase, e qualquer teste que importe `supabase.ts`
+    // (a maioria, transitivamente) morre sem isto. Na máquina do dev passava por
+    // acidente, porque o Vitest carrega o `.env.local`; no CI, que não tem `.env.local`,
+    // a suíte inteira quebrou. Valores fake de propósito: teste não fala com Supabase
+    // real, e deixar isso explícito aqui evita que a suíte dependa do .env de quem roda.
+    env: {
+      VITE_SUPABASE_URL: "https://test.supabase.co",
+      VITE_SUPABASE_PUBLISHABLE_KEY: "test-anon-key",
+    },
   },
 }));
