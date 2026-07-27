@@ -1,0 +1,158 @@
+name: Hotfix → aplicar UMA migration em produção
+
+# Aplica exatamente UMA migration nomeada em produção, sob aprovação.
+#
+# Por que este workflow existe, e por que ele NÃO é `supabase db push`:
+# em 2026-07-27 o banco de produção tinha 134 migrations aplicadas (última de
+# 2026-07-13) enquanto o branch staging já acumulava 184 arquivos. Um `db push`
+# levaria ~50 migrations de uma vez, ou seja, arrastaria feature não liberada junto
+# com a correção. Aqui o alvo é um arquivo só, escolhido no disparo.
+#
+# Segurança do desenho:
+#   - `environment: Production` exige a aprovação configurada no repositório;
+#   - o input `confirmar` obriga a digitar a frase, para dispatch acidental não passar;
+#   - o guard de migration destrutiva roda ANTES de tocar o banco;
+#   - a transação é única (`ON_ERROR_STOP=1` + BEGIN/COMMIT no wrapper): se qualquer
+#     statement falhar, nada fica aplicado pela metade;
+#   - a versão é registrada em supabase_migrations.schema_migrations, com o mesmo
+#     formato que a CLI usa, para o `db push` futuro não tentar reaplicar.
+#
+# Isto é medida de contenção, não o fluxo normal. O fluxo normal é
+# staging → main com o deploy-production do ci.yml.
+
+on:
+  workflow_dispatch:
+    inputs:
+      migration:
+        description: "Nome do arquivo em supabase/migrations (ex: 20260725000000_restaura_tenant_check_rpcs_e_asaas_rls.sql)"
+        required: true
+        type: string
+      confirmar:
+        description: 'Digite exatamente: aplicar em producao'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  # Nunca duas aplicações concorrentes no mesmo banco, e sem cancelar no meio.
+  group: hotfix-prod-migration
+  cancel-in-progress: false
+
+jobs:
+  aplicar:
+    name: Aplicar migration em produção
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: Production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Conferir a frase de confirmação
+        env:
+          CONFIRMAR: ${{ inputs.confirmar }}
+        run: |
+          if [ "$CONFIRMAR" != "aplicar em producao" ]; then
+            echo "::error::Confirmação inválida. Digite exatamente: aplicar em producao"
+            exit 1
+          fi
+
+      - name: Conferir que a migration existe e é única
+        env:
+          MIGRATION: ${{ inputs.migration }}
+        run: |
+          # basename para o input não conseguir apontar para fora do diretório.
+          BASE="$(basename "$MIGRATION")"
+          FILE="supabase/migrations/$BASE"
+          if [ ! -f "$FILE" ]; then
+            echo "::error::$FILE não existe neste branch."
+            exit 1
+          fi
+          case "$BASE" in
+            *.sql) ;;
+            *) echo "::error::só arquivo .sql"; exit 1 ;;
+          esac
+          echo "MIGRATION_FILE=$FILE" >> "$GITHUB_ENV"
+          echo "MIGRATION_VERSION=${BASE%%_*}" >> "$GITHUB_ENV"
+          echo "MIGRATION_NAME=$BASE" >> "$GITHUB_ENV"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Guard de migration destrutiva
+        env:
+          ALLOW_DESTRUCTIVE_MIGRATION: ${{ vars.ALLOW_DESTRUCTIVE_MIGRATION }}
+        run: node scripts/check-migration-safety.mjs "$MIGRATION_FILE"
+
+      - name: Instalar psql
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client
+
+      - name: Estado ANTES (para comparar depois)
+        env:
+          PGURL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          psql "$PGURL" -At -c "SELECT count(*) || ' migrations aplicadas, última: ' || max(version) FROM supabase_migrations.schema_migrations;"
+          psql "$PGURL" -At -c "SELECT 'já aplicada? ' || EXISTS(SELECT 1 FROM supabase_migrations.schema_migrations WHERE version = '$MIGRATION_VERSION');"
+
+      - name: Aplicar a migration (transação única)
+        env:
+          PGURL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          set -euo pipefail
+
+          # Idempotência: se a versão já está registrada, não repete.
+          JA=$(psql "$PGURL" -At -c "SELECT EXISTS(SELECT 1 FROM supabase_migrations.schema_migrations WHERE version = '$MIGRATION_VERSION');")
+          if [ "$JA" = "t" ]; then
+            echo "::notice::$MIGRATION_VERSION já está registrada em produção. Nada a fazer."
+            exit 0
+          fi
+
+          # Uma transação para o arquivo inteiro E o registro da versão: se o SQL
+          # falhar, o histórico não fica dizendo que aplicou.
+          {
+            echo "BEGIN;"
+            cat "$MIGRATION_FILE"
+            echo ";"
+            echo "INSERT INTO supabase_migrations.schema_migrations (version, name) VALUES ('$MIGRATION_VERSION', '$MIGRATION_NAME');"
+            echo "COMMIT;"
+          } > /tmp/migration-wrapped.sql
+
+          psql "$PGURL" -v ON_ERROR_STOP=1 -f /tmp/migration-wrapped.sql
+
+      - name: Estado DEPOIS
+        env:
+          PGURL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          psql "$PGURL" -At -c "SELECT count(*) || ' migrations aplicadas, última: ' || max(version) FROM supabase_migrations.schema_migrations;"
+
+      - name: Verificar o efeito da correção de tenant check
+        # Específico desta correção: prova o resultado em vez de confiar no exit code
+        # do psql. Se a migration alvo for outra, estes asserts são apenas informativos.
+        if: contains(env.MIGRATION_NAME, 'restaura_tenant_check')
+        env:
+          PGURL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          set -euo pipefail
+          echo "-- overloads de update_projeto_completo (esperado 1)"
+          N=$(psql "$PGURL" -At -c "SELECT count(*) FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.proname='update_projeto_completo';")
+          echo "   $N"
+          [ "$N" = "1" ] || { echo "::error::esperava 1 overload, achei $N"; exit 1; }
+
+          echo "-- as 3 RPCs têm check de empresa (esperado t)"
+          C=$(psql "$PGURL" -At -c "SELECT bool_and(pg_get_functiondef(p.oid) ILIKE '%Acesso negado%') FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.proname IN ('update_projeto_completo','rpc_faturar_marco','rpc_converter_lead_cliente');")
+          echo "   $C"
+          [ "$C" = "t" ] || { echo "::error::alguma RPC segue sem check de empresa"; exit 1; }
+
+          echo "-- anon NÃO executa nenhuma das 3 (esperado f)"
+          A=$(psql "$PGURL" -At -c "SELECT bool_or(has_function_privilege('anon', p.oid, 'EXECUTE')) FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.proname IN ('update_projeto_completo','rpc_faturar_marco','rpc_converter_lead_cliente');")
+          echo "   $A"
+          [ "$A" = "f" ] || { echo "::error::anon ainda tem EXECUTE em alguma RPC"; exit 1; }
+
+          echo "-- policies de asaas_config (esperado as 4 admin_*)"
+          psql "$PGURL" -At -c "SELECT string_agg(policyname, ', ' ORDER BY policyname) FROM pg_policies WHERE schemaname='public' AND tablename='asaas_config';"
+
+          echo "✅ correção verificada em produção."
