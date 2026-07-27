@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { env } from "@/lib/env";
 
 declare global {
   interface Window {
@@ -26,7 +27,7 @@ interface TurnstileWidgetProps {
 }
 
 const SCRIPT_ID = "cf-turnstile-script";
-const SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined;
+const SITE_KEY = env.VITE_TURNSTILE_SITE_KEY;
 
 export function TurnstileWidget({ onToken, onError }: TurnstileWidgetProps) {
   const ref = useRef<HTMLDivElement>(null);

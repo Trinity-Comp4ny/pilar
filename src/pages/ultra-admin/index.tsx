@@ -30,6 +30,7 @@ import {
   type SubscriptionPlanSlug,
 } from "@/lib/features";
 import type { PilarRole } from "@/lib/roles";
+import { env } from "@/lib/env";
 
 type EmpresaRow = {
   id: string;
@@ -73,7 +74,7 @@ async function edgeFetch(
   const token = session.data.session?.access_token;
   if (!token) throw new Error("Sessão expirada");
 
-  const base = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/${fn}`;
+  const base = `${env.VITE_SUPABASE_URL}/functions/v1/${fn}`;
   const url = options.params ? `${base}?${new URLSearchParams(options.params)}` : base;
 
   const method = options.method ?? (options.body ? "POST" : "GET");
@@ -353,7 +354,13 @@ export default function UltraAdmin() {
         setEmpresas((prev) =>
           prev.map((e) =>
             e.id === detail.id
-              ? { ...e, ...(patch.nome ? { nome: patch.nome } : {}), ...(patch.status ? { status: patch.status } : {}), ...(patch.plano ? { plano: patch.plano } : {}), ...(patch.cnpj !== undefined ? { cnpj: patch.cnpj } : {}) }
+              ? {
+                  ...e,
+                  ...(patch.nome ? { nome: patch.nome } : {}),
+                  ...(patch.status ? { status: patch.status } : {}),
+                  ...(patch.plano ? { plano: patch.plano } : {}),
+                  ...(patch.cnpj !== undefined ? { cnpj: patch.cnpj } : {}),
+                }
               : e
           )
         );
@@ -826,11 +833,19 @@ function EditCompanyDialog({
         <div className="space-y-3 py-2">
           <div className="space-y-1.5">
             <Label htmlFor="edit-nome">Nome</Label>
-            <Input id="edit-nome" value={form.nome} onChange={(e) => setForm((f) => ({ ...f, nome: e.target.value }))} />
+            <Input
+              id="edit-nome"
+              value={form.nome}
+              onChange={(e) => setForm((f) => ({ ...f, nome: e.target.value }))}
+            />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="edit-cnpj">CNPJ</Label>
-            <Input id="edit-cnpj" value={form.cnpj} onChange={(e) => setForm((f) => ({ ...f, cnpj: e.target.value }))} />
+            <Input
+              id="edit-cnpj"
+              value={form.cnpj}
+              onChange={(e) => setForm((f) => ({ ...f, cnpj: e.target.value }))}
+            />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
