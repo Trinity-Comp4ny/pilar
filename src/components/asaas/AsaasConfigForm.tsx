@@ -7,8 +7,9 @@ import { Loader2, Key, Copy, RefreshCw, CheckCircle2, Trash2, PlugZap } from "lu
 import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { useAsaasConfig, type AsaasAmbiente } from "@/hooks/useAsaas";
+import { env } from "@/lib/env";
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
+const SUPABASE_URL = env.VITE_SUPABASE_URL;
 
 export function AsaasConfigForm() {
   const {

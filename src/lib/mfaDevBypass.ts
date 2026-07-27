@@ -1,3 +1,4 @@
+import { env } from "./env";
 /**
  * MFA desligado SÓ no dev local apontando pro Supabase local.
  *
@@ -7,8 +8,5 @@
  * a cada login no desenvolvimento local.
  */
 export function mfaDevBypass(): boolean {
-  return (
-    import.meta.env.DEV &&
-    /(?:127\.0\.0\.1|localhost)/.test(import.meta.env.VITE_SUPABASE_URL ?? "")
-  );
+  return import.meta.env.DEV && /(?:127\.0\.0\.1|localhost)/.test(env.VITE_SUPABASE_URL);
 }
