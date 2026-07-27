@@ -36,12 +36,21 @@ echo "→ $(printf '%s' "$clean" | wc -w | tr -d ' ') função(ões) no gate blo
 
 status=0
 
+# `deno check` resolve import remoto (esm.sh, deno.land) pela rede, então um 5xx do
+# registry derruba o gate sem que exista nada de errado no código: o run 30176697516
+# morreu com "Import 'https://esm.sh/zod@3.23.8' failed: 522". O filtro de "isso foi
+# rede?" vive num único lugar (retry-on-network-error.sh), usado também pelo deploy das
+# edge functions, que sofre do mesmo problema no bundle.
+run_check() {
+  # shellcheck disable=SC2086 # word splitting intencional: lista de paths
+  scripts/retry-on-network-error.sh deno check $1
+}
+
 if [ -n "$clean" ]; then
   echo ""
   echo "== Gate bloqueante =="
-  # shellcheck disable=SC2086
-  if ! deno check $clean; then
-    echo "::error::deno check falhou numa função que estava limpa. Isso é regressão, não dívida antiga."
+  if ! run_check "$clean"; then
+    echo "::error::deno check falhou numa função que estava limpa: erro de tipo (regressão) ou o registry de módulos fora do ar depois de 3 tentativas. O log acima diz qual dos dois."
     status=1
   fi
 fi
