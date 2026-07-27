@@ -20,10 +20,17 @@ describe("normalize-db-types", () => {
     expect(out).toContain("Tables: {};");
   });
 
-  it("é idempotente e não mexe em arquivo sem o bloco", () => {
-    const src = `export type Database = {\n  public: {\n    Tables: {};\n  };\n};`;
-    expect(normalize(src)).toBe(src);
+  it("é idempotente", () => {
+    const src = `export type Database = {\n  public: {\n    Tables: {};\n  };\n};\n`;
     expect(normalize(normalize(src))).toBe(normalize(src));
+  });
+
+  // Último resíduo real do gate: os dois lados diferiam só por uma linha vazia no fim.
+  it("termina sempre com exatamente um newline", () => {
+    const base = "export type Database = {};";
+    for (const variant of [base, base + "\n", base + "\n\n", base + "\n\n\n", base + "  \n \n"]) {
+      expect(normalize(variant)).toBe(base + "\n");
+    }
   });
 
   it("dois arquivos que só diferem no PostgrestVersion normalizam para o mesmo texto", () => {

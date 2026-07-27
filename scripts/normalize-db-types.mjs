@@ -47,8 +47,11 @@ export function normalize(source) {
     out.push(line);
   }
 
-  // Colapsa linhas vazias consecutivas que a remoção possa ter deixado.
-  return out.join("\n").replace(/\n{3,}/g, "\n\n");
+  // Colapsa linhas vazias consecutivas que a remoção possa ter deixado, e termina
+  // sempre com exatamente um newline. O whitespace do fim do arquivo era o último
+  // resíduo do gate: `supabase gen types --local` e o arquivo commitado diferiam por
+  // uma linha vazia final, o que reprovava o PR por nada.
+  return out.join("\n").replace(/\n{3,}/g, "\n\n").replace(/\s+$/, "") + "\n";
 }
 
 if (process.argv[1] && process.argv[1].endsWith("normalize-db-types.mjs")) {
