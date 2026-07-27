@@ -38,25 +38,12 @@ status=0
 
 # `deno check` resolve import remoto (esm.sh, deno.land) pela rede, então um 5xx do
 # registry derruba o gate sem que exista nada de errado no código: o run 30176697516
-# morreu com "Import 'https://esm.sh/zod@3.23.8' failed: 522". Retry só quando a saída
-# tem cara de falha de transporte; erro de tipo falha de primeira, sem insistir.
+# morreu com "Import 'https://esm.sh/zod@3.23.8' failed: 522". O filtro de "isso foi
+# rede?" vive num único lugar (retry-on-network-error.sh), usado também pelo deploy das
+# edge functions, que sofre do mesmo problema no bundle.
 run_check() {
-  local log rc attempt=1
-  log="$(mktemp)"
-  while :; do
-    # shellcheck disable=SC2086 # word splitting intencional: lista de paths
-    deno check $1 >"$log" 2>&1
-    rc=$?
-    cat "$log"
-    if [ "$rc" -eq 0 ]; then rm -f "$log"; return 0; fi
-    if [ "$attempt" -ge 3 ] || ! grep -qiE "failed: (5[0-9][0-9]|<unknown)|error sending request|connection closed|dns error|Import '.*' failed" "$log"; then
-      rm -f "$log"
-      return "$rc"
-    fi
-    echo "::warning::tentativa $attempt falhou por erro de rede no registry de módulos; repetindo em $((attempt * 10))s"
-    sleep "$((attempt * 10))"
-    attempt=$((attempt + 1))
-  done
+  # shellcheck disable=SC2086 # word splitting intencional: lista de paths
+  scripts/retry-on-network-error.sh deno check $1
 }
 
 if [ -n "$clean" ]; then
