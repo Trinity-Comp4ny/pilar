@@ -35,7 +35,10 @@ ON CONFLICT (id) DO NOTHING;
 -- Insert um audit log marcado para esta suite (via service_role).
 -- Filtramos pelo target_id único para não conflitar com triggers que escrevem em audit_logs
 -- por causa do INSERT prévio em profiles (profiles está em sensitive_tables).
-INSERT INTO public.audit_logs (empresa_id, actor_id, action, target_table, target_id, new_data)
+-- A coluna é `diff`, não `new_data`: o schema mudou e o teste ficou para trás (com o
+-- job desligado, nada acusou). Colunas reais hoje: id, actor_id, actor_email, action,
+-- target_table, target_id, diff, metadata, created_at, empresa_id.
+INSERT INTO public.audit_logs (empresa_id, actor_id, action, target_table, target_id, diff)
 VALUES (
   '00000000-0000-0000-0000-0000000000bb',
   '22222222-0000-0000-0000-000000000001',

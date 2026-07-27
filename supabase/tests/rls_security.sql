@@ -15,7 +15,10 @@ BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 SET search_path = public, extensions;
 
-SELECT plan(16);
+-- 20, não 16: o arquivo foi ganhando asserts sem atualizar o plano, e como o job de
+-- pgTAP estava desligado desde f5a86ea ninguém viu. Plano errado faz o pg_prove
+-- reportar "Bad plan" e marcar os asserts extras como falha.
+SELECT plan(24);
 
 -- =============================================
 -- Setup: duas empresas e usuários de cada
@@ -219,11 +222,21 @@ SELECT throws_ok(
 -- Teste 10: Convites sem token — signup rejeitado
 -- =============================================
 -- (handle_new_user é chamado por trigger em auth.users; testamos que sem token dá exception)
+--
+-- RESET ROLE é obrigatório aqui: o assert anterior deixou o role em `authenticated`,
+-- que não tem INSERT em auth.users, então o teste morria com "permission denied for
+-- table users" antes de chegar no trigger. O que se quer provar é o comportamento do
+-- handle_new_user, não a permissão de tabela.
+RESET ROLE;
 
-SELECT throws_ok(
+-- throws_like, não throws_ok: o trigger levanta "Cadastro não autorizado. Entre em
+-- contato com a equipe comercial." e throws_ok compara a mensagem inteira, então o
+-- teste reprovava por causa do sufixo, com o comportamento correto. Casar por padrão
+-- mantém o assert honesto sem prendê-lo à copy exata da mensagem.
+SELECT throws_like(
   $$ INSERT INTO auth.users (id, email, raw_user_meta_data, aud, role)
      VALUES ('cccccccc-0000-0000-0000-000000000001', 'hacker@evil.com', '{}'::jsonb, 'authenticated', 'authenticated') $$,
-  'Cadastro não autorizado',
+  '%Cadastro não autorizado%',
   'Signup sem invite_token é rejeitado'
 );
 
@@ -257,6 +270,44 @@ SELECT ok(public.check_rate_limit('test_action', 'test_key', 5, 60), 'rate_limit
 SELECT ok(
   NOT public.check_rate_limit('test_action', 'test_key', 5, 60),
   'rate_limit tentativa 6: BLOQUEADA'
+);
+
+-- =============================================
+-- RPC SECURITY DEFINER não é executável por anon
+-- =============================================
+-- A anon key é pública (vai no bundle do front), então EXECUTE para `anon` numa função
+-- SECURITY DEFINER significa que qualquer pessoa na internet pode chamá-la. As três
+-- abaixo tinham exatamente isso até 20260725000000, junto com a ausência de check de
+-- empresa. Nenhuma é chamada de contexto anônimo: useProjetoForm.ts,
+-- BillingMilestonesTab.tsx e useLeads.ts rodam autenticados, ai-chat usa service_role.
+RESET ROLE;
+
+SELECT ok(
+  NOT has_function_privilege('anon', 'public.rpc_faturar_marco(uuid)', 'EXECUTE'),
+  'anon NÃO executa rpc_faturar_marco'
+);
+
+SELECT ok(
+  NOT has_function_privilege('anon', 'public.rpc_converter_lead_cliente(uuid, boolean)', 'EXECUTE'),
+  'anon NÃO executa rpc_converter_lead_cliente'
+);
+
+SELECT ok(
+  NOT has_function_privilege(
+    'anon',
+    'public.update_projeto_completo(uuid, text, text, uuid, date, date, date, numeric, text, text, text, numeric, jsonb, text, text)',
+    'EXECUTE'
+  ),
+  'anon NÃO executa update_projeto_completo'
+);
+
+-- E o overload de 14 args, que era órfão e também estava sem check, não existe mais.
+SELECT is(
+  (SELECT count(*)::int FROM pg_proc p
+    JOIN pg_namespace n ON n.oid = p.pronamespace
+   WHERE n.nspname = 'public' AND p.proname = 'update_projeto_completo'),
+  1,
+  'update_projeto_completo tem uma única assinatura (sem overload sem check)'
 );
 
 SELECT * FROM finish();
