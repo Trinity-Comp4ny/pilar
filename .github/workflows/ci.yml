@@ -143,14 +143,25 @@ jobs:
 
       - name: Avaliar sincronia de types.ts
         id: types
-        # Não reprova o job: grava o veredito para o job types-sync decidir. Compara
-        # depois de passar os dois lados pelo prettier, para diferença de formatação
-        # não virar falso positivo.
+        # Não reprova o job: grava o veredito para o job types-sync decidir.
+        #
+        # Duas armadilhas que faziam este gate acusar diferença onde não há nenhuma, e
+        # que só apareceram quando ele rodou de verdade (PR #142):
+        #
+        # 1. O gerado ia para /tmp, e o prettier resolve .prettierrc relativo ao
+        #    ARQUIVO, não ao cwd. Um lado saía com printWidth 120 (o do projeto) e o
+        #    outro com o default 80, então o diff era quase todo quebra de linha. Por
+        #    isso os dois temporários agora ficam dentro do repo e o --config é explícito.
+        # 2. __InternalSupabase.PostgrestVersion difere entre o stack local do CLI e o
+        #    projeto hospedado. É versão de runtime, não schema. normalize-db-types.mjs
+        #    corta esse bloco (e tem teste garantindo que não corta mais que isso).
         run: |
-          supabase gen types typescript --local > /tmp/types-generated.ts
-          npx prettier --parser typescript /tmp/types-generated.ts > /tmp/a.ts
-          npx prettier --parser typescript src/integrations/supabase/types.ts > /tmp/b.ts
-          if diff -u /tmp/b.ts /tmp/a.ts; then
+          supabase gen types typescript --local > ./types-gate-local-raw.ts
+          node scripts/normalize-db-types.mjs ./types-gate-local-raw.ts > ./types-gate-local.ts
+          node scripts/normalize-db-types.mjs src/integrations/supabase/types.ts > ./types-gate-committed.ts
+          npx prettier --config .prettierrc --parser typescript ./types-gate-local.ts > ./types-gate-a.ts
+          npx prettier --config .prettierrc --parser typescript ./types-gate-committed.ts > ./types-gate-b.ts
+          if diff -u ./types-gate-b.ts ./types-gate-a.ts; then
             echo "in_sync=true" >> "$GITHUB_OUTPUT"
           else
             echo "in_sync=false" >> "$GITHUB_OUTPUT"
@@ -258,7 +269,11 @@ jobs:
       - name: Deploy das edge functions
         # Sem nome = deploya todas em supabase/functions, respeitando verify_jwt
         # de config.toml por função. Vai por HTTPS, IPv4 do runner basta.
-        run: supabase functions deploy --project-ref "$SUPABASE_PROJECT_REF"
+        # Com retry: o bundle resolve os imports remotos na hora, e um 5xx do esm.sh
+        # derruba o deploy sem haver nada errado no código (run 30288891918 morreu com
+        # "Import 'https://esm.sh/@supabase/supabase-js@2' failed: 522"). O wrapper só
+        # repete em erro de transporte; erro de bundle real falha na primeira.
+        run: scripts/retry-on-network-error.sh supabase functions deploy --project-ref "$SUPABASE_PROJECT_REF"
         env:
           SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
       - name: Smoke test (health)
@@ -308,7 +323,11 @@ jobs:
         env:
           SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
       - name: Deploy das edge functions
-        run: supabase functions deploy --project-ref "$SUPABASE_PROJECT_REF"
+        # Com retry: o bundle resolve os imports remotos na hora, e um 5xx do esm.sh
+        # derruba o deploy sem haver nada errado no código (run 30288891918 morreu com
+        # "Import 'https://esm.sh/@supabase/supabase-js@2' failed: 522"). O wrapper só
+        # repete em erro de transporte; erro de bundle real falha na primeira.
+        run: scripts/retry-on-network-error.sh supabase functions deploy --project-ref "$SUPABASE_PROJECT_REF"
         env:
           SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
       - name: Smoke test (health)
