@@ -5,7 +5,13 @@ export type Json =
   | null
   | { [key: string]: Json | undefined }
   | Json[]
+
 export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "14.5"
+  }
   graphql_public: {
     Tables: {
       [_ in never]: never
@@ -674,6 +680,82 @@ export type Database = {
           },
         ]
       }
+      chat_messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          meta: Json
+          role: string
+          session_id: string
+          tokens_input: number
+          tokens_output: number
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          meta?: Json
+          role: string
+          session_id: string
+          tokens_input?: number
+          tokens_output?: number
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          meta?: Json
+          role?: string
+          session_id?: string
+          tokens_input?: number
+          tokens_output?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "chat_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_sessions: {
+        Row: {
+          created_at: string
+          empresa_id: string
+          id: string
+          titulo: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          empresa_id: string
+          id?: string
+          titulo?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          empresa_id?: string
+          id?: string
+          titulo?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_sessions_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cliente_portal_accounts: {
         Row: {
           ativo: boolean | null
@@ -683,6 +765,7 @@ export type Database = {
           email: string | null
           empresa_id: string
           id: string
+          must_change_password: boolean
           nome: string
           senha_hash: string | null
           token_expira_em: string | null
@@ -698,6 +781,7 @@ export type Database = {
           email?: string | null
           empresa_id: string
           id?: string
+          must_change_password?: boolean
           nome: string
           senha_hash?: string | null
           token_expira_em?: string | null
@@ -713,6 +797,7 @@ export type Database = {
           email?: string | null
           empresa_id?: string
           id?: string
+          must_change_password?: boolean
           nome?: string
           senha_hash?: string | null
           token_expira_em?: string | null
@@ -755,6 +840,7 @@ export type Database = {
           origem: string | null
           sobrenome: string | null
           tipo_nf: string | null
+          tipo_pessoa: string | null
           updated_at: string | null
           updated_by: string | null
         }
@@ -775,6 +861,7 @@ export type Database = {
           origem?: string | null
           sobrenome?: string | null
           tipo_nf?: string | null
+          tipo_pessoa?: string | null
           updated_at?: string | null
           updated_by?: string | null
         }
@@ -795,6 +882,7 @@ export type Database = {
           origem?: string | null
           sobrenome?: string | null
           tipo_nf?: string | null
+          tipo_pessoa?: string | null
           updated_at?: string | null
           updated_by?: string | null
         }
@@ -872,7 +960,8 @@ export type Database = {
           features: Json
           id: string
           nome: string | null
-          token: string
+          token: string | null
+          token_hash: string | null
           usado_em: string | null
         }
         Insert: {
@@ -885,7 +974,8 @@ export type Database = {
           features?: Json
           id?: string
           nome?: string | null
-          token?: string
+          token?: string | null
+          token_hash?: string | null
           usado_em?: string | null
         }
         Update: {
@@ -898,7 +988,8 @@ export type Database = {
           features?: Json
           id?: string
           nome?: string | null
-          token?: string
+          token?: string | null
+          token_hash?: string | null
           usado_em?: string | null
         }
         Relationships: [
@@ -1255,7 +1346,8 @@ export type Database = {
           expira_em: string
           id: string
           nome: string | null
-          token: string
+          token: string | null
+          token_hash: string | null
           usado_em: string | null
         }
         Insert: {
@@ -1266,7 +1358,8 @@ export type Database = {
           expira_em?: string
           id?: string
           nome?: string | null
-          token?: string
+          token?: string | null
+          token_hash?: string | null
           usado_em?: string | null
         }
         Update: {
@@ -1277,7 +1370,8 @@ export type Database = {
           expira_em?: string
           id?: string
           nome?: string | null
-          token?: string
+          token?: string | null
+          token_hash?: string | null
           usado_em?: string | null
         }
         Relationships: []
@@ -1748,6 +1842,13 @@ export type Database = {
             foreignKeyName: "folha_pagamento_pessoa_id_fkey"
             columns: ["pessoa_id"]
             isOneToOne: false
+            referencedRelation: "pessoas_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "folha_pagamento_pessoa_id_fkey"
+            columns: ["pessoa_id"]
+            isOneToOne: false
             referencedRelation: "view_folha_pagamento"
             referencedColumns: ["pessoa_id"]
           },
@@ -1946,6 +2047,71 @@ export type Database = {
           user_agent?: string | null
         }
         Relationships: []
+      }
+      jobs: {
+        Row: {
+          attempts: number
+          completed_at: string | null
+          created_at: string
+          created_by: string | null
+          empresa_id: string
+          error: string | null
+          id: string
+          input: Json
+          max_attempts: number
+          progress: number
+          result: Json | null
+          stage: string | null
+          started_at: string | null
+          status: Database["public"]["Enums"]["job_status"]
+          tipo: string
+          updated_at: string
+        }
+        Insert: {
+          attempts?: number
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          empresa_id: string
+          error?: string | null
+          id?: string
+          input?: Json
+          max_attempts?: number
+          progress?: number
+          result?: Json | null
+          stage?: string | null
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["job_status"]
+          tipo: string
+          updated_at?: string
+        }
+        Update: {
+          attempts?: number
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          empresa_id?: string
+          error?: string | null
+          id?: string
+          input?: Json
+          max_attempts?: number
+          progress?: number
+          result?: Json | null
+          stage?: string | null
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["job_status"]
+          tipo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "jobs_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       lancamento_rateios: {
         Row: {
@@ -2241,6 +2407,13 @@ export type Database = {
             columns: ["pessoa_id"]
             isOneToOne: false
             referencedRelation: "pessoas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "metas_pessoa_id_fkey"
+            columns: ["pessoa_id"]
+            isOneToOne: false
+            referencedRelation: "pessoas_safe"
             referencedColumns: ["id"]
           },
           {
@@ -2914,6 +3087,13 @@ export type Database = {
             columns: ["pessoa_id"]
             isOneToOne: false
             referencedRelation: "pessoas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projeto_disciplina_responsaveis_pessoa_id_fkey"
+            columns: ["pessoa_id"]
+            isOneToOne: false
+            referencedRelation: "pessoas_safe"
             referencedColumns: ["id"]
           },
           {
@@ -3845,6 +4025,117 @@ export type Database = {
         }
         Relationships: []
       }
+      pessoas_safe: {
+        Row: {
+          cargo: string | null
+          chaves_pix: Json | null
+          cnpj: string | null
+          contas_bancarias: Json | null
+          cpf: string | null
+          created_at: string | null
+          data_admissao: string | null
+          data_demissao: string | null
+          data_nascimento: string | null
+          deleted_at: string | null
+          email: string | null
+          empresa_id: string | null
+          endereco: string | null
+          horas_semanais: number | null
+          id: string | null
+          nome: string | null
+          pis_nit: string | null
+          pode_ver_sensivel: boolean | null
+          primeiro_nome: string | null
+          profile_id: string | null
+          razao_social: string | null
+          rg: string | null
+          salario_fixo: number | null
+          sobrenome: string | null
+          status: string | null
+          telefone: string | null
+          tipo_contrato: string | null
+          updated_at: string | null
+          valor_m2: number | null
+        }
+        Insert: {
+          cargo?: string | null
+          chaves_pix?: never
+          cnpj?: string | null
+          contas_bancarias?: never
+          cpf?: never
+          created_at?: string | null
+          data_admissao?: string | null
+          data_demissao?: string | null
+          data_nascimento?: string | null
+          deleted_at?: string | null
+          email?: string | null
+          empresa_id?: string | null
+          endereco?: string | null
+          horas_semanais?: number | null
+          id?: string | null
+          nome?: string | null
+          pis_nit?: string | null
+          pode_ver_sensivel?: never
+          primeiro_nome?: string | null
+          profile_id?: string | null
+          razao_social?: string | null
+          rg?: string | null
+          salario_fixo?: never
+          sobrenome?: string | null
+          status?: string | null
+          telefone?: string | null
+          tipo_contrato?: string | null
+          updated_at?: string | null
+          valor_m2?: never
+        }
+        Update: {
+          cargo?: string | null
+          chaves_pix?: never
+          cnpj?: string | null
+          contas_bancarias?: never
+          cpf?: never
+          created_at?: string | null
+          data_admissao?: string | null
+          data_demissao?: string | null
+          data_nascimento?: string | null
+          deleted_at?: string | null
+          email?: string | null
+          empresa_id?: string | null
+          endereco?: string | null
+          horas_semanais?: number | null
+          id?: string | null
+          nome?: string | null
+          pis_nit?: string | null
+          pode_ver_sensivel?: never
+          primeiro_nome?: string | null
+          profile_id?: string | null
+          razao_social?: string | null
+          rg?: string | null
+          salario_fixo?: never
+          sobrenome?: string | null
+          status?: string | null
+          telefone?: string | null
+          tipo_contrato?: string | null
+          updated_at?: string | null
+          valor_m2?: never
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pessoas_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pessoas_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       v_budget_vs_actual: {
         Row: {
           custo_orcado: number | null
@@ -4090,26 +4381,21 @@ export type Database = {
         Args: { p_company_name?: string; p_email: string; p_nome: string }
         Returns: Json
       }
+      admin_create_convite: {
+        Args: {
+          p_cargo: string
+          p_email: string
+          p_empresa_id: string
+          p_features?: Json
+          p_nome?: string
+        }
+        Returns: string
+      }
       aprovar_orcamento_agente: { Args: { p_run_id: string }; Returns: Json }
-      criar_lead_agente: { Args: { p_run_id: string }; Returns: Json }
-      criar_projeto_agente: { Args: { p_run_id: string }; Returns: Json }
-      criar_receita_agente: { Args: { p_run_id: string }; Returns: Json }
-      criar_despesa_agente: { Args: { p_run_id: string }; Returns: Json }
-      criar_cartao_agente: { Args: { p_run_id: string }; Returns: Json }
-      fechar_folha_agente: { Args: { p_run_id: string }; Returns: Json }
-      criar_cliente_agente: { Args: { p_run_id: string }; Returns: Json }
-      criar_fornecedor_agente: { Args: { p_run_id: string }; Returns: Json }
-      criar_categoria_agente: { Args: { p_run_id: string }; Returns: Json }
-      criar_conta_agente: { Args: { p_run_id: string }; Returns: Json }
-      criar_centro_custo_agente: { Args: { p_run_id: string }; Returns: Json }
-      criar_pessoa_agente: { Args: { p_run_id: string }; Returns: Json }
-      criar_proposta_agente: { Args: { p_run_id: string }; Returns: Json }
-      criar_marco_agente: { Args: { p_run_id: string }; Returns: Json }
-      criar_disciplina_agente: { Args: { p_run_id: string }; Returns: Json }
-      criar_aditivo_agente: { Args: { p_run_id: string }; Returns: Json }
-      executar_acao_agente: { Args: { p_run_id: string }; Returns: Json }
       audit_log_cleanup: { Args: never; Returns: number }
       audit_logs_archive_old: { Args: never; Returns: number }
+      can_view_financeiro: { Args: never; Returns: boolean }
+      can_view_folha: { Args: never; Returns: boolean }
       check_convite_rate_limit: {
         Args: { p_empresa_id: string }
         Returns: undefined
@@ -4122,6 +4408,33 @@ export type Database = {
           p_window: number
         }
         Returns: boolean
+      }
+      claim_next_job: {
+        Args: { p_tipos?: string[] }
+        Returns: {
+          attempts: number
+          completed_at: string | null
+          created_at: string
+          created_by: string | null
+          empresa_id: string
+          error: string | null
+          id: string
+          input: Json
+          max_attempts: number
+          progress: number
+          result: Json | null
+          stage: string | null
+          started_at: string | null
+          status: Database["public"]["Enums"]["job_status"]
+          tipo: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "jobs"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       cleanup_expired_pending_signups: { Args: never; Returns: number }
       cleanup_pending_signups: { Args: never; Returns: number }
@@ -4195,6 +4508,21 @@ export type Database = {
             }
             Returns: string
           }
+      criar_aditivo_agente: { Args: { p_run_id: string }; Returns: Json }
+      criar_cartao_agente: { Args: { p_run_id: string }; Returns: Json }
+      criar_categoria_agente: { Args: { p_run_id: string }; Returns: Json }
+      criar_centro_custo_agente: { Args: { p_run_id: string }; Returns: Json }
+      criar_cliente_agente: { Args: { p_run_id: string }; Returns: Json }
+      criar_conta_agente: { Args: { p_run_id: string }; Returns: Json }
+      criar_despesa_agente: { Args: { p_run_id: string }; Returns: Json }
+      criar_disciplina_agente: { Args: { p_run_id: string }; Returns: Json }
+      criar_fornecedor_agente: { Args: { p_run_id: string }; Returns: Json }
+      criar_lead_agente: { Args: { p_run_id: string }; Returns: Json }
+      criar_marco_agente: { Args: { p_run_id: string }; Returns: Json }
+      criar_pessoa_agente: { Args: { p_run_id: string }; Returns: Json }
+      criar_projeto_agente: { Args: { p_run_id: string }; Returns: Json }
+      criar_proposta_agente: { Args: { p_run_id: string }; Returns: Json }
+      criar_receita_agente: { Args: { p_run_id: string }; Returns: Json }
       current_effective_role: { Args: never; Returns: string }
       current_impersonation: {
         Args: never
@@ -4216,6 +4544,8 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      executar_acao_agente: { Args: { p_run_id: string }; Returns: Json }
+      fechar_folha_agente: { Args: { p_run_id: string }; Returns: Json }
       find_or_create_fatura: {
         Args: { p_cartao_id: string; p_data_compra: string }
         Returns: string
@@ -4256,30 +4586,24 @@ export type Database = {
         Args: { p_from?: string; p_to?: string }
         Returns: Json
       }
-      get_portal_propostas: {
-        Args: { p_token: string }
-        Returns: {
-          area_m2: number
-          codigo: string
-          created_at: string
-          id: string
-          localizacao: string
-          observacao: string
-          prazo_estimado_dias: number
-          status: string
-          titulo: string
-          validade: string
-          valor_proposto: number
-        }[]
-      }
       get_user_empresa_id: { Args: never; Returns: string }
       get_user_empresa_id_text: { Args: never; Returns: string }
+      get_user_role: { Args: never; Returns: string }
       guard_login_attempt: { Args: { p_email: string }; Returns: boolean }
       has_role: {
         Args: { allowed_roles: Database["public"]["Enums"]["user_role"][] }
         Returns: boolean
       }
       impersonation_sessions_cleanup: { Args: never; Returns: number }
+      increment_ai_usage: {
+        Args: {
+          p_calls: number
+          p_empresa_id: string
+          p_tokens_input: number
+          p_tokens_output: number
+        }
+        Returns: undefined
+      }
       insert_audit_log: {
         Args: {
           p_action: string
@@ -4297,6 +4621,42 @@ export type Database = {
       is_impersonating: { Args: never; Returns: boolean }
       is_ultra_admin: { Args: never; Returns: boolean }
       is_ultra_admin_scoped: { Args: never; Returns: boolean }
+      listar_clientes_paginado: {
+        Args: {
+          p_com_projeto?: boolean
+          p_limit?: number
+          p_offset?: number
+          p_origem?: string
+          p_search?: string
+          p_sort_dir?: string
+          p_sort_field?: string
+          p_tem_portal?: boolean
+          p_tipo_pessoa?: string
+        }
+        Returns: {
+          chaves_pix: Json
+          contas_bancarias: Json
+          contato: string
+          cpf_cnpj: string
+          created_at: string
+          email: string
+          endereco: string
+          id: string
+          nome: string
+          origem: string
+          sobrenome: string
+          tipo_nf: string
+          tipo_pessoa: string
+          total_count: number
+        }[]
+      }
+      listar_origens_clientes: {
+        Args: never
+        Returns: {
+          origem: string
+        }[]
+      }
+      my_empresa_id: { Args: never; Returns: string }
       pagar_fatura: {
         Args: {
           p_conta_id: string
@@ -4311,8 +4671,16 @@ export type Database = {
         Args: { p_scoped: boolean }
         Returns: boolean
       }
-      portal_atualizar_status_proposta: {
-        Args: { p_proposta_id: string; p_status: string; p_token: string }
+      portal_aprovar_entrega: {
+        Args: { p_entrega_id: string; p_token: string }
+        Returns: undefined
+      }
+      portal_aprovar_proposta_atomica: {
+        Args: { p_projeto_id: string; p_proposta_id: string }
+        Returns: undefined
+      }
+      portal_change_password: {
+        Args: { p_nova_senha: string; p_senha_atual: string; p_token: string }
         Returns: Json
       }
       portal_get_projeto_disciplinas: {
@@ -4323,15 +4691,51 @@ export type Database = {
         Args: { p_projeto_id: string; p_token: string }
         Returns: Json
       }
+      portal_listar_entregas: {
+        Args: { p_projeto_id: string; p_token: string }
+        Returns: {
+          created_at: string | null
+          created_by: string | null
+          descricao: string | null
+          drive_url: string | null
+          empresa_id: string
+          id: string
+          projeto_id: string
+          respondido_em: string | null
+          resposta_cliente: string | null
+          status: string | null
+          tipo: string | null
+          titulo: string
+          updated_at: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "portal_entregas"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       portal_login: {
         Args: { p_email: string; p_senha: string }
         Returns: Json
       }
+      portal_solicitar_revisao_entrega: {
+        Args: { p_entrega_id: string; p_resposta: string; p_token: string }
+        Returns: undefined
+      }
       portal_verify_session: { Args: { p_token: string }; Returns: Json }
+      portal_verify_session_readonly: {
+        Args: { p_token: string }
+        Returns: Json
+      }
       rate_limit_cleanup: { Args: never; Returns: undefined }
       recalc_grupo_parcela_status: {
         Args: { p_grupo_id: string }
         Returns: undefined
+      }
+      regenerate_convite_token: {
+        Args: { p_convite_id: string }
+        Returns: string
       }
       request_data_deletion: { Args: { p_motivo?: string }; Returns: string }
       request_data_export: { Args: never; Returns: Json }
@@ -4341,7 +4745,7 @@ export type Database = {
         Returns: number
       }
       rpc_converter_lead_cliente: {
-        Args: { p_lead_id: string }
+        Args: { p_lead_id: string; p_omit_cnpj?: boolean }
         Returns: string
       }
       rpc_converter_proposta_projeto: {
@@ -4460,7 +4864,15 @@ export type Database = {
         Args: { p_projeto_id: string }
         Returns: Json
       }
+      rpc_salvar_proposta_disciplinas: {
+        Args: { p_disciplinas: Json; p_proposta_id: string }
+        Returns: undefined
+      }
       rpc_sync_metas: { Args: never; Returns: number }
+      set_access_profile: {
+        Args: { p_perfil: string; p_user_id: string }
+        Returns: undefined
+      }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
       start_impersonation: {
@@ -4468,50 +4880,34 @@ export type Database = {
         Returns: string
       }
       stop_impersonation: { Args: never; Returns: undefined }
+      sync_disciplina_responsaveis: {
+        Args: { p_disciplina_id: string; p_pessoa_ids: string[] }
+        Returns: undefined
+      }
       update_company_features: {
         Args: { p_features: Json }
         Returns: undefined
       }
-      update_projeto_completo:
-        | {
-            Args: {
-              p_area_m2?: number
-              p_cliente_id: string
-              p_codigo: string
-              p_data_final?: string
-              p_data_inicio?: string
-              p_data_previsao?: string
-              p_disciplinas?: Json
-              p_localizacao?: string
-              p_nome: string
-              p_observacao?: string
-              p_parcelas?: string
-              p_prioridade?: string
-              p_projeto_id: string
-              p_status?: string
-              p_valor_contrato?: number
-            }
-            Returns: undefined
-          }
-        | {
-            Args: {
-              p_area_m2: number
-              p_cliente_id: string
-              p_codigo: string
-              p_data_final: string
-              p_data_inicio: string
-              p_data_previsao: string
-              p_disciplinas: Json
-              p_localizacao: string
-              p_nome: string
-              p_observacao: string
-              p_parcelas: string
-              p_projeto_id: string
-              p_status: string
-              p_valor_contrato: number
-            }
-            Returns: boolean
-          }
+      update_projeto_completo: {
+        Args: {
+          p_area_m2?: number
+          p_cliente_id: string
+          p_codigo: string
+          p_data_final?: string
+          p_data_inicio?: string
+          p_data_previsao?: string
+          p_disciplinas?: Json
+          p_localizacao?: string
+          p_nome: string
+          p_observacao?: string
+          p_parcelas?: string
+          p_prioridade?: string
+          p_projeto_id: string
+          p_status?: string
+          p_valor_contrato?: number
+        }
+        Returns: undefined
+      }
       update_user_access: {
         Args: { p_features?: Json; p_role: string; p_user_id: string }
         Returns: undefined
@@ -4530,6 +4926,7 @@ export type Database = {
         | "executed"
         | "rejected"
         | "failed"
+      job_status: "pending" | "running" | "completed" | "failed"
       status_empresa: "active" | "suspended" | "cancelled"
       status_financeiro:
         | "Pendente"
@@ -4546,15 +4943,24 @@ export type Database = {
         | "Em andamento"
         | "Revisão"
       tipo_categoria: "Receita" | "Despesa"
-      user_role: "user" | "admin" | "ultra_admin"
+      user_role:
+        | "user"
+        | "admin"
+        | "ultra_admin"
+        | "owner"
+        | "coordenador"
+        | "colaborador"
     }
     CompositeTypes: {
       [_ in never]: never
     }
   }
 }
+
 type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+
 type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
@@ -4583,6 +4989,7 @@ export type Tables<
       ? R
       : never
     : never
+
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
@@ -4607,6 +5014,7 @@ export type TablesInsert<
       ? I
       : never
     : never
+
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
@@ -4631,6 +5039,7 @@ export type TablesUpdate<
       ? U
       : never
     : never
+
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
@@ -4647,6 +5056,7 @@ export type Enums<
   : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
     ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
     : never
+
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
@@ -4663,6 +5073,7 @@ export type CompositeTypes<
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
     ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never
+
 export const Constants = {
   graphql_public: {
     Enums: {},
@@ -4678,6 +5089,7 @@ export const Constants = {
         "rejected",
         "failed",
       ],
+      job_status: ["pending", "running", "completed", "failed"],
       status_empresa: ["active", "suspended", "cancelled"],
       status_financeiro: [
         "Pendente",
@@ -4696,7 +5108,14 @@ export const Constants = {
         "Revisão",
       ],
       tipo_categoria: ["Receita", "Despesa"],
-      user_role: ["user", "admin", "ultra_admin"],
+      user_role: [
+        "user",
+        "admin",
+        "ultra_admin",
+        "owner",
+        "coordenador",
+        "colaborador",
+      ],
     },
   },
 } as const
