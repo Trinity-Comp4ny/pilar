@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,16 +11,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Pencil, Trash2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -304,33 +295,16 @@ export function CategoryManager({ title, description, type, onCategoryChange }: 
         </DialogContent>
       </Dialog>
 
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
-            <AlertDialogDescription>
-              Tem certeza que deseja excluir a categoria &quot;{deleteCategory?.name}&quot;? Esta ação não pode ser
-              desfeita.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDeleteCategory}
-              className="bg-red-600 hover:bg-red-700"
-              disabled={isDeleting}
-            >
-              {isDeleting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Excluindo...
-                </>
-              ) : (
-                "Excluir"
-              )}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ConfirmDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        onConfirm={handleDeleteCategory}
+        title="Excluir categoria?"
+        itemName={deleteCategory?.name}
+        description="Esta ação não pode ser desfeita."
+        confirmText="Excluir"
+        loading={isDeleting}
+      />
     </div>
   );
 }

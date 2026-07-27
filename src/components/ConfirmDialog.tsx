@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -8,17 +9,29 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { buttonVariants } from "@/components/ui/button";
+import { Spinner } from "@/components/Spinner";
+import { cn } from "@/lib/utils";
 
+/**
+ * Único caminho de confirmação do app (ADR 0008, spec 003 onda 2).
+ * Não montar AlertDialog cru para confirmar ação: use este componente.
+ * `description` aceita ReactNode para os casos com contexto extra (valores,
+ * consequências), sem precisar de dialog próprio.
+ */
 interface ConfirmDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onConfirm: () => void;
   title: string;
-  description: string;
+  description: ReactNode;
+  /** Destacado acima da descrição (nome do registro que será afetado). */
   itemName?: string;
   confirmText?: string;
   cancelText?: string;
   variant?: "default" | "destructive";
+  /** Trava os botões e mostra spinner no confirmar durante a ação. */
+  loading?: boolean;
 }
 
 export function ConfirmDialog({
@@ -31,6 +44,7 @@ export function ConfirmDialog({
   confirmText = "Confirmar",
   cancelText = "Cancelar",
   variant = "destructive",
+  loading = false,
 }: ConfirmDialogProps) {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
@@ -44,17 +58,19 @@ export function ConfirmDialog({
                   &ldquo;{itemName}&rdquo;
                 </p>
               )}
-              <p>{description}</p>
+              {typeof description === "string" ? <p>{description}</p> : description}
             </div>
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>{cancelText}</AlertDialogCancel>
+          <AlertDialogCancel disabled={loading}>{cancelText}</AlertDialogCancel>
           <AlertDialogAction
             onClick={onConfirm}
-            className={variant === "destructive" ? "bg-red-600 hover:bg-red-700" : ""}
+            disabled={loading}
+            // Cor vem da variant do Button (token), nunca de paleta crua.
+            className={cn(variant === "destructive" && buttonVariants({ variant: "destructive" }))}
           >
-            {confirmText}
+            {loading ? <Spinner size="sm" className="text-current" /> : confirmText}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
