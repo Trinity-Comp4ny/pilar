@@ -2,6 +2,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp, TrendingDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+/**
+ * @deprecated Use `@/components/KPICard` (ADR 0008). Este mantém a API antiga
+ * baseada em classes de cor soltas (cardBg/titleColor/valueColor), que é a
+ * deriva que o ADR proíbe. Migração pendente: mapear cada card do Dashboard
+ * para um `tone` semântico (mudança visual, exige QA da tela mais usada).
+ */
 export function KPICard({
   title,
   value,
