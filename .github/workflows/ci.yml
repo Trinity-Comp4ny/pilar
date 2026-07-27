@@ -17,6 +17,14 @@ on:
 permissions:
   contents: read
 
+env:
+  # Pinada, não `latest`: com `latest` a action consulta a API do GitHub a cada job
+  # para descobrir a release, e isso derrubou o job de banco com "Failed to resolve
+  # latest Supabase CLI release: rate limit exceeded". Além do flake, `latest` torna o
+  # build irreprodutível — o mesmo commit passa hoje e falha amanhã porque a CLI mudou.
+  # Bumpar aqui, num lugar só, deliberadamente.
+  SUPABASE_CLI_VERSION: "2.109.1"
+
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
@@ -116,7 +124,7 @@ jobs:
 
       - uses: supabase/setup-cli@v1
         with:
-          version: latest
+          version: ${{ env.SUPABASE_CLI_VERSION }}
 
       # O config.toml tem `[auth.hook.send_email] secrets = env(AUTH_HOOK_SEND_EMAIL_SECRET)`,
       # e a CLI valida o formato antes de subir qualquer coisa: sem a var, `supabase
@@ -259,7 +267,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: supabase/setup-cli@v1
         with:
-          version: latest
+          version: ${{ env.SUPABASE_CLI_VERSION }}
       - name: Aplicar migrations (db push via pooler IPv4)
         # --db-url aponta pro Session Pooler (IPv4). A conexão direta do Supabase
         # é IPv6-only e falharia no runner IPv4-only do GitHub.
@@ -376,7 +384,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: supabase/setup-cli@v1
         with:
-          version: latest
+          version: ${{ env.SUPABASE_CLI_VERSION }}
       - name: Aplicar migrations (db push via pooler IPv4)
         run: supabase db push --db-url "$SUPABASE_DB_URL"
         env:

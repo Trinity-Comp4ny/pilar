@@ -138,6 +138,17 @@ describe("contrato do pipeline", () => {
     expect(needs).toContain("database");
   });
 
+  // `version: latest` faz a action consultar a API do GitHub em cada job, e isso
+  // derrubou o job de banco com "rate limit exceeded". Pior: torna o build
+  // irreprodutível, porque o mesmo commit passa hoje e falha amanhã.
+  it("a versão da CLI do Supabase é pinada, não latest", () => {
+    expect(ci).toMatch(/SUPABASE_CLI_VERSION:\s*"\d+\.\d+\.\d+"/);
+    expect(ci).not.toContain("version: latest");
+    const uses = (ci.match(/supabase\/setup-cli@v1/g) ?? []).length;
+    const pinned = (ci.match(/version: \$\{\{ env\.SUPABASE_CLI_VERSION \}\}/g) ?? []).length;
+    expect(pinned).toBe(uses);
+  });
+
   it("todo job declara timeout, para um job travado não consumir 6h de runner", () => {
     // Conta só depois de `jobs:`, senão `push:` e `pull_request:` do bloco `on:`
     // entram na conta (têm a mesma indentação de um job).
