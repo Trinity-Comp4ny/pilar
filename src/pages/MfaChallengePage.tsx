@@ -12,7 +12,7 @@ export default function MfaChallengePage() {
   const handleVerified = async () => {
     await refreshMfaLevel();
     sessionStorage.setItem("pilar_post_login", "1");
-    navigate("/dashboard", { replace: true });
+    navigate("/inicio", { replace: true });
   };
 
   const handleLogout = async () => {

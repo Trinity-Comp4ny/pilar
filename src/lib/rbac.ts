@@ -28,19 +28,19 @@ export function isContractRole(role: string | null | undefined): role is Contrac
  * Mapa único papel → rota "casa". Fonte da verdade para onde mandar cada
  * papel quando ele cai numa rota que não lhe pertence.
  *
- * Hoje o Pilar tem um único dashboard interno (`/dashboard`) para todos os
- * papéis do contrato; o destino difere só para não-autenticado. Manter o
- * mapa explícito deixa trivial diferenciar destinos por papel no futuro
- * (ex.: um painel só de coordenação) sem caçar redirects espalhados.
+ * Hoje o Pilar leva todos os papéis do contrato para a mesma casa (`/inicio`);
+ * o destino difere só para não-autenticado. Manter o mapa explícito deixa
+ * trivial diferenciar destinos por papel no futuro (ex.: um painel só de
+ * coordenação) sem caçar redirects espalhados.
  */
 const ROLE_DASHBOARD: Record<ContractRole, string> = {
-  owner: "/dashboard",
-  coordenador: "/dashboard",
-  colaborador: "/dashboard",
+  owner: "/inicio",
+  coordenador: "/inicio",
+  colaborador: "/inicio",
 };
 
 /** Rota "casa" do papel. Sem papel (deslogado) → tela de login. */
 export function dashboardForRole(role: string | null | undefined): string {
   if (isContractRole(role)) return ROLE_DASHBOARD[role];
-  return role ? "/dashboard" : "/login";
+  return role ? "/inicio" : "/login";
 }

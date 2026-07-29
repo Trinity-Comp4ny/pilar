@@ -1,6 +1,6 @@
 import { ArrowUpRight, ArrowDownRight } from "lucide-react";
 import type { DashboardVencimento } from "@/hooks/useDashboardData";
-import { fmt } from "./format";
+import { formatCurrency } from "@/lib/format";
 
 export function VencimentoRow({ item }: { item: DashboardVencimento }) {
   const isReceita = item.tipo === "receita";
@@ -22,7 +22,7 @@ export function VencimentoRow({ item }: { item: DashboardVencimento }) {
       <div className="text-right shrink-0">
         <p className={`text-sm font-semibold ${isReceita ? "text-positive-strong" : "text-negative-strong"}`}>
           {isReceita ? "+" : "-"}
-          {fmt.format(item.valor)}
+          {formatCurrency(item.valor)}
         </p>
         <p className="text-[11px] text-ink-disabled">
           {item.diasRestantes === 0 ? "Hoje" : item.diasRestantes === 1 ? "Amanhã" : `${item.diasRestantes}d`}

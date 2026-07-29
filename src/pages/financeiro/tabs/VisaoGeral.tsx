@@ -10,6 +10,7 @@ import {
   BarChart3,
   Clock,
   Trophy,
+  CalendarClock,
 } from "lucide-react";
 import { formatDateDisplay } from "@/lib/dateUtils";
 import { cn } from "@/lib/utils";
@@ -31,7 +32,9 @@ import {
 import { CustomTooltip } from "../components/CustomTooltip";
 import { FinanceErrorState } from "../components/FinanceErrorState";
 import { useFinanceData } from "@/hooks/useFinanceData";
+import { useDashboardData } from "@/hooks/useDashboardData";
 import { useFinanceFilter } from "../hooks/useFinanceFilter";
+import { VencimentoRow } from "../components/VencimentoRow";
 
 const formatCurrency = (val: number) => fmtMoeda(val);
 
@@ -156,6 +159,9 @@ function DonutChart({ data, totalLabel }: DonutProps) {
 export default function VisaoGeral() {
   const { visualizacao, dateFrom, dateTo } = useFinanceFilter();
   const { data: dashboardData, isLoading, isError, refetch } = useFinanceData(dateFrom, dateTo);
+  // Próximos vencimentos migraram do antigo Dashboard (spec 005). Sem args, reusa o
+  // cache que a Início já mantém; a lista independe do filtro de período (é a partir de hoje).
+  const { data: radar } = useDashboardData();
 
   if (isLoading) return <VisaoGeralSkeleton />;
 
@@ -487,6 +493,31 @@ export default function VisaoGeral() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Próximos vencimentos (migrado do antigo Dashboard, spec 005) */}
+      <Card className="w-full">
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <CalendarClock size={18} className="text-muted-foreground" />
+            Próximos vencimentos
+          </CardTitle>
+          <CardDescription>Recebimentos e pagamentos a partir de hoje</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {(radar?.proximosVencimentos ?? []).length === 0 ? (
+            <div className="h-[120px] flex flex-col items-center justify-center text-muted-foreground">
+              <CalendarClock size={24} className="mb-2 opacity-40" />
+              <p className="text-sm">Sem vencimentos próximos</p>
+            </div>
+          ) : (
+            <div>
+              {(radar?.proximosVencimentos ?? []).map((v) => (
+                <VencimentoRow key={v.id} item={v} />
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

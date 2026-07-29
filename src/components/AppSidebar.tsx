@@ -152,7 +152,7 @@ export function AppSidebar() {
       <NavLink
         key={item.title}
         to={item.url}
-        end={item.url === "/dashboard"}
+        end={false}
         onClick={handleNavClick}
         className={cn(
           "flex items-center gap-3 px-3 py-2 rounded-full text-sm transition-all duration-200 group relative",

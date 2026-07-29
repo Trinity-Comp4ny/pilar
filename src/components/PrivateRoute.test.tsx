@@ -33,13 +33,13 @@ vi.mock("@/integrations/supabase/client", () => ({
 
 import { PrivateRoute } from "./PrivateRoute";
 
-function renderWithRouter(initialRoute = "/dashboard") {
+function renderWithRouter(initialRoute = "/inicio") {
   return render(
     <MemoryRouter initialEntries={[initialRoute]}>
       <Routes>
         <Route path="/" element={<div data-testid="landing">Landing</div>} />
         <Route element={<PrivateRoute />}>
-          <Route path="/dashboard" element={<div data-testid="dashboard">Dashboard</div>} />
+          <Route path="/inicio" element={<div data-testid="inicio">Início</div>} />
           <Route path="/profile-setup" element={<div data-testid="profile-setup">Profile Setup</div>} />
           <Route path="/company-setup" element={<div data-testid="company-setup">Company Setup</div>} />
         </Route>

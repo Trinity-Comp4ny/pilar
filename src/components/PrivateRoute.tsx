@@ -114,7 +114,7 @@ export function PrivateRoute() {
     }
 
     if ((isCompanySetup || isProfileSetup) && profileDone && (!isAdmin || companyDone)) {
-      return <Navigate to="/dashboard" replace />;
+      return <Navigate to="/inicio" replace />;
     }
 
     const onboardingComplete = profileDone && (!isAdmin || companyDone);
@@ -139,7 +139,7 @@ export function PrivateRoute() {
   }
 
   const justLoggedIn = sessionStorage.getItem("pilar_post_login") === "1";
-  if (isUltraAdmin(profile?.role) && justLoggedIn && location.pathname === "/dashboard") {
+  if (isUltraAdmin(profile?.role) && justLoggedIn && location.pathname === "/inicio") {
     sessionStorage.removeItem("pilar_post_login");
     sessionStorage.setItem(ULTRA_PLATFORM_MODE_KEY, "true");
     return <Navigate to="/ultra-admin" replace />;

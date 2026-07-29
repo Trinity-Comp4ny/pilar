@@ -95,7 +95,7 @@ export default function SemAcesso() {
 
         <div className="flex flex-col gap-2">
           <Button asChild>
-            <Link to="/dashboard">Voltar ao dashboard</Link>
+            <Link to="/inicio">Voltar ao início</Link>
           </Button>
           <p className="text-xs text-muted-foreground">Precisa desse acesso? Fale com um admin da sua empresa.</p>
         </div>
