@@ -8,6 +8,9 @@ import { useDashboardData, type DashboardProjeto, type DashboardVencimento } fro
 import { useRecentes } from "@/hooks/useRecentes";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { readUltimoModulo, saveUltimoModulo, MODULES, type ModuleId } from "@/lib/modules";
+import { ProjectRow } from "./components/ProjectRow";
+import { LeadsFunnel } from "./components/LeadsFunnel";
+import { CalendarioPreview } from "@/pages/projetos/components/CalendarioPreview";
 
 /** Achado determinístico do Radar (fase 1: queries, zero LLM). */
 type Achado = {
@@ -243,6 +246,51 @@ export default function Inicio() {
           </button>
         </div>
       </section>
+
+      {/* Projetos ativos (operacional, vindo do antigo Dashboard) */}
+      {podeProjetos && data && data.projetos.length > 0 && (
+        <section className="mb-10" aria-label="Projetos ativos">
+          <div className="flex items-center justify-between mb-2.5">
+            <h2 className="text-[10px] font-medium uppercase tracking-[0.08em] text-black/40">Projetos ativos</h2>
+            <button
+              onClick={() => navigate("/projetos")}
+              className="text-xs text-black/45 hover:text-ink transition-colors"
+            >
+              Ver todos
+            </button>
+          </div>
+          <div className="rounded-2xl border border-black/10 bg-white p-1.5 divide-y divide-black/5">
+            {data.projetos.slice(0, 5).map((p) => (
+              <ProjectRow key={p.id} project={p} onClick={() => navigate(`/projetos/${p.id}`)} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Calendário de prazos */}
+      {podeProjetos && (
+        <section className="mb-10" aria-label="Calendário de prazos">
+          <CalendarioPreview />
+        </section>
+      )}
+
+      {/* Pipeline de leads */}
+      {can("leads") && data && data.leadsTotal > 0 && (
+        <section className="mb-10" aria-label="Pipeline de leads">
+          <div className="flex items-center justify-between mb-2.5">
+            <h2 className="text-[10px] font-medium uppercase tracking-[0.08em] text-black/40">Pipeline de leads</h2>
+            <button
+              onClick={() => navigate("/leads")}
+              className="text-xs text-black/45 hover:text-ink transition-colors"
+            >
+              Ver todos
+            </button>
+          </div>
+          <div className="rounded-2xl border border-black/10 bg-white px-5 py-4">
+            <LeadsFunnel pipeline={data.leadsPipeline} total={data.leadsTotal} />
+          </div>
+        </section>
+      )}
 
       {/* Recentes */}
       <section aria-label="Recentes">

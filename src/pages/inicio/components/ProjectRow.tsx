@@ -3,7 +3,7 @@ import { Clock, ChevronRight } from "lucide-react";
 import type { DashboardProjeto } from "@/hooks/useDashboardData";
 import { PROJECT_STATUS_CONFIG, PROJECT_PRIORITY_CONFIG, type ProjectStatus, type ProjectPriority } from "@/constants";
 import { cn } from "@/lib/utils";
-import { fmtCompact } from "./format";
+import { formatCurrency } from "@/lib/format";
 
 export function ProjectRow({ project, onClick }: { project: DashboardProjeto; onClick: () => void }) {
   const statusConfig = PROJECT_STATUS_CONFIG[project.status as ProjectStatus];
@@ -57,7 +57,7 @@ export function ProjectRow({ project, onClick }: { project: DashboardProjeto; on
       </div>
       <div className="text-right shrink-0 hidden sm:block">
         <div className="text-sm font-medium">
-          {project.valorContrato > 0 ? fmtCompact.format(project.valorContrato) : "—"}
+          {project.valorContrato > 0 ? formatCurrency(project.valorContrato, { compact: true }) : "—"}
         </div>
         {project.dataInicio && project.dataPrevisao && (
           <div className="w-16 mt-1">

@@ -145,7 +145,7 @@ export default function MfaSetupPage() {
         const { data: factorsData } = await supabase.auth.mfa.listFactors();
         const alreadyVerified = factorsData?.totp?.some((f) => f.status === "verified");
         if (alreadyVerified && !force) {
-          navigate("/dashboard", { replace: true });
+          navigate("/inicio", { replace: true });
           return;
         }
         await resetAllFactors();
@@ -486,7 +486,7 @@ export default function MfaSetupPage() {
               <Button
                 variant="brand"
                 className="w-full h-11 font-medium"
-                onClick={() => navigate("/dashboard", { replace: true })}
+                onClick={() => navigate("/inicio", { replace: true })}
               >
                 Já salvei — acessar o Pilar
               </Button>

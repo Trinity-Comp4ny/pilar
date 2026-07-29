@@ -20,7 +20,7 @@ export default function Landing() {
       const {
         data: { session },
       } = await supabase.auth.getSession();
-      if (session) navigate("/dashboard");
+      if (session) navigate("/inicio");
     };
     checkUser();
   }, [navigate]);

@@ -38,7 +38,7 @@ type CreateCmd = {
 };
 
 const NAV_COMMANDS: NavCmd[] = [
-  { label: "Dashboard", path: "/dashboard", icon: Home, keywords: "inicio home painel" },
+  { label: "Início", path: "/inicio", icon: Home, keywords: "dashboard home painel visao geral" },
   { label: "Projetos", path: "/projetos", icon: Calendar, keywords: "obras escopos" },
   { label: "Financeiro", path: "/financeiro", icon: Wallet, keywords: "contas faturas despesas receitas" },
   { label: "Leads", path: "/leads", icon: UserPlus, keywords: "comercial prospects" },

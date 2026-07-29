@@ -27,7 +27,6 @@ const Billing = lazy(() => import("./pages/billing"));
 const Login = lazy(() => import("./pages/Login"));
 const Inicio = lazy(() => import("./pages/inicio"));
 const Obras = lazy(() => import("./pages/obras"));
-const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Leads = lazy(() => import("./pages/leads"));
 const Financeiro = lazy(() => import("./pages/Financeiro"));
 const Projetos = lazy(() => import("./pages/Projetos"));
@@ -117,7 +116,8 @@ const App = () => {
                     <Route element={<PrivateRoute />}>
                       <Route path="/inicio" element={<Inicio />} />
                       <Route path="/obras" element={<Obras />} />
-                      <Route path="/dashboard" element={<Dashboard />} />
+                      {/* Dashboard aposentado (spec 005): financeiro vive em Gestão, operacional na Início. */}
+                      <Route path="/dashboard" element={<Navigate to="/inicio" replace />} />
 
                       <Route element={<FeatureRoute feature="leads" />}>
                         <Route path="/leads" element={<Leads />} />

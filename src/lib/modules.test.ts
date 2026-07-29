@@ -15,7 +15,6 @@ describe("routeToModule", () => {
     expect(routeToModule("/equipe")).toBe("gestao");
     expect(routeToModule("/fornecedores")).toBe("gestao");
     expect(routeToModule("/relatorios")).toBe("gestao");
-    expect(routeToModule("/dashboard")).toBe("projetos");
     expect(routeToModule("/leads")).toBe("projetos");
     expect(routeToModule("/documentos")).toBe("projetos");
     expect(routeToModule("/clientes")).toBe("projetos");
@@ -38,6 +37,8 @@ describe("routeToModule", () => {
 
   it("rotas transversais e desconhecidas retornam null", () => {
     expect(routeToModule("/inicio")).toBeNull();
+    // /dashboard foi aposentado (spec 005): não pertence mais a nenhum módulo.
+    expect(routeToModule("/dashboard")).toBeNull();
     expect(routeToModule("/agentes")).toBeNull();
     expect(routeToModule("/profile")).toBeNull();
     expect(routeToModule("/admin")).toBeNull();
