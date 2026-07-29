@@ -24,14 +24,14 @@ describe("isContractRole", () => {
 
 describe("dashboardForRole", () => {
   it("mapeia cada papel do contrato para sua casa", () => {
-    expect(dashboardForRole("owner")).toBe("/dashboard");
-    expect(dashboardForRole("coordenador")).toBe("/dashboard");
-    expect(dashboardForRole("colaborador")).toBe("/dashboard");
+    expect(dashboardForRole("owner")).toBe("/inicio");
+    expect(dashboardForRole("coordenador")).toBe("/inicio");
+    expect(dashboardForRole("colaborador")).toBe("/inicio");
   });
 
-  it("manda papel autenticado desconhecido/legado para o dashboard", () => {
-    expect(dashboardForRole("admin")).toBe("/dashboard");
-    expect(dashboardForRole("user")).toBe("/dashboard");
+  it("manda papel autenticado desconhecido/legado para o início", () => {
+    expect(dashboardForRole("admin")).toBe("/inicio");
+    expect(dashboardForRole("user")).toBe("/inicio");
   });
 
   it("manda não-autenticado para o login", () => {

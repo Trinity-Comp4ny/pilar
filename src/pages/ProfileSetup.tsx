@@ -114,7 +114,7 @@ export default function ProfileSetup() {
       const isAdmin = updatedProfile?.role === "admin" || updatedProfile?.role === "ultra_admin";
       const needsCompanySetup = isAdmin && !updatedProfile?.empresas?.onboarding_completed;
 
-      navigate(needsCompanySetup ? "/company-setup" : "/dashboard");
+      navigate(needsCompanySetup ? "/company-setup" : "/inicio");
     } catch (err: unknown) {
       toast.error("Erro ao salvar", { description: getSafeErrorMessage(err) });
     } finally {
@@ -130,7 +130,7 @@ export default function ProfileSetup() {
           <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-brand/6 rounded-full blur-[100px] animate-aurora" />
         </div>
         <Link
-          to="/dashboard"
+          to="/inicio"
           className="absolute top-8 left-8 lg:left-12 flex items-center gap-2 text-ink-soft hover:text-brand transition-colors font-medium text-sm group"
         >
           <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />

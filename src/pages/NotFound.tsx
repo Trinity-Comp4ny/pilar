@@ -31,7 +31,7 @@ const NotFound = () => {
   }, []);
 
   const primaryHref = useMemo(() => {
-    if (isAuthenticated === true) return "/dashboard";
+    if (isAuthenticated === true) return "/inicio";
     return "/";
   }, [isAuthenticated]);
 
