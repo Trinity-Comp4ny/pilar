@@ -19,7 +19,6 @@ import {
   FileText,
   FolderKanban,
   HardHat,
-  Home,
   Sparkles,
   Truck,
   UserPlus,
@@ -70,9 +69,8 @@ export const MODULES: Record<ModuleId, ModuleDef> = {
     id: "projetos",
     label: "Projetos",
     icon: FolderKanban,
-    homeRoute: "/dashboard",
+    homeRoute: "/projetos",
     items: [
-      { title: "Dashboard", url: "/dashboard", icon: Home, feature: "dashboard" },
       { title: "Leads", url: "/leads", icon: UserPlus, feature: "leads" },
       { title: "Documentos", url: "/documentos", icon: FileText, feature: "propostas" },
       { title: "Clientes", url: "/clientes", icon: Building2, feature: "clientes" },

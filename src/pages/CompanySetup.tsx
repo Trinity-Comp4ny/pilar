@@ -67,7 +67,7 @@ export default function CompanySetup() {
         description: "Bem-vindo ao sistema Pilar.",
       });
 
-      navigate("/dashboard");
+      navigate("/inicio");
     } catch (err: unknown) {
       toast.error("Erro ao salvar", {
         description: getSafeErrorMessage(err),

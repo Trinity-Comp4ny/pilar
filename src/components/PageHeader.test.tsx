@@ -26,8 +26,8 @@ describe("PageHeader", () => {
   });
 
   it("renderiza só com title (compat com uso antigo)", () => {
-    renderAt("/dashboard", <PageHeader title="Dashboard" />);
-    expect(screen.getByRole("heading", { name: "Dashboard" })).toBeInTheDocument();
+    renderAt("/inicio", <PageHeader title="Início" />);
+    expect(screen.getByRole("heading", { name: "Início" })).toBeInTheDocument();
     expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
   });
 
