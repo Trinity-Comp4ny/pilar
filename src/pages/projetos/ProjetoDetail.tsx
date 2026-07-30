@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Loader2 } from "lucide-react";
+import { Loader2, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PageLayout } from "@/components/PageLayout";
+import { PageHeader } from "@/components/PageHeader";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useRecentes } from "@/hooks/useRecentes";
 import { useProjetoDetail } from "./hooks/useProjetoDetail";
@@ -13,7 +14,6 @@ import { ProjetoFormDialog } from "./components/ProjetoFormDialog";
 
 export default function ProjetoDetail() {
   const { id } = useParams<{ id: string }>();
-  usePageTitle("Projeto");
   const navigate = useNavigate();
 
   const {
@@ -43,6 +43,7 @@ export default function ProjetoDetail() {
   } = useProjetoDetail(id);
 
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  usePageTitle(projeto?.nome ? `Projeto · ${projeto.nome}` : "Projeto");
 
   // Recentes da home Início (spec 001): registra a visita quando o projeto carrega.
   const { registrar } = useRecentes();
@@ -74,14 +75,19 @@ export default function ProjetoDetail() {
   }
 
   return (
-    <PageLayout>
-      <ProjetoDetailHeader
-        projeto={projeto}
-        deadline={deadline}
-        canEdit={canEdit}
-        onBack={() => navigate("/projetos")}
-        onEdit={() => setIsEditDialogOpen(true)}
-      />
+    <PageLayout
+      header={
+        <PageHeader title={projeto.nome} breadcrumbs={[{ label: "Projetos", to: "/projetos" }]}>
+          {canEdit && (
+            <Button variant="outline" onClick={() => setIsEditDialogOpen(true)} className="rounded-full h-9 text-sm">
+              <Pencil className="h-3.5 w-3.5 mr-1.5" />
+              Editar
+            </Button>
+          )}
+        </PageHeader>
+      }
+    >
+      <ProjetoDetailHeader projeto={projeto} deadline={deadline} />
 
       <ProjetoDetailInfo
         projeto={projeto}

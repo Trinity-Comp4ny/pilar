@@ -31,13 +31,37 @@ describe("PageHeader", () => {
     expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
   });
 
-  it("mostra o rótulo do módulo da rota e permite desligar", () => {
+  it("rótulo do módulo é opt-in: some por default, aparece com moduleLabel", () => {
     const { unmount } = renderAt("/projetos", <PageHeader title="Projetos" />);
-    expect(screen.getByText("Projetos", { selector: "span" })).toBeInTheDocument();
+    // Default (spec 006): só o nome da página, sem o rótulo de módulo em span.
+    expect(screen.queryByText("Projetos", { selector: "span" })).not.toBeInTheDocument();
     unmount();
 
-    renderAt("/projetos", <PageHeader title="Sem módulo" moduleLabel={false} />);
-    expect(screen.queryByText("Projetos", { selector: "span" })).not.toBeInTheDocument();
+    renderAt("/projetos", <PageHeader title="Projetos" moduleLabel />);
+    expect(screen.getByText("Projetos", { selector: "span" })).toBeInTheDocument();
+  });
+
+  it("breadcrumbs: ancestral com `to` vira link e a folha é o título", () => {
+    renderAt("/clientes/1", <PageHeader title="Fulano" breadcrumbs={[{ label: "Clientes", to: "/clientes" }]} />);
+    expect(screen.getByRole("link", { name: "Clientes" })).toHaveAttribute("href", "/clientes");
+    expect(screen.getByRole("heading", { name: "Fulano" })).toBeInTheDocument();
+  });
+
+  it("breadcrumbs: ancestral com `onClick` dispara sem virar link", async () => {
+    const onClick = vi.fn();
+    renderAt("/financeiro", <PageHeader title="Fluxo de Caixa" breadcrumbs={[{ label: "Financeiro", onClick }]} />);
+    expect(screen.queryByRole("link", { name: "Financeiro" })).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Financeiro" }));
+    expect(onClick).toHaveBeenCalledOnce();
+  });
+
+  it("com breadcrumbs, o rótulo de módulo dá lugar à trilha", () => {
+    renderAt(
+      "/financeiro",
+      <PageHeader title="Fluxo de Caixa" moduleLabel breadcrumbs={[{ label: "Financeiro", onClick: vi.fn() }]} />
+    );
+    expect(screen.getByRole("navigation", { name: "Trilha de navegação" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Fluxo de Caixa" })).toBeInTheDocument();
   });
 
   it("busca é controlada pela página", async () => {

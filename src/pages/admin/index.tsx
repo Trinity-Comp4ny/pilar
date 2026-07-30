@@ -32,7 +32,16 @@ type RawUser = {
   inviteId?: string | null;
 };
 
-const VALID_TABS = ["usuarios", "features", "empresa", "parametros", "automacoes", "auditoria", "plano", "integracoes"] as const;
+const VALID_TABS = [
+  "usuarios",
+  "features",
+  "empresa",
+  "parametros",
+  "automacoes",
+  "auditoria",
+  "plano",
+  "integracoes",
+] as const;
 type AdminTab = (typeof VALID_TABS)[number];
 
 const ADMIN_TABS: SecondSidebarTab[] = [
@@ -188,9 +197,18 @@ export default function Admin() {
     t.id === "usuarios" ? { ...t, badge: users.length } : t
   );
 
+  const isRootTab = activeTab === "usuarios";
+  const activeLabel = ADMIN_TABS.find((t) => t.id === activeTab)?.label ?? "Admin Portal";
+
   return (
     <PageLayout
-      header={<PageHeader title="Admin Portal" description="Governança, configuração e observabilidade da firma" />}
+      header={
+        <PageHeader
+          title={isRootTab ? "Admin Portal" : activeLabel}
+          description={isRootTab ? "Governança, configuração e observabilidade da firma" : undefined}
+          breadcrumbs={isRootTab ? undefined : [{ label: "Admin Portal", onClick: () => handleTabChange("usuarios") }]}
+        />
+      }
       sidebar={<SecondSidebar tabs={adminSidebarTabs} value={activeTab} onValueChange={handleTabChange} />}
       containerClassName="max-w-6xl"
     >

@@ -1,10 +1,11 @@
 import { useState, useEffect, useMemo, lazy, Suspense } from "react";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
-import { useSidebar } from "@/components/ui/sidebar";
 import { useSearchParams } from "react-router-dom";
 import { startOfMonth, endOfMonth, parseISO, format, isValid } from "date-fns";
 import { LayoutDashboard, TrendingUp, Receipt, Users2, CreditCard, Landmark } from "lucide-react";
-import { FinanceiroHeader } from "./financeiro/components/FinanceiroHeader";
+import { PageLayout } from "@/components/PageLayout";
+import { PageHeader } from "@/components/PageHeader";
+import { PeriodoPopover } from "./financeiro/components/PeriodoPopover";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useRegistrarPagina } from "@/hooks/useRecentes";
@@ -34,9 +35,7 @@ function parseDateParam(v: string | null): Date | undefined {
 }
 
 export default function Financeiro() {
-  usePageTitle("Financeiro");
   useRegistrarPagina("pagina", "/financeiro", "Financeiro");
-  const { state, isMobile } = useSidebar();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const initial = useMemo(() => {
@@ -81,73 +80,73 @@ export default function Financeiro() {
     [dateFrom, dateTo, visualizacao]
   );
 
+  const isRoot = activeTab === "visao-geral";
+  const activeLabel = FINANCEIRO_TABS_ALL.find((t) => t.id === activeTab)?.label ?? "Financeiro";
+  usePageTitle(isRoot ? "Financeiro" : `Financeiro · ${activeLabel}`);
+
   return (
-    <div
-      className="fixed top-0 right-0 bottom-0 bg-white z-40 overflow-hidden flex flex-col transition-[left] duration-300 ease-in-out"
-      style={{ left: isMobile ? "0px" : state === "collapsed" ? "64px" : "240px" }}
-    >
-      <FinanceFilterProvider value={filterValue}>
-        <Tabs value={activeTab} onValueChange={handleTabChange} className="flex flex-col flex-1 overflow-hidden">
-          <div className="sticky top-0 z-20 w-full bg-white border-b">
-            <FinanceiroHeader activeTab={activeTab} />
-          </div>
+    <FinanceFilterProvider value={filterValue}>
+      <PageLayout
+        header={
+          <PageHeader
+            title={isRoot ? "Financeiro" : activeLabel}
+            breadcrumbs={isRoot ? undefined : [{ label: "Financeiro", onClick: () => handleTabChange("visao-geral") }]}
+          >
+            <PeriodoPopover activeTab={activeTab} />
+          </PageHeader>
+        }
+        sidebar={<SecondSidebar tabs={FINANCEIRO_TABS_ALL} value={activeTab} onValueChange={handleTabChange} />}
+      >
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+          <TabsContent value="visao-geral" className="mt-0 w-full focus-visible:ring-0">
+            {activeTab === "visao-geral" && (
+              <Suspense fallback={<Skeleton className="h-64 w-full" />}>
+                <VisaoGeral />
+              </Suspense>
+            )}
+          </TabsContent>
 
-          <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
-            <SecondSidebar tabs={FINANCEIRO_TABS_ALL} value={activeTab} onValueChange={handleTabChange} />
-            <div className="flex-1 overflow-y-auto w-full bg-gray-50/50 p-6 md:p-8">
-              <div className="w-full mx-auto space-y-6">
-                <TabsContent value="visao-geral" className="mt-0 w-full focus-visible:ring-0">
-                  {activeTab === "visao-geral" && (
-                    <Suspense fallback={<Skeleton className="h-64 w-full" />}>
-                      <VisaoGeral />
-                    </Suspense>
-                  )}
-                </TabsContent>
+          <TabsContent value="fluxo-caixa" className="mt-0 w-full focus-visible:ring-0">
+            {activeTab === "fluxo-caixa" && (
+              <Suspense fallback={<Skeleton className="h-64 w-full" />}>
+                <FluxoCaixa dateFrom={dateFrom} dateTo={dateTo} />
+              </Suspense>
+            )}
+          </TabsContent>
 
-                <TabsContent value="fluxo-caixa" className="mt-0 w-full focus-visible:ring-0">
-                  {activeTab === "fluxo-caixa" && (
-                    <Suspense fallback={<Skeleton className="h-64 w-full" />}>
-                      <FluxoCaixa dateFrom={dateFrom} dateTo={dateTo} />
-                    </Suspense>
-                  )}
-                </TabsContent>
+          <TabsContent value="lancamentos" className="mt-0 w-full focus-visible:ring-0">
+            {activeTab === "lancamentos" && (
+              <Suspense fallback={<Skeleton className="h-64 w-full" />}>
+                <Lancamentos />
+              </Suspense>
+            )}
+          </TabsContent>
 
-                <TabsContent value="lancamentos" className="mt-0 w-full focus-visible:ring-0">
-                  {activeTab === "lancamentos" && (
-                    <Suspense fallback={<Skeleton className="h-64 w-full" />}>
-                      <Lancamentos />
-                    </Suspense>
-                  )}
-                </TabsContent>
+          <TabsContent value="folha-pagamento" className="mt-0 w-full focus-visible:ring-0">
+            {activeTab === "folha-pagamento" && (
+              <Suspense fallback={<Skeleton className="h-64 w-full" />}>
+                <FolhaPagamento />
+              </Suspense>
+            )}
+          </TabsContent>
 
-                <TabsContent value="folha-pagamento" className="mt-0 w-full focus-visible:ring-0">
-                  {activeTab === "folha-pagamento" && (
-                    <Suspense fallback={<Skeleton className="h-64 w-full" />}>
-                      <FolhaPagamento />
-                    </Suspense>
-                  )}
-                </TabsContent>
+          <TabsContent value="faturas" className="mt-0 w-full focus-visible:ring-0">
+            {activeTab === "faturas" && (
+              <Suspense fallback={<Skeleton className="h-64 w-full" />}>
+                <Faturas />
+              </Suspense>
+            )}
+          </TabsContent>
 
-                <TabsContent value="faturas" className="mt-0 w-full focus-visible:ring-0">
-                  {activeTab === "faturas" && (
-                    <Suspense fallback={<Skeleton className="h-64 w-full" />}>
-                      <Faturas />
-                    </Suspense>
-                  )}
-                </TabsContent>
-
-                <TabsContent value="contas" className="mt-0 w-full focus-visible:ring-0">
-                  {activeTab === "contas" && (
-                    <Suspense fallback={<Skeleton className="h-64 w-full" />}>
-                      <Contas />
-                    </Suspense>
-                  )}
-                </TabsContent>
-              </div>
-            </div>
-          </div>
+          <TabsContent value="contas" className="mt-0 w-full focus-visible:ring-0">
+            {activeTab === "contas" && (
+              <Suspense fallback={<Skeleton className="h-64 w-full" />}>
+                <Contas />
+              </Suspense>
+            )}
+          </TabsContent>
         </Tabs>
-      </FinanceFilterProvider>
-    </div>
+      </PageLayout>
+    </FinanceFilterProvider>
   );
 }
