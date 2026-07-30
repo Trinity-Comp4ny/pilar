@@ -82,9 +82,9 @@ export default function Contas() {
   };
 
   const handleSaveConta = () => {
-    const errors = { nome: !nome, banco: !banco, saldoInicial: !saldoInicial };
+    const errors = { nome: !nome, banco: !banco, saldoInicial: false };
     setContaErrors(errors);
-    if (errors.nome || errors.banco || errors.saldoInicial) {
+    if (errors.nome || errors.banco) {
       toast.error("Campos obrigatórios", { description: "Preencha todos os campos marcados com *" });
       return;
     }
@@ -101,8 +101,8 @@ export default function Contas() {
   };
 
   const handleSaveCartao = () => {
-    if (!nome || !diaFechamento || !diaVencimento || !limite) {
-      toast.error("Campos obrigatórios", { description: "Preencha todos os campos do cartão" });
+    if (!nome || !diaFechamento || !diaVencimento) {
+      toast.error("Campos obrigatórios", { description: "Preencha nome, fechamento e vencimento" });
       return;
     }
 

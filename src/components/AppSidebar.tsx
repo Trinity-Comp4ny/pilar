@@ -1,6 +1,17 @@
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
-import { Home, ShieldCheck, Zap, User, UserCircle, LogOut, ChevronDown, Check } from "lucide-react";
-import { useSidebar, SidebarTrigger } from "@/components/ui/sidebar";
+import {
+  Home,
+  ShieldCheck,
+  Zap,
+  User,
+  UserCircle,
+  LogOut,
+  ChevronDown,
+  Check,
+  PanelLeftClose,
+  PanelLeftOpen,
+} from "lucide-react";
+import { useSidebar } from "@/components/ui/sidebar";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import {
   DropdownMenu,
@@ -31,7 +42,7 @@ import {
 type MenuItem = ModuleMenuItem;
 
 export function AppSidebar() {
-  const { state, isMobile, openMobile, setOpenMobile } = useSidebar();
+  const { state, isMobile, openMobile, setOpenMobile, toggleSidebar } = useSidebar();
   const location = useLocation();
   const navigate = useNavigate();
   const { user, profile, signOut } = useAuth();
@@ -166,12 +177,12 @@ export function AppSidebar() {
           <>
             <span className="tracking-tight flex-1">{item.title}</span>
             {item.badge === "novo" && (
-              <span className="text-[10px] font-medium tracking-wide uppercase px-1.5 py-0.5 rounded-full bg-brand text-ink">
+              <span className="text-[10px] leading-none font-medium tracking-wide uppercase px-1.5 py-0.5 rounded-full bg-brand text-ink">
                 Novo
               </span>
             )}
             {item.badge === "em breve" && (
-              <span className="text-[10px] font-medium tracking-wide uppercase px-1.5 py-0.5 rounded-full bg-black/5 text-black/50">
+              <span className="text-[10px] leading-none font-medium tracking-wide uppercase px-1.5 py-0.5 rounded-full bg-black/5 text-black/50">
                 Em breve
               </span>
             )}
@@ -193,7 +204,7 @@ export function AppSidebar() {
   const sidebarInner = (
     <div className="flex flex-col h-full">
       {/* Logo Header com Toggle Button */}
-      <div className="flex items-center justify-between h-16 px-4 border-b border-black/5 group">
+      <div className="flex items-center justify-between h-16 px-4 group">
         {!collapsed ? (
           <>
             <div className="flex items-center gap-3">
@@ -202,48 +213,43 @@ export function AppSidebar() {
                 Pilar<sup className="text-[8px] font-normal text-ink-disabled ml-0.5 relative -top-2">®</sup>
               </span>
             </div>
-            <SidebarTrigger className="text-black/70 hover:text-brand hover:bg-brand/5 transition-colors rounded-full h-8 w-8" />
+            <button
+              type="button"
+              onClick={toggleSidebar}
+              aria-label="Recolher menu"
+              className="flex items-center justify-center h-8 w-8 rounded-lg text-ink-soft hover:text-ink hover:bg-black/[0.04] active:scale-95 transition-all duration-200"
+            >
+              <PanelLeftClose size={18} strokeWidth={1.5} />
+            </button>
           </>
         ) : (
           <div className="flex items-center justify-center w-full relative group">
             <div className="group-hover:opacity-0 transition-opacity">
               <img src="/pilar-logo.svg" alt="Pilar" className="h-8 w-8" />
             </div>
-            <div className="absolute opacity-0 group-hover:opacity-100 transition-opacity">
-              <SidebarTrigger className="text-black/70 hover:text-brand hover:bg-brand/5 transition-colors rounded-full h-8 w-8" />
-            </div>
+            <button
+              type="button"
+              onClick={toggleSidebar}
+              aria-label="Expandir menu"
+              className="absolute flex items-center justify-center h-8 w-8 rounded-lg text-ink-soft hover:text-ink hover:bg-black/[0.04] active:scale-95 opacity-0 group-hover:opacity-100 transition-all duration-200"
+            >
+              <PanelLeftOpen size={18} strokeWidth={1.5} />
+            </button>
           </div>
         )}
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-3 overflow-y-auto">
-        {/* Início: transversal, acima do switcher */}
-        <div className="space-y-1">
-          <NavLink
-            to="/inicio"
-            onClick={handleNavClick}
-            className={cn(
-              "flex items-center gap-3 px-3 py-2 rounded-full text-sm transition-all duration-200",
-              collapsed && "justify-center",
-              currentPath === "/inicio" ? "bg-brand text-black/80 font-medium" : "text-black/70 hover:bg-brand/30"
-            )}
-            title={collapsed ? "Início" : ""}
-          >
-            <Home size={18} strokeWidth={1.5} className="w-[18px] h-[18px] flex-shrink-0" />
-            {!collapsed && <span className="tracking-tight">Início</span>}
-          </NavLink>
-        </div>
-
+      <nav className="flex-1 p-3 overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
         {/* Switcher de módulo (apresentação; autorização é dos gates) */}
-        <div className="mt-3">
+        <div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
                 aria-label="Trocar de módulo"
                 className={cn(
-                  "w-full flex items-center gap-2.5 rounded-xl border border-black/10 bg-black/[0.03] px-3 py-2 text-sm font-medium text-ink hover:bg-black/[0.06] transition-colors",
+                  "w-full flex items-center gap-2.5 rounded-full border border-black/10 bg-black/[0.03] px-3 py-2 text-sm font-medium text-ink hover:bg-black/[0.06] transition-colors",
                   collapsed && "justify-center px-0"
                 )}
                 title={collapsed ? MODULES[activeModule].label : ""}
@@ -281,27 +287,28 @@ export function AppSidebar() {
           </DropdownMenu>
         </div>
 
-        {/* Itens do módulo ativo */}
-        <div className={collapsed ? "mt-3" : "mt-4"}>
-          {!collapsed && (
-            <div className="px-3 mb-1.5 text-[10px] font-medium tracking-[0.08em] uppercase text-black/40">
-              {MODULES[activeModule].label}
-            </div>
-          )}
-          <div className="space-y-1">{moduleItems.map(({ item, nav }) => renderItem(item, nav))}</div>
+        {/* Transversais: Início + Agentes, abaixo do switcher */}
+        <div className="mt-3 space-y-1">
+          <NavLink
+            to="/inicio"
+            onClick={handleNavClick}
+            className={cn(
+              "flex items-center gap-3 px-3 py-2 rounded-full text-sm transition-all duration-200",
+              collapsed && "justify-center",
+              currentPath === "/inicio" ? "bg-brand text-black/80 font-medium" : "text-black/70 hover:bg-brand/30"
+            )}
+            title={collapsed ? "Início" : ""}
+          >
+            <Home size={18} strokeWidth={1.5} className="w-[18px] h-[18px] flex-shrink-0" />
+            {!collapsed && <span className="tracking-tight">Início</span>}
+          </NavLink>
+          {empresaItems.map(({ item, nav }) => renderItem(item, nav))}
         </div>
 
-        {/* Empresa: transversal, fixo */}
-        {empresaItems.length > 0 && (
-          <div className={collapsed ? "mt-3" : "mt-5"}>
-            {!collapsed && (
-              <div className="px-3 mb-1.5 text-[10px] font-medium tracking-[0.08em] uppercase text-black/40">
-                Empresa
-              </div>
-            )}
-            <div className="space-y-1">{empresaItems.map(({ item, nav }) => renderItem(item, nav))}</div>
-          </div>
-        )}
+        {/* Itens do módulo ativo */}
+        <div className="mt-3">
+          <div className="space-y-1">{moduleItems.map(({ item, nav }) => renderItem(item, nav))}</div>
+        </div>
       </nav>
 
       {/* User Menu */}

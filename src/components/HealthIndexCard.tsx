@@ -11,6 +11,16 @@ const BREAKDOWN_LABELS: Record<keyof HealthBreakdown, string> = {
   concentracao: "Concentração",
 };
 
+/** Mapeia o score (0-100) para classes de tom semântico (tokens), substituindo a
+ *  cor inline do hook. Excelente/Bom → positivo, Atenção → warning, Crítico →
+ *  attention, Emergência → danger. */
+function scoreTone(score: number): { text: string; badge: string } {
+  if (score >= 60) return { text: "text-positive-strong", badge: "bg-positive/10 text-positive-strong" };
+  if (score >= 40) return { text: "text-warning-strong", badge: "bg-warning-soft text-warning-strong" };
+  if (score >= 20) return { text: "text-attention-strong", badge: "bg-attention-soft text-attention-strong" };
+  return { text: "text-negative-strong", badge: "bg-danger-soft text-danger-strong" };
+}
+
 function ProgressBar({ value, label }: { value: number; label: string }) {
   const color = value >= 70 ? "bg-chart-success" : value >= 40 ? "bg-chart-warning" : "bg-chart-danger";
   return (
@@ -43,26 +53,21 @@ export function HealthIndexCard() {
     );
   }
 
+  const tone = scoreTone(health.score);
+
   return (
     <Card className="w-full">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-sm font-medium text-black/60">Saúde Operacional</CardTitle>
-        <div className="p-2 rounded-full" style={{ backgroundColor: `${health.color}20`, color: health.color }}>
+        <div className={`p-2 rounded-full ${tone.badge}`}>
           <Activity size={18} />
         </div>
       </CardHeader>
       <CardContent>
         <div className="flex items-baseline gap-2 mb-3">
-          <span className="text-3xl font-bold" style={{ color: health.color }}>
-            {health.score}
-          </span>
+          <span className={`text-3xl font-bold ${tone.text}`}>{health.score}</span>
           <span className="text-sm text-muted-foreground">/ 100</span>
-          <span
-            className="text-xs font-medium px-2 py-0.5 rounded-full"
-            style={{ backgroundColor: `${health.color}20`, color: health.color }}
-          >
-            {health.label}
-          </span>
+          <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${tone.badge}`}>{health.label}</span>
         </div>
         <div className="space-y-1.5">
           {(Object.keys(health.breakdown) as (keyof HealthBreakdown)[]).map((key) => (

@@ -53,6 +53,8 @@ export const PROJECT_PRIORITY_CONFIG: Record<
     color: string;
     bgColor: string;
     borderColor: string;
+    /** Dot sólido de prioridade (spec 011, substitui a border-l lateral). */
+    dotColor: string;
     sortWeight: number;
   }
 > = {
@@ -61,6 +63,7 @@ export const PROJECT_PRIORITY_CONFIG: Record<
     color: "text-red-700",
     bgColor: "bg-red-50",
     borderColor: "border-l-red-500",
+    dotColor: "bg-negative",
     sortWeight: 0,
   },
   [PROJECT_PRIORITY.MEDIA]: {
@@ -68,6 +71,7 @@ export const PROJECT_PRIORITY_CONFIG: Record<
     color: "text-amber-700",
     bgColor: "bg-amber-50",
     borderColor: "border-l-amber-400",
+    dotColor: "bg-chart-warning",
     sortWeight: 1,
   },
   [PROJECT_PRIORITY.BAIXA]: {
@@ -75,6 +79,7 @@ export const PROJECT_PRIORITY_CONFIG: Record<
     color: "text-blue-700",
     bgColor: "bg-blue-50",
     borderColor: "border-l-blue-400",
+    dotColor: "bg-chart-info",
     sortWeight: 2,
   },
 };

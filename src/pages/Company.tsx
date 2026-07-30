@@ -355,9 +355,7 @@ export default function Company() {
   };
 
   return (
-    <PageLayout
-      header={<PageHeader title="Empresa" description="Gerencie as informações e configurações da empresa" />}
-    >
+    <PageLayout header={<PageHeader title="Empresa" />}>
       <div className="w-full max-w-6xl mx-auto space-y-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <CompanySummaryCard

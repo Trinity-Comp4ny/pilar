@@ -210,15 +210,17 @@ export default function DRE() {
                   } ${line.indent ? "pl-4" : ""}`}
                 >
                   <div className={`col-span-1 ${line.isSubtraction ? "text-muted-foreground" : ""}`}>{line.label}</div>
-                  <div className={`text-right ${line.value >= 0 ? "" : "text-red-600"}`}>
+                  <div className={`text-right ${line.value >= 0 ? "" : "text-negative-strong"}`}>
                     {formatCurrency(Math.abs(line.value))}
                   </div>
-                  <div className={`text-right text-muted-foreground ${line.prevValue >= 0 ? "" : "text-red-400"}`}>
+                  <div
+                    className={`text-right text-muted-foreground ${line.prevValue >= 0 ? "" : "text-negative-strong"}`}
+                  >
                     {formatCurrency(Math.abs(line.prevValue))}
                   </div>
                   <div
                     className={`text-right text-xs flex items-center justify-end gap-1 ${
-                      delta > 0 ? "text-emerald-600" : delta < 0 ? "text-red-600" : "text-muted-foreground"
+                      delta > 0 ? "text-success-mid" : delta < 0 ? "text-danger-mid" : "text-muted-foreground"
                     }`}
                   >
                     {delta > 0 ? (
@@ -245,7 +247,7 @@ export default function DRE() {
               <div>
                 <span className="text-muted-foreground">Margem Operacional: </span>
                 <span
-                  className={`font-semibold ${data.atual.resultadoOperacional >= 0 ? "text-emerald-600" : "text-red-600"}`}
+                  className={`font-semibold ${data.atual.resultadoOperacional >= 0 ? "text-positive-strong" : "text-negative-strong"}`}
                 >
                   {((data.atual.resultadoOperacional / data.atual.receitaBruta) * 100).toFixed(1)}%
                 </span>

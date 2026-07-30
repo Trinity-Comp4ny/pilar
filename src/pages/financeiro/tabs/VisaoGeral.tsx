@@ -1,17 +1,8 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { KPICard } from "@/components/KPICard";
 import { formatCurrency as fmtMoeda } from "@/lib/format";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  ArrowUpRight,
-  ArrowDownRight,
-  TrendingUp,
-  TrendingDown,
-  DollarSign,
-  BarChart3,
-  Clock,
-  Trophy,
-  CalendarClock,
-} from "lucide-react";
+import { ArrowUpRight, ArrowDownRight, DollarSign, BarChart3, Trophy, CalendarClock } from "lucide-react";
 import { formatDateDisplay } from "@/lib/dateUtils";
 import { cn } from "@/lib/utils";
 import {
@@ -193,7 +184,7 @@ export default function VisaoGeral() {
     <div className="space-y-6 w-full max-w-none">
       {/* KPIs: Lucro líquido como card primário (métrica da tagline); demais neutros */}
       <div className="space-y-4 w-full">
-        <Card className="w-full border-l-4 border-l-brand min-w-0">
+        <Card className="w-full rounded-2xl min-w-0">
           <CardContent className="p-5 flex flex-wrap items-end justify-between gap-4">
             <div className="min-w-0">
               <p className="text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
@@ -219,103 +210,30 @@ export default function VisaoGeral() {
         </Card>
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 w-full">
-          <Card className="w-full min-w-0">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-xs font-medium uppercase tracking-wider text-muted-foreground truncate">
-                Receitas totais
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="min-w-0">
-              <div
-                className="text-base sm:text-lg xl:text-xl font-bold text-positive-strong tabular-nums whitespace-nowrap"
-                title={formatCurrency(stats.receitasTotal)}
-              >
-                {formatCurrency(stats.receitasTotal)}
-              </div>
-              <p
-                className={cn(
-                  "text-xs mt-1 flex items-center min-w-0",
-                  Number(stats.receitasMes) < 0 ? "text-negative-strong" : "text-muted-foreground"
-                )}
-              >
-                {Number(stats.receitasMes) < 0 ? (
-                  <TrendingDown size={12} className="mr-1 flex-shrink-0" />
-                ) : (
-                  <TrendingUp size={12} className="mr-1 flex-shrink-0" />
-                )}
-                <span className="truncate">{stats.receitasMes}% vs período anterior</span>
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="w-full min-w-0">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-xs font-medium uppercase tracking-wider text-muted-foreground truncate">
-                Despesas totais
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="min-w-0">
-              <div
-                className="text-base sm:text-lg xl:text-xl font-bold text-negative-strong tabular-nums whitespace-nowrap"
-                title={formatCurrency(stats.despesasTotal)}
-              >
-                {formatCurrency(stats.despesasTotal)}
-              </div>
-              <p
-                className={cn(
-                  "text-xs mt-1 flex items-center min-w-0",
-                  Number(stats.despesasMes) > 0 ? "text-negative-strong" : "text-muted-foreground"
-                )}
-              >
-                {Number(stats.despesasMes) > 0 ? (
-                  <TrendingUp size={12} className="mr-1 flex-shrink-0" />
-                ) : (
-                  <TrendingDown size={12} className="mr-1 flex-shrink-0" />
-                )}
-                <span className="truncate">{stats.despesasMes}% vs período anterior</span>
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="w-full min-w-0">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-xs font-medium uppercase tracking-wider text-muted-foreground truncate">
-                A receber
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="min-w-0">
-              <div
-                className="text-base sm:text-lg xl:text-xl font-bold text-foreground tabular-nums whitespace-nowrap"
-                title={formatCurrency(stats.aReceber.total)}
-              >
-                {formatCurrency(stats.aReceber.total)}
-              </div>
-              <p className="text-xs text-muted-foreground mt-1 flex items-center min-w-0">
-                <Clock size={12} className="mr-1 flex-shrink-0" />
-                <span className="truncate">{stats.aReceber.count} lançamento(s) pendente(s)</span>
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="w-full min-w-0">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-xs font-medium uppercase tracking-wider text-muted-foreground truncate">
-                A pagar
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="min-w-0">
-              <div
-                className="text-base sm:text-lg xl:text-xl font-bold text-foreground tabular-nums whitespace-nowrap"
-                title={formatCurrency(stats.aPagar.total)}
-              >
-                {formatCurrency(stats.aPagar.total)}
-              </div>
-              <p className="text-xs text-muted-foreground mt-1 flex items-center min-w-0">
-                <Clock size={12} className="mr-1 flex-shrink-0" />
-                <span className="truncate">{stats.aPagar.count} lançamento(s) pendente(s)</span>
-              </p>
-            </CardContent>
-          </Card>
+          <KPICard
+            label="Receitas totais"
+            value={stats.receitasTotal}
+            tone="positive"
+            delta={{ value: Number(stats.receitasMes) }}
+          />
+          <KPICard
+            label="Despesas totais"
+            value={stats.despesasTotal}
+            tone="danger"
+            delta={{ value: Number(stats.despesasMes), invert: true }}
+          />
+          <KPICard
+            label="A receber"
+            value={stats.aReceber.total}
+            tone="positive"
+            subtitle={`${stats.aReceber.count} lançamento(s) pendente(s)`}
+          />
+          <KPICard
+            label="A pagar"
+            value={stats.aPagar.total}
+            tone="danger"
+            subtitle={`${stats.aPagar.count} lançamento(s) pendente(s)`}
+          />
         </div>
       </div>
 
@@ -383,7 +301,7 @@ export default function VisaoGeral() {
         <Card className="w-full">
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
-              <ArrowUpRight className="h-4 w-4 text-green-600" />
+              <ArrowUpRight className="h-4 w-4 text-positive-strong" />
               Detalhamento de Receitas
             </CardTitle>
             <CardDescription>Receitas por categoria</CardDescription>
@@ -404,7 +322,7 @@ export default function VisaoGeral() {
         <Card className="w-full">
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
-              <ArrowDownRight className="h-4 w-4 text-red-600" />
+              <ArrowDownRight className="h-4 w-4 text-negative-strong" />
               Detalhamento de Despesas
             </CardTitle>
             <CardDescription>Despesas por categoria</CardDescription>
@@ -428,7 +346,7 @@ export default function VisaoGeral() {
         <Card className="w-full">
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
-              <Trophy className="h-4 w-4 text-green-600" />
+              <Trophy className="h-4 w-4 text-positive-strong" />
               Top 5 receitas
             </CardTitle>
             <CardDescription>Maiores entradas do período</CardDescription>
@@ -462,7 +380,7 @@ export default function VisaoGeral() {
         <Card className="w-full">
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
-              <Trophy className="h-4 w-4 text-red-600" />
+              <Trophy className="h-4 w-4 text-negative-strong" />
               Top 5 despesas
             </CardTitle>
             <CardDescription>Maiores saídas do período</CardDescription>
@@ -476,14 +394,14 @@ export default function VisaoGeral() {
               <ul className="divide-y divide-black/5">
                 {topDespesas.map((d, i) => (
                   <li key={d.id} className="flex items-center gap-3 py-2.5">
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-red-50 text-red-600 text-xs font-bold flex-shrink-0">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-danger-soft text-negative-strong text-xs font-bold flex-shrink-0">
                       {i + 1}
                     </span>
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium truncate">{d.descricao}</p>
                       <p className="text-xs text-muted-foreground">{formatDateDisplay(d.data)}</p>
                     </div>
-                    <span className="text-sm font-semibold text-red-600 tabular-nums whitespace-nowrap">
+                    <span className="text-sm font-semibold text-negative-strong tabular-nums whitespace-nowrap">
                       {formatCurrency(d.valor)}
                     </span>
                   </li>

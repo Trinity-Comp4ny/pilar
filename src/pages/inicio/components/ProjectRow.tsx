@@ -12,10 +12,7 @@ export function ProjectRow({ project, onClick }: { project: DashboardProjeto; on
 
   return (
     <div
-      className={cn(
-        "flex items-center gap-3 p-3 rounded-lg hover:bg-muted transition-colors cursor-pointer group border-l-[3px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-        priorityConfig?.borderColor || "border-l-transparent"
-      )}
+      className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted transition-colors cursor-pointer group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       onClick={onClick}
       role="button"
       tabIndex={0}
@@ -31,17 +28,18 @@ export function ProjectRow({ project, onClick }: { project: DashboardProjeto; on
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <h4 className="text-sm font-medium text-ink truncate">{project.nome}</h4>
+          {priorityConfig && (
+            <span
+              className={cn("h-2 w-2 shrink-0 rounded-full", priorityConfig.dotColor)}
+              title={`Prioridade ${priorityConfig.label.toLowerCase()}`}
+            >
+              <span className="sr-only">Prioridade {priorityConfig.label.toLowerCase()}</span>
+            </span>
+          )}
+          <h3 className="text-sm font-medium text-ink truncate">{project.nome}</h3>
           <Badge className={`text-[10px] px-1.5 py-0 h-4 ${statusConfig?.color || "bg-muted text-ink-soft"}`}>
             {project.status}
           </Badge>
-          {priorityConfig && (
-            <span
-              className={`text-[10px] px-1.5 py-0 h-4 rounded-full font-medium inline-flex items-center ${priorityConfig.bgColor} ${priorityConfig.color}`}
-            >
-              {priorityConfig.label}
-            </span>
-          )}
         </div>
         <div className="flex items-center gap-3 mt-1">
           <span className="text-xs text-ink-disabled">{project.cliente}</span>

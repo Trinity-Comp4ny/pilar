@@ -102,7 +102,7 @@ export default function Profile() {
   return (
     <PageLayout
       header={
-        <PageHeader title="Perfil" description="Gerencie suas informações">
+        <PageHeader title="Perfil">
           {!editing ? (
             <Button onClick={() => setEditing(true)} variant="brand" className="rounded-full" disabled={isLoading}>
               Editar Perfil

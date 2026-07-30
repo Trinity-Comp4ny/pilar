@@ -1,7 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { callUntypedRpc } from "@/lib/supabaseRpc";
-import type { ProjetoDisciplinaDB } from "@/types/projetos";
+import type { DisciplinaComentario, ProjetoDisciplinaDB } from "@/types/projetos";
+import type { LinkItem } from "@/components/LinksEditor";
 
 /**
  * Sincroniza responsáveis de uma disciplina de forma transacional (insere só os novos,
@@ -19,6 +20,7 @@ async function syncResponsaveis(disciplinaId: string, responsavelIds: string[]) 
 interface RawDisciplinaRow {
   id: string;
   projeto_id: string;
+  codigo: string | null;
   nome: string;
   status: string;
   data_inicio: string | null;
@@ -28,7 +30,12 @@ interface RawDisciplinaRow {
   prioridade: string | null;
   justificativa_atraso: string | null;
   horas_estimadas: number;
+  horas_realizadas: number | null;
   custo_hora: number;
+  descricao: string | null;
+  labels: string[] | null;
+  links: LinkItem[] | null;
+  comentarios: DisciplinaComentario[] | null;
   created_at: string;
   updated_at: string;
   projeto_disciplina_responsaveis: Array<{
@@ -41,6 +48,7 @@ function mapRowToDb(row: RawDisciplinaRow): ProjetoDisciplinaDB {
   return {
     id: row.id,
     projeto_id: row.projeto_id,
+    codigo: row.codigo,
     nome: row.nome,
     status: row.status,
     data_inicio: row.data_inicio,
@@ -50,7 +58,12 @@ function mapRowToDb(row: RawDisciplinaRow): ProjetoDisciplinaDB {
     prioridade: row.prioridade,
     justificativa_atraso: row.justificativa_atraso,
     horas_estimadas: row.horas_estimadas,
+    horas_realizadas: row.horas_realizadas ?? 0,
     custo_hora: row.custo_hora,
+    descricao: row.descricao,
+    labels: row.labels ?? [],
+    links: row.links ?? [],
+    comentarios: row.comentarios ?? [],
     created_at: row.created_at,
     updated_at: row.updated_at,
     responsaveis:
@@ -102,9 +115,14 @@ interface UpsertDisciplinaInput {
   prioridade?: string | null;
   justificativa_atraso?: string | null;
   horas_estimadas?: number;
+  horas_realizadas?: number;
   custo_hora?: number;
+  descricao?: string | null;
+  comentarios?: DisciplinaComentario[];
   ordem_etapa?: number | null;
   responsavel_ids?: string[];
+  labels?: string[];
+  links?: LinkItem[];
 }
 
 export function useUpsertDisciplina() {
@@ -127,6 +145,11 @@ export function useUpsertDisciplina() {
         custo_hora = 0,
         ordem_etapa = null,
         responsavel_ids = [],
+        labels,
+        links,
+        horas_realizadas,
+        descricao,
+        comentarios,
       } = input;
 
       let disciplinaId = id;
@@ -149,6 +172,12 @@ export function useUpsertDisciplina() {
         // Assim adicionar/remover responsável (que não passa observacoes) não apaga
         // as observações já gravadas na disciplina.
         if (observacoes !== undefined) updatePayload.observacoes = observacoes || null;
+        // labels/links/etc: mesma regra — só grava quando o chamador informa.
+        if (labels !== undefined) updatePayload.labels = labels;
+        if (links !== undefined) updatePayload.links = links;
+        if (horas_realizadas !== undefined) updatePayload.horas_realizadas = horas_realizadas;
+        if (descricao !== undefined) updatePayload.descricao = descricao || null;
+        if (comentarios !== undefined) updatePayload.comentarios = comentarios;
 
         const { error } = await supabase
           .from("projeto_disciplinas")
@@ -170,7 +199,12 @@ export function useUpsertDisciplina() {
             prioridade: prioridade || null,
             justificativa_atraso: justificativa_atraso || null,
             horas_estimadas,
+            horas_realizadas: horas_realizadas ?? 0,
             custo_hora,
+            descricao: descricao || null,
+            labels: labels ?? [],
+            links: links ?? [],
+            comentarios: comentarios ?? [],
             ...(ordem_etapa !== null && ordem_etapa !== undefined ? { ordem_etapa } : {}),
           } as never)
           .select("id")

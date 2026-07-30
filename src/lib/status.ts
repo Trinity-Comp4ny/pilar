@@ -32,6 +32,23 @@ export const TONE_BADGE: Record<StatusTone, string> = {
   highlight: "bg-highlight-soft text-highlight-strong",
 };
 
+/**
+ * Cor do VALOR de um KPI por tom (spec 011). Só `positive`/`danger` colorem;
+ * os demais ficam em tinta pra o número não virar semáforo. `text-brand` nunca
+ * entra aqui (regra da marca: verde-500 só como fundo).
+ */
+export const TONE_VALUE: Record<StatusTone, string> = {
+  neutral: "text-ink",
+  info: "text-ink",
+  warning: "text-ink",
+  attention: "text-ink",
+  positive: "text-positive-strong",
+  danger: "text-negative-strong",
+  brand: "text-ink",
+  done: "text-ink",
+  highlight: "text-ink",
+};
+
 /** Fundo de coluna kanban: tint mais leve do mesmo tom. */
 export const TONE_COLUMN: Record<StatusTone, string> = {
   neutral: "bg-muted/50",
@@ -45,7 +62,7 @@ export const TONE_COLUMN: Record<StatusTone, string> = {
   highlight: "bg-highlight-soft/50",
 };
 
-export type StatusDomain = "projeto" | "proposta" | "lead" | "financeiro" | "tipo";
+export type StatusDomain = "projeto" | "proposta" | "lead" | "financeiro" | "tipo" | "obra";
 
 type StatusDef = { label: string; tone: StatusTone };
 
@@ -85,6 +102,12 @@ export const STATUS_REGISTRY: Record<StatusDomain, Record<string, StatusDef>> = 
   tipo: {
     Receita: { label: "Receita", tone: "positive" },
     Despesa: { label: "Despesa", tone: "danger" },
+  },
+  obra: {
+    planejada: { label: "Planejada", tone: "warning" },
+    em_andamento: { label: "Em andamento", tone: "info" },
+    paralisada: { label: "Paralisada", tone: "brand" },
+    concluida: { label: "Concluída", tone: "done" },
   },
 };
 

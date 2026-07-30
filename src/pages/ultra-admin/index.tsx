@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Skeleton } from "@/components/ui/skeleton";
+import { KPICard } from "@/components/KPICard";
 import {
   Dialog,
   DialogContent,
@@ -441,9 +441,7 @@ export default function UltraAdmin() {
 
   if (selectedId && loadingDetail) {
     return (
-      <PageLayout
-        header={<PageHeader title="Gestão Pilar" description="Visão cross-empresa. Apenas ultra admins têm acesso." />}
-      >
+      <PageLayout header={<PageHeader title="Gestão Pilar" />}>
         <div className="flex min-h-[60vh] items-center justify-center">
           <Loader2 className="h-6 w-6 animate-spin text-black/40" />
         </div>
@@ -466,10 +464,7 @@ export default function UltraAdmin() {
     return (
       <PageLayout
         header={
-          <PageHeader
-            title={detail.nome}
-            description={`${detail.cnpj ?? "CNPJ não cadastrado"} · ${PLAN_LABEL[detail.plano]}`}
-          >
+          <PageHeader title={detail.nome}>
             <div className="flex items-center gap-3">
               <StatusBadge status={detail.status as EmpresaStatus} />
               <Button
@@ -559,7 +554,7 @@ export default function UltraAdmin() {
   return (
     <PageLayout
       header={
-        <PageHeader title="Gestão Pilar" description="Visão cross-empresa. Apenas ultra admins têm acesso.">
+        <PageHeader title="Gestão Pilar">
           <Button className="rounded-full gap-2" onClick={() => setCreateOpen(true)}>
             <Plus size={16} />
             Criar empresa
@@ -568,16 +563,10 @@ export default function UltraAdmin() {
       }
     >
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        {loading ? (
-          Array.from({ length: 4 }).map((_, i) => <StatCardSkeleton key={i} />)
-        ) : (
-          <>
-            <StatCard icon={Layers} label="Total de empresas" value={`${totals.total}`} />
-            <StatCard icon={Building2} label="Empresas ativas" value={`${totals.active}`} />
-            <StatCard icon={CircleOff} label="Suspensas" value={`${totals.suspended}`} />
-            <StatCard icon={Users2} label="Usuários totais" value={`${totals.users}`} />
-          </>
-        )}
+        <KPICard icon={Layers} label="Total de empresas" value={`${totals.total}`} tone="neutral" loading={loading} />
+        <KPICard icon={Building2} label="Empresas ativas" value={`${totals.active}`} tone="neutral" loading={loading} />
+        <KPICard icon={CircleOff} label="Suspensas" value={`${totals.suspended}`} tone="neutral" loading={loading} />
+        <KPICard icon={Users2} label="Usuários totais" value={`${totals.users}`} tone="neutral" loading={loading} />
       </div>
 
       <Card className="border border-black/5">
@@ -742,42 +731,6 @@ export default function UltraAdmin() {
         </DialogContent>
       </Dialog>
     </PageLayout>
-  );
-}
-
-type StatCardProps = {
-  icon: typeof Building2;
-  label: string;
-  value: string;
-};
-
-function StatCard({ icon: Icon, label, value }: StatCardProps) {
-  return (
-    <Card className="border border-black/5">
-      <CardContent className="flex items-center gap-3 p-4">
-        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-black/5">
-          <Icon size={18} strokeWidth={1.5} className="text-black/60" />
-        </div>
-        <div>
-          <p className="text-[11px] uppercase tracking-wider text-black/40">{label}</p>
-          <p className="text-lg font-semibold">{value}</p>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-function StatCardSkeleton() {
-  return (
-    <Card className="border border-black/5">
-      <CardContent className="flex items-center gap-3 p-4">
-        <Skeleton className="h-10 w-10 rounded-full" />
-        <div className="space-y-2">
-          <Skeleton className="h-3 w-24" />
-          <Skeleton className="h-5 w-10" />
-        </div>
-      </CardContent>
-    </Card>
   );
 }
 

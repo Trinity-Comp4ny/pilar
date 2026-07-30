@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { DatePicker } from "@/components/ui/date-picker";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import {
   DropdownMenu,
@@ -37,13 +36,17 @@ import {
   Ruler,
   MapPin,
   Layers,
+  Link2,
+  MessageSquare,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { PROJECT_STATUS_CONFIG, PROJECT_PRIORITY_CONFIG, type ProjectPriority } from "@/constants";
 import {
   type Projeto,
-  disciplinaStatusOptions,
+  type DisciplinaResponsavel,
+  type ProjetoDisciplinaDB,
+  type DisciplinaComentario,
   formatCurrency,
   formatDateShort,
   getDeadlineStatus,
@@ -53,6 +56,24 @@ import {
   dbDisciplinaToLegacy,
 } from "@/types/projetos";
 import { useProjetoDisciplinas, useUpdateDisciplinaStatus } from "@/hooks/useProjetoDisciplinas";
+import { useProjetoDetail } from "../hooks/useProjetoDetail";
+import { useAuth } from "@/contexts/AuthContext";
+import { DisciplinaDetailDialog } from "./DisciplinaDetailDialog";
+import { ProjetoAtividadesPanel } from "./ProjetoAtividadesPanel";
+import { LinksEditor } from "@/components/LinksEditor";
+import { useProjetoAtividades } from "../hooks/useProjetoAtividades";
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
+
+// Campo da UI → coluna do banco (espelha o mapa de ProjetoDetailTabs).
+const DISC_DB_FIELD: Partial<Record<keyof DisciplinaResponsavel, keyof ProjetoDisciplinaDB>> = {
+  disciplina: "nome",
+  data_inicio: "data_inicio",
+  data_previsao: "data_fim",
+  data_final: "data_fim_real",
+  prioridade: "prioridade",
+  justificativa_atraso: "justificativa_atraso",
+  descricao: "descricao",
+};
 
 interface ProjectDetailDialogProps {
   open: boolean;
@@ -81,7 +102,7 @@ export function ProjectDetailDialog({
   onProjectUpdated,
 }: ProjectDetailDialogProps) {
   const navigate = useNavigate();
-  const [updatingDisc, setUpdatingDisc] = useState<number | null>(null);
+  const [, setUpdatingDisc] = useState<number | null>(null);
   const [justificativaDialog, setJustificativaDialog] = useState<{ discIdx: number; newStatus: string } | null>(null);
   const [justificativaText, setJustificativaText] = useState("");
   const [concludingDiscIdx, setConcludingDiscIdx] = useState<number | null>(null);
@@ -91,7 +112,46 @@ export function ProjectDetailDialog({
   const updateStatusMut = useUpdateDisciplinaStatus();
   const disciplinasLegacy = dbDisciplinas.map(dbDisciplinaToLegacy);
 
+  // Reusa a infra de edição da disciplina (catálogo, pessoas, save). A query de
+  // disciplinas é a mesma (deduplicada pelo React Query), então os índices batem.
+  const { disciplinasCatalog, pessoas, getDbDisc, handleSaveDiscChanges } = useProjetoDetail(projeto?.id);
+  const { profile } = useAuth();
+  const { links: projetoLinks, salvar: salvarAtividades } = useProjetoAtividades(projeto?.id ?? "");
+  const [selectedDiscIdx, setSelectedDiscIdx] = useState<number | null>(null);
+
+  const autorNome =
+    [profile?.first_name, profile?.last_name].filter(Boolean).join(" ").trim() || profile?.email || "Usuário";
+
   if (!projeto) return null;
+
+  const selectedDisc = selectedDiscIdx != null ? (disciplinasLegacy[selectedDiscIdx] ?? null) : null;
+
+  const saveDiscPatch = async (patch: Partial<ProjetoDisciplinaDB>) => {
+    if (selectedDiscIdx == null) return;
+    const dbDisc = getDbDisc(selectedDiscIdx);
+    if (!dbDisc) return;
+    await handleSaveDiscChanges({ ...dbDisc, ...patch });
+    onProjectUpdated?.();
+  };
+
+  // Editar a disciplina pelo modal rico. Status passa pela via com travas
+  // (justificativa/data), o resto grava direto.
+  const discOnUpdateField = (field: keyof DisciplinaResponsavel, value: string) => {
+    if (selectedDiscIdx == null) return;
+    if (field === "status") {
+      handleDisciplineStatusChange(selectedDiscIdx, value);
+      return;
+    }
+    const dbField = DISC_DB_FIELD[field] ?? (field as keyof ProjetoDisciplinaDB);
+    saveDiscPatch({ [dbField]: value } as Partial<ProjetoDisciplinaDB>);
+  };
+  const discOnUpdateResponsavel = (val: string, nome: string) => {
+    if (selectedDiscIdx == null) return;
+    const dbDisc = getDbDisc(selectedDiscIdx);
+    const resps = dbDisc?.responsaveis ?? [];
+    const updated = resps.length > 0 ? resps.map((r, i) => (i === 0 ? { id: val, nome } : r)) : [{ id: val, nome }];
+    saveDiscPatch({ responsaveis: updated });
+  };
 
   const deadline = getDeadlineStatus(projeto);
   const progress = getProjectProgress(disciplinasLegacy);
@@ -157,14 +217,18 @@ export function ProjectDetailDialog({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto p-0">
+        <DialogContent className="max-w-none w-[96vw] h-[92vh] overflow-hidden p-0 gap-0 flex flex-col">
           {/* Header compacto */}
-          <div className="px-6 pt-6 pb-4 border-b bg-gray-50/50">
+          <div className="flex-shrink-0 px-8 pt-6 pb-4 border-b bg-gray-50/50">
             <DialogHeader className="mb-0">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <DialogTitle className="text-lg">{projeto.codigo_projeto}</DialogTitle>
+                    {projeto.codigo_projeto && (
+                      <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
+                        {projeto.codigo_projeto}
+                      </span>
+                    )}
                     <Badge className={statusConfig?.color}>{statusConfig?.label}</Badge>
                     {priorityConfig && (
                       <span
@@ -179,7 +243,10 @@ export function ProjectDetailDialog({
                       </Badge>
                     )}
                   </div>
-                  <DialogDescription className="text-sm text-muted-foreground mt-1">{projeto.nome}</DialogDescription>
+                  <DialogTitle className="text-xl mt-1.5">{projeto.nome}</DialogTitle>
+                  <DialogDescription className="text-sm text-muted-foreground mt-0.5 flex items-center gap-1.5">
+                    <User className="h-3.5 w-3.5" /> {projeto.cliente_nome || "Sem cliente"}
+                  </DialogDescription>
                 </div>
                 {canEdit && (
                   <DropdownMenu>
@@ -207,9 +274,6 @@ export function ProjectDetailDialog({
 
             {/* Metadados em linha — substituem coluna lateral */}
             <div className="flex flex-wrap gap-x-4 gap-y-1.5 mt-3 text-xs text-muted-foreground">
-              <span className="flex items-center gap-1">
-                <User className="h-3 w-3" /> {projeto.cliente_nome || "—"}
-              </span>
               <span className="flex items-center gap-1 text-positive-strong font-medium">
                 <DollarSign className="h-3 w-3" /> {formatCurrency(projeto.valor_contrato)}
               </span>
@@ -243,104 +307,118 @@ export function ProjectDetailDialog({
             </div>
           </div>
 
-          {/* Conteúdo: foco em disciplinas */}
-          <div className="px-6 py-4">
-            <div className="flex items-center justify-between mb-3">
-              <Label className="text-xs font-semibold uppercase text-muted-foreground flex items-center gap-1.5">
-                <Layers className="h-3.5 w-3.5" />
-                Disciplinas ({disciplinasLegacy.length})
-              </Label>
-            </div>
+          {/* Conteúdo: disciplinas (redimensionável) + atividades do projeto */}
+          <ResizablePanelGroup direction="horizontal" className="flex-1 min-h-0">
+            <ResizablePanel defaultSize={68} minSize={45}>
+              <div className="h-full overflow-y-auto px-8 py-6">
+                <div className="flex items-center justify-between mb-3">
+                  <Label className="text-xs font-semibold uppercase text-muted-foreground flex items-center gap-1.5">
+                    <Layers className="h-3.5 w-3.5" />
+                    Disciplinas ({disciplinasLegacy.length})
+                  </Label>
+                </div>
 
-            {disciplinasLegacy.length === 0 ? (
-              <div className="text-xs text-muted-foreground text-center py-8 border border-dashed rounded-lg">
-                Nenhuma disciplina definida.
-              </div>
-            ) : (
-              <div className="space-y-1.5">
-                {disciplinasLegacy.map((disc, idx) => {
-                  const resps = getResponsaveisList(disc);
-                  const atrasada = isDiscAtrasada(disc);
+                {disciplinasLegacy.length === 0 ? (
+                  <div className="text-xs text-muted-foreground text-center py-8 border border-dashed rounded-lg">
+                    Nenhuma disciplina definida.
+                  </div>
+                ) : (
+                  <div className="space-y-1.5">
+                    {disciplinasLegacy.map((disc, idx) => {
+                      const resps = getResponsaveisList(disc);
+                      const atrasada = isDiscAtrasada(disc);
 
-                  return (
-                    <div
-                      key={idx}
-                      className={cn(
-                        "rounded-lg border p-3 hover:bg-muted/30 transition-colors",
-                        atrasada && "bg-red-50/40 border-red-100"
-                      )}
-                    >
-                      <div className="flex items-center justify-between gap-3">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-sm font-medium">{disc.disciplina}</span>
-                            {atrasada && (
-                              <span className="text-[9px] px-1.5 py-0.5 rounded-full font-semibold bg-red-100 text-red-700 flex items-center gap-1">
-                                <AlertTriangle size={10} /> Atrasada
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-[11px] text-muted-foreground mt-0.5 truncate">
-                            {resps.map((r) => r.responsavel_nome).join(", ") || "Sem responsável"}
-                            {disc.data_previsao && ` · Previsão ${formatDateShort(disc.data_previsao)}`}
-                          </p>
-                          {atrasada && disc.justificativa_atraso && (
-                            <p className="text-[10px] text-red-600 mt-1 italic line-clamp-1">
-                              {disc.justificativa_atraso}
-                            </p>
+                      return (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => {
+                            setSelectedDiscIdx(idx);
+                            onOpenChange(false); // fecha o modal do projeto: um overlay só
+                          }}
+                          className={cn(
+                            "w-full text-left rounded-lg border p-3 hover:bg-muted/40 transition-colors",
+                            atrasada && "bg-red-50/40 border-red-100"
                           )}
-                        </div>
-
-                        {canEdit ? (
-                          <Select
-                            value={disc.status || "Não Iniciado"}
-                            onValueChange={(val) => handleDisciplineStatusChange(idx, val)}
-                            disabled={updatingDisc === idx}
-                          >
-                            <SelectTrigger className="h-7 w-[140px] text-[11px]">
-                              <span className="flex items-center gap-1.5">
-                                <span
-                                  className={cn(
-                                    "h-2 w-2 rounded-full flex-shrink-0",
-                                    DISC_STATUS_DOT[disc.status || "Não Iniciado"]
-                                  )}
-                                />
-                                <SelectValue />
-                              </span>
-                            </SelectTrigger>
-                            <SelectContent>
-                              {disciplinaStatusOptions.map((s) => (
-                                <SelectItem key={s} value={s} className="text-xs">
-                                  <span className="flex items-center gap-1.5">
-                                    <span className={cn("h-2 w-2 rounded-full", DISC_STATUS_DOT[s])} />
-                                    {s}
+                        >
+                          <div className="flex items-center justify-between gap-3">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="text-sm font-medium">{disc.disciplina}</span>
+                                {atrasada && (
+                                  <span className="text-[9px] px-1.5 py-0.5 rounded-full font-semibold bg-red-100 text-red-700 flex items-center gap-1">
+                                    <AlertTriangle size={10} /> Atrasada
                                   </span>
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        ) : (
-                          <Badge variant="outline" className="text-[11px]">
-                            {disc.status || "Não Iniciado"}
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+                                )}
+                              </div>
+                              <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
+                                <span className="inline-flex items-center gap-1">
+                                  <User className="h-3 w-3" />
+                                  {resps.map((r) => r.responsavel_nome).join(", ") || "Sem responsável"}
+                                </span>
+                                {disc.data_previsao && (
+                                  <span className="inline-flex items-center gap-1">
+                                    <Calendar className="h-3 w-3" /> Previsão {formatDateShort(disc.data_previsao)}
+                                  </span>
+                                )}
+                                {disc.data_final && (
+                                  <span className="inline-flex items-center gap-1 text-positive-strong">
+                                    <Calendar className="h-3 w-3" /> Concluída {formatDateShort(disc.data_final)}
+                                  </span>
+                                )}
+                              </div>
+                              {atrasada && disc.justificativa_atraso && (
+                                <p className="text-[10px] text-red-600 mt-1 italic line-clamp-1">
+                                  {disc.justificativa_atraso}
+                                </p>
+                              )}
+                            </div>
 
-            {projeto.observacao && (
-              <div className="mt-4 pt-3 border-t">
-                <Label className="text-[10px] uppercase text-muted-foreground">Observações</Label>
-                <p className="text-xs text-gray-700 mt-1">{projeto.observacao}</p>
+                            <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground flex-shrink-0">
+                              <span
+                                className={cn("h-2 w-2 rounded-full", DISC_STATUS_DOT[disc.status || "Não Iniciado"])}
+                              />
+                              {disc.status || "Não Iniciado"}
+                            </span>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {projeto.observacao && (
+                  <div className="mt-4 pt-3 border-t">
+                    <Label className="text-[10px] uppercase text-muted-foreground">Observações</Label>
+                    <p className="text-xs text-gray-700 mt-1">{projeto.observacao}</p>
+                  </div>
+                )}
+
+                <div className="mt-6 pt-5 border-t">
+                  <Label className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase text-muted-foreground">
+                    <Link2 className="h-3.5 w-3.5" /> Links
+                  </Label>
+                  <div className="max-w-2xl">
+                    <LinksEditor value={projetoLinks} onChange={(n) => salvarAtividades.mutate({ links: n })} />
+                  </div>
+                </div>
               </div>
-            )}
-          </div>
+            </ResizablePanel>
+            <ResizableHandle withHandle />
+            <ResizablePanel defaultSize={32} minSize={22}>
+              <div className="flex h-full flex-col bg-muted/10 px-6 py-5">
+                <Label className="mb-3 flex flex-shrink-0 items-center gap-2 text-sm font-semibold">
+                  <MessageSquare className="h-4 w-4" /> Atividades
+                </Label>
+                <div className="min-h-0 flex-1">
+                  <ProjetoAtividadesPanel projetoId={projeto.id} pessoas={pessoas} autorNome={autorNome} />
+                </div>
+              </div>
+            </ResizablePanel>
+          </ResizablePanelGroup>
 
           {/* Footer */}
-          <div className="flex items-center justify-end gap-2 px-6 py-3 border-t bg-gray-50/30">
+          <div className="flex-shrink-0 flex items-center justify-end gap-2 px-6 py-3 border-t bg-gray-50/30">
             <Button
               size="sm"
               onClick={() => {
@@ -355,6 +433,29 @@ export function ProjectDetailDialog({
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Modal rico da disciplina (abre ao clicar numa disciplina) */}
+      <DisciplinaDetailDialog
+        open={selectedDiscIdx !== null}
+        onOpenChange={(o) => {
+          if (!o) {
+            setSelectedDiscIdx(null);
+            onOpenChange(true); // volta ao modal do projeto
+          }
+        }}
+        disciplina={selectedDisc}
+        disciplinas={disciplinasCatalog}
+        pessoas={pessoas}
+        onUpdateField={discOnUpdateField}
+        onUpdateResponsavel={discOnUpdateResponsavel}
+        onUpdateLabels={(n) => saveDiscPatch({ labels: n })}
+        onUpdateLinks={(n) => saveDiscPatch({ links: n })}
+        onUpdateComentarios={(n: DisciplinaComentario[]) => saveDiscPatch({ comentarios: n })}
+        onUpdateDescricao={(n) => saveDiscPatch({ descricao: n })}
+        onUpdateHorasEstimadas={(n) => saveDiscPatch({ horas_estimadas: n })}
+        onUpdateHorasRealizadas={(n) => saveDiscPatch({ horas_realizadas: n })}
+        autorNome={autorNome}
+      />
 
       {/* Confirmação de conclusão */}
       <AlertDialog

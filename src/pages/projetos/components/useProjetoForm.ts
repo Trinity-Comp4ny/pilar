@@ -234,9 +234,7 @@ export function useProjetoForm({
       // editProjeto.disciplinas é legado (sempre []). Hidrata da tabela relacional
       // preservando os IDs para que bulkSave faça update/delete coerentes.
       const hydrated =
-        existingDisciplinas.length > 0
-          ? existingDisciplinas.map(dbDisciplinaToLegacy)
-          : editProjeto.disciplinas || [];
+        existingDisciplinas.length > 0 ? existingDisciplinas.map(dbDisciplinaToLegacy) : editProjeto.disciplinas || [];
       setProjetosDisciplinas(hydrated);
       initialSnapshotRef.current = JSON.stringify({ form: nextForm, disc: hydrated });
     } else {
@@ -498,8 +496,8 @@ export function useProjetoForm({
   };
 
   const handleSubmit = async () => {
-    if (!formData.codigo_projeto || !formData.cliente_id || !formData.nome) {
-      toast.error("Campos obrigatórios", { description: "Preencha Código, Nome e Cliente" });
+    if (!formData.nome) {
+      toast.error("Campo obrigatório", { description: "Preencha o nome do projeto" });
       return;
     }
 
@@ -545,7 +543,10 @@ export function useProjetoForm({
     const projetoInicio = formData.data_inicio;
     for (const disc of finalDisciplinas) {
       const resps = getResponsaveisList(disc);
-      const datas = resps.length > 0 ? resps : [{ data_inicio: disc.data_inicio, data_previsao: disc.data_previsao, data_final: disc.data_final }];
+      const datas =
+        resps.length > 0
+          ? resps
+          : [{ data_inicio: disc.data_inicio, data_previsao: disc.data_previsao, data_final: disc.data_final }];
       for (const d of datas) {
         if (projetoInicio && d.data_inicio && d.data_inicio < projetoInicio) {
           toast.error("Datas inválidas", {
@@ -570,14 +571,19 @@ export function useProjetoForm({
 
     setIsSaving(true);
     const localizacaoComposta = composeLocalizacao(formData) || formData.localizacao;
+    // Id do projeto recém-criado, para o geocode (o código não é mais digitado).
+    let novoProjetoId: string | null = null;
 
     try {
       if (isEditMode && editProjeto) {
         const { error } = await supabase.rpc("update_projeto_completo", {
           p_projeto_id: editProjeto.id,
-          p_codigo: formData.codigo_projeto,
+          // Código e cliente são opcionais; a coluna aceita null e o UNIQUE de
+          // código ignora nulls. O tipo gerado marca como string (mais estrito
+          // que o banco), daí o cast.
+          p_codigo: (formData.codigo_projeto || null) as unknown as string,
           p_nome: formData.nome,
-          p_cliente_id: formData.cliente_id,
+          p_cliente_id: (formData.cliente_id || null) as unknown as string,
           p_data_inicio: formData.data_inicio || undefined,
           p_data_previsao: formData.data_previsao || undefined,
           p_data_final: formData.data_final || undefined,
@@ -617,10 +623,20 @@ export function useProjetoForm({
 
         toast.success("Projeto atualizado", { description: "Projeto foi atualizado com sucesso" });
       } else {
+        // Código gerado automático (PRJ-XXXX sequencial por empresa): não se pede
+        // ao usuário. A RLS de projetos escopa a busca à empresa do chamador.
+        const { data: codigosExistentes } = await supabase.from("projetos").select("codigo_projeto");
+        let maxSeq = 0;
+        for (const c of codigosExistentes ?? []) {
+          const m = /^PRJ-(\d+)$/i.exec((c.codigo_projeto ?? "").trim());
+          if (m) maxSeq = Math.max(maxSeq, parseInt(m[1], 10));
+        }
+        const codigoAuto = `PRJ-${String(maxSeq + 1).padStart(4, "0")}`;
+
         const { data: newProjetoId, error } = await supabase.rpc("create_projeto_completo", {
-          p_codigo: formData.codigo_projeto,
+          p_codigo: codigoAuto,
           p_nome: formData.nome,
-          p_cliente_id: formData.cliente_id,
+          p_cliente_id: (formData.cliente_id || null) as unknown as string,
           p_data_inicio: formData.data_inicio || undefined,
           p_data_previsao: formData.data_previsao || undefined,
           p_data_final: formData.data_final || undefined,
@@ -634,6 +650,8 @@ export function useProjetoForm({
         });
 
         if (error) throw new Error(error.message || String(error));
+
+        novoProjetoId = (newProjetoId as string) ?? null;
 
         // Sync disciplinas to relational table for new project.
         // Se falhar, faz rollback do projeto pra não deixar registro órfão sem disciplinas.
@@ -708,13 +726,9 @@ export function useProjetoForm({
 
         const saveCoords = (lat: number, lng: number) => {
           if (signal.aborted) return;
-          const query =
-            isEditMode && editProjeto
-              ? supabase.from("projetos").update({ latitude: lat, longitude: lng }).eq("id", editProjeto.id)
-              : supabase
-                  .from("projetos")
-                  .update({ latitude: lat, longitude: lng })
-                  .eq("codigo_projeto", formData.codigo_projeto);
+          const alvoId = isEditMode && editProjeto ? editProjeto.id : novoProjetoId;
+          if (!alvoId) return;
+          const query = supabase.from("projetos").update({ latitude: lat, longitude: lng }).eq("id", alvoId);
           query.then(() => {
             onSaved();
             queryClient.invalidateQueries({ queryKey: ["projetos-mapa"] });

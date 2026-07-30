@@ -1,55 +1,126 @@
-import { HardHat } from "lucide-react";
-import { toast } from "sonner";
+import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
+import { HardHat, MapPin, Plus, User } from "lucide-react";
+import { PageLayout } from "@/components/PageLayout";
+import { PageHeader } from "@/components/PageHeader";
+import { KPICard } from "@/components/KPICard";
+import { EmptyState } from "@/components/EmptyState";
+import { StatusBadge } from "@/components/StatusBadge";
+import { Card, CardContent } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { Skeleton } from "@/components/ui/skeleton";
 import { usePageTitle } from "@/hooks/usePageTitle";
+import { usePermissions } from "@/hooks/usePermissions";
+import { useObras, type ObraResumo } from "@/hooks/useObras";
+import { ObraFormDialog } from "./components/ObraFormDialog";
 
-/**
- * Módulo Obras — página "Em breve" (spec 001-shell-3-pilares, req. 7).
- * Sem chamadas de rede: só o shell. O interesse é registrado quando o módulo
- * tiver fila própria; por ora o CTA confirma e orienta.
- */
-export default function Obras() {
+function ObraCard({ obra }: { obra: ObraResumo }) {
+  return (
+    <Link to={`/obras/${obra.id}`} className="group">
+      <Card className="rounded-2xl border border-black/5 bg-white transition-colors hover:border-brand/40">
+        <CardContent className="space-y-3 p-4">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <p className="truncate font-medium text-ink group-hover:text-brand">{obra.nome}</p>
+              <p className="truncate text-xs text-muted-foreground">{obra.projeto?.nome ?? "Sem projeto"}</p>
+            </div>
+            <StatusBadge domain="obra" status={obra.status} />
+          </div>
+
+          <div>
+            <div className="mb-1 flex items-center justify-between text-xs text-muted-foreground">
+              <span>Avanço</span>
+              <span className="tabular-nums">{obra.avanco}%</span>
+            </div>
+            <Progress value={obra.avanco} className="h-1.5" />
+          </div>
+
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+            <span className="inline-flex items-center gap-1.5">
+              <User className="h-3.5 w-3.5" />
+              {obra.responsavel?.nome ?? "Sem responsável"}
+            </span>
+            {obra.cidade && (
+              <span className="inline-flex items-center gap-1.5">
+                <MapPin className="h-3.5 w-3.5" />
+                {obra.cidade}
+              </span>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    </Link>
+  );
+}
+
+export default function ObrasPage() {
   usePageTitle("Obras");
+  const { can } = usePermissions();
+  const canCreate = can("obras", "create");
+  const [search, setSearch] = useState("");
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const { data: obras = [], isLoading, isError } = useObras();
+
+  const filtradas = useMemo(() => {
+    const t = search.trim().toLowerCase();
+    if (!t) return obras;
+    return obras.filter((o) => o.nome.toLowerCase().includes(t) || (o.projeto?.nome ?? "").toLowerCase().includes(t));
+  }, [obras, search]);
+
+  const ativas = obras.filter((o) => o.status === "em_andamento").length;
+  const paralisadas = obras.filter((o) => o.status === "paralisada").length;
 
   return (
-    <div className="max-w-2xl mx-auto px-6 py-14">
-      <span className="inline-flex items-center gap-1.5 rounded-full bg-black/5 px-3 py-1 text-[10.5px] font-medium uppercase tracking-[0.06em] text-black/55">
-        <HardHat size={12} /> Em breve
-      </span>
+    <PageLayout
+      header={
+        <PageHeader
+          title="Obras"
+          search={{ value: search, onChange: setSearch, placeholder: "Buscar obra ou projeto" }}
+          primaryAction={{
+            label: "Nova obra",
+            onClick: () => setDialogOpen(true),
+            icon: Plus,
+            feature: "obras",
+          }}
+        />
+      }
+    >
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <KPICard label="Obras" value={String(obras.length)} icon={HardHat} loading={isLoading} />
+        <KPICard label="Em andamento" value={String(ativas)} tone="info" loading={isLoading} />
+        <KPICard label="Paralisadas" value={String(paralisadas)} tone="attention" loading={isLoading} />
+      </div>
 
-      <h1 className="text-2xl font-semibold tracking-tight text-ink mt-4 mb-3 text-balance">
-        Saiba o que vai parar sua obra antes que ela pare
-      </h1>
-      <p className="text-[15px] leading-relaxed text-black/60 mb-7 max-w-[56ch]">
-        O módulo Obras conecta o planejamento das próximas semanas com material, equipe e fornecedor, e avisa com
-        antecedência o que precisa ser resolvido hoje para o trabalho não parar depois.
-      </p>
+      {isLoading ? (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {[1, 2, 3].map((i) => (
+            <Skeleton key={i} className="h-32 w-full rounded-2xl" />
+          ))}
+        </div>
+      ) : isError ? (
+        <EmptyState
+          icon={HardHat}
+          title="Não foi possível carregar as obras"
+          description="Recarregue a página. Se persistir, avise o suporte."
+        />
+      ) : obras.length === 0 ? (
+        <EmptyState
+          icon={HardHat}
+          title="Nenhuma obra ainda"
+          description="Crie a primeira obra a partir de um projeto para acompanhar a execução em campo."
+          action={canCreate ? { label: "Nova obra", onClick: () => setDialogOpen(true) } : undefined}
+        />
+      ) : filtradas.length === 0 ? (
+        <EmptyState icon={HardHat} title="Nada encontrado" description="Nenhuma obra bate com a busca." />
+      ) : (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {filtradas.map((o) => (
+            <ObraCard key={o.id} obra={o} />
+          ))}
+        </div>
+      )}
 
-      <ul className="flex flex-col gap-2.5 mb-8">
-        {[
-          "Planejamento das frentes de trabalho das próximas 3 a 6 semanas",
-          "Prontidão de cada atividade: material, equipe e liberações no prazo",
-          "Visão simples para a equipe de campo acompanhar e reportar",
-        ].map((item) => (
-          <li
-            key={item}
-            className="flex items-baseline gap-3 rounded-xl border border-black/10 bg-white px-4 py-3 text-sm text-ink/85"
-          >
-            <span className="h-2 w-2 shrink-0 rounded-full bg-brand relative -top-px" />
-            {item}
-          </li>
-        ))}
-      </ul>
-
-      <button
-        onClick={() =>
-          toast.success("Interesse registrado", {
-            description: "Você recebe um aviso quando o módulo Obras abrir.",
-          })
-        }
-        className="rounded-full bg-brand px-5 py-2.5 text-[13.5px] font-medium text-ink hover:opacity-90 transition-opacity"
-      >
-        Me avise quando lançar
-      </button>
-    </div>
+      <ObraFormDialog open={dialogOpen} onOpenChange={setDialogOpen} />
+    </PageLayout>
   );
 }

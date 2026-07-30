@@ -81,7 +81,7 @@ export function BillingMilestonesTab({ projetoId, canEdit }: BillingMilestonesTa
       setFormData("");
       setFormPercentual("");
     },
-    onError: () => toast.error("Erro"),
+    onError: (err) => toast.error(err instanceof Error ? err.message : "Não foi possível criar o marco"),
   });
 
   const updateStatusMutation = useMutation({

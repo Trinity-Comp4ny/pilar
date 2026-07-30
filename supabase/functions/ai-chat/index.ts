@@ -34,18 +34,40 @@ const FEATURE_KEY = "ai_chat";
 const RequestSchema = z.object({
   message: z.string().trim().min(1, "mensagem vazia").max(2000),
   sessionId: z.string().uuid().optional(),
+  // Projeto em foco (spec 007): escopa a conversa a um projeto real do escritório.
+  projetoId: z.string().uuid().optional(),
 });
 
 const AGENTES = ["financeiro", "projetos", "comercial", "geral"] as const;
 type Agente = (typeof AGENTES)[number];
 
 const ENTIDADES_CRIAVEIS = [
-  "lead", "projeto", "receita", "despesa", "cartao", "folha",
-  "cliente", "fornecedor", "categoria", "conta", "centro_custo", "pessoa", "proposta", "marco", "disciplina", "aditivo",
+  "lead",
+  "projeto",
+  "receita",
+  "despesa",
+  "cartao",
+  "folha",
+  "cliente",
+  "fornecedor",
+  "categoria",
+  "conta",
+  "centro_custo",
+  "pessoa",
+  "proposta",
+  "marco",
+  "disciplina",
+  "aditivo",
 ] as const;
 
 const OPERACOES = [
-  "converter_lead", "converter_proposta", "marcar_recebido", "marcar_pago", "quitar_parcela", "pagar_fatura", "convidar_portal",
+  "converter_lead",
+  "converter_proposta",
+  "marcar_recebido",
+  "marcar_pago",
+  "quitar_parcela",
+  "pagar_fatura",
+  "convidar_portal",
 ] as const;
 
 const IntentSchema = z.object({
@@ -167,8 +189,14 @@ const ClienteExtractionSchema = z.object({
   tem_nome: z.boolean(),
   pergunta: z.string().max(300).nullish(),
   cliente: z.object({
-    nome: S(), sobrenome: S(), cpf_cnpj: S(), email: S(), contato: S(),
-    tipo_nf: z.enum(["servico", "produto", "misto"]).nullish(), origem: S(), endereco: S(),
+    nome: S(),
+    sobrenome: S(),
+    cpf_cnpj: S(),
+    email: S(),
+    contato: S(),
+    tipo_nf: z.enum(["servico", "produto", "misto"]).nullish(),
+    origem: S(),
+    endereco: S(),
   }),
 });
 const FornecedorExtractionSchema = z.object({
@@ -195,31 +223,58 @@ const PessoaExtractionSchema = z.object({
   tem_nome: z.boolean(),
   pergunta: z.string().max(300).nullish(),
   pessoa: z.object({
-    primeiro_nome: S(), sobrenome: S(), email: S(), cargo: S(), cpf: S(), telefone: S(),
-    tipo_contrato: S(), salario_fixo: N(), valor_m2: N(), cnpj: S(), razao_social: S(), pis_nit: S(),
+    primeiro_nome: S(),
+    sobrenome: S(),
+    email: S(),
+    cargo: S(),
+    cpf: S(),
+    telefone: S(),
+    tipo_contrato: S(),
+    salario_fixo: N(),
+    valor_m2: N(),
+    cnpj: S(),
+    razao_social: S(),
+    pis_nit: S(),
   }),
 });
 const PropostaExtractionSchema = z.object({
   tem_nome: z.boolean(),
   pergunta: z.string().max(300).nullish(),
   proposta: z.object({
-    titulo: S(), cliente_nome: S(), lead_nome: S(), valor_proposto: N(), area_m2: N(),
-    localizacao: S(), prazo_estimado_dias: z.number().int().nullish(), validade: S(), observacao: S(),
+    titulo: S(),
+    cliente_nome: S(),
+    lead_nome: S(),
+    valor_proposto: N(),
+    area_m2: N(),
+    localizacao: S(),
+    prazo_estimado_dias: z.number().int().nullish(),
+    validade: S(),
+    observacao: S(),
   }),
 });
 const MarcoExtractionSchema = z.object({
   tem_nome: z.boolean(),
   pergunta: z.string().max(300).nullish(),
   marco: z.object({
-    nome: S(), valor: N(), projeto_nome: S(), disciplina: S(), percentual: N(), data_prevista: S(),
+    nome: S(),
+    valor: N(),
+    projeto_nome: S(),
+    disciplina: S(),
+    percentual: N(),
+    data_prevista: S(),
   }),
 });
 const DisciplinaExtractionSchema = z.object({
   tem_nome: z.boolean(),
   pergunta: z.string().max(300).nullish(),
   disciplina: z.object({
-    nome: S(), projeto_nome: S(), prioridade: S(), horas_estimadas: N(), custo_hora: N(),
-    data_inicio: S(), data_fim: S(),
+    nome: S(),
+    projeto_nome: S(),
+    prioridade: S(),
+    horas_estimadas: N(),
+    custo_hora: N(),
+    data_inicio: S(),
+    data_fim: S(),
   }),
 });
 
@@ -531,63 +586,131 @@ const ENTIDADE_CFG: Record<string, EntidadeCfg> = {
     revisarMsg: "Revise o preview da folha e confirme para fechar.",
   },
   cliente: {
-    agente: "comercial", label: AGENTE_LABEL.comercial, entidade: "cliente", agentType: "criar_cliente",
-    entityKey: "cliente", prompt: EXTRAIR_CLIENTE_PROMPT, schema: ClienteExtractionSchema, requiredKeys: ["nome"],
-    instrucao: "Extraia os dados do cliente da conversa.", perguntaFallback: "Qual o nome do cliente?",
+    agente: "comercial",
+    label: AGENTE_LABEL.comercial,
+    entidade: "cliente",
+    agentType: "criar_cliente",
+    entityKey: "cliente",
+    prompt: EXTRAIR_CLIENTE_PROMPT,
+    schema: ClienteExtractionSchema,
+    requiredKeys: ["nome"],
+    instrucao: "Extraia os dados do cliente da conversa.",
+    perguntaFallback: "Qual o nome do cliente?",
     revisarMsg: "Revise os dados do cliente e confirme para criar.",
   },
   fornecedor: {
-    agente: "financeiro", label: AGENTE_LABEL.financeiro, entidade: "fornecedor", agentType: "criar_fornecedor",
-    entityKey: "fornecedor", prompt: EXTRAIR_FORNECEDOR_PROMPT, schema: FornecedorExtractionSchema, requiredKeys: ["nome"],
-    instrucao: "Extraia os dados do fornecedor.", perguntaFallback: "Qual o nome do fornecedor?",
+    agente: "financeiro",
+    label: AGENTE_LABEL.financeiro,
+    entidade: "fornecedor",
+    agentType: "criar_fornecedor",
+    entityKey: "fornecedor",
+    prompt: EXTRAIR_FORNECEDOR_PROMPT,
+    schema: FornecedorExtractionSchema,
+    requiredKeys: ["nome"],
+    instrucao: "Extraia os dados do fornecedor.",
+    perguntaFallback: "Qual o nome do fornecedor?",
     revisarMsg: "Revise os dados do fornecedor e confirme para criar.",
   },
   categoria: {
-    agente: "financeiro", label: AGENTE_LABEL.financeiro, entidade: "categoria", agentType: "criar_categoria",
-    entityKey: "categoria", prompt: EXTRAIR_CATEGORIA_PROMPT, schema: CategoriaExtractionSchema, requiredKeys: ["nome", "tipo"],
-    instrucao: "Extraia o nome e o tipo (Receita/Despesa) da categoria.", perguntaFallback: "Qual o nome e o tipo (receita ou despesa) da categoria?",
+    agente: "financeiro",
+    label: AGENTE_LABEL.financeiro,
+    entidade: "categoria",
+    agentType: "criar_categoria",
+    entityKey: "categoria",
+    prompt: EXTRAIR_CATEGORIA_PROMPT,
+    schema: CategoriaExtractionSchema,
+    requiredKeys: ["nome", "tipo"],
+    instrucao: "Extraia o nome e o tipo (Receita/Despesa) da categoria.",
+    perguntaFallback: "Qual o nome e o tipo (receita ou despesa) da categoria?",
     revisarMsg: "Revise a categoria e confirme para criar.",
   },
   conta: {
-    agente: "financeiro", label: AGENTE_LABEL.financeiro, entidade: "conta", agentType: "criar_conta",
-    entityKey: "conta", prompt: EXTRAIR_CONTA_PROMPT, schema: ContaExtractionSchema, requiredKeys: ["nome", "banco"],
-    instrucao: "Extraia os dados da conta bancária.", perguntaFallback: "Qual o nome e o banco da conta?",
+    agente: "financeiro",
+    label: AGENTE_LABEL.financeiro,
+    entidade: "conta",
+    agentType: "criar_conta",
+    entityKey: "conta",
+    prompt: EXTRAIR_CONTA_PROMPT,
+    schema: ContaExtractionSchema,
+    requiredKeys: ["nome", "banco"],
+    instrucao: "Extraia os dados da conta bancária.",
+    perguntaFallback: "Qual o nome e o banco da conta?",
     revisarMsg: "Revise a conta e confirme para cadastrar.",
   },
   centro_custo: {
-    agente: "financeiro", label: AGENTE_LABEL.financeiro, entidade: "centro_custo", agentType: "criar_centro_custo",
-    entityKey: "centro_custo", prompt: EXTRAIR_CENTRO_CUSTO_PROMPT, schema: CentroCustoExtractionSchema, requiredKeys: ["nome"],
-    instrucao: "Extraia os dados do centro de custo.", perguntaFallback: "Qual o nome do centro de custo?",
+    agente: "financeiro",
+    label: AGENTE_LABEL.financeiro,
+    entidade: "centro_custo",
+    agentType: "criar_centro_custo",
+    entityKey: "centro_custo",
+    prompt: EXTRAIR_CENTRO_CUSTO_PROMPT,
+    schema: CentroCustoExtractionSchema,
+    requiredKeys: ["nome"],
+    instrucao: "Extraia os dados do centro de custo.",
+    perguntaFallback: "Qual o nome do centro de custo?",
     revisarMsg: "Revise o centro de custo e confirme para criar.",
   },
   pessoa: {
-    agente: "projetos", label: "Agente de Pessoas", entidade: "pessoa", agentType: "criar_pessoa",
-    entityKey: "pessoa", prompt: EXTRAIR_PESSOA_PROMPT, schema: PessoaExtractionSchema,
+    agente: "projetos",
+    label: "Agente de Pessoas",
+    entidade: "pessoa",
+    agentType: "criar_pessoa",
+    entityKey: "pessoa",
+    prompt: EXTRAIR_PESSOA_PROMPT,
+    schema: PessoaExtractionSchema,
     requiredKeys: ["primeiro_nome", "sobrenome", "email"],
-    instrucao: "Extraia os dados da pessoa.", perguntaFallback: "Qual o nome, sobrenome e e-mail da pessoa?",
+    instrucao: "Extraia os dados da pessoa.",
+    perguntaFallback: "Qual o nome, sobrenome e e-mail da pessoa?",
     revisarMsg: "Revise os dados da pessoa e confirme para cadastrar.",
   },
   proposta: {
-    agente: "comercial", label: AGENTE_LABEL.comercial, entidade: "proposta", agentType: "criar_proposta",
-    entityKey: "proposta", prompt: EXTRAIR_PROPOSTA_PROMPT, schema: PropostaExtractionSchema, requiredKeys: ["titulo"],
-    instrucao: "Extraia os dados da proposta.", perguntaFallback: "Qual o título da proposta?",
+    agente: "comercial",
+    label: AGENTE_LABEL.comercial,
+    entidade: "proposta",
+    agentType: "criar_proposta",
+    entityKey: "proposta",
+    prompt: EXTRAIR_PROPOSTA_PROMPT,
+    schema: PropostaExtractionSchema,
+    requiredKeys: ["titulo"],
+    instrucao: "Extraia os dados da proposta.",
+    perguntaFallback: "Qual o título da proposta?",
     revisarMsg: "Revise a proposta e confirme para criar.",
   },
   marco: {
-    agente: "financeiro", label: AGENTE_LABEL.financeiro, entidade: "marco", agentType: "criar_marco",
-    entityKey: "marco", prompt: EXTRAIR_MARCO_PROMPT, schema: MarcoExtractionSchema, requiredKeys: ["nome", "valor"],
-    instrucao: "Extraia os dados do marco de faturamento.", perguntaFallback: "Qual o nome e o valor do marco?",
+    agente: "financeiro",
+    label: AGENTE_LABEL.financeiro,
+    entidade: "marco",
+    agentType: "criar_marco",
+    entityKey: "marco",
+    prompt: EXTRAIR_MARCO_PROMPT,
+    schema: MarcoExtractionSchema,
+    requiredKeys: ["nome", "valor"],
+    instrucao: "Extraia os dados do marco de faturamento.",
+    perguntaFallback: "Qual o nome e o valor do marco?",
     revisarMsg: "Revise o marco e confirme para criar.",
   },
   disciplina: {
-    agente: "projetos", label: AGENTE_LABEL.projetos, entidade: "disciplina", agentType: "criar_disciplina",
-    entityKey: "disciplina", prompt: EXTRAIR_DISCIPLINA_PROMPT, schema: DisciplinaExtractionSchema, requiredKeys: ["nome"],
-    instrucao: "Extraia a disciplina e o projeto-alvo da conversa.", perguntaFallback: "Qual disciplina e em qual projeto?",
+    agente: "projetos",
+    label: AGENTE_LABEL.projetos,
+    entidade: "disciplina",
+    agentType: "criar_disciplina",
+    entityKey: "disciplina",
+    prompt: EXTRAIR_DISCIPLINA_PROMPT,
+    schema: DisciplinaExtractionSchema,
+    requiredKeys: ["nome"],
+    instrucao: "Extraia a disciplina e o projeto-alvo da conversa.",
+    perguntaFallback: "Qual disciplina e em qual projeto?",
     revisarMsg: "Revise a disciplina e confirme para adicionar.",
   },
   aditivo: {
-    agente: "projetos", label: AGENTE_LABEL.projetos, entidade: "aditivo", agentType: "criar_aditivo",
-    entityKey: "aditivo", prompt: EXTRAIR_ADITIVO_PROMPT, schema: AditivoExtractionSchema, requiredKeys: ["descricao"],
+    agente: "projetos",
+    label: AGENTE_LABEL.projetos,
+    entidade: "aditivo",
+    agentType: "criar_aditivo",
+    entityKey: "aditivo",
+    prompt: EXTRAIR_ADITIVO_PROMPT,
+    schema: AditivoExtractionSchema,
+    requiredKeys: ["descricao"],
     instrucao: "Extraia o aditivo (descrição, justificativa, itens) e o projeto-alvo.",
     perguntaFallback: "Qual o resumo do aditivo e em qual projeto?",
     revisarMsg: "Revise o aditivo e confirme para criar (como rascunho).",
@@ -670,8 +793,14 @@ function inicioDoMes(): string {
 
 async function coletarFinanceiro(db: SupabaseClient, empresaId: string): Promise<Record<string, unknown>> {
   const inicio = inicioDoMes();
-  const [receitasMes, aReceber, despesasMes] = await Promise.all([
-    db.from("receitas").select("valor").eq("empresa_id", empresaId).eq("status", "Recebido").gte("data_recebimento", inicio),
+  const hoje = new Date().toISOString().slice(0, 10);
+  const [receitasMes, aReceber, despesasMes, aPagar, receitasVencidas, despesasVencidas, folhaMes] = await Promise.all([
+    db
+      .from("receitas")
+      .select("valor")
+      .eq("empresa_id", empresaId)
+      .eq("status", "Recebido")
+      .gte("data_recebimento", inicio),
     db.from("receitas").select("valor").eq("empresa_id", empresaId).eq("status", "Pendente"),
     db
       .from("despesas")
@@ -680,57 +809,164 @@ async function coletarFinanceiro(db: SupabaseClient, empresaId: string): Promise
       .in("status", ["Pago"])
       .eq("is_fatura_payment", false)
       .gte("data_pagamento", inicio),
+    db
+      .from("despesas")
+      .select("valor")
+      .eq("empresa_id", empresaId)
+      .eq("status", "Pendente")
+      .eq("is_fatura_payment", false),
+    // Vencidos = pendentes com vencimento antes de hoje (o que o sócio mais quer ver).
+    db
+      .from("receitas")
+      .select("valor")
+      .eq("empresa_id", empresaId)
+      .eq("status", "Pendente")
+      .lt("data_vencimento", hoje),
+    db
+      .from("despesas")
+      .select("valor")
+      .eq("empresa_id", empresaId)
+      .eq("status", "Pendente")
+      .eq("is_fatura_payment", false)
+      .lt("data_vencimento", hoje),
+    db
+      .from("folha_pagamento")
+      .select("total_receber")
+      .eq("empresa_id", empresaId)
+      .eq("mes", new Date().getMonth() + 1)
+      .eq("ano", new Date().getFullYear()),
   ]);
   const soma = (rows: { valor: number }[] | null) => (rows ?? []).reduce((s, r) => s + Number(r.valor || 0), 0);
+  const custoFolha = ((folhaMes.data as { total_receber: number }[] | null) ?? []).reduce(
+    (s, r) => s + Number(r.total_receber || 0),
+    0
+  );
   const recebido = soma(receitasMes.data as { valor: number }[] | null);
   const despesas = soma(despesasMes.data as { valor: number }[] | null);
   return {
+    hoje,
     mes_atual: {
       recebido_no_mes: recebido,
       despesas_pagas_no_mes: despesas,
       saldo_no_mes: recebido - despesas,
     },
     a_receber_pendente_total: soma(aReceber.data as { valor: number }[] | null),
+    a_pagar_pendente_total: soma(aPagar.data as { valor: number }[] | null),
+    a_receber_vencido_total: soma(receitasVencidas.data as { valor: number }[] | null),
+    a_pagar_vencido_total: soma(despesasVencidas.data as { valor: number }[] | null),
+    custo_folha_mes_atual: custoFolha,
   };
 }
 
 const STATUS_ATIVOS = ["Planejamento", "Execução", "Em andamento", "Revisão"];
 
+type ProjetoRow = {
+  codigo_projeto: string | null;
+  nome: string;
+  status: string;
+  prioridade: string | null;
+  valor_contrato: number | null;
+  data_inicio: string | null;
+  data_previsao: string | null;
+  data_final: string | null;
+  clientes: { nome: string } | null;
+};
+
 async function coletarProjetos(db: SupabaseClient, empresaId: string): Promise<Record<string, unknown>> {
+  const hoje = new Date().toISOString().slice(0, 10);
   const { data } = await db
     .from("projetos")
-    .select("nome, status, valor_contrato")
+    .select(
+      "codigo_projeto, nome, status, prioridade, valor_contrato, data_inicio, data_previsao, data_final, clientes(nome)"
+    )
     .eq("empresa_id", empresaId)
     .is("deleted_at", null);
-  const projetos = (data ?? []) as { nome: string; status: string; valor_contrato: number | null }[];
+  const projetos = (data ?? []) as unknown as ProjetoRow[];
   const porStatus: Record<string, number> = {};
   for (const p of projetos) porStatus[p.status] = (porStatus[p.status] ?? 0) + 1;
   const ativos = projetos.filter((p) => STATUS_ATIVOS.includes(p.status));
-  const topAtivos = [...ativos]
-    .sort((a, b) => Number(b.valor_contrato || 0) - Number(a.valor_contrato || 0))
-    .slice(0, 10)
-    .map((p) => ({ nome: p.nome, status: p.status, valor_contrato: Number(p.valor_contrato || 0) }));
+  const detalhe = (p: ProjetoRow) => ({
+    codigo: p.codigo_projeto,
+    nome: p.nome,
+    status: p.status,
+    prioridade: p.prioridade,
+    cliente: p.clientes?.nome ?? null,
+    valor_contrato: Number(p.valor_contrato || 0),
+    data_inicio: p.data_inicio,
+    data_previsao_entrega: p.data_previsao,
+    data_conclusao: p.data_final,
+    // Atrasado = tinha previsão, ainda não concluiu e a previsão já passou.
+    atrasado: !!p.data_previsao && !p.data_final && p.data_previsao < hoje,
+  });
+  const ativosDetalhe = ativos.map(detalhe);
   return {
+    hoje,
     total_projetos: projetos.length,
     projetos_ativos: ativos.length,
     por_status: porStatus,
     valor_em_contratos_ativos: ativos.reduce((s, p) => s + Number(p.valor_contrato || 0), 0),
-    top_projetos_ativos: topAtivos,
+    projetos_com_prazo_estourado: ativosDetalhe.filter((p) => p.atrasado).length,
+    // Lista dos ativos com datas/prazos (limite p/ caber no contexto do modelo).
+    projetos_ativos_detalhe: ativosDetalhe.slice(0, 30),
   };
 }
 
+type ClienteRow = {
+  nome: string;
+  email: string | null;
+  contato: string | null;
+  tipo_pessoa: string | null;
+  origem: string | null;
+};
+
 async function coletarComercial(db: SupabaseClient, empresaId: string): Promise<Record<string, unknown>> {
-  const [propostas, leads] = await Promise.all([
+  const [propostas, leads, clientes] = await Promise.all([
     db.from("propostas").select("status").eq("empresa_id", empresaId).is("deleted_at", null),
-    db.from("leads").select("id").eq("empresa_id", empresaId).is("deleted_at", null),
+    db.from("leads").select("status").eq("empresa_id", empresaId).is("deleted_at", null),
+    db
+      .from("clientes")
+      .select("nome, email, contato, tipo_pessoa, origem")
+      .eq("empresa_id", empresaId)
+      .is("deleted_at", null),
   ]);
   const props = (propostas.data ?? []) as { status: string }[];
-  const porStatus: Record<string, number> = {};
-  for (const p of props) porStatus[p.status] = (porStatus[p.status] ?? 0) + 1;
+  const propPorStatus: Record<string, number> = {};
+  for (const p of props) propPorStatus[p.status] = (propPorStatus[p.status] ?? 0) + 1;
+  const lds = (leads.data ?? []) as { status: string }[];
+  const leadsPorStatus: Record<string, number> = {};
+  for (const l of lds) leadsPorStatus[l.status] = (leadsPorStatus[l.status] ?? 0) + 1;
+  const cls = (clientes.data ?? []) as ClienteRow[];
   return {
     total_propostas: props.length,
-    propostas_por_status: porStatus,
-    total_leads: (leads.data ?? []).length,
+    propostas_por_status: propPorStatus,
+    total_leads: lds.length,
+    leads_por_status: leadsPorStatus,
+    total_clientes: cls.length,
+    // Lista de clientes (limite p/ caber no contexto do modelo).
+    clientes: cls.slice(0, 50).map((c) => ({
+      nome: c.nome,
+      email: c.email,
+      contato: c.contato,
+      tipo: c.tipo_pessoa,
+      origem: c.origem,
+    })),
+  };
+}
+
+type PessoaRow = { nome: string; cargo: string | null; tipo_contrato: string | null; status: string | null };
+
+async function coletarEquipe(db: SupabaseClient, empresaId: string): Promise<Record<string, unknown>> {
+  const { data } = await db
+    .from("pessoas")
+    .select("nome, cargo, tipo_contrato, status")
+    .eq("empresa_id", empresaId)
+    .is("deleted_at", null);
+  const pessoas = (data ?? []) as PessoaRow[];
+  return {
+    total_pessoas: pessoas.length,
+    equipe: pessoas
+      .slice(0, 50)
+      .map((p) => ({ nome: p.nome, cargo: p.cargo, contrato: p.tipo_contrato, status: p.status })),
   };
 }
 
@@ -742,8 +978,16 @@ async function coletarDados(agente: Agente, db: SupabaseClient, empresaId: strin
       return coletarProjetos(db, empresaId);
     case "comercial":
       return coletarComercial(db, empresaId);
-    case "geral":
-      return {};
+    case "geral": {
+      // Pergunta genérica: dá ao agente uma visão dos domínios de uma vez.
+      const [financeiro, projetos, comercial, equipe] = await Promise.all([
+        coletarFinanceiro(db, empresaId),
+        coletarProjetos(db, empresaId),
+        coletarComercial(db, empresaId),
+        coletarEquipe(db, empresaId),
+      ]);
+      return { financeiro, projetos, comercial, equipe };
+    }
   }
 }
 
@@ -823,6 +1067,26 @@ async function recordAndSaldo(
   }
 }
 
+// Registra um passo do raciocínio do agente em agent_actions (timeline do modal, spec 007
+// Fase 2b). Best-effort: logar um passo NUNCA pode quebrar o fluxo do usuário — falha é
+// engolida. Sem runId (ex.: fluxo que não persistiu run) vira no-op.
+async function logAction(
+  db: SupabaseClient,
+  runId: string | undefined,
+  toolName: string,
+  args?: Record<string, unknown>,
+  result?: Record<string, unknown>
+): Promise<void> {
+  if (!runId) return;
+  try {
+    await db
+      .from("agent_actions")
+      .insert({ run_id: runId, tool_name: toolName, args: args ?? null, result: result ?? null });
+  } catch {
+    // best-effort — não bloqueia a resposta
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Handler
 // ---------------------------------------------------------------------------
@@ -859,6 +1123,21 @@ serve(
       }
       const { message } = parsed.data;
 
+      // Contexto de projeto em foco (spec 007): busca via RLS (só projeto da empresa)
+      // e injeta nos prompts, para o agente responder/agir no escopo desse projeto.
+      const projetoId = parsed.data.projetoId;
+      let focoProjeto = "";
+      if (projetoId) {
+        const { data: proj } = await authClient
+          .from("projetos")
+          .select("id, codigo_projeto, nome, status, valor_contrato, data_inicio, data_previsao, clientes(nome)")
+          .eq("id", projetoId)
+          .single();
+        if (proj) {
+          focoProjeto = `\n\nPROJETO EM FOCO (o usuário está trabalhando neste projeto; priorize-o e responda no contexto dele):\n${JSON.stringify(proj)}`;
+        }
+      }
+
       // Sessão: cria se não veio (via RLS — o usuário é o dono).
       let sessionId = parsed.data.sessionId;
       if (!sessionId) {
@@ -881,7 +1160,11 @@ serve(
       const rota = await callGeminiStructured(
         {
           systemPrompt: ORQUESTRADOR_PROMPT,
-          userMessage: comContexto(historico, message, "Classifique a intenção real do usuário (agente + modo)."),
+          userMessage: comContexto(
+            historico,
+            message,
+            "Classifique a intenção real do usuário (agente + modo)." + focoProjeto
+          ),
           empresaId,
           tipo: FEATURE_KEY,
         },
@@ -921,7 +1204,13 @@ serve(
         });
         const saldo = await recordAndSaldo(adminClient, empresaId, rota.tokensEntrada, rota.tokensSaida, rota.attempts);
         return respondFinal(
-          { sessionId, tipo: "resposta", resposta: aviso, agentes: [{ agente, agente_label: AGENTE_LABEL[agente] }], saldo },
+          {
+            sessionId,
+            tipo: "resposta",
+            resposta: aviso,
+            agentes: [{ agente, agente_label: AGENTE_LABEL[agente] }],
+            saldo,
+          },
           req,
           wantsStream
         );
@@ -969,13 +1258,46 @@ serve(
         );
       }
 
+      // Run leve de consulta (spec 007, Fase 2b): âncora da timeline de raciocínio.
+      // agent_type 'consulta' + running → executed → NÃO entra na fila 'pending_review'.
+      const { data: consultaRun } = await authClient
+        .from("agent_runs")
+        .insert({
+          empresa_id: empresaId,
+          agent_type: "consulta",
+          status: "running",
+          entity_type: agente,
+          input: { message },
+          model: GEMINI_MODEL,
+          tokens_input: rota.tokensEntrada,
+          tokens_output: rota.tokensSaida,
+          created_by: user.id,
+        })
+        .select("id")
+        .single();
+      const consultaRunId = (consultaRun?.id as string | undefined) ?? undefined;
+      await logAction(
+        authClient,
+        consultaRunId,
+        "classificar_intencao",
+        { message },
+        { agente, modo, motivo: rota.data.motivo }
+      );
+
       // 2) Agente de domínio coleta os dados (read-only, RLS).
       const dados = await coletarDados(agente, authClient, empresaId);
+      await logAction(
+        authClient,
+        consultaRunId,
+        `consultar_${agente}`,
+        { fonte: agente },
+        { chaves: Object.keys(dados) }
+      );
 
       const userMessage = comContexto(
         historico,
         message,
-        `Responda à mensagem atual do usuário usando SOMENTE os dados abaixo.\n\nDados disponíveis (JSON):\n${JSON.stringify(dados)}`
+        `Responda à mensagem atual do usuário usando SOMENTE os dados abaixo.\n\nDados disponíveis (JSON):\n${JSON.stringify(dados)}${focoProjeto}`
       );
       const meta = {
         agente,
@@ -995,6 +1317,7 @@ serve(
           agente,
           meta,
           userMessage,
+          runId: consultaRunId,
           rotaTok: { in: rota.tokensEntrada, out: rota.tokensSaida, calls: rota.attempts },
         });
       }
@@ -1026,6 +1349,14 @@ serve(
 
       // Contabiliza uso (rate limit + log granular por feature) e lê o saldo restante.
       const saldo = await recordAndSaldo(adminClient, empresaId, tokensIn, tokensOut, chamadas);
+
+      await logAction(authClient, consultaRunId, "gerar_resposta", undefined, { chars: resp.data.resposta.length });
+      if (consultaRunId) {
+        await authClient
+          .from("agent_runs")
+          .update({ status: "executed", result: { resposta_len: resp.data.resposta.length } })
+          .eq("id", consultaRunId);
+      }
 
       return jsonResponse(
         {
@@ -1080,6 +1411,7 @@ function streamConsulta(o: {
   agente: Agente;
   meta: ChatMeta;
   userMessage: string;
+  runId?: string;
   rotaTok: { in: number; out: number; calls: number };
 }): Response {
   const encoder = new TextEncoder();
@@ -1108,7 +1440,12 @@ function streamConsulta(o: {
           if (full !== "") throw streamErr;
           // Nada emitido ainda: fallback buffered no próprio servidor.
           const resp = await callGeminiStructured(
-            { systemPrompt: respostaPrompt(o.agente), userMessage: o.userMessage, empresaId: o.empresaId, tipo: FEATURE_KEY },
+            {
+              systemPrompt: respostaPrompt(o.agente),
+              userMessage: o.userMessage,
+              empresaId: o.empresaId,
+              tipo: FEATURE_KEY,
+            },
             RespostaSchema
           );
           full = resp.data.resposta;
@@ -1130,6 +1467,14 @@ function streamConsulta(o: {
         });
 
         const saldo = await recordAndSaldo(o.admin, o.empresaId, tokIn, tokOut, chamadas);
+
+        await logAction(o.db, o.runId, "gerar_resposta", undefined, { chars: resposta.length });
+        if (o.runId) {
+          await o.db
+            .from("agent_runs")
+            .update({ status: "executed", result: { resposta_len: resposta.length } })
+            .eq("id", o.runId);
+        }
 
         emit("final", {
           sessionId: o.sessionId,
@@ -1210,7 +1555,13 @@ async function processarCriacao(o: {
     });
     const saldo = await recordAndSaldo(o.admin, o.empresaId, tokIn, tokOut, chamadas);
     return respondFinal(
-      { sessionId: o.sessionId, tipo: "resposta", resposta: pergunta, agentes: [{ agente: o.agente, agente_label: o.label }], saldo },
+      {
+        sessionId: o.sessionId,
+        tipo: "resposta",
+        resposta: pergunta,
+        agentes: [{ agente: o.agente, agente_label: o.label }],
+        saldo,
+      },
       o.req,
       o.wantsStream
     );
@@ -1263,7 +1614,13 @@ async function processarCriacao(o: {
     session_id: o.sessionId,
     role: "assistant",
     content: o.revisarMsg,
-    meta: { agente: o.agente, agente_label: o.label, model: GEMINI_MODEL, draft_run_id: runId, entity_type: o.entidade },
+    meta: {
+      agente: o.agente,
+      agente_label: o.label,
+      model: GEMINI_MODEL,
+      draft_run_id: runId,
+      entity_type: o.entidade,
+    },
     tokens_input: tokIn,
     tokens_output: tokOut,
   });

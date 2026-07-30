@@ -2,12 +2,14 @@
 
 Índice mestre. Cada nota captada ganha uma linha. Atualizar a cada coleta.
 
-**Stats:** notas captadas: `88` · fontes pending: ver [SOURCES.md](./SOURCES.md) · última coleta: `2026-06-12` (leva — RECUPERAÇÃO de fontes que falharam: 4 notas. Tidemark Vertical SaaS 2025, High Alpha 2025, a16z "Retention Is All You Need" (framework M3/M12), Dalton & Michael PMF/pivot. "Tactical Guide to Vertical AI Agents" resolvido como dup do "10X Bigger")
+**Stats:** notas captadas: `89` · fontes pending: ver [SOURCES.md](./SOURCES.md) · última coleta: `2026-06-12` (leva — RECUPERAÇÃO de fontes que falharam: 4 notas. Tidemark Vertical SaaS 2025, High Alpha 2025, a16z "Retention Is All You Need" (framework M3/M12), Dalton & Michael PMF/pivot. "Tactical Guide to Vertical AI Agents" resolvido como dup do "10X Bigger")
 
 ## Por fonte
 
 ### Y Combinator (29)
+
 **Paul Graham**
+
 - [Do Things That Don't Scale](./yc/paul-graham/do-things-that-dont-scale.md) — `gtm growth founder-psychology` · 🟢 high
 - [How to Get Startup Ideas](./yc/paul-graham/how-to-get-startup-ideas.md) — `idea-validation` · 🟡 med
 - [Startup = Growth](./yc/paul-graham/startup-equals-growth.md) — `growth metrics` · 🟡 med
@@ -24,6 +26,7 @@
 - [The Top Idea in Your Mind](./yc/paul-graham/the-top-idea-in-your-mind.md) — fundraising/brigas roubam o slot de pensamento · `founder-psychology` · 🟡 med
 
 **YC Library / RFS**
+
 - [Vertical AI Agents 10X Bigger Than SaaS](./yc/library/vertical-ai-agents-10x-bigger-than-saas.md) — Friedman/Tan · `ai-agents vertical-saas` · 🟢 high
 - [The Real Product Market Fit](./yc/library/the-real-product-market-fit.md) — Seibel · `pmf` · 🟢 high
 - [A Guide to Seed Fundraising](./yc/library/guide-to-seed-fundraising.md) — Ralston: 12-18 meses, SAFE, captar quando não precisa · `fundraising seed` · 🟢 high
@@ -31,6 +34,7 @@
 - [A Guide to Pricing (YC)](./yc/library/a-guide-to-pricing-yc.md) — Kevin Hale: regra 10-5-20, preço→canal, "garbage zone"; 80% cobram pouco · `pricing gtm` · 🟢 high
 
 **Startup School / Lightcone**
+
 - [How to Talk to Users](./yc/startup-school/how-to-talk-to-users.md) — Migicovsky · `idea-validation gtm` · 🟢 high
 - [How to Get and Evaluate Startup Ideas](./yc/startup-school/how-to-evaluate-startup-ideas.md) — Friedman: tarpit ideas, boas parecem ruins · `idea-validation` · 🟢 high
 - [How to Plan and Build an MVP](./yc/startup-school/how-to-build-an-mvp.md) — segura problema/cliente, solta a solução; iterar≠pivotar · `mvp pmf` · 🟢 high
@@ -41,11 +45,13 @@
 - [Vertical AI Agents — lições das batches 2025](./yc/lightcone/vertical-ai-agents-2025.md) — venda top-down ao CFO; 3 price points $5/$500/$5000 · `ai-agents pricing` · 🟢 high
 
 **Sam Altman / Dalton & Michael**
+
 - [Startup Playbook](./yc/sam-altman/startup-playbook.md) — Sam Altman: produto excelente + crescimento + nunca perder momentum · `fundamentals growth` · 🟢 high
 - [Common Startup Mistakes](./yc/dalton-michael/common-startup-mistakes.md) — Seibel: 8 erros de first-timers; chegar rápido ao cliente, decidir por dados · `founder-psychology mvp` · 🟢 high
 - [Encontrar PMF, pivotar e evitar tarpits](./yc/dalton-michael/finding-pmf-and-pivoting.md) — Caldwell: "montanhas e deserto"; pivô bom ancora em experiência prévia (Brex/Segment); "just don't die" · `pmf idea-validation founder-psychology` · 🟢 high
 
 ### a16z (14)
+
 - [AI Driving Shift to Outcome-Based Pricing](./a16z/ai-is-driving-shift-to-outcome-based-pricing.md) — `pricing ai-agents` · 🟢 high
 - [AI Eats Vertical SaaS](./a16z/ai-eats-vertical-saas.md) — `ai-native vertical-saas moat` · 🟢 high
 - [Go-to-Market para AI / B2B Enterprise](./a16z/b2b-ai-go-to-market.md) — comprador chega educado, 1 tiro, valor no demo · `gtm sales` · 🟢 high
@@ -62,6 +68,7 @@
 - [Retention Is All You Need (framework M3/M12)](./a16z/retention-is-all-you-need.md) — rebasear M0→M3 mata "AI tourist"; M12/M3 prevê NDR >100%; valores do gráfico pendentes de OCR · `ai-native retention metrics pmf` · 🟢 high
 
 ### Sequoia (7)
+
 - [The Arc PMF Framework](./sequoia/the-arc-pmf-framework.md) — 3 arquétipos (Hair on Fire/Hard Fact/Future Vision) · `pmf positioning` · 🟢 high
 - [Arc PMF — 4 Terrifying Questions](./sequoia/arc-pmf-terrifying-questions.md) — direito de existir→se importam→muda comportamento→pagam · `pmf` · 🟢 high
 - [Pitch Deck Template / Business Plan](./sequoia/pitch-deck-template.md) — ~10 slides; "Why Now" é o slide mais forte · `fundraising positioning` · 🟢 high
@@ -71,9 +78,11 @@
 - [Going to Market — Sales Learning Curve](./sequoia/sequoia-go-to-market.md) — Mark Leslie: não escalar vendas antes do traction point (~2x custo/rep) · `gtm sales` · 🟢 high
 
 ### Foundation Capital (1)
+
 - [AI Leads a Service-as-Software Paradigm Shift ($4.6T)](./foundation-capital/service-as-software-paradigm-shift.md) — TAM = mão de obra (US$4,6T), não software; System of Agents; outcome pricing · `ai-agents ai-native pricing` · 🟢 high
 
 ### First Round (7)
+
 - [Founder-Led Sales Playbook](./first-round/founder-led-sales-first-round.md) — `sales gtm` · 🟢 high
 - [Pricing Playbook B2B SaaS](./first-round/pricing-playbook-b2b-saas.md) — Gaffney/Ramanujam: erro nº1 = preço baixo; preço antes do produto · `pricing` · 🟢 high
 - [Superhuman: Engine to Find PMF](./first-round/superhuman-engine-to-find-pmf.md) — Vohra: teste dos 40% "muito decepcionado"; 22%→58% em 3 trimestres · `pmf metrics` · 🟢 high
@@ -83,6 +92,7 @@
 - [Hard-Won Lessons for Founders](./first-round/founders-field-guide-lessons.md) — tração esconde o porquê; receita de topo mascara unit economics ruins · `founder-psychology` · 🟡 med
 
 ### Techstars / 500 / B2B SaaS / operadores / relatórios (29)
+
 - [The Vertical AI Playbook](./techstars-500/contrary-the-vertical-ai-playbook.md) — Contrary · `ai-agents moat` · 🟢 high
 - [Bessemer — State of AI 2025](./techstars-500/bessemer-state-of-cloud-vertical-saas.md) — "system of action" > system of record; Centaur em 5.7 anos · `vertical-saas metrics` · 🟢 high
 - [Bessemer — Vertical SaaS Playbook](./techstars-500/bessemer-vertical-saas-playbook.md) — winner-take-most; "layer cake"; fintech embutido 1-3% do spend · `vertical-saas pricing` · 🟢 high
@@ -114,8 +124,10 @@
 - [High Alpha — 2025 SaaS Benchmarks](./techstars-500/high-alpha-2025-saas-benchmarks.md) — AI-native cresce ~2-3x B2B tradicional por banda (110% vs 40% em US$1-5M); margem −10pts por IA; quadrante NRR alta×CAC payback baixo (só 13%); híbrido lidera NRR · `metrics ai-native pricing growth unit-economics` · 🟢 high
 
 ## Por tema (`themes/`)
+
 - [ai-native-vertical-saas](./themes/ai-native-vertical-saas.md) — 8 fontes: labor budget, system of action, janela, moats
 - [ai-agents](./themes/ai-agents.md) — playbook vertical AI, pricing por tarefa, autonomia/HITL
+- [agent-ux-patterns](./themes/agent-ux-patterns.md) — UX de agentes além do chat (2025-26): generative UI, ambient, agent inbox/HITL, computer use, streaming reasoning; recomendação "mesa de trabalho dos agentes" pro Pilar
 - [pricing](./themes/pricing.md) — 13 fontes: híbrido, value metric, ancorar alto, COGS de token
 - [gtm](./themes/gtm.md) — founder-led, Sales Learning Curve, four fits, "animal", PLG, cadence
 - [pmf](./themes/pmf.md) — 40% test, Levels of PMF, retenção, arquétipos, MVP
@@ -124,6 +136,7 @@
 - [fundraising](./themes/fundraising.md) — seed/SAFE, default alive, deck/Why Now, ramen profitable
 
 ## Notas temáticas mais relevantes pro Pilar
+
 - [ai-agents](./themes/ai-agents.md) — playbook vertical AI, pricing por tarefa, autonomia
 - [pricing](./themes/pricing.md) — assinatura→outcome híbrido, telemetria de aprovação
 - [pmf](./themes/pmf.md) — "cabelo em chamas", não escalar antes do pull

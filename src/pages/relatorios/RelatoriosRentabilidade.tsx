@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { formatCurrency } from "@/lib/format";
+import { KPICard } from "@/components/KPICard";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -292,42 +293,14 @@ export default function RelatoriosRentabilidade({ modo }: Props) {
 
       {/* Resumo */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div className="flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
-          <div className="rounded-lg bg-emerald-100 p-2">
-            <TrendingUp size={18} className="text-emerald-600" />
-          </div>
-          <div className="min-w-0">
-            <p className="text-xs text-emerald-600 font-medium">Receita</p>
-            <p className="text-lg font-bold text-emerald-700 truncate">{toCurrency(totais.receita)}</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
-          <div className="rounded-lg bg-red-100 p-2">
-            <TrendingDown size={18} className="text-red-600" />
-          </div>
-          <div className="min-w-0">
-            <p className="text-xs text-red-600 font-medium">Custo</p>
-            <p className="text-lg font-bold text-red-700 truncate">{toCurrency(totais.custo)}</p>
-          </div>
-        </div>
-        <div
-          className={cn(
-            "flex items-center gap-3 rounded-xl border px-4 py-3",
-            totais.margem >= 0 ? "border-blue-200 bg-blue-50" : "border-orange-200 bg-orange-50"
-          )}
-        >
-          <div className={cn("rounded-lg p-2", totais.margem >= 0 ? "bg-blue-100" : "bg-orange-100")}>
-            <DollarSign size={18} className={totais.margem >= 0 ? "text-blue-600" : "text-orange-600"} />
-          </div>
-          <div className="min-w-0">
-            <p className={cn("text-xs font-medium", totais.margem >= 0 ? "text-blue-600" : "text-orange-600")}>
-              Margem ({toPct(totais.margem_pct)})
-            </p>
-            <p className={cn("text-lg font-bold truncate", totais.margem >= 0 ? "text-blue-700" : "text-orange-700")}>
-              {toCurrency(totais.margem)}
-            </p>
-          </div>
-        </div>
+        <KPICard icon={TrendingUp} label="Receita" value={totais.receita} tone="positive" />
+        <KPICard icon={TrendingDown} label="Custo" value={totais.custo} tone="danger" />
+        <KPICard
+          icon={DollarSign}
+          label={`Margem (${toPct(totais.margem_pct)})`}
+          value={totais.margem}
+          tone={totais.margem >= 0 ? "positive" : "danger"}
+        />
       </div>
 
       {/* Filtros (só no modo projeto: o modo cliente é agregação) */}
