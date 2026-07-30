@@ -14,6 +14,7 @@ Um ADR documenta uma decisão técnica relevante, seu contexto e consequências.
 | [0006](./adr/0006-soft-delete-restrito-por-filhos-financeiros.md) | Bloquear soft delete de projeto/cliente com filhos financeiros vivos                          |
 | [0007](./adr/0007-ambiente-explicito-em-comando-destrutivo.md)    | Exigir ambiente explícito em todo comando que muta banco ou funções                           |
 | [0008](./adr/0008-design-system-fonte-unica.md)                   | Design system com fonte única: variants nomeadas, promoção por uso, lint contra estilo ad-hoc |
+| [0009](./adr/0009-breadcrumb-como-navegacao-de-contexto.md)       | Breadcrumb no `PageHeader` como navegação de contexto (prop opcional `breadcrumbs`)           |
 
 ## Guias de reúso
 

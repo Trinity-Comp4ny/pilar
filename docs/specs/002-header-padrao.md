@@ -79,7 +79,9 @@ Funcionais:
    `description?`, `children?`) e adicionando props opcionais:
    `search?: { value: string; onChange: (v: string) => void; placeholder?: string }`,
    `primaryAction?: { label: string; onClick: () => void; icon?: LucideIcon; feature?: Feature }`,
-   `moduleLabel?: boolean` (default true: mostra o módulo da rota via `routeToModule`).
+   `moduleLabel?: boolean` (default **false**: o header exibe só o nome da página;
+   `true` opt-in mostra o módulo da rota via `routeToModule`).
+   `breadcrumbs?: Array<{ label; to?; onClick? }>` (trilha de ancestrais, ver ADR 0009).
    Páginas não migradas continuam renderizando sem quebrar (título encolhe, resto igual).
 2. A busca do header é **controlada pela página**: cada página liga `search` no
    estado de filtro que já possui (ex.: filtro de texto de Projetos/Clientes/Leads).
@@ -137,7 +139,8 @@ type PageHeaderProps = {
   children?: React.ReactNode; // ações secundárias (compat)
   search?: { value: string; onChange: (v: string) => void; placeholder?: string };
   primaryAction?: { label: string; onClick: () => void; icon?: LucideIcon; feature?: Feature };
-  moduleLabel?: boolean; // default true
+  moduleLabel?: boolean; // default false (só o nome da página)
+  breadcrumbs?: Array<{ label: string; to?: string; onClick?: () => void }>; // ADR 0009
 };
 ```
 
@@ -161,5 +164,7 @@ Estimativa: 2 a 3 dias efetivos.
   unificação da toolbar dele fica para depois.
 - **Risco:** o atalho `/` pode colidir com inputs de valores; mitigado ignorando o
   atalho quando `document.activeElement` é input/textarea/contenteditable.
-- **Suposição:** o rótulo do módulo ao lado do título ajuda a orientação com o
-  switcher novo; se o QA achar ruído, `moduleLabel` desliga por página sem custo.
+- **Revisado (2026-07-30):** o rótulo do módulo ao lado do título virou ruído
+  (redundante com o título e com a sidebar). `moduleLabel` passou a `false` por
+  padrão: o header exibe só o nome da página. Continua opt-in via `moduleLabel`.
+  Contexto de subnível agora é papel do breadcrumb (spec 006 / ADR 0009).

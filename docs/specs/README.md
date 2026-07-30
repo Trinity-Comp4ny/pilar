@@ -18,6 +18,11 @@ viram os testes.
 
 Decisão de arquitetura no meio do caminho vira um [ADR](../architecture/README.md); linke nos dois lados.
 
-| Spec | Feature | Status |
-|---|---|---|
-| _(primeira spec aqui)_ | — | — |
+| Spec                                           | Feature                                         | Status           |
+| ---------------------------------------------- | ----------------------------------------------- | ---------------- |
+| [001](./001-shell-3-pilares.md)                | Shell dos 3 pilares                             | Entregue         |
+| [002](./002-header-padrao.md)                  | Header padrão (`PageHeader`)                    | Entregue         |
+| [003](./003-design-system.md)                  | Design system                                   | Entregue         |
+| [004](./004-margem-confiavel.md)               | Margem confiável                                | —                |
+| [005](./005-fim-do-dashboard.md)               | Fim do dashboard                                | Entregue         |
+| [006](./006-financeiro-padrao-e-breadcrumb.md) | Financeiro no header padrão + breadcrumb global | Em implementação |

@@ -23,7 +23,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
-  ArrowLeft,
   Globe,
   KeyRound,
   Loader2,
@@ -495,6 +494,7 @@ export default function ClienteDetalhePage() {
   const navigate = useNavigate();
   const { isAdmin, can } = usePermissions();
   const canEdit = can("clientes", "edit");
+  const [tab, setTab] = useState("visao-geral");
 
   const { cliente, projetos, isLoadingProjetos, propostas, isLoadingPropostas, isLoadingCliente } = useClienteDetalhe(
     id!
@@ -573,12 +573,12 @@ export default function ClienteDetalhePage() {
   return (
     <PageLayout
       header={
-        <PageHeader title={clienteNomeCompleto} description={formatDocument(cliente.cpf_cnpj)}>
+        <PageHeader
+          title={clienteNomeCompleto}
+          description={formatDocument(cliente.cpf_cnpj)}
+          breadcrumbs={[{ label: "Clientes", to: "/clientes" }]}
+        >
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => navigate("/clientes")}>
-              <ArrowLeft className="h-4 w-4 mr-1.5" />
-              Voltar
-            </Button>
             {canEdit && (
               <Button variant="outline" size="sm" onClick={() => setIsMessageOpen(true)}>
                 <Mail className="h-4 w-4 mr-1.5" />
@@ -606,7 +606,7 @@ export default function ClienteDetalhePage() {
         </PageHeader>
       }
     >
-      <Tabs defaultValue="visao-geral" className="space-y-4">
+      <Tabs value={tab} onValueChange={setTab} className="space-y-4">
         <TabsList>
           <TabsTrigger value="visao-geral" className="flex items-center gap-1.5">
             <User className="h-3.5 w-3.5" />
