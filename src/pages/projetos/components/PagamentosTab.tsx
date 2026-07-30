@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
+import { KPICard } from "@/components/KPICard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -97,33 +98,6 @@ function StatusBadgeAlerta({ pagamento }: { pagamento: PagamentoProjeto }) {
   );
 }
 
-function SummaryCard({
-  label,
-  valor,
-  icon: Icon,
-  color,
-  subtitle,
-}: {
-  label: string;
-  valor: string;
-  icon: typeof DollarSign;
-  color: string;
-  subtitle?: string;
-}) {
-  return (
-    <div className="flex items-center gap-3 p-3 rounded-lg border bg-card">
-      <div className={`p-2 rounded-lg ${color}`}>
-        <Icon className="h-4 w-4" />
-      </div>
-      <div className="min-w-0">
-        <p className="text-[11px] text-muted-foreground">{label}</p>
-        <p className="text-sm font-bold">{valor}</p>
-        {subtitle && <p className="text-[10px] text-muted-foreground">{subtitle}</p>}
-      </div>
-    </div>
-  );
-}
-
 export function PagamentosTab({ projetoId, canEdit }: PagamentosTabProps) {
   const [filtro, setFiltro] = useState<FiltroStatus>("todos");
   const [confirmId, setConfirmId] = useState<string | null>(null);
@@ -168,31 +142,31 @@ export function PagamentosTab({ projetoId, canEdit }: PagamentosTabProps) {
         {resumo && (
           <>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <SummaryCard
+              <KPICard
                 label="Valor do Contrato"
-                valor={formatCurrency(resumo.totalContrato)}
+                value={formatCurrency(resumo.totalContrato)}
                 icon={DollarSign}
-                color="bg-blue-100 text-blue-700"
+                tone="neutral"
               />
-              <SummaryCard
+              <KPICard
                 label="Total Recebido"
-                valor={formatCurrency(resumo.totalRecebido)}
+                value={formatCurrency(resumo.totalRecebido)}
                 icon={TrendingUp}
-                color="bg-positive/10 text-positive-strong"
+                tone="positive"
                 subtitle={`${resumo.percentualRecebido}% do contrato`}
               />
-              <SummaryCard
+              <KPICard
                 label="Pendente"
-                valor={formatCurrency(resumo.totalPendente)}
+                value={formatCurrency(resumo.totalPendente)}
                 icon={CalendarClock}
-                color="bg-yellow-100 text-yellow-700"
+                tone="warning"
                 subtitle={`${resumo.qtdPendentes} pagamento(s)`}
               />
-              <SummaryCard
+              <KPICard
                 label="Atrasado"
-                valor={formatCurrency(resumo.totalAtrasado)}
+                value={formatCurrency(resumo.totalAtrasado)}
                 icon={AlertTriangle}
-                color={resumo.qtdAtrasados > 0 ? "bg-red-100 text-red-700" : "bg-gray-100 text-gray-500"}
+                tone={resumo.qtdAtrasados > 0 ? "danger" : "neutral"}
                 subtitle={resumo.qtdAtrasados > 0 ? `${resumo.qtdAtrasados} pagamento(s)` : "Nenhum atraso"}
               />
             </div>
@@ -280,7 +254,12 @@ export function PagamentosTab({ projetoId, canEdit }: PagamentosTabProps) {
                   {canEdit && isPendente && (
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" aria-label="Ações do pagamento">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 shrink-0"
+                          aria-label="Ações do pagamento"
+                        >
                           <MoreVertical className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>

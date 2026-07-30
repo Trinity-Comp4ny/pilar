@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
+import { KPICard } from "@/components/KPICard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -285,57 +286,17 @@ export function DisciplinasTab({ projetos, isLoading }: DisciplinasTabProps) {
 
         {/* KPI Cards */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-          <Card className="border-l-4 border-l-green-500">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
-                <CheckCircle2 className="h-3.5 w-3.5 text-positive-strong" />
-                Concluídas
-              </div>
-              <div className="flex items-baseline gap-2">
-                <p className="text-2xl font-bold text-positive-strong">{metrics.concluidas}</p>
-                <p className="text-xs text-muted-foreground">{metrics.progressoPct}%</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="border-l-4 border-l-blue-500">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
-                <Clock className="h-3.5 w-3.5 text-blue-500" />
-                Em Andamento
-              </div>
-              <p className="text-2xl font-bold text-blue-700">{metrics.emAndamento}</p>
-            </CardContent>
-          </Card>
-          <Card className={cn("border-l-4 border-l-yellow-500", metrics.emAtencao > 0 && "bg-yellow-50/40")}>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
-                <Clock className="h-3.5 w-3.5 text-yellow-500" />
-                Atenção
-              </div>
-              <p className="text-2xl font-bold text-yellow-600">{metrics.emAtencao}</p>
-            </CardContent>
-          </Card>
-          <Card className={cn("border-l-4 border-l-red-500", metrics.atrasadas > 0 && "bg-red-50/40")}>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
-                <AlertTriangle className="h-3.5 w-3.5 text-red-500" />
-                Atrasadas
-              </div>
-              <p className="text-2xl font-bold text-red-600">{metrics.atrasadas}</p>
-            </CardContent>
-          </Card>
-          <Card className="border-l-4 border-l-gray-300">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
-                <Layers className="h-3.5 w-3.5 text-muted-foreground" />
-                Total
-              </div>
-              <div className="flex items-baseline gap-2">
-                <p className="text-2xl font-bold">{metrics.total}</p>
-                <p className="text-xs text-muted-foreground">atribuições</p>
-              </div>
-            </CardContent>
-          </Card>
+          <KPICard
+            icon={CheckCircle2}
+            label="Concluídas"
+            value={metrics.concluidas.toString()}
+            tone="positive"
+            subtitle={`${metrics.progressoPct}%`}
+          />
+          <KPICard icon={Clock} label="Em Andamento" value={metrics.emAndamento.toString()} tone="info" />
+          <KPICard icon={Clock} label="Atenção" value={metrics.emAtencao.toString()} tone="warning" />
+          <KPICard icon={AlertTriangle} label="Atrasadas" value={metrics.atrasadas.toString()} tone="danger" />
+          <KPICard icon={Layers} label="Total" value={metrics.total.toString()} tone="neutral" subtitle="atribuições" />
         </div>
       </div>
 

@@ -1,5 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { KPICard } from "@/components/KPICard";
+import type { StatusTone } from "@/lib/status";
 import { Target, TrendingUp, Users, Calendar, Loader2, CheckCircle2, Clock, AlertTriangle } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -61,23 +63,11 @@ export default function MetasDashboard() {
     { name: "Projetos", total: projStats.total, concluidas: projStats.completed, progresso: projStats.avgProgress },
   ];
 
-  const summaryCards = [
-    {
-      label: "Total de Metas",
-      value: stats.total,
-      icon: Target,
-      color: "text-ink",
-      bg: "bg-brand/10",
-    },
-    {
-      label: "Concluídas",
-      value: stats.completed,
-      icon: CheckCircle2,
-      color: "text-positive-strong",
-      bg: "bg-positive/10",
-    },
-    { label: "Progresso Médio", value: `${stats.avgProgress}%`, icon: Clock, color: "text-blue-600", bg: "bg-blue-50" },
-    { label: "Atrasadas", value: stats.overdue, icon: AlertTriangle, color: "text-red-600", bg: "bg-red-50" },
+  const summaryCards: { label: string; value: string; icon: typeof Target; tone: StatusTone }[] = [
+    { label: "Total de Metas", value: stats.total.toString(), icon: Target, tone: "neutral" },
+    { label: "Concluídas", value: stats.completed.toString(), icon: CheckCircle2, tone: "positive" },
+    { label: "Progresso Médio", value: `${stats.avgProgress}%`, icon: Clock, tone: "neutral" },
+    { label: "Atrasadas", value: stats.overdue.toString(), icon: AlertTriangle, tone: "danger" },
   ];
 
   const topMetas = [...allMetas]
@@ -92,24 +82,9 @@ export default function MetasDashboard() {
     <div className="space-y-6">
       {/* Summary Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {summaryCards.map((card) => {
-          const Icon = card.icon;
-          return (
-            <Card key={card.label} className="">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <div className={`p-2 rounded-lg ${card.bg}`}>
-                    <Icon className={`h-5 w-5 ${card.color}`} />
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">{card.label}</p>
-                    <p className="text-2xl font-bold">{card.value}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
+        {summaryCards.map((card) => (
+          <KPICard key={card.label} icon={card.icon} label={card.label} value={card.value} tone={card.tone} />
+        ))}
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6">

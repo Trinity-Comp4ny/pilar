@@ -7,15 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import {
-  Sparkles,
-  FileText,
-  FilePlus2,
-  BadgeDollarSign,
-  Loader2,
-  Clock,
-  ChevronRight,
-} from "lucide-react";
+import { Sparkles, FileText, FilePlus2, BadgeDollarSign, Loader2, Clock, ChevronRight } from "lucide-react";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { toast } from "sonner";
@@ -189,7 +181,7 @@ export default function AiHub() {
 
   return (
     <PageLayout>
-      <PageHeader title="IA Pilar" description="Inteligência artificial aplicada à sua operação">
+      <PageHeader title="IA Pilar">
         <Badge variant="secondary" className="text-xs">
           <Sparkles className="h-3 w-3 mr-1" />
           {usage?.total_requests || 0}/{usage?.limite_requests || 100} consultas

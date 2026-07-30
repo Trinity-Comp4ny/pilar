@@ -102,7 +102,7 @@ export default function Templates() {
   if (isLoading) {
     return (
       <PageLayout>
-        <PageHeader title="Templates de Projeto" description="Modelos reutilizáveis para criação rápida de projetos" />
+        <PageHeader title="Templates de Projeto" />
         <div className="flex items-center justify-center py-12" aria-busy="true" aria-label="Carregando templates">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
@@ -112,7 +112,7 @@ export default function Templates() {
 
   return (
     <PageLayout>
-      <PageHeader title="Templates de Projeto" description="Modelos reutilizáveis para criação rápida de projetos">
+      <PageHeader title="Templates de Projeto">
         {canEdit && (
           <Button onClick={openCreate}>
             <Plus className="h-4 w-4 mr-1" /> Novo Template

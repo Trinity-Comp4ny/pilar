@@ -52,7 +52,7 @@ export default function Billing() {
 
   return (
     <PageLayout>
-      <PageHeader title="Assinatura" description="Plano, cobrança e gerenciamento da assinatura do Pilar." />
+      <PageHeader title="Assinatura" />
 
       {isLoading && (
         <div className="flex items-center justify-center py-20">

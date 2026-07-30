@@ -14,6 +14,13 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  // Pré-otimiza os deps que só entram via import() (exportação de relatórios). Sem
+  // isto, o Vite os descobre em voo no primeiro uso, re-otimiza o cache e troca os
+  // hashes, derrubando outro import dinâmico em andamento ("Failed to fetch
+  // dynamically imported module"). Só afeta o dev server.
+  optimizeDeps: {
+    include: ["jspdf", "jspdf-autotable", "pizzip"],
+  },
   build: {
     rollupOptions: {
       output: {

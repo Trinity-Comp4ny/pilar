@@ -5,14 +5,13 @@ import {
   Calendar,
   Coins,
   FileText,
-  Inbox,
   Loader2,
-  MessageSquare,
   PenLine,
-  ShieldCheck,
   Sparkles,
   Square,
   Wallet,
+  FolderKanban,
+  X,
   type LucideIcon,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -22,7 +21,11 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useRole } from "@/hooks/useRole";
 import { isContractRole } from "@/lib/rbac";
 import { cn } from "@/lib/utils";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAgentInbox } from "@/pages/revisao-ia/useAgentRuns";
+import { useAlertasNaoLidos } from "@/hooks/useAlertas";
 import { RevisaoInbox } from "@/pages/revisao-ia/RevisaoInbox";
 import { useChat } from "./useChat";
 import { LeadConfirmationCard } from "./LeadConfirmationCard";
@@ -39,14 +42,6 @@ const DOMINIOS: { key: string; label: string; icon: LucideIcon; hint: string }[]
   { key: "financeiro", label: "Financeiro", icon: Wallet, hint: "receitas, despesas, lucro, caixa" },
   { key: "projetos", label: "Projetos", icon: Calendar, hint: "status, prazos, projetos ativos" },
   { key: "comercial", label: "Comercial", icon: FileText, hint: "propostas, leads, pipeline" },
-];
-
-/** Sugestões agrupadas por domínio — ensinam o que dá pra perguntar. */
-const SUGESTOES: { dominio: string; texto: string }[] = [
-  { dominio: "financeiro", texto: "Quanto recebi esse mês?" },
-  { dominio: "projetos", texto: "Quantos projetos ativos eu tenho?" },
-  { dominio: "comercial", texto: "Cadastrar lead: João da Construtora X, (11) 99999-0000, indicação" },
-  { dominio: "projetos", texto: "Criar projeto estrutural para a Construtora X, R$ 80 mil" },
 ];
 
 const ICONE_DOMINIO: Record<string, LucideIcon> = {
@@ -70,15 +65,19 @@ export default function ChatPage() {
   const role = useRole();
   const podeRevisar = !isContractRole(role) || role === "owner";
   const [searchParams, setSearchParams] = useSearchParams();
-  const [aba, setAba] = useState<"conversa" | "revisao">(
-    podeRevisar && searchParams.get("tab") === "revisao" ? "revisao" : "conversa"
-  );
+  const [aba, setAba] = useState<"conversa" | "revisao">(() => {
+    if (!podeRevisar) return "conversa";
+    // Inbox-first (spec 007): a mesa de trabalho é a landing; ?tab=conversa força o chat.
+    return searchParams.get("tab") === "conversa" ? "conversa" : "revisao";
+  });
+  // Badge = tudo que espera você: alertas do agente (não lidos) + orçamentos a revisar.
   const { data: pendentes } = useAgentInbox({ enabled: podeRevisar });
-  const totalPendentes = pendentes?.length ?? 0;
+  const { data: alertasNaoLidos = 0 } = useAlertasNaoLidos();
+  const totalPendentes = (pendentes?.length ?? 0) + (podeRevisar ? alertasNaoLidos : 0);
 
   const trocarAba = (nova: "conversa" | "revisao") => {
     setAba(nova);
-    setSearchParams(nova === "revisao" ? { tab: "revisao" } : {}, { replace: true });
+    setSearchParams(nova === "conversa" ? { tab: "conversa" } : {}, { replace: true });
   };
 
   const {
@@ -99,6 +98,23 @@ export default function ChatPage() {
   const [input, setInput] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  // Projeto em foco (spec 007): escopa a conversa a um projeto real do escritório.
+  const [projetoAtivo, setProjetoAtivo] = useState<string | null>(null);
+  const { data: projetos = [] } = useQuery({
+    queryKey: ["chat-projetos-lista"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("projetos")
+        .select("id, codigo_projeto, nome")
+        .order("created_at", { ascending: false })
+        .limit(100);
+      return (data ?? []).map((p) => ({
+        id: p.id as string,
+        label: (p.codigo_projeto as string) || (p.nome as string),
+      }));
+    },
+  });
+
   // Hero do Início (spec 001): chega com a pergunta em location.state.prompt e envia
   // uma vez. O state é limpo em seguida para refresh/back não reenviarem.
   const location = useLocation();
@@ -108,6 +124,7 @@ export default function ChatPage() {
     const prompt = (location.state as { prompt?: string } | null)?.prompt?.trim();
     if (!prompt || promptInicialEnviado.current) return;
     promptInicialEnviado.current = true;
+    setAba("conversa"); // pergunta vinda do Início abre a conversa, não a fila
     send(prompt);
     navigate(`${location.pathname}${location.search}`, { replace: true, state: null });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -139,7 +156,7 @@ export default function ChatPage() {
 
   const handleSend = () => {
     if (!input.trim() || loading) return;
-    send(input);
+    send(input, projetoAtivo ?? undefined);
     setInput("");
   };
 
@@ -159,7 +176,9 @@ export default function ChatPage() {
   const vazio = messages.length === 0;
   const primeiroNome = profile?.first_name || profile?.nome?.split(" ")[0] || null;
   // Header some no herói vazio, mas reaparece na aba Revisão ou quando há pendências.
-  const mostrarHeader = !vazio || aba === "revisao" || (podeRevisar && totalPendentes > 0);
+  // Quem revisa tem o toggle Conversa/Trabalho no header, então ele fica sempre visível
+  // (inclusive no herói vazio). Quem não revisa mantém o herói limpo, sem header.
+  const mostrarHeader = podeRevisar || !vazio || aba === "revisao";
 
   const inputPanel = (
     <InputPanel
@@ -169,6 +188,9 @@ export default function ChatPage() {
       onStop={stop}
       loading={loading}
       autoFocus={vazio}
+      projetos={projetos}
+      projetoAtivo={projetoAtivo}
+      onProjeto={setProjetoAtivo}
     />
   );
 
@@ -180,93 +202,86 @@ export default function ChatPage() {
       {/* Cabeçalho — no herói vazio some para o input virar herói, mas reaparece
           quando a aba Revisão está ativa ou há pendências a mostrar. */}
       {mostrarHeader && (
-        <header className="flex items-center gap-3 border-b border-border px-6 py-3.5">
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand text-ink">
-            <Sparkles className="h-4 w-4" />
-          </span>
+        <header className="relative flex items-center gap-3 border-b border-border px-6 py-3.5">
           <div className="min-w-0 flex-1">
-            <h1 className="text-sm font-semibold leading-none text-foreground">
-              {aba === "revisao" ? "Revisão da IA" : "Agentes"}
-            </h1>
-            <p className="mt-1 text-xs text-muted-foreground">
-              {aba === "revisao"
-                ? "Trabalho gerado por agentes, aguardando sua aprovação"
-                : "Pergunte ou peça uma ação · nada grava sem você confirmar"}
-            </p>
+            <h1 className="text-base font-medium tracking-tight text-foreground">Agentes</h1>
           </div>
 
+          {/* Toggle central Conversa/Trabalho (spec 007, inspirado no ChatGPT Chat/Work). */}
           {podeRevisar && (
-            <div className="inline-flex rounded-full bg-muted p-0.5 text-xs font-medium">
-              <button
-                type="button"
-                onClick={() => trocarAba("conversa")}
-                aria-current={aba === "conversa" ? "page" : undefined}
-                className={cn(
-                  "flex min-h-9 items-center gap-1.5 rounded-full px-3 py-1.5 transition-colors",
-                  aba === "conversa" ? "bg-brand text-ink" : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                <MessageSquare className="h-3.5 w-3.5" />
-                Conversa
-              </button>
-              <button
-                type="button"
-                onClick={() => trocarAba("revisao")}
-                aria-current={aba === "revisao" ? "page" : undefined}
-                className={cn(
-                  "flex min-h-9 items-center gap-1.5 rounded-full px-3 py-1.5 transition-colors",
-                  aba === "revisao" ? "bg-brand text-ink" : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                <Inbox className="h-3.5 w-3.5" />
-                Revisão
-                {totalPendentes > 0 && (
-                  <span className="ml-0.5 rounded-full bg-black/10 px-1.5 py-0.5 text-[10px] leading-none">
-                    {totalPendentes}
-                  </span>
-                )}
-              </button>
+            <div className="shrink-0">
+              <div className="inline-flex rounded-full bg-black/5 p-0.5 text-xs font-medium">
+                <button
+                  type="button"
+                  onClick={() => trocarAba("revisao")}
+                  aria-current={aba === "revisao" ? "page" : undefined}
+                  className={cn(
+                    "flex min-h-8 items-center gap-1.5 rounded-full px-4 py-1.5 transition-colors",
+                    aba === "revisao" ? "bg-brand text-ink" : "text-ink-soft hover:text-ink"
+                  )}
+                >
+                  Trabalho
+                  {totalPendentes > 0 && (
+                    <span className="rounded-full bg-black/10 px-1.5 py-0.5 text-[10px] leading-none">
+                      {totalPendentes}
+                    </span>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => trocarAba("conversa")}
+                  aria-current={aba === "conversa" ? "page" : undefined}
+                  className={cn(
+                    "flex min-h-8 items-center rounded-full px-4 py-1.5 transition-colors",
+                    aba === "conversa" ? "bg-brand text-ink" : "text-ink-soft hover:text-ink"
+                  )}
+                >
+                  Conversa
+                </button>
+              </div>
             </div>
           )}
 
-          {aba === "conversa" && (
-            <>
-              {saldo && (
-                <span
-                  className="flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground"
-                  title={`Créditos de IA restantes este mês (${saldo.usados} de ${saldo.limite} usados)`}
+          <div className="flex flex-1 items-center justify-end gap-2">
+            {aba === "conversa" && (
+              <>
+                {saldo && (
+                  <span
+                    className="hidden lg:flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground"
+                    title={`Créditos de IA restantes este mês (${saldo.usados} de ${saldo.limite} usados)`}
+                  >
+                    <Coins className="h-3.5 w-3.5" />
+                    {saldo.restante} crédito{saldo.restante === 1 ? "" : "s"} restantes
+                  </span>
+                )}
+                {creditosUsados > 0 && (
+                  <span
+                    className="hidden lg:flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground"
+                    title="Créditos de IA debitados nesta conversa"
+                  >
+                    <Coins className="h-3.5 w-3.5" />
+                    {creditosUsados} usado{creditosUsados === 1 ? "" : "s"} agora
+                  </span>
+                )}
+                <button
+                  type="button"
+                  onClick={handleReset}
+                  disabled={loading}
+                  className="flex min-h-11 items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-40"
                 >
-                  <Coins className="h-3.5 w-3.5" />
-                  {saldo.restante} crédito{saldo.restante === 1 ? "" : "s"} restantes
-                </span>
-              )}
-              {creditosUsados > 0 && (
-                <span
-                  className="flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground"
-                  title="Créditos de IA debitados nesta conversa"
-                >
-                  <Coins className="h-3.5 w-3.5" />
-                  {creditosUsados} usado{creditosUsados === 1 ? "" : "s"} agora
-                </span>
-              )}
-              <button
-                type="button"
-                onClick={handleReset}
-                disabled={loading}
-                className="flex min-h-11 items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-40"
-              >
-                <PenLine className="h-3.5 w-3.5" />
-                Nova conversa
-              </button>
-            </>
-          )}
+                  <PenLine className="h-3.5 w-3.5" />
+                  Nova conversa
+                </button>
+              </>
+            )}
+          </div>
         </header>
       )}
 
       {aba === "revisao" ? (
         /* ── Aba Revisão: fila persistente de trabalho aguardando aprovação ── */
         <div className="flex-1 overflow-y-auto px-4 py-6">
-          <div className="mx-auto max-w-2xl">
+          <div className="mx-auto max-w-7xl">
             <RevisaoInbox enabled={podeRevisar} />
           </div>
         </div>
@@ -286,24 +301,6 @@ export default function ChatPage() {
             </div>
 
             {inputPanel}
-
-            {/* Sugestões */}
-            <div className="mt-4 flex flex-wrap justify-center gap-2">
-              {SUGESTOES.map((s) => {
-                const Icon = ICONE_DOMINIO[s.dominio];
-                return (
-                  <button
-                    key={s.texto}
-                    type="button"
-                    onClick={() => send(s.texto)}
-                    className="flex min-h-11 items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-sm text-foreground transition-colors hover:border-brand hover:bg-muted"
-                  >
-                    {Icon && <Icon className="h-3.5 w-3.5 text-muted-foreground" />}
-                    {s.texto}
-                  </button>
-                );
-              })}
-            </div>
           </div>
         </div>
       ) : (
@@ -421,7 +418,7 @@ export default function ChatPage() {
             </div>
           </div>
 
-          <div className="border-t border-border px-4 py-3">
+          <div className="px-4 py-3">
             <div className="relative mx-auto max-w-2xl">
               {mostrarDescer && (
                 <button
@@ -453,6 +450,9 @@ function InputPanel({
   onStop,
   loading,
   autoFocus,
+  projetos,
+  projetoAtivo,
+  onProjeto,
 }: {
   value: string;
   onChange: (v: string) => void;
@@ -460,12 +460,26 @@ function InputPanel({
   onStop: () => void;
   loading: boolean;
   autoFocus?: boolean;
+  projetos: { id: string; label: string }[];
+  projetoAtivo: string | null;
+  onProjeto: (id: string | null) => void;
 }) {
   const podeEnviar = value.trim().length > 0 && !loading;
+  const projetoLabel = projetos.find((p) => p.id === projetoAtivo)?.label;
+  const taRef = useRef<HTMLTextAreaElement>(null);
+
+  // Auto-resize: a caixa cresce com as linhas até ~160px e só então rola (não fica engessada).
+  useEffect(() => {
+    const ta = taRef.current;
+    if (!ta) return;
+    ta.style.height = "auto";
+    ta.style.height = `${Math.min(ta.scrollHeight, 160)}px`;
+  }, [value]);
 
   return (
     <div className="rounded-2xl border border-border bg-card shadow-elegant transition-colors focus-within:border-brand focus-within:ring-2 focus-within:ring-brand/30">
       <textarea
+        ref={taRef}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={(e) => {
@@ -474,17 +488,53 @@ function InputPanel({
             onSend();
           }
         }}
-        placeholder="Pergunte alguma coisa…"
+        placeholder={projetoLabel ? `Pergunte sobre ${projetoLabel}…` : "Pergunte alguma coisa…"}
         aria-label="Mensagem para os agentes"
         rows={1}
         autoFocus={autoFocus}
-        className="max-h-40 min-h-[24px] w-full resize-none bg-transparent px-4 pb-1 pt-3.5 text-[15px] leading-relaxed text-foreground outline-none placeholder:text-muted-foreground"
+        className="max-h-40 min-h-[24px] w-full resize-none overflow-y-auto bg-transparent px-4 pb-1 pt-3.5 text-[15px] leading-relaxed text-foreground outline-none placeholder:text-muted-foreground"
       />
       <div className="flex items-center justify-between gap-2 px-3 pb-2.5 pt-1">
-        <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          <ShieldCheck className="h-3.5 w-3.5" />
-          Nada grava sem você confirmar
-        </span>
+        <div className="flex items-center gap-2 min-w-0">
+          {/* Escolher projeto: escopa a conversa a um projeto real (spec 007). */}
+          {projetoAtivo ? (
+            <span className="flex items-center gap-1.5 rounded-full bg-brand/15 pl-2.5 pr-1 py-1 text-xs text-ink">
+              <FolderKanban className="h-3.5 w-3.5 shrink-0" />
+              <span className="truncate max-w-[160px]">{projetoLabel}</span>
+              <button
+                type="button"
+                onClick={() => onProjeto(null)}
+                aria-label="Remover projeto em foco"
+                className="grid h-5 w-5 shrink-0 place-items-center rounded-full hover:bg-black/10"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </span>
+          ) : (
+            <>
+              <Select value="" onValueChange={(v) => onProjeto(v || null)}>
+                <SelectTrigger className="h-8 w-auto gap-1.5 rounded-full border-black/10 px-3 text-xs text-ink-soft">
+                  <FolderKanban className="h-3.5 w-3.5" />
+                  <SelectValue placeholder="Escolher projeto" />
+                </SelectTrigger>
+                <SelectContent>
+                  {projetos.length === 0 ? (
+                    <div className="px-2 py-1.5 text-xs text-ink-muted">Nenhum projeto</div>
+                  ) : (
+                    projetos.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>
+                        {p.label}
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+              <span className="hidden md:inline text-xs text-ink-muted">
+                escolha um projeto para os agentes focarem nele
+              </span>
+            </>
+          )}
+        </div>
         {loading ? (
           <button
             type="button"

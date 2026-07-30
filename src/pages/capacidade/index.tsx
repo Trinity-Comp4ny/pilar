@@ -5,6 +5,7 @@ import { ChevronLeft, ChevronRight, Loader2, LayoutGrid, AlertTriangle } from "l
 import { useQuery } from "@tanstack/react-query";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
+import { KPICard } from "@/components/KPICard";
 import { EmptyState } from "@/components/EmptyState";
 import { supabase } from "@/integrations/supabase/client";
 import { AlocacaoVsReal } from "./components/AlocacaoVsReal";
@@ -120,31 +121,13 @@ export default function Capacidade() {
 
   return (
     <PageLayout>
-      <PageHeader title="Capacidade" description="Planejamento de capacidade da equipe" />
+      <PageHeader title="Capacidade" />
 
       {/* Métricas */}
       <div className="grid grid-cols-3 gap-4 mb-6">
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground">Equipe</p>
-            <p className="text-xl font-bold">{totalPessoas}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground flex items-center gap-1">
-              <AlertTriangle className="h-3 w-3 text-red-500" />
-              Sobrecarregados
-            </p>
-            <p className="text-xl font-bold text-red-600">{sobrecarregados}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground">Ociosos (semana atual)</p>
-            <p className="text-xl font-bold text-gray-500">{ociosos}</p>
-          </CardContent>
-        </Card>
+        <KPICard label="Equipe" value={totalPessoas.toString()} tone="neutral" />
+        <KPICard icon={AlertTriangle} label="Sobrecarregados" value={sobrecarregados.toString()} tone="danger" />
+        <KPICard label="Ociosos (semana atual)" value={ociosos.toString()} tone="neutral" />
       </div>
 
       {/* Navegação */}

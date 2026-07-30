@@ -9,19 +9,40 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CalendarIcon, Download, Plus, FileBarChart, Filter, X, Columns3 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  CalendarIcon,
+  Download,
+  FileBarChart,
+  Filter,
+  X,
+  Columns3,
+  FileSpreadsheet,
+  FileText,
+  FileDown,
+  ChevronDown,
+  Eye,
+  Wallet,
+  TrendingUp,
+  TrendingDown,
+  FolderKanban,
+  Building2,
+} from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { format, subDays, startOfMonth, endOfMonth, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { PageLayout } from "@/components/PageLayout";
-import { PageHeader } from "@/components/PageHeader";
-import { EmptyState } from "@/components/EmptyState";
-import { usePageTitle } from "@/hooks/usePageTitle";
 import { RelatoriosSummary } from "./relatorios/RelatoriosSummary";
 import { useRelatorioData, parseDDMMYYYY, type ReportRow } from "./relatorios/useRelatorioData";
-import { toCurrency, computeReportTotal, generateCSV, generatePDF } from "./relatorios/relatorioExport";
+import { toCurrency, computeReportTotal, generateCSV, generatePDF, generateXLSX } from "./relatorios/relatorioExport";
 import { applyFilters, computeFilterOptions, type ColumnFilters } from "./relatorios/relatorioFilters";
 
 // recharts é pesado e esta é uma página secundária: só carrega o chunk do
@@ -36,7 +57,10 @@ type RentabilidadeMode = "projeto" | "cliente";
 
 // Cores derivam do registry único (ADR 0008): "Pago" tem a MESMA cor em todas
 // as telas. Mudar tom = src/lib/status.ts.
-const finStatus = (s: string) => ({ label: statusLabel("financeiro", s), className: statusBadgeClasses("financeiro", s) });
+const finStatus = (s: string) => ({
+  label: statusLabel("financeiro", s),
+  className: statusBadgeClasses("financeiro", s),
+});
 
 const statusConfig: Record<string, { label: string; className: string }> = {
   Pendente: finStatus("Pendente"),
@@ -52,7 +76,6 @@ const tipoConfig: Record<string, { className: string }> = {
 };
 
 export default function Relatorios() {
-  usePageTitle("Relatórios");
   const [tipoRelatorio, setTipoRelatorio] = useState("");
   const [periodoPreset, setPeriodoPreset] = useState<"7d" | "30d" | "this_month" | "last_month" | "all" | "custom">(
     "all"
@@ -216,30 +239,40 @@ export default function Relatorios() {
     }
   };
 
-  const getSuggestedTitle = () => {
-    const base = getReportTypeLabel(tipoRelatorio);
+  const getSuggestedTitle = (tipo: string) => {
+    const base = getReportTypeLabel(tipo);
     const period = `${dateFrom ? format(dateFrom, "dd/MM/yyyy") : "Início"} a ${dateTo ? format(dateTo, "dd/MM/yyyy") : "Fim"}`;
     return `${base} • ${period}`;
   };
 
-  const handleGerarRelatorio = async () => {
-    if (!tipoRelatorio) {
-      toast.error("Campos obrigatórios", { description: "Selecione o tipo de relatório" });
+  // Gera a PRÉVIA do relatório na tela (tabela + resumo). Não baixa nada: o
+  // download é o passo seguinte, no botão Exportar.
+  const gerarRelatorio = async (tipo: string) => {
+    if (!tipo) {
+      toast.error("Selecione um tipo", { description: "Escolha o tipo de relatório para ver a prévia." });
       return;
     }
 
     // Rentabilidade tem fluxo próprio (componente com react-query): não passa
     // pelo pipeline financeiro de receitas/despesas.
-    if (isRentabilidade) {
+    if (tipo === "rentabilidade_projeto" || tipo === "rentabilidade_cliente") {
       clearReport();
-      setRentabilidadeMode(tipoRelatorio === "rentabilidade_cliente" ? "cliente" : "projeto");
+      setRentabilidadeMode(tipo === "rentabilidade_cliente" ? "cliente" : "projeto");
       return;
     }
 
     setRentabilidadeMode(null);
     clearAllFilters();
 
-    await generateReport({ tipoRelatorio, dateFrom, dateTo, title: getSuggestedTitle() });
+    await generateReport({ tipoRelatorio: tipo, dateFrom, dateTo, title: getSuggestedTitle(tipo) });
+  };
+
+  const handleGerarRelatorio = () => gerarRelatorio(tipoRelatorio);
+
+  // Card do estado inicial: seleciona o tipo e já mostra a prévia, num clique.
+  const escolherTipo = (tipo: string) => {
+    setTipoRelatorio(tipo);
+    void gerarRelatorio(tipo);
   };
 
   const applyPreset = (preset: "7d" | "this_month" | "last_month" | "30d" | "all" | "custom") => {
@@ -273,7 +306,7 @@ export default function Relatorios() {
     }
   };
 
-  const handleExport = async (formatType: "csv" | "pdf") => {
+  const handleExport = async (formatType: "csv" | "xlsx" | "pdf") => {
     if (!filteredData.length) {
       toast.error("Sem dados", { description: "Gere um relatório antes de exportar." });
       return;
@@ -288,6 +321,8 @@ export default function Relatorios() {
 
       if (formatType === "csv") {
         generateCSV(filteredData, columns, filename);
+      } else if (formatType === "xlsx") {
+        await generateXLSX(filteredData, columns, filename);
       } else {
         await generatePDF(filteredData, columns, { title: titleForPdf, filename, dateFrom, dateTo });
       }
@@ -303,11 +338,41 @@ export default function Relatorios() {
   };
 
   const tiposRelatorio = [
-    { value: "financeiro", label: "Financeiro (Receitas e Despesas)" },
-    { value: "receitas", label: "Receitas" },
-    { value: "despesas", label: "Despesas" },
-    { value: "rentabilidade_projeto", label: "Rentabilidade por projeto" },
-    { value: "rentabilidade_cliente", label: "Rentabilidade por cliente" },
+    {
+      value: "financeiro",
+      label: "Financeiro (Receitas e Despesas)",
+      cardLabel: "Financeiro",
+      icon: Wallet,
+      hint: "Receitas e despesas do período, com saldo",
+    },
+    {
+      value: "receitas",
+      label: "Receitas",
+      cardLabel: "Receitas",
+      icon: TrendingUp,
+      hint: "Só as entradas do período",
+    },
+    {
+      value: "despesas",
+      label: "Despesas",
+      cardLabel: "Despesas",
+      icon: TrendingDown,
+      hint: "Só as saídas do período",
+    },
+    {
+      value: "rentabilidade_projeto",
+      label: "Rentabilidade por projeto",
+      cardLabel: "Rentabilidade por projeto",
+      icon: FolderKanban,
+      hint: "Margem de cada projeto",
+    },
+    {
+      value: "rentabilidade_cliente",
+      label: "Rentabilidade por cliente",
+      cardLabel: "Rentabilidade por cliente",
+      icon: Building2,
+      hint: "Margem por cliente",
+    },
   ];
 
   // --- Render helpers ---
@@ -348,11 +413,34 @@ export default function Relatorios() {
   );
 
   const renderEmptyState = () => (
-    <EmptyState
-      icon={FileBarChart}
-      title="Nenhum relatório gerado"
-      description='Selecione o tipo e período acima, depois clique em "Gerar relatório".'
-    />
+    <div className="flex flex-col items-center text-center py-6 px-4">
+      <div className="mb-3 rounded-full bg-brand/15 p-3">
+        <FileBarChart className="h-6 w-6 text-ink" aria-hidden />
+      </div>
+      <h3 className="text-base font-semibold text-ink mb-1">Escolha um relatório para começar</h3>
+      <p className="text-sm text-muted-foreground max-w-md mb-6">
+        Clique num tipo para ver a prévia na tela. Depois você exporta em Excel, CSV ou PDF.
+      </p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 w-full max-w-3xl">
+        {tiposRelatorio.map((t) => {
+          const Icon = t.icon;
+          return (
+            <button
+              key={t.value}
+              type="button"
+              onClick={() => escolherTipo(t.value)}
+              className="group flex flex-col items-start gap-2 rounded-2xl border border-black/5 bg-white p-4 text-left transition-all hover:border-brand hover:bg-brand/5 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+            >
+              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-brand/15 text-ink transition-colors group-hover:bg-brand">
+                <Icon size={17} strokeWidth={1.7} />
+              </span>
+              <span className="text-sm font-medium text-ink">{t.cardLabel}</span>
+              <span className="text-xs text-muted-foreground leading-snug">{t.hint}</span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
   );
 
   const renderStatusBadge = (status: string) => {
@@ -399,311 +487,308 @@ export default function Relatorios() {
   );
 
   return (
-    <PageLayout
-      containerClassName="h-full flex flex-col min-h-0"
-      header={<PageHeader title="Relatórios" description="Monte, visualize e exporte relatórios financeiros" />}
-    >
-      <div className="flex-1 overflow-y-auto flex flex-col gap-5 pb-6">
-        {/* ═══ Barra de parâmetros ═══ */}
-        <Card className="rounded-2xl border border-black/5 bg-white shrink-0">
-          <CardContent className="p-5 space-y-4">
-            {/* Linha 1: Tipo + Período + Botão */}
-            <div className="flex flex-wrap gap-4 items-end">
-              {/* Tipo */}
-              <div className="space-y-1.5 w-56 shrink-0">
-                <Label className="text-xs font-medium text-muted-foreground">Tipo de relatório</Label>
-                <Select
-                  value={tipoRelatorio}
-                  onValueChange={(v) => {
-                    setTipoRelatorio(v);
-                    setRentabilidadeMode(null);
-                  }}
-                >
+    <div className="flex flex-col gap-5">
+      {/* ═══ Barra de parâmetros ═══ */}
+      <Card className="rounded-2xl border border-black/5 bg-white shrink-0">
+        <CardContent className="p-5 space-y-4">
+          {/* Linha 1: Tipo + Período + Botão */}
+          <div className="flex flex-wrap gap-4 items-end">
+            {/* Tipo */}
+            <div className="space-y-1.5 w-56 shrink-0">
+              <Label className="text-xs font-medium text-muted-foreground">Tipo de relatório</Label>
+              <Select
+                value={tipoRelatorio}
+                onValueChange={(v) => {
+                  setTipoRelatorio(v);
+                  setRentabilidadeMode(null);
+                }}
+              >
+                <SelectTrigger className="h-9 bg-white">
+                  <SelectValue placeholder="Selecione o tipo" />
+                </SelectTrigger>
+                <SelectContent>
+                  {tiposRelatorio.map((tipo) => (
+                    <SelectItem key={tipo.value} value={tipo.value}>
+                      {tipo.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Período (não se aplica a rentabilidade, que é acumulada por projeto) */}
+            {!isRentabilidade && (
+              <div className="space-y-1.5 xl:w-48 shrink-0">
+                <Label className="text-xs font-medium text-muted-foreground">Período</Label>
+                <Select value={periodoPreset} onValueChange={(v) => applyPreset(v as typeof periodoPreset)}>
                   <SelectTrigger className="h-9 bg-white">
-                    <SelectValue placeholder="Selecione o tipo" />
+                    <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {tiposRelatorio.map((tipo) => (
-                      <SelectItem key={tipo.value} value={tipo.value}>
-                        {tipo.label}
-                      </SelectItem>
-                    ))}
+                    <SelectItem value="7d">Últimos 7 dias</SelectItem>
+                    <SelectItem value="30d">Últimos 30 dias</SelectItem>
+                    <SelectItem value="this_month">Mês atual</SelectItem>
+                    <SelectItem value="last_month">Mês anterior</SelectItem>
+                    <SelectItem value="all">Todos</SelectItem>
+                    <SelectItem value="custom">Personalizado</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-
-              {/* Período (não se aplica a rentabilidade, que é acumulada por projeto) */}
-              {!isRentabilidade && (
-                <div className="space-y-1.5 xl:w-48 shrink-0">
-                  <Label className="text-xs font-medium text-muted-foreground">Período</Label>
-                  <Select value={periodoPreset} onValueChange={(v) => applyPreset(v as typeof periodoPreset)}>
-                    <SelectTrigger className="h-9 bg-white">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="7d">Últimos 7 dias</SelectItem>
-                      <SelectItem value="30d">Últimos 30 dias</SelectItem>
-                      <SelectItem value="this_month">Mês atual</SelectItem>
-                      <SelectItem value="last_month">Mês anterior</SelectItem>
-                      <SelectItem value="all">Todos</SelectItem>
-                      <SelectItem value="custom">Personalizado</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-
-              {/* Datas customizadas (só aparecem quando "Personalizado") */}
-              {!isRentabilidade && periodoPreset === "custom" && (
-                <div className="flex items-end gap-1.5">
-                  <div className="space-y-1.5">
-                    <Label className="text-xs font-medium text-muted-foreground">De</Label>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className={cn(
-                            "h-9 text-xs gap-1.5 w-[130px] justify-start",
-                            !dateFrom && "text-muted-foreground"
-                          )}
-                        >
-                          <CalendarIcon className="h-3.5 w-3.5" />
-                          {dateFrom ? format(dateFrom, "dd/MM/yyyy") : "Início"}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={dateFrom}
-                          onSelect={setDateFrom}
-                          initialFocus
-                          className="p-3 pointer-events-auto"
-                        />
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-                  <span className="text-xs text-muted-foreground pb-2">até</span>
-                  <div className="space-y-1.5">
-                    <Label className="text-xs font-medium text-muted-foreground">Até</Label>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className={cn(
-                            "h-9 text-xs gap-1.5 w-[130px] justify-start",
-                            !dateTo && "text-muted-foreground"
-                          )}
-                        >
-                          <CalendarIcon className="h-3.5 w-3.5" />
-                          {dateTo ? format(dateTo, "dd/MM/yyyy") : "Fim"}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={dateTo}
-                          onSelect={setDateTo}
-                          initialFocus
-                          className="p-3 pointer-events-auto"
-                        />
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-                </div>
-              )}
-
-              {/* Botão gerar */}
-              <Button onClick={handleGerarRelatorio} variant="brand" className="h-9 px-5 shrink-0" disabled={isLoading}>
-                <Plus className="mr-1.5 h-4 w-4" />
-                {isLoading ? "Gerando..." : "Gerar relatório"}
-              </Button>
-            </div>
-
-            {/* Linha 2: Filtros de coluna (aparecem após gerar) */}
-            {reportData.length > 0 && (
-              <div className="flex flex-col sm:flex-row sm:items-center gap-3 pt-3 border-t border-black/5">
-                <div className="flex items-center gap-2 text-xs font-medium text-black/50 shrink-0">
-                  <Filter size={13} />
-                  Filtrar por:
-                </div>
-                <div className="flex-1 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
-                  {renderFilterSelect(filterCategoria, setFilterCategoria, filterOptions.categorias, "Categoria")}
-                  {renderFilterSelect(filterCliente, setFilterCliente, filterOptions.clientes, "Cliente / Fornecedor")}
-                  {renderFilterSelect(filterStatus, setFilterStatus, filterOptions.status, "Status")}
-                  {renderFilterSelect(filterProjeto, setFilterProjeto, filterOptions.projetos, "Projeto")}
-                  {renderFilterSelect(filterConta, setFilterConta, filterOptions.contas, "Conta")}
-                </div>
-                {hasActiveFilters && (
-                  <Button variant="ghost" size="sm" onClick={clearAllFilters} className="h-8 text-xs gap-1 shrink-0">
-                    <X size={12} />
-                    Limpar
-                  </Button>
-                )}
-              </div>
             )}
-          </CardContent>
-        </Card>
 
-        {/* ═══ Resultado ═══ */}
-        <div className="flex flex-col gap-5">
-          {rentabilidadeMode ? (
-            <Suspense fallback={renderLoadingSkeleton()}>
-              <RelatoriosRentabilidade modo={rentabilidadeMode} />
-            </Suspense>
-          ) : isLoading ? (
-            renderLoadingSkeleton()
-          ) : reportData.length === 0 ? (
-            renderEmptyState()
-          ) : (
-            <>
-              {/* Resumo + Gráfico lado a lado */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 shrink-0">
-                <div className="lg:col-span-1 flex flex-col gap-3">{renderSummaryCards()}</div>
-                <div className="lg:col-span-2">
-                  {renderChart() ?? (
-                    <div className="flex items-center justify-center h-full rounded-xl border border-black/5 bg-white text-sm text-black/30">
-                      Dados insuficientes para gráfico
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Header da tabela com badge + export */}
-              <div className="flex items-center justify-between shrink-0">
-                <div className="flex items-center gap-3">
-                  <h3 className="text-sm font-medium text-muted-foreground">Registros</h3>
-                  <Badge variant="secondary" className="text-xs">
-                    {filteredData.length} {hasActiveFilters ? `de ${reportData.length}` : ""}
-                  </Badge>
-                </div>
-                <div className="flex items-center gap-2">
+            {/* Datas customizadas (só aparecem quando "Personalizado") */}
+            {!isRentabilidade && periodoPreset === "custom" && (
+              <div className="flex items-end gap-1.5">
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium text-muted-foreground">De</Label>
                   <Popover>
                     <PopoverTrigger asChild>
-                      <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5">
-                        <Columns3 size={13} />
-                        Colunas
-                        {visibleColumns.size < ALL_COLUMNS.length && (
-                          <span className="text-[10px] bg-foreground text-background rounded-full px-1.5 py-0.5 min-w-[18px] tabular-nums">
-                            {visibleColumns.size}
-                          </span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className={cn(
+                          "h-9 text-xs gap-1.5 w-[130px] justify-start",
+                          !dateFrom && "text-muted-foreground"
                         )}
+                      >
+                        <CalendarIcon className="h-3.5 w-3.5" />
+                        {dateFrom ? format(dateFrom, "dd/MM/yyyy") : "Início"}
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-52 p-2" align="end">
-                      <div className="space-y-1">
-                        <div className="flex items-center justify-between px-1 pb-1 border-b mb-1">
-                          <span className="text-xs font-medium text-muted-foreground">Colunas visíveis</span>
-                          <button
-                            onClick={() => {
-                              setVisibleColumns(new Set(ALL_COLUMNS));
-                              localStorage.setItem("relatorios.columns", JSON.stringify(ALL_COLUMNS));
-                            }}
-                            className="text-[10px] text-muted-foreground hover:text-foreground underline underline-offset-1"
-                          >
-                            Todas
-                          </button>
-                        </div>
-                        {ALL_COLUMNS.map((col) => (
-                          <label
-                            key={col}
-                            className="flex items-center gap-2 px-1 py-0.5 rounded hover:bg-muted cursor-pointer"
-                          >
-                            <Checkbox
-                              checked={visibleColumns.has(col)}
-                              onCheckedChange={() => toggleColumn(col)}
-                              className="h-3.5 w-3.5"
-                            />
-                            <span className="text-xs">{col}</span>
-                          </label>
-                        ))}
-                      </div>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={dateFrom}
+                        onSelect={setDateFrom}
+                        initialFocus
+                        className="p-3 pointer-events-auto"
+                      />
                     </PopoverContent>
                   </Popover>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-8 text-xs gap-1.5"
-                    onClick={() => handleExport("csv")}
-                    disabled={!filteredData.length}
-                  >
-                    <Download size={13} />
-                    CSV
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="brand"
-                    className="h-8 text-xs gap-1.5"
-                    onClick={() => handleExport("pdf")}
-                    disabled={!filteredData.length}
-                  >
-                    <Download size={13} />
-                    PDF
-                  </Button>
+                </div>
+                <span className="text-xs text-muted-foreground pb-2">até</span>
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium text-muted-foreground">Até</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className={cn(
+                          "h-9 text-xs gap-1.5 w-[130px] justify-start",
+                          !dateTo && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="h-3.5 w-3.5" />
+                        {dateTo ? format(dateTo, "dd/MM/yyyy") : "Fim"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={dateTo}
+                        onSelect={setDateTo}
+                        initialFocus
+                        className="p-3 pointer-events-auto"
+                      />
+                    </PopoverContent>
+                  </Popover>
                 </div>
               </div>
+            )}
 
-              {/* Tabela */}
-              <div
-                className="flex-1 min-h-0 w-full overflow-auto border rounded-xl bg-white"
-                style={{ minHeight: "320px" }}
-              >
-                {(() => {
-                  const cols = ALL_COLUMNS.filter((c) => visibleColumns.has(c));
-                  const valorIdx = cols.indexOf("Valor");
-                  const footerTotal = computeReportTotal(filteredData);
-                  return (
-                    <Table>
-                      <TableHeader>
+            {/* Botão gerar prévia (não baixa; exportar é passo separado) */}
+            <Button onClick={handleGerarRelatorio} variant="brand" className="h-9 px-5 shrink-0" disabled={isLoading}>
+              <Eye className="mr-1.5 h-4 w-4" />
+              {isLoading ? "Gerando..." : "Gerar prévia"}
+            </Button>
+          </div>
+
+          {/* Linha 2: Filtros de coluna (aparecem após gerar) */}
+          {reportData.length > 0 && (
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 pt-3 border-t border-black/5">
+              <div className="flex items-center gap-2 text-xs font-medium text-black/50 shrink-0">
+                <Filter size={13} />
+                Filtrar por:
+              </div>
+              <div className="flex-1 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+                {renderFilterSelect(filterCategoria, setFilterCategoria, filterOptions.categorias, "Categoria")}
+                {renderFilterSelect(filterCliente, setFilterCliente, filterOptions.clientes, "Cliente / Fornecedor")}
+                {renderFilterSelect(filterStatus, setFilterStatus, filterOptions.status, "Status")}
+                {renderFilterSelect(filterProjeto, setFilterProjeto, filterOptions.projetos, "Projeto")}
+                {renderFilterSelect(filterConta, setFilterConta, filterOptions.contas, "Conta")}
+              </div>
+              {hasActiveFilters && (
+                <Button variant="ghost" size="sm" onClick={clearAllFilters} className="h-8 text-xs gap-1 shrink-0">
+                  <X size={12} />
+                  Limpar
+                </Button>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* ═══ Resultado ═══ */}
+      <div className="flex flex-col gap-5">
+        {rentabilidadeMode ? (
+          <Suspense fallback={renderLoadingSkeleton()}>
+            <RelatoriosRentabilidade modo={rentabilidadeMode} />
+          </Suspense>
+        ) : isLoading ? (
+          renderLoadingSkeleton()
+        ) : reportData.length === 0 ? (
+          renderEmptyState()
+        ) : (
+          <>
+            {/* Resumo + Gráfico lado a lado */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 shrink-0">
+              <div className="lg:col-span-1 flex flex-col gap-3">{renderSummaryCards()}</div>
+              <div className="lg:col-span-2">
+                {renderChart() ?? (
+                  <div className="flex items-center justify-center h-full rounded-xl border border-black/5 bg-white text-sm text-black/30">
+                    Dados insuficientes para gráfico
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Header da tabela com badge + export */}
+            <div className="flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-3">
+                <h3 className="text-sm font-medium text-muted-foreground">Registros</h3>
+                <Badge variant="secondary" className="text-xs">
+                  {filteredData.length} {hasActiveFilters ? `de ${reportData.length}` : ""}
+                </Badge>
+              </div>
+              <div className="flex items-center gap-2">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5">
+                      <Columns3 size={13} />
+                      Colunas
+                      {visibleColumns.size < ALL_COLUMNS.length && (
+                        <span className="text-[10px] bg-brand text-ink rounded-full px-1.5 py-0.5 min-w-[18px] tabular-nums">
+                          {visibleColumns.size}
+                        </span>
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-52 p-2" align="end">
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between px-1 pb-1 border-b mb-1">
+                        <span className="text-xs font-medium text-muted-foreground">Colunas visíveis</span>
+                        <button
+                          onClick={() => {
+                            setVisibleColumns(new Set(ALL_COLUMNS));
+                            localStorage.setItem("relatorios.columns", JSON.stringify(ALL_COLUMNS));
+                          }}
+                          className="text-[10px] text-muted-foreground hover:text-foreground underline underline-offset-1"
+                        >
+                          Todas
+                        </button>
+                      </div>
+                      {ALL_COLUMNS.map((col) => (
+                        <label
+                          key={col}
+                          className="flex items-center gap-2 px-1 py-0.5 rounded hover:bg-brand/10 cursor-pointer"
+                        >
+                          <Checkbox
+                            checked={visibleColumns.has(col)}
+                            onCheckedChange={() => toggleColumn(col)}
+                            className="h-3.5 w-3.5 data-[state=checked]:bg-brand data-[state=checked]:text-ink data-[state=checked]:border-brand"
+                          />
+                          <span className="text-xs">{col}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </PopoverContent>
+                </Popover>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button size="sm" variant="brand" className="h-8 text-xs gap-1.5" disabled={!filteredData.length}>
+                      <Download size={13} />
+                      Exportar
+                      <ChevronDown size={13} className="opacity-70" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="min-w-[176px]">
+                    <DropdownMenuLabel className="text-xs text-muted-foreground">Baixar como</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => handleExport("xlsx")} className="text-sm">
+                      <FileSpreadsheet size={14} className="mr-2" />
+                      Excel (.xlsx)
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleExport("csv")} className="text-sm">
+                      <FileText size={14} className="mr-2" />
+                      CSV
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleExport("pdf")} className="text-sm">
+                      <FileDown size={14} className="mr-2" />
+                      PDF
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            </div>
+
+            {/* Tabela */}
+            <div
+              className="w-full overflow-auto border rounded-xl bg-white max-h-[60vh]"
+              style={{ minHeight: "320px" }}
+            >
+              {(() => {
+                const cols = ALL_COLUMNS.filter((c) => visibleColumns.has(c));
+                const valorIdx = cols.indexOf("Valor");
+                const footerTotal = computeReportTotal(filteredData);
+                return (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        {cols.map((key) => (
+                          <TableHead key={key} className="whitespace-nowrap text-xs sticky top-0 z-10 bg-white">
+                            {key}
+                          </TableHead>
+                        ))}
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredData.length === 0 ? (
                         <TableRow>
-                          {cols.map((key) => (
-                            <TableHead key={key} className="whitespace-nowrap text-xs sticky top-0 z-10 bg-white">
-                              {key}
-                            </TableHead>
-                          ))}
+                          <TableCell colSpan={cols.length} className="text-center py-10 text-muted-foreground text-sm">
+                            Nenhum registro encontrado com os filtros aplicados.
+                          </TableCell>
                         </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {filteredData.length === 0 ? (
-                          <TableRow>
-                            <TableCell
-                              colSpan={cols.length}
-                              className="text-center py-10 text-muted-foreground text-sm"
-                            >
-                              Nenhum registro encontrado com os filtros aplicados.
-                            </TableCell>
-                          </TableRow>
-                        ) : (
-                          filteredData.map((row, idx) => (
-                            <TableRow key={idx}>
-                              {cols.map((key) => (
-                                <TableCell key={key} className="align-top whitespace-nowrap text-xs">
-                                  {renderCellValue(key, row[key as keyof ReportRow])}
-                                </TableCell>
-                              ))}
-                            </TableRow>
-                          ))
-                        )}
-                      </TableBody>
-                      {filteredData.length > 0 && valorIdx >= 0 && (
-                        <TableFooter>
-                          <TableRow className="bg-black/[0.02] font-semibold">
-                            {cols.map((key, i) => (
-                              <TableCell key={key} className="text-xs">
-                                {i === 0 ? footerTotal.label : i === valorIdx ? toCurrency(footerTotal.value) : ""}
+                      ) : (
+                        filteredData.map((row, idx) => (
+                          <TableRow key={idx}>
+                            {cols.map((key) => (
+                              <TableCell key={key} className="align-top whitespace-nowrap text-xs">
+                                {renderCellValue(key, row[key as keyof ReportRow])}
                               </TableCell>
                             ))}
                           </TableRow>
-                        </TableFooter>
+                        ))
                       )}
-                    </Table>
-                  );
-                })()}
-              </div>
-            </>
-          )}
-        </div>
+                    </TableBody>
+                    {filteredData.length > 0 && valorIdx >= 0 && (
+                      <TableFooter>
+                        <TableRow className="bg-black/[0.02] font-semibold">
+                          {cols.map((key, i) => (
+                            <TableCell key={key} className="text-xs">
+                              {i === 0 ? footerTotal.label : i === valorIdx ? toCurrency(footerTotal.value) : ""}
+                            </TableCell>
+                          ))}
+                        </TableRow>
+                      </TableFooter>
+                    )}
+                  </Table>
+                );
+              })()}
+            </div>
+          </>
+        )}
       </div>
-    </PageLayout>
+    </div>
   );
 }

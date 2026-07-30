@@ -277,7 +277,8 @@ async function enviarStream(
     setSessionId: (id: string) => void;
     setSaldo: (s: Saldo) => void;
     aplicarResposta: (res: ChatResponse) => void;
-  }
+  },
+  projetoId?: string
 ): Promise<void> {
   const {
     data: { session },
@@ -295,7 +296,7 @@ async function enviarStream(
         apikey: SUPABASE_ANON_KEY,
         Accept: "text/event-stream",
       },
-      body: JSON.stringify({ message, sessionId }),
+      body: JSON.stringify({ message, sessionId, projetoId }),
       signal,
     });
   } catch (e) {
@@ -459,7 +460,7 @@ export function useChat() {
   }, []);
 
   const send = useCallback(
-    async (raw: string) => {
+    async (raw: string, projetoId?: string) => {
       const message = raw.trim();
       if (!message || loading) return;
 
@@ -528,18 +529,19 @@ export function useChat() {
       };
 
       try {
-        await enviarStream(message, sessionId, controller.signal, {
-          setMessages,
-          setSessionId,
-          setSaldo,
-          aplicarResposta,
-        });
+        await enviarStream(
+          message,
+          sessionId,
+          controller.signal,
+          { setMessages, setSessionId, setSaldo, aplicarResposta },
+          projetoId
+        );
       } catch (e) {
         // SSE indisponível → cai no fluxo buffered atual (functions.invoke, sem streaming).
         if (e instanceof StreamIndisponivel && !canceladoRef.current) {
           try {
             const { data, error } = await supabase.functions.invoke("ai-chat", {
-              body: { message, sessionId },
+              body: { message, sessionId, projetoId },
               signal: controller.signal,
             });
             if (error) throw error;

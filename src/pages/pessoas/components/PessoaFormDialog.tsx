@@ -680,12 +680,16 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
                     <Label className="text-[10px] uppercase text-muted-foreground tracking-wider">
                       Contas Bancárias
                     </Label>
-                    <span className="text-[10px] text-muted-foreground">Para pagamento</span>
+                    <span className="text-[10px] text-muted-foreground">Opcional</span>
                   </div>
+                  <p className="text-xs text-muted-foreground">
+                    Você pode salvar sem preencher e adicionar a conta depois. Se for cadastrar uma conta, precisa de
+                    banco, agência e número.
+                  </p>
 
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
                     <div className="space-y-1">
-                      <Label className="text-xs">Banco *</Label>
+                      <Label className="text-xs">Banco</Label>
                       <Input
                         placeholder="Nome do banco"
                         value={newConta.banco}
@@ -693,7 +697,7 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
                       />
                     </div>
                     <div className="space-y-1">
-                      <Label className="text-xs">Agência *</Label>
+                      <Label className="text-xs">Agência</Label>
                       <Input
                         placeholder="0000"
                         value={newConta.agencia}
@@ -701,7 +705,7 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
                       />
                     </div>
                     <div className="space-y-1">
-                      <Label className="text-xs">Conta *</Label>
+                      <Label className="text-xs">Conta</Label>
                       <Input
                         placeholder="000000-0"
                         value={newConta.conta}

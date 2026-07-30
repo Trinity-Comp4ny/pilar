@@ -1,0 +1,248 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { toPrioridade, type Prioridade, type StatusBucket } from "./status";
+import type { LinkItem } from "@/components/LinksEditor";
+import type { Json, TablesUpdate } from "@/integrations/supabase/types";
+
+export type PessoaOpcao = { id: string; nome: string };
+
+/** Comentário estruturado da tarefa (spec 013). */
+export type Comentario = { id: string; texto: string; autor: string; data: string };
+
+export type DisciplinaItem = {
+  id: string;
+  titulo: string;
+  status_bucket: StatusBucket;
+  status_raw: string | null;
+  prioridade: Prioridade;
+  prazo: string | null;
+  projeto_id: string;
+  projeto_nome: string;
+  responsavel_id: string | null;
+  responsavel_nome: string | null;
+  labels: string[];
+  links: LinkItem[];
+};
+
+export type TarefaItem = {
+  id: string;
+  titulo: string;
+  descricao: string | null;
+  status: StatusBucket;
+  prioridade: Prioridade;
+  responsavel_id: string | null;
+  projeto_id: string | null;
+  etapa_id: string | null;
+  prazo: string | null;
+  horas_estimadas: number | null;
+  labels: string[];
+  links: LinkItem[];
+  comentarios: Comentario[];
+  projeto: { id: string; nome: string } | null;
+};
+
+export type TarefaInput = {
+  titulo: string;
+  descricao?: string | null;
+  status: StatusBucket;
+  prioridade?: Prioridade;
+  responsavel_id?: string | null;
+  projeto_id?: string | null;
+  etapa_id?: string | null;
+  prazo?: string | null;
+  horas_estimadas?: number | null;
+  labels?: string[];
+  links?: LinkItem[];
+  comentarios?: Comentario[];
+};
+
+const KEY = {
+  minhaPessoa: (userId?: string) => ["meu-trabalho", "minha-pessoa", userId] as const,
+  pessoas: ["meu-trabalho", "pessoas"] as const,
+  disciplinas: (pessoaId: string | null) => ["meu-trabalho", "disciplinas", pessoaId] as const,
+  tarefas: (pessoaId: string | null) => ["meu-trabalho", "tarefas", pessoaId] as const,
+};
+
+/** Pessoa vinculada ao usuário logado (profile_id = auth.uid()). */
+export function useMinhaPessoa() {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: KEY.minhaPessoa(user?.id),
+    enabled: !!user?.id,
+    staleTime: 10 * 60 * 1000,
+    queryFn: async (): Promise<PessoaOpcao | null> => {
+      const { data, error } = await supabase
+        .from("pessoas")
+        .select("id, nome")
+        .eq("profile_id", user!.id)
+        .is("deleted_at", null)
+        .maybeSingle();
+      if (error) throw error;
+      return data ?? null;
+    },
+  });
+}
+
+/** Projetos da empresa (id + nome) para vincular numa tarefa. RLS escopa. */
+export function useProjetosLite() {
+  return useQuery({
+    queryKey: ["meu-trabalho", "projetos-lite"],
+    staleTime: 10 * 60 * 1000,
+    queryFn: async (): Promise<PessoaOpcao[]> => {
+      const { data, error } = await supabase.from("projetos").select("id, nome").order("nome");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+}
+
+/** Pessoas da empresa, para o filtro. RLS já escopa por empresa. */
+export function usePessoasEmpresa() {
+  return useQuery({
+    queryKey: KEY.pessoas,
+    staleTime: 10 * 60 * 1000,
+    queryFn: async (): Promise<PessoaOpcao[]> => {
+      const { data, error } = await supabase.from("pessoas").select("id, nome").is("deleted_at", null).order("nome");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+}
+
+/**
+ * Disciplinas sob responsabilidade da pessoa (aba Projetos).
+ * pessoaId null = pessoa do usuário logado (a RPC resolve o default).
+ */
+export function useDisciplinas(pessoaId: string | null, options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: KEY.disciplinas(pessoaId),
+    enabled: options?.enabled ?? true,
+    staleTime: 2 * 60 * 1000,
+    queryFn: async (): Promise<DisciplinaItem[]> => {
+      const { data, error } = await supabase.rpc("get_minhas_disciplinas", {
+        p_pessoa_id: pessoaId ?? undefined,
+      });
+      if (error) throw error;
+      return (data ?? []).map((d) => ({
+        id: d.id,
+        titulo: d.titulo,
+        status_bucket: d.status_bucket as StatusBucket,
+        status_raw: d.status_raw,
+        prioridade: toPrioridade(d.prioridade),
+        prazo: d.prazo,
+        projeto_id: d.projeto_id,
+        projeto_nome: d.projeto_nome,
+        responsavel_id: d.responsavel_id ?? null,
+        responsavel_nome: d.responsavel_nome ?? null,
+        labels: d.labels ?? [],
+        links: (d.links as unknown as LinkItem[]) ?? [],
+      }));
+    },
+  });
+}
+
+/** Grava o status canônico de uma disciplina a partir do balde de UI (D2). */
+export function useSetDisciplinaStatus() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ disciplinaId, bucket }: { disciplinaId: string; bucket: StatusBucket }) => {
+      const { error } = await supabase.rpc("set_disciplina_status", {
+        p_disciplina_id: disciplinaId,
+        p_bucket: bucket,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["meu-trabalho", "disciplinas"] }),
+  });
+}
+
+/** Tarefas avulsas (aba Tarefas). Filtra por responsável quando informado. */
+export function useTarefas(pessoaId: string | null) {
+  return useQuery({
+    queryKey: KEY.tarefas(pessoaId),
+    staleTime: 60 * 1000,
+    queryFn: async (): Promise<TarefaItem[]> => {
+      let q = supabase
+        .from("tarefas")
+        .select(
+          "id, titulo, descricao, status, prioridade, responsavel_id, projeto_id, etapa_id, prazo, horas_estimadas, labels, links, comentarios, projeto:projetos(id, nome)"
+        )
+        .order("prazo", { ascending: true, nullsFirst: false });
+      if (pessoaId) q = q.eq("responsavel_id", pessoaId);
+      const { data, error } = await q;
+      if (error) throw error;
+      return (data ?? []).map((t) => ({
+        ...t,
+        status: t.status as StatusBucket,
+        prioridade: toPrioridade(t.prioridade),
+        labels: t.labels ?? [],
+        links: (t.links as unknown as LinkItem[]) ?? [],
+        comentarios: (t.comentarios as unknown as Comentario[]) ?? [],
+        projeto: Array.isArray(t.projeto) ? (t.projeto[0] ?? null) : t.projeto,
+      })) as TarefaItem[];
+    },
+  });
+}
+
+export function useTarefaMutations() {
+  const qc = useQueryClient();
+  const { profile } = useAuth();
+  const invalidate = () => qc.invalidateQueries({ queryKey: ["meu-trabalho", "tarefas"] });
+
+  const criar = useMutation({
+    mutationFn: async (input: TarefaInput) => {
+      const empresaId = profile?.empresa_id;
+      if (!empresaId) throw new Error("Sem empresa no perfil");
+      const { error } = await supabase.from("tarefas").insert({
+        empresa_id: empresaId,
+        titulo: input.titulo,
+        descricao: input.descricao ?? null,
+        status: input.status,
+        prioridade: input.prioridade ?? "media",
+        responsavel_id: input.responsavel_id ?? null,
+        projeto_id: input.projeto_id ?? null,
+        etapa_id: input.etapa_id ?? null,
+        prazo: input.prazo ?? null,
+        horas_estimadas: input.horas_estimadas ?? null,
+        labels: input.labels ?? [],
+        links: (input.links ?? []) as unknown as Json,
+        comentarios: (input.comentarios ?? []) as unknown as Json,
+      });
+      if (error) throw error;
+    },
+    onSuccess: invalidate,
+  });
+
+  const atualizar = useMutation({
+    mutationFn: async ({ id, input }: { id: string; input: Partial<TarefaInput> }) => {
+      // Monta só os campos presentes; links/comentarios (jsonb) precisam de cast.
+      const patch: TablesUpdate<"tarefas"> = {};
+      if (input.titulo !== undefined) patch.titulo = input.titulo;
+      if (input.descricao !== undefined) patch.descricao = input.descricao;
+      if (input.status !== undefined) patch.status = input.status;
+      if (input.prioridade !== undefined) patch.prioridade = input.prioridade;
+      if (input.responsavel_id !== undefined) patch.responsavel_id = input.responsavel_id;
+      if (input.projeto_id !== undefined) patch.projeto_id = input.projeto_id;
+      if (input.etapa_id !== undefined) patch.etapa_id = input.etapa_id;
+      if (input.prazo !== undefined) patch.prazo = input.prazo;
+      if (input.horas_estimadas !== undefined) patch.horas_estimadas = input.horas_estimadas;
+      if (input.labels !== undefined) patch.labels = input.labels;
+      if (input.links !== undefined) patch.links = input.links as unknown as Json;
+      if (input.comentarios !== undefined) patch.comentarios = input.comentarios as unknown as Json;
+      const { error } = await supabase.from("tarefas").update(patch).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: invalidate,
+  });
+
+  const excluir = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("tarefas").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: invalidate,
+  });
+
+  return { criar, atualizar, excluir };
+}

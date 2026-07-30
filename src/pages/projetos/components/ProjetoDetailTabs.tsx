@@ -6,7 +6,14 @@ import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { Layers, DollarSign, Table as TableIcon, GanttChart } from "lucide-react";
 import { SecondSidebar, type SecondSidebarTab } from "@/components/SecondSidebar";
 import { cn } from "@/lib/utils";
-import { type Projeto, type DisciplinaResponsavel, type ProjetoDisciplinaDB } from "@/types/projetos";
+import {
+  type Projeto,
+  type DisciplinaResponsavel,
+  type ProjetoDisciplinaDB,
+  type DisciplinaComentario,
+} from "@/types/projetos";
+import { type LinkItem } from "@/components/LinksEditor";
+import { useAuth } from "@/contexts/AuthContext";
 import { CronogramaTab } from "./CronogramaTab";
 import { PagamentosTab } from "./PagamentosTab";
 import { DisciplinasTableView } from "./DisciplinasTableView";
@@ -56,6 +63,8 @@ export function ProjetoDetailTabs({
   handleAddResponsavel,
   handleRemoveResponsavel,
 }: ProjetoDetailTabsProps) {
+  const { profile } = useAuth();
+
   const handleCronogramaDatesChange = async (
     discIdx: number,
     updates: { data_inicio?: string; data_previsao?: string }
@@ -126,9 +135,7 @@ export function ProjetoDetailTabs({
     if (!dbDisc) return;
     const existingResps = dbDisc.responsaveis ?? [];
     const updatedResps =
-      existingResps.length > 0
-        ? existingResps.map((r, i) => (i === 0 ? { id: val, nome } : r))
-        : [{ id: val, nome }];
+      existingResps.length > 0 ? existingResps.map((r, i) => (i === 0 ? { id: val, nome } : r)) : [{ id: val, nome }];
     await handleSaveDiscChanges({ ...dbDisc, responsaveis: updatedResps });
     setSelectedDisc((prev) => prev && { ...prev, responsavel_id: val, responsavel_nome: nome });
   };
@@ -141,6 +148,37 @@ export function ProjetoDetailTabs({
     await handleDiscUpdateField("observacoes", obs);
     setNewObservation("");
   };
+
+  // Campos que não são string simples (arrays, números, descrição): handlers
+  // dedicados, porque onUpdateField só trafega string (spec 013).
+  const saveDiscPatch = async (
+    patch: Partial<
+      Pick<
+        ProjetoDisciplinaDB,
+        "labels" | "links" | "comentarios" | "descricao" | "horas_estimadas" | "horas_realizadas"
+      >
+    >
+  ) => {
+    if (!selectedDisc) return;
+    const discIdx = disciplinasLegacy.findIndex((d) => d.disciplina === selectedDisc.disciplina);
+    if (discIdx < 0) return;
+    const dbDisc = getDbDisc(discIdx);
+    if (!dbDisc) return;
+    await handleSaveDiscChanges({ ...dbDisc, ...patch });
+    // patch usa chaves de ProjetoDisciplinaDB (descricao pode ser null); no shape
+    // legacy é string|undefined e nunca gravamos null aqui — cast seguro.
+    setSelectedDisc((prev) => (prev ? ({ ...prev, ...patch } as DisciplinaResponsavel) : prev));
+  };
+
+  const handleDiscUpdateLabels = (next: string[]) => saveDiscPatch({ labels: next });
+  const handleDiscUpdateLinks = (next: LinkItem[]) => saveDiscPatch({ links: next });
+  const handleDiscUpdateComentarios = (next: DisciplinaComentario[]) => saveDiscPatch({ comentarios: next });
+  const handleDiscUpdateDescricao = (next: string) => saveDiscPatch({ descricao: next });
+  const handleDiscUpdateHorasEstimadas = (n: number) => saveDiscPatch({ horas_estimadas: n });
+  const handleDiscUpdateHorasRealizadas = (n: number) => saveDiscPatch({ horas_realizadas: n });
+
+  const autorNome =
+    [profile?.first_name, profile?.last_name].filter(Boolean).join(" ").trim() || profile?.email || "Usuário";
 
   useEffect(() => {
     const { tab, view } = resolveFromHash(location.hash);
@@ -232,6 +270,13 @@ export function ProjetoDetailTabs({
         pessoas={pessoas}
         onUpdateField={handleDiscUpdateField}
         onUpdateResponsavel={handleDiscUpdateResponsavel}
+        onUpdateLabels={handleDiscUpdateLabels}
+        onUpdateLinks={handleDiscUpdateLinks}
+        onUpdateComentarios={handleDiscUpdateComentarios}
+        onUpdateDescricao={handleDiscUpdateDescricao}
+        onUpdateHorasEstimadas={handleDiscUpdateHorasEstimadas}
+        onUpdateHorasRealizadas={handleDiscUpdateHorasRealizadas}
+        autorNome={autorNome}
         newObservation={newObservation}
         onNewObservationChange={setNewObservation}
         onAddObservation={handleAddObservation}

@@ -94,9 +94,7 @@ export function ContaFormDialog({
             {contaErrors.banco && <p className="text-xs text-destructive">Campo obrigatório</p>}
           </div>
           <div className="space-y-2">
-            <Label>
-              Saldo Inicial (R$) <span className="text-destructive">*</span>
-            </Label>
+            <Label>Saldo Inicial (R$)</Label>
             <Input
               type="text"
               value={saldoInicial}
