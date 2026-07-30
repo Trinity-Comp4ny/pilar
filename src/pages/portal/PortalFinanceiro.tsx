@@ -1,4 +1,5 @@
 import { Card, CardContent } from "@/components/ui/card";
+import { KPICard } from "@/components/KPICard";
 import { formatCurrency as fmtMoeda } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -27,24 +28,9 @@ export function FinanceiroContent({ receitas }: { receitas: ClienteReceita[] }) 
     <div className="space-y-4">
       {/* Resumo */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Card>
-          <CardContent className="p-4 text-center">
-            <p className="text-xs text-muted-foreground">Total das parcelas</p>
-            <p className="text-lg font-bold">{formatCurrency(totalPrevisto)}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <p className="text-xs text-muted-foreground">Pago</p>
-            <p className="text-lg font-bold text-positive-strong">{formatCurrency(totalPago)}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <p className="text-xs text-muted-foreground">Pendente</p>
-            <p className="text-lg font-bold text-yellow-600">{formatCurrency(totalPendente)}</p>
-          </CardContent>
-        </Card>
+        <KPICard label="Total das parcelas" value={totalPrevisto} tone="neutral" />
+        <KPICard label="Pago" value={totalPago} tone="positive" />
+        <KPICard label="Pendente" value={totalPendente} tone="warning" />
       </div>
 
       {/* Progresso de pagamento */}

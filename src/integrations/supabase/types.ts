@@ -7,11 +7,6 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "14.5"
-  }
   graphql_public: {
     Tables: {
       [_ in never]: never
@@ -2456,6 +2451,246 @@ export type Database = {
         }
         Relationships: []
       }
+      obra_frente: {
+        Row: {
+          created_at: string
+          empresa_id: string
+          id: string
+          nome: string
+          obra_id: string
+          ordem: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          empresa_id: string
+          id?: string
+          nome: string
+          obra_id: string
+          ordem?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          empresa_id?: string
+          id?: string
+          nome?: string
+          obra_id?: string
+          ordem?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "obra_frente_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_frente_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      obra_rdo: {
+        Row: {
+          atividades: string | null
+          autor_id: string | null
+          clima: string | null
+          condicao_trabalho: string | null
+          created_at: string
+          created_by: string
+          data: string
+          efetivo: number | null
+          empresa_id: string
+          id: string
+          obra_id: string
+          ocorrencias: string | null
+          pendencias: string | null
+          updated_at: string
+        }
+        Insert: {
+          atividades?: string | null
+          autor_id?: string | null
+          clima?: string | null
+          condicao_trabalho?: string | null
+          created_at?: string
+          created_by?: string
+          data: string
+          efetivo?: number | null
+          empresa_id: string
+          id?: string
+          obra_id: string
+          ocorrencias?: string | null
+          pendencias?: string | null
+          updated_at?: string
+        }
+        Update: {
+          atividades?: string | null
+          autor_id?: string | null
+          clima?: string | null
+          condicao_trabalho?: string | null
+          created_at?: string
+          created_by?: string
+          data?: string
+          efetivo?: number | null
+          empresa_id?: string
+          id?: string
+          obra_id?: string
+          ocorrencias?: string | null
+          pendencias?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "obra_rdo_autor_id_fkey"
+            columns: ["autor_id"]
+            isOneToOne: false
+            referencedRelation: "pessoas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_rdo_autor_id_fkey"
+            columns: ["autor_id"]
+            isOneToOne: false
+            referencedRelation: "pessoas_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_rdo_autor_id_fkey"
+            columns: ["autor_id"]
+            isOneToOne: false
+            referencedRelation: "view_folha_pagamento"
+            referencedColumns: ["pessoa_id"]
+          },
+          {
+            foreignKeyName: "obra_rdo_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_rdo_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      obras: {
+        Row: {
+          cep: string | null
+          cidade: string | null
+          created_at: string
+          created_by: string
+          data_fim_prevista: string | null
+          data_fim_real: string | null
+          data_inicio_prevista: string | null
+          data_inicio_real: string | null
+          deleted_at: string | null
+          empresa_id: string
+          id: string
+          latitude: number | null
+          localizacao: string | null
+          longitude: number | null
+          nome: string
+          observacoes: string | null
+          projeto_id: string | null
+          responsavel_id: string | null
+          status: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          cep?: string | null
+          cidade?: string | null
+          created_at?: string
+          created_by?: string
+          data_fim_prevista?: string | null
+          data_fim_real?: string | null
+          data_inicio_prevista?: string | null
+          data_inicio_real?: string | null
+          deleted_at?: string | null
+          empresa_id: string
+          id?: string
+          latitude?: number | null
+          localizacao?: string | null
+          longitude?: number | null
+          nome: string
+          observacoes?: string | null
+          projeto_id?: string | null
+          responsavel_id?: string | null
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          cep?: string | null
+          cidade?: string | null
+          created_at?: string
+          created_by?: string
+          data_fim_prevista?: string | null
+          data_fim_real?: string | null
+          data_inicio_prevista?: string | null
+          data_inicio_real?: string | null
+          deleted_at?: string | null
+          empresa_id?: string
+          id?: string
+          latitude?: number | null
+          localizacao?: string | null
+          longitude?: number | null
+          nome?: string
+          observacoes?: string | null
+          projeto_id?: string | null
+          responsavel_id?: string | null
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "obras_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obras_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obras_responsavel_id_fkey"
+            columns: ["responsavel_id"]
+            isOneToOne: false
+            referencedRelation: "pessoas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obras_responsavel_id_fkey"
+            columns: ["responsavel_id"]
+            isOneToOne: false
+            referencedRelation: "pessoas_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obras_responsavel_id_fkey"
+            columns: ["responsavel_id"]
+            isOneToOne: false
+            referencedRelation: "view_folha_pagamento"
+            referencedColumns: ["pessoa_id"]
+          },
+        ]
+      }
       orcamento_versoes: {
         Row: {
           created_at: string | null
@@ -3114,14 +3349,20 @@ export type Database = {
       }
       projeto_disciplinas: {
         Row: {
+          codigo: string | null
+          comentarios: Json
           created_at: string | null
           custo_hora: number | null
           data_fim: string | null
           data_fim_real: string | null
           data_inicio: string | null
+          descricao: string | null
           horas_estimadas: number | null
+          horas_realizadas: number
           id: string
           justificativa_atraso: string | null
+          labels: string[]
+          links: Json
           nome: string
           observacoes: string | null
           ordem_etapa: number | null
@@ -3131,14 +3372,20 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          codigo?: string | null
+          comentarios?: Json
           created_at?: string | null
           custo_hora?: number | null
           data_fim?: string | null
           data_fim_real?: string | null
           data_inicio?: string | null
+          descricao?: string | null
           horas_estimadas?: number | null
+          horas_realizadas?: number
           id?: string
           justificativa_atraso?: string | null
+          labels?: string[]
+          links?: Json
           nome: string
           observacoes?: string | null
           ordem_etapa?: number | null
@@ -3148,14 +3395,20 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          codigo?: string | null
+          comentarios?: Json
           created_at?: string | null
           custo_hora?: number | null
           data_fim?: string | null
           data_fim_real?: string | null
           data_inicio?: string | null
+          descricao?: string | null
           horas_estimadas?: number | null
+          horas_realizadas?: number
           id?: string
           justificativa_atraso?: string | null
+          labels?: string[]
+          links?: Json
           nome?: string
           observacoes?: string | null
           ordem_etapa?: number | null
@@ -3248,6 +3501,7 @@ export type Database = {
           area_m2: number | null
           cliente_id: string | null
           codigo_projeto: string | null
+          comentarios: Json
           created_at: string | null
           created_by: string | null
           custo_indireto_pct: number | null
@@ -3259,6 +3513,7 @@ export type Database = {
           empresa_id: string
           id: string
           latitude: number | null
+          links: Json
           localizacao: string | null
           longitude: number | null
           nome: string
@@ -3275,6 +3530,7 @@ export type Database = {
           area_m2?: number | null
           cliente_id?: string | null
           codigo_projeto?: string | null
+          comentarios?: Json
           created_at?: string | null
           created_by?: string | null
           custo_indireto_pct?: number | null
@@ -3286,6 +3542,7 @@ export type Database = {
           empresa_id: string
           id?: string
           latitude?: number | null
+          links?: Json
           localizacao?: string | null
           longitude?: number | null
           nome: string
@@ -3302,6 +3559,7 @@ export type Database = {
           area_m2?: number | null
           cliente_id?: string | null
           codigo_projeto?: string | null
+          comentarios?: Json
           created_at?: string | null
           created_by?: string | null
           custo_indireto_pct?: number | null
@@ -3313,6 +3571,7 @@ export type Database = {
           empresa_id?: string
           id?: string
           latitude?: number | null
+          links?: Json
           localizacao?: string | null
           longitude?: number | null
           nome?: string
@@ -3733,6 +3992,167 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "projetos"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      tarefa_etapas: {
+        Row: {
+          bucket: string | null
+          cor: string | null
+          created_at: string
+          empresa_id: string
+          id: string
+          nome: string
+          ordem: number
+        }
+        Insert: {
+          bucket?: string | null
+          cor?: string | null
+          created_at?: string
+          empresa_id: string
+          id?: string
+          nome: string
+          ordem?: number
+        }
+        Update: {
+          bucket?: string | null
+          cor?: string | null
+          created_at?: string
+          empresa_id?: string
+          id?: string
+          nome?: string
+          ordem?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tarefa_etapas_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tarefas: {
+        Row: {
+          comentarios: Json
+          created_at: string
+          created_by: string
+          descricao: string | null
+          empresa_id: string
+          etapa_id: string | null
+          horas_estimadas: number | null
+          id: string
+          labels: string[]
+          links: Json
+          obra_frente_id: string | null
+          obra_id: string | null
+          prazo: string | null
+          prioridade: string
+          projeto_id: string | null
+          responsavel_id: string | null
+          status: string
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          comentarios?: Json
+          created_at?: string
+          created_by?: string
+          descricao?: string | null
+          empresa_id: string
+          etapa_id?: string | null
+          horas_estimadas?: number | null
+          id?: string
+          labels?: string[]
+          links?: Json
+          obra_frente_id?: string | null
+          obra_id?: string | null
+          prazo?: string | null
+          prioridade?: string
+          projeto_id?: string | null
+          responsavel_id?: string | null
+          status?: string
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          comentarios?: Json
+          created_at?: string
+          created_by?: string
+          descricao?: string | null
+          empresa_id?: string
+          etapa_id?: string | null
+          horas_estimadas?: number | null
+          id?: string
+          labels?: string[]
+          links?: Json
+          obra_frente_id?: string | null
+          obra_id?: string | null
+          prazo?: string | null
+          prioridade?: string
+          projeto_id?: string | null
+          responsavel_id?: string | null
+          status?: string
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tarefas_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tarefas_etapa_id_fkey"
+            columns: ["etapa_id"]
+            isOneToOne: false
+            referencedRelation: "tarefa_etapas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tarefas_obra_frente_id_fkey"
+            columns: ["obra_frente_id"]
+            isOneToOne: false
+            referencedRelation: "obra_frente"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tarefas_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tarefas_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tarefas_responsavel_id_fkey"
+            columns: ["responsavel_id"]
+            isOneToOne: false
+            referencedRelation: "pessoas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tarefas_responsavel_id_fkey"
+            columns: ["responsavel_id"]
+            isOneToOne: false
+            referencedRelation: "pessoas_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tarefas_responsavel_id_fkey"
+            columns: ["responsavel_id"]
+            isOneToOne: false
+            referencedRelation: "view_folha_pagamento"
+            referencedColumns: ["pessoa_id"]
           },
         ]
       }
@@ -4544,12 +4964,14 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      current_pessoa_id: { Args: never; Returns: string }
       executar_acao_agente: { Args: { p_run_id: string }; Returns: Json }
       fechar_folha_agente: { Args: { p_run_id: string }; Returns: Json }
       find_or_create_fatura: {
         Args: { p_cartao_id: string; p_data_compra: string }
         Returns: string
       }
+      gerar_alertas_ambient: { Args: never; Returns: number }
       gerar_fatura: {
         Args: { p_ano: number; p_cartao_id: string; p_mes: number }
         Returns: string
@@ -4585,6 +5007,23 @@ export type Database = {
       get_lancamentos_kpis: {
         Args: { p_from?: string; p_to?: string }
         Returns: Json
+      }
+      get_minhas_disciplinas: {
+        Args: { p_pessoa_id?: string }
+        Returns: {
+          id: string
+          labels: string[]
+          links: Json
+          prazo: string
+          prioridade: string
+          projeto_id: string
+          projeto_nome: string
+          responsavel_id: string
+          responsavel_nome: string
+          status_bucket: string
+          status_raw: string
+          titulo: string
+        }[]
       }
       get_user_empresa_id: { Args: never; Returns: string }
       get_user_empresa_id_text: { Args: never; Returns: string }
@@ -4667,10 +5106,15 @@ export type Database = {
         }
         Returns: undefined
       }
+      pilar_disciplina_status_canonico: {
+        Args: { p_bucket: string }
+        Returns: string
+      }
       pilar_set_ultra_admin_scope: {
         Args: { p_scoped: boolean }
         Returns: boolean
       }
+      pilar_status_bucket: { Args: { p_status: string }; Returns: string }
       portal_aprovar_entrega: {
         Args: { p_entrega_id: string; p_token: string }
         Returns: undefined
@@ -4871,6 +5315,10 @@ export type Database = {
       rpc_sync_metas: { Args: never; Returns: number }
       set_access_profile: {
         Args: { p_perfil: string; p_user_id: string }
+        Returns: undefined
+      }
+      set_disciplina_status: {
+        Args: { p_bucket: string; p_disciplina_id: string }
         Returns: undefined
       }
       show_limit: { Args: never; Returns: number }
@@ -5119,3 +5567,4 @@ export const Constants = {
     },
   },
 } as const
+

@@ -1,10 +1,21 @@
 import { type ProjectStatus, type ProjectPriority } from "@/constants";
+import { type LinkItem } from "@/components/LinksEditor";
 
 export interface DisciplinaObservacao {
   id: string;
   texto: string;
   usuario: string;
   data: string;
+}
+
+/** Comentário estruturado (atividade) da disciplina, com menções opcionais (spec 013). */
+export interface DisciplinaComentario {
+  id: string;
+  texto: string;
+  autor: string;
+  data: string;
+  /** Ids de pessoas marcadas (@menção). Base para notificação futura. */
+  mencionados?: string[];
 }
 
 export interface ResponsavelDatas {
@@ -31,7 +42,13 @@ export interface DisciplinaResponsavel {
   responsaveis?: ResponsavelDatas[];
   justificativa_atraso?: string;
   etapa?: number;
+  codigo?: string;
   horas_estimadas?: number;
+  horas_realizadas?: number;
+  descricao?: string;
+  labels?: string[];
+  links?: LinkItem[];
+  comentarios?: DisciplinaComentario[];
 }
 
 export function isDiscAtrasada(disc: DisciplinaResponsavel): boolean {
@@ -145,6 +162,7 @@ export interface Projeto {
 export interface ProjetoDisciplinaDB {
   id: string;
   projeto_id: string;
+  codigo?: string | null;
   nome: string;
   status: string;
   data_inicio: string | null;
@@ -154,7 +172,12 @@ export interface ProjetoDisciplinaDB {
   prioridade: string | null;
   justificativa_atraso: string | null;
   horas_estimadas: number;
+  horas_realizadas?: number;
   custo_hora: number;
+  descricao?: string | null;
+  labels?: string[];
+  links?: LinkItem[];
+  comentarios?: DisciplinaComentario[];
   created_at?: string;
   updated_at?: string;
   responsaveis?: Array<{ id: string; nome: string }>;
@@ -173,6 +196,7 @@ export function dbDisciplinaToLegacy(d: ProjetoDisciplinaDB): DisciplinaResponsa
 
   return {
     id: d.id,
+    codigo: d.codigo ?? undefined,
     disciplina: d.nome,
     responsavel_id: resps[0]?.responsavel_id || "",
     responsavel_nome: resps[0]?.responsavel_nome || "",
@@ -183,8 +207,13 @@ export function dbDisciplinaToLegacy(d: ProjetoDisciplinaDB): DisciplinaResponsa
     prioridade: (d.prioridade as ProjectPriority) || undefined,
     justificativa_atraso: d.justificativa_atraso || undefined,
     horas_estimadas: d.horas_estimadas,
+    horas_realizadas: d.horas_realizadas ?? 0,
+    descricao: d.descricao ?? undefined,
     responsaveis: resps,
     observacoes: [],
+    labels: d.labels ?? [],
+    links: d.links ?? [],
+    comentarios: d.comentarios ?? [],
   };
 }
 
@@ -253,9 +282,7 @@ export const getProjectProgress = (disciplinas: DisciplinaResponsavel[]) => {
   // que uma pequena. Sem horas registradas, cai para contagem simples de disciplinas.
   const totalHoras = disciplinas.reduce((acc, d) => acc + (d.horas_estimadas || 0), 0);
   if (totalHoras > 0) {
-    const concluidasHoras = disciplinas
-      .filter(isConcluida)
-      .reduce((acc, d) => acc + (d.horas_estimadas || 0), 0);
+    const concluidasHoras = disciplinas.filter(isConcluida).reduce((acc, d) => acc + (d.horas_estimadas || 0), 0);
     return Math.round((concluidasHoras / totalHoras) * 100);
   }
 

@@ -573,11 +573,7 @@ export default function ClienteDetalhePage() {
   return (
     <PageLayout
       header={
-        <PageHeader
-          title={clienteNomeCompleto}
-          description={formatDocument(cliente.cpf_cnpj)}
-          breadcrumbs={[{ label: "Clientes", to: "/clientes" }]}
-        >
+        <PageHeader title={clienteNomeCompleto} breadcrumbs={[{ label: "Clientes", to: "/clientes" }]}>
           <div className="flex items-center gap-2">
             {canEdit && (
               <Button variant="outline" size="sm" onClick={() => setIsMessageOpen(true)}>

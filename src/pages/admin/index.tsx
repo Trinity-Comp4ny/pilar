@@ -205,7 +205,6 @@ export default function Admin() {
       header={
         <PageHeader
           title={isRootTab ? "Admin Portal" : activeLabel}
-          description={isRootTab ? "Governança, configuração e observabilidade da firma" : undefined}
           breadcrumbs={isRootTab ? undefined : [{ label: "Admin Portal", onClick: () => handleTabChange("usuarios") }]}
         />
       }

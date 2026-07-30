@@ -49,7 +49,7 @@ interface ProjetoFormDialogProps {
 type Step = 1 | 2 | 3;
 
 const STEPS: { id: Step; label: string; icon: typeof FileText; desc: string }[] = [
-  { id: 1, label: "Identificação", icon: FileText, desc: "Código, cliente e localização" },
+  { id: 1, label: "Identificação", icon: FileText, desc: "Cliente e localização" },
   { id: 2, label: "Escopo & Prazo", icon: Calendar, desc: "Valor, parcelas e datas" },
   { id: 3, label: "Disciplinas", icon: Layers, desc: "Equipe e responsabilidades" },
 ];
@@ -104,8 +104,7 @@ export function ProjetoFormDialog({
 
   const [step, setStep] = useState<Step>(1);
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
-  const [errors, setErrors] = useState<{ codigo_projeto?: string; nome?: string; cliente_id?: string }>({});
-  const codigoRef = useRef<HTMLInputElement>(null);
+  const [errors, setErrors] = useState<{ nome?: string; cliente_id?: string }>({});
   const nomeRef = useRef<HTMLInputElement>(null);
   const clienteTriggerRef = useRef<HTMLButtonElement>(null);
 
@@ -126,14 +125,10 @@ export function ProjetoFormDialog({
 
   const validateStep1 = () => {
     const next: typeof errors = {};
-    if (!form.formData.codigo_projeto.trim()) next.codigo_projeto = "Informe o código do projeto";
     if (!form.formData.nome.trim()) next.nome = "Informe o nome do projeto";
-    if (!form.formData.cliente_id) next.cliente_id = "Selecione um cliente";
     setErrors(next);
     if (Object.keys(next).length > 0) {
-      if (next.codigo_projeto) codigoRef.current?.focus();
-      else if (next.nome) nomeRef.current?.focus();
-      else clienteTriggerRef.current?.focus();
+      nomeRef.current?.focus();
       return false;
     }
     return true;
@@ -273,30 +268,31 @@ export function ProjetoFormDialog({
                   </div>
                 )}
 
+                {/* Nome + Cliente na mesma linha */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="codigo_projeto">Código do Projeto *</Label>
+                    <Label htmlFor="nome">Nome do Projeto *</Label>
                     <Input
-                      id="codigo_projeto"
-                      ref={codigoRef}
-                      value={form.formData.codigo_projeto}
+                      id="nome"
+                      ref={nomeRef}
+                      value={form.formData.nome}
                       onChange={(e) => {
-                        form.handleInputChange("codigo_projeto", e.target.value);
-                        clearError("codigo_projeto");
+                        form.handleInputChange("nome", e.target.value);
+                        clearError("nome");
                       }}
-                      placeholder="PRJ-2024-001"
-                      aria-invalid={!!errors.codigo_projeto}
-                      aria-describedby={errors.codigo_projeto ? "codigo_projeto-error" : undefined}
-                      className={cn(errors.codigo_projeto && "border-destructive focus-visible:ring-destructive")}
+                      placeholder="Ex: Residência Silva - Reforma Completa"
+                      aria-invalid={!!errors.nome}
+                      aria-describedby={errors.nome ? "nome-error" : undefined}
+                      className={cn(errors.nome && "border-destructive focus-visible:ring-destructive")}
                     />
-                    {errors.codigo_projeto && (
-                      <p id="codigo_projeto-error" className="text-xs text-destructive">
-                        {errors.codigo_projeto}
+                    {errors.nome && (
+                      <p id="nome-error" className="text-xs text-destructive">
+                        {errors.nome}
                       </p>
                     )}
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="cliente">Cliente *</Label>
+                    <Label htmlFor="cliente">Cliente</Label>
                     <Select
                       value={form.formData.cliente_id}
                       onValueChange={(value) => {
@@ -329,28 +325,8 @@ export function ProjetoFormDialog({
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="md:col-span-2 space-y-2">
-                    <Label htmlFor="nome">Nome do Projeto *</Label>
-                    <Input
-                      id="nome"
-                      ref={nomeRef}
-                      value={form.formData.nome}
-                      onChange={(e) => {
-                        form.handleInputChange("nome", e.target.value);
-                        clearError("nome");
-                      }}
-                      placeholder="Ex: Residência Silva - Reforma Completa"
-                      aria-invalid={!!errors.nome}
-                      aria-describedby={errors.nome ? "nome-error" : undefined}
-                      className={cn(errors.nome && "border-destructive focus-visible:ring-destructive")}
-                    />
-                    {errors.nome && (
-                      <p id="nome-error" className="text-xs text-destructive">
-                        {errors.nome}
-                      </p>
-                    )}
-                  </div>
+                {/* Prioridade + Área na mesma linha */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Prioridade</Label>
                     <Select
@@ -371,6 +347,17 @@ export function ProjetoFormDialog({
                         ))}
                       </SelectContent>
                     </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="area_m2">Área (m²)</Label>
+                    <Input
+                      id="area_m2"
+                      type="number"
+                      step="0.01"
+                      value={form.formData.area_m2}
+                      onChange={(e) => form.handleInputChange("area_m2", e.target.value)}
+                      placeholder="0.00"
+                    />
                   </div>
                 </div>
 
@@ -456,18 +443,6 @@ export function ProjetoFormDialog({
                       </Select>
                     </div>
                   </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="area_m2">Área (m²)</Label>
-                  <Input
-                    id="area_m2"
-                    type="number"
-                    step="0.01"
-                    value={form.formData.area_m2}
-                    onChange={(e) => form.handleInputChange("area_m2", e.target.value)}
-                    placeholder="0.00"
-                  />
                 </div>
               </div>
             )}

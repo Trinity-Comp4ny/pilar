@@ -1,13 +1,16 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { AlertTriangle, ArrowRight, Briefcase, CalendarClock, FolderKanban, HardHat, Plus } from "lucide-react";
+import { AlertTriangle, ArrowRight, CalendarClock, CloudRain, Sparkles, Wind } from "lucide-react";
 import { cn, formatCurrency } from "@/lib/utils";
+import { analytics } from "@/lib/analytics";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useDashboardData, type DashboardProjeto, type DashboardVencimento } from "@/hooks/useDashboardData";
-import { useRecentes } from "@/hooks/useRecentes";
 import { usePageTitle } from "@/hooks/usePageTitle";
-import { readUltimoModulo, saveUltimoModulo, MODULES, type ModuleId } from "@/lib/modules";
+import { useAlertasClimaObras } from "@/hooks/useAlertasClima";
+import { PageLayout } from "@/components/PageLayout";
+import { PageHeader } from "@/components/PageHeader";
+import { KPICard } from "@/components/KPICard";
 import { ProjectRow } from "./components/ProjectRow";
 import { LeadsFunnel } from "./components/LeadsFunnel";
 import { CalendarioPreview } from "@/pages/projetos/components/CalendarioPreview";
@@ -19,6 +22,17 @@ type Achado = {
   titulo: string;
   detalhe: string;
   rota: string;
+};
+
+/** KPI da faixa de dados (spec 011). `tone` colore o número; `subtitle` é a linha de risco. */
+type KpiDef = {
+  label: string;
+  value: string | number;
+  tone: "positive" | "danger" | "neutral";
+  subtitle?: string;
+  subtitleTone?: "muted" | "positive" | "danger";
+  delta?: { value?: number; isNew?: boolean };
+  rota?: string;
 };
 
 function saudacao(nome: string | null): string {
@@ -71,24 +85,23 @@ function buildAchados(vencimentos: DashboardVencimento[], projetos: DashboardPro
   return achados.sort((a, b) => (a.severidade === b.severidade ? 0 : a.severidade === "critico" ? -1 : 1)).slice(0, 5);
 }
 
-const CHIPS: Array<{ label: string; rota: string; feature: "financeiro" | "projetos" | "propostas" | "leads" }> = [
-  { label: "novo lançamento", rota: "/financeiro", feature: "financeiro" },
-  { label: "novo projeto", rota: "/projetos", feature: "projetos" },
-  { label: "nova proposta", rota: "/documentos", feature: "propostas" },
-  { label: "novo lead", rota: "/leads", feature: "leads" },
-];
+// Grid da faixa de KPIs adaptado à quantidade (a tela se molda aos módulos ativos).
+function kpiGridCols(n: number): string {
+  if (n <= 2) return "grid-cols-2";
+  if (n === 3) return "grid-cols-2 sm:grid-cols-3";
+  if (n === 4) return "grid-cols-2 lg:grid-cols-4";
+  return "grid-cols-2 sm:grid-cols-3 xl:grid-cols-5";
+}
 
 export default function Inicio() {
   usePageTitle("Início");
   const navigate = useNavigate();
   const { profile } = useAuth();
   const { can } = usePermissions();
-  const { recentes } = useRecentes();
   const { data, isLoading } = useDashboardData();
   const [pergunta, setPergunta] = useState("");
 
   const primeiroNome = profile?.first_name || null;
-  const ultimoModulo = readUltimoModulo();
 
   const achados = useMemo(() => (data ? buildAchados(data.proximosVencimentos, data.projetos) : []), [data]);
 
@@ -97,221 +110,278 @@ export default function Inicio() {
     [data]
   );
 
-  const perguntar = () => {
-    const prompt = pergunta.trim();
-    navigate("/agentes", prompt ? { state: { prompt } } : undefined);
-  };
-
-  const abrirModulo = (id: ModuleId) => {
-    saveUltimoModulo(id);
-    navigate(MODULES[id].homeRoute);
-  };
+  // Vencido = o que o sócio precisa ver separado do total "a pagar/a receber" (lente do ICP).
+  const vencido = useMemo(() => {
+    let receber = 0;
+    let pagar = 0;
+    for (const v of data?.proximosVencimentos ?? []) {
+      if (v.status !== "pendente" || v.diasRestantes >= 0) continue;
+      if (v.tipo === "receita") receber += v.valor;
+      else pagar += v.valor;
+    }
+    return { receber, pagar };
+  }, [data]);
 
   const podeFinanceiro = can("financeiro");
   const podeProjetos = can("projetos") || can("dashboard");
   const podeAgentes = can("ai_chat");
+  const podeObras = can("obras");
+  const { alertas: alertasClima } = useAlertasClimaObras(podeObras);
+
+  // Faixa de KPIs: monta só o que os módulos da empresa habilitam.
+  const kpis = useMemo<KpiDef[]>(() => {
+    if (!data) return [];
+    const out: KpiDef[] = [];
+    const k = data.kpis;
+    if (podeFinanceiro) {
+      out.push({
+        label: "Saldo do mês",
+        value: k.saldoMes,
+        tone: k.saldoMes < 0 ? "danger" : "positive",
+        subtitle: `${formatCurrency(k.receitaMes)} entrou · ${formatCurrency(k.despesaMes)} saiu`,
+        rota: "/financeiro",
+      });
+      out.push({
+        label: "Recebido no mês",
+        value: k.receitaMes,
+        tone: "positive",
+        delta: { value: k.receitaNovo ? undefined : k.receitaVariacao, isNew: k.receitaNovo },
+        rota: "/financeiro",
+      });
+      out.push({
+        label: "A receber",
+        value: k.aReceber,
+        tone: "positive",
+        subtitle: vencido.receber > 0 ? `${formatCurrency(vencido.receber)} vencido` : "nada vencido",
+        subtitleTone: vencido.receber > 0 ? "danger" : "muted",
+        rota: "/financeiro",
+      });
+      out.push({
+        label: "A pagar",
+        value: k.aPagar,
+        tone: "danger",
+        subtitle: vencido.pagar > 0 ? `${formatCurrency(vencido.pagar)} vencido` : "nada vencido",
+        subtitleTone: vencido.pagar > 0 ? "danger" : "muted",
+        rota: "/financeiro",
+      });
+    }
+    if (podeProjetos) {
+      out.push({
+        label: "Projetos ativos",
+        value: String(k.projetosAtivos),
+        tone: "neutral",
+        subtitle: projetosAtrasados > 0 ? `${projetosAtrasados} com prazo estourado` : "prazos em dia",
+        subtitleTone: projetosAtrasados > 0 ? "danger" : "muted",
+        rota: "/projetos",
+      });
+    }
+    return out;
+  }, [data, podeFinanceiro, podeProjetos, projetosAtrasados, vencido]);
+
+  // Rótulos estáticos p/ o esqueleto de carregamento (não dependem de dados).
+  const loadingLabels = useMemo<string[]>(
+    () => [
+      ...(podeFinanceiro ? ["Saldo do mês", "Recebido no mês", "A receber", "A pagar"] : []),
+      ...(podeProjetos ? ["Projetos ativos"] : []),
+    ],
+    [podeFinanceiro, podeProjetos]
+  );
+
+  const perguntar = () => {
+    const prompt = pergunta.trim();
+    // Instrumenta a porta de entrada do agente (não envia o texto: PII). Spec 001 pedia medir isto.
+    analytics.track("inicio_agentes_abrir", { origem: "barra_inicio", com_texto: prompt.length > 0 });
+    navigate("/agentes", prompt ? { state: { prompt } } : undefined);
+  };
 
   return (
-    <div className="max-w-4xl mx-auto px-6 py-10">
-      {/* Saudação + herói: o input É o agente (busca ou ação) */}
-      <h1 className="text-2xl font-semibold tracking-tight text-ink mb-6">{saudacao(primeiroNome)}</h1>
+    <PageLayout header={<PageHeader title="Início" />}>
+      {/* Saudação enxuta + faixa de KPIs: o número é o herói da primeira dobra (voto do time + ICP). */}
+      <section aria-label="Indicadores" className="pt-1">
+        <p className="text-sm text-ink-muted mb-4">{saudacao(primeiroNome)}</p>
+        {isLoading && !data ? (
+          loadingLabels.length > 0 && (
+            <div className={cn("grid gap-3", kpiGridCols(loadingLabels.length))}>
+              {loadingLabels.map((label) => (
+                <KPICard key={label} label={label} value="" loading />
+              ))}
+            </div>
+          )
+        ) : kpis.length > 0 ? (
+          <div className={cn("grid gap-3", kpiGridCols(kpis.length))}>
+            {kpis.map((kpi) => (
+              <KPICard
+                key={kpi.label}
+                label={kpi.label}
+                value={kpi.value}
+                tone={kpi.tone}
+                subtitle={kpi.subtitle}
+                subtitleTone={kpi.subtitleTone}
+                delta={kpi.delta}
+                onClick={kpi.rota ? () => navigate(kpi.rota!) : undefined}
+              />
+            ))}
+          </div>
+        ) : null}
+      </section>
 
+      {/* Porta para os agentes, com destaque. A conversa mora em /agentes, não aqui. */}
       {podeAgentes && (
-        <>
+        <section aria-label="Assistente">
           <form
             onSubmit={(e) => {
               e.preventDefault();
               perguntar();
             }}
-            className="flex items-center gap-3 rounded-full border border-black/10 bg-white pl-5 pr-2 py-1.5 shadow-sm focus-within:ring-2 focus-within:ring-brand/60"
+            className="flex items-center gap-3 rounded-2xl border border-black/10 bg-white pl-4 pr-2.5 py-3 shadow-lg focus-within:ring-2 focus-within:ring-brand/60"
           >
+            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-brand text-ink">
+              <Sparkles size={20} />
+            </span>
             <input
               value={pergunta}
               onChange={(e) => setPergunta(e.target.value)}
-              placeholder="Pergunte, busque ou peça uma ação"
-              className="flex-1 bg-transparent text-[15px] text-ink placeholder:text-black/40 outline-none py-2.5"
+              placeholder="Pergunte aos agentes"
+              className="flex-1 bg-transparent text-lg text-ink placeholder:text-ink-muted outline-none py-1.5"
               aria-label="Perguntar aos agentes"
             />
             <button
               type="submit"
-              className="h-9 w-9 rounded-full bg-brand text-ink grid place-items-center hover:opacity-90 transition-opacity"
-              aria-label="Enviar para os agentes"
+              className="h-12 w-12 shrink-0 rounded-xl bg-brand text-ink grid place-items-center hover:opacity-90 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60"
+              aria-label="Abrir conversa com os agentes"
             >
-              <ArrowRight size={16} />
+              <ArrowRight size={20} />
             </button>
           </form>
-          <p className="text-xs text-black/40 mt-2 px-2">
-            Enter envia para os agentes. Exemplos: "quanto recebi esse mês?", "cadastrar lead João"
+          <p className="text-xs text-ink-muted mt-2">
+            Enter abre a conversa nos agentes. Ex.: "quanto recebi esse mês?", "projetos com prazo estourado"
           </p>
-        </>
+        </section>
       )}
 
-      {/* Ações rápidas */}
-      <div className="flex flex-wrap gap-2 mt-5 mb-10">
-        {CHIPS.filter((c) => can(c.feature)).map((c) => (
-          <button
-            key={c.label}
-            onClick={() => navigate(c.rota)}
-            className="inline-flex items-center gap-1.5 rounded-full border border-black/10 bg-white px-3.5 py-1.5 text-[13px] text-ink/80 hover:bg-brand/20 transition-colors"
-          >
-            <Plus size={13} /> {c.label}
-          </button>
-        ))}
-      </div>
+      {/* Operacional em duas colunas nas telas grandes: ação/risco à esquerda, contexto à direita */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
+        <div className="xl:col-span-2 space-y-6">
+          {/* Radar: alertas primeiro, é o que pede ação */}
+          <section aria-label="Radar">
+            <h2 className="text-[11px] font-medium uppercase tracking-[0.08em] text-ink-muted mb-2.5">
+              Radar dos agentes
+            </h2>
+            {isLoading ? (
+              <div className="rounded-2xl border border-black/10 bg-white px-5 py-4 text-sm text-ink-muted">
+                Verificando vencimentos e prazos...
+              </div>
+            ) : achados.length === 0 ? (
+              <div className="flex items-center gap-2.5 rounded-2xl border border-positive/40 bg-positive/5 px-5 py-4 text-sm text-ink-soft">
+                <CalendarClock size={16} className="text-positive-strong shrink-0" />
+                Nada crítico hoje. Vencimentos e prazos em dia.
+              </div>
+            ) : (
+              <div className="rounded-2xl border border-black/10 bg-white divide-y divide-black/5 overflow-hidden">
+                {achados.map((a) => (
+                  <button
+                    key={a.id}
+                    onClick={() => navigate(a.rota)}
+                    className="w-full flex items-start gap-3 px-5 py-3.5 text-left hover:bg-black/[0.02] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-inset"
+                  >
+                    {a.severidade === "critico" ? (
+                      <AlertTriangle size={16} className="text-negative-strong mt-0.5 shrink-0" />
+                    ) : (
+                      <CalendarClock size={16} className="text-ink-muted mt-0.5 shrink-0" />
+                    )}
+                    <span className="min-w-0">
+                      <span className="block text-sm text-ink truncate">{a.titulo}</span>
+                      <span className="block text-xs text-ink-soft mt-0.5">{a.detalhe}</span>
+                    </span>
+                    <ArrowRight size={14} className="ml-auto mt-1 text-ink-muted shrink-0" />
+                  </button>
+                ))}
+              </div>
+            )}
+          </section>
 
-      {/* Radar: achados determinísticos apresentados como descobertas dos agentes */}
-      <section className="mb-10" aria-label="Radar">
-        <h2 className="text-[10px] font-medium uppercase tracking-[0.08em] text-black/40 mb-2.5">Radar dos agentes</h2>
-        {isLoading ? (
-          <div className="rounded-2xl border border-black/10 bg-white px-5 py-4 text-sm text-black/40">
-            Verificando vencimentos e prazos...
-          </div>
-        ) : achados.length === 0 ? (
-          <div className="rounded-2xl border border-black/10 bg-white px-5 py-4 text-sm text-black/50">
-            Nenhum alerta. Vencimentos e prazos em dia.
-          </div>
-        ) : (
-          <div className="rounded-2xl border border-black/10 bg-white divide-y divide-black/5 overflow-hidden">
-            {achados.map((a) => (
-              <button
-                key={a.id}
-                onClick={() => navigate(a.rota)}
-                className="w-full flex items-start gap-3 px-5 py-3.5 text-left hover:bg-black/[0.02] transition-colors"
-              >
-                {a.severidade === "critico" ? (
-                  <AlertTriangle size={16} className="text-destructive mt-0.5 shrink-0" />
-                ) : (
-                  <CalendarClock size={16} className="text-black/45 mt-0.5 shrink-0" />
-                )}
-                <span className="min-w-0">
-                  <span className="block text-sm text-ink truncate">{a.titulo}</span>
-                  <span className="block text-xs text-black/45 mt-0.5">{a.detalhe}</span>
-                </span>
-                <ArrowRight size={14} className="ml-auto mt-1 text-black/25 shrink-0" />
-              </button>
-            ))}
-          </div>
-        )}
-      </section>
+          {/* Clima das obras: chuva ou vento forte hoje/amanhã (só se houver alerta) */}
+          {podeObras && alertasClima.length > 0 && (
+            <section aria-label="Clima das obras">
+              <h2 className="text-[11px] font-medium uppercase tracking-[0.08em] text-ink-muted mb-2.5">
+                Clima das obras
+              </h2>
+              <div className="rounded-2xl border border-black/10 bg-white divide-y divide-black/5 overflow-hidden">
+                {alertasClima.map((a) => (
+                  <button
+                    key={`${a.obraId}-${a.tipo}`}
+                    onClick={() => navigate("/obras/clima")}
+                    className="w-full flex items-start gap-3 px-5 py-3.5 text-left hover:bg-black/[0.02] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-inset"
+                  >
+                    {a.tipo === "chuva" ? (
+                      <CloudRain size={16} className="text-info-strong mt-0.5 shrink-0" />
+                    ) : (
+                      <Wind size={16} className="text-attention-strong mt-0.5 shrink-0" />
+                    )}
+                    <span className="min-w-0">
+                      <span className="block text-sm text-ink truncate">
+                        {a.obraNome}
+                        {a.cidade ? ` · ${a.cidade}` : ""}
+                      </span>
+                      <span className="block text-xs text-ink-soft mt-0.5 first-letter:uppercase">{a.label}</span>
+                    </span>
+                    <ArrowRight size={14} className="ml-auto mt-1 text-ink-muted shrink-0" />
+                  </button>
+                ))}
+              </div>
+            </section>
+          )}
 
-      {/* Módulos */}
-      <section className="mb-10" aria-label="Módulos">
-        <h2 className="text-[10px] font-medium uppercase tracking-[0.08em] text-black/40 mb-2.5">Módulos</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          {podeFinanceiro && (
-            <button
-              onClick={() => abrirModulo("gestao")}
-              className={cn(
-                "rounded-2xl border bg-white p-4 text-left hover:shadow-sm transition-shadow",
-                ultimoModulo === "gestao" ? "border-brand border-[1.5px]" : "border-black/10"
-              )}
-            >
-              <span className="flex items-center gap-2 text-sm font-semibold text-ink">
-                <Briefcase size={15} /> Gestão
-              </span>
-              <span className="block text-[13px] text-black/55 mt-2 tabular-nums">
-                {data ? `${formatCurrency(data.kpis.aPagar)} a pagar` : "..."}
-              </span>
-            </button>
+          {/* Projetos ativos (operacional, vindo do antigo Dashboard) */}
+          {podeProjetos && data && data.projetos.length > 0 && (
+            <section aria-label="Projetos ativos">
+              <div className="flex items-center justify-between mb-2.5">
+                <h2 className="text-[11px] font-medium uppercase tracking-[0.08em] text-ink-muted">Projetos ativos</h2>
+                <button
+                  onClick={() => navigate("/projetos")}
+                  className="rounded px-1.5 py-1 text-xs text-ink-muted hover:text-ink transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                >
+                  Ver todos
+                </button>
+              </div>
+              <div className="rounded-2xl border border-black/10 bg-white p-1.5 divide-y divide-black/5">
+                {data.projetos.slice(0, 5).map((p) => (
+                  <ProjectRow key={p.id} project={p} onClick={() => navigate(`/projetos/${p.id}`)} />
+                ))}
+              </div>
+            </section>
           )}
-          {podeProjetos && (
-            <button
-              onClick={() => abrirModulo("projetos")}
-              className={cn(
-                "rounded-2xl border bg-white p-4 text-left hover:shadow-sm transition-shadow",
-                ultimoModulo === "projetos" ? "border-brand border-[1.5px]" : "border-black/10"
-              )}
-            >
-              <span className="flex items-center gap-2 text-sm font-semibold text-ink">
-                <FolderKanban size={15} /> Projetos
-              </span>
-              <span className="block text-[13px] text-black/55 mt-2 tabular-nums">
-                {data
-                  ? `${data.kpis.projetosAtivos} ativos${projetosAtrasados > 0 ? ` · ${projetosAtrasados} com prazo estourado` : ""}`
-                  : "..."}
-              </span>
-            </button>
+
+          {/* Pipeline de leads */}
+          {can("leads") && data && data.leadsTotal > 0 && (
+            <section aria-label="Pipeline de leads">
+              <div className="flex items-center justify-between mb-2.5">
+                <h2 className="text-[11px] font-medium uppercase tracking-[0.08em] text-ink-muted">
+                  Pipeline de leads
+                </h2>
+                <button
+                  onClick={() => navigate("/leads")}
+                  className="rounded px-1.5 py-1 text-xs text-ink-muted hover:text-ink transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                >
+                  Ver todos
+                </button>
+              </div>
+              <div className="rounded-2xl border border-black/10 bg-white px-5 py-4">
+                <LeadsFunnel pipeline={data.leadsPipeline} total={data.leadsTotal} />
+              </div>
+            </section>
           )}
-          <button
-            onClick={() => abrirModulo("obras")}
-            className="rounded-2xl border border-black/10 bg-white p-4 text-left opacity-75 hover:opacity-100 transition-opacity"
-          >
-            <span className="flex items-center gap-2 text-sm font-semibold text-ink">
-              <HardHat size={15} /> Obras
-              <span className="ml-auto text-[9.5px] font-medium uppercase tracking-wide rounded-full bg-black/5 text-black/50 px-2 py-0.5">
-                em breve
-              </span>
-            </span>
-            <span className="block text-[13px] text-black/55 mt-2">Antecipe o que vai parar a obra</span>
-          </button>
         </div>
-      </section>
 
-      {/* Projetos ativos (operacional, vindo do antigo Dashboard) */}
-      {podeProjetos && data && data.projetos.length > 0 && (
-        <section className="mb-10" aria-label="Projetos ativos">
-          <div className="flex items-center justify-between mb-2.5">
-            <h2 className="text-[10px] font-medium uppercase tracking-[0.08em] text-black/40">Projetos ativos</h2>
-            <button
-              onClick={() => navigate("/projetos")}
-              className="text-xs text-black/45 hover:text-ink transition-colors"
-            >
-              Ver todos
-            </button>
-          </div>
-          <div className="rounded-2xl border border-black/10 bg-white p-1.5 divide-y divide-black/5">
-            {data.projetos.slice(0, 5).map((p) => (
-              <ProjectRow key={p.id} project={p} onClick={() => navigate(`/projetos/${p.id}`)} />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Calendário de prazos */}
-      {podeProjetos && (
-        <section className="mb-10" aria-label="Calendário de prazos">
-          <CalendarioPreview />
-        </section>
-      )}
-
-      {/* Pipeline de leads */}
-      {can("leads") && data && data.leadsTotal > 0 && (
-        <section className="mb-10" aria-label="Pipeline de leads">
-          <div className="flex items-center justify-between mb-2.5">
-            <h2 className="text-[10px] font-medium uppercase tracking-[0.08em] text-black/40">Pipeline de leads</h2>
-            <button
-              onClick={() => navigate("/leads")}
-              className="text-xs text-black/45 hover:text-ink transition-colors"
-            >
-              Ver todos
-            </button>
-          </div>
-          <div className="rounded-2xl border border-black/10 bg-white px-5 py-4">
-            <LeadsFunnel pipeline={data.leadsPipeline} total={data.leadsTotal} />
-          </div>
-        </section>
-      )}
-
-      {/* Recentes */}
-      <section aria-label="Recentes">
-        <h2 className="text-[10px] font-medium uppercase tracking-[0.08em] text-black/40 mb-2.5">Recentes</h2>
-        {recentes.length === 0 ? (
-          <p className="text-sm text-black/40">Suas últimas páginas e registros visitados aparecem aqui.</p>
-        ) : (
-          <div className="flex flex-col">
-            {recentes.map((r) => (
-              <button
-                key={r.rota}
-                onClick={() => navigate(r.rota)}
-                className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-left hover:bg-black/[0.03] transition-colors"
-              >
-                <span className="w-20 shrink-0 text-[10px] uppercase tracking-wide text-black/40">{r.tipo}</span>
-                <span className="text-sm text-ink/85 truncate">{r.label}</span>
-              </button>
-            ))}
-          </div>
+        {/* Calendário de prazos */}
+        {podeProjetos && (
+          <aside>
+            <section aria-label="Calendário de prazos">
+              <CalendarioPreview />
+            </section>
+          </aside>
         )}
-      </section>
-    </div>
+      </div>
+    </PageLayout>
   );
 }

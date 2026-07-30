@@ -12,28 +12,28 @@ Ordem das seções = ordem de prioridade. Dentro da seção, do mais crítico ao
 
 ## 1. Bugs e riscos em produção
 
-| # | Item | Onde | Detalhe |
-|---|---|---|---|
-| B1 | `saveCoords` atualiza por `codigo_projeto` **sem filtrar `empresa_id`**: dois projetos de empresas diferentes com o mesmo código = escrita cruzada entre tenants | `src/pages/projetos/components/useProjetoForm.ts:717` | [decisão 25/07](./strategy/DECISAO_PILARES_E_AGENTES_2026-07-25.md) |
-| B2 | RPCs de rentabilidade consultam a tabela `timesheets`, que **não existe** (a real é `timesheet_lancamentos`) → erro em runtime, não número errado | `rpc_dashboard_rentabilidade`, `rpc_projeto_rentabilidade` | [spec 004](./specs/004-margem-confiavel.md) |
-| B3 | Folha de pagamento quebra ao abrir (visto na demo de 24/07); módulo ativo que a VRZ usa | `src/pages/financeiro/tabs/folha-pagamento/` | [decisão 25/07](./strategy/DECISAO_PILARES_E_AGENTES_2026-07-25.md) |
-| B4 | Cadastro de projeto quebra quando o lookup de CEP falha, e o mapa fica vazio sem explicação | `useProjetoForm.ts:188` | idem |
-| B5 | Campo de parcelamento da receita não é encontrável (o próprio autor não achou na demo) | `src/pages/financeiro/` | idem |
-| B6 | Suíte pgTAP desalinhada das migrations: `audit_logs.new_data` não existe e 10 asserts de `rls_security.sql` falham → o gate `Migrations + RLS + types` **falha em todo PR** | `supabase/tests/` | [plano de engenharia](./operations/PLANO_ENGENHARIA_2026-07.md) |
-| B7 | Preços antigos (R$97/197/397) ainda servidos ao lado do R$690 decidido, ancorando o valor para baixo | banco + `src/lib/features.ts:207` | [PRICING](./strategy/PRICING.md) |
+| #   | Item                                                                                                                                                                        | Onde                                                       | Detalhe                                                             |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- | ------------------------------------------------------------------- |
+| B1  | `saveCoords` atualiza por `codigo_projeto` **sem filtrar `empresa_id`**: dois projetos de empresas diferentes com o mesmo código = escrita cruzada entre tenants            | `src/pages/projetos/components/useProjetoForm.ts:717`      | [decisão 25/07](./strategy/DECISAO_PILARES_E_AGENTES_2026-07-25.md) |
+| B2  | RPCs de rentabilidade consultam a tabela `timesheets`, que **não existe** (a real é `timesheet_lancamentos`) → erro em runtime, não número errado                           | `rpc_dashboard_rentabilidade`, `rpc_projeto_rentabilidade` | [spec 004](./specs/004-margem-confiavel.md)                         |
+| B3  | Folha de pagamento quebra ao abrir (visto na demo de 24/07); módulo ativo que a VRZ usa                                                                                     | `src/pages/financeiro/tabs/folha-pagamento/`               | [decisão 25/07](./strategy/DECISAO_PILARES_E_AGENTES_2026-07-25.md) |
+| B4  | Cadastro de projeto quebra quando o lookup de CEP falha, e o mapa fica vazio sem explicação                                                                                 | `useProjetoForm.ts:188`                                    | idem                                                                |
+| B5  | Campo de parcelamento da receita não é encontrável (o próprio autor não achou na demo)                                                                                      | `src/pages/financeiro/`                                    | idem                                                                |
+| B6  | Suíte pgTAP desalinhada das migrations: `audit_logs.new_data` não existe e 10 asserts de `rls_security.sql` falham → o gate `Migrations + RLS + types` **falha em todo PR** | `supabase/tests/`                                          | [plano de engenharia](./operations/PLANO_ENGENHARIA_2026-07.md)     |
+| B7  | Preços antigos (R$97/197/397) ainda servidos ao lado do R$690 decidido, ancorando o valor para baixo                                                                        | banco + `src/lib/features.ts:207`                          | [PRICING](./strategy/PRICING.md)                                    |
 
 ## 2. Produto: sequência de 90 dias
 
 Gates encadeados: cada item só abre quando o anterior fecha.
 Fonte: [decisão 25/07](./strategy/DECISAO_PILARES_E_AGENTES_2026-07-25.md).
 
-| # | Item | Estado |
-|---|---|---|
-| P1 | **Margem confiável** (custo por alocação + declarar confiança do número) | spec escrita: [004](./specs/004-margem-confiavel.md) |
-| P2 | **Captura de horas em 30s/dia + view "Meu trabalho"** (o destravador de 14/07; critério do ICP: um gesto só) | não começado |
-| P3 | **Proposta de R$690 para a VRZ** (sem código; o teste que ninguém fez ainda) | não começado |
-| P4 | **Export xlsx + memorial via docxtemplater** (pedido direto do ICP; hoje só PDF) | não começado |
-| P5 | **Radar de Prontidão v0**: dependência entre etapas com lead time sobre Fluxos+Gantt+Fornecedores | não começado |
+| #   | Item                                                                                                         | Estado                                               |
+| --- | ------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------- |
+| P1  | **Margem confiável** (custo por alocação + declarar confiança do número)                                     | spec escrita: [004](./specs/004-margem-confiavel.md) |
+| P2  | **Captura de horas em 30s/dia + view "Meu trabalho"** (o destravador de 14/07; critério do ICP: um gesto só) | não começado                                         |
+| P3  | **Proposta de R$690 para a VRZ** (sem código; o teste que ninguém fez ainda)                                 | não começado                                         |
+| P4  | **Export xlsx + memorial via docxtemplater** (pedido direto do ICP; hoje só PDF)                             | não começado                                         |
+| P5  | **Radar de Prontidão v0**: dependência entre etapas com lead time sobre Fluxos+Gantt+Fornecedores            | não começado                                         |
 
 ## 3. Design system (spec 003)
 
@@ -63,14 +63,14 @@ Detalhe: [decisão 25/07, tese B](./strategy/DECISAO_PILARES_E_AGENTES_2026-07-2
 
 ## 6. Engavetado com gatilho (não é dívida)
 
-| Item | Gatilho para reabrir |
-|---|---|
-| Multi-moeda / Angola | Contrato **pago** não-BRL (hoje sem trilho de cobrança: Stripe não atende Angola) |
-| Pilar Obras completo (estoque, clima, PWA de campo) | 3 pagantes BR pedindo, ou 1 pagante do ICP com obra própria |
-| Pilar Gestão como produto (iniciativas, departamentos, carga) | Só a view "Meu trabalho" está aprovada (= P2) |
-| Central de documentos (versionamento, TUS, StorageProvider) | Pagante pedindo + Supabase Pro assinado |
-| Agentes proativos / Caixa de Decisões | Gate de margem fechado |
-| Anunciar os 3 produtos publicamente | Produto 2 existir + 1 cliente pagando por ele |
+| Item                                                                                                                                                                                                                                                                                                  | Gatilho para reabrir                                                              |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| Multi-moeda / Angola                                                                                                                                                                                                                                                                                  | Contrato **pago** não-BRL (hoje sem trilho de cobrança: Stripe não atende Angola) |
+| ~~Pilar Obras completo (estoque, clima, PWA de campo)~~ **REABERTO 30/07** (gatilho fechou: VRZ, obra própria) → [spec 015](./specs/015-obras-mvp.md) MVP web-first + [ADR 0011](./architecture/adr/0011-reabrir-obras-como-fase-de-execucao-do-projeto.md). Estoque/PWA/clima-API seguem fora do MVP | —                                                                                 |
+| Pilar Gestão como produto (iniciativas, departamentos, carga)                                                                                                                                                                                                                                         | Só a view "Meu trabalho" está aprovada (= P2)                                     |
+| Central de documentos (versionamento, TUS, StorageProvider)                                                                                                                                                                                                                                           | Pagante pedindo + Supabase Pro assinado                                           |
+| Agentes proativos / Caixa de Decisões                                                                                                                                                                                                                                                                 | Gate de margem fechado                                                            |
+| Anunciar os 3 produtos publicamente                                                                                                                                                                                                                                                                   | Produto 2 existir + 1 cliente pagando por ele                                     |
 
 ## 7. Pendências operacionais
 

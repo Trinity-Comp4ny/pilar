@@ -34,8 +34,15 @@ const schema = z
     dataVencimento: z.date({ required_error: "Data obrigatória" }),
     status: z.string(),
     formaPagamento: z.string().optional().default(""),
-    parcelas: z.string().optional().default("1"),
-    categoriaId: z.string().optional().default(""),
+    parcelas: z
+      .string()
+      .optional()
+      .default("1")
+      .refine((v) => {
+        const n = parseInt(v || "1", 10);
+        return Number.isInteger(n) && n >= 1 && n <= 60;
+      }, "Parcelas deve ser entre 1 e 60"),
+    categoriaId: z.string().min(1, "Categoria obrigatória"),
     projetoId: z.string().optional().default(""),
     contaId: z.string().optional().default(""),
     cartaoId: z.string().optional().default(""),
@@ -192,7 +199,7 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
   const save = async (data: FormData) => {
     setSaving(true);
     try {
-      const numParcelas = parseInt(data.parcelas || "1") || 1;
+      const numParcelas = Math.min(60, Math.max(1, parseInt(data.parcelas || "1") || 1));
       const valorNum = parseCurrencyString(data.valorTotal);
       const valorParcela = Math.round((valorNum / numParcelas) * 100) / 100;
       const { data: empresaId } = await supabase.rpc("get_user_empresa_id");
@@ -427,7 +434,7 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
                   {!isEdit && (
                     <div className="space-y-1.5">
                       <Label className="text-xs">Parcelas</Label>
-                      <Input type="number" min="1" {...form.register("parcelas")} className="h-9" />
+                      <Input type="number" min="1" max="60" {...form.register("parcelas")} className="h-9" />
                     </div>
                   )}
                 </div>
@@ -567,9 +574,14 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label className="text-xs">Categoria</Label>
-                  <Select value={form.watch("categoriaId")} onValueChange={(v) => form.setValue("categoriaId", v)}>
-                    <SelectTrigger className="h-9">
+                  <Label className="text-xs">
+                    Categoria<span className="text-red-500 ml-0.5">*</span>
+                  </Label>
+                  <Select
+                    value={form.watch("categoriaId")}
+                    onValueChange={(v) => form.setValue("categoriaId", v, { shouldValidate: true })}
+                  >
+                    <SelectTrigger className={cn("h-9", form.formState.errors.categoriaId && "border-red-500")}>
                       <SelectValue placeholder="Selecione" />
                     </SelectTrigger>
                     <SelectContent>
@@ -580,6 +592,9 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
                       ))}
                     </SelectContent>
                   </Select>
+                  {form.formState.errors.categoriaId && (
+                    <p className="text-xs text-red-500">{form.formState.errors.categoriaId.message}</p>
+                  )}
                 </div>
 
                 {isCartaoPayment && !isReceita ? (

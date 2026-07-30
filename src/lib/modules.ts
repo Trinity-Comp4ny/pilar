@@ -11,14 +11,15 @@
  *   arquitetura").
  */
 import {
-  BarChart,
   Briefcase,
   Building2,
   Calendar,
   CalendarDays,
+  CloudSun,
   FileText,
   FolderKanban,
   HardHat,
+  ListTodo,
   Sparkles,
   Truck,
   UserPlus,
@@ -57,12 +58,12 @@ export const MODULES: Record<ModuleId, ModuleDef> = {
     id: "gestao",
     label: "Gestão",
     icon: Briefcase,
-    homeRoute: "/financeiro",
+    homeRoute: "/meu-trabalho",
     items: [
+      { title: "Meu trabalho", url: "/meu-trabalho", icon: ListTodo, feature: "meu_trabalho" },
       { title: "Financeiro", url: "/financeiro", icon: Wallet, feature: "financeiro" },
       { title: "Equipe", url: "/equipe", icon: Users, feature: "pessoas", adminOnly: true },
       { title: "Fornecedores", url: "/fornecedores", icon: Truck, feature: "financeiro" },
-      { title: "Relatórios", url: "/relatorios", icon: BarChart, feature: "relatorios" },
     ],
   },
   projetos: {
@@ -83,8 +84,10 @@ export const MODULES: Record<ModuleId, ModuleDef> = {
     label: "Obras",
     icon: HardHat,
     homeRoute: "/obras",
-    emBreve: true,
-    items: [{ title: "Obras", url: "/obras", icon: HardHat, badge: "em breve" }],
+    items: [
+      { title: "Obras", url: "/obras", icon: HardHat, feature: "obras" },
+      { title: "Clima", url: "/obras/clima", icon: CloudSun, feature: "obras" },
+    ],
   },
 };
 

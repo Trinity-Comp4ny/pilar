@@ -31,14 +31,11 @@ describe("PageHeader", () => {
     expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
   });
 
-  it("rótulo do módulo é opt-in: some por default, aparece com moduleLabel", () => {
-    const { unmount } = renderAt("/projetos", <PageHeader title="Projetos" />);
-    // Default (spec 006): só o nome da página, sem o rótulo de módulo em span.
+  it("mostra só o nome da página: nunca renderiza rótulo de módulo", () => {
+    renderAt("/projetos", <PageHeader title="Projetos" />);
+    // O header exibe o título como heading e nada de módulo em span (spec 006).
+    expect(screen.getByRole("heading", { name: "Projetos" })).toBeInTheDocument();
     expect(screen.queryByText("Projetos", { selector: "span" })).not.toBeInTheDocument();
-    unmount();
-
-    renderAt("/projetos", <PageHeader title="Projetos" moduleLabel />);
-    expect(screen.getByText("Projetos", { selector: "span" })).toBeInTheDocument();
   });
 
   it("breadcrumbs: ancestral com `to` vira link e a folha é o título", () => {
@@ -55,10 +52,10 @@ describe("PageHeader", () => {
     expect(onClick).toHaveBeenCalledOnce();
   });
 
-  it("com breadcrumbs, o rótulo de módulo dá lugar à trilha", () => {
+  it("com breadcrumbs, a trilha aparece com o título como folha", () => {
     renderAt(
       "/financeiro",
-      <PageHeader title="Fluxo de Caixa" moduleLabel breadcrumbs={[{ label: "Financeiro", onClick: vi.fn() }]} />
+      <PageHeader title="Fluxo de Caixa" breadcrumbs={[{ label: "Financeiro", onClick: vi.fn() }]} />
     );
     expect(screen.getByRole("navigation", { name: "Trilha de navegação" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Fluxo de Caixa" })).toBeInTheDocument();

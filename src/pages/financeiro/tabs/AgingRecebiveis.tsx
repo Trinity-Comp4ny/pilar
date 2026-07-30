@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { formatCurrency as fmtMoeda } from "@/lib/format";
+import { KPICard } from "@/components/KPICard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Loader2, AlertTriangle, Clock } from "lucide-react";
@@ -101,35 +102,10 @@ export default function AgingRecebiveis() {
     <div className="space-y-6">
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground">Total em Aberto</p>
-            <p className="text-xl font-bold">{formatCurrency(totalGeral)}</p>
-            <p className="text-xs text-muted-foreground">{receitas.length} título(s)</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground">Total Atrasado (&gt;30d)</p>
-            <p className="text-xl font-bold text-amber-600">{formatCurrency(totalAtrasado)}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground flex items-center gap-1">
-              <AlertTriangle className="h-3 w-3 text-red-500" /> Crítico (&gt;90d)
-            </p>
-            <p className="text-xl font-bold text-red-600">{formatCurrency(total90Plus)}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground flex items-center gap-1">
-              <Clock className="h-3 w-3" /> Prazo Médio Atraso
-            </p>
-            <p className="text-xl font-bold">{prazoMedio.toFixed(0)} dias</p>
-          </CardContent>
-        </Card>
+        <KPICard label="Total em Aberto" value={formatCurrency(totalGeral)} subtitle={`${receitas.length} título(s)`} />
+        <KPICard label="Total Atrasado (>30d)" value={formatCurrency(totalAtrasado)} tone="warning" />
+        <KPICard label="Crítico (>90d)" value={formatCurrency(total90Plus)} tone="danger" icon={AlertTriangle} />
+        <KPICard label="Prazo Médio Atraso" value={`${prazoMedio.toFixed(0)} dias`} icon={Clock} />
       </div>
 
       {/* Gráfico stacked bar */}
@@ -180,16 +156,16 @@ export default function AgingRecebiveis() {
                   {aging.map((a) => (
                     <TableRow key={a.cliente_id}>
                       <TableCell className="text-xs py-2 font-medium">{a.cliente_nome}</TableCell>
-                      <TableCell className="text-xs py-2 text-right text-emerald-600">
+                      <TableCell className="text-xs py-2 text-right text-positive-strong">
                         {a.bucket_0_30 > 0 ? formatCurrency(a.bucket_0_30) : "—"}
                       </TableCell>
-                      <TableCell className="text-xs py-2 text-right text-amber-600">
+                      <TableCell className="text-xs py-2 text-right text-warning-strong">
                         {a.bucket_31_60 > 0 ? formatCurrency(a.bucket_31_60) : "—"}
                       </TableCell>
-                      <TableCell className="text-xs py-2 text-right text-orange-600">
+                      <TableCell className="text-xs py-2 text-right text-attention-strong">
                         {a.bucket_61_90 > 0 ? formatCurrency(a.bucket_61_90) : "—"}
                       </TableCell>
-                      <TableCell className="text-xs py-2 text-right text-red-600 font-semibold">
+                      <TableCell className="text-xs py-2 text-right text-negative-strong font-semibold">
                         {a.bucket_90_plus > 0 ? formatCurrency(a.bucket_90_plus) : "—"}
                       </TableCell>
                       <TableCell className="text-xs py-2 text-right font-bold">{formatCurrency(a.total)}</TableCell>

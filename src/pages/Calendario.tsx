@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { usePageTitle } from "@/hooks/usePageTitle";
@@ -7,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { CalendarioPrazosTab } from "@/pages/projetos/components/CalendarioPrazosTab";
 import {
   type Projeto,
   type ProjetoDisciplinaDB,
@@ -16,32 +16,32 @@ import {
   getResponsaveisList,
 } from "@/types/projetos";
 import { PROJECT_PRIORITY, type ProjectPriority } from "@/constants";
+import { type CamadaId, buildEventosProjetos, filtrarVisiveis, groupByDia } from "@/components/calendario/eventos";
+import {
+  VIEW_LABEL,
+  type CalendarioView,
+  labelPeriodo,
+  useCalendarioNav,
+  useCamadasVisiveis,
+  useDiasComEvento,
+} from "@/components/calendario/useCalendario";
+import { CalendarioSidebar } from "@/components/calendario/CalendarioSidebar";
+import { CalendarioLegenda } from "@/components/calendario/EventoItem";
+import { MesView } from "@/components/calendario/MesView";
+import { SemanaView } from "@/components/calendario/SemanaView";
+import { AgendaView } from "@/components/calendario/AgendaView";
 
-const MESES = [
-  "Janeiro",
-  "Fevereiro",
-  "Março",
-  "Abril",
-  "Maio",
-  "Junho",
-  "Julho",
-  "Agosto",
-  "Setembro",
-  "Outubro",
-  "Novembro",
-  "Dezembro",
-];
-
-function startOfMonth(d: Date): Date {
-  return new Date(d.getFullYear(), d.getMonth(), 1);
-}
+const CAMADAS: CamadaId[] = ["projeto", "disciplina"];
 
 export default function Calendario() {
   usePageTitle("Calendário");
+  const navigate = useNavigate();
 
-  const [cursor, setCursor] = useState<Date>(startOfMonth(new Date()));
+  const { cursor, setCursor, view, setView, step, goHoje } = useCalendarioNav();
+  const { visiveis, toggle } = useCamadasVisiveis({ projeto: true, disciplina: true });
   const [filtroProjeto, setFiltroProjeto] = useState<string>("todos");
   const [filtroResponsavel, setFiltroResponsavel] = useState<string>("todos");
+  const [busca, setBusca] = useState<string>("");
 
   const { data: projetos = [], isLoading } = useQuery({
     queryKey: ["projetos"],
@@ -150,23 +150,68 @@ export default function Calendario() {
     return Array.from(set).sort();
   }, [projetos]);
 
-  const goPrev = () => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() - 1, 1));
-  const goNext = () => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1));
-  const goHoje = () => setCursor(startOfMonth(new Date()));
+  const eventos = useMemo(() => {
+    const todos = buildEventosProjetos(projetos, filtroProjeto, filtroResponsavel, busca);
+    return filtrarVisiveis(todos, visiveis);
+  }, [projetos, visiveis, filtroProjeto, filtroResponsavel, busca]);
+  const eventosPorDia = useMemo(() => groupByDia(eventos), [eventos]);
+  const diasComEvento = useDiasComEvento(eventosPorDia);
+
+  // No calendário de projetos todo evento leva ao projeto de origem (só leitura).
+  const abrirEvento = (evento: { projetoId?: string }) => {
+    if (evento.projetoId) navigate(`/projetos/${evento.projetoId}`);
+  };
 
   return (
     <PageLayout
+      sidebar={
+        <CalendarioSidebar
+          selecionado={cursor}
+          diasComEvento={diasComEvento}
+          onSelectDate={setCursor}
+          camadas={CAMADAS}
+          visiveis={visiveis}
+          onToggleCamada={toggle}
+        >
+          <Select value={filtroProjeto} onValueChange={setFiltroProjeto}>
+            <SelectTrigger className="w-full h-9 text-sm">
+              <SelectValue placeholder="Projeto" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Todos os projetos</SelectItem>
+              {projetos.map((p) => (
+                <SelectItem key={p.id} value={p.id}>
+                  {p.codigo_projeto ? `${p.codigo_projeto} — ` : ""}
+                  {p.nome}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={filtroResponsavel} onValueChange={setFiltroResponsavel}>
+            <SelectTrigger className="w-full h-9 text-sm">
+              <SelectValue placeholder="Responsável" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Todos responsáveis</SelectItem>
+              {responsaveisUnicos.map((r) => (
+                <SelectItem key={r} value={r}>
+                  {r}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </CalendarioSidebar>
+      }
       header={
-        <PageHeader title="Calendário" description="Prazos e entregas dos projetos">
-          <div className="flex items-center gap-2 flex-wrap">
+        <PageHeader title="Calendário" search={{ value: busca, onChange: setBusca, placeholder: "Buscar prazo" }}>
+          <div className="flex items-center gap-2">
             <div className="flex items-center gap-1">
-              <Button variant="ghost" size="icon" className="h-9 w-9" onClick={goPrev} aria-label="Mês anterior">
+              <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => step(-1)} aria-label="Anterior">
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-              <span className="text-sm font-medium min-w-[160px] text-center">
-                {MESES[cursor.getMonth()]} {cursor.getFullYear()}
-              </span>
-              <Button variant="ghost" size="icon" className="h-9 w-9" onClick={goNext} aria-label="Próximo mês">
+              <span className="text-sm font-medium min-w-[150px] text-center">{labelPeriodo(view, cursor)}</span>
+              <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => step(1)} aria-label="Próximo">
                 <ChevronRight className="h-4 w-4" />
               </Button>
               <Button variant="outline" size="sm" className="ml-1 h-9 text-sm rounded-full" onClick={goHoje}>
@@ -174,30 +219,14 @@ export default function Calendario() {
               </Button>
             </div>
 
-            <Select value={filtroProjeto} onValueChange={setFiltroProjeto}>
-              <SelectTrigger className="w-[200px] h-9 text-sm rounded-full">
-                <SelectValue placeholder="Projeto" />
+            <Select value={view} onValueChange={(v) => setView(v as CalendarioView)}>
+              <SelectTrigger className="w-[120px] h-9 text-sm rounded-full">
+                <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="todos">Todos os projetos</SelectItem>
-                {projetos.map((p) => (
-                  <SelectItem key={p.id} value={p.id}>
-                    {p.codigo_projeto ? `${p.codigo_projeto} — ` : ""}
-                    {p.nome}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select value={filtroResponsavel} onValueChange={setFiltroResponsavel}>
-              <SelectTrigger className="w-[180px] h-9 text-sm rounded-full">
-                <SelectValue placeholder="Responsável" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todos">Todos responsáveis</SelectItem>
-                {responsaveisUnicos.map((r) => (
-                  <SelectItem key={r} value={r}>
-                    {r}
+                {(Object.keys(VIEW_LABEL) as CalendarioView[]).map((v) => (
+                  <SelectItem key={v} value={v}>
+                    {VIEW_LABEL[v]}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -209,12 +238,14 @@ export default function Calendario() {
       {isLoading ? (
         <div className="flex items-center justify-center h-64 text-muted-foreground text-sm">Carregando...</div>
       ) : (
-        <CalendarioPrazosTab
-          projetos={projetos}
-          cursor={cursor}
-          filtroProjeto={filtroProjeto}
-          filtroResponsavel={filtroResponsavel}
-        />
+        <>
+          <CalendarioLegenda camadas={CAMADAS} />
+          {view === "mes" && <MesView cursor={cursor} eventosPorDia={eventosPorDia} onEventoClick={abrirEvento} />}
+          {view === "semana" && (
+            <SemanaView cursor={cursor} eventosPorDia={eventosPorDia} onEventoClick={abrirEvento} />
+          )}
+          {view === "agenda" && <AgendaView cursor={cursor} eventos={eventos} onEventoClick={abrirEvento} />}
+        </>
       )}
     </PageLayout>
   );

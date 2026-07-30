@@ -1,6 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { KPICard } from "@/components/KPICard";
 import { formatCurrency as fmtMoeda } from "@/lib/format";
-import { ArrowUpRight, ArrowDownRight, TrendingUp, TrendingDown } from "lucide-react";
+import { TrendingUp, TrendingDown } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   ResponsiveContainer,
@@ -102,61 +103,24 @@ export default function FluxoCaixa({ dateFrom, dateTo }: FluxoCaixaProps) {
     <div className="space-y-6 w-full max-w-none">
       {/* KPIs */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
-        <Card className="bg-positive/10 border-positive/10 w-full min-w-0">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-green-700 truncate">Receitas</CardTitle>
-          </CardHeader>
-          <CardContent className="min-w-0">
-            <div className="text-base sm:text-lg xl:text-xl font-bold text-green-700 tabular-nums whitespace-nowrap">
-              {formatCurrency(stats.receitasTotal)}
-            </div>
-            <p
-              className={`text-xs mt-1 flex items-center min-w-0 ${Number(stats.receitasMes) < 0 ? "text-red-600" : "text-green-600"}`}
-            >
-              {Number(stats.receitasMes) < 0 ? (
-                <ArrowDownRight size={12} className="mr-1 flex-shrink-0" />
-              ) : (
-                <ArrowUpRight size={12} className="mr-1 flex-shrink-0" />
-              )}
-              <span className="truncate">{stats.receitasMes}% vs período anterior</span>
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-red-50 border-red-100 w-full min-w-0">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-red-800 truncate">Despesas</CardTitle>
-          </CardHeader>
-          <CardContent className="min-w-0">
-            <div className="text-base sm:text-lg xl:text-xl font-bold text-red-700 tabular-nums whitespace-nowrap">
-              {formatCurrency(stats.despesasTotal)}
-            </div>
-            <p
-              className={`text-xs mt-1 flex items-center min-w-0 ${Number(stats.despesasMes) > 0 ? "text-red-600" : "text-green-600"}`}
-            >
-              {Number(stats.despesasMes) > 0 ? (
-                <ArrowUpRight size={12} className="mr-1 flex-shrink-0" />
-              ) : (
-                <ArrowDownRight size={12} className="mr-1 flex-shrink-0" />
-              )}
-              <span className="truncate">{stats.despesasMes}% vs período anterior</span>
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-blue-50 border-blue-100 w-full min-w-0">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-blue-800 truncate">Lucro Líquido</CardTitle>
-          </CardHeader>
-          <CardContent className="min-w-0">
-            <div className="text-base sm:text-lg xl:text-xl font-bold text-blue-700 tabular-nums whitespace-nowrap">
-              {formatCurrency(stats.saldo)}
-            </div>
-            <p className="text-xs text-blue-600 mt-1 truncate">
-              Margem de {stats.receitasTotal > 0 ? ((stats.saldo / stats.receitasTotal) * 100).toFixed(1) : 0}%
-            </p>
-          </CardContent>
-        </Card>
+        <KPICard
+          label="Receitas"
+          value={stats.receitasTotal}
+          tone="positive"
+          delta={{ value: Number(stats.receitasMes) }}
+        />
+        <KPICard
+          label="Despesas"
+          value={stats.despesasTotal}
+          tone="danger"
+          delta={{ value: Number(stats.despesasMes), invert: true }}
+        />
+        <KPICard
+          label="Lucro Líquido"
+          value={stats.saldo}
+          tone={stats.saldo >= 0 ? "positive" : "danger"}
+          subtitle={`Margem de ${stats.receitasTotal > 0 ? ((stats.saldo / stats.receitasTotal) * 100).toFixed(1) : 0}%`}
+        />
       </div>
 
       {/* Gráfico mensal — barras + saldo */}
@@ -296,7 +260,7 @@ export default function FluxoCaixa({ dateFrom, dateTo }: FluxoCaixaProps) {
         <Card className="w-full">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <TrendingDown className="h-5 w-5 text-red-600" />
+              <TrendingDown className="h-5 w-5 text-negative-strong" />
               Principais Despesas
             </CardTitle>
             <CardDescription>Top 5 saídas no período</CardDescription>
@@ -306,7 +270,7 @@ export default function FluxoCaixa({ dateFrom, dateTo }: FluxoCaixaProps) {
               {topTransactions?.despesas.map((item, idx) => (
                 <div
                   key={idx}
-                  className="flex items-center justify-between p-3 bg-red-50 rounded-lg border border-red-100 hover:bg-red-100 transition-colors"
+                  className="flex items-center justify-between p-3 bg-danger-soft rounded-lg border border-danger-soft hover:bg-danger-soft/70 transition-colors"
                 >
                   <div className="flex-1">
                     <p className="text-sm font-medium">{item.descricao}</p>
@@ -315,7 +279,7 @@ export default function FluxoCaixa({ dateFrom, dateTo }: FluxoCaixaProps) {
                       {item.categorias_financeiras?.nome || "Outros"}
                     </p>
                   </div>
-                  <span className="text-sm font-bold text-red-700">{formatCurrency(item.valor)}</span>
+                  <span className="text-sm font-bold text-negative-strong">{formatCurrency(item.valor)}</span>
                 </div>
               ))}
               {topTransactions?.despesas.length === 0 && (
@@ -325,7 +289,7 @@ export default function FluxoCaixa({ dateFrom, dateTo }: FluxoCaixaProps) {
             <div className="mt-4 pt-4 border-t border-black/10">
               <div className="flex justify-between items-center">
                 <span className="text-sm font-medium text-muted-foreground">Total das 5 principais</span>
-                <span className="text-lg font-bold text-red-600">{formatCurrency(totalTopDespesas)}</span>
+                <span className="text-lg font-bold text-negative-strong">{formatCurrency(totalTopDespesas)}</span>
               </div>
             </div>
           </CardContent>
