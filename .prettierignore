@@ -1,0 +1,5 @@
+# Tipos gerados pelo Supabase (`npm run gen:types`). O gate de CI "types.ts em
+# sync" compara o arquivo com a saída literal do `supabase gen types`, então o
+# prettier NÃO pode reformatá-lo: se o hook de pre-commit mexer no formato
+# (ponto-e-vírgula, quebra de união), o gate reprova. Deixar fora do prettier.
+src/integrations/supabase/types.ts
