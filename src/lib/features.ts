@@ -5,8 +5,10 @@ import {
   Calendar,
   FileText,
   Globe,
+  HardHat,
   Home,
   LayoutTemplate,
+  ListTodo,
   MapPin,
   Sparkles,
   Target,
@@ -33,7 +35,9 @@ export type FeatureKey =
   | "capacidade"
   | "templates"
   | "timesheet"
-  | "ai_chat";
+  | "ai_chat"
+  | "meu_trabalho"
+  | "obras";
 
 export type FeatureGroup = "visao" | "comercial" | "operacao" | "financeiro" | "equipe" | "extras";
 
@@ -195,6 +199,31 @@ export const FEATURES: readonly FeatureDefinition[] = [
     addon: false,
     dormant: false,
     includedInPlans: ["pro", "enterprise"],
+  },
+  {
+    key: "meu_trabalho",
+    label: "Meu trabalho",
+    description: "Suas disciplinas de projeto e tarefas do dia, num lugar só",
+    group: "operacao",
+    // core: acesso liberado sem depender do catálogo de features do banco.
+    // D1 (spec 008) fica em aberto: os planos serão calibrados depois; até lá
+    // a tela fica sempre disponível e a escrita segue gated em 'editor'.
+    icon: ListTodo,
+    core: true,
+    addon: false,
+    includedInPlans: ["starter", "pro", "enterprise"],
+  },
+  {
+    key: "obras",
+    label: "Obras",
+    description: "Execução em campo: diário de obra, frentes e andamento",
+    group: "operacao",
+    icon: HardHat,
+    core: false,
+    addon: false,
+    // Reaberto em 2026-07-30 (ADR 0011, spec 015). Fica off por padrão e é
+    // ligado por empresa (design partner VRZ); por isso não entra em plano ainda.
+    includedInPlans: [],
   },
   {
     key: "ai_hub",

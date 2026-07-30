@@ -26,7 +26,10 @@ const Checkout = lazy(() => import("./pages/checkout"));
 const Billing = lazy(() => import("./pages/billing"));
 const Login = lazy(() => import("./pages/Login"));
 const Inicio = lazy(() => import("./pages/inicio"));
+const MeuTrabalho = lazy(() => import("./pages/meu-trabalho"));
 const Obras = lazy(() => import("./pages/obras"));
+const ObraClima = lazy(() => import("./pages/obras/clima"));
+const ObraDetalhe = lazy(() => import("./pages/obras/[id]"));
 const Leads = lazy(() => import("./pages/leads"));
 const Financeiro = lazy(() => import("./pages/Financeiro"));
 const Projetos = lazy(() => import("./pages/Projetos"));
@@ -34,7 +37,6 @@ const Clientes = lazy(() => import("./pages/clientes"));
 const ClienteDetalhe = lazy(() => import("./pages/clientes/[id]"));
 const Fornecedores = lazy(() => import("./pages/fornecedores"));
 const Pessoas = lazy(() => import("./pages/pessoas"));
-const Relatorios = lazy(() => import("./pages/Relatorios"));
 const Profile = lazy(() => import("./pages/Profile"));
 const Company = lazy(() => import("./pages/Company"));
 const CompanySetup = lazy(() => import("./pages/CompanySetup"));
@@ -115,12 +117,23 @@ const App = () => {
 
                     <Route element={<PrivateRoute />}>
                       <Route path="/inicio" element={<Inicio />} />
-                      <Route path="/obras" element={<Obras />} />
+
+                      {/* Obras (reaberto — ADR 0011, spec 015): fase de execução do projeto. */}
+                      <Route element={<FeatureRoute feature="obras" />}>
+                        <Route path="/obras" element={<Obras />} />
+                        <Route path="/obras/clima" element={<ObraClima />} />
+                        <Route path="/obras/:id" element={<ObraDetalhe />} />
+                      </Route>
                       {/* Dashboard aposentado (spec 005): financeiro vive em Gestão, operacional na Início. */}
                       <Route path="/dashboard" element={<Navigate to="/inicio" replace />} />
 
                       <Route element={<FeatureRoute feature="leads" />}>
                         <Route path="/leads" element={<Leads />} />
+                      </Route>
+
+                      {/* Meu trabalho (Gestão): disciplinas do responsável + tarefas do dia. */}
+                      <Route element={<FeatureRoute feature="meu_trabalho" />}>
+                        <Route path="/meu-trabalho" element={<MeuTrabalho />} />
                       </Route>
 
                       {/* Financeiro (inclui aba Folha) escondido de coordenador/colaborador.
@@ -155,9 +168,9 @@ const App = () => {
                         <Route path="/pessoas" element={<Navigate to="/equipe" replace />} />
                       </Route>
 
-                      <Route element={<FeatureRoute feature="relatorios" />}>
-                        <Route path="/relatorios" element={<Relatorios />} />
-                      </Route>
+                      {/* Relatórios virou aba do Financeiro (recorte financeiro).
+                          Link antigo continua funcionando via redirect. */}
+                      <Route path="/relatorios" element={<Navigate to="/financeiro?tab=relatorios" replace />} />
 
                       <Route element={<FeatureRoute feature="templates" />}>
                         <Route path="/templates" element={<Templates />} />

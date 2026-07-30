@@ -1,8 +1,8 @@
 import { useMemo, useState } from "react";
 import { formatCurrency as fmtMoeda } from "@/lib/format";
+import { KPICard } from "@/components/KPICard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Loader2, TrendingUp, TrendingDown, AlertTriangle } from "lucide-react";
+import { Loader2, TrendingUp, TrendingDown } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts";
@@ -137,43 +137,25 @@ export default function ProjecaoFluxoCaixa() {
     <div className="space-y-6">
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground">Saldo Atual</p>
-            <p className={`text-xl font-bold ${saldoAtual >= 0 ? "text-emerald-600" : "text-red-600"}`}>
-              {formatCurrency(saldoAtual)}
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground flex items-center gap-1">
-              <TrendingUp className="h-3 w-3 text-emerald-500" /> A Receber ({dias}d)
-            </p>
-            <p className="text-xl font-bold text-emerald-600">{formatCurrency(totalEntradas)}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground flex items-center gap-1">
-              <TrendingDown className="h-3 w-3 text-red-500" /> A Pagar ({dias}d)
-            </p>
-            <p className="text-xl font-bold text-red-600">{formatCurrency(totalSaidas)}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground">Saldo em {dias} dias</p>
-            <p className={`text-xl font-bold ${saldoFinal >= 0 ? "text-emerald-600" : "text-red-600"}`}>
-              {formatCurrency(saldoFinal)}
-            </p>
-            {ficaNegativo && (
-              <Badge variant="destructive" className="mt-1 text-[10px]">
-                <AlertTriangle className="h-3 w-3 mr-1" /> Caixa negativo previsto
-              </Badge>
-            )}
-          </CardContent>
-        </Card>
+        <KPICard
+          label="Saldo Atual"
+          value={formatCurrency(saldoAtual)}
+          tone={saldoAtual >= 0 ? "positive" : "danger"}
+        />
+        <KPICard
+          label={`A Receber (${dias}d)`}
+          value={formatCurrency(totalEntradas)}
+          tone="positive"
+          icon={TrendingUp}
+        />
+        <KPICard label={`A Pagar (${dias}d)`} value={formatCurrency(totalSaidas)} tone="danger" icon={TrendingDown} />
+        <KPICard
+          label={`Saldo em ${dias} dias`}
+          value={formatCurrency(saldoFinal)}
+          tone={saldoFinal >= 0 ? "positive" : "danger"}
+          subtitle={ficaNegativo ? "Caixa negativo previsto" : undefined}
+          subtitleTone={ficaNegativo ? "danger" : "muted"}
+        />
       </div>
 
       {/* Gráfico */}
@@ -240,14 +222,14 @@ export default function ProjecaoFluxoCaixa() {
                   {projecao.map((p) => (
                     <tr key={p.data} className="border-b hover:bg-muted/50">
                       <td className="py-2 px-3 font-medium">{p.label}</td>
-                      <td className="py-2 px-3 text-right text-emerald-600">
+                      <td className="py-2 px-3 text-right text-positive-strong">
                         {p.entradas > 0 ? `+${formatCurrency(p.entradas)}` : "—"}
                       </td>
-                      <td className="py-2 px-3 text-right text-red-600">
+                      <td className="py-2 px-3 text-right text-negative-strong">
                         {p.saidas > 0 ? `-${formatCurrency(p.saidas)}` : "—"}
                       </td>
                       <td
-                        className={`py-2 px-3 text-right font-medium ${p.saldo >= 0 ? "text-emerald-600" : "text-red-600"}`}
+                        className={`py-2 px-3 text-right font-medium ${p.saldo >= 0 ? "text-positive-strong" : "text-negative-strong"}`}
                       >
                         {formatCurrency(p.saldo)}
                       </td>

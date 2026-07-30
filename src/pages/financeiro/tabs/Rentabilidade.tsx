@@ -1,4 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { KPICard } from "@/components/KPICard";
 import { formatCurrency as fmtMoeda } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -76,42 +77,22 @@ export default function Rentabilidade() {
       <TabsContent value="por-projeto" className="space-y-6">
         {/* KPI Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-                <DollarSign className="h-4 w-4" /> Receitas
-              </div>
-              <p className="text-lg font-bold">{formatCurrency(metricas.totalReceitas)}</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-                <TrendingDown className="h-4 w-4" /> Despesas Diretas
-              </div>
-              <p className="text-lg font-bold">{formatCurrency(metricas.totalDespesas)}</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-                <TrendingUp className="h-4 w-4" /> Margem Bruta
-              </div>
-              <p className="text-lg font-bold">{formatCurrency(metricas.margemBrutaTotal)}</p>
-              <MargemBadge pct={metricas.margemMediaPct} />
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-                <Clock className="h-4 w-4" /> Utilização de Horas
-              </div>
-              <p className="text-lg font-bold">{formatPct(metricas.utilizacaoHoras)}</p>
-              <p className="text-xs text-muted-foreground">
-                {metricas.totalHorasConsumidas.toFixed(0)}h / {metricas.totalHorasOrcadas.toFixed(0)}h
-              </p>
-            </CardContent>
-          </Card>
+          <KPICard label="Receitas" value={metricas.totalReceitas} tone="positive" icon={DollarSign} />
+          <KPICard label="Despesas Diretas" value={metricas.totalDespesas} tone="danger" icon={TrendingDown} />
+          <KPICard
+            label="Margem Bruta"
+            value={metricas.margemBrutaTotal}
+            tone={metricas.margemBrutaTotal >= 0 ? "positive" : "danger"}
+            icon={TrendingUp}
+            subtitle={formatPct(metricas.margemMediaPct)}
+            subtitleTone={metricas.margemMediaPct >= 0 ? "positive" : "danger"}
+          />
+          <KPICard
+            label="Utilização de Horas"
+            value={formatPct(metricas.utilizacaoHoras)}
+            icon={Clock}
+            subtitle={`${metricas.totalHorasConsumidas.toFixed(0)}h / ${metricas.totalHorasOrcadas.toFixed(0)}h`}
+          />
         </div>
 
         {/* Charts */}

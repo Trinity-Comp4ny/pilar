@@ -3,7 +3,7 @@ import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { useSidebar } from "@/components/ui/sidebar";
 import { useSearchParams } from "react-router-dom";
 import { LayoutDashboard, DollarSign, User, FolderKanban } from "lucide-react";
-import { MetasHeader } from "./components/MetasHeader";
+import { PageHeader } from "@/components/PageHeader";
 import MetasDashboard from "./tabs/MetasDashboard";
 import MetasFinanceiras from "./tabs/MetasFinanceiras";
 import MetasPessoais from "./tabs/MetasPessoais";
@@ -41,7 +41,7 @@ export default function MetasPage() {
     >
       <Tabs value={activeTab} onValueChange={handleTabChange} className="flex flex-col flex-1 overflow-hidden">
         <div className="sticky top-0 z-20 w-full bg-white border-b">
-          <MetasHeader />
+          <PageHeader title="Metas" />
         </div>
 
         <div className="flex flex-col md:flex-row flex-1 overflow-hidden">

@@ -14,7 +14,6 @@ describe("routeToModule", () => {
     expect(routeToModule("/financeiro")).toBe("gestao");
     expect(routeToModule("/equipe")).toBe("gestao");
     expect(routeToModule("/fornecedores")).toBe("gestao");
-    expect(routeToModule("/relatorios")).toBe("gestao");
     expect(routeToModule("/leads")).toBe("projetos");
     expect(routeToModule("/documentos")).toBe("projetos");
     expect(routeToModule("/clientes")).toBe("projetos");
@@ -39,6 +38,8 @@ describe("routeToModule", () => {
     expect(routeToModule("/inicio")).toBeNull();
     // /dashboard foi aposentado (spec 005): não pertence mais a nenhum módulo.
     expect(routeToModule("/dashboard")).toBeNull();
+    // /relatorios virou aba do Financeiro: só redireciona, não é rota de módulo.
+    expect(routeToModule("/relatorios")).toBeNull();
     expect(routeToModule("/agentes")).toBeNull();
     expect(routeToModule("/profile")).toBeNull();
     expect(routeToModule("/admin")).toBeNull();
@@ -82,9 +83,10 @@ describe("integridade do mapa de módulos", () => {
     }
   });
 
-  it("obras é marcado como em breve e sempre presente na ordem", () => {
-    expect(MODULES.obras.emBreve).toBe(true);
+  it("obras é módulo real gated pela feature (reaberto — ADR 0011)", () => {
+    expect(MODULES.obras.emBreve).toBeUndefined();
     expect(MODULE_ORDER).toContain("obras");
+    expect(MODULES.obras.items.every((i) => i.feature === "obras")).toBe(true);
   });
 });
 

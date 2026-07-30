@@ -81,12 +81,16 @@ export function CartaoFormDialog({
             </Select>
           </div>
           <div className="space-y-2">
-            <Label>Nome do Cartão</Label>
+            <Label>
+              Nome do Cartão <span className="text-destructive">*</span>
+            </Label>
             <Input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Ex: Nubank Platinum" />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Dia de Fechamento</Label>
+              <Label>
+                Dia de Fechamento <span className="text-destructive">*</span>
+              </Label>
               <Input
                 type="number"
                 min="1"
@@ -97,7 +101,9 @@ export function CartaoFormDialog({
               />
             </div>
             <div className="space-y-2">
-              <Label>Dia de Vencimento</Label>
+              <Label>
+                Dia de Vencimento <span className="text-destructive">*</span>
+              </Label>
               <Input
                 type="number"
                 min="1"

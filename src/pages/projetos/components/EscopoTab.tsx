@@ -147,13 +147,16 @@ export function EscopoTab({ projetoId, canEdit }: EscopoTabProps) {
     mutationFn: async () => {
       if (!formDescricao.trim()) throw new Error("Descrição é obrigatória");
 
+      // Item com horas ou custo precisa de descrição (a coluna é NOT NULL no banco).
+      // Itens totalmente vazios são descartados silenciosamente (não contribuem em nada).
+      const itemSemDescricao = formItens.find((i) => !i.descricao.trim() && (i.horas > 0 || i.custo > 0));
+      if (itemSemDescricao) throw new Error("Todo item com horas ou custo precisa de descrição");
+      const itensValidos = formItens.filter((i) => i.descricao.trim());
+
       const totalHoras = formItens.reduce((s, i) => s + i.horas, 0);
       const totalCusto = formItens.reduce((s, i) => s + i.custo, 0);
       // Valor do aditivo é editável: usa o informado; se vazio, cai na sugestão (custo + 30%).
-      const valorAditivo =
-        formTipo === "aditivo"
-          ? parseFloat(formValorAditivo) || totalCusto * 1.3
-          : totalCusto * 1.3;
+      const valorAditivo = formTipo === "aditivo" ? parseFloat(formValorAditivo) || totalCusto * 1.3 : totalCusto * 1.3;
 
       const { data: escopo, error } = await supabase
         .from("escopos")
@@ -172,11 +175,11 @@ export function EscopoTab({ projetoId, canEdit }: EscopoTabProps) {
       if (error) throw error;
 
       // Insere itens
-      if (formItens.length > 0) {
+      if (itensValidos.length > 0) {
         const { error: itensError } = await supabase.from("escopo_itens").insert(
-          formItens.map((item) => ({
+          itensValidos.map((item) => ({
             escopo_id: escopo.id,
-            descricao: item.descricao,
+            descricao: item.descricao.trim(),
             disciplina: item.disciplina || null,
             horas: item.horas,
             custo: item.custo,
@@ -202,7 +205,7 @@ export function EscopoTab({ projetoId, canEdit }: EscopoTabProps) {
       toast.success(formTipo === "original" ? "Escopo original definido" : "Aditivo criado");
       resetForm();
     },
-    onError: () => toast.error("Erro"),
+    onError: (err) => toast.error(err instanceof Error ? err.message : "Não foi possível salvar o escopo"),
   });
 
   const updateStatusMutation = useMutation({
@@ -488,10 +491,7 @@ export function EscopoTab({ projetoId, canEdit }: EscopoTabProps) {
                     value={item.descricao}
                     onChange={(e) => updateItem(i, "descricao", e.target.value)}
                   />
-                  <Select
-                    value={item.disciplina || undefined}
-                    onValueChange={(v) => updateItem(i, "disciplina", v)}
-                  >
+                  <Select value={item.disciplina || undefined} onValueChange={(v) => updateItem(i, "disciplina", v)}>
                     <SelectTrigger className="w-28 h-8 text-xs">
                       <SelectValue placeholder="Disciplina" />
                     </SelectTrigger>

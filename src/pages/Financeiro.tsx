@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, lazy, Suspense } from "react";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { useSearchParams } from "react-router-dom";
 import { startOfMonth, endOfMonth, parseISO, format, isValid } from "date-fns";
-import { LayoutDashboard, TrendingUp, Receipt, Users2, CreditCard, Landmark } from "lucide-react";
+import { LayoutDashboard, TrendingUp, Receipt, Users2, CreditCard, Landmark, FileBarChart } from "lucide-react";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { PeriodoPopover } from "./financeiro/components/PeriodoPopover";
@@ -18,6 +18,7 @@ const Contas = lazy(() => import("./financeiro/tabs/Contas"));
 const Lancamentos = lazy(() => import("./financeiro/tabs/Lancamentos"));
 const FolhaPagamento = lazy(() => import("./financeiro/tabs/FolhaPagamento"));
 const Faturas = lazy(() => import("./financeiro/tabs/Faturas"));
+const Relatorios = lazy(() => import("./Relatorios"));
 
 const FINANCEIRO_TABS_ALL: SecondSidebarTab[] = [
   { id: "visao-geral", label: "Visão Geral", icon: LayoutDashboard },
@@ -26,6 +27,7 @@ const FINANCEIRO_TABS_ALL: SecondSidebarTab[] = [
   { id: "folha-pagamento", label: "Folha de Pagamento", icon: Users2 },
   { id: "faturas", label: "Faturas", icon: CreditCard },
   { id: "contas", label: "Contas", icon: Landmark },
+  { id: "relatorios", label: "Relatórios", icon: FileBarChart },
 ];
 
 function parseDateParam(v: string | null): Date | undefined {
@@ -142,6 +144,14 @@ export default function Financeiro() {
             {activeTab === "contas" && (
               <Suspense fallback={<Skeleton className="h-64 w-full" />}>
                 <Contas />
+              </Suspense>
+            )}
+          </TabsContent>
+
+          <TabsContent value="relatorios" className="mt-0 w-full focus-visible:ring-0">
+            {activeTab === "relatorios" && (
+              <Suspense fallback={<Skeleton className="h-64 w-full" />}>
+                <Relatorios />
               </Suspense>
             )}
           </TabsContent>

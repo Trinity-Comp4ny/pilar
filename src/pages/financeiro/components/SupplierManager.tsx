@@ -15,6 +15,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Plus, Pencil, Trash2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { onlyDigits, formatCNPJ, validateCNPJ, validateEmail } from "@/lib/maskUtils";
 
 interface Supplier {
   id: string;
@@ -82,14 +83,23 @@ export function SupplierManager({ onSupplierChange }: SupplierManagerProps) {
       toast.error("Campo obrigatório", { description: "O nome do fornecedor é obrigatório" });
       return;
     }
+    const cnpjDigits = onlyDigits(newSupplier.cnpj ?? "");
+    if (cnpjDigits.length > 0 && !validateCNPJ(newSupplier.cnpj ?? "")) {
+      toast.error("CNPJ inválido", { description: "Confira o CNPJ ou deixe em branco" });
+      return;
+    }
+    if (newSupplier.email?.trim() && !validateEmail(newSupplier.email)) {
+      toast.error("Email inválido", { description: "Confira o email ou deixe em branco" });
+      return;
+    }
 
     setIsSaving(true);
     try {
       const { error } = await supabase.from("fornecedores").insert({
         nome: newSupplier.name.trim(),
-        contato: newSupplier.contact?.trim(),
-        email: newSupplier.email?.trim(),
-        cnpj: newSupplier.cnpj?.trim(),
+        contato: newSupplier.contact?.trim() || null,
+        email: newSupplier.email?.trim() || null,
+        cnpj: cnpjDigits || null,
         empresa_id: (await supabase.rpc("get_user_empresa_id")).data,
       } as never);
 
@@ -112,6 +122,15 @@ export function SupplierManager({ onSupplierChange }: SupplierManagerProps) {
       toast.error("Campo obrigatório", { description: "O nome do fornecedor é obrigatório" });
       return;
     }
+    const cnpjDigits = onlyDigits(editSupplier.cnpj ?? "");
+    if (cnpjDigits.length > 0 && !validateCNPJ(editSupplier.cnpj ?? "")) {
+      toast.error("CNPJ inválido", { description: "Confira o CNPJ ou deixe em branco" });
+      return;
+    }
+    if (editSupplier.email?.trim() && !validateEmail(editSupplier.email)) {
+      toast.error("Email inválido", { description: "Confira o email ou deixe em branco" });
+      return;
+    }
 
     setIsSaving(true);
     try {
@@ -119,9 +138,9 @@ export function SupplierManager({ onSupplierChange }: SupplierManagerProps) {
         .from("fornecedores")
         .update({
           nome: editSupplier.name.trim(),
-          contato: editSupplier.contact?.trim(),
-          email: editSupplier.email?.trim(),
-          cnpj: editSupplier.cnpj?.trim(),
+          contato: editSupplier.contact?.trim() || null,
+          email: editSupplier.email?.trim() || null,
+          cnpj: cnpjDigits || null,
         })
         .eq("id", editSupplier.id);
 
@@ -199,7 +218,8 @@ export function SupplierManager({ onSupplierChange }: SupplierManagerProps) {
                 <Input
                   id="supplierCnpj"
                   value={newSupplier.cnpj || ""}
-                  onChange={(e) => setNewSupplier({ ...newSupplier, cnpj: e.target.value })}
+                  onChange={(e) => setNewSupplier({ ...newSupplier, cnpj: formatCNPJ(e.target.value) })}
+                  maxLength={18}
                   placeholder="00.000.000/0000-00"
                 />
               </div>
@@ -333,7 +353,10 @@ export function SupplierManager({ onSupplierChange }: SupplierManagerProps) {
               <Input
                 id="editSupplierCnpj"
                 value={editSupplier?.cnpj || ""}
-                onChange={(e) => setEditSupplier(editSupplier ? { ...editSupplier, cnpj: e.target.value } : null)}
+                onChange={(e) =>
+                  setEditSupplier(editSupplier ? { ...editSupplier, cnpj: formatCNPJ(e.target.value) } : null)
+                }
+                maxLength={18}
                 placeholder="00.000.000/0000-00"
               />
             </div>

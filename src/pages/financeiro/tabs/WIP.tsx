@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { formatCurrency as fmtMoeda } from "@/lib/format";
+import { KPICard } from "@/components/KPICard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -120,40 +121,22 @@ export default function WIP() {
 
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground">Custo Realizado</p>
-            <p className="text-lg font-bold">{formatCurrency(totalCusto)}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground">Faturado</p>
-            <p className="text-lg font-bold text-blue-600">{formatCurrency(totalFaturado)}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground">Recebido</p>
-            <p className="text-lg font-bold text-emerald-600">{formatCurrency(totalRecebido)}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground">Saldo WIP Total</p>
-            <p className={`text-lg font-bold ${totalWIP > 0 ? "text-amber-600" : totalWIP < 0 ? "text-blue-600" : ""}`}>
-              {formatCurrency(totalWIP)}
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground">Projetos</p>
+        <KPICard label="Custo Realizado" value={formatCurrency(totalCusto)} />
+        <KPICard label="Faturado" value={formatCurrency(totalFaturado)} />
+        <KPICard label="Recebido" value={formatCurrency(totalRecebido)} tone="positive" />
+        <KPICard
+          label="Saldo WIP Total"
+          value={formatCurrency(totalWIP)}
+          tone={totalWIP > 0 ? "warning" : totalWIP < 0 ? "info" : "neutral"}
+        />
+        <Card className="rounded-2xl border-black/5 bg-white p-4">
+          <CardContent className="p-0">
+            <p className="text-xs text-muted-foreground uppercase tracking-wider">Projetos</p>
             <div className="flex items-center gap-2 mt-1">
-              <Badge className="bg-amber-100 text-amber-800 text-[10px]">
+              <Badge className="bg-warning-soft text-warning-strong text-[10px]">
                 <TrendingUp className="h-3 w-3 mr-0.5" /> {wipPositivo} subfaturados
               </Badge>
-              <Badge className="bg-blue-100 text-blue-800 text-[10px]">
+              <Badge className="bg-info-soft text-info-strong text-[10px]">
                 <TrendingDown className="h-3 w-3 mr-0.5" /> {wipNegativo} sobrefaturados
               </Badge>
             </div>
@@ -213,15 +196,15 @@ export default function WIP() {
                           {formatCurrency(Number(w.custo_realizado))}
                         </TableCell>
                         <TableCell className="text-xs py-2 text-center text-muted-foreground">→</TableCell>
-                        <TableCell className="text-xs py-2 text-right text-blue-600">
+                        <TableCell className="text-xs py-2 text-right text-info-strong">
                           {formatCurrency(Number(w.faturado))}
                         </TableCell>
                         <TableCell className="text-xs py-2 text-center text-muted-foreground">→</TableCell>
-                        <TableCell className="text-xs py-2 text-right text-emerald-600">
+                        <TableCell className="text-xs py-2 text-right text-positive-strong">
                           {formatCurrency(Number(w.recebido))}
                         </TableCell>
                         <TableCell
-                          className={`text-xs py-2 text-right font-semibold ${wipSaldo > 0 ? "text-amber-600" : wipSaldo < 0 ? "text-blue-600" : ""}`}
+                          className={`text-xs py-2 text-right font-semibold ${wipSaldo > 0 ? "text-warning-strong" : wipSaldo < 0 ? "text-info-strong" : ""}`}
                         >
                           {formatCurrency(wipSaldo)}
                         </TableCell>

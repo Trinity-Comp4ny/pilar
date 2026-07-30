@@ -1,7 +1,6 @@
 import { useMemo } from "react";
 import { CalendarClock, Layers, TrendingUp, PercentCircle } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { formatCurrency } from "@/lib/currencyUtils";
+import { KPICard } from "@/components/KPICard";
 import { type Lead } from "@/hooks/useLeads";
 
 const ATIVOS = new Set(["Novo", "Em contato", "Proposta", "Negociação"]);
@@ -42,69 +41,28 @@ export function LeadsKPIs({ leads, onFilterProximos, proximosAtivo = false }: Le
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4 flex-shrink-0">
-      <KpiCard icon={Layers} label="Pipeline ativo" value={stats.total.toString()} color="text-foreground" />
-      <KpiCard
-        icon={TrendingUp}
-        label="Valor estimado"
-        value={formatCurrency(stats.valorPipeline)}
-        color="text-positive-strong"
-      />
-      <KpiCard
+      <KPICard icon={Layers} label="Pipeline ativo" value={stats.total.toString()} tone="neutral" />
+      <KPICard icon={TrendingUp} label="Valor estimado" value={stats.valorPipeline} tone="positive" />
+      <KPICard
         icon={CalendarClock}
         label="Fecham em 7 dias"
         value={stats.proximos.toString()}
-        color="text-warning"
+        tone="warning"
         onClick={onFilterProximos}
-        title="Filtrar leads que fecham nos próximos 7 dias"
-        pressed={proximosAtivo}
+        className={proximosAtivo ? "border-brand ring-1 ring-brand bg-brand/5" : undefined}
       />
-      <KpiCard
+      <KPICard
         icon={PercentCircle}
         label="Taxa de conversão"
         value={stats.taxaConversao !== null ? `${stats.taxaConversao}%` : "0%"}
-        color={
-          stats.taxaConversao === null
-            ? "text-muted-foreground"
-            : stats.taxaConversao >= 50
-              ? "text-positive-strong"
-              : "text-warning"
+        tone={
+          stats.taxaConversao !== null && stats.taxaConversao >= 50
+            ? "positive"
+            : stats.taxaConversao === null
+              ? "neutral"
+              : "warning"
         }
       />
     </div>
-  );
-}
-
-interface KpiCardProps {
-  icon: typeof Layers;
-  label: string;
-  value: string;
-  color: string;
-  onClick?: () => void;
-  title?: string;
-  pressed?: boolean;
-}
-
-function KpiCard({ icon: Icon, label, value, color, onClick, title, pressed }: KpiCardProps) {
-  const Component = onClick ? "button" : "div";
-  return (
-    <Component
-      type={onClick ? "button" : undefined}
-      onClick={onClick}
-      title={title}
-      aria-pressed={onClick ? pressed : undefined}
-      className={cn(
-        "flex items-center gap-3 px-3 py-2 rounded-lg border bg-white text-left transition-colors",
-        onClick && "hover:bg-muted/40 cursor-pointer",
-        pressed && "border-brand ring-1 ring-brand bg-brand/5"
-      )}
-    >
-      <div className={cn("h-8 w-8 rounded-md flex items-center justify-center bg-muted/50", color)}>
-        <Icon className="h-4 w-4" />
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-[10px] uppercase text-muted-foreground tracking-wide truncate">{label}</p>
-        <p className={cn("text-sm font-semibold tabular-nums truncate", color)}>{value}</p>
-      </div>
-    </Component>
   );
 }

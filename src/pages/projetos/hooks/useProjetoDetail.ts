@@ -214,7 +214,12 @@ export function useProjetoDetail(id: string | undefined) {
           prioridade: editingDiscLocal.prioridade,
           justificativa_atraso: editingDiscLocal.justificativa_atraso,
           horas_estimadas: editingDiscLocal.horas_estimadas,
+          horas_realizadas: editingDiscLocal.horas_realizadas,
           custo_hora: editingDiscLocal.custo_hora,
+          descricao: editingDiscLocal.descricao,
+          labels: editingDiscLocal.labels,
+          links: editingDiscLocal.links,
+          comentarios: editingDiscLocal.comentarios,
           responsavel_ids: responsavelIds,
         });
         toast.success("Disciplina atualizada");

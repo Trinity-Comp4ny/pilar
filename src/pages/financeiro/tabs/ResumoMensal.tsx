@@ -1,6 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { KPICard } from "@/components/KPICard";
 import { formatCurrency as fmtMoeda } from "@/lib/format";
-import { ArrowUpRight, ArrowDownRight, TrendingUp, TrendingDown, Loader2 } from "lucide-react";
+import { TrendingUp, TrendingDown, Loader2 } from "lucide-react";
 import { ResponsiveContainer, AreaChart, Area, CartesianGrid, XAxis, YAxis, Tooltip } from "recharts";
 import { CustomTooltip } from "../components/CustomTooltip";
 import { FinanceErrorState } from "../components/FinanceErrorState";
@@ -69,74 +70,43 @@ export default function ResumoMensal({ dateFrom, dateTo }: ResumoMensalProps) {
   return (
     <div className="space-y-6 w-full max-w-none">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
-        <Card className="bg-positive/10 border-positive/10 w-full min-w-0">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-positive-strong truncate">Receitas</CardTitle>
-          </CardHeader>
-          <CardContent className="min-w-0">
-            <div className="text-base sm:text-lg xl:text-xl font-bold text-positive-strong tabular-nums whitespace-nowrap">
-              {formatCurrency(stats.receitasTotal)}
-            </div>
-            <p className="text-xs text-positive-strong mt-1 flex items-center min-w-0">
-              <ArrowUpRight size={12} className="mr-1 flex-shrink-0" />
-              <span className="truncate">{stats.receitasMes}% vs mês anterior</span>
-            </p>
-          </CardContent>
-        </Card>
-        <Card className="bg-red-50 border-red-100 w-full min-w-0">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-red-800 truncate">Despesas</CardTitle>
-          </CardHeader>
-          <CardContent className="min-w-0">
-            <div className="text-base sm:text-lg xl:text-xl font-bold text-red-700 tabular-nums whitespace-nowrap">
-              {formatCurrency(stats.despesasTotal)}
-            </div>
-            <p className="text-xs text-positive-strong mt-1 flex items-center min-w-0">
-              <ArrowDownRight size={12} className="mr-1 flex-shrink-0" />
-              <span className="truncate">{stats.despesasMes}% vs mês anterior</span>
-            </p>
-          </CardContent>
-        </Card>
-        <Card className="bg-blue-50 border-blue-100 w-full min-w-0">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-blue-800 truncate">Saldo do período</CardTitle>
-          </CardHeader>
-          <CardContent className="min-w-0">
-            <div className="text-base sm:text-lg xl:text-xl font-bold text-blue-700 tabular-nums whitespace-nowrap">
-              {formatCurrency(stats.saldo)}
-            </div>
-            <p className="text-xs text-blue-600 mt-1 truncate">Entradas menos saídas no caixa</p>
-          </CardContent>
-        </Card>
-        <Card className="border-black/5 w-full min-w-0">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground truncate">Projeção final</CardTitle>
-          </CardHeader>
-          <CardContent className="min-w-0">
-            {(() => {
-              const today = new Date();
-              const start = dateFrom || startOfMonth(today);
-              const end = dateTo || endOfMonth(today);
-              // Só faz sentido projetar um período em andamento. Período já encerrado
-              // ou totalmente no futuro mostra o saldo real, sem extrapolar.
-              const isOngoing = today >= start && today <= end;
-              const dayMs = 1000 * 60 * 60 * 24;
-              const totalDays = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / dayMs) + 1);
-              const elapsedDays = Math.max(1, Math.ceil((today.getTime() - start.getTime()) / dayMs) + 1);
-              const projection = isOngoing ? (stats.saldo / elapsedDays) * totalDays : stats.saldo;
-              return (
-                <>
-                  <div className="text-base sm:text-lg xl:text-xl font-bold text-foreground tabular-nums whitespace-nowrap">
-                    {formatCurrency(projection)}
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-1 truncate">
-                    {isOngoing ? "Baseado na média diária" : "Período encerrado, saldo real"}
-                  </p>
-                </>
-              );
-            })()}
-          </CardContent>
-        </Card>
+        <KPICard
+          label="Receitas"
+          value={stats.receitasTotal}
+          tone="positive"
+          delta={{ value: Number(stats.receitasMes) }}
+        />
+        <KPICard
+          label="Despesas"
+          value={stats.despesasTotal}
+          tone="danger"
+          delta={{ value: Number(stats.despesasMes), invert: true }}
+        />
+        <KPICard
+          label="Saldo do período"
+          value={stats.saldo}
+          tone={stats.saldo >= 0 ? "positive" : "danger"}
+          subtitle="Entradas menos saídas no caixa"
+        />
+        {(() => {
+          const today = new Date();
+          const start = dateFrom || startOfMonth(today);
+          const end = dateTo || endOfMonth(today);
+          // Só faz sentido projetar um período em andamento. Período já encerrado
+          // ou totalmente no futuro mostra o saldo real, sem extrapolar.
+          const isOngoing = today >= start && today <= end;
+          const dayMs = 1000 * 60 * 60 * 24;
+          const totalDays = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / dayMs) + 1);
+          const elapsedDays = Math.max(1, Math.ceil((today.getTime() - start.getTime()) / dayMs) + 1);
+          const projection = isOngoing ? (stats.saldo / elapsedDays) * totalDays : stats.saldo;
+          return (
+            <KPICard
+              label="Projeção final"
+              value={projection}
+              subtitle={isOngoing ? "Baseado na média diária" : "Período encerrado, saldo real"}
+            />
+          );
+        })()}
       </div>
 
       <Card className="w-full">
@@ -227,7 +197,7 @@ export default function ResumoMensal({ dateFrom, dateTo }: ResumoMensalProps) {
         <Card className="w-full">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <TrendingDown className="h-5 w-5 text-red-600" />
+              <TrendingDown className="h-5 w-5 text-negative-strong" />
               Principais Despesas do Mês
             </CardTitle>
             <CardDescription>Top 5 saídas de despesa</CardDescription>
@@ -237,7 +207,7 @@ export default function ResumoMensal({ dateFrom, dateTo }: ResumoMensalProps) {
               {topTransactions?.despesas.map((item, idx) => (
                 <div
                   key={idx}
-                  className="flex items-center justify-between p-3 bg-red-50 rounded-lg border border-red-100 hover:bg-red-100 transition-colors"
+                  className="flex items-center justify-between p-3 bg-danger-soft rounded-lg border border-danger-soft hover:bg-danger-soft/70 transition-colors"
                 >
                   <div className="flex-1">
                     <p className="text-sm font-medium">{item.descricao}</p>
@@ -246,7 +216,7 @@ export default function ResumoMensal({ dateFrom, dateTo }: ResumoMensalProps) {
                       {item.categorias_financeiras?.nome || "Outros"}
                     </p>
                   </div>
-                  <span className="text-sm font-bold text-red-700">{formatCurrency(item.valor)}</span>
+                  <span className="text-sm font-bold text-negative-strong">{formatCurrency(item.valor)}</span>
                 </div>
               ))}
               {topTransactions?.despesas.length === 0 && (
@@ -256,7 +226,7 @@ export default function ResumoMensal({ dateFrom, dateTo }: ResumoMensalProps) {
             <div className="mt-4 pt-4 border-t border-black/10">
               <div className="flex justify-between items-center">
                 <span className="text-sm font-medium text-muted-foreground">Total das 5 principais</span>
-                <span className="text-lg font-bold text-red-600">{formatCurrency(totalTopDespesas)}</span>
+                <span className="text-lg font-bold text-negative-strong">{formatCurrency(totalTopDespesas)}</span>
               </div>
             </div>
           </CardContent>
