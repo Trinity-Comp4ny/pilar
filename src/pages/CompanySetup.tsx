@@ -19,13 +19,25 @@ export default function CompanySetup() {
   const [isLoading, setIsLoading] = useState(false);
   const [progressValue, setProgressValue] = useState(0);
   const navigate = useNavigate();
-  const { refreshProfile } = useAuth();
+  const { profile, refreshProfile } = useAuth();
 
   const form = useForm<CompanySetupFormData>({
     resolver: zodResolver(companySetupSchema),
     mode: "onChange",
     defaultValues: companySetupDefaultValues,
   });
+
+  // Prefill com o que a empresa já tem (o nome sempre é gravado na criação:
+  // form do ultra-admin ou company_name do checkout). Sem isso, o dono
+  // redigitava o nome do zero e podia sobrescrever com um valor divergente.
+  const { reset } = form;
+  const [hydrated, setHydrated] = useState(false);
+  useEffect(() => {
+    const empresa = profile?.empresas;
+    if (!empresa || hydrated) return;
+    reset({ name: empresa.nome ?? "", cnpj: empresa.cnpj ?? "" });
+    setHydrated(true);
+  }, [profile?.empresas, hydrated, reset]);
 
   const targetProgress = useMemo(() => {
     const step = 2;
@@ -118,13 +130,13 @@ export default function CompanySetup() {
             <Progress
               value={progressValue}
               className="h-2 bg-paper-border"
-              indicatorClassName="bg-gradient-to-r from-brand via-orange-500 to-yellow-400 transition-all duration-700 ease-out"
+              indicatorClassName="bg-gradient-brand transition-all duration-700 ease-out"
             />
           </div>
 
           <div className="space-y-2">
             <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-ink">Sua empresa</h1>
-            <p className="text-sm text-ink-soft">Defina o nome da organização e o CNPJ para emissão e cadastro.</p>
+            <p className="text-sm text-ink-soft">Confirme o nome da organização e o CNPJ para emissão e cadastro.</p>
           </div>
 
           <Form {...form}>

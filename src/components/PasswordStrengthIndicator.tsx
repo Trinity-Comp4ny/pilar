@@ -1,6 +1,6 @@
 import { evaluatePassword } from "@/lib/passwordPolicy";
 
-const SCORE_COLOR = ["bg-red-500", "bg-red-400", "bg-amber-400", "bg-emerald-400", "bg-emerald-500"];
+const SCORE_COLOR = ["bg-red-500", "bg-red-400", "bg-amber-400", "bg-positive", "bg-positive"];
 
 export function PasswordStrengthIndicator({ password }: { password: string }) {
   const { score, label, feedback } = evaluatePassword(password);
