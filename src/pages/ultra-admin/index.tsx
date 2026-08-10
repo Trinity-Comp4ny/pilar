@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type Dispatch, type SetStateAction } from "react";
-import { ArrowLeft, Building2, CircleOff, Loader2, Pencil, Plus, Search, Users2, Layers } from "lucide-react";
+import { Archive, ArrowLeft, Building2, CircleOff, Loader2, Pencil, Plus, Search, Users2, Layers } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +16,16 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { CompanyFeatureToggles } from "@/components/admin/CompanyFeatureToggles";
 import { UsersAccessManager, type ManagedUser } from "@/components/admin/UsersAccessManager";
 import { PageLayout } from "@/components/PageLayout";
@@ -379,6 +389,7 @@ export default function UltraAdmin() {
   const [form, setForm] = useState({ nome: "", cnpj: "", ownerEmail: "", ownerNome: "" });
 
   const [editCompanyOpen, setEditCompanyOpen] = useState(false);
+  const [archiveOpen, setArchiveOpen] = useState(false);
   const [companyForm, setCompanyForm] = useState<{
     nome: string;
     cnpj: string;
@@ -484,6 +495,17 @@ export default function UltraAdmin() {
                 <Pencil size={14} />
                 Editar empresa
               </Button>
+              {detail.status !== "cancelled" && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="rounded-full gap-1.5 border-red-200 text-red-700 hover:bg-red-50 hover:text-red-800"
+                  onClick={() => setArchiveOpen(true)}
+                >
+                  <Archive size={14} />
+                  Arquivar empresa
+                </Button>
+              )}
               <Button
                 variant="outline"
                 size="sm"
@@ -545,6 +567,16 @@ export default function UltraAdmin() {
               confirm_name: confirmName,
             });
             setEditCompanyOpen(false);
+          }}
+        />
+
+        <ArchiveCompanyDialog
+          open={archiveOpen}
+          onOpenChange={setArchiveOpen}
+          companyName={detail.nome}
+          onConfirm={async (confirmName) => {
+            await handleUpdateCompany({ status: "cancelled", confirm_name: confirmName });
+            setArchiveOpen(false);
           }}
         />
       </PageLayout>
@@ -873,5 +905,71 @@ function EditCompanyDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function ArchiveCompanyDialog({
+  open,
+  onOpenChange,
+  companyName,
+  onConfirm,
+}: {
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+  companyName: string;
+  onConfirm: (confirmName: string) => Promise<void>;
+}) {
+  const [confirmText, setConfirmText] = useState("");
+  const [saving, setSaving] = useState(false);
+  const matches = confirmText.trim() === (companyName ?? "").trim();
+
+  // Reseta o campo de confirmação sempre que o dialog fecha.
+  useEffect(() => {
+    if (!open) setConfirmText("");
+  }, [open]);
+
+  return (
+    <AlertDialog open={open} onOpenChange={(o) => !saving && onOpenChange(o)}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Arquivar {companyName}?</AlertDialogTitle>
+          <AlertDialogDescription>
+            A empresa é marcada como cancelada e sai do fluxo. Os usuários perdem o acesso na hora. Os dados
+            ficam preservados no banco, e a ação pode ser revertida reativando a empresa em "Editar empresa".
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <div className="space-y-1.5">
+          <Label htmlFor="archive-confirm" className="text-xs">
+            Digite <span className="font-semibold">{companyName}</span> para confirmar
+          </Label>
+          <Input
+            id="archive-confirm"
+            value={confirmText}
+            onChange={(e) => setConfirmText(e.target.value)}
+            placeholder={companyName}
+            autoComplete="off"
+          />
+        </div>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={saving}>Cancelar</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={async (e) => {
+              e.preventDefault();
+              if (!matches) return;
+              setSaving(true);
+              try {
+                await onConfirm(confirmText.trim());
+              } finally {
+                setSaving(false);
+              }
+            }}
+            disabled={saving || !matches}
+            className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+          >
+            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Arquivar empresa"}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }
