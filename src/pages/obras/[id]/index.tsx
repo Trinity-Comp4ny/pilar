@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
-import { CalendarClock, ClipboardList, LayoutList, MapPin, Pencil, Trash2, User } from "lucide-react";
+import { CalendarClock, ClipboardList, LayoutList, MapPin, Pencil, Trash2, User, Wallet } from "lucide-react";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -17,6 +17,7 @@ import { ObraFormDialog } from "../components/ObraFormDialog";
 import { ObraTimelineTab } from "../components/ObraTimelineTab";
 import { ObraDiarioTab } from "../components/ObraDiarioTab";
 import { ObraFrentesTab } from "../components/ObraFrentesTab";
+import { ObraContaTab } from "../components/ObraContaTab";
 
 const BREADCRUMB = [{ label: "Obras", to: "/obras" }];
 
@@ -126,6 +127,10 @@ export default function ObraDetalhePage() {
             <LayoutList className="h-3.5 w-3.5" />
             Frentes
           </TabsTrigger>
+          <TabsTrigger value="conta" className="flex items-center gap-1.5">
+            <Wallet className="h-3.5 w-3.5" />
+            Conta da obra
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="timeline">
@@ -136,6 +141,9 @@ export default function ObraDetalhePage() {
         </TabsContent>
         <TabsContent value="frentes">
           <ObraFrentesTab obraId={obra.id} projetoId={obra.projeto_id} canEdit={canEdit} />
+        </TabsContent>
+        <TabsContent value="conta">
+          <ObraContaTab obra={obra} canEdit={canEdit} />
         </TabsContent>
       </Tabs>
 

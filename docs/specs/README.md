@@ -18,14 +18,15 @@ viram os testes.
 
 Decisão de arquitetura no meio do caminho vira um [ADR](../architecture/README.md); linke nos dois lados.
 
-| Spec                                           | Feature                                           | Status           |
-| ---------------------------------------------- | ------------------------------------------------- | ---------------- |
-| [001](./001-shell-3-pilares.md)                | Shell dos 3 pilares                               | Entregue         |
-| [002](./002-header-padrao.md)                  | Header padrão (`PageHeader`)                      | Entregue         |
-| [003](./003-design-system.md)                  | Design system                                     | Entregue         |
-| [004](./004-margem-confiavel.md)               | Margem confiável                                  | —                |
-| [005](./005-fim-do-dashboard.md)               | Fim do dashboard                                  | Entregue         |
-| [006](./006-financeiro-padrao-e-breadcrumb.md) | Financeiro no header padrão + breadcrumb global   | Em implementação |
-| [007](./007-mesa-de-trabalho-agentes.md)       | Mesa de trabalho dos agentes (inbox-first)        | Proposta         |
-| [008](./008-gestao-meu-trabalho.md)            | Gestão — "Meu trabalho" (lista de tarefas do dia) | Em implementação |
-| [015](./015-obras-mvp.md)                      | Obras — MVP (timeline + diário/RDO + frentes)     | Em implementação |
+| Spec                                                | Feature                                             | Status           |
+| --------------------------------------------------- | --------------------------------------------------- | ---------------- |
+| [001](./001-shell-3-pilares.md)                     | Shell dos 3 pilares                                 | Entregue         |
+| [002](./002-header-padrao.md)                       | Header padrão (`PageHeader`)                        | Entregue         |
+| [003](./003-design-system.md)                       | Design system                                       | Entregue         |
+| [004](./004-margem-confiavel.md)                    | Margem confiável                                    | —                |
+| [005](./005-fim-do-dashboard.md)                    | Fim do dashboard                                    | Entregue         |
+| [006](./006-financeiro-padrao-e-breadcrumb.md)      | Financeiro no header padrão + breadcrumb global     | Em implementação |
+| [007](./007-mesa-de-trabalho-agentes.md)            | Mesa de trabalho dos agentes (inbox-first)          | Proposta         |
+| [008](./008-gestao-meu-trabalho.md)                 | Gestão — "Meu trabalho" (lista de tarefas do dia)   | Em implementação |
+| [015](./015-obras-mvp.md)                           | Obras — MVP (timeline + diário/RDO + frentes)       | Em implementação |
+| [016](./016-conta-da-obra-e-prestacao-de-contas.md) | Conta da obra + prestação de contas (administração) | Draft            |

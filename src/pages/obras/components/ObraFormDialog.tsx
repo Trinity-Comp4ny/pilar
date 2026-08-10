@@ -31,6 +31,8 @@ const SEM_PROJETO = "__none__";
 const schema = z.object({
   nome: z.string().min(1, "Dê um nome à obra"),
   status: z.enum(["planejada", "em_andamento", "paralisada", "concluida"]),
+  modelo_cobranca: z.enum(["administracao", "preco_fechado"]),
+  taxa_administracao_pct: z.string(),
   projeto_id: z.string(),
   responsavel_id: z.string(),
   cep: z.string(),
@@ -43,6 +45,8 @@ type FormData = z.infer<typeof schema>;
 const VAZIO: FormData = {
   nome: "",
   status: "planejada",
+  modelo_cobranca: "administracao",
+  taxa_administracao_pct: "",
   projeto_id: SEM_PROJETO,
   responsavel_id: SEM_RESPONSAVEL,
   cep: "",
@@ -92,6 +96,8 @@ export function ObraFormDialog({ open, onOpenChange, obra, onSaved }: Props) {
       reset({
         nome: obra.nome,
         status: obra.status as FormData["status"],
+        modelo_cobranca: (obra.modelo_cobranca as FormData["modelo_cobranca"]) ?? "administracao",
+        taxa_administracao_pct: obra.taxa_administracao_pct ? String(obra.taxa_administracao_pct) : "",
         projeto_id: obra.projeto_id ?? SEM_PROJETO,
         responsavel_id: obra.responsavel_id ?? SEM_RESPONSAVEL,
         cep: obra.cep ?? "",
@@ -152,6 +158,8 @@ export function ObraFormDialog({ open, onOpenChange, obra, onSaved }: Props) {
     const payload = {
       nome: data.nome.trim(),
       status: data.status,
+      modelo_cobranca: data.modelo_cobranca,
+      taxa_administracao_pct: data.modelo_cobranca === "administracao" ? Number(data.taxa_administracao_pct) || 0 : 0,
       projeto_id: mostrarProjeto && data.projeto_id !== SEM_PROJETO ? data.projeto_id : null,
       responsavel_id: data.responsavel_id === SEM_RESPONSAVEL ? null : data.responsavel_id,
       cep: onlyDigits(data.cep) || null,
@@ -232,6 +240,43 @@ export function ObraFormDialog({ open, onOpenChange, obra, onSaved }: Props) {
               </Select>
             </div>
           </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="modelo_cobranca">Cobrança</Label>
+              <Select
+                value={watch("modelo_cobranca")}
+                onValueChange={(v) => setValue("modelo_cobranca", v as FormData["modelo_cobranca"])}
+              >
+                <SelectTrigger id="modelo_cobranca">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="administracao">Administração</SelectItem>
+                  <SelectItem value="preco_fechado">Preço fechado</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {watch("modelo_cobranca") === "administracao" && (
+              <div className="space-y-1.5">
+                <Label htmlFor="taxa">Taxa de administração (%)</Label>
+                <Input
+                  id="taxa"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  max="100"
+                  placeholder="Ex.: 10"
+                  {...register("taxa_administracao_pct")}
+                />
+              </div>
+            )}
+          </div>
+          {watch("modelo_cobranca") === "administracao" && (
+            <p className="-mt-2 text-xs text-muted-foreground">
+              A taxa vira receita do escritório automaticamente a cada despesa lançada na conta da obra.
+            </p>
+          )}
 
           <div className="space-y-1.5">
             <Label htmlFor="cep">CEP da obra</Label>
