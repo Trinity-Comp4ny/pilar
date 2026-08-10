@@ -384,12 +384,19 @@ jobs:
       cancel-in-progress: false
     env:
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-      AUTH_HOOK_SEND_EMAIL_SECRET: ${{ secrets.AUTH_HOOK_SEND_EMAIL_SECRET }}
     steps:
       - uses: actions/checkout@v4
       - uses: supabase/setup-cli@v1
         with:
           version: ${{ env.SUPABASE_CLI_VERSION }}
+      # A CLI valida o config.toml inteiro antes de aplicar, e [auth.hook.send_email]
+      # referencia env(AUTH_HOOK_SEND_EMAIL_SECRET). O secret não estava no Environment
+      # Production, então o parse abortava com "must be formatted as v1,whsec_...". Como
+      # db push/functions deploy NÃO aplicam config no servidor (só migrations/código),
+      # gera um valor descartável só para o parse passar, igual o job "Migrations + RLS".
+      # O hook real vive no GoTrue do projeto e não é tocado aqui.
+      - name: Gerar secret descartável para o parse do config
+        run: echo "AUTH_HOOK_SEND_EMAIL_SECRET=v1,whsec_$(openssl rand -base64 32)" >> "$GITHUB_ENV"
       - name: Aplicar migrations (db push via pooler IPv4)
         # --include-all aplica também migrations com timestamp MENOR que a última já
         # no remoto. Necessário quando um hotfix cherry-picked deixa uma versão alta no
