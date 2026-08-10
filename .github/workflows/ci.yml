@@ -271,7 +271,12 @@ jobs:
       - name: Aplicar migrations (db push via pooler IPv4)
         # --db-url aponta pro Session Pooler (IPv4). A conexão direta do Supabase
         # é IPv6-only e falharia no runner IPv4-only do GitHub.
-        run: supabase db push --db-url "$SUPABASE_DB_URL"
+        # --include-all aplica também migrations com timestamp MENOR que a última já
+        # no remoto. Necessário quando um hotfix cherry-picked deixa uma versão alta no
+        # topo do schema_migrations (ex.: 20260725000000 em prod) e o release traz
+        # migrations anteriores a ela. Sem a flag o push aborta com "found local
+        # migrations before the last migration on remote".
+        run: supabase db push --include-all --db-url "$SUPABASE_DB_URL"
         env:
           SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
       - name: Deploy das edge functions
@@ -386,7 +391,12 @@ jobs:
         with:
           version: ${{ env.SUPABASE_CLI_VERSION }}
       - name: Aplicar migrations (db push via pooler IPv4)
-        run: supabase db push --db-url "$SUPABASE_DB_URL"
+        # --include-all aplica também migrations com timestamp MENOR que a última já
+        # no remoto. Necessário quando um hotfix cherry-picked deixa uma versão alta no
+        # topo do schema_migrations (ex.: 20260725000000 em prod) e o release traz
+        # migrations anteriores a ela. Sem a flag o push aborta com "found local
+        # migrations before the last migration on remote".
+        run: supabase db push --include-all --db-url "$SUPABASE_DB_URL"
         env:
           SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
       - name: Deploy das edge functions
