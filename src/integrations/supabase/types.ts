@@ -1161,6 +1161,8 @@ export type Database = {
           fornecedor_id: string | null
           grupo_parcela: string | null
           id: string
+          import_batch_id: string | null
+          import_line_hash: string | null
           is_fatura_payment: boolean
           nota_fiscal: string | null
           observacao: string | null
@@ -1194,6 +1196,8 @@ export type Database = {
           fornecedor_id?: string | null
           grupo_parcela?: string | null
           id?: string
+          import_batch_id?: string | null
+          import_line_hash?: string | null
           is_fatura_payment?: boolean
           nota_fiscal?: string | null
           observacao?: string | null
@@ -1227,6 +1231,8 @@ export type Database = {
           fornecedor_id?: string | null
           grupo_parcela?: string | null
           id?: string
+          import_batch_id?: string | null
+          import_line_hash?: string | null
           is_fatura_payment?: boolean
           nota_fiscal?: string | null
           observacao?: string | null
@@ -2451,6 +2457,92 @@ export type Database = {
         }
         Relationships: []
       }
+      obra_conta_lancamento: {
+        Row: {
+          comprovante_url: string | null
+          created_at: string
+          created_by: string
+          data: string
+          deleted_at: string | null
+          descricao: string
+          empresa_id: string
+          fornecedor_id: string | null
+          id: string
+          obra_frente_id: string | null
+          obra_id: string
+          pago_por: string | null
+          tipo: string
+          updated_at: string
+          updated_by: string | null
+          valor: number
+        }
+        Insert: {
+          comprovante_url?: string | null
+          created_at?: string
+          created_by?: string
+          data: string
+          deleted_at?: string | null
+          descricao: string
+          empresa_id: string
+          fornecedor_id?: string | null
+          id?: string
+          obra_frente_id?: string | null
+          obra_id: string
+          pago_por?: string | null
+          tipo: string
+          updated_at?: string
+          updated_by?: string | null
+          valor: number
+        }
+        Update: {
+          comprovante_url?: string | null
+          created_at?: string
+          created_by?: string
+          data?: string
+          deleted_at?: string | null
+          descricao?: string
+          empresa_id?: string
+          fornecedor_id?: string | null
+          id?: string
+          obra_frente_id?: string | null
+          obra_id?: string
+          pago_por?: string | null
+          tipo?: string
+          updated_at?: string
+          updated_by?: string | null
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "obra_conta_lancamento_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_conta_lancamento_fornecedor_id_fkey"
+            columns: ["fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "fornecedores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_conta_lancamento_obra_frente_id_fkey"
+            columns: ["obra_frente_id"]
+            isOneToOne: false
+            referencedRelation: "obra_frente"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_conta_lancamento_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       obra_frente: {
         Row: {
           created_at: string
@@ -2489,6 +2581,58 @@ export type Database = {
           },
           {
             foreignKeyName: "obra_frente_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      obra_orcamento_etapa: {
+        Row: {
+          created_at: string
+          empresa_id: string
+          id: string
+          obra_frente_id: string
+          obra_id: string
+          updated_at: string
+          valor_previsto: number
+        }
+        Insert: {
+          created_at?: string
+          empresa_id: string
+          id?: string
+          obra_frente_id: string
+          obra_id: string
+          updated_at?: string
+          valor_previsto?: number
+        }
+        Update: {
+          created_at?: string
+          empresa_id?: string
+          id?: string
+          obra_frente_id?: string
+          obra_id?: string
+          updated_at?: string
+          valor_previsto?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "obra_orcamento_etapa_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_orcamento_etapa_obra_frente_id_fkey"
+            columns: ["obra_frente_id"]
+            isOneToOne: false
+            referencedRelation: "obra_frente"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_orcamento_etapa_obra_id_fkey"
             columns: ["obra_id"]
             isOneToOne: false
             referencedRelation: "obras"
@@ -2599,11 +2743,13 @@ export type Database = {
           latitude: number | null
           localizacao: string | null
           longitude: number | null
+          modelo_cobranca: string
           nome: string
           observacoes: string | null
           projeto_id: string | null
           responsavel_id: string | null
           status: string
+          taxa_administracao_pct: number
           updated_at: string
           updated_by: string | null
         }
@@ -2622,11 +2768,13 @@ export type Database = {
           latitude?: number | null
           localizacao?: string | null
           longitude?: number | null
+          modelo_cobranca?: string
           nome: string
           observacoes?: string | null
           projeto_id?: string | null
           responsavel_id?: string | null
           status?: string
+          taxa_administracao_pct?: number
           updated_at?: string
           updated_by?: string | null
         }
@@ -2645,11 +2793,13 @@ export type Database = {
           latitude?: number | null
           localizacao?: string | null
           longitude?: number | null
+          modelo_cobranca?: string
           nome?: string
           observacoes?: string | null
           projeto_id?: string | null
           responsavel_id?: string | null
           status?: string
+          taxa_administracao_pct?: number
           updated_at?: string
           updated_by?: string | null
         }
@@ -3870,7 +4020,10 @@ export type Database = {
           forma_pagamento: string | null
           grupo_parcela: string | null
           id: string
+          import_batch_id: string | null
+          import_line_hash: string | null
           nota_fiscal: string | null
+          obra_lancamento_origem_id: string | null
           observacao: string | null
           parcela_numero: number | null
           parcela_total: number | null
@@ -3901,7 +4054,10 @@ export type Database = {
           forma_pagamento?: string | null
           grupo_parcela?: string | null
           id?: string
+          import_batch_id?: string | null
+          import_line_hash?: string | null
           nota_fiscal?: string | null
+          obra_lancamento_origem_id?: string | null
           observacao?: string | null
           parcela_numero?: number | null
           parcela_total?: number | null
@@ -3932,7 +4088,10 @@ export type Database = {
           forma_pagamento?: string | null
           grupo_parcela?: string | null
           id?: string
+          import_batch_id?: string | null
+          import_line_hash?: string | null
           nota_fiscal?: string | null
+          obra_lancamento_origem_id?: string | null
           observacao?: string | null
           parcela_numero?: number | null
           parcela_total?: number | null
@@ -3984,6 +4143,13 @@ export type Database = {
             columns: ["empresa_id"]
             isOneToOne: false
             referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "receitas_obra_lancamento_origem_id_fkey"
+            columns: ["obra_lancamento_origem_id"]
+            isOneToOne: false
+            referencedRelation: "obra_conta_lancamento"
             referencedColumns: ["id"]
           },
           {
@@ -5303,6 +5469,44 @@ export type Database = {
           p_tipo_lancamento: string
         }
         Returns: number
+      }
+      rpc_obra_despesa_excluir: { Args: { p_id: string }; Returns: undefined }
+      rpc_obra_despesa_salvar: {
+        Args: {
+          p_comprovante_url?: string
+          p_data: string
+          p_descricao: string
+          p_fornecedor_id?: string
+          p_id?: string
+          p_obra_frente_id?: string
+          p_obra_id: string
+          p_pago_por?: string
+          p_valor: number
+        }
+        Returns: {
+          comprovante_url: string | null
+          created_at: string
+          created_by: string
+          data: string
+          deleted_at: string | null
+          descricao: string
+          empresa_id: string
+          fornecedor_id: string | null
+          id: string
+          obra_frente_id: string | null
+          obra_id: string
+          pago_por: string | null
+          tipo: string
+          updated_at: string
+          updated_by: string | null
+          valor: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "obra_conta_lancamento"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       rpc_projeto_rentabilidade: {
         Args: { p_projeto_id: string }
