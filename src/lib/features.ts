@@ -171,12 +171,11 @@ export const FEATURES: readonly FeatureDefinition[] = [
   {
     key: "metas",
     label: "Metas",
-    description: "Metas individuais e por equipe",
+    description: "Metas financeiras, por pessoa e por projeto, com acompanhamento",
     group: "equipe",
     icon: Target,
     core: false,
     addon: false,
-    dormant: true,
     includedInPlans: ["enterprise"],
   },
   {
