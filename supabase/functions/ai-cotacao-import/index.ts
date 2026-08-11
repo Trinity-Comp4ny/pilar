@@ -319,7 +319,7 @@ serve(
         tokensSaida += clf.tokensSaida;
         chamadas += clf.attempts;
         modoEfetivo = clf.data.tipo;
-        classificacao = { tipo: clf.data.tipo, confianca: clf.data.confianca, motivo: clf.data.motivo ?? null };
+        classificacao = { tipo: clf.data.tipo, confianca: clf.data.confianca ?? 0.7, motivo: clf.data.motivo ?? null };
         console.log(`[ai-cotacao-import] classificado como '${modoEfetivo}' (${clf.data.confianca}) — ${clf.data.motivo ?? ""}`);
       } else {
         modoEfetivo = modoPedido;
