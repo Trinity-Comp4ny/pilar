@@ -45,6 +45,32 @@ export function isPrioridade(v: unknown): v is Prioridade {
   return v === "alta" || v === "media" || v === "baixa";
 }
 
+// Paleta das colunas (etapas). Guardada como hex em tarefa_etapas.cor; o dot usa
+// backgroundColor inline. As três âncoras de status têm cor padrão por bucket.
+export const CORES_ETAPA = [
+  "#94a3b8",
+  "#ef4444",
+  "#f59e0b",
+  "#eab308",
+  "#10b981",
+  "#3b82f6",
+  "#8b5cf6",
+  "#ec4899",
+] as const;
+
+const COR_POR_BUCKET: Record<StatusBucket, string> = {
+  a_fazer: "#94a3b8",
+  fazendo: "#f59e0b",
+  concluida: "#10b981",
+};
+
+/** Cor do dot de uma coluna: a cor escolhida, ou a padrão do bucket, ou cinza. */
+export function corDaEtapa(cor: string | null, bucket: StatusBucket | null): string {
+  if (cor) return cor;
+  if (bucket) return COR_POR_BUCKET[bucket];
+  return "#94a3b8";
+}
+
 export function toPrioridade(v: unknown): Prioridade {
   return isPrioridade(v) ? v : "media";
 }

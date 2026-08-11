@@ -1,38 +1,28 @@
 # Pilar — Claude Context
 
-## Stack
-
-React 18 + TypeScript + Vite | Supabase (Postgres + Auth + Edge Functions Deno) | shadcn/ui + Tailwind | Vitest
-
 ## Scripts
 
 ```
-npm run dev          # Vite dev server
+npm run dev          # Vite dev server (só o front)
+npm run dev:local    # ambiente local completo: Supabase + migrations pendentes + functions + Vite
 npm run build:strict # Build com typecheck
 npm run typecheck    # tsc sem emitir
 npm run test         # Vitest watch
 npm run test:run     # Vitest CI
 npm run gen:types    # tipos do banco de STAGING (default seguro, ADR 0007)
+npm run gen:types:local          # tipos do banco LOCAL (após criar migration no dev local)
 npm run db:push:staging          # aplica migrations em staging
 npm run functions:deploy:staging # deploya edge functions em staging
 ```
 
+`dev:local` aplica as migrations pendentes no banco local automaticamente
+(`supabase migration up`, incremental, não apaga dados): criou migration, é só
+rodar/reiniciar o `dev:local` e ela entra. Para os tipos refletirem o schema
+local, rode `gen:types:local`. Antes de PR/deploy, a migration vai pro staging e
+o `types.ts` canônico fecha com `gen:types` (staging).
+
 Comando que muta banco ou funções exige ambiente explícito e passa por
 `scripts/supabase-target.sh`. Produção só com `ALLOW_PROD_DB_PUSH=true`. Ver ADR 0007.
-
-## Estrutura
-
-```
-src/
-  pages/        # Uma pasta por módulo (projetos/, financeiro/, clientes/, etc.)
-  components/   # UI compartilhado + hooks (use*.ts ficam aqui)
-  hooks/        # Hooks globais
-  contexts/     # AuthContext, ImpersonationContext
-  integrations/supabase/  # client.ts + types.ts gerado
-supabase/
-  functions/    # Edge Functions Deno (cada uma em sua pasta)
-  migrations/   # 183 arquivos SQL, dois esquemas convivendo: 000..029 (antigo) e timestamp 2026*
-```
 
 ## Módulos ativos (produção)
 
@@ -76,7 +66,8 @@ público → `brand/personas.md`. Cor/token: a verdade é `src/styles/tokens.css
 
 ## DB
 
-183 migrations em `supabase/migrations/`. Tipos gerados em `src/integrations/supabase/types.ts`.
+183 migrations em `supabase/migrations/`, dois esquemas convivendo: 000..029 (antigo) e
+timestamp 2026*. Tipos gerados em `src/integrations/supabase/types.ts`.
 Rodar `npm run gen:types` após qualquer migration, e commitar o `types.ts`: **nenhum job
 de CI valida isso hoje**, então esquecer gera código que passa no typecheck e quebra em
 runtime. Ver `docs/operations/PLANO_ENGENHARIA_2026-07.md` (Fase 1) para o gate que fecha

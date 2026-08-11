@@ -25,15 +25,22 @@ export function useObraFrentes(obraId: string | undefined) {
   });
 }
 
+export interface NovaFrente {
+  nome: string;
+  ordem: number;
+  data_inicio?: string | null;
+  data_fim?: string | null;
+}
+
 export function useCreateFrente(obraId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ nome, ordem }: { nome: string; ordem: number }): Promise<ObraFrenteRow> => {
+    mutationFn: async ({ nome, ordem, data_inicio, data_fim }: NovaFrente): Promise<ObraFrenteRow> => {
       const { data: empresaId } = await supabase.rpc("get_user_empresa_id");
       if (!empresaId) throw new Error("Usuário não vinculado a uma empresa");
       const { data, error } = await supabase
         .from("obra_frente")
-        .insert({ empresa_id: empresaId, obra_id: obraId, nome, ordem })
+        .insert({ empresa_id: empresaId, obra_id: obraId, nome, ordem, data_inicio, data_fim })
         .select()
         .single();
       if (error) throw error;
@@ -43,11 +50,18 @@ export function useCreateFrente(obraId: string) {
   });
 }
 
+export interface AtualizaFrente {
+  id: string;
+  nome?: string;
+  data_inicio?: string | null;
+  data_fim?: string | null;
+}
+
 export function useUpdateFrente(obraId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, nome }: { id: string; nome: string }): Promise<void> => {
-      const { error } = await supabase.from("obra_frente").update({ nome }).eq("id", id);
+    mutationFn: async ({ id, ...campos }: AtualizaFrente): Promise<void> => {
+      const { error } = await supabase.from("obra_frente").update(campos).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: frentesKey(obraId) }),

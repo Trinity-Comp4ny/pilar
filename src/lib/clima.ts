@@ -142,6 +142,7 @@ export interface HoraPrevisao {
   temp: number;
   chuvaProb: number;
   chuvaMm: number;
+  ehDia: boolean;
 }
 
 /**
@@ -190,7 +191,7 @@ export async function buscarPrevisao(latitude: number, longitude: number): Promi
     longitude: String(longitude),
     current:
       "temperature_2m,apparent_temperature,relative_humidity_2m,precipitation,weather_code,wind_speed_10m,wind_gusts_10m,wind_direction_10m,is_day",
-    hourly: "temperature_2m,weather_code,precipitation_probability,precipitation",
+    hourly: "temperature_2m,weather_code,precipitation_probability,precipitation,is_day",
     daily:
       "weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,precipitation_sum,wind_speed_10m_max,uv_index_max,sunrise,sunset",
     timezone: "auto",
@@ -206,6 +207,7 @@ export async function buscarPrevisao(latitude: number, longitude: number): Promi
       weather_code: number[];
       precipitation_probability: (number | null)[];
       precipitation: (number | null)[];
+      is_day: (number | null)[];
     };
     daily?: {
       time: string[];
@@ -264,6 +266,7 @@ function proximasHoras(hourly?: {
   weather_code: number[];
   precipitation_probability: (number | null)[];
   precipitation: (number | null)[];
+  is_day: (number | null)[];
 }): HoraPrevisao[] {
   if (!hourly) return [];
   const agora = Date.now();
@@ -277,6 +280,7 @@ function proximasHoras(hourly?: {
       temp: Math.round(hourly.temperature_2m[i]),
       chuvaProb: hourly.precipitation_probability[i] ?? 0,
       chuvaMm: Math.round((hourly.precipitation[i] ?? 0) * 10) / 10,
+      ehDia: (hourly.is_day?.[i] ?? 1) === 1,
     };
   });
 }

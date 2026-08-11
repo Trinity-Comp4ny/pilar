@@ -1,6 +1,15 @@
-import { format, endOfMonth, endOfYear, startOfMonth, startOfYear, subMonths } from "date-fns";
+import { format, parseISO } from "date-fns";
+import { detectPreset, rangeForPreset, type PeriodoPreset } from "@/lib/periodo";
 
 export type Periodo = "mes-atual" | "mes-anterior" | "ultimos-30" | "ano" | "tudo";
+
+// Lançamentos usa "ano"; a fonte única (spec 024) usa "este-ano". Só isso diverge.
+function toPresetKey(p: Periodo): PeriodoPreset {
+  return p === "ano" ? "este-ano" : p;
+}
+function fromPresetKey(p: PeriodoPreset): Periodo {
+  return p === "este-ano" ? "ano" : (p as Periodo);
+}
 export type TipoFilter = "todos" | "receita" | "despesa";
 export type StatusFilter = "todos" | "pagos" | "pendentes" | "atrasados";
 export type QuickFilter = "mes-atual" | "vence-hoje" | "atrasados" | "pendentes";
@@ -117,18 +126,36 @@ export function periodoRange(filters: LancamentosFilters): { from: string | null
   if (filters.periodo === "custom") {
     return { from: filters.customFrom, to: filters.customTo };
   }
-  const today = new Date();
   if (filters.periodo === "tudo") return { from: null, to: null };
-  if (filters.periodo === "mes-atual")
-    return { from: format(startOfMonth(today), "yyyy-MM-dd"), to: format(endOfMonth(today), "yyyy-MM-dd") };
-  if (filters.periodo === "mes-anterior") {
-    const prev = subMonths(today, 1);
-    return { from: format(startOfMonth(prev), "yyyy-MM-dd"), to: format(endOfMonth(prev), "yyyy-MM-dd") };
+  const r = rangeForPreset(toPresetKey(filters.periodo));
+  return {
+    from: r.from ? format(r.from, "yyyy-MM-dd") : null,
+    to: r.to ? format(r.to, "yyyy-MM-dd") : null,
+  };
+}
+
+/** Intervalo atual dos filtros como Dates, para alimentar o FiltroPeriodo. */
+export function filtersToDates(filters: LancamentosFilters): { from: Date | undefined; to: Date | undefined } {
+  if (filters.periodo === "custom") {
+    return {
+      from: filters.customFrom ? parseISO(filters.customFrom) : undefined,
+      to: filters.customTo ? parseISO(filters.customTo) : undefined,
+    };
   }
-  if (filters.periodo === "ultimos-30") {
-    const from = new Date(today);
-    from.setDate(from.getDate() - 30);
-    return { from: format(from, "yyyy-MM-dd"), to: format(today, "yyyy-MM-dd") };
+  if (filters.periodo === "tudo") return { from: undefined, to: undefined };
+  return rangeForPreset(toPresetKey(filters.periodo));
+}
+
+/** Traduz uma escolha de datas do FiltroPeriodo de volta pro modelo de Lançamentos. */
+export function datesToFilterPatch(from: Date | undefined, to: Date | undefined): Partial<LancamentosFilters> {
+  const key = detectPreset(from, to);
+  if (key === "custom") {
+    return {
+      periodo: "custom",
+      customFrom: from ? format(from, "yyyy-MM-dd") : null,
+      customTo: to ? format(to, "yyyy-MM-dd") : null,
+    };
   }
-  return { from: format(startOfYear(today), "yyyy-MM-dd"), to: format(endOfYear(today), "yyyy-MM-dd") };
+  if (key === "tudo") return { periodo: "tudo", customFrom: null, customTo: null };
+  return { periodo: fromPresetKey(key), customFrom: null, customTo: null };
 }

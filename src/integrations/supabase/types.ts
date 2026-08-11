@@ -2543,9 +2543,242 @@ export type Database = {
           },
         ]
       }
+      obra_cotacao: {
+        Row: {
+          created_at: string
+          created_by: string
+          deleted_at: string | null
+          descricao: string
+          empresa_id: string
+          id: string
+          obra_frente_id: string | null
+          obra_id: string
+          observacoes: string | null
+          prazo_necessidade: string | null
+          proposta_vencedora_id: string | null
+          quantidade: number | null
+          status: string
+          tipo: string
+          unidade: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string
+          deleted_at?: string | null
+          descricao: string
+          empresa_id: string
+          id?: string
+          obra_frente_id?: string | null
+          obra_id: string
+          observacoes?: string | null
+          prazo_necessidade?: string | null
+          proposta_vencedora_id?: string | null
+          quantidade?: number | null
+          status?: string
+          tipo?: string
+          unidade?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          deleted_at?: string | null
+          descricao?: string
+          empresa_id?: string
+          id?: string
+          obra_frente_id?: string | null
+          obra_id?: string
+          observacoes?: string | null
+          prazo_necessidade?: string | null
+          proposta_vencedora_id?: string | null
+          quantidade?: number | null
+          status?: string
+          tipo?: string
+          unidade?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "obra_cotacao_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_cotacao_obra_frente_id_fkey"
+            columns: ["obra_frente_id"]
+            isOneToOne: false
+            referencedRelation: "obra_frente"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_cotacao_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_cotacao_vencedora_fk"
+            columns: ["proposta_vencedora_id"]
+            isOneToOne: false
+            referencedRelation: "obra_cotacao_proposta"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      obra_cotacao_proposta: {
+        Row: {
+          condicao_pagamento: string | null
+          cotacao_id: string
+          created_at: string
+          created_by: string
+          deleted_at: string | null
+          empresa_id: string
+          fornecedor_id: string | null
+          fornecedor_nome: string | null
+          id: string
+          link_orcamento: string | null
+          observacoes: string | null
+          prazo_entrega_dias: number | null
+          quantidade: number | null
+          unidade: string | null
+          updated_at: string
+          updated_by: string | null
+          valor: number
+          valor_parcelado: number | null
+        }
+        Insert: {
+          condicao_pagamento?: string | null
+          cotacao_id: string
+          created_at?: string
+          created_by?: string
+          deleted_at?: string | null
+          empresa_id: string
+          fornecedor_id?: string | null
+          fornecedor_nome?: string | null
+          id?: string
+          link_orcamento?: string | null
+          observacoes?: string | null
+          prazo_entrega_dias?: number | null
+          quantidade?: number | null
+          unidade?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          valor: number
+          valor_parcelado?: number | null
+        }
+        Update: {
+          condicao_pagamento?: string | null
+          cotacao_id?: string
+          created_at?: string
+          created_by?: string
+          deleted_at?: string | null
+          empresa_id?: string
+          fornecedor_id?: string | null
+          fornecedor_nome?: string | null
+          id?: string
+          link_orcamento?: string | null
+          observacoes?: string | null
+          prazo_entrega_dias?: number | null
+          quantidade?: number | null
+          unidade?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          valor?: number
+          valor_parcelado?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "obra_cotacao_proposta_cotacao_id_fkey"
+            columns: ["cotacao_id"]
+            isOneToOne: false
+            referencedRelation: "obra_cotacao"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_cotacao_proposta_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_cotacao_proposta_fornecedor_id_fkey"
+            columns: ["fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "fornecedores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      obra_cotacao_proposta_item: {
+        Row: {
+          created_at: string
+          descricao: string
+          empresa_id: string
+          id: string
+          ordem: number
+          preco_unitario: number | null
+          proposta_id: string
+          quantidade: number | null
+          unidade: string | null
+          updated_at: string
+          valor_total: number
+        }
+        Insert: {
+          created_at?: string
+          descricao: string
+          empresa_id: string
+          id?: string
+          ordem?: number
+          preco_unitario?: number | null
+          proposta_id: string
+          quantidade?: number | null
+          unidade?: string | null
+          updated_at?: string
+          valor_total?: number
+        }
+        Update: {
+          created_at?: string
+          descricao?: string
+          empresa_id?: string
+          id?: string
+          ordem?: number
+          preco_unitario?: number | null
+          proposta_id?: string
+          quantidade?: number | null
+          unidade?: string | null
+          updated_at?: string
+          valor_total?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "obra_cotacao_proposta_item_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_cotacao_proposta_item_proposta_id_fkey"
+            columns: ["proposta_id"]
+            isOneToOne: false
+            referencedRelation: "obra_cotacao_proposta"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       obra_frente: {
         Row: {
           created_at: string
+          data_fim: string | null
+          data_inicio: string | null
           empresa_id: string
           id: string
           nome: string
@@ -2555,6 +2788,8 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          data_fim?: string | null
+          data_inicio?: string | null
           empresa_id: string
           id?: string
           nome: string
@@ -2564,6 +2799,8 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          data_fim?: string | null
+          data_inicio?: string | null
           empresa_id?: string
           id?: string
           nome?: string
@@ -2584,6 +2821,166 @@ export type Database = {
             columns: ["obra_id"]
             isOneToOne: false
             referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      obra_material: {
+        Row: {
+          categoria: string | null
+          created_at: string
+          created_by: string
+          deleted_at: string | null
+          empresa_id: string
+          id: string
+          nome: string
+          obra_id: string
+          unidade: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          categoria?: string | null
+          created_at?: string
+          created_by?: string
+          deleted_at?: string | null
+          empresa_id: string
+          id?: string
+          nome: string
+          obra_id: string
+          unidade: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          categoria?: string | null
+          created_at?: string
+          created_by?: string
+          deleted_at?: string | null
+          empresa_id?: string
+          id?: string
+          nome?: string
+          obra_id?: string
+          unidade?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "obra_material_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_material_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      obra_material_mov: {
+        Row: {
+          created_at: string
+          created_by: string
+          data: string
+          deleted_at: string | null
+          empresa_id: string
+          id: string
+          obra_conta_lancamento_id: string | null
+          obra_frente_id: string | null
+          obra_id: string
+          obra_material_id: string
+          obra_rdo_id: string | null
+          observacoes: string | null
+          quantidade: number
+          tipo: string
+          updated_at: string
+          updated_by: string | null
+          valor_unitario: number | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string
+          data: string
+          deleted_at?: string | null
+          empresa_id: string
+          id?: string
+          obra_conta_lancamento_id?: string | null
+          obra_frente_id?: string | null
+          obra_id: string
+          obra_material_id: string
+          obra_rdo_id?: string | null
+          observacoes?: string | null
+          quantidade: number
+          tipo: string
+          updated_at?: string
+          updated_by?: string | null
+          valor_unitario?: number | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          data?: string
+          deleted_at?: string | null
+          empresa_id?: string
+          id?: string
+          obra_conta_lancamento_id?: string | null
+          obra_frente_id?: string | null
+          obra_id?: string
+          obra_material_id?: string
+          obra_rdo_id?: string | null
+          observacoes?: string | null
+          quantidade?: number
+          tipo?: string
+          updated_at?: string
+          updated_by?: string | null
+          valor_unitario?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "obra_material_mov_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_material_mov_obra_conta_lancamento_id_fkey"
+            columns: ["obra_conta_lancamento_id"]
+            isOneToOne: false
+            referencedRelation: "obra_conta_lancamento"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_material_mov_obra_frente_id_fkey"
+            columns: ["obra_frente_id"]
+            isOneToOne: false
+            referencedRelation: "obra_frente"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_material_mov_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_material_mov_obra_material_id_fkey"
+            columns: ["obra_material_id"]
+            isOneToOne: false
+            referencedRelation: "obra_material"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_material_mov_obra_rdo_id_fkey"
+            columns: ["obra_rdo_id"]
+            isOneToOne: false
+            referencedRelation: "obra_rdo"
             referencedColumns: ["id"]
           },
         ]
@@ -4208,6 +4605,7 @@ export type Database = {
           empresa_id: string
           etapa_id: string | null
           horas_estimadas: number | null
+          horas_reais: number | null
           id: string
           labels: string[]
           links: Json
@@ -4229,6 +4627,7 @@ export type Database = {
           empresa_id: string
           etapa_id?: string | null
           horas_estimadas?: number | null
+          horas_reais?: number | null
           id?: string
           labels?: string[]
           links?: Json
@@ -4250,6 +4649,7 @@ export type Database = {
           empresa_id?: string
           etapa_id?: string | null
           horas_estimadas?: number | null
+          horas_reais?: number | null
           id?: string
           labels?: string[]
           links?: Json

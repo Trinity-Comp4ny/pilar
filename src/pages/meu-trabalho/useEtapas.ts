@@ -37,12 +37,12 @@ export function useEtapaMutations() {
   const invalidate = () => qc.invalidateQueries({ queryKey: KEY });
 
   const criar = useMutation({
-    mutationFn: async ({ nome, ordem }: { nome: string; ordem: number }) => {
+    mutationFn: async ({ nome, ordem, cor }: { nome: string; ordem: number; cor?: string | null }) => {
       const empresaId = profile?.empresa_id;
       if (!empresaId) throw new Error("Sem empresa no perfil");
       const { data, error } = await supabase
         .from("tarefa_etapas")
-        .insert({ empresa_id: empresaId, nome, ordem })
+        .insert({ empresa_id: empresaId, nome, ordem, cor: cor ?? null })
         .select("id, nome, ordem, cor, bucket")
         .single();
       if (error) throw error;

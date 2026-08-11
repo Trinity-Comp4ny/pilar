@@ -10,10 +10,12 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Mail, Phone, User, MoreVertical, ArrowRight } from "lucide-react";
+import { Mail, Phone, User, MoreVertical, ArrowRight, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatCurrency } from "@/lib/currencyUtils";
 import type { Lead } from "@/hooks/useLeads";
+import { PROPOSTA_STATUS_CONFIG, type Proposta } from "@/hooks/usePropostas";
+import { statusExibido } from "@/lib/comercial";
 
 const statusLabels: Record<string, string> = {
   Novo: "Novo",
@@ -31,9 +33,12 @@ type Props = {
   canEdit: boolean;
   onMoveStatus: (leadId: string, status: Lead["status"]) => void;
   dragging?: boolean;
+  proposta?: Proposta | null;
 };
 
-export function LeadKanbanCard({ lead, leadNome, onClick, canEdit, onMoveStatus, dragging }: Props) {
+export function LeadKanbanCard({ lead, leadNome, onClick, canEdit, onMoveStatus, dragging, proposta }: Props) {
+  const propStatus = proposta ? statusExibido(proposta) : null;
+  const propStatusConfig = propStatus ? PROPOSTA_STATUS_CONFIG[propStatus] : null;
   return (
     <Card
       onClick={onClick}
@@ -56,10 +61,32 @@ export function LeadKanbanCard({ lead, leadNome, onClick, canEdit, onMoveStatus,
                 Cliente
               </Badge>
             )}
-            {lead.valor_estimado != null && (
-              <span className="text-xs font-semibold text-foreground tabular-nums">
-                {formatCurrency(lead.valor_estimado)}
-              </span>
+            {propStatusConfig && (
+              <Badge variant="outline" className={cn("text-xs h-5 px-1.5 border-transparent", propStatusConfig.color)}>
+                {propStatusConfig.label}
+              </Badge>
+            )}
+            {proposta && proposta.valor_proposto != null ? (
+              <>
+                <span
+                  className="flex items-center gap-1 text-xs font-semibold text-foreground tabular-nums"
+                  title="Valor da proposta"
+                >
+                  <FileText size={11} className="text-muted-foreground" />
+                  {formatCurrency(proposta.valor_proposto)}
+                </span>
+                {proposta.margem_estimada_pct != null && (
+                  <span className="text-[10px] text-muted-foreground tabular-nums">
+                    margem {Math.round(proposta.margem_estimada_pct)}%
+                  </span>
+                )}
+              </>
+            ) : (
+              lead.valor_estimado != null && (
+                <span className="text-xs font-semibold text-foreground tabular-nums" title="Valor estimado do lead">
+                  {formatCurrency(lead.valor_estimado)}
+                </span>
+              )
             )}
           </div>
         </div>

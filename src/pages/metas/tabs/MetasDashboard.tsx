@@ -1,10 +1,23 @@
+import { useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/ui/button";
 import { KPICard } from "@/components/KPICard";
 import type { StatusTone } from "@/lib/status";
-import { Target, TrendingUp, Users, Calendar, Loader2, CheckCircle2, Clock, AlertTriangle } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import {
+  Target,
+  TrendingUp,
+  Users,
+  Calendar,
+  Loader2,
+  CheckCircle2,
+  Clock,
+  AlertTriangle,
+  RefreshCw,
+} from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
 interface Meta {
@@ -20,6 +33,9 @@ interface Meta {
 }
 
 export default function MetasDashboard() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
   const { data: metas, isLoading } = useQuery({
     queryKey: ["metas-all"],
     queryFn: async () => {
@@ -28,6 +44,32 @@ export default function MetasDashboard() {
       return (data ?? []) as Meta[];
     },
   });
+
+  // Acompanhamento automático: rpc_sync_metas atualiza o valor "atual" das metas
+  // com auto_sync=true a partir das fontes (receita, projetos, margem...).
+  const sync = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.rpc("rpc_sync_metas");
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["metas-all"] });
+      queryClient.invalidateQueries({ queryKey: ["metas"] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Não foi possível atualizar as metas",
+        description: error instanceof Error ? error.message : "Tente novamente em instantes.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Sincroniza uma vez ao abrir o dashboard.
+  useEffect(() => {
+    sync.mutate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (isLoading) {
     return (
@@ -80,6 +122,16 @@ export default function MetasDashboard() {
 
   return (
     <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-muted-foreground">
+          Metas com sincronização automática são atualizadas pelas suas fontes (receita, projetos, margem).
+        </p>
+        <Button variant="outline" size="sm" onClick={() => sync.mutate()} disabled={sync.isPending}>
+          <RefreshCw className={`h-4 w-4 mr-2 ${sync.isPending ? "animate-spin" : ""}`} />
+          Atualizar
+        </Button>
+      </div>
+
       {/* Summary Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {summaryCards.map((card) => (

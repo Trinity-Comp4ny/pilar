@@ -108,6 +108,19 @@ export function AppSidebar() {
     [activeModule, getNavItemProps, isAdmin]
   );
 
+  // Agrupa itens consecutivos pelo rótulo `group`, preservando a ordem. Itens sem
+  // grupo (Projetos, Obras) caem num bloco único sem cabeçalho.
+  const moduleGroups = useMemo(() => {
+    const groups: { label: string | null; entries: typeof moduleItems }[] = [];
+    for (const entry of moduleItems) {
+      const label = entry.item.group ?? null;
+      const last = groups[groups.length - 1];
+      if (last && last.label === label) last.entries.push(entry);
+      else groups.push({ label, entries: [entry] });
+    }
+    return groups;
+  }, [moduleItems]);
+
   const empresaItems = useMemo(
     () => withNav(EMPRESA_ITEMS).filter(({ nav }) => !nav.disabled),
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -132,8 +145,13 @@ export function AppSidebar() {
     if (isMobile) setOpenMobile(false);
   };
 
+  // View ativa da URL (?view=), usada para distinguir as lentes de /projetos na sidebar.
+  const currentView = new URLSearchParams(location.search).get("view");
+
   const renderItem = (item: MenuItem, navProps: { disabled: boolean; title: string }) => {
-    const isActive = currentPath === item.url;
+    const [itemPath, itemQuery] = item.url.split("?");
+    const itemView = itemQuery ? new URLSearchParams(itemQuery).get("view") : null;
+    const isActive = currentPath === itemPath && currentView === itemView;
     const Icon = item.icon;
 
     if (navProps.disabled) {
@@ -305,9 +323,18 @@ export function AppSidebar() {
           {empresaItems.map(({ item, nav }) => renderItem(item, nav))}
         </div>
 
-        {/* Itens do módulo ativo */}
-        <div className="mt-3">
-          <div className="space-y-1">{moduleItems.map(({ item, nav }) => renderItem(item, nav))}</div>
+        {/* Itens do módulo ativo, agrupados por seção (Comercial/Financeiro/Empresa) */}
+        <div className="mt-3 space-y-3">
+          {moduleGroups.map((group, i) => (
+            <div key={group.label ?? `grupo-${i}`} className="space-y-1">
+              {group.label && !collapsed && (
+                <p className="px-3 pt-1 text-[10px] font-medium uppercase tracking-wider text-black/35">
+                  {group.label}
+                </p>
+              )}
+              {group.entries.map(({ item, nav }) => renderItem(item, nav))}
+            </div>
+          ))}
         </div>
       </nav>
 

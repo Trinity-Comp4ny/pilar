@@ -4,12 +4,13 @@ import { useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeftRight, Clock, Plus, TrendingDown, TrendingUp } from "lucide-react";
+import { ArrowLeftRight, Clock, Plus, TrendingDown, TrendingUp, Upload } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { LancamentosTable } from "../components/LancamentosTable";
 import { useLancamentosPaginados } from "../hooks/useLancamentosPaginados";
 import { LancamentoFormDialog } from "../components/LancamentoFormDialog";
 import { TransferenciaFormDialog } from "../components/TransferenciaFormDialog";
+import { ImportarLancamentosDialog } from "../components/ImportarLancamentosDialog";
 import {
   periodoRange,
   readFiltersFromParams,
@@ -47,6 +48,7 @@ export default function Lancamentos() {
 
   const [newTipo, setNewTipo] = useState<TipoLancamento | null>(null);
   const [newTransferencia, setNewTransferencia] = useState(false);
+  const [importar, setImportar] = useState(false);
 
   const range = useMemo(() => periodoRange(filters), [filters]);
   const paginated = useLancamentosPaginados({ from: range.from, to: range.to });
@@ -112,6 +114,10 @@ export default function Lancamentos() {
             <ArrowLeftRight className="h-3.5 w-3.5" />
             Transferência
           </Button>
+          <Button size="sm" variant="outline" className="h-9 rounded-full gap-1" onClick={() => setImportar(true)}>
+            <Upload className="h-3.5 w-3.5" />
+            Importar
+          </Button>
         </div>
       </div>
 
@@ -155,6 +161,15 @@ export default function Lancamentos() {
             onOpenChange={setNewTransferencia}
             onSaved={() => {
               setNewTransferencia(false);
+              paginated.refetch();
+              invalidateKpis();
+            }}
+          />
+
+          <ImportarLancamentosDialog
+            open={importar}
+            onOpenChange={setImportar}
+            onImported={() => {
               paginated.refetch();
               invalidateKpis();
             }}
