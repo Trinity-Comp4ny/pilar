@@ -5,7 +5,12 @@ import {
   climaLabel,
   condicaoLabel,
   desvioOrcamento,
+  estadoFrenteCronograma,
   pagoPorLabel,
+  menorValorProposta,
+  nomeFornecedorProposta,
+  custoMedioEntradas,
+  saldoMaterial,
   realizadoPorEtapa,
   SEM_ETAPA,
   STATUS_OBRA_OPCOES,
@@ -30,6 +35,39 @@ describe("calcularAvanco", () => {
   it("arredonda para inteiro", () => {
     // 1 de 3 = 33.33 -> 33
     expect(calcularAvanco([{ status: "concluida" }, { status: "a_fazer" }, { status: "a_fazer" }])).toBe(33);
+  });
+});
+
+describe("estado da frente no cronograma (spec 020)", () => {
+  const hoje = new Date("2026-08-11T12:00:00");
+  const abertas = [{ status: "a_fazer" }, { status: "concluida" }];
+  const todasFeitas = [{ status: "concluida" }, { status: "concluida" }];
+
+  it("sem início ou fim → sem_prazo (fora da timeline)", () => {
+    expect(estadoFrenteCronograma({ data_inicio: null, data_fim: null }, abertas, hoje)).toBe("sem_prazo");
+    expect(estadoFrenteCronograma({ data_inicio: "2026-08-01", data_fim: null }, abertas, hoje)).toBe("sem_prazo");
+  });
+
+  it("todas as pendências fechadas → concluida, mesmo antes do fim", () => {
+    expect(estadoFrenteCronograma({ data_inicio: "2026-08-01", data_fim: "2026-08-31" }, todasFeitas, hoje)).toBe(
+      "concluida",
+    );
+  });
+
+  it("hoje depois do fim com pendência aberta → atrasada", () => {
+    expect(estadoFrenteCronograma({ data_inicio: "2026-07-01", data_fim: "2026-08-05" }, abertas, hoje)).toBe(
+      "atrasada",
+    );
+  });
+
+  it("hoje entre início e fim → em_andamento", () => {
+    expect(estadoFrenteCronograma({ data_inicio: "2026-08-01", data_fim: "2026-08-31" }, abertas, hoje)).toBe(
+      "em_andamento",
+    );
+  });
+
+  it("início ainda não chegou → futura", () => {
+    expect(estadoFrenteCronograma({ data_inicio: "2026-09-01", data_fim: "2026-09-30" }, abertas, hoje)).toBe("futura");
   });
 });
 
@@ -113,5 +151,77 @@ describe("labels da conta da obra", () => {
   it("traduz pago_por conhecido e vazio para nulo", () => {
     expect(pagoPorLabel("escritorio_reembolsavel")).toBe("Escritório adiantou (reembolsável)");
     expect(pagoPorLabel(null)).toBe("");
+  });
+});
+
+describe("cotações (spec 018)", () => {
+  it("menor valor entre propostas, aceitando string do banco", () => {
+    expect(menorValorProposta([{ valor: 1200 }, { valor: "900" }, { valor: 1500 }])).toBe(900);
+  });
+
+  it("sem propostas → null (nada a comparar)", () => {
+    expect(menorValorProposta([])).toBeNull();
+  });
+
+  it("nome do fornecedor: cadastro tem prioridade sobre nome livre", () => {
+    expect(nomeFornecedorProposta({ fornecedor: { nome: "Aço Forte" }, fornecedor_nome: "ignorado" })).toBe("Aço Forte");
+    expect(nomeFornecedorProposta({ fornecedor: null, fornecedor_nome: "Depósito São João" })).toBe("Depósito São João");
+    expect(nomeFornecedorProposta({ fornecedor: null, fornecedor_nome: null })).toBe("Fornecedor sem nome");
+  });
+});
+
+describe("estoque da obra (spec 019)", () => {
+  it("comprei 100, aplicado 0 → saldo 100", () => {
+    const { comprado, aplicado, saldo } = saldoMaterial([{ tipo: "entrada", quantidade: 100 }]);
+    expect({ comprado, aplicado, saldo }).toEqual({ comprado: 100, aplicado: 0, saldo: 100 });
+  });
+
+  it("entrada 100, baixa 60 → saldo 40", () => {
+    const movs = [
+      { tipo: "entrada", quantidade: 100 },
+      { tipo: "baixa", quantidade: 60 },
+    ];
+    expect(saldoMaterial(movs).saldo).toBe(40);
+  });
+
+  it("sem baixa, saldo = comprado (feature não depende da baixa)", () => {
+    const movs = [
+      { tipo: "entrada", quantidade: 30 },
+      { tipo: "entrada", quantidade: 20 },
+    ];
+    const { comprado, saldo } = saldoMaterial(movs);
+    expect(saldo).toBe(comprado);
+    expect(saldo).toBe(50);
+  });
+
+  it("saldo pode ficar negativo (baixa maior que entrada, não bloqueia)", () => {
+    const movs = [
+      { tipo: "entrada", quantidade: 100 },
+      { tipo: "baixa", quantidade: 120 },
+    ];
+    expect(saldoMaterial(movs).saldo).toBe(-20);
+  });
+
+  it("custo médio ponderado só das entradas valoradas, aceitando string do banco", () => {
+    const movs = [
+      { tipo: "entrada", quantidade: 100, valor_unitario: "30" },
+      { tipo: "entrada", quantidade: 100, valor_unitario: 40 },
+      { tipo: "baixa", quantidade: 50, valor_unitario: null },
+    ];
+    expect(custoMedioEntradas(movs)).toBe(35);
+  });
+
+  it("valor parado = saldo × custo médio", () => {
+    const movs = [
+      { tipo: "entrada", quantidade: 100, valor_unitario: 35 },
+      { tipo: "baixa", quantidade: 60 },
+    ];
+    expect(saldoMaterial(movs).valorParado).toBe(40 * 35);
+  });
+
+  it("sem entrada valorada → custo médio e valor parado nulos", () => {
+    const movs = [{ tipo: "entrada", quantidade: 100 }];
+    expect(custoMedioEntradas(movs)).toBeNull();
+    expect(saldoMaterial(movs).valorParado).toBeNull();
   });
 });

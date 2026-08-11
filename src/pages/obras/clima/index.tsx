@@ -4,6 +4,7 @@ import {
   Cloud,
   CloudFog,
   CloudLightning,
+  CloudMoon,
   CloudRain,
   CloudSnow,
   Droplets,
@@ -11,6 +12,7 @@ import {
   History,
   LocateFixed,
   MapPin,
+  Moon,
   Plus,
   Search,
   Star,
@@ -55,6 +57,31 @@ const ICONE: Record<CategoriaClima, LucideIcon> = {
   neve: CloudSnow,
   nevoa: CloudFog,
 };
+
+const COR_CLIMA: Record<CategoriaClima, string> = {
+  sol: "text-amber-500",
+  nuvem: "text-slate-400",
+  chuva: "text-sky-500",
+  tempestade: "text-violet-500",
+  neve: "text-sky-300",
+  nevoa: "text-zinc-400",
+};
+
+/**
+ * Céu limpo/nublado à noite vira lua; os demais códigos não dependem do sol.
+ * Só troca por lua quando sabemos que é noite (ehDia === false); na dúvida, dia.
+ */
+function iconeClima(cat: CategoriaClima, ehDia: boolean | undefined): LucideIcon {
+  if (ehDia === false) {
+    if (cat === "sol") return Moon;
+    if (cat === "nuvem") return CloudMoon;
+  }
+  return ICONE[cat];
+}
+function corClima(cat: CategoriaClima, ehDia: boolean | undefined): string {
+  if (ehDia === false && (cat === "sol" || cat === "nuvem")) return "text-indigo-400";
+  return COR_CLIMA[cat];
+}
 
 type Alvo = { label: string; latitude: number; longitude: number };
 
@@ -257,7 +284,7 @@ export default function ObraClimaPage() {
     >
       <div className="mx-auto w-full max-w-5xl space-y-4">
         {/* Abas de lugares (obras + cidades salvas) + minha localização */}
-        <div className="flex items-center gap-1 overflow-x-auto border-b border-black/10">
+        <div className="flex items-center gap-1 overflow-x-auto overflow-y-hidden border-b border-black/10">
           <button
             onClick={usarMinhaLocalizacao}
             disabled={localizando}
@@ -363,13 +390,13 @@ export default function ObraClimaPage() {
             {/* Condição atual */}
             {(() => {
               const info = climaPorCodigo(dados.atual.code);
-              const Icone = ICONE[info.categoria];
+              const Icone = iconeClima(info.categoria, dados.atual.ehDia);
               const hoje = dados.dias[0];
               return (
                 <Card className="rounded-2xl border border-black/5 bg-white">
                   <CardContent className="space-y-4 p-5">
                     <div className="flex items-center gap-4">
-                      <Icone className="h-14 w-14 text-brand" />
+                      <Icone className={cn("h-14 w-14", corClima(info.categoria, dados.atual.ehDia))} />
                       <div>
                         <p className="text-4xl font-semibold tabular-nums text-ink">{dados.atual.temp}°C</p>
                         <p className="text-sm text-muted-foreground">
@@ -412,7 +439,8 @@ export default function ObraClimaPage() {
                   <h3 className="text-sm font-medium text-ink">Próximas 48 horas</h3>
                   <div className="flex gap-3 overflow-x-auto pb-1">
                     {dados.horas.map((h, i) => {
-                      const Icone = ICONE[climaPorCodigo(h.code).categoria];
+                      const catHora = climaPorCodigo(h.code).categoria;
+                      const Icone = iconeClima(catHora, h.ehDia);
                       const prev = dados.horas[i - 1];
                       const novoDia = !!prev && h.hora.slice(0, 10) !== prev.hora.slice(0, 10);
                       return (
@@ -429,7 +457,7 @@ export default function ObraClimaPage() {
                             <span className="text-xs text-muted-foreground">
                               {i === 0 ? "Agora" : horaLabel(h.hora)}
                             </span>
-                            <Icone className="h-5 w-5 text-ink/70" />
+                            <Icone className={cn("h-5 w-5", corClima(catHora, h.ehDia))} />
                             <span className="text-sm font-medium tabular-nums text-ink">{h.temp}°</span>
                             {h.chuvaProb > 0 && (
                               <span className="inline-flex items-center gap-0.5 text-[11px] text-info-strong">
@@ -462,7 +490,7 @@ export default function ObraClimaPage() {
                         <span className="w-24 shrink-0 whitespace-nowrap text-sm capitalize text-ink">
                           {diaSemana(d.data)} <span className="text-xs text-muted-foreground">{diaMes(d.data)}</span>
                         </span>
-                        <Icone className="h-5 w-5 shrink-0 text-ink/70" aria-label={info.label} />
+                        <Icone className={cn("h-5 w-5 shrink-0", COR_CLIMA[info.categoria])} aria-label={info.label} />
                         <span className="w-8 shrink-0 text-right text-xs tabular-nums text-muted-foreground">
                           {d.tempMin}°
                         </span>

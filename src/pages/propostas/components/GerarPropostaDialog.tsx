@@ -35,6 +35,30 @@ const humanizeVar = (v: string) => {
   return clean.charAt(0).toUpperCase() + clean.slice(1);
 };
 
+// Variáveis cujo conteúdo costuma ser texto de vários parágrafos (escopo, apresentação,
+// premissas). Recebem Textarea em vez de Input de uma linha. O generateDocx já usa
+// linebreaks: true, então as quebras caem como parágrafos no .docx.
+const LONG_TEXT_HINTS = [
+  "ESCOPO",
+  "APRESENTA",
+  "OBSERV",
+  "PREMISSA",
+  "EXCLUS",
+  "DESCRI",
+  "DETALHE",
+  "CONDICAO",
+  "CONDICOES",
+  "INTRODU",
+  "JUSTIFICA",
+  "TEXTO",
+  "OBJETO",
+  "SERVICO",
+];
+const isLongTextVar = (v: string) => {
+  const upper = v.replace(/[{}]/g, "").toUpperCase();
+  return LONG_TEXT_HINTS.some((hint) => upper.includes(hint));
+};
+
 const isValidEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
 
 interface GerarPropostaDialogProps {
@@ -405,11 +429,21 @@ export function GerarPropostaDialog({
                             {`{{${v.replace(/[{}]/g, "")}}}`}
                           </Badge>
                         </Label>
-                        <Input
-                          value={manualFields[v] || ""}
-                          onChange={(e) => setManualFields((prev) => ({ ...prev, [v]: e.target.value }))}
-                          placeholder={`Valor para ${humanizeVar(v)}`}
-                        />
+                        {isLongTextVar(v) ? (
+                          <Textarea
+                            value={manualFields[v] || ""}
+                            onChange={(e) => setManualFields((prev) => ({ ...prev, [v]: e.target.value }))}
+                            placeholder={`Valor para ${humanizeVar(v)}`}
+                            rows={4}
+                            className="resize-y min-h-[84px]"
+                          />
+                        ) : (
+                          <Input
+                            value={manualFields[v] || ""}
+                            onChange={(e) => setManualFields((prev) => ({ ...prev, [v]: e.target.value }))}
+                            placeholder={`Valor para ${humanizeVar(v)}`}
+                          />
+                        )}
                       </div>
                     ))}
                   </div>
