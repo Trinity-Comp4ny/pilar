@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { CalendarDays, LayoutGrid, Plus } from "lucide-react";
+import { CalendarDays, LayoutGrid, List, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,6 +16,7 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { QuadroTrabalho } from "./components/QuadroTrabalho";
+import { ListaTrabalho } from "./components/ListaTrabalho";
 import { TarefaDialog } from "./components/TarefaDialog";
 import { AbaAgenda } from "./components/AbaAgenda";
 import {
@@ -29,12 +30,13 @@ import {
 } from "./hooks";
 import { useItensTrabalho, type FiltroTipo, type ItemTrabalho } from "./useItensTrabalho";
 import { useEtapas, useEtapaMutations, type Etapa } from "./useEtapas";
+import { useColunasLista } from "./colunas";
 import type { Prioridade } from "./status";
 
 const LS_VISAO = "pilar.meu-trabalho.visao";
 const EU = "eu";
 
-type Visao = "quadro" | "agenda";
+type Visao = "lista" | "quadro" | "agenda";
 type FiltroData = "todas" | "atrasadas" | "hoje" | "semana" | "sem_prazo";
 
 const TIPO_LABEL: Record<FiltroTipo, string> = {
@@ -78,14 +80,17 @@ export default function MeuTrabalho() {
   const { data: projetos } = useProjetosLite();
   const { data: etapas } = useEtapas();
   const etapaMut = useEtapaMutations();
+  const colunas = useColunasLista();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [visao, setVisao] = useState<Visao>(() => {
     try {
       const v = localStorage.getItem(LS_VISAO);
-      return v === "agenda" ? "agenda" : "quadro";
+      if (v === "agenda") return "agenda";
+      if (v === "quadro") return "quadro";
+      return "lista";
     } catch {
-      return "quadro";
+      return "lista";
     }
   });
   const [tipo, setTipo] = useState<FiltroTipo>(temProjetos ? "tudo" : "tarefa");
@@ -183,6 +188,68 @@ export default function MeuTrabalho() {
     }
   };
 
+  const mudarResponsavel = async (item: ItemTrabalho, pessoaId: string | null) => {
+    if (item.tipo !== "tarefa") return;
+    try {
+      patchTarefa(item.id, { responsavel_id: pessoaId });
+      await atualizar.mutateAsync({ id: item.id, input: { responsavel_id: pessoaId } });
+    } catch {
+      toast({ variant: "destructive", description: "Não deu para mudar o responsável." });
+    }
+  };
+
+  const mudarPrazo = async (item: ItemTrabalho, iso: string | null) => {
+    if (item.tipo !== "tarefa") return;
+    try {
+      patchTarefa(item.id, { prazo: iso });
+      await atualizar.mutateAsync({ id: item.id, input: { prazo: iso } });
+    } catch {
+      toast({ variant: "destructive", description: "Não deu para mudar o prazo." });
+    }
+  };
+
+  const mudarProjeto = async (item: ItemTrabalho, projetoId: string | null) => {
+    if (item.tipo !== "tarefa") return;
+    // Otimista: além do id, atualiza o objeto aninhado para o nome trocar na hora.
+    const proj = (projetos ?? []).find((p) => p.id === projetoId) ?? null;
+    try {
+      patchTarefa(item.id, { projeto_id: projetoId, projeto: proj });
+      await atualizar.mutateAsync({ id: item.id, input: { projeto_id: projetoId } });
+    } catch {
+      toast({ variant: "destructive", description: "Não deu para mudar o projeto." });
+    }
+  };
+
+  const mudarEtiquetas = async (item: ItemTrabalho, labels: string[]) => {
+    if (item.tipo !== "tarefa") return;
+    try {
+      patchTarefa(item.id, { labels });
+      await atualizar.mutateAsync({ id: item.id, input: { labels } });
+    } catch {
+      toast({ variant: "destructive", description: "Não deu para mudar as etiquetas." });
+    }
+  };
+
+  const mudarHoras = async (item: ItemTrabalho, dec: number | null) => {
+    if (item.tipo !== "tarefa") return;
+    try {
+      patchTarefa(item.id, { horas_estimadas: dec });
+      await atualizar.mutateAsync({ id: item.id, input: { horas_estimadas: dec } });
+    } catch {
+      toast({ variant: "destructive", description: "Não deu para mudar as horas." });
+    }
+  };
+
+  const mudarHorasReais = async (item: ItemTrabalho, dec: number | null) => {
+    if (item.tipo !== "tarefa") return;
+    try {
+      patchTarefa(item.id, { horas_reais: dec });
+      await atualizar.mutateAsync({ id: item.id, input: { horas_reais: dec } });
+    } catch {
+      toast({ variant: "destructive", description: "Não deu para mudar as horas reais." });
+    }
+  };
+
   // Dialog de tarefa
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editando, setEditando] = useState<TarefaItem | null>(null);
@@ -237,23 +304,32 @@ export default function MeuTrabalho() {
   };
 
   // --- Colunas (etapas) personalizáveis ---
-  const [etapaDialog, setEtapaDialog] = useState<{ mode: "nova" | "renomear"; id?: string; nome: string } | null>(null);
+  const [renomeando, setRenomeando] = useState<{ id: string; nome: string } | null>(null);
   const [aEtapaExcluir, setAEtapaExcluir] = useState<Etapa | null>(null);
 
-  const salvarEtapa = async () => {
-    if (!etapaDialog) return;
-    const nome = etapaDialog.nome.trim();
+  // Criação inline (estilo ClickUp): recebe nome + cor do campo no fim das colunas.
+  const criarEtapa = async (nome: string, cor: string | null): Promise<boolean> => {
+    const limpo = nome.trim();
+    if (!limpo) return false;
+    const ordem = (etapas ?? []).reduce((m, e) => Math.max(m, e.ordem), -1) + 1;
+    try {
+      await etapaMut.criar.mutateAsync({ nome: limpo, ordem, cor });
+      return true;
+    } catch {
+      toast({ variant: "destructive", description: "Não deu para criar a coluna." });
+      return false;
+    }
+  };
+
+  const salvarRenomear = async () => {
+    if (!renomeando) return;
+    const nome = renomeando.nome.trim();
     if (!nome) return;
     try {
-      if (etapaDialog.mode === "nova") {
-        const ordem = (etapas ?? []).reduce((m, e) => Math.max(m, e.ordem), -1) + 1;
-        await etapaMut.criar.mutateAsync({ nome, ordem });
-      } else if (etapaDialog.id) {
-        await etapaMut.renomear.mutateAsync({ id: etapaDialog.id, nome });
-      }
-      setEtapaDialog(null);
+      await etapaMut.renomear.mutateAsync({ id: renomeando.id, nome });
+      setRenomeando(null);
     } catch {
-      toast({ variant: "destructive", description: "Não deu para salvar a coluna." });
+      toast({ variant: "destructive", description: "Não deu para renomear a coluna." });
     }
   };
 
@@ -292,9 +368,9 @@ export default function MeuTrabalho() {
         <PageHeader
           title="Meu trabalho"
           search={
-            visao === "quadro" ? { value: busca, onChange: setBusca, placeholder: "Buscar no meu trabalho" } : undefined
+            visao !== "agenda" ? { value: busca, onChange: setBusca, placeholder: "Buscar no meu trabalho" } : undefined
           }
-          primaryAction={visao === "quadro" ? { label: "Nova tarefa", icon: Plus, onClick: abrirNova } : undefined}
+          primaryAction={visao !== "agenda" ? { label: "Nova tarefa", icon: Plus, onClick: abrirNova } : undefined}
         >
           {isAdmin && (
             <Select value={filtroPessoa} onValueChange={setFiltroPessoa}>
@@ -321,6 +397,16 @@ export default function MeuTrabalho() {
         <div className="inline-flex rounded-lg border bg-muted/40 p-0.5">
           <button
             type="button"
+            onClick={() => trocarVisao("lista")}
+            className={cn(
+              "inline-flex items-center gap-1.5 rounded-md px-3 py-1 text-sm transition-colors",
+              visao === "lista" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground"
+            )}
+          >
+            <List className="h-4 w-4" /> Lista
+          </button>
+          <button
+            type="button"
             onClick={() => trocarVisao("quadro")}
             className={cn(
               "inline-flex items-center gap-1.5 rounded-md px-3 py-1 text-sm transition-colors",
@@ -341,7 +427,7 @@ export default function MeuTrabalho() {
           </button>
         </div>
 
-        {visao === "quadro" && (
+        {visao !== "agenda" && (
           <>
             {temProjetos && (
               <Select value={tipo} onValueChange={(v) => setTipo(v as FiltroTipo)}>
@@ -380,6 +466,25 @@ export default function MeuTrabalho() {
         <p className="py-12 text-center text-sm text-muted-foreground">Carregando seu trabalho...</p>
       ) : isError ? (
         <p className="py-12 text-center text-sm text-destructive">Não deu para carregar. Recarregue a página.</p>
+      ) : visao === "lista" ? (
+        <ListaTrabalho
+          itens={itensFiltrados}
+          etapas={etapas ?? []}
+          pessoas={pessoas ?? []}
+          projetos={projetos ?? []}
+          colunas={colunas}
+          podeEditarResponsavel={isAdmin}
+          onAbrir={abrirItem}
+          onPrioridade={mudarPrioridade}
+          onResponsavel={mudarResponsavel}
+          onPrazo={mudarPrazo}
+          onProjeto={mudarProjeto}
+          onEtiquetas={mudarEtiquetas}
+          onHoras={mudarHoras}
+          onHorasReais={mudarHorasReais}
+          onExcluir={setAExcluir}
+          onMover={moverItem}
+        />
       ) : (
         <QuadroTrabalho
           itens={itensFiltrados}
@@ -389,8 +494,9 @@ export default function MeuTrabalho() {
           onMover={moverItem}
           etapaControls={{
             etapas: etapas ?? [],
-            onNova: () => setEtapaDialog({ mode: "nova", nome: "" }),
-            onRenomear: (e) => setEtapaDialog({ mode: "renomear", id: e.id, nome: e.nome }),
+            onCriar: criarEtapa,
+            criando: etapaMut.criar.isPending,
+            onRenomear: (e) => setRenomeando({ id: e.id, nome: e.nome }),
             onExcluir: (e) => setAEtapaExcluir(e),
             onReordenar: reordenarEtapa,
           }}
@@ -421,36 +527,32 @@ export default function MeuTrabalho() {
         loading={excluir.isPending}
       />
 
-      <Dialog open={!!etapaDialog} onOpenChange={(open) => !open && setEtapaDialog(null)}>
+      <Dialog open={!!renomeando} onOpenChange={(open) => !open && setRenomeando(null)}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle>{etapaDialog?.mode === "renomear" ? "Renomear coluna" : "Nova coluna"}</DialogTitle>
+            <DialogTitle>Renomear coluna</DialogTitle>
           </DialogHeader>
           <div className="space-y-1.5">
             <Label htmlFor="etapa-nome">Nome da coluna</Label>
             <Input
               id="etapa-nome"
               autoFocus
-              value={etapaDialog?.nome ?? ""}
-              onChange={(e) => setEtapaDialog((prev) => (prev ? { ...prev, nome: e.target.value } : prev))}
+              value={renomeando?.nome ?? ""}
+              onChange={(e) => setRenomeando((prev) => (prev ? { ...prev, nome: e.target.value } : prev))}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   e.preventDefault();
-                  salvarEtapa();
+                  salvarRenomear();
                 }
               }}
               placeholder="Bloqueado, Em revisão, Aprovado..."
             />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setEtapaDialog(null)}>
+            <Button variant="outline" onClick={() => setRenomeando(null)}>
               Cancelar
             </Button>
-            <Button
-              variant="brand"
-              onClick={salvarEtapa}
-              disabled={!etapaDialog?.nome.trim() || etapaMut.criar.isPending || etapaMut.renomear.isPending}
-            >
+            <Button variant="brand" onClick={salvarRenomear} disabled={!renomeando?.nome.trim() || etapaMut.renomear.isPending}>
               Salvar
             </Button>
           </DialogFooter>

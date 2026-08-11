@@ -1,7 +1,9 @@
 /**
- * Domínio de Obras (spec 015, ADR 0011). Constantes e cálculos puros — sem
+ * Domínio de Obras (spec 015, ADR 0011). Constantes e cálculos puros, sem
  * dependência de rede, para serem testáveis e reusados por hooks e telas.
  */
+
+import { parseDate, startOfDay } from "./cronograma";
 
 export type ObraStatus = "planejada" | "em_andamento" | "paralisada" | "concluida";
 export type ClimaRdo = "ensolarado" | "nublado" | "chuvoso" | "chuva_forte";
@@ -41,6 +43,38 @@ export function calcularAvanco(tarefas: ReadonlyArray<{ status: string }>): numb
   if (tarefas.length === 0) return 0;
   const concluidas = tarefas.filter((t) => t.status === "concluida").length;
   return Math.round((concluidas / tarefas.length) * 100);
+}
+
+// --- Cronograma da obra (spec 020: frentes na linha do tempo) -----------------
+
+/**
+ * Estado de uma frente no cronograma, derivado das datas previstas e do avanço
+ * das pendências (nunca de um campo manual):
+ * - `sem_prazo`: falta início ou fim → fica fora da timeline, listada à parte.
+ * - `concluida`: todas as pendências fechadas (verde, mesmo antes do fim).
+ * - `atrasada`: hoje já passou do fim e a frente não está concluída (vermelho).
+ * - `em_andamento`: hoje entre início e fim (azul).
+ * - `futura`: início ainda não chegou (cinza).
+ */
+export type EstadoFrente = "sem_prazo" | "concluida" | "atrasada" | "em_andamento" | "futura";
+
+export function estadoFrenteCronograma(
+  frente: { data_inicio?: string | null; data_fim?: string | null },
+  tarefas: ReadonlyArray<{ status: string }>,
+  hoje: Date = new Date(),
+): EstadoFrente {
+  const inicio = parseDate(frente.data_inicio);
+  const fim = parseDate(frente.data_fim);
+  if (!inicio || !fim) return "sem_prazo";
+
+  const total = tarefas.length;
+  const concluidas = tarefas.filter((t) => t.status === "concluida").length;
+  if (total > 0 && concluidas === total) return "concluida";
+
+  const hojeDia = startOfDay(hoje);
+  if (hojeDia > fim) return "atrasada";
+  if (hojeDia >= inicio) return "em_andamento";
+  return "futura";
 }
 
 // --- Conta da obra (spec 016, ADR 0013: dois bolsos e uma lente) --------------
@@ -115,4 +149,84 @@ export function totalAdiantadoEscritorio(lancamentos: ReadonlyArray<LancamentoCa
   return lancamentos
     .filter((l) => l.tipo === "despesa" && l.pago_por === "escritorio_reembolsavel")
     .reduce((acc, l) => acc + num(l.valor), 0);
+}
+
+// --- Cotações (spec 018) ------------------------------------------------------
+
+export type CotacaoStatus = "aberta" | "decidida" | "cancelada";
+
+export const STATUS_COTACAO_OPCOES: ReadonlyArray<{ value: CotacaoStatus; label: string }> = [
+  { value: "aberta", label: "Aberta" },
+  { value: "decidida", label: "Decidida" },
+  { value: "cancelada", label: "Cancelada" },
+];
+
+/** Menor valor entre as propostas de uma cotação. Sem propostas → null. */
+export function menorValorProposta(propostas: ReadonlyArray<{ valor: number | string }>): number | null {
+  if (propostas.length === 0) return null;
+  return Math.min(...propostas.map((p) => num(p.valor)));
+}
+
+/** Nome exibível de uma proposta: fornecedor cadastrado ou o nome digitado. */
+export function nomeFornecedorProposta(p: {
+  fornecedor?: { nome: string } | null;
+  fornecedor_nome?: string | null;
+}): string {
+  return p.fornecedor?.nome ?? p.fornecedor_nome ?? "Fornecedor sem nome";
+}
+
+// --- Estoque da obra (spec 019) -----------------------------------------------
+
+export type TipoMovimento = "entrada" | "baixa";
+
+export const TIPO_MOVIMENTO_OPCOES: ReadonlyArray<{ value: TipoMovimento; label: string }> = [
+  { value: "entrada", label: "Entrada (compra recebida)" },
+  { value: "baixa", label: "Baixa (aplicado na obra)" },
+];
+
+type MovimentoCalc = {
+  tipo: string;
+  quantidade: number | string;
+  valor_unitario?: number | string | null;
+};
+
+/**
+ * Custo médio ponderado das entradas de um material = Σ(qtd × valor_unitário) / Σ(qtd),
+ * considerando só entradas com valor informado. Sem entrada valorada → null (não dá
+ * para valorizar o saldo). Simples de propósito: sem PEPS/UEPS (spec 019, guardrail ERP).
+ */
+export function custoMedioEntradas(movs: ReadonlyArray<MovimentoCalc>): number | null {
+  let qtdTotal = 0;
+  let valorTotal = 0;
+  for (const m of movs) {
+    if (m.tipo !== "entrada" || m.valor_unitario == null) continue;
+    const q = num(m.quantidade);
+    qtdTotal += q;
+    valorTotal += q * num(m.valor_unitario);
+  }
+  return qtdTotal > 0 ? valorTotal / qtdTotal : null;
+}
+
+/**
+ * Saldo de um material a partir dos seus movimentos: comprado (Σ entradas),
+ * aplicado (Σ baixas), saldo (comprado − aplicado, em quantidade) e valorParado
+ * (saldo × custo médio das entradas; null se não há entrada valorada). O saldo
+ * pode ser negativo — baixa maior que a entrada é permitida e sinalizada, não
+ * bloqueada (spec 019).
+ */
+export function saldoMaterial(movs: ReadonlyArray<MovimentoCalc>): {
+  comprado: number;
+  aplicado: number;
+  saldo: number;
+  valorParado: number | null;
+} {
+  let comprado = 0;
+  let aplicado = 0;
+  for (const m of movs) {
+    if (m.tipo === "entrada") comprado += num(m.quantidade);
+    else if (m.tipo === "baixa") aplicado += num(m.quantidade);
+  }
+  const saldo = comprado - aplicado;
+  const custoMedio = custoMedioEntradas(movs);
+  return { comprado, aplicado, saldo, valorParado: custoMedio == null ? null : saldo * custoMedio };
 }

@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, lazy, Suspense } from "react";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { useSearchParams } from "react-router-dom";
 import { startOfMonth, endOfMonth, parseISO, format, isValid } from "date-fns";
-import { LayoutDashboard, TrendingUp, Receipt, Users2, CreditCard, Landmark, FileBarChart, Upload } from "lucide-react";
+import { LayoutDashboard, TrendingUp, Receipt, Users2, CreditCard, Landmark, FileBarChart } from "lucide-react";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { PeriodoPopover } from "./financeiro/components/PeriodoPopover";
@@ -18,14 +18,12 @@ const Contas = lazy(() => import("./financeiro/tabs/Contas"));
 const Lancamentos = lazy(() => import("./financeiro/tabs/Lancamentos"));
 const FolhaPagamento = lazy(() => import("./financeiro/tabs/FolhaPagamento"));
 const Faturas = lazy(() => import("./financeiro/tabs/Faturas"));
-const ImportarFinanceiro = lazy(() => import("./financeiro/tabs/ImportarFinanceiro"));
 const Relatorios = lazy(() => import("./Relatorios"));
 
 const FINANCEIRO_TABS_ALL: SecondSidebarTab[] = [
   { id: "visao-geral", label: "Visão Geral", icon: LayoutDashboard },
   { id: "fluxo-caixa", label: "Fluxo de Caixa", icon: TrendingUp },
   { id: "lancamentos", label: "Lançamentos", icon: Receipt },
-  { id: "importar", label: "Importar", icon: Upload },
   { id: "folha-pagamento", label: "Folha de Pagamento", icon: Users2 },
   { id: "faturas", label: "Faturas", icon: CreditCard },
   { id: "contas", label: "Contas", icon: Landmark },
@@ -44,8 +42,10 @@ export default function Financeiro() {
 
   const initial = useMemo(() => {
     const now = new Date();
+    const tabParam = searchParams.get("tab") || "visao-geral";
     return {
-      tab: searchParams.get("tab") || "visao-geral",
+      // "importar" deixou de ser aba (virou modal em Lançamentos); mantém links antigos vivos.
+      tab: tabParam === "importar" ? "lancamentos" : tabParam,
       from: parseDateParam(searchParams.get("from")) ?? startOfMonth(now),
       to: parseDateParam(searchParams.get("to")) ?? endOfMonth(now),
       viz: ((searchParams.get("viz") as Visualizacao) || "mes") as Visualizacao,
@@ -122,14 +122,6 @@ export default function Financeiro() {
             {activeTab === "lancamentos" && (
               <Suspense fallback={<Skeleton className="h-64 w-full" />}>
                 <Lancamentos />
-              </Suspense>
-            )}
-          </TabsContent>
-
-          <TabsContent value="importar" className="mt-0 w-full focus-visible:ring-0">
-            {activeTab === "importar" && (
-              <Suspense fallback={<Skeleton className="h-64 w-full" />}>
-                <ImportarFinanceiro />
               </Suspense>
             )}
           </TabsContent>

@@ -1,0 +1,62 @@
+# Dependabot — mantém dependências atualizadas.
+#
+# Alvo = branch `staging`, NÃO `main`. Staging é o tronco de integração real deste
+# repo (o CI roda e deploya a partir dele); main só recebe releases promovidos. Se
+# o Dependabot mirasse o default (main), os PRs pulariam o CI de staging e o gate de
+# audit. Ver docs/CLAUDE.md e o workflow promote-staging-to-main.yml.
+#
+# Deno (supabase/functions) fica de fora: o Dependabot não suporta ecossistema Deno.
+# Os imports remotos das edge functions são pinados/checados pelo `deno check` no CI.
+version: 2
+updates:
+  # Dependências do app (npm na raiz).
+  - package-ecosystem: npm
+    directory: /
+    target-branch: staging
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: America/Sao_Paulo
+    open-pull-requests-limit: 5
+    versioning-strategy: increase
+    labels:
+      - dependencies
+    commit-message:
+      prefix: chore(deps)
+      prefix-development: chore(deps-dev)
+      include: scope
+    # Agrupa minor/patch para cortar ruído de PR. Major fica separado (1 PR por pacote),
+    # porque tende a exigir revisão manual de breaking change.
+    groups:
+      dev-minor-patch:
+        dependency-type: development
+        update-types:
+          - minor
+          - patch
+      prod-minor-patch:
+        dependency-type: production
+        update-types:
+          - minor
+          - patch
+
+  # Actions dos próprios workflows (checkout, setup-node, setup-cli, etc.).
+  - package-ecosystem: github-actions
+    directory: /
+    target-branch: staging
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: America/Sao_Paulo
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - ci
+    commit-message:
+      prefix: ci(deps)
+    groups:
+      github-actions:
+        update-types:
+          - minor
+          - patch

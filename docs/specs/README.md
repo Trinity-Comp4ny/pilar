@@ -30,3 +30,7 @@ Decisão de arquitetura no meio do caminho vira um [ADR](../architecture/README.
 | [008](./008-gestao-meu-trabalho.md)                 | Gestão — "Meu trabalho" (lista de tarefas do dia)   | Em implementação |
 | [015](./015-obras-mvp.md)                           | Obras — MVP (timeline + diário/RDO + frentes)       | Em implementação |
 | [016](./016-conta-da-obra-e-prestacao-de-contas.md) | Conta da obra + prestação de contas (administração) | Draft            |
+| [018](./018-cotacoes-na-obra.md)                    | Cotações na obra (registrar, comparar, decidir)     | Em implementação |
+| [019](./019-estoque-da-obra.md)                     | Estoque da obra (compra unificada, fase 4)          | Draft            |
+| [020](./020-cronograma-da-obra.md)                  | Cronograma da obra (frentes na linha do tempo)      | Em implementação |
+| [022](./022-funil-comercial-no-leads.md)            | Funil comercial no Leads (proposta dentro do card)  | Em implementação |

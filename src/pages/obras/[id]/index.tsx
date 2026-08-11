@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
-import { CalendarClock, ClipboardList, LayoutList, MapPin, Pencil, Trash2, User, Wallet } from "lucide-react";
+import { Boxes, CalendarClock, ClipboardList, LayoutList, MapPin, Pencil, Scale, Trash2, User, Wallet } from "lucide-react";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -16,8 +16,10 @@ import { formatDate } from "@/lib/format";
 import { ObraFormDialog } from "../components/ObraFormDialog";
 import { ObraTimelineTab } from "../components/ObraTimelineTab";
 import { ObraDiarioTab } from "../components/ObraDiarioTab";
-import { ObraFrentesTab } from "../components/ObraFrentesTab";
+import { ObraCronogramaTab } from "../components/ObraCronogramaTab";
 import { ObraContaTab } from "../components/ObraContaTab";
+import { ObraCotacoesTab } from "../components/ObraCotacoesTab";
+import { ObraEstoqueTab } from "../components/ObraEstoqueTab";
 
 const BREADCRUMB = [{ label: "Obras", to: "/obras" }];
 
@@ -123,9 +125,17 @@ export default function ObraDetalhePage() {
             <ClipboardList className="h-3.5 w-3.5" />
             Diário
           </TabsTrigger>
-          <TabsTrigger value="frentes" className="flex items-center gap-1.5">
-            <LayoutList className="h-3.5 w-3.5" />
-            Frentes
+          <TabsTrigger value="cronograma" className="flex items-center gap-1.5">
+            <CalendarClock className="h-3.5 w-3.5" />
+            Cronograma
+          </TabsTrigger>
+          <TabsTrigger value="cotacoes" className="flex items-center gap-1.5">
+            <Scale className="h-3.5 w-3.5" />
+            Cotações
+          </TabsTrigger>
+          <TabsTrigger value="estoque" className="flex items-center gap-1.5">
+            <Boxes className="h-3.5 w-3.5" />
+            Estoque
           </TabsTrigger>
           <TabsTrigger value="conta" className="flex items-center gap-1.5">
             <Wallet className="h-3.5 w-3.5" />
@@ -139,8 +149,14 @@ export default function ObraDetalhePage() {
         <TabsContent value="diario">
           <ObraDiarioTab obraId={obra.id} canEdit={canEdit} />
         </TabsContent>
-        <TabsContent value="frentes">
-          <ObraFrentesTab obraId={obra.id} projetoId={obra.projeto_id} canEdit={canEdit} />
+        <TabsContent value="cronograma">
+          <ObraCronogramaTab obraId={obra.id} projetoId={obra.projeto_id} canEdit={canEdit} />
+        </TabsContent>
+        <TabsContent value="cotacoes">
+          <ObraCotacoesTab obraId={obra.id} canEdit={canEdit} />
+        </TabsContent>
+        <TabsContent value="estoque">
+          <ObraEstoqueTab obraId={obra.id} canEdit={canEdit} />
         </TabsContent>
         <TabsContent value="conta">
           <ObraContaTab obra={obra} canEdit={canEdit} />

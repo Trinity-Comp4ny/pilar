@@ -23,6 +23,10 @@ export type ItemTrabalho = {
   responsavelNome: string | null;
   etapaId: string | null;
   labels: string[];
+  /** Horas estimadas (só tarefa; disciplina não tem). */
+  horasEstimadas: number | null;
+  /** Horas reais/gastas (só tarefa; manual, independe do timesheet). */
+  horasReais: number | null;
   /** Nº de comentários (só tarefa hoje). */
   comentarios: number;
   /** Nº de links. */
@@ -48,6 +52,8 @@ function tarefaParaItem(t: TarefaItem, nomePorPessoa: Map<string, string>): Item
     responsavelNome: t.responsavel_id ? (nomePorPessoa.get(t.responsavel_id) ?? null) : null,
     etapaId: t.etapa_id,
     labels: t.labels,
+    horasEstimadas: t.horas_estimadas,
+    horasReais: t.horas_reais,
     comentarios: t.comentarios.length,
     links: t.links.length,
     tarefa: t,
@@ -69,6 +75,8 @@ function disciplinaParaItem(d: DisciplinaItem): ItemTrabalho {
     responsavelNome: d.responsavel_nome,
     etapaId: null,
     labels: d.labels,
+    horasEstimadas: null,
+    horasReais: null,
     comentarios: 0,
     links: d.links.length,
   };

@@ -62,7 +62,7 @@ export const TONE_COLUMN: Record<StatusTone, string> = {
   highlight: "bg-highlight-soft/50",
 };
 
-export type StatusDomain = "projeto" | "proposta" | "lead" | "financeiro" | "tipo" | "obra";
+export type StatusDomain = "projeto" | "proposta" | "lead" | "financeiro" | "tipo" | "obra" | "cotacao";
 
 type StatusDef = { label: string; tone: StatusTone };
 
@@ -108,6 +108,11 @@ export const STATUS_REGISTRY: Record<StatusDomain, Record<string, StatusDef>> = 
     em_andamento: { label: "Em andamento", tone: "info" },
     paralisada: { label: "Paralisada", tone: "brand" },
     concluida: { label: "Concluída", tone: "done" },
+  },
+  cotacao: {
+    aberta: { label: "Aberta", tone: "info" },
+    decidida: { label: "Decidida", tone: "positive" },
+    cancelada: { label: "Cancelada", tone: "neutral" },
   },
 };
 

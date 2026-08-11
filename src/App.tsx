@@ -37,6 +37,7 @@ const Clientes = lazy(() => import("./pages/clientes"));
 const ClienteDetalhe = lazy(() => import("./pages/clientes/[id]"));
 const Fornecedores = lazy(() => import("./pages/fornecedores"));
 const Pessoas = lazy(() => import("./pages/pessoas"));
+const Metas = lazy(() => import("./pages/metas"));
 const Profile = lazy(() => import("./pages/Profile"));
 const Company = lazy(() => import("./pages/Company"));
 const CompanySetup = lazy(() => import("./pages/CompanySetup"));
@@ -171,6 +172,12 @@ const App = () => {
                       {/* Relatórios virou aba do Financeiro (recorte financeiro).
                           Link antigo continua funcionando via redirect. */}
                       <Route path="/relatorios" element={<Navigate to="/financeiro?tab=relatorios" replace />} />
+
+                      <Route element={<FeatureRoute feature="metas" />}>
+                        <Route element={<RequireRole roles={["owner"]} />}>
+                          <Route path="/metas" element={<Metas />} />
+                        </Route>
+                      </Route>
 
                       <Route element={<FeatureRoute feature="templates" />}>
                         <Route path="/templates" element={<Templates />} />
