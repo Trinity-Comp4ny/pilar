@@ -1,6 +1,5 @@
-import { useMemo, useRef, useState } from "react";
-import { useSearchParams } from "react-router-dom";
-import { Calendar as CalendarIcon, GitBranch, Layers, MapPin, Plus, Settings2 } from "lucide-react";
+import { useMemo, useState } from "react";
+import { GitBranch, Plus, Settings2 } from "lucide-react";
 import { toast } from "sonner";
 import { DragDropContext } from "@hello-pangea/dnd";
 import { PageLayout } from "@/components/PageLayout";
@@ -33,15 +32,12 @@ import { cn } from "@/lib/utils";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useQueryClient } from "@tanstack/react-query";
 
-type Tab = "kanban" | "disciplinas" | "cronograma" | "mapa";
-
 export default function ProjetosKanban() {
   usePageTitle("Projetos");
   const { can } = usePermissions();
   const queryClient = useQueryClient();
   const canEdit = can("projetos", "create");
   const canViewMapa = can("mapa", "view");
-  const [searchParams] = useSearchParams();
 
   const {
     templatesData,
@@ -57,19 +53,14 @@ export default function ProjetosKanban() {
     disciplinas,
   } = useProjetosData();
 
-  const { filters, setFilters, sort, setSort, collapsedColumns, toggleColumn } = useProjetosUrlState();
+  const { filters, setFilters, sort, setSort, collapsedColumns, toggleColumn, activeTab } =
+    useProjetosUrlState(canViewMapa);
 
   const [isFormDialogOpen, setIsFormDialogOpen] = useState(false);
   const [editingProjeto, setEditingProjeto] = useState<Projeto | null>(null);
   const [isDisciplinasOpen, setIsDisciplinasOpen] = useState(false);
   const [selectedProjeto, setSelectedProjeto] = useState<Projeto | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<Tab>(() => {
-    const view = searchParams.get("view");
-    if (view === "mapa" && canViewMapa) return "mapa";
-    if (view === "disciplinas" || view === "cronograma") return view;
-    return "kanban";
-  });
   const [isFluxosOpen, setIsFluxosOpen] = useState(false);
   const [projetoToDelete, setProjetoToDelete] = useState<{ id: string; nome: string } | null>(null);
 
@@ -213,29 +204,6 @@ export default function ProjetosKanban() {
 
   const getProjetosByStatus = (status: string) => projetosByStatus[status] || [];
 
-  const tabs: { id: Tab; label: string; icon: typeof CalendarIcon }[] = [
-    { id: "kanban", label: "Quadro", icon: CalendarIcon },
-    { id: "disciplinas", label: "Disciplinas", icon: Layers },
-    { id: "cronograma", label: "Cronograma", icon: CalendarIcon },
-    ...(canViewMapa ? [{ id: "mapa" as Tab, label: "Mapa", icon: MapPin }] : []),
-  ];
-
-  // Navegação por teclado nas abas (padrão ARIA tablist: setas, Home/End).
-  const tabRefs = useRef<Record<string, HTMLButtonElement | null>>({});
-  const handleTabKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) => {
-    const order = tabs.map((t) => t.id);
-    const idx = order.indexOf(activeTab);
-    let next: Tab | null = null;
-    if (e.key === "ArrowRight" || e.key === "ArrowDown") next = order[(idx + 1) % order.length];
-    else if (e.key === "ArrowLeft" || e.key === "ArrowUp") next = order[(idx - 1 + order.length) % order.length];
-    else if (e.key === "Home") next = order[0];
-    else if (e.key === "End") next = order[order.length - 1];
-    if (!next) return;
-    e.preventDefault();
-    setActiveTab(next);
-    tabRefs.current[next]?.focus();
-  };
-
   const noProjetos = !loadingProjetos && !projetosError && projetos.length === 0;
   const noResults = !loadingProjetos && !projetosError && projetos.length > 0 && filteredProjetos.length === 0;
 
@@ -295,38 +263,12 @@ export default function ProjetosKanban() {
         />
       )}
 
-      {/* Abas. O SortControl fica nesta linha (não no header) para a altura do
-          header não variar entre abas e a barra de abas não "pular". */}
-      <div className="flex items-center justify-between gap-2 border-b mb-4">
-        <div role="tablist" aria-label="Visualização de projetos" className="flex items-center gap-0">
-          {tabs.map((tab) => {
-            const selected = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                ref={(el) => (tabRefs.current[tab.id] = el)}
-                role="tab"
-                id={`projetos-tab-${tab.id}`}
-                aria-selected={selected}
-                aria-controls={`projetos-tabpanel-${tab.id}`}
-                tabIndex={selected ? 0 : -1}
-                type="button"
-                onClick={() => setActiveTab(tab.id)}
-                onKeyDown={handleTabKeyDown}
-                className={cn(
-                  "px-4 py-2 text-sm transition-colors -mb-px rounded-t-md border border-transparent",
-                  selected
-                    ? "bg-brand border-brand text-foreground font-medium"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                )}
-              >
-                {tab.label}
-              </button>
-            );
-          })}
+      {/* Ordenação do quadro (a navegação entre as lentes vive na sidebar do módulo). */}
+      {activeTab === "kanban" && (
+        <div className="flex items-center justify-end mb-4">
+          <SortControl sort={sort} onChange={setSort} />
         </div>
-        {activeTab === "kanban" && <SortControl sort={sort} onChange={setSort} />}
-      </div>
+      )}
 
       {/* Erro de carregamento: estado distinto do empty, com opção de tentar de novo */}
       {projetosError && <ProjetosEmptyState variant="error" onRetry={() => refetchProjetos()} />}
@@ -342,12 +284,7 @@ export default function ProjetosKanban() {
             <ProjetosEmptyState variant="no-results" onClearFilters={() => setFilters(EMPTY_FILTERS)} />
           ) : (
             <DragDropContext onDragEnd={onDragEnd}>
-              <div
-                role="tabpanel"
-                id="projetos-tabpanel-kanban"
-                aria-labelledby="projetos-tab-kanban"
-                className="flex-1 min-h-0"
-              >
+              <div className="flex-1 min-h-0">
                 <KanbanBoard
                   collapsedColumns={collapsedColumns}
                   loadingProjetos={loadingProjetos}
@@ -376,11 +313,11 @@ export default function ProjetosKanban() {
           )}
         </>
       ) : activeTab === "disciplinas" ? (
-        <div role="tabpanel" id="projetos-tabpanel-disciplinas" aria-labelledby="projetos-tab-disciplinas">
+        <div>
           <DisciplinasTab projetos={filteredProjetos} />
         </div>
       ) : activeTab === "cronograma" ? (
-        <div role="tabpanel" id="projetos-tabpanel-cronograma" aria-labelledby="projetos-tab-cronograma">
+        <div>
           <CronogramaProjetosTab projetos={filteredProjetos} />
         </div>
       ) : activeTab === "mapa" ? (

@@ -1,10 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { format, parseISO } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import {
   ArrowDownCircle,
   ArrowUpCircle,
-  CalendarIcon,
   ChevronsDown,
   ChevronsUp,
   Filter,
@@ -17,8 +14,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
 import {
   Sheet,
   SheetContent,
@@ -30,11 +25,16 @@ import {
 } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
-import type { DateRange } from "react-day-picker";
+import { FiltroPeriodo } from "@/components/filters/FiltroPeriodo";
 import { formatCurrencyInput } from "@/lib/currencyUtils";
-import { MultiSelectFilter, type MultiSelectOption } from "./MultiSelectFilter";
+import { MultiSelectFilter, type MultiSelectOption } from "@/components/filters/MultiSelectFilter";
 import { FORMAS_PAGAMENTO } from "../hooks/useLancamentosFiltersData";
-import type { LancamentosFilters, Periodo, StatusFilter } from "./lancamentosFilters";
+import {
+  datesToFilterPatch,
+  filtersToDates,
+  type LancamentosFilters,
+  type StatusFilter,
+} from "./lancamentosFilters";
 
 interface Props {
   filters: LancamentosFilters;
@@ -52,15 +52,6 @@ interface Props {
   onToggleGrouped: () => void;
   onToggleExpandAll: () => void;
 }
-
-const PERIODO_LABEL: Record<Periodo | "custom", string> = {
-  "mes-atual": "Este mês",
-  "mes-anterior": "Mês passado",
-  "ultimos-30": "Últimos 30 dias",
-  ano: "Este ano",
-  tudo: "Todo período",
-  custom: "Personalizado",
-};
 
 const STATUS_LABEL: Record<StatusFilter, string> = {
   todos: "Todos status",
@@ -85,8 +76,8 @@ export function LancamentosFilterBar({
   onToggleGrouped,
   onToggleExpandAll,
 }: Props) {
-  const [periodoOpen, setPeriodoOpen] = useState(false);
   const [advOpen, setAdvOpen] = useState(false);
+  const periodoDates = useMemo(() => filtersToDates(filters), [filters]);
 
   const formaOptions = useMemo<MultiSelectOption[]>(() => FORMAS_PAGAMENTO.map((f) => ({ value: f, label: f })), []);
   const labelMap = useMemo(() => {
@@ -94,16 +85,6 @@ export function LancamentosFilterBar({
     [...categorias, ...projetos, ...clientes, ...fornecedores, ...formaOptions].forEach((o) => m.set(o.value, o.label));
     return m;
   }, [categorias, projetos, clientes, fornecedores, formaOptions]);
-
-  const customFromDate = filters.customFrom ? parseISO(filters.customFrom) : undefined;
-  const customToDate = filters.customTo ? parseISO(filters.customTo) : undefined;
-
-  const periodoTriggerLabel =
-    filters.periodo === "custom"
-      ? customFromDate && customToDate
-        ? `${format(customFromDate, "dd/MM")} → ${format(customToDate, "dd/MM")}`
-        : "Personalizado"
-      : PERIODO_LABEL[filters.periodo];
 
   const advancedCount =
     (filters.status !== "todos" ? 1 : 0) +
@@ -161,66 +142,13 @@ export function LancamentosFilterBar({
           </SegBtn>
         </div>
 
-        <Popover open={periodoOpen} onOpenChange={setPeriodoOpen}>
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              className={cn(
-                "h-9 rounded-full gap-1.5 text-sm font-normal",
-                filters.periodo !== "mes-atual" && "border-brand bg-brand text-ink"
-              )}
-            >
-              <CalendarIcon className="h-4 w-4" />
-              {periodoTriggerLabel}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="start">
-            <div className="flex">
-              <div className="border-r py-2 px-1 space-y-0.5 min-w-[160px]">
-                {(["mes-atual", "mes-anterior", "ultimos-30", "ano", "tudo"] as Periodo[]).map((p) => (
-                  <button
-                    key={p}
-                    type="button"
-                    onClick={() => {
-                      onChange({ periodo: p, customFrom: null, customTo: null });
-                      setPeriodoOpen(false);
-                    }}
-                    className={cn(
-                      "w-full text-left text-xs px-3 py-2 rounded hover:bg-muted transition-colors",
-                      filters.periodo === p && "bg-brand text-ink font-medium"
-                    )}
-                  >
-                    {PERIODO_LABEL[p]}
-                  </button>
-                ))}
-                <div className="border-t my-1" />
-                <div
-                  className={cn(
-                    "text-[10px] uppercase px-3 py-1 text-muted-foreground tracking-wider",
-                    filters.periodo === "custom" && "text-ink"
-                  )}
-                >
-                  Personalizado
-                </div>
-              </div>
-              <Calendar
-                mode="range"
-                locale={ptBR}
-                selected={{ from: customFromDate, to: customToDate } as DateRange}
-                onSelect={(range: DateRange | undefined) => {
-                  onChange({
-                    periodo: "custom",
-                    customFrom: range?.from ? format(range.from, "yyyy-MM-dd") : null,
-                    customTo: range?.to ? format(range.to, "yyyy-MM-dd") : null,
-                  });
-                  if (range?.from && range?.to) setPeriodoOpen(false);
-                }}
-                numberOfMonths={2}
-                initialFocus
-              />
-            </div>
-          </PopoverContent>
-        </Popover>
+        <FiltroPeriodo
+          from={periodoDates.from}
+          to={periodoDates.to}
+          onChange={(from, to) => onChange(datesToFilterPatch(from, to))}
+          align="start"
+          className={cn(filters.periodo !== "mes-atual" && "border-brand bg-brand text-ink")}
+        />
 
         <Sheet open={advOpen} onOpenChange={setAdvOpen}>
           <SheetTrigger asChild>

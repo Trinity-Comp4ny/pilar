@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { type ProjectPriority } from "@/constants";
 import {
@@ -8,13 +8,26 @@ import {
 } from "@/pages/projetos/components/ProjetosFilterBar";
 import { type SortKey, type SortDir } from "@/pages/projetos/lib/sort";
 
+// Visualização ativa da tela de projetos. Vive na URL (?view=) para dar deep-link
+// e permitir que a sidebar do módulo aponte direto para cada lente.
+export type ProjetosView = "kanban" | "disciplinas" | "cronograma" | "mapa";
+
+function parseView(params: URLSearchParams, canViewMapa: boolean): ProjetosView {
+  const view = params.get("view");
+  if (view === "mapa") return canViewMapa ? "mapa" : "kanban";
+  if (view === "disciplinas" || view === "cronograma") return view;
+  return "kanban";
+}
+
 // ---------- URL persistence helpers ----------
 export function filtersToParams(
   filters: ProjetosFilters,
   sort: { key: SortKey; dir: SortDir },
-  collapsed: Set<string>
+  collapsed: Set<string>,
+  view: ProjetosView = "kanban"
 ) {
   const params = new URLSearchParams();
+  if (view !== "kanban") params.set("view", view);
   if (filters.search) params.set("q", filters.search);
   if (filters.prioridades.length) params.set("prio", filters.prioridades.join(","));
   if (filters.pessoaIds.length) params.set("p", filters.pessoaIds.join(","));
@@ -63,7 +76,7 @@ export function parseFiltersFromParams(params: URLSearchParams): {
 // Estado de filtros, ordenação e colunas minimizadas do quadro, persistido na URL.
 // Lê o estado inicial dos search params uma vez e sincroniza de volta (replace)
 // a cada mudança, preservando o comportamento original da página.
-export function useProjetosUrlState() {
+export function useProjetosUrlState(canViewMapa: boolean) {
   const [searchParams, setSearchParams] = useSearchParams();
   const initial = useMemo(() => parseFiltersFromParams(searchParams), []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -71,11 +84,28 @@ export function useProjetosUrlState() {
   const [sort, setSort] = useState<{ key: SortKey; dir: SortDir }>(initial.sort);
   const [collapsedColumns, setCollapsedColumns] = useState<Set<string>>(initial.collapsed);
 
-  // Sync state → URL
+  // Aba ativa: derivada da URL (fonte de verdade), escrita de volta abaixo.
+  const activeTab = parseView(searchParams, canViewMapa);
+  const setActiveTab = useCallback(
+    (tab: ProjetosView) => {
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          if (tab === "kanban") next.delete("view");
+          else next.set("view", tab);
+          return next;
+        },
+        { replace: false }
+      );
+    },
+    [setSearchParams]
+  );
+
+  // Sync state → URL (preserva a aba ativa junto dos filtros)
   useEffect(() => {
-    const params = filtersToParams(filters, sort, collapsedColumns);
+    const params = filtersToParams(filters, sort, collapsedColumns, activeTab);
     setSearchParams(params, { replace: true });
-  }, [filters, sort, collapsedColumns, setSearchParams]);
+  }, [filters, sort, collapsedColumns, activeTab, setSearchParams]);
 
   const toggleColumn = (status: string) => {
     setCollapsedColumns((prev) => {
@@ -94,5 +124,7 @@ export function useProjetosUrlState() {
     collapsedColumns,
     setCollapsedColumns,
     toggleColumn,
+    activeTab,
+    setActiveTab,
   };
 }
