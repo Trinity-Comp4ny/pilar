@@ -3,10 +3,10 @@ import { Badge } from "@/components/ui/badge";
 import { Calendar as CalendarIcon, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { FiltroCompetencia } from "@/components/filters/FiltroCompetencia";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import type { FolhaItem, HistoryItem } from "./folha-pagamento/types";
-import { MONTHS, getMonthLabel, buildYearRange } from "./folha-pagamento/types";
+import { getMonthLabel, buildYearRange } from "./folha-pagamento/types";
 import { FolhaSummaryCards } from "./folha-pagamento/components/FolhaSummaryCards";
 import { FolhaTable } from "./folha-pagamento/components/FolhaTable";
 import { FolhaHistory } from "./folha-pagamento/components/FolhaHistory";
@@ -406,30 +406,16 @@ export default function FolhaPagamento() {
               <CalendarIcon className="h-4 w-4 text-muted-foreground" />
               <span className="text-sm font-medium">Período:</span>
             </div>
-            <Select value={selectedMonth.toString()} onValueChange={(v) => setSelectedMonth(parseInt(v))}>
-              <SelectTrigger className="w-[140px] h-9 rounded-full text-sm">
-                <SelectValue placeholder="Mês" />
-              </SelectTrigger>
-              <SelectContent>
-                {MONTHS.map((m) => (
-                  <SelectItem key={m.value} value={m.value.toString()}>
-                    {m.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={selectedYear.toString()} onValueChange={(v) => setSelectedYear(parseInt(v))}>
-              <SelectTrigger className="w-[100px] h-9 rounded-full text-sm">
-                <SelectValue placeholder="Ano" />
-              </SelectTrigger>
-              <SelectContent>
-                {years.map((y) => (
-                  <SelectItem key={y} value={y.toString()}>
-                    {y}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <FiltroCompetencia
+              mes={selectedMonth}
+              ano={selectedYear}
+              onChange={(mes, ano) => {
+                setSelectedMonth(mes);
+                setSelectedYear(ano);
+              }}
+              fromYear={years[0]}
+              toYear={years[years.length - 1]}
+            />
           </div>
 
           <div className="flex items-center gap-4">

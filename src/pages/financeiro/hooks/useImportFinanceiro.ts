@@ -157,9 +157,23 @@ export function useImportFinanceiro() {
   const ultimoLote = useRef<LoteDesfazer | null>(null);
   const [temDesfazer, setTemDesfazer] = useState(false);
 
-  /** Caminho determinístico: CSV/planilha parseado no client, sem IA. */
-  const extrairCsv = useCallback(async (file: File, aux: AuxData) => {
-    const texto = await file.text();
+  /**
+   * Caminho determinístico: CSV ou Excel parseado no client, sem IA. Excel é
+   * convertido em CSV (primeira aba) e cai no mesmo pipeline do CSV. O SheetJS
+   * é carregado sob demanda para não pesar o bundle inicial.
+   */
+  const extrairArquivo = useCallback(async (file: File, aux: AuxData) => {
+    const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
+    let texto: string;
+    if (ext === "xlsx" || ext === "xls") {
+      const XLSX = await import("xlsx");
+      const wb = XLSX.read(await file.arrayBuffer(), { type: "array" });
+      const primeira = wb.SheetNames[0];
+      if (!primeira) throw new Error("Planilha sem abas legíveis.");
+      texto = XLSX.utils.sheet_to_csv(wb.Sheets[primeira]);
+    } else {
+      texto = await file.text();
+    }
     const { linhas, avisos } = csvParaLinhas(texto);
     const cands: CandidatoExt[] = linhas.map((l) => ({ ...linhaParaCandidato(l), confianca: 1 }));
     return { itens: montarItens(cands, aux), avisos };
@@ -324,5 +338,5 @@ export function useImportFinanceiro() {
     await auxQuery.refetch();
   }, [auxQuery]);
 
-  return { auxQuery, extrairCsv, extrairTextoIA, gravarLote, desfazer, gravando, temDesfazer };
+  return { auxQuery, extrairArquivo, extrairTextoIA, gravarLote, desfazer, gravando, temDesfazer };
 }

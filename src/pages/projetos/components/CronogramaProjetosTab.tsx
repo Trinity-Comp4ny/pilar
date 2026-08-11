@@ -12,6 +12,7 @@ import { Calendar, ChevronDown, Layers, ZoomIn, ZoomOut, AlertTriangle } from "l
 import { cn } from "@/lib/utils";
 import { type Projeto, getDeadlineStatus, isDiscAtrasada } from "@/types/projetos";
 import { PROJECT_STATUS, PROJECT_STATUS_CONFIG, type ProjectStatus } from "@/constants";
+import { addDays, diffDays, endOfMonth, generateColumns, parseDate, startOfMonth, type ZoomLevel } from "@/lib/cronograma";
 
 interface MultiSelectProps {
   options: string[];
@@ -79,8 +80,6 @@ interface CronogramaProjetosTabProps {
   projetos: Projeto[];
 }
 
-type ZoomLevel = "months" | "weeks";
-
 const STATUS_BAR_COLORS: Record<string, string> = {
   [PROJECT_STATUS.PLANEJAMENTO]: "bg-yellow-500",
   [PROJECT_STATUS.EM_ANDAMENTO]: "bg-blue-500",
@@ -90,83 +89,10 @@ const STATUS_BAR_COLORS: Record<string, string> = {
   [PROJECT_STATUS.CANCELADO]: "bg-red-500",
 };
 
-function parseDate(d: string | undefined | null): Date | null {
-  if (!d) return null;
-  const date = new Date(d + "T00:00:00");
-  return isNaN(date.getTime()) ? null : date;
-}
-
-function addDays(date: Date, days: number): Date {
-  const result = new Date(date);
-  result.setDate(result.getDate() + days);
-  return result;
-}
-
-function diffDays(a: Date, b: Date): number {
-  return Math.round((b.getTime() - a.getTime()) / (1000 * 60 * 60 * 24));
-}
-
-function startOfMonth(date: Date): Date {
-  return new Date(date.getFullYear(), date.getMonth(), 1);
-}
-
-function endOfMonth(date: Date): Date {
-  return new Date(date.getFullYear(), date.getMonth() + 1, 0);
-}
-
-function startOfWeek(date: Date): Date {
-  const d = new Date(date);
-  const day = d.getDay();
-  d.setDate(d.getDate() - (day === 0 ? 6 : day - 1));
-  return d;
-}
-
-function formatMonthYear(date: Date): string {
-  return date.toLocaleDateString("pt-BR", { month: "short", year: "numeric" });
-}
-
-function formatWeekLabel(date: Date): string {
-  return date.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
-}
-
 function formatDateBR(d: string | undefined | Date): string {
   if (!d) return "—";
   const date = typeof d === "string" ? new Date(d + "T00:00:00") : d;
   return date.toLocaleDateString("pt-BR");
-}
-
-interface TimelineColumn {
-  label: string;
-  start: Date;
-  end: Date;
-}
-
-function generateColumns(timelineStart: Date, timelineEnd: Date, zoom: ZoomLevel): TimelineColumn[] {
-  const cols: TimelineColumn[] = [];
-  if (zoom === "months") {
-    let current = startOfMonth(timelineStart);
-    while (current <= timelineEnd) {
-      const monthEnd = endOfMonth(current);
-      cols.push({
-        label: formatMonthYear(current),
-        start: new Date(current),
-        end: monthEnd > timelineEnd ? new Date(timelineEnd) : monthEnd,
-      });
-      current = new Date(current.getFullYear(), current.getMonth() + 1, 1);
-    }
-  } else {
-    let current = startOfWeek(timelineStart);
-    while (current <= timelineEnd) {
-      const weekEnd = addDays(current, 6);
-      cols.push({
-        label: formatWeekLabel(current),
-        start: new Date(current),
-        end: weekEnd > timelineEnd ? new Date(timelineEnd) : weekEnd,
-      });
-      current = addDays(current, 7);
-    }
-  }
-  return cols;
 }
 
 export function CronogramaProjetosTab({ projetos }: CronogramaProjetosTabProps) {

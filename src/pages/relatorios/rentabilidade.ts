@@ -2,7 +2,9 @@
 //
 // Base de dados (decisão de produto, dinheiro real, audit-ready):
 //   Receita = receitas lançadas do projeto (status Recebido + Pendente)
-//   Custo   = despesas diretas do projeto (status Pago + Pendente)
+//   Custo   = despesas diretas + mão de obra realizada do projeto
+//             (despesas status Pago + Pendente; MO = horas de timesheet aprovado
+//              × custo/hora, calculada no RPC rpc_dashboard_rentabilidade)
 //   Margem  = Receita menos Custo
 // O valor de contrato entra só como referência de coluna, não no cálculo de
 // margem, porque a margem realizada segue o que de fato foi lançado (receitas x
@@ -19,6 +21,7 @@ export interface RentabilidadeProjeto {
   valor_contrato: number;
   receita: number;
   custo: number;
+  mao_de_obra: number;
   margem: number;
   margem_pct: number;
 }
@@ -30,6 +33,7 @@ export interface RentabilidadeCliente {
   valor_contrato: number;
   receita: number;
   custo: number;
+  mao_de_obra: number;
   margem: number;
   margem_pct: number;
 }
@@ -43,6 +47,7 @@ export interface RpcRentabilidadeRaw {
   valor_contrato: unknown;
   receitas_total: unknown;
   despesas_diretas: unknown;
+  custo_mao_de_obra: unknown;
 }
 
 /**
@@ -64,7 +69,9 @@ export function toRentabilidadeProjeto(
   cliente: { id: string | null; nome: string }
 ): RentabilidadeProjeto {
   const receita = Number(raw.receitas_total) || 0;
-  const custo = Number(raw.despesas_diretas) || 0;
+  const mao_de_obra = Number(raw.custo_mao_de_obra) || 0;
+  // Custo = despesas diretas + mão de obra realizada (custo direto).
+  const custo = (Number(raw.despesas_diretas) || 0) + mao_de_obra;
   const { margem, margem_pct } = computeMargem(receita, custo);
   return {
     projeto_id: String(raw.projeto_id ?? ""),
@@ -76,6 +83,7 @@ export function toRentabilidadeProjeto(
     valor_contrato: Number(raw.valor_contrato) || 0,
     receita,
     custo,
+    mao_de_obra,
     margem,
     margem_pct,
   };
@@ -96,6 +104,7 @@ export function aggregatePorCliente(projetos: RentabilidadeProjeto[]): Rentabili
         valor_contrato: 0,
         receita: 0,
         custo: 0,
+        mao_de_obra: 0,
         margem: 0,
         margem_pct: 0,
       } satisfies RentabilidadeCliente);
@@ -104,6 +113,7 @@ export function aggregatePorCliente(projetos: RentabilidadeProjeto[]): Rentabili
     atual.valor_contrato += p.valor_contrato;
     atual.receita += p.receita;
     atual.custo += p.custo;
+    atual.mao_de_obra += p.mao_de_obra;
     mapa.set(id, atual);
   }
 

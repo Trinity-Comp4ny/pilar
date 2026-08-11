@@ -28,6 +28,9 @@ export interface AiRequest {
   referenciaTipo?: string;
   mesReferencia?: number;
   anoReferencia?: number;
+  // Anexos multimodais (PDF/imagem em base64) enviados junto do prompt.
+  // Usado no import de orçamento por IA (spec 023). Vazio/ausente = texto puro.
+  files?: Array<{ mimeType: string; dataBase64: string }>;
 }
 
 export interface AiResponse {
@@ -171,8 +174,20 @@ async function logAiUsage(
 async function fetchGeminiRaw(
   systemPrompt: string,
   userMessage: string,
-  opts: { deadline?: number } = {}
+  opts: {
+    deadline?: number;
+    files?: Array<{ mimeType: string; dataBase64: string }>;
+    maxOutputTokens?: number;
+  } = {}
 ): Promise<{ text: string; tokensEntrada: number; tokensSaida: number }> {
+  // Multimodal: cada arquivo vira uma part inline_data (base64) junto do texto.
+  const userParts: Array<{ text: string } | { inline_data: { mime_type: string; data: string } }> = [
+    { text: userMessage },
+  ];
+  for (const f of opts.files ?? []) {
+    userParts.push({ inline_data: { mime_type: f.mimeType, data: f.dataBase64 } });
+  }
+
   const body = {
     system_instruction: {
       parts: [{ text: systemPrompt }],
@@ -180,12 +195,12 @@ async function fetchGeminiRaw(
     contents: [
       {
         role: "user",
-        parts: [{ text: userMessage }],
+        parts: userParts,
       },
     ],
     generationConfig: {
       temperature: 0.7,
-      maxOutputTokens: 4096,
+      maxOutputTokens: opts.maxOutputTokens ?? 4096,
       responseMimeType: "application/json",
     },
   };
@@ -391,7 +406,7 @@ export interface StructuredResult<T> {
 export async function callGeminiStructured<T>(
   request: AiRequest,
   schema: z.ZodType<T>,
-  opts: { maxRetries?: number } = {}
+  opts: { maxRetries?: number; maxOutputTokens?: number } = {}
 ): Promise<StructuredResult<T>> {
   const maxRetries = opts.maxRetries ?? 2;
   let lastError = "";
@@ -415,7 +430,11 @@ export async function callGeminiStructured<T>(
         ? request.userMessage
         : `${request.userMessage}\n\n[Tentativa ${attempt}] A resposta anterior foi rejeitada: ${lastError}. Responda APENAS com JSON válido que satisfaça exatamente o schema exigido.`;
 
-    const raw = await fetchGeminiRaw(request.systemPrompt, userMessage, { deadline });
+    const raw = await fetchGeminiRaw(request.systemPrompt, userMessage, {
+      deadline,
+      files: request.files,
+      maxOutputTokens: opts.maxOutputTokens,
+    });
     tokensEntrada += raw.tokensEntrada;
     tokensSaida += raw.tokensSaida;
 

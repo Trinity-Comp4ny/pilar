@@ -4,8 +4,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Label } from "@/components/ui/label";
-import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { FiltroPeriodo } from "@/components/filters/FiltroPeriodo";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -18,7 +18,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  CalendarIcon,
   Download,
   FileBarChart,
   Filter,
@@ -36,7 +35,7 @@ import {
   Building2,
 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
-import { format, subDays, startOfMonth, endOfMonth, subMonths } from "date-fns";
+import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -77,9 +76,6 @@ const tipoConfig: Record<string, { className: string }> = {
 
 export default function Relatorios() {
   const [tipoRelatorio, setTipoRelatorio] = useState("");
-  const [periodoPreset, setPeriodoPreset] = useState<"7d" | "30d" | "this_month" | "last_month" | "all" | "custom">(
-    "all"
-  );
   const [dateFrom, setDateFrom] = useState<Date>();
   const [dateTo, setDateTo] = useState<Date>();
   const { isLoading, setIsLoading, reportData, reportTitle, generateReport, clearReport } = useRelatorioData();
@@ -275,36 +271,6 @@ export default function Relatorios() {
     void gerarRelatorio(tipo);
   };
 
-  const applyPreset = (preset: "7d" | "this_month" | "last_month" | "30d" | "all" | "custom") => {
-    setPeriodoPreset(preset);
-    if (preset === "custom") return;
-    const now = new Date();
-    if (preset === "all") {
-      setDateFrom(undefined);
-      setDateTo(undefined);
-      return;
-    }
-    if (preset === "7d") {
-      setDateFrom(subDays(now, 6));
-      setDateTo(now);
-      return;
-    }
-    if (preset === "30d") {
-      setDateFrom(subDays(now, 29));
-      setDateTo(now);
-      return;
-    }
-    if (preset === "this_month") {
-      setDateFrom(startOfMonth(now));
-      setDateTo(endOfMonth(now));
-      return;
-    }
-    if (preset === "last_month") {
-      const last = subMonths(now, 1);
-      setDateFrom(startOfMonth(last));
-      setDateTo(endOfMonth(last));
-    }
-  };
 
   const handleExport = async (formatType: "csv" | "xlsx" | "pdf") => {
     if (!filteredData.length) {
@@ -518,81 +484,29 @@ export default function Relatorios() {
 
             {/* Período (não se aplica a rentabilidade, que é acumulada por projeto) */}
             {!isRentabilidade && (
-              <div className="space-y-1.5 xl:w-48 shrink-0">
+              <div className="space-y-1.5 shrink-0">
                 <Label className="text-xs font-medium text-muted-foreground">Período</Label>
-                <Select value={periodoPreset} onValueChange={(v) => applyPreset(v as typeof periodoPreset)}>
-                  <SelectTrigger className="h-9 bg-white">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="7d">Últimos 7 dias</SelectItem>
-                    <SelectItem value="30d">Últimos 30 dias</SelectItem>
-                    <SelectItem value="this_month">Mês atual</SelectItem>
-                    <SelectItem value="last_month">Mês anterior</SelectItem>
-                    <SelectItem value="all">Todos</SelectItem>
-                    <SelectItem value="custom">Personalizado</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
-            {/* Datas customizadas (só aparecem quando "Personalizado") */}
-            {!isRentabilidade && periodoPreset === "custom" && (
-              <div className="flex items-end gap-1.5">
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-medium text-muted-foreground">De</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className={cn(
-                          "h-9 text-xs gap-1.5 w-[130px] justify-start",
-                          !dateFrom && "text-muted-foreground"
-                        )}
-                      >
-                        <CalendarIcon className="h-3.5 w-3.5" />
-                        {dateFrom ? format(dateFrom, "dd/MM/yyyy") : "Início"}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={dateFrom}
-                        onSelect={setDateFrom}
-                        initialFocus
-                        className="p-3 pointer-events-auto"
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
-                <span className="text-xs text-muted-foreground pb-2">até</span>
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-medium text-muted-foreground">Até</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className={cn(
-                          "h-9 text-xs gap-1.5 w-[130px] justify-start",
-                          !dateTo && "text-muted-foreground"
-                        )}
-                      >
-                        <CalendarIcon className="h-3.5 w-3.5" />
-                        {dateTo ? format(dateTo, "dd/MM/yyyy") : "Fim"}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={dateTo}
-                        onSelect={setDateTo}
-                        initialFocus
-                        className="p-3 pointer-events-auto"
-                      />
-                    </PopoverContent>
-                  </Popover>
+                <div>
+                  <FiltroPeriodo
+                    from={dateFrom}
+                    to={dateTo}
+                    onChange={(from, to) => {
+                      setDateFrom(from);
+                      setDateTo(to);
+                    }}
+                    presets={[
+                      "mes-atual",
+                      "mes-anterior",
+                      "ultimos-7",
+                      "ultimos-30",
+                      "este-trimestre",
+                      "trimestre-passado",
+                      "este-ano",
+                      "tudo",
+                      "custom",
+                    ]}
+                    align="start"
+                  />
                 </div>
               </div>
             )}
