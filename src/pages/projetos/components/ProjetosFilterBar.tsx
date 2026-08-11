@@ -259,27 +259,42 @@ function FiltersPanel({
         </FilterSection>
 
         {/* Equipe */}
-        <PessoasSection
-          pessoas={pessoas}
+        <CheckboxSearchSection
+          title="Equipe"
+          icon={<Users className="h-3.5 w-3.5 text-muted-foreground" />}
+          items={pessoas}
           selected={filters.pessoaIds}
           onToggle={togglePessoa}
           onClear={() => onChange({ ...filters, pessoaIds: [] })}
+          searchPlaceholder="Buscar membro..."
+          emptyText="Nenhum membro"
+          clearLabel="Limpar equipe"
         />
 
         {/* Cliente */}
-        <ClientesSection
-          clientes={clientes}
+        <CheckboxSearchSection
+          title="Cliente"
+          icon={<Building2 className="h-3.5 w-3.5 text-muted-foreground" />}
+          items={clientes}
           selected={filters.clienteIds}
           onToggle={toggleCliente}
           onClear={() => onChange({ ...filters, clienteIds: [] })}
+          searchPlaceholder="Buscar cliente..."
+          emptyText="Nenhum cliente"
+          clearLabel="Limpar clientes"
         />
 
         {/* Disciplina */}
-        <DisciplinasSection
-          disciplinas={disciplinas}
+        <CheckboxSearchSection
+          title="Disciplina"
+          icon={<Layers className="h-3.5 w-3.5 text-muted-foreground" />}
+          items={disciplinas}
           selected={filters.disciplinaIds}
           onToggle={toggleDisciplina}
           onClear={() => onChange({ ...filters, disciplinaIds: [] })}
+          searchPlaceholder="Buscar disciplina..."
+          emptyText="Nenhuma disciplina"
+          clearLabel="Limpar disciplinas"
         />
 
         {/* Período */}
@@ -326,167 +341,64 @@ function FilterSection({
   );
 }
 
-function PessoasSection({
-  pessoas,
+// Lista de busca + checkboxes dentro de uma FilterSection colapsável. Unifica o
+// que antes eram três componentes idênticos (Equipe/Cliente/Disciplina). Não usa
+// MultiSelectFilter de propósito: aquele é um Popover próprio e aninhá-lo dentro do
+// popover de "Filtros" seria popover-dentro-de-popover (spec 025, Camada 1).
+function CheckboxSearchSection({
+  title,
+  icon,
+  items,
   selected,
   onToggle,
   onClear,
+  searchPlaceholder,
+  emptyText,
+  clearLabel,
 }: {
-  pessoas: { id: string; nome: string }[];
+  title: string;
+  icon: React.ReactNode;
+  items: { id: string; nome: string }[];
   selected: string[];
   onToggle: (id: string) => void;
   onClear: () => void;
+  searchPlaceholder: string;
+  emptyText: string;
+  clearLabel: string;
 }) {
   const [search, setSearch] = useState("");
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return q ? pessoas.filter((p) => p.nome.toLowerCase().includes(q)) : pessoas;
-  }, [pessoas, search]);
+    return q ? items.filter((i) => i.nome.toLowerCase().includes(q)) : items;
+  }, [items, search]);
 
   return (
-    <FilterSection
-      title="Equipe"
-      count={selected.length}
-      icon={<Users className="h-3.5 w-3.5 text-muted-foreground" />}
-      defaultOpen={false}
-    >
+    <FilterSection title={title} count={selected.length} icon={icon} defaultOpen={false}>
       <div className="space-y-2">
         <Input
-          placeholder="Buscar membro..."
+          placeholder={searchPlaceholder}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="h-8 text-xs"
         />
         <div className="max-h-48 overflow-y-auto -mx-1">
           {filtered.length === 0 ? (
-            <p className="text-xs text-muted-foreground text-center py-3">Nenhum membro</p>
+            <p className="text-xs text-muted-foreground text-center py-3">{emptyText}</p>
           ) : (
-            filtered.map((p) => (
+            filtered.map((i) => (
               <label
-                key={p.id}
+                key={i.id}
                 className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted cursor-pointer text-xs"
               >
-                <Checkbox checked={selected.includes(p.id)} onCheckedChange={() => onToggle(p.id)} />
-                <span className="truncate">{p.nome}</span>
+                <Checkbox checked={selected.includes(i.id)} onCheckedChange={() => onToggle(i.id)} />
+                <span className="truncate">{i.nome}</span>
               </label>
             ))
           )}
         </div>
         {selected.length > 0 && (
           <Button variant="ghost" size="sm" className="h-7 text-xs w-full" onClick={onClear}>
-            Limpar equipe
-          </Button>
-        )}
-      </div>
-    </FilterSection>
-  );
-}
-
-function ClientesSection({
-  clientes,
-  selected,
-  onToggle,
-  onClear,
-}: {
-  clientes: { id: string; nome: string }[];
-  selected: string[];
-  onToggle: (id: string) => void;
-  onClear: () => void;
-}) {
-  const [search, setSearch] = useState("");
-  const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    return q ? clientes.filter((c) => c.nome.toLowerCase().includes(q)) : clientes;
-  }, [clientes, search]);
-
-  return (
-    <FilterSection
-      title="Cliente"
-      count={selected.length}
-      icon={<Building2 className="h-3.5 w-3.5 text-muted-foreground" />}
-      defaultOpen={false}
-    >
-      <div className="space-y-2">
-        <Input
-          placeholder="Buscar cliente..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="h-8 text-xs"
-        />
-        <div className="max-h-48 overflow-y-auto -mx-1">
-          {filtered.length === 0 ? (
-            <p className="text-xs text-muted-foreground text-center py-3">Nenhum cliente</p>
-          ) : (
-            filtered.map((c) => (
-              <label
-                key={c.id}
-                className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted cursor-pointer text-xs"
-              >
-                <Checkbox checked={selected.includes(c.id)} onCheckedChange={() => onToggle(c.id)} />
-                <span className="truncate">{c.nome}</span>
-              </label>
-            ))
-          )}
-        </div>
-        {selected.length > 0 && (
-          <Button variant="ghost" size="sm" className="h-7 text-xs w-full" onClick={onClear}>
-            Limpar clientes
-          </Button>
-        )}
-      </div>
-    </FilterSection>
-  );
-}
-
-function DisciplinasSection({
-  disciplinas,
-  selected,
-  onToggle,
-  onClear,
-}: {
-  disciplinas: { id: string; nome: string }[];
-  selected: string[];
-  onToggle: (id: string) => void;
-  onClear: () => void;
-}) {
-  const [search, setSearch] = useState("");
-  const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    return q ? disciplinas.filter((d) => d.nome.toLowerCase().includes(q)) : disciplinas;
-  }, [disciplinas, search]);
-
-  return (
-    <FilterSection
-      title="Disciplina"
-      count={selected.length}
-      icon={<Layers className="h-3.5 w-3.5 text-muted-foreground" />}
-      defaultOpen={false}
-    >
-      <div className="space-y-2">
-        <Input
-          placeholder="Buscar disciplina..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="h-8 text-xs"
-        />
-        <div className="max-h-48 overflow-y-auto -mx-1">
-          {filtered.length === 0 ? (
-            <p className="text-xs text-muted-foreground text-center py-3">Nenhuma disciplina</p>
-          ) : (
-            filtered.map((d) => (
-              <label
-                key={d.id}
-                className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted cursor-pointer text-xs"
-              >
-                <Checkbox checked={selected.includes(d.id)} onCheckedChange={() => onToggle(d.id)} />
-                <span className="truncate">{d.nome}</span>
-              </label>
-            ))
-          )}
-        </div>
-        {selected.length > 0 && (
-          <Button variant="ghost" size="sm" className="h-7 text-xs w-full" onClick={onClear}>
-            Limpar disciplinas
+            {clearLabel}
           </Button>
         )}
       </div>
