@@ -13,14 +13,18 @@
 import {
   Briefcase,
   Building2,
-  Calendar,
   CalendarDays,
   CloudSun,
   FileText,
   FolderKanban,
+  GanttChartSquare,
   HardHat,
+  Layers,
+  LayoutGrid,
   ListTodo,
+  MapPin,
   Sparkles,
+  Target,
   Truck,
   UserPlus,
   Users,
@@ -39,6 +43,8 @@ export type ModuleMenuItem = {
   feature?: Feature;
   badge?: "novo" | "em breve";
   adminOnly?: boolean;
+  /** Rótulo do sub-grupo na sidebar (ex.: "Comercial"). Itens sem grupo ficam soltos. */
+  group?: string;
 };
 
 export type ModuleDef = {
@@ -60,10 +66,17 @@ export const MODULES: Record<ModuleId, ModuleDef> = {
     icon: Briefcase,
     homeRoute: "/meu-trabalho",
     items: [
-      { title: "Meu trabalho", url: "/meu-trabalho", icon: ListTodo, feature: "meu_trabalho" },
-      { title: "Financeiro", url: "/financeiro", icon: Wallet, feature: "financeiro" },
-      { title: "Equipe", url: "/equipe", icon: Users, feature: "pessoas", adminOnly: true },
-      { title: "Fornecedores", url: "/fornecedores", icon: Truck, feature: "financeiro" },
+      // Comercial (movido de Projetos: dono da relação com o cliente é gestão/comercial)
+      { title: "Leads", url: "/leads", icon: UserPlus, feature: "leads", group: "Comercial" },
+      { title: "Clientes", url: "/clientes", icon: Building2, feature: "clientes", group: "Comercial" },
+      { title: "Propostas", url: "/documentos", icon: FileText, feature: "propostas", group: "Comercial" },
+      // Financeiro
+      { title: "Financeiro", url: "/financeiro", icon: Wallet, feature: "financeiro", group: "Financeiro" },
+      // Empresa
+      { title: "Equipe", url: "/equipe", icon: Users, feature: "pessoas", adminOnly: true, group: "Empresa" },
+      { title: "Metas", url: "/metas", icon: Target, feature: "metas", adminOnly: true, group: "Empresa" },
+      { title: "Fornecedores", url: "/fornecedores", icon: Truck, feature: "financeiro", group: "Empresa" },
+      { title: "Meu trabalho", url: "/meu-trabalho", icon: ListTodo, feature: "meu_trabalho", group: "Empresa" },
     ],
   },
   projetos: {
@@ -72,10 +85,11 @@ export const MODULES: Record<ModuleId, ModuleDef> = {
     icon: FolderKanban,
     homeRoute: "/projetos",
     items: [
-      { title: "Leads", url: "/leads", icon: UserPlus, feature: "leads" },
-      { title: "Documentos", url: "/documentos", icon: FileText, feature: "propostas" },
-      { title: "Clientes", url: "/clientes", icon: Building2, feature: "clientes" },
-      { title: "Projetos", url: "/projetos", icon: Calendar, feature: "projetos" },
+      // As lentes da tela /projetos (mesma coleção, ?view=): navegáveis direto na sidebar.
+      { title: "Quadro", url: "/projetos", icon: LayoutGrid, feature: "projetos" },
+      { title: "Disciplinas", url: "/projetos?view=disciplinas", icon: Layers, feature: "projetos" },
+      { title: "Cronograma", url: "/projetos?view=cronograma", icon: GanttChartSquare, feature: "projetos" },
+      { title: "Mapa", url: "/projetos?view=mapa", icon: MapPin, feature: "mapa" },
       { title: "Calendário", url: "/calendario", icon: CalendarDays, feature: "projetos" },
     ],
   },
@@ -103,7 +117,8 @@ const EXTRA_ROUTE_PREFIXES: ReadonlyArray<readonly [string, ModuleId]> = [
 ];
 
 const ROUTE_PREFIXES: ReadonlyArray<readonly [string, ModuleId]> = [
-  ...MODULE_ORDER.flatMap((id) => MODULES[id].items.map((item) => [item.url, id] as const)),
+  // Só o pathname importa aqui; itens com ?view= compartilham o mesmo prefixo (/projetos).
+  ...MODULE_ORDER.flatMap((id) => MODULES[id].items.map((item) => [item.url.split("?")[0], id] as const)),
   ...EXTRA_ROUTE_PREFIXES,
   // Ordena da mais longa pra mais curta: prefixo mais específico vence.
 ].sort((a, b) => b[0].length - a[0].length);
@@ -113,7 +128,8 @@ const ROUTE_PREFIXES: ReadonlyArray<readonly [string, ModuleId]> = [
  * Rotas transversais (/inicio, /agentes, /profile...) retornam null.
  */
 export function routeToModule(pathname: string): ModuleId | null {
-  const path = pathname.replace(/\/+$/, "") || "/";
+  // Só o pathname classifica; ?view= e #hash não mudam o módulo dono da rota.
+  const path = pathname.split(/[?#]/)[0].replace(/\/+$/, "") || "/";
   for (const [prefix, moduleId] of ROUTE_PREFIXES) {
     if (path === prefix || path.startsWith(`${prefix}/`)) return moduleId;
   }

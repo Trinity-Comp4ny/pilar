@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { format, subDays } from "date-fns";
+import { format, subDays, parseISO } from "date-fns";
 import { Clock, Plus, CheckCircle, XCircle, RotateCcw } from "lucide-react";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
@@ -20,7 +20,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { DatePicker } from "@/components/ui/date-picker";
+import { FiltroPeriodo } from "@/components/filters/FiltroPeriodo";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { TimesheetLancamento } from "@/hooks/useTimesheet";
 
@@ -204,14 +204,15 @@ function FiltrosBar({
 }) {
   return (
     <div className="flex flex-wrap gap-3 items-center">
-      <div className="flex items-center gap-2">
-        <span className="text-xs text-muted-foreground whitespace-nowrap">De</span>
-        <DatePicker value={dataInicio} onChange={onDataInicio} className="w-36" />
-      </div>
-      <div className="flex items-center gap-2">
-        <span className="text-xs text-muted-foreground whitespace-nowrap">Até</span>
-        <DatePicker value={dataFim} onChange={onDataFim} className="w-36" />
-      </div>
+      <FiltroPeriodo
+        from={dataInicio ? parseISO(dataInicio) : undefined}
+        to={dataFim ? parseISO(dataFim) : undefined}
+        onChange={(from, to) => {
+          onDataInicio(from ? format(from, "yyyy-MM-dd") : "");
+          onDataFim(to ? format(to, "yyyy-MM-dd") : "");
+        }}
+        align="start"
+      />
       <Select value={status} onValueChange={onStatus}>
         <SelectTrigger className="w-36 h-10">
           <SelectValue placeholder="Status" />

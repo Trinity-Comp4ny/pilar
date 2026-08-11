@@ -14,9 +14,9 @@ describe("routeToModule", () => {
     expect(routeToModule("/financeiro")).toBe("gestao");
     expect(routeToModule("/equipe")).toBe("gestao");
     expect(routeToModule("/fornecedores")).toBe("gestao");
-    expect(routeToModule("/leads")).toBe("projetos");
-    expect(routeToModule("/documentos")).toBe("projetos");
-    expect(routeToModule("/clientes")).toBe("projetos");
+    expect(routeToModule("/leads")).toBe("gestao");
+    expect(routeToModule("/documentos")).toBe("gestao");
+    expect(routeToModule("/clientes")).toBe("gestao");
     expect(routeToModule("/projetos")).toBe("projetos");
     expect(routeToModule("/calendario")).toBe("projetos");
     expect(routeToModule("/obras")).toBe("obras");
@@ -24,7 +24,7 @@ describe("routeToModule", () => {
 
   it("resolve sub-rotas por prefixo (detalhes)", () => {
     expect(routeToModule("/projetos/abc-123")).toBe("projetos");
-    expect(routeToModule("/clientes/9f2/financeiro")).toBe("projetos");
+    expect(routeToModule("/clientes/9f2/financeiro")).toBe("gestao");
     expect(routeToModule("/financeiro/lancamentos")).toBe("gestao");
   });
 
