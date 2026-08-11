@@ -24,6 +24,9 @@ export const useFinanceData = (dateFrom?: Date, dateTo?: Date) => {
     refetchInterval: 5 * 60 * 1000,
     refetchOnWindowFocus: true,
     queryFn: async () => {
+      // Sem dateFrom/dateTo = "Todo o período" (spec 024): sem filtro de data, sem
+      // comparação com período anterior (não existe "anterior" ao início dos dados).
+      const allTime = !dateFrom && !dateTo;
       const now = new Date();
       const start = dateFrom || startOfMonth(now);
       const end = dateTo || endOfMonth(now);
@@ -35,27 +38,31 @@ export const useFinanceData = (dateFrom?: Date, dateTo?: Date) => {
 
       // Busca por vencimento OU pagamento/recebimento dentro da janela. Um item
       // pago no período mas com vencimento fora dela precisa aparecer no caixa
-      // (getDisplayDate agrupa pela data de pagamento/recebimento).
+      // (getDisplayDate agrupa pela data de pagamento/recebimento). Em all-time a
+      // busca não tem bounds de data.
+      const receitasBase = supabase.from("receitas").select("*").neq("status", "Cancelado");
+      const despesasBase = supabase
+        .from("despesas")
+        .select("*")
+        .eq("is_fatura_payment", false)
+        .neq("status", "Cancelado");
+
       const [categoriesRes, receitasRes, despesasRes] = await Promise.all([
         supabase.from("categorias_financeiras").select("id, nome, tipo"),
-        supabase
-          .from("receitas")
-          .select("*")
-          .neq("status", "Cancelado")
-          .or(
-            `and(data_vencimento.gte.${prevFromStr},data_vencimento.lte.${dateToStr}),and(data_recebimento.gte.${prevFromStr},data_recebimento.lte.${dateToStr})`
-          )
+        (allTime
+          ? receitasBase
+          : receitasBase.or(
+              `and(data_vencimento.gte.${prevFromStr},data_vencimento.lte.${dateToStr}),and(data_recebimento.gte.${prevFromStr},data_recebimento.lte.${dateToStr})`
+            )
+        )
           .order("data_recebimento", { ascending: false })
           .order("data_vencimento", { ascending: false }),
-        supabase
-          .from("despesas")
-          .select("*")
-          .eq("is_fatura_payment", false)
-          .neq("status", "Cancelado")
-          .or(
-            `and(data_vencimento.gte.${prevFromStr},data_vencimento.lte.${dateToStr}),and(data_pagamento.gte.${prevFromStr},data_pagamento.lte.${dateToStr})`
-          )
-          .order("data_vencimento", { ascending: true }),
+        (allTime
+          ? despesasBase
+          : despesasBase.or(
+              `and(data_vencimento.gte.${prevFromStr},data_vencimento.lte.${dateToStr}),and(data_pagamento.gte.${prevFromStr},data_pagamento.lte.${dateToStr})`
+            )
+        ).order("data_vencimento", { ascending: true }),
       ]);
 
       if (receitasRes.error) throw receitasRes.error;
@@ -79,12 +86,13 @@ export const useFinanceData = (dateFrom?: Date, dateTo?: Date) => {
 
       const inMainPeriod = (dateStr: string) => {
         if (!dateStr) return false;
+        if (allTime) return true;
         const dStr = dateStr.split("T")[0];
         return dStr >= startStr && dStr <= endStr;
       };
 
       const inPreviousPeriod = (dateStr: string) => {
-        if (!dateStr) return false;
+        if (allTime || !dateStr) return false;
         const dStr = dateStr.split("T")[0];
         return dStr >= prevStartStr && dStr < startStr;
       };
@@ -136,7 +144,28 @@ export const useFinanceData = (dateFrom?: Date, dateTo?: Date) => {
       }));
 
       const chartData = processChartData(receitasChartMain, despesasChartMain);
-      const chartDataDiario = processDailyChartData(receitasMain, despesasMain, start, end);
+      // Em all-time a janela do gráfico diário vem do intervalo real dos dados
+      // (senão iteraríamos do mês corrente). Span grande cai para granularidade
+      // mensal automaticamente em processDailyChartData.
+      let dailyStart = start;
+      let dailyEnd = end;
+      if (allTime) {
+        const displayDates: string[] = [];
+        receitasMain.forEach((r) => {
+          const d = getDisplayDate(r.data_recebimento, r.data_vencimento, r.status);
+          if (d) displayDates.push(d.slice(0, 10));
+        });
+        despesasMain.forEach((d) => {
+          const disp = getDisplayDate(d.data_pagamento, d.data_vencimento, d.status);
+          if (disp) displayDates.push(disp.slice(0, 10));
+        });
+        if (displayDates.length) {
+          displayDates.sort();
+          dailyStart = new Date(displayDates[0] + "T00:00:00");
+          dailyEnd = new Date(displayDates[displayDates.length - 1] + "T00:00:00");
+        }
+      }
+      const chartDataDiario = processDailyChartData(receitasMain, despesasMain, dailyStart, dailyEnd);
       const categoriaData = processCategoryData(receitasMain, "receitas");
       const despesasCategoriaData = processCategoryData(despesasMain, "despesas");
 

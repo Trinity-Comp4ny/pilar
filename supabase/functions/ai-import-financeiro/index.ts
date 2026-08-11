@@ -53,6 +53,11 @@ function montarPrompt(tipoDoc: string, categorias: CategoriaRow[]) {
     "- Uma entrada por movimento financeiro real. Ignore saldos, cabeçalhos, totais e rodapés.",
     "- `valor` é SEMPRE positivo (número, ponto decimal). O sentido vai em `tipo`.",
     "- `tipo`: 'despesa' para saída/débito/pagamento; 'receita' para entrada/crédito/recebimento.",
+    ...(tipoDoc === "fatura"
+      ? [
+          "- Em fatura de cartão TODO movimento é 'despesa', exceto estorno/crédito/pagamento da fatura, que é 'receita'.",
+        ]
+      : []),
     "- `data` no formato ISO yyyy-mm-dd. Se o ano estiver ausente, use o mais provável do contexto.",
     "- `categoria_sugerida`: escolha o NOME exato de uma das categorias abaixo cujo tipo bata com o lançamento; se nenhuma servir, use null. Nunca invente categoria.",
     "- Parcelas ('2/12', 'PARC 03/10'): preencha parcela_numero e parcela_total.",
