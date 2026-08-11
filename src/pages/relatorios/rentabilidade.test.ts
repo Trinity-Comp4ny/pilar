@@ -41,6 +41,7 @@ describe("toRentabilidadeProjeto", () => {
     valor_contrato: 120000,
     receitas_total: 100000,
     despesas_diretas: 70000,
+    custo_mao_de_obra: 0,
   };
 
   it("mapeia a linha crua e computa a margem", () => {
@@ -49,19 +50,36 @@ describe("toRentabilidadeProjeto", () => {
     expect(p.cliente_nome).toBe("Prefeitura X");
     expect(p.receita).toBe(100000);
     expect(p.custo).toBe(70000);
+    expect(p.mao_de_obra).toBe(0);
     expect(p.margem).toBe(30000);
     expect(p.margem_pct).toBe(30);
     expect(p.valor_contrato).toBe(120000);
   });
 
+  it("soma mão de obra ao custo direto e reduz a margem", () => {
+    const p = toRentabilidadeProjeto({ ...raw, custo_mao_de_obra: 20000 }, { id: "c1", nome: "Prefeitura X" });
+    expect(p.mao_de_obra).toBe(20000);
+    expect(p.custo).toBe(90000); // 70000 despesas + 20000 MO
+    expect(p.margem).toBe(10000); // 100000 - 90000
+    expect(p.margem_pct).toBe(10);
+  });
+
   it("aplica defaults quando campos vêm nulos", () => {
     const p = toRentabilidadeProjeto(
-      { ...raw, codigo_projeto: null, receitas_total: null, despesas_diretas: null, valor_contrato: null },
+      {
+        ...raw,
+        codigo_projeto: null,
+        receitas_total: null,
+        despesas_diretas: null,
+        custo_mao_de_obra: null,
+        valor_contrato: null,
+      },
       { id: null, nome: "Sem cliente" }
     );
     expect(p.codigo_projeto).toBe("-");
     expect(p.receita).toBe(0);
     expect(p.custo).toBe(0);
+    expect(p.mao_de_obra).toBe(0);
     expect(p.margem).toBe(0);
     expect(p.margem_pct).toBe(0);
   });
@@ -78,6 +96,7 @@ describe("aggregatePorCliente", () => {
     valor_contrato: 0,
     receita: 0,
     custo: 0,
+    mao_de_obra: 0,
     margem: 0,
     margem_pct: 0,
     ...over,

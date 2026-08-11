@@ -13,6 +13,7 @@ export interface ProjetoRentabilidade {
   receitas_total: number;
   receitas_recebidas: number;
   despesas_diretas: number;
+  custo_mao_de_obra: number;
   horas_orcadas: number;
   horas_consumidas: number;
   // Calculados no frontend
@@ -32,6 +33,7 @@ export interface RpcRentabilidadeRow {
   receitas_total: unknown;
   receitas_recebidas: unknown;
   despesas_diretas: unknown;
+  custo_mao_de_obra: unknown;
   horas_orcadas: unknown;
   horas_consumidas: unknown;
 }
@@ -39,7 +41,10 @@ export interface RpcRentabilidadeRow {
 function calcularMargens(raw: RpcRentabilidadeRow, custoIndiretoPct = 15): ProjetoRentabilidade {
   const receitas = Number(raw.receitas_total) || 0;
   const despesas = Number(raw.despesas_diretas) || 0;
-  const margemBruta = receitas - despesas;
+  const maoDeObra = Number(raw.custo_mao_de_obra) || 0;
+  // Mão de obra é custo direto: entra na margem bruta junto das despesas.
+  const custoDireto = despesas + maoDeObra;
+  const margemBruta = receitas - custoDireto;
   const margemBrutaPct = receitas > 0 ? (margemBruta / receitas) * 100 : 0;
   const custoIndireto = despesas * (custoIndiretoPct / 100);
   const margemLiquida = margemBruta - custoIndireto;
@@ -54,6 +59,7 @@ function calcularMargens(raw: RpcRentabilidadeRow, custoIndiretoPct = 15): Proje
     receitas_total: receitas,
     receitas_recebidas: Number(raw.receitas_recebidas) || 0,
     despesas_diretas: despesas,
+    custo_mao_de_obra: maoDeObra,
     horas_orcadas: Number(raw.horas_orcadas) || 0,
     horas_consumidas: Number(raw.horas_consumidas) || 0,
     margem_bruta: margemBruta,
@@ -77,6 +83,7 @@ export const useDashboardRentabilidade = () => {
       const comReceita = projetos.filter((p) => p.receitas_total > 0);
       const totalReceitas = projetos.reduce((s, p) => s + p.receitas_total, 0);
       const totalDespesas = projetos.reduce((s, p) => s + p.despesas_diretas, 0);
+      const totalMaoDeObra = projetos.reduce((s, p) => s + p.custo_mao_de_obra, 0);
       const margemMediaPct =
         comReceita.length > 0 ? comReceita.reduce((s, p) => s + p.margem_bruta_pct, 0) / comReceita.length : 0;
 
@@ -93,7 +100,8 @@ export const useDashboardRentabilidade = () => {
         metricas: {
           totalReceitas,
           totalDespesas,
-          margemBrutaTotal: totalReceitas - totalDespesas,
+          totalMaoDeObra,
+          margemBrutaTotal: totalReceitas - totalDespesas - totalMaoDeObra,
           margemMediaPct,
           totalHorasOrcadas,
           totalHorasConsumidas,
@@ -163,7 +171,8 @@ export const useRentabilidadePorCliente = () => {
       const clientes: ClienteRentabilidade[] = Array.from(clienteMap.entries()).map(
         ([clienteId, { nome, projetos: clienteProjetos }]) => {
           const rec = clienteProjetos.reduce((s, p) => s + p.receitas_total, 0);
-          const desp = clienteProjetos.reduce((s, p) => s + p.despesas_diretas, 0);
+          // Custo do cliente = despesas diretas + mão de obra dos projetos.
+          const desp = clienteProjetos.reduce((s, p) => s + p.despesas_diretas + p.custo_mao_de_obra, 0);
           const margem = rec - desp;
 
           return {
