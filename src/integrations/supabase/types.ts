@@ -1553,7 +1553,6 @@ export type Database = {
           descricao: string
           empresa_id: string
           horas_estimadas?: number | null
-          horas_reais?: number | null
           id?: string
           impacto_prazo_dias?: number | null
           justificativa?: string | null
@@ -1574,7 +1573,6 @@ export type Database = {
           descricao?: string
           empresa_id?: string
           horas_estimadas?: number | null
-          horas_reais?: number | null
           id?: string
           impacto_prazo_dias?: number | null
           justificativa?: string | null
@@ -4003,7 +4001,6 @@ export type Database = {
           disciplina: string
           empresa_id: string
           horas_estimadas?: number | null
-          horas_reais?: number | null
           id?: string
           margem_alvo_pct?: number | null
           observacao?: string | null
@@ -4021,7 +4018,6 @@ export type Database = {
           disciplina?: string
           empresa_id?: string
           horas_estimadas?: number | null
-          horas_reais?: number | null
           id?: string
           margem_alvo_pct?: number | null
           observacao?: string | null
@@ -4169,7 +4165,6 @@ export type Database = {
           disciplina: string
           empresa_id: string
           horas_estimadas?: number | null
-          horas_reais?: number | null
           id?: string
           proposta_id: string
           valor_venda?: number | null
@@ -4180,7 +4175,6 @@ export type Database = {
           disciplina?: string
           empresa_id?: string
           horas_estimadas?: number | null
-          horas_reais?: number | null
           id?: string
           proposta_id?: string
           valor_venda?: number | null
