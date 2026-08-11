@@ -94,6 +94,7 @@ function TarefaFormBody({
   const [projetoId, setProjetoId] = useState<string | null>(tarefa?.projeto_id ?? null);
   const [prazo, setPrazo] = useState(tarefa?.prazo ?? "");
   const [horas, setHoras] = useState(tarefa?.horas_estimadas != null ? String(tarefa.horas_estimadas) : "");
+  const [horasReais, setHorasReais] = useState(tarefa?.horas_reais != null ? String(tarefa.horas_reais) : "");
   const [labels, setLabels] = useState<string[]>(tarefa?.labels ?? []);
   const [links, setLinks] = useState<LinkItem[]>(tarefa?.links ?? []);
   const [comentarios, setComentarios] = useState<Comentario[]>(tarefa?.comentarios ?? []);
@@ -112,6 +113,7 @@ function TarefaFormBody({
   const salvar = async () => {
     if (!podeSalvar) return;
     const horasNum = horas.trim() ? Number(horas) : null;
+    const horasReaisNum = horasReais.trim() ? Number(horasReais) : null;
     await onSave({
       titulo: titulo.trim(),
       descricao: descricao.trim() || null,
@@ -121,6 +123,7 @@ function TarefaFormBody({
       projeto_id: projetoId,
       prazo: prazo || null,
       horas_estimadas: horasNum != null && !Number.isNaN(horasNum) ? horasNum : null,
+      horas_reais: horasReaisNum != null && !Number.isNaN(horasReaisNum) ? horasReaisNum : null,
       labels,
       links,
       comentarios,
@@ -210,6 +213,20 @@ function TarefaFormBody({
                   onChange={(e) => setHoras(e.target.value)}
                   className="h-9"
                   placeholder="opcional"
+                  disabled={readOnly}
+                />
+              </Prop>
+
+              <Prop icon={Clock} label="Horas reais">
+                <Input
+                  type="number"
+                  min="0"
+                  step="0.5"
+                  inputMode="decimal"
+                  value={horasReais}
+                  onChange={(e) => setHorasReais(e.target.value)}
+                  className="h-9"
+                  placeholder="gastas até agora"
                   disabled={readOnly}
                 />
               </Prop>

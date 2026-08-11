@@ -36,6 +36,7 @@ export type TarefaItem = {
   etapa_id: string | null;
   prazo: string | null;
   horas_estimadas: number | null;
+  horas_reais: number | null;
   labels: string[];
   links: LinkItem[];
   comentarios: Comentario[];
@@ -52,6 +53,7 @@ export type TarefaInput = {
   etapa_id?: string | null;
   prazo?: string | null;
   horas_estimadas?: number | null;
+  horas_reais?: number | null;
   labels?: string[];
   links?: LinkItem[];
   comentarios?: Comentario[];
@@ -166,7 +168,7 @@ export function useTarefas(pessoaId: string | null) {
       let q = supabase
         .from("tarefas")
         .select(
-          "id, titulo, descricao, status, prioridade, responsavel_id, projeto_id, etapa_id, prazo, horas_estimadas, labels, links, comentarios, projeto:projetos(id, nome)"
+          "id, titulo, descricao, status, prioridade, responsavel_id, projeto_id, etapa_id, prazo, horas_estimadas, horas_reais, labels, links, comentarios, projeto:projetos(id, nome)"
         )
         .order("prazo", { ascending: true, nullsFirst: false });
       if (pessoaId) q = q.eq("responsavel_id", pessoaId);
@@ -205,6 +207,7 @@ export function useTarefaMutations() {
         etapa_id: input.etapa_id ?? null,
         prazo: input.prazo ?? null,
         horas_estimadas: input.horas_estimadas ?? null,
+        horas_reais: input.horas_reais ?? null,
         labels: input.labels ?? [],
         links: (input.links ?? []) as unknown as Json,
         comentarios: (input.comentarios ?? []) as unknown as Json,
@@ -227,6 +230,7 @@ export function useTarefaMutations() {
       if (input.etapa_id !== undefined) patch.etapa_id = input.etapa_id;
       if (input.prazo !== undefined) patch.prazo = input.prazo;
       if (input.horas_estimadas !== undefined) patch.horas_estimadas = input.horas_estimadas;
+      if (input.horas_reais !== undefined) patch.horas_reais = input.horas_reais;
       if (input.labels !== undefined) patch.labels = input.labels;
       if (input.links !== undefined) patch.links = input.links as unknown as Json;
       if (input.comentarios !== undefined) patch.comentarios = input.comentarios as unknown as Json;
