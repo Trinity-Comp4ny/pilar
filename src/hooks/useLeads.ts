@@ -398,8 +398,11 @@ export const useCreatePropostaFromLead = () => {
 
       if (error) throw error;
 
-      // Atualizar lead status para "Proposta"
-      await supabase.from("leads").update({ status: "Proposta" }).eq("id", lead.id);
+      // Avança o lead para "Proposta" só se ele ainda está antes disso.
+      // Nunca retrocede um lead que já passou (ex.: em "Negociação").
+      if (lead.status === "Novo" || lead.status === "Em contato") {
+        await supabase.from("leads").update({ status: "Proposta" }).eq("id", lead.id);
+      }
 
       return proposta;
     },

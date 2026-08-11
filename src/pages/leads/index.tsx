@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { statusBadgeClasses, statusLabel } from "@/lib/status";
 import { useQueryClient } from "@tanstack/react-query";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
@@ -34,6 +34,8 @@ import {
   useLeadMembers,
   type Lead,
 } from "@/hooks/useLeads";
+import { usePropostas, useConverterProposta } from "@/hooks/usePropostas";
+import { propostaPrimaria, propostasPorLead } from "@/lib/comercial";
 
 // Cores derivam do registry único (ADR 0008): mudar tom = src/lib/status.ts.
 const leadStatus = (s: string) => ({ label: statusLabel("lead", s), color: statusBadgeClasses("lead", s) });
@@ -108,9 +110,11 @@ export default function Leads() {
   usePageTitle("Leads");
   useRegistrarPagina("pagina", "/leads", "Leads");
   const { data: leads = [], isLoading, isError, refetch } = useLeads();
+  const { data: propostas = [] } = usePropostas();
   const createLead = useCreateLead();
   const updateStatus = useUpdateLeadStatus();
   const convertToClient = useConvertLeadToClient();
+  const converterProposta = useConverterProposta();
   const deleteLead = useDeleteLead();
   const createProposta = useCreatePropostaFromLead();
   const updateLead = useUpdateLead();
@@ -118,6 +122,11 @@ export default function Leads() {
   const { canEdit } = useFeatureAccess("leads");
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+
+  // Casa cada lead com suas propostas (só as ligadas a lead; recompra sem lead
+  // fica em /documentos nesta v1). A primária enriquece card, KPI e detalhe.
+  const propostasByLead = useMemo(() => propostasPorLead(propostas), [propostas]);
+  const primariaDoLead = (leadId: string) => propostaPrimaria(propostasByLead.get(leadId) ?? []);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
@@ -130,6 +139,7 @@ export default function Leads() {
   const [motivoPerda, setMotivoPerda] = useState("");
   const [isAutoConvertOpen, setIsAutoConvertOpen] = useState(false);
   const [isCreatePropostaOpen, setIsCreatePropostaOpen] = useState(false);
+  const [isConvertProjetoOpen, setIsConvertProjetoOpen] = useState(false);
   const [leadToDelete, setLeadToDelete] = useState<{ id: string; nome: string } | null>(null);
   const [collapsedColumns, setCollapsedColumns] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState("");
@@ -443,6 +453,31 @@ export default function Leads() {
     });
   };
 
+  // Converter em projeto é uma ação explícita (nunca efeito de arrastar): usa a
+  // proposta primária do lead e a RPC que cria cliente + projeto + disciplinas.
+  const handleConfirmConvertProjeto = () => {
+    if (!selectedLead) return;
+    const primaria = primariaDoLead(selectedLead.id);
+    if (!primaria) {
+      toast.error("Sem proposta", { description: "Este lead não tem uma proposta para converter." });
+      return;
+    }
+    converterProposta.mutate(primaria.id, {
+      onSuccess: (projetoId) => {
+        queryClient.invalidateQueries({ queryKey: ["leads"] });
+        setIsConvertProjetoOpen(false);
+        setIsDetailOpen(false);
+        toast.success("Projeto criado", { description: "Projeto gerado a partir da proposta." });
+        navigate(`/projetos/${projetoId}`);
+      },
+      onError: (err: unknown) => {
+        toast.error("Erro ao converter", {
+          description: err instanceof Error ? err.message : "Não foi possível criar o projeto.",
+        });
+      },
+    });
+  };
+
   const hasNoLeads = leads.length === 0;
   const visibleCount = Object.keys(statusConfig).reduce((sum, s) => sum + getLeadsByStatus(s).length, 0);
   const hasNoResults = !hasNoLeads && visibleCount === 0;
@@ -470,6 +505,7 @@ export default function Leads() {
     >
       <LeadsKPIs
         leads={leads}
+        propostasByLead={propostasByLead}
         onFilterProximos={() => setPeriodo((p) => (p === "prox7" ? "todos" : "prox7"))}
         proximosAtivo={periodo === "prox7"}
       />
@@ -679,6 +715,7 @@ export default function Leads() {
                                     canEdit={canEdit}
                                     onMoveStatus={handleMobileMove}
                                     dragging={snapshot.isDragging}
+                                    proposta={primariaDoLead(lead.id)}
                                   />
                                 </div>
                               )}
@@ -717,6 +754,7 @@ export default function Leads() {
                           onClick={() => handleCardClick(lead)}
                           canEdit={canEdit}
                           onMoveStatus={handleMobileMove}
+                          proposta={primariaDoLead(lead.id)}
                         />
                       ))}
                     </div>
@@ -762,6 +800,13 @@ export default function Leads() {
         onCreateProposta={() => setIsCreatePropostaOpen(true)}
         onConvert={handleOpenConvert}
         createPropostaPending={createProposta.isPending}
+        proposta={selectedLead ? primariaDoLead(selectedLead.id) : null}
+        onOpenProposta={(id) => {
+          setIsDetailOpen(false);
+          navigate(`/documentos?edit=${id}`);
+        }}
+        onConvertProjeto={() => setIsConvertProjetoOpen(true)}
+        convertProjetoPending={converterProposta.isPending}
       />
 
       <LeadMotivoPerdasDialog
@@ -815,6 +860,16 @@ export default function Leads() {
         itemName={leadToDelete?.nome}
         description="O lead sai do pipeline. Você pode desfazer logo após excluir."
         confirmText="Excluir"
+        cancelText="Cancelar"
+      />
+
+      <ConfirmDialog
+        open={isConvertProjetoOpen}
+        onOpenChange={setIsConvertProjetoOpen}
+        onConfirm={handleConfirmConvertProjeto}
+        title="Converter em projeto"
+        description="Cria o projeto a partir da proposta, promove o lead a cliente e copia as disciplinas. Não dá para desfazer."
+        confirmText="Converter"
         cancelText="Cancelar"
       />
     </PageLayout>
