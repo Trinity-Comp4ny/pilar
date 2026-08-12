@@ -354,7 +354,7 @@ export const processCategoryData = (
   items: (ReceitaWithCategoria | DespesaWithCategoria)[],
   type: "receitas" | "despesas" = "receitas"
 ) => {
-  const categoryMap = new Map<string, { name: string; value: number; color: string }>();
+  const categoryMap = new Map<string, { name: string; value: number; color: string; count: number }>();
 
   // Matizes distintos (não monocromáticos) para diferenciar fatias adjacentes.
   // Receitas: paleta fria/verde; Despesas: paleta quente/vermelha.
@@ -387,11 +387,12 @@ export const processCategoryData = (
     if (!categoryMap.has(categoryName)) {
       const colorIndex = categoryMap.size % colors.length;
       const categoryColor = colors[colorIndex];
-      categoryMap.set(categoryName, { name: categoryName, value: 0, color: categoryColor });
+      categoryMap.set(categoryName, { name: categoryName, value: 0, color: categoryColor, count: 0 });
     }
 
     const current = categoryMap.get(categoryName)!;
     current.value += Number(item.valor);
+    current.count += 1;
   });
 
   return Array.from(categoryMap.values());

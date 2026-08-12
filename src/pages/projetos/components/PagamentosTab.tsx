@@ -3,7 +3,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { KPICard } from "@/components/KPICard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   DropdownMenu,
@@ -169,15 +168,6 @@ export function PagamentosTab({ projetoId, canEdit }: PagamentosTabProps) {
                 tone={resumo.qtdAtrasados > 0 ? "danger" : "neutral"}
                 subtitle={resumo.qtdAtrasados > 0 ? `${resumo.qtdAtrasados} pagamento(s)` : "Nenhum atraso"}
               />
-            </div>
-
-            {/* Barra de progresso */}
-            <div>
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-xs text-muted-foreground">Recebimento do contrato</span>
-                <span className="text-xs font-medium">{resumo.percentualRecebido}%</span>
-              </div>
-              <Progress value={resumo.percentualRecebido} className="h-2" indicatorClassName="bg-brand" />
             </div>
 
             {resumo.proximoVencimento && (

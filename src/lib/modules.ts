@@ -14,7 +14,6 @@
 import {
   Briefcase,
   Building2,
-  CalendarDays,
   CloudSun,
   FileText,
   FolderKanban,
@@ -69,14 +68,13 @@ export const MODULES: Record<ModuleId, ModuleDef> = {
     items: [
       // Empresa (primeiro grupo: Meu trabalho é a home do módulo)
       { title: "Meu trabalho", url: "/gestao/meu-trabalho", icon: ListTodo, feature: "meu_trabalho", group: "Empresa" },
+      { title: "Financeiro", url: "/gestao/financeiro", icon: Wallet, feature: "financeiro", group: "Empresa" },
       { title: "Equipe", url: "/gestao/equipe", icon: Users, feature: "pessoas", adminOnly: true, group: "Empresa" },
       { title: "Metas", url: "/gestao/metas", icon: Target, feature: "metas", adminOnly: true, group: "Empresa" },
       // Comercial (movido de Projetos: dono da relação com o cliente é gestão/comercial)
       { title: "Leads", url: "/gestao/leads", icon: UserPlus, feature: "leads", group: "Comercial" },
       { title: "Clientes", url: "/gestao/clientes", icon: Building2, feature: "clientes", group: "Comercial" },
       { title: "Propostas", url: "/gestao/propostas", icon: FileText, feature: "propostas", group: "Comercial" },
-      // Financeiro
-      { title: "Financeiro", url: "/gestao/financeiro", icon: Wallet, feature: "financeiro", group: "Financeiro" },
     ],
   },
   projetos: {
@@ -92,7 +90,6 @@ export const MODULES: Record<ModuleId, ModuleDef> = {
       { title: "Disciplinas", url: "/projetos/disciplinas", icon: Layers, feature: "projetos" },
       { title: "Cronograma", url: "/projetos/cronograma", icon: GanttChartSquare, feature: "projetos" },
       { title: "Mapa", url: "/projetos/mapa", icon: MapPin, feature: "mapa" },
-      { title: "Calendário", url: "/projetos/calendario", icon: CalendarDays, feature: "projetos" },
     ],
   },
   obras: {
@@ -113,7 +110,7 @@ export const MODULES: Record<ModuleId, ModuleDef> = {
 
 /** Grupo fixo "Empresa" — transversal, fora do switcher. */
 export const EMPRESA_ITEMS: ModuleMenuItem[] = [
-  { title: "Agentes", url: "/agentes", icon: Sparkles, feature: "ai_chat" as Feature, badge: "novo" },
+  { title: "Agentes", url: "/agentes", icon: Sparkles, feature: "ai_chat" as Feature },
 ];
 
 /** Rotas que pertencem a um módulo mas não são item de menu (detalhes, redirects). */

@@ -1,5 +1,4 @@
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -12,10 +11,11 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Loader2, CheckCircle2 } from "lucide-react";
+import { Loader2, CheckCircle2, FileDown } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import type { FolhaItem, HistoryItem } from "../types";
 import { getMonthLabel } from "../types";
+import { calcularVariavel, calcularTotal, subtotalProjeto } from "../folhaCalc";
 
 interface CloseMonthDialogProps {
   open: boolean;
@@ -25,7 +25,6 @@ interface CloseMonthDialogProps {
   peopleCount: number;
   totalFolha: number;
   saving: boolean;
-  allConfirmed: boolean;
   onConfirm: () => void;
 }
 
@@ -37,29 +36,19 @@ export function CloseMonthDialog({
   peopleCount,
   totalFolha,
   saving,
-  allConfirmed,
   onConfirm,
 }: CloseMonthDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
-        <Button
-          className={cn(
-            "disabled:opacity-100",
-            allConfirmed
-              ? "bg-brand text-ink-on-brand hover:bg-brand/90"
-              : "bg-muted text-ink-soft border border-border"
-          )}
-          disabled={!allConfirmed}
-          title={!allConfirmed ? "Confirme todos os colaboradores para fechar a folha" : undefined}
-        >
+        <Button variant="brand">
           <CheckCircle2 className="mr-2 h-4 w-4" />
-          Fechar Folha
+          Fechar folha
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Fechar Folha de Pagamento</DialogTitle>
+          <DialogTitle>Fechar folha de pagamento</DialogTitle>
           <DialogDescription>
             Você está prestes a fechar a folha de{" "}
             <strong>
@@ -68,11 +57,12 @@ export function CloseMonthDialog({
             .
             <br />
             <br />
-            Isso irá gerar os registros financeiros para {peopleCount} pessoas, totalizando{" "}
+            Isso vai gerar os registros financeiros para {peopleCount} pessoas, totalizando{" "}
             <strong>{formatCurrency(totalFolha)}</strong>.
             <br />
             <br />
-            Esta ação confirmará os valores atuais e não refletirá mudanças futuras nos projetos deste mês.
+            Confira os valores antes de confirmar: a folha fechada guarda os valores atuais e não reflete mudanças
+            futuras nos projetos deste mês.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
@@ -81,59 +71,7 @@ export function CloseMonthDialog({
           </Button>
           <Button onClick={onConfirm} disabled={saving} variant="brand">
             {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Confirmar Fechamento
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-interface ConfirmPersonDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  person: FolhaItem | null;
-  onConfirm: () => void;
-}
-
-export function ConfirmPersonDialog({ open, onOpenChange, person, onConfirm }: ConfirmPersonDialogProps) {
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Confirmar Folha de Pagamento</DialogTitle>
-          <DialogDescription>Confira os dados antes de confirmar o colaborador.</DialogDescription>
-        </DialogHeader>
-        {person && (
-          <div className="space-y-3 text-sm">
-            <div>
-              <span className="font-semibold">Colaborador: </span>
-              <span>{person.p_nome}</span>
-            </div>
-            <div>
-              <span className="font-semibold">Cargo: </span>
-              <span>{person.p_cargo}</span>
-            </div>
-            <div className="flex justify-between border-b pb-1">
-              <span className="font-semibold">Salário Fixo: </span>
-              <span>{formatCurrency(person.p_salario_fixo)}</span>
-            </div>
-            <div className="flex justify-between border-b pb-1">
-              <span className="font-semibold">Variável: </span>
-              <span>{formatCurrency(person.v_variavel)}</span>
-            </div>
-            <div className="flex justify-between text-lg pt-1">
-              <span className="font-semibold">Total a Receber: </span>
-              <span className="font-bold text-positive-strong">{formatCurrency(person.v_total)}</span>
-            </div>
-          </div>
-        )}
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancelar
-          </Button>
-          <Button onClick={onConfirm} variant="brand">
-            Confirmar Colaborador
+            Confirmar fechamento
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -164,14 +102,24 @@ export function DetailEditDialog({
   onSaveEditing,
   onEditFormChange,
 }: DetailEditDialogProps) {
+  // Fórmula: variável = área × valor/m²; total = fixo + variável. Ao editar,
+  // recalculamos os derivados para não fechar folha com total inconsistente.
+  const salario = editForm.p_salario_fixo ?? person?.p_salario_fixo ?? 0;
+  const area = editForm.soma_area ?? person?.soma_area ?? 0;
+  const valorM2 = person?.p_valor_m2 ?? 0;
+  const variavelCalc = calcularVariavel(area, valorM2);
+  const totalCalc = calcularTotal(salario, variavelCalc);
+  const totalManual = editForm.v_total;
+  const totalDesacoplado = isEditing && totalManual !== undefined && Math.abs(totalManual - totalCalc) > 0.01;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{isEditing ? "Editar Folha de Pagamento" : "Detalhes da Folha de Pagamento"}</DialogTitle>
+          <DialogTitle>{isEditing ? "Editar folha de pagamento" : "Detalhes da folha de pagamento"}</DialogTitle>
           <DialogDescription>
             {isEditing
-              ? "Ajuste os valores manualmente. As alterações serão salvas apenas para este mês."
+              ? "Ajuste os valores. As alterações valem só para este mês."
               : "Informações detalhadas do colaborador."}
           </DialogDescription>
         </DialogHeader>
@@ -179,12 +127,12 @@ export function DetailEditDialog({
           <div className="space-y-4 py-2">
             <div className="grid grid-cols-2 gap-4">
               <div className="col-span-2">
-                <label className="text-xs font-semibold text-muted-foreground">Colaborador</label>
+                <span className="text-xs font-semibold text-muted-foreground">Colaborador</span>
                 <p className="font-medium">{person.p_nome}</p>
               </div>
 
               <EditableField
-                label="Salário Fixo"
+                label="Salário fixo"
                 isEditing={isEditing}
                 value={person.p_salario_fixo}
                 editValue={editForm.p_salario_fixo}
@@ -203,23 +151,54 @@ export function DetailEditDialog({
                 label="Variável"
                 isEditing={isEditing}
                 value={person.v_variavel}
-                editValue={editForm.v_variavel}
-                onChange={(v) => onEditFormChange("v_variavel", v)}
+                editValue={isEditing ? variavelCalc : editForm.v_variavel}
+                onChange={() => {}}
                 isCurrency
+                readOnlyWhenEditing
               />
               <EditableField
                 label="Total"
                 isEditing={isEditing}
                 value={person.v_total}
-                editValue={editForm.v_total}
+                editValue={editForm.v_total ?? totalCalc}
                 onChange={(v) => onEditFormChange("v_total", v)}
                 isCurrency
                 isBold
               />
             </div>
 
+            {isEditing && (
+              <p className="text-xs text-muted-foreground">
+                Variável recalculado de área × {formatCurrency(valorM2)}/m². Total sugerido:{" "}
+                {formatCurrency(totalCalc)}.
+              </p>
+            )}
+            {totalDesacoplado && (
+              <div className="text-xs text-warning-strong bg-warning-soft p-2 rounded">
+                Total ajustado manualmente, desacoplado da fórmula (fixo + variável = {formatCurrency(totalCalc)}).
+              </div>
+            )}
+
+            {/* Breakdown por projeto: de onde veio o variável. */}
+            {!isEditing && person.detalhe_projetos && person.detalhe_projetos.length > 0 && (
+              <div className="space-y-1">
+                <span className="text-xs font-semibold text-muted-foreground">Variável por projeto</span>
+                <div className="rounded border border-border divide-y">
+                  {person.detalhe_projetos.map((p, i) => (
+                    <div key={`${p.nome}-${i}`} className="flex justify-between px-2 py-1 text-sm">
+                      <span className="truncate max-w-[220px]">{p.nome}</span>
+                      <span className="text-muted-foreground">
+                        {(p.area_m2 || 0).toLocaleString("pt-BR")} m² ={" "}
+                        {formatCurrency(subtotalProjeto(p, person.p_valor_m2))}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {!isEditing && person.edited_fields && person.edited_fields.length > 0 && (
-              <div className="text-xs text-amber-600 bg-amber-50 p-2 rounded">
+              <div className="text-xs text-warning-strong bg-warning-soft p-2 rounded">
                 * Campos editados manualmente: {person.edited_fields.join(", ")}
               </div>
             )}
@@ -232,13 +211,11 @@ export function DetailEditDialog({
                 Cancelar
               </Button>
               <Button onClick={onSaveEditing} variant="brand">
-                Salvar Alterações
+                Salvar alterações
               </Button>
             </>
           ) : (
-            <>
-              <Button onClick={onStartEditing}>Editar</Button>
-            </>
+            <Button onClick={onStartEditing}>Editar</Button>
           )}
         </DialogFooter>
       </DialogContent>
@@ -255,6 +232,7 @@ function EditableField({
   isCurrency,
   isBold,
   suffix,
+  readOnlyWhenEditing,
 }: {
   label: string;
   isEditing: boolean;
@@ -264,12 +242,15 @@ function EditableField({
   isCurrency?: boolean;
   isBold?: boolean;
   suffix?: string;
+  readOnlyWhenEditing?: boolean;
 }) {
   return (
     <div className="space-y-2">
-      <label className="text-xs font-semibold text-muted-foreground">{label}</label>
-      {isEditing ? (
+      <span className="text-xs font-semibold text-muted-foreground">{label}</span>
+      {isEditing && !readOnlyWhenEditing ? (
         <Input type="number" value={editValue} onChange={(e) => onChange(parseFloat(e.target.value) || 0)} />
+      ) : isEditing && readOnlyWhenEditing ? (
+        <p className="text-muted-foreground">{formatCurrency(editValue ?? value)}</p>
       ) : (
         <p className={isBold ? "font-bold text-lg text-positive-strong" : ""}>
           {isCurrency ? formatCurrency(value) : `${value?.toLocaleString("pt-BR")}${suffix || ""}`}
@@ -285,18 +266,35 @@ interface HistoryDetailDialogProps {
   selectedHistory: HistoryItem | null;
   loading: boolean;
   items: FolhaItem[];
+  onDownloadLote?: () => void;
+  onDownloadComprovante?: (item: FolhaItem) => void;
 }
 
-export function HistoryDetailDialog({ open, onOpenChange, selectedHistory, loading, items }: HistoryDetailDialogProps) {
+export function HistoryDetailDialog({
+  open,
+  onOpenChange,
+  selectedHistory,
+  loading,
+  items,
+  onDownloadLote,
+  onDownloadComprovante,
+}: HistoryDetailDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            Detalhes da Folha {selectedHistory && `${getMonthLabel(selectedHistory.mes)}/${selectedHistory.ano}`}
+            Detalhes da folha {selectedHistory && `${getMonthLabel(selectedHistory.mes)}/${selectedHistory.ano}`}
           </DialogTitle>
-          <DialogDescription>Visualização completa dos colaboradores e valores da folha selecionada.</DialogDescription>
+          <DialogDescription>Colaboradores e valores da folha selecionada.</DialogDescription>
         </DialogHeader>
+        {!loading && items.length > 0 && onDownloadLote && (
+          <div className="flex justify-end">
+            <Button variant="outline" size="sm" onClick={onDownloadLote}>
+              Baixar lote de comprovantes
+            </Button>
+          </div>
+        )}
         {loading ? (
           <div className="flex justify-center items-center py-8">
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -309,21 +307,21 @@ export function HistoryDetailDialog({ open, onOpenChange, selectedHistory, loadi
               <TableHeader>
                 <TableRow>
                   <TableHead>Colaborador</TableHead>
-                  <TableHead>Cargo</TableHead>
-                  <TableHead className="text-right">Salário Fixo</TableHead>
-                  <TableHead className="text-center">Produtividade</TableHead>
+                  <TableHead className="text-right">Salário fixo</TableHead>
                   <TableHead className="text-right">Variável (m²)</TableHead>
-                  <TableHead className="text-right">Total a Receber</TableHead>
+                  <TableHead className="text-right">Total a receber</TableHead>
                   <TableHead className="text-center">Status</TableHead>
+                  <TableHead className="text-right">Comprovante</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {items.map((item, index) => (
                   <TableRow key={item.p_id || `${item.p_nome}-${index}`}>
-                    <TableCell>{item.p_nome}</TableCell>
-                    <TableCell>{item.p_cargo}</TableCell>
+                    <TableCell>
+                      <div className="font-medium">{item.p_nome}</div>
+                      <div className="text-xs text-muted-foreground">{item.p_cargo}</div>
+                    </TableCell>
                     <TableCell className="text-right">{formatCurrency(item.p_salario_fixo)}</TableCell>
-                    <TableCell className="text-center">{(item.soma_area ?? 0).toLocaleString("pt-BR")} m²</TableCell>
                     <TableCell className="text-right text-positive-strong font-medium">
                       {formatCurrency(item.v_variavel)}
                     </TableCell>
@@ -332,13 +330,24 @@ export function HistoryDetailDialog({ open, onOpenChange, selectedHistory, loadi
                       <Badge
                         variant="secondary"
                         className={`capitalize text-xs px-2 py-0.5
-                          ${item.status === "pago" ? "bg-positive/100 text-white" : ""}
-                          ${item.status === "pendente" ? "bg-yellow-400 text-black" : ""}
-                          ${item.status === "cancelado" ? "bg-red-500 text-white" : ""}
+                          ${item.status === "pago" ? "bg-positive text-ink" : ""}
+                          ${item.status === "pendente" ? "bg-warning-soft text-warning-strong" : ""}
+                          ${item.status === "cancelado" ? "bg-destructive text-destructive-foreground" : ""}
                         `}
                       >
                         {item.status}
                       </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8 gap-1 text-xs"
+                        onClick={() => onDownloadComprovante?.(item)}
+                      >
+                        <FileDown className="h-3.5 w-3.5" />
+                        PDF
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))}

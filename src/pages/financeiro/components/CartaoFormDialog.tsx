@@ -18,6 +18,9 @@ interface CartaoFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onAddClick: () => void;
+  // Quando false, o dialog vira controlado sem botão-gatilho próprio (o pai
+  // abre via `open`). Usado na Carteira, onde "adicionar cartão" mora na conta.
+  showTrigger?: boolean;
   selectedCartao: CartaoItem | null;
   contas: ContaItem[];
   nome: string;
@@ -39,6 +42,7 @@ export function CartaoFormDialog({
   open,
   onOpenChange,
   onAddClick,
+  showTrigger = true,
   selectedCartao,
   contas,
   nome,
@@ -57,11 +61,13 @@ export function CartaoFormDialog({
 }: CartaoFormDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogTrigger asChild>
-        <Button variant="ghost" className="h-6 w-6" onClick={onAddClick} aria-label="Adicionar cartão">
-          <Plus className="h-3.5 w-3.5" />
-        </Button>
-      </DialogTrigger>
+      {showTrigger && (
+        <DialogTrigger asChild>
+          <Button variant="ghost" className="h-6 w-6" onClick={onAddClick} aria-label="Adicionar cartão">
+            <Plus className="h-3.5 w-3.5" />
+          </Button>
+        </DialogTrigger>
+      )}
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{selectedCartao ? "Editar Cartão" : "Adicionar Cartão"}</DialogTitle>

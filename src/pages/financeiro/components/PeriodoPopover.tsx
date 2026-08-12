@@ -4,7 +4,7 @@ import { useFinanceFilter } from "../hooks/useFinanceFilter";
 
 // Apenas estas abas são regidas pelo período do header. As demais têm filtros
 // próprios (Lançamentos, Folha) ou não usam período (Faturas, Contas).
-const TABS_WITH_PERIOD = new Set(["visao-geral", "fluxo-caixa"]);
+const TABS_WITH_PERIOD = new Set(["visao-geral"]);
 
 /**
  * Seletor de período do Financeiro no header (spec 006, padronizado na spec 024).

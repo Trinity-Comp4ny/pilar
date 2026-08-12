@@ -24,7 +24,8 @@ export interface MonitoringUser {
 
 interface Monitoring {
   init(): void;
-  captureException(error: unknown, extra?: Extra): void;
+  /** Retorna o event id (Sentry) quando disponível, para exibir como código de referência. */
+  captureException(error: unknown, extra?: Extra): string | undefined;
   captureMessage(message: string, level?: "info" | "warning" | "error", extra?: Extra): void;
   setUser(user: MonitoringUser | null): void;
   addBreadcrumb(message: string, data?: Extra): void;
@@ -95,6 +96,7 @@ const noopMonitoring: Monitoring = {
   },
   captureException(error, extra) {
     if (DEV) console.error("[monitoring] exception", error, scrub(extra));
+    return undefined;
   },
   captureMessage(message, level = "info", extra) {
     if (DEV) console[level === "error" ? "error" : "log"]("[monitoring]", message, scrub(extra));
@@ -139,7 +141,7 @@ const sentryMonitoring: Monitoring = {
     });
   },
   captureException(error, extra) {
-    Sentry.captureException(error, { extra: scrub(extra) as Record<string, unknown> });
+    return Sentry.captureException(error, { extra: scrub(extra) as Record<string, unknown> });
   },
   captureMessage(message, level = "info", extra) {
     Sentry.captureMessage(message, { level, extra: scrub(extra) as Record<string, unknown> });

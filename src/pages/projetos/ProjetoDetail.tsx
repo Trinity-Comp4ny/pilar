@@ -28,8 +28,6 @@ export default function ProjetoDetail() {
     deadline,
     progress,
     margemBrutaPct,
-    rentabilidade,
-    rentabilidadeLoading,
     applyDiscStatusChange,
     handleRemoveDisc,
     handleAddDisc,
@@ -89,13 +87,7 @@ export default function ProjetoDetail() {
     >
       <ProjetoDetailHeader projeto={projeto} deadline={deadline} />
 
-      <ProjetoDetailInfo
-        projeto={projeto}
-        progress={progress}
-        margemBrutaPct={margemBrutaPct}
-        rentabilidade={rentabilidade ?? null}
-        rentabilidadeLoading={rentabilidadeLoading}
-      />
+      <ProjetoDetailInfo projeto={projeto} progress={progress} margemBrutaPct={margemBrutaPct} />
 
       <ProjetoDetailTabs
         projeto={projeto}
