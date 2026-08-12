@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { type ProjectPriority } from "@/constants";
 import {
   type ProjetosFilters,
@@ -8,15 +8,16 @@ import {
 } from "@/pages/projetos/components/ProjetosFilterBar";
 import { type SortKey, type SortDir } from "@/pages/projetos/lib/sort";
 
-// Visualização ativa da tela de projetos. Vive na URL (?view=) para dar deep-link
-// e permitir que a sidebar do módulo aponte direto para cada lente.
-export type ProjetosView = "kanban" | "disciplinas" | "cronograma" | "mapa";
+// Lente ativa da tela de projetos. As lentes de recorte (disciplinas/cronograma/
+// mapa) são rotas próprias (/disciplinas, /cronograma, /mapa); dentro de /projetos
+// o toggle Quadro/Lista vive em ?v=. A lente é derivada do pathname.
+export type ProjetosView = "quadro" | "lista" | "disciplinas" | "cronograma" | "mapa";
 
-function parseView(params: URLSearchParams, canViewMapa: boolean): ProjetosView {
-  const view = params.get("view");
-  if (view === "mapa") return canViewMapa ? "mapa" : "kanban";
-  if (view === "disciplinas" || view === "cronograma") return view;
-  return "kanban";
+function parseView(pathname: string, params: URLSearchParams, canViewMapa: boolean): ProjetosView {
+  if (pathname.startsWith("/projetos/disciplinas")) return "disciplinas";
+  if (pathname.startsWith("/projetos/cronograma")) return "cronograma";
+  if (pathname.startsWith("/projetos/mapa")) return canViewMapa ? "mapa" : "quadro";
+  return params.get("v") === "lista" ? "lista" : "quadro";
 }
 
 // ---------- URL persistence helpers ----------
@@ -24,10 +25,10 @@ export function filtersToParams(
   filters: ProjetosFilters,
   sort: { key: SortKey; dir: SortDir },
   collapsed: Set<string>,
-  view: ProjetosView = "kanban"
+  viewMode: "quadro" | "lista" = "quadro"
 ) {
   const params = new URLSearchParams();
-  if (view !== "kanban") params.set("view", view);
+  if (viewMode === "lista") params.set("v", "lista");
   if (filters.search) params.set("q", filters.search);
   if (filters.prioridades.length) params.set("prio", filters.prioridades.join(","));
   if (filters.pessoaIds.length) params.set("p", filters.pessoaIds.join(","));
@@ -78,21 +79,36 @@ export function parseFiltersFromParams(params: URLSearchParams): {
 // a cada mudança, preservando o comportamento original da página.
 export function useProjetosUrlState(canViewMapa: boolean) {
   const [searchParams, setSearchParams] = useSearchParams();
+  const { pathname } = useLocation();
+  const navigate = useNavigate();
   const initial = useMemo(() => parseFiltersFromParams(searchParams), []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const [filters, setFilters] = useState<ProjetosFilters>(initial.filters);
   const [sort, setSort] = useState<{ key: SortKey; dir: SortDir }>(initial.sort);
   const [collapsedColumns, setCollapsedColumns] = useState<Set<string>>(initial.collapsed);
 
-  // Aba ativa: derivada da URL (fonte de verdade), escrita de volta abaixo.
-  const activeTab = parseView(searchParams, canViewMapa);
-  const setActiveTab = useCallback(
-    (tab: ProjetosView) => {
+  // Lente ativa: derivada do pathname (rota). Dentro de /projetos, ?v= escolhe quadro/lista.
+  const activeTab = parseView(pathname, searchParams, canViewMapa);
+  const viewMode: "quadro" | "lista" = activeTab === "lista" ? "lista" : "quadro";
+
+  // Compat: links antigos com ?view=disciplinas|cronograma|mapa viram as rotas novas.
+  useEffect(() => {
+    const legacy = searchParams.get("view");
+    if (pathname === "/projetos" && legacy) {
+      const dest =
+        legacy === "disciplinas" || legacy === "cronograma" || legacy === "mapa" ? `/projetos/${legacy}` : "/projetos";
+      navigate(dest, { replace: true });
+    }
+  }, [pathname, searchParams, navigate]);
+
+  // Toggle Quadro/Lista (só em /projetos): grava ?v=.
+  const setViewMode = useCallback(
+    (mode: "quadro" | "lista") => {
       setSearchParams(
         (prev) => {
           const next = new URLSearchParams(prev);
-          if (tab === "kanban") next.delete("view");
-          else next.set("view", tab);
+          if (mode === "lista") next.set("v", "lista");
+          else next.delete("v");
           return next;
         },
         { replace: false }
@@ -101,11 +117,15 @@ export function useProjetosUrlState(canViewMapa: boolean) {
     [setSearchParams]
   );
 
-  // Sync state → URL (preserva a aba ativa junto dos filtros)
+  // Sync state → URL (só na coleção /projetos, onde os filtros e o ?v= vivem).
+  // Nas rotas de recorte não reescrevemos a URL para não apagar o pathname; e se
+  // ainda houver ?view= legado, deixamos o redirect acima resolver primeiro (senão
+  // este sync clobbaria o navigate).
   useEffect(() => {
-    const params = filtersToParams(filters, sort, collapsedColumns, activeTab);
+    if (pathname !== "/projetos" || searchParams.get("view")) return;
+    const params = filtersToParams(filters, sort, collapsedColumns, viewMode);
     setSearchParams(params, { replace: true });
-  }, [filters, sort, collapsedColumns, activeTab, setSearchParams]);
+  }, [filters, sort, collapsedColumns, viewMode, pathname, searchParams, setSearchParams]);
 
   const toggleColumn = (status: string) => {
     setCollapsedColumns((prev) => {
@@ -125,6 +145,7 @@ export function useProjetosUrlState(canViewMapa: boolean) {
     setCollapsedColumns,
     toggleColumn,
     activeTab,
-    setActiveTab,
+    viewMode,
+    setViewMode,
   };
 }

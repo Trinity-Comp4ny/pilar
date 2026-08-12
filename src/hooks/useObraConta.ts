@@ -76,6 +76,8 @@ export type DespesaInput = {
   fornecedor_id?: string | null;
   pago_por?: PagoPor;
   comprovante_url?: string | null;
+  /** false = segurada (em conferência), não aparece no portal do cliente. Default true. */
+  confirmada_portal?: boolean;
 };
 
 /**
@@ -96,6 +98,7 @@ export function useSaveDespesa(obraId: string) {
         p_fornecedor_id: input.fornecedor_id ?? undefined,
         p_pago_por: input.pago_por ?? "cliente",
         p_comprovante_url: input.comprovante_url ?? undefined,
+        p_confirmada_portal: input.confirmada_portal ?? true,
       });
       if (error) throw error;
     },

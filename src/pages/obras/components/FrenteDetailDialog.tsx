@@ -6,9 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
-import { formatDate } from "@/lib/format";
 import { usePessoasEmpresa } from "@/pages/meu-trabalho/hooks";
 import { useUpdateFrente, useDeleteFrente, type ObraFrenteRow } from "@/hooks/useObraFrentes";
 import {
@@ -22,25 +22,43 @@ import {
 const SEM_RESP = "__none__";
 type PessoaOpcao = { id: string; nome: string };
 
+interface NovaTarefaInput {
+  titulo: string;
+  responsavel_id: string | null;
+  data_inicio: string | null;
+  prazo: string | null;
+}
+
 function AddTarefaForm({
   pessoas,
   onAdd,
 }: {
   pessoas: PessoaOpcao[];
-  onAdd: (input: { titulo: string; responsavel_id: string | null; prazo: string | null }) => Promise<void>;
+  onAdd: (input: NovaTarefaInput) => Promise<void>;
 }) {
   const [titulo, setTitulo] = useState("");
   const [resp, setResp] = useState(SEM_RESP);
+  const [inicio, setInicio] = useState("");
   const [prazo, setPrazo] = useState("");
   const [saving, setSaving] = useState(false);
 
   const submit = async () => {
     if (!titulo.trim()) return;
+    if (inicio && prazo && prazo < inicio) {
+      toast.error("O início não pode ser depois do prazo");
+      return;
+    }
     setSaving(true);
     try {
-      await onAdd({ titulo: titulo.trim(), responsavel_id: resp === SEM_RESP ? null : resp, prazo: prazo || null });
+      await onAdd({
+        titulo: titulo.trim(),
+        responsavel_id: resp === SEM_RESP ? null : resp,
+        data_inicio: inicio || null,
+        prazo: prazo || null,
+      });
       setTitulo("");
       setResp(SEM_RESP);
+      setInicio("");
       setPrazo("");
     } finally {
       setSaving(false);
@@ -48,32 +66,49 @@ function AddTarefaForm({
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-2 pt-1">
-      <Input
-        value={titulo}
-        onChange={(e) => setTitulo(e.target.value)}
-        onKeyDown={(e) => e.key === "Enter" && submit()}
-        placeholder="Nova pendência…"
-        className="h-8 min-w-[10rem] flex-1"
-      />
-      <Select value={resp} onValueChange={setResp}>
-        <SelectTrigger className="h-8 w-40">
-          <SelectValue placeholder="Responsável" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value={SEM_RESP}>Sem responsável</SelectItem>
-          {pessoas.map((p) => (
-            <SelectItem key={p.id} value={p.id}>
-              {p.nome}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-      <Input type="date" value={prazo} onChange={(e) => setPrazo(e.target.value)} className="h-8 w-36" />
-      <Button variant="outline" size="sm" onClick={submit} disabled={saving || !titulo.trim()}>
-        <Plus className="mr-1 h-4 w-4" />
-        Adicionar
-      </Button>
+    <div className="space-y-2 pt-1">
+      <div className="flex flex-wrap items-center gap-2">
+        <Input
+          value={titulo}
+          onChange={(e) => setTitulo(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && submit()}
+          placeholder="Nova tarefa…"
+          className="h-8 min-w-[10rem] flex-1"
+        />
+        <Select value={resp} onValueChange={setResp}>
+          <SelectTrigger className="h-8 w-40">
+            <SelectValue placeholder="Responsável" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={SEM_RESP}>Sem responsável</SelectItem>
+            {pessoas.map((p) => (
+              <SelectItem key={p.id} value={p.id}>
+                {p.nome}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
+        <DatePicker
+          value={inicio}
+          onChange={setInicio}
+          placeholder="Início"
+          className="h-8 w-36"
+          maxDate={prazo || undefined}
+        />
+        <DatePicker
+          value={prazo}
+          onChange={setPrazo}
+          placeholder="Prazo"
+          className="h-8 w-36"
+          minDate={inicio || undefined}
+        />
+        <Button variant="outline" size="sm" onClick={submit} disabled={saving || !titulo.trim()} className="ml-auto">
+          <Plus className="mr-1 h-4 w-4" />
+          Adicionar
+        </Button>
+      </div>
     </div>
   );
 }
@@ -83,17 +118,42 @@ function TarefaRow({
   canEdit,
   onToggle,
   onDelete,
+  onUpdateDatas,
 }: {
   tarefa: ObraTarefa;
   canEdit: boolean;
   onToggle: (concluida: boolean) => void;
   onDelete: () => void;
+  onUpdateDatas: (campos: { data_inicio?: string | null; prazo?: string | null }) => void;
 }) {
   const concluida = tarefa.status === "concluida";
+
+  const salvarInicio = (valor: string) => {
+    if (valor && tarefa.prazo && tarefa.prazo < valor) {
+      toast.error("O início não pode ser depois do prazo");
+      return;
+    }
+    onUpdateDatas({ data_inicio: valor || null });
+  };
+
+  const salvarPrazo = (valor: string) => {
+    if (valor && tarefa.data_inicio && valor < tarefa.data_inicio) {
+      toast.error("O prazo não pode ser antes do início");
+      return;
+    }
+    onUpdateDatas({ prazo: valor || null });
+  };
+
   return (
-    <div className="flex items-center gap-2 py-1.5">
+    <div className="flex flex-wrap items-center gap-2 py-2">
       <Checkbox checked={concluida} disabled={!canEdit} onCheckedChange={(v) => onToggle(v === true)} />
-      <span className={concluida ? "flex-1 text-sm text-muted-foreground line-through" : "flex-1 text-sm text-ink"}>
+      <span
+        className={
+          concluida
+            ? "min-w-[7rem] flex-1 text-sm text-muted-foreground line-through"
+            : "min-w-[7rem] flex-1 text-sm text-ink"
+        }
+      >
         {tarefa.titulo}
       </span>
       {tarefa.responsavel?.nome && (
@@ -102,20 +162,42 @@ function TarefaRow({
           {tarefa.responsavel.nome}
         </span>
       )}
-      {tarefa.prazo && <span className="text-xs text-muted-foreground">{formatDate(tarefa.prazo)}</span>}
-      {canEdit && (
-        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onDelete}>
-          <Trash2 className="h-3.5 w-3.5" />
-        </Button>
+      {canEdit ? (
+        <div className="flex items-center gap-1">
+          <DatePicker
+            value={tarefa.data_inicio ?? ""}
+            onChange={salvarInicio}
+            placeholder="Início"
+            className="h-7 w-32 text-xs"
+            maxDate={tarefa.prazo ?? undefined}
+          />
+          <span className="text-xs text-muted-foreground">→</span>
+          <DatePicker
+            value={tarefa.prazo ?? ""}
+            onChange={salvarPrazo}
+            placeholder="Prazo"
+            className="h-7 w-32 text-xs"
+            minDate={tarefa.data_inicio ?? undefined}
+          />
+          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onDelete}>
+            <Trash2 className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+      ) : (
+        (tarefa.data_inicio || tarefa.prazo) && (
+          <span className="text-xs text-muted-foreground">
+            {tarefa.data_inicio ?? "?"} → {tarefa.prazo ?? "?"}
+          </span>
+        )
       )}
     </div>
   );
 }
 
 /**
- * Detalhe de uma frente: as pendências dela (o checklist que era a aba "Frentes")
- * e, quando é uma frente de verdade (não o balde "sem frente"), a edição das datas
- * do cronograma e a exclusão. `frente = null` mostra as pendências sem frente.
+ * Detalhe de uma etapa (frente de serviço): suas tarefas (o checklist) e, quando
+ * é uma etapa de verdade (não o balde "sem etapa"), a edição das datas do
+ * cronograma e a exclusão. `frente = null` mostra as tarefas sem etapa.
  */
 export function FrenteDetailDialog({
   open,
@@ -144,18 +226,25 @@ export function FrenteDetailDialog({
   const frenteId = frente?.id ?? null;
   const daFrente = tarefas.filter((t) => (t.obra_frente_id ?? null) === frenteId);
 
-  const salvarDatas = (campos: { data_inicio?: string | null; data_fim?: string | null }) => {
+  const salvarInicio = (valor: string) => {
     if (!frente) return;
-    const inicio = campos.data_inicio !== undefined ? campos.data_inicio : frente.data_inicio;
-    const fim = campos.data_fim !== undefined ? campos.data_fim : frente.data_fim;
-    if (inicio && fim && fim < inicio) {
+    if (valor && frente.data_fim && frente.data_fim < valor) {
       toast.error("A data de fim não pode ser antes do início");
       return;
     }
-    updateFrente.mutate({ id: frente.id, ...campos });
+    updateFrente.mutate({ id: frente.id, data_inicio: valor || null });
   };
 
-  const addTarefa = async (input: { titulo: string; responsavel_id: string | null; prazo: string | null }) => {
+  const salvarFim = (valor: string) => {
+    if (!frente) return;
+    if (valor && frente.data_inicio && valor < frente.data_inicio) {
+      toast.error("A data de fim não pode ser antes do início");
+      return;
+    }
+    updateFrente.mutate({ id: frente.id, data_fim: valor || null });
+  };
+
+  const addTarefa = async (input: NovaTarefaInput) => {
     try {
       await createTarefa.mutateAsync({ ...input, obra_frente_id: frenteId });
     } catch (e) {
@@ -167,29 +256,31 @@ export function FrenteDetailDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>{frente ? frente.nome : "Pendências sem frente"}</DialogTitle>
+          <DialogTitle>{frente ? frente.nome : "Tarefas sem etapa"}</DialogTitle>
         </DialogHeader>
 
         {frente && (
           <div className="flex flex-wrap items-end gap-3 border-b border-black/5 pb-4">
             <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">Início</Label>
-              <Input
-                type="date"
+              <Label className="text-xs text-muted-foreground">Início da etapa</Label>
+              <DatePicker
                 value={frente.data_inicio ?? ""}
+                onChange={salvarInicio}
+                placeholder="Início"
                 disabled={!canEdit}
-                onChange={(e) => salvarDatas({ data_inicio: e.target.value || null })}
                 className="h-8 w-40"
+                maxDate={frente.data_fim ?? undefined}
               />
             </div>
             <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">Fim</Label>
-              <Input
-                type="date"
+              <Label className="text-xs text-muted-foreground">Fim da etapa</Label>
+              <DatePicker
                 value={frente.data_fim ?? ""}
+                onChange={salvarFim}
+                placeholder="Fim"
                 disabled={!canEdit}
-                onChange={(e) => salvarDatas({ data_fim: e.target.value || null })}
                 className="h-8 w-40"
+                minDate={frente.data_inicio ?? undefined}
               />
             </div>
             {canEdit && (
@@ -200,7 +291,7 @@ export function FrenteDetailDialog({
                 onClick={() => setConfirmDel(true)}
               >
                 <Trash2 className="mr-1.5 h-4 w-4" />
-                Excluir frente
+                Excluir etapa
               </Button>
             )}
           </div>
@@ -208,7 +299,7 @@ export function FrenteDetailDialog({
 
         <div className="max-h-[50vh] overflow-y-auto">
           {daFrente.length === 0 ? (
-            <p className="py-4 text-sm text-muted-foreground">Nenhuma pendência ainda.</p>
+            <p className="py-4 text-sm text-muted-foreground">Nenhuma tarefa ainda.</p>
           ) : (
             <div className="divide-y divide-black/5">
               {daFrente.map((t) => (
@@ -218,6 +309,7 @@ export function FrenteDetailDialog({
                   canEdit={canEdit}
                   onToggle={(c) => updateTarefa.mutate({ id: t.id, status: c ? "concluida" : "a_fazer" })}
                   onDelete={() => deleteTarefa.mutate(t.id)}
+                  onUpdateDatas={(campos) => updateTarefa.mutate({ id: t.id, ...campos })}
                 />
               ))}
             </div>
@@ -241,9 +333,9 @@ export function FrenteDetailDialog({
               });
             }
           }}
-          title="Excluir frente?"
+          title="Excluir etapa?"
           itemName={frente?.nome}
-          description="As pendências desta frente continuam na obra, sem frente."
+          description="As tarefas desta etapa continuam na obra, sem etapa."
           variant="destructive"
           confirmText="Excluir"
           loading={deleteFrente.isPending}

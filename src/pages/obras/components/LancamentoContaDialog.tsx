@@ -5,8 +5,10 @@ import { Loader2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { useObraFrentes } from "@/hooks/useObraFrentes";
 import { useSaveAporte, useSaveDespesa, type ObraLancamentoRow } from "@/hooks/useObraConta";
@@ -40,6 +42,9 @@ export function LancamentoContaDialog({ open, onOpenChange, obraId, tipo, lancam
   const [frenteId, setFrenteId] = useState(lancamento?.obra_frente_id ?? SEM_FRENTE);
   const [fornecedorId, setFornecedorId] = useState(lancamento?.fornecedor_id ?? SEM_FORNECEDOR);
   const [pagoPor, setPagoPor] = useState<PagoPor>((lancamento?.pago_por as PagoPor) ?? "cliente");
+  const [comprovanteUrl, setComprovanteUrl] = useState(lancamento?.comprovante_url ?? "");
+  // "Segurar" = não deixar aparecer no portal ainda (confirmada_portal = false).
+  const [seguraPortal, setSeguraPortal] = useState(lancamento ? lancamento.confirmada_portal === false : false);
 
   const saving = saveAporte.isPending || saveDespesa.isPending;
 
@@ -61,6 +66,8 @@ export function LancamentoContaDialog({ open, onOpenChange, obraId, tipo, lancam
           obra_frente_id: frenteId === SEM_FRENTE ? null : frenteId,
           fornecedor_id: fornecedorId === SEM_FORNECEDOR ? null : fornecedorId,
           pago_por: pagoPor,
+          comprovante_url: comprovanteUrl.trim() || null,
+          confirmada_portal: !seguraPortal,
         });
       }
       toast.success(tipo === "aporte" ? "Aporte registrado" : "Despesa registrada");
@@ -83,7 +90,7 @@ export function LancamentoContaDialog({ open, onOpenChange, obraId, tipo, lancam
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label htmlFor="lanc-data">Data</Label>
-              <Input id="lanc-data" type="date" value={data} onChange={(e) => setData(e.target.value)} />
+              <DatePicker id="lanc-data" value={data} onChange={setData} />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="lanc-valor">Valor (R$)</Label>
@@ -160,6 +167,31 @@ export function LancamentoContaDialog({ open, onOpenChange, obraId, tipo, lancam
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="lanc-comprovante">Comprovante (link da nota)</Label>
+                <Input
+                  id="lanc-comprovante"
+                  type="url"
+                  inputMode="url"
+                  value={comprovanteUrl}
+                  onChange={(e) => setComprovanteUrl(e.target.value)}
+                  placeholder="https://drive.google.com/..."
+                />
+                <p className="text-xs text-muted-foreground">
+                  Link do Drive. Aparece como "Ver nota" na prestação de contas do cliente.
+                </p>
+              </div>
+
+              <div className="flex items-start justify-between gap-3 rounded-lg border p-3">
+                <div className="space-y-0.5">
+                  <Label htmlFor="lanc-segura">Segurar do portal</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Em conferência: não aparece para o cliente até você liberar.
+                  </p>
+                </div>
+                <Switch id="lanc-segura" checked={seguraPortal} onCheckedChange={setSeguraPortal} />
               </div>
             </>
           )}

@@ -1,7 +1,20 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { AlertTriangle, Check, ChevronDown, ChevronRight, ExternalLink, Loader2, Pencil, Plus, Sparkles, Trash2, Trophy, X } from "lucide-react";
+import {
+  AlertTriangle,
+  Check,
+  ChevronDown,
+  ChevronRight,
+  ExternalLink,
+  Loader2,
+  Pencil,
+  Plus,
+  Sparkles,
+  Trash2,
+  Trophy,
+  X,
+} from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,8 +39,11 @@ import {
   type PropostaItemInput,
   type PropostaComparativa,
 } from "@/hooks/useObraCotacoes";
+import { useCriarFornecedor } from "@/hooks/useFornecedorDetalhe";
 
 const OUTRO = "__outro__";
+// Opção que cria o cadastro na hora (evita a dívida de reconciliação na origem).
+const NOVO = "__novo__";
 const hoje = () => new Date().toISOString().slice(0, 10);
 
 interface Props {
@@ -113,137 +129,143 @@ export function CotacaoDetailDialog({ open, onOpenChange, obraId, cotacao, canEd
                     const temItens = p.itens.length > 0;
                     const aberta = expandida === p.id;
                     return (
-                    <Fragment key={p.id}>
-                      <tr className={isVencedora ? "bg-positive/5" : undefined}>
-                        <td className="py-2 pr-2">
-                          <span className="inline-flex items-center gap-1.5 text-ink">
-                            {isVencedora && <Trophy className="h-3.5 w-3.5 text-positive-strong" />}
+                      <Fragment key={p.id}>
+                        <tr className={isVencedora ? "bg-positive/5" : undefined}>
+                          <td className="py-2 pr-2">
+                            <span className="inline-flex items-center gap-1.5 text-ink">
+                              {isVencedora && <Trophy className="h-3.5 w-3.5 text-positive-strong" />}
+                              {temItens && (
+                                <button
+                                  type="button"
+                                  className="inline-flex text-muted-foreground hover:text-ink"
+                                  onClick={() => setExpandida(aberta ? null : p.id)}
+                                  title={aberta ? "Ocultar itens" : `Ver ${p.itens.length} itens`}
+                                >
+                                  {aberta ? (
+                                    <ChevronDown className="h-3.5 w-3.5" />
+                                  ) : (
+                                    <ChevronRight className="h-3.5 w-3.5" />
+                                  )}
+                                </button>
+                              )}
+                              {nomeFornecedorProposta(p)}
+                            </span>
                             {temItens && (
-                              <button
-                                type="button"
-                                className="inline-flex text-muted-foreground hover:text-ink"
-                                onClick={() => setExpandida(aberta ? null : p.id)}
-                                title={aberta ? "Ocultar itens" : `Ver ${p.itens.length} itens`}
+                              <span className="ml-1.5 text-xs text-muted-foreground">
+                                {p.itens.length} {p.itens.length === 1 ? "item" : "itens"}
+                              </span>
+                            )}
+                            {!temItens && (p.quantidade != null || p.unidade) && (
+                              <span className="ml-1.5 text-xs text-muted-foreground">
+                                {[p.quantidade, p.unidade].filter((x) => x != null && x !== "").join(" ")}
+                              </span>
+                            )}
+                            {p.link_orcamento && (
+                              <a
+                                href={p.link_orcamento}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="ml-1.5 inline-flex text-muted-foreground hover:text-ink"
+                                title="Abrir orçamento"
                               >
-                                {aberta ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
-                              </button>
+                                <ExternalLink className="h-3.5 w-3.5" />
+                              </a>
                             )}
-                            {nomeFornecedorProposta(p)}
-                          </span>
-                          {temItens && (
-                            <span className="ml-1.5 text-xs text-muted-foreground">
-                              {p.itens.length} {p.itens.length === 1 ? "item" : "itens"}
+                          </td>
+                          <td className="py-2 text-right">
+                            <span className={isMenor ? "font-semibold text-positive-strong" : "text-ink"}>
+                              {formatCurrency(valor)}
                             </span>
-                          )}
-                          {!temItens && (p.quantidade != null || p.unidade) && (
-                            <span className="ml-1.5 text-xs text-muted-foreground">
-                              {[p.quantidade, p.unidade].filter((x) => x != null && x !== "").join(" ")}
-                            </span>
-                          )}
-                          {p.link_orcamento && (
-                            <a
-                              href={p.link_orcamento}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="ml-1.5 inline-flex text-muted-foreground hover:text-ink"
-                              title="Abrir orçamento"
-                            >
-                              <ExternalLink className="h-3.5 w-3.5" />
-                            </a>
-                          )}
-                        </td>
-                        <td className="py-2 text-right">
-                          <span className={isMenor ? "font-semibold text-positive-strong" : "text-ink"}>
-                            {formatCurrency(valor)}
-                          </span>
-                          {isMenor && propostas.length > 1 && (
-                            <Badge variant="outline" className="ml-1.5 border-transparent bg-positive/10 text-positive-strong">
-                              menor
-                            </Badge>
-                          )}
-                          {p.quantidade != null && Number(p.quantidade) > 0 && (
-                            <div className="text-xs text-muted-foreground tabular-nums">
-                              {formatCurrency(valor / Number(p.quantidade))}/{p.unidade || "un"}
-                            </div>
-                          )}
-                          {p.valor_parcelado != null && Number(p.valor_parcelado) !== valor && (
-                            <div className="text-xs text-muted-foreground tabular-nums">
-                              parc. {formatCurrency(Number(p.valor_parcelado))}
-                            </div>
-                          )}
-                        </td>
-                        <td className="py-2 text-right text-muted-foreground">
-                          {p.prazo_entrega_dias != null ? `${p.prazo_entrega_dias} d` : "—"}
-                        </td>
-                        <td className="py-2 text-muted-foreground">{p.condicao_pagamento || "—"}</td>
-                        <td className="py-2">
-                          <div className="flex justify-end gap-0.5">
-                            {editavel && (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-7"
-                                onClick={() => setDecisao(p)}
+                            {isMenor && propostas.length > 1 && (
+                              <Badge
+                                variant="outline"
+                                className="ml-1.5 border-transparent bg-positive/10 text-positive-strong"
                               >
-                                Escolher
-                              </Button>
+                                menor
+                              </Badge>
                             )}
-                            {canEdit && !decidida && (
-                              <>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-7 w-7"
-                                  onClick={() => setPropostaForm({ proposta: p })}
-                                >
-                                  <Pencil className="h-3.5 w-3.5" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-7 w-7"
-                                  onClick={() => setConfirmDel(p)}
-                                >
-                                  <Trash2 className="h-3.5 w-3.5" />
-                                </Button>
-                              </>
+                            {p.quantidade != null && Number(p.quantidade) > 0 && (
+                              <div className="text-xs text-muted-foreground tabular-nums">
+                                {formatCurrency(valor / Number(p.quantidade))}/{p.unidade || "un"}
+                              </div>
                             )}
-                          </div>
-                        </td>
-                      </tr>
-                      {aberta && (
-                        <tr>
-                          <td colSpan={5} className="pb-3">
-                            <div className="overflow-x-auto rounded-md bg-muted/40 p-2">
-                              <table className="w-full text-xs">
-                                <thead>
-                                  <tr className="text-left text-muted-foreground">
-                                    <th className="pb-1 font-normal">Item</th>
-                                    <th className="pb-1 text-right font-normal">Qtd</th>
-                                    <th className="pb-1 text-right font-normal">Unit.</th>
-                                    <th className="pb-1 text-right font-normal">Total</th>
-                                  </tr>
-                                </thead>
-                                <tbody>
-                                  {p.itens.map((it) => (
-                                    <tr key={it.id}>
-                                      <td className="py-0.5 pr-2 text-ink">{it.descricao}</td>
-                                      <td className="py-0.5 text-right text-muted-foreground">
-                                        {it.quantidade != null ? `${it.quantidade}${it.unidade ? ` ${it.unidade}` : ""}` : "—"}
-                                      </td>
-                                      <td className="py-0.5 text-right text-muted-foreground">
-                                        {it.preco_unitario != null ? formatCurrency(Number(it.preco_unitario)) : "—"}
-                                      </td>
-                                      <td className="py-0.5 text-right text-ink">{formatCurrency(Number(it.valor_total))}</td>
-                                    </tr>
-                                  ))}
-                                </tbody>
-                              </table>
+                            {p.valor_parcelado != null && Number(p.valor_parcelado) !== valor && (
+                              <div className="text-xs text-muted-foreground tabular-nums">
+                                parc. {formatCurrency(Number(p.valor_parcelado))}
+                              </div>
+                            )}
+                          </td>
+                          <td className="py-2 text-right text-muted-foreground">
+                            {p.prazo_entrega_dias != null ? `${p.prazo_entrega_dias} d` : "—"}
+                          </td>
+                          <td className="py-2 text-muted-foreground">{p.condicao_pagamento || "—"}</td>
+                          <td className="py-2">
+                            <div className="flex justify-end gap-0.5">
+                              {editavel && (
+                                <Button variant="ghost" size="sm" className="h-7" onClick={() => setDecisao(p)}>
+                                  Escolher
+                                </Button>
+                              )}
+                              {canEdit && !decidida && (
+                                <>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-7 w-7"
+                                    onClick={() => setPropostaForm({ proposta: p })}
+                                  >
+                                    <Pencil className="h-3.5 w-3.5" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-7 w-7"
+                                    onClick={() => setConfirmDel(p)}
+                                  >
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                  </Button>
+                                </>
+                              )}
                             </div>
                           </td>
                         </tr>
-                      )}
-                    </Fragment>
+                        {aberta && (
+                          <tr>
+                            <td colSpan={5} className="pb-3">
+                              <div className="overflow-x-auto rounded-md bg-muted/40 p-2">
+                                <table className="w-full text-xs">
+                                  <thead>
+                                    <tr className="text-left text-muted-foreground">
+                                      <th className="pb-1 font-normal">Item</th>
+                                      <th className="pb-1 text-right font-normal">Qtd</th>
+                                      <th className="pb-1 text-right font-normal">Unit.</th>
+                                      <th className="pb-1 text-right font-normal">Total</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {p.itens.map((it) => (
+                                      <tr key={it.id}>
+                                        <td className="py-0.5 pr-2 text-ink">{it.descricao}</td>
+                                        <td className="py-0.5 text-right text-muted-foreground">
+                                          {it.quantidade != null
+                                            ? `${it.quantidade}${it.unidade ? ` ${it.unidade}` : ""}`
+                                            : "—"}
+                                        </td>
+                                        <td className="py-0.5 text-right text-muted-foreground">
+                                          {it.preco_unitario != null ? formatCurrency(Number(it.preco_unitario)) : "—"}
+                                        </td>
+                                        <td className="py-0.5 text-right text-ink">
+                                          {formatCurrency(Number(it.valor_total))}
+                                        </td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </Fragment>
                     );
                   })}
                 </tbody>
@@ -346,7 +368,13 @@ const toItemDraft = (it: ItemLike): ItemDraft => ({
   valor_total: it.valor_total != null ? String(it.valor_total) : "",
 });
 
-const linhaVazia = (): ItemDraft => ({ descricao: "", quantidade: "", unidade: "", preco_unitario: "", valor_total: "" });
+const linhaVazia = (): ItemDraft => ({
+  descricao: "",
+  quantidade: "",
+  unidade: "",
+  preco_unitario: "",
+  valor_total: "",
+});
 
 const ACCEPT_ORCAMENTO = "application/pdf,image/png,image/jpeg,image/webp";
 
@@ -380,7 +408,10 @@ function ImportStepper({ step }: { step: number }) {
         const feito = i < step;
         const atual = i === step;
         return (
-          <li key={label} className={`flex items-center gap-2 ${feito || atual ? "text-ink" : "text-muted-foreground/50"}`}>
+          <li
+            key={label}
+            className={`flex items-center gap-2 ${feito || atual ? "text-ink" : "text-muted-foreground/50"}`}
+          >
             {feito ? (
               <Check className="h-4 w-4 text-positive-strong" />
             ) : atual ? (
@@ -397,7 +428,13 @@ function ImportStepper({ step }: { step: number }) {
 }
 
 /** Tabela editável de itens de uma cesta (descrição, qtd, unidade, preço unit., total). */
-function ItensEditor({ itens, setItens }: { itens: ItemDraft[]; setItens: React.Dispatch<React.SetStateAction<ItemDraft[]>> }) {
+function ItensEditor({
+  itens,
+  setItens,
+}: {
+  itens: ItemDraft[];
+  setItens: React.Dispatch<React.SetStateAction<ItemDraft[]>>;
+}) {
   const total = itens.reduce((s, it) => s + (Number(it.valor_total) || 0), 0);
   const setItem = (idx: number, patch: Partial<ItemDraft>) => {
     setItens((prev) =>
@@ -405,7 +442,11 @@ function ItensEditor({ itens, setItens }: { itens: ItemDraft[]; setItens: React.
         if (i !== idx) return it;
         const next = { ...it, ...patch };
         // Recalcula o total da linha quando quantidade e preço unitário estão presentes.
-        if (("quantidade" in patch || "preco_unitario" in patch) && next.quantidade !== "" && next.preco_unitario !== "") {
+        if (
+          ("quantidade" in patch || "preco_unitario" in patch) &&
+          next.quantidade !== "" &&
+          next.preco_unitario !== ""
+        ) {
           const t = (Number(next.quantidade) || 0) * (Number(next.preco_unitario) || 0);
           next.valor_total = t ? String(Number(t.toFixed(2))) : next.valor_total;
         }
@@ -432,22 +473,59 @@ function ItensEditor({ itens, setItens }: { itens: ItemDraft[]; setItens: React.
               {itens.map((it, idx) => (
                 <tr key={idx}>
                   <td className="py-0.5 pr-1">
-                    <Input value={it.descricao} onChange={(e) => setItem(idx, { descricao: e.target.value })} className="h-8" placeholder="Material" />
+                    <Input
+                      value={it.descricao}
+                      onChange={(e) => setItem(idx, { descricao: e.target.value })}
+                      className="h-8"
+                      placeholder="Material"
+                    />
                   </td>
                   <td className="py-0.5 pr-1">
-                    <Input type="number" min="0" step="0.001" value={it.quantidade} onChange={(e) => setItem(idx, { quantidade: e.target.value })} className="h-8 w-16 text-right" />
+                    <Input
+                      type="number"
+                      min="0"
+                      step="0.001"
+                      value={it.quantidade}
+                      onChange={(e) => setItem(idx, { quantidade: e.target.value })}
+                      className="h-8 w-16 text-right"
+                    />
                   </td>
                   <td className="py-0.5 pr-1">
-                    <Input value={it.unidade} onChange={(e) => setItem(idx, { unidade: e.target.value })} className="h-8 w-14" placeholder="un" />
+                    <Input
+                      value={it.unidade}
+                      onChange={(e) => setItem(idx, { unidade: e.target.value })}
+                      className="h-8 w-14"
+                      placeholder="un"
+                    />
                   </td>
                   <td className="py-0.5 pr-1">
-                    <Input type="number" min="0" step="0.01" value={it.preco_unitario} onChange={(e) => setItem(idx, { preco_unitario: e.target.value })} className="h-8 w-24 text-right" />
+                    <Input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={it.preco_unitario}
+                      onChange={(e) => setItem(idx, { preco_unitario: e.target.value })}
+                      className="h-8 w-24 text-right"
+                    />
                   </td>
                   <td className="py-0.5 pr-1">
-                    <Input type="number" min="0" step="0.01" value={it.valor_total} onChange={(e) => setItem(idx, { valor_total: e.target.value })} className="h-8 w-28 text-right" />
+                    <Input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={it.valor_total}
+                      onChange={(e) => setItem(idx, { valor_total: e.target.value })}
+                      className="h-8 w-28 text-right"
+                    />
                   </td>
                   <td className="py-0.5">
-                    <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => setItens((prev) => prev.filter((_, i) => i !== idx))}>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      onClick={() => setItens((prev) => prev.filter((_, i) => i !== idx))}
+                    >
                       <X className="h-3.5 w-3.5" />
                     </Button>
                   </td>
@@ -458,7 +536,13 @@ function ItensEditor({ itens, setItens }: { itens: ItemDraft[]; setItens: React.
         </div>
       )}
       <div className="flex items-center justify-between">
-        <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => setItens((prev) => [...prev, linhaVazia()])}>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="h-7 px-2 text-xs"
+          onClick={() => setItens((prev) => [...prev, linhaVazia()])}
+        >
           <Plus className="mr-1 h-3.5 w-3.5" />
           Adicionar item
         </Button>
@@ -477,7 +561,15 @@ function ItensEditor({ itens, setItens }: { itens: ItemDraft[]; setItens: React.
  * ou cesta de um fornecedor) e mostra o preview certo. Um botão só, sem o usuário
  * escolher o tipo.
  */
-function AnalisarOrcamentoButton({ obraId, cotacaoId, contexto }: { obraId: string; cotacaoId: string; contexto: string }) {
+function AnalisarOrcamentoButton({
+  obraId,
+  cotacaoId,
+  contexto,
+}: {
+  obraId: string;
+  cotacaoId: string;
+  contexto: string;
+}) {
   const importar = useImportarOrcamento();
   const salvarLote = useSalvarPropostasEmLote(obraId, cotacaoId);
   const save = useSaveProposta(obraId, cotacaoId);
@@ -597,7 +689,12 @@ function AnalisarOrcamentoButton({ obraId, cotacaoId, contexto }: { obraId: stri
           valor_total: Number(it.valor_total) || 0,
         }));
         const total = validos.reduce((s, it) => s + (Number(it.valor_total) || 0), 0);
-        await save.mutateAsync({ fornecedor_nome: fornecedorNome.trim(), fornecedor_id: null, valor: total, itens: itensInput });
+        await save.mutateAsync({
+          fornecedor_nome: fornecedorNome.trim(),
+          fornecedor_id: null,
+          valor: total,
+          itens: itensInput,
+        });
         toast.success("Proposta adicionada");
       }
       setOpen(false);
@@ -616,7 +713,11 @@ function AnalisarOrcamentoButton({ obraId, cotacaoId, contexto }: { obraId: stri
     <>
       <input ref={fileRef} type="file" accept={ACCEPT_ORCAMENTO} className="hidden" onChange={onArquivo} />
       <Button variant="outline" size="sm" onClick={() => fileRef.current?.click()} disabled={importar.isPending}>
-        {importar.isPending ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Sparkles className="mr-1.5 h-4 w-4" />}
+        {importar.isPending ? (
+          <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+        ) : (
+          <Sparkles className="mr-1.5 h-4 w-4" />
+        )}
         Analisar orçamento (PDF)
       </Button>
 
@@ -632,7 +733,10 @@ function AnalisarOrcamentoButton({ obraId, cotacaoId, contexto }: { obraId: stri
             <div className="max-h-[70vh] space-y-4 overflow-y-auto pr-1">
               {classificacao && (
                 <p className="rounded-md bg-brand/5 px-3 py-2 text-xs text-muted-foreground">
-                  Detectei: <span className="font-medium text-ink">{tipoPreview === "comparativo" ? "comparação entre lojas" : "orçamento de um fornecedor"}</span>
+                  Detectei:{" "}
+                  <span className="font-medium text-ink">
+                    {tipoPreview === "comparativo" ? "comparação entre lojas" : "orçamento de um fornecedor"}
+                  </span>
                   {classificacao.motivo ? ` — ${classificacao.motivo}` : ""}
                 </p>
               )}
@@ -664,26 +768,68 @@ function AnalisarOrcamentoButton({ obraId, cotacaoId, contexto }: { obraId: stri
                               <td className="py-0.5 pr-1">
                                 <div className="flex items-center gap-1">
                                   {duvidoso && <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-warning-strong" />}
-                                  <Input value={p.fornecedor_nome} onChange={(e) => setLinha(idx, { fornecedor_nome: e.target.value })} className="h-8" />
+                                  <Input
+                                    value={p.fornecedor_nome}
+                                    onChange={(e) => setLinha(idx, { fornecedor_nome: e.target.value })}
+                                    className="h-8"
+                                  />
                                 </div>
                               </td>
                               <td className="py-0.5 pr-1">
-                                <Input type="number" min="0" step="0.001" value={p.quantidade} onChange={(e) => setLinha(idx, { quantidade: e.target.value })} className="h-8 w-14 text-right" />
+                                <Input
+                                  type="number"
+                                  min="0"
+                                  step="0.001"
+                                  value={p.quantidade}
+                                  onChange={(e) => setLinha(idx, { quantidade: e.target.value })}
+                                  className="h-8 w-14 text-right"
+                                />
                               </td>
                               <td className="py-0.5 pr-1">
-                                <Input value={p.unidade} onChange={(e) => setLinha(idx, { unidade: e.target.value })} className="h-8 w-14" placeholder="un" />
+                                <Input
+                                  value={p.unidade}
+                                  onChange={(e) => setLinha(idx, { unidade: e.target.value })}
+                                  className="h-8 w-14"
+                                  placeholder="un"
+                                />
                               </td>
                               <td className="py-0.5 pr-1">
-                                <Input type="number" min="0" step="0.01" value={p.valor_a_vista} onChange={(e) => setLinha(idx, { valor_a_vista: e.target.value })} className="h-8 w-24 text-right" />
+                                <Input
+                                  type="number"
+                                  min="0"
+                                  step="0.01"
+                                  value={p.valor_a_vista}
+                                  onChange={(e) => setLinha(idx, { valor_a_vista: e.target.value })}
+                                  className="h-8 w-24 text-right"
+                                />
                               </td>
                               <td className="py-0.5 pr-1">
-                                <Input type="number" min="0" step="0.01" value={p.valor_parcelado} onChange={(e) => setLinha(idx, { valor_parcelado: e.target.value })} className="h-8 w-24 text-right" placeholder="—" />
+                                <Input
+                                  type="number"
+                                  min="0"
+                                  step="0.01"
+                                  value={p.valor_parcelado}
+                                  onChange={(e) => setLinha(idx, { valor_parcelado: e.target.value })}
+                                  className="h-8 w-24 text-right"
+                                  placeholder="—"
+                                />
                               </td>
                               <td className="py-0.5 pr-1">
-                                <Input value={p.condicao} onChange={(e) => setLinha(idx, { condicao: e.target.value })} className="h-8 w-28" placeholder="—" />
+                                <Input
+                                  value={p.condicao}
+                                  onChange={(e) => setLinha(idx, { condicao: e.target.value })}
+                                  className="h-8 w-28"
+                                  placeholder="—"
+                                />
                               </td>
                               <td className="py-0.5">
-                                <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => setPropostas((prev) => prev.filter((_, i) => i !== idx))}>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7"
+                                  onClick={() => setPropostas((prev) => prev.filter((_, i) => i !== idx))}
+                                >
                                   <X className="h-3.5 w-3.5" />
                                 </Button>
                               </td>
@@ -698,7 +844,12 @@ function AnalisarOrcamentoButton({ obraId, cotacaoId, contexto }: { obraId: stri
                 <>
                   <div className="space-y-1.5">
                     <Label htmlFor="cesta-forn">Fornecedor</Label>
-                    <Input id="cesta-forn" value={fornecedorNome} onChange={(e) => setFornecedorNome(e.target.value)} placeholder="Nome do fornecedor" />
+                    <Input
+                      id="cesta-forn"
+                      value={fornecedorNome}
+                      onChange={(e) => setFornecedorNome(e.target.value)}
+                      placeholder="Nome do fornecedor"
+                    />
                   </div>
                   <ItensEditor itens={itens} setItens={setItens} />
                 </>
@@ -744,8 +895,11 @@ function PropostaFormDialog({
   const tinhaItens = (proposta?.itens?.length ?? 0) > 0;
   const { data: fornecedores = [] } = useFornecedoresLite();
   const save = useSaveProposta(obraId, cotacaoId);
+  const criarFornecedor = useCriarFornecedor();
 
-  const [fornecedorId, setFornecedorId] = useState(proposta?.fornecedor_id ?? OUTRO);
+  // Nova proposta começa sem seleção (placeholder) para incentivar escolher o
+  // cadastro em vez de cair no texto livre. Na edição, mantém o que já tinha.
+  const [fornecedorId, setFornecedorId] = useState(proposta ? (proposta.fornecedor_id ?? OUTRO) : "");
   const [fornecedorNome, setFornecedorNome] = useState(proposta?.fornecedor_nome ?? "");
   const [valor, setValor] = useState(proposta && !tinhaItens ? String(proposta.valor) : "");
   const [prazo, setPrazo] = useState(proposta?.prazo_entrega_dias != null ? String(proposta.prazo_entrega_dias) : "");
@@ -754,11 +908,17 @@ function PropostaFormDialog({
   const [itens, setItens] = useState<ItemDraft[]>(() => (proposta?.itens ?? []).map(toItemDraft));
 
   const usaNomeLivre = fornecedorId === OUTRO;
+  const usaNovo = fornecedorId === NOVO;
+  const precisaNome = usaNomeLivre || usaNovo;
   const temItens = itens.length > 0;
   const totalItens = useMemo(() => itens.reduce((s, it) => s + (Number(it.valor_total) || 0), 0), [itens]);
 
   const submit = async () => {
-    if (usaNomeLivre && !fornecedorNome.trim()) {
+    if (fornecedorId === "") {
+      toast.error("Selecione um fornecedor");
+      return;
+    }
+    if (precisaNome && !fornecedorNome.trim()) {
       toast.error("Informe o nome do fornecedor");
       return;
     }
@@ -789,11 +949,32 @@ function PropostaFormDialog({
       itensInput = isEdit && tinhaItens ? [] : undefined;
     }
 
+    // "Cadastrar novo": cria o fornecedor na hora e usa o id (já entra vinculado).
+    let fornecedorIdFinal: string | null;
+    let fornecedorNomeFinal: string | null;
+    try {
+      if (usaNovo) {
+        fornecedorIdFinal = await criarFornecedor.mutateAsync(fornecedorNome.trim());
+        fornecedorNomeFinal = null;
+      } else if (usaNomeLivre) {
+        fornecedorIdFinal = null;
+        fornecedorNomeFinal = fornecedorNome.trim();
+      } else {
+        fornecedorIdFinal = fornecedorId;
+        fornecedorNomeFinal = null;
+      }
+    } catch (e) {
+      toast.error("Não foi possível cadastrar o fornecedor", {
+        description: e instanceof Error ? e.message : "Tente novamente",
+      });
+      return;
+    }
+
     try {
       await save.mutateAsync({
         id: proposta?.id,
-        fornecedor_id: usaNomeLivre ? null : fornecedorId,
-        fornecedor_nome: usaNomeLivre ? fornecedorNome.trim() : null,
+        fornecedor_id: fornecedorIdFinal,
+        fornecedor_nome: fornecedorNomeFinal,
         valor: valorFinal,
         prazo_entrega_dias: prazo ? Number(prazo) : null,
         condicao_pagamento: condicao.trim() || null,
@@ -819,7 +1000,7 @@ function PropostaFormDialog({
             <Label>Fornecedor</Label>
             <Select value={fornecedorId} onValueChange={setFornecedorId}>
               <SelectTrigger>
-                <SelectValue />
+                <SelectValue placeholder="Selecione o fornecedor" />
               </SelectTrigger>
               <SelectContent>
                 {fornecedores.map((f) => (
@@ -827,20 +1008,26 @@ function PropostaFormDialog({
                     {f.nome}
                   </SelectItem>
                 ))}
-                <SelectItem value={OUTRO}>Outro (digitar nome)</SelectItem>
+                <SelectItem value={NOVO}>+ Cadastrar novo fornecedor</SelectItem>
+                <SelectItem value={OUTRO}>Outro (só nesta cotação)</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
-          {usaNomeLivre && (
+          {precisaNome && (
             <div className="space-y-1.5">
-              <Label htmlFor="prop-nome">Nome do fornecedor</Label>
+              <Label htmlFor="prop-nome">{usaNovo ? "Nome do novo fornecedor" : "Nome do fornecedor"}</Label>
               <Input
                 id="prop-nome"
                 value={fornecedorNome}
                 onChange={(e) => setFornecedorNome(e.target.value)}
                 placeholder="Ex.: Depósito São João"
               />
+              {usaNovo && (
+                <p className="text-xs text-muted-foreground">
+                  Fica salvo no cadastro e vale para as próximas cotações.
+                </p>
+              )}
             </div>
           )}
 

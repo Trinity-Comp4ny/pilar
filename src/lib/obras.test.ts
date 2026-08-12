@@ -6,6 +6,8 @@ import {
   condicaoLabel,
   desvioOrcamento,
   estadoFrenteCronograma,
+  estadoTarefaCronograma,
+  spanFrente,
   pagoPorLabel,
   menorValorProposta,
   nomeFornecedorProposta,
@@ -50,24 +52,107 @@ describe("estado da frente no cronograma (spec 020)", () => {
 
   it("todas as pendências fechadas → concluida, mesmo antes do fim", () => {
     expect(estadoFrenteCronograma({ data_inicio: "2026-08-01", data_fim: "2026-08-31" }, todasFeitas, hoje)).toBe(
-      "concluida",
+      "concluida"
     );
   });
 
   it("hoje depois do fim com pendência aberta → atrasada", () => {
     expect(estadoFrenteCronograma({ data_inicio: "2026-07-01", data_fim: "2026-08-05" }, abertas, hoje)).toBe(
-      "atrasada",
+      "atrasada"
     );
   });
 
   it("hoje entre início e fim → em_andamento", () => {
     expect(estadoFrenteCronograma({ data_inicio: "2026-08-01", data_fim: "2026-08-31" }, abertas, hoje)).toBe(
-      "em_andamento",
+      "em_andamento"
     );
   });
 
   it("início ainda não chegou → futura", () => {
     expect(estadoFrenteCronograma({ data_inicio: "2026-09-01", data_fim: "2026-09-30" }, abertas, hoje)).toBe("futura");
+  });
+});
+
+describe("estado do passo no cronograma (spec 027)", () => {
+  const hoje = new Date("2026-08-11T12:00:00");
+
+  it("concluído → verde, independente da data", () => {
+    expect(estadoTarefaCronograma({ status: "concluida", data_inicio: "2026-09-01", prazo: "2026-09-30" }, hoje)).toBe(
+      "concluida"
+    );
+  });
+
+  it("sem início ou sem prazo → sem_periodo (não vira barra)", () => {
+    expect(estadoTarefaCronograma({ status: "a_fazer", data_inicio: null, prazo: "2026-08-31" }, hoje)).toBe(
+      "sem_periodo"
+    );
+    expect(estadoTarefaCronograma({ status: "a_fazer", data_inicio: "2026-08-01", prazo: null }, hoje)).toBe(
+      "sem_periodo"
+    );
+  });
+
+  it("hoje passou do prazo e não concluído → atrasada", () => {
+    expect(estadoTarefaCronograma({ status: "fazendo", data_inicio: "2026-07-01", prazo: "2026-08-05" }, hoje)).toBe(
+      "atrasada"
+    );
+  });
+
+  it("hoje entre início e prazo → em_andamento", () => {
+    expect(estadoTarefaCronograma({ status: "a_fazer", data_inicio: "2026-08-01", prazo: "2026-08-31" }, hoje)).toBe(
+      "em_andamento"
+    );
+  });
+
+  it("início ainda não chegou → futura", () => {
+    expect(estadoTarefaCronograma({ status: "a_fazer", data_inicio: "2026-09-01", prazo: "2026-09-30" }, hoje)).toBe(
+      "futura"
+    );
+  });
+});
+
+describe("span da frente = frente ∪ passos (spec 027)", () => {
+  it("null quando não há nenhuma data (nem frente nem passos)", () => {
+    expect(spanFrente({ data_inicio: null, data_fim: null }, [])).toBeNull();
+    expect(spanFrente({ data_inicio: null, data_fim: null }, [{ data_inicio: "2026-08-01", prazo: null }])).toBeNull();
+  });
+
+  it("usa só as datas próprias da frente quando não há passos datados", () => {
+    expect(spanFrente({ data_inicio: "2026-08-01", data_fim: "2026-08-31" }, [])).toEqual({
+      inicio: "2026-08-01",
+      fim: "2026-08-31",
+    });
+  });
+
+  it("deriva do span dos passos quando a frente não tem datas próprias", () => {
+    const passos = [
+      { data_inicio: "2026-08-04", prazo: "2026-08-08" },
+      { data_inicio: "2026-08-01", prazo: "2026-08-03" },
+      { data_inicio: "2026-08-09", prazo: "2026-08-14" },
+    ];
+    expect(spanFrente({ data_inicio: null, data_fim: null }, passos)).toEqual({
+      inicio: "2026-08-01",
+      fim: "2026-08-14",
+    });
+  });
+
+  it("une o período da frente com o dos passos (o mais amplo dos dois)", () => {
+    const passos = [{ data_inicio: "2026-07-20", prazo: "2026-09-10" }];
+    expect(spanFrente({ data_inicio: "2026-08-01", data_fim: "2026-08-31" }, passos)).toEqual({
+      inicio: "2026-07-20",
+      fim: "2026-09-10",
+    });
+  });
+
+  it("ignora passos com só uma das datas ao derivar o span", () => {
+    const passos = [
+      { data_inicio: "2026-08-05", prazo: "2026-08-10" },
+      { data_inicio: "2026-08-01", prazo: null },
+      { data_inicio: null, prazo: "2026-08-20" },
+    ];
+    expect(spanFrente({ data_inicio: null, data_fim: null }, passos)).toEqual({
+      inicio: "2026-08-05",
+      fim: "2026-08-10",
+    });
   });
 });
 
@@ -164,8 +249,12 @@ describe("cotações (spec 018)", () => {
   });
 
   it("nome do fornecedor: cadastro tem prioridade sobre nome livre", () => {
-    expect(nomeFornecedorProposta({ fornecedor: { nome: "Aço Forte" }, fornecedor_nome: "ignorado" })).toBe("Aço Forte");
-    expect(nomeFornecedorProposta({ fornecedor: null, fornecedor_nome: "Depósito São João" })).toBe("Depósito São João");
+    expect(nomeFornecedorProposta({ fornecedor: { nome: "Aço Forte" }, fornecedor_nome: "ignorado" })).toBe(
+      "Aço Forte"
+    );
+    expect(nomeFornecedorProposta({ fornecedor: null, fornecedor_nome: "Depósito São João" })).toBe(
+      "Depósito São João"
+    );
     expect(nomeFornecedorProposta({ fornecedor: null, fornecedor_nome: null })).toBe("Fornecedor sem nome");
   });
 });
