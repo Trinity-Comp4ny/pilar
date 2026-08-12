@@ -621,7 +621,7 @@ export function useChat() {
     async (runId: string, entidade: Entidade, entityId: string, porGrupo = false) => {
       const table = TABELA_BY_ENTIDADE[entidade] as Parameters<typeof supabase.from>[0];
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const q = supabase.from(table).update({ deleted_at: new Date().toISOString() } as any);
+      const q = supabase.from(table).update({ deleted_at: new Date().toISOString() } as never) as any;
       const { error } = await (porGrupo ? q.eq("grupo_parcela", entityId) : q.eq("id", entityId));
       if (error) throw error;
       await supabase.from("agent_runs").update({ status: "rejected" }).eq("id", runId);

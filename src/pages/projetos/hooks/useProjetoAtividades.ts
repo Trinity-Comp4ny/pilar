@@ -31,7 +31,7 @@ export function useProjetoAtividades(projetoId: string) {
       const upd: Record<string, unknown> = {};
       if (patch.comentarios) upd.comentarios = patch.comentarios as unknown as Json;
       if (patch.links) upd.links = patch.links as unknown as Json;
-      const { error } = await supabase.from("projetos").update(upd).eq("id", projetoId);
+      const { error } = await supabase.from("projetos").update(upd as never).eq("id", projetoId);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: key }),

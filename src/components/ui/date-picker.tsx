@@ -15,7 +15,7 @@ interface DatePickerProps {
   maxDate?: string;
   className?: string;
   disabled?: boolean;
-  captionLayout?: "buttons" | "dropdown" | "dropdown-buttons";
+  captionLayout?: "label" | "dropdown";
   fromYear?: number;
   toYear?: number;
   id?: string;
@@ -39,7 +39,7 @@ export function DatePicker({
   maxDate,
   className,
   disabled,
-  captionLayout = "buttons",
+  captionLayout = "label",
   fromYear,
   toYear,
   id,
@@ -80,14 +80,13 @@ export function DatePicker({
               setOpen(false);
             }
           }}
-          fromDate={fromDate}
-          toDate={toDate}
-          fromYear={fromYear}
-          toYear={toYear}
+          startMonth={fromDate ?? (fromYear ? new Date(fromYear, 0) : undefined)}
+          endMonth={toDate ?? (toYear ? new Date(toYear, 11) : undefined)}
+          disabled={[...(fromDate ? [{ before: fromDate }] : []), ...(toDate ? [{ after: toDate }] : [])]}
           captionLayout={captionLayout}
           defaultMonth={selected ?? fromDate}
           locale={ptBR}
-          initialFocus
+          autoFocus
         />
       </PopoverContent>
     </Popover>
