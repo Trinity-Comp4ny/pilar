@@ -42,9 +42,7 @@ export default function Login() {
   const handleLogin = async (values: LoginFormData) => {
     setIsLoading(true);
 
-    // guard_login_attempt não está nos tipos gerados ainda — usar cast seguro
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: loginAllowed, error: guardError } = await (supabase.rpc as any)("guard_login_attempt", {
+    const { data: loginAllowed, error: guardError } = await supabase.rpc("guard_login_attempt", {
       p_email: values.email,
     });
     // Fail-open: só bloqueia quando o guard NEGA explicitamente. Se a RPC de
