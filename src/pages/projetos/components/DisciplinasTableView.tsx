@@ -46,6 +46,25 @@ interface DisciplinasTableViewProps {
   handleSaveDiscChanges: (editingDiscLocal: ProjetoDisciplinaDB) => Promise<void>;
   handleAddResponsavel: (discIdx: number, responsavelId: string) => Promise<void>;
   handleRemoveResponsavel: (discIdx: number, respIdx: number) => Promise<void>;
+  /** Datas do projeto: limitam as datas da disciplina ao "guarda-chuva". */
+  projetoDataInicio?: string;
+  projetoDataPrevisao?: string;
+}
+
+function isoSlice(d?: string | null): string | undefined {
+  return d ? d.slice(0, 10) : undefined;
+}
+
+/** Maior data (limite inferior mais restritivo). */
+function laterOf(...ds: (string | null | undefined)[]): string | undefined {
+  const v = ds.map(isoSlice).filter(Boolean) as string[];
+  return v.length ? [...v].sort()[v.length - 1] : undefined;
+}
+
+/** Menor data (limite superior mais restritivo). */
+function earlierOf(...ds: (string | null | undefined)[]): string | undefined {
+  const v = ds.map(isoSlice).filter(Boolean) as string[];
+  return v.length ? [...v].sort()[0] : undefined;
 }
 
 const STATUS_DOT: Record<string, string> = {
@@ -67,6 +86,8 @@ export function DisciplinasTableView({
   handleSaveDiscChanges,
   handleAddResponsavel,
   handleRemoveResponsavel,
+  projetoDataInicio,
+  projetoDataPrevisao,
 }: DisciplinasTableViewProps) {
   const [isAddingDisc, setIsAddingDisc] = useState(false);
   const [newDisc, setNewDisc] = useState({ disciplina: "", responsavel_id: "" });
@@ -267,7 +288,8 @@ export function DisciplinasTableView({
                           <DatePicker
                             value={disc.data_inicio || undefined}
                             onChange={(v) => quickUpdate(idx, { data_inicio: v || null })}
-                            maxDate={disc.data_previsao || disc.data_final || undefined}
+                            minDate={isoSlice(projetoDataInicio)}
+                            maxDate={earlierOf(disc.data_previsao, disc.data_final, projetoDataPrevisao)}
                             placeholder="—"
                             className="h-7 text-xs border-0 bg-transparent hover:bg-muted"
                           />
@@ -282,8 +304,8 @@ export function DisciplinasTableView({
                           <DatePicker
                             value={disc.data_previsao || undefined}
                             onChange={(v) => quickUpdate(idx, { data_fim: v || null })}
-                            minDate={disc.data_inicio || undefined}
-                            maxDate={disc.data_final || undefined}
+                            minDate={laterOf(disc.data_inicio, projetoDataInicio)}
+                            maxDate={earlierOf(disc.data_final, projetoDataPrevisao)}
                             placeholder="—"
                             className="h-7 text-xs border-0 bg-transparent hover:bg-muted"
                           />
@@ -300,7 +322,7 @@ export function DisciplinasTableView({
                           <DatePicker
                             value={disc.data_final || undefined}
                             onChange={(v) => quickUpdate(idx, { data_fim_real: v || null })}
-                            minDate={disc.data_inicio || undefined}
+                            minDate={laterOf(disc.data_inicio, projetoDataInicio)}
                             placeholder="—"
                             className="h-7 text-xs border-0 bg-transparent hover:bg-muted"
                           />

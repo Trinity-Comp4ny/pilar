@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -12,7 +12,17 @@ import { Calendar, ChevronDown, Layers, ZoomIn, ZoomOut, AlertTriangle } from "l
 import { cn } from "@/lib/utils";
 import { type Projeto, getDeadlineStatus, isDiscAtrasada } from "@/types/projetos";
 import { PROJECT_STATUS, PROJECT_STATUS_CONFIG, type ProjectStatus } from "@/constants";
-import { addDays, diffDays, endOfMonth, generateColumns, parseDate, startOfMonth, type ZoomLevel } from "@/lib/cronograma";
+import {
+  addDays,
+  diffDays,
+  endOfMonth,
+  generateColumns,
+  parseDate,
+  snapToBoundary,
+  startOfMonth,
+  toIso,
+  type ZoomLevel,
+} from "@/lib/cronograma";
 
 interface MultiSelectProps {
   options: string[];
@@ -78,6 +88,25 @@ function MultiSelect({ options, selected, onChange, placeholder, searchPlacehold
 
 interface CronogramaProjetosTabProps {
   projetos: Projeto[];
+  /** Grava a nova data ao arrastar a barra. Sem isto, as barras não arrastam. */
+  onDatesChange?: (projetoId: string, updates: { data_inicio: string; data_previsao: string }) => Promise<void>;
+}
+
+type DragType = "left" | "right" | "move";
+
+interface DragState {
+  projIdx: number;
+  type: DragType;
+  startX: number;
+  origStart: Date;
+  origEnd: Date;
+}
+
+interface DragOverride {
+  projIdx: number;
+  start: Date;
+  end: Date;
+  type: DragType;
 }
 
 const STATUS_BAR_COLORS: Record<string, string> = {
@@ -95,7 +124,11 @@ function formatDateBR(d: string | undefined | Date): string {
   return date.toLocaleDateString("pt-BR");
 }
 
-export function CronogramaProjetosTab({ projetos }: CronogramaProjetosTabProps) {
+function formatDateShort(d: Date): string {
+  return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
+}
+
+export function CronogramaProjetosTab({ projetos, onDatesChange }: CronogramaProjetosTabProps) {
   const navigate = useNavigate();
   const [zoom, setZoom] = useState<ZoomLevel>("months");
   const [statusFilter, setStatusFilter] = useState<ProjectStatus | "all">("all");
@@ -103,6 +136,19 @@ export function CronogramaProjetosTab({ projetos }: CronogramaProjetosTabProps) 
   const [responsavelFilter, setResponsavelFilter] = useState<string[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
   const timelineRef = useRef<HTMLDivElement>(null);
+
+  // Drag state via ref (closures estáveis) + estado mínimo para re-render.
+  const dragRef = useRef<DragState | null>(null);
+  const [dragOverride, setDragOverride] = useState<DragOverride | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [guideX, setGuideX] = useState<number | null>(null);
+  // Marca que a barra realmente mudou de data no arraste, pra o clique de soltar
+  // não navegar pro projeto logo em seguida.
+  const draggedRef = useRef(false);
+  const zoomRef = useRef<ZoomLevel>(zoom);
+  useEffect(() => {
+    zoomRef.current = zoom;
+  }, [zoom]);
 
   const { clienteOptions, responsavelOptions } = useMemo(() => {
     const clientes = new Set<string>();
@@ -210,6 +256,157 @@ export function CronogramaProjetosTab({ projetos }: CronogramaProjetosTabProps) 
     if (todayPct >= 0) scrollToToday();
   }, [todayPct]);
 
+  // ── Arraste das barras (edita data do projeto) ───────────────────────────────
+
+  const pxPerDay = useCallback((): number => {
+    if (!timelineRef.current) return 1;
+    const totalDays = diffDays(timelineStart, timelineEnd);
+    return totalDays > 0 ? timelineRef.current.offsetWidth / totalDays : 1;
+  }, [timelineStart, timelineEnd]);
+
+  const startDrag = useCallback(
+    (clientX: number, projIdx: number, type: DragType) => {
+      if (!onDatesChange) return;
+      const row = rows[projIdx];
+      if (!row?.start || !row?.end) return;
+      draggedRef.current = false;
+      dragRef.current = {
+        projIdx,
+        type,
+        startX: clientX,
+        origStart: new Date(row.start),
+        origEnd: new Date(row.end),
+      };
+    },
+    [rows, onDatesChange]
+  );
+
+  useEffect(() => {
+    const resetDrag = () => {
+      dragRef.current = null;
+      setDragOverride(null);
+      setGuideX(null);
+    };
+
+    const applyDragDelta = (clientX: number) => {
+      const drag = dragRef.current;
+      if (!drag) return;
+
+      const deltaDays = Math.round((clientX - drag.startX) / pxPerDay());
+      let newStart = new Date(drag.origStart);
+      let newEnd = new Date(drag.origEnd);
+
+      if (drag.type === "left") {
+        newStart = addDays(drag.origStart, deltaDays);
+        if (newStart >= newEnd) newStart = addDays(newEnd, -1);
+        newStart = snapToBoundary(newStart, zoomRef.current);
+      } else if (drag.type === "right") {
+        newEnd = addDays(drag.origEnd, deltaDays);
+        if (newEnd <= newStart) newEnd = addDays(newStart, 1);
+        newEnd = snapToBoundary(newEnd, zoomRef.current);
+      } else {
+        newStart = addDays(drag.origStart, deltaDays);
+        newEnd = addDays(drag.origEnd, deltaDays);
+      }
+
+      if (toIso(newStart) !== toIso(drag.origStart) || toIso(newEnd) !== toIso(drag.origEnd)) {
+        draggedRef.current = true;
+      }
+      setDragOverride({ projIdx: drag.projIdx, start: newStart, end: newEnd, type: drag.type });
+    };
+
+    const trackGuide = (clientX: number) => {
+      if (timelineRef.current && scrollRef.current) {
+        const rect = timelineRef.current.getBoundingClientRect();
+        setGuideX(Math.max(0, clientX - rect.left + scrollRef.current.scrollLeft));
+      }
+    };
+
+    const onMouseMove = (e: MouseEvent) => {
+      if (!dragRef.current) return;
+      trackGuide(e.clientX);
+      applyDragDelta(e.clientX);
+    };
+
+    const onTouchMove = (e: TouchEvent) => {
+      if (!dragRef.current) return;
+      e.preventDefault();
+      const touch = e.touches[0];
+      trackGuide(touch.clientX);
+      applyDragDelta(touch.clientX);
+    };
+
+    const commitDrag = async () => {
+      const drag = dragRef.current;
+      const override = dragOverride;
+      resetDrag();
+
+      if (!drag || !override || !onDatesChange) return;
+      if (toIso(override.start) === toIso(drag.origStart) && toIso(override.end) === toIso(drag.origEnd)) return;
+
+      const projetoId = rows[override.projIdx]?.projeto.id;
+      if (!projetoId) return;
+
+      setIsSaving(true);
+      try {
+        await onDatesChange(projetoId, {
+          data_inicio: toIso(override.start),
+          data_previsao: toIso(override.end),
+        });
+      } finally {
+        setIsSaving(false);
+      }
+    };
+
+    const onMouseUp = () => commitDrag();
+    const onTouchEnd = () => commitDrag();
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && dragRef.current) resetDrag();
+    };
+
+    document.addEventListener("mousemove", onMouseMove);
+    document.addEventListener("mouseup", onMouseUp);
+    document.addEventListener("touchmove", onTouchMove, { passive: false });
+    document.addEventListener("touchend", onTouchEnd);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("mousemove", onMouseMove);
+      document.removeEventListener("mouseup", onMouseUp);
+      document.removeEventListener("touchmove", onTouchMove);
+      document.removeEventListener("touchend", onTouchEnd);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [dragOverride, onDatesChange, pxPerDay, rows]);
+
+  const getBarGeometry = (rowIdx: number) => {
+    const totalDays = diffDays(timelineStart, timelineEnd);
+    if (totalDays <= 0) return null;
+    const override = dragOverride?.projIdx === rowIdx ? dragOverride : null;
+    const start = override ? override.start : rows[rowIdx].start;
+    const end = override ? override.end : rows[rowIdx].end;
+    if (!start || !end) return null;
+    const leftPct = Math.max(0, (diffDays(timelineStart, start) / totalDays) * 100);
+    let widthPct = Math.max(1, (diffDays(start, end) / totalDays) * 100);
+    if (leftPct + widthPct > 100) widthPct = 100 - leftPct;
+    return { leftPct, widthPct, start, end };
+  };
+
+  const guideDateLabel = (): string => {
+    if (guideX === null || !timelineRef.current) return "";
+    const totalDays = diffDays(timelineStart, timelineEnd);
+    const totalWidth = timelineRef.current.offsetWidth;
+    if (totalWidth <= 0) return "";
+    const dayOffset = Math.round((guideX / totalWidth) * totalDays);
+    return formatDateShort(addDays(timelineStart, Math.max(0, Math.min(totalDays, dayOffset))));
+  };
+
+  const getDragLabel = (geo: { start: Date; end: Date }, type: DragType): string => {
+    const durLabel = `${diffDays(geo.start, geo.end)}d`;
+    if (type === "left") return `Início: ${formatDateBR(geo.start)} · ${durLabel}`;
+    if (type === "right") return `Previsão: ${formatDateBR(geo.end)} · ${durLabel}`;
+    return `${formatDateBR(geo.start)} → ${formatDateBR(geo.end)} · ${durLabel}`;
+  };
+
   const statusOptions: Array<{ value: ProjectStatus | "all"; label: string }> = [
     { value: "all", label: "Todos os status" },
     ...Object.values(PROJECT_STATUS).map((s) => ({ value: s, label: PROJECT_STATUS_CONFIG[s].label })),
@@ -229,9 +426,10 @@ export function CronogramaProjetosTab({ projetos }: CronogramaProjetosTabProps) 
   }
 
   const projetosSemDatas = projetos.filter((p) => !parseDate(p.data_inicio) || !parseDate(p.data_previsao));
+  const isDragging = dragRef.current !== null || dragOverride !== null;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" style={{ userSelect: isDragging ? "none" : undefined }}>
       {/* Header */}
       <Card>
         <CardContent className="p-4">
@@ -244,6 +442,12 @@ export function CronogramaProjetosTab({ projetos }: CronogramaProjetosTabProps) 
                 <span className="text-[11px] text-muted-foreground">
                   {visibleProjetos.length} projeto{visibleProjetos.length === 1 ? "" : "s"}
                 </span>
+                {isSaving && <span className="text-[10px] text-muted-foreground animate-pulse">Salvando...</span>}
+                {isDragging && (
+                  <span className="text-[10px] text-muted-foreground/60 border border-dashed border-muted-foreground/30 rounded px-1.5 py-0.5">
+                    Esc para cancelar
+                  </span>
+                )}
               </div>
               <div className="flex items-center gap-2">
                 <Button
@@ -431,33 +635,118 @@ export function CronogramaProjetosTab({ projetos }: CronogramaProjetosTabProps) 
                       />
                     )}
 
+                    {/* Vertical guide line during drag */}
+                    {guideX !== null && (
+                      <div
+                        className="absolute top-0 bottom-0 w-px bg-blue-400/70 z-30 pointer-events-none"
+                        style={{ left: `${guideX}px` }}
+                      >
+                        <div className="absolute top-1 left-2 bg-blue-600 text-white text-[9px] px-1.5 py-0.5 rounded whitespace-nowrap shadow-md font-medium">
+                          {guideDateLabel()}
+                        </div>
+                      </div>
+                    )}
+
                     <TooltipProvider delayDuration={200}>
-                      {rows.map((row) => {
+                      {rows.map((row, i) => {
                         const cfg = PROJECT_STATUS_CONFIG[row.projeto.status];
+                        const geo = getBarGeometry(i);
+                        const isThisDragging = dragOverride?.projIdx === i;
+                        const canDrag = !!onDatesChange && !!geo;
+                        if (!geo) return <div key={row.projeto.id} className="h-14 border-b relative" />;
+
                         return (
                           <div
                             key={row.projeto.id}
                             className={cn("h-14 border-b relative", row.atrasado && "bg-red-50/20")}
                           >
-                            <Tooltip>
+                            <Tooltip open={isThisDragging ? false : undefined}>
                               <TooltipTrigger asChild>
-                                <button
-                                  onClick={() => navigate(`/projetos/${row.projeto.id}#cronograma`)}
+                                <div
                                   className={cn(
-                                    "absolute top-3 h-8 rounded-md flex items-center px-2.5 shadow-sm border border-black/5 hover:shadow-md transition-shadow cursor-pointer",
+                                    "absolute top-3 h-8 rounded-md flex items-center overflow-visible shadow-sm border border-black/5 transition-shadow",
                                     row.barClass,
-                                    row.atrasado && "ring-2 ring-red-300 ring-offset-1"
+                                    row.atrasado && "ring-2 ring-red-300 ring-offset-1",
+                                    isThisDragging && "opacity-90 ring-2 ring-white/60 shadow-md"
                                   )}
                                   style={{
-                                    left: `${row.leftPct}%`,
-                                    width: `${row.widthPct}%`,
+                                    left: `${geo.leftPct}%`,
+                                    width: `${geo.widthPct}%`,
                                     minWidth: "32px",
                                   }}
                                 >
-                                  <span className="text-[10px] text-white font-medium truncate">
-                                    {row.projeto.nome}
-                                  </span>
-                                </button>
+                                  {/* Left handle — arrasta o início */}
+                                  {canDrag && (
+                                    <div
+                                      className="absolute left-0 top-0 bottom-0 w-4 cursor-col-resize z-10 flex items-center justify-center group/handle rounded-l-md hover:bg-black/20 transition-colors"
+                                      onMouseDown={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        startDrag(e.clientX, i, "left");
+                                      }}
+                                      onTouchStart={(e) => {
+                                        e.stopPropagation();
+                                        startDrag(e.touches[0].clientX, i, "left");
+                                      }}
+                                    >
+                                      <div className="flex gap-[3px]">
+                                        <div className="w-px h-3.5 bg-white/55 rounded group-hover/handle:bg-white transition-colors" />
+                                        <div className="w-px h-3.5 bg-white/55 rounded group-hover/handle:bg-white transition-colors" />
+                                      </div>
+                                    </div>
+                                  )}
+
+                                  {/* Body — mover / clicar para abrir */}
+                                  <div
+                                    className={cn(
+                                      "flex-1 flex items-center overflow-hidden",
+                                      canDrag ? "mx-4 cursor-grab active:cursor-grabbing" : "mx-2.5 cursor-pointer"
+                                    )}
+                                    onMouseDown={
+                                      canDrag
+                                        ? (e) => {
+                                            e.preventDefault();
+                                            startDrag(e.clientX, i, "move");
+                                          }
+                                        : undefined
+                                    }
+                                    onTouchStart={
+                                      canDrag ? (e) => startDrag(e.touches[0].clientX, i, "move") : undefined
+                                    }
+                                    onClick={() => {
+                                      if (dragRef.current || draggedRef.current) {
+                                        draggedRef.current = false;
+                                        return;
+                                      }
+                                      navigate(`/projetos/${row.projeto.id}#cronograma`);
+                                    }}
+                                  >
+                                    <span className="text-[10px] text-white font-medium truncate">
+                                      {row.projeto.nome}
+                                    </span>
+                                  </div>
+
+                                  {/* Right handle — arrasta a previsão */}
+                                  {canDrag && (
+                                    <div
+                                      className="absolute right-0 top-0 bottom-0 w-4 cursor-col-resize z-10 flex items-center justify-center group/handle rounded-r-md hover:bg-black/20 transition-colors"
+                                      onMouseDown={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        startDrag(e.clientX, i, "right");
+                                      }}
+                                      onTouchStart={(e) => {
+                                        e.stopPropagation();
+                                        startDrag(e.touches[0].clientX, i, "right");
+                                      }}
+                                    >
+                                      <div className="flex gap-[3px]">
+                                        <div className="w-px h-3.5 bg-white/55 rounded group-hover/handle:bg-white transition-colors" />
+                                        <div className="w-px h-3.5 bg-white/55 rounded group-hover/handle:bg-white transition-colors" />
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
                               </TooltipTrigger>
                               <TooltipContent side="top" className="max-w-xs">
                                 <div className="space-y-1.5">
@@ -474,12 +763,10 @@ export function CronogramaProjetosTab({ projetos }: CronogramaProjetosTabProps) 
                                   <div className="text-xs text-muted-foreground space-y-0.5">
                                     <p>Código: {row.projeto.codigo_projeto}</p>
                                     {row.projeto.cliente_nome && <p>Cliente: {row.projeto.cliente_nome}</p>}
-                                    <p>Início: {formatDateBR(row.projeto.data_inicio)}</p>
-                                    <p>Previsão: {formatDateBR(row.projeto.data_previsao)}</p>
+                                    <p>Início: {formatDateBR(geo.start)}</p>
+                                    <p>Previsão: {formatDateBR(geo.end)}</p>
                                     {row.projeto.data_final && <p>Conclusão: {formatDateBR(row.projeto.data_final)}</p>}
-                                    <p className="text-muted-foreground/60">
-                                      Duração: {diffDays(row.start, row.end)} dias
-                                    </p>
+                                    <p className="text-muted-foreground/60">Duração: {diffDays(geo.start, geo.end)} dias</p>
                                     {row.totalDiscs > 0 && (
                                       <p>
                                         {row.totalDiscs} disciplina{row.totalDiscs === 1 ? "" : "s"}
@@ -492,11 +779,23 @@ export function CronogramaProjetosTab({ projetos }: CronogramaProjetosTabProps) 
                                     )}
                                   </div>
                                   <p className="text-[10px] text-muted-foreground/60 border-t pt-1 mt-1">
-                                    Clique para abrir o cronograma do projeto
+                                    {canDrag ? "Arraste as bordas para ajustar as datas" : "Clique para abrir o cronograma"}
                                   </p>
                                 </div>
                               </TooltipContent>
                             </Tooltip>
+
+                            {/* Floating drag label — segue o cursor */}
+                            {isThisDragging && guideX !== null && (
+                              <div
+                                className="absolute top-1/2 -translate-y-1/2 z-40 pointer-events-none"
+                                style={{ left: `${guideX + 14}px` }}
+                              >
+                                <div className="bg-gray-900/90 text-white text-[10px] px-2 py-1 rounded-md whitespace-nowrap shadow-lg font-medium">
+                                  {getDragLabel(geo, dragOverride.type)}
+                                </div>
+                              </div>
+                            )}
                           </div>
                         );
                       })}
@@ -521,6 +820,12 @@ export function CronogramaProjetosTab({ projetos }: CronogramaProjetosTabProps) 
           <div className="h-2.5 w-0.5 bg-red-500" />
           <span>Hoje</span>
         </div>
+        {onDatesChange && (
+          <div className="flex items-center gap-1.5 text-muted-foreground/50">
+            <span>↔</span>
+            <span>Arraste as bordas para ajustar datas</span>
+          </div>
+        )}
       </div>
     </div>
   );

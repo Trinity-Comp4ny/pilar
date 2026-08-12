@@ -1788,6 +1788,7 @@ export type Database = {
           ano: number
           created_at: string
           data_pagamento: string | null
+          detalhe_projetos: Json
           empresa_id: string
           id: string
           mes: number
@@ -1804,6 +1805,7 @@ export type Database = {
           ano: number
           created_at?: string
           data_pagamento?: string | null
+          detalhe_projetos?: Json
           empresa_id: string
           id?: string
           mes: number
@@ -1820,6 +1822,7 @@ export type Database = {
           ano?: number
           created_at?: string
           data_pagamento?: string | null
+          detalhe_projetos?: Json
           empresa_id?: string
           id?: string
           mes?: number
@@ -5244,9 +5247,12 @@ export type Database = {
         Row: {
           cartao_id: string | null
           categoria_id: string | null
+          categoria_nome: string | null
           centro_custo_id: string | null
           conta_id: string | null
+          conta_nome: string | null
           contraparte_id: string | null
+          contraparte_nome: string | null
           contraparte_tipo: string | null
           created_at: string | null
           created_by: string | null
@@ -5263,10 +5269,12 @@ export type Database = {
           grupo_tipo: string | null
           grupo_total_original: number | null
           id: string | null
+          is_fatura_payment: boolean | null
           nota_fiscal: string | null
           observacao: string | null
           parcela_numero: number | null
           parcela_total: number | null
+          projeto_codigo: string | null
           projeto_id: string | null
           status: string | null
           tags: string[] | null
@@ -5837,10 +5845,19 @@ export type Database = {
         }
         Returns: Json
       }
+      get_folha_pessoas_pii: {
+        Args: { p_ids: string[] }
+        Returns: {
+          chaves_pix: Json
+          cpf: string
+          pessoa_id: string
+        }[]
+      }
       get_folha_preview: {
         Args: { p_ano: number; p_mes: number }
         Returns: {
           cargo: string
+          detalhe_projetos: Json
           nome: string
           pessoa_id: string
           projetos_nomes: string[]
@@ -5851,8 +5868,105 @@ export type Database = {
           valor_m2: number
         }[]
       }
+      get_grupos_parcela_resumo: {
+        Args: { p_grupo_ids: string[] }
+        Returns: {
+          grupo_parcela: string
+          pagas: number
+          proxima_valor: number
+          proxima_venc: string
+          saldo: number
+          status: string
+          total_original: number
+          total_pago: number
+          total_parcelas: number
+        }[]
+      }
       get_lancamentos_kpis: {
         Args: { p_from?: string; p_to?: string }
+        Returns: Json
+      }
+      get_lancamentos_pagina: {
+        Args: {
+          p_categorias?: string[]
+          p_clientes?: string[]
+          p_formas?: string[]
+          p_fornecedores?: string[]
+          p_from?: string
+          p_limit?: number
+          p_offset?: number
+          p_projetos?: string[]
+          p_search?: string
+          p_sort_dir?: string
+          p_sort_key?: string
+          p_status?: string
+          p_tipo?: string
+          p_to?: string
+          p_valor_max?: number
+          p_valor_min?: number
+        }
+        Returns: {
+          cartao_id: string | null
+          categoria_id: string | null
+          categoria_nome: string | null
+          centro_custo_id: string | null
+          conta_id: string | null
+          conta_nome: string | null
+          contraparte_id: string | null
+          contraparte_nome: string | null
+          contraparte_tipo: string | null
+          created_at: string | null
+          created_by: string | null
+          data_competencia: string | null
+          data_efetivacao: string | null
+          data_vencimento: string | null
+          deleted_at: string | null
+          descricao: string | null
+          empresa_id: string | null
+          fatura_id: string | null
+          forma_pagamento: string | null
+          grupo_parcela: string | null
+          grupo_status: string | null
+          grupo_tipo: string | null
+          grupo_total_original: number | null
+          id: string | null
+          is_fatura_payment: boolean | null
+          nota_fiscal: string | null
+          observacao: string | null
+          parcela_numero: number | null
+          parcela_total: number | null
+          projeto_codigo: string | null
+          projeto_id: string | null
+          status: string | null
+          tags: string[] | null
+          tipo: string | null
+          transferencia_par_id: string | null
+          updated_at: string | null
+          updated_by: string | null
+          valor: number | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "lancamentos"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      get_lancamentos_resumo: {
+        Args: {
+          p_categorias?: string[]
+          p_clientes?: string[]
+          p_formas?: string[]
+          p_fornecedores?: string[]
+          p_from?: string
+          p_projetos?: string[]
+          p_search?: string
+          p_status?: string
+          p_tipo?: string
+          p_to?: string
+          p_valor_max?: number
+          p_valor_min?: number
+        }
         Returns: Json
       }
       get_minhas_disciplinas: {

@@ -5,8 +5,18 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
-import { Calendar, CircleDot, Clock, Flag, Layers, MessageSquare, Plus, Tag, User } from "lucide-react";
+import { Calendar, CircleDot, Clock, Flag, Layers, MessageSquare, Plus, Tag, Trash2, User } from "lucide-react";
 import { PROJECT_PRIORITY, PRIORITY_OPTIONS, PROJECT_PRIORITY_CONFIG } from "@/constants";
 import { type DisciplinaComentario, type DisciplinaResponsavel, disciplinaStatusOptions } from "@/types/projetos";
 import { DatePicker } from "@/components/ui/date-picker";
@@ -34,10 +44,31 @@ interface DisciplinaDetailDialogProps {
   newObservation?: string;
   onNewObservationChange?: (val: string) => void;
   onAddObservation?: () => void;
+  /** Datas do projeto: limitam as datas da disciplina ao "guarda-chuva" do projeto. */
+  projetoDataInicio?: string;
+  projetoDataPrevisao?: string;
+  /** Excluir a disciplina persistida. Ausente = sem botão de excluir. */
+  onDelete?: () => void;
 }
 
 function priorityDot(p: string): string {
   return p === PROJECT_PRIORITY.ALTA ? "bg-red-500" : p === PROJECT_PRIORITY.MEDIA ? "bg-amber-400" : "bg-blue-400";
+}
+
+function isoSlice(d?: string | null): string | undefined {
+  return d ? d.slice(0, 10) : undefined;
+}
+
+/** Maior data (limite inferior mais restritivo) entre as informadas. */
+function laterOf(...ds: (string | null | undefined)[]): string | undefined {
+  const v = ds.map(isoSlice).filter(Boolean) as string[];
+  return v.length ? [...v].sort()[v.length - 1] : undefined;
+}
+
+/** Menor data (limite superior mais restritivo) entre as informadas. */
+function earlierOf(...ds: (string | null | undefined)[]): string | undefined {
+  const v = ds.map(isoSlice).filter(Boolean) as string[];
+  return v.length ? [...v].sort()[0] : undefined;
 }
 
 /** Linha de propriedade no padrão ClickUp: ícone + rótulo cinza + controle. */
@@ -91,8 +122,12 @@ function DisciplinaDetailBody({
   newObservation,
   onNewObservationChange,
   onAddObservation,
+  projetoDataInicio,
+  projetoDataPrevisao,
+  onDelete,
 }: DisciplinaDetailDialogProps & { disciplina: DisciplinaResponsavel }) {
   const [descricao, setDescricao] = useState(disciplina.descricao ?? "");
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [horasEst, setHorasEst] = useState(
     disciplina.horas_estimadas != null ? String(disciplina.horas_estimadas) : ""
   );
@@ -137,9 +172,21 @@ function DisciplinaDetailBody({
             <Layers className="h-3 w-3" /> {disciplina.codigo || "Disciplina"}
           </span>
         </div>
-        <DialogHeader>
-          <DialogTitle className="text-2xl font-semibold">{disciplina.disciplina || "Disciplina"}</DialogTitle>
-        </DialogHeader>
+        <div className="flex items-start justify-between gap-3">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-semibold">{disciplina.disciplina || "Disciplina"}</DialogTitle>
+          </DialogHeader>
+          {onDelete && persistida && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="flex-shrink-0 gap-1.5 text-muted-foreground hover:text-red-600"
+              onClick={() => setConfirmDelete(true)}
+            >
+              <Trash2 className="h-4 w-4" /> Excluir
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Corpo: principal (redimensionável) + atividades */}
@@ -270,16 +317,21 @@ function DisciplinaDetailBody({
                     value={(disciplina.data_inicio || "").slice(0, 10) || undefined}
                     onChange={(v) => onUpdateField("data_inicio", v)}
                     placeholder="Início"
+                    minDate={isoSlice(projetoDataInicio)}
+                    maxDate={earlierOf(disciplina.data_previsao, disciplina.data_final, projetoDataPrevisao)}
                   />
                   <DatePicker
                     value={(disciplina.data_previsao || "").slice(0, 10) || undefined}
                     onChange={(v) => onUpdateField("data_previsao", v)}
                     placeholder="Previsão"
+                    minDate={laterOf(disciplina.data_inicio, projetoDataInicio)}
+                    maxDate={isoSlice(projetoDataPrevisao)}
                   />
                   <DatePicker
                     value={(disciplina.data_final || "").slice(0, 10) || undefined}
                     onChange={(v) => onUpdateField("data_final", v)}
                     placeholder="Final"
+                    minDate={laterOf(disciplina.data_inicio, projetoDataInicio)}
                   />
                 </div>
               </Prop>
@@ -372,6 +424,29 @@ function DisciplinaDetailBody({
           </div>
         </ResizablePanel>
       </ResizablePanelGroup>
+
+      <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir disciplina</AlertDialogTitle>
+            <AlertDialogDescription>
+              A disciplina "{disciplina.disciplina}" e seus dados serão removidos. Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700"
+              onClick={() => {
+                setConfirmDelete(false);
+                onDelete?.();
+              }}
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

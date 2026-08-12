@@ -1,9 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
-import { Calendar as CalendarIcon, CheckCircle2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Calendar as CalendarIcon, CheckCircle2, Search } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { FiltroCompetencia } from "@/components/filters/FiltroCompetencia";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import type { FolhaItem, HistoryItem } from "./folha-pagamento/types";
 import { getMonthLabel, buildYearRange } from "./folha-pagamento/types";
@@ -11,12 +13,9 @@ import { FolhaSummaryCards } from "./folha-pagamento/components/FolhaSummaryCard
 import { FolhaTable } from "./folha-pagamento/components/FolhaTable";
 import { FolhaHistory } from "./folha-pagamento/components/FolhaHistory";
 import { FinanceErrorState } from "../components/FinanceErrorState";
-import {
-  CloseMonthDialog,
-  ConfirmPersonDialog,
-  DetailEditDialog,
-  HistoryDetailDialog,
-} from "./folha-pagamento/components/FolhaDialogs";
+import { gerarComprovantePDF, gerarLoteComprovantesPDF } from "./folha-pagamento/folhaComprovante";
+import { calcularVariavel, calcularTotal, parseDetalhe, firstPix } from "./folha-pagamento/folhaCalc";
+import { CloseMonthDialog, DetailEditDialog, HistoryDetailDialog } from "./folha-pagamento/components/FolhaDialogs";
 
 export default function FolhaPagamento() {
   const [loading, setLoading] = useState(true);
@@ -24,12 +23,16 @@ export default function FolhaPagamento() {
   const [saving, setSaving] = useState(false);
   const [data, setData] = useState<FolhaItem[]>([]);
   const [statusFolha, setStatusFolha] = useState<"preview" | "closed">("preview");
-  const [confirmedUsers, setConfirmedUsers] = useState<Set<string>>(new Set());
   const [totalUniqueArea, setTotalUniqueArea] = useState(0);
   const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [empresaNome, setEmpresaNome] = useState<string | undefined>(undefined);
+  // Total pago por pessoa no mês anterior; o delta (atual − anterior) é derivado.
+  const [prevTotals, setPrevTotals] = useState<Map<string, number>>(new Map());
+
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("todos");
 
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
-  const [personConfirmDialogOpen, setPersonConfirmDialogOpen] = useState(false);
 
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
   const [isEditingDetail, setIsEditingDetail] = useState(false);
@@ -50,8 +53,19 @@ export default function FolhaPagamento() {
   useEffect(() => {
     fetchData();
     fetchHistory();
+    fetchPrevTotals();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedMonth, selectedYear]);
+
+  useEffect(() => {
+    // Nome da empresa para o cabeçalho do comprovante.
+    (async () => {
+      const empresaId = (await supabase.rpc("get_user_empresa_id")).data;
+      if (!empresaId) return;
+      const { data: emp } = await supabase.from("empresas").select("nome").eq("id", empresaId).maybeSingle();
+      if (emp?.nome) setEmpresaNome(emp.nome);
+    })();
+  }, []);
 
   const fetchHistory = async () => {
     try {
@@ -87,10 +101,27 @@ export default function FolhaPagamento() {
     }
   };
 
+  // Total pago por pessoa no mês anterior, para o delta na revisão.
+  const fetchPrevTotals = async () => {
+    try {
+      const prevMonth = selectedMonth === 1 ? 12 : selectedMonth - 1;
+      const prevYear = selectedMonth === 1 ? selectedYear - 1 : selectedYear;
+      const { data: prev } = await supabase
+        .from("folha_pagamento")
+        .select("pessoa_id, total_receber")
+        .eq("mes", prevMonth)
+        .eq("ano", prevYear);
+      const map = new Map<string, number>();
+      (prev || []).forEach((r) => map.set(r.pessoa_id, Number(r.total_receber || 0)));
+      setPrevTotals(map);
+    } catch {
+      setPrevTotals(new Map());
+    }
+  };
+
   const fetchData = async () => {
     setLoading(true);
     setLoadError(false);
-    setConfirmedUsers(new Set());
     try {
       const { data: projectsData } = await supabase
         .from("projetos")
@@ -116,7 +147,12 @@ export default function FolhaPagamento() {
       if (existingData && existingData.length > 0) {
         setStatusFolha("closed");
         const personIds = existingData.map((d) => d.pessoa_id);
-        const { data: peopleData } = await supabase.from("pessoas").select("id, nome, cargo").in("id", personIds);
+        // cpf/chaves_pix têm grant só para service_role (PII): o role autenticado
+        // não pode lê-los aqui, senão o select inteiro falha e some com os nomes.
+        const { data: peopleData } = await supabase
+          .from("pessoas")
+          .select("id, nome, cargo")
+          .in("id", personIds);
         const peopleMap = new Map((peopleData || []).map((p) => [p.id, p]));
 
         setData(
@@ -126,16 +162,22 @@ export default function FolhaPagamento() {
             const soma_area = Number(item.total_area_projetada ?? 0);
             const v_variavel = Number(item.adicional_variavel ?? soma_area * valor_m2);
             const v_total = Number(item.total_receber ?? salario_fixo + v_variavel);
+            const pessoa = peopleMap.get(item.pessoa_id);
             return {
               p_id: item.pessoa_id,
-              p_nome: peopleMap.get(item.pessoa_id)?.nome || "Desconhecido",
-              p_cargo: peopleMap.get(item.pessoa_id)?.cargo || "-",
+              p_nome: pessoa?.nome || "Desconhecido",
+              p_cargo: pessoa?.cargo || "-",
+              p_cpf: null,
+              p_chave_pix: null,
               p_salario_fixo: salario_fixo,
               p_valor_m2: valor_m2,
               soma_area,
               v_variavel,
               v_total,
               lista_projetos: [],
+              detalhe_projetos: parseDetalhe(
+                (item as unknown as { detalhe_projetos?: unknown }).detalhe_projetos
+              ),
               status: item.status ?? undefined,
               data_pagamento: item.data_pagamento ?? undefined,
               folha_id: item.id,
@@ -158,6 +200,7 @@ export default function FolhaPagamento() {
             const soma_area = Number(item.soma_area ?? item.total_area ?? 0);
             const v_variavel = Number(item.v_variavel ?? item.total_variavel ?? soma_area * valor_m2);
             const v_total = Number(item.v_total ?? item.total_receber ?? salario_fixo + v_variavel);
+            const detalhe = parseDetalhe(item.detalhe_projetos);
             return {
               p_id: String(item.p_id ?? item.pessoa_id ?? item.id ?? ""),
               p_nome: String(item.p_nome ?? item.nome ?? ""),
@@ -167,13 +210,14 @@ export default function FolhaPagamento() {
               soma_area,
               v_variavel,
               v_total,
-              lista_projetos: (item.lista_projetos ?? item.projetos_nomes ?? []) as string[],
+              lista_projetos: (item.projetos_nomes ?? []) as string[],
+              detalhe_projetos: detalhe,
               edited_fields: [] as string[],
             };
           })
         );
       }
-    } catch (err: unknown) {
+    } catch {
       setLoadError(true);
       toast.error("Erro ao carregar dados");
     } finally {
@@ -195,6 +239,8 @@ export default function FolhaPagamento() {
         valor_m2: item.p_valor_m2,
         adicional_variavel: item.v_variavel,
         total_receber: item.v_total,
+        // Snapshot da origem do variável: fica congelado mesmo que o projeto mude.
+        detalhe_projetos: item.detalhe_projetos ?? [],
         status: "pendente",
       }));
       const { error } = await supabase.from("folha_pagamento").insert(payload as never);
@@ -206,31 +252,11 @@ export default function FolhaPagamento() {
       setConfirmDialogOpen(false);
       fetchData();
       fetchHistory();
-    } catch (err: unknown) {
+    } catch {
       toast.error("Erro ao fechar folha");
     } finally {
       setSaving(false);
     }
-  };
-
-  const handleCheckboxChange = (item: FolhaItem, isChecked: boolean) => {
-    if (isChecked) {
-      setSelectedPerson(item);
-      setPersonConfirmDialogOpen(true);
-    } else {
-      const next = new Set(confirmedUsers);
-      next.delete(item.p_id);
-      setConfirmedUsers(next);
-    }
-  };
-
-  const confirmPerson = () => {
-    if (!selectedPerson) return;
-    const next = new Set(confirmedUsers);
-    next.add(selectedPerson.p_id);
-    setConfirmedUsers(next);
-    setPersonConfirmDialogOpen(false);
-    setSelectedPerson(null);
   };
 
   const openDetailDialog = (item: FolhaItem) => {
@@ -253,14 +279,27 @@ export default function FolhaPagamento() {
 
   const saveEditing = () => {
     if (!selectedPerson) return;
-    const newEditedFields = new Set(selectedPerson.edited_fields || []);
-    if (editForm.p_salario_fixo !== selectedPerson.p_salario_fixo) newEditedFields.add("salario");
-    if (editForm.soma_area !== selectedPerson.soma_area) newEditedFields.add("area");
-    if (editForm.v_variavel !== selectedPerson.v_variavel) newEditedFields.add("variavel");
-    if (editForm.v_total !== selectedPerson.v_total) newEditedFields.add("total");
+    const salario = editForm.p_salario_fixo ?? selectedPerson.p_salario_fixo;
+    const area = editForm.soma_area ?? selectedPerson.soma_area;
+    // Recalcula os derivados pela fórmula; total só diverge se editado à mão.
+    const variavel = calcularVariavel(area, selectedPerson.p_valor_m2);
+    const total = editForm.v_total ?? calcularTotal(salario, variavel);
 
-    const updatedItem = { ...selectedPerson, ...editForm, edited_fields: Array.from(newEditedFields) };
-    setData((prev) => prev.map((p) => (p.p_id === selectedPerson.p_id ? (updatedItem as FolhaItem) : p)));
+    const newEditedFields = new Set(selectedPerson.edited_fields || []);
+    if (salario !== selectedPerson.p_salario_fixo) newEditedFields.add("salario");
+    if (area !== selectedPerson.soma_area) newEditedFields.add("area");
+    if (variavel !== selectedPerson.v_variavel) newEditedFields.add("variavel");
+    if (total !== selectedPerson.v_total) newEditedFields.add("total");
+
+    const updatedItem: FolhaItem = {
+      ...selectedPerson,
+      p_salario_fixo: salario,
+      soma_area: area,
+      v_variavel: variavel,
+      v_total: total,
+      edited_fields: Array.from(newEditedFields),
+    };
+    setData((prev) => prev.map((p) => (p.p_id === selectedPerson.p_id ? updatedItem : p)));
     setIsEditingDetail(false);
     setDetailDialogOpen(false);
     setSelectedPerson(null);
@@ -331,12 +370,12 @@ export default function FolhaPagamento() {
 
       toast.success("Status atualizado", { description: `O status foi alterado para ${newStatus}.` });
       fetchHistory();
-    } catch (err: unknown) {
+    } catch {
       // Reverte o status (DB + estado local) para não deixar a folha "paga" sem a despesa
-      // correspondente — assim o próximo "Marcar Pago" recria a despesa corretamente.
+      // correspondente, assim o próximo "Marcar Pago" recria a despesa corretamente.
       await supabase.from("folha_pagamento").update({ status: previousStatus }).eq("id", folhaId);
       setData((prev) => prev.map((item) => (item.folha_id === folhaId ? { ...item, status: previousStatus } : item)));
-      toast.error("Erro ao atualizar status. A alteração foi revertida — tente novamente.");
+      toast.error("Erro ao atualizar status. A alteração foi revertida, tente novamente.");
     }
   };
 
@@ -357,7 +396,10 @@ export default function FolhaPagamento() {
         setHistoryDetailItems([]);
       } else {
         const personIds = existingData.map((d) => d.pessoa_id);
-        const { data: peopleData } = await supabase.from("pessoas").select("id, nome, cargo").in("id", personIds);
+        const { data: peopleData } = await supabase
+          .from("pessoas")
+          .select("id, nome, cargo")
+          .in("id", personIds);
         const peopleMap = new Map((peopleData || []).map((p) => [p.id, p]));
 
         setHistoryDetailItems(
@@ -367,16 +409,20 @@ export default function FolhaPagamento() {
             const soma_area = Number(item.total_area_projetada ?? 0);
             const v_variavel = Number(item.adicional_variavel ?? soma_area * valor_m2);
             const v_total = Number(item.total_receber ?? salario_fixo + v_variavel);
+            const pessoa = peopleMap.get(item.pessoa_id);
             return {
               p_id: item.pessoa_id,
-              p_nome: peopleMap.get(item.pessoa_id)?.nome || "Desconhecido",
-              p_cargo: peopleMap.get(item.pessoa_id)?.cargo || "-",
+              p_nome: pessoa?.nome || "Desconhecido",
+              p_cargo: pessoa?.cargo || "-",
+              p_cpf: null,
+              p_chave_pix: null,
               p_salario_fixo: salario_fixo,
               p_valor_m2: valor_m2,
               soma_area,
               v_variavel,
               v_total,
-              lista_projetos: [] as string[],
+              lista_projetos: [],
+              detalhe_projetos: parseDetalhe((item as unknown as { detalhe_projetos?: unknown }).detalhe_projetos),
               status: item.status ?? undefined,
               data_pagamento: item.data_pagamento ?? undefined,
               folha_id: item.id,
@@ -393,15 +439,82 @@ export default function FolhaPagamento() {
     }
   };
 
+  // Busca cpf/pix sob demanda (RPC gated a empresa + financeiro) e mescla nos
+  // itens só na hora de gerar o comprovante — a PII não fica no estado da tela.
+  const withPii = async (items: FolhaItem[]): Promise<FolhaItem[]> => {
+    const ids = items.map((i) => i.p_id).filter(Boolean);
+    if (ids.length === 0) return items;
+    const { data: pii } = (await supabase.rpc("get_folha_pessoas_pii" as never, { p_ids: ids } as never)) as unknown as {
+      data: Array<{ pessoa_id: string; cpf: string | null; chaves_pix: unknown }> | null;
+    };
+    const piiMap = new Map((pii || []).map((r) => [r.pessoa_id, r]));
+    return items.map((item) => {
+      const p = piiMap.get(item.p_id);
+      return p ? { ...item, p_cpf: p.cpf ?? null, p_chave_pix: firstPix(p.chaves_pix) } : item;
+    });
+  };
+
+  const downloadComprovante = async (item: FolhaItem) => {
+    try {
+      const [enriched] = await withPii([item]);
+      await gerarComprovantePDF(enriched, { empresaNome, mes: selectedMonth, ano: selectedYear });
+    } catch {
+      toast.error("Erro ao gerar comprovante");
+    }
+  };
+
+  const downloadComprovanteHistory = async (item: FolhaItem) => {
+    if (!selectedHistory) return;
+    try {
+      const [enriched] = await withPii([item]);
+      await gerarComprovantePDF(enriched, { empresaNome, mes: selectedHistory.mes, ano: selectedHistory.ano });
+    } catch {
+      toast.error("Erro ao gerar comprovante");
+    }
+  };
+
+  const downloadLoteHistory = async () => {
+    if (!selectedHistory || historyDetailItems.length === 0) return;
+    try {
+      const enriched = await withPii(historyDetailItems);
+      await gerarLoteComprovantesPDF(enriched, {
+        empresaNome,
+        mes: selectedHistory.mes,
+        ano: selectedHistory.ano,
+      });
+    } catch {
+      toast.error("Erro ao gerar lote de comprovantes");
+    }
+  };
+
   const totalFolha = data.reduce((acc, item) => acc + item.v_total, 0);
-  const allConfirmed = data.length > 0 && confirmedUsers.size === data.length;
+
+  // Delta = total atual − total do mês anterior (undefined se não houver folha
+  // anterior daquela pessoa, para a tabela mostrar "-" em vez de um número falso).
+  const deltas = useMemo(() => {
+    const m = new Map<string, number>();
+    data.forEach((item) => {
+      const prev = prevTotals.get(item.p_id);
+      if (prev !== undefined) m.set(item.p_id, item.v_total - prev);
+    });
+    return m;
+  }, [data, prevTotals]);
+
+  const filteredData = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return data.filter((item) => {
+      if (q && !item.p_nome.toLowerCase().includes(q)) return false;
+      if (statusFolha === "closed" && statusFilter !== "todos" && item.status !== statusFilter) return false;
+      return true;
+    });
+  }, [data, search, statusFilter, statusFolha]);
 
   return (
     <div className="space-y-8 pb-10">
       <div className="space-y-6">
         {/* Filtros e ações */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 rounded-lg border border-border shadow-sm">
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center gap-4">
             <div className="flex items-center gap-2">
               <CalendarIcon className="h-4 w-4 text-muted-foreground" />
               <span className="text-sm font-medium">Período:</span>
@@ -416,6 +529,28 @@ export default function FolhaPagamento() {
               fromYear={years[0]}
               toYear={years[years.length - 1]}
             />
+            <div className="relative">
+              <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Buscar colaborador"
+                className="pl-8 w-[200px]"
+              />
+            </div>
+            {statusFolha === "closed" && (
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-[150px]">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Todos os status</SelectItem>
+                  <SelectItem value="pendente">Pendente</SelectItem>
+                  <SelectItem value="pago">Pago</SelectItem>
+                  <SelectItem value="cancelado">Cancelado</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
           </div>
 
           <div className="flex items-center gap-4">
@@ -428,7 +563,6 @@ export default function FolhaPagamento() {
                 peopleCount={data.length}
                 totalFolha={totalFolha}
                 saving={saving}
-                allConfirmed={allConfirmed}
                 onConfirm={handleCloseMonth}
               />
             )}
@@ -438,7 +572,7 @@ export default function FolhaPagamento() {
                 className="bg-positive/10 text-positive-strong px-3 py-1 text-sm flex gap-1 items-center"
               >
                 <CheckCircle2 className="h-3 w-3" />
-                Folha Fechada
+                Folha fechada
               </Badge>
             )}
           </div>
@@ -451,13 +585,13 @@ export default function FolhaPagamento() {
             <FolhaSummaryCards totalFolha={totalFolha} peopleCount={data.length} totalUniqueArea={totalUniqueArea} />
 
             <FolhaTable
-              data={data}
+              data={filteredData}
               loading={loading}
               statusFolha={statusFolha}
-              confirmedUsers={confirmedUsers}
-              onCheckboxChange={handleCheckboxChange}
+              deltas={deltas}
               onRowClick={openDetailDialog}
               onStatusChange={handleStatusChange}
+              onDownloadComprovante={downloadComprovante}
             />
           </>
         )}
@@ -468,13 +602,6 @@ export default function FolhaPagamento() {
         selectedMonth={selectedMonth}
         selectedYear={selectedYear}
         onOpenDetail={openHistoryDetail}
-      />
-
-      <ConfirmPersonDialog
-        open={personConfirmDialogOpen}
-        onOpenChange={setPersonConfirmDialogOpen}
-        person={selectedPerson}
-        onConfirm={confirmPerson}
       />
 
       <DetailEditDialog
@@ -495,6 +622,8 @@ export default function FolhaPagamento() {
         selectedHistory={selectedHistory}
         loading={historyDetailLoading}
         items={historyDetailItems}
+        onDownloadLote={downloadLoteHistory}
+        onDownloadComprovante={downloadComprovanteHistory}
       />
     </div>
   );

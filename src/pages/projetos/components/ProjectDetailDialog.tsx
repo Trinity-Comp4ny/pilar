@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -38,6 +39,7 @@ import {
   Layers,
   Link2,
   MessageSquare,
+  Plus,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -114,10 +116,30 @@ export function ProjectDetailDialog({
 
   // Reusa a infra de edição da disciplina (catálogo, pessoas, save). A query de
   // disciplinas é a mesma (deduplicada pelo React Query), então os índices batem.
-  const { disciplinasCatalog, pessoas, getDbDisc, handleSaveDiscChanges } = useProjetoDetail(projeto?.id);
+  const { disciplinasCatalog, pessoas, getDbDisc, handleSaveDiscChanges, handleAddDisc, handleRemoveDisc } =
+    useProjetoDetail(projeto?.id);
   const { profile } = useAuth();
   const { links: projetoLinks, salvar: salvarAtividades } = useProjetoAtividades(projeto?.id ?? "");
   const [selectedDiscIdx, setSelectedDiscIdx] = useState<number | null>(null);
+  const [isAddingDisc, setIsAddingDisc] = useState(false);
+  const [newDisc, setNewDisc] = useState({ disciplina: "", responsavel_id: "" });
+  const [confirmDeleteIdx, setConfirmDeleteIdx] = useState<number | null>(null);
+
+  const confirmarExcluirDisc = async () => {
+    if (confirmDeleteIdx === null) return;
+    const idx = confirmDeleteIdx;
+    setConfirmDeleteIdx(null);
+    await handleRemoveDisc(idx);
+    onProjectUpdated?.();
+  };
+
+  const onAddDisc = async () => {
+    if (!newDisc.disciplina || !newDisc.responsavel_id) return;
+    await handleAddDisc(newDisc);
+    setNewDisc({ disciplina: "", responsavel_id: "" });
+    setIsAddingDisc(false);
+    onProjectUpdated?.();
+  };
 
   const autorNome =
     [profile?.first_name, profile?.last_name].filter(Boolean).join(" ").trim() || profile?.email || "Usuário";
@@ -316,12 +338,81 @@ export function ProjectDetailDialog({
                     <Layers className="h-3.5 w-3.5" />
                     Disciplinas ({disciplinasLegacy.length})
                   </Label>
+                  {canEdit && !isAddingDisc && (
+                    <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setIsAddingDisc(true)}>
+                      <Plus className="h-3.5 w-3.5 mr-1.5" /> Adicionar
+                    </Button>
+                  )}
                 </div>
 
-                {disciplinasLegacy.length === 0 ? (
-                  <div className="text-xs text-muted-foreground text-center py-8 border border-dashed rounded-lg">
-                    Nenhuma disciplina definida.
+                {isAddingDisc && canEdit && (
+                  <div className="rounded-lg border bg-primary/5 p-3 space-y-2 mb-3">
+                    <Select
+                      value={newDisc.disciplina}
+                      onValueChange={(v) => setNewDisc((p) => ({ ...p, disciplina: v }))}
+                    >
+                      <SelectTrigger className="h-8 text-xs">
+                        <SelectValue placeholder="Disciplina" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {disciplinasCatalog.map((d) => (
+                          <SelectItem key={d.id} value={d.nome} className="text-xs">
+                            {d.nome}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Select
+                      value={newDisc.responsavel_id}
+                      onValueChange={(v) => setNewDisc((p) => ({ ...p, responsavel_id: v }))}
+                    >
+                      <SelectTrigger className="h-8 text-xs">
+                        <SelectValue placeholder="Responsável" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {pessoas.map((p) => (
+                          <SelectItem key={p.id} value={p.id} className="text-xs">
+                            {p.nome}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 text-xs"
+                        onClick={() => {
+                          setIsAddingDisc(false);
+                          setNewDisc({ disciplina: "", responsavel_id: "" });
+                        }}
+                      >
+                        Cancelar
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="brand"
+                        className="h-7 text-xs"
+                        disabled={!newDisc.disciplina || !newDisc.responsavel_id}
+                        onClick={onAddDisc}
+                      >
+                        Adicionar
+                      </Button>
+                    </div>
                   </div>
+                )}
+
+                {disciplinasLegacy.length === 0 ? (
+                  !isAddingDisc && (
+                    <div className="flex flex-col items-center gap-3 text-xs text-muted-foreground text-center py-8 border border-dashed rounded-lg">
+                      <span>Nenhuma disciplina definida.</span>
+                      {canEdit && (
+                        <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setIsAddingDisc(true)}>
+                          <Plus className="h-3.5 w-3.5 mr-1.5" /> Adicionar disciplina
+                        </Button>
+                      )}
+                    </div>
+                  )
                 ) : (
                   <div className="space-y-1.5">
                     {disciplinasLegacy.map((disc, idx) => {
@@ -329,19 +420,22 @@ export function ProjectDetailDialog({
                       const atrasada = isDiscAtrasada(disc);
 
                       return (
-                        <button
+                        <div
                           key={idx}
-                          type="button"
-                          onClick={() => {
-                            setSelectedDiscIdx(idx);
-                            onOpenChange(false); // fecha o modal do projeto: um overlay só
-                          }}
                           className={cn(
-                            "w-full text-left rounded-lg border p-3 hover:bg-muted/40 transition-colors",
-                            atrasada && "bg-red-50/40 border-red-100"
+                            "flex items-center gap-1 rounded-lg border pr-1 transition-colors",
+                            atrasada ? "bg-red-50/40 border-red-100" : "hover:bg-muted/40"
                           )}
                         >
-                          <div className="flex items-center justify-between gap-3">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedDiscIdx(idx);
+                              onOpenChange(false); // fecha o modal do projeto: um overlay só
+                            }}
+                            className="min-w-0 flex-1 rounded-lg p-3 text-left"
+                          >
+                            <div className="flex items-center justify-between gap-3">
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 flex-wrap">
                                 <span className="text-sm font-medium">{disc.disciplina}</span>
@@ -380,8 +474,20 @@ export function ProjectDetailDialog({
                               />
                               {disc.status || "Não Iniciado"}
                             </span>
-                          </div>
-                        </button>
+                            </div>
+                          </button>
+                          {canEdit && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 flex-shrink-0 text-muted-foreground hover:text-red-600"
+                              onClick={() => setConfirmDeleteIdx(idx)}
+                              aria-label="Excluir disciplina"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
                       );
                     })}
                   </div>
@@ -455,7 +561,40 @@ export function ProjectDetailDialog({
         onUpdateHorasEstimadas={(n) => saveDiscPatch({ horas_estimadas: n })}
         onUpdateHorasRealizadas={(n) => saveDiscPatch({ horas_realizadas: n })}
         autorNome={autorNome}
+        projetoDataInicio={projeto.data_inicio}
+        projetoDataPrevisao={projeto.data_previsao}
+        onDelete={
+          canEdit && selectedDiscIdx !== null
+            ? async () => {
+                const idx = selectedDiscIdx;
+                setSelectedDiscIdx(null);
+                onOpenChange(true);
+                await handleRemoveDisc(idx);
+                onProjectUpdated?.();
+              }
+            : undefined
+        }
       />
+
+      {/* Confirmação de exclusão de disciplina */}
+      <AlertDialog open={confirmDeleteIdx !== null} onOpenChange={(o) => !o && setConfirmDeleteIdx(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir disciplina</AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmDeleteIdx !== null && disciplinasLegacy[confirmDeleteIdx]
+                ? `A disciplina "${disciplinasLegacy[confirmDeleteIdx].disciplina}" e seus dados serão removidos. Esta ação não pode ser desfeita.`
+                : "Esta ação não pode ser desfeita."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction className="bg-red-600 hover:bg-red-700" onClick={confirmarExcluirDisc}>
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Confirmação de conclusão */}
       <AlertDialog

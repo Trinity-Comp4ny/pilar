@@ -1,3 +1,8 @@
+export interface ProjetoDetalhe {
+  nome: string;
+  area_m2: number;
+}
+
 export interface FolhaItem {
   p_id: string;
   p_nome: string;
@@ -8,6 +13,11 @@ export interface FolhaItem {
   v_variavel: number;
   v_total: number;
   lista_projetos: string[];
+  // Snapshot dos projetos que geraram o variável (nome + m²). Vem do RPC no
+  // preview e da coluna folha_pagamento.detalhe_projetos na folha fechada.
+  detalhe_projetos: ProjetoDetalhe[];
+  p_cpf?: string | null;
+  p_chave_pix?: string | null;
   status?: string;
   data_pagamento?: string;
   folha_id?: string;

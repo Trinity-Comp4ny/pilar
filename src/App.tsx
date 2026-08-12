@@ -53,7 +53,6 @@ const Propostas = lazy(() => import("./pages/propostas"));
 const Capacidade = lazy(() => import("./pages/capacidade"));
 const AiHub = lazy(() => import("./pages/ai"));
 const ProjetoDetail = lazy(() => import("./pages/projetos/ProjetoDetail"));
-const Calendario = lazy(() => import("./pages/Calendario"));
 const ClienteLogin = lazy(() => import("./pages/cliente/ClienteLogin"));
 const ClienteDashboard = lazy(() => import("./pages/cliente/ClienteDashboard"));
 const ClienteObraDetail = lazy(() => import("./pages/cliente/ClienteObraDetail"));
@@ -194,7 +193,7 @@ const App = () => {
                           <Route path="/projetos" element={<Projetos />} />
                           <Route path="/projetos/disciplinas" element={<Projetos />} />
                           <Route path="/projetos/cronograma" element={<Projetos />} />
-                          <Route path="/projetos/calendario" element={<Calendario />} />
+                          <Route path="/projetos/calendario" element={<Navigate to="/projetos/cronograma" replace />} />
                           <Route path="/projetos/:id" element={<ProjetoDetail />} />
                         </Route>
                         <Route element={<FeatureRoute feature="mapa" />}>
@@ -248,10 +247,7 @@ const App = () => {
                           path="/fornecedores/*"
                           element={<RedirectPrefix from="/fornecedores" to="/obras/fornecedores" />}
                         />
-                        <Route
-                          path="/calendario/*"
-                          element={<RedirectPrefix from="/calendario" to="/projetos/calendario" />}
-                        />
+                        <Route path="/calendario/*" element={<Navigate to="/projetos/cronograma" replace />} />
                         <Route path="/disciplinas" element={<Navigate to="/projetos/disciplinas" replace />} />
                         <Route path="/cronograma" element={<Navigate to="/projetos/cronograma" replace />} />
                         <Route path="/mapa" element={<Navigate to="/projetos/mapa" replace />} />

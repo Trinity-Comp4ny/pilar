@@ -45,6 +45,8 @@ export function usePagarFatura() {
       inflightKeyRef.current = null;
       queryClient.invalidateQueries({ queryKey: ["faturas"] });
       queryClient.invalidateQueries({ queryKey: ["cartoes-resumo"] });
+      // Pagar debita a conta: atualiza o saldo no overview e no painel da conta.
+      queryClient.invalidateQueries({ queryKey: ["contas-resumo"] });
       queryClient.invalidateQueries({ queryKey: ["lancamentos-paginados"] });
     },
     // Não limpamos a key em onError: retry deve usar a mesma chave para
