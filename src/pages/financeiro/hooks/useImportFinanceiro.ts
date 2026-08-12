@@ -1,11 +1,13 @@
 import { useCallback, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import {
   csvParaLinhas,
   linhaParaCandidato,
   lineHash,
+  parseDataBR,
   encontrarDuplicata,
   type Candidato,
   type ContaPendente,
@@ -62,16 +64,29 @@ export interface ResumoImport {
   totalReceita: number;
 }
 
-interface LancamentoIA {
-  data: string;
-  descricao: string;
-  valor: number;
-  tipo: "despesa" | "receita";
-  categoria_sugerida?: string | null;
-  parcela_numero?: number | null;
-  parcela_total?: number | null;
-  confianca?: number;
-}
+/**
+ * A resposta da edge `ai-import-financeiro` vem de um modelo generativo: não dá
+ * para confiar no shape. Validamos na fronteira. `valor` é coagido para número
+ * e precisa ser finito (guard de NaN); a data passa pelo mesmo `parseDataBR` do
+ * caminho CSV. Lançamento que não casar o schema é descartado com aviso, em vez
+ * de entrar quebrado no banco.
+ */
+const lancamentoIASchema = z.object({
+  data: z.string(),
+  descricao: z.string().trim().min(1),
+  valor: z.coerce.number().refine(Number.isFinite, "valor não numérico"),
+  tipo: z.enum(["despesa", "receita"]),
+  categoria_sugerida: z.string().nullish(),
+  parcela_numero: z.coerce.number().int().nullish(),
+  parcela_total: z.coerce.number().int().nullish(),
+  confianca: z.coerce.number().nullish(),
+});
+
+const respostaIASchema = z.object({
+  lancamentos: z.array(z.unknown()).optional(),
+  avisos: z.array(z.string()).optional(),
+  error: z.string().optional(),
+});
 
 interface CandidatoExt extends Candidato {
   confianca: number;
@@ -80,11 +95,18 @@ interface CandidatoExt extends Candidato {
   parcelaTotal?: number | null;
 }
 
+interface Conciliada {
+  id: string;
+  contaOriginal: string | null;
+}
+
 interface LoteDesfazer {
   despesasCriadas: string[];
   receitasCriadas: string[];
-  conciliadasDespesas: string[];
-  conciliadasReceitas: string[];
+  conciliadasDespesas: Conciliada[];
+  conciliadasReceitas: Conciliada[];
+  /** A conciliação sobrescreveu `conta_id`? Se sim, o desfazer restaura o original. */
+  contaSobrescrita: boolean;
 }
 
 function casarCategoriaId(nome: string | null, tipo: "despesa" | "receita", categorias: CategoriaOpt[]): string | null {
@@ -185,24 +207,40 @@ export function useImportFinanceiro() {
       body: { tipo: tipoDoc, texto },
     });
     if (error) throw new Error(error.message ?? "Falha ao extrair do documento");
-    const res = data as { lancamentos?: LancamentoIA[]; avisos?: string[]; error?: string };
+
+    const parsed = respostaIASchema.safeParse(data);
+    if (!parsed.success) throw new Error("Resposta do documento em formato inesperado");
+    const res = parsed.data;
     if (res.error) throw new Error(res.error);
 
-    const cands: CandidatoExt[] = (res.lancamentos ?? []).map((l) => {
-      const valor = Math.abs(Number(l.valor));
-      return {
-        data: l.data,
+    const avisos = [...(res.avisos ?? [])];
+    const cands: CandidatoExt[] = [];
+    for (const bruto of res.lancamentos ?? []) {
+      const lancamento = lancamentoIASchema.safeParse(bruto);
+      if (!lancamento.success) {
+        avisos.push("Lançamento ignorado: formato inválido na resposta do documento.");
+        continue;
+      }
+      const l = lancamento.data;
+      const dataISO = parseDataBR(l.data);
+      if (!dataISO) {
+        avisos.push(`Lançamento ignorado: data inválida (${l.descricao}).`);
+        continue;
+      }
+      const valor = Math.abs(l.valor);
+      cands.push({
+        data: dataISO,
         descricao: l.descricao,
         valor,
         tipo: l.tipo,
-        lineHash: lineHash({ data: l.data, valor, descricao: l.descricao }),
+        lineHash: lineHash({ data: dataISO, valor, descricao: l.descricao }),
         confianca: l.confianca ?? 0.5,
         categoriaSugerida: l.categoria_sugerida ?? null,
         parcelaNumero: l.parcela_numero ?? null,
         parcelaTotal: l.parcela_total ?? null,
-      };
-    });
-    return { itens: montarItens(cands, aux), avisos: res.avisos ?? [] };
+      });
+    }
+    return { itens: montarItens(cands, aux), avisos };
   }, []);
 
   const gravarLote = useCallback(
@@ -271,7 +309,31 @@ export function useImportFinanceiro() {
           receitasCriadas: [],
           conciliadasDespesas: [],
           conciliadasReceitas: [],
+          contaSobrescrita: !!contaId,
         };
+
+        // Quando a conciliação vai sobrescrever `conta_id`, capturamos a conta
+        // original de cada registro antes do update, para o desfazer restaurar.
+        const contaOrigDespesas = new Map<string, string | null>();
+        const contaOrigReceitas = new Map<string, string | null>();
+        if (contaId) {
+          if (conciliarDespesas.length) {
+            const { data, error } = await supabase
+              .from("despesas")
+              .select("id, conta_id")
+              .in("id", conciliarDespesas.map((c) => c.id));
+            if (error) throw error;
+            for (const d of data ?? []) contaOrigDespesas.set(d.id, d.conta_id);
+          }
+          if (conciliarReceitas.length) {
+            const { data, error } = await supabase
+              .from("receitas")
+              .select("id, conta_id")
+              .in("id", conciliarReceitas.map((c) => c.id));
+            if (error) throw error;
+            for (const r of data ?? []) contaOrigReceitas.set(r.id, r.conta_id);
+          }
+        }
 
         if (despesasInsert.length) {
           const { data, error } = await supabase.from("despesas").insert(despesasInsert).select("id");
@@ -292,7 +354,7 @@ export function useImportFinanceiro() {
           if (contaId) patch.conta_id = contaId;
           const { error } = await supabase.from("despesas").update(patch).eq("id", c.id);
           if (error) throw error;
-          lote.conciliadasDespesas.push(c.id);
+          lote.conciliadasDespesas.push({ id: c.id, contaOriginal: contaOrigDespesas.get(c.id) ?? null });
         }
         for (const c of conciliarReceitas) {
           const patch: Database["public"]["Tables"]["receitas"]["Update"] = {
@@ -302,7 +364,7 @@ export function useImportFinanceiro() {
           if (contaId) patch.conta_id = contaId;
           const { error } = await supabase.from("receitas").update(patch).eq("id", c.id);
           if (error) throw error;
-          lote.conciliadasReceitas.push(c.id);
+          lote.conciliadasReceitas.push({ id: c.id, contaOriginal: contaOrigReceitas.get(c.id) ?? null });
         }
 
         ultimoLote.current = lote;
@@ -325,13 +387,25 @@ export function useImportFinanceiro() {
   const desfazer = useCallback(async () => {
     const b = ultimoLote.current;
     if (!b) return;
-    if (b.despesasCriadas.length) await supabase.from("despesas").delete().in("id", b.despesasCriadas);
-    if (b.receitasCriadas.length) await supabase.from("receitas").delete().in("id", b.receitasCriadas);
-    for (const id of b.conciliadasDespesas) {
-      await supabase.from("despesas").update({ status: "Pendente", data_pagamento: null }).eq("id", id);
+    if (b.despesasCriadas.length) {
+      const { error } = await supabase.from("despesas").delete().in("id", b.despesasCriadas);
+      if (error) throw error;
     }
-    for (const id of b.conciliadasReceitas) {
-      await supabase.from("receitas").update({ status: "Pendente", data_recebimento: null }).eq("id", id);
+    if (b.receitasCriadas.length) {
+      const { error } = await supabase.from("receitas").delete().in("id", b.receitasCriadas);
+      if (error) throw error;
+    }
+    for (const c of b.conciliadasDespesas) {
+      const patch: Database["public"]["Tables"]["despesas"]["Update"] = { status: "Pendente", data_pagamento: null };
+      if (b.contaSobrescrita) patch.conta_id = c.contaOriginal;
+      const { error } = await supabase.from("despesas").update(patch).eq("id", c.id);
+      if (error) throw error;
+    }
+    for (const c of b.conciliadasReceitas) {
+      const patch: Database["public"]["Tables"]["receitas"]["Update"] = { status: "Pendente", data_recebimento: null };
+      if (b.contaSobrescrita) patch.conta_id = c.contaOriginal;
+      const { error } = await supabase.from("receitas").update(patch).eq("id", c.id);
+      if (error) throw error;
     }
     ultimoLote.current = null;
     setTemDesfazer(false);
