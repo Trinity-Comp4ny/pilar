@@ -16,6 +16,7 @@ import { formatCurrency } from "@/lib/currencyUtils";
 import type { Lead } from "@/hooks/useLeads";
 import { PROPOSTA_STATUS_CONFIG, type Proposta } from "@/hooks/usePropostas";
 import { statusExibido } from "@/lib/comercial";
+import { AvatarStack } from "@/pages/projetos/components/AvatarStack";
 
 const statusLabels: Record<string, string> = {
   Novo: "Novo",
@@ -34,11 +35,29 @@ type Props = {
   onMoveStatus: (leadId: string, status: Lead["status"]) => void;
   dragging?: boolean;
   proposta?: Proposta | null;
+  responsavelNome?: string | null;
 };
 
-export function LeadKanbanCard({ lead, leadNome, onClick, canEdit, onMoveStatus, dragging, proposta }: Props) {
+export function LeadKanbanCard({
+  lead,
+  leadNome,
+  onClick,
+  canEdit,
+  onMoveStatus,
+  dragging,
+  proposta,
+  responsavelNome,
+}: Props) {
   const propStatus = proposta ? statusExibido(proposta) : null;
   const propStatusConfig = propStatus ? PROPOSTA_STATUS_CONFIG[propStatus] : null;
+  const valor =
+    proposta && proposta.valor_proposto != null
+      ? proposta.valor_proposto
+      : lead.valor_estimado != null
+        ? lead.valor_estimado
+        : null;
+  const valorDeProposta = proposta && proposta.valor_proposto != null;
+
   return (
     <Card
       onClick={onClick}
@@ -55,7 +74,40 @@ export function LeadKanbanCard({ lead, leadNome, onClick, canEdit, onMoveStatus,
               <p className="text-xs text-muted-foreground mt-0.5 ml-6 line-clamp-1">{lead.empresa_lead}</p>
             )}
           </div>
-          <div className="flex flex-col items-end gap-1 shrink-0">
+          {canEdit && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 -my-1 -mr-1 text-muted-foreground hover:text-foreground"
+                  aria-label="Mais opções"
+                >
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger>
+                    <ArrowRight className="h-3.5 w-3.5 mr-2" /> Mover para
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuSubContent>
+                    {Object.keys(statusLabels)
+                      .filter((s) => s !== lead.status)
+                      .map((s) => (
+                        <DropdownMenuItem key={s} onClick={() => onMoveStatus(lead.id, s as Lead["status"])}>
+                          {statusLabels[s]}
+                        </DropdownMenuItem>
+                      ))}
+                  </DropdownMenuSubContent>
+                </DropdownMenuSub>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+        </div>
+
+        {(lead.cliente_id || propStatusConfig) && (
+          <div className="flex flex-wrap items-center gap-1 mt-2">
             {lead.cliente_id && (
               <Badge variant="outline" className="text-xs h-5 px-1.5 bg-brand text-ink border-brand/40">
                 Cliente
@@ -66,30 +118,8 @@ export function LeadKanbanCard({ lead, leadNome, onClick, canEdit, onMoveStatus,
                 {propStatusConfig.label}
               </Badge>
             )}
-            {proposta && proposta.valor_proposto != null ? (
-              <>
-                <span
-                  className="flex items-center gap-1 text-xs font-semibold text-foreground tabular-nums"
-                  title="Valor da proposta"
-                >
-                  <FileText size={11} className="text-muted-foreground" />
-                  {formatCurrency(proposta.valor_proposto)}
-                </span>
-                {proposta.margem_estimada_pct != null && (
-                  <span className="text-[10px] text-muted-foreground tabular-nums">
-                    margem {Math.round(proposta.margem_estimada_pct)}%
-                  </span>
-                )}
-              </>
-            ) : (
-              lead.valor_estimado != null && (
-                <span className="text-xs font-semibold text-foreground tabular-nums" title="Valor estimado do lead">
-                  {formatCurrency(lead.valor_estimado)}
-                </span>
-              )
-            )}
           </div>
-        </div>
+        )}
       </CardHeader>
       <CardContent className="p-3 pt-0 space-y-1.5">
         {lead.email && (
@@ -112,32 +142,26 @@ export function LeadKanbanCard({ lead, leadNome, onClick, canEdit, onMoveStatus,
             Motivo: {lead.motivo_perda}
           </p>
         )}
-        {canEdit && (
-          <div className="flex justify-end pt-2 mt-1 border-t" onClick={(e) => e.stopPropagation()}>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="min-h-[44px] px-3 text-xs gap-1 text-muted-foreground">
-                  <MoreVertical className="h-3.5 w-3.5" />
-                  Ações
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuSub>
-                  <DropdownMenuSubTrigger>
-                    <ArrowRight className="h-3.5 w-3.5 mr-2" /> Mover para
-                  </DropdownMenuSubTrigger>
-                  <DropdownMenuSubContent>
-                    {Object.keys(statusLabels)
-                      .filter((s) => s !== lead.status)
-                      .map((s) => (
-                        <DropdownMenuItem key={s} onClick={() => onMoveStatus(lead.id, s as Lead["status"])}>
-                          {statusLabels[s]}
-                        </DropdownMenuItem>
-                      ))}
-                  </DropdownMenuSubContent>
-                </DropdownMenuSub>
-              </DropdownMenuContent>
-            </DropdownMenu>
+
+        {(valor != null || responsavelNome) && (
+          <div className="flex items-center justify-between gap-2 mt-2 pt-2 border-t">
+            {valor != null ? (
+              <span
+                className="flex items-center gap-1 text-xs font-semibold text-foreground tabular-nums"
+                title={valorDeProposta ? "Valor da proposta" : "Valor estimado do lead"}
+              >
+                {valorDeProposta && <FileText size={11} className="text-muted-foreground" />}
+                {formatCurrency(valor)}
+                {valorDeProposta && proposta?.margem_estimada_pct != null && (
+                  <span className="text-[10px] font-normal text-muted-foreground">
+                    · margem {Math.round(proposta.margem_estimada_pct)}%
+                  </span>
+                )}
+              </span>
+            ) : (
+              <span />
+            )}
+            {responsavelNome && <AvatarStack names={[responsavelNome]} max={1} size="xs" />}
           </div>
         )}
       </CardContent>

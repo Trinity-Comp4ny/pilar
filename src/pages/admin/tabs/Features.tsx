@@ -1,11 +1,11 @@
 import { useMemo, useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { callUntypedRpc } from "@/lib/supabaseRpc";
 import { CompanyFeatureToggles } from "@/components/admin/CompanyFeatureToggles";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useRequireAal2 } from "@/hooks/useRequireAal2";
+import { useSettingsModal } from "@/contexts/SettingsModalContext";
 import { parseUserFeatures, type CompanyFeatures, type FeatureKey, type SubscriptionPlanSlug } from "@/lib/features";
 
 type RawUser = {
@@ -22,7 +22,7 @@ type Props = {
 };
 
 export function FeaturesEmpresaTab({ companyFeatures, setCompanyFeatures, currentPlan, users }: Props) {
-  const navigate = useNavigate();
+  const { openSettings } = useSettingsModal();
   const requireAal2 = useRequireAal2();
   const [draft, setDraft] = useState<CompanyFeatures>(companyFeatures);
   const [isSaving, setIsSaving] = useState(false);
@@ -77,7 +77,7 @@ export function FeaturesEmpresaTab({ companyFeatures, setCompanyFeatures, curren
           onChange={setDraft}
           currentPlan={currentPlan}
           usersByFeature={usersByFeature}
-          onChangePlan={() => navigate("/billing")}
+          onChangePlan={() => openSettings("pagamento")}
         />
 
         <div className="flex items-center justify-end gap-2">

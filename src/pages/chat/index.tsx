@@ -18,8 +18,6 @@ import { toast } from "sonner";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useSidebar } from "@/components/ui/sidebar";
 import { useAuth } from "@/contexts/AuthContext";
-import { useRole } from "@/hooks/useRole";
-import { isContractRole } from "@/lib/rbac";
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -60,10 +58,9 @@ export default function ChatPage() {
   const left = isMobile ? "0px" : state === "collapsed" ? "64px" : "240px";
   const { profile } = useAuth();
 
-  // Revisão IA fundida como aba. Só owner (ou papéis legados) revisa — preserva
-  // o gate ACH-ADM-01 que antes era o RequireRole da rota /revisao-ia.
-  const role = useRole();
-  const podeRevisar = !isContractRole(role) || role === "owner";
+  // Revisão IA fundida como aba. Só admin da empresa (ou ultra_admin) revisa —
+  // preserva o gate ACH-ADM-01 que antes era o RequireRole da rota /revisao-ia.
+  const podeRevisar = profile?.role === "admin" || profile?.role === "ultra_admin";
   const [searchParams, setSearchParams] = useSearchParams();
   const [aba, setAba] = useState<"conversa" | "revisao">(() => {
     if (!podeRevisar) return "conversa";

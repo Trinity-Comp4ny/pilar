@@ -19,6 +19,9 @@ Um ADR documenta uma decisão técnica relevante, seu contexto e consequências.
 | [0011](./adr/0011-reabrir-obras-como-fase-de-execucao-do-projeto.md)             | Reabrir Obras (gatilho atingido) como a fase de execução de um projeto, sem duplicar entidade        |
 | [0012](./adr/0012-obra-sem-projeto-obrigatorio-e-local-proprio.md)               | Obra não exige projeto (vínculo opcional) e tem localização própria (CEP → clima) — amenda o 0011    |
 | [0013](./adr/0013-financeiro-de-obra-por-administracao-dois-bolsos-uma-lente.md) | Financeiro de obra por administração: dois bolsos (escritório + conta da obra) e uma lente (projeto) |
+| [0014](./adr/0014-filtros-padronizados-em-componentes-compartilhados.md)         | Filtros padronizados em componentes compartilhados (sem filter-builder genérico)                     |
+| [0015](./adr/0015-notificacoes-por-destinatario.md)                              | Notificações por destinatário (uma linha por usuário, leitura individual)                            |
+| [0016](./adr/0016-rotas-aninhadas-por-modulo.md)                                 | Rotas aninhadas por módulo (/&lt;modulo&gt;/&lt;aba&gt;), com redirects de compat                    |
 
 ## Guias de reúso
 
