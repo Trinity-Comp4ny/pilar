@@ -1,13 +1,14 @@
 import { useCallback, useMemo, useState } from "react";
 import { KPICard } from "@/components/KPICard";
 import { useSearchParams } from "react-router-dom";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
+import { format, parseISO } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeftRight, Clock, Plus, TrendingDown, TrendingUp, Upload } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { LancamentosTable } from "../components/LancamentosTable";
-import { useLancamentosPaginados } from "../hooks/useLancamentosPaginados";
+import { useLancamentosResumo } from "../hooks/useLancamentosResumo";
 import { LancamentoFormDialog } from "../components/LancamentoFormDialog";
 import { TransferenciaFormDialog } from "../components/TransferenciaFormDialog";
 import { ImportarLancamentosDialog } from "../components/ImportarLancamentosDialog";
@@ -19,14 +20,29 @@ import {
 } from "../components/lancamentosFilters";
 import type { TipoLancamento } from "../hooks/useLancamentosUnified";
 
-interface KPIs {
-  recebido: number;
-  pago: number;
-  aReceber: number;
-  aPagar: number;
+/** Invalida as três queries da tela (página, resumo, grupos) de uma vez. */
+export function invalidateLancamentos(qc: ReturnType<typeof useQueryClient>) {
+  qc.invalidateQueries({ queryKey: ["lancamentos-pagina"] });
+  qc.invalidateQueries({ queryKey: ["lancamentos-resumo"] });
+  qc.invalidateQueries({ queryKey: ["grupos-parcela-resumo"] });
 }
 
-const EMPTY_KPIS: KPIs = { recebido: 0, pago: 0, aReceber: 0, aPagar: 0 };
+/** Rótulo legível do recorte de período ativo, para deixar o corte explícito. */
+function recorteLabel(f: LancamentosFilters): string {
+  if (f.periodo === "tudo") return "todo o período";
+  if (f.periodo === "custom") {
+    const de = f.customFrom ? format(parseISO(f.customFrom), "dd/MM/yyyy") : "…";
+    const ate = f.customTo ? format(parseISO(f.customTo), "dd/MM/yyyy") : "…";
+    return `${de} a ${ate}`;
+  }
+  const r = periodoRange(f);
+  if (f.periodo === "mes-atual" || f.periodo === "mes-anterior") {
+    return r.from ? format(parseISO(r.from), "MMMM 'de' yyyy", { locale: ptBR }) : f.periodo;
+  }
+  if (f.periodo === "ano") return r.from ? format(parseISO(r.from), "yyyy") : "este ano";
+  if (f.periodo === "ultimos-30") return "últimos 30 dias";
+  return f.periodo;
+}
 
 export default function Lancamentos() {
   // Filtros vivem na URL para persistir em refresh e compartilhamento de link.
@@ -45,46 +61,28 @@ export default function Lancamentos() {
     },
     [setSearchParams]
   );
+  const patchFilters = useCallback(
+    (patch: Partial<LancamentosFilters>) => setFilters({ ...filters, ...patch }),
+    [filters, setFilters]
+  );
 
   const [newTipo, setNewTipo] = useState<TipoLancamento | null>(null);
   const [newTransferencia, setNewTransferencia] = useState(false);
   const [importar, setImportar] = useState(false);
 
-  const range = useMemo(() => periodoRange(filters), [filters]);
-  const paginated = useLancamentosPaginados({ from: range.from, to: range.to });
-  const items = paginated.data;
-
   const queryClient = useQueryClient();
-  const invalidateKpis = () => queryClient.invalidateQueries({ queryKey: ["lancamentos-kpis"] });
+  const invalidate = () => invalidateLancamentos(queryClient);
 
-  const { data: kpisRaw, isLoading: loadingKpis } = useQuery({
-    queryKey: ["lancamentos-kpis", range.from, range.to],
-    queryFn: async () => {
-      const { data, error } = await supabase.rpc("get_lancamentos_kpis", {
-        p_from: range.from ?? undefined,
-        p_to: range.to ?? undefined,
-      });
-      if (error) throw error;
-      return data as { recebido: number; a_receber: number; pago: number; a_pagar: number };
-    },
-    staleTime: 30_000,
-  });
-
-  const kpis: KPIs = kpisRaw
-    ? {
-        recebido: Number(kpisRaw.recebido),
-        pago: Number(kpisRaw.pago),
-        aReceber: Number(kpisRaw.a_receber),
-        aPagar: Number(kpisRaw.a_pagar),
-      }
-    : EMPTY_KPIS;
+  const { resumo, isLoading: loadingResumo } = useLancamentosResumo(filters);
 
   return (
     <div className="space-y-6 w-full">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h2 className="text-2xl font-bold">Lançamentos</h2>
-          <p className="text-sm text-muted-foreground">Receitas e despesas em um só lugar</p>
+          <p className="text-sm text-muted-foreground">
+            Vendo <span className="font-medium text-foreground">{recorteLabel(filters)}</span> · por vencimento
+          </p>
         </div>
         <div className="flex items-center gap-2">
           <Button
@@ -121,26 +119,51 @@ export default function Lancamentos() {
         </div>
       </div>
 
+      {/* KPIs clicáveis: cada um aplica o filtro correspondente. */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <KPICard label="Recebido" value={kpis.recebido} icon={TrendingUp} tone="positive" loading={loadingKpis} />
-        <KPICard label="Pago" value={kpis.pago} icon={TrendingDown} tone="danger" loading={loadingKpis} />
-        <KPICard label="A receber" value={kpis.aReceber} icon={Clock} tone="info" loading={loadingKpis} />
-        <KPICard label="A pagar" value={kpis.aPagar} icon={Clock} tone="warning" loading={loadingKpis} />
+        <KPICard
+          label="Recebido"
+          value={resumo.recebido}
+          icon={TrendingUp}
+          tone="positive"
+          loading={loadingResumo}
+          onClick={() => patchFilters({ tipo: "receita", status: "pagos" })}
+        />
+        <KPICard
+          label="Pago"
+          value={resumo.pago}
+          icon={TrendingDown}
+          tone="danger"
+          loading={loadingResumo}
+          onClick={() => patchFilters({ tipo: "despesa", status: "pagos" })}
+        />
+        <KPICard
+          label="A receber"
+          value={resumo.aReceber}
+          icon={Clock}
+          tone="info"
+          loading={loadingResumo}
+          onClick={() => patchFilters({ tipo: "receita", status: "pendentes" })}
+        />
+        <KPICard
+          label="A pagar"
+          value={resumo.aPagar}
+          icon={Clock}
+          tone="warning"
+          loading={loadingResumo}
+          subtitle={resumo.atrasadosCount > 0 ? `${resumo.atrasadosCount} atrasado(s)` : undefined}
+          subtitleTone="danger"
+          onClick={() => patchFilters({ tipo: "despesa", status: "pendentes" })}
+        />
       </div>
 
       <Card className="rounded-2xl border border-black/5 bg-white p-4">
         <CardContent className="p-0">
-
-
           <LancamentosTable
-            data={items}
-            loading={paginated.isLoading}
-            onRefetch={() => paginated.refetch()}
+            resumo={resumo}
             filters={filters}
             onFiltersChange={setFilters}
-            hasNextPage={paginated.hasNextPage}
-            isFetchingNextPage={paginated.isFetchingNextPage}
-            onLoadMore={() => paginated.fetchNextPage()}
+            onMutated={invalidate}
           />
 
           {newTipo && (
@@ -150,8 +173,7 @@ export default function Lancamentos() {
               tipo={newTipo}
               onSaved={() => {
                 setNewTipo(null);
-                paginated.refetch();
-                invalidateKpis();
+                invalidate();
               }}
             />
           )}
@@ -161,22 +183,17 @@ export default function Lancamentos() {
             onOpenChange={setNewTransferencia}
             onSaved={() => {
               setNewTransferencia(false);
-              paginated.refetch();
-              invalidateKpis();
+              invalidate();
             }}
           />
 
           <ImportarLancamentosDialog
             open={importar}
             onOpenChange={setImportar}
-            onImported={() => {
-              paginated.refetch();
-              invalidateKpis();
-            }}
+            onImported={invalidate}
           />
         </CardContent>
       </Card>
     </div>
   );
 }
-

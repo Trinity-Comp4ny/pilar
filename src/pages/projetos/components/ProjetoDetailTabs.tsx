@@ -241,6 +241,8 @@ export function ProjetoDetailTabs({
                       handleSaveDiscChanges={handleSaveDiscChanges}
                       handleAddResponsavel={handleAddResponsavel}
                       handleRemoveResponsavel={handleRemoveResponsavel}
+                      projetoDataInicio={projeto.data_inicio}
+                      projetoDataPrevisao={projeto.data_previsao}
                     />
                   </CardContent>
                 </Card>
@@ -280,6 +282,17 @@ export function ProjetoDetailTabs({
         newObservation={newObservation}
         onNewObservationChange={setNewObservation}
         onAddObservation={handleAddObservation}
+        projetoDataInicio={projeto.data_inicio}
+        projetoDataPrevisao={projeto.data_previsao}
+        onDelete={
+          canEdit && selectedDisc
+            ? async () => {
+                const idx = disciplinasLegacy.findIndex((d) => d.disciplina === selectedDisc.disciplina);
+                setDiscDialogOpen(false);
+                if (idx >= 0) await handleRemoveDisc(idx);
+              }
+            : undefined
+        }
       />
     </Tabs>
   );
