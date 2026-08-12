@@ -128,7 +128,7 @@ export function CalendarioPreview() {
             variant="ghost"
             size="sm"
             className="text-xs text-muted-foreground"
-            onClick={() => navigate("/calendario")}
+            onClick={() => navigate("/projetos/calendario")}
           >
             Ver calendário <ChevronRight size={14} />
           </Button>

@@ -18,9 +18,7 @@ export function useProjetosData() {
 
   const rentabilidadeMap = useMemo<Record<string, number>>(() => {
     if (!rentabilidadeData?.projetos) return {};
-    return Object.fromEntries(
-      rentabilidadeData.projetos.map((p) => [p.projeto_id, p.margem_bruta_pct])
-    );
+    return Object.fromEntries(rentabilidadeData.projetos.map((p) => [p.projeto_id, p.margem_bruta_pct]));
   }, [rentabilidadeData]);
 
   const { data: currentUser = null } = useQuery({
@@ -128,6 +126,7 @@ export function useProjetosData() {
           data_previsao: proj.data_previsao as string,
           data_final: proj.data_final as string | undefined,
           status: proj.status as Projeto["status"],
+          etapa_id: (proj.etapa_id as string | null) ?? null,
           prioridade: (proj.prioridade as ProjectPriority) || PROJECT_PRIORITY.MEDIA,
           valor_contrato: proj.valor_contrato as number,
           observacao: proj.observacao as string,

@@ -1,14 +1,14 @@
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   Mail,
   Phone,
@@ -18,7 +18,6 @@ import {
   FileText,
   Pencil,
   Trash2,
-  MoreVertical,
   Building2,
   DollarSign,
   Calendar,
@@ -90,56 +89,29 @@ export function LeadDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto p-0">
-        {/* Header */}
-        <div className="px-6 pt-6 pb-4 border-b bg-gray-50/50">
-          <DialogHeader className="mb-0">
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <DialogTitle className="text-lg">{nomeCompleto}</DialogTitle>
-                  <DialogDescription className="sr-only">Detalhes do lead {nomeCompleto}</DialogDescription>
-                  <Badge className={statusConfig?.color}>{statusConfig?.label ?? lead.status}</Badge>
-                  {lead.status === "Perdido" && (
-                    <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-danger-soft text-danger-strong flex items-center gap-1">
-                      <AlertTriangle size={10} /> Perdido
-                    </span>
-                  )}
-                </div>
-                {lead.empresa_lead && (
-                  <p className="text-sm text-muted-foreground mt-1 flex items-center gap-1">
-                    <Building2 className="h-3 w-3" />
-                    {lead.empresa_lead}
-                  </p>
-                )}
-              </div>
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex flex-wrap items-center gap-2 pr-6">
+            {nomeCompleto}
+            <Badge className={statusConfig?.color}>{statusConfig?.label ?? lead.status}</Badge>
+            {lead.status === "Perdido" && (
+              <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-danger-soft text-danger-strong flex items-center gap-1">
+                <AlertTriangle size={10} /> Perdido
+              </span>
+            )}
+          </DialogTitle>
+          <DialogDescription className="sr-only">Detalhes do lead {nomeCompleto}</DialogDescription>
+          {lead.empresa_lead && (
+            <p className="text-sm text-muted-foreground flex items-center gap-1">
+              <Building2 className="h-3 w-3" />
+              {lead.empresa_lead}
+            </p>
+          )}
+        </DialogHeader>
 
-              {canEdit && (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 -mr-2 -mt-1" aria-label="Mais opções">
-                      <MoreVertical className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => onEdit(lead)}>
-                      <Pencil className="h-3.5 w-3.5 mr-2" /> Editar dados
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      className="text-destructive focus:text-destructive"
-                      onClick={() => onDelete(lead.id)}
-                    >
-                      <Trash2 className="h-3.5 w-3.5 mr-2" /> Excluir lead
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              )}
-            </div>
-          </DialogHeader>
-
+        <div className="space-y-4 mt-4">
           {/* Metadados em linha */}
-          <div className="flex flex-wrap gap-x-4 gap-y-1.5 mt-3 text-xs text-muted-foreground">
+          <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-muted-foreground">
             {lead.email && (
               <span className="flex items-center gap-1">
                 <Mail className="h-3 w-3" /> {lead.email}
@@ -167,10 +139,7 @@ export function LeadDetailDialog({
               </span>
             )}
           </div>
-        </div>
 
-        {/* Conteúdo */}
-        <div className="px-6 py-4 space-y-4">
           {proposta && (
             <div className="space-y-2 rounded-lg border border-border p-3">
               <div className="flex items-center justify-between gap-2">
@@ -196,7 +165,12 @@ export function LeadDetailDialog({
                 )}
               </div>
               {onOpenProposta && (
-                <Button variant="ghost" size="sm" className="h-8 px-2 text-xs" onClick={() => onOpenProposta(proposta.id)}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 px-2 text-xs"
+                  onClick={() => onOpenProposta(proposta.id)}
+                >
                   <PencilIcon className="mr-1.5 h-3.5 w-3.5" /> Editar proposta
                 </Button>
               )}
@@ -246,8 +220,7 @@ export function LeadDetailDialog({
           )}
         </div>
 
-        {/* Footer */}
-        <div className="flex items-center gap-2 px-6 py-3 border-t bg-gray-50/30">
+        <DialogFooter className="flex-row flex-wrap items-center gap-2 pt-4 mt-4 border-t sm:justify-start">
           {lead.status === "Ganho" && !lead.cliente_id && (
             <Button size="sm" className="bg-positive hover:bg-positive/90 text-white" onClick={onConvert}>
               <CheckCircle2 className="mr-1.5 h-3.5 w-3.5" />
@@ -286,7 +259,25 @@ export function LeadDetailDialog({
               Criar Proposta
             </Button>
           )}
-        </div>
+
+          {canEdit && (
+            <div className="flex items-center gap-2 ml-auto">
+              <Button variant="outline" size="sm" onClick={() => onEdit(lead)}>
+                <Pencil className="mr-1.5 h-3.5 w-3.5" />
+                Editar
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-destructive hover:text-destructive"
+                onClick={() => onDelete(lead.id)}
+              >
+                <Trash2 className="mr-1.5 h-3.5 w-3.5" />
+                Excluir
+              </Button>
+            </div>
+          )}
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

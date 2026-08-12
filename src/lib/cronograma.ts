@@ -50,6 +50,36 @@ export function startOfWeek(date: Date): Date {
   return d;
 }
 
+/** Data → "YYYY-MM-DD" (local), para gravar no banco após um drag. */
+export function toIso(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+const SNAP_BOUNDARY_MONTHS = 4;
+const SNAP_BOUNDARY_WEEKS = 2;
+
+/**
+ * Encaixa uma data na borda de mês/semana quando o drag chega perto dela, para
+ * o usuário conseguir "grudar" no início do mês/semana sem mirar pixel a pixel.
+ */
+export function snapToBoundary(date: Date, zoom: ZoomLevel): Date {
+  if (zoom === "months") {
+    const som = startOfMonth(date);
+    const nextMonth = new Date(date.getFullYear(), date.getMonth() + 1, 1);
+    if (Math.abs(diffDays(som, date)) <= SNAP_BOUNDARY_MONTHS) return som;
+    if (Math.abs(diffDays(nextMonth, date)) <= SNAP_BOUNDARY_MONTHS) return nextMonth;
+  } else {
+    const sow = startOfWeek(date);
+    const nextWeek = addDays(sow, 7);
+    if (Math.abs(diffDays(sow, date)) <= SNAP_BOUNDARY_WEEKS) return sow;
+    if (Math.abs(diffDays(nextWeek, date)) <= SNAP_BOUNDARY_WEEKS) return nextWeek;
+  }
+  return date;
+}
+
 export function formatMonthYear(date: Date): string {
   return date.toLocaleDateString("pt-BR", { month: "short", year: "numeric" });
 }
@@ -95,7 +125,7 @@ export function barPosition(
   start: Date,
   end: Date,
   timelineStart: Date,
-  timelineEnd: Date,
+  timelineEnd: Date
 ): { leftPct: number; widthPct: number } {
   const totalDays = diffDays(timelineStart, timelineEnd);
   if (totalDays <= 0) return { leftPct: 0, widthPct: 0 };

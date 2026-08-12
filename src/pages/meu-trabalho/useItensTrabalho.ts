@@ -3,7 +3,14 @@
 // achatar o modelo no banco: cada item guarda seu `tipo` e a origem para ações.
 import { useMemo } from "react";
 import type { Prioridade, StatusBucket } from "./status";
-import { useDisciplinas, usePessoasEmpresa, useTarefas, type DisciplinaItem, type TarefaItem } from "./hooks";
+import {
+  useDisciplinas,
+  usePessoasEmpresa,
+  useTarefas,
+  type DisciplinaItem,
+  type PessoaOpcao,
+  type TarefaItem,
+} from "./hooks";
 import type { Etapa } from "./useEtapas";
 
 export type TipoItem = "tarefa" | "disciplina";
@@ -13,14 +20,19 @@ export type ItemTrabalho = {
   key: string;
   tipo: TipoItem;
   id: string;
+  /** Número curto "#N" (só tarefa; disciplina não tem). */
+  numero: number | null;
   titulo: string;
   status: StatusBucket;
   prioridade: Prioridade;
   prazo: string | null;
   projetoId: string | null;
   projetoNome: string | null;
+  /** Primário (o primeiro responsável), para compat. */
   responsavelId: string | null;
   responsavelNome: string | null;
+  /** Conjunto de responsáveis (para pilha de avatares e edição multi). */
+  responsaveis: PessoaOpcao[];
   etapaId: string | null;
   labels: string[];
   /** Horas estimadas (só tarefa; disciplina não tem). */
@@ -42,14 +54,17 @@ function tarefaParaItem(t: TarefaItem, nomePorPessoa: Map<string, string>): Item
     key: `tarefa:${t.id}`,
     tipo: "tarefa",
     id: t.id,
+    numero: t.numero,
     titulo: t.titulo,
     status: t.status,
     prioridade: t.prioridade,
     prazo: t.prazo,
     projetoId: t.projeto?.id ?? t.projeto_id ?? null,
     projetoNome: t.projeto?.nome ?? null,
-    responsavelId: t.responsavel_id,
-    responsavelNome: t.responsavel_id ? (nomePorPessoa.get(t.responsavel_id) ?? null) : null,
+    responsavelId: t.responsaveis[0]?.id ?? t.responsavel_id,
+    responsavelNome:
+      t.responsaveis[0]?.nome ?? (t.responsavel_id ? (nomePorPessoa.get(t.responsavel_id) ?? null) : null),
+    responsaveis: t.responsaveis,
     etapaId: t.etapa_id,
     labels: t.labels,
     horasEstimadas: t.horas_estimadas,
@@ -65,6 +80,7 @@ function disciplinaParaItem(d: DisciplinaItem): ItemTrabalho {
     key: `disciplina:${d.id}`,
     tipo: "disciplina",
     id: d.id,
+    numero: null,
     titulo: d.titulo,
     status: d.status_bucket,
     prioridade: d.prioridade,
@@ -73,6 +89,7 @@ function disciplinaParaItem(d: DisciplinaItem): ItemTrabalho {
     projetoNome: d.projeto_nome,
     responsavelId: d.responsavel_id,
     responsavelNome: d.responsavel_nome,
+    responsaveis: d.responsavel_id && d.responsavel_nome ? [{ id: d.responsavel_id, nome: d.responsavel_nome }] : [],
     etapaId: null,
     labels: d.labels,
     horasEstimadas: null,

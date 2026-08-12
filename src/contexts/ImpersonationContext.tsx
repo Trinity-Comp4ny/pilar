@@ -118,8 +118,13 @@ export function ImpersonationProvider({ children }: { children: ReactNode }) {
       if (realRole !== "admin" && realRole !== "ultra_admin") {
         throw new Error("Apenas admin pode iniciar impersonation");
       }
-      if (role === "admin" || role === "ultra_admin") {
-        throw new Error("Impersonation de admin não permitido");
+      // ultra_admin nunca é alvo; 'admin' só o ultra_admin pode visualizar
+      // (espelha o guard de start_impersonation no backend).
+      if (role === "ultra_admin") {
+        throw new Error("Impersonation de ultra_admin não permitido");
+      }
+      if (role === "admin" && realRole !== "ultra_admin") {
+        throw new Error("Só ultra_admin pode visualizar como admin");
       }
 
       // Optimistic update

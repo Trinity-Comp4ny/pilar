@@ -34,3 +34,7 @@ Decisão de arquitetura no meio do caminho vira um [ADR](../architecture/README.
 | [019](./019-estoque-da-obra.md)                     | Estoque da obra (compra unificada, fase 4)          | Draft            |
 | [020](./020-cronograma-da-obra.md)                  | Cronograma da obra (frentes na linha do tempo)      | Em implementação |
 | [022](./022-funil-comercial-no-leads.md)            | Funil comercial no Leads (proposta dentro do card)  | Em implementação |
+| [026](./026-inteligencia-do-fornecedor.md)          | Inteligência do fornecedor (página com histórico)   | Em implementação |
+| [027](./027-cronograma-obra-dois-niveis.md)         | Cronograma da obra em dois níveis (frente + passos) | Em implementação |
+| [029](./029-central-de-notificacoes.md)             | Central de notificações in-app (por destinatário)   | Draft            |
+| [030](./030-obra-no-portal-do-cliente.md)           | Obra no portal do cliente (acompanhamento + contas) | Draft            |

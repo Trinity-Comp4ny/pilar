@@ -539,7 +539,7 @@ export default function ClienteDetalhePage() {
     if (!cliente) return;
     try {
       await deleteCliente(cliente.id);
-      navigate("/clientes");
+      navigate("/gestao/clientes");
     } catch {
       // error handled by hook
     }
@@ -562,7 +562,7 @@ export default function ClienteDetalhePage() {
       <PageLayout header={<PageHeader title="Cliente não encontrado" />}>
         <div className="p-6 text-muted-foreground text-sm">
           Cliente não encontrado.{" "}
-          <button onClick={() => navigate("/clientes")} className="underline">
+          <button onClick={() => navigate("/gestao/clientes")} className="underline">
             Voltar para clientes
           </button>
         </div>
@@ -679,7 +679,7 @@ export default function ClienteDetalhePage() {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {propostas.map((p) => (
-                <PropostaCard key={p.id} proposta={p} onOpen={() => navigate("/documentos")} />
+                <PropostaCard key={p.id} proposta={p} onOpen={() => navigate("/gestao/propostas")} />
               ))}
             </div>
           )}

@@ -172,13 +172,11 @@ export const PAYMENT_METHODS = {
 
 export type PaymentMethod = (typeof PAYMENT_METHODS)[keyof typeof PAYMENT_METHODS];
 
-// User Roles
+// User Roles — a autoridade da conta. owner/coordenador/colaborador NÃO são
+// roles: viram presets de acesso (profiles.features) na UI de admin.
 export const USER_ROLES = {
   ULTRA_ADMIN: "ultra_admin",
   ADMIN: "admin",
-  FINANCEIRO: "financeiro",
-  MARKETING: "marketing",
-  OPERACIONAL: "operacional",
   USER: "user",
 } as const;
 

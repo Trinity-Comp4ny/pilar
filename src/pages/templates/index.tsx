@@ -29,7 +29,7 @@ export default function Templates() {
   const updateTemplate = useUpdateTemplate();
   const deleteTemplate = useDeleteTemplate();
 
-  const canEdit = userRole === "admin" || userRole === "operacional";
+  const canEdit = userRole === "admin" || userRole === "ultra_admin";
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<TemplateProjeto | undefined>();
