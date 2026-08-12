@@ -21,6 +21,7 @@ import { ProjetosFilterBar, EMPTY_FILTERS, type DeadlineFilter } from "@/pages/p
 import { ProjetosKPIs } from "@/pages/projetos/components/ProjetosKPIs";
 import { ProjetosEmptyState } from "@/pages/projetos/components/ProjetosEmptyState";
 import { KanbanBoard } from "@/pages/projetos/components/KanbanBoard";
+import { ListaProjetos } from "@/pages/projetos/components/ListaProjetos";
 import { MapaTab } from "@/pages/projetos/components/MapaTab";
 import { ProjetosMobileList } from "@/pages/projetos/components/ProjetosMobileList";
 import { SortControl } from "@/pages/projetos/components/SortControl";
@@ -28,6 +29,11 @@ import { NotifyTeamDialog, ReopenProjetoDialog } from "@/pages/projetos/componen
 import { useProjetosData } from "@/pages/projetos/hooks/useProjetosData";
 import { useProjetosUrlState } from "@/pages/projetos/hooks/useProjetosUrlState";
 import { useProjetoStatusMove } from "@/pages/projetos/hooks/useProjetoStatusMove";
+import { useProjetoEtapas, useProjetoEtapaMutations, type ProjetoEtapa } from "@/pages/projetos/hooks/useProjetoEtapas";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { type ProjectStatus } from "@/constants";
 import { cn } from "@/lib/utils";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useQueryClient } from "@tanstack/react-query";
@@ -53,8 +59,12 @@ export default function ProjetosKanban() {
     disciplinas,
   } = useProjetosData();
 
-  const { filters, setFilters, sort, setSort, collapsedColumns, toggleColumn, activeTab } =
+  const { filters, setFilters, sort, setSort, collapsedColumns, toggleColumn, activeTab, viewMode, setViewMode } =
     useProjetosUrlState(canViewMapa);
+  const isColecao = activeTab === "quadro" || activeTab === "lista";
+
+  const { data: etapas = [] } = useProjetoEtapas();
+  const etapaMut = useProjetoEtapaMutations();
 
   const [isFormDialogOpen, setIsFormDialogOpen] = useState(false);
   const [editingProjeto, setEditingProjeto] = useState<Projeto | null>(null);
@@ -63,6 +73,8 @@ export default function ProjetosKanban() {
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isFluxosOpen, setIsFluxosOpen] = useState(false);
   const [projetoToDelete, setProjetoToDelete] = useState<{ id: string; nome: string } | null>(null);
+  const [renomeando, setRenomeando] = useState<{ id: string; nome: string } | null>(null);
+  const [aEtapaExcluir, setAEtapaExcluir] = useState<ProjetoEtapa | null>(null);
 
   const {
     pendingDrag,
@@ -73,7 +85,7 @@ export default function ProjetosKanban() {
     handleMoveStatus,
     onDragEnd,
     notifyProjectStatusChange,
-  } = useProjetoStatusMove(projetos, canEdit);
+  } = useProjetoStatusMove(projetos, canEdit, etapas);
 
   const handleCardClick = (projeto: Projeto) => {
     setSelectedProjeto(projeto);
@@ -190,27 +202,108 @@ export default function ProjetosKanban() {
     [projetos, filters, disciplinaNomesSelected]
   );
 
-  // Agrupa e ordena por status uma única vez por render, em vez de rodar
-  // filter().sort() para cada coluna (12 varreduras da lista a cada render).
+  // Agrupa e ordena por etapa (coluna) uma única vez por render, em vez de rodar
+  // filter().sort() para cada coluna. Projetos sem etapa correspondente caem em
+  // `orfaos` (status legado sem coluna) para não sumirem da vista.
+  const etapaIds = useMemo(() => new Set(etapas.map((e) => e.id)), [etapas]);
+  const { projetosByEtapa, orfaos } = useMemo(() => {
+    const groups: Record<string, Projeto[]> = {};
+    const semColuna: Projeto[] = [];
+    for (const p of filteredProjetos) {
+      if (p.etapa_id && etapaIds.has(p.etapa_id)) (groups[p.etapa_id] ||= []).push(p);
+      else semColuna.push(p);
+    }
+    for (const key of Object.keys(groups)) groups[key].sort(sortProjetos);
+    semColuna.sort(sortProjetos);
+    return { projetosByEtapa: groups, orfaos: semColuna };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filteredProjetos, sort, etapaIds]);
+
+  const getProjetosByEtapa = (etapaId: string) => projetosByEtapa[etapaId] || [];
+
+  // Mobile agrupa pelos 6 status canônicos (o status deriva do bucket da etapa).
   const projetosByStatus = useMemo(() => {
     const groups: Record<string, Projeto[]> = {};
-    for (const p of filteredProjetos) {
-      (groups[p.status] ||= []).push(p);
-    }
+    for (const p of filteredProjetos) (groups[p.status] ||= []).push(p);
     for (const key of Object.keys(groups)) groups[key].sort(sortProjetos);
     return groups;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filteredProjetos, sort]);
-
   const getProjetosByStatus = (status: string) => projetosByStatus[status] || [];
+
+  // ---------- Colunas (etapas) personalizáveis ----------
+  const criarEtapa = async (nome: string, cor: string, bucket: ProjectStatus): Promise<boolean> => {
+    const limpo = nome.trim();
+    if (!limpo) return false;
+    const ordem = etapas.reduce((m, e) => Math.max(m, e.ordem), -1) + 1;
+    try {
+      await etapaMut.criar.mutateAsync({ nome: limpo, ordem, cor, bucket });
+      return true;
+    } catch {
+      toast.error("Não deu para criar a coluna");
+      return false;
+    }
+  };
+
+  const salvarRenomear = async () => {
+    if (!renomeando) return;
+    const nome = renomeando.nome.trim();
+    if (!nome) return;
+    try {
+      await etapaMut.renomear.mutateAsync({ id: renomeando.id, nome });
+      setRenomeando(null);
+    } catch {
+      toast.error("Não deu para renomear a coluna");
+    }
+  };
+
+  const reordenarEtapa = async (id: string, dir: -1 | 1) => {
+    const lista = [...etapas].sort((a, b) => a.ordem - b.ordem);
+    const i = lista.findIndex((e) => e.id === id);
+    const j = i + dir;
+    if (i < 0 || j < 0 || j >= lista.length) return;
+    try {
+      await etapaMut.reordenar.mutateAsync([
+        { id: lista[i].id, ordem: lista[j].ordem },
+        { id: lista[j].id, ordem: lista[i].ordem },
+      ]);
+    } catch {
+      toast.error("Não deu para reordenar as colunas");
+    }
+  };
+
+  // Excluir coluna: bloqueia se houver projeto dentro (o ON DELETE RESTRICT do
+  // banco recusaria de qualquer forma; aqui damos a orientação antes).
+  const pedirExcluirEtapa = (etapa: ProjetoEtapa) => {
+    // Checa contra TODOS os projetos (não os filtrados): com um filtro ativo a
+    // coluna pode parecer vazia mas ainda ter projetos, e o ON DELETE RESTRICT
+    // do banco barraria com uma mensagem genérica.
+    if (projetos.some((p) => p.etapa_id === etapa.id)) {
+      toast.error("Mova os projetos desta coluna antes de excluí-la");
+      return;
+    }
+    setAEtapaExcluir(etapa);
+  };
+
+  const confirmarExcluirEtapa = async () => {
+    if (!aEtapaExcluir) return;
+    try {
+      await etapaMut.excluir.mutateAsync(aEtapaExcluir.id);
+      toast.success("Coluna excluída");
+    } catch {
+      toast.error("Não deu para excluir a coluna");
+    } finally {
+      setAEtapaExcluir(null);
+    }
+  };
 
   const noProjetos = !loadingProjetos && !projetosError && projetos.length === 0;
   const noResults = !loadingProjetos && !projetosError && projetos.length > 0 && filteredProjetos.length === 0;
 
   return (
     <PageLayout
-      className={activeTab === "kanban" ? "overflow-y-hidden" : undefined}
-      containerClassName={cn("flex flex-col", activeTab === "kanban" && "h-full min-h-0")}
+      className={activeTab === "quadro" ? "overflow-y-hidden" : undefined}
+      containerClassName={cn("flex flex-col", activeTab === "quadro" && "h-full min-h-0")}
       header={
         <PageHeader
           title="Projetos"
@@ -263,9 +356,31 @@ export default function ProjetosKanban() {
         />
       )}
 
-      {/* Ordenação do quadro (a navegação entre as lentes vive na sidebar do módulo). */}
-      {activeTab === "kanban" && (
-        <div className="flex items-center justify-end mb-4">
+      {/* Toggle Quadro/Lista + ordenação (a navegação entre recortes vive na sidebar). */}
+      {isColecao && (
+        <div className="flex items-center justify-between gap-2 mb-4">
+          <div className="inline-flex rounded-full border p-0.5">
+            <button
+              type="button"
+              onClick={() => setViewMode("quadro")}
+              className={cn(
+                "rounded-full px-3 py-1 text-sm transition-colors",
+                viewMode === "quadro" ? "bg-brand text-ink" : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              Quadro
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode("lista")}
+              className={cn(
+                "rounded-full px-3 py-1 text-sm transition-colors",
+                viewMode === "lista" ? "bg-brand text-ink" : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              Lista
+            </button>
+          </div>
           <SortControl sort={sort} onChange={setSort} />
         </div>
       )}
@@ -274,44 +389,56 @@ export default function ProjetosKanban() {
       {projetosError && <ProjetosEmptyState variant="error" onRetry={() => refetchProjetos()} />}
 
       {/* Empty states globais */}
-      {!projetosError && noProjetos && activeTab === "kanban" && (
+      {!projetosError && noProjetos && isColecao && (
         <ProjetosEmptyState variant="no-projetos" onCreate={canEdit ? handleNewProjeto : undefined} />
       )}
 
-      {projetosError ? null : activeTab === "kanban" && !noProjetos ? (
-        <>
-          {noResults ? (
-            <ProjetosEmptyState variant="no-results" onClearFilters={() => setFilters(EMPTY_FILTERS)} />
-          ) : (
-            <DragDropContext onDragEnd={onDragEnd}>
-              <div className="flex-1 min-h-0">
-                <KanbanBoard
-                  collapsedColumns={collapsedColumns}
-                  loadingProjetos={loadingProjetos}
-                  canEdit={canEdit}
-                  clientes={clientes}
-                  rentabilidadeMap={rentabilidadeMap}
-                  getProjetosByStatus={getProjetosByStatus}
-                  onToggleColumn={toggleColumn}
-                  onCardClick={handleCardClick}
-                  onEditClick={handleEditClick}
-                  onDelete={handleDelete}
-                  onQuickAddCreated={() => queryClient.invalidateQueries({ queryKey: ["projetos"] })}
-                />
+      {projetosError ? null : isColecao && !noProjetos ? (
+        noResults ? (
+          <ProjetosEmptyState variant="no-results" onClearFilters={() => setFilters(EMPTY_FILTERS)} />
+        ) : viewMode === "lista" ? (
+          <ListaProjetos
+            projetos={filteredProjetos}
+            etapas={etapas}
+            rentabilidadeMap={rentabilidadeMap}
+            onCardClick={handleCardClick}
+          />
+        ) : (
+          <DragDropContext onDragEnd={onDragEnd}>
+            <div className="flex-1 min-h-0">
+              <KanbanBoard
+                etapas={etapas}
+                collapsedColumns={collapsedColumns}
+                loadingProjetos={loadingProjetos}
+                canEdit={canEdit}
+                clientes={clientes}
+                rentabilidadeMap={rentabilidadeMap}
+                getProjetosByEtapa={getProjetosByEtapa}
+                orfaos={orfaos}
+                onToggleColumn={toggleColumn}
+                onCriarEtapa={criarEtapa}
+                criandoEtapa={etapaMut.criar.isPending}
+                onRenomearEtapa={(e) => setRenomeando({ id: e.id, nome: e.nome })}
+                onReordenarEtapa={reordenarEtapa}
+                onExcluirEtapa={pedirExcluirEtapa}
+                onCardClick={handleCardClick}
+                onEditClick={handleEditClick}
+                onDelete={handleDelete}
+                onQuickAddCreated={() => queryClient.invalidateQueries({ queryKey: ["projetos"] })}
+              />
 
-                <ProjetosMobileList
-                  canEdit={canEdit}
-                  rentabilidadeMap={rentabilidadeMap}
-                  getProjetosByStatus={getProjetosByStatus}
-                  onCardClick={handleCardClick}
-                  onEditClick={handleEditClick}
-                  onDelete={handleDelete}
-                  onMoveStatus={handleMoveStatus}
-                />
-              </div>
-            </DragDropContext>
-          )}
-        </>
+              <ProjetosMobileList
+                canEdit={canEdit}
+                rentabilidadeMap={rentabilidadeMap}
+                getProjetosByStatus={getProjetosByStatus}
+                onCardClick={handleCardClick}
+                onEditClick={handleEditClick}
+                onDelete={handleDelete}
+                onMoveStatus={handleMoveStatus}
+              />
+            </div>
+          </DragDropContext>
+        )
       ) : activeTab === "disciplinas" ? (
         <div>
           <DisciplinasTab projetos={filteredProjetos} />
@@ -379,9 +506,9 @@ export default function ProjetosKanban() {
         onCancel={() => setPendingReopen(null)}
         onConfirm={async () => {
           if (!pendingReopen) return;
-          const { projetoId, newStatus } = pendingReopen;
+          const { projetoId, newStatus, etapaId } = pendingReopen;
           setPendingReopen(null);
-          await applyStatusMove(projetoId, newStatus, true);
+          await applyStatusMove(projetoId, newStatus, true, etapaId);
         }}
       />
 
@@ -394,6 +521,54 @@ export default function ProjetosKanban() {
         description="O projeto sai das listagens e o histórico é preservado. A exclusão é bloqueada se houver lançamentos financeiros vinculados."
         confirmText="Excluir"
         cancelText="Cancelar"
+      />
+
+      <Dialog open={!!renomeando} onOpenChange={(open) => !open && setRenomeando(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Renomear coluna</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-1.5">
+            <Label htmlFor="etapa-nome">Nome da coluna</Label>
+            <Input
+              id="etapa-nome"
+              autoFocus
+              value={renomeando?.nome ?? ""}
+              onChange={(e) => setRenomeando((prev) => (prev ? { ...prev, nome: e.target.value } : prev))}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  salvarRenomear();
+                }
+              }}
+              placeholder="Em revisão, Aguardando cliente, Aprovado..."
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRenomeando(null)}>
+              Cancelar
+            </Button>
+            <Button
+              variant="brand"
+              onClick={salvarRenomear}
+              disabled={!renomeando?.nome.trim() || etapaMut.renomear.isPending}
+            >
+              Salvar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <ConfirmDialog
+        open={!!aEtapaExcluir}
+        onOpenChange={(open) => !open && setAEtapaExcluir(null)}
+        onConfirm={confirmarExcluirEtapa}
+        title="Excluir coluna"
+        description="A coluna só pode ser excluída quando não tem projetos."
+        itemName={aEtapaExcluir?.nome}
+        confirmText="Excluir"
+        cancelText="Cancelar"
+        loading={etapaMut.excluir.isPending}
       />
     </PageLayout>
   );

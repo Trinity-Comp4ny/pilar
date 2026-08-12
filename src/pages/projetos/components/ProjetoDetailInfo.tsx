@@ -40,12 +40,20 @@ function HorasLancadas({ projetoId }: { projetoId: string }) {
         Horas lançadas
       </p>
       <p className="text-sm font-semibold">{totalHoras.toFixed(1)}h aprovadas</p>
-      <p className="text-[11px] text-muted-foreground">{lancamentos.length} lançamento{lancamentos.length !== 1 ? "s" : ""}</p>
+      <p className="text-[11px] text-muted-foreground">
+        {lancamentos.length} lançamento{lancamentos.length !== 1 ? "s" : ""}
+      </p>
     </div>
   );
 }
 
-export function ProjetoDetailInfo({ projeto, progress, margemBrutaPct, rentabilidade, rentabilidadeLoading = false }: ProjetoDetailInfoProps) {
+export function ProjetoDetailInfo({
+  projeto,
+  progress,
+  margemBrutaPct,
+  rentabilidade,
+  rentabilidadeLoading = false,
+}: ProjetoDetailInfoProps) {
   return (
     <>
       {/* KPI Cards */}
@@ -156,25 +164,16 @@ export function ProjetoDetailInfo({ projeto, progress, margemBrutaPct, rentabili
               {/* Custo estimado */}
               <div>
                 <p className="text-[10px] uppercase text-muted-foreground mb-1">Custo estimado</p>
-                <p className="text-sm font-semibold">
-                  {formatCurrency(rentabilidade.despesas_diretas)}
-                </p>
+                <p className="text-sm font-semibold">{formatCurrency(rentabilidade.despesas_diretas)}</p>
               </div>
 
               {/* Margem bruta */}
               <div>
                 <p className="text-[10px] uppercase text-muted-foreground mb-1">Margem atual</p>
-                <p
-                  className={cn(
-                    "text-sm font-bold",
-                    margemColor(rentabilidade.margem_bruta_pct)
-                  )}
-                >
+                <p className={cn("text-sm font-bold", margemColor(rentabilidade.margem_bruta_pct))}>
                   {rentabilidade.margem_bruta_pct.toFixed(1)}%
                 </p>
-                <p className="text-[11px] text-muted-foreground">
-                  {formatCurrency(rentabilidade.margem_bruta)}
-                </p>
+                <p className="text-[11px] text-muted-foreground">{formatCurrency(rentabilidade.margem_bruta)}</p>
               </div>
 
               {/* Horas lançadas */}
@@ -184,7 +183,7 @@ export function ProjetoDetailInfo({ projeto, progress, margemBrutaPct, rentabili
           {rentabilidade !== null && (
             <div className="mt-3 pt-3 border-t">
               <Link
-                to={`/financeiro?tab=rentabilidade&projeto=${projeto.id}`}
+                to={`/gestao/financeiro?tab=rentabilidade&projeto=${projeto.id}`}
                 className="inline-flex items-center gap-1 text-xs text-ink hover:underline font-medium"
               >
                 Ver análise completa

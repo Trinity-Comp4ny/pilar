@@ -1,9 +1,10 @@
 import { Link, useOutletContext } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, FolderKanban, ArrowRight } from "lucide-react";
+import { Loader2, FolderKanban, ArrowRight, Building2 } from "lucide-react";
 import { ClienteShell } from "./ClienteShell";
 import { useClienteProjetos, type ClienteProjeto } from "./useClienteProjetos";
+import { useClienteObras } from "./useClienteObraData";
 import type { ClienteAccount } from "@/hooks/useClienteAuth";
 import { usePageTitle } from "@/hooks/usePageTitle";
 
@@ -17,6 +18,13 @@ const STATUS_COLORS: Record<string, string> = {
   Paralisado: "bg-yellow-100 text-yellow-800",
   Concluído: "bg-gray-100 text-gray-800",
   Cancelado: "bg-red-100 text-red-800",
+};
+
+const OBRA_STATUS_LABEL: Record<string, string> = {
+  planejada: "Planejada",
+  em_andamento: "Em andamento",
+  paralisada: "Paralisada",
+  concluida: "Concluída",
 };
 
 function calcProgress(disciplinas: ClienteProjeto["disciplinas"]): number {
@@ -34,6 +42,7 @@ export default function ClienteDashboard() {
   usePageTitle("Portal | Dashboard");
   const account = useOutletContext<ClienteAccount>();
   const { projetos, loading, error } = useClienteProjetos();
+  const { obras } = useClienteObras();
 
   return (
     <ClienteShell account={account}>
@@ -61,8 +70,8 @@ export default function ClienteDashboard() {
           </Card>
         )}
 
-        {/* Empty state */}
-        {!loading && !error && projetos.length === 0 && (
+        {/* Empty state: só quando não há nada liberado (nem projeto nem obra). */}
+        {!loading && !error && projetos.length === 0 && obras.length === 0 && (
           <Card>
             <CardContent className="p-12 text-center">
               <FolderKanban className="h-10 w-10 mx-auto mb-3 text-muted-foreground opacity-40" />
@@ -141,6 +150,65 @@ export default function ClienteDashboard() {
                 </Link>
               );
             })}
+          </div>
+        )}
+
+        {/* Obras liberadas (regime administração) */}
+        {obras.length > 0 && (
+          <div className="space-y-3">
+            <div>
+              <h2 className="text-sm font-semibold text-slate-900">Obras</h2>
+              <p className="text-xs text-muted-foreground">Acompanhe a execução e a prestação de contas.</p>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {obras.map((obra) => (
+                <Link key={obra.id} to={`/cliente/obra/${obra.id}`} className="block group">
+                  <Card className="h-full transition-all hover:shadow-md hover:border-brand/30 group-hover:border-brand/30">
+                    <CardContent className="p-5 space-y-4">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0 flex items-center gap-2">
+                          <Building2 className="h-4 w-4 text-muted-foreground shrink-0" />
+                          <h3 className="text-sm font-semibold text-slate-900 truncate">{obra.nome}</h3>
+                        </div>
+                        <Badge className="text-[10px] shrink-0 bg-gray-100 text-gray-800">
+                          {OBRA_STATUS_LABEL[obra.status] ?? obra.status}
+                        </Badge>
+                      </div>
+                      <div>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className="text-xs text-muted-foreground">Avanço</span>
+                          <span className="text-xs font-medium">{obra.avanco_pct}%</span>
+                        </div>
+                        <div
+                          className="w-full bg-gray-200 rounded-full h-2"
+                          role="progressbar"
+                          aria-valuenow={obra.avanco_pct}
+                          aria-valuemin={0}
+                          aria-valuemax={100}
+                          aria-label="Avanço da obra"
+                        >
+                          <div
+                            className="bg-brand h-2 rounded-full transition-all"
+                            style={{ width: `${obra.avanco_pct}%` }}
+                          />
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between text-xs text-muted-foreground">
+                        <span>Início: {formatDate(obra.data_inicio_prevista)}</span>
+                        <span>Previsão: {formatDate(obra.data_fim_prevista)}</span>
+                      </div>
+                      <div
+                        aria-hidden="true"
+                        className="inline-flex items-center gap-1 bg-brand text-ink text-xs font-medium px-3 py-1.5 rounded-lg transition-all group-hover:bg-brand/90"
+                      >
+                        Ver obra
+                        <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" />
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
+              ))}
+            </div>
           </div>
         )}
       </div>

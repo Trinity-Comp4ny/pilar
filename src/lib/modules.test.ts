@@ -11,27 +11,27 @@ import {
 
 describe("routeToModule", () => {
   it("resolve rota exata de cada item de menu", () => {
-    expect(routeToModule("/financeiro")).toBe("gestao");
-    expect(routeToModule("/equipe")).toBe("gestao");
-    expect(routeToModule("/fornecedores")).toBe("gestao");
-    expect(routeToModule("/leads")).toBe("gestao");
-    expect(routeToModule("/documentos")).toBe("gestao");
-    expect(routeToModule("/clientes")).toBe("gestao");
+    expect(routeToModule("/gestao/financeiro")).toBe("gestao");
+    expect(routeToModule("/gestao/equipe")).toBe("gestao");
+    expect(routeToModule("/obras/fornecedores")).toBe("obras");
+    expect(routeToModule("/gestao/leads")).toBe("gestao");
+    expect(routeToModule("/gestao/propostas")).toBe("gestao");
+    expect(routeToModule("/gestao/clientes")).toBe("gestao");
     expect(routeToModule("/projetos")).toBe("projetos");
-    expect(routeToModule("/calendario")).toBe("projetos");
+    expect(routeToModule("/projetos/calendario")).toBe("projetos");
     expect(routeToModule("/obras")).toBe("obras");
   });
 
   it("resolve sub-rotas por prefixo (detalhes)", () => {
     expect(routeToModule("/projetos/abc-123")).toBe("projetos");
-    expect(routeToModule("/clientes/9f2/financeiro")).toBe("gestao");
-    expect(routeToModule("/financeiro/lancamentos")).toBe("gestao");
+    expect(routeToModule("/gestao/clientes/9f2/financeiro")).toBe("gestao");
+    expect(routeToModule("/gestao/financeiro/lancamentos")).toBe("gestao");
   });
 
   it("não confunde prefixo parcial de segmento", () => {
     // "/projetos-x" não é sub-rota de "/projetos"
     expect(routeToModule("/projetosx")).toBeNull();
-    expect(routeToModule("/financeiroy")).toBeNull();
+    expect(routeToModule("/gestaox")).toBeNull();
   });
 
   it("rotas transversais e desconhecidas retornam null", () => {
@@ -48,13 +48,14 @@ describe("routeToModule", () => {
   });
 
   it("ignora barra final", () => {
-    expect(routeToModule("/financeiro/")).toBe("gestao");
+    expect(routeToModule("/gestao/financeiro/")).toBe("gestao");
     expect(routeToModule("/projetos/")).toBe("projetos");
   });
 
   it("rotas extras fora do menu pertencem a um módulo", () => {
+    // /mapa e /rentabilidade são redirects; ainda classificam para o dono conceitual.
     expect(routeToModule("/mapa")).toBe("projetos");
-    expect(routeToModule("/rentabilidade")).toBe("projetos");
+    expect(routeToModule("/rentabilidade")).toBe("gestao");
   });
 });
 

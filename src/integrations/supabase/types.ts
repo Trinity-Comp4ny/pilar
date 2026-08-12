@@ -2457,9 +2457,127 @@ export type Database = {
         }
         Relationships: []
       }
+      notificacao_preferencias: {
+        Row: {
+          categoria: string
+          created_at: string
+          email: boolean
+          empresa_id: string
+          id: string
+          in_app: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          categoria: string
+          created_at?: string
+          email?: boolean
+          empresa_id: string
+          id?: string
+          in_app?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          categoria?: string
+          created_at?: string
+          email?: boolean
+          empresa_id?: string
+          id?: string
+          in_app?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notificacao_preferencias_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notificacao_preferencias_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notificacoes: {
+        Row: {
+          arquivada_em: string | null
+          categoria: string
+          created_at: string
+          destinatario_id: string
+          empresa_id: string
+          expires_at: string | null
+          id: string
+          lido_em: string | null
+          link: string | null
+          mensagem: string | null
+          referencia_id: string | null
+          referencia_tipo: string | null
+          severidade: string
+          tipo: string
+          titulo: string
+        }
+        Insert: {
+          arquivada_em?: string | null
+          categoria: string
+          created_at?: string
+          destinatario_id: string
+          empresa_id: string
+          expires_at?: string | null
+          id?: string
+          lido_em?: string | null
+          link?: string | null
+          mensagem?: string | null
+          referencia_id?: string | null
+          referencia_tipo?: string | null
+          severidade?: string
+          tipo: string
+          titulo: string
+        }
+        Update: {
+          arquivada_em?: string | null
+          categoria?: string
+          created_at?: string
+          destinatario_id?: string
+          empresa_id?: string
+          expires_at?: string | null
+          id?: string
+          lido_em?: string | null
+          link?: string | null
+          mensagem?: string | null
+          referencia_id?: string | null
+          referencia_tipo?: string | null
+          severidade?: string
+          tipo?: string
+          titulo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notificacoes_destinatario_id_fkey"
+            columns: ["destinatario_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notificacoes_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       obra_conta_lancamento: {
         Row: {
           comprovante_url: string | null
+          confirmada_portal: boolean
           created_at: string
           created_by: string
           data: string
@@ -2478,6 +2596,7 @@ export type Database = {
         }
         Insert: {
           comprovante_url?: string | null
+          confirmada_portal?: boolean
           created_at?: string
           created_by?: string
           data: string
@@ -2496,6 +2615,7 @@ export type Database = {
         }
         Update: {
           comprovante_url?: string | null
+          confirmada_portal?: boolean
           created_at?: string
           created_by?: string
           data?: string
@@ -3128,6 +3248,7 @@ export type Database = {
         Row: {
           cep: string | null
           cidade: string | null
+          cliente_id: string | null
           created_at: string
           created_by: string
           data_fim_prevista: string | null
@@ -3149,10 +3270,12 @@ export type Database = {
           taxa_administracao_pct: number
           updated_at: string
           updated_by: string | null
+          visivel_portal: boolean
         }
         Insert: {
           cep?: string | null
           cidade?: string | null
+          cliente_id?: string | null
           created_at?: string
           created_by?: string
           data_fim_prevista?: string | null
@@ -3174,10 +3297,12 @@ export type Database = {
           taxa_administracao_pct?: number
           updated_at?: string
           updated_by?: string | null
+          visivel_portal?: boolean
         }
         Update: {
           cep?: string | null
           cidade?: string | null
+          cliente_id?: string | null
           created_at?: string
           created_by?: string
           data_fim_prevista?: string | null
@@ -3199,8 +3324,16 @@ export type Database = {
           taxa_administracao_pct?: number
           updated_at?: string
           updated_by?: string | null
+          visivel_portal?: boolean
         }
         Relationships: [
+          {
+            foreignKeyName: "obras_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "obras_empresa_id_fkey"
             columns: ["empresa_id"]
@@ -3974,6 +4107,44 @@ export type Database = {
           },
         ]
       }
+      projeto_etapas: {
+        Row: {
+          bucket: Database["public"]["Enums"]["status_projeto"]
+          cor: string | null
+          created_at: string
+          empresa_id: string
+          id: string
+          nome: string
+          ordem: number
+        }
+        Insert: {
+          bucket?: Database["public"]["Enums"]["status_projeto"]
+          cor?: string | null
+          created_at?: string
+          empresa_id: string
+          id?: string
+          nome: string
+          ordem?: number
+        }
+        Update: {
+          bucket?: Database["public"]["Enums"]["status_projeto"]
+          cor?: string | null
+          created_at?: string
+          empresa_id?: string
+          id?: string
+          nome?: string
+          ordem?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projeto_etapas_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       projeto_orcamento_fases: {
         Row: {
           created_at: string | null
@@ -4058,6 +4229,7 @@ export type Database = {
           deleted_at: string | null
           disciplinas: Json | null
           empresa_id: string
+          etapa_id: string | null
           id: string
           latitude: number | null
           links: Json
@@ -4087,6 +4259,7 @@ export type Database = {
           deleted_at?: string | null
           disciplinas?: Json | null
           empresa_id: string
+          etapa_id?: string | null
           id?: string
           latitude?: number | null
           links?: Json
@@ -4116,6 +4289,7 @@ export type Database = {
           deleted_at?: string | null
           disciplinas?: Json | null
           empresa_id?: string
+          etapa_id?: string | null
           id?: string
           latitude?: number | null
           links?: Json
@@ -4144,6 +4318,13 @@ export type Database = {
             columns: ["empresa_id"]
             isOneToOne: false
             referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projetos_etapa_id_fkey"
+            columns: ["etapa_id"]
+            isOneToOne: false
+            referencedRelation: "projeto_etapas"
             referencedColumns: ["id"]
           },
         ]
@@ -4558,6 +4739,29 @@ export type Database = {
           },
         ]
       }
+      tarefa_contadores: {
+        Row: {
+          empresa_id: string
+          ultimo: number
+        }
+        Insert: {
+          empresa_id: string
+          ultimo?: number
+        }
+        Update: {
+          empresa_id?: string
+          ultimo?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tarefa_contadores_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: true
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tarefa_etapas: {
         Row: {
           bucket: string | null
@@ -4596,11 +4800,69 @@ export type Database = {
           },
         ]
       }
+      tarefa_responsaveis: {
+        Row: {
+          created_at: string
+          empresa_id: string
+          pessoa_id: string
+          tarefa_id: string
+        }
+        Insert: {
+          created_at?: string
+          empresa_id: string
+          pessoa_id: string
+          tarefa_id: string
+        }
+        Update: {
+          created_at?: string
+          empresa_id?: string
+          pessoa_id?: string
+          tarefa_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tarefa_responsaveis_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tarefa_responsaveis_pessoa_id_fkey"
+            columns: ["pessoa_id"]
+            isOneToOne: false
+            referencedRelation: "pessoas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tarefa_responsaveis_pessoa_id_fkey"
+            columns: ["pessoa_id"]
+            isOneToOne: false
+            referencedRelation: "pessoas_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tarefa_responsaveis_pessoa_id_fkey"
+            columns: ["pessoa_id"]
+            isOneToOne: false
+            referencedRelation: "view_folha_pagamento"
+            referencedColumns: ["pessoa_id"]
+          },
+          {
+            foreignKeyName: "tarefa_responsaveis_tarefa_id_fkey"
+            columns: ["tarefa_id"]
+            isOneToOne: false
+            referencedRelation: "tarefas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tarefas: {
         Row: {
           comentarios: Json
           created_at: string
           created_by: string
+          data_inicio: string | null
           descricao: string | null
           empresa_id: string
           etapa_id: string | null
@@ -4609,6 +4871,7 @@ export type Database = {
           id: string
           labels: string[]
           links: Json
+          numero: number
           obra_frente_id: string | null
           obra_id: string | null
           prazo: string | null
@@ -4623,6 +4886,7 @@ export type Database = {
           comentarios?: Json
           created_at?: string
           created_by?: string
+          data_inicio?: string | null
           descricao?: string | null
           empresa_id: string
           etapa_id?: string | null
@@ -4631,6 +4895,7 @@ export type Database = {
           id?: string
           labels?: string[]
           links?: Json
+          numero?: number
           obra_frente_id?: string | null
           obra_id?: string | null
           prazo?: string | null
@@ -4645,6 +4910,7 @@ export type Database = {
           comentarios?: Json
           created_at?: string
           created_by?: string
+          data_inicio?: string | null
           descricao?: string | null
           empresa_id?: string
           etapa_id?: string | null
@@ -4653,6 +4919,7 @@ export type Database = {
           id?: string
           labels?: string[]
           links?: Json
+          numero?: number
           obra_frente_id?: string | null
           obra_id?: string | null
           prazo?: string | null
@@ -5344,6 +5611,14 @@ export type Database = {
     }
     Functions: {
       _feature_catalog: { Args: never; Returns: string[] }
+      _notif_gestao: { Args: { p_empresa: string }; Returns: string[] }
+      _notif_resp_disciplina: {
+        Args: { p_disciplina: string }
+        Returns: string[]
+      }
+      _notif_resp_projeto: { Args: { p_projeto: string }; Returns: string[] }
+      _notif_resp_tarefa: { Args: { p_tarefa: string }; Returns: string[] }
+      _notif_ve_financeiro: { Args: { p_empresa: string }; Returns: string[] }
       _portal_create_account: {
         Args: {
           p_cliente_id: string
@@ -5542,6 +5817,12 @@ export type Database = {
         Args: { p_ano: number; p_cartao_id: string; p_mes: number }
         Returns: string
       }
+      gerar_notificacoes_ambient: { Args: never; Returns: number }
+      get_cliente_obra_detail: {
+        Args: { p_obra_id: string; p_token: string }
+        Returns: Json
+      }
+      get_cliente_obras: { Args: { p_token: string }; Returns: Json }
       get_cliente_projeto_detail:
         | { Args: { p_projeto_id: string }; Returns: Json }
         | { Args: { p_projeto_id: string; p_token?: string }; Returns: Json }
@@ -5662,6 +5943,22 @@ export type Database = {
         }[]
       }
       my_empresa_id: { Args: never; Returns: string }
+      notificar: {
+        Args: {
+          p_categoria: string
+          p_destinatarios: string[]
+          p_empresa_id: string
+          p_expires_at?: string
+          p_link?: string
+          p_mensagem?: string
+          p_ref_id?: string
+          p_ref_tipo?: string
+          p_severidade: string
+          p_tipo: string
+          p_titulo: string
+        }
+        Returns: number
+      }
       pagar_fatura: {
         Args: {
           p_conta_id: string
@@ -5874,6 +6171,7 @@ export type Database = {
       rpc_obra_despesa_salvar: {
         Args: {
           p_comprovante_url?: string
+          p_confirmada_portal?: boolean
           p_data: string
           p_descricao: string
           p_fornecedor_id?: string
@@ -5885,6 +6183,7 @@ export type Database = {
         }
         Returns: {
           comprovante_url: string | null
+          confirmada_portal: boolean
           created_at: string
           created_by: string
           data: string

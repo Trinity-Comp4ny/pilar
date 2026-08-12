@@ -1,9 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
+import { useQuery } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
 import { Loader2, MapPin } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { Switch } from "@/components/ui/switch";
 import {
   Dialog,
   DialogContent,
@@ -27,6 +30,7 @@ import { onlyDigits } from "@/lib/maskUtils";
 
 const SEM_RESPONSAVEL = "__none__";
 const SEM_PROJETO = "__none__";
+const SEM_CLIENTE = "__none__";
 
 const schema = z.object({
   nome: z.string().min(1, "Dê um nome à obra"),
@@ -35,6 +39,8 @@ const schema = z.object({
   taxa_administracao_pct: z.string(),
   projeto_id: z.string(),
   responsavel_id: z.string(),
+  cliente_id: z.string(),
+  visivel_portal: z.boolean(),
   cep: z.string(),
   data_inicio_prevista: z.string(),
   data_fim_prevista: z.string(),
@@ -49,6 +55,8 @@ const VAZIO: FormData = {
   taxa_administracao_pct: "",
   projeto_id: SEM_PROJETO,
   responsavel_id: SEM_RESPONSAVEL,
+  cliente_id: SEM_CLIENTE,
+  visivel_portal: false,
   cep: "",
   data_inicio_prevista: "",
   data_fim_prevista: "",
@@ -71,6 +79,7 @@ export function ObraFormDialog({ open, onOpenChange, obra, onSaved }: Props) {
 
   const { data: projetos = [] } = useProjetosLite();
   const { data: pessoas = [] } = usePessoasEmpresa();
+  const { data: clientes = [] } = useClientesLite();
   const { data: obrasExistentes = [] } = useObrasParaFiltro(isEdit);
   const criar = useCreateObra();
   const atualizar = useUpdateObra();
@@ -100,6 +109,8 @@ export function ObraFormDialog({ open, onOpenChange, obra, onSaved }: Props) {
         taxa_administracao_pct: obra.taxa_administracao_pct ? String(obra.taxa_administracao_pct) : "",
         projeto_id: obra.projeto_id ?? SEM_PROJETO,
         responsavel_id: obra.responsavel_id ?? SEM_RESPONSAVEL,
+        cliente_id: obra.cliente_id ?? SEM_CLIENTE,
+        visivel_portal: obra.visivel_portal ?? false,
         cep: obra.cep ?? "",
         data_inicio_prevista: obra.data_inicio_prevista ?? "",
         data_fim_prevista: obra.data_fim_prevista ?? "",
@@ -162,6 +173,8 @@ export function ObraFormDialog({ open, onOpenChange, obra, onSaved }: Props) {
       taxa_administracao_pct: data.modelo_cobranca === "administracao" ? Number(data.taxa_administracao_pct) || 0 : 0,
       projeto_id: mostrarProjeto && data.projeto_id !== SEM_PROJETO ? data.projeto_id : null,
       responsavel_id: data.responsavel_id === SEM_RESPONSAVEL ? null : data.responsavel_id,
+      cliente_id: data.cliente_id === SEM_CLIENTE ? null : data.cliente_id,
+      visivel_portal: data.visivel_portal,
       cep: onlyDigits(data.cep) || null,
       cidade: local?.cidade || null,
       localizacao: local?.localizacao || null,
@@ -324,6 +337,39 @@ export function ObraFormDialog({ open, onOpenChange, obra, onSaved }: Props) {
             </div>
           )}
 
+          {/* Portal do cliente: quem vê e se está publicada */}
+          <div className="space-y-1.5">
+            <Label htmlFor="cliente">Cliente</Label>
+            <Select value={watch("cliente_id")} onValueChange={(v) => setValue("cliente_id", v)}>
+              <SelectTrigger id="cliente">
+                <SelectValue placeholder="Sem cliente" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={SEM_CLIENTE}>Sem cliente</SelectItem>
+                {clientes.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    {c.nome}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex items-start justify-between gap-3 rounded-lg border p-3">
+            <div className="space-y-0.5">
+              <Label htmlFor="visivel_portal">Visível no portal do cliente</Label>
+              <p className="text-xs text-muted-foreground">
+                O dono acompanha o andamento e a prestação de contas. Só vale para obra em administração com cliente
+                vinculado.
+              </p>
+            </div>
+            <Switch
+              id="visivel_portal"
+              checked={watch("visivel_portal")}
+              onCheckedChange={(v) => setValue("visivel_portal", v)}
+            />
+          </div>
+
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label htmlFor="inicio">Início previsto</Label>
@@ -359,4 +405,17 @@ export function ObraFormDialog({ open, onOpenChange, obra, onSaved }: Props) {
 function useObrasParaFiltro(isEdit: boolean) {
   const q = useObras();
   return { data: isEdit ? [] : (q.data ?? []) };
+}
+
+// Lista leve de clientes para vincular a obra ao portal do cliente.
+function useClientesLite() {
+  return useQuery({
+    queryKey: ["clientes-lite"],
+    queryFn: async (): Promise<{ id: string; nome: string }[]> => {
+      const { data, error } = await supabase.from("clientes").select("id, nome").is("deleted_at", null).order("nome");
+      if (error) throw error;
+      return data ?? [];
+    },
+    staleTime: 1000 * 60 * 5,
+  });
 }

@@ -1,7 +1,6 @@
 import { Outlet } from "react-router-dom";
 import { SidebarProvider, useSidebar } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
-import { AlertsBell } from "@/components/AlertsBell";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { UltraAdminPlatformBanner } from "@/components/UltraAdminPlatformBanner";
 
@@ -20,9 +19,6 @@ function LayoutContent() {
       <AppSidebar />
       <div className={`${marginLeft}`}>
         <UltraAdminPlatformBanner />
-        <div className="flex justify-end items-center px-6 pt-4 md:px-10">
-          <AlertsBell />
-        </div>
         <main id="main-content" className="md:px-10 md:pb-10 md:pt-4">
           <ErrorBoundary>
             <Outlet />

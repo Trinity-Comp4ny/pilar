@@ -4,8 +4,9 @@
  * Regras:
  * - O módulo ativo é SEMPRE inferido da rota via routeToModule(); o switcher da
  *   sidebar é apresentação, nunca autorização (gates continuam em FeatureRoute,
- *   RequireRole e usePermissions).
- * - Nenhuma rota existente muda de path; este arquivo só classifica rotas em módulos.
+ *   AdminOnlyRoute e usePermissions).
+ * - As rotas são aninhadas por módulo (/<modulo>/<aba>) desde o ADR 0016; rotas
+ *   flat antigas seguem funcionando via redirect em App.tsx.
  * - Entidade é da empresa; o módulo é dono da tela de administração dela; outros
  *   módulos referenciam a entidade e mostram recortes (ver spec, "Regra de
  *   arquitetura").
@@ -64,19 +65,18 @@ export const MODULES: Record<ModuleId, ModuleDef> = {
     id: "gestao",
     label: "Gestão",
     icon: Briefcase,
-    homeRoute: "/meu-trabalho",
+    homeRoute: "/gestao/meu-trabalho",
     items: [
+      // Empresa (primeiro grupo: Meu trabalho é a home do módulo)
+      { title: "Meu trabalho", url: "/gestao/meu-trabalho", icon: ListTodo, feature: "meu_trabalho", group: "Empresa" },
+      { title: "Equipe", url: "/gestao/equipe", icon: Users, feature: "pessoas", adminOnly: true, group: "Empresa" },
+      { title: "Metas", url: "/gestao/metas", icon: Target, feature: "metas", adminOnly: true, group: "Empresa" },
       // Comercial (movido de Projetos: dono da relação com o cliente é gestão/comercial)
-      { title: "Leads", url: "/leads", icon: UserPlus, feature: "leads", group: "Comercial" },
-      { title: "Clientes", url: "/clientes", icon: Building2, feature: "clientes", group: "Comercial" },
-      { title: "Propostas", url: "/documentos", icon: FileText, feature: "propostas", group: "Comercial" },
+      { title: "Leads", url: "/gestao/leads", icon: UserPlus, feature: "leads", group: "Comercial" },
+      { title: "Clientes", url: "/gestao/clientes", icon: Building2, feature: "clientes", group: "Comercial" },
+      { title: "Propostas", url: "/gestao/propostas", icon: FileText, feature: "propostas", group: "Comercial" },
       // Financeiro
-      { title: "Financeiro", url: "/financeiro", icon: Wallet, feature: "financeiro", group: "Financeiro" },
-      // Empresa
-      { title: "Equipe", url: "/equipe", icon: Users, feature: "pessoas", adminOnly: true, group: "Empresa" },
-      { title: "Metas", url: "/metas", icon: Target, feature: "metas", adminOnly: true, group: "Empresa" },
-      { title: "Fornecedores", url: "/fornecedores", icon: Truck, feature: "financeiro", group: "Empresa" },
-      { title: "Meu trabalho", url: "/meu-trabalho", icon: ListTodo, feature: "meu_trabalho", group: "Empresa" },
+      { title: "Financeiro", url: "/gestao/financeiro", icon: Wallet, feature: "financeiro", group: "Financeiro" },
     ],
   },
   projetos: {
@@ -85,12 +85,14 @@ export const MODULES: Record<ModuleId, ModuleDef> = {
     icon: FolderKanban,
     homeRoute: "/projetos",
     items: [
-      // As lentes da tela /projetos (mesma coleção, ?view=): navegáveis direto na sidebar.
-      { title: "Quadro", url: "/projetos", icon: LayoutGrid, feature: "projetos" },
-      { title: "Disciplinas", url: "/projetos?view=disciplinas", icon: Layers, feature: "projetos" },
-      { title: "Cronograma", url: "/projetos?view=cronograma", icon: GanttChartSquare, feature: "projetos" },
-      { title: "Mapa", url: "/projetos?view=mapa", icon: MapPin, feature: "mapa" },
-      { title: "Calendário", url: "/calendario", icon: CalendarDays, feature: "projetos" },
+      // A coleção de projetos (com toggle Quadro/Lista interno) + as lentes de
+      // recorte, aninhadas sob o módulo (/projetos/*) para comunicar pertencimento
+      // e liberar os nomes genéricos (cronograma/mapa) para outros módulos.
+      { title: "Projetos", url: "/projetos", icon: LayoutGrid, feature: "projetos" },
+      { title: "Disciplinas", url: "/projetos/disciplinas", icon: Layers, feature: "projetos" },
+      { title: "Cronograma", url: "/projetos/cronograma", icon: GanttChartSquare, feature: "projetos" },
+      { title: "Mapa", url: "/projetos/mapa", icon: MapPin, feature: "mapa" },
+      { title: "Calendário", url: "/projetos/calendario", icon: CalendarDays, feature: "projetos" },
     ],
   },
   obras: {
@@ -100,6 +102,10 @@ export const MODULES: Record<ModuleId, ModuleDef> = {
     homeRoute: "/obras",
     items: [
       { title: "Obras", url: "/obras", icon: HardHat, feature: "obras" },
+      // Fornecedor é cadastro global da empresa (empresa_id, sem obra_id), reusado
+      // por cotação/conta da obra e pela despesa do escritório. A porta de gerência
+      // mora aqui na Obra; o escritório mantém o SupplierManager embutido na despesa.
+      { title: "Fornecedores", url: "/obras/fornecedores", icon: Truck, feature: "obras" },
       { title: "Clima", url: "/obras/clima", icon: CloudSun, feature: "obras" },
     ],
   },
@@ -110,10 +116,10 @@ export const EMPRESA_ITEMS: ModuleMenuItem[] = [
   { title: "Agentes", url: "/agentes", icon: Sparkles, feature: "ai_chat" as Feature, badge: "novo" },
 ];
 
-/** Rotas que pertencem a um módulo mas não são item de menu (detalhes, sub-rotas). */
+/** Rotas que pertencem a um módulo mas não são item de menu (detalhes, redirects). */
 const EXTRA_ROUTE_PREFIXES: ReadonlyArray<readonly [string, ModuleId]> = [
   ["/mapa", "projetos"],
-  ["/rentabilidade", "projetos"],
+  ["/rentabilidade", "gestao"], // redireciona para /gestao/financeiro?tab=rentabilidade
 ];
 
 const ROUTE_PREFIXES: ReadonlyArray<readonly [string, ModuleId]> = [

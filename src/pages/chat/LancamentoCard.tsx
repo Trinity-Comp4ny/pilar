@@ -168,7 +168,7 @@ export function LancamentoCard({ index, draft, tipo, onConfirmar, onCancelar, on
         </p>
         <div className="mt-3 flex items-center gap-2 pl-8">
           <NavLink
-            to="/financeiro"
+            to="/gestao/financeiro"
             className="inline-flex items-center gap-1 rounded-lg border border-border px-2.5 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted"
           >
             Ver no Financeiro

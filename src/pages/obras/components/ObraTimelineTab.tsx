@@ -62,10 +62,10 @@ export function ObraTimelineTab({ obra, onIrParaDiario }: { obra: ObraResumo; on
         <Progress value={obra.avanco} className="h-2" />
       </Bloco>
 
-      <Bloco titulo="Frentes de serviço">
+      <Bloco titulo="Etapas">
         {frentes.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            Nenhuma frente ainda. Abra a aba Frentes para organizar os serviços.
+            Nenhuma etapa ainda. Abra a aba Cronograma para organizar as etapas.
           </p>
         ) : (
           <ul className="space-y-1.5">

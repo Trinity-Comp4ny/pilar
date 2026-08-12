@@ -2,7 +2,10 @@
 -- Roda automaticamente em `supabase start` e `supabase db reset`, então o banco
 -- local sempre nasce com uma empresa demo e um usuário owner que loga por senha.
 --
--- Login:  dev@local.test  /  123456
+-- Logins (todos com senha 123456):
+--   dev@local.test    → ultra_admin (bypass total, telas de plataforma)
+--   admin@local.test  → admin da Empresa Dev (acesso total dentro da empresa)
+--   user@local.test   → user comum: SEM financeiro e SEM obras (testa gating)
 --
 -- Idempotente: se o usuário já existe, não faz nada.
 
@@ -63,12 +66,77 @@ begin
 
   alter table auth.users enable trigger on_auth_user_created;
 
-  -- profile.features fica vazio: owner enxerga tudo e o gate real mora na empresa.
+  -- role 'ultra_admin': superadmin com bypass total (is_ultra_admin lê direto de
+  -- profiles.role, has_role dá bypass em qualquer verificação, e libera as telas
+  -- de plataforma/impersonation no front). profile.features fica vazio de propósito
   -- (o validador de profile trata algumas chaves como nível, ex. mapa=viewer/editor,
-  --  então não dá para reusar o payload booleano da empresa aqui.)
+  --  então não dá para reusar o payload booleano da empresa aqui). O trigger
+  --  tg_protect_ultra_admin barra promoção a ultra_admin via SQL de usuário comum,
+  --  mas o seed roda como 'postgres' (conexão direta), que tem bypass.
   insert into public.profiles (
     id, empresa_id, email, first_name, last_name, role, onboarding_completed, features
   ) values (
-    v_user_id, v_empresa_id, v_email, 'Dev', 'Local', 'admin', true, '{}'::jsonb
+    v_user_id, v_empresa_id, v_email, 'Dev', 'Local', 'ultra_admin', true, '{}'::jsonb
   );
+end $$;
+
+-- Usuários não-ultra da Empresa Dev, para testar o gating de acesso no browser.
+-- Mesmo padrão do bloco acima (trigger desligado + auth.users + identity + profile).
+do $$
+declare
+  v_empresa_id uuid := '00000000-0000-0000-0000-000000000001';
+  v_senha      text := '123456';
+  r record;
+begin
+  for r in
+    select * from (values
+      -- id, email, role, features (JSONB por usuário; '{}' = admin dá bypass na empresa)
+      ('00000000-0000-0000-0000-000000000011'::uuid, 'admin@local.test', 'admin'::public.user_role,
+       '{}'::jsonb, 'Admin', 'Empresa'),
+      ('00000000-0000-0000-0000-000000000012'::uuid, 'user@local.test', 'user'::public.user_role,
+       '{"projetos":"editor","leads":"editor","propostas":"editor","clientes":"viewer"}'::jsonb,
+       'User', 'Comum')
+    ) as t(id, email, role, features, first_name, last_name)
+  loop
+    if exists (select 1 from auth.users where id = r.id) then
+      continue;
+    end if;
+
+    alter table auth.users disable trigger on_auth_user_created;
+
+    insert into auth.users (
+      instance_id, id, aud, role, email,
+      encrypted_password, email_confirmed_at,
+      raw_app_meta_data, raw_user_meta_data,
+      confirmation_token, recovery_token,
+      email_change, email_change_token_new, email_change_token_current,
+      phone_change, phone_change_token, reauthentication_token,
+      created_at, updated_at
+    ) values (
+      '00000000-0000-0000-0000-000000000000',
+      r.id, 'authenticated', 'authenticated', r.email,
+      crypt(v_senha, gen_salt('bf')), now(),
+      '{"provider":"email","providers":["email"]}'::jsonb,
+      '{}'::jsonb,
+      '', '', '', '', '', '', '', '',
+      now(), now()
+    );
+
+    insert into auth.identities (
+      id, user_id, provider_id, provider, identity_data,
+      last_sign_in_at, created_at, updated_at
+    ) values (
+      gen_random_uuid(), r.id, r.id::text, 'email',
+      jsonb_build_object('sub', r.id::text, 'email', r.email),
+      now(), now(), now()
+    );
+
+    alter table auth.users enable trigger on_auth_user_created;
+
+    insert into public.profiles (
+      id, empresa_id, email, first_name, last_name, role, onboarding_completed, features
+    ) values (
+      r.id, v_empresa_id, r.email, r.first_name, r.last_name, r.role, true, r.features
+    );
+  end loop;
 end $$;

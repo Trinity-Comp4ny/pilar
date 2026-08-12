@@ -18,7 +18,9 @@ export function useObraTarefas(obraId: string | undefined) {
     queryFn: async (): Promise<ObraTarefa[]> => {
       const { data, error } = await supabase
         .from("tarefas")
-        .select("*, responsavel:pessoas(id, nome)")
+        // Desambigua o embed: após a tabela-ponte tarefa_responsaveis, há dois
+        // caminhos tarefas↔pessoas; fixa o responsável primário pela FK direta.
+        .select("*, responsavel:pessoas!tarefas_responsavel_id_fkey(id, nome)")
         .eq("obra_id", obraId!)
         .order("created_at", { ascending: true })
         .returns<ObraTarefa[]>();
@@ -33,6 +35,7 @@ export interface NovaObraTarefa {
   titulo: string;
   obra_frente_id: string | null;
   responsavel_id?: string | null;
+  data_inicio?: string | null;
   prazo?: string | null;
 }
 
@@ -56,6 +59,7 @@ export function useCreateObraTarefa(obraId: string, projetoId: string | null) {
           obra_frente_id: input.obra_frente_id,
           titulo: input.titulo,
           responsavel_id: input.responsavel_id ?? null,
+          data_inicio: input.data_inicio ?? null,
           prazo: input.prazo ?? null,
         })
         .select()
@@ -77,7 +81,7 @@ export function useUpdateObraTarefa(obraId: string) {
       id,
       ...patch
     }: { id: string } & Partial<
-      Pick<TarefaRow, "status" | "titulo" | "responsavel_id" | "prazo" | "obra_frente_id">
+      Pick<TarefaRow, "status" | "titulo" | "responsavel_id" | "data_inicio" | "prazo" | "obra_frente_id">
     >): Promise<void> => {
       const { error } = await supabase.from("tarefas").update(patch).eq("id", id);
       if (error) throw error;

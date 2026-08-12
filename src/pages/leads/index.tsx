@@ -143,13 +143,18 @@ export default function Leads() {
   const [leadToDelete, setLeadToDelete] = useState<{ id: string; nome: string } | null>(null);
   const [collapsedColumns, setCollapsedColumns] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState("");
-  const [estagioFilter, setEstagioFilter] = useState<Set<string>>(new Set());
   const [origemFilter, setOrigemFilter] = useState("");
   const [responsavelFilter, setResponsavelFilter] = useState("");
   const [periodo, setPeriodo] = useState<PeriodoFilter>("todos");
   const [sortBy, setSortBy] = useState<SortBy>("padrao");
 
   const leadNome = (lead: Lead) => (lead.sobrenome ? `${lead.nome} ${lead.sobrenome}` : lead.nome);
+
+  const responsavelNome = (id?: string | null) => {
+    if (!id) return null;
+    const m = members.find((mem) => mem.id === id);
+    return m ? `${m.first_name} ${m.last_name}`.trim() : null;
+  };
 
   const toggleColumn = (status: string) => {
     setCollapsedColumns((prev) => {
@@ -163,15 +168,6 @@ export default function Leads() {
   const origemOptions = Array.from(
     new Set(leads.map((l) => l.origem).filter((o): o is string => !!o && o.trim() !== ""))
   ).sort((a, b) => a.localeCompare(b, "pt-BR"));
-
-  const toggleEstagio = (status: string) => {
-    setEstagioFilter((prev) => {
-      const next = new Set(prev);
-      if (next.has(status)) next.delete(status);
-      else next.add(status);
-      return next;
-    });
-  };
 
   const matchesPeriodo = (lead: Lead) => {
     if (periodo === "todos") return true;
@@ -231,15 +227,10 @@ export default function Leads() {
     return sortLeads(filtered);
   };
 
-  const visibleStatuses = Object.keys(statusConfig).filter((s) => estagioFilter.size === 0 || estagioFilter.has(s));
+  const visibleStatuses = Object.keys(statusConfig);
 
   const filtersActive =
-    !!searchQuery.trim() ||
-    estagioFilter.size > 0 ||
-    !!origemFilter ||
-    !!responsavelFilter ||
-    periodo !== "todos" ||
-    sortBy !== "padrao";
+    !!searchQuery.trim() || !!origemFilter || !!responsavelFilter || periodo !== "todos" || sortBy !== "padrao";
 
   const handleCardClick = (lead: Lead) => {
     setSelectedLead(lead);
@@ -448,7 +439,7 @@ export default function Leads() {
     createProposta.mutate(lead, {
       onSuccess: (proposta) => {
         setIsDetailOpen(false);
-        navigate(`/documentos?edit=${proposta.id}`);
+        navigate(`/gestao/propostas?edit=${proposta.id}`);
       },
     });
   };
@@ -484,7 +475,6 @@ export default function Leads() {
 
   const handleClearFilters = () => {
     setSearchQuery("");
-    setEstagioFilter(new Set());
     setOrigemFilter("");
     setResponsavelFilter("");
     setPeriodo("todos");
@@ -582,29 +572,6 @@ export default function Leads() {
               Limpar
             </Button>
           )}
-        </div>
-
-        <div className="flex flex-wrap items-center gap-1.5">
-          <span className="text-[11px] uppercase tracking-wide text-muted-foreground mr-1">Estágio</span>
-          {Object.entries(statusConfig).map(([status, config]) => {
-            const active = estagioFilter.has(status);
-            return (
-              <button
-                key={status}
-                type="button"
-                onClick={() => toggleEstagio(status)}
-                aria-pressed={active}
-                className={cn(
-                  "text-xs rounded-full border px-2.5 py-1 transition-colors",
-                  active
-                    ? "border-brand bg-brand text-ink font-medium"
-                    : "border-border text-muted-foreground hover:bg-muted/40"
-                )}
-              >
-                {config.label}
-              </button>
-            );
-          })}
         </div>
       </div>
 
@@ -716,6 +683,7 @@ export default function Leads() {
                                     onMoveStatus={handleMobileMove}
                                     dragging={snapshot.isDragging}
                                     proposta={primariaDoLead(lead.id)}
+                                    responsavelNome={responsavelNome(lead.responsavel_id)}
                                   />
                                 </div>
                               )}
@@ -755,6 +723,7 @@ export default function Leads() {
                           canEdit={canEdit}
                           onMoveStatus={handleMobileMove}
                           proposta={primariaDoLead(lead.id)}
+                          responsavelNome={responsavelNome(lead.responsavel_id)}
                         />
                       ))}
                     </div>
@@ -803,7 +772,7 @@ export default function Leads() {
         proposta={selectedLead ? primariaDoLead(selectedLead.id) : null}
         onOpenProposta={(id) => {
           setIsDetailOpen(false);
-          navigate(`/documentos?edit=${id}`);
+          navigate(`/gestao/propostas?edit=${id}`);
         }}
         onConvertProjeto={() => setIsConvertProjetoOpen(true)}
         convertProjetoPending={converterProposta.isPending}

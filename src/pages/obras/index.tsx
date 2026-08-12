@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { HardHat, MapPin, Plus, User } from "lucide-react";
+import { HardHat, MapPin, Plus, User, Globe } from "lucide-react";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { KPICard } from "@/components/KPICard";
@@ -44,6 +44,15 @@ function ObraCard({ obra }: { obra: ObraResumo }) {
               <span className="inline-flex items-center gap-1.5">
                 <MapPin className="h-3.5 w-3.5" />
                 {obra.cidade}
+              </span>
+            )}
+            {obra.visivel_portal && obra.cliente_id && (
+              <span
+                className="inline-flex items-center gap-1.5 text-positive-strong"
+                title="Cliente acompanha esta obra no portal"
+              >
+                <Globe className="h-3.5 w-3.5" />
+                No portal
               </span>
             )}
           </div>

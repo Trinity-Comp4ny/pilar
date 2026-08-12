@@ -3,20 +3,19 @@ import {
   Home,
   ShieldCheck,
   Zap,
-  User,
   UserCircle,
   LogOut,
   ChevronDown,
   Check,
   PanelLeftClose,
   PanelLeftOpen,
+  Settings,
 } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuLabel,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
@@ -24,8 +23,10 @@ import {
 import { cn } from "@/lib/utils";
 import { useState, useEffect, useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useSettingsModal } from "@/contexts/SettingsModalContext";
 import { usePermissions } from "@/hooks/usePermissions";
 import { ImpersonationPicker } from "@/components/ImpersonationPicker";
+import { NotificationInbox } from "@/components/NotificationInbox";
 import {
   EMPRESA_ITEMS,
   MODULE_ORDER,
@@ -46,13 +47,14 @@ export function AppSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, profile, signOut } = useAuth();
+  const { openSettings, isOpen: isSettingsOpen } = useSettingsModal();
   const { getNavItemProps, isAdmin, isUltraAdmin } = usePermissions();
   const currentPath = location.pathname;
   const [sidebarWidth, setSidebarWidth] = useState(state === "collapsed" ? "64px" : "240px");
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
-  const USER_ROUTES = ["/profile", "/company", "/admin", "/ultra-admin", "/billing"];
-  const isUserRouteActive = USER_ROUTES.some((r) => currentPath.startsWith(r));
+  const USER_ROUTES = ["/admin", "/ultra-admin"];
+  const isUserRouteActive = USER_ROUTES.some((r) => currentPath.startsWith(r)) || isSettingsOpen;
 
   const userName = profile
     ? [profile.first_name, profile.last_name].filter(Boolean).join(" ").trim() || user?.email || "Usuário"
@@ -71,7 +73,7 @@ export function AppSidebar() {
   };
 
   const handleProfile = () => {
-    navigate("/profile");
+    openSettings("conta");
   };
 
   const handleAdmin = () => {
@@ -338,72 +340,78 @@ export function AppSidebar() {
         </div>
       </nav>
 
-      {/* User Menu */}
+      {/* User Menu + sino de notificações */}
       <div className="border-t border-black/5 p-3">
-        <DropdownMenu open={isUserMenuOpen} onOpenChange={setIsUserMenuOpen}>
-          <DropdownMenuTrigger asChild>
-            <button
-              className={cn(
-                "group w-full flex items-center gap-3 px-3 py-2 rounded-full text-sm transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/10",
-                collapsed && "justify-center",
-                isUserRouteActive ? "bg-brand text-black/80 font-medium" : "hover:bg-brand/30"
-              )}
-              type="button"
-              aria-label="Menu do usuário"
-              title={collapsed ? userName : ""}
-            >
-              <UserCircle size={18} strokeWidth={1.5} className="text-black/70 w-[18px] h-[18px] flex-shrink-0" />
-              {!collapsed && (
-                <>
-                  <div className="flex-1 text-left min-w-0">
-                    <p className="text-sm font-medium text-black/70 tracking-tight truncate leading-tight">
-                      {userName}
-                    </p>
-                    {userEmail && <p className="text-xs text-black/40 truncate leading-tight">{userEmail}</p>}
+        <div className={cn("flex items-center gap-1", collapsed && "flex-col gap-2")}>
+          <div className="min-w-0 flex-1">
+            <DropdownMenu open={isUserMenuOpen} onOpenChange={setIsUserMenuOpen}>
+              <DropdownMenuTrigger asChild>
+                <button
+                  className={cn(
+                    "group w-full flex items-center gap-3 px-3 py-2 rounded-full text-sm transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/10",
+                    collapsed && "justify-center",
+                    isUserRouteActive ? "bg-brand text-black/80 font-medium" : "hover:bg-brand/30"
+                  )}
+                  type="button"
+                  aria-label="Menu do usuário"
+                  title={collapsed ? userName : ""}
+                >
+                  <UserCircle size={18} strokeWidth={1.5} className="text-black/70 w-[18px] h-[18px] flex-shrink-0" />
+                  {!collapsed && (
+                    <>
+                      <div className="flex-1 text-left min-w-0">
+                        <p className="text-sm font-medium text-black/70 tracking-tight truncate leading-tight">
+                          {userName}
+                        </p>
+                        {userEmail && <p className="text-xs text-black/40 truncate leading-tight">{userEmail}</p>}
+                      </div>
+                      <ChevronDown
+                        size={14}
+                        className={cn(
+                          "text-black/50 transition-transform duration-200 flex-shrink-0",
+                          isUserMenuOpen && "rotate-180"
+                        )}
+                      />
+                    </>
+                  )}
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" side="top" sideOffset={8} alignOffset={8} className="min-w-[240px]">
+                {/* Cabeçalho clicável: nome + email abrem as configurações; engrenagem à direita reforça a ação. */}
+                <DropdownMenuItem onClick={handleProfile} className="cursor-pointer gap-3 py-2.5">
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold leading-tight text-ink">{userName}</p>
+                    {userEmail && <p className="truncate text-xs leading-tight text-muted-foreground">{userEmail}</p>}
                   </div>
-                  <ChevronDown
-                    size={14}
-                    className={cn(
-                      "text-black/50 transition-transform duration-200 flex-shrink-0",
-                      isUserMenuOpen && "rotate-180"
-                    )}
-                  />
-                </>
-              )}
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" side="top" className="min-w-[220px]">
-            <DropdownMenuLabel className="font-normal">
-              <div className="flex flex-col space-y-1">
-                <span className="text-sm font-medium leading-none">{userName}</span>
-                {userEmail && <span className="text-xs leading-none text-muted-foreground">{userEmail}</span>}
-              </div>
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleProfile}>
-              <User size={14} className="mr-2" />
-              Perfil
-            </DropdownMenuItem>
-            {isAdmin && !isUltraAdmin && (
-              <DropdownMenuItem onClick={handleAdmin}>
-                <ShieldCheck size={14} className="mr-2" />
-                Portal Admin
-              </DropdownMenuItem>
-            )}
-            {isUltraAdmin && (
-              <DropdownMenuItem onClick={handleUltraAdmin}>
-                <Zap size={14} className="mr-2" />
-                Portal Ultra
-              </DropdownMenuItem>
-            )}
-            <ImpersonationPicker />
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive">
-              <LogOut size={14} className="mr-2" />
-              Sair
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+                  <Settings size={16} className="flex-shrink-0 text-muted-foreground" />
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                {isAdmin && !isUltraAdmin && (
+                  <DropdownMenuItem onClick={handleAdmin} className="justify-between">
+                    Portal Admin
+                    <ShieldCheck size={16} className="text-muted-foreground" />
+                  </DropdownMenuItem>
+                )}
+                {isUltraAdmin && (
+                  <DropdownMenuItem onClick={handleUltraAdmin} className="justify-between">
+                    Portal Ultra
+                    <Zap size={16} className="text-muted-foreground" />
+                  </DropdownMenuItem>
+                )}
+                <ImpersonationPicker />
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={handleLogout}
+                  className="justify-between text-destructive focus:text-destructive"
+                >
+                  Log out
+                  <LogOut size={16} />
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+          <NotificationInbox />
+        </div>
       </div>
     </div>
   );
