@@ -46,7 +46,11 @@ const schema = z
   .superRefine((d, ctx) => {
     const q = parseNum(d.quantidade);
     if (!Number.isFinite(q) || q <= 0) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["quantidade"], message: "Informe uma quantidade maior que zero" });
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["quantidade"],
+        message: "Informe uma quantidade maior que zero",
+      });
     }
     if (d.material === NOVO) {
       if (!d.nome.trim()) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["nome"], message: "Nome do material" });
@@ -67,7 +71,15 @@ interface Props {
   materialIdInicial?: string | null;
 }
 
-export function MaterialMovDialog({ open, onOpenChange, obraId, materiais, frentes, movInicial, materialIdInicial }: Props) {
+export function MaterialMovDialog({
+  open,
+  onOpenChange,
+  obraId,
+  materiais,
+  frentes,
+  movInicial,
+  materialIdInicial,
+}: Props) {
   const saveMaterial = useSaveMaterial(obraId);
   const saveMov = useSaveMovimento(obraId);
   const editando = !!movInicial;
@@ -113,7 +125,9 @@ export function MaterialMovDialog({ open, onOpenChange, obraId, materiais, frent
         valor_unitario: d.tipo === "entrada" && d.valor_unitario.trim() ? parseNum(d.valor_unitario) : null,
         observacoes: d.observacoes.trim() || null,
       });
-      toast.success(editando ? "Movimento atualizado" : d.tipo === "entrada" ? "Entrada registrada" : "Baixa registrada");
+      toast.success(
+        editando ? "Movimento atualizado" : d.tipo === "entrada" ? "Entrada registrada" : "Baixa registrada"
+      );
       onOpenChange(false);
     } catch (e) {
       toast.error("Não foi possível salvar", { description: e instanceof Error ? e.message : "Tente novamente" });
@@ -207,7 +221,7 @@ export function MaterialMovDialog({ open, onOpenChange, obraId, materiais, frent
               {formState.errors.data && <p className="text-xs text-danger-strong">{formState.errors.data.message}</p>}
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="frente">Frente (etapa)</Label>
+              <Label htmlFor="frente">Etapa</Label>
               <Select value={watch("obra_frente_id")} onValueChange={(v) => setValue("obra_frente_id", v)}>
                 <SelectTrigger id="frente">
                   <SelectValue placeholder="Sem etapa" />

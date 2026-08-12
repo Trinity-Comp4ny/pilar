@@ -61,7 +61,7 @@ export type EstadoFrente = "sem_prazo" | "concluida" | "atrasada" | "em_andament
 export function estadoFrenteCronograma(
   frente: { data_inicio?: string | null; data_fim?: string | null },
   tarefas: ReadonlyArray<{ status: string }>,
-  hoje: Date = new Date(),
+  hoje: Date = new Date()
 ): EstadoFrente {
   const inicio = parseDate(frente.data_inicio);
   const fim = parseDate(frente.data_fim);
@@ -75,6 +75,62 @@ export function estadoFrenteCronograma(
   if (hojeDia > fim) return "atrasada";
   if (hojeDia >= inicio) return "em_andamento";
   return "futura";
+}
+
+// --- Cronograma em dois níveis (spec 027: passos dentro da frente) ------------
+
+/**
+ * Estado de um passo (tarefa) no cronograma, derivado do `status` e do período
+ * previsto (data_inicio → prazo, onde `prazo` faz as vezes de fim):
+ * - `sem_periodo`: falta início ou prazo → não vira barra, listado à parte.
+ * - `concluida`: status concluído (verde, independente da data).
+ * - `atrasada`: hoje já passou do prazo e não está concluído (vermelho).
+ * - `em_andamento`: hoje entre início e prazo (azul).
+ * - `futura`: início ainda não chegou (cinza).
+ */
+export type EstadoTarefa = "sem_periodo" | "concluida" | "atrasada" | "em_andamento" | "futura";
+
+export function estadoTarefaCronograma(
+  tarefa: { status: string; data_inicio?: string | null; prazo?: string | null },
+  hoje: Date = new Date()
+): EstadoTarefa {
+  if (tarefa.status === "concluida") return "concluida";
+  const inicio = parseDate(tarefa.data_inicio);
+  const fim = parseDate(tarefa.prazo);
+  if (!inicio || !fim) return "sem_periodo";
+
+  const hojeDia = startOfDay(hoje);
+  if (hojeDia > fim) return "atrasada";
+  if (hojeDia >= inicio) return "em_andamento";
+  return "futura";
+}
+
+/**
+ * Período que a barra-resumo de uma frente deve cobrir: a união do período
+ * próprio da frente (data_inicio/data_fim, spec 020) com o span dos passos que
+ * têm início e prazo (spec 027). Assim a frente aparece na timeline se tiver
+ * datas próprias OU passos datados. `null` quando não há nenhuma data.
+ */
+export function spanFrente(
+  frente: { data_inicio?: string | null; data_fim?: string | null },
+  tarefas: ReadonlyArray<{ data_inicio?: string | null; prazo?: string | null }>
+): { inicio: string; fim: string } | null {
+  const inicios: string[] = [];
+  const fins: string[] = [];
+  if (frente.data_inicio) inicios.push(frente.data_inicio);
+  if (frente.data_fim) fins.push(frente.data_fim);
+  for (const t of tarefas) {
+    if (t.data_inicio && t.prazo) {
+      inicios.push(t.data_inicio);
+      fins.push(t.prazo);
+    }
+  }
+  if (inicios.length === 0 || fins.length === 0) return null;
+  // Datas em "YYYY-MM-DD" ordenam corretamente como string.
+  return {
+    inicio: inicios.reduce((a, b) => (b < a ? b : a)),
+    fim: fins.reduce((a, b) => (b > a ? b : a)),
+  };
 }
 
 // --- Conta da obra (spec 016, ADR 0013: dois bolsos e uma lente) --------------

@@ -1,11 +1,10 @@
 import { useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { CalendarDays, LayoutGrid, List, Plus } from "lucide-react";
+import { CalendarClock, CalendarDays, LayoutGrid, List, ListFilter, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
@@ -19,6 +18,7 @@ import { QuadroTrabalho } from "./components/QuadroTrabalho";
 import { ListaTrabalho } from "./components/ListaTrabalho";
 import { TarefaDialog } from "./components/TarefaDialog";
 import { AbaAgenda } from "./components/AbaAgenda";
+import { FiltroPessoa, FiltroPill } from "./components/FiltrosTrabalho";
 import {
   useMinhaPessoa,
   usePessoasEmpresa,
@@ -46,7 +46,7 @@ const TIPO_LABEL: Record<FiltroTipo, string> = {
 };
 
 const DATA_LABEL: Record<FiltroData, string> = {
-  todas: "Qualquer data",
+  todas: "Tudo",
   atrasadas: "Atrasadas",
   hoje: "Vencem hoje",
   semana: "Próximos 7 dias",
@@ -132,10 +132,12 @@ export default function MeuTrabalho() {
     return itens.filter((i) => {
       if (!noPeriodo(i.prazo, filtroData)) return false;
       if (!termo) return true;
+      const numeroTermo = termo.replace(/^#/, "");
       return (
         i.titulo.toLowerCase().includes(termo) ||
+        (i.numero != null && String(i.numero) === numeroTermo) ||
         (i.projetoNome?.toLowerCase().includes(termo) ?? false) ||
-        (i.responsavelNome?.toLowerCase().includes(termo) ?? false) ||
+        i.responsaveis.some((r) => r.nome.toLowerCase().includes(termo)) ||
         i.labels.some((l) => l.toLowerCase().includes(termo))
       );
     });
@@ -188,13 +190,14 @@ export default function MeuTrabalho() {
     }
   };
 
-  const mudarResponsavel = async (item: ItemTrabalho, pessoaId: string | null) => {
+  const mudarResponsaveis = async (item: ItemTrabalho, pessoaIds: string[]) => {
     if (item.tipo !== "tarefa") return;
+    const novos = (pessoas ?? []).filter((p) => pessoaIds.includes(p.id)).map((p) => ({ id: p.id, nome: p.nome }));
     try {
-      patchTarefa(item.id, { responsavel_id: pessoaId });
-      await atualizar.mutateAsync({ id: item.id, input: { responsavel_id: pessoaId } });
+      patchTarefa(item.id, { responsaveis: novos, responsavel_id: pessoaIds[0] ?? null });
+      await atualizar.mutateAsync({ id: item.id, input: { responsaveis: pessoaIds } });
     } catch {
-      toast({ variant: "destructive", description: "Não deu para mudar o responsável." });
+      toast({ variant: "destructive", description: "Não deu para mudar os responsáveis." });
     }
   };
 
@@ -253,16 +256,21 @@ export default function MeuTrabalho() {
   // Dialog de tarefa
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editando, setEditando] = useState<TarefaItem | null>(null);
+  const [etapaInicial, setEtapaInicial] = useState<string | null>(null);
   const [aExcluir, setAExcluir] = useState<ItemTrabalho | null>(null);
 
-  const abrirNova = () => {
+  // Nova tarefa: sem etapa (cai na âncora "A fazer") pelo botão do topo, ou já
+  // na coluna clicada quando vem do "+" de um grupo da lista.
+  const abrirNova = (etapaId?: string) => {
     setEditando(null);
+    setEtapaInicial(etapaId ?? null);
     setDialogOpen(true);
   };
 
   const abrirItem = (item: ItemTrabalho) => {
     if (item.tipo === "tarefa" && item.tarefa) {
       setEditando(item.tarefa);
+      setEtapaInicial(null);
       setDialogOpen(true);
     } else if (item.tipo === "disciplina" && item.projetoId) {
       navigate(`/projetos/${item.projetoId}`);
@@ -293,7 +301,7 @@ export default function MeuTrabalho() {
         await criar.mutateAsync({
           ...input,
           etapa_id: input.etapa_id ?? etapaPadrao?.id ?? null,
-          responsavel_id: input.responsavel_id ?? minhaPessoaId,
+          responsaveis: input.responsaveis ?? (minhaPessoaId ? [minhaPessoaId] : []),
         });
         toast({ description: "Tarefa criada." });
       }
@@ -362,6 +370,16 @@ export default function MeuTrabalho() {
 
   const autorNome = minhaPessoa?.nome ?? "Eu";
 
+  // Gestão das listas/status (etapas), compartilhada por lista e quadro.
+  const etapaControls = {
+    etapas: etapas ?? [],
+    onCriar: criarEtapa,
+    criando: etapaMut.criar.isPending,
+    onRenomear: (e: Etapa) => setRenomeando({ id: e.id, nome: e.nome }),
+    onExcluir: (e: Etapa) => setAEtapaExcluir(e),
+    onReordenar: reordenarEtapa,
+  };
+
   return (
     <PageLayout
       header={
@@ -370,26 +388,10 @@ export default function MeuTrabalho() {
           search={
             visao !== "agenda" ? { value: busca, onChange: setBusca, placeholder: "Buscar no meu trabalho" } : undefined
           }
-          primaryAction={visao !== "agenda" ? { label: "Nova tarefa", icon: Plus, onClick: abrirNova } : undefined}
-        >
-          {isAdmin && (
-            <Select value={filtroPessoa} onValueChange={setFiltroPessoa}>
-              <SelectTrigger className="w-40">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={EU}>Eu</SelectItem>
-                {(pessoas ?? [])
-                  .filter((p) => p.id !== minhaPessoaId)
-                  .map((p) => (
-                    <SelectItem key={p.id} value={p.id}>
-                      {p.nome}
-                    </SelectItem>
-                  ))}
-              </SelectContent>
-            </Select>
-          )}
-        </PageHeader>
+          primaryAction={
+            visao !== "agenda" ? { label: "Nova tarefa", icon: Plus, onClick: () => abrirNova() } : undefined
+          }
+        />
       }
     >
       {/* Toolbar: visão + (no quadro) filtros de tipo e data */}
@@ -429,33 +431,31 @@ export default function MeuTrabalho() {
 
         {visao !== "agenda" && (
           <>
-            {temProjetos && (
-              <Select value={tipo} onValueChange={(v) => setTipo(v as FiltroTipo)}>
-                <SelectTrigger className="w-36">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {(Object.keys(TIPO_LABEL) as FiltroTipo[]).map((t) => (
-                    <SelectItem key={t} value={t}>
-                      {TIPO_LABEL[t]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            {isAdmin && (
+              <FiltroPessoa
+                value={filtroPessoa}
+                pessoas={pessoas ?? []}
+                minhaPessoaId={minhaPessoaId}
+                meuNome={autorNome}
+                onChange={setFiltroPessoa}
+              />
             )}
 
-            <Select value={filtroData} onValueChange={(v) => setFiltroData(v as FiltroData)}>
-              <SelectTrigger className="w-40">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {(Object.keys(DATA_LABEL) as FiltroData[]).map((d) => (
-                  <SelectItem key={d} value={d}>
-                    {DATA_LABEL[d]}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {temProjetos && (
+              <FiltroPill
+                icon={ListFilter}
+                value={tipo}
+                onChange={(v) => setTipo(v as FiltroTipo)}
+                options={(Object.keys(TIPO_LABEL) as FiltroTipo[]).map((t) => ({ value: t, label: TIPO_LABEL[t] }))}
+              />
+            )}
+
+            <FiltroPill
+              icon={CalendarClock}
+              value={filtroData}
+              onChange={(v) => setFiltroData(v as FiltroData)}
+              options={(Object.keys(DATA_LABEL) as FiltroData[]).map((d) => ({ value: d, label: DATA_LABEL[d] }))}
+            />
           </>
         )}
       </div>
@@ -476,7 +476,7 @@ export default function MeuTrabalho() {
           podeEditarResponsavel={isAdmin}
           onAbrir={abrirItem}
           onPrioridade={mudarPrioridade}
-          onResponsavel={mudarResponsavel}
+          onResponsaveis={mudarResponsaveis}
           onPrazo={mudarPrazo}
           onProjeto={mudarProjeto}
           onEtiquetas={mudarEtiquetas}
@@ -484,6 +484,8 @@ export default function MeuTrabalho() {
           onHorasReais={mudarHorasReais}
           onExcluir={setAExcluir}
           onMover={moverItem}
+          onCriarNoGrupo={abrirNova}
+          etapaControls={etapaControls}
         />
       ) : (
         <QuadroTrabalho
@@ -492,14 +494,7 @@ export default function MeuTrabalho() {
           onPrioridade={mudarPrioridade}
           onExcluir={setAExcluir}
           onMover={moverItem}
-          etapaControls={{
-            etapas: etapas ?? [],
-            onCriar: criarEtapa,
-            criando: etapaMut.criar.isPending,
-            onRenomear: (e) => setRenomeando({ id: e.id, nome: e.nome }),
-            onExcluir: (e) => setAEtapaExcluir(e),
-            onReordenar: reordenarEtapa,
-          }}
+          etapaControls={etapaControls}
         />
       )}
 
@@ -509,6 +504,8 @@ export default function MeuTrabalho() {
         tarefa={editando}
         pessoas={pessoas ?? []}
         projetos={projetos ?? []}
+        etapas={etapas ?? []}
+        defaultEtapaId={etapaInicial}
         defaultResponsavelId={minhaPessoaId}
         podeEscolherResponsavel={isAdmin}
         autorNome={autorNome}
@@ -552,7 +549,11 @@ export default function MeuTrabalho() {
             <Button variant="outline" onClick={() => setRenomeando(null)}>
               Cancelar
             </Button>
-            <Button variant="brand" onClick={salvarRenomear} disabled={!renomeando?.nome.trim() || etapaMut.renomear.isPending}>
+            <Button
+              variant="brand"
+              onClick={salvarRenomear}
+              disabled={!renomeando?.nome.trim() || etapaMut.renomear.isPending}
+            >
               Salvar
             </Button>
           </DialogFooter>
