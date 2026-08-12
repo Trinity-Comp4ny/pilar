@@ -521,7 +521,7 @@ function EntregavelForm({
             arquivo_nome: file.name,
             arquivo_mime: file.type || null,
             arquivo_tamanho_bytes: file.size,
-          } as Record<string, unknown>)
+          } as never)
           .eq("id", inserted.id);
         if (updateErr) throw updateErr;
       }
