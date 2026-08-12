@@ -360,7 +360,7 @@ export default function Inicio() {
                   Pipeline de leads
                 </h2>
                 <button
-                  onClick={() => navigate("/leads")}
+                  onClick={() => navigate("/gestao/leads")}
                   className="rounded px-1.5 py-1 text-xs text-ink-muted hover:text-ink transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                 >
                   Ver todos

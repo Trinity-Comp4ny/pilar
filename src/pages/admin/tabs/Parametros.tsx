@@ -27,7 +27,7 @@ export function ParametrosTab() {
             name="Categorias financeiras"
             description="Grupos de receitas e despesas para relatórios"
             status="ativo"
-            onOpen={() => navigate("/financeiro?tab=lancamentos")}
+            onOpen={() => navigate("/gestao/financeiro?tab=lancamentos")}
           />
           <ParamRow
             icon={Truck}

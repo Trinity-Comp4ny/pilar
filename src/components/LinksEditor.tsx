@@ -77,11 +77,14 @@ export function LinksEditor({ value, onChange, readOnly }: LinksEditorProps) {
                 add();
               }
             }}
+            // Salva sozinho ao sair do campo: colou o link e clicou em Salvar/fora,
+            // o link entra na lista sem precisar clicar em "Adicionar".
+            onBlur={add}
             placeholder="Colar URL (repositório, drive...)"
             className="h-8 flex-1 text-xs"
           />
           <Button type="button" size="sm" variant="outline" className="h-8 gap-1" onClick={add}>
-            <Plus className="h-3.5 w-3.5" /> Add
+            <Plus className="h-3.5 w-3.5" /> Adicionar
           </Button>
         </div>
       )}
