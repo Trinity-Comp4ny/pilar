@@ -82,7 +82,11 @@ jobs:
           if [ -n "$EXISTING" ]; then
             gh pr edit "$EXISTING" --title "$TITLE" --body-file "$BODY_FILE"
             echo "::notice::PR de release #$EXISTING atualizado."
-          else
-            gh pr create --base main --head staging --title "$TITLE" --body-file "$BODY_FILE"
+          # Sem RELEASE_PAT, o GITHUB_TOKEN padrão não pode criar PR (política do repo/org).
+          # Nesse caso o create falha: tratamos como aviso, não como erro do job, porque o
+          # fluxo aceito é abrir o PR de release na mão. Assim o check não fica vermelho à toa.
+          elif gh pr create --base main --head staging --title "$TITLE" --body-file "$BODY_FILE"; then
             echo "::notice::PR de release criado."
+          else
+            echo "::warning::Não criei o PR de release automaticamente (GitHub Actions não pode criar PR sem o secret RELEASE_PAT). Abra o PR staging → main manualmente."
           fi
