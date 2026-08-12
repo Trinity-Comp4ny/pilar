@@ -5,7 +5,7 @@
 // Arquitetura de dados financeiros:
 //   useLancamentosPaginados  → tabela paginada (keyset cursor, TanStack Query infinite)
 //   useFinanceItems          → listas completas para Despesas/Receitas (TanStack Query)
-//   useFinanceData           → KPIs e gráficos para VisaoGeral/FluxoCaixa (TanStack Query)
+//   useFinanceData           → KPIs e gráficos da VisaoGeral (TanStack Query)
 //   useFinanceAuxData        → dados auxiliares do formulário (TanStack Query, staleTime 10min)
 
 export type TipoLancamento = "receita" | "despesa" | "transferencia";

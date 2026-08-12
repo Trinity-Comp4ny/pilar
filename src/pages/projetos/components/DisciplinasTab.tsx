@@ -20,7 +20,6 @@ import {
   LayoutGrid,
   List,
   Calendar,
-  TrendingUp,
 } from "lucide-react";
 import {
   type DisciplinaResponsavel,
@@ -261,29 +260,8 @@ export function DisciplinasTab({ projetos, isLoading }: DisciplinasTabProps) {
 
   return (
     <div className="space-y-6">
-      {/* Progresso geral + Métricas */}
+      {/* Métricas */}
       <div className="space-y-4">
-        {/* Barra de progresso geral */}
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm font-medium">Progresso Geral</span>
-              </div>
-              <span className="text-sm font-bold">{metrics.progressoPct}%</span>
-            </div>
-            <Progress value={metrics.progressoPct} className="h-2.5" indicatorClassName="bg-brand" />
-            <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
-              <span>
-                {metrics.concluidas} de {metrics.total} atribuições concluídas
-              </span>
-              <span>·</span>
-              <span>{metrics.disciplinasUnicas} disciplinas únicas</span>
-            </div>
-          </CardContent>
-        </Card>
-
         {/* KPI Cards */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
           <KPICard

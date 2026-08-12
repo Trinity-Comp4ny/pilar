@@ -221,8 +221,10 @@ export function CronogramaTab({
     const projStart = parseDate(projetoDataInicio);
     const projEnd = parseDate(projetoDataPrevisao);
 
-    // Start: project start date (fallback to earliest discipline, then today)
-    const tlStart = startOfMonth(projStart || minDate || new Date());
+    // Start: uma folga curta antes do início do projeto, só pra a linha de INÍCIO
+    // não colar na borda esquerda (fica perto da borda, não no meio).
+    const LEAD_DAYS = 4;
+    const tlStart = addDays(projStart || minDate || new Date(), -LEAD_DAYS);
 
     // End: latest of project end OR latest discipline date (accommodates delays)
     const latestDate = [projEnd, maxDate]
@@ -390,15 +392,29 @@ export function CronogramaTab({
         newEnd = addDays(drag.origEnd, deltaDays);
       }
 
-      // Hard snap only at project START — end is open (allows delays)
+      // Guarda-chuva do projeto: a disciplina não sai das datas do projeto —
+      // nem antes do início, nem depois da previsão.
       let snapping = false;
       const projStart = parseDate(projetoDataInicio);
+      const projEnd = parseDate(projetoDataPrevisao);
       const dur = diffDays(newStart, newEnd);
 
+      if (projEnd && newEnd > projEnd) {
+        newEnd = projEnd;
+        if (drag.type === "move") newStart = addDays(projEnd, -dur);
+        snapping = true;
+      }
       if (projStart && newStart < projStart) {
         newStart = projStart;
         if (drag.type === "move") newEnd = addDays(projStart, dur);
         snapping = true;
+      }
+      // Projeto mais curto que a barra arrastada: preenche o intervalo do projeto.
+      if (projStart && newStart < projStart) newStart = projStart;
+      if (projEnd && newEnd > projEnd) newEnd = projEnd;
+      if (newStart >= newEnd && projStart && projEnd) {
+        newStart = projStart;
+        newEnd = projEnd;
       }
 
       isSnappingRef.current = snapping;
