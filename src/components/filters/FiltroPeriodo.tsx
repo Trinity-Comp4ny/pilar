@@ -130,9 +130,9 @@ export function FiltroPeriodo({
               }}
               numberOfMonths={numberOfMonths}
               defaultMonth={from ?? undefined}
-              components={{ Caption: MonthYearCaption }}
+              components={{ MonthCaption: MonthYearCaption, Nav: () => <span className="sr-only" /> }}
               locale={ptBR}
-              initialFocus
+              autoFocus
             />
           </div>
         ) : (

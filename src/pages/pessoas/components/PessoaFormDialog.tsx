@@ -442,7 +442,7 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
                     value={form.watch("data_nascimento") || undefined}
                     onChange={(v) => form.setValue("data_nascimento", v)}
                     placeholder="dd/mm/aaaa"
-                    captionLayout="dropdown-buttons"
+                    captionLayout="dropdown"
                     fromYear={1940}
                     toYear={new Date().getFullYear()}
                   />
