@@ -10,6 +10,7 @@ import {
   LayoutDashboard,
   ChevronDown,
   KeyRound,
+  Building2,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -29,6 +30,8 @@ interface ClienteShellProps {
   projetoId?: string;
   projetoNome?: string;
   projetoCodigo?: string | null;
+  /** Sub-header de obra (sem abas): mostra "voltar" + nome da obra. */
+  obraNome?: string;
 }
 
 const projetoNavItems = [
@@ -37,7 +40,14 @@ const projetoNavItems = [
   { path: "/entregas", label: "Entregas", icon: FileCheck, end: false },
 ];
 
-export function ClienteShell({ account, children, projetoId, projetoNome, projetoCodigo }: ClienteShellProps) {
+export function ClienteShell({
+  account,
+  children,
+  projetoId,
+  projetoNome,
+  projetoCodigo,
+  obraNome,
+}: ClienteShellProps) {
   const navigate = useNavigate();
   const [isAdminSession, setIsAdminSession] = useState(false);
   const [senhaDialogOpen, setSenhaDialogOpen] = useState(false);
@@ -69,12 +79,7 @@ export function ClienteShell({ account, children, projetoId, projetoNome, projet
           </div>
           <div className="flex items-center gap-4">
             {isAdminSession && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => navigate("/clientes")}
-                className="text-xs"
-              >
+              <Button variant="outline" size="sm" onClick={() => navigate("/gestao/clientes")} className="text-xs">
                 <LayoutDashboard className="h-3.5 w-3.5 mr-1" />
                 Voltar ao painel
               </Button>
@@ -125,9 +130,7 @@ export function ClienteShell({ account, children, projetoId, projetoNome, projet
               </Button>
               <div className="h-4 w-px bg-border shrink-0" />
               <div className="min-w-0 flex items-baseline gap-2">
-                {projetoCodigo && (
-                  <span className="text-xs text-muted-foreground shrink-0">{projetoCodigo}</span>
-                )}
+                {projetoCodigo && <span className="text-xs text-muted-foreground shrink-0">{projetoCodigo}</span>}
                 <span className="text-sm font-medium truncate">{projetoNome}</span>
               </div>
             </div>
@@ -158,6 +161,28 @@ export function ClienteShell({ account, children, projetoId, projetoNome, projet
         </>
       )}
 
+      {/* Sub-header da obra (página dedicada, sem abas) */}
+      {obraNome && !projetoId && (
+        <div className="bg-white border-b px-6 py-3">
+          <div className="max-w-7xl mx-auto flex items-center gap-3">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate("/cliente/dashboard")}
+              className="text-muted-foreground hover:text-foreground -ml-2"
+            >
+              <ArrowLeft className="h-4 w-4 mr-1" />
+              Início
+            </Button>
+            <div className="h-4 w-px bg-border shrink-0" />
+            <div className="min-w-0 flex items-center gap-2">
+              <Building2 className="h-4 w-4 text-muted-foreground shrink-0" />
+              <span className="text-sm font-medium truncate">{obraNome}</span>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Content */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-6 py-6">{children}</main>
 
@@ -176,10 +201,7 @@ export function ClienteShell({ account, children, projetoId, projetoNome, projet
             <DialogTitle>Trocar senha</DialogTitle>
             <DialogDescription>Defina uma nova senha de acesso ao portal.</DialogDescription>
           </DialogHeader>
-          <TrocarSenhaForm
-            onSuccess={() => setSenhaDialogOpen(false)}
-            onCancel={() => setSenhaDialogOpen(false)}
-          />
+          <TrocarSenhaForm onSuccess={() => setSenhaDialogOpen(false)} onCancel={() => setSenhaDialogOpen(false)} />
         </DialogContent>
       </Dialog>
     </div>
