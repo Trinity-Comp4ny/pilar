@@ -1,11 +1,26 @@
 import { useCallback, useEffect, useMemo, useState, type Dispatch, type SetStateAction } from "react";
-import { Archive, ArrowLeft, Building2, CircleOff, Loader2, Pencil, Plus, Search, Users2, Layers } from "lucide-react";
+import {
+  Activity,
+  Archive,
+  ArrowLeft,
+  Building2,
+  CircleOff,
+  ExternalLink,
+  Loader2,
+  Pencil,
+  Plus,
+  Search,
+  Trash2,
+  Users2,
+  Layers,
+} from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { KPICard } from "@/components/KPICard";
 import {
   Dialog,
@@ -56,10 +71,53 @@ type EmpresaDetail = EmpresaRow & {
   usuarios: ManagedUser[];
 };
 
+type AuditRow = {
+  id: string;
+  actor_email: string | null;
+  action: string;
+  category: string | null;
+  target_name: string | null;
+  empresa_id: string | null;
+  created_at: string;
+};
+
+type CrossUserRow = {
+  id: string;
+  nome: string | null;
+  email: string | null;
+  role: PilarRole;
+  empresaId: string | null;
+  empresaNome: string | null;
+};
+
+// Mutações de dados (audit_logs): quem criou/editou/apagou o quê na empresa.
+type DataAuditRow = {
+  id: string;
+  actor_email: string | null;
+  action: string;
+  target_table: string | null;
+  created_at: string;
+};
+
+const AUDIT_CATEGORIAS = [
+  { value: "all", label: "Todas as categorias" },
+  { value: "user", label: "Usuários" },
+  { value: "empresa", label: "Empresas" },
+  { value: "member", label: "Membros" },
+  { value: "billing", label: "Cobrança" },
+  { value: "impersonation", label: "Impersonation" },
+] as const;
+
 const PLAN_LABEL: Record<SubscriptionPlanSlug, string> = {
   starter: "Starter",
   pro: "Pro",
   enterprise: "Enterprise",
+};
+
+const ROLE_LABEL: Record<PilarRole, string> = {
+  ultra_admin: "Ultra Admin",
+  admin: "Admin",
+  user: "Usuário",
 };
 
 const STATUS_LABEL = {
@@ -113,6 +171,17 @@ export default function UltraAdmin() {
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [savingFeatures, setSavingFeatures] = useState(false);
   const [query, setQuery] = useState("");
+  const [tab, setTab] = useState<"dashboard" | "empresas" | "usuarios" | "atividade">("dashboard");
+  const [audit, setAudit] = useState<AuditRow[]>([]);
+  const [auditFull, setAuditFull] = useState<AuditRow[]>([]);
+  const [auditEmpresa, setAuditEmpresa] = useState<string>("all");
+  const [auditCategoria, setAuditCategoria] = useState<string>("all");
+  const [users, setUsers] = useState<CrossUserRow[]>([]);
+  const [userQuery, setUserQuery] = useState("");
+  const [userEmpresa, setUserEmpresa] = useState<string>("all");
+  const [userRole, setUserRole] = useState<string>("all");
+  const [userToDelete, setUserToDelete] = useState<CrossUserRow | null>(null);
+  const [detailAudit, setDetailAudit] = useState<DataAuditRow[]>([]);
 
   const fetchEmpresas = useCallback(async () => {
     setLoading(true);
@@ -135,6 +204,84 @@ export default function UltraAdmin() {
   useEffect(() => {
     fetchEmpresas();
   }, [fetchEmpresas]);
+
+  // Ultra admin lê admin_audit_logs e profiles cross-empresa direto (RLS
+  // is_ultra_admin). Uso de IA (ai_usage_logs) fica fora do v1: a policy não
+  // tem bypass de ultra, exigiria endpoint com service_role.
+  const fetchAudit = useCallback(async () => {
+    const { data, error } = await supabase
+      .from("admin_audit_logs")
+      .select("id, actor_email, action, category, target_name, empresa_id, created_at")
+      .order("created_at", { ascending: false })
+      .limit(30);
+    if (error) return;
+    setAudit((data ?? []) as AuditRow[]);
+  }, []);
+
+  const fetchUsers = useCallback(async () => {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("id, nome, email, role, empresa_id, empresas(nome)")
+      .order("nome", { ascending: true });
+    if (error) return;
+    setUsers(
+      (data ?? []).map((u) => ({
+        id: u.id,
+        nome: u.nome,
+        email: u.email,
+        role: normalizeRole(u.role),
+        empresaId: u.empresa_id,
+        empresaNome: (u.empresas as { nome: string } | null)?.nome ?? null,
+      }))
+    );
+  }, []);
+
+  useEffect(() => {
+    fetchAudit();
+    fetchUsers();
+  }, [fetchAudit, fetchUsers]);
+
+  // Aba Atividade: log administrativo completo, com filtros de empresa e categoria.
+  useEffect(() => {
+    const run = async () => {
+      let q = supabase
+        .from("admin_audit_logs")
+        .select("id, actor_email, action, category, target_name, empresa_id, created_at")
+        .order("created_at", { ascending: false })
+        .limit(100);
+      if (auditEmpresa !== "all") q = q.eq("empresa_id", auditEmpresa);
+      if (auditCategoria !== "all") q = q.eq("category", auditCategoria);
+      const { data, error } = await q;
+      if (error) return;
+      setAuditFull((data ?? []) as AuditRow[]);
+    };
+    run();
+  }, [auditEmpresa, auditCategoria]);
+
+  const usuariosFiltrados = useMemo(() => {
+    const q = userQuery.trim().toLowerCase();
+    return users.filter((u) => {
+      if (userEmpresa !== "all" && u.empresaId !== userEmpresa) return false;
+      if (userRole !== "all" && u.role !== userRole) return false;
+      if (!q) return true;
+      return (u.nome ?? "").toLowerCase().includes(q) || (u.email ?? "").toLowerCase().includes(q);
+    });
+  }, [users, userQuery, userEmpresa, userRole]);
+
+  const handleCrossDelete = useCallback(async (user: CrossUserRow) => {
+    try {
+      await edgeFetch("ultra-admin-usuarios", {
+        method: "DELETE",
+        body: { user_id: user.id, empresa_id: user.empresaId },
+      });
+      setUsers((prev) => prev.filter((u) => u.id !== user.id));
+      toast.success("Usuário removido");
+    } catch (err) {
+      toast.error("Erro ao remover usuário", {
+        description: err instanceof Error ? err.message : "Erro inesperado",
+      });
+    }
+  }, []);
 
   const fetchDetail = useCallback(async (id: string) => {
     setLoadingDetail(true);
@@ -199,6 +346,15 @@ export default function UltraAdmin() {
 
       setDetail(emp);
       setSelectedId(id);
+
+      // Mutações de dados da empresa (audit_logs, ultra lê cross-empresa).
+      const { data: aud } = await supabase
+        .from("audit_logs")
+        .select("id, actor_email, action, target_table, created_at")
+        .eq("empresa_id", id)
+        .order("created_at", { ascending: false })
+        .limit(20);
+      setDetailAudit((aud ?? []) as DataAuditRow[]);
     } catch (err) {
       toast.error("Erro ao carregar empresa", {
         description: err instanceof Error ? err.message : "Erro inesperado",
@@ -552,6 +708,39 @@ export default function UltraAdmin() {
           onCancelInvite={handleCancelInvite}
         />
 
+        <Card className="border border-black/5">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Activity size={16} strokeWidth={1.5} className="text-black/50" />
+              Atividade da empresa
+            </CardTitle>
+            <CardDescription>
+              Últimas alterações de dados (quem criou, editou ou apagou o quê). Atividade de IA cross-empresa ainda não
+              disponível aqui.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {detailAudit.length === 0 ? (
+              <p className="py-6 text-center text-sm text-black/50">Nenhuma alteração registrada.</p>
+            ) : (
+              <ul className="divide-y divide-black/5">
+                {detailAudit.map((a) => (
+                  <li key={a.id} className="flex items-center justify-between gap-3 py-2.5 text-sm">
+                    <div className="min-w-0 truncate">
+                      <span className="font-medium text-black/80">{a.actor_email ?? "sistema"}</span>
+                      <span className="text-black/50"> · {a.action}</span>
+                      {a.target_table && <span className="text-black/50"> em {a.target_table}</span>}
+                    </div>
+                    <time className="flex-shrink-0 text-xs text-black/40">
+                      {new Date(a.created_at).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })}
+                    </time>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
+
         <EditCompanyDialog
           open={editCompanyOpen}
           onOpenChange={setEditCompanyOpen}
@@ -594,95 +783,379 @@ export default function UltraAdmin() {
         </PageHeader>
       }
     >
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <KPICard icon={Layers} label="Total de empresas" value={`${totals.total}`} tone="neutral" loading={loading} />
-        <KPICard icon={Building2} label="Empresas ativas" value={`${totals.active}`} tone="neutral" loading={loading} />
-        <KPICard icon={CircleOff} label="Suspensas" value={`${totals.suspended}`} tone="neutral" loading={loading} />
-        <KPICard icon={Users2} label="Usuários totais" value={`${totals.users}`} tone="neutral" loading={loading} />
-      </div>
+      <Tabs value={tab} onValueChange={(v) => setTab(v as "dashboard" | "empresas" | "usuarios" | "atividade")}>
+        <TabsList>
+          <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+          <TabsTrigger value="empresas">Empresas</TabsTrigger>
+          <TabsTrigger value="usuarios">Usuários</TabsTrigger>
+          <TabsTrigger value="atividade">Atividade</TabsTrigger>
+        </TabsList>
 
-      <Card className="border border-black/5">
-        <CardHeader>
-          <CardTitle className="text-base">Empresas</CardTitle>
-          <CardDescription>Clique para ver detalhes ou editar features.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="relative">
-            <Search
-              size={16}
-              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-black/40"
-              strokeWidth={1.5}
+        <TabsContent value="dashboard" className="mt-4 space-y-4">
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <KPICard
+              icon={Layers}
+              label="Total de empresas"
+              value={`${totals.total}`}
+              tone="neutral"
+              loading={loading}
             />
-            <Input
-              placeholder="Buscar por nome ou CNPJ"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              className="pl-9"
+            <KPICard
+              icon={Building2}
+              label="Empresas ativas"
+              value={`${totals.active}`}
+              tone="neutral"
+              loading={loading}
             />
+            <KPICard
+              icon={CircleOff}
+              label="Suspensas"
+              value={`${totals.suspended}`}
+              tone="neutral"
+              loading={loading}
+            />
+            <KPICard icon={Users2} label="Usuários totais" value={`${totals.users}`} tone="neutral" loading={loading} />
           </div>
 
-          {loading ? (
-            <div className="flex justify-center py-12">
-              <Loader2 className="h-6 w-6 animate-spin text-black/40" />
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Empresa</TableHead>
-                  <TableHead>CNPJ</TableHead>
-                  <TableHead>Plano</TableHead>
-                  <TableHead>Usuários</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="w-20 text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filtered.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-black/50">
-                      Nenhuma empresa encontrada.
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filtered.map((e) => (
-                    <TableRow
-                      key={e.id}
-                      onClick={() => fetchDetail(e.id)}
-                      className="cursor-pointer hover:bg-black/[0.02]"
-                    >
-                      <TableCell className="font-medium">{e.nome}</TableCell>
-                      <TableCell className="text-black/60">{e.cnpj ?? "—"}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="h-6 rounded-full text-[11px]">
-                          {PLAN_LABEL[e.plano]}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-black/70">{e.usersCount}</TableCell>
-                      <TableCell>
-                        <StatusBadge status={e.status as EmpresaStatus} />
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="rounded-full"
-                          onClick={(ev) => {
-                            ev.stopPropagation();
-                            fetchDetail(e.id);
-                          }}
+          <Card className="border border-black/5">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Activity size={16} strokeWidth={1.5} className="text-black/50" />
+                Atividade recente
+              </CardTitle>
+              <CardDescription>
+                Ações administrativas em todas as empresas (convites, acessos, billing, impersonation).
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {audit.length === 0 ? (
+                <p className="py-6 text-center text-sm text-black/50">Nenhuma atividade registrada ainda.</p>
+              ) : (
+                <ul className="divide-y divide-black/5">
+                  {audit.map((a) => (
+                    <li key={a.id} className="flex items-center justify-between gap-3 py-2.5 text-sm">
+                      <div className="min-w-0 truncate">
+                        <span className="font-medium text-black/80">{a.actor_email ?? "sistema"}</span>
+                        <span className="text-black/50"> · {a.action}</span>
+                        {a.target_name && <span className="text-black/50"> → {a.target_name}</span>}
+                      </div>
+                      <time className="flex-shrink-0 text-xs text-black/40">
+                        {new Date(a.created_at).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })}
+                      </time>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="empresas" className="mt-4">
+          <Card className="border border-black/5">
+            <CardHeader>
+              <CardTitle className="text-base">Empresas</CardTitle>
+              <CardDescription>Clique para ver detalhes ou editar features.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="relative">
+                <Search
+                  size={16}
+                  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-black/40"
+                  strokeWidth={1.5}
+                />
+                <Input
+                  placeholder="Buscar por nome ou CNPJ"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
+
+              {loading ? (
+                <div className="flex justify-center py-12">
+                  <Loader2 className="h-6 w-6 animate-spin text-black/40" />
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Empresa</TableHead>
+                      <TableHead>CNPJ</TableHead>
+                      <TableHead>Plano</TableHead>
+                      <TableHead>Usuários</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="w-20 text-right">Ações</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filtered.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={6} className="text-black/50">
+                          Nenhuma empresa encontrada.
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      filtered.map((e) => (
+                        <TableRow
+                          key={e.id}
+                          onClick={() => fetchDetail(e.id)}
+                          className="cursor-pointer hover:bg-black/[0.02]"
                         >
-                          Abrir
-                        </Button>
+                          <TableCell className="font-medium">{e.nome}</TableCell>
+                          <TableCell className="text-black/60">{e.cnpj ?? "—"}</TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className="h-6 rounded-full text-[11px]">
+                              {PLAN_LABEL[e.plano]}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-black/70">{e.usersCount}</TableCell>
+                          <TableCell>
+                            <StatusBadge status={e.status as EmpresaStatus} />
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="rounded-full"
+                              onClick={(ev) => {
+                                ev.stopPropagation();
+                                fetchDetail(e.id);
+                              }}
+                            >
+                              Abrir
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="usuarios" className="mt-4">
+          <Card className="border border-black/5">
+            <CardHeader>
+              <CardTitle className="text-base">Usuários</CardTitle>
+              <CardDescription>Todos os usuários da plataforma, de todas as empresas.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <div className="relative flex-1">
+                  <Search
+                    size={16}
+                    className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-black/40"
+                    strokeWidth={1.5}
+                  />
+                  <Input
+                    placeholder="Buscar por nome ou e-mail"
+                    value={userQuery}
+                    onChange={(e) => setUserQuery(e.target.value)}
+                    className="pl-9"
+                  />
+                </div>
+                <Select value={userEmpresa} onValueChange={setUserEmpresa}>
+                  <SelectTrigger className="sm:w-52">
+                    <SelectValue placeholder="Empresa" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas as empresas</SelectItem>
+                    {empresas.map((e) => (
+                      <SelectItem key={e.id} value={e.id}>
+                        {e.nome}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select value={userRole} onValueChange={setUserRole}>
+                  <SelectTrigger className="sm:w-40">
+                    <SelectValue placeholder="Papel" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos os papéis</SelectItem>
+                    <SelectItem value="admin">Admin</SelectItem>
+                    <SelectItem value="user">Usuário</SelectItem>
+                    <SelectItem value="ultra_admin">Ultra Admin</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Usuário</TableHead>
+                    <TableHead>Empresa</TableHead>
+                    <TableHead>Papel</TableHead>
+                    <TableHead className="w-32 text-right">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {usuariosFiltrados.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-black/50">
+                        Nenhum usuário encontrado.
                       </TableCell>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+                  ) : (
+                    usuariosFiltrados.map((u) => (
+                      <TableRow key={u.id}>
+                        <TableCell>
+                          <div className="font-medium">{u.nome ?? "—"}</div>
+                          <div className="text-xs text-black/50">{u.email ?? "—"}</div>
+                        </TableCell>
+                        <TableCell className="text-black/70">{u.empresaNome ?? "—"}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="h-6 rounded-full text-[11px]">
+                            {ROLE_LABEL[u.role]}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-1.5">
+                            {u.empresaId && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="rounded-full gap-1.5"
+                                onClick={() => fetchDetail(u.empresaId as string)}
+                              >
+                                <ExternalLink size={13} />
+                                Abrir empresa
+                              </Button>
+                            )}
+                            {u.role !== "ultra_admin" && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="rounded-full border-red-200 text-red-700 hover:bg-red-50 hover:text-red-800"
+                                onClick={() => setUserToDelete(u)}
+                                aria-label="Remover usuário"
+                              >
+                                <Trash2 size={13} />
+                              </Button>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="atividade" className="mt-4">
+          <Card className="border border-black/5">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Activity size={16} strokeWidth={1.5} className="text-black/50" />
+                Log administrativo
+              </CardTitle>
+              <CardDescription>
+                Ações administrativas em todas as empresas. Últimas 100, filtráveis. Atividade de IA por empresa fica no
+                detalhe da empresa.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <Select value={auditEmpresa} onValueChange={setAuditEmpresa}>
+                  <SelectTrigger className="sm:w-52">
+                    <SelectValue placeholder="Empresa" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas as empresas</SelectItem>
+                    {empresas.map((e) => (
+                      <SelectItem key={e.id} value={e.id}>
+                        {e.nome}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select value={auditCategoria} onValueChange={setAuditCategoria}>
+                  <SelectTrigger className="sm:w-52">
+                    <SelectValue placeholder="Categoria" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {AUDIT_CATEGORIAS.map((c) => (
+                      <SelectItem key={c.value} value={c.value}>
+                        {c.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-36">Quando</TableHead>
+                    <TableHead>Ator</TableHead>
+                    <TableHead>Ação</TableHead>
+                    <TableHead>Categoria</TableHead>
+                    <TableHead>Alvo</TableHead>
+                    <TableHead>Empresa</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {auditFull.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-black/50">
+                        Nenhuma atividade registrada para este filtro.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    auditFull.map((a) => (
+                      <TableRow key={a.id}>
+                        <TableCell className="text-xs text-black/50">
+                          {new Date(a.created_at).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })}
+                        </TableCell>
+                        <TableCell className="text-black/70">{a.actor_email ?? "sistema"}</TableCell>
+                        <TableCell className="font-medium">{a.action}</TableCell>
+                        <TableCell>
+                          {a.category && (
+                            <Badge variant="outline" className="h-6 rounded-full text-[11px]">
+                              {a.category}
+                            </Badge>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-black/60">{a.target_name ?? "—"}</TableCell>
+                        <TableCell className="text-black/60">
+                          {empresas.find((e) => e.id === a.empresa_id)?.nome ?? "—"}
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+
+      <AlertDialog open={!!userToDelete} onOpenChange={(o) => !o && setUserToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remover usuário?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {userToDelete?.nome ?? userToDelete?.email} perde o acesso à plataforma. Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700"
+              onClick={() => {
+                if (userToDelete) handleCrossDelete(userToDelete);
+                setUserToDelete(null);
+              }}
+            >
+              Remover
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <Dialog
         open={createOpen}
@@ -934,8 +1407,8 @@ function ArchiveCompanyDialog({
         <AlertDialogHeader>
           <AlertDialogTitle>Arquivar {companyName}?</AlertDialogTitle>
           <AlertDialogDescription>
-            A empresa é marcada como cancelada e sai do fluxo. Os usuários perdem o acesso na hora. Os dados
-            ficam preservados no banco, e a ação pode ser revertida reativando a empresa em "Editar empresa".
+            A empresa é marcada como cancelada e sai do fluxo. Os usuários perdem o acesso na hora. Os dados ficam
+            preservados no banco, e a ação pode ser revertida reativando a empresa em "Editar empresa".
           </AlertDialogDescription>
         </AlertDialogHeader>
         <div className="space-y-1.5">

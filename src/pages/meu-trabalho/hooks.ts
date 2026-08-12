@@ -27,11 +27,16 @@ export type DisciplinaItem = {
 
 export type TarefaItem = {
   id: string;
+  /** Número curto sequencial por empresa (estilo "#42"), para identificar/buscar. */
+  numero: number;
   titulo: string;
   descricao: string | null;
   status: StatusBucket;
   prioridade: Prioridade;
+  /** Primário (o primeiro responsável), mantido para compat/otimista. */
   responsavel_id: string | null;
+  /** Conjunto de responsáveis (tabela ponte tarefa_responsaveis). */
+  responsaveis: PessoaOpcao[];
   projeto_id: string | null;
   etapa_id: string | null;
   prazo: string | null;
@@ -48,7 +53,10 @@ export type TarefaInput = {
   descricao?: string | null;
   status: StatusBucket;
   prioridade?: Prioridade;
+  /** Legado/primário: quando `responsaveis` não vem, vira o único responsável. */
   responsavel_id?: string | null;
+  /** Conjunto de responsáveis (ids de pessoa). Fonte de verdade da ponte. */
+  responsaveis?: string[];
   projeto_id?: string | null;
   etapa_id?: string | null;
   prazo?: string | null;
@@ -165,26 +173,58 @@ export function useTarefas(pessoaId: string | null) {
     queryKey: KEY.tarefas(pessoaId),
     staleTime: 60 * 1000,
     queryFn: async (): Promise<TarefaItem[]> => {
+      // Filtro "minhas tarefas": tarefas em que a pessoa é um dos responsáveis
+      // (via ponte). Sem responsáveis não aparece pra ninguém, como antes.
+      let idsFiltro: string[] | null = null;
+      if (pessoaId) {
+        const { data: vinc, error: eVinc } = await supabase
+          .from("tarefa_responsaveis")
+          .select("tarefa_id")
+          .eq("pessoa_id", pessoaId);
+        if (eVinc) throw eVinc;
+        idsFiltro = (vinc ?? []).map((r) => r.tarefa_id);
+        if (idsFiltro.length === 0) return [];
+      }
+
       let q = supabase
         .from("tarefas")
         .select(
-          "id, titulo, descricao, status, prioridade, responsavel_id, projeto_id, etapa_id, prazo, horas_estimadas, horas_reais, labels, links, comentarios, projeto:projetos(id, nome)"
+          "id, numero, titulo, descricao, status, prioridade, responsavel_id, projeto_id, etapa_id, prazo, horas_estimadas, horas_reais, labels, links, comentarios, projeto:projetos(id, nome), responsaveis:tarefa_responsaveis(pessoa:pessoas(id, nome))"
         )
         .order("prazo", { ascending: true, nullsFirst: false });
-      if (pessoaId) q = q.eq("responsavel_id", pessoaId);
+      if (idsFiltro) q = q.in("id", idsFiltro);
       const { data, error } = await q;
       if (error) throw error;
-      return (data ?? []).map((t) => ({
-        ...t,
-        status: t.status as StatusBucket,
-        prioridade: toPrioridade(t.prioridade),
-        labels: t.labels ?? [],
-        links: (t.links as unknown as LinkItem[]) ?? [],
-        comentarios: (t.comentarios as unknown as Comentario[]) ?? [],
-        projeto: Array.isArray(t.projeto) ? (t.projeto[0] ?? null) : t.projeto,
-      })) as TarefaItem[];
+      return (data ?? []).map((t) => {
+        const { responsaveis, ...rest } = t;
+        return {
+          ...rest,
+          status: t.status as StatusBucket,
+          prioridade: toPrioridade(t.prioridade),
+          responsaveis: (responsaveis ?? [])
+            .map((r) => (Array.isArray(r.pessoa) ? r.pessoa[0] : r.pessoa))
+            .filter((p): p is PessoaOpcao => !!p),
+          labels: t.labels ?? [],
+          links: (t.links as unknown as LinkItem[]) ?? [],
+          comentarios: (t.comentarios as unknown as Comentario[]) ?? [],
+          projeto: Array.isArray(t.projeto) ? (t.projeto[0] ?? null) : t.projeto,
+        };
+      }) as TarefaItem[];
     },
   });
+}
+
+/**
+ * Reescreve o conjunto de responsáveis de uma tarefa na ponte (apaga e reinsere,
+ * simples e idempotente). RLS valida empresa/tenant nos dois lados.
+ */
+async function syncResponsaveis(tarefaId: string, empresaId: string, pessoaIds: string[]) {
+  const { error: eDel } = await supabase.from("tarefa_responsaveis").delete().eq("tarefa_id", tarefaId);
+  if (eDel) throw eDel;
+  if (pessoaIds.length === 0) return;
+  const rows = pessoaIds.map((pid) => ({ tarefa_id: tarefaId, pessoa_id: pid, empresa_id: empresaId }));
+  const { error: eIns } = await supabase.from("tarefa_responsaveis").insert(rows);
+  if (eIns) throw eIns;
 }
 
 export function useTarefaMutations() {
@@ -196,23 +236,29 @@ export function useTarefaMutations() {
     mutationFn: async (input: TarefaInput) => {
       const empresaId = profile?.empresa_id;
       if (!empresaId) throw new Error("Sem empresa no perfil");
-      const { error } = await supabase.from("tarefas").insert({
-        empresa_id: empresaId,
-        titulo: input.titulo,
-        descricao: input.descricao ?? null,
-        status: input.status,
-        prioridade: input.prioridade ?? "media",
-        responsavel_id: input.responsavel_id ?? null,
-        projeto_id: input.projeto_id ?? null,
-        etapa_id: input.etapa_id ?? null,
-        prazo: input.prazo ?? null,
-        horas_estimadas: input.horas_estimadas ?? null,
-        horas_reais: input.horas_reais ?? null,
-        labels: input.labels ?? [],
-        links: (input.links ?? []) as unknown as Json,
-        comentarios: (input.comentarios ?? []) as unknown as Json,
-      });
+      const responsaveis = input.responsaveis ?? (input.responsavel_id ? [input.responsavel_id] : []);
+      const { data, error } = await supabase
+        .from("tarefas")
+        .insert({
+          empresa_id: empresaId,
+          titulo: input.titulo,
+          descricao: input.descricao ?? null,
+          status: input.status,
+          prioridade: input.prioridade ?? "media",
+          responsavel_id: responsaveis[0] ?? null,
+          projeto_id: input.projeto_id ?? null,
+          etapa_id: input.etapa_id ?? null,
+          prazo: input.prazo ?? null,
+          horas_estimadas: input.horas_estimadas ?? null,
+          horas_reais: input.horas_reais ?? null,
+          labels: input.labels ?? [],
+          links: (input.links ?? []) as unknown as Json,
+          comentarios: (input.comentarios ?? []) as unknown as Json,
+        })
+        .select("id")
+        .single();
       if (error) throw error;
+      await syncResponsaveis(data.id, empresaId, responsaveis);
     },
     onSuccess: invalidate,
   });
@@ -225,7 +271,6 @@ export function useTarefaMutations() {
       if (input.descricao !== undefined) patch.descricao = input.descricao;
       if (input.status !== undefined) patch.status = input.status;
       if (input.prioridade !== undefined) patch.prioridade = input.prioridade;
-      if (input.responsavel_id !== undefined) patch.responsavel_id = input.responsavel_id;
       if (input.projeto_id !== undefined) patch.projeto_id = input.projeto_id;
       if (input.etapa_id !== undefined) patch.etapa_id = input.etapa_id;
       if (input.prazo !== undefined) patch.prazo = input.prazo;
@@ -234,8 +279,26 @@ export function useTarefaMutations() {
       if (input.labels !== undefined) patch.labels = input.labels;
       if (input.links !== undefined) patch.links = input.links as unknown as Json;
       if (input.comentarios !== undefined) patch.comentarios = input.comentarios as unknown as Json;
-      const { error } = await supabase.from("tarefas").update(patch).eq("id", id);
-      if (error) throw error;
+      // Responsáveis: `responsaveis` (multi) tem prioridade; o primário acompanha.
+      const responsaveis =
+        input.responsaveis !== undefined
+          ? input.responsaveis
+          : input.responsavel_id !== undefined
+            ? input.responsavel_id
+              ? [input.responsavel_id]
+              : []
+            : null;
+      if (responsaveis !== null) patch.responsavel_id = responsaveis[0] ?? null;
+
+      if (Object.keys(patch).length > 0) {
+        const { error } = await supabase.from("tarefas").update(patch).eq("id", id);
+        if (error) throw error;
+      }
+      if (responsaveis !== null) {
+        const empresaId = profile?.empresa_id;
+        if (!empresaId) throw new Error("Sem empresa no perfil");
+        await syncResponsaveis(id, empresaId, responsaveis);
+      }
     },
     onSuccess: invalidate,
   });

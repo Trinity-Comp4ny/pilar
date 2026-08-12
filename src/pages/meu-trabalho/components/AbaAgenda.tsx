@@ -34,6 +34,7 @@ import {
   type TarefaInput,
   type TarefaItem,
 } from "../hooks";
+import { useEtapas } from "../useEtapas";
 import { TarefaDialog } from "./TarefaDialog";
 
 type Props = {
@@ -57,6 +58,7 @@ export function AbaAgenda({ pessoaId, minhaPessoaId, canEdit, temProjetos }: Pro
   const { data: tarefas } = useTarefas(pessoaId);
   const { data: pessoas } = usePessoasEmpresa();
   const { data: projetos } = useProjetosLite();
+  const { data: etapas } = useEtapas();
   const { atualizar } = useTarefaMutations();
 
   const camadas: CamadaId[] = temProjetos ? ["disciplina", "tarefa"] : ["tarefa"];
@@ -166,6 +168,7 @@ export function AbaAgenda({ pessoaId, minhaPessoaId, canEdit, temProjetos }: Pro
         tarefa={tarefaAberta}
         pessoas={pessoas ?? []}
         projetos={projetos ?? []}
+        etapas={etapas ?? []}
         defaultResponsavelId={minhaPessoaId}
         autorNome={(pessoas ?? []).find((p) => p.id === minhaPessoaId)?.nome ?? "Eu"}
         onSave={salvarTarefa}

@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
-import { Plus, Pencil, Trash2, Loader2, Truck } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Plus, Pencil, Trash2, Loader2, Truck, Link2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,6 +18,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { formatCNPJ, formatPhone, onlyDigits, validateEmail } from "@/lib/maskUtils";
 import { isValidCNPJ } from "@/lib/brasilApi";
+import { ReconciliarDialog } from "./ReconciliarDialog";
 
 interface Fornecedor {
   id: string;
@@ -40,10 +42,13 @@ const EMPTY_FORM: FormState = { nome: "", cnpj: "", contato: "", email: "", tele
 export default function Fornecedores() {
   usePageTitle("Fornecedores");
   const { can } = usePermissions();
-  // Decisão de produto: fornecedores é intencionalmente gated pela feature "financeiro"
-  // (contas a pagar/fornecedores fazem parte do módulo financeiro). Não há feature própria
-  // "fornecedores" no controle de acesso — mudar isso exige alteração central de permissões.
-  const canEdit = can("financeiro", "edit");
+  const navigate = useNavigate();
+  // Decisão de produto: fornecedor é cadastro global da empresa, mas a porta de
+  // gerência vive no módulo Obra (é onde ele mais se usa: cotação e conta da obra).
+  // Por isso o gate é "obras". O escritório continua gerenciando o mesmo cadastro
+  // pelo SupplierManager embutido no fluxo de despesa (gated por "financeiro").
+  const canEdit = can("obras", "edit");
+  const [reconciliarOpen, setReconciliarOpen] = useState(false);
 
   const [fornecedores, setFornecedores] = useState<Fornecedor[]>([]);
   const [loadError, setLoadError] = useState(false);
@@ -249,128 +254,136 @@ export default function Fornecedores() {
         <PageHeader
           title="Fornecedores"
           search={{ value: searchTerm, onChange: setSearchTerm, placeholder: "Buscar fornecedores" }}
-          primaryAction={{ label: "Novo fornecedor", onClick: handleOpenNew, icon: Plus, feature: "financeiro" }}
+          primaryAction={{ label: "Novo fornecedor", onClick: handleOpenNew, icon: Plus, feature: "obras" }}
           children={
-            <Dialog
-              open={isDialogOpen}
-              onOpenChange={(open) => {
-                setIsDialogOpen(open);
-                if (!open) resetForm();
-              }}
-            >
-              <DialogContent className="sm:max-w-md">
-                <DialogHeader>
-                  <DialogTitle>{isEditMode ? "Editar Fornecedor" : "Novo Fornecedor"}</DialogTitle>
-                  <DialogDescription>
-                    {isEditMode ? "Atualize os dados do fornecedor" : "Cadastre um novo fornecedor"}
-                  </DialogDescription>
-                </DialogHeader>
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    handleSave();
-                  }}
-                  className="space-y-3 pt-2"
-                >
-                  <div className="space-y-1.5">
-                    <Label htmlFor="nome" className="text-xs">
-                      Nome / Razão Social *
-                    </Label>
-                    <Input
-                      id="nome"
-                      value={form.nome}
-                      onChange={(e) => setForm({ ...form, nome: e.target.value })}
-                      placeholder="Razão social ou nome fantasia"
-                      required
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="cnpj" className="text-xs">
-                      CNPJ
-                    </Label>
-                    <Input
-                      id="cnpj"
-                      value={form.cnpj}
-                      onChange={(e) => handleCnpjChange(e.target.value)}
-                      placeholder="00.000.000/0000-00"
-                      aria-invalid={!!cnpjError}
-                      aria-describedby={cnpjError ? "fornecedor-cnpj-error" : undefined}
-                      className={cnpjError ? "border-red-500 focus-visible:ring-red-500" : ""}
-                    />
-                    {cnpjError && (
-                      <p id="fornecedor-cnpj-error" role="alert" className="text-xs text-red-600">
-                        {cnpjError}
-                      </p>
-                    )}
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
+            <>
+              {canEdit && (
+                <Button variant="outline" size="sm" onClick={() => setReconciliarOpen(true)}>
+                  <Link2 className="mr-1.5 h-4 w-4" />
+                  Reconciliar
+                </Button>
+              )}
+              <Dialog
+                open={isDialogOpen}
+                onOpenChange={(open) => {
+                  setIsDialogOpen(open);
+                  if (!open) resetForm();
+                }}
+              >
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>{isEditMode ? "Editar Fornecedor" : "Novo Fornecedor"}</DialogTitle>
+                    <DialogDescription>
+                      {isEditMode ? "Atualize os dados do fornecedor" : "Cadastre um novo fornecedor"}
+                    </DialogDescription>
+                  </DialogHeader>
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      handleSave();
+                    }}
+                    className="space-y-3 pt-2"
+                  >
                     <div className="space-y-1.5">
-                      <Label htmlFor="contato" className="text-xs">
-                        Contato
+                      <Label htmlFor="nome" className="text-xs">
+                        Nome / Razão Social *
                       </Label>
                       <Input
-                        id="contato"
-                        value={form.contato}
-                        onChange={(e) => setForm({ ...form, contato: e.target.value })}
-                        placeholder="Nome do contato"
+                        id="nome"
+                        value={form.nome}
+                        onChange={(e) => setForm({ ...form, nome: e.target.value })}
+                        placeholder="Razão social ou nome fantasia"
+                        required
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <Label htmlFor="telefone" className="text-xs">
-                        Telefone
+                      <Label htmlFor="cnpj" className="text-xs">
+                        CNPJ
                       </Label>
                       <Input
-                        id="telefone"
-                        value={form.telefone}
-                        onChange={(e) => handleTelefoneChange(e.target.value)}
-                        placeholder="(00) 00000-0000"
+                        id="cnpj"
+                        value={form.cnpj}
+                        onChange={(e) => handleCnpjChange(e.target.value)}
+                        placeholder="00.000.000/0000-00"
+                        aria-invalid={!!cnpjError}
+                        aria-describedby={cnpjError ? "fornecedor-cnpj-error" : undefined}
+                        className={cnpjError ? "border-red-500 focus-visible:ring-red-500" : ""}
                       />
-                    </div>
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="email" className="text-xs">
-                      Email
-                    </Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={form.email}
-                      onChange={(e) => {
-                        setForm({ ...form, email: e.target.value });
-                        if (emailError) setEmailError("");
-                      }}
-                      placeholder="email@exemplo.com"
-                      aria-invalid={!!emailError}
-                      aria-describedby={emailError ? "fornecedor-email-error" : undefined}
-                      className={emailError ? "border-red-500 focus-visible:ring-red-500" : ""}
-                    />
-                    {emailError && (
-                      <p id="fornecedor-email-error" role="alert" className="text-xs text-red-600">
-                        {emailError}
-                      </p>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2 pt-2">
-                    <Button type="button" variant="ghost" onClick={() => setIsDialogOpen(false)} disabled={isSaving}>
-                      Cancelar
-                    </Button>
-                    <div className="flex-1" />
-                    <Button type="submit" variant="brand" disabled={isSaving}>
-                      {isSaving ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Salvando...
-                        </>
-                      ) : isEditMode ? (
-                        "Atualizar"
-                      ) : (
-                        "Salvar"
+                      {cnpjError && (
+                        <p id="fornecedor-cnpj-error" role="alert" className="text-xs text-red-600">
+                          {cnpjError}
+                        </p>
                       )}
-                    </Button>
-                  </div>
-                </form>
-              </DialogContent>
-            </Dialog>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1.5">
+                        <Label htmlFor="contato" className="text-xs">
+                          Contato
+                        </Label>
+                        <Input
+                          id="contato"
+                          value={form.contato}
+                          onChange={(e) => setForm({ ...form, contato: e.target.value })}
+                          placeholder="Nome do contato"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label htmlFor="telefone" className="text-xs">
+                          Telefone
+                        </Label>
+                        <Input
+                          id="telefone"
+                          value={form.telefone}
+                          onChange={(e) => handleTelefoneChange(e.target.value)}
+                          placeholder="(00) 00000-0000"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="email" className="text-xs">
+                        Email
+                      </Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        value={form.email}
+                        onChange={(e) => {
+                          setForm({ ...form, email: e.target.value });
+                          if (emailError) setEmailError("");
+                        }}
+                        placeholder="email@exemplo.com"
+                        aria-invalid={!!emailError}
+                        aria-describedby={emailError ? "fornecedor-email-error" : undefined}
+                        className={emailError ? "border-red-500 focus-visible:ring-red-500" : ""}
+                      />
+                      {emailError && (
+                        <p id="fornecedor-email-error" role="alert" className="text-xs text-red-600">
+                          {emailError}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 pt-2">
+                      <Button type="button" variant="ghost" onClick={() => setIsDialogOpen(false)} disabled={isSaving}>
+                        Cancelar
+                      </Button>
+                      <div className="flex-1" />
+                      <Button type="submit" variant="brand" disabled={isSaving}>
+                        {isSaving ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Salvando...
+                          </>
+                        ) : isEditMode ? (
+                          "Atualizar"
+                        ) : (
+                          "Salvar"
+                        )}
+                      </Button>
+                    </div>
+                  </form>
+                </DialogContent>
+              </Dialog>
+            </>
           }
         />
       }
@@ -417,9 +430,7 @@ export default function Fornecedores() {
                           title="Nenhum fornecedor cadastrado"
                           description="Crie o primeiro fornecedor para começar."
                           action={
-                            can("financeiro", "create")
-                              ? { label: "Novo Fornecedor", onClick: handleOpenNew }
-                              : undefined
+                            can("obras", "create") ? { label: "Novo Fornecedor", onClick: handleOpenNew } : undefined
                           }
                         />
                       ) : (
@@ -434,7 +445,11 @@ export default function Fornecedores() {
                   </TableRow>
                 ) : (
                   filtered.map((f) => (
-                    <TableRow key={f.id}>
+                    <TableRow
+                      key={f.id}
+                      className="cursor-pointer"
+                      onClick={() => navigate(`/obras/fornecedores/${f.id}`)}
+                    >
                       <TableCell className="font-medium">{f.nome}</TableCell>
                       <TableCell>{f.cnpj ? formatCNPJ(f.cnpj) : "-"}</TableCell>
                       <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
@@ -458,7 +473,7 @@ export default function Fornecedores() {
                             >
                               <Pencil className="h-4 w-4" />
                             </Button>
-                            <Can feature="financeiro" action="delete">
+                            <Can feature="obras" action="delete">
                               <Button
                                 variant="ghost"
                                 size="icon"
@@ -491,6 +506,8 @@ export default function Fornecedores() {
         confirmText="Excluir"
         cancelText="Cancelar"
       />
+
+      <ReconciliarDialog open={reconciliarOpen} onOpenChange={setReconciliarOpen} />
     </PageLayout>
   );
 }

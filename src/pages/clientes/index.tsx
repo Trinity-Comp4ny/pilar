@@ -231,7 +231,7 @@ export default function Clientes() {
   };
 
   const handleRowClick = (cliente: Cliente) => {
-    navigate(`/clientes/${cliente.id}`);
+    navigate(`/gestao/clientes/${cliente.id}`);
   };
 
   const clearFilters = () => {

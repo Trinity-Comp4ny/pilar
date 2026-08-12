@@ -153,6 +153,8 @@ export interface Projeto {
   parcelas?: string;
   area_m2?: number;
   status: ProjectStatus;
+  /** Coluna do quadro (projeto_etapas). O status deriva do bucket da etapa. */
+  etapa_id?: string | null;
   prioridade: ProjectPriority;
   valor_contrato: number;
   observacao: string;

@@ -1,9 +1,12 @@
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Pencil, Trash2, Landmark, Eye, EyeOff } from "lucide-react";
+import { Pencil, Trash2, Landmark, Eye, EyeOff, Target } from "lucide-react";
 import {
   CONTRACT_TYPES,
   CONTRACT_TYPE_LABELS,
@@ -22,6 +25,21 @@ const formatDateBR = (iso?: string) => {
   return `${d}/${m}/${y}`;
 };
 
+interface MetaPessoa {
+  id: string;
+  nome: string;
+  alvo: number;
+  atual: number;
+  prazo: string | null;
+  unidade: string | null;
+}
+
+const formatMetaValor = (value: number, unidade: string | null) => {
+  if (unidade === "currency") return `R$ ${value.toLocaleString("pt-BR")}`;
+  if (unidade === "percentage") return `${value}%`;
+  return value.toLocaleString("pt-BR");
+};
+
 interface PessoaDetailDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -38,6 +56,21 @@ export function PessoaDetailDialog({ open, onOpenChange, pessoa, isAdmin, onEdit
   useEffect(() => {
     setShowCpf(false);
   }, [pessoa?.id, open]);
+
+  const { data: metas } = useQuery({
+    queryKey: ["metas", "pessoa", pessoa?.id],
+    enabled: open && !!pessoa?.id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("metas")
+        .select("id, nome, alvo, atual, prazo, unidade")
+        .eq("tipo", "pessoal")
+        .eq("pessoa_id", pessoa!.id)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data as MetaPessoa[];
+    },
+  });
 
   if (!pessoa) return null;
 
@@ -215,6 +248,44 @@ export function PessoaDetailDialog({ open, onOpenChange, pessoa, isAdmin, onEdit
               )}
             </div>
           )}
+
+          <div className="border-t pt-4 space-y-3">
+            <h4 className="font-medium text-sm text-muted-foreground flex items-center gap-1.5">
+              <Target className="h-3.5 w-3.5" />
+              Metas pessoais
+            </h4>
+            {metas && metas.length > 0 ? (
+              <div className="space-y-3">
+                {metas.map((meta) => {
+                  const percent = Math.min(Math.round((meta.atual / meta.alvo) * 100), 100);
+                  const isCompleted = percent >= 100;
+                  return (
+                    <div key={meta.id} className="space-y-1.5">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-sm font-medium truncate">{meta.nome}</span>
+                        <span className={cn("text-sm font-bold shrink-0", isCompleted && "text-positive-strong")}>
+                          {percent}%
+                        </span>
+                      </div>
+                      <Progress
+                        value={percent}
+                        className="h-1.5 bg-gray-100"
+                        indicatorClassName={isCompleted ? "bg-positive/100" : "bg-blue-500"}
+                      />
+                      <div className="flex justify-between text-xs text-muted-foreground">
+                        <span>
+                          {formatMetaValor(meta.atual, meta.unidade)} de {formatMetaValor(meta.alvo, meta.unidade)}
+                        </span>
+                        {meta.prazo && <span>Prazo: {formatDateBR(meta.prazo)}</span>}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground italic">Nenhuma meta pessoal cadastrada.</p>
+            )}
+          </div>
 
           <div className="flex gap-2 pt-4">
             {isAdmin && (

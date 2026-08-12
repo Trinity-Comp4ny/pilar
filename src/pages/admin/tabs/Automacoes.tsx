@@ -20,7 +20,7 @@ export function AutomacoesTab() {
             name="Asaas"
             description="Cobrança via boleto, PIX e cartão para receitas"
             status="configurado"
-            onOpen={() => navigate("/financeiro?tab=faturas")}
+            onOpen={() => navigate("/gestao/financeiro?tab=faturas")}
           />
         </CardContent>
       </Card>

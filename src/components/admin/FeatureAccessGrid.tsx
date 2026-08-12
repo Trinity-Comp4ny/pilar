@@ -23,7 +23,8 @@ const LEVELS: readonly { value: FeatureAccess; label: string; hint: string }[] =
   { value: "editor", label: "Editor", hint: "Criar, editar, excluir" },
 ];
 
-type ShortcutId = "all-viewer" | "all-editor" | "clear" | "commercial" | "ops" | "finance";
+type ShortcutId =
+  "all-viewer" | "all-editor" | "clear" | "commercial" | "ops" | "finance" | "coordenador" | "colaborador";
 
 type Shortcut = {
   id: ShortcutId;
@@ -70,6 +71,36 @@ const SHORTCUTS: readonly Shortcut[] = [
     apply: (keys) => {
       const editor: FeatureKey[] = ["financeiro"];
       const viewer: FeatureKey[] = ["relatorios", "projetos", "clientes"];
+      const next: UserFeatures = {};
+      for (const k of keys) {
+        if (editor.includes(k)) next[k] = "editor";
+        else if (viewer.includes(k)) next[k] = "viewer";
+      }
+      return next;
+    },
+  },
+  {
+    // Coordena projetos e comercial; sem financeiro nem folha.
+    id: "coordenador",
+    label: "Perfil Coordenador",
+    apply: (keys) => {
+      const editor: FeatureKey[] = ["projetos", "leads", "propostas", "clientes"];
+      const viewer: FeatureKey[] = ["relatorios", "mapa", "obras"];
+      const next: UserFeatures = {};
+      for (const k of keys) {
+        if (editor.includes(k)) next[k] = "editor";
+        else if (viewer.includes(k)) next[k] = "viewer";
+      }
+      return next;
+    },
+  },
+  {
+    // Executa o trabalho; nenhum dado de dinheiro.
+    id: "colaborador",
+    label: "Perfil Colaborador",
+    apply: (keys) => {
+      const editor: FeatureKey[] = ["meu_trabalho", "timesheet"];
+      const viewer: FeatureKey[] = ["projetos"];
       const next: UserFeatures = {};
       for (const k of keys) {
         if (editor.includes(k)) next[k] = "editor";

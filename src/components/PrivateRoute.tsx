@@ -1,6 +1,7 @@
 import { Navigate, useLocation, Outlet, Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useSettingsModal } from "@/contexts/SettingsModalContext";
 import { supabase } from "@/integrations/supabase/client";
 import { isUltraAdmin } from "@/lib/roles";
 import { mfaDevBypass } from "@/lib/mfaDevBypass";
@@ -18,6 +19,7 @@ type SubStatus = "active" | "trialing" | "overdue" | "canceled" | "expired" | nu
 const subStatusCache: { v: SubStatus | undefined } = { v: undefined };
 
 function SubscriptionSuspendedScreen() {
+  const { openSettings } = useSettingsModal();
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50 p-8">
       <div className="max-w-md text-center space-y-6">
@@ -33,8 +35,8 @@ function SubscriptionSuspendedScreen() {
           </p>
         </div>
         <div className="flex flex-col gap-3">
-          <Button asChild variant="brand">
-            <Link to="/billing">Ver assinatura</Link>
+          <Button variant="brand" onClick={() => openSettings("pagamento")}>
+            Ver assinatura
           </Button>
           <Button variant="ghost" asChild className="text-slate-500">
             <Link to="/" onClick={() => supabase.auth.signOut()}>
@@ -132,9 +134,10 @@ export function PrivateRoute() {
     return <Outlet />;
   }
 
+  // Assinatura suspensa bloqueia a app; a própria tela abre o modal de pagamento
+  // (montado na raiz, fora das rotas) para o cliente regularizar sem sair daqui.
   const suspended = subStatus === "canceled" || subStatus === "expired";
-  const isBillingPath = location.pathname.startsWith("/billing");
-  if (suspended && !isBillingPath) {
+  if (suspended) {
     return <SubscriptionSuspendedScreen />;
   }
 

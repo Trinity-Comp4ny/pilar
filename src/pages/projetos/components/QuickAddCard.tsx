@@ -5,15 +5,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Loader2, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { type ProjectStatus } from "@/constants";
 
 interface QuickAddCardProps {
-  status: ProjectStatus;
+  /** Coluna onde o projeto será criado; o status deriva do bucket da etapa. */
+  etapaId: string;
   clientes: { id: string; nome: string }[];
   onCreated: () => void;
 }
 
-export function QuickAddCard({ status, clientes, onCreated }: QuickAddCardProps) {
+export function QuickAddCard({ etapaId, clientes, onCreated }: QuickAddCardProps) {
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [codigo, setCodigo] = useState("");
@@ -52,12 +52,15 @@ export function QuickAddCard({ status, clientes, onCreated }: QuickAddCardProps)
         p_disciplinas: [] as unknown as never,
       });
       if (error) throw error;
-      // status default é "Planejamento" — ajustar se diferente
-      if (status !== "Planejamento") {
-        const { data } = await supabase.from("projetos").select("id").eq("codigo_projeto", codigo.trim()).single();
-        if (data?.id) {
-          await supabase.from("projetos").update({ status }).eq("id", data.id);
-        }
+      // O RPC cria em "Planejamento"; movemos para a coluna clicada (o trigger
+      // deriva o status pelo bucket da etapa).
+      const { data } = await supabase
+        .from("projetos")
+        .select("id, etapa_id")
+        .eq("codigo_projeto", codigo.trim())
+        .single();
+      if (data?.id && data.etapa_id !== etapaId) {
+        await supabase.from("projetos").update({ etapa_id: etapaId }).eq("id", data.id);
       }
       toast.success("Projeto criado");
       reset();

@@ -4,6 +4,7 @@ import { Loader2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -71,7 +72,8 @@ export function CotacaoFormDialog({ open, onOpenChange, obraId, cotacao }: Props
               placeholder="Ex.: Tábuas de cedrinho, material elétrico, locação de MUNCK"
             />
             <p className="text-xs text-muted-foreground">
-              Depois é só analisar o PDF do orçamento: a IA identifica sozinha se é comparação entre lojas ou a lista de um fornecedor.
+              Depois é só analisar o PDF do orçamento: a IA identifica sozinha se é comparação entre lojas ou a lista de
+              um fornecedor.
             </p>
           </div>
 
@@ -118,7 +120,7 @@ export function CotacaoFormDialog({ open, onOpenChange, obraId, cotacao }: Props
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="cot-prazo">Precisa até</Label>
-              <Input id="cot-prazo" type="date" value={prazo} onChange={(e) => setPrazo(e.target.value)} />
+              <DatePicker id="cot-prazo" value={prazo} onChange={setPrazo} />
             </div>
           </div>
 

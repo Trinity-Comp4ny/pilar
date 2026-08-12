@@ -94,7 +94,7 @@ describe("useUserRole", () => {
 
 describe("UserRole type", () => {
   it("accepts valid roles", () => {
-    const roles: UserRole[] = ["admin", "financeiro", "marketing", "operacional", "user"];
-    expect(roles).toHaveLength(5);
+    const roles: UserRole[] = ["ultra_admin", "admin", "user"];
+    expect(roles).toHaveLength(3);
   });
 });

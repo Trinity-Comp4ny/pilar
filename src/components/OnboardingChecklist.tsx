@@ -96,7 +96,7 @@ export function OnboardingChecklist() {
         title: "Cadastre sua primeira pessoa",
         description: "Equipe técnica que executa os projetos",
         cta: "Ir para Equipe",
-        ctaPath: "/equipe",
+        ctaPath: "/gestao/equipe",
         count: c.pessoas,
       },
       {
@@ -104,7 +104,7 @@ export function OnboardingChecklist() {
         title: "Cadastre seu primeiro cliente",
         description: "Quem contrata os serviços do escritório",
         cta: "Ir para Clientes",
-        ctaPath: "/clientes",
+        ctaPath: "/gestao/clientes",
         count: c.clientes,
       },
       {
@@ -112,7 +112,7 @@ export function OnboardingChecklist() {
         title: "Registre seu primeiro lead",
         description: "Oportunidade comercial em prospecção",
         cta: "Ir para Leads",
-        ctaPath: "/leads",
+        ctaPath: "/gestao/leads",
         count: c.leads,
       },
       {
@@ -120,7 +120,7 @@ export function OnboardingChecklist() {
         title: "Crie sua primeira proposta",
         description: "Orçamento comercial vinculado a um cliente ou lead",
         cta: "Ir para Propostas",
-        ctaPath: "/documentos",
+        ctaPath: "/gestao/propostas",
         count: c.propostas,
       },
       {

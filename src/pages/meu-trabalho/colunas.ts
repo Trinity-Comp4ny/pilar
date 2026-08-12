@@ -3,14 +3,7 @@
 // visão (lista/quadro/agenda). "Nome" é fixo e não entra aqui.
 import { useCallback, useEffect, useState } from "react";
 
-export type ColunaLista =
-  | "projeto"
-  | "responsavel"
-  | "prazo"
-  | "prioridade"
-  | "etiquetas"
-  | "horas"
-  | "horasreais";
+export type ColunaLista = "projeto" | "responsavel" | "prazo" | "prioridade" | "etiquetas" | "horas" | "horasreais";
 
 export const COLUNAS_ORDEM: readonly ColunaLista[] = [
   "projeto",
@@ -32,15 +25,15 @@ export const COLUNA_LABEL: Record<ColunaLista, string> = {
   horasreais: "Horas reais",
 };
 
-// Largura de cada coluna na grade (o Nome ocupa o restante como 1fr).
+// Largura de cada coluna na grade (o Nome ocupa parte do restante como 1fr).
 export const COLUNA_LARGURA: Record<ColunaLista, string> = {
-  projeto: "150px",
-  responsavel: "160px",
-  prazo: "110px",
+  projeto: "minmax(180px, 1fr)",
+  responsavel: "180px",
+  prazo: "132px",
   prioridade: "128px",
   etiquetas: "180px",
-  horas: "110px",
-  horasreais: "110px",
+  horas: "104px",
+  horasreais: "104px",
 };
 
 const PADRAO: Record<ColunaLista, boolean> = {

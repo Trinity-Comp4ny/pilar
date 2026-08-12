@@ -1,6 +1,7 @@
-import { CalendarDays, FolderOpen, Link2, MessageSquare, MoreVertical, Pencil, Trash2, User } from "lucide-react";
+import { CalendarDays, FolderOpen, Link2, MessageSquare, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { AvatarStack } from "@/pages/projetos/components/AvatarStack";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -59,6 +60,9 @@ export function CardTrabalho({ item, onAbrir, onPrioridade, onExcluir }: Props) 
           )}
         </DropdownMenu>
         <div className="flex shrink-0 items-center gap-1">
+          {item.numero != null && (
+            <span className="font-mono text-[10px] text-muted-foreground/70">#{item.numero}</span>
+          )}
           <Badge variant="outline" className="text-[10px] font-normal text-muted-foreground">
             {ehTarefa ? "Tarefa" : "Disciplina"}
           </Badge>
@@ -98,10 +102,10 @@ export function CardTrabalho({ item, onAbrir, onPrioridade, onExcluir }: Props) 
 
       {/* Metadados */}
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-        {item.responsavelNome && (
-          <span className="inline-flex items-center gap-1">
-            <User className="h-3 w-3" />
-            {item.responsavelNome}
+        {item.responsaveis.length > 0 && (
+          <span className="inline-flex items-center gap-1.5">
+            <AvatarStack names={item.responsaveis.map((r) => r.nome)} size="xs" />
+            {item.responsaveis.length === 1 && <span>{item.responsaveis[0].nome}</span>}
           </span>
         )}
         {prazo && (

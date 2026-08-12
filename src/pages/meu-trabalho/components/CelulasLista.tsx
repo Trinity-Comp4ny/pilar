@@ -4,19 +4,12 @@
 import { useState } from "react";
 import { format, parse, isValid } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { CalendarPlus, Clock, Flag, FolderOpen, Plus, Tag, UserPlus } from "lucide-react";
+import { CalendarPlus, Check, Clock, Flag, FolderOpen, Plus, Tag, UserPlus } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -37,35 +30,39 @@ function pararClique(e: React.MouseEvent) {
 // --- Responsável ---------------------------------------------------------
 
 type ResponsavelCellProps = {
-  responsavelId: string | null;
-  responsavelNome: string | null;
+  responsaveis: PessoaOpcao[];
   pessoas: PessoaOpcao[];
   editavel: boolean;
-  onChange: (pessoaId: string | null) => void;
+  onChange: (pessoaIds: string[]) => void;
 };
 
-export function ResponsavelCell({
-  responsavelId,
-  responsavelNome,
-  pessoas,
-  editavel,
-  onChange,
-}: ResponsavelCellProps) {
+export function ResponsavelCell({ responsaveis, pessoas, editavel, onChange }: ResponsavelCellProps) {
   const [open, setOpen] = useState(false);
+  const ids = new Set(responsaveis.map((r) => r.id));
 
-  const conteudo = responsavelNome ? (
-    <span className="inline-flex min-w-0 items-center gap-1.5">
-      <AvatarStack names={[responsavelNome]} size="xs" />
-      <span className="truncate text-xs text-foreground">{responsavelNome}</span>
-    </span>
-  ) : editavel ? (
-    <span className="inline-flex items-center gap-1 text-muted-foreground/60 group-hover:text-muted-foreground">
-      <UserPlus className="h-3.5 w-3.5" />
-      <span className="text-xs">Atribuir</span>
-    </span>
-  ) : (
-    <span className="text-xs text-muted-foreground/40">—</span>
-  );
+  const toggle = (pessoaId: string) => {
+    const next = new Set(ids);
+    if (next.has(pessoaId)) next.delete(pessoaId);
+    else next.add(pessoaId);
+    onChange([...next]);
+  };
+
+  const conteudo =
+    responsaveis.length > 0 ? (
+      <span className="inline-flex min-w-0 items-center gap-1.5">
+        <AvatarStack names={responsaveis.map((r) => r.nome)} size="xs" />
+        <span className="truncate text-xs text-foreground">
+          {responsaveis.length === 1 ? responsaveis[0].nome : `${responsaveis.length} responsáveis`}
+        </span>
+      </span>
+    ) : editavel ? (
+      <span className="inline-flex items-center gap-1 text-muted-foreground/60 group-hover:text-muted-foreground">
+        <UserPlus className="h-3.5 w-3.5" />
+        <span className="text-xs">Atribuir</span>
+      </span>
+    ) : (
+      <span className="text-xs text-muted-foreground/40">—</span>
+    );
 
   if (!editavel) return <div className="min-w-0 truncate">{conteudo}</div>;
 
@@ -81,30 +78,21 @@ export function ResponsavelCell({
             <CommandList>
               <CommandEmpty>Ninguém encontrado.</CommandEmpty>
               <CommandGroup>
-                <CommandItem
-                  value="sem-responsavel"
-                  onSelect={() => {
-                    onChange(null);
-                    setOpen(false);
-                  }}
-                  className={cn(!responsavelId && "font-medium")}
-                >
-                  <span className="text-muted-foreground">Sem responsável</span>
-                </CommandItem>
-                {pessoas.map((p) => (
-                  <CommandItem
-                    key={p.id}
-                    value={p.nome}
-                    onSelect={() => {
-                      onChange(p.id);
-                      setOpen(false);
-                    }}
-                    className={cn("gap-2", p.id === responsavelId && "font-medium")}
-                  >
-                    <AvatarStack names={[p.nome]} size="xs" />
-                    {p.nome}
-                  </CommandItem>
-                ))}
+                {pessoas.map((p) => {
+                  const marcado = ids.has(p.id);
+                  return (
+                    <CommandItem
+                      key={p.id}
+                      value={p.nome}
+                      onSelect={() => toggle(p.id)}
+                      className={cn("gap-2", marcado && "font-medium")}
+                    >
+                      <AvatarStack names={[p.nome]} size="xs" />
+                      <span className="flex-1 truncate">{p.nome}</span>
+                      {marcado && <Check className="h-4 w-4 text-brand" />}
+                    </CommandItem>
+                  );
+                })}
               </CommandGroup>
             </CommandList>
           </Command>
@@ -130,18 +118,39 @@ type PrazoCellProps = {
   onChange: (iso: string | null) => void;
 };
 
+/** Rótulo claro do prazo: "Hoje", "Amanhã", "12 fev" ou "12 fev 2027" (outro ano). */
+function rotuloPrazo(data: Date): string {
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+  const alvo = new Date(data);
+  alvo.setHours(0, 0, 0, 0);
+  const dias = Math.round((alvo.getTime() - hoje.getTime()) / 86_400_000);
+  if (dias === 0) return "Hoje";
+  if (dias === 1) return "Amanhã";
+  if (dias === -1) return "Ontem";
+  const mesmoAno = alvo.getFullYear() === hoje.getFullYear();
+  return format(data, mesmoAno ? "dd MMM" : "dd MMM yyyy", { locale: ptBR });
+}
+
 export function PrazoCell({ prazo, atrasado, editavel, onChange }: PrazoCellProps) {
   const [open, setOpen] = useState(false);
   const data = parseIso(prazo);
-  const texto = data ? format(data, "dd MMM", { locale: ptBR }) : null;
+  const texto = data ? rotuloPrazo(data) : null;
 
   const conteudo = texto ? (
-    <span className={cn("inline-flex items-center gap-1 text-xs text-muted-foreground", atrasado && "font-medium text-destructive")}>
+    <span
+      className={cn(
+        "inline-flex items-center gap-1 text-xs text-muted-foreground",
+        atrasado && "font-medium text-destructive"
+      )}
+    >
+      <CalendarPlus className={cn("h-3 w-3 shrink-0", atrasado ? "text-destructive" : "text-muted-foreground/50")} />
       {texto}
     </span>
   ) : editavel ? (
     <span className="inline-flex items-center gap-1 text-muted-foreground/60 group-hover:text-muted-foreground">
       <CalendarPlus className="h-3.5 w-3.5" />
+      <span className="text-xs">Prazo</span>
     </span>
   ) : (
     <span className="text-xs text-muted-foreground/40">—</span>
@@ -194,7 +203,16 @@ type PrioridadeCellProps = {
 export function PrioridadeCell({ prioridade, editavel, onChange }: PrioridadeCellProps) {
   const conteudo = (
     <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-      <Flag className={cn("h-3 w-3", prioridade === "alta" ? "text-destructive" : prioridade === "media" ? "text-warning" : "text-muted-foreground/40")} />
+      <Flag
+        className={cn(
+          "h-3 w-3",
+          prioridade === "alta"
+            ? "text-destructive"
+            : prioridade === "media"
+              ? "text-warning"
+              : "text-muted-foreground/40"
+        )}
+      />
       {PRIORIDADE_LABEL[prioridade]}
     </span>
   );
@@ -311,9 +329,7 @@ export function EtiquetasCell({ labels, editavel, onChange }: EtiquetasCellProps
             {l}
           </Badge>
         ))}
-        {labels.length > 2 && (
-          <span className="shrink-0 text-[10px] text-muted-foreground">+{labels.length - 2}</span>
-        )}
+        {labels.length > 2 && <span className="shrink-0 text-[10px] text-muted-foreground">+{labels.length - 2}</span>}
       </span>
     ) : editavel ? (
       <span className="inline-flex items-center gap-1 text-muted-foreground/60 group-hover:text-muted-foreground">
