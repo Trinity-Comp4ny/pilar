@@ -144,7 +144,7 @@ describe("contrato do pipeline", () => {
   it("a versão da CLI do Supabase é pinada, não latest", () => {
     expect(ci).toMatch(/SUPABASE_CLI_VERSION:\s*"\d+\.\d+\.\d+"/);
     expect(ci).not.toContain("version: latest");
-    const uses = (ci.match(/supabase\/setup-cli@v1/g) ?? []).length;
+    const uses = (ci.match(/supabase\/setup-cli@v\d+/g) ?? []).length;
     const pinned = (ci.match(/version: \$\{\{ env\.SUPABASE_CLI_VERSION \}\}/g) ?? []).length;
     expect(pinned).toBe(uses);
   });

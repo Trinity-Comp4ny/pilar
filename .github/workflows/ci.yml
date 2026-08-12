@@ -122,7 +122,7 @@ jobs:
           git fetch --no-tags origin "$BASE_REF"
           node scripts/check-migration-safety.mjs --base FETCH_HEAD
 
-      - uses: supabase/setup-cli@v1
+      - uses: supabase/setup-cli@v3
         with:
           version: ${{ env.SUPABASE_CLI_VERSION }}
 
@@ -265,7 +265,7 @@ jobs:
       AUTH_HOOK_SEND_EMAIL_SECRET: ${{ secrets.AUTH_HOOK_SEND_EMAIL_SECRET }}
     steps:
       - uses: actions/checkout@v7
-      - uses: supabase/setup-cli@v1
+      - uses: supabase/setup-cli@v3
         with:
           version: ${{ env.SUPABASE_CLI_VERSION }}
       - name: Aplicar migrations (db push via pooler IPv4)
@@ -386,7 +386,7 @@ jobs:
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
     steps:
       - uses: actions/checkout@v7
-      - uses: supabase/setup-cli@v1
+      - uses: supabase/setup-cli@v3
         with:
           version: ${{ env.SUPABASE_CLI_VERSION }}
       # A CLI valida o config.toml inteiro antes de aplicar, e [auth.hook.send_email]
