@@ -42,8 +42,7 @@ interface ImpersonationSession {
 }
 
 async function fetchServerSession(): Promise<ImpersonationSession | null> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabase.rpc as any)("current_impersonation");
+  const { data, error } = await supabase.rpc("current_impersonation");
   if (error) return null;
   const row = (Array.isArray(data) ? data[0] : data) as ImpersonationSession | null;
   return row?.target_role ? row : null;
