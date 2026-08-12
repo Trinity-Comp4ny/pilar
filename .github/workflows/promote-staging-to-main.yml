@@ -1,0 +1,88 @@
+name: Promote staging → main
+
+# Abre (ou atualiza) o PR de release staging → main. Fazer merge desse PR empurra
+# staging em main, e o push em main dispara o deploy-production do ci.yml — que passa
+# pelo gate humano do GitHub Environment "Production". Ou seja: este workflow só PREPARA
+# a promoção; quem promove é o merge revisado, não a automação.
+#
+# Armadilha da branch default (ver feedback_github_actions_default_branch_trap na memória):
+#   - workflow_dispatch só aparece depois que ESTE arquivo estiver na branch default (main).
+#   - o gatilho push só dispara a partir do arquivo presente na branch empurrada (staging).
+# Então, para os dois gatilhos funcionarem, o arquivo precisa existir tanto em main quanto
+# em staging. O primeiro merge que leva staging→main já resolve isso.
+on:
+  workflow_dispatch:
+  # Mantém o PR de release sempre fresco conforme staging avança.
+  push:
+    branches: [staging]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: promote-staging-to-main
+  cancel-in-progress: false
+
+jobs:
+  release-pr:
+    name: Abrir/atualizar PR de release
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Abrir ou atualizar o PR staging → main
+        # Prefere um PAT (RELEASE_PAT) se existir: um PR criado com o GITHUB_TOKEN padrão
+        # NÃO dispara os workflows de CI do PR, então required checks em main ficariam
+        # pendentes para sempre. Com o PAT o PR nasce disparando o ci.yml normalmente.
+        # Sem o PAT, ainda cria o PR (o conteúdo de staging já passou pelo CI ao ser
+        # empurrado lá), mas confira a proteção de branch de main.
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_PAT || secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          git fetch origin main staging --quiet
+
+          AHEAD=$(git rev-list --count origin/main..origin/staging)
+          if [ "$AHEAD" -eq 0 ]; then
+            echo "::notice::staging não está à frente de main — nada a promover."
+            exit 0
+          fi
+
+          DATE=$(date -u +%Y-%m-%d)
+          TITLE="Release: promote staging to main ($DATE)"
+
+          BODY_FILE=$(mktemp)
+          {
+            echo "## Promover staging → main"
+            echo ""
+            echo "**${AHEAD}** commit(s) à frente de main."
+            echo ""
+            echo "### Commits"
+            git log --pretty='- \`%h\` %s' origin/main..origin/staging
+            echo ""
+            echo "### Migrations neste release"
+            MIGR=$(git diff --name-only --diff-filter=A origin/main..origin/staging -- 'supabase/migrations/' || true)
+            if [ -n "$MIGR" ]; then
+              echo "$MIGR" | sed 's#supabase/migrations/#- #'
+            else
+              echo "_Nenhuma migration nova._"
+            fi
+            echo ""
+            echo "---"
+            echo "> O merge dispara o deploy de produção (gate humano no Environment **Production**)."
+            echo "> Confira que \`types.ts\` está em sync e que o \`npm audit\` não tem high aberto."
+          } > "$BODY_FILE"
+
+          EXISTING=$(gh pr list --base main --head staging --state open --json number --jq '.[0].number // empty')
+          if [ -n "$EXISTING" ]; then
+            gh pr edit "$EXISTING" --title "$TITLE" --body-file "$BODY_FILE"
+            echo "::notice::PR de release #$EXISTING atualizado."
+          else
+            gh pr create --base main --head staging --title "$TITLE" --body-file "$BODY_FILE"
+            echo "::notice::PR de release criado."
+          fi
