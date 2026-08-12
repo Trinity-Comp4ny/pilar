@@ -463,7 +463,7 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
                           mode="single"
                           selected={form.watch("dataVencimento")}
                           onSelect={(d) => d && form.setValue("dataVencimento", d)}
-                          initialFocus
+                          autoFocus
                         />
                       </PopoverContent>
                     </Popover>
@@ -683,7 +683,7 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
                           mode="single"
                           selected={form.watch("dataCompetencia")}
                           onSelect={(d) => form.setValue("dataCompetencia", d)}
-                          initialFocus
+                          autoFocus
                         />
                       </PopoverContent>
                     </Popover>

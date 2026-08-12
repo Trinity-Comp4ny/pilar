@@ -251,7 +251,7 @@ export default function Receitas() {
                   mode="single"
                   selected={form.watch("dataVencimento")}
                   onSelect={(d) => form.setValue("dataVencimento", d as Date)}
-                  initialFocus
+                  autoFocus
                 />
               </PopoverContent>
             </Popover>

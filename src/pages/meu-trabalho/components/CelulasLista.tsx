@@ -163,7 +163,7 @@ export function PrazoCell({ prazo, atrasado, editavel, onChange }: PrazoCellProp
             }}
             defaultMonth={data}
             locale={ptBR}
-            initialFocus
+            autoFocus
           />
           {prazo && (
             <button

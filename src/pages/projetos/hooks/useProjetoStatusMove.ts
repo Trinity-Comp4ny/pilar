@@ -52,7 +52,7 @@ export function useProjetoStatusMove(projetos: Projeto[], canEdit: boolean) {
     const updateData: Record<string, string | null> = { status: newStatus };
     if (clearDataFinal) updateData.data_final = null;
 
-    const { error } = await supabase.from("projetos").update(updateData).eq("id", projetoId);
+    const { error } = await supabase.from("projetos").update(updateData as never).eq("id", projetoId);
     if (error) {
       toast.error("Erro ao mover projeto");
       // Reverte o cache otimista buscando o estado real do servidor.

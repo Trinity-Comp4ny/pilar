@@ -126,7 +126,7 @@ export function QuickAddLancamento({ onCreated }: Props) {
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="start">
-          <Calendar mode="single" selected={data} onSelect={(d) => d && setData(d)} initialFocus />
+          <Calendar mode="single" selected={data} onSelect={(d) => d && setData(d)} autoFocus />
         </PopoverContent>
       </Popover>
 

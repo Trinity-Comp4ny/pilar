@@ -1,5 +1,5 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { type CaptionProps, useNavigation } from "react-day-picker";
+import { type MonthCaptionProps, useDayPicker } from "react-day-picker";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
@@ -30,8 +30,9 @@ export function makeMonthYearCaption(fromYear: number, toYear: number) {
   const anos: number[] = [];
   for (let y = toYear; y >= fromYear; y--) anos.push(y);
 
-  return function MonthYearCaption({ displayMonth }: CaptionProps) {
-    const { goToMonth } = useNavigation();
+  return function MonthYearCaption({ calendarMonth }: MonthCaptionProps) {
+    const { goToMonth } = useDayPicker();
+    const displayMonth = calendarMonth.date;
     const mes = displayMonth.getMonth();
     const ano = displayMonth.getFullYear();
 

@@ -88,7 +88,7 @@ export function BillingMilestonesTab({ projetoId, canEdit }: BillingMilestonesTa
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
       const updateData: Record<string, string> = { status };
       if (status === "faturado") updateData.data_faturada = new Date().toISOString().split("T")[0];
-      const { error } = await supabase.from("marcos_faturamento").update(updateData).eq("id", id);
+      const { error } = await supabase.from("marcos_faturamento").update(updateData as never).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {

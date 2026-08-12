@@ -279,7 +279,7 @@ export function useUpdateDisciplinaStatus() {
         updatePayload.data_fim_real = data_fim_real;
       }
 
-      const { error } = await supabase.from("projeto_disciplinas").update(updatePayload).eq("id", id);
+      const { error } = await supabase.from("projeto_disciplinas").update(updatePayload as never).eq("id", id);
 
       if (error) throw error;
       return { projetoId, id, status, justificativa_atraso, data_fim_real };
