@@ -273,7 +273,7 @@ export const useConvertLeadToClient = () => {
         if (Object.keys(updates).length > 0) {
           const { error: updateError } = await supabase
             .from("clientes")
-            .update(updates)
+            .update(updates as never)
             .eq("id", data as string);
           if (updateError) throw updateError;
         }

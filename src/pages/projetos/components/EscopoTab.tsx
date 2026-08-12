@@ -218,7 +218,7 @@ export function EscopoTab({ projetoId, canEdit }: EscopoTabProps) {
         updateData.aprovado_por = user?.id ?? "";
         updateData.aprovado_em = new Date().toISOString();
       }
-      const { error } = await supabase.from("escopos").update(updateData).eq("id", id);
+      const { error } = await supabase.from("escopos").update(updateData as never).eq("id", id);
       if (error) throw error;
 
       await supabase.from("escopo_historico").insert({
