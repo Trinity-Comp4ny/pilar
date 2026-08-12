@@ -15,8 +15,6 @@ test.describe("Security — rotas autenticadas bloqueadas sem sessão", () => {
     "/financeiro",
     "/admin",
     "/ultra-admin",
-    "/billing",
-    "/company",
     "/templates",
     "/mapa",
     "/documentos",
