@@ -77,15 +77,18 @@ esse buraco.
 
 Fluxo e higiene não negociáveis. Aplicar sempre, sem perguntar, em toda mudança:
 
+O repo permite squash e rebase, mas BLOQUEIA merge commit.
+
 **Branches**
 - Feature/fix nasce de `origin/staging` e o PR vai SEMPRE para `staging`, nunca direto para `main`.
+- Merge do PR de feature com `gh pr merge <n> --rebase --delete-branch`: preserva os commits em linha e mantém `staging` linear. Curar a branch antes (sem commits "wip/typo"), porque o rebase reaplica todos no log.
 - Zero commit direto em `staging` ou `main`.
 - Entre trabalhos só sobrevivem `main` e `staging`. Nenhuma branch órfã.
 
 **Promoção staging→main (release)**
-- NUNCA merge ou rebase direto de `staging` para `main`: o histórico divergiu (releases antigos foram squash) e dá conflito falso.
-- Método correto: branch `release/staging-AAAA-MM-DD[-slug]` a partir de `origin/main`, depois `git read-tree --reset -u origin/staging`, `git commit --no-verify`, e PR para `main`.
-- Merge do PR de release com `gh pr merge <n> --admin --squash --delete-branch` (o repo bloqueia merge commit; `enforce_admins=false` deixa o admin passar o review requerido).
+- NUNCA PR direto de `staging` para `main`: o histórico divergiu (releases antigos foram squash) e qualquer método por replay (rebase ou merge) dá conflito falso.
+- Método correto: branch `release/staging-AAAA-MM-DD[-slug]` a partir de `origin/main`, depois `git read-tree --reset -u origin/staging`, `git commit --no-verify`, e PR para `main`. Isso vira UM commit cuja árvore = `staging`, sem replay de histórico.
+- Merge do PR de release com `gh pr merge <n> --admin --squash --delete-branch` (`enforce_admins=false` deixa o admin passar o review requerido). Como a branch release já é 1 commit, squash e rebase são equivalentes aqui.
 - Só mergear com TODOS os checks verdes, incluindo Security audit e "types.ts em sync".
 
 **Limpeza obrigatória após CADA merge**
