@@ -72,3 +72,26 @@ Rodar `npm run gen:types` após qualquer migration, e commitar o `types.ts`: **n
 de CI valida isso hoje**, então esquecer gera código que passa no typecheck e quebra em
 runtime. Ver `docs/operations/PLANO_ENGENHARIA_2026-07.md` (Fase 1) para o gate que fecha
 esse buraco.
+
+## Git, branches e release (REGRA INQUEBRÁVEL)
+
+Fluxo e higiene não negociáveis. Aplicar sempre, sem perguntar, em toda mudança:
+
+**Branches**
+- Feature/fix nasce de `origin/staging` e o PR vai SEMPRE para `staging`, nunca direto para `main`.
+- Zero commit direto em `staging` ou `main`.
+- Entre trabalhos só sobrevivem `main` e `staging`. Nenhuma branch órfã.
+
+**Promoção staging→main (release)**
+- NUNCA merge ou rebase direto de `staging` para `main`: o histórico divergiu (releases antigos foram squash) e dá conflito falso.
+- Método correto: branch `release/staging-AAAA-MM-DD[-slug]` a partir de `origin/main`, depois `git read-tree --reset -u origin/staging`, `git commit --no-verify`, e PR para `main`.
+- Merge do PR de release com `gh pr merge <n> --admin --squash --delete-branch` (o repo bloqueia merge commit; `enforce_admins=false` deixa o admin passar o review requerido).
+- Só mergear com TODOS os checks verdes, incluindo Security audit e "types.ts em sync".
+
+**Limpeza obrigatória após CADA merge**
+- Deletar a branch merged, local e remota (`--delete-branch`, ou `git branch -D` + `git push origin --delete`).
+- Fechar manualmente as issues resolvidas: `Closes #` não dispara porque o merge é em `staging`, não na branch default `main`. Comentar o PR/commit que corrigiu.
+- Trocar para `staging`, `git pull --ff-only`, e apagar as branches locais já merged.
+
+**Verificação de fecho**
+- Após o release, confirmar `git diff --stat origin/main origin/staging` vazio (árvore idêntica = promoção completa).
