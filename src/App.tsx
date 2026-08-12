@@ -19,7 +19,12 @@ import { AdminOnlyRoute } from "./components/AdminOnlyRoute";
 import { ImpersonationBanner } from "./components/ImpersonationBanner";
 import { TrialBanner } from "./components/TrialBanner";
 import { SettingsModalProvider } from "./contexts/SettingsModalContext";
-import { SettingsDialog } from "./components/settings/SettingsDialog";
+
+// Modal de configuracoes: so monta quando o usuario abre. Estatico, arrastava os
+// 6 paineis (empresa, pagamento, uso...) pro entry chunk e estourava o budget.
+const SettingsDialog = lazy(() =>
+  import("./components/settings/SettingsDialog").then((m) => ({ default: m.SettingsDialog }))
+);
 
 const Landing = lazy(() => import("./pages/Landing"));
 const Planos = lazy(() => import("./pages/planos"));
@@ -293,7 +298,9 @@ const App = () => {
                       <Route path="*" element={<NotFound />} />
                     </Routes>
                   </Suspense>
-                  <SettingsDialog />
+                  <Suspense fallback={null}>
+                    <SettingsDialog />
+                  </Suspense>
                 </SettingsModalProvider>
               </ImpersonationProvider>
             </AuthProvider>
