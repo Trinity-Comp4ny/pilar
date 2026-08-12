@@ -1,16 +1,14 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { CreditCard, Calendar, Package, ExternalLink, Loader2 } from "lucide-react";
-import { PageLayout } from "@/components/PageLayout";
-import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { usePageTitle } from "@/hooks/usePageTitle";
 import { useUserRole } from "@/hooks/useUserRole";
-import { useMySubscription } from "./hooks/useMySubscription";
-import { StatusBadge } from "./components/StatusBadge";
-import { ChangePlanDialog } from "./components/ChangePlanDialog";
-import { CancelDialog } from "./components/CancelDialog";
+import { useMySubscription } from "@/pages/billing/hooks/useMySubscription";
+import { StatusBadge } from "@/pages/billing/components/StatusBadge";
+import { ChangePlanDialog } from "@/pages/billing/components/ChangePlanDialog";
+import { CancelDialog } from "@/pages/billing/components/CancelDialog";
+import { useSettingsModal } from "@/contexts/SettingsModalContext";
 
 function formatBRL(value: number): string {
   return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -32,9 +30,12 @@ const BILLING_TYPE_LABELS: Record<string, string> = {
   UNDEFINED: "A definir",
 };
 
-export default function Billing() {
-  usePageTitle("Assinatura");
+// Conteúdo da aba Pagamento do modal (antigo /billing sem a casca de página). O
+// acesso NÃO passa por step-up de MFA aqui de propósito: é a rota de fuga do cliente
+// inadimplente para regularizar a assinatura. Ações destrutivas seguem só-admin.
+export function PagamentoPanel() {
   const navigate = useNavigate();
+  const { closeSettings } = useSettingsModal();
   const { data: role } = useUserRole();
   const isAdmin = role === "admin" || role === "ultra_admin";
 
@@ -45,15 +46,18 @@ export default function Billing() {
   const isCanceled = subscription?.status === "canceled";
   const isOverdue = subscription?.status === "overdue";
 
+  const goToPlanos = () => {
+    closeSettings();
+    navigate("/planos");
+  };
+
   const value =
     subscription?.plan && subscription.billing_cycle === "yearly"
       ? subscription.plan.preco_anual
       : subscription?.plan?.preco_mensal;
 
   return (
-    <PageLayout>
-      <PageHeader title="Assinatura" />
-
+    <>
       {isLoading && (
         <div className="flex items-center justify-center py-20">
           <Loader2 className="w-6 h-6 animate-spin text-slate-400" />
@@ -74,7 +78,7 @@ export default function Billing() {
               <h3 className="text-lg font-medium text-slate-900">Sem assinatura ativa</h3>
               <p className="text-sm text-slate-500 mt-1">Escolha um plano pra começar a usar o Pilar.</p>
             </div>
-            <Button onClick={() => navigate("/planos")} variant="brand">
+            <Button onClick={goToPlanos} variant="brand">
               Ver planos
             </Button>
           </CardContent>
@@ -162,7 +166,7 @@ export default function Billing() {
                     >
                       <Package className="w-4 h-4 mr-2" /> Mudar plano
                     </Button>
-                    <Button className="w-full justify-start" variant="outline" onClick={() => navigate("/planos")}>
+                    <Button className="w-full justify-start" variant="outline" onClick={goToPlanos}>
                       <ExternalLink className="w-4 h-4 mr-2" /> Ver todos os planos
                     </Button>
                     <Button
@@ -205,6 +209,6 @@ export default function Billing() {
           )}
         </div>
       )}
-    </PageLayout>
+    </>
   );
 }

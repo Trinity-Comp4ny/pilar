@@ -1,8 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { AlertTriangle } from "lucide-react";
-import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
+import { useSettingsModal } from "@/contexts/SettingsModalContext";
 import { supabase } from "@/integrations/supabase/client";
 import { differenceInDays, parseISO } from "date-fns";
 
@@ -27,6 +27,7 @@ function useTrial(empresaId: string | null | undefined) {
 
 export function TrialBanner() {
   const { profile } = useAuth();
+  const { openSettings } = useSettingsModal();
   const empresaId = profile?.empresa_id;
   const { data: subscription } = useTrial(empresaId);
 
@@ -50,12 +51,10 @@ export function TrialBanner() {
               O período gratuito da sua empresa chegou ao fim. Assine um plano para continuar acessando o Pilar.
             </p>
           </div>
-          <Button asChild className="w-full" size="lg">
-            <Link to="/billing">Assinar para continuar →</Link>
+          <Button className="w-full" size="lg" onClick={() => openSettings("pagamento")}>
+            Assinar para continuar →
           </Button>
-          <p className="text-xs text-gray-400">
-            Precisa de ajuda? Entre em contato com o suporte.
-          </p>
+          <p className="text-xs text-gray-400">Precisa de ajuda? Entre em contato com o suporte.</p>
         </div>
       </div>
     );
@@ -72,31 +71,28 @@ export function TrialBanner() {
     daysLeft <= 0
       ? "Seu trial expira hoje."
       : daysLeft === 1
-      ? "Seu trial expira amanhã."
-      : `Seu trial expira em ${daysLeft} dias.`;
+        ? "Seu trial expira amanhã."
+        : `Seu trial expira em ${daysLeft} dias.`;
 
   return (
     <div
       className={`flex items-center justify-between gap-3 px-4 py-2.5 text-sm font-medium ${
-        urgent
-          ? "bg-red-600 text-white"
-          : "bg-amber-400 text-amber-950"
+        urgent ? "bg-red-600 text-white" : "bg-amber-400 text-amber-950"
       }`}
     >
       <div className="flex items-center gap-2">
         <AlertTriangle className="h-4 w-4 shrink-0" strokeWidth={2} />
         <span>{label}</span>
       </div>
-      <Link
-        to="/billing"
+      <button
+        type="button"
+        onClick={() => openSettings("pagamento")}
         className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
-          urgent
-            ? "bg-white text-red-600 hover:bg-red-50"
-            : "bg-amber-950/10 text-amber-950 hover:bg-amber-950/20"
+          urgent ? "bg-white text-red-600 hover:bg-red-50" : "bg-amber-950/10 text-amber-950 hover:bg-amber-950/20"
         }`}
       >
         Assinar agora →
-      </Link>
+      </button>
     </div>
   );
 }
