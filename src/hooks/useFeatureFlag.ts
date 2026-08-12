@@ -23,8 +23,7 @@ export function useFeatureFlag(key: string): { enabled: boolean; isLoading: bool
     staleTime: STALE_TIME,
     gcTime: STALE_TIME * 2,
     queryFn: async (): Promise<boolean> => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data, error } = await (supabase.rpc as any)("is_feature_flag_enabled", { p_key: key });
+      const { data, error } = await supabase.rpc("is_feature_flag_enabled", { p_key: key });
       if (error) return false;
       const dbEnabled = data === true;
       if (dbEnabled) return true;
