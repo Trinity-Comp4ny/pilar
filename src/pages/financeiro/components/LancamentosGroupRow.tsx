@@ -12,10 +12,13 @@ import {
 import { cn } from "@/lib/utils";
 import { formatDateDisplay } from "@/lib/dateUtils";
 import type { Lancamento } from "../hooks/useLancamentosUnified";
+import type { GrupoParcelaResumo } from "../hooks/useGruposParcelaResumo";
 
 interface Props {
   groupId: string;
   items: Lancamento[];
+  /** Resumo do PLANO inteiro (independe do período). Ausente enquanto carrega. */
+  resumo?: GrupoParcelaResumo;
   isExpanded: boolean;
   canEdit: boolean;
   selected: Set<string>;
@@ -32,9 +35,19 @@ interface Props {
   onDeleteGroup: (items: Lancamento[]) => void;
 }
 
+const formatBRL = (v: number) =>
+  v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 2 });
+
+const STATUS_LABEL: Record<GrupoParcelaResumo["status"], string> = {
+  aberto: "Em aberto",
+  parcial: "Parcial",
+  quitado: "Quitado",
+};
+
 export function LancamentosGroupRow({
   groupId,
   items,
+  resumo,
   isExpanded,
   canEdit,
   selected,
@@ -52,36 +65,24 @@ export function LancamentosGroupRow({
 }: Props) {
   const first = items[0];
   const isReceita = first.tipo === "receita";
-  const total = items.reduce((s, i) => s + i.valor, 0);
-  const paidCount = items.filter(isPaidStatus).length;
   const groupDesc = stripParcelaSuffix(first.descricao);
   const groupAllSelected = items.every((i) => selected.has(rowKey(i)));
   const groupSomeSelected = items.some((i) => selected.has(rowKey(i)));
-  const originalTotal = first.parcela_total ?? items.length;
-  const isPartiallyFiltered = items.length < originalTotal;
 
-  const dates = items
-    .map((i) => i.data_vencimento)
-    .filter(Boolean)
-    .sort() as string[];
-  const firstDate = dates[0] ?? "";
-  const lastDate = dates[dates.length - 1] ?? "";
-  const dateLabel =
-    firstDate === lastDate
-      ? formatDateDisplay(firstDate)
-      : `${formatDateDisplay(firstDate)} → ${formatDateDisplay(lastDate)}`;
+  // Fonte da verdade = resumo do plano (RPC). Fallback para o visível enquanto carrega.
+  const totalPlano = resumo?.totalOriginal ?? items.reduce((s, i) => s + i.valor, 0);
+  const saldo = resumo?.saldo ?? items.filter((i) => !isPaidStatus(i)).reduce((s, i) => s + i.valor, 0);
+  const pagas = resumo?.pagas ?? items.filter(isPaidStatus).length;
+  const totalParcelas = resumo?.totalParcelas ?? first.parcela_total ?? items.length;
+  const status = resumo?.status ?? (pagas === 0 ? "aberto" : pagas < totalParcelas ? "parcial" : "quitado");
 
-  const groupStatusLabel =
-    paidCount === items.length
-      ? isReceita
-        ? "Recebido"
-        : "Pago"
-      : paidCount > 0
-        ? "Parcial"
-        : "Pendente";
-
-  const formatBRL = (v: number) =>
-    v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 2 });
+  const parcelaLabel = `${pagas} de ${totalParcelas} pagas`;
+  const proximaLabel =
+    status === "quitado"
+      ? "quitado"
+      : resumo?.proximaVenc
+        ? `vence ${formatDateDisplay(resumo.proximaVenc)}`
+        : "—";
 
   return (
     <tr
@@ -110,7 +111,7 @@ export function LancamentosGroupRow({
           {isReceita ? <ArrowUpCircle className="h-4 w-4" /> : <ArrowDownCircle className="h-4 w-4" />}
         </span>
       </td>
-      <td className={cn(cellPad, cellTextSize, "text-muted-foreground whitespace-nowrap")}>{dateLabel}</td>
+      <td className={cn(cellPad, cellTextSize, "text-muted-foreground whitespace-nowrap")}>{proximaLabel}</td>
       <td className={cn(cellPad, "font-semibold", cellTextSize)}>
         <span className="inline-flex items-center gap-1.5">
           {isExpanded ? (
@@ -124,49 +125,33 @@ export function LancamentosGroupRow({
       <td className={cn(cellPad, cellTextSize)}>{first.contraparte_nome || "-"}</td>
       <td className={cn(cellPad, cellTextSize)}>{first.categoria_nome || "-"}</td>
       <td className={cn(cellPad, cellTextSize)}>{first.projeto_codigo || "-"}</td>
-      <td className={cn(cellPad, "text-xs text-muted-foreground")}>
-        {isPartiallyFiltered ? (
-          <span className="inline-flex items-center gap-1">
-            <span className="text-amber-600 font-medium">{items.length}</span>
-            <span>de {originalTotal}x</span>
-          </span>
-        ) : (
-          `${items.length}x`
+      <td className={cn(cellPad, "text-xs text-muted-foreground whitespace-nowrap")}>{parcelaLabel}</td>
+      <td className={cn(cellPad, "text-right tabular-nums", cellTextSize)}>
+        <div className={cn("font-semibold", isReceita ? "text-positive-strong" : "text-red-600")}>
+          {isReceita ? "+" : "−"} {formatBRL(totalPlano)}
+        </div>
+        {status !== "quitado" && saldo > 0 && (
+          <div className="text-[11px] text-muted-foreground">falta {formatBRL(saldo)}</div>
         )}
-      </td>
-      <td
-        className={cn(
-          cellPad,
-          "text-right font-semibold tabular-nums",
-          cellTextSize,
-          isReceita ? "text-positive-strong" : "text-red-600"
-        )}
-      >
-        {isReceita ? "+" : "−"} {formatBRL(total)}
       </td>
       <td className={cellPad}>
         <Badge
           variant="secondary"
           className={cn(
             "text-xs",
-            paidCount === items.length && isReceita && "bg-positive text-white",
-            paidCount === items.length && !isReceita && "bg-red-600 text-white",
-            paidCount > 0 && paidCount < items.length && "bg-amber-100 text-amber-800"
+            status === "quitado" && isReceita && "bg-positive text-white",
+            status === "quitado" && !isReceita && "bg-red-600 text-white",
+            status === "parcial" && "bg-amber-100 text-amber-800"
           )}
         >
-          {groupStatusLabel}
+          {STATUS_LABEL[status]}
         </Badge>
       </td>
       <td className={cellPad} onClick={(e) => e.stopPropagation()}>
         {canEdit && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7 text-muted-foreground"
-                aria-label="Mais opções"
-              >
+              <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground" aria-label="Mais opções">
                 <MoreHorizontal className="h-3.5 w-3.5" />
               </Button>
             </DropdownMenuTrigger>

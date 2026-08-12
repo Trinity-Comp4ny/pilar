@@ -1,18 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-export interface Cartao {
-  id: string;
-  nome: string;
-  dia_fechamento: number;
-  dia_vencimento: number;
-  cor: string | null;
-  limite: number;
-  usado: number;
-  disponivel: number;
-  conta_pagamento_id: string | null;
-}
-
 export interface Fatura {
   id: string;
   cartao_id: string;
@@ -50,18 +38,6 @@ export interface Conta {
 const STALE_30S = 30 * 1000;
 const STALE_5MIN = 5 * 60 * 1000;
 
-export function useCartoesResumo() {
-  return useQuery({
-    queryKey: ["cartoes-resumo"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("view_cartao_resumo").select("*");
-      if (error) throw error;
-      return (data ?? []) as Cartao[];
-    },
-    staleTime: STALE_30S,
-  });
-}
-
 export function useContas() {
   return useQuery({
     queryKey: ["contas-list"],
@@ -95,6 +71,34 @@ export async function gerarFaturasCartao(cartaoId: string) {
     return [];
   });
   if (realErrors.length > 0) throw realErrors[0];
+}
+
+// Faturas em aberto de TODOS os cartões da empresa (sem filtro de cartão).
+// Alimenta o overview "faturas a pagar" e os badges de vencimento na sidebar.
+// A RLS da view_fatura_resumo já escopa por empresa, então dispensa filtro extra.
+export function useFaturasPendentes() {
+  return useQuery({
+    queryKey: ["faturas", "pendentes"],
+    staleTime: STALE_30S,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("view_fatura_resumo")
+        .select("*")
+        .neq("status", "Paga")
+        .gt("valor_total", 0)
+        .order("data_vencimento", { ascending: true });
+
+      if (error) throw error;
+
+      const today = new Date();
+      const rows = (data ?? []) as unknown as Fatura[];
+      return rows.map((f) => {
+        let status = f.status;
+        if (status === "Aberta" && new Date(f.data_fim + "T00:00:00") < today) status = "Fechada";
+        return { ...f, status };
+      });
+    },
+  });
 }
 
 export function useFaturas(cartaoId: string | null) {

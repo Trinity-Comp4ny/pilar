@@ -108,6 +108,19 @@ export default function ProjetosKanban() {
     setProjetoToDelete({ id, nome: projeto?.nome ?? "Projeto" });
   };
 
+  // Arraste da barra no Cronograma grava início/previsão direto na tabela (RLS por empresa).
+  const handleCronogramaProjetoDates = async (
+    projetoId: string,
+    updates: { data_inicio: string; data_previsao: string }
+  ) => {
+    const { error } = await supabase.from("projetos").update(updates).eq("id", projetoId);
+    if (error) {
+      toast.error("Não deu para atualizar as datas", { description: error.message });
+      throw error;
+    }
+    queryClient.invalidateQueries({ queryKey: ["projetos"] });
+  };
+
   const handleDeleteConfirm = async () => {
     if (!projetoToDelete) return;
     const { error } = await supabase.from("projetos").delete().eq("id", projetoToDelete.id);
@@ -338,8 +351,8 @@ export default function ProjetosKanban() {
         </PageHeader>
       }
     >
-      {/* KPIs */}
-      {!loadingProjetos && projetos.length > 0 && (
+      {/* KPIs (só na coleção /projetos; as lentes têm métricas próprias) */}
+      {isColecao && !loadingProjetos && projetos.length > 0 && (
         <ProjetosKPIs
           projetos={projetos}
           onFilterAtraso={() => setFilters((f) => ({ ...f, deadlineStatus: ["em_atraso"] }))}
@@ -445,7 +458,10 @@ export default function ProjetosKanban() {
         </div>
       ) : activeTab === "cronograma" ? (
         <div>
-          <CronogramaProjetosTab projetos={filteredProjetos} />
+          <CronogramaProjetosTab
+            projetos={filteredProjetos}
+            onDatesChange={canEdit ? handleCronogramaProjetoDates : undefined}
+          />
         </div>
       ) : activeTab === "mapa" ? (
         <MapaTab />

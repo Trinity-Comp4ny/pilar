@@ -9,11 +9,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Wallet } from "lucide-react";
+import { CreditCard, ChevronRight, Receipt, Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useState } from "react";
 import { toast } from "sonner";
-import { formatValorToInput } from "@/lib/currencyUtils";
+import { cn } from "@/lib/utils";
+import { formatValorToInput, formatCurrency } from "@/lib/currencyUtils";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import { FinanceErrorState } from "../components/FinanceErrorState";
 import { ContasSidebar } from "../components/ContasSidebar";
@@ -21,6 +23,11 @@ import { ContaFormDialog } from "../components/ContaFormDialog";
 import { CartaoFormDialog } from "../components/CartaoFormDialog";
 import { ContaDetailPanel } from "../components/ContaDetailPanel";
 import { CartaoDetailPanel } from "../components/CartaoDetailPanel";
+import { CarteiraOverview } from "../components/CarteiraOverview";
+import { FaturasCartaoTable } from "../components/FaturasCartaoTable";
+import { FaturaDetailDialog } from "../components/FaturaDetailDialog";
+import { FaturaPagamentoDialog } from "../components/FaturaPagamentoDialog";
+import { vencimentoRelativo } from "../components/faturaHelpers";
 import {
   useContasResumo,
   useCartoesResumoDetalhado,
@@ -28,19 +35,24 @@ import {
   type ContaItem,
   type CartaoItem,
 } from "../hooks/useContasCartoes";
+import { useContas, useFaturasPendentes, type Fatura } from "../hooks/useFaturas";
 
-export default function Contas() {
+export default function Carteira() {
   const contasQuery = useContasResumo();
   const cartoesQuery = useCartoesResumoDetalhado();
+  const faturasPendentesQuery = useFaturasPendentes();
+  const { data: contasSimples = [] } = useContas();
   const { saveConta, saveCartao, deleteConta, deleteCartao } = useContasCartoesMutations();
 
   const contas = contasQuery.data ?? [];
   const cartoes = cartoesQuery.data ?? [];
+  const faturasPendentes = faturasPendentesQuery.data ?? [];
   const loading = contasQuery.isLoading || cartoesQuery.isLoading;
   const loadError = contasQuery.isError || cartoesQuery.isError;
   const reload = () => {
     void contasQuery.refetch();
     void cartoesQuery.refetch();
+    void faturasPendentesQuery.refetch();
   };
 
   const [isNewCartaoOpen, setIsNewCartaoOpen] = useState(false);
@@ -53,6 +65,21 @@ export default function Contas() {
   const [panelCartao, setPanelCartao] = useState<CartaoItem | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ type: "conta" | "cartao"; id: string; nome: string } | null>(null);
   const { canEdit } = useFeatureAccess("financeiro");
+
+  // Fatura: detalhe + pagamento (disparados pelo overview e pelo painel do cartão)
+  const [faturaDetalhe, setFaturaDetalhe] = useState<Fatura | null>(null);
+  const [isFaturaDetalheOpen, setIsFaturaDetalheOpen] = useState(false);
+  const [faturaPagamento, setFaturaPagamento] = useState<Fatura | null>(null);
+  const [isFaturaPagamentoOpen, setIsFaturaPagamentoOpen] = useState(false);
+
+  const openFaturaDetalhe = (fatura: Fatura) => {
+    setFaturaDetalhe(fatura);
+    setIsFaturaDetalheOpen(true);
+  };
+  const openFaturaPagamento = (fatura: Fatura) => {
+    setFaturaPagamento(fatura);
+    setIsFaturaPagamentoOpen(true);
+  };
 
   // Form States
   const [nome, setNome] = useState("");
@@ -138,6 +165,13 @@ export default function Contas() {
     setIsNewContaOpen(true);
   };
 
+  // Criar cartão a partir de uma conta: já vincula a conta de pagamento.
+  const openNewCartaoParaConta = (conta: ContaItem) => {
+    resetForm();
+    setContaPagamentoId(conta.id);
+    setIsNewCartaoOpen(true);
+  };
+
   const openEditCartao = (cartao: CartaoItem) => {
     setSelectedCartao(cartao);
     setNome(cartao.nome);
@@ -149,13 +183,21 @@ export default function Contas() {
     setIsNewCartaoOpen(true);
   };
 
+  const selectCartao = (cartao: CartaoItem) => {
+    setPanelCartao(cartao);
+    setPanelConta(null);
+  };
+
+  // Cartões pagos pela conta selecionada (mini-lista no painel da conta)
+  const cartoesDaConta = panelConta ? cartoes.filter((c) => c.conta_pagamento_id === panelConta.id) : [];
+
   return (
     <>
       <Card className="w-full">
         <CardContent className="p-0">
           {loading ? (
             <div className="flex min-h-[480px]">
-              <div className="w-64 shrink-0 border-r p-4 space-y-2">
+              <div className="w-72 shrink-0 border-r p-4 space-y-2">
                 <Skeleton className="h-4 w-20" />
                 <Skeleton className="h-9 w-full" />
                 <Skeleton className="h-9 w-full" />
@@ -177,16 +219,14 @@ export default function Contas() {
               <ContasSidebar
                 contas={contas}
                 cartoes={cartoes}
+                faturasPendentes={faturasPendentes}
                 panelConta={panelConta}
                 panelCartao={panelCartao}
                 onSelectConta={(conta) => {
                   setPanelConta(conta);
                   setPanelCartao(null);
                 }}
-                onSelectCartao={(cartao) => {
-                  setPanelCartao(cartao);
-                  setPanelConta(null);
-                }}
+                onSelectCartao={selectCartao}
                 contaDialog={
                   canEdit ? (
                     <ContaFormDialog
@@ -214,66 +254,150 @@ export default function Contas() {
                     />
                   ) : null
                 }
-                cartaoDialog={
-                  canEdit ? (
-                    <CartaoFormDialog
-                      open={isNewCartaoOpen}
-                      onOpenChange={(open) => {
-                        setIsNewCartaoOpen(open);
-                        if (!open) resetForm();
-                      }}
-                      onAddClick={() => {
-                        resetForm();
-                        setIsNewCartaoOpen(true);
-                      }}
-                      selectedCartao={selectedCartao}
-                      contas={contas}
-                      nome={nome}
-                      setNome={setNome}
-                      tipoCartao={tipoCartao}
-                      setTipoCartao={setTipoCartao}
-                      diaFechamento={diaFechamento}
-                      setDiaFechamento={setDiaFechamento}
-                      diaVencimento={diaVencimento}
-                      setDiaVencimento={setDiaVencimento}
-                      limite={limite}
-                      setLimite={setLimite}
-                      contaPagamentoId={contaPagamentoId}
-                      setContaPagamentoId={setContaPagamentoId}
-                      onSave={handleSaveCartao}
-                    />
-                  ) : null
-                }
               />
 
               {/* Painel de detalhes */}
               <div className="flex-1 p-6">
                 {panelConta && !panelCartao ? (
-                  <ContaDetailPanel
-                    conta={panelConta}
-                    canEdit={canEdit}
-                    onEdit={() => openEditConta(panelConta)}
-                    onDelete={() => setDeleteTarget({ type: "conta", id: panelConta.id, nome: panelConta.nome })}
-                  />
-                ) : panelCartao && !panelConta ? (
-                  <CartaoDetailPanel
-                    cartao={panelCartao}
-                    contas={contas}
-                    canEdit={canEdit}
-                    onEdit={() => openEditCartao(panelCartao)}
-                    onDelete={() => setDeleteTarget({ type: "cartao", id: panelCartao.id, nome: panelCartao.nome })}
-                  />
-                ) : (
-                  <div className="h-full flex flex-col items-center justify-center gap-3 text-muted-foreground">
-                    <Wallet className="h-10 w-10 opacity-20" />
-                    <p className="text-sm">Selecione uma conta ou cartão</p>
+                  <div className="space-y-6">
+                    <ContaDetailPanel
+                      conta={panelConta}
+                      canEdit={canEdit}
+                      onEdit={() => openEditConta(panelConta)}
+                      onDelete={() => setDeleteTarget({ type: "conta", id: panelConta.id, nome: panelConta.nome })}
+                    />
+                    <div className="border-t pt-5">
+                      <div className="flex items-center justify-between mb-3">
+                        <h3 className="text-sm font-semibold flex items-center gap-1.5">
+                          <CreditCard className="h-4 w-4" /> Cartões pagos por esta conta
+                        </h3>
+                        {canEdit && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-8 rounded-full text-sm"
+                            onClick={() => openNewCartaoParaConta(panelConta)}
+                          >
+                            <Plus className="h-4 w-4 mr-1" /> Adicionar cartão
+                          </Button>
+                        )}
+                      </div>
+                      {cartoesDaConta.length === 0 ? (
+                        <p className="text-sm text-muted-foreground">
+                          Nenhum cartão vinculado. Adicione o primeiro para acompanhar as faturas dele.
+                        </p>
+                      ) : (
+                        <div className="space-y-2">
+                          {cartoesDaConta.map((cartao) => {
+                            const fatura = faturasPendentes.find((f) => f.cartao_id === cartao.id);
+                            const venc = fatura ? vencimentoRelativo(fatura.status, fatura.data_vencimento) : null;
+                            return (
+                              <button
+                                key={cartao.id}
+                                onClick={() => selectCartao(cartao)}
+                                className="w-full flex items-center gap-3 p-3 rounded-lg border text-left transition-colors hover:bg-muted/50"
+                              >
+                                <CreditCard className="h-4 w-4 text-muted-foreground shrink-0" />
+                                <span className="text-sm font-medium flex-1 truncate">{cartao.nome}</span>
+                                {venc && (
+                                  <span
+                                    className={cn(
+                                      "text-xs shrink-0",
+                                      venc.vencida ? "text-red-600 font-medium" : "text-muted-foreground"
+                                    )}
+                                  >
+                                    {venc.label}
+                                  </span>
+                                )}
+                                <span className="text-sm text-muted-foreground shrink-0 tabular-nums">
+                                  {formatCurrency(cartao.usado)} / {formatCurrency(cartao.limite)}
+                                </span>
+                                <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
                   </div>
+                ) : panelCartao && !panelConta ? (
+                  <div className="space-y-6">
+                    <CartaoDetailPanel
+                      cartao={panelCartao}
+                      contas={contas}
+                      canEdit={canEdit}
+                      onEdit={() => openEditCartao(panelCartao)}
+                      onDelete={() => setDeleteTarget({ type: "cartao", id: panelCartao.id, nome: panelCartao.nome })}
+                    />
+                    <div className="border-t pt-5">
+                      <h3 className="text-sm font-semibold mb-3 flex items-center gap-1.5">
+                        <Receipt className="h-4 w-4" /> Faturas
+                      </h3>
+                      <FaturasCartaoTable
+                        cartaoId={panelCartao.id}
+                        onDetalhe={openFaturaDetalhe}
+                        onPagar={openFaturaPagamento}
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <CarteiraOverview
+                    contas={contas}
+                    faturas={faturasPendentes}
+                    onDetalhe={openFaturaDetalhe}
+                    onPagar={openFaturaPagamento}
+                  />
                 )}
               </div>
             </div>
           )}
         </CardContent>
       </Card>
+
+      {canEdit && (
+        <CartaoFormDialog
+          open={isNewCartaoOpen}
+          onOpenChange={(open) => {
+            setIsNewCartaoOpen(open);
+            if (!open) resetForm();
+          }}
+          onAddClick={() => {}}
+          showTrigger={false}
+          selectedCartao={selectedCartao}
+          contas={contas}
+          nome={nome}
+          setNome={setNome}
+          tipoCartao={tipoCartao}
+          setTipoCartao={setTipoCartao}
+          diaFechamento={diaFechamento}
+          setDiaFechamento={setDiaFechamento}
+          diaVencimento={diaVencimento}
+          setDiaVencimento={setDiaVencimento}
+          limite={limite}
+          setLimite={setLimite}
+          contaPagamentoId={contaPagamentoId}
+          setContaPagamentoId={setContaPagamentoId}
+          onSave={handleSaveCartao}
+        />
+      )}
+
+      <FaturaDetailDialog
+        fatura={faturaDetalhe}
+        open={isFaturaDetalheOpen}
+        onOpenChange={setIsFaturaDetalheOpen}
+        onPagar={(f) => {
+          setIsFaturaDetalheOpen(false);
+          openFaturaPagamento(f);
+        }}
+      />
+
+      <FaturaPagamentoDialog
+        fatura={faturaPagamento}
+        contas={contasSimples}
+        open={isFaturaPagamentoOpen}
+        onOpenChange={setIsFaturaPagamentoOpen}
+        onPaid={() => setIsFaturaDetalheOpen(false)}
+      />
 
       <AlertDialog
         open={!!deleteTarget}

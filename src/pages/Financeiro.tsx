@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, lazy, Suspense } from "react";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { useSearchParams } from "react-router-dom";
 import { startOfMonth, endOfMonth, parseISO, format, isValid } from "date-fns";
-import { LayoutDashboard, TrendingUp, Receipt, Users2, CreditCard, Landmark, FileBarChart } from "lucide-react";
+import { LayoutDashboard, Receipt, Users2, Wallet, FileBarChart } from "lucide-react";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { PeriodoPopover } from "./financeiro/components/PeriodoPopover";
@@ -13,20 +13,16 @@ import { SecondSidebar, type SecondSidebarTab } from "@/components/SecondSidebar
 import { FinanceFilterProvider, type Visualizacao } from "./financeiro/contexts/FinanceFilterContext";
 
 const VisaoGeral = lazy(() => import("./financeiro/tabs/VisaoGeral"));
-const FluxoCaixa = lazy(() => import("./financeiro/tabs/FluxoCaixa"));
-const Contas = lazy(() => import("./financeiro/tabs/Contas"));
+const Carteira = lazy(() => import("./financeiro/tabs/Carteira"));
 const Lancamentos = lazy(() => import("./financeiro/tabs/Lancamentos"));
 const FolhaPagamento = lazy(() => import("./financeiro/tabs/FolhaPagamento"));
-const Faturas = lazy(() => import("./financeiro/tabs/Faturas"));
 const Relatorios = lazy(() => import("./Relatorios"));
 
 const FINANCEIRO_TABS_ALL: SecondSidebarTab[] = [
   { id: "visao-geral", label: "Visão Geral", icon: LayoutDashboard },
-  { id: "fluxo-caixa", label: "Fluxo de Caixa", icon: TrendingUp },
   { id: "lancamentos", label: "Lançamentos", icon: Receipt },
   { id: "folha-pagamento", label: "Folha de Pagamento", icon: Users2 },
-  { id: "faturas", label: "Faturas", icon: CreditCard },
-  { id: "contas", label: "Contas", icon: Landmark },
+  { id: "carteira", label: "Carteira", icon: Wallet },
   { id: "relatorios", label: "Relatórios", icon: FileBarChart },
 ];
 
@@ -43,9 +39,16 @@ export default function Financeiro() {
   const initial = useMemo(() => {
     const now = new Date();
     const tabParam = searchParams.get("tab") || "visao-geral";
+    // Links antigos: "importar" virou modal em Lançamentos; "fluxo-caixa" foi fundida na Visão Geral;
+    // "faturas" e "contas" foram unificadas na Carteira.
+    const legacyTab: Record<string, string> = {
+      importar: "lancamentos",
+      "fluxo-caixa": "visao-geral",
+      faturas: "carteira",
+      contas: "carteira",
+    };
     return {
-      // "importar" deixou de ser aba (virou modal em Lançamentos); mantém links antigos vivos.
-      tab: tabParam === "importar" ? "lancamentos" : tabParam,
+      tab: legacyTab[tabParam] ?? tabParam,
       from: parseDateParam(searchParams.get("from")) ?? startOfMonth(now),
       to: parseDateParam(searchParams.get("to")) ?? endOfMonth(now),
       viz: ((searchParams.get("viz") as Visualizacao) || "mes") as Visualizacao,
@@ -105,15 +108,7 @@ export default function Financeiro() {
           <TabsContent value="visao-geral" className="mt-0 w-full focus-visible:ring-0">
             {activeTab === "visao-geral" && (
               <Suspense fallback={<Skeleton className="h-64 w-full" />}>
-                <VisaoGeral />
-              </Suspense>
-            )}
-          </TabsContent>
-
-          <TabsContent value="fluxo-caixa" className="mt-0 w-full focus-visible:ring-0">
-            {activeTab === "fluxo-caixa" && (
-              <Suspense fallback={<Skeleton className="h-64 w-full" />}>
-                <FluxoCaixa dateFrom={dateFrom} dateTo={dateTo} />
+                <VisaoGeral onNavigateTab={handleTabChange} />
               </Suspense>
             )}
           </TabsContent>
@@ -134,18 +129,10 @@ export default function Financeiro() {
             )}
           </TabsContent>
 
-          <TabsContent value="faturas" className="mt-0 w-full focus-visible:ring-0">
-            {activeTab === "faturas" && (
+          <TabsContent value="carteira" className="mt-0 w-full focus-visible:ring-0">
+            {activeTab === "carteira" && (
               <Suspense fallback={<Skeleton className="h-64 w-full" />}>
-                <Faturas />
-              </Suspense>
-            )}
-          </TabsContent>
-
-          <TabsContent value="contas" className="mt-0 w-full focus-visible:ring-0">
-            {activeTab === "contas" && (
-              <Suspense fallback={<Skeleton className="h-64 w-full" />}>
-                <Contas />
+                <Carteira />
               </Suspense>
             )}
           </TabsContent>

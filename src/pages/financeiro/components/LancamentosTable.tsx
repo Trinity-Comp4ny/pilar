@@ -1,19 +1,18 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import {
-  ArrowDownCircle,
-  ArrowUp,
-  ArrowUpDown,
-  ArrowDown,
-} from "lucide-react";
+import { ArrowDownCircle, ArrowUp, ArrowUpDown, ArrowDown } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { getDisplayDate } from "@/lib/dateUtils";
-import { parseCurrencyString } from "@/lib/currencyUtils";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import type { Lancamento } from "../hooks/useLancamentosUnified";
+import { useLancamentosPaginados } from "../hooks/useLancamentosPaginados";
+import { useGruposParcelaResumo } from "../hooks/useGruposParcelaResumo";
+import type { LancamentosResumo } from "../hooks/useLancamentosResumo";
+import { invalidateLancamentos } from "../tabs/Lancamentos";
 import { LancamentoDetailDialog } from "./LancamentoDetailDialog";
 import { LancamentoFormDialog } from "./LancamentoFormDialog";
 import { TransferenciaFormDialog } from "./TransferenciaFormDialog";
@@ -25,14 +24,10 @@ import { LancamentosGroupRow } from "./LancamentosGroupRow";
 import { LancamentosItemRow } from "./LancamentosItemRow";
 
 interface Props {
-  data: Lancamento[];
-  loading: boolean;
-  onRefetch: () => void;
+  resumo: LancamentosResumo;
   filters: LancamentosFilters;
   onFiltersChange: (next: LancamentosFilters) => void;
-  hasNextPage?: boolean;
-  isFetchingNextPage?: boolean;
-  onLoadMore?: () => void;
+  onMutated: () => void;
 }
 
 type SortKey = "data" | "descricao" | "valor" | "categoria" | "projeto" | "contraparte" | "status";
@@ -46,9 +41,6 @@ const ROW_HEIGHT = 56;
 type FlatRow =
   | { kind: "item"; data: Lancamento; isChild: boolean }
   | { kind: "group"; groupId: string; items: Lancamento[] };
-
-const formatBRL = (v: number) =>
-  v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 2 });
 
 export const isPaidStatus = (l: Lancamento) =>
   (l.tipo === "receita" && (l.status === "Recebido" || l.status === "Recebida")) ||
@@ -70,21 +62,19 @@ export function rowKey(l: Lancamento): string {
   return `${l.tipo}-${l.id}`;
 }
 
-export function LancamentosTable({
-  data,
-  loading,
-  onRefetch,
-  filters,
-  onFiltersChange,
-  hasNextPage,
-  isFetchingNextPage,
-  onLoadMore,
-}: Props) {
+export function LancamentosTable({ resumo, filters, onFiltersChange, onMutated }: Props) {
   const { canEdit } = useFeatureAccess("financeiro");
   const aux = useLancamentosFiltersData();
+  const queryClient = useQueryClient();
 
-  // Distingue "sem resultados neste filtro" de "nenhum dado ainda".
-  // O período "mes-atual" (padrão) já é um recorte, então também conta como filtro ativo.
+  const [sort, setSort] = useState<SortState>({ key: "data", dir: "desc" });
+
+  // Filtro, ordenação e paginação rodam no banco (spec 033). A tabela só renderiza.
+  const paginated = useLancamentosPaginados({ filters, sortKey: sort.key, sortDir: sort.dir });
+  const items = paginated.data;
+  const loading = paginated.isLoading;
+
+  // "Nenhum lançamento ainda" só quando vê tudo e sem filtro; senão é recorte.
   const hasActiveFilters =
     filters.search.trim() !== "" ||
     filters.tipo !== "todos" ||
@@ -98,7 +88,6 @@ export function LancamentosTable({
     filters.valorMin.trim() !== "" ||
     filters.valorMax.trim() !== "";
 
-  const [sort, setSort] = useState<SortState>({ key: "data", dir: "desc" });
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [grouped, setGrouped] = useState<boolean>(() => localStorage.getItem("lancamentos.grouped") !== "false");
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
@@ -111,7 +100,14 @@ export function LancamentosTable({
   const [editTarget, setEditTarget] = useState<Lancamento | null>(null);
   const [editTransferencia, setEditTransferencia] = useState<Lancamento | null>(null);
 
-  useEffect(() => { localStorage.setItem("lancamentos.grouped", String(grouped)); }, [grouped]);
+  const refetchAll = () => {
+    invalidateLancamentos(queryClient);
+    onMutated();
+  };
+
+  useEffect(() => {
+    localStorage.setItem("lancamentos.grouped", String(grouped));
+  }, [grouped]);
 
   const toggleGroup = (groupId: string) => {
     setExpandedGroups((prev) => {
@@ -122,11 +118,11 @@ export function LancamentosTable({
     });
   };
 
-  const toggleGroupSelection = (items: Lancamento[]) => {
-    const allSel = items.every((i) => selected.has(rowKey(i)));
+  const toggleGroupSelection = (groupItems: Lancamento[]) => {
+    const allSel = groupItems.every((i) => selected.has(rowKey(i)));
     setSelected((prev) => {
       const next = new Set(prev);
-      for (const i of items) {
+      for (const i of groupItems) {
         if (allSel) next.delete(rowKey(i));
         else next.add(rowKey(i));
       }
@@ -134,85 +130,15 @@ export function LancamentosTable({
     });
   };
 
-  const filtered = useMemo(() => {
-    const minVal = filters.valorMin ? parseCurrencyString(filters.valorMin) : null;
-    const maxVal = filters.valorMax ? parseCurrencyString(filters.valorMax) : null;
-    const catSet = new Set(filters.categorias);
-    const projSet = new Set(filters.projetos);
-    const cliSet = new Set(filters.clientes);
-    const fornSet = new Set(filters.fornecedores);
-    const formaSet = new Set(filters.formasPagamento);
-    const q = filters.search.trim().toLowerCase();
-
-    return data.filter((l) => {
-      if (filters.tipo !== "todos" && l.tipo !== filters.tipo) return false;
-      if (filters.status === "pagos" && !isPaidStatus(l)) return false;
-      if (filters.status === "pendentes" && isPaidStatus(l)) return false;
-      if (filters.status === "atrasados" && !isOverdue(l)) return false;
-      if (catSet.size && (!l.categoria_id || !catSet.has(l.categoria_id))) return false;
-      if (projSet.size && (!l.projeto_id || !projSet.has(l.projeto_id))) return false;
-      if (cliSet.size) {
-        if (l.tipo !== "receita" || !l.contraparte_id || !cliSet.has(l.contraparte_id)) return false;
-      }
-      if (fornSet.size) {
-        if (l.tipo !== "despesa" || !l.contraparte_id || !fornSet.has(l.contraparte_id)) return false;
-      }
-      if (formaSet.size && (!l.forma_pagamento || !formaSet.has(l.forma_pagamento))) return false;
-      if (minVal !== null && l.valor < minVal) return false;
-      if (maxVal !== null && l.valor > maxVal) return false;
-      if (q) {
-        const hit =
-          l.descricao.toLowerCase().includes(q) ||
-          (l.contraparte_nome ?? "").toLowerCase().includes(q) ||
-          (l.categoria_nome ?? "").toLowerCase().includes(q) ||
-          (l.projeto_codigo ?? "").toLowerCase().includes(q);
-        if (!hit) return false;
-      }
-      return true;
-    });
-  }, [data, filters]);
-
-  const sorted = useMemo(() => {
-    const arr = [...filtered];
-    const dir = sort.dir === "asc" ? 1 : -1;
-    const get = (l: Lancamento): string | number => {
-      switch (sort.key) {
-        case "data": return l.data_efetivacao ?? l.data_vencimento ?? "";
-        case "descricao": return l.descricao.toLowerCase();
-        case "valor": return l.valor;
-        case "categoria": return (l.categoria_nome ?? "").toLowerCase();
-        case "projeto": return (l.projeto_codigo ?? "").toLowerCase();
-        case "contraparte": return (l.contraparte_nome ?? "").toLowerCase();
-        case "status": return l.status.toLowerCase();
-      }
-    };
-    arr.sort((a, b) => {
-      const va = get(a);
-      const vb = get(b);
-      if (va < vb) return -1 * dir;
-      if (va > vb) return 1 * dir;
-      return 0;
-    });
-    return arr;
-  }, [filtered, sort]);
-
-  useEffect(() => { setSelected(new Set()); }, [filters]);
-
-  const totals = useMemo(() => {
-    let receitas = 0;
-    let despesas = 0;
-    for (const l of sorted) {
-      if (l.tipo === "receita") receitas += l.valor;
-      else if (l.tipo === "despesa") despesas += l.valor;
-    }
-    return { receitas, despesas, saldo: receitas - despesas };
-  }, [sorted]);
+  useEffect(() => {
+    setSelected(new Set());
+  }, [filters]);
 
   const flatRows = useMemo((): FlatRow[] => {
-    if (!grouped) return sorted.map((l) => ({ kind: "item" as const, data: l, isChild: false }));
+    if (!grouped) return items.map((l) => ({ kind: "item" as const, data: l, isChild: false }));
 
     const groups = new Map<string, Lancamento[]>();
-    for (const l of sorted) {
+    for (const l of items) {
       if (l.grupo_parcela && l.parcela_total && l.parcela_total > 1) {
         const arr = groups.get(l.grupo_parcela) ?? [];
         arr.push(l);
@@ -221,8 +147,8 @@ export function LancamentosTable({
     }
 
     const groupAnchors = new Map<string, string>();
-    for (const [gid, items] of groups) {
-      const anchor = items.reduce((best, cur) =>
+    for (const [gid, groupItems] of groups) {
+      const anchor = groupItems.reduce((best, cur) =>
         (cur.parcela_numero ?? Infinity) < (best.parcela_numero ?? Infinity) ? cur : best
       );
       groupAnchors.set(gid, rowKey(anchor));
@@ -230,13 +156,13 @@ export function LancamentosTable({
 
     const result: FlatRow[] = [];
     const emitted = new Set<string>();
-    for (const l of sorted) {
+    for (const l of items) {
       if (l.grupo_parcela && l.parcela_total && l.parcela_total > 1) {
         const gid = l.grupo_parcela;
         if (!emitted.has(gid) && groupAnchors.get(gid) === rowKey(l)) {
           emitted.add(gid);
-          const items = groups.get(gid)!;
-          const orderedItems = [...items].sort((a, b) => (a.parcela_numero ?? 0) - (b.parcela_numero ?? 0));
+          const groupItems = groups.get(gid)!;
+          const orderedItems = [...groupItems].sort((a, b) => (a.parcela_numero ?? 0) - (b.parcela_numero ?? 0));
           result.push({ kind: "group", groupId: gid, items: orderedItems });
           if (expandedGroups.has(gid)) {
             for (const item of orderedItems) result.push({ kind: "item", data: item, isChild: true });
@@ -247,9 +173,9 @@ export function LancamentosTable({
       }
     }
 
-    for (const [gid, items] of groups) {
+    for (const [gid, groupItems] of groups) {
       if (!emitted.has(gid)) {
-        const orderedItems = [...items].sort((a, b) => (a.parcela_numero ?? 0) - (b.parcela_numero ?? 0));
+        const orderedItems = [...groupItems].sort((a, b) => (a.parcela_numero ?? 0) - (b.parcela_numero ?? 0));
         result.push({ kind: "group", groupId: gid, items: orderedItems });
         if (expandedGroups.has(gid)) {
           for (const item of orderedItems) result.push({ kind: "item", data: item, isChild: true });
@@ -257,33 +183,23 @@ export function LancamentosTable({
       }
     }
     return result;
-  }, [sorted, grouped, expandedGroups]);
+  }, [items, grouped, expandedGroups]);
 
   const allGroupIds = useMemo(
     () => flatRows.filter((r): r is Extract<FlatRow, { kind: "group" }> => r.kind === "group").map((r) => r.groupId),
     [flatRows]
   );
   const allExpanded = allGroupIds.length > 0 && allGroupIds.every((id) => expandedGroups.has(id));
+  const gruposResumo = useGruposParcelaResumo(allGroupIds);
 
   const toggleExpandAll = () => setExpandedGroups(allExpanded ? new Set() : new Set(allGroupIds));
 
-  const footerLabel = useMemo(() => {
-    if (!grouped) return `${sorted.length} de ${data.length} lançamento${data.length !== 1 ? "s" : ""}`;
-    const groupCount = flatRows.filter((r) => r.kind === "group").length;
-    const singleCount = flatRows.filter((r) => r.kind === "item" && !r.isChild).length;
-    const parts: string[] = [];
-    if (groupCount > 0) parts.push(`${groupCount} grupo${groupCount !== 1 ? "s" : ""}`);
-    if (singleCount > 0) parts.push(`${singleCount} avulso${singleCount !== 1 ? "s" : ""}`);
-    parts.push(`${sorted.length} lançamento${sorted.length !== 1 ? "s" : ""}`);
-    return parts.join(" · ");
-  }, [grouped, sorted, flatRows, data.length]);
-
-  const allSelected = sorted.length > 0 && sorted.every((l) => selected.has(rowKey(l)));
-  const someSelected = sorted.some((l) => selected.has(rowKey(l)));
+  const allSelected = items.length > 0 && items.every((l) => selected.has(rowKey(l)));
+  const someSelected = items.some((l) => selected.has(rowKey(l)));
 
   const toggleAll = () => {
     if (allSelected) setSelected(new Set());
-    else setSelected(new Set(sorted.map((l) => rowKey(l))));
+    else setSelected(new Set(items.map((l) => rowKey(l))));
   };
 
   const toggleRow = (l: Lancamento) => {
@@ -294,7 +210,7 @@ export function LancamentosTable({
     setSelected(next);
   };
 
-  const selectedRows = useMemo(() => sorted.filter((l) => selected.has(rowKey(l))), [sorted, selected]);
+  const selectedRows = useMemo(() => items.filter((l) => selected.has(rowKey(l))), [items, selected]);
 
   const headerSort = (key: SortKey) => {
     setSort((prev) => (prev.key === key ? { key, dir: prev.dir === "asc" ? "desc" : "asc" } : { key, dir: "desc" }));
@@ -317,9 +233,12 @@ export function LancamentosTable({
         p_status: novoStatus,
         p_observacao: null,
       } as never);
-      if (error) { toast.error("Falha ao atualizar status", { description: error.message }); return; }
+      if (error) {
+        toast.error("Falha ao atualizar status", { description: error.message });
+        return;
+      }
       toast.success("Status atualizado");
-      onRefetch();
+      refetchAll();
       return;
     }
     const table = l.tipo === "receita" ? "receitas" : "despesas";
@@ -332,25 +251,34 @@ export function LancamentosTable({
     const payload: Record<string, unknown> = { status: normalized };
     payload[dataField] = isPaying ? today : null;
     const { error } = await supabase.from(table).update(payload as never).eq("id", l.id);
-    if (error) { toast.error("Falha ao atualizar status", { description: error.message }); return; }
+    if (error) {
+      toast.error("Falha ao atualizar status", { description: error.message });
+      return;
+    }
     toast.success("Status atualizado");
-    onRefetch();
+    refetchAll();
   };
 
-  const markItemsPaid = async (items: Lancamento[]) => {
+  const markItemsPaid = async (rows: Lancamento[]) => {
     const today = new Date().toISOString().slice(0, 10);
-    const recIds = items.filter((l) => l.tipo === "receita" && !isPaidStatus(l)).map((l) => l.id);
-    const despIds = items.filter((l) => l.tipo === "despesa" && !isPaidStatus(l)).map((l) => l.id);
+    const recIds = rows.filter((l) => l.tipo === "receita" && !isPaidStatus(l)).map((l) => l.id);
+    const despIds = rows.filter((l) => l.tipo === "despesa" && !isPaidStatus(l)).map((l) => l.id);
     const ops: PromiseLike<{ error: unknown }>[] = [];
     if (recIds.length)
       ops.push(supabase.from("receitas").update({ status: "Recebido", data_recebimento: today } as never).in("id", recIds) as unknown as PromiseLike<{ error: unknown }>);
     if (despIds.length)
       ops.push(supabase.from("despesas").update({ status: "Pago", data_pagamento: today } as never).in("id", despIds) as unknown as PromiseLike<{ error: unknown }>);
-    if (!ops.length) { toast.info("Nada a marcar — já efetivados"); return; }
+    if (!ops.length) {
+      toast.info("Nada a marcar — já efetivados");
+      return;
+    }
     const results = await Promise.all(ops);
-    if (results.find((r) => (r as { error?: unknown }).error)) { toast.error("Falha em alguns registros"); return; }
+    if (results.find((r) => (r as { error?: unknown }).error)) {
+      toast.error("Falha em alguns registros");
+      return;
+    }
     toast.success(`${recIds.length + despIds.length} marcado(s) como pago/recebido`);
-    onRefetch();
+    refetchAll();
   };
 
   const bulkMarkPaid = async () => {
@@ -360,16 +288,15 @@ export function LancamentosTable({
     setBulkPaidConfirm(false);
   };
 
-  // Quantos dos selecionados ainda não estão efetivados (os que serão movidos).
   const selectedUnpaidCount = useMemo(
     () => selectedRows.filter((l) => l.tipo !== "transferencia" && !isPaidStatus(l)).length,
     [selectedRows]
   );
 
-  const deleteItems = async (items: Lancamento[]) => {
-    const recIds = items.filter((l) => l.tipo === "receita").map((l) => l.id);
-    const despIds = items.filter((l) => l.tipo === "despesa").map((l) => l.id);
-    const transfIds = items.filter((l) => l.tipo === "transferencia").map((l) => l.id);
+  const deleteItems = async (rows: Lancamento[]) => {
+    const recIds = rows.filter((l) => l.tipo === "receita").map((l) => l.id);
+    const despIds = rows.filter((l) => l.tipo === "despesa").map((l) => l.id);
+    const transfIds = rows.filter((l) => l.tipo === "transferencia").map((l) => l.id);
     const stamp = new Date().toISOString();
     const ops: PromiseLike<{ error: unknown }>[] = [];
     if (recIds.length)
@@ -379,9 +306,12 @@ export function LancamentosTable({
     if (transfIds.length)
       ops.push(supabase.from("transferencias").update({ deleted_at: stamp } as never).in("id", transfIds) as unknown as PromiseLike<{ error: unknown }>);
     const results = await Promise.all(ops);
-    if (results.find((r) => (r as { error?: unknown }).error)) { toast.error("Falha em alguns registros"); return; }
-    toast.success(`${items.length} excluído(s)`);
-    onRefetch();
+    if (results.find((r) => (r as { error?: unknown }).error)) {
+      toast.error("Falha em alguns registros");
+      return;
+    }
+    toast.success(`${rows.length} excluído(s)`);
+    refetchAll();
   };
 
   const bulkDelete = async () => {
@@ -403,24 +333,29 @@ export function LancamentosTable({
     setDeleteTarget(null);
     if (tipo === "transferencia") {
       const { error } = await supabase.rpc("rpc_excluir_transferencia", { p_id: id } as never);
-      if (error) { toast.error("Falha ao excluir", { description: error.message }); return; }
+      if (error) {
+        toast.error("Falha ao excluir", { description: error.message });
+        return;
+      }
       toast.success("Transferência excluída");
-      onRefetch();
+      refetchAll();
       return;
     }
     const table = tipo === "receita" ? "receitas" : "despesas";
     const { error } = await supabase.from(table).delete().eq("id", id);
-    if (error) { toast.error("Falha ao excluir", { description: error.message }); return; }
+    if (error) {
+      toast.error("Falha ao excluir", { description: error.message });
+      return;
+    }
     toast.success("Lançamento excluído");
-    onRefetch();
+    refetchAll();
   };
 
   const scrollRef = useRef<HTMLDivElement>(null);
-  const rowHeight = ROW_HEIGHT;
   const virtualizer = useVirtualizer({
     count: flatRows.length,
     getScrollElement: () => scrollRef.current,
-    estimateSize: () => rowHeight,
+    estimateSize: () => ROW_HEIGHT,
     overscan: 10,
   });
   const virtualItems = virtualizer.getVirtualItems();
@@ -446,12 +381,15 @@ export function LancamentosTable({
         projetos={aux.projetos.map((p) => ({ value: p.id, label: p.codigo }))}
         clientes={aux.clientes.map((c) => ({ value: c.id, label: c.nome }))}
         fornecedores={aux.fornecedores.map((f) => ({ value: f.id, label: f.nome }))}
-        total={data.length}
-        visible={sorted.length}
+        total={resumo.totalCount}
+        visible={items.length}
         grouped={grouped}
         allGroupIds={allGroupIds}
         allExpanded={allExpanded}
-        onToggleGrouped={() => { setGrouped((v) => !v); setExpandedGroups(new Set()); }}
+        onToggleGrouped={() => {
+          setGrouped((v) => !v);
+          setExpandedGroups(new Set());
+        }}
         onToggleExpandAll={toggleExpandAll}
       />
 
@@ -474,7 +412,9 @@ export function LancamentosTable({
                       type="checkbox"
                       className="h-4 w-4 rounded border-gray-300"
                       checked={allSelected}
-                      ref={(el) => { if (el) el.indeterminate = someSelected && !allSelected; }}
+                      ref={(el) => {
+                        if (el) el.indeterminate = someSelected && !allSelected;
+                      }}
                       onChange={toggleAll}
                       aria-label="Selecionar todos"
                     />
@@ -493,37 +433,53 @@ export function LancamentosTable({
               </tr>
             </thead>
             <tbody>
-              {loading && sorted.length === 0 ? (
+              {loading && items.length === 0 ? (
                 <tr>
-                  <td colSpan={colCount} className="text-center text-muted-foreground py-10">Carregando…</td>
+                  <td colSpan={colCount} className="text-center text-muted-foreground py-10">
+                    Carregando…
+                  </td>
                 </tr>
-              ) : sorted.length === 0 ? (
+              ) : items.length === 0 ? (
                 <tr>
                   <td colSpan={colCount}>
                     <div className="flex flex-col items-center gap-3 py-12 text-center">
                       <ArrowDownCircle className="h-8 w-8 text-muted-foreground/30" />
                       <p className="text-sm font-medium text-muted-foreground">
-                        {hasActiveFilters ? "Nenhum lançamento neste filtro" : "Nenhum lançamento ainda"}
+                        {hasActiveFilters ? "Nenhum lançamento com esses filtros" : "Nenhum lançamento ainda"}
                       </p>
                       <p className="text-xs text-muted-foreground/70">
                         {hasActiveFilters
-                          ? "Ajuste ou limpe os filtros para ver mais resultados"
+                          ? "Ajuste os filtros ou amplie o período"
                           : "Crie uma receita ou despesa para começar"}
                       </p>
-                      {hasActiveFilters && (
-                        <button
-                          onClick={() => onFiltersChange(defaultFilters)}
-                          className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground transition-colors"
-                        >
-                          Limpar filtros
-                        </button>
-                      )}
+                      {hasActiveFilters &&
+                        (filters.periodo !== "tudo" ? (
+                          <button
+                            onClick={() =>
+                              onFiltersChange({ ...filters, periodo: "tudo", customFrom: null, customTo: null })
+                            }
+                            className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground transition-colors"
+                          >
+                            Ver todo o período
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => onFiltersChange(defaultFilters)}
+                            className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground transition-colors"
+                          >
+                            Limpar filtros
+                          </button>
+                        ))}
                     </div>
                   </td>
                 </tr>
               ) : (
                 <>
-                  {paddingTop > 0 && <tr aria-hidden><td colSpan={colCount} style={{ height: paddingTop, padding: 0 }} /></tr>}
+                  {paddingTop > 0 && (
+                    <tr aria-hidden>
+                      <td colSpan={colCount} style={{ height: paddingTop, padding: 0 }} />
+                    </tr>
+                  )}
                   {virtualItems.map((vi) => {
                     const row = flatRows[vi.index];
                     if (row.kind === "group") {
@@ -532,6 +488,7 @@ export function LancamentosTable({
                           key={`group-${row.groupId}`}
                           groupId={row.groupId}
                           items={row.items}
+                          resumo={gruposResumo.get(row.groupId)}
                           isExpanded={expandedGroups.has(row.groupId)}
                           canEdit={canEdit}
                           selected={selected}
@@ -565,41 +522,32 @@ export function LancamentosTable({
                         getDisplayDate={getDisplayDate}
                         rowKey={rowKey}
                         onToggleRow={toggleRow}
-                        onRowClick={(l) => l.tipo === "transferencia" ? setEditTransferencia(l) : setDetailTarget(l)}
-                        onEdit={(l) => l.tipo === "transferencia" ? setEditTransferencia(l) : setEditTarget(l)}
+                        onRowClick={(l) => (l.tipo === "transferencia" ? setEditTransferencia(l) : setDetailTarget(l))}
+                        onEdit={(l) => (l.tipo === "transferencia" ? setEditTransferencia(l) : setEditTarget(l))}
                         onDelete={setDeleteTarget}
                         onStatusChange={setStatus}
                       />
                     );
                   })}
-                  {paddingBottom > 0 && <tr aria-hidden><td colSpan={colCount} style={{ height: paddingBottom, padding: 0 }} /></tr>}
+                  {paddingBottom > 0 && (
+                    <tr aria-hidden>
+                      <td colSpan={colCount} style={{ height: paddingBottom, padding: 0 }} />
+                    </tr>
+                  )}
                 </>
               )}
             </tbody>
           </table>
         </div>
 
-        {sorted.length > 0 && (
-          <div className="border-t border-black/10 bg-gray-50/60 px-4 py-3 flex flex-wrap items-center justify-between gap-3 text-xs">
-            <span className="text-muted-foreground">{footerLabel}</span>
-            <div className="flex flex-wrap items-center gap-4 tabular-nums">
-              <span className="text-positive-strong">+ {formatBRL(totals.receitas)}</span>
-              <span className="text-red-600">− {formatBRL(totals.despesas)}</span>
-              <span className={cn("font-bold", totals.saldo >= 0 ? "text-positive-strong" : "text-red-600")}>
-                = {formatBRL(totals.saldo)}
-              </span>
-            </div>
-          </div>
-        )}
-
-        {hasNextPage && onLoadMore && (
+        {paginated.hasNextPage && (
           <div className="border-t border-black/10 bg-white px-4 py-3 flex justify-center">
             <button
-              onClick={onLoadMore}
-              disabled={isFetchingNextPage}
+              onClick={() => paginated.fetchNextPage()}
+              disabled={paginated.isFetchingNextPage}
               className="text-xs border border-gray-200 rounded-md px-3 py-1.5 hover:bg-gray-50 disabled:opacity-50"
             >
-              {isFetchingNextPage ? "Carregando…" : "Carregar mais"}
+              {paginated.isFetchingNextPage ? "Carregando…" : "Carregar mais"}
             </button>
           </div>
         )}
@@ -609,9 +557,15 @@ export function LancamentosTable({
         lancamento={detailTarget}
         open={detailTarget !== null}
         onOpenChange={(v) => !v && setDetailTarget(null)}
-        onDelete={(l) => { setDetailTarget(null); setDeleteTarget(l); }}
-        onEditInTab={(l) => { setDetailTarget(null); setEditTarget(l); }}
-        onGroupChanged={onRefetch}
+        onDelete={(l) => {
+          setDetailTarget(null);
+          setDeleteTarget(l);
+        }}
+        onEditInTab={(l) => {
+          setDetailTarget(null);
+          setEditTarget(l);
+        }}
+        onGroupChanged={refetchAll}
       />
 
       {editTarget && (
@@ -620,7 +574,10 @@ export function LancamentosTable({
           onOpenChange={(v) => !v && setEditTarget(null)}
           tipo={editTarget.tipo}
           lancamento={editTarget}
-          onSaved={() => { setEditTarget(null); onRefetch(); }}
+          onSaved={() => {
+            setEditTarget(null);
+            refetchAll();
+          }}
         />
       )}
 
@@ -628,7 +585,10 @@ export function LancamentosTable({
         open={editTransferencia !== null}
         onOpenChange={(v) => !v && setEditTransferencia(null)}
         transferencia={editTransferencia}
-        onSaved={() => { setEditTransferencia(null); onRefetch(); }}
+        onSaved={() => {
+          setEditTransferencia(null);
+          refetchAll();
+        }}
       />
 
       <ConfirmDialog
@@ -701,7 +661,12 @@ function SortableTH({
   const active = sort.key === k;
   return (
     <th className={cn("px-3 py-2 cursor-pointer select-none font-medium text-xs", className)} onClick={() => onSort(k)}>
-      <span className={cn("inline-flex items-center gap-1 hover:text-foreground transition-colors", active ? "text-foreground" : "text-muted-foreground")}>
+      <span
+        className={cn(
+          "inline-flex items-center gap-1 hover:text-foreground transition-colors",
+          active ? "text-foreground" : "text-muted-foreground"
+        )}
+      >
         {label}
         {icon}
       </span>
