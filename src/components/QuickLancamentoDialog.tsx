@@ -206,7 +206,7 @@ export function QuickLancamentoDialog({ children, onOpenFullForm }: QuickLancame
                     selected={form.watch("data")}
                     onSelect={(d) => d && form.setValue("data", d, { shouldValidate: true })}
                     locale={ptBR}
-                    initialFocus
+                    autoFocus
                   />
                 </PopoverContent>
               </Popover>
