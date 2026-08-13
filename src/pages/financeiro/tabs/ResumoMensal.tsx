@@ -1,6 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { KPICard } from "@/components/KPICard";
-import { formatCurrency as fmtMoeda } from "@/lib/format";
+import { formatCurrency as fmtMoeda, formatDate } from "@/lib/format";
 import { TrendingUp, TrendingDown, Loader2 } from "lucide-react";
 import { ResponsiveContainer, AreaChart, Area, CartesianGrid, XAxis, YAxis, Tooltip } from "recharts";
 import { CustomTooltip } from "../components/CustomTooltip";
@@ -175,7 +175,7 @@ export default function ResumoMensal({ dateFrom, dateTo }: ResumoMensalProps) {
                   <div className="flex-1">
                     <p className="text-sm font-medium">{item.descricao}</p>
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      {item.data_recebimento ? new Date(item.data_recebimento).toLocaleDateString("pt-BR") : "—"}
+                      {item.data_recebimento ? formatDate(item.data_recebimento) : "—"}
                     </p>
                   </div>
                   <span className="text-sm font-bold text-positive-strong">{formatCurrency(item.valor)}</span>
@@ -212,7 +212,7 @@ export default function ResumoMensal({ dateFrom, dateTo }: ResumoMensalProps) {
                   <div className="flex-1">
                     <p className="text-sm font-medium">{item.descricao}</p>
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      {item.data_pagamento ? new Date(item.data_pagamento).toLocaleDateString("pt-BR") : "—"} •{" "}
+                      {item.data_pagamento ? formatDate(item.data_pagamento) : "—"} •{" "}
                       {item.categorias_financeiras?.nome || "Outros"}
                     </p>
                   </div>
