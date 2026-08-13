@@ -187,7 +187,7 @@ export function ProjetoFormDialog({
       >
         <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{form.isEditMode ? "Editar Projeto" : "Novo Projeto"}</DialogTitle>
+            <DialogTitle>{form.isEditMode ? "Editar projeto" : "Novo projeto"}</DialogTitle>
             <DialogDescription>{STEPS.find((s) => s.id === step)?.desc}</DialogDescription>
           </DialogHeader>
 

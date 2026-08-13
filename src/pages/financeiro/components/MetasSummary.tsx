@@ -1,6 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Target, Loader2 } from "lucide-react";
+import { EmptyState } from "@/components/EmptyState";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -58,7 +59,12 @@ export default function MetasSummary() {
       </CardHeader>
       <CardContent className="space-y-4">
         {!metas || metas.length === 0 ? (
-          <div className="text-center text-muted-foreground py-4">Nenhuma meta cadastrada</div>
+          <EmptyState
+            icon={Target}
+            title="Nenhuma meta cadastrada"
+            description="Defina metas para acompanhar o progresso do time."
+            className="py-6"
+          />
         ) : (
           metas.map((meta) => {
             const percent = Math.min(Math.round((meta.atual / meta.alvo) * 100), 100);

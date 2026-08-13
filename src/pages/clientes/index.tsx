@@ -515,7 +515,7 @@ export default function Clientes() {
         open={confirmDeleteOpen}
         onOpenChange={setConfirmDeleteOpen}
         onConfirm={handleDeleteConfirm}
-        title="Excluir Cliente"
+        title="Excluir cliente"
         itemName={clienteToDelete?.nome}
         description="O cliente sai da lista, mas o histórico é preservado. Você pode desfazer logo após excluir."
         confirmText="Excluir"

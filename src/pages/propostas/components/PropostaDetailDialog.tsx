@@ -325,7 +325,7 @@ export function PropostaDetailDialog({
                     onClick={onConverter}
                   >
                     <FolderPlus className="h-3.5 w-3.5" />
-                    Aceitar e Criar Projeto
+                    Aceitar e criar projeto
                   </Button>
                 )}
                 <Button size="sm" variant="outline" className="gap-1.5" onClick={onGerarDocx}>
@@ -423,7 +423,7 @@ export function PropostaDetailDialog({
                 {canEdit && !proposta.projeto_id && (
                   <Button variant="brand" className="gap-1.5" onClick={onConverter}>
                     <FolderPlus className="h-4 w-4" />
-                    Criar Projeto
+                    Criar projeto
                   </Button>
                 )}
                 {!proposta.contrato_assinado && (
@@ -433,7 +433,7 @@ export function PropostaDetailDialog({
                     onClick={onGerarContrato}
                   >
                     <FileSignature className="h-4 w-4" />
-                    {proposta.contrato_recusado ? "Gerar Novo Contrato" : "Gerar Contrato"}
+                    {proposta.contrato_recusado ? "Gerar novo contrato" : "Gerar contrato"}
                   </Button>
                 )}
               </div>

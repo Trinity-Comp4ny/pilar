@@ -159,7 +159,7 @@ export function LeadFormDialog({
       <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto p-0">
         <div className="px-6 pt-6 pb-4">
           <DialogHeader>
-            <DialogTitle>{isEdit ? "Editar Lead" : "Novo Lead"}</DialogTitle>
+            <DialogTitle>{isEdit ? "Editar lead" : "Novo lead"}</DialogTitle>
             <DialogDescription>
               {isEdit ? "Atualize as informações do lead" : "Cadastre um novo lead no sistema"}
             </DialogDescription>

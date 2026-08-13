@@ -283,7 +283,7 @@ export function TemplateForm({ template, onSubmit, onCancel, isLoading }: Templa
           Cancelar
         </Button>
         <Button onClick={handleSubmit} variant="brand" disabled={isLoading || !nome.trim() || !tipoServico}>
-          {template ? "Salvar Alterações" : "Criar Template"}
+          {template ? "Salvar alterações" : "Criar template"}
         </Button>
       </div>
     </div>

@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Pencil, Trash2, Landmark, Eye, EyeOff, Target } from "lucide-react";
+import { EmptyState } from "@/components/EmptyState";
 import {
   CONTRACT_TYPES,
   CONTRACT_TYPE_LABELS,
@@ -244,7 +245,12 @@ export function PessoaDetailDialog({ open, onOpenChange, pessoa, isAdmin, onEdit
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-muted-foreground italic">Nenhuma conta bancária cadastrada.</p>
+                <EmptyState
+                  icon={Landmark}
+                  title="Nenhuma conta bancária cadastrada"
+                  description="As contas bancárias desta pessoa aparecem aqui."
+                  className="py-6"
+                />
               )}
             </div>
           )}
@@ -283,7 +289,12 @@ export function PessoaDetailDialog({ open, onOpenChange, pessoa, isAdmin, onEdit
                 })}
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground italic">Nenhuma meta pessoal cadastrada.</p>
+              <EmptyState
+                icon={Target}
+                title="Nenhuma meta pessoal cadastrada"
+                description="As metas pessoais desta pessoa aparecem aqui."
+                className="py-6"
+              />
             )}
           </div>
 

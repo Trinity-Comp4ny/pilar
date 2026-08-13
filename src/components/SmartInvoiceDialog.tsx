@@ -167,7 +167,7 @@ export function SmartInvoiceDialog({ open, onClose, projetoId, propostaValor, pr
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Receipt className="h-4 w-4 text-info-mid" />
-            Gerar Faturas
+            Gerar faturas
           </DialogTitle>
           <DialogDescription>
             Deseja gerar as faturas automaticamente para o projeto <strong>{propostaNome}</strong>?

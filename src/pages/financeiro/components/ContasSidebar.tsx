@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { formatCurrency } from "@/lib/format";
 import { CreditCard, Wallet } from "lucide-react";
+import { EmptyState } from "@/components/EmptyState";
 import { cn } from "@/lib/utils";
 import type { ContaItem, CartaoItem } from "../hooks/useContasCartoes";
 import type { Fatura } from "../hooks/useFaturas";
@@ -154,7 +155,14 @@ export function ContasSidebar({
               </div>
             );
           })}
-          {contas.length === 0 && <p className="text-xs text-muted-foreground px-3 py-2">Nenhuma conta cadastrada</p>}
+          {contas.length === 0 && (
+            <EmptyState
+              icon={Wallet}
+              title="Nenhuma conta cadastrada"
+              description="Cadastre uma conta para começar a organizar saldos e cartões."
+              className="py-8 px-3"
+            />
+          )}
         </div>
       </div>
 

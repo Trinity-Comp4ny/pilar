@@ -304,7 +304,7 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
       <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto p-0">
         <div className="px-6 pt-6 pb-4 border-b">
           <DialogHeader>
-            <DialogTitle>{isEditMode ? "Editar Pessoa" : "Nova Pessoa"}</DialogTitle>
+            <DialogTitle>{isEditMode ? "Editar pessoa" : "Nova pessoa"}</DialogTitle>
             <DialogDescription>{STEPS.find((s) => s.id === step)?.desc}</DialogDescription>
           </DialogHeader>
         </div>

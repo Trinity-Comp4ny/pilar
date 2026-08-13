@@ -134,7 +134,7 @@ export default function Pessoas() {
         open={confirmDeleteOpen}
         onOpenChange={setConfirmDeleteOpen}
         onConfirm={handleDeleteConfirm}
-        title="Excluir Pessoa"
+        title="Excluir pessoa"
         itemName={pessoaToDelete?.nome}
         description="Esta ação não pode ser desfeita."
         confirmText="Excluir"

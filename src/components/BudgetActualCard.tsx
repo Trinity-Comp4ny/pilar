@@ -135,7 +135,7 @@ function EmptyBudget({ onAdd }: { onAdd?: () => void }) {
       </div>
       {onAdd && (
         <Button variant="outline" size="sm" onClick={onAdd} className="rounded-full">
-          Adicionar Orçamento
+          Adicionar orçamento
         </Button>
       )}
     </div>
