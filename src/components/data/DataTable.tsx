@@ -1,8 +1,18 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
+import {
+  useReactTable,
+  getCoreRowModel,
+  getSortedRowModel,
+  type ColumnDef as TanstackColumnDef,
+  type RowSelectionState,
+  type SortingFn,
+  type SortingState,
+} from "@tanstack/react-table";
 import { AlertCircle, ChevronDown, ChevronUp, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Table,
   TableBody,
@@ -58,12 +68,37 @@ interface DataTableProps<T> {
   minWidth?: string;
   /** Altura máxima com rolagem vertical. */
   maxHeight?: string;
+  /**
+   * Habilita a coluna de seleção por checkbox (opt-in). O checkbox mestre no
+   * cabeçalho seleciona/limpa todas as linhas visíveis.
+   */
+  enableRowSelection?: boolean;
+  /** Notificado com as linhas selecionadas sempre que a seleção muda. */
+  onSelectionChange?: (rows: T[]) => void;
+  /**
+   * Visibilidade de coluna controlada pelo pai (opt-in), por `key`. `false`
+   * esconde a coluna. Sem esta prop, todas as colunas ficam visíveis.
+   */
+  columnVisibility?: Record<string, boolean>;
 }
 
 const alignClass: Record<NonNullable<ColumnDef<unknown>["align"]>, string> = {
   start: "text-left",
   end: "text-right",
   center: "text-center",
+};
+
+/**
+ * Comparador que preserva o comportamento anterior: strings por `localeCompare`
+ * (respeita acentos pt-BR), números por subtração. Valores ausentes/não-finitos
+ * são mapeados para `undefined` no accessor e posicionados pelo `sortUndefined`
+ * da coluna, independentemente da direção.
+ */
+const mixedSortingFn: SortingFn<unknown> = (rowA, rowB, columnId) => {
+  const a = rowA.getValue(columnId);
+  const b = rowB.getValue(columnId);
+  if (typeof a === "string" && typeof b === "string") return a.localeCompare(b);
+  return (a as number) - (b as number);
 };
 
 export function DataTable<T>({
@@ -78,50 +113,88 @@ export function DataTable<T>({
   loadingRows = 6,
   minWidth,
   maxHeight,
+  enableRowSelection = false,
+  onSelectionChange,
+  columnVisibility,
 }: DataTableProps<T>) {
   const { rows, isPending = false, error = null } = data;
 
-  const [sortKey, setSortKey] = useState<string | null>(defaultSortKey ?? null);
-  const [sortDir, setSortDir] = useState<"asc" | "desc">(defaultSortDir);
+  const [sorting, setSorting] = useState<SortingState>(
+    defaultSortKey ? [{ id: defaultSortKey, desc: defaultSortDir === "desc" }] : [],
+  );
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
 
-  const activeCol = columns.find((c) => c.key === sortKey && c.getSortValue);
+  const tableColumns = useMemo<TanstackColumnDef<T>[]>(
+    () =>
+      columns.map((col) => ({
+        id: col.key,
+        enableSorting: !!col.getSortValue,
+        sortingFn: mixedSortingFn as SortingFn<T>,
+        // Primeiro clique sempre ascendente (paridade com a versão anterior);
+        // o TanStack usaria "descending first" em colunas numéricas.
+        sortDescFirst: false,
+        sortUndefined: "last",
+        accessorFn: col.getSortValue
+          ? (row: T) => {
+              const v = col.getSortValue!(row);
+              // Não-finito vira undefined para o sortUndefined empurrá-lo ao fim.
+              return typeof v === "number" && !isFinite(v) ? undefined : v;
+            }
+          : undefined,
+      })),
+    [columns],
+  );
 
-  const sortedRows = useMemo(() => {
-    if (!activeCol?.getSortValue) return rows;
-    const dir = sortDir === "asc" ? 1 : -1;
-    const getValue = activeCol.getSortValue;
-    return [...rows].sort((a, b) => {
-      const av = getValue(a);
-      const bv = getValue(b);
-      // Empurra valores não-finitos (missing) para o fim, independente da direção.
-      const aInf = typeof av === "number" && !isFinite(av);
-      const bInf = typeof bv === "number" && !isFinite(bv);
-      if (aInf && bInf) return 0;
-      if (aInf) return 1;
-      if (bInf) return -1;
-      if (typeof av === "string" && typeof bv === "string") return dir * av.localeCompare(bv);
-      return dir * ((av as number) - (bv as number));
-    });
-  }, [rows, activeCol, sortDir]);
+  const table = useReactTable<T>({
+    data: rows,
+    columns: tableColumns,
+    state: { sorting, rowSelection },
+    onSortingChange: setSorting,
+    onRowSelectionChange: setRowSelection,
+    getRowId: (row) => rowKey(row),
+    enableRowSelection,
+    enableSortingRemoval: false,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+  });
 
-  const handleSort = (col: ColumnDef<T>) => {
-    if (!col.getSortValue) return;
-    if (sortKey === col.key) {
-      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
-    } else {
-      setSortKey(col.key);
-      setSortDir("asc");
-    }
-  };
+  // Notifica o consumidor sobre a seleção corrente (linhas originais).
+  useEffect(() => {
+    if (!onSelectionChange) return;
+    onSelectionChange(table.getSelectedRowModel().rows.map((r) => r.original));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rowSelection]);
 
-  const headerCells = columns.map((col) => {
+  const visibleColumns = columnVisibility
+    ? columns.filter((c) => columnVisibility[c.key] !== false)
+    : columns;
+  const totalCols = visibleColumns.length + (enableRowSelection ? 1 : 0);
+
+  const selectionHead = enableRowSelection ? (
+    <TableHead className="w-10 sticky left-0 z-20 bg-muted/50">
+      <Checkbox
+        checked={
+          table.getIsAllRowsSelected()
+            ? true
+            : table.getIsSomeRowsSelected()
+              ? "indeterminate"
+              : false
+        }
+        onCheckedChange={(v) => table.toggleAllRowsSelected(!!v)}
+        aria-label="Selecionar todas as linhas"
+      />
+    </TableHead>
+  ) : null;
+
+  const headerCells = visibleColumns.map((col) => {
     const sortable = !!col.getSortValue;
-    const isActive = sortKey === col.key && sortable;
-    const SortIcon = !isActive ? ChevronsUpDown : sortDir === "asc" ? ChevronUp : ChevronDown;
+    const sortState = sorting.find((s) => s.id === col.key);
+    const isActive = !!sortState && sortable;
+    const SortIcon = !isActive ? ChevronsUpDown : sortState!.desc ? ChevronDown : ChevronUp;
     return (
       <TableHead
         key={col.key}
-        aria-sort={isActive ? (sortDir === "asc" ? "ascending" : "descending") : undefined}
+        aria-sort={isActive ? (sortState!.desc ? "descending" : "ascending") : undefined}
         className={cn(
           col.align && alignClass[col.align],
           col.stickyLeft && "sticky left-0 z-20 bg-muted/50",
@@ -131,7 +204,7 @@ export function DataTable<T>({
         {sortable ? (
           <button
             type="button"
-            onClick={() => handleSort(col)}
+            onClick={() => table.getColumn(col.key)?.toggleSorting()}
             className={cn(
               "inline-flex items-center gap-1 hover:text-foreground transition-colors",
               col.align === "end" && "flex-row-reverse",
@@ -152,7 +225,7 @@ export function DataTable<T>({
     if (error) {
       return (
         <TableRow className="hover:bg-transparent">
-          <TableCell colSpan={columns.length} className="py-14">
+          <TableCell colSpan={totalCols} className="py-14">
             <div className="flex flex-col items-center justify-center text-center px-6" role="alert">
               <AlertCircle className="h-8 w-8 text-destructive mb-3" aria-hidden />
               <p className="text-sm font-semibold text-foreground mb-1">{errorTitle}</p>
@@ -166,7 +239,12 @@ export function DataTable<T>({
     if (isPending) {
       return Array.from({ length: loadingRows }).map((_, i) => (
         <TableRow key={`sk-${i}`} className="hover:bg-transparent">
-          {columns.map((col) => (
+          {enableRowSelection && (
+            <TableCell className="sticky left-0 z-10 bg-card">
+              <Skeleton className="h-4 w-4" />
+            </TableCell>
+          )}
+          {visibleColumns.map((col) => (
             <TableCell
               key={col.key}
               className={cn(col.stickyLeft && "sticky left-0 z-10 bg-card", col.className)}
@@ -180,23 +258,34 @@ export function DataTable<T>({
       ));
     }
 
-    if (sortedRows.length === 0) {
+    const bodyRows = table.getRowModel().rows;
+    if (bodyRows.length === 0) {
       return (
         <TableRow className="hover:bg-transparent">
-          <TableCell colSpan={columns.length} className="py-14 text-center text-sm text-muted-foreground">
+          <TableCell colSpan={totalCols} className="py-14 text-center text-sm text-muted-foreground">
             {emptyMessage}
           </TableCell>
         </TableRow>
       );
     }
 
-    return sortedRows.map((row) => (
+    return bodyRows.map((row) => (
       <TableRow
-        key={rowKey(row)}
-        onClick={onRowClick ? () => onRowClick(row) : undefined}
+        key={row.id}
+        data-state={row.getIsSelected() ? "selected" : undefined}
+        onClick={onRowClick ? () => onRowClick(row.original) : undefined}
         className={cn(onRowClick && "cursor-pointer")}
       >
-        {columns.map((col) => (
+        {enableRowSelection && (
+          <TableCell className="sticky left-0 z-10 bg-card" onClick={(e) => e.stopPropagation()}>
+            <Checkbox
+              checked={row.getIsSelected()}
+              onCheckedChange={(v) => row.toggleSelected(!!v)}
+              aria-label="Selecionar linha"
+            />
+          </TableCell>
+        )}
+        {visibleColumns.map((col) => (
           <TableCell
             key={col.key}
             className={cn(
@@ -205,7 +294,7 @@ export function DataTable<T>({
               col.className,
             )}
           >
-            {col.cell(row)}
+            {col.cell(row.original)}
           </TableCell>
         ))}
       </TableRow>
@@ -216,7 +305,10 @@ export function DataTable<T>({
     <div className={cn("w-full", maxHeight && "overflow-y-auto")} style={maxHeight ? { maxHeight } : undefined}>
       <Table style={minWidth ? { minWidth } : undefined}>
         <TableHeader>
-          <TableRow className="hover:bg-transparent">{headerCells}</TableRow>
+          <TableRow className="hover:bg-transparent">
+            {selectionHead}
+            {headerCells}
+          </TableRow>
         </TableHeader>
         <TableBody>{renderBody()}</TableBody>
       </Table>
