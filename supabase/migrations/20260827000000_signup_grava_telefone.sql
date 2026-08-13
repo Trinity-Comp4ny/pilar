@@ -72,11 +72,13 @@ begin
     v_nome_completo := coalesce(v_meta_nome, split_part(NEW.email, '@', 1));
     v_first_name := split_part(v_nome_completo, ' ', 1);
     if position(' ' in v_nome_completo) > 0 then
-      v_last_name := nullif(trim(substring(v_nome_completo from position(' ' in v_nome_completo) + 1)), '');
+      v_last_name := coalesce(nullif(trim(substring(v_nome_completo from position(' ' in v_nome_completo) + 1)), ''), '');
     else
-      v_last_name := null;
+      v_last_name := '';
     end if;
 
+    -- profiles.last_name é NOT NULL DEFAULT '' (migration 20260429500000): sem
+    -- sobrenome, grava string vazia, nunca NULL (senão o INSERT viola a constraint).
     insert into public.profiles (
       id, empresa_id, first_name, last_name, email, contato, role, features, onboarding_completed
     )
