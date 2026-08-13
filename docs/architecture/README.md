@@ -24,6 +24,7 @@ Um ADR documenta uma decisão técnica relevante, seu contexto e consequências.
 | [0016](./adr/0016-rotas-aninhadas-por-modulo.md)                                 | Rotas aninhadas por módulo (/&lt;modulo&gt;/&lt;aba&gt;), com redirects de compat                    |
 | [0017](./adr/0017-lancamentos-pagina-server-side.md)                             | Página de Lançamentos server-side (view + RPCs de paginação/resumo)                  |
 | [0018](./adr/0018-onboarding-guiado-checklist-e-tour.md)                         | Onboarding guiado: checklist derivado de dados + tour por página com driver.js       |
+| [0019](./adr/0019-features-como-controle-de-rollout-nao-de-plano.md)             | Features como controle de rollout por módulo (não paywall); sub-features flat; revisa o 0005 |
 
 ## Guias de reúso
 

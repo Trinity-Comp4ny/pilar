@@ -1,17 +1,23 @@
 import {
   BarChart,
+  Boxes,
   Brain,
   Building2,
   Calendar,
+  ClipboardList,
+  CloudSun,
   FileText,
+  GanttChartSquare,
   Globe,
   HardHat,
   Home,
   LayoutTemplate,
   ListTodo,
   MapPin,
+  Scale,
   Sparkles,
   Target,
+  Truck,
   UserPlus,
   Users,
   Wallet,
@@ -37,9 +43,24 @@ export type FeatureKey =
   | "timesheet"
   | "ai_chat"
   | "meu_trabalho"
-  | "obras";
+  | "obras"
+  // Sub-features do módulo Obras (parent: "obras"). Gate de experiência (UI + rota),
+  // não fronteira de dados: a proteção do dado segue no nível do módulo. Ver ADR 0019.
+  | "obras_fornecedores"
+  | "obras_clima"
+  | "obras_diario"
+  | "obras_cronograma"
+  | "obras_cotacoes"
+  | "obras_estoque"
+  | "obras_conta";
 
 export type FeatureGroup = "visao" | "comercial" | "operacao" | "financeiro" | "equipe" | "extras";
+
+/**
+ * Os 3 módulos (pilares) do produto. Mesmo conjunto que ModuleId em modules.ts,
+ * definido aqui para evitar ciclo de import (modules.ts → permissions.ts → features.ts).
+ */
+export type FeatureModuleId = "gestao" | "projetos" | "obras";
 
 export type PermissionLevel = "viewer" | "editor";
 export type FeatureAccess = PermissionLevel | null;
@@ -57,6 +78,11 @@ export type FeatureDefinition = {
   addonPriceLabel?: string;
   dormant?: boolean;
   includedInPlans: readonly SubscriptionPlanSlug[];
+  /**
+   * Feature-pai (módulo) desta sub-feature. Uma sub-feature só vale se o pai
+   * estiver ligado; ausente do JSONB herda o pai (ligado). Ver ADR 0019.
+   */
+  parent?: FeatureKey;
 };
 
 export const FEATURE_GROUP_LABEL: Record<FeatureGroup, string> = {
@@ -224,6 +250,86 @@ export const FEATURES: readonly FeatureDefinition[] = [
     // ligado por empresa (design partner VRZ); por isso não entra em plano ainda.
     includedInPlans: [],
   },
+  // Sub-features de Obras (spec 035, ADR 0019). Todas com parent "obras": só
+  // valem se o módulo estiver ligado; ausência no JSONB herda o pai (ligado),
+  // para não retirar telas de quem já usa Obras. Desligar grava false explícito.
+  {
+    key: "obras_fornecedores",
+    label: "Fornecedores",
+    description: "Cadastro de fornecedores da obra",
+    group: "operacao",
+    icon: Truck,
+    core: false,
+    addon: false,
+    includedInPlans: [],
+    parent: "obras",
+  },
+  {
+    key: "obras_clima",
+    label: "Clima",
+    description: "Previsão do tempo por obra",
+    group: "operacao",
+    icon: CloudSun,
+    core: false,
+    addon: false,
+    includedInPlans: [],
+    parent: "obras",
+  },
+  {
+    key: "obras_diario",
+    label: "Diário de obra (RDO)",
+    description: "Registro diário: clima, efetivo, atividades e ocorrências",
+    group: "operacao",
+    icon: ClipboardList,
+    core: false,
+    addon: false,
+    includedInPlans: [],
+    parent: "obras",
+  },
+  {
+    key: "obras_cronograma",
+    label: "Cronograma da obra",
+    description: "Frentes e passos na linha do tempo da execução",
+    group: "operacao",
+    icon: GanttChartSquare,
+    core: false,
+    addon: false,
+    includedInPlans: [],
+    parent: "obras",
+  },
+  {
+    key: "obras_cotacoes",
+    label: "Cotações",
+    description: "Registrar, comparar e decidir cotações de materiais",
+    group: "operacao",
+    icon: Scale,
+    core: false,
+    addon: false,
+    includedInPlans: [],
+    parent: "obras",
+  },
+  {
+    key: "obras_estoque",
+    label: "Estoque",
+    description: "Entradas e saídas de materiais da obra",
+    group: "operacao",
+    icon: Boxes,
+    core: false,
+    addon: false,
+    includedInPlans: [],
+    parent: "obras",
+  },
+  {
+    key: "obras_conta",
+    label: "Conta da obra",
+    description: "Aportes, despesas e prestação de contas por administração",
+    group: "operacao",
+    icon: Wallet,
+    core: false,
+    addon: false,
+    includedInPlans: [],
+    parent: "obras",
+  },
   {
     key: "ai_hub",
     label: "IA Hub",
@@ -281,6 +387,59 @@ export const FEATURES_BY_KEY: Record<FeatureKey, FeatureDefinition> = FEATURES.r
   },
   {} as Record<FeatureKey, FeatureDefinition>
 );
+
+/**
+ * Módulo (pilar) dono de cada feature. `null` = transversal/plataforma (não
+ * pertence a um módulo do switcher: dashboard, relatórios, agentes, add-ons).
+ * Record fechado sobre FeatureKey: esquecer uma chave nova quebra o build.
+ * Deve refletir a distribuição dos itens em modules.ts (teste de sincronia).
+ */
+export const FEATURE_MODULE: Record<FeatureKey, FeatureModuleId | null> = {
+  // Gestão
+  meu_trabalho: "gestao",
+  financeiro: "gestao",
+  pessoas: "gestao",
+  metas: "gestao",
+  leads: "gestao",
+  clientes: "gestao",
+  propostas: "gestao",
+  // Projetos
+  projetos: "projetos",
+  mapa: "projetos",
+  // Obras
+  obras: "obras",
+  obras_fornecedores: "obras",
+  obras_clima: "obras",
+  obras_diario: "obras",
+  obras_cronograma: "obras",
+  obras_cotacoes: "obras",
+  obras_estoque: "obras",
+  obras_conta: "obras",
+  // Transversal / plataforma (fora dos 3 pilares)
+  dashboard: null,
+  relatorios: null,
+  portal_cliente: null,
+  ai_chat: null,
+  ai_hub: null,
+  capacidade: null,
+  templates: null,
+  timesheet: null,
+};
+
+/** Módulo dono da feature, ou null se transversal. */
+export function moduleOfFeature(key: FeatureKey): FeatureModuleId | null {
+  return FEATURE_MODULE[key];
+}
+
+/** Sub-features (parent === key), na ordem do catálogo. */
+export function subFeaturesOf(parent: FeatureKey): FeatureDefinition[] {
+  return FEATURES.filter((f) => f.parent === parent);
+}
+
+/** Features "raiz" de um módulo (as que não são sub-feature de outra). */
+export function rootFeaturesOfModule(moduleId: FeatureModuleId): FeatureDefinition[] {
+  return FEATURES.filter((f) => FEATURE_MODULE[f.key] === moduleId && !f.parent);
+}
 
 export type CompanyFeatures = Partial<Record<FeatureKey, boolean>>;
 export type UserFeatures = Partial<Record<FeatureKey, PermissionLevel>>;
@@ -345,5 +504,11 @@ export function isFeatureEnabledForCompany(
 ): boolean {
   const feature = FEATURES_BY_KEY[key];
   if (feature?.core) return true;
+  // Sub-feature: exige o módulo-pai ligado; ausência no JSONB herda o pai
+  // (ligado). Desligar uma sub-feature grava false explícito. Ver ADR 0019.
+  if (feature?.parent) {
+    if (!isFeatureEnabledForCompany(companyFeatures, feature.parent)) return false;
+    return companyFeatures?.[key] !== false;
+  }
   return Boolean(companyFeatures?.[key]);
 }

@@ -138,10 +138,16 @@ const App = () => {
                         {/* Obras (reaberto — ADR 0011, spec 015): fase de execução do projeto. */}
                         <Route element={<FeatureRoute feature="obras" />}>
                           <Route path="/obras" element={<Obras />} />
-                          <Route path="/obras/clima" element={<ObraClima />} />
+                          {/* Sub-features do módulo Obras (spec 035): gate próprio,
+                              herda o módulo ligado via parent em features.ts. */}
+                          <Route element={<FeatureRoute feature="obras_clima" />}>
+                            <Route path="/obras/clima" element={<ObraClima />} />
+                          </Route>
                           {/* Fornecedor mora no módulo Obra (spec 026). */}
-                          <Route path="/obras/fornecedores" element={<Fornecedores />} />
-                          <Route path="/obras/fornecedores/:id" element={<FornecedorDetalhe />} />
+                          <Route element={<FeatureRoute feature="obras_fornecedores" />}>
+                            <Route path="/obras/fornecedores" element={<Fornecedores />} />
+                            <Route path="/obras/fornecedores/:id" element={<FornecedorDetalhe />} />
+                          </Route>
                           <Route path="/obras/:id" element={<ObraDetalhe />} />
                         </Route>
 
