@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useSidebar } from "@/components/ui/sidebar";
-import { Plus, DollarSign, User } from "lucide-react";
+import { Plus, DollarSign, User, Layers } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import {
@@ -40,6 +40,10 @@ export default function MetasPage() {
               <DropdownMenuItem onSelect={() => setNovaMetaTipo("pessoal")}>
                 <User className="mr-2 h-4 w-4" />
                 Meta pessoal
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => setNovaMetaTipo("livre")}>
+                <Layers className="mr-2 h-4 w-4" />
+                Meta livre
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
