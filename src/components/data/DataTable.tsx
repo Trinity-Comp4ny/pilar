@@ -60,8 +60,18 @@ interface DataTableProps<T> {
   defaultSortDir?: "asc" | "desc";
   /** Mensagem quando não há dados. */
   emptyMessage?: string;
+  /**
+   * Estado de vazio customizado (opt-in). Quando fornecido, substitui a
+   * `emptyMessage` padrão — permite `EmptyState` com ícone e ação.
+   */
+  emptyState?: ReactNode;
   /** Título do estado de erro. */
   errorTitle?: string;
+  /**
+   * Estado de erro customizado (opt-in). Quando fornecido, substitui o estado
+   * de erro padrão (ícone + mensagem) — permite botão "Tentar de novo".
+   */
+  errorState?: ReactNode;
   /** Nº de linhas do skeleton de carregamento. */
   loadingRows?: number;
   /** Largura mínima da tabela (rolagem horizontal abaixo disso). */
@@ -109,7 +119,9 @@ export function DataTable<T>({
   defaultSortKey,
   defaultSortDir = "asc",
   emptyMessage = "Nenhum registro encontrado.",
+  emptyState,
   errorTitle = "Não foi possível carregar os dados",
+  errorState,
   loadingRows = 6,
   minWidth,
   maxHeight,
@@ -226,11 +238,13 @@ export function DataTable<T>({
       return (
         <TableRow className="hover:bg-transparent">
           <TableCell colSpan={totalCols} className="py-14">
-            <div className="flex flex-col items-center justify-center text-center px-6" role="alert">
-              <AlertCircle className="h-8 w-8 text-destructive mb-3" aria-hidden />
-              <p className="text-sm font-semibold text-foreground mb-1">{errorTitle}</p>
-              <p className="text-sm text-muted-foreground max-w-md">{error.message}</p>
-            </div>
+            {errorState ?? (
+              <div className="flex flex-col items-center justify-center text-center px-6" role="alert">
+                <AlertCircle className="h-8 w-8 text-destructive mb-3" aria-hidden />
+                <p className="text-sm font-semibold text-foreground mb-1">{errorTitle}</p>
+                <p className="text-sm text-muted-foreground max-w-md">{error.message}</p>
+              </div>
+            )}
           </TableCell>
         </TableRow>
       );
@@ -262,8 +276,11 @@ export function DataTable<T>({
     if (bodyRows.length === 0) {
       return (
         <TableRow className="hover:bg-transparent">
-          <TableCell colSpan={totalCols} className="py-14 text-center text-sm text-muted-foreground">
-            {emptyMessage}
+          <TableCell
+            colSpan={totalCols}
+            className={cn(!emptyState && "py-14 text-center text-sm text-muted-foreground")}
+          >
+            {emptyState ?? emptyMessage}
           </TableCell>
         </TableRow>
       );
