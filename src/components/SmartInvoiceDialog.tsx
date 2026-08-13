@@ -23,6 +23,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
+import { formatCurrency, formatDate } from "@/lib/format";
 
 // ---------- tipos ----------
 
@@ -52,8 +53,6 @@ export interface SmartInvoiceDialogProps {
 }
 
 // ---------- helpers ----------
-
-const formatBRL = (v: number) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
 
 const buildParcelas = (valor: number, qtd: number, inicio: Date): ParcelaPreview[] =>
   Array.from({ length: qtd }, (_, i) => ({
@@ -227,7 +226,7 @@ export function SmartInvoiceDialog({ open, onClose, projetoId, propostaValor, pr
                             <TableRow key={p.numero} className="text-xs">
                               <TableCell className="py-1.5">{p.numero}</TableCell>
                               <TableCell className="py-1.5">{format(p.data, "dd/MM/yyyy", { locale: ptBR })}</TableCell>
-                              <TableCell className="py-1.5 text-right font-medium">{formatBRL(p.valor)}</TableCell>
+                              <TableCell className="py-1.5 text-right font-medium">{formatCurrency(p.valor)}</TableCell>
                             </TableRow>
                           ))}
                         </TableBody>
@@ -298,9 +297,9 @@ export function SmartInvoiceDialog({ open, onClose, projetoId, propostaValor, pr
                                 </div>
                               </TableCell>
                               <TableCell className="py-1.5 text-muted-foreground">
-                                {m.data_prevista ? format(new Date(m.data_prevista + "T00:00:00"), "dd/MM/yyyy") : "—"}
+                                {formatDate(m.data_prevista)}
                               </TableCell>
-                              <TableCell className="py-1.5 text-right font-medium">{formatBRL(m.valor)}</TableCell>
+                              <TableCell className="py-1.5 text-right font-medium">{formatCurrency(m.valor)}</TableCell>
                             </TableRow>
                           ))}
                         </TableBody>

@@ -1,5 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { formatDate } from "@/lib/format";
 
 export interface TimelineDisciplina {
   disciplina: string;
@@ -14,8 +15,6 @@ export function TimelineContent({ disciplinas }: { disciplinas: TimelineDiscipli
   const total = disciplinas.length;
   const concluidas = disciplinas.filter((d) => d.status === "Concluído").length;
   const progress = total > 0 ? Math.round((concluidas / total) * 100) : 0;
-
-  const formatDate = (d: string | undefined) => (d ? new Date(d + "T00:00:00").toLocaleDateString("pt-BR") : "—");
 
   return (
     <div className="space-y-4">

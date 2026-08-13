@@ -6,8 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { PageLayout } from "@/components/PageLayout";
-import { PageHeader } from "@/components/PageHeader";
+import { PilarPage } from "@/components/PilarPage";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
@@ -380,17 +379,13 @@ export default function MeuTrabalho() {
   };
 
   return (
-    <PageLayout
-      header={
-        <PageHeader
-          title="Meu trabalho"
-          search={
-            visao !== "agenda" ? { value: busca, onChange: setBusca, placeholder: "Buscar no meu trabalho" } : undefined
-          }
-          primaryAction={
-            visao !== "agenda" ? { label: "Nova tarefa", icon: Plus, onClick: () => abrirNova() } : undefined
-          }
-        />
+    <PilarPage
+      title="Meu trabalho"
+      search={
+        visao !== "agenda" ? { value: busca, onChange: setBusca, placeholder: "Buscar no meu trabalho" } : undefined
+      }
+      primaryAction={
+        visao !== "agenda" ? { label: "Nova tarefa", icon: Plus, onClick: () => abrirNova() } : undefined
       }
     >
       {/* Toolbar: visão + (no quadro) filtros de tipo e data */}
@@ -569,6 +564,6 @@ export default function MeuTrabalho() {
         confirmText="Excluir coluna"
         loading={etapaMut.excluir.isPending}
       />
-    </PageLayout>
+    </PilarPage>
   );
 }

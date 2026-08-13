@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Separator } from "@/components/ui/separator";
 import { AlertCircle } from "lucide-react";
 import { toast } from "sonner";
-import { formatCurrency } from "@/lib/currencyUtils";
+import { formatCurrency } from "@/lib/format";
 import { usePagarFatura } from "../hooks/usePagarFatura";
 import type { Conta, Fatura } from "../hooks/useFaturas";
 
@@ -25,8 +25,6 @@ const MESES = [
   "Novembro",
   "Dezembro",
 ];
-
-const formatBRL = (v: number) => v.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
 
 interface FaturaPagamentoDialogProps {
   fatura: Fatura | null;
@@ -100,18 +98,18 @@ export function FaturaPagamentoDialog({ fatura, contas, open, onOpenChange, onPa
             <div className="p-4 bg-muted/50 rounded-lg">
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Valor total da fatura</span>
-                <span className="font-bold">R$ {formatBRL(fatura.valor_total)}</span>
+                <span className="font-bold">{formatCurrency(fatura.valor_total)}</span>
               </div>
               {fatura.valor_pago > 0 && (
                 <>
                   <div className="flex justify-between text-sm mt-1">
                     <span className="text-muted-foreground">Já pago</span>
-                    <span className="text-positive-strong">- R$ {formatBRL(fatura.valor_pago)}</span>
+                    <span className="text-positive-strong">- {formatCurrency(fatura.valor_pago)}</span>
                   </div>
                   <Separator className="my-2" />
                   <div className="flex justify-between text-sm font-bold">
                     <span>Restante</span>
-                    <span>R$ {formatBRL(fatura.valor_total - fatura.valor_pago)}</span>
+                    <span>{formatCurrency(fatura.valor_total - fatura.valor_pago)}</span>
                   </div>
                 </>
               )}

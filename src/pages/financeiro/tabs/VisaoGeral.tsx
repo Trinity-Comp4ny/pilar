@@ -10,7 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { formatCurrency as fmtMoeda } from "@/lib/format";
+import { formatCurrency } from "@/lib/format";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   ArrowUpRight,
@@ -53,8 +53,6 @@ import { useFinanceFilter } from "../hooks/useFinanceFilter";
 import { useLancamentosRecentes } from "../hooks/useLancamentosRecentes";
 import type { TipoLancamento } from "../hooks/useLancamentosUnified";
 import { VencimentoRow } from "../components/VencimentoRow";
-
-const formatCurrency = (val: number) => fmtMoeda(val);
 
 function VisaoGeralSkeleton() {
   return (

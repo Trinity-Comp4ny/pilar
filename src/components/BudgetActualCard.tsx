@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { formatCurrency } from "@/lib/format";
 
 // ---------- tipos ----------
 
@@ -23,11 +24,6 @@ interface BudgetActualCardProps {
   /** Callback para abrir o form de orçamento quando não há dados */
   onAddBudget?: () => void;
 }
-
-// ---------- helpers ----------
-
-const formatBRL = (v: number) =>
-  new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
 
 // ---------- componente ----------
 
@@ -68,7 +64,7 @@ export function BudgetActualCard({ projetoId, onAddBudget }: BudgetActualCardPro
           {fases.length > 0 && (
             <div className="text-right">
               <p className="text-xs text-muted-foreground">Total orçado</p>
-              <p className="text-sm font-semibold">{formatBRL(totalValorVenda)}</p>
+              <p className="text-sm font-semibold">{formatCurrency(totalValorVenda)}</p>
             </div>
           )}
         </div>
@@ -90,7 +86,7 @@ export function BudgetActualCard({ projetoId, onAddBudget }: BudgetActualCardPro
                       <Badge variant="secondary" className="text-xs font-normal">
                         Sem dados reais
                       </Badge>
-                      <span className="text-xs text-muted-foreground">{formatBRL(valorVenda)}</span>
+                      <span className="text-xs text-muted-foreground">{formatCurrency(valorVenda)}</span>
                     </div>
                   </div>
 
@@ -100,7 +96,7 @@ export function BudgetActualCard({ projetoId, onAddBudget }: BudgetActualCardPro
                     <span>0% realizado</span>
                     <span>
                       {horas > 0 ? `${horas}h estimadas` : "Sem horas estimadas"}
-                      {fase.custo_hora ? ` · ${formatBRL(fase.custo_hora)}/h` : ""}
+                      {fase.custo_hora ? ` · ${formatCurrency(fase.custo_hora)}/h` : ""}
                     </span>
                   </div>
                 </div>

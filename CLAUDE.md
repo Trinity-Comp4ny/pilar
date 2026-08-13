@@ -45,6 +45,22 @@ Relatórios, Portal Cliente.
 - RLS em toda tabela nova; testar com `auth.uid()` correto
 - Edge Functions seguem padrão `_shared/cors.ts` + rate limiting por empresa
 
+## UI e design system
+
+Antes de escrever QUALQUER UI (tela, modal, componente), consultar
+`docs/design/PILAR_DESIGN_SYSTEM.md`: é o contrato visual (o que existe, quando
+usar, o que é proibido). Regras que valem sempre:
+
+- Página nova usa `PilarPage`; modal de formulário usa `FormDialog` (largura só
+  `sm`/`md`/`lg`). Não remontar `PageLayout`+`PageHeader` nem `DialogContent`+footer à mão.
+- Cor só por token semântico de `src/styles/tokens.css`. Nunca paleta crua
+  (`bg-red-100`, `text-amber-700`); o ESLint barra.
+- Botão primário é `variant="brand"`, nunca `className="bg-brand..."`. Status via
+  `StatusBadge` do registry (`src/lib/status.ts`). Dinheiro/data via `@/lib/format`.
+  Exclusão via `ConfirmDialog`. Campo de dinheiro via `MoneyInput`.
+- Componente genérico faltando e repetido 3+ vezes: promover (regra dos 3 usos,
+  ADR 0008), não copiar. Regra de domínio: escrever à mão.
+
 ## Documentação
 
 Toda a documentação vive em `docs/`, organizada por tema com índices navegáveis.
