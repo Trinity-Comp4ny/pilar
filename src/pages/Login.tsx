@@ -174,7 +174,7 @@ export default function Login() {
                       <FormLabel className="text-ink-soft font-medium flex items-center gap-2">
                         Senha <span className="text-danger-mid">*</span>
                         {ultimo === "senha" && (
-                          <span className="rounded-full bg-brand/15 px-2 py-0.5 text-[10px] font-medium text-brand">
+                          <span className="rounded-full bg-brand px-2 py-0.5 text-[10px] font-medium text-ink">
                             usado por último
                           </span>
                         )}
@@ -259,7 +259,7 @@ export default function Login() {
             Ainda não tem conta?{" "}
             <Link
               to="/cadastro"
-              className="font-medium text-ink underline underline-offset-2 hover:text-ink-soft"
+              className="font-medium text-ink decoration-brand underline-offset-2 hover:underline"
             >
               Criar conta
             </Link>
