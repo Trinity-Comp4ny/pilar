@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Target, TrendingUp, Wallet, User, Pencil, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { formatDate } from "@/lib/format";
 import type { MetaRow } from "./MetaFormDialog";
 
 interface MetaCardProps {
@@ -89,7 +90,7 @@ export function MetaCard({ meta, subtitle, onEdit, onDelete }: MetaCardProps) {
           </div>
         </div>
         <p className="text-xs text-muted-foreground">
-          Prazo: {meta.prazo ? new Date(meta.prazo).toLocaleDateString("pt-BR") : "—"}
+          Prazo: {meta.prazo ? formatDate(meta.prazo) : "—"}
         </p>
       </CardContent>
     </Card>
