@@ -22,6 +22,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { ChevronDown, Pencil, RefreshCw, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
+import { getSafeErrorMessage } from "@/lib/safeError";
 import { supabase } from "@/integrations/supabase/client";
 import type { Lancamento } from "../hooks/useLancamentosUnified";
 
@@ -148,7 +149,9 @@ function EditarEmAbertoDialog({ open, grupoId, onClose, onDone }: OpProps) {
       onDone();
       onClose();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Erro");
+      toast.error("Não foi possível atualizar as parcelas", {
+        description: getSafeErrorMessage(e, "Confira os dados e tente de novo."),
+      });
     } finally {
       setSaving(false);
     }
@@ -216,7 +219,9 @@ function RenegociarDialog({ open, grupoId, onClose, onDone }: OpProps) {
       onDone();
       onClose();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Erro");
+      toast.error("Não foi possível renegociar", {
+        description: getSafeErrorMessage(e, "Confira os dados e tente de novo."),
+      });
     } finally {
       setSaving(false);
     }
@@ -290,7 +295,9 @@ function QuitarAntecipadoDialog({ open, grupoId, onClose, onDone }: OpProps) {
       onDone();
       onClose();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Erro");
+      toast.error("Não foi possível quitar", {
+        description: getSafeErrorMessage(e, "Confira os dados e tente de novo."),
+      });
     } finally {
       setSaving(false);
     }

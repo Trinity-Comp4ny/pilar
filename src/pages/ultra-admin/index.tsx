@@ -48,6 +48,7 @@ import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { getSafeErrorMessage } from "@/lib/safeError";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import {
   parseCompanyFeatures,
@@ -197,7 +198,7 @@ export default function UltraAdmin() {
       setEmpresas(rows);
     } catch (err) {
       toast.error("Erro ao carregar empresas", {
-        description: err instanceof Error ? err.message : "Erro inesperado",
+        description: getSafeErrorMessage(err, "Tente de novo em instantes."),
       });
     } finally {
       setLoading(false);
@@ -301,7 +302,7 @@ export default function UltraAdmin() {
       toast.success("Usuário removido");
     } catch (err) {
       toast.error("Erro ao remover usuário", {
-        description: err instanceof Error ? err.message : "Erro inesperado",
+        description: getSafeErrorMessage(err, "Tente de novo em instantes."),
       });
     }
   }, []);
@@ -380,7 +381,7 @@ export default function UltraAdmin() {
       setDetailAudit((aud ?? []) as DataAuditRow[]);
     } catch (err) {
       toast.error("Erro ao carregar empresa", {
-        description: err instanceof Error ? err.message : "Erro inesperado",
+        description: getSafeErrorMessage(err, "Tente de novo em instantes."),
       });
     } finally {
       setLoadingDetail(false);
@@ -401,7 +402,7 @@ export default function UltraAdmin() {
         toast.success("Features atualizadas");
       } catch (err) {
         toast.error("Erro ao salvar features", {
-          description: err instanceof Error ? err.message : "Erro inesperado",
+          description: getSafeErrorMessage(err, "Tente de novo em instantes."),
         });
       } finally {
         setSavingFeatures(false);
@@ -431,7 +432,7 @@ export default function UltraAdmin() {
         toast.success("Usuário atualizado");
       } catch (err) {
         toast.error("Erro ao atualizar usuário", {
-          description: err instanceof Error ? err.message : "Erro inesperado",
+          description: getSafeErrorMessage(err, "Tente de novo em instantes."),
         });
       }
     },
@@ -450,7 +451,7 @@ export default function UltraAdmin() {
         toast.success("Usuário removido");
       } catch (err) {
         toast.error("Erro ao remover usuário", {
-          description: err instanceof Error ? err.message : "Erro inesperado",
+          description: getSafeErrorMessage(err, "Tente de novo em instantes."),
         });
       }
     },
@@ -479,7 +480,7 @@ export default function UltraAdmin() {
         await fetchDetail(detail.id);
       } catch (err) {
         toast.error("Erro ao convidar usuário", {
-          description: err instanceof Error ? err.message : "Erro inesperado",
+          description: getSafeErrorMessage(err, "Tente de novo em instantes."),
         });
       }
     },
@@ -497,7 +498,7 @@ export default function UltraAdmin() {
         toast.success("Convite reenviado", { description: `Novo e-mail enviado para ${user.email}.` });
       } catch (err) {
         toast.error("Erro ao reenviar convite", {
-          description: err instanceof Error ? err.message : "Erro inesperado",
+          description: getSafeErrorMessage(err, "Tente de novo em instantes."),
         });
       }
     },
@@ -518,7 +519,7 @@ export default function UltraAdmin() {
         toast.success("Convite cancelado");
       } catch (err) {
         toast.error("Erro ao cancelar convite", {
-          description: err instanceof Error ? err.message : "Erro inesperado",
+          description: getSafeErrorMessage(err, "Tente de novo em instantes."),
         });
       }
     },
@@ -556,7 +557,7 @@ export default function UltraAdmin() {
         toast.success("Empresa atualizada");
       } catch (err) {
         toast.error("Erro ao atualizar empresa", {
-          description: err instanceof Error ? err.message : "Erro inesperado",
+          description: getSafeErrorMessage(err, "Tente de novo em instantes."),
         });
       }
     },
@@ -609,7 +610,7 @@ export default function UltraAdmin() {
       await fetchEmpresas();
     } catch (err) {
       toast.error("Erro ao criar empresa", {
-        description: err instanceof Error ? err.message : "Erro inesperado",
+        description: getSafeErrorMessage(err, "Tente de novo em instantes."),
       });
     } finally {
       setCreating(false);
