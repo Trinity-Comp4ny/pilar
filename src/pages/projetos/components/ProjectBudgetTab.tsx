@@ -9,7 +9,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { type DisciplinaResponsavel } from "@/types/projetos";
-import { formatCurrency } from "@/lib/currencyUtils";
+import { formatCurrency, formatValorToInput, parseCurrencyString } from "@/lib/currencyUtils";
+import { MoneyInput } from "@/components/forms/MoneyInput";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 
 interface ProjectBudgetTabProps {
@@ -210,11 +211,10 @@ export function ProjectBudgetTab({ projetoId, canEdit, disciplinas }: ProjectBud
                   />
                 </TableCell>
                 <TableCell>
-                  <Input
-                    type="number"
+                  <MoneyInput
                     className="h-7 text-xs w-20 ml-auto"
-                    value={editRow.custo_hora || ""}
-                    onChange={(e) => setEditRow({ ...editRow, custo_hora: parseFloat(e.target.value) || 0 })}
+                    value={editRow.custo_hora ? formatValorToInput(editRow.custo_hora) : ""}
+                    onChange={(v) => setEditRow({ ...editRow, custo_hora: parseCurrencyString(v) })}
                   />
                 </TableCell>
                 <TableCell className="text-xs text-right">
@@ -229,11 +229,10 @@ export function ProjectBudgetTab({ projetoId, canEdit, disciplinas }: ProjectBud
                   />
                 </TableCell>
                 <TableCell>
-                  <Input
-                    type="number"
+                  <MoneyInput
                     className="h-7 text-xs w-24 ml-auto"
-                    value={editRow.valor_venda || ""}
-                    onChange={(e) => setEditRow({ ...editRow, valor_venda: parseFloat(e.target.value) || 0 })}
+                    value={editRow.valor_venda ? formatValorToInput(editRow.valor_venda) : ""}
+                    onChange={(v) => setEditRow({ ...editRow, valor_venda: parseCurrencyString(v) })}
                   />
                 </TableCell>
                 <TableCell className="text-right">
