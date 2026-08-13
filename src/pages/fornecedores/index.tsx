@@ -5,8 +5,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { DataTable, type ColumnDef } from "@/components/data/DataTable";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { Can } from "@/components/Can";
@@ -256,6 +256,98 @@ export default function Fornecedores() {
     });
   }, [fornecedores, searchTerm]);
 
+  const columns: ColumnDef<Fornecedor>[] = [
+    {
+      key: "nome",
+      header: "Nome",
+      className: "font-medium",
+      getSortValue: (f) => f.nome.toLowerCase(),
+      cell: (f) => f.nome,
+    },
+    {
+      key: "cnpj",
+      header: "CNPJ",
+      getSortValue: (f) => f.cnpj ?? "",
+      cell: (f) => (f.cnpj ? formatCNPJ(f.cnpj) : "-"),
+    },
+    {
+      key: "contato",
+      header: "Contato",
+      className: "hidden md:table-cell text-sm text-muted-foreground",
+      getSortValue: (f) => (f.contato ?? "").toLowerCase(),
+      cell: (f) => f.contato || "-",
+    },
+    {
+      key: "telefone",
+      header: "Telefone",
+      className: "hidden lg:table-cell text-sm text-muted-foreground",
+      cell: (f) => (f.telefone ? formatPhone(f.telefone) : "-"),
+    },
+    {
+      key: "email",
+      header: "Email",
+      className: "hidden md:table-cell text-sm text-muted-foreground",
+      getSortValue: (f) => (f.email ?? "").toLowerCase(),
+      cell: (f) => f.email || "-",
+    },
+    ...(canEdit
+      ? [
+          {
+            key: "acoes",
+            header: "Ações",
+            align: "end" as const,
+            cell: (f: Fornecedor) => (
+              <div className="flex justify-end gap-2">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9"
+                  onClick={(e) => handleEditClick(f, e)}
+                  aria-label="Editar fornecedor"
+                >
+                  <Pencil className="h-4 w-4" />
+                </Button>
+                <Can feature="obras" action="delete">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-9 w-9 text-danger-mid"
+                    onClick={(e) => handleDeleteClick(f, e)}
+                    aria-label="Excluir fornecedor"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </Can>
+              </div>
+            ),
+          },
+        ]
+      : []),
+  ];
+
+  const emptyState = loadError ? (
+    <EmptyState
+      icon={Truck}
+      title="Não foi possível carregar os fornecedores"
+      description="Atualize a página em instantes."
+      action={{ label: "Tentar de novo", variant: "outline", onClick: () => fetchFornecedores() }}
+    />
+  ) : fornecedores.length === 0 ? (
+    <EmptyState
+      icon={Truck}
+      title="Nenhum fornecedor cadastrado"
+      description="Crie o primeiro fornecedor para começar."
+      action={can("obras", "create") ? { label: "Novo fornecedor", onClick: handleOpenNew } : undefined}
+    />
+  ) : (
+    <EmptyState
+      icon={Truck}
+      title="Nenhum resultado encontrado"
+      description="Tente ajustar o termo de busca."
+      action={{ label: "Limpar busca", variant: "outline", onClick: () => setSearchTerm("") }}
+    />
+  );
+
   return (
     <PageLayout
       className="overflow-y-hidden"
@@ -411,97 +503,14 @@ export default function Fornecedores() {
           </div>
         </CardHeader>
         <CardContent className="flex-1 min-h-0">
-          <div className="overflow-x-auto overflow-y-auto w-full h-full">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>CNPJ</TableHead>
-                  <TableHead className="hidden md:table-cell">Contato</TableHead>
-                  <TableHead className="hidden lg:table-cell">Telefone</TableHead>
-                  <TableHead className="hidden md:table-cell">Email</TableHead>
-                  {canEdit && <TableHead className="text-right">Ações</TableHead>}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filtered.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={canEdit ? 6 : 5}>
-                      {loadError ? (
-                        <EmptyState
-                          icon={Truck}
-                          title="Não foi possível carregar os fornecedores"
-                          description="Atualize a página em instantes."
-                          action={{ label: "Tentar de novo", variant: "outline", onClick: () => fetchFornecedores() }}
-                        />
-                      ) : fornecedores.length === 0 ? (
-                        <EmptyState
-                          icon={Truck}
-                          title="Nenhum fornecedor cadastrado"
-                          description="Crie o primeiro fornecedor para começar."
-                          action={
-                            can("obras", "create") ? { label: "Novo fornecedor", onClick: handleOpenNew } : undefined
-                          }
-                        />
-                      ) : (
-                        <EmptyState
-                          icon={Truck}
-                          title="Nenhum resultado encontrado"
-                          description="Tente ajustar o termo de busca."
-                          action={{ label: "Limpar busca", variant: "outline", onClick: () => setSearchTerm("") }}
-                        />
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filtered.map((f) => (
-                    <TableRow
-                      key={f.id}
-                      className="cursor-pointer"
-                      onClick={() => navigate(`/obras/fornecedores/${f.id}`)}
-                    >
-                      <TableCell className="font-medium">{f.nome}</TableCell>
-                      <TableCell>{f.cnpj ? formatCNPJ(f.cnpj) : "-"}</TableCell>
-                      <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
-                        {f.contato || "-"}
-                      </TableCell>
-                      <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
-                        {f.telefone ? formatPhone(f.telefone) : "-"}
-                      </TableCell>
-                      <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
-                        {f.email || "-"}
-                      </TableCell>
-                      {canEdit && (
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-2">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-9 w-9"
-                              onClick={(e) => handleEditClick(f, e)}
-                              aria-label="Editar fornecedor"
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                            <Can feature="obras" action="delete">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-9 w-9 text-danger-mid"
-                                onClick={(e) => handleDeleteClick(f, e)}
-                                aria-label="Excluir fornecedor"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </Can>
-                          </div>
-                        </TableCell>
-                      )}
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
+          <div className="w-full h-full">
+            <DataTable
+              columns={columns}
+              data={{ rows: filtered }}
+              rowKey={(f) => f.id}
+              onRowClick={(f) => navigate(`/obras/fornecedores/${f.id}`)}
+              emptyState={emptyState}
+            />
           </div>
         </CardContent>
       </Card>
