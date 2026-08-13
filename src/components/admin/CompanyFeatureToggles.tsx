@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Sparkles, Check, AlertCircle, ChevronRight, LayoutGrid } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
+  applyFeatureToggle,
   FEATURES,
   isFeatureEnabledForCompany,
   moduleOfFeature,
@@ -92,29 +93,14 @@ export function CompanyFeatureToggles({
     return { active, total: FEATURES.length, addonsOn };
   }, [value]);
 
-  // Liga/desliga uma feature-raiz. Ao ligar uma com sub-features (ex.: obras),
-  // limpa os `false` das subs para voltarem a herdar "ligado" (macro liga tudo).
+  // Semântica de herança centralizada em applyFeatureToggle (ADR 0019): ligar a
+  // raiz limpa os `false` das subs; sub liga=herda / desliga=false explícito.
   const applyRootToggle = (feature: FeatureDefinition, nextEnabled: boolean) => {
-    const next: CompanyFeatures = { ...value };
-    if (nextEnabled) {
-      next[feature.key] = true;
-      for (const sub of subFeaturesOf(feature.key)) delete next[sub.key];
-    } else {
-      delete next[feature.key];
-    }
-    onChange(next);
+    onChange(applyFeatureToggle(value, feature.key, nextEnabled));
   };
 
-  // Sub-feature: desligar grava `false` explícito; ligar remove a chave para
-  // herdar o pai (ligado). Mantém o JSONB enxuto. Ver ADR 0019.
   const applySubToggle = (subKey: FeatureKey, nextEnabled: boolean) => {
-    const next: CompanyFeatures = { ...value };
-    if (nextEnabled) {
-      delete next[subKey];
-    } else {
-      next[subKey] = false;
-    }
-    onChange(next);
+    onChange(applyFeatureToggle(value, subKey, nextEnabled));
   };
 
   const isPaidAddon = (feature: FeatureDefinition) =>

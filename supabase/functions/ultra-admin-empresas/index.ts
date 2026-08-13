@@ -181,6 +181,77 @@ serve(
       return jsonResponse({ success: true, empresa_id: empresa.id, warning: inviteWarning }, 200, req);
     }
 
+    // ─── PUT ?action=bulk-feature: liga/desliga uma feature em N empresas ───
+    // Ação em massa (spec 035). O preview de contagem é feito no front a partir
+    // da lista de empresas (que já traz features); aqui só se escreve.
+    if (req.method === "PUT" && url.searchParams.get("action") === "bulk-feature") {
+      const body = await req.json();
+      const feature = typeof body?.feature === "string" ? body.feature.trim() : "";
+      const value = body?.value;
+      const scope = body?.scope; // "all" | "has_parent"
+      const parent =
+        typeof body?.parent === "string" && body.parent.trim() ? body.parent.trim() : null;
+
+      if (!/^[a-z][a-z_]*$/.test(feature)) return safeErrorResponse(400, "feature inválida", req);
+      if (typeof value !== "boolean") return safeErrorResponse(400, "value deve ser boolean", req);
+      if (scope !== "all" && scope !== "has_parent") return safeErrorResponse(400, "scope inválido", req);
+      if (scope === "has_parent" && !parent) {
+        return safeErrorResponse(400, "parent é obrigatório para scope has_parent", req);
+      }
+
+      const { data: empresas, error: listErr } = await svc.from("empresas").select("id, features");
+      if (listErr) return safeErrorResponse(500, listErr.message, req);
+
+      const isSub = parent !== null;
+      const targets = (empresas ?? []).filter((e) => {
+        const f = (e.features ?? {}) as Record<string, unknown>;
+        if (scope === "has_parent" && parent) return f[parent] === true;
+        return true;
+      });
+
+      let affected = 0;
+      const failures: string[] = [];
+      await Promise.all(
+        targets.map(async (e) => {
+          const f = { ...((e.features ?? {}) as Record<string, unknown>) };
+          // Estado atual com a MESMA semântica do front (herança pai→filho).
+          const currently = isSub ? f[parent!] === true && f[feature] !== false : f[feature] === true;
+          if (currently === value) return; // já no estado desejado: não escreve
+          if (value) {
+            if (isSub) delete f[feature]; // herda o pai (ligado)
+            else f[feature] = true;
+          } else {
+            if (isSub) f[feature] = false; // desliga explícito
+            else delete f[feature];
+          }
+          const { error } = await svc.from("empresas").update({ features: f }).eq("id", e.id);
+          if (error) failures.push(error.message);
+          else affected += 1;
+        })
+      );
+
+      // Se nada foi aplicado e houve falhas, é erro (ex.: feature fora do catálogo,
+      // rejeitada pela trigger _validate_features_payload em todas as empresas).
+      if (affected === 0 && failures.length > 0) {
+        return safeErrorResponse(400, failures[0] ?? "Falha ao aplicar em massa", req);
+      }
+
+      await logAction(svc, {
+        actorId: userId,
+        actorEmail,
+        actorRole: "ultra_admin",
+        action: "bulk_toggle_feature",
+        category: "empresa",
+        targetType: "feature",
+        targetName: feature,
+        empresaId: null,
+        metadata: { feature, value, scope, parent, affected, considered: targets.length, failures: failures.length },
+        req,
+      });
+
+      return jsonResponse({ affected, considered: targets.length, failures: failures.length }, 200, req);
+    }
+
     // ─── PUT: atualizar empresa (features, dados cadastrais, status, plano) ─
     if (req.method === "PUT") {
       const body = await req.json();

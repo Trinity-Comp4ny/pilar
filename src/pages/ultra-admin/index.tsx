@@ -42,6 +42,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { CompanyFeatureToggles } from "@/components/admin/CompanyFeatureToggles";
+import { BulkFeatureManager, type BulkFeatureInput } from "@/components/admin/BulkFeatureManager";
 import { UsersAccessManager, type ManagedUser } from "@/components/admin/UsersAccessManager";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
@@ -171,7 +172,9 @@ export default function UltraAdmin() {
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [savingFeatures, setSavingFeatures] = useState(false);
   const [query, setQuery] = useState("");
-  const [tab, setTab] = useState<"dashboard" | "empresas" | "usuarios" | "atividade">("dashboard");
+  const [tab, setTab] = useState<"dashboard" | "empresas" | "funcionalidades" | "usuarios" | "atividade">(
+    "dashboard"
+  );
   const [audit, setAudit] = useState<AuditRow[]>([]);
   const [auditFull, setAuditFull] = useState<AuditRow[]>([]);
   const [auditEmpresa, setAuditEmpresa] = useState<string>("all");
@@ -204,6 +207,26 @@ export default function UltraAdmin() {
   useEffect(() => {
     fetchEmpresas();
   }, [fetchEmpresas]);
+
+  // Ação em massa (spec 035): liga/desliga uma feature em N empresas via edge
+  // function (PUT ?action=bulk-feature, service_role). Recarrega a lista depois
+  // para as contagens refletirem o novo estado.
+  const handleBulkFeature = useCallback(
+    async (input: BulkFeatureInput): Promise<number> => {
+      const res = (await edgeFetch("ultra-admin-empresas", {
+        method: "PUT",
+        params: { action: "bulk-feature" },
+        body: input,
+      })) as { affected: number; considered: number; failures: number };
+      await fetchEmpresas();
+      toast.success(
+        `${res.affected} ${res.affected === 1 ? "empresa atualizada" : "empresas atualizadas"}`,
+        { description: res.failures > 0 ? `${res.failures} falha(s) ao aplicar` : undefined }
+      );
+      return res.affected;
+    },
+    [fetchEmpresas]
+  );
 
   // Ultra admin lê admin_audit_logs e profiles cross-empresa direto (RLS
   // is_ultra_admin). Uso de IA (ai_usage_logs) fica fora do v1: a policy não
@@ -783,10 +806,16 @@ export default function UltraAdmin() {
         </PageHeader>
       }
     >
-      <Tabs value={tab} onValueChange={(v) => setTab(v as "dashboard" | "empresas" | "usuarios" | "atividade")}>
+      <Tabs
+        value={tab}
+        onValueChange={(v) =>
+          setTab(v as "dashboard" | "empresas" | "funcionalidades" | "usuarios" | "atividade")
+        }
+      >
         <TabsList>
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
           <TabsTrigger value="empresas">Empresas</TabsTrigger>
+          <TabsTrigger value="funcionalidades">Funcionalidades</TabsTrigger>
           <TabsTrigger value="usuarios">Usuários</TabsTrigger>
           <TabsTrigger value="atividade">Atividade</TabsTrigger>
         </TabsList>
@@ -930,6 +959,28 @@ export default function UltraAdmin() {
                     )}
                   </TableBody>
                 </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="funcionalidades" className="mt-4">
+          <Card className="border border-black/5">
+            <CardHeader>
+              <CardTitle className="text-base">Funcionalidades</CardTitle>
+              <CardDescription>
+                Ligue ou desligue uma funcionalidade para todas as empresas de uma vez. Feature aqui é
+                controle de rollout, não de plano (ADR 0019).
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {loading ? (
+                <div className="flex items-center gap-2 py-8 text-sm text-black/50">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Carregando empresas…
+                </div>
+              ) : (
+                <BulkFeatureManager empresas={empresas} onApply={handleBulkFeature} />
               )}
             </CardContent>
           </Card>
