@@ -626,7 +626,10 @@ export function useProjetoForm({
       } else {
         // Código gerado automático (PRJ-XXXX sequencial por empresa): não se pede
         // ao usuário. A RLS de projetos escopa a busca à empresa do chamador.
-        const { data: codigosExistentes } = await supabase.from("projetos").select("codigo_projeto");
+        const { data: codigosExistentes } = await supabase
+          .from("projetos")
+          .select("codigo_projeto")
+          .is("deleted_at", null);
         let maxSeq = 0;
         for (const c of codigosExistentes ?? []) {
           const m = /^PRJ-(\d+)$/i.exec((c.codigo_projeto ?? "").trim());

@@ -36,6 +36,7 @@ async function fetchPrazos() {
     supabase
       .from("projetos")
       .select("id, nome, status, data_previsao")
+      .is("deleted_at", null)
       .not("data_previsao", "is", null)
       .not("status", "in", '("Concluído","Cancelado")'),
     supabase
