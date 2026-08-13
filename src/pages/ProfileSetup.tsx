@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -13,7 +13,12 @@ import { ArrowLeft, ArrowRight, Eye, EyeOff, Loader2, Lock, Phone, User } from "
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { PasswordStrengthIndicator } from "@/components/PasswordStrengthIndicator";
 import { getSafeErrorMessage } from "@/lib/safeError";
-import { profileSetupSchema, profileSetupDefaultValues, type ProfileSetupFormData } from "@/schemas";
+import {
+  profileSetupSchema,
+  profileSetupOAuthSchema,
+  profileSetupDefaultValues,
+  type ProfileSetupFormData,
+} from "@/schemas";
 
 export default function ProfileSetup() {
   usePageTitle("Configuração do Perfil");
@@ -21,11 +26,23 @@ export default function ProfileSetup() {
   const [progressValue, setProgressValue] = useState(0);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  // Conta OAuth (Google) chega sem senha própria: escondemos o campo de senha e
+  // pulamos o updateUser({ password }). Ref para o resolver ler o valor atual sem
+  // recriar o form; state para re-renderizar a UI.
+  const [isOAuth, setIsOAuth] = useState(false);
+  const isOAuthRef = useRef(false);
   const navigate = useNavigate();
   const { refreshProfile } = useAuth();
 
+  const resolver = useMemo<Resolver<ProfileSetupFormData>>(() => {
+    return (values, context, options) => {
+      const schema = isOAuthRef.current ? profileSetupOAuthSchema : profileSetupSchema;
+      return zodResolver(schema)(values, context, options);
+    };
+  }, []);
+
   const form = useForm<ProfileSetupFormData>({
-    resolver: zodResolver(profileSetupSchema),
+    resolver,
     mode: "onChange",
     defaultValues: profileSetupDefaultValues,
   });
@@ -50,6 +67,17 @@ export default function ProfileSetup() {
           data: { user },
         } = await supabase.auth.getUser();
         if (!user) return;
+
+        // OAuth = provider google no app_metadata, ou identidade google sem
+        // identidade 'email' (conta que nunca teve senha própria).
+        const provider = user.app_metadata?.provider;
+        const identities = user.identities ?? [];
+        const temGoogle = identities.some((i) => i.provider === "google");
+        const temEmail = identities.some((i) => i.provider === "email");
+        const oauth = provider === "google" || (temGoogle && !temEmail);
+        isOAuthRef.current = oauth;
+        setIsOAuth(oauth);
+        form.clearErrors();
 
         const { data: profile } = await supabase
           .from("profiles")
@@ -82,12 +110,15 @@ export default function ProfileSetup() {
       } = await supabase.auth.getUser();
       if (!user) throw new Error("Usuário não logado");
 
-      // 1. Definir a senha PRIMEIRO. Marcar onboarding antes disso deixava o
-      //    usuário "onboarded sem senha" se o updateUser falhasse.
-      const { error: pwdError } = await supabase.auth.updateUser({
-        password: values.password,
-      });
-      if (pwdError) throw pwdError;
+      // 1. Definir a senha PRIMEIRO (fluxo email/senha). Marcar onboarding antes
+      //    disso deixava o usuário "onboarded sem senha" se o updateUser falhasse.
+      //    Conta OAuth (Google) já tem identidade verificada e não define senha aqui.
+      if (!isOAuth) {
+        const { error: pwdError } = await supabase.auth.updateUser({
+          password: values.password,
+        });
+        if (pwdError) throw pwdError;
+      }
 
       // 2. Só então gravar o perfil e concluir o onboarding.
       const { error } = await supabase
@@ -171,7 +202,11 @@ export default function ProfileSetup() {
 
           <div className="space-y-2">
             <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-ink">Seu perfil</h1>
-            <p className="text-sm text-ink-soft">Confirme seus dados e defina uma senha para continuar.</p>
+            <p className="text-sm text-ink-soft">
+              {isOAuth
+                ? "Confirme seus dados para continuar."
+                : "Confirme seus dados e defina uma senha para continuar."}
+            </p>
           </div>
 
           <Form {...form}>
@@ -252,6 +287,8 @@ export default function ProfileSetup() {
                 )}
               />
 
+              {!isOAuth && (
+                <>
               <FormField
                 control={form.control}
                 name="password"
@@ -319,6 +356,8 @@ export default function ProfileSetup() {
                   </FormItem>
                 )}
               />
+                </>
+              )}
 
               <Button
                 variant="brand"

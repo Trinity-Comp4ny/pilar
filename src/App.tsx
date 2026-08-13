@@ -30,6 +30,8 @@ const Landing = lazy(() => import("./pages/Landing"));
 const Planos = lazy(() => import("./pages/planos"));
 const Checkout = lazy(() => import("./pages/checkout"));
 const Login = lazy(() => import("./pages/Login"));
+const Signup = lazy(() => import("./pages/Signup"));
+const AuthCallback = lazy(() => import("./pages/AuthCallback"));
 const Inicio = lazy(() => import("./pages/inicio"));
 const MeuTrabalho = lazy(() => import("./pages/meu-trabalho"));
 const Obras = lazy(() => import("./pages/obras"));
@@ -126,6 +128,8 @@ const App = () => {
                       <Route path="/planos" element={<Planos />} />
                       <Route path="/checkout" element={<Checkout />} />
                       <Route path="/login" element={<Login />} />
+                      <Route path="/cadastro" element={<Signup />} />
+                      <Route path="/auth/callback" element={<AuthCallback />} />
                       <Route path="/forgot-password" element={<ForgotPassword />} />
                       <Route path="/reset-password" element={<PasswordReset />} />
                       <Route path="/privacidade" element={<Privacidade />} />

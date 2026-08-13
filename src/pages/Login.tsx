@@ -10,16 +10,20 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Mail, Lock, ArrowLeft, Loader2, CheckCircle2, Eye, EyeOff } from "lucide-react";
 import { usePageTitle } from "@/hooks/usePageTitle";
+import { GoogleButton } from "@/components/GoogleButton";
 import { loginSchema, loginDefaultValues, type LoginFormData } from "@/schemas";
 import { STORAGE_KEYS } from "@/constants";
 import { translateAuthError } from "@/lib/authErrors";
+import { marcarLogin, ultimoMetodo } from "@/lib/ultimoLogin";
 
 export default function Login() {
   usePageTitle("Login");
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
+  const ultimo = ultimoMetodo();
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -86,12 +90,26 @@ export default function Login() {
       return;
     }
 
+    marcarLogin("senha");
     toast.success("Login realizado com sucesso!", {
       description: "Bem-vindo de volta.",
     });
     sessionStorage.setItem("pilar_post_login", "1");
     navigate("/inicio");
     setIsLoading(false);
+  };
+
+  const handleGoogle = async () => {
+    setIsGoogleLoading(true);
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: `${window.location.origin}/auth/callback` },
+    });
+    if (error) {
+      toast.error("Erro ao continuar com Google", { description: translateAuthError(error) });
+      setIsGoogleLoading(false);
+    }
+    // Em sucesso o browser redireciona para o Google; marcarLogin roda no callback.
   };
 
   return (
@@ -153,8 +171,13 @@ export default function Login() {
                 render={({ field }) => (
                   <FormItem className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <FormLabel className="text-ink-soft font-medium">
+                      <FormLabel className="text-ink-soft font-medium flex items-center gap-2">
                         Senha <span className="text-danger-mid">*</span>
+                        {ultimo === "senha" && (
+                          <span className="rounded-full bg-brand/15 px-2 py-0.5 text-[10px] font-medium text-brand">
+                            usado por último
+                          </span>
+                        )}
                       </FormLabel>
                       <Link
                         to="/forgot-password"
@@ -221,21 +244,23 @@ export default function Login() {
               <span className="w-full border-t border-paper-border" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-paper px-2 text-ink/40">Ainda não tem conta?</span>
+              <span className="bg-paper px-2 text-ink/40">ou</span>
             </div>
           </div>
 
-          <div className="text-center pt-2">
-            <Button
-              variant="outline"
-              className="w-full h-10 border-paper-border text-ink-soft hover:text-brand hover:border-brand/50 hover:bg-brand/10 transition-all text-sm font-medium"
-              asChild
-            >
-              <a href="https://trnty.com.br" target="_blank" rel="noopener noreferrer">
-                Fale com nossa equipe comercial
-              </a>
-            </Button>
-          </div>
+          <GoogleButton
+            onClick={handleGoogle}
+            loading={isGoogleLoading}
+            disabled={isLoading}
+            destaque={ultimo === "google"}
+          />
+
+          <p className="text-center text-sm text-ink-soft">
+            Ainda não tem conta?{" "}
+            <Link to="/cadastro" className="font-medium text-brand hover:underline underline-offset-2">
+              Criar conta
+            </Link>
+          </p>
         </div>
       </div>
 
