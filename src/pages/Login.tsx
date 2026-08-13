@@ -171,13 +171,8 @@ export default function Login() {
                 render={({ field }) => (
                   <FormItem className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <FormLabel className="text-ink-soft font-medium flex items-center gap-2">
+                      <FormLabel className="text-ink-soft font-medium">
                         Senha <span className="text-danger-mid">*</span>
-                        {ultimo === "senha" && (
-                          <span className="rounded-full bg-brand px-2 py-0.5 text-[10px] font-medium text-ink">
-                            usado por último
-                          </span>
-                        )}
                       </FormLabel>
                       <Link
                         to="/forgot-password"
@@ -210,16 +205,23 @@ export default function Login() {
                 )}
               />
 
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  id="remember-me"
-                  checked={rememberMe}
-                  onCheckedChange={(v) => setRememberMe(!!v)}
-                  className="data-[state=checked]:bg-brand data-[state=checked]:border-brand data-[state=checked]:text-ink"
-                />
-                <label htmlFor="remember-me" className="text-sm text-ink-soft cursor-pointer select-none leading-none">
-                  Lembre-me
-                </label>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="remember-me"
+                    checked={rememberMe}
+                    onCheckedChange={(v) => setRememberMe(!!v)}
+                    className="data-[state=checked]:bg-brand data-[state=checked]:border-brand data-[state=checked]:text-ink"
+                  />
+                  <label htmlFor="remember-me" className="text-sm text-ink-soft cursor-pointer select-none leading-none">
+                    Lembre-me
+                  </label>
+                </div>
+                {ultimo === "senha" && (
+                  <span className="rounded-full bg-brand px-2 py-0.5 text-[10px] font-medium text-ink">
+                    usado por último
+                  </span>
+                )}
               </div>
 
               <Button
