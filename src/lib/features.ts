@@ -512,3 +512,32 @@ export function isFeatureEnabledForCompany(
   }
   return Boolean(companyFeatures?.[key]);
 }
+
+/**
+ * Próximo estado de `empresas.features` ao ligar/desligar uma feature no admin.
+ * Fonte única da semântica de herança do ADR 0019 (usada pelo toggle por empresa;
+ * a ação em massa no backend espelha estas mesmas regras):
+ * - Sub-feature: ligar remove a chave (herda o pai ligado); desligar grava `false`.
+ * - Feature-raiz: ligar grava `true` e limpa os `false` das sub-features (o macro
+ *   liga tudo); desligar remove a chave.
+ */
+export function applyFeatureToggle(
+  features: CompanyFeatures,
+  key: FeatureKey,
+  value: boolean
+): CompanyFeatures {
+  const feature = FEATURES_BY_KEY[key];
+  const next: CompanyFeatures = { ...features };
+  if (feature?.parent) {
+    if (value) delete next[key];
+    else next[key] = false;
+    return next;
+  }
+  if (value) {
+    next[key] = true;
+    for (const sub of subFeaturesOf(key)) delete next[sub.key];
+  } else {
+    delete next[key];
+  }
+  return next;
+}

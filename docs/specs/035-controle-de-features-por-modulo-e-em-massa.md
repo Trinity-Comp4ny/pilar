@@ -5,11 +5,13 @@
 **Autor:** Matheus  
 **Módulo:** plataforma / ultra-admin
 
-> **Entrega em 2 PRs.** PR 1 (este): reagrupamento por módulo + sub-features de
-> Obra + gate com herança pai→filho + dropdown no `CompanyFeatureToggles` +
-> migration do catálogo + testes (fases 1–5 do plano). PR 2 (a seguir): aba
-> "Funcionalidades" com ação em massa e backend (fase 4 do plano, requisitos
-> 6–9).
+> **Entrega no PR #203, em 2 commits.** Commit 1: reagrupamento por módulo +
+> sub-features de Obra + gate com herança pai→filho + dropdown no
+> `CompanyFeatureToggles` + migration do catálogo + testes (fases 1–5, req. 1–5).
+> Commit 2: aba "Funcionalidades" com ação em massa (`BulkFeatureManager`) +
+> backend `PUT ?action=bulk-feature` na edge function + audit (req. 6–9). O
+> preview de contagem é feito no cliente a partir da lista de empresas (que já
+> traz `features`), sem endpoint de preview.
 
 ## Problema
 
