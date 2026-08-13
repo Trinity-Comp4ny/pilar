@@ -136,6 +136,29 @@ Migração das ~31 tabelas artesanais restantes: **incremental, por toque.** Reg
 "mexeu significativamente na tela, migra para a `DataTable`". Não é um esforço
 único.
 
+## Estado da implementação (2026-08-13)
+
+- **Fase 1 — feito** (PR #220). `DataTable` sobre `@tanstack/react-table`, paridade
+  de ordenação, seleção e visibilidade opt-in, 7 testes.
+- **Fase 2 — feito** (PR #220). Slots `emptyState`/`errorState`; `fornecedores/index.tsx`
+  migrado (ganha ordenação, mantém empty states ricos), verificado em Chrome.
+  `LancamentosTable` fica custom (req. 4). Demais tabelas migram por toque.
+- **Fase 3 — parcial** (PR #220). `CronogramaTab` dedupada contra `lib/cronograma.ts`
+  (-110 linhas), render/marcadores verificados em Chrome. **Pendente:** extrair o
+  `<PilarGantt>` único que os 3 tabs consomem (req. 5).
+- **Fase 4 — pendente.** `<KanbanBoard>` consolidando os 3 boards.
+- **Fase 5 — parcial.** Regra no `CLAUDE.md` (tabela plana usa `DataTable`, timeline
+  usa `lib/cronograma.ts`). **Pendente:** subir gate de cor crua warn→error.
+
+**Por que 3-full e 4 ficam pendentes:** extrair `<PilarGantt>`/`<KanbanBoard>` é
+reescrever ~4.500 linhas de código de arrastar em telas usadas por cliente real
+(design partner). O risco de regressão é alto e a verificação por automação de
+browser NÃO exercita drag custom de forma confiável (o `left_click_drag` sintético
+não dispara a sequência de mousemove que os listeners de `document` esperam). Cada
+extração merece um PR próprio, exercido à mão no fluxo real antes do merge, em vez
+de empacotada numa leva. O dedup da Fase 3 já entrega o ganho central do ADR (fonte
+única da matemática) com risco baixo.
+
 ## Decisões e riscos
 
 - Decisão de arquitetura: [ADR 0020](../architecture/adr/0020-headless-sim-widget-estilizado-nao.md)
