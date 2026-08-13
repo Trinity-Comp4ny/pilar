@@ -12,6 +12,16 @@ const CommandPalette = lazy(() =>
   import("@/components/CommandPalette").then((m) => ({ default: m.CommandPalette }))
 );
 
+// Lazy: onboarding (checklist + tour driver.js) fica fora do bundle de entrada.
+const OnboardingChecklist = lazy(() =>
+  import("@/components/OnboardingChecklist").then((m) => ({ default: m.OnboardingChecklist }))
+);
+const OnboardingTourController = lazy(() =>
+  import("@/components/onboarding/OnboardingTourController").then((m) => ({
+    default: m.OnboardingTourController,
+  }))
+);
+
 // Atalho ⌘K sempre ativo (hook leve); o dialog pesado só monta quando aberto.
 function CommandPaletteMount() {
   const { open, setOpen } = useCommandPalette();
@@ -56,6 +66,10 @@ function LayoutContent() {
         </main>
       </div>
       <CommandPaletteMount />
+      <Suspense fallback={null}>
+        <OnboardingChecklist />
+        <OnboardingTourController />
+      </Suspense>
     </div>
   );
 }

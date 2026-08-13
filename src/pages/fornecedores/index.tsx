@@ -254,7 +254,7 @@ export default function Fornecedores() {
         <PageHeader
           title="Fornecedores"
           search={{ value: searchTerm, onChange: setSearchTerm, placeholder: "Buscar fornecedores" }}
-          primaryAction={{ label: "Novo fornecedor", onClick: handleOpenNew, icon: Plus, feature: "obras" }}
+          primaryAction={{ label: "Novo fornecedor", onClick: handleOpenNew, icon: Plus, feature: "obras", dataTour: "onb-novo-fornecedor" }}
           children={
             <>
               {canEdit && (

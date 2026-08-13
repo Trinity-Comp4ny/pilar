@@ -1,0 +1,48 @@
+/* Tema do driver.js nos tokens da marca. Verde só como fundo com text-on-brand;
+   nunca texto verde sobre claro (regra de contraste). */
+
+.driver-popover.onb-popover {
+  background: hsl(var(--surface-card));
+  color: hsl(var(--text-ink));
+  border-radius: 12px;
+  box-shadow: var(--shadow-elegant);
+  padding: 16px 18px;
+  max-width: 320px;
+}
+
+.driver-popover.onb-popover .driver-popover-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: hsl(var(--text-ink));
+  margin-bottom: 4px;
+}
+
+.driver-popover.onb-popover .driver-popover-description {
+  font-size: 13px;
+  line-height: 1.5;
+  color: hsl(var(--text-ink-soft));
+}
+
+.driver-popover.onb-popover .driver-popover-footer button {
+  border-radius: 9999px;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  text-shadow: none;
+  border: none;
+}
+
+.driver-popover.onb-popover .driver-popover-footer .driver-popover-next-btn,
+.driver-popover.onb-popover .driver-popover-footer .driver-popover-done-btn {
+  background: hsl(var(--brand-accent));
+  color: hsl(var(--text-on-brand));
+}
+
+.driver-popover.onb-popover .driver-popover-close-btn {
+  color: hsl(var(--text-muted));
+}
+
+/* Seta do balão na cor do card. */
+.driver-popover.onb-popover .driver-popover-arrow {
+  border-color: hsl(var(--surface-card));
+}

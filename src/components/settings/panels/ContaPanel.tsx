@@ -8,18 +8,31 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { toast } from "sonner";
-import { User, Mail, Phone, Building2 } from "lucide-react";
+import { User, Mail, Phone, Building2, Rocket } from "lucide-react";
 import { formatPhone } from "@/lib/maskUtils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { profileEditSchema, profileEditDefaultValues, type ProfileEditFormData } from "@/schemas";
 import { useAuth } from "@/contexts/AuthContext";
 import { EmailChangeCard } from "@/components/profile/EmailChangeCard";
+import { usePermissions } from "@/hooks/usePermissions";
+import { useOnboardingState } from "@/hooks/useOnboardingState";
 
 // Aba Conta do modal: identidade do usuário (nome, sobrenome, contato) e o email de
 // login (troca com confirmação). Empresa é apenas-leitura aqui (muda na aba Empresa).
 export function ContaPanel() {
   const { user, profile, refreshProfile } = useAuth();
+  const { isAdmin } = usePermissions();
+  const { reset: resetOnboarding } = useOnboardingState();
   const [editing, setEditing] = useState(false);
+
+  const handleRefazerTour = async () => {
+    try {
+      await resetOnboarding();
+      toast.success("Guia reativado", { description: "Os primeiros passos vão reaparecer no app." });
+    } catch {
+      toast.error("Não deu para reativar o guia");
+    }
+  };
 
   const companyName = profile?.empresas?.nome ?? "";
   const email = user?.email ?? "";
@@ -198,6 +211,22 @@ export function ContaPanel() {
           /* confirmação chega por email; o profile atualiza no próximo load */
         }}
       />
+
+      {isAdmin && (
+        <Card className="border border-black/5">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Rocket size={16} className="text-ink" /> Guia de primeiros passos
+            </CardTitle>
+            <CardDescription>Reative o checklist e os balões de ajuda do início.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button variant="outline" className="rounded-full" onClick={handleRefazerTour}>
+              Refazer o guia
+            </Button>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

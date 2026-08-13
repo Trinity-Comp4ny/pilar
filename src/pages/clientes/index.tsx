@@ -250,7 +250,7 @@ export default function Clientes() {
         <PageHeader
           title="Clientes"
           search={{ value: searchTerm, onChange: setSearchTerm, placeholder: "Buscar por nome, CPF/CNPJ ou email" }}
-          primaryAction={{ label: "Novo cliente", onClick: handleOpenCreate, icon: Plus, feature: "clientes" }}
+          primaryAction={{ label: "Novo cliente", onClick: handleOpenCreate, icon: Plus, feature: "clientes", dataTour: "onb-novo-cliente" }}
         />
       }
     >
