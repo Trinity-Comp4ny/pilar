@@ -20,7 +20,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { formatCurrency } from "@/lib/format";
 import { formatCurrencyInput, formatValorToInput, parseCurrencyString } from "@/lib/currencyUtils";
 import { lineHash, type ImportTipoDoc } from "@/lib/importFinanceiro";
@@ -64,7 +64,6 @@ interface Props {
 export function ImportarLancamentosDialog({ open, onOpenChange, onImported }: Props) {
   const { auxQuery, extrairArquivo, extrairTextoIA, gravarLote, desfazer, gravando, temDesfazer } =
     useImportFinanceiro();
-  const { toast } = useToast();
 
   const [tipoDoc, setTipoDoc] = useState<ImportTipoDoc>("extrato");
   const [itens, setItens] = useState<ItemImport[]>([]);
@@ -134,10 +133,8 @@ export function ImportarLancamentosDialog({ open, onOpenChange, onImported }: Pr
         setFase("lendo");
         const texto = await extrairTextoPdf(file);
         if (!texto.trim()) {
-          toast({
-            title: "PDF sem texto legível",
+          toast.error("PDF sem texto legível", {
             description: "Parece um PDF digitalizado (imagem). Copie o texto e cole na caixa abaixo.",
-            variant: "destructive",
           });
           return;
         }
@@ -149,15 +146,13 @@ export function ImportarLancamentosDialog({ open, onOpenChange, onImported }: Pr
         setAvisos(r.avisos);
         setResumo(null);
         if (r.itens.length === 0) {
-          toast({
-            title: "Nada reconhecido no arquivo",
+          toast.error("Nada reconhecido no arquivo", {
             description: "Confira se a planilha tem data, descrição e valor.",
-            variant: "destructive",
           });
         }
       }
     } catch (err) {
-      toast({ title: "Erro ao ler arquivo", description: msg(err), variant: "destructive" });
+      toast.error("Erro ao ler arquivo", { description: msg(err) });
     } finally {
       setFase("idle");
       if (fileRef.current) fileRef.current.value = "";
@@ -173,10 +168,10 @@ export function ImportarLancamentosDialog({ open, onOpenChange, onImported }: Pr
       setAvisos(r.avisos);
       setResumo(null);
       if (r.itens.length === 0) {
-        toast({ title: "Nenhum lançamento extraído", description: "Revise o texto.", variant: "destructive" });
+        toast.error("Nenhum lançamento extraído", { description: "Revise o texto." });
       }
     } catch (err) {
-      toast({ title: "Falha ao extrair", description: msg(err), variant: "destructive" });
+      toast.error("Falha ao extrair", { description: msg(err) });
     } finally {
       setFase("idle");
     }
@@ -194,12 +189,11 @@ export function ImportarLancamentosDialog({ open, onOpenChange, onImported }: Pr
       setAvisos([]);
       setTextoColado("");
       onImported?.();
-      toast({
-        title: "Importação concluída",
+      toast.success("Importação concluída", {
         description: `${r.criados} lançamento(s) criado(s), ${r.conciliados} conciliado(s).`,
       });
     } catch (err) {
-      toast({ title: "Erro ao gravar", description: msg(err), variant: "destructive" });
+      toast.error("Erro ao gravar", { description: msg(err) });
     }
   }
 
@@ -208,9 +202,9 @@ export function ImportarLancamentosDialog({ open, onOpenChange, onImported }: Pr
       await desfazer();
       setResumo(null);
       onImported?.();
-      toast({ title: "Importação desfeita" });
+      toast.success("Importação desfeita");
     } catch (err) {
-      toast({ title: "Erro ao desfazer", description: msg(err), variant: "destructive" });
+      toast.error("Erro ao desfazer", { description: msg(err) });
     }
   }
 

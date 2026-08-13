@@ -13,7 +13,7 @@ import { TimelineContent, type TimelineDisciplina } from "@/pages/portal/PortalT
 import { PendenciasCard } from "@/pages/portal/PendenciasCard";
 import type { ClienteAccount } from "@/hooks/useClienteAuth";
 import { usePageTitle } from "@/hooks/usePageTitle";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { getPortalToken } from "@/hooks/useClienteAuth";
 import type { ClienteProjetoData } from "./useClienteProjetoData";
@@ -26,7 +26,6 @@ function formatDate(d: string | null | undefined): string {
 function AprovarPropostaCard({ projeto, refresh }: { projeto: ClienteProjetoData; refresh: () => void }) {
   const [loading, setLoading] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const { toast } = useToast();
 
   const formatCurrency = (v: number | null) => (v == null ? "R$ 0,00" : fmtMoeda(v));
 
@@ -36,7 +35,7 @@ function AprovarPropostaCard({ projeto, refresh }: { projeto: ClienteProjetoData
   const handleAprovar = async () => {
     const token = getPortalToken();
     if (!token) {
-      toast({ title: "Sessão inválida", description: "Faça login novamente.", variant: "destructive" });
+      toast.error("Sessão inválida", { description: "Faça login novamente." });
       return;
     }
 
@@ -48,16 +47,13 @@ function AprovarPropostaCard({ projeto, refresh }: { projeto: ClienteProjetoData
 
       if (error) throw error;
 
-      toast({
-        title: "Proposta aprovada!",
+      toast.success("Proposta aprovada!", {
         description: "Seu projeto foi confirmado. Em breve entraremos em contato.",
       });
       refresh();
     } catch {
-      toast({
-        title: "Erro ao aprovar proposta",
+      toast.error("Erro ao aprovar proposta", {
         description: "Tente novamente em instantes.",
-        variant: "destructive",
       });
     } finally {
       setLoading(false);

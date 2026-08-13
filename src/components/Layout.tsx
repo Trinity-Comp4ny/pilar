@@ -1,6 +1,7 @@
 import { Outlet } from "react-router-dom";
 import { SidebarProvider, useSidebar } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
+import { CommandPalette, CommandPaletteHint } from "@/components/CommandPalette";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { UltraAdminPlatformBanner } from "@/components/UltraAdminPlatformBanner";
 
@@ -36,6 +37,8 @@ function LayoutContent() {
           </ErrorBoundary>
         </main>
       </div>
+      <CommandPalette />
+      <CommandPaletteHint />
     </div>
   );
 }
