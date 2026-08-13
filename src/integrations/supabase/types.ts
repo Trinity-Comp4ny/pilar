@@ -7,11 +7,6 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "14.5"
-  }
   graphql_public: {
     Tables: {
       [_ in never]: never
@@ -3252,6 +3247,61 @@ export type Database = {
           },
         ]
       }
+      obra_rdo_tarefa: {
+        Row: {
+          created_at: string
+          created_by: string
+          empresa_id: string
+          id: string
+          observacao: string | null
+          rdo_id: string
+          resultado: string
+          tarefa_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string
+          empresa_id: string
+          id?: string
+          observacao?: string | null
+          rdo_id: string
+          resultado: string
+          tarefa_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          empresa_id?: string
+          id?: string
+          observacao?: string | null
+          rdo_id?: string
+          resultado?: string
+          tarefa_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "obra_rdo_tarefa_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_rdo_tarefa_rdo_id_fkey"
+            columns: ["rdo_id"]
+            isOneToOne: false
+            referencedRelation: "obra_rdo"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_rdo_tarefa_tarefa_id_fkey"
+            columns: ["tarefa_id"]
+            isOneToOne: false
+            referencedRelation: "tarefas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       obras: {
         Row: {
           cep: string | null
@@ -4889,6 +4939,8 @@ export type Database = {
           prioridade: string
           projeto_id: string | null
           responsavel_id: string | null
+          sensivel_clima: string | null
+          sinalizada: boolean
           status: string
           titulo: string
           updated_at: string
@@ -4913,6 +4965,8 @@ export type Database = {
           prioridade?: string
           projeto_id?: string | null
           responsavel_id?: string | null
+          sensivel_clima?: string | null
+          sinalizada?: boolean
           status?: string
           titulo: string
           updated_at?: string
@@ -4937,6 +4991,8 @@ export type Database = {
           prioridade?: string
           projeto_id?: string | null
           responsavel_id?: string | null
+          sensivel_clima?: string | null
+          sinalizada?: boolean
           status?: string
           titulo?: string
           updated_at?: string
@@ -6597,3 +6653,4 @@ export const Constants = {
     },
   },
 } as const
+
