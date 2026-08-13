@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Mail, Lock, ArrowLeft, Loader2, CheckCircle2, Eye, EyeOff, User, Building2 } from "lucide-react";
+import { Mail, Lock, ArrowLeft, Loader2, CheckCircle2, Eye, EyeOff, User, Building2, Phone } from "lucide-react";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { PasswordStrengthIndicator } from "@/components/PasswordStrengthIndicator";
 import { PasswordRequirements } from "@/components/PasswordRequirements";
@@ -54,7 +54,11 @@ export default function Signup() {
       email: values.email,
       password: values.password,
       options: {
-        data: { nome: values.nome.trim(), company_name: values.companyName.trim() },
+        data: {
+          nome: values.nome.trim(),
+          telefone: values.telefone.trim(),
+          company_name: values.companyName.trim(),
+        },
         emailRedirectTo: `${window.location.origin}/auth/callback`,
         ...(captchaToken ? { captchaToken } : {}),
       },
@@ -177,6 +181,32 @@ export default function Signup() {
                               {...field}
                               type="email"
                               placeholder="seu@empresa.com"
+                              className="pl-10 h-11 bg-paper-alt border-paper-border focus:border-brand focus:ring-brand/20 transition-all"
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="telefone"
+                    render={({ field }) => (
+                      <FormItem className="space-y-2">
+                        <FormLabel className="text-ink-soft font-medium">
+                          Celular <span className="text-danger-mid">*</span>
+                        </FormLabel>
+                        <FormControl>
+                          <div className="relative group">
+                            <Phone className="absolute left-3 top-3 h-4 w-4 text-ink/40 group-focus-within:text-brand transition-colors" />
+                            <Input
+                              {...field}
+                              type="tel"
+                              inputMode="tel"
+                              autoComplete="tel"
+                              placeholder="(11) 90000-0000"
                               className="pl-10 h-11 bg-paper-alt border-paper-border focus:border-brand focus:ring-brand/20 transition-all"
                             />
                           </div>

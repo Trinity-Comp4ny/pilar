@@ -12,6 +12,7 @@ export const signupSchema = z
   .object({
     nome: z.string().trim().min(1, "Nome é obrigatório"),
     email: z.string().trim().toLowerCase().email("Email inválido"),
+    telefone: z.string().trim().min(10, "Informe um celular válido"),
     password: passwordSchema,
     confirmPassword: z.string().min(1, "Confirme a senha"),
     companyName: z.string().trim().min(1, "Nome da empresa é obrigatório"),
@@ -24,6 +25,7 @@ export type SignupFormData = z.infer<typeof signupSchema>;
 export const signupDefaultValues: SignupFormData = {
   nome: "",
   email: "",
+  telefone: "",
   password: "",
   confirmPassword: "",
   companyName: "",
