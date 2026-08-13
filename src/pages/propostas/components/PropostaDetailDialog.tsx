@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { formatCurrency as fmtMoeda } from "@/lib/format";
+import { formatCurrency, formatDate } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -65,10 +65,6 @@ interface PropostaDetailDialogProps {
   onRecusarContrato?: () => void;
   isUpdating?: boolean;
 }
-
-const formatCurrency = (v: number | null) => (v ? fmtMoeda(v) : "—");
-
-const formatDate = (d: string | null) => (d ? new Date(d + "T00:00:00").toLocaleDateString("pt-BR") : "—");
 
 function InfoRow({
   icon: Icon,

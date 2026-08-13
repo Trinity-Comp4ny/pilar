@@ -38,7 +38,7 @@ import {
   getDiasStatus,
   type PagamentoProjeto,
 } from "@/hooks/usePagamentosProjeto";
-import { formatCurrency } from "@/lib/currencyUtils";
+import { formatCurrency, formatDate } from "@/lib/format";
 import { statusBadgeClasses } from "@/lib/status";
 
 interface PagamentosTabProps {
@@ -83,8 +83,6 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; bgCard: stri
     icon: XCircle,
   },
 };
-
-const formatDate = (d: string | null) => (d ? new Date(d + "T00:00:00").toLocaleDateString("pt-BR") : "—");
 
 function StatusBadgeAlerta({ pagamento }: { pagamento: PagamentoProjeto }) {
   const { dias, tipo } = getDiasStatus(pagamento);

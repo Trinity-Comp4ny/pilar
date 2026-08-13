@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
-import { PageLayout } from "@/components/PageLayout";
-import { PageHeader } from "@/components/PageHeader";
+import { PilarPage } from "@/components/PilarPage";
 import { supabase } from "@/integrations/supabase/client";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
@@ -95,15 +94,11 @@ export default function Pessoas() {
   };
 
   return (
-    <PageLayout
+    <PilarPage
       className="overflow-y-hidden"
       containerClassName="h-full flex flex-col min-h-0"
-      header={
-        <PageHeader
-          title="Equipe"
-          primaryAction={isAdmin ? { label: "Nova pessoa", onClick: handleNewPessoa, icon: Plus, dataTour: "onb-nova-pessoa" } : undefined}
-        />
-      }
+      title="Equipe"
+      primaryAction={isAdmin ? { label: "Nova pessoa", onClick: handleNewPessoa, icon: Plus, dataTour: "onb-nova-pessoa" } : undefined}
     >
       <PessoaTable
         pessoas={pessoas}
@@ -140,6 +135,6 @@ export default function Pessoas() {
         confirmText="Excluir"
         cancelText="Cancelar"
       />
-    </PageLayout>
+    </PilarPage>
   );
 }

@@ -3,11 +3,9 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { DollarSign } from "lucide-react";
-import { format } from "date-fns";
+import { formatCurrency, formatDate, formatDateShort } from "@/lib/format";
 import { useDespesasFatura, type Fatura } from "../hooks/useFaturas";
 import { MESES, getStatusBadge } from "./faturaHelpers";
-
-const formatBRL = (v: number) => v.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
 
 interface FaturaDetailDialogProps {
   fatura: Fatura | null;
@@ -41,26 +39,26 @@ export function FaturaDetailDialog({ fatura, open, onOpenChange, onPagar }: Fatu
               </div>
               <div className="p-3 bg-muted/50 rounded-lg">
                 <p className="text-xs text-muted-foreground">Valor total</p>
-                <p className="text-sm font-bold mt-1">R$ {formatBRL(fatura.valor_total)}</p>
+                <p className="text-sm font-bold mt-1">{formatCurrency(fatura.valor_total)}</p>
               </div>
               <div className="p-3 bg-muted/50 rounded-lg">
                 <p className="text-xs text-muted-foreground">Vencimento</p>
                 <p className="text-sm font-medium mt-1">
-                  {format(new Date(fatura.data_vencimento + "T00:00:00"), "dd/MM/yyyy")}
+                  {formatDate(fatura.data_vencimento)}
                 </p>
               </div>
               <div className="p-3 bg-muted/50 rounded-lg">
                 <p className="text-xs text-muted-foreground">Ciclo</p>
                 <p className="text-sm mt-1">
-                  {format(new Date(fatura.data_inicio + "T00:00:00"), "dd/MM")} a{" "}
-                  {format(new Date(fatura.data_fim + "T00:00:00"), "dd/MM")}
+                  {formatDateShort(fatura.data_inicio)} a{" "}
+                  {formatDateShort(fatura.data_fim)}
                 </p>
               </div>
             </div>
 
             {fatura.data_pagamento && (
               <div className="p-3 bg-positive/10 rounded-lg text-sm text-positive-strong">
-                Paga em {format(new Date(fatura.data_pagamento + "T00:00:00"), "dd/MM/yyyy")}
+                Paga em {formatDate(fatura.data_pagamento)}
                 {fatura.conta_pagamento_nome && ` via ${fatura.conta_pagamento_nome}`}
               </div>
             )}
@@ -79,12 +77,12 @@ export function FaturaDetailDialog({ fatura, open, onOpenChange, onPagar }: Fatu
                       <div>
                         <p className="text-sm font-medium">{d.descricao}</p>
                         <div className="flex gap-2 text-xs text-muted-foreground mt-0.5">
-                          <span>{format(new Date(d.data_vencimento + "T00:00:00"), "dd/MM/yyyy")}</span>
+                          <span>{formatDate(d.data_vencimento)}</span>
                           {d.categorias_financeiras?.nome && <span>| {d.categorias_financeiras.nome}</span>}
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium">R$ {formatBRL(d.valor)}</span>
+                        <span className="text-sm font-medium">{formatCurrency(d.valor)}</span>
                         <Badge variant={d.status === "Pago" ? "default" : "secondary"} className="text-xs">
                           {d.status}
                         </Badge>
@@ -102,7 +100,7 @@ export function FaturaDetailDialog({ fatura, open, onOpenChange, onPagar }: Fatu
                 <div className="flex justify-between items-center">
                   <div>
                     <p className="text-sm text-muted-foreground">Valor restante</p>
-                    <p className="text-lg font-bold">R$ {formatBRL(fatura.valor_total - fatura.valor_pago)}</p>
+                    <p className="text-lg font-bold">{formatCurrency(fatura.valor_total - fatura.valor_pago)}</p>
                   </div>
                   <Button
                     variant="brand"

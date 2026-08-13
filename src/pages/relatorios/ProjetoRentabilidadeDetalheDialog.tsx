@@ -1,5 +1,4 @@
 import { useQuery } from "@tanstack/react-query";
-import { format } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Dialog,
@@ -8,7 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { formatCurrency } from "@/lib/format";
+import { formatCurrency, formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -55,12 +54,6 @@ function useProjetoRentabilidadeDetalhe(projetoId: string | null) {
   });
 }
 
-const fmtData = (d?: string | null) => {
-  if (!d) return "—";
-  const parsed = new Date(`${d.slice(0, 10)}T00:00:00`);
-  return Number.isNaN(parsed.getTime()) ? "—" : format(parsed, "dd/MM/yyyy");
-};
-
 function Bloco({
   titulo,
   linhas,
@@ -95,7 +88,7 @@ function Bloco({
                 {l.fornecedor ? <span className="text-ink/50"> · {l.fornecedor}</span> : null}
                 {l.horas != null ? <span className="text-ink/50"> · {l.horas}h</span> : null}
               </span>
-              <span className="shrink-0 text-ink/50">{fmtData(l.data)}</span>
+              <span className="shrink-0 text-ink/50">{formatDate(l.data)}</span>
               {l.status ? <span className="shrink-0 text-ink/50">{l.status}</span> : null}
               <span className="shrink-0 tabular-nums text-ink">{formatCurrency(Number(l.valor ?? 0))}</span>
             </li>

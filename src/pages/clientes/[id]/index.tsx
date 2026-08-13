@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { formatCurrency as fmtMoeda } from "@/lib/format";
+import { formatCurrency, formatDate } from "@/lib/format";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -60,10 +60,6 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import type { Cliente } from "@/hooks/useClientes";
 import type { ProjetoResumo, PropostaResumo } from "@/hooks/useClienteDetalhe";
-
-const formatCurrency = (v: number | null) => (v != null ? fmtMoeda(v) : "—");
-
-const formatDate = (d: string | null) => (d ? new Date(d + "T00:00:00").toLocaleDateString("pt-BR") : "—");
 
 const TIPO_NF_LABELS: Record<string, string> = {
   servico: "Serviço",

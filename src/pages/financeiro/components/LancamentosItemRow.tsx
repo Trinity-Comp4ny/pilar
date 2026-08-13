@@ -10,6 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { formatCurrency } from "@/lib/format";
 import { formatDateDisplay } from "@/lib/dateUtils";
 import type { Lancamento } from "../hooks/useLancamentosUnified";
 
@@ -32,9 +33,6 @@ interface Props {
   onDelete: (l: Lancamento) => void;
   onStatusChange: (l: Lancamento, s: string) => void;
 }
-
-const formatBRL = (v: number) =>
-  v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 2 });
 
 function StatusBadge({
   l,
@@ -201,7 +199,7 @@ export function LancamentosItemRow({
           isTransf ? "text-info-mid" : isReceita ? "text-positive-strong" : "text-negative-strong"
         )}
       >
-        {isTransf ? "⇄" : isReceita ? "+" : "−"} {formatBRL(l.valor)}
+        {isTransf ? "⇄" : isReceita ? "+" : "−"} {formatCurrency(l.valor)}
       </td>
       <td className={cellPad} onClick={(e) => e.stopPropagation()}>
         <StatusBadge
