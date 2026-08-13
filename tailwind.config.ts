@@ -162,6 +162,28 @@ export default {
           negociacao: "hsl(var(--pipeline-negociacao) / <alpha-value>)",
           perdido: "hsl(var(--pipeline-perdido) / <alpha-value>)",
         },
+        // Fill sólido/saturado (ADR 0008 D6) — banner/CTA/badge cheio.
+        // Par: bg-fill-X + text-fill-X-foreground (contraste AA garantido).
+        "fill-danger": {
+          DEFAULT: "hsl(var(--fill-danger) / <alpha-value>)",
+          foreground: "hsl(var(--fill-danger-fg) / <alpha-value>)",
+        },
+        "fill-warning": {
+          DEFAULT: "hsl(var(--fill-warning) / <alpha-value>)",
+          foreground: "hsl(var(--fill-warning-fg) / <alpha-value>)",
+        },
+        "fill-attention": {
+          DEFAULT: "hsl(var(--fill-attention) / <alpha-value>)",
+          foreground: "hsl(var(--fill-attention-fg) / <alpha-value>)",
+        },
+        "fill-info": {
+          DEFAULT: "hsl(var(--fill-info) / <alpha-value>)",
+          foreground: "hsl(var(--fill-info-fg) / <alpha-value>)",
+        },
+        "fill-success": {
+          DEFAULT: "hsl(var(--fill-success) / <alpha-value>)",
+          foreground: "hsl(var(--fill-success-fg) / <alpha-value>)",
+        },
       },
       fontFamily: {
         montserrat: ["Montserrat", "sans-serif"],
