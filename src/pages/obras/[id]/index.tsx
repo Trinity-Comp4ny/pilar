@@ -29,6 +29,13 @@ export default function ObraDetalhePage() {
   const { can } = usePermissions();
   const canEdit = can("obras", "edit");
   const canDelete = can("obras", "delete");
+  // Sub-features do módulo Obras (spec 035): a aba some quando desligada para a
+  // empresa. Timeline ("Visão") é a base do módulo e segue só o gate de "obras".
+  const showDiario = can("obras_diario", "view");
+  const showCronograma = can("obras_cronograma", "view");
+  const showCotacoes = can("obras_cotacoes", "view");
+  const showEstoque = can("obras_estoque", "view");
+  const showConta = can("obras_conta", "view");
 
   const { data: obra, isLoading } = useObra(id);
   usePageTitle(obra?.nome ?? "Obra");
@@ -121,46 +128,66 @@ export default function ObraDetalhePage() {
             <LayoutList className="h-3.5 w-3.5" />
             Visão
           </TabsTrigger>
-          <TabsTrigger value="diario" className="flex items-center gap-1.5">
-            <ClipboardList className="h-3.5 w-3.5" />
-            Diário
-          </TabsTrigger>
-          <TabsTrigger value="cronograma" className="flex items-center gap-1.5">
-            <CalendarClock className="h-3.5 w-3.5" />
-            Cronograma
-          </TabsTrigger>
-          <TabsTrigger value="cotacoes" className="flex items-center gap-1.5">
-            <Scale className="h-3.5 w-3.5" />
-            Cotações
-          </TabsTrigger>
-          <TabsTrigger value="estoque" className="flex items-center gap-1.5">
-            <Boxes className="h-3.5 w-3.5" />
-            Estoque
-          </TabsTrigger>
-          <TabsTrigger value="conta" className="flex items-center gap-1.5">
-            <Wallet className="h-3.5 w-3.5" />
-            Conta da obra
-          </TabsTrigger>
+          {showDiario && (
+            <TabsTrigger value="diario" className="flex items-center gap-1.5">
+              <ClipboardList className="h-3.5 w-3.5" />
+              Diário
+            </TabsTrigger>
+          )}
+          {showCronograma && (
+            <TabsTrigger value="cronograma" className="flex items-center gap-1.5">
+              <CalendarClock className="h-3.5 w-3.5" />
+              Cronograma
+            </TabsTrigger>
+          )}
+          {showCotacoes && (
+            <TabsTrigger value="cotacoes" className="flex items-center gap-1.5">
+              <Scale className="h-3.5 w-3.5" />
+              Cotações
+            </TabsTrigger>
+          )}
+          {showEstoque && (
+            <TabsTrigger value="estoque" className="flex items-center gap-1.5">
+              <Boxes className="h-3.5 w-3.5" />
+              Estoque
+            </TabsTrigger>
+          )}
+          {showConta && (
+            <TabsTrigger value="conta" className="flex items-center gap-1.5">
+              <Wallet className="h-3.5 w-3.5" />
+              Conta da obra
+            </TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="timeline">
           <ObraTimelineTab obra={obra} onIrParaDiario={() => setTab("diario")} />
         </TabsContent>
-        <TabsContent value="diario">
-          <ObraDiarioTab obraId={obra.id} canEdit={canEdit} />
-        </TabsContent>
-        <TabsContent value="cronograma">
-          <ObraCronogramaTab obraId={obra.id} projetoId={obra.projeto_id} canEdit={canEdit} />
-        </TabsContent>
-        <TabsContent value="cotacoes">
-          <ObraCotacoesTab obraId={obra.id} canEdit={canEdit} />
-        </TabsContent>
-        <TabsContent value="estoque">
-          <ObraEstoqueTab obraId={obra.id} canEdit={canEdit} />
-        </TabsContent>
-        <TabsContent value="conta">
-          <ObraContaTab obra={obra} canEdit={canEdit} />
-        </TabsContent>
+        {showDiario && (
+          <TabsContent value="diario">
+            <ObraDiarioTab obraId={obra.id} canEdit={canEdit} />
+          </TabsContent>
+        )}
+        {showCronograma && (
+          <TabsContent value="cronograma">
+            <ObraCronogramaTab obraId={obra.id} projetoId={obra.projeto_id} canEdit={canEdit} />
+          </TabsContent>
+        )}
+        {showCotacoes && (
+          <TabsContent value="cotacoes">
+            <ObraCotacoesTab obraId={obra.id} canEdit={canEdit} />
+          </TabsContent>
+        )}
+        {showEstoque && (
+          <TabsContent value="estoque">
+            <ObraEstoqueTab obraId={obra.id} canEdit={canEdit} />
+          </TabsContent>
+        )}
+        {showConta && (
+          <TabsContent value="conta">
+            <ObraContaTab obra={obra} canEdit={canEdit} />
+          </TabsContent>
+        )}
       </Tabs>
 
       <ObraFormDialog open={editOpen} onOpenChange={setEditOpen} obra={obra} />

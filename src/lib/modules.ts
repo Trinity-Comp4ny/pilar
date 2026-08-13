@@ -31,9 +31,11 @@ import {
   Wallet,
   type LucideIcon,
 } from "lucide-react";
+import type { FeatureModuleId } from "@/lib/features";
 import type { Feature } from "@/lib/permissions";
 
-export type ModuleId = "gestao" | "projetos" | "obras";
+/** Mesmo conjunto que FeatureModuleId (fonte única em features.ts, evita ciclo). */
+export type ModuleId = FeatureModuleId;
 
 export type ModuleMenuItem = {
   title: string;
@@ -102,8 +104,9 @@ export const MODULES: Record<ModuleId, ModuleDef> = {
       // Fornecedor é cadastro global da empresa (empresa_id, sem obra_id), reusado
       // por cotação/conta da obra e pela despesa do escritório. A porta de gerência
       // mora aqui na Obra; o escritório mantém o SupplierManager embutido na despesa.
-      { title: "Fornecedores", url: "/obras/fornecedores", icon: Truck, feature: "obras" },
-      { title: "Clima", url: "/obras/clima", icon: CloudSun, feature: "obras" },
+      // Sub-features gated por obras_* (spec 035): herdam o módulo Obras ligado.
+      { title: "Fornecedores", url: "/obras/fornecedores", icon: Truck, feature: "obras_fornecedores" },
+      { title: "Clima", url: "/obras/clima", icon: CloudSun, feature: "obras_clima" },
     ],
   },
 };

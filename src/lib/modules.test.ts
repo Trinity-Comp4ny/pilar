@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
+import { moduleOfFeature, type FeatureKey } from "./features";
 import {
   EMPRESA_ITEMS,
   MODULE_ORDER,
@@ -84,10 +85,14 @@ describe("integridade do mapa de módulos", () => {
     }
   });
 
-  it("obras é módulo real gated pela feature (reaberto — ADR 0011)", () => {
+  it("obras é módulo real; itens gated por obras ou suas sub-features (ADR 0011/0019)", () => {
     expect(MODULES.obras.emBreve).toBeUndefined();
     expect(MODULE_ORDER).toContain("obras");
-    expect(MODULES.obras.items.every((i) => i.feature === "obras")).toBe(true);
+    // Após spec 035, Fornecedores/Clima usam sub-features (obras_*); todas
+    // resolvem para o módulo obras via moduleOfFeature.
+    for (const item of MODULES.obras.items) {
+      expect(item.feature && moduleOfFeature(item.feature as FeatureKey)).toBe("obras");
+    }
   });
 });
 
