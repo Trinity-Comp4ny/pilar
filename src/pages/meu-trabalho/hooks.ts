@@ -100,7 +100,11 @@ export function useProjetosLite() {
     queryKey: ["meu-trabalho", "projetos-lite"],
     staleTime: 10 * 60 * 1000,
     queryFn: async (): Promise<PessoaOpcao[]> => {
-      const { data, error } = await supabase.from("projetos").select("id, nome").order("nome");
+      const { data, error } = await supabase
+        .from("projetos")
+        .select("id, nome")
+        .is("deleted_at", null)
+        .order("nome");
       if (error) throw error;
       return data ?? [];
     },

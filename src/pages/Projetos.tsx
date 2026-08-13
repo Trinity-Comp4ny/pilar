@@ -126,9 +126,33 @@ export default function ProjetosKanban() {
 
   const handleDeleteConfirm = async () => {
     if (!projetoToDelete) return;
-    const { error } = await supabase.from("projetos").delete().eq("id", projetoToDelete.id);
+    const id = projetoToDelete.id;
+    const nome = projetoToDelete.nome;
+    // Soft delete (deleted_at some das listagens), com "Desfazer" no toast — o delete é recuperável.
+    const { error } = await supabase
+      .from("projetos")
+      .update({ deleted_at: new Date().toISOString() })
+      .eq("id", id);
     if (!error) {
-      toast.success("Projeto excluído");
+      toast.success(`Projeto "${nome}" excluído`, {
+        action: {
+          label: "Desfazer",
+          onClick: async () => {
+            const { error: restoreError } = await supabase
+              .from("projetos")
+              .update({ deleted_at: null })
+              .eq("id", id);
+            if (restoreError) {
+              toast.error("Não foi possível restaurar o projeto", {
+                description: getSafeErrorMessage(restoreError, "Tente novamente em instantes."),
+              });
+            } else {
+              toast.success("Projeto restaurado");
+              queryClient.invalidateQueries({ queryKey: ["projetos"] });
+            }
+          },
+        },
+      });
       setIsDetailOpen(false);
       queryClient.invalidateQueries({ queryKey: ["projetos"] });
     } else {

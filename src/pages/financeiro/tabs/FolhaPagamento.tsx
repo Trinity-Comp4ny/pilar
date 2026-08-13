@@ -126,7 +126,8 @@ export default function FolhaPagamento() {
       const { data: projectsData } = await supabase
         .from("projetos")
         .select("area_m2, data_inicio")
-        .eq("empresa_id", (await supabase.rpc("get_user_empresa_id")).data ?? "");
+        .eq("empresa_id", (await supabase.rpc("get_user_empresa_id")).data ?? "")
+        .is("deleted_at", null);
 
       const uniqueArea = (projectsData || [])
         .filter((p) => {
