@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Building2, Pencil, Plus, Trash2, X } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
 import { toast } from "sonner";
+import { getSafeErrorMessage } from "@/lib/safeError";
 import { supabase } from "@/integrations/supabase/client";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 
@@ -39,7 +40,10 @@ export function CentroCustoManager({ open, onOpenChange, onChanged }: Props) {
       .select("id, codigo, nome, descricao, ativo")
       .is("deleted_at", null)
       .order("nome");
-    if (error) toast.error("Erro ao carregar centros");
+    if (error)
+      toast.error("Não foi possível carregar os centros de custo", {
+        description: getSafeErrorMessage(error, "Atualize a página em instantes."),
+      });
     setList((data ?? []) as CentroCusto[]);
     setLoading(false);
   };
@@ -91,7 +95,9 @@ export function CentroCustoManager({ open, onOpenChange, onChanged }: Props) {
       await fetchAll();
       onChanged?.();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Erro");
+      toast.error("Não foi possível salvar", {
+        description: getSafeErrorMessage(e, "Confira os dados e tente de novo."),
+      });
     } finally {
       setSaving(false);
     }
@@ -103,7 +109,9 @@ export function CentroCustoManager({ open, onOpenChange, onChanged }: Props) {
       .update({ deleted_at: new Date().toISOString() })
       .eq("id", c.id);
     if (error) {
-      toast.error("Erro ao excluir");
+      toast.error("Não foi possível excluir", {
+        description: getSafeErrorMessage(error, "Tente de novo em instantes."),
+      });
       return;
     }
     toast.success("Centro excluído");

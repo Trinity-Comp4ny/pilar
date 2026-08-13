@@ -16,6 +16,7 @@ import {
 import { type TemplateProjeto } from "@/hooks/useTemplates";
 import type { FluxoDisciplinas } from "@/types/fluxoDisciplinas";
 import { toast } from "sonner";
+import { getSafeErrorMessage } from "@/lib/safeError";
 import { useBulkSaveDisciplinas } from "@/hooks/useProjetoDisciplinas";
 import { useFormPersist, clearFormPersist } from "@/hooks/useFormPersist";
 
@@ -697,7 +698,9 @@ export function useProjetoForm({
             p_dia_fixo: diaFixo,
           });
           if (parcelasError) {
-            toast.error("Projeto salvo, mas falhou ao gerar parcelas", { description: parcelasError.message });
+            toast.error("Projeto salvo, mas as parcelas não foram geradas", {
+              description: getSafeErrorMessage(parcelasError, "Gere as parcelas de novo na aba de pagamentos."),
+            });
           } else {
             toast.success(`${numParcelas} parcela(s) geradas`, {
               description: `Vencimento dia ${diaFixo} de cada mês`,

@@ -257,7 +257,9 @@ export function LancamentosTable({ resumo, filters, onFiltersChange, onMutated }
     payload[dataField] = isPaying ? today : null;
     const { error } = await supabase.from(table).update(payload as never).eq("id", l.id);
     if (error) {
-      toast.error("Falha ao atualizar status", { description: error.message });
+      toast.error("Não foi possível atualizar o status", {
+        description: getSafeErrorMessage(error, "Tente de novo em instantes."),
+      });
       return;
     }
     toast.success("Status atualizado");
@@ -339,7 +341,9 @@ export function LancamentosTable({ resumo, filters, onFiltersChange, onMutated }
     if (tipo === "transferencia") {
       const { error } = await supabase.rpc("rpc_excluir_transferencia", { p_id: id } as never);
       if (error) {
-        toast.error("Falha ao excluir", { description: error.message });
+        toast.error("Não foi possível excluir", {
+          description: getSafeErrorMessage(error, "Tente de novo em instantes."),
+        });
         return;
       }
       toast.success("Transferência excluída");

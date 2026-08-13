@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
+import { getSafeErrorMessage } from "@/lib/safeError";
 import { Building2, Users as UsersIcon, Palette } from "lucide-react";
 import { formatCNPJ, formatPhone, onlyDigits } from "@/lib/maskUtils";
 import type { CompanyData, CompanyUser } from "@/pages/company/types";
@@ -136,7 +137,11 @@ export function EmpresaPanel() {
     };
 
     fetchData()
-      .catch(() => toast.error("Erro ao carregar"))
+      .catch((err) =>
+        toast.error("Não foi possível carregar os dados da empresa", {
+          description: getSafeErrorMessage(err, "Atualize a página em instantes."),
+        })
+      )
       .finally(() => setIsLoading(false));
   }, []);
 
@@ -196,7 +201,9 @@ export function EmpresaPanel() {
       setEditingCompany(false);
       toast.success("Dados salvos", { description: "Informações da empresa atualizadas com sucesso" });
     } catch (err: unknown) {
-      toast.error("Erro ao salvar");
+      toast.error("Não foi possível salvar", {
+        description: getSafeErrorMessage(err, "Confira os dados e tente de novo."),
+      });
     }
   };
 
@@ -274,8 +281,10 @@ export function EmpresaPanel() {
       );
       setIsEditUserOpen(false);
       toast.success("Usuário atualizado");
-    } catch {
-      toast.error("Erro ao atualizar usuário");
+    } catch (err) {
+      toast.error("Não foi possível atualizar o usuário", {
+        description: getSafeErrorMessage(err, "Tente de novo em instantes."),
+      });
     }
   };
 
@@ -295,8 +304,8 @@ export function EmpresaPanel() {
       setDeleteUserId(null);
       toast.success("Usuário removido");
     } catch (err) {
-      toast.error("Erro ao remover usuário", {
-        description: err instanceof Error ? err.message : undefined,
+      toast.error("Não foi possível remover o usuário", {
+        description: getSafeErrorMessage(err, "Tente de novo em instantes."),
       });
     }
   };
@@ -348,8 +357,10 @@ export function EmpresaPanel() {
       await uploadCompanyLogo();
       setEditingVisual(false);
       toast.success("Configuração salva", { description: "Visual da empresa atualizado com sucesso" });
-    } catch {
-      toast.error("Erro ao salvar logo");
+    } catch (err) {
+      toast.error("Não foi possível salvar o logo", {
+        description: getSafeErrorMessage(err, "Confira o arquivo e tente de novo."),
+      });
     }
   };
 

@@ -9,6 +9,7 @@ import { Plus, Trash2, Loader2, CheckCircle2, Clock, XCircle, Banknote } from "l
 import { EmptyState } from "@/components/EmptyState";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { getSafeErrorMessage } from "@/lib/safeError";
 import { supabase } from "@/integrations/supabase/client";
 import { formatCurrencyInput, parseCurrencyString, formatCurrency } from "@/lib/currencyUtils";
 import { DatePicker } from "@/components/ui/date-picker";
@@ -82,7 +83,10 @@ export function BillingMilestonesTab({ projetoId, canEdit }: BillingMilestonesTa
       setFormData("");
       setFormPercentual("");
     },
-    onError: (err) => toast.error(err instanceof Error ? err.message : "Não foi possível criar o marco"),
+    onError: (err) =>
+      toast.error("Não foi possível criar o marco", {
+        description: getSafeErrorMessage(err, "Confira os dados e tente de novo."),
+      }),
   });
 
   const updateStatusMutation = useMutation({

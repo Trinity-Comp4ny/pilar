@@ -10,6 +10,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
+import { getSafeErrorMessage } from "@/lib/safeError";
 import { useSubscriptionManage } from "../hooks/useSubscriptionManage";
 import type { MySubscription } from "../hooks/useMySubscription";
 
@@ -37,7 +38,9 @@ export function CancelDialog({ open, onOpenChange, current }: CancelDialogProps)
           onOpenChange(false);
         },
         onError: (err) => {
-          toast.error("Erro ao cancelar", { description: (err as Error).message });
+          toast.error("Não foi possível cancelar a assinatura", {
+            description: getSafeErrorMessage(err, "Tente de novo em instantes."),
+          });
         },
       }
     );
