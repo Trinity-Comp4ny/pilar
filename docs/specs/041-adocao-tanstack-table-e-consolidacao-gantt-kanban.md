@@ -43,10 +43,14 @@ Funcionais, testáveis:
 2. A `DataTable` preserva a API pública atual (`ColumnDef` com
    `key/header/align/stickyLeft/cell/getSortValue`) para não quebrar o consumidor
    existente (`FaturasCartaoTable`).
-3. A `DataTable` integra `@tanstack/react-virtual` quando o volume exige, atrás de
-   uma prop (ex. `virtualized`), sem mudar a API de colunas.
-4. `LancamentosTable` passa a usar a `DataTable` (filtros/seleção/sort deixam de
-   ser código próprio da tela).
+3. A `DataTable` aceita estados de vazio/erro customizados (`emptyState`/`errorState`),
+   para preservar `EmptyState` com ícone e ação ao migrar telas existentes.
+4. **A `LancamentosTable` NÃO migra para a base (decisão revista após auditoria).**
+   Ela é server-side (sort/filtro/paginação no banco, spec 033 / ADR 0017), agrupada
+   (grupos de parcela com expand/collapse), com linhas medidas dinamicamente e scroll
+   infinito. Forçá-la na base plana client-side seria regressão. Fica custom, pela
+   própria regra do design system ("regra de domínio: escrever à mão"). Virtualização
+   na base fica adiada até um consumidor plano real precisar (sem API especulativa).
 5. Existe um `<PilarGantt>` único que renderiza linhas (planas ou hierárquicas
    pai→filho), zoom mês/semana, e emite callbacks de drag (mover/resize left/right)
    com snap. Os 3 tabs (`CronogramaTab`, `CronogramaProjetosTab`, `ObraCronogramaTab`)
@@ -114,9 +118,11 @@ um PR próprio para `staging`, verificável isolado.
    `src/components/data/DataTable.tsx` em cima dele preservando a API `ColumnDef`.
    Adicionar seleção, filtro e visibilidade de coluna atrás de props opt-in.
    Migrar o único consumidor atual (`FaturasCartaoTable`) e provar paridade.
-2. **Fase 2 — DataTable virtualizada + Lançamentos.** Integrar
-   `@tanstack/react-virtual` na `DataTable` (prop `virtualized`). Migrar
-   `LancamentosTable` para a base, removendo o sort/filtro/seleção próprios.
+2. **Fase 2 — Enriquecer a base + provar em tabela plana.** Adicionar slots
+   `emptyState`/`errorState` à `DataTable`. Migrar uma tabela plana representativa
+   (`fornecedores/index.tsx`) para a base: ganha ordenação por coluna, preserva os
+   empty states ricos via o slot novo. `LancamentosTable` fica custom (ver req. 4).
+   Demais tabelas planas migram "por toque" (regra abaixo), não em lote.
 3. **Fase 3 — `<PilarGantt>`.** Extrair um componente único a partir do mais
    completo (`CronogramaTab`), fazendo-o consumir `lib/cronograma.ts`. Migrar os
    3 tabs para ele. Apagar a matemática duplicada.
