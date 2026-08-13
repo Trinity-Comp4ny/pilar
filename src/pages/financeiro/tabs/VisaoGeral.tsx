@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { KPICard } from "@/components/KPICard";
+import { DataFrescor } from "@/components/DataFrescor";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -179,7 +180,10 @@ interface VisaoGeralProps {
 
 export default function VisaoGeral({ onNavigateTab }: VisaoGeralProps) {
   const { visualizacao, dateFrom, dateTo } = useFinanceFilter();
-  const { data: dashboardData, isLoading, isError, refetch } = useFinanceData(dateFrom, dateTo);
+  const { data: dashboardData, isLoading, isFetching, dataUpdatedAt, isError, refetch } = useFinanceData(
+    dateFrom,
+    dateTo
+  );
   // Próximos vencimentos migraram do antigo Dashboard (spec 005). Sem args, reusa o
   // cache que a Início já mantém; a lista independe do filtro de período (é a partir de hoje).
   const { data: radar } = useDashboardData();
@@ -227,6 +231,9 @@ export default function VisaoGeral({ onNavigateTab }: VisaoGeralProps) {
 
   return (
     <div className="space-y-6 w-full max-w-none">
+      <div className="flex justify-end">
+        <DataFrescor updatedAt={dataUpdatedAt} isFetching={isFetching} onRefresh={() => void refetch()} />
+      </div>
       {/* KPIs uniformes: Lucro líquido é o primeiro do grid (métrica da tagline), margem no subtítulo */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5 gap-4 w-full">
         <KPICard
