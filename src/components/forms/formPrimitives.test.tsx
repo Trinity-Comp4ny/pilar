@@ -26,6 +26,19 @@ function PercentHarness() {
   return <PercentInput aria-label="pct" value={v} onChange={setV} />;
 }
 
+// Pai que guarda NÚMERO (não string), como as tabelas de orçamento.
+function NumericParentHarness() {
+  const [n, setN] = useState(0);
+  return (
+    <NumberInput
+      aria-label="dec"
+      allowDecimal
+      value={n ? String(n) : ""}
+      onChange={(v) => setN(parseFloat(v.replace(",", ".")) || 0)}
+    />
+  );
+}
+
 describe("MoneyInput", () => {
   it("mascara dígitos como centavos", () => {
     render(<MoneyHarness />);
@@ -70,6 +83,27 @@ describe("NumberInput", () => {
     const input = screen.getByLabelText("qtd") as HTMLInputElement;
     fireEvent.change(input, { target: { value: "3,5" } });
     expect(input.value).toBe("3,5");
+  });
+});
+
+describe("NumberInput com pai numérico", () => {
+  it("preserva a vírgula decimal durante a digitação", () => {
+    render(<NumericParentHarness />);
+    const input = screen.getByLabelText("dec") as HTMLInputElement;
+    // O pai normaliza "3," para o número 3 e devolve "3"; o buffer segura a vírgula.
+    fireEvent.change(input, { target: { value: "3," } });
+    expect(input.value).toBe("3,");
+    fireEvent.change(input, { target: { value: "3,5" } });
+    expect(input.value).toBe("3,5");
+  });
+
+  it("ressincroniza quando o valor externo muda de número (reset)", () => {
+    render(<NumericParentHarness />);
+    const input = screen.getByLabelText("dec") as HTMLInputElement;
+    fireEvent.change(input, { target: { value: "3,5" } });
+    expect(input.value).toBe("3,5");
+    fireEvent.change(input, { target: { value: "" } });
+    expect(input.value).toBe("");
   });
 });
 

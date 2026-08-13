@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, Trash2 } from "lucide-react";
 import { formatCurrency, formatValorToInput, parseCurrencyString } from "@/lib/currencyUtils";
 import { MoneyInput } from "@/components/forms/MoneyInput";
+import { NumberInput } from "@/components/forms/NumberInput";
 import { calcDisciplinasTotais, custoLinha, type DisciplinaLinha } from "../lib/disciplinasCalc";
 
 // Catálogo padrão de disciplinas de engenharia multidisciplinar. Mantido em
@@ -112,13 +113,13 @@ export function DisciplinasEditor({ rows, onChange, disabled }: DisciplinasEdito
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Input
-                      type="number"
+                    <NumberInput
+                      allowDecimal
                       min={0}
                       className="h-8 text-xs text-right"
-                      value={r.horas_estimadas || ""}
+                      value={r.horas_estimadas ? String(r.horas_estimadas).replace(".", ",") : ""}
                       disabled={disabled}
-                      onChange={(e) => updateRow(r.id, { horas_estimadas: parseFloat(e.target.value) || 0 })}
+                      onChange={(v) => updateRow(r.id, { horas_estimadas: parseFloat(v.replace(",", ".")) || 0 })}
                     />
                   </TableCell>
                   <TableCell>

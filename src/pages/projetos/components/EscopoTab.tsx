@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { formatCurrency, formatValorToInput, parseCurrencyString } from "@/lib/currencyUtils";
 import { MoneyInput } from "@/components/forms/MoneyInput";
+import { NumberInput } from "@/components/forms/NumberInput";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { TONE_BADGE } from "@/lib/status";
 
@@ -507,19 +508,18 @@ export function EscopoTab({ projetoId, canEdit }: EscopoTabProps) {
                       ))}
                     </SelectContent>
                   </Select>
-                  <Input
+                  <NumberInput
+                    allowDecimal
                     className="w-16 h-8 text-xs"
-                    type="number"
                     placeholder="Horas"
-                    value={item.horas || ""}
-                    onChange={(e) => updateItem(i, "horas", parseFloat(e.target.value) || 0)}
+                    value={item.horas ? String(item.horas).replace(".", ",") : ""}
+                    onChange={(v) => updateItem(i, "horas", parseFloat(v.replace(",", ".")) || 0)}
                   />
-                  <Input
+                  <MoneyInput
                     className="w-20 h-8 text-xs"
-                    type="number"
                     placeholder="Custo"
-                    value={item.custo || ""}
-                    onChange={(e) => updateItem(i, "custo", parseFloat(e.target.value) || 0)}
+                    value={item.custo ? formatValorToInput(item.custo) : ""}
+                    onChange={(v) => updateItem(i, "custo", parseCurrencyString(v))}
                   />
                   <Button
                     variant="ghost"

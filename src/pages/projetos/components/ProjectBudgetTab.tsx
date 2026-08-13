@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Save, Trash2, Loader2 } from "lucide-react";
@@ -11,6 +10,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { type DisciplinaResponsavel } from "@/types/projetos";
 import { formatCurrency, formatValorToInput, parseCurrencyString } from "@/lib/currencyUtils";
 import { MoneyInput } from "@/components/forms/MoneyInput";
+import { NumberInput } from "@/components/forms/NumberInput";
+import { PercentInput } from "@/components/forms/PercentInput";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 
 interface ProjectBudgetTabProps {
@@ -203,11 +204,11 @@ export function ProjectBudgetTab({ projetoId, canEdit, disciplinas }: ProjectBud
               <TableRow className="bg-info-soft/50">
                 <TableCell className="text-xs font-medium">{editRow.disciplina}</TableCell>
                 <TableCell>
-                  <Input
-                    type="number"
+                  <NumberInput
+                    allowDecimal
                     className="h-7 text-xs w-20 ml-auto"
-                    value={editRow.horas_estimadas || ""}
-                    onChange={(e) => setEditRow({ ...editRow, horas_estimadas: parseFloat(e.target.value) || 0 })}
+                    value={editRow.horas_estimadas ? String(editRow.horas_estimadas).replace(".", ",") : ""}
+                    onChange={(v) => setEditRow({ ...editRow, horas_estimadas: parseFloat(v.replace(",", ".")) || 0 })}
                   />
                 </TableCell>
                 <TableCell>
@@ -221,11 +222,10 @@ export function ProjectBudgetTab({ projetoId, canEdit, disciplinas }: ProjectBud
                   {formatCurrency((editRow.horas_estimadas || 0) * (editRow.custo_hora || 0))}
                 </TableCell>
                 <TableCell>
-                  <Input
-                    type="number"
+                  <PercentInput
                     className="h-7 text-xs w-16 ml-auto"
-                    value={editRow.margem_alvo_pct || ""}
-                    onChange={(e) => setEditRow({ ...editRow, margem_alvo_pct: parseFloat(e.target.value) || 0 })}
+                    value={editRow.margem_alvo_pct ? String(editRow.margem_alvo_pct).replace(".", ",") : ""}
+                    onChange={(v) => setEditRow({ ...editRow, margem_alvo_pct: parseFloat(v.replace(",", ".")) || 0 })}
                   />
                 </TableCell>
                 <TableCell>
