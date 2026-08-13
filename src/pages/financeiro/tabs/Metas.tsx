@@ -17,6 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { DatePicker } from "@/components/ui/date-picker";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { formatDate } from "@/lib/format";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -411,7 +412,7 @@ export default function Metas() {
                         </div>
                         <div>
                           <CardTitle className="text-base">{meta.nome}</CardTitle>
-                          <CardDescription>Prazo: {new Date(meta.prazo).toLocaleDateString("pt-BR")}</CardDescription>
+                          <CardDescription>Prazo: {formatDate(meta.prazo)}</CardDescription>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
