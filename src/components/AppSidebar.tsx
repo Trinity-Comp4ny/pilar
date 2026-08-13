@@ -21,12 +21,19 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, lazy, Suspense } from "react";
+import { Sparkles } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSettingsModal } from "@/contexts/SettingsModalContext";
 import { usePermissions } from "@/hooks/usePermissions";
+import { useNovidades } from "@/hooks/useNovidades";
 import { ImpersonationPicker } from "@/components/ImpersonationPicker";
 import { NotificationInbox } from "@/components/NotificationInbox";
+
+// Lazy: mantém o entry enxuto (o dialog só carrega ao abrir as novidades).
+const NovidadesDialog = lazy(() =>
+  import("@/components/NovidadesDialog").then((m) => ({ default: m.NovidadesDialog }))
+);
 import {
   EMPRESA_ITEMS,
   MODULE_ORDER,
@@ -49,9 +56,18 @@ export function AppSidebar() {
   const { user, profile, signOut } = useAuth();
   const { openSettings, isOpen: isSettingsOpen } = useSettingsModal();
   const { getNavItemProps, isAdmin, isUltraAdmin } = usePermissions();
+  const { temNovidade, marcarVista } = useNovidades();
   const currentPath = location.pathname;
   const [sidebarWidth, setSidebarWidth] = useState(state === "collapsed" ? "64px" : "240px");
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [novidadesOpen, setNovidadesOpen] = useState(false);
+  const [novidadesMontado, setNovidadesMontado] = useState(false);
+  const mostrarDotNovidade = temNovidade();
+
+  const abrirNovidades = () => {
+    setNovidadesMontado(true);
+    setNovidadesOpen(true);
+  };
 
   const USER_ROUTES = ["/admin", "/ultra-admin"];
   const isUserRouteActive = USER_ROUTES.some((r) => currentPath.startsWith(r)) || isSettingsOpen;
@@ -410,9 +426,27 @@ export function AppSidebar() {
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
+          <button
+            type="button"
+            onClick={abrirNovidades}
+            aria-label={mostrarDotNovidade ? "Novidades, novas atualizações" : "Novidades"}
+            title="Novidades"
+            className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-black/70 transition-colors hover:bg-brand/30"
+          >
+            <Sparkles className="h-[18px] w-[18px]" strokeWidth={1.5} />
+            {mostrarDotNovidade && (
+              <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-brand ring-2 ring-white" />
+            )}
+          </button>
           <NotificationInbox />
         </div>
       </div>
+
+      {novidadesMontado && (
+        <Suspense fallback={null}>
+          <NovidadesDialog open={novidadesOpen} onOpenChange={setNovidadesOpen} onVisto={marcarVista} />
+        </Suspense>
+      )}
     </div>
   );
 
