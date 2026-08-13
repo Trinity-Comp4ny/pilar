@@ -168,7 +168,7 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
 
   const goNext = async () => {
     if (step === 1) {
-      const valid = await form.trigger(["primeiro_nome", "sobrenome", "cargo", "email", "cpf"]);
+      const valid = await form.trigger(["primeiro_nome", "cargo", "email", "cpf"]);
       if (!valid) return;
     }
     if (step === 2 && isPJ) {
@@ -384,7 +384,7 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="sobrenome" className="text-xs">
-                    Sobrenome *
+                    Sobrenome
                   </Label>
                   <Input
                     id="sobrenome"
@@ -504,6 +504,12 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
                   <Input id="endereco" {...form.register("endereco")} placeholder="Endereço completo" />
                 </div>
               </div>
+              {!isEditMode && (
+                <p className="text-xs text-muted-foreground">
+                  Precisa só de nome, email e cargo. Documento, salário e conta você completa quando a pessoa entrar na
+                  folha.
+                </p>
+              )}
             </div>
           )}
 
@@ -851,6 +857,14 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
             <Button type="button" variant="ghost" size="sm" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
               Cancelar
             </Button>
+            {/* Cadastro leve: na criação, dá pra salvar já no passo 1 (nome +
+                email + cargo) e completar vínculo/banco depois. */}
+            {step < 3 && !isEditMode && (
+              <Button type="button" variant="outline" onClick={() => handleSubmit()} disabled={isSubmitting}>
+                {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                Salvar
+              </Button>
+            )}
             {step < 3 ? (
               <Button type="button" onClick={goNext} variant="brand" disabled={isSubmitting}>
                 Próximo →
