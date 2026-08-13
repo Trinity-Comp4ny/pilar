@@ -15,7 +15,7 @@ import { formatValorToInput, parseCurrencyString } from "@/lib/currencyUtils";
 import { MoneyInput } from "@/components/forms/MoneyInput";
 import { NumberInput } from "@/components/forms/NumberInput";
 
-export type MetaTipo = "financeira" | "pessoal";
+export type MetaTipo = "financeira" | "pessoal" | "livre";
 
 export interface MetaRow {
   id: string;
@@ -54,6 +54,23 @@ const CATEGORIAS_PESSOAL = [
   { value: "desenvolvimento", label: "Desenvolvimento" },
 ];
 
+// Meta livre: objetivo de qualquer área da gestão, não atrelado a financeiro
+// nem a um colaborador. A "categoria" guarda o setor. Precisa casar com o CHECK
+// de metas_categoria (migration 20260828000000).
+export const CATEGORIAS_LIVRE = [
+  { value: "geral", label: "Geral" },
+  { value: "rh", label: "RH" },
+  { value: "financeiro", label: "Financeiro" },
+  { value: "comercial", label: "Comercial" },
+  { value: "logistica", label: "Logística" },
+  { value: "administrativo", label: "Administrativo" },
+  { value: "operacoes", label: "Operações" },
+  { value: "inovacao", label: "Inovação" },
+];
+
+const SETOR_LABEL: Record<string, string> = Object.fromEntries(CATEGORIAS_LIVRE.map((c) => [c.value, c.label]));
+export const setorLabel = (v: string | null | undefined): string => (v ? (SETOR_LABEL[v] ?? v) : "Geral");
+
 const UNIDADES = [
   { value: "currency", label: "Valor (R$)" },
   { value: "percentage", label: "Percentual (%)" },
@@ -84,12 +101,13 @@ interface FormState {
 }
 
 function emptyForm(tipo: MetaTipo): FormState {
+  const categoria = tipo === "financeira" ? "receita" : tipo === "livre" ? "geral" : "entregas";
   return {
     nome: "",
     descricao: "",
     pessoa_id: "",
-    categoria: tipo === "financeira" ? "receita" : "entregas",
-    unidade: "currency",
+    categoria,
+    unidade: tipo === "livre" ? "percentage" : "currency",
     alvo: "",
     atual: "",
     prazo: "",
@@ -110,12 +128,14 @@ function parseValor(unidade: string, raw: string): number {
 }
 
 function fromMeta(tipo: MetaTipo, meta: MetaRow): FormState {
-  const unidade = tipo === "financeira" ? "currency" : meta.unidade || "quantity";
+  const unidadeFallback = tipo === "livre" ? "percentage" : "quantity";
+  const unidade = tipo === "financeira" ? "currency" : meta.unidade || unidadeFallback;
+  const categoriaFallback = tipo === "financeira" ? "receita" : tipo === "livre" ? "geral" : "entregas";
   return {
     nome: meta.nome,
     descricao: meta.descricao ?? "",
     pessoa_id: meta.pessoa_id ?? "",
-    categoria: meta.categoria ?? (tipo === "financeira" ? "receita" : "entregas"),
+    categoria: meta.categoria ?? categoriaFallback,
     unidade,
     alvo: valorToInput(unidade, meta.alvo),
     atual: valorToInput(unidade, meta.atual),
@@ -139,7 +159,7 @@ export function MetaFormDialog({ open, onOpenChange, tipo, meta }: MetaFormDialo
   const { data: pessoas } = useQuery({
     queryKey: ["pessoas-list"],
     queryFn: fetchPessoasLookup,
-    enabled: tipo === "pessoal",
+    enabled: tipo === "pessoal" || tipo === "livre",
   });
 
   const set = (field: keyof FormState, value: string | boolean): void => setForm((f) => ({ ...f, [field]: value }));
@@ -156,7 +176,7 @@ export function MetaFormDialog({ open, onOpenChange, tipo, meta }: MetaFormDialo
         unidade,
         tipo,
       };
-      if (tipo === "pessoal") {
+      if (tipo === "pessoal" || tipo === "livre") {
         payload.pessoa_id = form.pessoa_id || null;
         payload.descricao = form.descricao || null;
       }
@@ -200,10 +220,12 @@ export function MetaFormDialog({ open, onOpenChange, tipo, meta }: MetaFormDialo
     mutation.mutate();
   };
 
-  const categorias = tipo === "financeira" ? CATEGORIAS_FINANCEIRA : CATEGORIAS_PESSOAL;
+  const categorias =
+    tipo === "financeira" ? CATEGORIAS_FINANCEIRA : tipo === "livre" ? CATEGORIAS_LIVRE : CATEGORIAS_PESSOAL;
   const unidade = tipo === "financeira" ? "currency" : form.unidade;
 
-  const tituloTipo = tipo === "financeira" ? "Financeira" : "Pessoal";
+  const tituloTipo = tipo === "financeira" ? "Financeira" : tipo === "livre" ? "Livre" : "Pessoal";
+  const labelCategoria = tipo === "livre" ? "Área" : "Categoria";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -215,17 +237,19 @@ export function MetaFormDialog({ open, onOpenChange, tipo, meta }: MetaFormDialo
           <DialogDescription>
             {tipo === "financeira"
               ? "Estabeleça um objetivo de receita, lucro, economia ou investimento."
-              : "Defina uma meta para um colaborador."}
+              : tipo === "livre"
+                ? "Objetivo de qualquer área (RH, logística, administrativo). Você acompanha o progresso na mão."
+                : "Defina uma meta para um colaborador."}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 mt-2">
-          {tipo === "pessoal" && (
+          {(tipo === "pessoal" || tipo === "livre") && (
             <div className="space-y-2">
-              <Label>Colaborador</Label>
+              <Label>{tipo === "livre" ? "Responsável (opcional)" : "Colaborador"}</Label>
               <Select value={form.pessoa_id || undefined} onValueChange={(v) => set("pessoa_id", v)}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione um colaborador" />
+                  <SelectValue placeholder={tipo === "livre" ? "Sem responsável definido" : "Selecione um colaborador"} />
                 </SelectTrigger>
                 <SelectContent>
                   {(pessoas ?? []).map((p) => (
@@ -243,12 +267,18 @@ export function MetaFormDialog({ open, onOpenChange, tipo, meta }: MetaFormDialo
             <Input
               value={form.nome}
               onChange={(e) => set("nome", e.target.value)}
-              placeholder={tipo === "financeira" ? "Ex: Faturamento 2026" : "Ex: Entregas no prazo"}
+              placeholder={
+                tipo === "financeira"
+                  ? "Ex: Faturamento 2026"
+                  : tipo === "livre"
+                    ? "Ex: Organizar a segurança social dos trabalhadores"
+                    : "Ex: Entregas no prazo"
+              }
               required
             />
           </div>
 
-          {tipo === "pessoal" && (
+          {(tipo === "pessoal" || tipo === "livre") && (
             <>
               <div className="space-y-2">
                 <Label>Descrição</Label>
@@ -293,7 +323,7 @@ export function MetaFormDialog({ open, onOpenChange, tipo, meta }: MetaFormDialo
               <DatePicker value={form.prazo} onChange={(v) => set("prazo", v)} />
             </div>
             <div className="space-y-2">
-              <Label>Categoria</Label>
+              <Label>{labelCategoria}</Label>
               <Select value={form.categoria} onValueChange={(v) => set("categoria", v)}>
                 <SelectTrigger>
                   <SelectValue />
