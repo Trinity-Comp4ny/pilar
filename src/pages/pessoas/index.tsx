@@ -101,7 +101,7 @@ export default function Pessoas() {
       header={
         <PageHeader
           title="Equipe"
-          primaryAction={isAdmin ? { label: "Nova pessoa", onClick: handleNewPessoa, icon: Plus } : undefined}
+          primaryAction={isAdmin ? { label: "Nova pessoa", onClick: handleNewPessoa, icon: Plus, dataTour: "onb-nova-pessoa" } : undefined}
         />
       }
     >
