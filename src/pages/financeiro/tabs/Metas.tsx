@@ -287,7 +287,7 @@ export default function Metas() {
           <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
             <DialogContent className="sm:max-w-md">
               <DialogHeader>
-                <DialogTitle>Editar Meta</DialogTitle>
+                <DialogTitle>Editar meta</DialogTitle>
                 <DialogDescription>Atualize as informações da meta financeira.</DialogDescription>
               </DialogHeader>
               {editingMeta && (

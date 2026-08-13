@@ -16,7 +16,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
 import { toast } from "sonner";
 import { fetchPessoasLookup } from "@/lib/supabaseQueries";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
@@ -25,7 +24,6 @@ import { MetaFormDialog, type MetaRow, type MetaTipo } from "../components/MetaF
 
 export default function MetasDashboard() {
   const queryClient = useQueryClient();
-  const { toast: uiToast } = useToast();
 
   const [editingMeta, setEditingMeta] = useState<MetaRow | null>(null);
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -59,10 +57,8 @@ export default function MetasDashboard() {
       queryClient.invalidateQueries({ queryKey: ["metas"] });
     },
     onError: (error) => {
-      uiToast({
-        title: "Não foi possível atualizar as metas",
+      toast.error("Não foi possível atualizar as metas", {
         description: error instanceof Error ? error.message : "Tente novamente em instantes.",
-        variant: "destructive",
       });
     },
   });

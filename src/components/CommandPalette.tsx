@@ -52,42 +52,42 @@ const NAV_COMMANDS: NavCmd[] = [
 
 const CREATE_COMMANDS: CreateCmd[] = [
   {
-    label: "Nova Receita",
+    label: "Nova receita",
     event: "palette:create-receita",
     path: "/gestao/financeiro?tab=receitas&new=1",
     icon: TrendingUp,
     keywords: "criar adicionar entrada lancamento",
   },
   {
-    label: "Nova Despesa",
+    label: "Nova despesa",
     event: "palette:create-despesa",
     path: "/gestao/financeiro?tab=despesas&new=1",
     icon: TrendingDown,
     keywords: "criar adicionar pagamento lancamento",
   },
   {
-    label: "Novo Projeto",
+    label: "Novo projeto",
     event: "palette:create-projeto",
     path: "/projetos?new=1",
     icon: Calendar,
     keywords: "criar adicionar obra",
   },
   {
-    label: "Novo Lead",
+    label: "Novo lead",
     event: "palette:create-lead",
     path: "/gestao/leads?new=1",
     icon: UserPlus,
     keywords: "criar adicionar prospect",
   },
   {
-    label: "Novo Cliente",
+    label: "Novo cliente",
     event: "palette:create-cliente",
     path: "/gestao/clientes?new=1",
     icon: Building2,
     keywords: "criar adicionar contato",
   },
   {
-    label: "Novo Membro de Equipe",
+    label: "Novo membro de equipe",
     event: "palette:create-pessoa",
     path: "/gestao/equipe?new=1",
     icon: Users,

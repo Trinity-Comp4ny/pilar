@@ -166,7 +166,7 @@ export function CategoryManager({ title, description, type, onCategoryChange }: 
           </DialogTrigger>
           <DialogContent className="sm:max-w-sm">
             <DialogHeader>
-              <DialogTitle>Nova Categoria</DialogTitle>
+              <DialogTitle>Nova categoria</DialogTitle>
               <DialogDescription>Adicione uma nova categoria de {type.toLowerCase()} ao sistema</DialogDescription>
             </DialogHeader>
 
@@ -257,7 +257,7 @@ export function CategoryManager({ title, description, type, onCategoryChange }: 
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>Editar Categoria</DialogTitle>
+            <DialogTitle>Editar categoria</DialogTitle>
             <DialogDescription>Altere o nome da categoria</DialogDescription>
           </DialogHeader>
 

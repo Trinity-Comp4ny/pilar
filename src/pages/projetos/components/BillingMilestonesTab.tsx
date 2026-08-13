@@ -267,7 +267,7 @@ export function BillingMilestonesTab({ projetoId, canEdit }: BillingMilestonesTa
         <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
           <DialogContent className="sm:max-w-sm">
             <DialogHeader>
-              <DialogTitle>Novo Marco de Faturamento</DialogTitle>
+              <DialogTitle>Novo marco de faturamento</DialogTitle>
             </DialogHeader>
             <div className="space-y-3 mt-2">
               <div className="space-y-1">

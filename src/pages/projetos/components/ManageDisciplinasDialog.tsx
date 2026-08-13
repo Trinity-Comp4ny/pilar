@@ -141,7 +141,7 @@ export function ManageDisciplinasDialog({
       >
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>Nova Disciplina</DialogTitle>
+            <DialogTitle>Nova disciplina</DialogTitle>
           </DialogHeader>
           <div className="space-y-3 mt-2">
             <div className="space-y-1.5">

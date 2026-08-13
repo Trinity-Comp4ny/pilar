@@ -195,7 +195,7 @@ export function SupplierManager({ onSupplierChange }: SupplierManagerProps) {
           </DialogTrigger>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
-              <DialogTitle>Novo Fornecedor</DialogTitle>
+              <DialogTitle>Novo fornecedor</DialogTitle>
               <DialogDescription>Adicione um novo fornecedor ao sistema</DialogDescription>
             </DialogHeader>
 
@@ -330,7 +330,7 @@ export function SupplierManager({ onSupplierChange }: SupplierManagerProps) {
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Editar Fornecedor</DialogTitle>
+            <DialogTitle>Editar fornecedor</DialogTitle>
             <DialogDescription>Altere as informações do fornecedor</DialogDescription>
           </DialogHeader>
 
