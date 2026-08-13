@@ -214,12 +214,12 @@ export default function Metas() {
               <DialogTrigger asChild>
                 <Button variant="brand" className="rounded-full">
                   <Plus className="mr-2 h-4 w-4" />
-                  Nova Meta
+                  Nova meta
                 </Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-md">
                 <DialogHeader>
-                  <DialogTitle>Definir Nova Meta</DialogTitle>
+                  <DialogTitle>Definir nova meta</DialogTitle>
                   <DialogDescription>Estabeleça um novo objetivo financeiro para sua empresa.</DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4 mt-4">
@@ -393,7 +393,7 @@ export default function Metas() {
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 w-full">
             {metas?.length === 0 && (
               <div className="col-span-full text-center py-10 text-muted-foreground">
-                Nenhuma meta cadastrada. Clique em "Nova Meta" para começar.
+                Nenhuma meta cadastrada. Clique em "Nova meta" para começar.
               </div>
             )}
             {metas?.map((meta) => {

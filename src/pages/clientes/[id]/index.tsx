@@ -752,7 +752,7 @@ export default function ClienteDetalhePage() {
         open={confirmDeleteOpen}
         onOpenChange={setConfirmDeleteOpen}
         onConfirm={handleDelete}
-        title="Excluir Cliente"
+        title="Excluir cliente"
         description="Tem certeza que deseja excluir este cliente? Esta ação não pode ser desfeita."
         confirmText="Excluir"
         cancelText="Cancelar"

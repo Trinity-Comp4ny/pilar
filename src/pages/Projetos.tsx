@@ -537,7 +537,7 @@ export default function ProjetosKanban() {
         open={!!projetoToDelete}
         onOpenChange={(open) => !open && setProjetoToDelete(null)}
         onConfirm={handleDeleteConfirm}
-        title="Excluir Projeto"
+        title="Excluir projeto"
         itemName={projetoToDelete?.nome}
         description="O projeto sai das listagens e o histórico é preservado. A exclusão é bloqueada se houver lançamentos financeiros vinculados."
         confirmText="Excluir"

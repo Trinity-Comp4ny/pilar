@@ -19,6 +19,7 @@ import {
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
 import { AlertTriangle, MessageSquare, Plus, Trash2, User, X, Layers } from "lucide-react";
+import { EmptyState } from "@/components/EmptyState";
 import { cn } from "@/lib/utils";
 import { PROJECT_PRIORITY, PROJECT_PRIORITY_CONFIG, PRIORITY_OPTIONS, type ProjectPriority } from "@/constants";
 import {
@@ -141,14 +142,13 @@ export function DisciplinasTableView({
         </div>
 
         {disciplinasLegacy.length === 0 && !isAddingDisc ? (
-          <div className="flex flex-col items-center justify-center py-12 text-muted-foreground border rounded-lg">
-            <Layers className="h-10 w-10 mb-3 opacity-30" />
-            <p className="text-sm font-medium">Nenhuma disciplina definida</p>
-            {canEdit && (
-              <Button size="sm" variant="outline" className="mt-4" onClick={() => setIsAddingDisc(true)}>
-                <Plus className="h-3.5 w-3.5 mr-1.5" /> Adicionar disciplina
-              </Button>
-            )}
+          <div className="border rounded-lg">
+            <EmptyState
+              icon={Layers}
+              title="Nenhuma disciplina definida"
+              description="Adicione as disciplinas deste projeto para acompanhar prazos e responsáveis."
+              action={canEdit ? { label: "Adicionar disciplina", onClick: () => setIsAddingDisc(true) } : undefined}
+            />
           </div>
         ) : (
           <div className="border rounded-lg overflow-hidden bg-white">

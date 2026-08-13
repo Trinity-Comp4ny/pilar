@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Plus, Trash2, Loader2, CheckCircle2, Clock, XCircle, Banknote } from "lucide-react";
+import { EmptyState } from "@/components/EmptyState";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -174,17 +175,22 @@ export function BillingMilestonesTab({ projetoId, canEdit }: BillingMilestonesTa
                 onClick={() => gerarParcelasMutation.mutate({ numParcelas: 3, intervaloDias: 30 })}
                 disabled={gerarParcelasMutation.isPending}
               >
-                <Banknote className="h-3.5 w-3.5 mr-1" /> Gerar Parcelas
+                <Banknote className="h-3.5 w-3.5 mr-1" /> Gerar parcelas
               </Button>
               <Button size="sm" variant="brand" onClick={() => setIsFormOpen(true)}>
-                <Plus className="h-3.5 w-3.5 mr-1" /> Novo Marco
+                <Plus className="h-3.5 w-3.5 mr-1" /> Novo marco
               </Button>
             </div>
           )}
         </div>
 
         {marcos.length === 0 ? (
-          <p className="text-sm text-muted-foreground text-center py-6">Nenhum marco de faturamento definido.</p>
+          <EmptyState
+            icon={Banknote}
+            title="Nenhum marco de faturamento definido"
+            description="Crie marcos para dividir o valor do projeto em parcelas a faturar."
+            action={canEdit ? { label: "Novo marco", onClick: () => setIsFormOpen(true) } : undefined}
+          />
         ) : (
           <div className="space-y-3">
             {marcos.map((marco) => {

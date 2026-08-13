@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Pencil, Plus, Trash2, X } from "lucide-react";
+import { Building2, Pencil, Plus, Trash2, X } from "lucide-react";
+import { EmptyState } from "@/components/EmptyState";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
@@ -170,7 +171,13 @@ export function CentroCustoManager({ open, onOpenChange, onChanged }: Props) {
               <div className="border rounded max-h-80 overflow-y-auto divide-y">
                 {loading && <div className="p-3 text-xs text-muted-foreground">Carregando...</div>}
                 {!loading && list.length === 0 && (
-                  <div className="p-3 text-xs text-muted-foreground">Nenhum centro cadastrado</div>
+                  <EmptyState
+                    icon={Building2}
+                    title="Nenhum centro cadastrado"
+                    description="Crie centros de custo para agrupar despesas e receitas."
+                    action={{ label: "Novo centro", onClick: startNew }}
+                    className="py-8"
+                  />
                 )}
                 {list.map((c) => (
                   <div key={c.id} className="flex items-center gap-2 p-2 text-sm hover:bg-muted/30">

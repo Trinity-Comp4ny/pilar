@@ -2,6 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { KPICard } from "@/components/KPICard";
 import { formatCurrency as fmtMoeda, formatDate } from "@/lib/format";
 import { TrendingUp, TrendingDown, Loader2 } from "lucide-react";
+import { EmptyState } from "@/components/EmptyState";
 import { ResponsiveContainer, AreaChart, Area, CartesianGrid, XAxis, YAxis, Tooltip } from "recharts";
 import { CustomTooltip } from "../components/CustomTooltip";
 import { FinanceErrorState } from "../components/FinanceErrorState";
@@ -111,7 +112,7 @@ export default function ResumoMensal({ dateFrom, dateTo }: ResumoMensalProps) {
 
       <Card className="w-full">
         <CardHeader>
-          <CardTitle>Performance Diária</CardTitle>
+          <CardTitle>Performance diária</CardTitle>
           <CardDescription>Acompanhamento do mês corrente</CardDescription>
         </CardHeader>
         <CardContent>
@@ -182,7 +183,12 @@ export default function ResumoMensal({ dateFrom, dateTo }: ResumoMensalProps) {
                 </div>
               ))}
               {topTransactions?.receitas.length === 0 && (
-                <p className="text-sm text-muted-foreground text-center py-4">Nenhuma receita encontrada.</p>
+                <EmptyState
+                  icon={TrendingUp}
+                  title="Nenhuma receita encontrada"
+                  description="As principais receitas do mês aparecem aqui."
+                  className="py-6"
+                />
               )}
             </div>
             <div className="mt-4 pt-4 border-t border-black/10">
@@ -220,7 +226,12 @@ export default function ResumoMensal({ dateFrom, dateTo }: ResumoMensalProps) {
                 </div>
               ))}
               {topTransactions?.despesas.length === 0 && (
-                <p className="text-sm text-muted-foreground text-center py-4">Nenhuma despesa encontrada.</p>
+                <EmptyState
+                  icon={TrendingDown}
+                  title="Nenhuma despesa encontrada"
+                  description="As principais despesas do mês aparecem aqui."
+                  className="py-6"
+                />
               )}
             </div>
             <div className="mt-4 pt-4 border-t border-black/10">

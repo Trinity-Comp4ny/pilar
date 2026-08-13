@@ -374,7 +374,7 @@ export function GerarPropostaDialog({
                     }}
                   >
                     <FileText className="h-3.5 w-3.5 mr-1.5" />
-                    Gerenciar Templates
+                    Gerenciar templates
                   </Button>
                 </div>
               ) : (

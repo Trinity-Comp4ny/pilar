@@ -196,14 +196,14 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <GitBranch className="h-5 w-5" />
-              {mode === "list" ? "Fluxos de Disciplinas" : editingId ? "Editar Fluxo" : "Novo Fluxo"}
+              {mode === "list" ? "Fluxos de disciplinas" : editingId ? "Editar fluxo" : "Novo fluxo"}
             </DialogTitle>
           </DialogHeader>
 
           {mode === "list" ? (
             <div className="space-y-4 mt-2">
               <Button onClick={handleNew} variant="brand" className="w-full">
-                <Plus className="mr-2 h-4 w-4" /> Novo Fluxo
+                <Plus className="mr-2 h-4 w-4" /> Novo fluxo
               </Button>
 
               {fluxos.length === 0 ? (
@@ -426,7 +426,7 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
                   className="w-full mt-3 text-sm h-9"
                   onClick={addEtapa}
                 >
-                  <Plus className="mr-1 h-4 w-4" /> Adicionar Etapa
+                  <Plus className="mr-1 h-4 w-4" /> Adicionar etapa
                 </Button>
               </div>
 
@@ -462,7 +462,7 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
                   className="w-full"
                   disabled={createFluxo.isPending || updateFluxo.isPending}
                 >
-                  {editingId ? "Salvar Alterações" : "Criar Fluxo"}
+                  {editingId ? "Salvar alterações" : "Criar fluxo"}
                 </Button>
                 <Button variant="outline" className="w-full" onClick={resetToList}>
                   Cancelar

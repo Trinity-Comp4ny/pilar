@@ -9,6 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Calendar, ChevronDown, Layers, ZoomIn, ZoomOut, AlertTriangle } from "lucide-react";
+import { EmptyState } from "@/components/EmptyState";
 import { cn } from "@/lib/utils";
 import { type Projeto, getDeadlineStatus, isDiscAtrasada } from "@/types/projetos";
 import { PROJECT_STATUS, PROJECT_STATUS_CONFIG, type ProjectStatus } from "@/constants";
@@ -415,11 +416,12 @@ export function CronogramaProjetosTab({ projetos, onDatesChange }: CronogramaPro
   if (projetos.length === 0) {
     return (
       <Card>
-        <CardContent className="p-4">
-          <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-            <Layers className="h-10 w-10 mb-3 opacity-30" />
-            <p className="text-sm font-medium">Nenhum projeto cadastrado</p>
-          </div>
+        <CardContent className="p-0">
+          <EmptyState
+            icon={Layers}
+            title="Nenhum projeto cadastrado"
+            description="Os projetos aparecem no cronograma assim que forem criados."
+          />
         </CardContent>
       </Card>
     );

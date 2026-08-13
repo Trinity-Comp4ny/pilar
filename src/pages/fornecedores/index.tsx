@@ -272,7 +272,7 @@ export default function Fornecedores() {
               >
                 <DialogContent className="sm:max-w-md">
                   <DialogHeader>
-                    <DialogTitle>{isEditMode ? "Editar Fornecedor" : "Novo Fornecedor"}</DialogTitle>
+                    <DialogTitle>{isEditMode ? "Editar fornecedor" : "Novo fornecedor"}</DialogTitle>
                     <DialogDescription>
                       {isEditMode ? "Atualize os dados do fornecedor" : "Cadastre um novo fornecedor"}
                     </DialogDescription>
@@ -430,7 +430,7 @@ export default function Fornecedores() {
                           title="Nenhum fornecedor cadastrado"
                           description="Crie o primeiro fornecedor para começar."
                           action={
-                            can("obras", "create") ? { label: "Novo Fornecedor", onClick: handleOpenNew } : undefined
+                            can("obras", "create") ? { label: "Novo fornecedor", onClick: handleOpenNew } : undefined
                           }
                         />
                       ) : (
@@ -500,7 +500,7 @@ export default function Fornecedores() {
         open={confirmDeleteOpen}
         onOpenChange={setConfirmDeleteOpen}
         onConfirm={handleDeleteConfirm}
-        title="Excluir Fornecedor"
+        title="Excluir fornecedor"
         itemName={toDelete?.nome}
         description="O fornecedor sai das listagens e o histórico de despesas é preservado."
         confirmText="Excluir"

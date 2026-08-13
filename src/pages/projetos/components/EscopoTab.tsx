@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Plus, Trash2, Loader2, FileText, CheckCircle2, XCircle, Clock, ChevronDown } from "lucide-react";
+import { EmptyState } from "@/components/EmptyState";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -314,7 +315,7 @@ export function EscopoTab({ projetoId, canEdit }: EscopoTabProps) {
                 setIsFormOpen(true);
               }}
             >
-              <Plus className="h-3.5 w-3.5 mr-1" /> Novo Aditivo
+              <Plus className="h-3.5 w-3.5 mr-1" /> Novo aditivo
             </Button>
           </div>
         )}
@@ -323,9 +324,23 @@ export function EscopoTab({ projetoId, canEdit }: EscopoTabProps) {
       {/* Lista */}
       {escopos.length === 0 ? (
         <Card>
-          <CardContent className="p-6 text-center text-muted-foreground">
-            <FileText className="h-8 w-8 mx-auto mb-2 opacity-40" />
-            <p className="text-sm">Nenhum escopo definido ainda.</p>
+          <CardContent className="p-0">
+            <EmptyState
+              icon={FileText}
+              title="Nenhum escopo definido ainda"
+              description="Defina o escopo original ou crie um aditivo para registrar o que foi contratado."
+              action={
+                canEdit
+                  ? {
+                      label: "Novo aditivo",
+                      onClick: () => {
+                        setFormTipo("aditivo");
+                        setIsFormOpen(true);
+                      },
+                    }
+                  : undefined
+              }
+            />
           </CardContent>
         </Card>
       ) : (
@@ -455,7 +470,7 @@ export function EscopoTab({ projetoId, canEdit }: EscopoTabProps) {
       >
         <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{formTipo === "original" ? "Definir Escopo Original" : "Novo Aditivo"}</DialogTitle>
+            <DialogTitle>{formTipo === "original" ? "Definir escopo original" : "Novo aditivo"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 mt-2">
             <div className="space-y-2">
@@ -562,7 +577,7 @@ export function EscopoTab({ projetoId, canEdit }: EscopoTabProps) {
                 Cancelar
               </Button>
               <Button variant="brand" onClick={() => createMutation.mutate()} disabled={createMutation.isPending}>
-                {formTipo === "original" ? "Definir Escopo" : "Criar Aditivo"}
+                {formTipo === "original" ? "Definir escopo" : "Criar aditivo"}
               </Button>
             </div>
           </div>

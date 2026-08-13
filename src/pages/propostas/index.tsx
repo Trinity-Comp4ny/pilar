@@ -808,7 +808,7 @@ export default function Propostas() {
       <Sheet open={isTemplatesOpen} onOpenChange={setIsTemplatesOpen}>
         <SheetContent side="right" className="w-full sm:max-w-2xl overflow-y-auto">
           <SheetHeader className="mb-4">
-            <SheetTitle>Gerenciar Templates</SheetTitle>
+            <SheetTitle>Gerenciar templates</SheetTitle>
           </SheetHeader>
           <TemplatesManager />
         </SheetContent>
@@ -875,7 +875,7 @@ export default function Propostas() {
       >
         <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editingId ? "Editar Proposta" : "Nova Proposta"}</DialogTitle>
+            <DialogTitle>{editingId ? "Editar proposta" : "Nova proposta"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 mt-2">
             <div className="grid grid-cols-2 gap-4">
@@ -1073,7 +1073,7 @@ export default function Propostas() {
                 onClick={handleSubmit}
                 disabled={createProposta.isPending || updateProposta.isPending || salvarDisciplinas.isPending}
               >
-                {editingId ? "Salvar Alterações" : "Criar Proposta"}
+                {editingId ? "Salvar alterações" : "Criar proposta"}
               </Button>
             </div>
           </div>
@@ -1085,7 +1085,7 @@ export default function Propostas() {
         onOpenChange={(open) => {
           if (!open) setConfirmDelete(null);
         }}
-        title="Excluir Proposta"
+        title="Excluir proposta"
         itemName={confirmDelete?.titulo}
         description="A proposta sai da lista. Você poderá restaurá-la logo em seguida pelo aviso de desfazer."
         confirmText="Excluir"
@@ -1187,7 +1187,7 @@ export default function Propostas() {
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Criando...
                 </>
               ) : (
-                "Criar Projeto"
+                "Criar projeto"
               )}
             </Button>
           </DialogFooter>
