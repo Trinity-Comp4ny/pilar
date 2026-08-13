@@ -3,6 +3,10 @@
 // parseamos o .md em runtime: mantê-lo aqui dá tipo forte e zero custo de I/O.
 // Ao promover staging -> main, a seção [Não lançado] do CHANGELOG vira uma versão
 // datada; espelhe a mudança aqui (novo release no topo) e atualize ULTIMA_VERSAO.
+//
+// Versão amigável em SemVer (ex.: 1.1.0): minor = feature, patch = correção,
+// major = mudança grande. ULTIMA_VERSAO tem que bater com o "version" do
+// package.json (guardado por novidades.test.ts).
 
 export type TipoItem = "novo" | "melhoria" | "correcao";
 
@@ -23,8 +27,8 @@ export type Release = {
 // Mais recente primeiro. A seção [Não lançado] do CHANGELOG é o release do topo.
 export const NOVIDADES: Release[] = [
   {
-    versao: "2026.08",
-    titulo: "O que mudou",
+    versao: "1.1.0",
+    titulo: "Versão 1.1.0",
     data: "Agosto de 2026",
     itens: [
       {
