@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Mail, Lock, ArrowLeft, Loader2, CheckCircle2, Eye, EyeOff, User, Building2 } from "lucide-react";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { PasswordStrengthIndicator } from "@/components/PasswordStrengthIndicator";
+import { PasswordRequirements } from "@/components/PasswordRequirements";
 import { GoogleButton } from "@/components/GoogleButton";
 import { TurnstileWidget } from "@/components/TurnstileWidget";
 import { env } from "@/lib/env";
@@ -213,6 +214,31 @@ export default function Signup() {
                           </div>
                         </FormControl>
                         {password && <PasswordStrengthIndicator password={password} />}
+                        {password && <PasswordRequirements password={password} />}
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="confirmPassword"
+                    render={({ field }) => (
+                      <FormItem className="space-y-2">
+                        <FormLabel className="text-ink-soft font-medium">
+                          Confirmar senha <span className="text-danger-mid">*</span>
+                        </FormLabel>
+                        <FormControl>
+                          <div className="relative group">
+                            <Lock className="absolute left-3 top-3 h-4 w-4 text-ink/40 group-focus-within:text-brand transition-colors" />
+                            <Input
+                              {...field}
+                              type={showPassword ? "text" : "password"}
+                              placeholder="••••••••"
+                              className="pl-10 h-11 bg-paper-alt border-paper-border focus:border-brand focus:ring-brand/20 transition-all"
+                            />
+                          </div>
+                        </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -249,7 +275,7 @@ export default function Signup() {
                     variant="brand"
                     className="w-full h-11 font-medium shadow-lg shadow-brand/20 hover:shadow-brand/30 transition-all active:scale-[0.98] text-sm"
                     type="submit"
-                    disabled={isLoading || (captchaRequerido && !captchaToken)}
+                    disabled={!form.formState.isValid || isLoading || (captchaRequerido && !captchaToken)}
                   >
                     {isLoading ? (
                       <>
@@ -275,7 +301,10 @@ export default function Signup() {
 
               <p className="text-center text-sm text-ink-soft">
                 Já tem conta?{" "}
-                <Link to="/login" className="font-medium text-brand hover:underline underline-offset-2">
+                <Link
+                  to="/login"
+                  className="font-medium text-ink underline underline-offset-2 hover:text-ink-soft"
+                >
                   Entrar
                 </Link>
               </p>

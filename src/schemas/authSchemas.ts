@@ -8,14 +8,26 @@ export const loginSchema = z.object({
 export type LoginFormData = z.infer<typeof loginSchema>;
 export const loginDefaultValues: LoginFormData = { email: "", password: "" };
 
-export const signupSchema = z.object({
-  nome: z.string().trim().min(1, "Nome é obrigatório"),
-  email: z.string().trim().toLowerCase().email("Email inválido"),
-  password: passwordSchema,
-  companyName: z.string().trim().min(1, "Nome da empresa é obrigatório"),
-});
+export const signupSchema = z
+  .object({
+    nome: z.string().trim().min(1, "Nome é obrigatório"),
+    email: z.string().trim().toLowerCase().email("Email inválido"),
+    password: passwordSchema,
+    confirmPassword: z.string().min(1, "Confirme a senha"),
+    companyName: z.string().trim().min(1, "Nome da empresa é obrigatório"),
+  })
+  .refine((d) => d.password === d.confirmPassword, {
+    message: "As senhas não coincidem",
+    path: ["confirmPassword"],
+  });
 export type SignupFormData = z.infer<typeof signupSchema>;
-export const signupDefaultValues: SignupFormData = { nome: "", email: "", password: "", companyName: "" };
+export const signupDefaultValues: SignupFormData = {
+  nome: "",
+  email: "",
+  password: "",
+  confirmPassword: "",
+  companyName: "",
+};
 
 export const forgotPasswordSchema = z.object({
   email: z.string().trim().toLowerCase().email("Email inválido"),
