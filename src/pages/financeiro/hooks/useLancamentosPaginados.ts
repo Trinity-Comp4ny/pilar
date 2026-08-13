@@ -61,6 +61,8 @@ export function useLancamentosPaginados({ filters, sortKey, sortDir }: Lancament
   return {
     data,
     isLoading: query.isLoading,
+    isFetching: query.isFetching,
+    dataUpdatedAt: query.dataUpdatedAt,
     isFetchingNextPage: query.isFetchingNextPage,
     hasNextPage: query.hasNextPage ?? false,
     fetchNextPage: query.fetchNextPage,

@@ -7,6 +7,7 @@ import { ptBR } from "date-fns/locale";
 import { CalendarIcon, Loader2, Plus, Zap } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { getSafeErrorMessage } from "@/lib/safeError";
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -99,7 +100,7 @@ export function QuickLancamentoDialog({ children, onOpenFullForm }: QuickLancame
       form.reset({ descricao: "", valor: "", data: new Date() });
       setOpen(false);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Erro ao salvar lançamento");
+      toast.error("Erro ao salvar lançamento", { description: getSafeErrorMessage(err, "Confira os dados e tente de novo.") });
     } finally {
       setSaving(false);
     }

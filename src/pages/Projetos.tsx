@@ -7,6 +7,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { Can } from "@/components/Can";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { getSafeErrorMessage } from "@/lib/safeError";
 import { usePermissions } from "@/hooks/usePermissions";
 import { PROJECT_PRIORITY_CONFIG, type ProjectPriority } from "@/constants";
 import { type Projeto, getDeadlineStatus } from "@/types/projetos";
@@ -115,7 +116,9 @@ export default function ProjetosKanban() {
   ) => {
     const { error } = await supabase.from("projetos").update(updates).eq("id", projetoId);
     if (error) {
-      toast.error("Não deu para atualizar as datas", { description: error.message });
+      toast.error("Não deu para atualizar as datas", {
+        description: getSafeErrorMessage(error, "Tente novamente em instantes."),
+      });
       throw error;
     }
     queryClient.invalidateQueries({ queryKey: ["projetos"] });
@@ -129,7 +132,9 @@ export default function ProjetosKanban() {
       setIsDetailOpen(false);
       queryClient.invalidateQueries({ queryKey: ["projetos"] });
     } else {
-      toast.error("Erro ao excluir", { description: error.message });
+      toast.error("Não foi possível excluir o projeto", {
+        description: getSafeErrorMessage(error, "Tente novamente em instantes."),
+      });
     }
     setProjetoToDelete(null);
   };
