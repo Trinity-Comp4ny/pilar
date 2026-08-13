@@ -1,5 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { climaPorCodigo, corTemperatura, diasComChuva, direcaoVento, nivelUV, type DiaPrevisao } from "./clima";
+import {
+  alertasClimaTarefas,
+  climaPorCodigo,
+  corTemperatura,
+  diasComChuva,
+  direcaoVento,
+  nivelUV,
+  type DiaPrevisao,
+  type TarefaSensivel,
+} from "./clima";
 
 describe("climaPorCodigo (WMO)", () => {
   it("céu limpo é sol, sem chuva", () => {
@@ -92,5 +101,62 @@ describe("nivelUV", () => {
     expect(nivelUV(7)).toBe("Alto");
     expect(nivelUV(9)).toBe("Muito alto");
     expect(nivelUV(12)).toBe("Extremo");
+  });
+});
+
+describe("alertasClimaTarefas", () => {
+  const dia = (over: Partial<DiaPrevisao>): DiaPrevisao => ({
+    data: "2026-08-01",
+    code: 0,
+    tempMax: 25,
+    tempMin: 15,
+    chuvaProb: 0,
+    chuvaMm: 0,
+    ventoMax: 10,
+    uvMax: 5,
+    nascer: null,
+    ocaso: null,
+    ...over,
+  });
+  const tarefa = (over: Partial<TarefaSensivel>): TarefaSensivel => ({
+    id: "t1",
+    titulo: "Concretar laje",
+    sensivel_clima: "concretagem",
+    data_inicio: "2026-08-01",
+    prazo: "2026-08-03",
+    status: "em_andamento",
+    ...over,
+  });
+
+  it("alerta concretagem quando um dia da janela tem chuva provável", () => {
+    const r = alertasClimaTarefas([tarefa({})], [dia({ data: "2026-08-02", chuvaProb: 80 })]);
+    expect(r).toHaveLength(1);
+    expect(r[0].motivo).toBe("chuva");
+    expect(r[0].data).toBe("2026-08-02");
+  });
+
+  it("içamento alerta por vento forte, não por chuva", () => {
+    const t = tarefa({ id: "t2", titulo: "Içar viga", sensivel_clima: "icamento" });
+    const semAlerta = alertasClimaTarefas([t], [dia({ chuvaProb: 90, ventoMax: 20 })]);
+    expect(semAlerta).toHaveLength(0);
+    const comAlerta = alertasClimaTarefas([t], [dia({ ventoMax: 55 })]);
+    expect(comAlerta[0].motivo).toBe("vento");
+  });
+
+  it("ignora tarefa concluída, sem tipo ou sem janela", () => {
+    const dias = [dia({ chuvaProb: 90 })];
+    expect(alertasClimaTarefas([tarefa({ status: "concluida" })], dias)).toHaveLength(0);
+    expect(alertasClimaTarefas([tarefa({ sensivel_clima: null })], dias)).toHaveLength(0);
+    expect(alertasClimaTarefas([tarefa({ prazo: null })], dias)).toHaveLength(0);
+  });
+
+  it("não alerta quando o dia de chuva está fora da janela da tarefa", () => {
+    const r = alertasClimaTarefas([tarefa({})], [dia({ data: "2026-08-10", chuvaProb: 90 })]);
+    expect(r).toHaveLength(0);
+  });
+
+  it("pega chuva por código mesmo com probabilidade baixa", () => {
+    const r = alertasClimaTarefas([tarefa({})], [dia({ data: "2026-08-02", code: 61, chuvaProb: 5 })]);
+    expect(r).toHaveLength(1);
   });
 });
