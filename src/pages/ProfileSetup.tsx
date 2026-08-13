@@ -26,17 +26,18 @@ export default function ProfileSetup() {
   const [progressValue, setProgressValue] = useState(0);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  // Conta OAuth (Google) chega sem senha própria: escondemos o campo de senha e
-  // pulamos o updateUser({ password }). Ref para o resolver ler o valor atual sem
-  // recriar o form; state para re-renderizar a UI.
-  const [isOAuth, setIsOAuth] = useState(false);
-  const isOAuthRef = useRef(false);
+  // Quem já tem senha (OAuth do Google, ou self-serve que definiu no /cadastro)
+  // não redefine senha aqui: escondemos o campo e pulamos o updateUser({ password }).
+  // Só o dono que chega por magic link do checkout (com invite_token) ainda define.
+  // Ref para o resolver ler o valor atual sem recriar o form; state para re-render.
+  const [pulaSenha, setPulaSenha] = useState(false);
+  const pulaSenhaRef = useRef(false);
   const navigate = useNavigate();
   const { refreshProfile } = useAuth();
 
   const resolver = useMemo<Resolver<ProfileSetupFormData>>(() => {
     return (values, context, options) => {
-      const schema = isOAuthRef.current ? profileSetupOAuthSchema : profileSetupSchema;
+      const schema = pulaSenhaRef.current ? profileSetupOAuthSchema : profileSetupSchema;
       return zodResolver(schema)(values, context, options);
     };
   }, []);
@@ -75,8 +76,12 @@ export default function ProfileSetup() {
         const temGoogle = identities.some((i) => i.provider === "google");
         const temEmail = identities.some((i) => i.provider === "email");
         const oauth = provider === "google" || (temGoogle && !temEmail);
-        isOAuthRef.current = oauth;
-        setIsOAuth(oauth);
+        // Self-serve não carrega invite_token no metadata (só checkout/convite têm).
+        // Esse cadastro já definiu a senha no /cadastro, então aqui não redefine.
+        const temToken = Boolean(user.user_metadata?.invite_token);
+        const semSenhaPendente = oauth || !temToken;
+        pulaSenhaRef.current = semSenhaPendente;
+        setPulaSenha(semSenhaPendente);
         form.clearErrors();
 
         const { data: profile } = await supabase
@@ -113,7 +118,7 @@ export default function ProfileSetup() {
       // 1. Definir a senha PRIMEIRO (fluxo email/senha). Marcar onboarding antes
       //    disso deixava o usuário "onboarded sem senha" se o updateUser falhasse.
       //    Conta OAuth (Google) já tem identidade verificada e não define senha aqui.
-      if (!isOAuth) {
+      if (!pulaSenha) {
         const { error: pwdError } = await supabase.auth.updateUser({
           password: values.password,
         });
@@ -203,7 +208,7 @@ export default function ProfileSetup() {
           <div className="space-y-2">
             <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-ink">Seu perfil</h1>
             <p className="text-sm text-ink-soft">
-              {isOAuth
+              {pulaSenha
                 ? "Confirme seus dados para continuar."
                 : "Confirme seus dados e defina uma senha para continuar."}
             </p>
@@ -287,7 +292,7 @@ export default function ProfileSetup() {
                 )}
               />
 
-              {!isOAuth && (
+              {!pulaSenha && (
                 <>
               <FormField
                 control={form.control}
