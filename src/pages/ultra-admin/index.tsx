@@ -969,8 +969,8 @@ export default function UltraAdmin() {
             <CardHeader>
               <CardTitle className="text-base">Funcionalidades</CardTitle>
               <CardDescription>
-                Ligue ou desligue uma funcionalidade para todas as empresas de uma vez. Feature aqui é
-                controle de rollout, não de plano (ADR 0019).
+                Ligue ou desligue uma funcionalidade para todas as empresas de uma vez. Aqui a feature é
+                controle de rollout, não de plano.
               </CardDescription>
             </CardHeader>
             <CardContent>

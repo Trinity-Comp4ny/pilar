@@ -115,9 +115,8 @@ export function BulkFeatureManager({ empresas, onApply, disabled = false }: Bulk
   return (
     <div className="space-y-5">
       <p className="text-sm text-black/60">
-        Ligue ou desligue uma funcionalidade para várias empresas de uma vez. A ação sobrescreve o
-        estado atual de cada empresa e não pode ser desfeita em massa (mas você pode reaplicar).
-        Sub-funcionalidades de Obras só afetam empresas com o módulo ligado.
+        A ação sobrescreve o estado atual de cada empresa e não tem desfazer em massa (mas você pode
+        reaplicar). Sub-funcionalidades de Obras só afetam empresas com o módulo ligado.
       </p>
 
       {sections.map((section) => {
