@@ -19,6 +19,8 @@ declare
   v_telefone       text;
   v_email          text;
   v_first_name     text;
+  v_last_name      text;
+  v_nome_completo  text;
   v_convite        record;
   v_owner_pending  record;
   v_pending_signup record;
@@ -65,13 +67,21 @@ begin
     )
     returning id into v_empresa_id;
 
-    v_first_name := coalesce(v_meta_nome, split_part(NEW.email, '@', 1));
+    -- Self-serve coleta o nome num campo só. Quebra em first/last (primeiro token e
+    -- o resto) para o onboarding já vir preenchido e o dono só confirmar o sobrenome.
+    v_nome_completo := coalesce(v_meta_nome, split_part(NEW.email, '@', 1));
+    v_first_name := split_part(v_nome_completo, ' ', 1);
+    if position(' ' in v_nome_completo) > 0 then
+      v_last_name := nullif(trim(substring(v_nome_completo from position(' ' in v_nome_completo) + 1)), '');
+    else
+      v_last_name := null;
+    end if;
 
     insert into public.profiles (
-      id, empresa_id, first_name, email, contato, role, features, onboarding_completed
+      id, empresa_id, first_name, last_name, email, contato, role, features, onboarding_completed
     )
     values (
-      NEW.id, v_empresa_id, v_first_name, NEW.email, v_telefone, 'admin', '{}'::jsonb, false
+      NEW.id, v_empresa_id, v_first_name, v_last_name, NEW.email, v_telefone, 'admin', '{}'::jsonb, false
     );
 
     -- Trial de 14 dias no plano padrão (o em destaque; senão o de menor ordem ativo).
