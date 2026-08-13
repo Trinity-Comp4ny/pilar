@@ -75,12 +75,14 @@ Proibido: `bg-red-100`, `text-amber-700`, `bg-blue-500` e afins em página ou co
 Peças oficiais em uso. Use estas, não remonte à mão.
 
 ### Layout de página
-- **`PilarPage`** (`src/components/PilarPage.tsx`): envelope oficial. Junta `PageLayout` + `PageHeader`. Props: `title`, `breadcrumbs`, `search`, `primaryAction`, `actions` (secundárias), `sidebar`, `className`, `containerClassName`, `children`. É o caminho padrão de toda página nova.
-- **`PageLayout`** / **`PageHeader`** (`src/components/`): as peças que o `PilarPage` compõe. Use direto só em caso especial (header totalmente custom).
+- **`PageLayout`** (`src/components/PageLayout.tsx`): shell fixo, padding responsivo, foco/anúncio a11y em troca de rota. Props: `header`, `sidebar`, `children`, `className`, `containerClassName`.
+- **`PageHeader`** (`src/components/PageHeader.tsx`): header fino de 56px. Props: `title`, `breadcrumbs`, `search` (controlada pela página), `primaryAction` (com `feature` gateia por permissão), `children` (ações secundárias). Atalho `/` foca a busca.
+
+> Hoje as duas são montadas juntas à mão. A peça `PilarPage` (seção 5) junta as duas. Até ela existir, use o par.
 
 ### Modais
-- **`FormDialog`** (`src/components/FormDialog.tsx`): modal de formulário padrão. Props: `open`, `onOpenChange`, `title`, `description?`, `size?: "sm" | "md" | "lg"`, `onSubmit`, `submitLabel?`, `cancelLabel?`, `submitVariant?`, `isPending?`, `submitDisabled?`, `children`. Padroniza largura, footer Cancelar/Salvar, scroll e estado de envio. Não monte `DialogContent` + footer à mão.
-- **`ConfirmDialog`** (`src/components/ConfirmDialog.tsx`): confirmação destrutiva. Props: `open`, `onOpenChange`, `onConfirm`, `title`, `description`, `itemName?`, `confirmText?`, `variant?`, `loading?`. **Toda exclusão passa por aqui.** Não monte `AlertDialogContent` cru.
+- **`ConfirmDialog`** (`src/components/ConfirmDialog.tsx`): confirmação destrutiva. Props: `open`, `onOpenChange`, `onConfirm`, `title`, `description`, `itemName?`, `confirmText?`, `variant?: "default" | "destructive"`, `loading?`. **Toda exclusão passa por aqui.** Não monte `AlertDialogContent` cru.
+- Primitivos shadcn: `Dialog`/`DialogContent`/`DialogHeader`/`DialogFooter` em `src/components/ui/dialog.tsx`. Para modal de formulário, use o `FormDialog` (seção 5) quando existir; até lá, siga a escala de largura da seção 6.
 
 ### Estado da tela
 - **`EmptyState`** (`src/components/EmptyState.tsx`): vazio orientado à ação. Props: `icon?`, `title`, `description?`, `action?`, `children?`.
@@ -96,7 +98,7 @@ Peças oficiais em uso. Use estas, não remonte à mão.
 - **`MoneyInput`** / **`NumberInput`** / **`PercentInput`** (`src/components/forms/`): inputs com máscara. Use em todo campo de dinheiro/número/percentual, nunca `<Input>` cru com parse à mão.
 
 ### Botão e badge (variants, não className)
-- **`Button`** (`src/components/ui/button.tsx`): sem variant = `brand` (verde, ação primária). Outras: `outline`, `ghost`, `destructive`, `secondary`, `link`. Tem prop `loading`. **Nunca** `<Button className="bg-brand ...">`, isso reaplica o default e o ESLint barra.
+- **`Button`** (`src/components/ui/button.tsx`): sem variant = `brand` (verde, ação primária). Outras: `outline`, `ghost`, `destructive`, `secondary`. **Nunca** `<Button className="bg-brand ...">`, isso reaplica o default e o ESLint barra.
 - **`Badge`** (`src/components/ui/badge.tsx`): variants semânticas `brand | success | warning | info | attention | highlight | danger | neutral`. Para status de domínio, prefira `StatusBadge`.
 
 ### Tabela
@@ -110,9 +112,60 @@ Peças oficiais em uso. Use estas, não remonte à mão.
 
 ---
 
-## 5. Escala de largura de modal (decisão congelada)
+## 5. Peças a construir (as duas que faltam)
 
-Pare de escolher `max-w-*` caso a caso. A escala oficial do `FormDialog` é:
+Estas ainda não existem. São composição do que já temos, sem decisão de arquitetura nova. Quando um agente precisar de página ou modal de form, é isto que ele deve usar (e criar, se ainda não existir).
+
+### `PilarPage` (envelopa PageLayout + PageHeader)
+```ts
+interface PilarPageProps {
+  title: string;
+  breadcrumbs?: Array<{ label: string; to?: string; onClick?: () => void }>;
+  search?: { value: string; onChange: (v: string) => void; placeholder?: string };
+  primaryAction?: { label: string; onClick: () => void; icon?: LucideIcon; feature?: Feature };
+  actions?: React.ReactNode;      // ações secundárias (children do PageHeader)
+  sidebar?: React.ReactNode;
+  className?: string;
+  containerClassName?: string;
+  children: React.ReactNode;
+}
+```
+Migração típica (elimina 2 imports e o slot manual):
+```tsx
+// antes
+<PageLayout header={<PageHeader title="Clientes" search={...} primaryAction={...} />}>
+  <ClientesTable />
+</PageLayout>
+
+// depois
+<PilarPage title="Clientes" search={...} primaryAction={...}>
+  <ClientesTable />
+</PilarPage>
+```
+
+### `FormDialog` (modal de formulário padrão)
+```ts
+interface FormDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  title: string;
+  description?: React.ReactNode;
+  size?: "sm" | "md" | "lg";              // ver escala na seção 6
+  onSubmit: () => void;
+  submitLabel?: string;                   // default "Salvar"
+  cancelLabel?: string;                   // default "Cancelar"
+  submitVariant?: "brand" | "destructive"; // default "brand"
+  isPending?: boolean;                    // trava botões + spinner
+  children: React.ReactNode;              // corpo do formulário
+}
+```
+Padroniza de uma vez: largura, footer Cancelar/Salvar, `max-h-[90vh] overflow-y-auto` e o estado de envio. Ataca ~86 modais montados à mão hoje.
+
+---
+
+## 6. Escala de largura de modal (decisão congelada)
+
+Pare de escolher `max-w-*` caso a caso. Hoje há 9 larguras diferentes no código. A escala oficial é:
 
 | `size` | Largura | Usar para |
 |---|---|---|
@@ -124,7 +177,7 @@ Precisa de mais que `lg`? Não é modal, é página. Larguras fora dessa escala 
 
 ---
 
-## 6. Receitas (o caminho único para tarefas comuns)
+## 7. Receitas (o caminho único para tarefas comuns)
 
 **Criar uma página de lista** → `PilarPage` com `title`, `search`, `primaryAction` (com `feature`). Conteúdo em `DataTable`. Vazio com `EmptyState`. Loading com `TableSkeleton`.
 
@@ -142,16 +195,6 @@ Precisa de mais que `lg`? Não é modal, é página. Larguras fora dessa escala 
 
 ---
 
-## 7. Guia para agentes de IA
-
-Ao pedir uma tela ao Claude/Codex, use este vocabulário em vez de "faça uma tela bonita":
-
-> Use `PilarPage`. Ação primária é a `primaryAction` (variant brand, gateada por `feature`). Lista em `DataTable`. Vazio em `EmptyState`. Formulário em `FormDialog size="md"`, dinheiro em `MoneyInput`, validação Zod com erro inline. Status via `StatusBadge` do registry. Dinheiro/data via `@/lib/format`. Exclusão via `ConfirmDialog`. Zero cor crua: só token de `tokens.css`.
-
-Regra para o agente ao mexer em tela legada: **tocou de forma significativa, migra para o padrão.** Não faça refatoração de 50 telas de uma vez; migre por impacto ao passar por elas.
-
----
-
 ## 8. Enforcement (o que o CI barra)
 
 O `eslint.config.js` já tem regras `no-restricted-syntax` que barram a deriva em `src/pages/**` e `src/components/**` (exceto `ui/` e `landing/`):
@@ -161,7 +204,7 @@ O `eslint.config.js` já tem regras `no-restricted-syntax` que barram a deriva e
 3. Cor primitiva Tailwind (`bg/text/border-{emerald|red|amber|blue|slate|gray|...}-NNN`) → use token semântico.
 4. `new Intl.NumberFormat` direto → importe de `@/lib/format`.
 
-**Estado atual: severidade `warn`.** Meta (ADR 0008 D5): subir para `error` (bloqueia merge) e adicionar a regra "proibido `import { supabase }` em `src/pages/**`". A subida para `error` está **gated**: só depois de zerar os violadores existentes (itens 3-6 do backlog), senão o CI reprova todo PR. Enquanto for `warn`, a deriva ainda entra.
+**Estado atual: severidade `warn`.** Meta (ADR 0008 D5): subir para `error` (bloqueia merge) e adicionar a regra "proibido `import { supabase }` em `src/pages/**`" (o acesso a dados vive em hooks/queries, não na página). Enquanto for `warn`, a deriva ainda entra.
 
 ---
 
@@ -175,25 +218,34 @@ Regra dos 3 usos. Ao ver o mesmo padrão pela terceira vez:
 
 ---
 
-## 10. Fora de escopo (não padronizar agora)
+## 10. Guia para agentes de IA
+
+Ao pedir uma tela ao Claude/Codex, use este vocabulário em vez de "faça uma tela bonita":
+
+> Use `PilarPage`. Ação primária é a `primaryAction` (variant brand, gateada por `feature`). Lista em `DataTable`. Vazio em `EmptyState`. Formulário em `FormDialog size="md"`, dinheiro em `MoneyInput`, validação Zod com erro inline. Status via `StatusBadge` do registry. Dinheiro/data via `@/lib/format`. Exclusão via `ConfirmDialog`. Zero cor crua: só token de `tokens.css`.
+
+Regra para o agente ao mexer em tela legada: **tocou de forma significativa, migra para o padrão.** Não faça refatoração de 50 telas de uma vez; migre por impacto ao passar por elas.
+
+---
+
+## 11. Fora de escopo (não padronizar agora)
 
 O ADR 0008 fecha o escopo. Ficam de fora: DataTable genérico além do que existe, form engine próprio, telas dormentes (Projeção de caixa, Aging, DRE, WIP, Timesheet, Capacidade), a landing (marketing), e os cards do chat. Não invista esforço de padronização nesses até haver demanda.
 
 ---
 
-## 11. Backlog de padronização (por impacto)
+## 12. Backlog de padronização (por impacto)
 
 | # | Ação | Estado |
 |---|---|---|
-| 1 | Criar `PilarPage` e `FormDialog` | feito (esta leva) |
-| 2 | Adotar `PilarPage`/`FormDialog` nas telas | em curso (4 telas em `PilarPage`) |
+| 1 | Subir ESLint de `warn` para `error` + regra `supabase` em `pages/` | pendente |
+| 2 | Criar `FormDialog` e `PilarPage` | pendente |
 | 3 | Espalhar `MoneyInput`/`NumberInput`/`PercentInput` (10 telas hoje) | em curso |
-| 4 | Migrar mapas de status locais para o registry | avançado: render-sites já consomem o registry; resta prioridade (sem token, ADR D6) e domínios novos (contrato, pessoa, entrega) |
-| 5 | Matar defs locais de moeda e datas à mão | avançado: ~24 arquivos migrados para `@/lib/format` |
+| 4 | Migrar mapas de status locais (~27 arquivos) para o registry | em curso |
+| 5 | Matar defs locais de moeda (~25) e datas à mão (~38 arquivos) | em curso |
 | 6 | Adotar `DataTable` nas listas grandes (Receitas, Despesas, Pessoas) | pendente |
-| 7 | Subir ESLint de `warn` para `error` + regra `supabase` em `pages/` (após 3-6) | pendente (ainda há cor crua residual, parte intencional) |
-| 8 | Migrar `useFinanceItems` (teto de 2000) para `useLancamentosPaginados` | pendente |
-| 9 | Extrair `useTimelineDrag` (dedup do motor de Gantt) | pendente |
-| 10 | Criar `/dev/ui` + visual regression no Playwright existente | pendente |
+| 7 | Migrar `useFinanceItems` (teto de 2000) para `useLancamentosPaginados` | pendente |
+| 8 | Extrair `useTimelineDrag` (dedup do motor de Gantt) | pendente |
+| 9 | Criar `/dev/ui` + visual regression no Playwright existente | pendente |
 
 Manter esta tabela viva conforme os itens fecham.
