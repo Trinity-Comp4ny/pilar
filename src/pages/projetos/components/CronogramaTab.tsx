@@ -6,6 +6,17 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Calendar, User, AlertTriangle, Layers, ZoomIn, ZoomOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
+  type ZoomLevel,
+  parseDate,
+  addDays,
+  diffDays,
+  endOfMonth,
+  snapToBoundary,
+  generateColumns,
+  barPosition,
+  toIso,
+} from "@/lib/cronograma";
+import {
   type DisciplinaResponsavel,
   isDiscAtrasada,
   getDiscDeadlineStatus,
@@ -20,7 +31,6 @@ interface CronogramaTabProps {
   onDisciplinaClick?: (disc: DisciplinaResponsavel) => void;
 }
 
-type ZoomLevel = "months" | "weeks";
 type DragType = "left" | "right" | "move";
 
 interface DragState {
@@ -56,45 +66,6 @@ const STATUS_COLORS: Record<string, { bar: string; text: string; bg: string }> =
   "Não Iniciado": { bar: "bg-status-unknown", text: "text-ink-muted", bg: "bg-muted" },
 };
 
-function parseDate(d: string | undefined): Date | null {
-  if (!d) return null;
-  const date = new Date(d + "T00:00:00");
-  return isNaN(date.getTime()) ? null : date;
-}
-
-function addDays(date: Date, days: number): Date {
-  const result = new Date(date);
-  result.setDate(result.getDate() + days);
-  return result;
-}
-
-function diffDays(a: Date, b: Date): number {
-  return Math.round((b.getTime() - a.getTime()) / (1000 * 60 * 60 * 24));
-}
-
-function startOfMonth(date: Date): Date {
-  return new Date(date.getFullYear(), date.getMonth(), 1);
-}
-
-function endOfMonth(date: Date): Date {
-  return new Date(date.getFullYear(), date.getMonth() + 1, 0);
-}
-
-function startOfWeek(date: Date): Date {
-  const d = new Date(date);
-  const day = d.getDay();
-  d.setDate(d.getDate() - (day === 0 ? 6 : day - 1));
-  return d;
-}
-
-function formatMonthYear(date: Date): string {
-  return date.toLocaleDateString("pt-BR", { month: "short", year: "numeric" });
-}
-
-function formatWeekLabel(date: Date): string {
-  return date.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
-}
-
 function formatDateBR(d: string | undefined | Date): string {
   if (!d) return "—";
   const date = typeof d === "string" ? new Date(d + "T00:00:00") : d;
@@ -103,67 +74,6 @@ function formatDateBR(d: string | undefined | Date): string {
 
 function formatDateShort(d: Date): string {
   return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
-}
-
-function toIso(date: Date): string {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-}
-
-const SNAP_BOUNDARY_MONTHS = 4;
-const SNAP_BOUNDARY_WEEKS = 2;
-
-function snapToBoundary(date: Date, zoomLevel: ZoomLevel): Date {
-  if (zoomLevel === "months") {
-    const som = startOfMonth(date);
-    const nextMonth = new Date(date.getFullYear(), date.getMonth() + 1, 1);
-    if (Math.abs(diffDays(som, date)) <= SNAP_BOUNDARY_MONTHS) return som;
-    if (Math.abs(diffDays(nextMonth, date)) <= SNAP_BOUNDARY_MONTHS) return nextMonth;
-  } else {
-    const sow = startOfWeek(date);
-    const nextWeek = addDays(sow, 7);
-    if (Math.abs(diffDays(sow, date)) <= SNAP_BOUNDARY_WEEKS) return sow;
-    if (Math.abs(diffDays(nextWeek, date)) <= SNAP_BOUNDARY_WEEKS) return nextWeek;
-  }
-  return date;
-}
-
-interface TimelineColumn {
-  label: string;
-  start: Date;
-  end: Date;
-}
-
-function generateColumns(timelineStart: Date, timelineEnd: Date, zoom: ZoomLevel): TimelineColumn[] {
-  const cols: TimelineColumn[] = [];
-
-  if (zoom === "months") {
-    let current = startOfMonth(timelineStart);
-    while (current <= timelineEnd) {
-      const monthEnd = endOfMonth(current);
-      cols.push({
-        label: formatMonthYear(current),
-        start: new Date(current),
-        end: monthEnd > timelineEnd ? new Date(timelineEnd) : monthEnd,
-      });
-      current = new Date(current.getFullYear(), current.getMonth() + 1, 1);
-    }
-  } else {
-    let current = startOfWeek(timelineStart);
-    while (current <= timelineEnd) {
-      const weekEnd = addDays(current, 6);
-      cols.push({
-        label: formatWeekLabel(current),
-        start: new Date(current),
-        end: weekEnd > timelineEnd ? new Date(timelineEnd) : weekEnd,
-      });
-      current = addDays(current, 7);
-    }
-  }
-
-  return cols;
 }
 
 export function CronogramaTab({
@@ -261,15 +171,13 @@ export function CronogramaTab({
       let leftPct = 0;
       let widthPct = 0;
 
-      if (start && end && totalDays > 0) {
-        leftPct = Math.max(0, (diffDays(tlStart, start) / totalDays) * 100);
-        widthPct = Math.max(1, (diffDays(start, end) / totalDays) * 100);
+      if (start && end) {
+        ({ leftPct, widthPct } = barPosition(start, end, tlStart, tlEnd));
       } else if (start && totalDays > 0) {
         leftPct = Math.max(0, (diffDays(tlStart, start) / totalDays) * 100);
         widthPct = 2;
+        if (leftPct + widthPct > 100) widthPct = 100 - leftPct;
       }
-
-      if (leftPct + widthPct > 100) widthPct = 100 - leftPct;
 
       return { disc, start, end, resps, atrasada, deadlineStatus, status, colors, leftPct, widthPct, beyondProjectEnd };
     });
@@ -502,10 +410,7 @@ export function CronogramaTab({
     const end = override ? override.end : rows[rowIdx].end;
     if (!start || !end) return null;
 
-    const leftPct = Math.max(0, (diffDays(timelineStart, start) / totalDays) * 100);
-    let widthPct = Math.max(1, (diffDays(start, end) / totalDays) * 100);
-    if (leftPct + widthPct > 100) widthPct = 100 - leftPct;
-
+    const { leftPct, widthPct } = barPosition(start, end, timelineStart, timelineEnd);
     return { leftPct, widthPct, start, end };
   };
 
