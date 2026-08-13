@@ -59,5 +59,18 @@ export default defineConfig(({ mode }) => ({
       VITE_SUPABASE_URL: "https://test.supabase.co",
       VITE_SUPABASE_PUBLISHABLE_KEY: "test-anon-key",
     },
+    coverage: {
+      provider: "v8",
+      reporter: ["text", "html", "json-summary"],
+      // Foco onde a corretude importa e dá pra medir: regras de negócio (lib) e o
+      // módulo financeiro. Não medimos o app inteiro ainda; a meta é ter número
+      // de linha de base antes de exigir piso no CI.
+      include: ["src/lib/**", "src/pages/financeiro/**"],
+      // Ainda sem `thresholds` que reprovem o CI: primeiro medir, depois travar.
+      // Quando a base estiver mapeada, subir um piso para o financeiro, ex.:
+      // thresholds: {
+      //   "src/pages/financeiro/**": { statements: 20, branches: 20, functions: 20, lines: 20 },
+      // },
+    },
   },
 }));
