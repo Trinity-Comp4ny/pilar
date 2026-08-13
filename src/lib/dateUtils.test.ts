@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { isInvalidDate, getDisplayDate, formatDateDisplay } from "./dateUtils";
+import { isInvalidDate, getDisplayDate, formatDateDisplay, formatDate, formatDateShort } from "./dateUtils";
 
 describe("isInvalidDate", () => {
   it("returns true for null/undefined/empty", () => {
@@ -59,5 +59,30 @@ describe("formatDateDisplay", () => {
   it("returns - for null/undefined", () => {
     expect(formatDateDisplay(null)).toBe("-");
     expect(formatDateDisplay(undefined)).toBe("-");
+  });
+});
+
+describe("formatDate — fuso (data pura sem deslocar o dia)", () => {
+  it("formata YYYY-MM-DD como dd/mm/aaaa local, sem cair pro dia anterior", () => {
+    // Parse com "T00:00:00" força hora local; sem isso, em UTC-3 a data virava o
+    // dia anterior (ex.: 01/03 aparecia 28/02).
+    expect(formatDate("2026-03-01")).toBe("01/03/2026");
+    expect(formatDate("2026-12-31")).toBe("31/12/2026");
+  });
+
+  it("traço para nulo/vazio", () => {
+    expect(formatDate(null)).toBe("-");
+    expect(formatDate(undefined)).toBe("-");
+    expect(formatDate("")).toBe("-");
+  });
+});
+
+describe("formatDateShort", () => {
+  it("formata só dia/mês", () => {
+    expect(formatDateShort("2026-03-01")).toBe("01/03");
+  });
+
+  it("traço para nulo", () => {
+    expect(formatDateShort(null)).toBe("-");
   });
 });
