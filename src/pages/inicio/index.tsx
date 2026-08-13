@@ -11,6 +11,7 @@ import { useAlertasClimaObras } from "@/hooks/useAlertasClima";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { KPICard } from "@/components/KPICard";
+import { DataFrescor } from "@/components/DataFrescor";
 import { ProjectRow } from "./components/ProjectRow";
 import { LeadsFunnel } from "./components/LeadsFunnel";
 import { CalendarioPreview } from "@/pages/projetos/components/CalendarioPreview";
@@ -98,7 +99,7 @@ export default function Inicio() {
   const navigate = useNavigate();
   const { profile } = useAuth();
   const { can } = usePermissions();
-  const { data, isLoading } = useDashboardData();
+  const { data, isLoading, isFetching, dataUpdatedAt, refetch } = useDashboardData();
   const [pergunta, setPergunta] = useState("");
 
   const primeiroNome = profile?.first_name || null;
@@ -195,7 +196,13 @@ export default function Inicio() {
   };
 
   return (
-    <PageLayout header={<PageHeader title="Início" />}>
+    <PageLayout
+      header={
+        <PageHeader title="Início">
+          <DataFrescor updatedAt={dataUpdatedAt} isFetching={isFetching} onRefresh={() => void refetch()} />
+        </PageHeader>
+      }
+    >
       {/* Saudação enxuta + faixa de KPIs: o número é o herói da primeira dobra (voto do time + ICP). */}
       <section aria-label="Indicadores" className="pt-1">
         <p className="text-sm text-ink-muted mb-4">{saudacao(primeiroNome)}</p>

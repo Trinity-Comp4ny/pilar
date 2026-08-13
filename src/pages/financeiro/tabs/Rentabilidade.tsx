@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { KPICard } from "@/components/KPICard";
+import { DataFrescor } from "@/components/DataFrescor";
 import { formatCurrency as fmtMoeda } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -242,7 +243,7 @@ export default function Rentabilidade() {
 }
 
 function RentabilidadePorClienteTab() {
-  const { data, isLoading } = useRentabilidadePorCliente();
+  const { data, isLoading, isFetching, dataUpdatedAt, refetch } = useRentabilidadePorCliente();
 
   if (isLoading) {
     return (
@@ -275,6 +276,9 @@ function RentabilidadePorClienteTab() {
 
   return (
     <div className="space-y-6">
+      <div className="flex justify-end">
+        <DataFrescor updatedAt={dataUpdatedAt} isFetching={isFetching} onRefresh={() => void refetch()} />
+      </div>
       {clienteConcentrado && (
         <Card className="border-warning-mid-border bg-warning-soft">
           <CardContent className="p-4 flex items-center gap-3">

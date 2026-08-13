@@ -3,6 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { ArrowDownCircle, ArrowUp, ArrowUpDown, ArrowDown } from "lucide-react";
 import { toast } from "sonner";
+import { getSafeErrorMessage } from "@/lib/safeError";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
@@ -236,7 +237,9 @@ export function LancamentosTable({ resumo, filters, onFiltersChange, onMutated }
         p_observacao: null,
       } as never);
       if (error) {
-        toast.error("Falha ao atualizar status", { description: error.message });
+        toast.error("Falha ao atualizar status", {
+          description: getSafeErrorMessage(error, "Tente novamente em instantes."),
+        });
         return;
       }
       toast.success("Status atualizado");
