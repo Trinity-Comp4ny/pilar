@@ -60,6 +60,14 @@ usar, o que é proibido). Regras que valem sempre:
   Exclusão via `ConfirmDialog`. Campo de dinheiro via `MoneyInput`.
 - Componente genérico faltando e repetido 3+ vezes: promover (regra dos 3 usos,
   ADR 0008), não copiar. Regra de domínio: escrever à mão.
+- Tabela plana (listagem com ordenação/seleção) usa `DataTable`
+  (`src/components/data/DataTable.tsx`, sobre `@tanstack/react-table`), não
+  `<table>` à mão. Empty/erro ricos via os slots `emptyState`/`errorState`.
+  Exceção: tabela server-side + agrupada + scroll infinito (ex. `LancamentosTable`)
+  fica custom. Matemática de timeline/Gantt vem de `src/lib/cronograma.ts`, nunca
+  reimplementada na tela. Ver [ADR 0020](docs/architecture/adr/0020-headless-sim-widget-estilizado-nao.md)
+  e [SPEC 041](docs/specs/041-adocao-tanstack-table-e-consolidacao-gantt-kanban.md):
+  headless (TanStack/dnd-kit) sim, widget estilizado (DHTMLX/ag-Grid) não.
 
 ## Documentação
 
