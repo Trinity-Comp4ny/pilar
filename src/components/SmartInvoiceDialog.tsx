@@ -4,6 +4,7 @@ import { addMonths, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Loader2, Receipt, Calendar, Milestone, PenLine } from "lucide-react";
 import { toast } from "sonner";
+import { getSafeErrorMessage } from "@/lib/safeError";
 
 import {
   Dialog,
@@ -148,7 +149,10 @@ export function SmartInvoiceDialog({ open, onClose, projetoId, propostaValor, pr
       await queryClient.invalidateQueries({ queryKey: ["marcos-faturamento", projetoId] });
       onClose();
     },
-    onError: (err) => toast.error(err instanceof Error ? err.message : "Erro ao criar faturas"),
+    onError: (err) =>
+      toast.error("Não foi possível criar as faturas", {
+        description: getSafeErrorMessage(err, "Confira os dados e tente de novo."),
+      }),
   });
 
   const handleConfirmar = () => criar.mutate();

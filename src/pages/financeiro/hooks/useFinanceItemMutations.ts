@@ -3,6 +3,7 @@ import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { errorMessage } from "@/lib/errors";
+import { getSafeErrorMessage } from "@/lib/safeError";
 import type { DespesaFormData } from "@/schemas/despesaSchema";
 import type { ReceitaFormData } from "@/schemas/receitaSchema";
 import { FINANCE_ITEMS_KEYS, type FinanceItemTipo, type DespesaItem, type ReceitaItem } from "./useFinanceItems";
@@ -78,7 +79,9 @@ async function saveDespesaImpl({ formData, selected, cartoes }: SaveDespesaArgs)
           p_ano: billingYear,
         });
         if (faturaError) {
-          toast.error("Erro ao associar fatura do cartão", { description: faturaError.message });
+          toast.error("Não foi possível associar a fatura do cartão", {
+            description: getSafeErrorMessage(faturaError, "A despesa foi salva. Tente associar de novo em instantes."),
+          });
         }
       }
     }

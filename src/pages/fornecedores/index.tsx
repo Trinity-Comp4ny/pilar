@@ -16,6 +16,7 @@ import { usePageTitle } from "@/hooks/usePageTitle";
 import { usePermissions } from "@/hooks/usePermissions";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { getSafeErrorMessage } from "@/lib/safeError";
 import { formatCNPJ, formatPhone, onlyDigits, validateEmail } from "@/lib/maskUtils";
 import { isValidCNPJ } from "@/lib/brasilApi";
 import { ReconciliarDialog } from "./ReconciliarDialog";
@@ -67,7 +68,9 @@ export default function Fornecedores() {
     const { data, error } = await supabase.from("fornecedores").select("*").order("nome");
     if (error) {
       setLoadError(true);
-      toast.error("Erro ao carregar fornecedores");
+      toast.error("Não foi possível carregar os fornecedores", {
+        description: getSafeErrorMessage(error, "Atualize a página em instantes."),
+      });
       return;
     }
     setLoadError(false);
@@ -190,7 +193,9 @@ export default function Fornecedores() {
       if (message.includes("unique") || message.includes("duplicate") || message.includes("fornecedores_cnpj")) {
         toast.error("CNPJ já cadastrado para outro fornecedor");
       } else {
-        toast.error("Erro ao salvar fornecedor");
+        toast.error("Não foi possível salvar o fornecedor", {
+          description: getSafeErrorMessage(err, "Confira os dados e tente de novo."),
+        });
       }
     } finally {
       setIsSaving(false);
@@ -210,7 +215,9 @@ export default function Fornecedores() {
     // como cliente/lead — o delete é recuperável (ACH-FOR-01).
     const { error } = await supabase.from("fornecedores").update({ deleted_at: new Date().toISOString() }).eq("id", id);
     if (error) {
-      toast.error("Erro ao excluir fornecedor");
+      toast.error("Não foi possível excluir o fornecedor", {
+        description: getSafeErrorMessage(error, "Tente de novo em instantes."),
+      });
       return;
     }
     toast.success("Fornecedor excluído", {
@@ -218,7 +225,10 @@ export default function Fornecedores() {
         label: "Desfazer",
         onClick: async () => {
           const { error: restoreError } = await supabase.from("fornecedores").update({ deleted_at: null }).eq("id", id);
-          if (restoreError) toast.error("Erro ao restaurar fornecedor");
+          if (restoreError)
+            toast.error("Não foi possível restaurar o fornecedor", {
+              description: getSafeErrorMessage(restoreError, "Tente de novo em instantes."),
+            });
           else {
             toast.success("Fornecedor restaurado");
             fetchFornecedores();

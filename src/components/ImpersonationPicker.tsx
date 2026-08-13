@@ -1,4 +1,5 @@
 import { toast } from "sonner";
+import { getSafeErrorMessage } from "@/lib/safeError";
 import {
   DropdownMenuSub,
   DropdownMenuSubContent,
@@ -32,7 +33,11 @@ export function ImpersonationPicker() {
           description: 'Use "Sair da visualização" para voltar ao seu acesso.',
         })
       )
-      .catch((err) => toast.error(err instanceof Error ? err.message : "Falha ao iniciar visualização"));
+      .catch((err) =>
+        toast.error("Não foi possível iniciar a visualização", {
+          description: getSafeErrorMessage(err, "Tente de novo em instantes."),
+        })
+      );
   };
 
   return (

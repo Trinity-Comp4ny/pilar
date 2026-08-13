@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Upload, FileText, Trash2, Loader2, Eye } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
 import { toast } from "sonner";
+import { getSafeErrorMessage } from "@/lib/safeError";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import {
   usePropostaTemplates,
@@ -56,7 +57,10 @@ export function TemplatesManager() {
           toast.success("Template salvo", { description: `${data.variaveis.length} variáveis detectadas` });
           resetForm();
         },
-        onError: (err: Error) => toast.error("Erro", { description: err.message }),
+        onError: (err: Error) =>
+          toast.error("Não foi possível salvar o template", {
+            description: getSafeErrorMessage(err, "Confira o arquivo e tente de novo."),
+          }),
       }
     );
   };
@@ -68,7 +72,10 @@ export function TemplatesManager() {
         toast.success("Template removido");
         setDeleteId(null);
       },
-      onError: (err: Error) => toast.error("Não foi possível remover o template", { description: err.message }),
+      onError: (err: Error) =>
+        toast.error("Não foi possível remover o template", {
+          description: getSafeErrorMessage(err, "Tente de novo em instantes."),
+        }),
     });
   };
 

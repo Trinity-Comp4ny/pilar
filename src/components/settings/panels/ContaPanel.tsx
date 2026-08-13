@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { toast } from "sonner";
+import { getSafeErrorMessage } from "@/lib/safeError";
 import { User, Mail, Phone, Building2, Rocket } from "lucide-react";
 import { formatPhone } from "@/lib/maskUtils";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -74,8 +75,10 @@ export function ContaPanel() {
       setEditing(false);
       toast.success("Conta atualizada", { description: "Suas informações foram salvas com sucesso" });
       void refreshProfile();
-    } catch {
-      toast.error("Erro ao salvar");
+    } catch (err) {
+      toast.error("Não foi possível salvar", {
+        description: getSafeErrorMessage(err, "Confira os dados e tente de novo."),
+      });
     }
   };
 

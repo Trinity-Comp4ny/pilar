@@ -11,6 +11,7 @@ import { Plus, Trash2, Loader2, FileText, CheckCircle2, XCircle, Clock, ChevronD
 import { EmptyState } from "@/components/EmptyState";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { getSafeErrorMessage } from "@/lib/safeError";
 import { supabase } from "@/integrations/supabase/client";
 import { formatCurrency, formatValorToInput, parseCurrencyString } from "@/lib/currencyUtils";
 import { MoneyInput } from "@/components/forms/MoneyInput";
@@ -209,7 +210,10 @@ export function EscopoTab({ projetoId, canEdit }: EscopoTabProps) {
       toast.success(formTipo === "original" ? "Escopo original definido" : "Aditivo criado");
       resetForm();
     },
-    onError: (err) => toast.error(err instanceof Error ? err.message : "Não foi possível salvar o escopo"),
+    onError: (err) =>
+      toast.error("Não foi possível salvar o escopo", {
+        description: getSafeErrorMessage(err, "Confira os dados e tente de novo."),
+      }),
   });
 
   const updateStatusMutation = useMutation({
