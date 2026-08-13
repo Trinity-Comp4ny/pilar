@@ -11,7 +11,8 @@ import { Plus, Trash2, Loader2, FileText, CheckCircle2, XCircle, Clock, ChevronD
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { formatCurrency } from "@/lib/currencyUtils";
+import { formatCurrency, formatValorToInput, parseCurrencyString } from "@/lib/currencyUtils";
+import { MoneyInput } from "@/components/forms/MoneyInput";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { TONE_BADGE } from "@/lib/status";
 
@@ -77,7 +78,7 @@ export function EscopoTab({ projetoId, canEdit }: EscopoTabProps) {
   // (custo + 30%). Depois de tocado, respeita o valor informado.
   useEffect(() => {
     if (formTipo === "aditivo" && !valorAditivoTouched) {
-      setFormValorAditivo(sugeridoAditivo > 0 ? String(sugeridoAditivo) : "");
+      setFormValorAditivo(sugeridoAditivo > 0 ? formatValorToInput(sugeridoAditivo) : "");
     }
   }, [sugeridoAditivo, formTipo, valorAditivoTouched]);
 
@@ -157,7 +158,7 @@ export function EscopoTab({ projetoId, canEdit }: EscopoTabProps) {
       const totalHoras = formItens.reduce((s, i) => s + i.horas, 0);
       const totalCusto = formItens.reduce((s, i) => s + i.custo, 0);
       // Valor do aditivo é editável: usa o informado; se vazio, cai na sugestão (custo + 30%).
-      const valorAditivo = formTipo === "aditivo" ? parseFloat(formValorAditivo) || totalCusto * 1.3 : totalCusto * 1.3;
+      const valorAditivo = formTipo === "aditivo" ? parseCurrencyString(formValorAditivo) || totalCusto * 1.3 : totalCusto * 1.3;
 
       const { data: escopo, error } = await supabase
         .from("escopos")
@@ -542,17 +543,13 @@ export function EscopoTab({ projetoId, canEdit }: EscopoTabProps) {
             {formTipo === "aditivo" && (
               <div className="space-y-1.5">
                 <Label htmlFor="valorAditivo">Valor do aditivo (R$)</Label>
-                <Input
+                <MoneyInput
                   id="valorAditivo"
-                  type="number"
-                  step="0.01"
-                  min="0"
                   value={formValorAditivo}
-                  onChange={(e) => {
-                    setFormValorAditivo(e.target.value);
+                  onChange={(v) => {
+                    setFormValorAditivo(v);
                     setValorAditivoTouched(true);
                   }}
-                  placeholder={sugeridoAditivo > 0 ? String(sugeridoAditivo) : "0,00"}
                 />
                 <p className="text-[10px] text-muted-foreground">
                   Sugestão (custo + 30% de margem): {formatCurrency(sugeridoAditivo)}. Ajuste conforme o negociado.
