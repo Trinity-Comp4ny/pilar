@@ -81,7 +81,10 @@ export function useUpdateObraTarefa(obraId: string) {
       id,
       ...patch
     }: { id: string } & Partial<
-      Pick<TarefaRow, "status" | "titulo" | "responsavel_id" | "data_inicio" | "prazo" | "obra_frente_id">
+      Pick<
+        TarefaRow,
+        "status" | "titulo" | "responsavel_id" | "data_inicio" | "prazo" | "obra_frente_id" | "sensivel_clima" | "sinalizada"
+      >
     >): Promise<void> => {
       const { error } = await supabase.from("tarefas").update(patch).eq("id", id);
       if (error) throw error;

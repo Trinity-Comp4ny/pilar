@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { toast } from "sonner";
-import { Plus, Trash2, User } from "lucide-react";
+import { CloudRain, Plus, Trash2, User } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { SENSIVEL_CLIMA_OPCOES, sensivelClimaLabel } from "@/lib/obras";
 import { usePessoasEmpresa } from "@/pages/meu-trabalho/hooks";
 import { useUpdateFrente, useDeleteFrente, type ObraFrenteRow } from "@/hooks/useObraFrentes";
 import {
@@ -113,18 +114,22 @@ function AddTarefaForm({
   );
 }
 
+const SEM_CLIMA = "__none__";
+
 function TarefaRow({
   tarefa,
   canEdit,
   onToggle,
   onDelete,
   onUpdateDatas,
+  onSetSensivel,
 }: {
   tarefa: ObraTarefa;
   canEdit: boolean;
   onToggle: (concluida: boolean) => void;
   onDelete: () => void;
   onUpdateDatas: (campos: { data_inicio?: string | null; prazo?: string | null }) => void;
+  onSetSensivel: (tipo: string | null) => void;
 }) {
   const concluida = tarefa.status === "concluida";
 
@@ -164,6 +169,25 @@ function TarefaRow({
       )}
       {canEdit ? (
         <div className="flex items-center gap-1">
+          <Select
+            value={tarefa.sensivel_clima ?? SEM_CLIMA}
+            onValueChange={(v) => onSetSensivel(v === SEM_CLIMA ? null : v)}
+          >
+            <SelectTrigger className="h-7 w-32 text-xs" title="Sensível ao clima">
+              <CloudRain
+                className={tarefa.sensivel_clima ? "h-3.5 w-3.5 text-info-mid" : "h-3.5 w-3.5 text-muted-foreground"}
+              />
+              <SelectValue placeholder="Clima" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={SEM_CLIMA}>Não sensível</SelectItem>
+              {SENSIVEL_CLIMA_OPCOES.map((o) => (
+                <SelectItem key={o.value} value={o.value}>
+                  {o.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <DatePicker
             value={tarefa.data_inicio ?? ""}
             onChange={salvarInicio}
@@ -184,11 +208,19 @@ function TarefaRow({
           </Button>
         </div>
       ) : (
-        (tarefa.data_inicio || tarefa.prazo) && (
-          <span className="text-xs text-muted-foreground">
-            {tarefa.data_inicio ?? "?"} → {tarefa.prazo ?? "?"}
-          </span>
-        )
+        <div className="flex items-center gap-2">
+          {tarefa.sensivel_clima && (
+            <span className="inline-flex items-center gap-1 text-xs text-info-mid">
+              <CloudRain className="h-3.5 w-3.5" />
+              {sensivelClimaLabel(tarefa.sensivel_clima)}
+            </span>
+          )}
+          {(tarefa.data_inicio || tarefa.prazo) && (
+            <span className="text-xs text-muted-foreground">
+              {tarefa.data_inicio ?? "?"} → {tarefa.prazo ?? "?"}
+            </span>
+          )}
+        </div>
       )}
     </div>
   );
@@ -310,6 +342,7 @@ export function FrenteDetailDialog({
                   onToggle={(c) => updateTarefa.mutate({ id: t.id, status: c ? "concluida" : "a_fazer" })}
                   onDelete={() => deleteTarefa.mutate(t.id)}
                   onUpdateDatas={(campos) => updateTarefa.mutate({ id: t.id, ...campos })}
+                  onSetSensivel={(tipo) => updateTarefa.mutate({ id: t.id, sensivel_clima: tipo })}
                 />
               ))}
             </div>

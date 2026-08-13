@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
-import { Boxes, CalendarClock, ClipboardList, LayoutList, MapPin, Pencil, Scale, Trash2, User, Wallet } from "lucide-react";
+import { Boxes, CalendarClock, ClipboardList, CloudRain, LayoutList, MapPin, Pencil, Scale, Trash2, User, Wallet } from "lucide-react";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -12,7 +12,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useObra, useDeleteObra } from "@/hooks/useObras";
+import { useObraTarefas } from "@/hooks/useObraTarefas";
+import { useAlertasClimaCronograma } from "@/hooks/useAlertasClima";
 import { formatDate } from "@/lib/format";
+import { sensivelClimaLabel } from "@/lib/obras";
 import { ObraFormDialog } from "../components/ObraFormDialog";
 import { ObraTimelineTab } from "../components/ObraTimelineTab";
 import { ObraDiarioTab } from "../components/ObraDiarioTab";
@@ -44,6 +47,10 @@ export default function ObraDetalhePage() {
   const [editOpen, setEditOpen] = useState(false);
   const [confirmDel, setConfirmDel] = useState(false);
   const del = useDeleteObra();
+
+  // Alertas de clima: etapas sensíveis do cronograma vs previsão (spec 040).
+  const { data: tarefasObra = [] } = useObraTarefas(id);
+  const alertasClima = useAlertasClimaCronograma(obra?.latitude, obra?.longitude, tarefasObra);
 
   if (isLoading) {
     return (
@@ -121,6 +128,28 @@ export default function ObraDetalhePage() {
           </span>
         )}
       </div>
+
+      {alertasClima.length > 0 && (
+        <div className="space-y-1.5 rounded-xl border border-warning-soft bg-warning-soft/40 p-3">
+          <div className="flex items-center gap-2 text-sm font-medium text-warning-strong">
+            <CloudRain className="h-4 w-4" />
+            Clima pode atrapalhar {alertasClima.length === 1 ? "uma etapa" : `${alertasClima.length} etapas`}
+          </div>
+          <ul className="space-y-0.5 text-sm text-ink/90">
+            {alertasClima.slice(0, 4).map((a) => (
+              <li key={a.tarefaId}>
+                <span className="font-medium">{a.titulo}</span> ({sensivelClimaLabel(a.tipo)}): {a.detalhe} em{" "}
+                {formatDate(a.data)}. Reprograme.
+              </li>
+            ))}
+          </ul>
+          {showCronograma && (
+            <Button variant="outline" size="sm" className="mt-1" onClick={() => setTab("cronograma")}>
+              Ver cronograma
+            </Button>
+          )}
+        </div>
+      )}
 
       <Tabs value={tab} onValueChange={setTab} className="space-y-4">
         <TabsList>
