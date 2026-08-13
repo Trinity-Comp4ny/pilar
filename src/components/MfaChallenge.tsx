@@ -190,7 +190,7 @@ export function MfaChallenge({ onVerified }: MfaChallengeProps) {
           <Button
             onClick={handleBackupCode}
             variant="outline"
-            className="w-full h-11 bg-amber-500 hover:bg-amber-600 text-white font-medium"
+            className="w-full h-11 bg-fill-warning hover:bg-fill-warning/90 text-fill-warning-foreground font-medium"
             disabled={backupSubmitting || !backupCode.trim()}
           >
             {backupSubmitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}

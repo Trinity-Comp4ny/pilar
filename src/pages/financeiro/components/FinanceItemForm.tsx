@@ -200,7 +200,7 @@ export function DeleteGroupDialog({ target, onCancel, onConfirm }: DeleteGroupDi
         <AlertDialogFooter>
           <AlertDialogCancel>Cancelar</AlertDialogCancel>
           <AlertDialogAction
-            className="bg-orange-500 hover:bg-orange-600 text-white"
+            className="bg-fill-attention hover:bg-fill-attention/90 text-fill-attention-foreground"
             onClick={() => onConfirm("single")}
           >
             Só esta parcela
