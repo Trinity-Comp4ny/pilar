@@ -8,9 +8,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { UltraAdminPlatformBanner } from "@/components/UltraAdminPlatformBanner";
 
 // Lazy: o CommandPalette carrega o cmdk. Fora do bundle de entrada; só baixa no 1º ⌘K.
-const CommandPalette = lazy(() =>
-  import("@/components/CommandPalette").then((m) => ({ default: m.CommandPalette }))
-);
+const CommandPalette = lazy(() => import("@/components/CommandPalette").then((m) => ({ default: m.CommandPalette })));
 
 // Lazy: onboarding (checklist + tour driver.js) fica fora do bundle de entrada.
 const OnboardingChecklist = lazy(() =>
@@ -48,7 +46,7 @@ function LayoutContent() {
   const marginLeft = isMobile ? "ml-0" : state === "collapsed" ? "ml-[64px]" : "ml-[240px]";
 
   return (
-    <div className="min-h-screen w-full flex-1 min-w-0 bg-white">
+    <div className="min-h-screen w-full flex-1 min-w-0 bg-background">
       <a
         href="#main-content"
         className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[9999] focus:rounded focus:bg-background focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:shadow-md focus:outline-none focus:ring-2 focus:ring-ring"
