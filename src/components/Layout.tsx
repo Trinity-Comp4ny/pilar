@@ -1,9 +1,27 @@
+import { Suspense, lazy } from "react";
 import { Outlet } from "react-router-dom";
 import { SidebarProvider, useSidebar } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
-import { CommandPalette, CommandPaletteHint } from "@/components/CommandPalette";
+import { CommandPaletteHint } from "@/components/CommandPaletteHint";
+import { useCommandPalette } from "@/hooks/useCommandPalette";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { UltraAdminPlatformBanner } from "@/components/UltraAdminPlatformBanner";
+
+// Lazy: o CommandPalette carrega o cmdk. Fora do bundle de entrada; só baixa no 1º ⌘K.
+const CommandPalette = lazy(() =>
+  import("@/components/CommandPalette").then((m) => ({ default: m.CommandPalette }))
+);
+
+// Atalho ⌘K sempre ativo (hook leve); o dialog pesado só monta quando aberto.
+function CommandPaletteMount() {
+  const { open, setOpen } = useCommandPalette();
+  return (
+    <>
+      <CommandPaletteHint />
+      <Suspense fallback={null}>{open && <CommandPalette open={open} onOpenChange={setOpen} />}</Suspense>
+    </>
+  );
+}
 
 // Gatilho só-dev para pré-visualizar o ErrorBoundary: abra qualquer página com ?boom
 // na URL (ex.: /financeiro?boom). Nunca renderiza em produção.
@@ -37,8 +55,7 @@ function LayoutContent() {
           </ErrorBoundary>
         </main>
       </div>
-      <CommandPalette />
-      <CommandPaletteHint />
+      <CommandPaletteMount />
     </div>
   );
 }
