@@ -7,6 +7,11 @@ export type Json =
   | Json[]
 
 export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "14.5"
+  }
   graphql_public: {
     Tables: {
       [_ in never]: never
@@ -3935,6 +3940,7 @@ export type Database = {
           last_name: string
           nome: string | null
           onboarding_completed: boolean | null
+          onboarding_state: Json
           role: Database["public"]["Enums"]["user_role"] | null
           updated_at: string | null
           updated_by: string | null
@@ -3952,6 +3958,7 @@ export type Database = {
           last_name?: string
           nome?: string | null
           onboarding_completed?: boolean | null
+          onboarding_state?: Json
           role?: Database["public"]["Enums"]["user_role"] | null
           updated_at?: string | null
           updated_by?: string | null
@@ -3969,6 +3976,7 @@ export type Database = {
           last_name?: string
           nome?: string | null
           onboarding_completed?: boolean | null
+          onboarding_state?: Json
           role?: Database["public"]["Enums"]["user_role"] | null
           updated_at?: string | null
           updated_by?: string | null
@@ -6338,6 +6346,7 @@ export type Database = {
         Args: { p_bucket: string; p_disciplina_id: string }
         Returns: undefined
       }
+      set_onboarding_state: { Args: { patch: Json }; Returns: Json }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
       start_impersonation: {
@@ -6584,4 +6593,3 @@ export const Constants = {
     },
   },
 } as const
-

@@ -90,6 +90,7 @@ export default function ObrasPage() {
             onClick: () => setDialogOpen(true),
             icon: Plus,
             feature: "obras",
+            dataTour: "onb-nova-obra",
           }}
         />
       }

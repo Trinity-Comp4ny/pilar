@@ -325,7 +325,7 @@ export default function ProjetosKanban() {
             onChange: (v) => setFilters((f) => ({ ...f, search: v })),
             placeholder: "Buscar projetos",
           }}
-          primaryAction={{ label: "Novo projeto", onClick: handleNewProjeto, icon: Plus, feature: "projetos" }}
+          primaryAction={{ label: "Novo projeto", onClick: handleNewProjeto, icon: Plus, feature: "projetos", dataTour: "onb-novo-projeto" }}
         >
           <ProjetosFilterBar
             pessoas={pessoas}
@@ -343,7 +343,7 @@ export default function ProjetosKanban() {
           </Can>
 
           <Can feature="projetos" action="edit">
-            <Button variant="outline" className="rounded-full text-sm h-9" onClick={() => setIsFluxosOpen(true)}>
+            <Button variant="outline" className="rounded-full text-sm h-9" data-tour="onb-fluxos" onClick={() => setIsFluxosOpen(true)}>
               <GitBranch className="mr-2 h-4 w-4" />
               Fluxos
             </Button>

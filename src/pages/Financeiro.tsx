@@ -20,7 +20,7 @@ const Relatorios = lazy(() => import("./Relatorios"));
 
 const FINANCEIRO_TABS_ALL: SecondSidebarTab[] = [
   { id: "visao-geral", label: "Visão Geral", icon: LayoutDashboard },
-  { id: "lancamentos", label: "Lançamentos", icon: Receipt },
+  { id: "lancamentos", label: "Lançamentos", icon: Receipt, dataTour: "onb-lancamentos" },
   { id: "folha-pagamento", label: "Folha de Pagamento", icon: Users2 },
   { id: "carteira", label: "Carteira", icon: Wallet },
   { id: "relatorios", label: "Relatórios", icon: FileBarChart },
