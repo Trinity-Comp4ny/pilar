@@ -7,7 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, Trash2, Landmark, Loader2, User, Briefcase, Check, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { formatCurrencyInput, formatValorToInput, parseCurrencyString } from "@/lib/currencyUtils";
+import { formatValorToInput, parseCurrencyString } from "@/lib/currencyUtils";
+import { MoneyInput } from "@/components/forms/MoneyInput";
 import { formatCPF, formatCNPJ, formatPhone, formatRG, formatAgency, formatBankAccount } from "@/lib/maskUtils";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -614,24 +615,20 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
                         <Label htmlFor="salario_fixo" className="text-xs">
                           {isEstagio ? "Bolsa (R$)" : "Salário Fixo (R$)"}
                         </Label>
-                        <Input
+                        <MoneyInput
                           id="salario_fixo"
-                          type="text"
                           value={form.watch("salario_fixo")}
-                          onChange={(e) => form.setValue("salario_fixo", formatCurrencyInput(e.target.value))}
-                          placeholder="R$ 0,00"
+                          onChange={(v) => form.setValue("salario_fixo", v)}
                         />
                       </div>
                       <div className="space-y-1.5">
                         <Label htmlFor="valor_m2" className="text-xs">
                           Valor m² (R$)
                         </Label>
-                        <Input
+                        <MoneyInput
                           id="valor_m2"
-                          type="text"
                           value={form.watch("valor_m2")}
-                          onChange={(e) => form.setValue("valor_m2", formatCurrencyInput(e.target.value))}
-                          placeholder="R$ 0,00"
+                          onChange={(v) => form.setValue("valor_m2", v)}
                         />
                       </div>
                     </>

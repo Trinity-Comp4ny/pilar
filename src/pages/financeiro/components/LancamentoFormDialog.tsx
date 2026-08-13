@@ -13,10 +13,11 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Badge } from "@/components/ui/badge";
-import { CalendarIcon, ChevronDown, Loader2, QrCode, Settings2, Plus, Trash2 } from "lucide-react";
+import { CalendarIcon, ChevronDown, QrCode, Settings2, Plus, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
-import { formatCurrencyInput, parseCurrencyString } from "@/lib/currencyUtils";
+import { parseCurrencyString } from "@/lib/currencyUtils";
+import { MoneyInput } from "@/components/forms/MoneyInput";
 import { checkDuplicates } from "@/lib/duplicateCheck";
 import { DuplicateWarningDialog } from "@/components/DuplicateWarningDialog";
 import { TIPO_CHAVE_PIX_LABEL } from "@/lib/pixUtils";
@@ -421,11 +422,10 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
                 <div className="grid grid-cols-2 gap-2">
                   <div className="space-y-1.5">
                     <Label className="text-xs">Valor total (R$) *</Label>
-                    <Input
+                    <MoneyInput
                       value={form.watch("valorTotal")}
-                      onChange={(e) => form.setValue("valorTotal", formatCurrencyInput(e.target.value))}
-                      placeholder="R$ 0,00"
-                      className="h-9 tabular-nums"
+                      onChange={(v) => form.setValue("valorTotal", v)}
+                      className="h-9"
                     />
                     {form.formState.errors.valorTotal && (
                       <p className="text-xs text-destructive">{form.formState.errors.valorTotal.message}</p>
@@ -834,17 +834,8 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
               <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} disabled={saving}>
                 Cancelar
               </Button>
-              <Button type="submit" variant="brand" disabled={saving}>
-                {saving ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Salvando…
-                  </>
-                ) : isEdit ? (
-                  "Atualizar"
-                ) : (
-                  "Salvar"
-                )}
+              <Button type="submit" variant="brand" loading={saving}>
+                {isEdit ? "Atualizar" : "Salvar"}
               </Button>
             </div>
           </form>

@@ -11,7 +11,9 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { fetchPessoasLookup } from "@/lib/supabaseQueries";
-import { formatCurrencyInput, formatValorToInput, parseCurrencyString } from "@/lib/currencyUtils";
+import { formatValorToInput, parseCurrencyString } from "@/lib/currencyUtils";
+import { MoneyInput } from "@/components/forms/MoneyInput";
+import { NumberInput } from "@/components/forms/NumberInput";
 
 export type MetaTipo = "financeira" | "pessoal";
 
@@ -342,8 +344,8 @@ export function MetaFormDialog({ open, onOpenChange, tipo, meta }: MetaFormDialo
             </div>
           )}
 
-          <Button type="submit" variant="brand" className="w-full rounded-full" disabled={mutation.isPending}>
-            {mutation.isPending ? "Salvando..." : isEdit ? "Atualizar meta" : "Salvar meta"}
+          <Button type="submit" variant="brand" className="w-full rounded-full" loading={mutation.isPending}>
+            {isEdit ? "Atualizar meta" : "Salvar meta"}
           </Button>
         </form>
       </DialogContent>
@@ -357,19 +359,11 @@ interface ValorInputProps {
   onChange: (value: string) => void;
 }
 
-// Campo de valor com máscara: moeda (R$) quando a unidade é "currency",
-// numérico simples para percentual/quantidade.
+// Campo de valor: moeda (R$) para "currency", inteiro para "quantity",
+// decimal para o resto (ex.: percentual). Usa os primitivos canônicos.
 function ValorInput({ unidade, value, onChange }: ValorInputProps) {
-  const isCurrency = unidade === "currency";
-  return (
-    <Input
-      inputMode={isCurrency || unidade === "quantity" ? "numeric" : "decimal"}
-      value={value}
-      onChange={(e) =>
-        onChange(isCurrency ? formatCurrencyInput(e.target.value) : e.target.value.replace(/[^\d.,]/g, ""))
-      }
-      placeholder={isCurrency ? "R$ 0,00" : "0"}
-      required
-    />
-  );
+  if (unidade === "currency") {
+    return <MoneyInput value={value} onChange={onChange} required />;
+  }
+  return <NumberInput value={value} onChange={onChange} allowDecimal={unidade !== "quantity"} required />;
 }

@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
 import { formatPhone, formatCNPJ, validateCNPJ, validateEmail, onlyDigits } from "@/lib/maskUtils";
-import { formatCurrencyInput } from "@/lib/currencyUtils";
+import { MoneyInput } from "@/components/forms/MoneyInput";
 import { ValidatedField } from "@/components/forms/ValidatedField";
 import { emailFormatValidator, isPersonalEmail } from "@/lib/emailValidator";
 
@@ -265,11 +265,10 @@ export function LeadFormDialog({
                 <Label htmlFor={`${prefix}valor_estimado`} className="text-xs">
                   Valor Estimado
                 </Label>
-                <Input
+                <MoneyInput
                   id={`${prefix}valor_estimado`}
                   value={formData.valor_estimado}
-                  onChange={(e) => set("valor_estimado", formatCurrencyInput(e.target.value))}
-                  placeholder="R$ 0,00"
+                  onChange={(v) => set("valor_estimado", v)}
                 />
               </div>
               <div className="space-y-1.5">
