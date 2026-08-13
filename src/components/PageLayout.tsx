@@ -34,10 +34,10 @@ export function PageLayout({ children, header, sidebar, className, containerClas
 
   return (
     <div
-      className="fixed top-0 right-0 bottom-0 bg-white z-40 overflow-hidden flex flex-col transition-[left] duration-300 ease-in-out"
+      className="fixed top-0 right-0 bottom-0 bg-background z-40 overflow-hidden flex flex-col transition-[left] duration-300 ease-in-out"
       style={{ left: isMobile ? "0px" : state === "collapsed" ? "64px" : "240px" }}
     >
-      {header && <div className="sticky top-0 z-20 w-full bg-white border-b">{header}</div>}
+      {header && <div className="sticky top-0 z-20 w-full bg-background border-b">{header}</div>}
 
       <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
         {sidebar}
@@ -45,7 +45,7 @@ export function PageLayout({ children, header, sidebar, className, containerClas
           ref={mainRef}
           tabIndex={-1}
           className={cn(
-            "flex-1 overflow-y-auto w-full bg-muted/50 p-6 md:p-8 xl:p-10 2xl:p-12 outline-none",
+            "flex-1 overflow-y-auto w-full bg-background p-6 md:p-8 xl:p-10 2xl:p-12 outline-none",
             className
           )}
         >
