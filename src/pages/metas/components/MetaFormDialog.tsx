@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
@@ -308,15 +309,16 @@ export function MetaFormDialog({ open, onOpenChange, tipo, meta }: MetaFormDialo
 
           {tipo === "financeira" && (
             <div className="space-y-2 border-t pt-4">
-              <label className="flex items-center gap-2 text-sm cursor-pointer">
-                <input
-                  type="checkbox"
-                  className="h-4 w-4 rounded border-gray-300"
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="auto_sync"
                   checked={form.auto_sync}
-                  onChange={(e) => set("auto_sync", e.target.checked)}
+                  onCheckedChange={(checked) => set("auto_sync", checked === true)}
                 />
-                Sincronizar automaticamente
-              </label>
+                <Label htmlFor="auto_sync" className="text-sm cursor-pointer font-normal">
+                  Sincronizar automaticamente
+                </Label>
+              </div>
               {form.auto_sync && (
                 <div className="space-y-1">
                   <Label className="text-xs">Fonte de dados</Label>

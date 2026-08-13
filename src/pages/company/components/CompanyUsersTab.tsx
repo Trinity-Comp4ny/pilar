@@ -155,7 +155,7 @@ export function CompanyUsersTab({
                           <Button
                             variant="outline"
                             size="sm"
-                            className="rounded-full text-red-600"
+                            className="rounded-full text-danger-mid"
                             onClick={() => onDeleteUser(u.id)}
                             disabled={u.id === currentUserId}
                           >
@@ -198,7 +198,7 @@ export function CompanyUsersTab({
                         <Button
                           variant="outline"
                           size="sm"
-                          className="rounded-full text-red-600"
+                          className="rounded-full text-danger-mid"
                           onClick={() => onDeleteUser(u.id)}
                           disabled={u.id === currentUserId}
                         >

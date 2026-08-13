@@ -195,7 +195,7 @@ export function SupplierManager({ onSupplierChange }: SupplierManagerProps) {
           </DialogTrigger>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
-              <DialogTitle>Novo Fornecedor</DialogTitle>
+              <DialogTitle>Novo fornecedor</DialogTitle>
               <DialogDescription>Adicione um novo fornecedor ao sistema</DialogDescription>
             </DialogHeader>
 
@@ -318,7 +318,7 @@ export function SupplierManager({ onSupplierChange }: SupplierManagerProps) {
                     }}
                     aria-label="Excluir fornecedor"
                   >
-                    <Trash2 className="h-4 w-4 text-red-500" />
+                    <Trash2 className="h-4 w-4 text-danger-mid" />
                   </Button>
                 </TableCell>
               </TableRow>
@@ -330,7 +330,7 @@ export function SupplierManager({ onSupplierChange }: SupplierManagerProps) {
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Editar Fornecedor</DialogTitle>
+            <DialogTitle>Editar fornecedor</DialogTitle>
             <DialogDescription>Altere as informações do fornecedor</DialogDescription>
           </DialogHeader>
 

@@ -61,7 +61,7 @@ function CartaoRow({
           <span
             className={cn(
               "text-[10px] shrink-0 rounded-full px-1.5 py-0.5 leading-none",
-              venc.vencida ? "bg-red-100 text-red-700" : "bg-black/5 text-muted-foreground"
+              venc.vencida ? "bg-danger-soft text-danger-strong" : "bg-black/5 text-muted-foreground"
             )}
           >
             {venc.label}
@@ -72,7 +72,7 @@ function CartaoRow({
         <div
           className={cn(
             "h-1 rounded-full transition-all",
-            pct > 80 ? "bg-red-500" : pct > 50 ? "bg-yellow-500" : "bg-positive"
+            pct > 80 ? "bg-danger-strong" : pct > 50 ? "bg-warning-mid" : "bg-positive"
           )}
           style={{ width: `${Math.min(pct, 100)}%` }}
         />

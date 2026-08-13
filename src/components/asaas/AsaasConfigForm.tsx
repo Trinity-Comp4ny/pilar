@@ -143,7 +143,7 @@ export function AsaasConfigForm() {
           <Button
             type="button"
             variant="outline"
-            className="text-red-600 hover:text-red-700"
+            className="text-danger-mid hover:text-danger-strong"
             onClick={() => setConfirmRemoveOpen(true)}
             disabled={isRemovendo}
           >
@@ -160,7 +160,7 @@ export function AsaasConfigForm() {
           <div className="space-y-2">
             <Label className="text-xs">URL do Webhook</Label>
             <div className="flex gap-2">
-              <Input readOnly value={webhookUrl} className="text-xs text-muted-foreground bg-gray-50 font-mono" />
+              <Input readOnly value={webhookUrl} className="text-xs text-muted-foreground bg-muted font-mono" />
               <Button
                 type="button"
                 variant="outline"
@@ -181,7 +181,7 @@ export function AsaasConfigForm() {
                 readOnly
                 value={webhookToken}
                 type="password"
-                className="text-xs text-muted-foreground bg-gray-50 font-mono"
+                className="text-xs text-muted-foreground bg-muted font-mono"
               />
               <Button
                 type="button"

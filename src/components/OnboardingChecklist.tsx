@@ -172,15 +172,15 @@ export function OnboardingChecklist() {
   // Oculta automaticamente quando tudo está completo — usuário pode dispensar manualmente também
   if (allDone) {
     return (
-      <Card className="border-emerald-200/70 bg-emerald-50/30">
+      <Card className="border-success-soft-border/70 bg-success-soft/30">
         <CardContent className="p-4 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-full bg-emerald-100 flex items-center justify-center">
-              <CheckCircle2 className="h-5 w-5 text-emerald-700" />
+            <div className="h-9 w-9 rounded-full bg-success-soft flex items-center justify-center">
+              <CheckCircle2 className="h-5 w-5 text-success-strong" />
             </div>
             <div>
-              <p className="text-sm font-medium text-emerald-900">Setup inicial concluído</p>
-              <p className="text-xs text-emerald-700/80">Seu escritório está pronto para operar no Pilar.</p>
+              <p className="text-sm font-medium text-success-strong">Setup inicial concluído</p>
+              <p className="text-xs text-success-strong/80">Seu escritório está pronto para operar no Pilar.</p>
             </div>
           </div>
           <Button size="sm" variant="ghost" onClick={handleDismiss}>
@@ -245,18 +245,18 @@ function StepRow({ step, onClick }: { step: StepConfig; onClick: () => void }) {
       className={cn(
         "w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-left transition-colors",
         done
-          ? "bg-emerald-50/50 cursor-default"
+          ? "bg-success-soft/50 cursor-default"
           : "bg-white hover:bg-brand/5 border border-black/5 hover:border-brand/30"
       )}
     >
       {done ? (
-        <CheckCircle2 className="h-4 w-4 text-emerald-600 flex-shrink-0" />
+        <CheckCircle2 className="h-4 w-4 text-success-mid flex-shrink-0" />
       ) : (
         <Circle className="h-4 w-4 text-black/30 flex-shrink-0" />
       )}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <span className={cn("text-sm font-medium", done && "text-emerald-900 line-through decoration-emerald-300")}>
+          <span className={cn("text-sm font-medium", done && "text-success-strong line-through decoration-emerald-300")}>
             {step.title}
           </span>
         </div>

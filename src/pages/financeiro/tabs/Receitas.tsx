@@ -330,10 +330,10 @@ export default function Receitas() {
           <div className="space-y-1.5">
             <Label className="text-xs">
               Conta de Recebimento
-              {form.watch("status") === "Recebida" && <span className="text-red-500 ml-0.5">*</span>}
+              {form.watch("status") === "Recebida" && <span className="text-danger-mid ml-0.5">*</span>}
             </Label>
             <Select value={form.watch("contaId")} onValueChange={(v) => form.setValue("contaId", v)}>
-              <SelectTrigger className={`h-9 ${form.formState.errors.contaId ? "border-red-500" : ""}`}>
+              <SelectTrigger className={`h-9 ${form.formState.errors.contaId ? "border-destructive" : ""}`}>
                 <SelectValue placeholder="Selecione" />
               </SelectTrigger>
               <SelectContent>
@@ -345,7 +345,7 @@ export default function Receitas() {
               </SelectContent>
             </Select>
             {form.formState.errors.contaId && (
-              <p className="text-xs text-red-500">{form.formState.errors.contaId.message}</p>
+              <p className="text-xs text-danger-mid">{form.formState.errors.contaId.message}</p>
             )}
           </div>
           <div className="space-y-1.5">
@@ -466,12 +466,12 @@ export default function Receitas() {
         </CardHeader>
         <CardContent className="p-0">
           {isError && (
-            <div className="mx-4 mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            <div className="mx-4 mt-4 rounded-lg border border-danger-mid-border bg-danger-soft px-4 py-3 text-sm text-danger-strong">
               Não foi possível carregar as receitas. Verifique a conexão e recarregue a página — os valores abaixo podem
               estar incompletos.
             </div>
           )}
-          <div className="flex items-center gap-3 px-4 py-3 border-b bg-gray-50/50">
+          <div className="flex items-center gap-3 px-4 py-3 border-b bg-muted/50">
             <Input
               placeholder="Buscar por descrição ou cliente..."
               value={searchTerm}
@@ -513,7 +513,7 @@ export default function Receitas() {
                 {receitasFiltradas.map((receita) => (
                   <TableRow
                     key={receita.id}
-                    className="cursor-pointer hover:bg-gray-50"
+                    className="cursor-pointer hover:bg-muted"
                     onClick={() => {
                       setSelectedReceita(receita);
                       setIsDetailOpen(true);
@@ -531,10 +531,10 @@ export default function Receitas() {
                               receita.asaas_payment_status === "CONFIRMED"
                                 ? "border-status-done text-positive-strong text-[10px] px-1 py-0"
                                 : receita.asaas_payment_status === "PENDING"
-                                  ? "border-yellow-500 text-yellow-700 text-[10px] px-1 py-0"
+                                  ? "border-yellow-500 text-warning-strong text-[10px] px-1 py-0"
                                   : receita.asaas_payment_status === "OVERDUE"
-                                    ? "border-red-500 text-red-700 text-[10px] px-1 py-0"
-                                    : "border-gray-400 text-gray-600 text-[10px] px-1 py-0"
+                                    ? "border-red-500 text-danger-strong text-[10px] px-1 py-0"
+                                    : "border-gray-400 text-ink-muted text-[10px] px-1 py-0"
                             }
                           >
                             Asaas
@@ -588,13 +588,13 @@ export default function Receitas() {
                               </DropdownMenuItem>
                             ) : (
                               <DropdownMenuItem onClick={() => marcarPendente.mutate(receita.id)}>
-                                <Clock className="mr-2 h-4 w-4 text-amber-500" />
+                                <Clock className="mr-2 h-4 w-4 text-warning-mid" />
                                 Marcar como pendente
                               </DropdownMenuItem>
                             )}
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
-                              className="text-red-600 focus:text-red-600"
+                              className="text-danger-mid focus:text-danger-mid"
                               onClick={() => handleDelete(receita.id)}
                             >
                               <Trash2 className="mr-2 h-4 w-4" />

@@ -45,7 +45,7 @@ export function PageLayout({ children, header, sidebar, className, containerClas
           ref={mainRef}
           tabIndex={-1}
           className={cn(
-            "flex-1 overflow-y-auto w-full bg-gray-50/50 p-6 md:p-8 xl:p-10 2xl:p-12 outline-none",
+            "flex-1 overflow-y-auto w-full bg-muted/50 p-6 md:p-8 xl:p-10 2xl:p-12 outline-none",
             className
           )}
         >

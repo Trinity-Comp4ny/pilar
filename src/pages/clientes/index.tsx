@@ -405,7 +405,7 @@ export default function Clientes() {
                   clientes.map((cliente) => (
                     <TableRow
                       key={cliente.id}
-                      className="cursor-pointer hover:bg-gray-50"
+                      className="cursor-pointer hover:bg-muted"
                       onClick={() => handleRowClick(cliente)}
                     >
                       <TableCell className="font-medium">
@@ -448,7 +448,7 @@ export default function Clientes() {
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-11 w-11 text-red-500"
+                                className="h-11 w-11 text-danger-mid"
                                 onClick={(e) => handleDeleteClick(cliente.id, e)}
                                 aria-label="Excluir cliente"
                               >

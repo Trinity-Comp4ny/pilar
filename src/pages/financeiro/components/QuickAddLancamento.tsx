@@ -78,7 +78,7 @@ export function QuickAddLancamento({ onCreated }: Props) {
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-2 rounded-xl border border-dashed border-black/15 bg-gray-50/40 px-3 py-2">
+    <div className="flex flex-wrap items-center gap-2 rounded-xl border border-dashed border-black/15 bg-muted/40 px-3 py-2">
       <div className="inline-flex rounded-full bg-white border p-0.5">
         <button
           type="button"
@@ -96,7 +96,7 @@ export function QuickAddLancamento({ onCreated }: Props) {
           onClick={() => setTipo("despesa")}
           className={cn(
             "h-7 px-3 rounded-full text-xs font-medium inline-flex items-center gap-1 transition",
-            tipo === "despesa" ? "bg-red-50 text-red-600" : "text-muted-foreground hover:text-foreground"
+            tipo === "despesa" ? "bg-negative/10 text-negative-strong" : "text-muted-foreground hover:text-foreground"
           )}
         >
           <ArrowDownCircle className="h-3.5 w-3.5" />

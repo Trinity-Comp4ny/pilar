@@ -13,7 +13,7 @@ export function CycleToggle({ value, onChange, yearlySavingPct }: CycleTogglePro
     <div
       role="tablist"
       aria-label="Ciclo de cobrança"
-      className="inline-flex items-center rounded-full border border-slate-200 bg-white p-1 shadow-sm"
+      className="inline-flex items-center rounded-full border border-border bg-white p-1 shadow-sm"
     >
       <button
         type="button"
@@ -22,7 +22,7 @@ export function CycleToggle({ value, onChange, yearlySavingPct }: CycleTogglePro
         onClick={() => onChange("monthly")}
         className={cn(
           "px-5 py-2 rounded-full text-xs font-medium uppercase tracking-wider transition-all",
-          value === "monthly" ? "bg-ink-soft text-white" : "text-slate-500 hover:text-slate-800"
+          value === "monthly" ? "bg-ink-soft text-white" : "text-ink-muted hover:text-ink"
         )}
       >
         Mensal
@@ -34,7 +34,7 @@ export function CycleToggle({ value, onChange, yearlySavingPct }: CycleTogglePro
         onClick={() => onChange("yearly")}
         className={cn(
           "px-5 py-2 rounded-full text-xs font-medium uppercase tracking-wider transition-all flex items-center gap-2",
-          value === "yearly" ? "bg-ink-soft text-white" : "text-slate-500 hover:text-slate-800"
+          value === "yearly" ? "bg-ink-soft text-white" : "text-ink-muted hover:text-ink"
         )}
       >
         Anual

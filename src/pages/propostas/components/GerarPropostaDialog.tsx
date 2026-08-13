@@ -359,7 +359,7 @@ export function GerarPropostaDialog({
             <div className="space-y-2">
               <Label>Template *</Label>
               {templates.length === 0 ? (
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm text-amber-700 space-y-2">
+                <div className="bg-warning-soft border border-warning-mid-border rounded-lg p-3 text-sm text-warning-mid space-y-2">
                   <p>
                     Nenhum template do tipo <strong>{label.toLowerCase()}</strong> cadastrado. Cadastre um template para
                     poder gerar o documento.
@@ -367,7 +367,7 @@ export function GerarPropostaDialog({
                   <Button
                     size="sm"
                     variant="outline"
-                    className="bg-white border-amber-300 text-amber-800 hover:bg-amber-100"
+                    className="bg-white border-warning-mid-border text-warning-strong hover:bg-warning-soft"
                     onClick={() => {
                       onOpenChange(false);
                       navigate("/templates");
@@ -425,7 +425,7 @@ export function GerarPropostaDialog({
                       <div key={v} className="space-y-1.5">
                         <Label className="text-sm flex items-center gap-2">
                           {humanizeVar(v)}
-                          <Badge variant="secondary" className="text-[10px] bg-amber-50 text-amber-700 font-mono">
+                          <Badge variant="secondary" className="text-[10px] bg-warning-soft text-warning-mid font-mono">
                             {`{{${v.replace(/[{}]/g, "")}}}`}
                           </Badge>
                         </Label>
@@ -500,7 +500,7 @@ export function GerarPropostaDialog({
                 !sendEmail &&
                 cliente?.email == null &&
                 lead?.email == null && (
-                  <p className="text-xs text-amber-600">
+                  <p className="text-xs text-warning-mid">
                     Nenhum email cadastrado para este cliente/lead. Preencha manualmente.
                   </p>
                 )
@@ -519,9 +519,9 @@ export function GerarPropostaDialog({
                 placeholder="Mensagem personalizada para o cliente..."
               />
             </div>
-            <div className="flex items-start gap-2 bg-blue-50 border border-blue-200 rounded-lg p-3">
-              <Mail className="h-4 w-4 text-blue-500 flex-shrink-0 mt-0.5" />
-              <p className="text-xs text-blue-700">
+            <div className="flex items-start gap-2 bg-info-soft border border-info-mid-border rounded-lg p-3">
+              <Mail className="h-4 w-4 text-info-mid flex-shrink-0 mt-0.5" />
+              <p className="text-xs text-info-strong">
                 O documento DOCX será enviado como anexo. Após o envio, a proposta mudará automaticamente para{" "}
                 <strong>Enviada</strong>.
               </p>

@@ -33,7 +33,7 @@ export function CarteiraOverview({ contas, faturas, onDetalhe, onPagar }: Cartei
         </div>
         <div className="p-5 rounded-lg border bg-muted/30">
           <p className="text-xs text-muted-foreground mb-1">Faturas a pagar</p>
-          <p className={cn("text-3xl font-bold", totalAPagar > 0 && "text-red-600")}>{formatCurrency(totalAPagar)}</p>
+          <p className={cn("text-3xl font-bold", totalAPagar > 0 && "text-negative-strong")}>{formatCurrency(totalAPagar)}</p>
           <p className="text-xs text-muted-foreground mt-1">
             {faturas.length} fatura{faturas.length === 1 ? "" : "s"} em aberto
           </p>
@@ -73,7 +73,7 @@ export function CarteiraOverview({ contas, faturas, onDetalhe, onPagar }: Cartei
                   <span
                     className={cn(
                       "text-xs shrink-0 tabular-nums",
-                      venc.vencida ? "text-red-600 font-medium" : "text-muted-foreground"
+                      venc.vencida ? "text-danger-mid font-medium" : "text-muted-foreground"
                     )}
                   >
                     {venc.label}

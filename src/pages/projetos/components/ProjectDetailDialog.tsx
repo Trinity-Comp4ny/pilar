@@ -88,10 +88,10 @@ interface ProjectDetailDialogProps {
 }
 
 const DISC_STATUS_DOT: Record<string, string> = {
-  Concluído: "bg-positive/100",
-  "Em Andamento": "bg-blue-500",
-  Pendente: "bg-amber-500",
-  "Não Iniciado": "bg-gray-400",
+  Concluído: "bg-status-done",
+  "Em Andamento": "bg-status-progress",
+  Pendente: "bg-status-planning",
+  "Não Iniciado": "bg-status-unknown",
 };
 
 export function ProjectDetailDialog({
@@ -241,7 +241,7 @@ export function ProjectDetailDialog({
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-none w-[96vw] h-[92vh] overflow-hidden p-0 gap-0 flex flex-col">
           {/* Header compacto */}
-          <div className="flex-shrink-0 px-8 pt-6 pb-4 border-b bg-gray-50/50">
+          <div className="flex-shrink-0 px-8 pt-6 pb-4 border-b bg-muted/50">
             <DialogHeader className="mb-0">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0">
@@ -424,7 +424,7 @@ export function ProjectDetailDialog({
                           key={idx}
                           className={cn(
                             "flex items-center gap-1 rounded-lg border pr-1 transition-colors",
-                            atrasada ? "bg-red-50/40 border-red-100" : "hover:bg-muted/40"
+                            atrasada ? "bg-danger-soft/40 border-danger-soft-border" : "hover:bg-muted/40"
                           )}
                         >
                           <button
@@ -440,7 +440,7 @@ export function ProjectDetailDialog({
                               <div className="flex items-center gap-2 flex-wrap">
                                 <span className="text-sm font-medium">{disc.disciplina}</span>
                                 {atrasada && (
-                                  <span className="text-[9px] px-1.5 py-0.5 rounded-full font-semibold bg-red-100 text-red-700 flex items-center gap-1">
+                                  <span className="text-[9px] px-1.5 py-0.5 rounded-full font-semibold bg-danger-soft text-danger-strong flex items-center gap-1">
                                     <AlertTriangle size={10} /> Atrasada
                                   </span>
                                 )}
@@ -462,7 +462,7 @@ export function ProjectDetailDialog({
                                 )}
                               </div>
                               {atrasada && disc.justificativa_atraso && (
-                                <p className="text-[10px] text-red-600 mt-1 italic line-clamp-1">
+                                <p className="text-[10px] text-danger-mid mt-1 italic line-clamp-1">
                                   {disc.justificativa_atraso}
                                 </p>
                               )}
@@ -480,7 +480,7 @@ export function ProjectDetailDialog({
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8 flex-shrink-0 text-muted-foreground hover:text-red-600"
+                              className="h-8 w-8 flex-shrink-0 text-muted-foreground hover:text-danger-mid"
                               onClick={() => setConfirmDeleteIdx(idx)}
                               aria-label="Excluir disciplina"
                             >
@@ -496,7 +496,7 @@ export function ProjectDetailDialog({
                 {projeto.observacao && (
                   <div className="mt-4 pt-3 border-t">
                     <Label className="text-[10px] uppercase text-muted-foreground">Observações</Label>
-                    <p className="text-xs text-gray-700 mt-1">{projeto.observacao}</p>
+                    <p className="text-xs text-ink-soft mt-1">{projeto.observacao}</p>
                   </div>
                 )}
 
@@ -524,7 +524,7 @@ export function ProjectDetailDialog({
           </ResizablePanelGroup>
 
           {/* Footer */}
-          <div className="flex-shrink-0 flex items-center justify-end gap-2 px-6 py-3 border-t bg-gray-50/30">
+          <div className="flex-shrink-0 flex items-center justify-end gap-2 px-6 py-3 border-t bg-muted/30">
             <Button
               size="sm"
               onClick={() => {
@@ -589,7 +589,7 @@ export function ProjectDetailDialog({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction className="bg-red-600 hover:bg-red-700" onClick={confirmarExcluirDisc}>
+            <AlertDialogAction className="bg-destructive hover:bg-destructive/90" onClick={confirmarExcluirDisc}>
               Excluir
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -655,7 +655,7 @@ export function ProjectDetailDialog({
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-red-500" />
+              <AlertTriangle className="h-5 w-5 text-danger-mid" />
               Justificativa de atraso obrigatória
             </AlertDialogTitle>
             <AlertDialogDescription>

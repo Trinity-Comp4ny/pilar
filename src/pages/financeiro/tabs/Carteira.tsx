@@ -303,7 +303,7 @@ export default function Carteira() {
                                   <span
                                     className={cn(
                                       "text-xs shrink-0",
-                                      venc.vencida ? "text-red-600 font-medium" : "text-muted-foreground"
+                                      venc.vencida ? "text-danger-mid font-medium" : "text-muted-foreground"
                                     )}
                                   >
                                     {venc.label}
@@ -415,7 +415,10 @@ export default function Carteira() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete} className="bg-red-600 hover:bg-red-700">
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
               Excluir
             </AlertDialogAction>
           </AlertDialogFooter>

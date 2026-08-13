@@ -11,7 +11,7 @@ function PlanSkeleton() {
   return (
     <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto" aria-hidden="true">
       {[0, 1, 2].map((i) => (
-        <div key={i} className="h-[460px] rounded-2xl border border-slate-200 bg-white/40 animate-pulse" />
+        <div key={i} className="h-[460px] rounded-2xl border border-border bg-white/40 animate-pulse" />
       ))}
     </div>
   );
@@ -56,7 +56,7 @@ export default function Planos() {
               <br />
               <em className="landing-highlight">Ative em minutos.</em>
             </h1>
-            <p className="text-slate-500 text-lg max-w-2xl mx-auto font-light mb-10">
+            <p className="text-ink-muted text-lg max-w-2xl mx-auto font-light mb-10">
               Pague por cartão, PIX ou boleto. Sem fidelidade. Cancele quando quiser.
             </p>
             <CycleToggle value={cycle} onChange={setCycle} yearlySavingPct={maxSavings || undefined} />
@@ -67,13 +67,13 @@ export default function Planos() {
           {isLoading && <PlanSkeleton />}
 
           {error && (
-            <div className="max-w-md mx-auto p-6 bg-red-50 border border-red-200 rounded-xl text-center text-sm text-red-700">
+            <div className="max-w-md mx-auto p-6 bg-danger-soft border border-danger-mid-border rounded-xl text-center text-sm text-danger-strong">
               Não foi possível carregar os planos. Tente novamente em instantes.
             </div>
           )}
 
           {!isLoading && plans?.length === 0 && (
-            <p className="text-center text-sm text-slate-400 py-12">
+            <p className="text-center text-sm text-ink-disabled py-12">
               Estamos finalizando os planos. Volte em instantes.
             </p>
           )}

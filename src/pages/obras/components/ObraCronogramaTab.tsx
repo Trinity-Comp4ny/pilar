@@ -46,9 +46,9 @@ import { FrenteDetailDialog } from "./FrenteDetailDialog";
 const ESTADO_BAR: Record<EstadoFrente, string> = {
   concluida: "bg-positive/100",
   atrasada: "bg-red-500",
-  em_andamento: "bg-blue-500",
+  em_andamento: "bg-status-progress",
   futura: "bg-gray-400",
-  sem_prazo: "bg-gray-300",
+  sem_prazo: "bg-status-unknown",
 };
 
 const ESTADO_LABEL: Record<EstadoFrente, string> = {
@@ -62,9 +62,9 @@ const ESTADO_LABEL: Record<EstadoFrente, string> = {
 const ESTADO_TAREFA_BAR: Record<EstadoTarefa, string> = {
   concluida: "bg-positive/100",
   atrasada: "bg-red-500",
-  em_andamento: "bg-blue-500",
+  em_andamento: "bg-status-progress",
   futura: "bg-gray-400",
-  sem_periodo: "bg-gray-300",
+  sem_periodo: "bg-status-unknown",
 };
 
 const ESTADO_TAREFA_LABEL: Record<EstadoTarefa, string> = {
@@ -618,7 +618,7 @@ export function ObraCronogramaTab({
                       <div className="relative">
                         <div className="pointer-events-none absolute inset-0 flex" aria-hidden>
                           {columns.map((_, i) => (
-                            <div key={i} className="flex-1 border-r border-dashed border-gray-100 last:border-r-0" />
+                            <div key={i} className="flex-1 border-r border-dashed border-border last:border-r-0" />
                           ))}
                         </div>
                         {todayPct >= 0 && (
@@ -784,7 +784,7 @@ export function ObraCronogramaTab({
           {semPrazo.length > 0 && (
             <Card>
               <CardContent className="space-y-2 p-4">
-                <div className="flex items-center gap-2 text-xs text-amber-800">
+                <div className="flex items-center gap-2 text-xs text-warning-strong">
                   <AlertTriangle className="h-3.5 w-3.5 flex-shrink-0" />
                   <span>
                     {semPrazo.length} etapa{semPrazo.length > 1 ? "s" : ""} sem período (fora da linha do tempo)

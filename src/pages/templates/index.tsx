@@ -114,7 +114,7 @@ export default function Templates() {
     <PageLayout>
       <PageHeader title="Templates de Projeto">
         {canEdit && (
-          <Button onClick={openCreate}>
+          <Button variant="brand" onClick={openCreate}>
             <Plus className="h-4 w-4 mr-1" /> Novo Template
           </Button>
         )}
@@ -152,7 +152,7 @@ export default function Templates() {
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-7 w-7 text-red-500"
+                              className="h-7 w-7 text-danger-mid"
                               onClick={() => setConfirmDeleteId(template.id)}
                               aria-label="Excluir template"
                             >

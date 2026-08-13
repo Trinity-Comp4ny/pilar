@@ -288,7 +288,7 @@ function FeatureToggleRow({
             {includedInPlan ? (
               <Badge
                 variant="outline"
-                className="h-5 rounded-full border-emerald-600/20 bg-emerald-600/10 px-2 text-[10px] font-medium text-emerald-700"
+                className="h-5 rounded-full border-success/20 bg-success/10 px-2 text-[10px] font-medium text-success-strong"
               >
                 <Check size={10} className="mr-1" strokeWidth={2.5} />
                 Incluso no plano

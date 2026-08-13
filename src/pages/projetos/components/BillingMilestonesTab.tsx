@@ -30,10 +30,10 @@ interface Marco {
 }
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: typeof Clock }> = {
-  pendente: { label: "Pendente", color: "bg-yellow-100 text-yellow-800", icon: Clock },
-  faturado: { label: "Faturado", color: "bg-blue-100 text-blue-800", icon: CheckCircle2 },
+  pendente: { label: "Pendente", color: "bg-warning-soft text-warning-strong", icon: Clock },
+  faturado: { label: "Faturado", color: "bg-info-soft text-info-strong", icon: CheckCircle2 },
   recebido: { label: "Recebido", color: "bg-positive/10 text-positive-strong", icon: CheckCircle2 },
-  cancelado: { label: "Cancelado", color: "bg-red-100 text-red-800", icon: XCircle },
+  cancelado: { label: "Cancelado", color: "bg-danger-soft text-danger-strong", icon: XCircle },
 };
 
 export function BillingMilestonesTab({ projetoId, canEdit }: BillingMilestonesTabProps) {
@@ -163,7 +163,7 @@ export function BillingMilestonesTab({ projetoId, canEdit }: BillingMilestonesTa
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3 text-sm">
             <Badge variant="secondary">Total: {formatCurrency(totalMarcos)}</Badge>
-            <Badge className="bg-blue-100 text-blue-800">Faturado: {formatCurrency(totalFaturado)}</Badge>
+            <Badge className="bg-info-soft text-info-strong">Faturado: {formatCurrency(totalFaturado)}</Badge>
             <Badge className="bg-positive/10 text-positive-strong">Recebido: {formatCurrency(totalRecebido)}</Badge>
           </div>
           {canEdit && (
@@ -176,7 +176,7 @@ export function BillingMilestonesTab({ projetoId, canEdit }: BillingMilestonesTa
               >
                 <Banknote className="h-3.5 w-3.5 mr-1" /> Gerar Parcelas
               </Button>
-              <Button size="sm" onClick={() => setIsFormOpen(true)}>
+              <Button size="sm" variant="brand" onClick={() => setIsFormOpen(true)}>
                 <Plus className="h-3.5 w-3.5 mr-1" /> Novo Marco
               </Button>
             </div>
@@ -213,7 +213,7 @@ export function BillingMilestonesTab({ projetoId, canEdit }: BillingMilestonesTa
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8 text-blue-600"
+                          className="h-8 w-8 text-info-mid"
                           title="Faturar (cria receita)"
                           aria-label="Faturar"
                           disabled={faturarMarcoMutation.isPending}
@@ -236,7 +236,7 @@ export function BillingMilestonesTab({ projetoId, canEdit }: BillingMilestonesTa
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 text-red-500"
+                        className="h-8 w-8 text-danger-mid"
                         onClick={() => setDeleteMarcoId(marco.id)}
                         aria-label="Excluir marco"
                       >
@@ -267,7 +267,7 @@ export function BillingMilestonesTab({ projetoId, canEdit }: BillingMilestonesTa
         <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
           <DialogContent className="sm:max-w-sm">
             <DialogHeader>
-              <DialogTitle>Novo Marco de Faturamento</DialogTitle>
+              <DialogTitle>Novo marco de faturamento</DialogTitle>
             </DialogHeader>
             <div className="space-y-3 mt-2">
               <div className="space-y-1">
@@ -305,7 +305,12 @@ export function BillingMilestonesTab({ projetoId, canEdit }: BillingMilestonesTa
                 <Button variant="outline" size="sm" onClick={() => setIsFormOpen(false)}>
                   Cancelar
                 </Button>
-                <Button size="sm" onClick={() => createMutation.mutate()} disabled={createMutation.isPending}>
+                <Button
+                  size="sm"
+                  variant="brand"
+                  onClick={() => createMutation.mutate()}
+                  disabled={createMutation.isPending}
+                >
                   Criar
                 </Button>
               </div>

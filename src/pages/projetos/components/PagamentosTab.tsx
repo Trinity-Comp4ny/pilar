@@ -39,6 +39,7 @@ import {
   type PagamentoProjeto,
 } from "@/hooks/usePagamentosProjeto";
 import { formatCurrency } from "@/lib/currencyUtils";
+import { statusBadgeClasses } from "@/lib/status";
 
 interface PagamentosTabProps {
   projetoId: string;
@@ -47,34 +48,37 @@ interface PagamentosTabProps {
 
 type FiltroStatus = "todos" | "pendentes" | "atrasados" | "recebidos";
 
+// Cor do badge vem do registry único (financeiro), evitando mapa divergente.
+// bgCard (accent lateral do card) não tem token equivalente no design system
+// ainda; mantido cru (ver relatório do lote).
 const STATUS_CONFIG: Record<string, { label: string; color: string; bgCard: string; icon: typeof Clock }> = {
   Pendente: {
     label: "Pendente",
-    color: "bg-yellow-100 text-yellow-800",
+    color: statusBadgeClasses("financeiro", "Pendente"),
     bgCard: "border-l-yellow-400",
     icon: Clock,
   },
   Atrasado: {
     label: "Atrasado",
-    color: "bg-red-100 text-red-800",
+    color: statusBadgeClasses("financeiro", "Atrasado"),
     bgCard: "border-l-red-500",
     icon: AlertTriangle,
   },
   Recebido: {
     label: "Recebido",
-    color: "bg-positive/10 text-positive-strong",
+    color: statusBadgeClasses("financeiro", "Recebido"),
     bgCard: "border-l-green-500",
     icon: CheckCircle2,
   },
   Pago: {
     label: "Pago",
-    color: "bg-positive/10 text-positive-strong",
+    color: statusBadgeClasses("financeiro", "Pago"),
     bgCard: "border-l-green-500",
     icon: CheckCircle2,
   },
   Cancelado: {
     label: "Cancelado",
-    color: "bg-gray-100 text-gray-600",
+    color: statusBadgeClasses("financeiro", "Cancelado"),
     bgCard: "border-l-gray-400",
     icon: XCircle,
   },
@@ -89,9 +93,9 @@ function StatusBadgeAlerta({ pagamento }: { pagamento: PagamentoProjeto }) {
   return (
     <div className="flex items-center gap-1.5">
       <Badge className={`text-[10px] ${config.color}`}>{config.label}</Badge>
-      {tipo === "atrasado" && <span className="text-[10px] font-medium text-red-600">{dias}d atrasado</span>}
+      {tipo === "atrasado" && <span className="text-[10px] font-medium text-danger-mid">{dias}d atrasado</span>}
       {tipo === "proximo" && dias <= 7 && (
-        <span className="text-[10px] font-medium text-amber-600">vence em {dias}d</span>
+        <span className="text-[10px] font-medium text-warning-mid">vence em {dias}d</span>
       )}
     </div>
   );
@@ -171,9 +175,9 @@ export function PagamentosTab({ projetoId, canEdit }: PagamentosTabProps) {
             </div>
 
             {resumo.proximoVencimento && (
-              <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-amber-50 border border-amber-200">
-                <CalendarClock className="h-4 w-4 text-amber-600" />
-                <span className="text-xs text-amber-800">
+              <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-warning-soft border border-warning-mid-border">
+                <CalendarClock className="h-4 w-4 text-warning-mid" />
+                <span className="text-xs text-warning-strong">
                   Próximo vencimento: <strong>{formatDate(resumo.proximoVencimento)}</strong>
                 </span>
               </div>

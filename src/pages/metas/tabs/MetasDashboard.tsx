@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { KPICard } from "@/components/KPICard";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import type { StatusTone } from "@/lib/status";
 import { Target, TrendingUp, Users, Loader2, CheckCircle2, Clock, AlertTriangle } from "lucide-react";
 import {
@@ -16,7 +18,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
 import { toast } from "sonner";
 import { fetchPessoasLookup } from "@/lib/supabaseQueries";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
@@ -25,7 +26,6 @@ import { MetaFormDialog, type MetaRow, type MetaTipo } from "../components/MetaF
 
 export default function MetasDashboard() {
   const queryClient = useQueryClient();
-  const { toast: uiToast } = useToast();
 
   const [editingMeta, setEditingMeta] = useState<MetaRow | null>(null);
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -59,10 +59,8 @@ export default function MetasDashboard() {
       queryClient.invalidateQueries({ queryKey: ["metas"] });
     },
     onError: (error) => {
-      uiToast({
-        title: "Não foi possível atualizar as metas",
+      toast.error("Não foi possível atualizar as metas", {
         description: error instanceof Error ? error.message : "Tente novamente em instantes.",
-        variant: "destructive",
       });
     },
   });
@@ -209,7 +207,7 @@ export default function MetasDashboard() {
                     <div className="flex justify-between items-center">
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-medium">{meta.nome}</span>
-                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-600">
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-ink-muted">
                           {tipoLabel}
                         </span>
                       </div>
@@ -217,7 +215,7 @@ export default function MetasDashboard() {
                     </div>
                     <Progress
                       value={percent}
-                      className="h-2 bg-gray-100"
+                      className="h-2 bg-muted"
                       indicatorClassName={percent >= 100 ? "bg-positive/100" : "bg-brand"}
                     />
                   </div>
@@ -246,8 +244,8 @@ export default function MetasDashboard() {
             stats: pesStats,
             items: pessoais,
             isPessoal: true,
-            color: "text-blue-600",
-            bg: "bg-blue-50",
+            color: "text-info-mid",
+            bg: "bg-info-soft",
           },
         ].map((item) => {
           const Icon = item.icon;
@@ -267,7 +265,7 @@ export default function MetasDashboard() {
                   </div>
                   <Progress
                     value={item.stats.avgProgress}
-                    className="h-2 bg-gray-100"
+                    className="h-2 bg-muted"
                     indicatorClassName={item.stats.avgProgress >= 100 ? "bg-positive/100" : "bg-brand"}
                   />
                   <div className="flex justify-between mt-2 text-xs text-muted-foreground">
@@ -314,7 +312,7 @@ export default function MetasDashboard() {
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => metaToDelete && deleteMutation.mutate(metaToDelete)}
-              className="bg-red-600 hover:bg-red-700"
+              className={cn(buttonVariants({ variant: "destructive" }))}
               disabled={deleteMutation.isPending}
             >
               {deleteMutation.isPending ? "Excluindo..." : "Excluir"}

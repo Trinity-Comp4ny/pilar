@@ -12,6 +12,17 @@ const badgeVariants = cva(
         secondary: "border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80",
         destructive: "border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80",
         outline: "text-foreground",
+        // Status por intenção (ADR 0008 D3): fundo suave + texto forte (AA nos tokens).
+        // Espelham os tons do registry lib/status.ts (TONE_BADGE). Use estas em vez
+        // de colar bg-*-100/text-*-800 cru; para status de domínio prefira <StatusBadge>.
+        brand: "border-transparent bg-brand text-ink",
+        success: "border-transparent bg-success-soft text-success-strong",
+        warning: "border-transparent bg-warning-soft text-warning-strong",
+        info: "border-transparent bg-info-soft text-info-strong",
+        attention: "border-transparent bg-attention-soft text-attention-strong",
+        highlight: "border-transparent bg-highlight-soft text-highlight-strong",
+        danger: "border-transparent bg-danger-soft text-danger-strong",
+        neutral: "border-transparent bg-muted text-muted-foreground",
       },
     },
     defaultVariants: {

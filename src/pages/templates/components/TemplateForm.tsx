@@ -181,7 +181,7 @@ export function TemplateForm({ template, onSubmit, onCancel, isLoading }: Templa
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 text-red-500"
+                  className="h-8 w-8 text-danger-mid"
                   onClick={() => removeFase(fi)}
                   aria-label="Excluir fase"
                 >
@@ -229,7 +229,7 @@ export function TemplateForm({ template, onSubmit, onCancel, isLoading }: Templa
                       onClick={() => removeDisciplinaFromFase(fi, di)}
                       aria-label="Excluir disciplina"
                     >
-                      <Trash2 className="h-3 w-3 text-red-400" />
+                      <Trash2 className="h-3 w-3 text-danger-mid" />
                     </Button>
                   </div>
                 ))}
@@ -271,7 +271,7 @@ export function TemplateForm({ template, onSubmit, onCancel, isLoading }: Templa
               onClick={() => removeChecklistItem(i)}
               aria-label="Excluir item do checklist"
             >
-              <Trash2 className="h-3 w-3 text-red-400" />
+              <Trash2 className="h-3 w-3 text-danger-mid" />
             </Button>
           </div>
         ))}
@@ -282,7 +282,7 @@ export function TemplateForm({ template, onSubmit, onCancel, isLoading }: Templa
         <Button variant="outline" onClick={onCancel} disabled={isLoading}>
           Cancelar
         </Button>
-        <Button onClick={handleSubmit} disabled={isLoading || !nome.trim() || !tipoServico}>
+        <Button onClick={handleSubmit} variant="brand" disabled={isLoading || !nome.trim() || !tipoServico}>
           {template ? "Salvar Alterações" : "Criar Template"}
         </Button>
       </div>

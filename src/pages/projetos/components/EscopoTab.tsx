@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { formatCurrency } from "@/lib/currencyUtils";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { TONE_BADGE } from "@/lib/status";
 
 interface EscopoTabProps {
   projetoId: string;
@@ -43,10 +44,10 @@ interface EscopoItem {
 }
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: typeof Clock }> = {
-  rascunho: { label: "Rascunho", color: "bg-gray-100 text-gray-800", icon: FileText },
-  pendente_aprovacao: { label: "Pendente", color: "bg-yellow-100 text-yellow-800", icon: Clock },
+  rascunho: { label: "Rascunho", color: TONE_BADGE.neutral, icon: FileText },
+  pendente_aprovacao: { label: "Pendente", color: TONE_BADGE.warning, icon: Clock },
   aprovado: { label: "Aprovado", color: "bg-positive/10 text-positive-strong", icon: CheckCircle2 },
-  rejeitado: { label: "Rejeitado", color: "bg-red-100 text-red-800", icon: XCircle },
+  rejeitado: { label: "Rejeitado", color: TONE_BADGE.danger, icon: XCircle },
 };
 
 export function EscopoTab({ projetoId, canEdit }: EscopoTabProps) {
@@ -286,7 +287,7 @@ export function EscopoTab({ projetoId, canEdit }: EscopoTabProps) {
           {escopoOriginal && <Badge variant="secondary">Escopo original definido</Badge>}
           <Badge variant="secondary">{aditivos.length} aditivo(s)</Badge>
           {totalAditivos > 0 && (
-            <Badge className="bg-orange-100 text-orange-800">+ {formatCurrency(totalAditivos)} em aditivos</Badge>
+            <Badge className="bg-attention-soft text-attention-strong">+ {formatCurrency(totalAditivos)} em aditivos</Badge>
           )}
         </div>
         {canEdit && (
@@ -305,6 +306,7 @@ export function EscopoTab({ projetoId, canEdit }: EscopoTabProps) {
             )}
             <Button
               size="sm"
+              variant="brand"
               onClick={() => {
                 setFormTipo("aditivo");
                 setIsFormOpen(true);
@@ -353,7 +355,7 @@ export function EscopoTab({ projetoId, canEdit }: EscopoTabProps) {
                       {escopo.horas_estimadas > 0 && <span>{escopo.horas_estimadas}h</span>}
                       {escopo.custo_estimado > 0 && <span>Custo: {formatCurrency(escopo.custo_estimado)}</span>}
                       {escopo.tipo === "aditivo" && escopo.valor_aditivo > 0 && (
-                        <span className="font-medium text-orange-700">
+                        <span className="font-medium text-attention-mid">
                           Aditivo: {formatCurrency(escopo.valor_aditivo)}
                         </span>
                       )}
@@ -412,6 +414,7 @@ export function EscopoTab({ projetoId, canEdit }: EscopoTabProps) {
                           <>
                             <Button
                               size="sm"
+                              variant="brand"
                               className="text-xs h-7 bg-positive hover:bg-positive/90"
                               onClick={() =>
                                 setConfirmAditivo({ id: escopo.id, status: "aprovado", descricao: escopo.descricao })
@@ -520,7 +523,7 @@ export function EscopoTab({ projetoId, canEdit }: EscopoTabProps) {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 text-red-400"
+                    className="h-8 w-8 text-danger-mid"
                     onClick={() => removeItem(i)}
                     aria-label="Excluir item"
                   >
@@ -561,7 +564,7 @@ export function EscopoTab({ projetoId, canEdit }: EscopoTabProps) {
               <Button variant="outline" onClick={resetForm}>
                 Cancelar
               </Button>
-              <Button onClick={() => createMutation.mutate()} disabled={createMutation.isPending}>
+              <Button variant="brand" onClick={() => createMutation.mutate()} disabled={createMutation.isPending}>
                 {formTipo === "original" ? "Definir Escopo" : "Criar Aditivo"}
               </Button>
             </div>

@@ -21,7 +21,7 @@ export function PlanCard({ plan, cycle }: PlanCardProps) {
         "relative flex flex-col rounded-2xl border p-8 bg-white transition-all",
         plan.destaque
           ? "border-brand shadow-2xl shadow-brand/10 scale-[1.02]"
-          : "border-slate-200 hover:border-slate-300 hover:shadow-lg"
+          : "border-border hover:border-slate-300 hover:shadow-lg"
       )}
     >
       {plan.destaque && (
@@ -31,23 +31,23 @@ export function PlanCard({ plan, cycle }: PlanCardProps) {
       )}
 
       <header>
-        <h3 className="text-2xl font-medium text-slate-900">{plan.nome}</h3>
-        {plan.descricao && <p className="text-sm text-slate-500 mt-1">{plan.descricao}</p>}
+        <h3 className="text-2xl font-medium text-ink">{plan.nome}</h3>
+        {plan.descricao && <p className="text-sm text-ink-muted mt-1">{plan.descricao}</p>}
       </header>
 
       <div className="mt-6 mb-8">
         <div className="flex items-baseline gap-1">
-          <span className="text-4xl font-semibold text-slate-900">{formatBRL(price)}</span>
-          <span className="text-sm text-slate-500">/mês</span>
+          <span className="text-4xl font-semibold text-ink">{formatBRL(price)}</span>
+          <span className="text-sm text-ink-muted">/mês</span>
         </div>
         {cycle === "yearly" && (
-          <p className="text-xs text-slate-400 mt-1">Cobrado {formatBRL(fullPrice)} por ano</p>
+          <p className="text-xs text-ink-disabled mt-1">Cobrado {formatBRL(fullPrice)} por ano</p>
         )}
       </div>
 
       <ul className="space-y-3 mb-8 flex-1">
         {plan.features.map((feature) => (
-          <li key={feature} className="flex items-start gap-3 text-sm text-slate-700">
+          <li key={feature} className="flex items-start gap-3 text-sm text-ink-soft">
             <Check aria-hidden="true" className="w-4 h-4 text-positive-strong flex-shrink-0 mt-0.5" />
             <span>{feature}</span>
           </li>

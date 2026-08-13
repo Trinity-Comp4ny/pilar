@@ -44,15 +44,16 @@ function Medidor({
           <div className="h-2 w-full overflow-hidden rounded-full bg-black/[0.06]">
             <div
               className={
-                "h-full rounded-full transition-all " + (full ? "bg-red-500" : near ? "bg-amber-500" : "bg-brand")
+                "h-full rounded-full transition-all " +
+                (full ? "bg-chart-danger" : near ? "bg-chart-warning" : "bg-brand")
               }
               style={{ width: `${pct}%` }}
             />
           </div>
         )}
         {hint && <p className="text-xs text-black/45">{hint}</p>}
-        {near && !full && <p className="text-xs font-medium text-amber-600">Você está perto do limite da sua faixa.</p>}
-        {full && <p className="text-xs font-medium text-red-600">Faixa cheia. Suba de plano para abrir mais.</p>}
+        {near && !full && <p className="text-xs font-medium text-warning-mid">Você está perto do limite da sua faixa.</p>}
+        {full && <p className="text-xs font-medium text-danger-mid">Faixa cheia. Suba de plano para abrir mais.</p>}
       </CardContent>
     </Card>
   );
@@ -74,7 +75,7 @@ export function UsoPanel() {
 
   if (error) {
     return (
-      <div className="p-6 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
+      <div className="p-6 bg-danger-soft border border-danger-mid-border rounded-xl text-sm text-danger-strong">
         Não foi possível carregar o uso. Tente recarregar.
       </div>
     );

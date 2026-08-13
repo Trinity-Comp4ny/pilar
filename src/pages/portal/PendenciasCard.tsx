@@ -53,15 +53,15 @@ export function PendenciasCard({ baseUrl, receitas, portalEntregasPendentes }: P
   }
 
   return (
-    <Card className="border-amber-200 bg-amber-50/40">
+    <Card className="border-warning-mid-border bg-warning-soft/40">
       <CardContent className="p-4 space-y-3">
         <div className="flex items-center gap-3">
-          <div className="h-9 w-9 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
-            <AlertCircle className="h-4 w-4 text-amber-700" />
+          <div className="h-9 w-9 rounded-full bg-warning-soft flex items-center justify-center flex-shrink-0">
+            <AlertCircle className="h-4 w-4 text-warning-mid" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-amber-900">Você tem pendências</p>
-            <p className="text-xs text-amber-700/80">
+            <p className="text-sm font-semibold text-warning-strong">Você tem pendências</p>
+            <p className="text-xs text-warning-mid/80">
               {totalPendencias} {totalPendencias === 1 ? "item precisa" : "itens precisam"} da sua atenção.
             </p>
           </div>
@@ -71,15 +71,15 @@ export function PendenciasCard({ baseUrl, receitas, portalEntregasPendentes }: P
           {pendencias.entregasPendentes > 0 && (
             <button
               onClick={() => navigate(`${baseUrl}/entregas`)}
-              className="w-full flex items-center justify-between gap-3 px-3 py-2 rounded-md bg-white hover:bg-amber-50 border border-amber-100 text-sm transition-colors"
+              className="w-full flex items-center justify-between gap-3 px-3 py-2 rounded-md bg-white hover:bg-warning-soft border border-warning-soft-border text-sm transition-colors"
             >
               <div className="flex items-center gap-2">
-                <FileCheck className="h-3.5 w-3.5 text-amber-700" />
+                <FileCheck className="h-3.5 w-3.5 text-warning-mid" />
                 <span>
                   {pendencias.entregasPendentes} entrega{pendencias.entregasPendentes === 1 ? "" : "s"} para aprovar
                 </span>
               </div>
-              <ChevronRight className="h-3.5 w-3.5 text-amber-700" />
+              <ChevronRight className="h-3.5 w-3.5 text-warning-mid" />
             </button>
           )}
 
@@ -87,15 +87,15 @@ export function PendenciasCard({ baseUrl, receitas, portalEntregasPendentes }: P
             <div className="flex items-center gap-2">
               <button
                 onClick={() => navigate(`${baseUrl}/financeiro`)}
-                className="flex-1 flex items-center justify-between gap-3 px-3 py-2 rounded-md bg-white hover:bg-red-50 border border-red-200 text-sm transition-colors"
+                className="flex-1 flex items-center justify-between gap-3 px-3 py-2 rounded-md bg-white hover:bg-danger-soft border border-danger-mid-border text-sm transition-colors"
               >
                 <div className="flex items-center gap-2">
-                  <Clock className="h-3.5 w-3.5 text-red-700" />
-                  <span className="text-red-800">
+                  <Clock className="h-3.5 w-3.5 text-danger-strong" />
+                  <span className="text-danger-strong">
                     {pendencias.faturasAtrasadas} parcela{pendencias.faturasAtrasadas === 1 ? "" : "s"} em atraso
                   </span>
                 </div>
-                <ChevronRight className="h-3.5 w-3.5 text-red-700" />
+                <ChevronRight className="h-3.5 w-3.5 text-danger-strong" />
               </button>
               {paymentLinkAtrasada && (
                 <a
@@ -115,16 +115,16 @@ export function PendenciasCard({ baseUrl, receitas, portalEntregasPendentes }: P
             <div className="flex items-center gap-2">
               <button
                 onClick={() => navigate(`${baseUrl}/financeiro`)}
-                className="flex-1 flex items-center justify-between gap-3 px-3 py-2 rounded-md bg-white hover:bg-amber-50 border border-amber-100 text-sm transition-colors"
+                className="flex-1 flex items-center justify-between gap-3 px-3 py-2 rounded-md bg-white hover:bg-warning-soft border border-warning-soft-border text-sm transition-colors"
               >
                 <div className="flex items-center gap-2">
-                  <Clock className="h-3.5 w-3.5 text-amber-700" />
+                  <Clock className="h-3.5 w-3.5 text-warning-mid" />
                   <span>
                     {pendencias.faturasProximasVencimento} parcela
                     {pendencias.faturasProximasVencimento === 1 ? "" : "s"} vencendo em 7 dias
                   </span>
                 </div>
-                <ChevronRight className="h-3.5 w-3.5 text-amber-700" />
+                <ChevronRight className="h-3.5 w-3.5 text-warning-mid" />
               </button>
               {paymentLinkProxima && (
                 <a
@@ -152,7 +152,7 @@ interface BadgePendenciasProps {
 export function BadgePendencias({ count }: BadgePendenciasProps) {
   if (count === 0) return null;
   return (
-    <Badge className="bg-amber-100 text-amber-800 border-amber-200 border text-[10px]">
+    <Badge variant="warning" className="text-[10px]">
       {count} pendente{count === 1 ? "" : "s"}
     </Badge>
   );
