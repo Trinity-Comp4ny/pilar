@@ -8,6 +8,15 @@ export const loginSchema = z.object({
 export type LoginFormData = z.infer<typeof loginSchema>;
 export const loginDefaultValues: LoginFormData = { email: "", password: "" };
 
+export const signupSchema = z.object({
+  nome: z.string().trim().min(1, "Nome é obrigatório"),
+  email: z.string().trim().toLowerCase().email("Email inválido"),
+  password: passwordSchema,
+  companyName: z.string().trim().min(1, "Nome da empresa é obrigatório"),
+});
+export type SignupFormData = z.infer<typeof signupSchema>;
+export const signupDefaultValues: SignupFormData = { nome: "", email: "", password: "", companyName: "" };
+
 export const forgotPasswordSchema = z.object({
   email: z.string().trim().toLowerCase().email("Email inválido"),
 });
@@ -38,6 +47,14 @@ export const profileSetupSchema = z
     message: "As senhas não coincidem",
     path: ["confirmPassword"],
   });
+// Contas OAuth (Google) chegam sem senha própria: o onboarding não pede senha,
+// então firstName/lastName/phone bastam. Ignora password/confirmPassword do form.
+export const profileSetupOAuthSchema = z.object({
+  firstName: z.string().trim().min(1, "Nome é obrigatório"),
+  lastName: z.string().trim().min(1, "Sobrenome é obrigatório"),
+  phone: z.string().trim().min(10, "Telefone obrigatório"),
+});
+
 export type ProfileSetupFormData = z.infer<typeof profileSetupSchema>;
 export const profileSetupDefaultValues: ProfileSetupFormData = {
   firstName: "",
