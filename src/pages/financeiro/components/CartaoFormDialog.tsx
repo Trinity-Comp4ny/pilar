@@ -70,7 +70,7 @@ export function CartaoFormDialog({
       )}
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{selectedCartao ? "Editar Cartão" : "Adicionar Cartão"}</DialogTitle>
+          <DialogTitle>{selectedCartao ? "Editar cartão" : "Adicionar cartão"}</DialogTitle>
           <DialogDescription>Configure as datas do seu cartão para melhor controle financeiro</DialogDescription>
         </DialogHeader>
         <div className="space-y-4 mt-4">

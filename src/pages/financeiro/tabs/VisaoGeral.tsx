@@ -22,6 +22,7 @@ import {
   Receipt,
   Plus,
 } from "lucide-react";
+import { EmptyState } from "@/components/EmptyState";
 import { formatDateDisplay } from "@/lib/dateUtils";
 import { cn } from "@/lib/utils";
 import {
@@ -560,10 +561,13 @@ export default function VisaoGeral({ onNavigateTab }: VisaoGeralProps) {
                 ))}
               </div>
             ) : recentes.length === 0 ? (
-              <div className="h-[120px] flex flex-col items-center justify-center text-muted-foreground">
-                <Receipt size={24} className="mb-2 opacity-40" />
-                <p className="text-sm">Nenhum lançamento ainda</p>
-              </div>
+              <EmptyState
+                icon={Receipt}
+                title="Nenhum lançamento ainda"
+                description="Registre a primeira receita ou despesa para acompanhar o financeiro."
+                action={{ label: "Novo lançamento", onClick: () => setNovoLancamento("receita") }}
+                className="py-6"
+              />
             ) : (
               <ul className="divide-y divide-black/5">
                 {recentes.map((l) => {

@@ -487,7 +487,7 @@ export default function Despesas() {
                 className="rounded-full px-5 py-2.5 text-sm"
               >
                 <Plus className="mr-2 h-4 w-4" />
-                Nova Despesa
+                Nova despesa
               </Button>
             )}
 

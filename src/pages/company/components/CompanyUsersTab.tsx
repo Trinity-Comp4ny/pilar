@@ -108,7 +108,7 @@ export function CompanyUsersTab({
                 className="rounded-full"
                 disabled={isInviting || !inviteFirstName.trim() || !inviteEmail.trim()}
               >
-                {isInviting ? "Enviando convite..." : "Adicionar Usuário"}
+                {isInviting ? "Enviando convite..." : "Adicionar usuário"}
               </Button>
               <p className="text-xs text-black/50">
                 O convite será enviado por email e o usuário aparecerá como pendente.

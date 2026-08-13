@@ -21,6 +21,7 @@ import {
   List,
   Calendar,
 } from "lucide-react";
+import { EmptyState } from "@/components/EmptyState";
 import {
   type DisciplinaResponsavel,
   type Projeto,
@@ -352,24 +353,28 @@ export function DisciplinasTab({ projetos, isLoading }: DisciplinasTabProps) {
 
       {/* Conteúdo */}
       {filtered.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-          <Layers className="h-10 w-10 mb-3 opacity-30" />
-          <p className="text-sm font-medium">Nenhuma disciplina encontrada</p>
-          {(searchTerm || statusFilter !== "todos" || projetoFilter !== "todos") && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="mt-3 text-xs"
-              onClick={() => {
-                setSearchTerm("");
-                setStatusFilter("todos");
-                setProjetoFilter("todos");
-              }}
-            >
-              Limpar filtros
-            </Button>
-          )}
-        </div>
+        <EmptyState
+          icon={Layers}
+          title="Nenhuma disciplina encontrada"
+          description={
+            searchTerm || statusFilter !== "todos" || projetoFilter !== "todos"
+              ? "Ajuste ou limpe os filtros para ver as disciplinas."
+              : "As disciplinas dos projetos aparecem aqui conforme forem definidas."
+          }
+          action={
+            searchTerm || statusFilter !== "todos" || projetoFilter !== "todos"
+              ? {
+                  label: "Limpar filtros",
+                  variant: "outline",
+                  onClick: () => {
+                    setSearchTerm("");
+                    setStatusFilter("todos");
+                    setProjetoFilter("todos");
+                  },
+                }
+              : undefined
+          }
+        />
       ) : viewMode === "cards" ? (
         <div className="space-y-3">
           {filtered.map((grupo) => {

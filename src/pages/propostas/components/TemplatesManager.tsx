@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Upload, FileText, Trash2, Loader2, Eye } from "lucide-react";
+import { EmptyState } from "@/components/EmptyState";
 import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import {
@@ -190,12 +191,13 @@ export function TemplatesManager() {
 
       {templates.length === 0 ? (
         <Card>
-          <CardContent className="py-12 text-center">
-            <FileText className="h-10 w-10 mx-auto mb-3 opacity-40" />
-            <p className="text-sm text-muted-foreground">Nenhum template cadastrado.</p>
-            <p className="text-xs text-muted-foreground mt-1">
-              Crie um documento Word (.docx) com variáveis como {"{{CLIENTE_NOME}}"} e faça upload aqui.
-            </p>
+          <CardContent className="p-0">
+            <EmptyState
+              icon={FileText}
+              title="Nenhum template cadastrado"
+              description="Crie um documento Word (.docx) com variáveis como {{CLIENTE_NOME}} e faça upload aqui."
+              action={{ label: "Upload template", onClick: () => setIsUploadOpen(true) }}
+            />
           </CardContent>
         </Card>
       ) : (
@@ -391,7 +393,7 @@ export function TemplatesManager() {
         onOpenChange={(open) => {
           if (!open) setDeleteId(null);
         }}
-        title="Excluir Template"
+        title="Excluir template"
         description="Tem certeza que deseja excluir este template?"
         onConfirm={handleDelete}
       />

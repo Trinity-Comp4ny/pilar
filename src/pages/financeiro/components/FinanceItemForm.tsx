@@ -56,8 +56,8 @@ export function FinanceItemForm({
   step1Description = "Valor, data e forma de pagamento",
   step2Description = "Vínculos e categorias",
 }: FinanceItemFormProps) {
-  const titleNew = tipo === "despesa" ? "Nova Despesa" : "Nova Receita";
-  const titleEdit = tipo === "despesa" ? "Editar Despesa" : "Editar Receita";
+  const titleNew = tipo === "despesa" ? "Nova despesa" : "Nova receita";
+  const titleEdit = tipo === "despesa" ? "Editar despesa" : "Editar receita";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

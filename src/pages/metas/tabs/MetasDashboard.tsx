@@ -6,6 +6,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { StatusTone } from "@/lib/status";
 import { Target, TrendingUp, Users, Loader2, CheckCircle2, Clock, AlertTriangle } from "lucide-react";
+import { EmptyState } from "@/components/EmptyState";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -197,7 +198,12 @@ export default function MetasDashboard() {
           </CardHeader>
           <CardContent className="space-y-4">
             {topMetas.length === 0 ? (
-              <p className="text-center text-muted-foreground py-4">Nenhuma meta cadastrada</p>
+              <EmptyState
+                icon={Target}
+                title="Nenhuma meta cadastrada"
+                description="Crie metas para acompanhar o progresso por aqui."
+                className="py-6"
+              />
             ) : (
               topMetas.map((meta) => {
                 const percent = Math.min(Math.round((meta.atual / meta.alvo) * 100), 100);
