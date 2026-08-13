@@ -16,6 +16,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { MoneyInput } from "@/components/forms/MoneyInput";
+import { parseCurrencyString } from "@/lib/currencyUtils";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { ChevronDown, Pencil, RefreshCw, CheckCircle2 } from "lucide-react";
@@ -196,7 +198,7 @@ function RenegociarDialog({ open, grupoId, onClose, onDone }: OpProps) {
   const [saving, setSaving] = useState(false);
 
   const submit = async () => {
-    if (!novoTotal || !numParcelas || !primeiraData) {
+    if (parseCurrencyString(novoTotal) <= 0 || !numParcelas || !primeiraData) {
       toast.error("Preencha total, parcelas e primeira data");
       return;
     }
@@ -204,7 +206,7 @@ function RenegociarDialog({ open, grupoId, onClose, onDone }: OpProps) {
     try {
       const { data, error } = await supabase.rpc("rpc_grupo_parcela_renegociar", {
         p_grupo_id: grupoId,
-        p_novo_total: Number(novoTotal),
+        p_novo_total: parseCurrencyString(novoTotal),
         p_novo_num_parcelas: Number(numParcelas),
         p_nova_primeira_data: primeiraData,
         p_observacao: observacao || undefined,
@@ -232,7 +234,7 @@ function RenegociarDialog({ open, grupoId, onClose, onDone }: OpProps) {
         <div className="space-y-3 py-2">
           <div>
             <Label>Novo total *</Label>
-            <Input type="number" step="0.01" value={novoTotal} onChange={(e) => setNovoTotal(e.target.value)} />
+            <MoneyInput value={novoTotal} onChange={setNovoTotal} />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
