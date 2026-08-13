@@ -24,6 +24,17 @@ export const passwordSchema = z
   .regex(HAS_DIGIT, "Senha deve conter número")
   .regex(HAS_SPECIAL, "Senha deve conter caractere especial");
 
+/** Requisitos individuais da senha, para exibir a checklist no cadastro/reset. */
+export function passwordChecks(password: string): { label: string; ok: boolean }[] {
+  return [
+    { label: `Pelo menos ${MIN_LENGTH} caracteres`, ok: password.length >= MIN_LENGTH },
+    { label: "Uma letra minúscula", ok: HAS_LOWERCASE.test(password) },
+    { label: "Uma letra maiúscula", ok: HAS_UPPERCASE.test(password) },
+    { label: "Um número", ok: HAS_DIGIT.test(password) },
+    { label: "Um caractere especial", ok: HAS_SPECIAL.test(password) },
+  ];
+}
+
 export interface PasswordStrength {
   score: 0 | 1 | 2 | 3 | 4;
   label: "muito fraca" | "fraca" | "média" | "forte" | "muito forte";
