@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Pilar">
+  <defs>
+    <!-- Disco verde com gradiente sutil (opção 2) -->
+    <radialGradient id="disco" cx="50%" cy="40%" r="65%">
+      <stop offset="0%" stop-color="#C6F3AB" />
+      <stop offset="100%" stop-color="#88D46A" />
+    </radialGradient>
+  </defs>
+  <!-- Tile escuro cheio (iOS/Android arredondam os cantos por cima) -->
+  <rect width="512" height="512" fill="#0A0A0A" />
+  <!-- Disco centralizado com respiro (padrão Spotify) -->
+  <circle cx="256" cy="256" r="188" fill="url(#disco)" />
+  <!-- Marca REAL (pilar-logo.svg), geometria idêntica, escalada e centralizada.
+       4 colunas, capitel + ábaco, sem barra de base. -->
+  <g transform="translate(256,256) scale(8) translate(-16,-16.5)">
+    <g transform="translate(2,4)" stroke="#0A0A0A" stroke-width="1.6" stroke-linecap="round">
+      <line x1="1" y1="2" x2="27" y2="2" />
+      <line x1="3" y1="6" x2="25" y2="6" opacity="0.9" />
+      <line x1="7" y1="9" x2="7" y2="23" />
+      <line x1="12" y1="9" x2="12" y2="23" />
+      <line x1="17" y1="9" x2="17" y2="23" />
+      <line x1="22" y1="9" x2="22" y2="23" />
+    </g>
+  </g>
+</svg>
