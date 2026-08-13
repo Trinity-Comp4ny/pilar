@@ -77,7 +77,7 @@ export function TrialBanner() {
   return (
     <div
       className={`flex items-center justify-between gap-3 px-4 py-2.5 text-sm font-medium ${
-        urgent ? "bg-red-600 text-white" : "bg-amber-400 text-amber-950"
+        urgent ? "bg-fill-danger text-fill-danger-foreground" : "bg-fill-warning text-fill-warning-foreground"
       }`}
     >
       <div className="flex items-center gap-2">

@@ -521,7 +521,7 @@ export function DisciplinasTab({ projetos, isLoading }: DisciplinasTabProps) {
                                 </Badge>
                               )}
                               {atencao && dlStatus && (
-                                <Badge className="text-[10px] gap-0.5 bg-yellow-500 hover:bg-yellow-500 text-white">
+                                <Badge className="text-[10px] gap-0.5 bg-fill-warning hover:bg-fill-warning text-fill-warning-foreground">
                                   <Clock className="h-3 w-3" />
                                   Atenção {dlStatus.days > 0 ? `(${dlStatus.days}d)` : ""}
                                 </Badge>
@@ -613,7 +613,7 @@ export function DisciplinasTab({ projetos, isLoading }: DisciplinasTabProps) {
                               </Badge>
                             )}
                             {atencao && dlStatus && (
-                              <Badge className="text-[10px] gap-0.5 bg-yellow-500 hover:bg-yellow-500 text-white">
+                              <Badge className="text-[10px] gap-0.5 bg-fill-warning hover:bg-fill-warning text-fill-warning-foreground">
                                 <Clock className="h-3 w-3" />
                                 {dlStatus.days}d
                               </Badge>

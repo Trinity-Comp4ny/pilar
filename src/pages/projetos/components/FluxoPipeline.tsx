@@ -45,8 +45,8 @@ const STATUS_CONFIG = {
   atrasado: {
     // bg/border sem token exato: "atrasado" não é um dos 7 status-* (não é o
     // mesmo conceito de "Cancelado"), deixado cru (ver relatório do lote).
-    bg: "bg-red-500",
-    border: "border-red-500",
+    bg: "bg-fill-danger",
+    border: "border-fill-danger",
     text: "text-danger-strong",
     icon: AlertTriangle,
     label: "Atrasado",

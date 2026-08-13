@@ -46,7 +46,7 @@ export function EventoDetalhe({ evento, onOpen }: { evento: PrazoEvento; onOpen:
               </Badge>
             )}
             {evento.estado === "proximo" && (
-              <Badge className="text-[10px] px-1 py-0 bg-amber-500 hover:bg-amber-500 text-white">próximo</Badge>
+              <Badge className="text-[10px] px-1 py-0 bg-fill-warning hover:bg-fill-warning text-fill-warning-foreground">próximo</Badge>
             )}
             {evento.estado === "concluido" && (
               <Badge className="text-[10px] px-1 py-0 bg-positive hover:bg-positive text-ink">OK</Badge>
