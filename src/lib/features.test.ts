@@ -3,6 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import {
+  applyFeatureToggle,
   FEATURES,
   FEATURE_MODULE,
   isFeatureEnabledForCompany,
@@ -41,6 +42,40 @@ describe("isFeatureEnabledForCompany — herança de sub-feature (ADR 0019)", ()
 
   it("sub true não vale nada se o pai estiver desligado", () => {
     expect(isFeatureEnabledForCompany({ obras_clima: true }, "obras_clima")).toBe(false);
+  });
+});
+
+describe("applyFeatureToggle — próximo estado do JSONB (ADR 0019)", () => {
+  it("ligar feature-raiz grava true", () => {
+    expect(applyFeatureToggle({}, "obras", true)).toEqual({ obras: true });
+  });
+
+  it("desligar feature-raiz remove a chave", () => {
+    expect(applyFeatureToggle({ obras: true }, "obras", false)).toEqual({});
+  });
+
+  it("ligar o módulo limpa os false das sub-features (macro liga tudo)", () => {
+    const next = applyFeatureToggle({ obras_clima: false, obras_estoque: false }, "obras", true);
+    expect(next).toEqual({ obras: true });
+  });
+
+  it("desligar sub grava false explícito, sem tocar as outras", () => {
+    expect(applyFeatureToggle({ obras: true }, "obras_clima", false)).toEqual({
+      obras: true,
+      obras_clima: false,
+    });
+  });
+
+  it("ligar sub remove a chave para herdar o pai", () => {
+    expect(applyFeatureToggle({ obras: true, obras_clima: false }, "obras_clima", true)).toEqual({
+      obras: true,
+    });
+  });
+
+  it("não muta o objeto de entrada", () => {
+    const input = { obras: true };
+    applyFeatureToggle(input, "obras_clima", false);
+    expect(input).toEqual({ obras: true });
   });
 });
 
