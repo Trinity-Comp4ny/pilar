@@ -115,7 +115,7 @@ export default function CompanySetup() {
                 />
                 <div className="leading-tight">
                   <div className="text-sm font-semibold text-ink">
-                    Pilar<sup className="text-[8px] font-normal text-slate-400 ml-0.5 relative -top-1.5">®</sup>
+                    Pilar<sup className="text-[8px] font-normal text-ink-disabled ml-0.5 relative -top-1.5">®</sup>
                   </div>
                   <div className="text-xs text-ink-soft">Configuração inicial · Etapa 2 de 2</div>
                 </div>
@@ -147,7 +147,7 @@ export default function CompanySetup() {
                 render={({ field }) => (
                   <FormItem className="space-y-2">
                     <FormLabel className="text-ink-soft font-medium">
-                      Razão social / Nome fantasia <span className="text-red-500">*</span>
+                      Razão social / Nome fantasia <span className="text-danger-mid">*</span>
                     </FormLabel>
                     <FormControl>
                       <div className="relative group">

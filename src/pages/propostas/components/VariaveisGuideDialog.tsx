@@ -54,13 +54,13 @@ export function VariaveisGuideDialog({ open, onOpenChange }: VariaveisGuideDialo
 
         <div className="space-y-4 mt-2">
           {/* How to use */}
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 space-y-2">
-            <p className="text-sm font-medium text-blue-900">Como usar</p>
-            <ol className="text-sm text-blue-800 space-y-1 list-decimal list-inside">
+          <div className="bg-info-soft border border-info-mid-border rounded-lg p-3 space-y-2">
+            <p className="text-sm font-medium text-info-strong">Como usar</p>
+            <ol className="text-sm text-info-strong space-y-1 list-decimal list-inside">
               <li>Abra seu documento Word (.docx)</li>
               <li>
                 Digite a variável com chaves duplas, ex:{" "}
-                <code className="bg-blue-100 px-1 rounded font-mono text-xs">{"{{CLIENTE_NOME}}"}</code>
+                <code className="bg-info-soft px-1 rounded font-mono text-xs">{"{{CLIENTE_NOME}}"}</code>
               </li>
               <li>Faça upload do template aqui no sistema</li>
               <li>Ao gerar a proposta, o sistema substitui pelas informações reais</li>
@@ -104,11 +104,12 @@ export function VariaveisGuideDialog({ open, onOpenChange }: VariaveisGuideDialo
           </div>
 
           {/* Custom variables info */}
-          <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 space-y-1">
-            <p className="text-sm font-medium text-amber-900">Variáveis personalizadas</p>
-            <p className="text-sm text-amber-800">
+          <div className="bg-warning-soft border border-warning-mid-border rounded-lg p-3 space-y-1">
+            <p className="text-sm font-medium text-warning-strong">Variáveis personalizadas</p>
+            <p className="text-sm text-warning-strong">
               Você pode criar suas próprias variáveis! Basta escrever{" "}
-              <code className="bg-amber-100 px-1 rounded font-mono text-xs">{"{{MINHA_VARIAVEL}}"}</code> no documento.
+              <code className="bg-warning-soft px-1 rounded font-mono text-xs">{"{{MINHA_VARIAVEL}}"}</code> no
+              documento.
               O sistema vai detectá-la e pedir para você preencher manualmente ao gerar a proposta.
             </p>
           </div>

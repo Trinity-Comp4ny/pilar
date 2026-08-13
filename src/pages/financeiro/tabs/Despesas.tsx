@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   Dialog,
@@ -184,7 +185,7 @@ export default function Despesas() {
         <div>
           <Input id="descricao" {...form.register("descricao")} placeholder="Ex: Material de escritório, Aluguel" />
           {form.formState.errors.descricao && (
-            <p className="text-xs text-red-500 mt-1">{form.formState.errors.descricao.message}</p>
+            <p className="text-xs text-danger-mid mt-1">{form.formState.errors.descricao.message}</p>
           )}
         </div>
       </div>
@@ -205,7 +206,7 @@ export default function Despesas() {
               className="h-9"
             />
             {form.formState.errors.valorTotal && (
-              <p className="text-xs text-red-500 mt-1">{form.formState.errors.valorTotal.message}</p>
+              <p className="text-xs text-danger-mid mt-1">{form.formState.errors.valorTotal.message}</p>
             )}
           </div>
           <div className="space-y-1.5">
@@ -407,20 +408,26 @@ export default function Despesas() {
       <div className="px-6 py-4 space-y-3">
         <Label className="text-[10px] uppercase text-muted-foreground tracking-wider">Recorrência</Label>
         <div className="flex items-center gap-4">
-          <label className="flex items-center gap-2 text-sm cursor-pointer">
-            <input type="checkbox" className="h-4 w-4 rounded border-gray-300" {...form.register("recorrente")} />
+          <label htmlFor="recorrente" className="flex items-center gap-2 text-sm cursor-pointer">
+            <Checkbox
+              id="recorrente"
+              checked={form.watch("recorrente")}
+              onCheckedChange={(checked) => form.setValue("recorrente", checked === true)}
+            />
             Despesa recorrente
           </label>
           {form.watch("recorrente") && (
-            <select
-              className="h-9 rounded-md border border-input bg-background px-3 text-sm"
-              {...form.register("periodicidade")}
-            >
-              <option value="mensal">Mensal</option>
-              <option value="trimestral">Trimestral</option>
-              <option value="semestral">Semestral</option>
-              <option value="anual">Anual</option>
-            </select>
+            <Select value={form.watch("periodicidade")} onValueChange={(v) => form.setValue("periodicidade", v)}>
+              <SelectTrigger className="h-9 w-[160px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="mensal">Mensal</SelectItem>
+                <SelectItem value="trimestral">Trimestral</SelectItem>
+                <SelectItem value="semestral">Semestral</SelectItem>
+                <SelectItem value="anual">Anual</SelectItem>
+              </SelectContent>
+            </Select>
           )}
         </div>
       </div>
@@ -509,12 +516,12 @@ export default function Despesas() {
         </CardHeader>
         <CardContent className="p-0">
           {isError && (
-            <div className="mx-4 mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            <div className="mx-4 mt-4 rounded-lg border border-danger-mid-border bg-danger-soft px-4 py-3 text-sm text-danger-strong">
               Não foi possível carregar as despesas. Verifique a conexão e recarregue a página — os valores abaixo podem
               estar incompletos.
             </div>
           )}
-          <div className="flex items-center gap-3 px-4 py-3 border-b bg-gray-50/50">
+          <div className="flex items-center gap-3 px-4 py-3 border-b bg-muted/50">
             <Input
               placeholder="Buscar por descrição ou fornecedor..."
               value={searchTerm}
@@ -557,7 +564,7 @@ export default function Despesas() {
                 {despesasFiltradas.map((despesa) => (
                   <TableRow
                     key={despesa.id}
-                    className="cursor-pointer hover:bg-gray-50"
+                    className="cursor-pointer hover:bg-muted"
                     onClick={() => {
                       setSelectedDespesa(despesa);
                       setIsDetailOpen(true);
@@ -574,7 +581,7 @@ export default function Despesas() {
                         ? `${despesa.parcela_numero}/${despesa.parcela_total}`
                         : "1/1"}
                     </TableCell>
-                    <TableCell className="text-red-600 font-medium">
+                    <TableCell className="text-negative-strong font-medium">
                       R$ {despesa.valor.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                     </TableCell>
                     <TableCell>
@@ -600,7 +607,7 @@ export default function Despesas() {
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                              className="h-8 w-8 text-info-mid hover:text-info-strong hover:bg-info-soft"
                               onClick={() => openEditDespesa(despesa)}
                               aria-label="Editar despesa"
                             >
@@ -609,7 +616,7 @@ export default function Despesas() {
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                              className="h-8 w-8 text-danger-mid hover:text-danger-strong hover:bg-danger-soft"
                               onClick={() => handleDelete(despesa.id)}
                               aria-label="Excluir despesa"
                             >

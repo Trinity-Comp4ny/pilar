@@ -44,21 +44,21 @@ const DISCIPLINA_STATUS_CONFIG: Record<
   },
   "Em Andamento": {
     label: "Em Andamento",
-    color: "text-blue-700",
+    color: "text-info-strong",
     icon: Clock,
-    bgColor: "bg-blue-50 border-blue-200",
+    bgColor: "bg-info-soft border-info-mid-border",
   },
   "Não Iniciado": {
     label: "Não Iniciado",
-    color: "text-gray-500",
+    color: "text-ink-muted",
     icon: PauseCircle,
-    bgColor: "bg-gray-50 border-gray-200",
+    bgColor: "bg-muted border-border",
   },
   Pendente: {
     label: "Pendente",
-    color: "text-amber-700",
+    color: "text-warning-strong",
     icon: AlertTriangle,
-    bgColor: "bg-amber-50 border-amber-200",
+    bgColor: "bg-warning-soft border-warning-mid-border",
   },
 };
 
@@ -93,15 +93,15 @@ function StatusDistributionBar({ grupo }: { grupo: DisciplinaAgrupada }) {
 
   const segments = [
     { count: grupo.totalConcluido, color: "bg-positive/100", label: "Concluído" },
-    { count: grupo.totalEmAndamento, color: "bg-blue-500", label: "Em Andamento" },
-    { count: grupo.totalPendente, color: "bg-amber-500", label: "Pendente" },
+    { count: grupo.totalEmAndamento, color: "bg-status-progress", label: "Em Andamento" },
+    { count: grupo.totalPendente, color: "bg-status-planning", label: "Pendente" },
     { count: grupo.totalNaoIniciado, color: "bg-gray-300", label: "Não Iniciado" },
   ].filter((s) => s.count > 0);
 
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <div className="flex h-2 w-28 rounded-full overflow-hidden bg-gray-100 cursor-default">
+        <div className="flex h-2 w-28 rounded-full overflow-hidden bg-muted cursor-default">
           {segments.map((seg) => (
             <div
               key={seg.label}
@@ -403,7 +403,7 @@ export function DisciplinasTab({ projetos, isLoading }: DisciplinasTabProps) {
                           {grupo.projetos.length !== 1 ? "s" : ""}
                         </Badge>
                         {hasAtrasadas && (
-                          <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold bg-red-100 text-red-700 flex items-center gap-1">
+                          <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold bg-danger-soft text-danger-strong flex items-center gap-1">
                             <AlertTriangle size={10} /> Atraso
                           </span>
                         )}
@@ -435,7 +435,7 @@ export function DisciplinasTab({ projetos, isLoading }: DisciplinasTabProps) {
                         {grupo.totalEmAndamento > 0 && (
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <span className="flex items-center gap-0.5 text-xs text-blue-700 bg-blue-50 rounded-full px-2 py-0.5">
+                              <span className="flex items-center gap-0.5 text-xs text-info-strong bg-info-soft rounded-full px-2 py-0.5">
                                 <Clock className="h-3 w-3" />
                                 {grupo.totalEmAndamento}
                               </span>
@@ -446,7 +446,7 @@ export function DisciplinasTab({ projetos, isLoading }: DisciplinasTabProps) {
                         {grupo.totalPendente > 0 && (
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <span className="flex items-center gap-0.5 text-xs text-amber-700 bg-amber-50 rounded-full px-2 py-0.5">
+                              <span className="flex items-center gap-0.5 text-xs text-warning-strong bg-warning-soft rounded-full px-2 py-0.5">
                                 <AlertTriangle className="h-3 w-3" />
                                 {grupo.totalPendente}
                               </span>
@@ -474,8 +474,8 @@ export function DisciplinasTab({ projetos, isLoading }: DisciplinasTabProps) {
                             key={projeto.id}
                             className={cn(
                               "px-4 py-3 flex flex-col sm:flex-row sm:items-center gap-2 transition-colors hover:bg-muted/20",
-                              atrasada && "bg-red-50/30",
-                              atencao && "bg-yellow-50/30"
+                              atrasada && "bg-danger-soft/30",
+                              atencao && "bg-warning-soft/30"
                             )}
                           >
                             <div className="flex-1 min-w-0 pl-7">
@@ -496,7 +496,7 @@ export function DisciplinasTab({ projetos, isLoading }: DisciplinasTabProps) {
                                   <>
                                     <span className="text-muted-foreground/30">·</span>
                                     <span
-                                      className={cn("flex items-center gap-1", atrasada && "text-red-600 font-medium")}
+                                      className={cn("flex items-center gap-1", atrasada && "text-danger-mid font-medium")}
                                     >
                                       <Calendar className="h-3 w-3" />
                                       Prev: {formatDateShort(disciplina.data_previsao)}
@@ -573,9 +573,9 @@ export function DisciplinasTab({ projetos, isLoading }: DisciplinasTabProps) {
                         className={cn(
                           "border-b transition-colors",
                           atrasada
-                            ? "bg-red-50/30 hover:bg-red-50/50"
+                            ? "bg-danger-soft/30 hover:bg-danger-soft/50"
                             : atencao
-                              ? "bg-yellow-50/30 hover:bg-yellow-50/50"
+                              ? "bg-warning-soft/30 hover:bg-warning-soft/50"
                               : "hover:bg-muted/30"
                         )}
                       >
@@ -624,9 +624,9 @@ export function DisciplinasTab({ projetos, isLoading }: DisciplinasTabProps) {
                           className={cn(
                             "py-2.5 px-4 text-sm",
                             atrasada
-                              ? "text-red-600 font-medium"
+                              ? "text-danger-mid font-medium"
                               : atencao
-                                ? "text-yellow-600 font-medium"
+                                ? "text-warning-mid font-medium"
                                 : "text-muted-foreground"
                           )}
                         >

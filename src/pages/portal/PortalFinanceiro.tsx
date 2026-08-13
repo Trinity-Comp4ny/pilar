@@ -3,6 +3,8 @@ import { KPICard } from "@/components/KPICard";
 import { formatCurrency as fmtMoeda } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { StatusBadge } from "@/components/StatusBadge";
+import { statusBadgeClasses } from "@/lib/status";
 import { CheckCircle2, Clock, Receipt, ExternalLink } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
 import type { ClienteReceita } from "@/pages/cliente/useClienteProjetoData";
@@ -42,7 +44,7 @@ export function FinanceiroContent({ receitas }: { receitas: ClienteReceita[] }) 
               <span className="text-sm font-bold">{((totalPago / totalPrevisto) * 100).toFixed(0)}% pago</span>
             </div>
             <div
-              className="w-full bg-gray-200 rounded-full h-3"
+              className="w-full bg-muted rounded-full h-3"
               role="progressbar"
               aria-valuenow={Math.round((totalPago / totalPrevisto) * 100)}
               aria-valuemin={0}
@@ -69,11 +71,10 @@ export function FinanceiroContent({ receitas }: { receitas: ClienteReceita[] }) 
               {receitas.map((r) => {
                 const isRecebido = r.status === "Recebido";
                 const isAtrasado = !isRecebido && !!r.data_vencimento && r.data_vencimento < hojeLocal;
+                const statusKey = isRecebido ? "Pago" : isAtrasado ? "Atrasado" : "Pendente";
                 return (
                   <div key={r.id} className="flex items-center gap-3 p-3 border rounded-lg">
-                    <div
-                      className={`p-1.5 rounded ${isRecebido ? "bg-positive/10 text-positive-strong" : isAtrasado ? "bg-red-100 text-red-700" : "bg-yellow-100 text-yellow-700"}`}
-                    >
+                    <div className={`p-1.5 rounded ${statusBadgeClasses("financeiro", statusKey)}`}>
                       {isRecebido ? <CheckCircle2 className="h-4 w-4" /> : <Clock className="h-4 w-4" />}
                     </div>
                     <div className="flex-1">
@@ -87,15 +88,11 @@ export function FinanceiroContent({ receitas }: { receitas: ClienteReceita[] }) 
                       <p className="text-sm font-bold">{formatCurrency(r.valor)}</p>
                       <div className="flex items-center justify-end gap-1.5 flex-wrap">
                         {!isRecebido && r.asaas_billing_type && (
-                          <Badge className="text-[10px] bg-blue-100 text-blue-800">
+                          <Badge className="text-[10px] bg-info-soft text-info-strong">
                             {r.asaas_billing_type === "PIX" ? "PIX" : "Boleto"}
                           </Badge>
                         )}
-                        <Badge
-                          className={`text-[10px] ${isRecebido ? "bg-positive/10 text-positive-strong" : isAtrasado ? "bg-red-100 text-red-800" : "bg-yellow-100 text-yellow-800"}`}
-                        >
-                          {isRecebido ? "Pago" : isAtrasado ? "Atrasado" : "Pendente"}
-                        </Badge>
+                        <StatusBadge domain="financeiro" status={statusKey} className="text-[10px]" />
                       </div>
                       {!isRecebido && r.asaas_payment_url && (
                         <Button asChild size="sm" variant="brand" className="h-11 sm:h-8 text-xs px-3">

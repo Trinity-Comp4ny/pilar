@@ -517,7 +517,7 @@ function SegBtn({
           ? tone === "positive"
             ? "bg-positive/10 text-positive-strong shadow-sm"
             : tone === "negative"
-              ? "bg-red-50 text-red-600 shadow-sm"
+              ? "bg-negative/10 text-negative-strong shadow-sm"
               : "bg-white shadow-sm text-foreground"
           : "text-muted-foreground hover:text-foreground"
       )}

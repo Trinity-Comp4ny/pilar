@@ -89,7 +89,7 @@ export function LancamentosGroupRow({
       key={`group-${groupId}`}
       data-index={dataIndex}
       ref={measureRef}
-      className="border-b border-black/5 hover:bg-gray-50 cursor-pointer transition-colors bg-gray-50/50"
+      className="border-b border-black/5 hover:bg-muted cursor-pointer transition-colors bg-muted/50"
       onClick={onToggle}
     >
       {canEdit && (
@@ -105,7 +105,7 @@ export function LancamentosGroupRow({
         <span
           className={cn(
             "inline-flex items-center justify-center h-7 w-7 rounded-full",
-            isReceita ? "bg-positive/10 text-positive-strong" : "bg-red-50 text-red-600"
+            isReceita ? "bg-positive/10 text-positive-strong" : "bg-negative/10 text-negative-strong"
           )}
         >
           {isReceita ? <ArrowUpCircle className="h-4 w-4" /> : <ArrowDownCircle className="h-4 w-4" />}
@@ -127,7 +127,7 @@ export function LancamentosGroupRow({
       <td className={cn(cellPad, cellTextSize)}>{first.projeto_codigo || "-"}</td>
       <td className={cn(cellPad, "text-xs text-muted-foreground whitespace-nowrap")}>{parcelaLabel}</td>
       <td className={cn(cellPad, "text-right tabular-nums", cellTextSize)}>
-        <div className={cn("font-semibold", isReceita ? "text-positive-strong" : "text-red-600")}>
+        <div className={cn("font-semibold", isReceita ? "text-positive-strong" : "text-negative-strong")}>
           {isReceita ? "+" : "−"} {formatBRL(totalPlano)}
         </div>
         {status !== "quitado" && saldo > 0 && (
@@ -140,8 +140,8 @@ export function LancamentosGroupRow({
           className={cn(
             "text-xs",
             status === "quitado" && isReceita && "bg-positive text-white",
-            status === "quitado" && !isReceita && "bg-red-600 text-white",
-            status === "parcial" && "bg-amber-100 text-amber-800"
+            status === "quitado" && !isReceita && "bg-negative text-white",
+            status === "parcial" && "bg-warning-soft text-warning-strong"
           )}
         >
           {STATUS_LABEL[status]}
@@ -162,7 +162,7 @@ export function LancamentosGroupRow({
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
-                className="text-xs gap-2 text-red-600 focus:text-red-600"
+                className="text-xs gap-2 text-danger-mid focus:text-danger-mid"
                 onSelect={() => onDeleteGroup(items)}
               >
                 <Trash2 className="h-3.5 w-3.5" />

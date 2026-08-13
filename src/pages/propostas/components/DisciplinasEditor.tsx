@@ -149,7 +149,7 @@ export function DisciplinasEditor({ rows, onChange, disabled }: DisciplinasEdito
                         type="button"
                         variant="ghost"
                         size="icon"
-                        className="h-7 w-7 text-red-500"
+                        className="h-7 w-7 text-danger-mid"
                         onClick={() => removeRow(r.id)}
                         aria-label="Remover disciplina"
                       >
@@ -182,7 +182,7 @@ export function DisciplinasEditor({ rows, onChange, disabled }: DisciplinasEdito
             Soma venda: {formatCurrency(totais.totalValor)}
           </Badge>
           {totais.margemPct !== null && (
-            <Badge className={`text-xs ${totais.margemPct >= 0 ? "bg-positive/10 text-positive-strong" : "bg-red-100 text-red-800"}`}>
+            <Badge className={`text-xs ${totais.margemPct >= 0 ? "bg-positive/10 text-positive-strong" : "bg-danger-soft text-danger-strong"}`}>
               Margem: {totais.margemPct.toFixed(1)}%
             </Badge>
           )}

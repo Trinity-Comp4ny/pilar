@@ -1,5 +1,5 @@
 import { type ReactNode } from "react";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Check, DollarSign, Tag, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -129,7 +129,7 @@ export function FinanceItemForm({
           {step === 1 && parcelaBanner}
           {step === 1 ? step1 : step2}
 
-          <div className="flex items-center gap-2 px-6 py-4 bg-gray-50/30">
+          <div className="flex items-center gap-2 px-6 py-4 bg-muted/30">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isSaving}>
               Cancelar
             </Button>
@@ -171,11 +171,11 @@ interface ParcelaBannerProps {
 export function ParcelaBanner({ numero, total }: ParcelaBannerProps) {
   return (
     <div className="px-6 pt-4 pb-0">
-      <div className="flex items-center gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+      <div className="flex items-center gap-2 rounded-md border border-warning-mid-border bg-warning-soft px-3 py-2 text-xs text-warning-strong">
         <span className="font-medium">
           Parcela {numero ?? "?"} de {total ?? "?"}
         </span>
-        <span className="text-amber-600">— faz parte de um grupo. Editar aqui altera só esta parcela.</span>
+        <span className="text-warning-mid">— faz parte de um grupo. Editar aqui altera só esta parcela.</span>
       </div>
     </div>
   );
@@ -205,7 +205,10 @@ export function DeleteGroupDialog({ target, onCancel, onConfirm }: DeleteGroupDi
           >
             Só esta parcela
           </AlertDialogAction>
-          <AlertDialogAction className="bg-red-600 hover:bg-red-700 text-white" onClick={() => onConfirm("all")}>
+          <AlertDialogAction
+            className={cn(buttonVariants({ variant: "destructive" }))}
+            onClick={() => onConfirm("all")}
+          >
             Todo o grupo
           </AlertDialogAction>
         </AlertDialogFooter>

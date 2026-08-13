@@ -106,7 +106,7 @@ export function CapacidadeSimulacao({ disciplinas, prazoEstimadoDias }: Capacida
   if (disciplinas.length === 0) return null;
 
   return (
-    <Card className={temAlertas ? "border-amber-200" : "border-blue-200"}>
+    <Card className={temAlertas ? "border-warning-mid-border" : "border-info-mid-border"}>
       <CardHeader className="pb-2">
         <CardTitle className="text-sm font-medium flex items-center gap-2">
           <Users className="h-4 w-4" /> Simulação de Capacidade
@@ -136,21 +136,21 @@ export function CapacidadeSimulacao({ disciplinas, prazoEstimadoDias }: Capacida
                 </div>
 
                 {s.sem_pessoa ? (
-                  <p className="text-xs text-amber-600 bg-amber-50 rounded p-2">
+                  <p className="text-xs text-warning-mid bg-warning-soft rounded p-2">
                     Nenhuma pessoa atribuída a esta disciplina em projetos ativos
                   </p>
                 ) : (
                   <div className="space-y-1">
                     {s.pessoas.map((p) => (
                       <div key={p.id} className="flex items-center justify-between text-xs">
-                        <span className={p.pode_absorver ? "text-emerald-700" : "text-muted-foreground"}>
+                        <span className={p.pode_absorver ? "text-success-strong" : "text-muted-foreground"}>
                           {p.nome} {p.cargo ? `(${p.cargo})` : ""}
                         </span>
                         <div className="flex items-center gap-2">
                           <span className="text-muted-foreground">{p.horas_livres.toFixed(0)}h livres</span>
                           <Badge
-                            variant={p.pode_absorver ? "default" : "secondary"}
-                            className={`text-[9px] ${p.pode_absorver ? "bg-emerald-100 text-emerald-800" : p.utilizacao_pct > 90 ? "bg-red-100 text-red-800" : ""}`}
+                            variant={p.pode_absorver ? "success" : p.utilizacao_pct > 90 ? "danger" : "secondary"}
+                            className="text-[9px]"
                           >
                             {p.utilizacao_pct.toFixed(0)}% utilizado
                           </Badge>
@@ -158,7 +158,7 @@ export function CapacidadeSimulacao({ disciplinas, prazoEstimadoDias }: Capacida
                       </div>
                     ))}
                     {s.alerta && (
-                      <p className="text-xs text-red-600 mt-1">
+                      <p className="text-xs text-danger-mid mt-1">
                         Nenhuma pessoa tem capacidade suficiente para absorver {s.horas_necessarias}h
                       </p>
                     )}

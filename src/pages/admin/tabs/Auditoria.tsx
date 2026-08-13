@@ -28,8 +28,8 @@ interface AuditLog {
 
 const ACTION_COLOR: Record<AuditLog["action"], string> = {
   INSERT: "bg-positive/10 text-positive-strong",
-  UPDATE: "bg-blue-100 text-blue-700",
-  DELETE: "bg-red-100 text-red-700",
+  UPDATE: "bg-info-soft text-info-strong",
+  DELETE: "bg-danger-soft text-danger-strong",
 };
 
 // ─── admin_audit_logs (ações administrativas) ─────────────────────────────────
@@ -47,11 +47,11 @@ interface AdminAuditLog {
 }
 
 const CATEGORY_COLOR: Record<string, string> = {
-  user: "bg-blue-100 text-blue-700",
-  empresa: "bg-purple-100 text-purple-700",
+  user: "bg-info-soft text-info-strong",
+  empresa: "bg-highlight-soft text-highlight-strong",
   member: "bg-positive/10 text-positive-strong",
-  billing: "bg-yellow-100 text-yellow-700",
-  impersonation: "bg-orange-100 text-orange-700",
+  billing: "bg-warning-soft text-warning-strong",
+  impersonation: "bg-attention-soft text-attention-strong",
 };
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -213,7 +213,7 @@ function DataAuditTab() {
         </div>
       </div>
 
-      {error && <div className="text-sm text-red-600">{error}</div>}
+      {error && <div className="text-sm text-danger-mid">{error}</div>}
 
       {loading ? (
         <div className="flex justify-center p-12">
@@ -352,7 +352,7 @@ function AdminActionsTab() {
         </div>
       </div>
 
-      {error && <div className="text-sm text-red-600">{error}</div>}
+      {error && <div className="text-sm text-danger-mid">{error}</div>}
 
       {loading ? (
         <div className="flex justify-center p-12">
@@ -394,7 +394,7 @@ function AdminActionsTab() {
                       <TableCell className="text-xs font-mono">{log.action}</TableCell>
                       <TableCell>
                         <Badge
-                          className={CATEGORY_COLOR[log.category] ?? "bg-gray-100 text-gray-700"}
+                          className={CATEGORY_COLOR[log.category] ?? "bg-muted text-muted-foreground"}
                           variant="secondary"
                         >
                           {log.category}

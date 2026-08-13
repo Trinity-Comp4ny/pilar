@@ -150,7 +150,7 @@ export function ProjectBudgetTab({ projetoId, canEdit, disciplinas }: ProjectBud
           <Badge variant="secondary">Custo: {formatCurrency(totalCusto)}</Badge>
           <Badge variant="secondary">Venda: {formatCurrency(totalVenda)}</Badge>
           {totalVenda > 0 && (
-            <Badge className={totalVenda - totalCusto > 0 ? "bg-positive/10 text-positive-strong" : "bg-red-100 text-red-800"}>
+            <Badge className={totalVenda - totalCusto > 0 ? "bg-positive/10 text-positive-strong" : "bg-danger-soft text-danger-strong"}>
               Margem: {(((totalVenda - totalCusto) / totalVenda) * 100).toFixed(1)}%
             </Badge>
           )}
@@ -183,7 +183,7 @@ export function ProjectBudgetTab({ projetoId, canEdit, disciplinas }: ProjectBud
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-6 w-6 text-red-500"
+                      className="h-6 w-6 text-danger-mid"
                       onClick={(e) => {
                         e.stopPropagation();
                         setDeleteRow(o);
@@ -199,7 +199,7 @@ export function ProjectBudgetTab({ projetoId, canEdit, disciplinas }: ProjectBud
 
             {/* Linha de edição */}
             {isEditing && (
-              <TableRow className="bg-blue-50/50">
+              <TableRow className="bg-info-soft/50">
                 <TableCell className="text-xs font-medium">{editRow.disciplina}</TableCell>
                 <TableCell>
                   <Input
@@ -238,6 +238,7 @@ export function ProjectBudgetTab({ projetoId, canEdit, disciplinas }: ProjectBud
                 </TableCell>
                 <TableCell className="text-right">
                   <Button
+                    variant="brand"
                     size="icon"
                     className="h-6 w-6"
                     onClick={handleSave}

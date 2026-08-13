@@ -18,7 +18,7 @@ export const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) =>
         {payload.map((entry, index) => (
           <div key={index} className="flex items-center gap-2 text-sm">
             <div className="w-3 h-3 rounded-full" style={{ backgroundColor: entry.color }} />
-            <span className="text-gray-600">{entry.name}:</span>
+            <span className="text-ink-muted">{entry.name}:</span>
             <span className="font-medium">
               R$ {typeof entry.value === "number" ? entry.value.toLocaleString("pt-BR") : entry.value}
             </span>

@@ -71,7 +71,7 @@ export function CartaoDetailPanel({ cartao, contas, canEdit, onEdit, onDelete }:
           <div
             className={cn(
               "h-2.5 rounded-full transition-all",
-              pct > 80 ? "bg-red-500" : pct > 50 ? "bg-yellow-500" : "bg-positive"
+              pct > 80 ? "bg-danger-strong" : pct > 50 ? "bg-warning-mid" : "bg-positive"
             )}
             style={{ width: `${Math.min(pct, 100)}%` }}
           />

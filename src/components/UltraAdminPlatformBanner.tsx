@@ -18,7 +18,7 @@ export function UltraAdminPlatformBanner() {
   }
 
   return (
-    <div className="flex items-center justify-between gap-4 bg-amber-50 border-b border-amber-200 px-6 py-2 text-sm text-amber-800">
+    <div className="flex items-center justify-between gap-4 bg-warning-soft border-b border-warning-mid-border px-6 py-2 text-sm text-warning-strong">
       <div className="flex items-center gap-2">
         <ShieldAlert size={14} className="shrink-0" />
         <span>Modo plataforma ativo: você está visualizando como ultra admin.</span>
@@ -26,7 +26,7 @@ export function UltraAdminPlatformBanner() {
       <Button
         variant="outline"
         size="sm"
-        className="h-7 rounded-full border-amber-300 bg-white text-amber-800 hover:bg-amber-100 hover:text-amber-900"
+        className="h-7 rounded-full border-warning-mid-border bg-white text-warning-strong hover:bg-warning-soft hover:text-warning-strong"
         onClick={exitPlatformMode}
       >
         <ArrowLeft size={13} />

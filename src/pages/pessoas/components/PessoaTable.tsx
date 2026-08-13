@@ -226,12 +226,12 @@ export function PessoaTable({ pessoas, isLoading, isAdmin, onRowClick, onEditCli
                 filteredAndSortedPessoas.map((pessoa) => (
                   <TableRow
                     key={pessoa.id}
-                    className="cursor-pointer hover:bg-gray-50"
+                    className="cursor-pointer hover:bg-muted"
                     onClick={() => onRowClick(pessoa)}
                   >
                     <TableCell className="font-medium">
                       <div className="flex items-center gap-2">
-                        <div className="bg-gray-100 p-1.5 rounded-full">
+                        <div className="bg-muted p-1.5 rounded-full">
                           {(() => {
                             const Icon = TIPO_ICON[pessoa.tipo_contrato] || User;
                             return <Icon size={14} />;
@@ -246,7 +246,7 @@ export function PessoaTable({ pessoas, isLoading, isAdmin, onRowClick, onEditCli
                         className={cn(
                           "border",
                           CONTRACT_TYPE_COLORS[pessoa.tipo_contrato as ContractType] ||
-                            "bg-gray-100 text-gray-700 border-gray-200"
+                            "bg-muted text-ink-soft border-border"
                         )}
                       >
                         {CONTRACT_TYPE_LABELS[pessoa.tipo_contrato as ContractType] || pessoa.tipo_contrato}
@@ -278,7 +278,7 @@ export function PessoaTable({ pessoas, isLoading, isAdmin, onRowClick, onEditCli
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8 text-red-600"
+                            className="h-8 w-8 text-danger-mid"
                             onClick={(e) => {
                               e.stopPropagation();
                               onDeleteClick(pessoa.id);

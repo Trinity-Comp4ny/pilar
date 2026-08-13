@@ -673,7 +673,7 @@ export default function Propostas() {
                         role="button"
                         tabIndex={0}
                         aria-label={`Ver detalhes da proposta ${p.titulo}`}
-                        className="cursor-pointer hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
+                        className="cursor-pointer hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
                         onClick={() => openDetail(p.id)}
                         onKeyDown={(e) => handleRowKeyDown(e, p.id)}
                       >
@@ -689,7 +689,7 @@ export default function Propostas() {
                           </Badge>
                         </TableCell>
                         <TableCell
-                          className={`text-sm py-4 ${p.validade && p.validade < hoje ? "text-red-500 font-medium" : ""}`}
+                          className={`text-sm py-4 ${p.validade && p.validade < hoje ? "text-danger-mid font-medium" : ""}`}
                         >
                           {formatDate(p.validade)}
                         </TableCell>
@@ -788,7 +788,7 @@ export default function Propostas() {
                         )}
                         {p.validade && (
                           <div
-                            className={`flex items-center gap-1.5 text-xs ${isExpired ? "text-red-500" : "text-muted-foreground"}`}
+                            className={`flex items-center gap-1.5 text-xs ${isExpired ? "text-danger-mid" : "text-muted-foreground"}`}
                           >
                             <Calendar className="h-3 w-3 flex-shrink-0" />
                             <span>{formatDate(p.validade)}</span>
@@ -887,7 +887,7 @@ export default function Propostas() {
                   placeholder="PROP-001"
                 />
                 {codigoDuplicado && (
-                  <p className="text-[11px] text-amber-600">Já existe uma proposta com este código.</p>
+                  <p className="text-[11px] text-warning-mid">Já existe uma proposta com este código.</p>
                 )}
               </div>
               <div className="space-y-2">
@@ -1012,7 +1012,7 @@ export default function Propostas() {
                 <span>Soma das disciplinas: {formatCurrencyBRL(disciplinasTotais.totalValor)}</span>
                 {valorDiverge && (
                   <>
-                    <span className="text-amber-600">difere do valor digitado</span>
+                    <span className="text-warning-mid">difere do valor digitado</span>
                     <button
                       type="button"
                       className="text-ink underline underline-offset-2"
@@ -1069,6 +1069,7 @@ export default function Propostas() {
                 Cancelar
               </Button>
               <Button
+                variant="brand"
                 onClick={handleSubmit}
                 disabled={createProposta.isPending || updateProposta.isPending || salvarDisciplinas.isPending}
               >
@@ -1147,7 +1148,7 @@ export default function Propostas() {
                     {convertDisciplinas.map((d: PropostaDisciplina) => (
                       <div
                         key={d.id}
-                        className="flex justify-between items-center text-xs bg-blue-50 rounded px-3 py-1.5"
+                        className="flex justify-between items-center text-xs bg-info-soft rounded px-3 py-1.5"
                       >
                         <span className="font-medium">{d.disciplina}</span>
                         <span className="text-muted-foreground">
@@ -1169,7 +1170,7 @@ export default function Propostas() {
                 />
               )}
 
-              <div className="text-xs text-muted-foreground bg-amber-50 border border-amber-200 rounded-lg p-3">
+              <div className="text-xs text-muted-foreground bg-warning-soft border border-warning-mid-border rounded-lg p-3">
                 O projeto será criado com status "Planejamento" e orçamento por disciplina pré-preenchido. Você poderá
                 editar tudo depois.
               </div>

@@ -30,7 +30,10 @@ const buttonVariants = cva(
       },
     },
     defaultVariants: {
-      variant: "default",
+      // ADR 0008 D2: verde (brand) é a ação primária padrão. Botão sem variant
+      // explícita nasce primário — todos os 650 usos atuais já declaram o papel,
+      // então isto só blinda código futuro contra o "preto por acidente".
+      variant: "brand",
       size: "default",
     },
   }

@@ -162,12 +162,12 @@ export function CalendarioPreview() {
                       )}
                       <span className="text-sm flex-1 truncate">{e.nome}</span>
                       {e.atrasado && (
-                        <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-red-100 text-red-700 flex-shrink-0">
+                        <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-danger-soft text-danger-strong flex-shrink-0">
                           atraso
                         </span>
                       )}
                       {!e.atrasado && e.proximo && (
-                        <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 flex-shrink-0">
+                        <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-warning-soft text-warning-strong flex-shrink-0">
                           próximo
                         </span>
                       )}

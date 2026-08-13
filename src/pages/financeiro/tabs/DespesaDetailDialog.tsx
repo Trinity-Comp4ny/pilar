@@ -99,7 +99,7 @@ export function DespesaDetailDialog({
               )}
               <div>
                 <Label className="text-xs text-muted-foreground">Valor</Label>
-                <p className="text-sm font-bold text-red-600">
+                <p className="text-sm font-bold text-negative-strong">
                   R$ {despesa.valor.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                 </p>
               </div>

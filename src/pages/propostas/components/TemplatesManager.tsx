@@ -135,7 +135,7 @@ export function TemplatesManager() {
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 text-red-500 flex-shrink-0"
+            className="h-8 w-8 text-danger-mid flex-shrink-0"
             onClick={() => setDeleteId(t.id)}
             aria-label="Excluir template"
           >
@@ -148,7 +148,7 @@ export function TemplatesManager() {
             <Badge
               key={v}
               variant="secondary"
-              className={`text-[10px] ${v in AUTO_VARIABLES ? "bg-positive/10 text-positive-strong" : "bg-amber-50 text-amber-700"}`}
+              className={`text-[10px] ${v in AUTO_VARIABLES ? "bg-positive/10 text-positive-strong" : "bg-warning-soft text-warning-strong"}`}
             >
               {v}
             </Badge>
@@ -277,8 +277,8 @@ export function TemplatesManager() {
                     [&_h3]:text-base [&_h3]:font-semibold [&_h3]:mb-2 [&_h3]:mt-3
                     [&_p]:mb-2 [&_p]:leading-relaxed [&_p]:text-sm
                     [&_table]:w-full [&_table]:border-collapse [&_table]:mb-4
-                    [&_td]:border [&_td]:border-gray-300 [&_td]:px-2 [&_td]:py-1 [&_td]:text-sm
-                    [&_th]:border [&_th]:border-gray-300 [&_th]:px-2 [&_th]:py-1 [&_th]:bg-gray-50 [&_th]:text-sm
+                    [&_td]:border [&_td]:border-border [&_td]:px-2 [&_td]:py-1 [&_td]:text-sm
+                    [&_th]:border [&_th]:border-border [&_th]:px-2 [&_th]:py-1 [&_th]:bg-muted [&_th]:text-sm
                     [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:mb-2
                     [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:mb-2
                     [&_li]:text-sm [&_li]:mb-1"
@@ -295,7 +295,7 @@ export function TemplatesManager() {
                   <Badge
                     key={v}
                     variant="secondary"
-                    className={`text-[10px] ${v in AUTO_VARIABLES ? "bg-positive/10 text-positive-strong" : "bg-amber-50 text-amber-700"}`}
+                    className={`text-[10px] ${v in AUTO_VARIABLES ? "bg-positive/10 text-positive-strong" : "bg-warning-soft text-warning-strong"}`}
                   >
                     {`{{${v}}}`}
                   </Badge>

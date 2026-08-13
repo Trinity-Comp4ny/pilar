@@ -35,15 +35,15 @@ export function BoletoPayment({ bankSlipUrl, identificationField, value, isPolli
         <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-brand/10 text-ink mb-3">
           <FileText className="w-6 h-6" />
         </div>
-        <h2 className="text-2xl font-medium text-slate-900">Boleto gerado</h2>
-        <p className="text-sm text-slate-500 mt-1">Valor: {formatBRL(value)}</p>
+        <h2 className="text-2xl font-medium text-ink">Boleto gerado</h2>
+        <p className="text-sm text-ink-muted mt-1">Valor: {formatBRL(value)}</p>
       </header>
 
       {identificationField && (
         <div>
-          <p className="text-xs text-slate-500 mb-2">Linha digitável:</p>
+          <p className="text-xs text-ink-muted mb-2">Linha digitável:</p>
           <div className="flex gap-2">
-            <div className="flex-1 px-3 py-3 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono text-slate-700 break-all">
+            <div className="flex-1 px-3 py-3 bg-muted border border-border rounded-lg text-xs font-mono text-ink-soft break-all">
               {identificationField}
             </div>
             <Button type="button" variant="outline" onClick={handleCopy} className="shrink-0">
@@ -64,12 +64,12 @@ export function BoletoPayment({ bankSlipUrl, identificationField, value, isPolli
         </a>
       )}
 
-      <p className="text-xs text-slate-500 bg-amber-50 border border-amber-200 rounded-lg p-3">
+      <p className="text-xs text-ink-muted bg-warning-soft border border-warning-mid-border rounded-lg p-3">
         Após o pagamento, o banco leva de 1 a 3 dias úteis pra processar. Assim que cair, enviamos email com o link de
         acesso ao Pilar.
       </p>
 
-      <div className="flex items-center justify-center gap-2 text-sm text-slate-500 pt-2">
+      <div className="flex items-center justify-center gap-2 text-sm text-ink-muted pt-2">
         {isPolling && (
           <>
             <Loader2 className="w-4 h-4 animate-spin" /> Aguardando pagamento...

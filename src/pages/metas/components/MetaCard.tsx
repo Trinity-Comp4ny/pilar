@@ -42,7 +42,7 @@ export function MetaCard({ meta, subtitle, onEdit, onDelete }: MetaCardProps) {
     <Card className={cn("border-2 transition-all", isCompleted && "border-status-done bg-positive/10")}>
       <CardContent className="p-4 space-y-3">
         <div className="flex items-center justify-between">
-          <div className={cn("p-2 rounded-lg", isCompleted ? "bg-positive/10" : "bg-gray-100")}>
+          <div className={cn("p-2 rounded-lg", isCompleted ? "bg-positive/10" : "bg-muted")}>
             {getIcon(meta, isCompleted)}
           </div>
           <div className="flex gap-0.5">
@@ -52,7 +52,7 @@ export function MetaCard({ meta, subtitle, onEdit, onDelete }: MetaCardProps) {
             <Button
               variant="ghost"
               size="icon"
-              className="h-7 w-7 text-red-500 hover:text-red-600"
+              className="h-7 w-7 text-danger-mid hover:text-danger-strong"
               onClick={onDelete}
               aria-label="Excluir meta"
             >
@@ -76,7 +76,7 @@ export function MetaCard({ meta, subtitle, onEdit, onDelete }: MetaCardProps) {
           </span>
         </div>
 
-        <Progress value={percent} className="h-1.5 bg-gray-200" indicatorClassName="bg-positive/100" />
+        <Progress value={percent} className="h-1.5 bg-muted" indicatorClassName="bg-positive/100" />
 
         <div className="flex items-end justify-between">
           <div>

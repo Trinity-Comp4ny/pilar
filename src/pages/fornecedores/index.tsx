@@ -307,10 +307,10 @@ export default function Fornecedores() {
                         placeholder="00.000.000/0000-00"
                         aria-invalid={!!cnpjError}
                         aria-describedby={cnpjError ? "fornecedor-cnpj-error" : undefined}
-                        className={cnpjError ? "border-red-500 focus-visible:ring-red-500" : ""}
+                        className={cnpjError ? "border-danger-mid focus-visible:ring-danger-mid" : ""}
                       />
                       {cnpjError && (
-                        <p id="fornecedor-cnpj-error" role="alert" className="text-xs text-red-600">
+                        <p id="fornecedor-cnpj-error" role="alert" className="text-xs text-danger-mid">
                           {cnpjError}
                         </p>
                       )}
@@ -354,10 +354,10 @@ export default function Fornecedores() {
                         placeholder="email@exemplo.com"
                         aria-invalid={!!emailError}
                         aria-describedby={emailError ? "fornecedor-email-error" : undefined}
-                        className={emailError ? "border-red-500 focus-visible:ring-red-500" : ""}
+                        className={emailError ? "border-danger-mid focus-visible:ring-danger-mid" : ""}
                       />
                       {emailError && (
-                        <p id="fornecedor-email-error" role="alert" className="text-xs text-red-600">
+                        <p id="fornecedor-email-error" role="alert" className="text-xs text-danger-mid">
                           {emailError}
                         </p>
                       )}
@@ -477,7 +477,7 @@ export default function Fornecedores() {
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-9 w-9 text-red-500"
+                                className="h-9 w-9 text-danger-mid"
                                 onClick={(e) => handleDeleteClick(f, e)}
                                 aria-label="Excluir fornecedor"
                               >
