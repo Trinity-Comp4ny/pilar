@@ -5994,6 +5994,10 @@ export type Database = {
           titulo: string
         }[]
       }
+      get_projeto_rentabilidade_detalhe: {
+        Args: { p_projeto_id: string }
+        Returns: Json
+      }
       get_user_empresa_id: { Args: never; Returns: string }
       get_user_empresa_id_text: { Args: never; Returns: string }
       get_user_role: { Args: never; Returns: string }
