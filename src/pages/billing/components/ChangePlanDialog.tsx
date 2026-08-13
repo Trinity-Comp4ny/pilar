@@ -88,11 +88,11 @@ export function ChangePlanDialog({ open, onOpenChange, current }: ChangePlanDial
                 onClick={() => setSelectedSlug(plan.slug)}
                 className={cn(
                   "relative text-left p-4 rounded-xl border-2 transition-all",
-                  isSelected ? "border-brand bg-brand/5" : "border-slate-200 hover:border-slate-300"
+                  isSelected ? "border-brand bg-brand/5" : "border-border hover:border-border"
                 )}
               >
                 {isCurrent && (
-                  <span className="absolute top-2 right-2 text-[9px] uppercase tracking-wider bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full">
+                  <span className="absolute top-2 right-2 text-[9px] uppercase tracking-wider bg-muted text-ink-muted px-2 py-0.5 rounded-full">
                     Atual
                   </span>
                 )}
@@ -101,9 +101,9 @@ export function ChangePlanDialog({ open, onOpenChange, current }: ChangePlanDial
                     <Check className="w-4 h-4 text-ink" />
                   </span>
                 )}
-                <p className="text-sm font-medium text-slate-900">{plan.nome}</p>
-                <p className="text-2xl font-semibold text-slate-900 mt-2">{formatBRL(price)}</p>
-                <p className="text-xs text-slate-500">/mês</p>
+                <p className="text-sm font-medium text-ink">{plan.nome}</p>
+                <p className="text-2xl font-semibold text-ink mt-2">{formatBRL(price)}</p>
+                <p className="text-xs text-ink-muted">/mês</p>
               </button>
             );
           })}

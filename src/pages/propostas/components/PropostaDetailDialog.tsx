@@ -102,18 +102,18 @@ type StageConfig = {
 
 const STAGE_CONFIG: Record<string, StageConfig> = {
   rascunho: {
-    bg: "bg-gray-50",
-    border: "border-gray-200",
+    bg: "bg-muted",
+    border: "border-border",
     icon: Pencil,
-    iconColor: "text-gray-500",
+    iconColor: "text-ink-muted",
     message:
       "Em elaboração. Edite os detalhes, gere o documento para revisar e envie ao cliente quando estiver pronto.",
   },
   enviada: {
-    bg: "bg-blue-50",
-    border: "border-blue-200",
+    bg: "bg-info-soft",
+    border: "border-info-mid-border",
     icon: Clock3,
-    iconColor: "text-blue-500",
+    iconColor: "text-info-mid",
     message: "Enviada ao cliente — aguardando resposta. Registre o resultado quando o cliente retornar.",
   },
   aceita: {
@@ -124,17 +124,17 @@ const STAGE_CONFIG: Record<string, StageConfig> = {
     message: "Proposta aceita! Formalize o contrato ou converta em projeto para iniciar o trabalho.",
   },
   recusada: {
-    bg: "bg-red-50",
-    border: "border-red-200",
+    bg: "bg-danger-soft",
+    border: "border-danger-mid-border",
     icon: ThumbsDown,
-    iconColor: "text-red-500",
+    iconColor: "text-danger-mid",
     message: "Proposta recusada pelo cliente. Você pode reabrir como rascunho para revisar e reenviar.",
   },
   expirada: {
-    bg: "bg-amber-50",
-    border: "border-amber-200",
+    bg: "bg-warning-soft",
+    border: "border-warning-mid-border",
     icon: AlertCircle,
-    iconColor: "text-amber-500",
+    iconColor: "text-warning-mid",
     message: "Prazo de validade expirado. Edite a proposta, atualize a validade e reenvie.",
   },
 };
@@ -223,7 +223,7 @@ export function PropostaDetailDialog({
                 icon={Calendar}
                 label="Validade"
                 value={formatDate(proposta.validade)}
-                valueClass={isExpiredValidity ? "text-red-500" : ""}
+                valueClass={isExpiredValidity ? "text-danger-mid" : ""}
               />
             )}
             {proposta.localizacao && <InfoRow icon={MapPin} label="Localização" value={proposta.localizacao} />}
@@ -269,7 +269,7 @@ export function PropostaDetailDialog({
                 <Button
                   size="sm"
                   variant="ghost"
-                  className="gap-1.5 text-red-500 hover:text-red-600 hover:bg-red-50"
+                  className="gap-1.5 text-danger-mid hover:text-danger-strong hover:bg-danger-soft"
                   onClick={onDelete}
                 >
                   <Trash2 className="h-3.5 w-3.5" />
@@ -281,7 +281,7 @@ export function PropostaDetailDialog({
 
           {displayStatus === "enviada" && (
             <div className="space-y-3">
-              <div className="rounded-lg border border-dashed border-gray-300 bg-gray-50/50 p-3">
+              <div className="rounded-lg border border-dashed border-border bg-muted/50 p-3">
                 <p className="text-xs text-muted-foreground mb-2 font-medium">A proposta foi:</p>
                 <div className="flex flex-wrap gap-2">
                   <Button
@@ -295,7 +295,7 @@ export function PropostaDetailDialog({
                   </Button>
                   <Button
                     variant="outline"
-                    className="gap-1.5 border-red-300 text-red-600 hover:bg-red-500 hover:text-white hover:border-red-500 transition-colors"
+                    className="gap-1.5 border-danger-mid-border text-danger-mid hover:bg-destructive hover:text-destructive-foreground hover:border-destructive transition-colors"
                     disabled={isUpdating}
                     onClick={() => setConfirmRecusar(true)}
                   >
@@ -321,7 +321,7 @@ export function PropostaDetailDialog({
                   <Button
                     size="sm"
                     variant="outline"
-                    className="gap-1.5 text-blue-600 border-blue-200 hover:bg-blue-50"
+                    className="gap-1.5 text-info-mid border-info-mid-border hover:bg-info-soft"
                     onClick={onConverter}
                   >
                     <FolderPlus className="h-3.5 w-3.5" />
@@ -341,7 +341,7 @@ export function PropostaDetailDialog({
                     <Button
                       size="sm"
                       variant="outline"
-                      className="gap-1.5 text-gray-500"
+                      className="gap-1.5 text-ink-muted"
                       disabled={isUpdating}
                       onClick={() => onStatusChange(proposta.id, "rascunho")}
                     >
@@ -355,7 +355,7 @@ export function PropostaDetailDialog({
                 <Button
                   size="sm"
                   variant="ghost"
-                  className="gap-1.5 text-red-500 hover:text-red-600 hover:bg-red-50"
+                  className="gap-1.5 text-danger-mid hover:text-danger-strong hover:bg-danger-soft"
                   onClick={onDelete}
                 >
                   <Trash2 className="h-3.5 w-3.5" />
@@ -378,18 +378,18 @@ export function PropostaDetailDialog({
                 </div>
               ) : proposta.contrato_recusado ? (
                 <div className="space-y-2">
-                  <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2.5">
-                    <XCircle className="h-4 w-4 text-red-500 flex-shrink-0" />
+                  <div className="flex items-center gap-2 rounded-lg border border-danger-mid-border bg-danger-soft px-3 py-2.5">
+                    <XCircle className="h-4 w-4 text-danger-mid flex-shrink-0" />
                     <div>
-                      <p className="text-xs font-medium text-red-800">Contrato recusado</p>
-                      <p className="text-[11px] text-red-700">
+                      <p className="text-xs font-medium text-danger-strong">Contrato recusado</p>
+                      <p className="text-[11px] text-danger-strong">
                         O cliente recusou o contrato. Gere um novo para reenviar.
                       </p>
                     </div>
                   </div>
                 </div>
               ) : proposta.contrato_enviado ? (
-                <div className="rounded-lg border border-dashed border-gray-300 bg-gray-50/50 p-3">
+                <div className="rounded-lg border border-dashed border-border bg-muted/50 p-3">
                   <p className="text-xs text-muted-foreground mb-2 font-medium">O contrato foi:</p>
                   <div className="flex flex-wrap gap-2">
                     <Button
@@ -403,7 +403,7 @@ export function PropostaDetailDialog({
                     </Button>
                     <Button
                       variant="outline"
-                      className="gap-1.5 border-red-300 text-red-600 hover:bg-red-500 hover:text-white hover:border-red-500 transition-colors"
+                      className="gap-1.5 border-danger-mid-border text-danger-mid hover:bg-destructive hover:text-destructive-foreground hover:border-destructive transition-colors"
                       disabled={isUpdating}
                       onClick={onRecusarContrato}
                     >
@@ -413,15 +413,15 @@ export function PropostaDetailDialog({
                   </div>
                 </div>
               ) : (
-                <div className="flex items-center gap-2 rounded-lg border border-dashed border-amber-200 bg-amber-50/50 px-3 py-2.5">
-                  <AlertCircle className="h-4 w-4 text-amber-500 flex-shrink-0" />
-                  <p className="text-xs text-amber-700">Nenhum contrato enviado. Gere e envie o contrato ao cliente.</p>
+                <div className="flex items-center gap-2 rounded-lg border border-dashed border-warning-mid-border bg-warning-soft/50 px-3 py-2.5">
+                  <AlertCircle className="h-4 w-4 text-warning-mid flex-shrink-0" />
+                  <p className="text-xs text-warning-mid">Nenhum contrato enviado. Gere e envie o contrato ao cliente.</p>
                 </div>
               )}
 
               <div className="flex flex-wrap gap-2">
                 {canEdit && !proposta.projeto_id && (
-                  <Button className="gap-1.5" onClick={onConverter}>
+                  <Button variant="brand" className="gap-1.5" onClick={onConverter}>
                     <FolderPlus className="h-4 w-4" />
                     Criar Projeto
                   </Button>
@@ -457,6 +457,7 @@ export function PropostaDetailDialog({
               {canEdit && (
                 <div className="flex flex-wrap gap-2">
                   <Button
+                    variant="brand"
                     className="gap-1.5"
                     disabled={isUpdating}
                     onClick={() => onStatusChange(proposta.id, "rascunho")}
@@ -475,7 +476,7 @@ export function PropostaDetailDialog({
                   <Button
                     size="sm"
                     variant="ghost"
-                    className="gap-1.5 text-red-500 hover:text-red-600 hover:bg-red-50"
+                    className="gap-1.5 text-danger-mid hover:text-danger-strong hover:bg-danger-soft"
                     onClick={onDelete}
                   >
                     <Trash2 className="h-3.5 w-3.5" />
@@ -490,7 +491,7 @@ export function PropostaDetailDialog({
             <div className="space-y-3">
               {canEdit && (
                 <div className="flex flex-wrap gap-2">
-                  <Button className="gap-1.5" onClick={onEdit}>
+                  <Button variant="brand" className="gap-1.5" onClick={onEdit}>
                     <Pencil className="h-4 w-4" />
                     Editar e Atualizar Validade
                   </Button>
@@ -505,7 +506,7 @@ export function PropostaDetailDialog({
                   <Button
                     size="sm"
                     variant="ghost"
-                    className="gap-1.5 text-red-500 hover:text-red-600 hover:bg-red-50"
+                    className="gap-1.5 text-danger-mid hover:text-danger-strong hover:bg-danger-soft"
                     onClick={onDelete}
                   >
                     <Trash2 className="h-3.5 w-3.5" />

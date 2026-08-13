@@ -44,11 +44,11 @@ function formatDateISO(date: Date): string {
 }
 
 function getCellColor(pct: number): string {
-  if (pct === 0) return "bg-gray-100 text-gray-400";
+  if (pct === 0) return "bg-muted text-ink-disabled";
   if (pct <= 60) return "bg-positive/10 text-positive-strong";
   if (pct <= 80) return "bg-positive/15 text-positive-strong";
-  if (pct <= 100) return "bg-yellow-200 text-yellow-900";
-  return "bg-red-200 text-red-900 font-semibold";
+  if (pct <= 100) return "bg-warning-soft text-warning-strong";
+  return "bg-danger-soft text-danger-strong font-semibold";
 }
 
 const NUM_WEEKS = 12;
@@ -223,16 +223,16 @@ export default function Capacidade() {
       {/* Legenda */}
       <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground flex-wrap">
         <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded bg-gray-100 border" /> 0%
+          <div className="w-3 h-3 rounded bg-muted border" /> 0%
         </div>
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-3 rounded bg-positive/15" /> &le;80%
         </div>
         <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded bg-yellow-200" /> 80-100%
+          <div className="w-3 h-3 rounded bg-warning-soft" /> 80-100%
         </div>
         <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded bg-red-200" /> &gt;100%
+          <div className="w-3 h-3 rounded bg-danger-soft" /> &gt;100%
         </div>
       </div>
 

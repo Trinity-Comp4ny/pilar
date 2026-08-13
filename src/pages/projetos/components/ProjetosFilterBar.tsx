@@ -16,7 +16,6 @@ import {
 import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { PROJECT_PRIORITY_CONFIG, PRIORITY_OPTIONS, type ProjectPriority } from "@/constants";
-import { getPriorityDotColor } from "../lib/priorityColors";
 
 export type DeadlineFilter = "em_atraso" | "atencao" | "no_prazo";
 export type DateField = "previsao" | "inicio" | "final";
@@ -60,8 +59,8 @@ interface ProjetosFilterBarProps {
 }
 
 const DEADLINE_OPTIONS: { id: DeadlineFilter; label: string; dot: string }[] = [
-  { id: "em_atraso", label: "Atrasado", dot: "bg-red-500" },
-  { id: "atencao", label: "Atenção", dot: "bg-yellow-500" },
+  { id: "em_atraso", label: "Atrasado", dot: "bg-chart-danger" },
+  { id: "atencao", label: "Atenção", dot: "bg-chart-warning" },
   { id: "no_prazo", label: "No prazo", dot: "bg-positive/100" },
 ];
 
@@ -212,7 +211,7 @@ function FiltersPanel({
           <div className="flex flex-wrap gap-1">
             {PRIORITY_OPTIONS.map((p) => {
               const active = filters.prioridades.includes(p);
-              const dot = getPriorityDotColor(p);
+              const dot = PROJECT_PRIORITY_CONFIG[p].dotColor;
               return (
                 <button
                   key={p}

@@ -6,6 +6,8 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { getDisplayDate } from "@/lib/dateUtils";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import type { Lancamento } from "../hooks/useLancamentosUnified";
@@ -408,14 +410,9 @@ export function LancamentosTable({ resumo, filters, onFiltersChange, onMutated }
               <tr className="text-xs text-muted-foreground">
                 {canEdit && (
                   <th className="w-[40px] px-3 py-2">
-                    <input
-                      type="checkbox"
-                      className="h-4 w-4 rounded border-gray-300"
-                      checked={allSelected}
-                      ref={(el) => {
-                        if (el) el.indeterminate = someSelected && !allSelected;
-                      }}
-                      onChange={toggleAll}
+                    <Checkbox
+                      checked={allSelected ? true : someSelected ? "indeterminate" : false}
+                      onCheckedChange={toggleAll}
                       aria-label="Selecionar todos"
                     />
                   </th>
@@ -542,13 +539,15 @@ export function LancamentosTable({ resumo, filters, onFiltersChange, onMutated }
 
         {paginated.hasNextPage && (
           <div className="border-t border-black/10 bg-white px-4 py-3 flex justify-center">
-            <button
+            <Button
+              variant="outline"
+              size="sm"
               onClick={() => paginated.fetchNextPage()}
               disabled={paginated.isFetchingNextPage}
-              className="text-xs border border-gray-200 rounded-md px-3 py-1.5 hover:bg-gray-50 disabled:opacity-50"
+              className="text-xs"
             >
               {paginated.isFetchingNextPage ? "Carregando…" : "Carregar mais"}
-            </button>
+            </Button>
           </div>
         )}
       </div>

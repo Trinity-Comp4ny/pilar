@@ -379,7 +379,7 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
     return (
       <Badge
         variant="secondary"
-        className={cn("tabular-nums", ok ? "bg-positive/10 text-positive-strong" : "bg-amber-100 text-amber-700")}
+        className={cn("tabular-nums", ok ? "bg-positive/10 text-positive-strong" : "bg-warning-soft text-warning-strong")}
       >
         Soma: {soma.toFixed(2)}%
       </Badge>
@@ -414,7 +414,7 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
                   <Label className="text-xs">Descrição *</Label>
                   <Input {...form.register("descricao")} placeholder="Ex: Honorários projeto A" className="h-9" />
                   {form.formState.errors.descricao && (
-                    <p className="text-xs text-red-500">{form.formState.errors.descricao.message}</p>
+                    <p className="text-xs text-destructive">{form.formState.errors.descricao.message}</p>
                   )}
                 </div>
 
@@ -428,7 +428,7 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
                       className="h-9 tabular-nums"
                     />
                     {form.formState.errors.valorTotal && (
-                      <p className="text-xs text-red-500">{form.formState.errors.valorTotal.message}</p>
+                      <p className="text-xs text-destructive">{form.formState.errors.valorTotal.message}</p>
                     )}
                   </div>
                   {!isEdit && (
@@ -575,13 +575,13 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
 
                 <div className="space-y-1.5">
                   <Label className="text-xs">
-                    Categoria<span className="text-red-500 ml-0.5">*</span>
+                    Categoria<span className="text-destructive ml-0.5">*</span>
                   </Label>
                   <Select
                     value={form.watch("categoriaId")}
                     onValueChange={(v) => form.setValue("categoriaId", v, { shouldValidate: true })}
                   >
-                    <SelectTrigger className={cn("h-9", form.formState.errors.categoriaId && "border-red-500")}>
+                    <SelectTrigger className={cn("h-9", form.formState.errors.categoriaId && "border-destructive")}>
                       <SelectValue placeholder="Selecione" />
                     </SelectTrigger>
                     <SelectContent>
@@ -593,7 +593,7 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
                     </SelectContent>
                   </Select>
                   {form.formState.errors.categoriaId && (
-                    <p className="text-xs text-red-500">{form.formState.errors.categoriaId.message}</p>
+                    <p className="text-xs text-destructive">{form.formState.errors.categoriaId.message}</p>
                   )}
                 </div>
 
@@ -601,10 +601,10 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
                   <div className="space-y-1.5">
                     <Label className="text-xs">
                       {formaPagamento}
-                      {form.watch("status") === "Pago" && <span className="text-red-500 ml-0.5">*</span>}
+                      {form.watch("status") === "Pago" && <span className="text-destructive ml-0.5">*</span>}
                     </Label>
                     <Select value={form.watch("cartaoId")} onValueChange={(v) => form.setValue("cartaoId", v)}>
-                      <SelectTrigger className={cn("h-9", form.formState.errors.cartaoId && "border-red-500")}>
+                      <SelectTrigger className={cn("h-9", form.formState.errors.cartaoId && "border-destructive")}>
                         <SelectValue placeholder="Selecione o cartão" />
                       </SelectTrigger>
                       <SelectContent>
@@ -616,7 +616,7 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
                       </SelectContent>
                     </Select>
                     {form.formState.errors.cartaoId && (
-                      <p className="text-xs text-red-500">{form.formState.errors.cartaoId.message}</p>
+                      <p className="text-xs text-destructive">{form.formState.errors.cartaoId.message}</p>
                     )}
                   </div>
                 ) : (
@@ -624,11 +624,11 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
                     <Label className="text-xs">
                       Conta
                       {(form.watch("status") === "Recebida" || form.watch("status") === "Pago") && (
-                        <span className="text-red-500 ml-0.5">*</span>
+                        <span className="text-destructive ml-0.5">*</span>
                       )}
                     </Label>
                     <Select value={form.watch("contaId")} onValueChange={(v) => form.setValue("contaId", v)}>
-                      <SelectTrigger className={cn("h-9", form.formState.errors.contaId && "border-red-500")}>
+                      <SelectTrigger className={cn("h-9", form.formState.errors.contaId && "border-destructive")}>
                         <SelectValue placeholder="Selecione a conta" />
                       </SelectTrigger>
                       <SelectContent>
@@ -640,7 +640,7 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
                       </SelectContent>
                     </Select>
                     {form.formState.errors.contaId && (
-                      <p className="text-xs text-red-500">{form.formState.errors.contaId.message}</p>
+                      <p className="text-xs text-destructive">{form.formState.errors.contaId.message}</p>
                     )}
                   </div>
                 )}
@@ -652,7 +652,7 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
               <CollapsibleTrigger asChild>
                 <button
                   type="button"
-                  className="w-full flex items-center justify-between px-6 py-3 text-xs text-muted-foreground hover:text-foreground hover:bg-gray-50/50 transition-colors"
+                  className="w-full flex items-center justify-between px-6 py-3 text-xs text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
                 >
                   <span className="font-medium uppercase tracking-wider">Mais opções</span>
                   <ChevronDown className={cn("h-4 w-4 transition-transform", advancedOpen && "rotate-180")} />
@@ -785,7 +785,7 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
                                 type="button"
                                 variant="ghost"
                                 size="icon"
-                                className="h-7 w-7 text-red-600"
+                                className="h-7 w-7 text-danger-mid"
                                 onClick={() => setRateios((prev) => prev.filter((_, idx) => idx !== i))}
                                 aria-label="Remover rateio"
                               >
@@ -830,7 +830,7 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
               </CollapsibleContent>
             </Collapsible>
 
-            <div className="flex items-center justify-end gap-2 px-6 py-4 bg-gray-50/30">
+            <div className="flex items-center justify-end gap-2 px-6 py-4 bg-muted/30">
               <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} disabled={saving}>
                 Cancelar
               </Button>

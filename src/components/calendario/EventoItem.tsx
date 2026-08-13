@@ -66,13 +66,13 @@ export function CalendarioLegenda({ camadas }: { camadas: CamadaId[] }) {
   return (
     <div className="flex items-center gap-4 text-xs text-muted-foreground flex-wrap">
       <div className="flex items-center gap-1.5">
-        <span className="h-2 w-2 rounded-full bg-red-500" /> Em atraso
+        <span className="h-2 w-2 rounded-full bg-chart-danger" /> Em atraso
       </div>
       <div className="flex items-center gap-1.5">
-        <span className="h-2 w-2 rounded-full bg-amber-500" /> Próximos 7 dias
+        <span className="h-2 w-2 rounded-full bg-chart-warning" /> Próximos 7 dias
       </div>
       <div className="flex items-center gap-1.5">
-        <span className="h-2 w-2 rounded-full bg-blue-500" /> Futuro
+        <span className="h-2 w-2 rounded-full bg-chart-info" /> Futuro
       </div>
       <div className="flex items-center gap-1.5">
         <span className="h-2 w-2 rounded-full bg-positive" /> Concluído

@@ -149,7 +149,7 @@ export function CentroCustoManager({ open, onOpenChange, onChanged }: Props) {
                 <Input value={form.descricao} onChange={(e) => setForm((f) => ({ ...f, descricao: e.target.value }))} />
               </div>
               <div className="flex gap-2">
-                <Button onClick={submit} disabled={saving} className="flex-1">
+                <Button variant="brand" onClick={submit} disabled={saving} className="flex-1">
                   {saving ? "Salvando..." : editing ? "Atualizar" : "Criar"}
                 </Button>
                 {editing && (
@@ -212,7 +212,7 @@ export function CentroCustoManager({ open, onOpenChange, onChanged }: Props) {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8 text-red-600"
+                      className="h-8 w-8 text-danger-mid"
                       onClick={() => setDeleteTarget(c)}
                       aria-label={`Excluir ${c.nome}`}
                     >

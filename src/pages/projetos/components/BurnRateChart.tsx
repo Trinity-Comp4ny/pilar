@@ -109,14 +109,14 @@ export function BurnRateChart({ projetoId }: BurnRateChartProps) {
 
   const { serie = [], orcamentoTotal = 0, custoAcum = 0, receitaAcum = 0, pctConsumido = 0 } = data || {};
 
-  const statusColor = pctConsumido > 90 ? "text-red-600" : pctConsumido > 70 ? "text-amber-600" : "text-emerald-600";
+  const statusColor = pctConsumido > 90 ? "text-danger-mid" : pctConsumido > 70 ? "text-warning-mid" : "text-success-mid";
   const statusLabel = pctConsumido > 90 ? "Crítico" : pctConsumido > 70 ? "Atenção" : "Saudável";
   const statusBadge =
     pctConsumido > 90
-      ? "bg-red-100 text-red-800"
+      ? "bg-danger-soft text-danger-strong"
       : pctConsumido > 70
-        ? "bg-amber-100 text-amber-800"
-        : "bg-emerald-100 text-emerald-800";
+        ? "bg-warning-soft text-warning-strong"
+        : "bg-success-soft text-success-strong";
 
   return (
     <Card>
@@ -143,7 +143,7 @@ export function BurnRateChart({ projetoId }: BurnRateChartProps) {
           </div>
           <div>
             <span className="text-muted-foreground">Receita acum.: </span>
-            <span className="font-medium text-emerald-600">{formatCurrency(receitaAcum)}</span>
+            <span className="font-medium text-positive-strong">{formatCurrency(receitaAcum)}</span>
           </div>
         </div>
 

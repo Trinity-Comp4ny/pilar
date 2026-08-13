@@ -39,10 +39,10 @@ export function GrupoParcelaActions({ lancamento: l, onChanged }: Props) {
     l.grupo_status === "quitado"
       ? "bg-positive/10 text-positive-strong"
       : l.grupo_status === "parcial"
-        ? "bg-amber-100 text-amber-700"
+        ? "bg-warning-soft text-warning-strong"
         : l.grupo_status === "cancelado"
           ? "bg-muted text-muted-foreground"
-          : "bg-blue-100 text-blue-700";
+          : "bg-info-soft text-info-strong";
 
   return (
     <>
@@ -179,7 +179,7 @@ function EditarEmAbertoDialog({ open, grupoId, onClose, onDone }: OpProps) {
           <Button variant="outline" onClick={onClose} disabled={saving}>
             Cancelar
           </Button>
-          <Button onClick={submit} disabled={saving}>
+          <Button variant="brand" onClick={submit} disabled={saving}>
             {saving ? "Salvando..." : "Aplicar"}
           </Button>
         </DialogFooter>
@@ -259,7 +259,7 @@ function RenegociarDialog({ open, grupoId, onClose, onDone }: OpProps) {
           <Button variant="outline" onClick={onClose} disabled={saving}>
             Cancelar
           </Button>
-          <Button onClick={submit} disabled={saving}>
+          <Button variant="brand" onClick={submit} disabled={saving}>
             {saving ? "Renegociando..." : "Renegociar"}
           </Button>
         </DialogFooter>
@@ -319,7 +319,7 @@ function QuitarAntecipadoDialog({ open, grupoId, onClose, onDone }: OpProps) {
           <Button variant="outline" onClick={onClose} disabled={saving}>
             Cancelar
           </Button>
-          <Button onClick={submit} disabled={saving}>
+          <Button variant="brand" onClick={submit} disabled={saving}>
             {saving ? "Quitando..." : "Quitar"}
           </Button>
         </DialogFooter>

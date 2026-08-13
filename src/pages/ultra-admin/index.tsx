@@ -655,7 +655,7 @@ export default function UltraAdmin() {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="rounded-full gap-1.5 border-red-200 text-red-700 hover:bg-red-50 hover:text-red-800"
+                  className="rounded-full gap-1.5 border-danger-mid-border text-danger-strong hover:bg-danger-soft hover:text-danger-strong"
                   onClick={() => setArchiveOpen(true)}
                 >
                   <Archive size={14} />
@@ -776,7 +776,7 @@ export default function UltraAdmin() {
     <PageLayout
       header={
         <PageHeader title="Gestão Pilar">
-          <Button className="rounded-full gap-2" onClick={() => setCreateOpen(true)}>
+          <Button variant="brand" className="rounded-full gap-2" onClick={() => setCreateOpen(true)}>
             <Plus size={16} />
             Criar empresa
           </Button>
@@ -1028,7 +1028,7 @@ export default function UltraAdmin() {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                className="rounded-full border-red-200 text-red-700 hover:bg-red-50 hover:text-red-800"
+                                className="rounded-full border-danger-mid-border text-danger-strong hover:bg-danger-soft hover:text-danger-strong"
                                 onClick={() => setUserToDelete(u)}
                                 aria-label="Remover usuário"
                               >
@@ -1145,7 +1145,7 @@ export default function UltraAdmin() {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
-              className="bg-red-600 hover:bg-red-700"
+              className="bg-destructive hover:bg-destructive/90"
               onClick={() => {
                 if (userToDelete) handleCrossDelete(userToDelete);
                 setUserToDelete(null);
@@ -1222,7 +1222,7 @@ export default function UltraAdmin() {
             >
               Cancelar
             </Button>
-            <Button onClick={handleCreateEmpresa} disabled={creating}>
+            <Button variant="brand" onClick={handleCreateEmpresa} disabled={creating}>
               {creating ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
@@ -1241,9 +1241,9 @@ export default function UltraAdmin() {
 
 function StatusBadge({ status }: { status: EmpresaStatus }) {
   const variants: Record<EmpresaStatus, string> = {
-    active: "border-emerald-600/30 bg-emerald-600/10 text-emerald-700",
-    suspended: "border-yellow-600/30 bg-yellow-600/10 text-yellow-700",
-    cancelled: "border-red-600/30 bg-red-600/10 text-red-700",
+    active: "border-success/30 bg-success/10 text-success-strong",
+    suspended: "border-warning/30 bg-warning/10 text-warning-strong",
+    cancelled: "border-danger/30 bg-danger/10 text-danger-strong",
   };
   return (
     <Badge variant="outline" className={`h-6 rounded-full text-[11px] ${variants[status] ?? ""}`}>
@@ -1337,14 +1337,14 @@ function EditCompanyDialog({
             </div>
           </div>
           {dangerous && (
-            <div className="space-y-2 rounded-md border border-red-200 bg-red-50 px-3 py-2.5">
-              <p className="text-xs text-red-700">
+            <div className="space-y-2 rounded-md border border-danger-mid-border bg-danger-soft px-3 py-2.5">
+              <p className="text-xs text-danger-strong">
                 {form.status === "suspended"
                   ? "Suspensa: os usuários da empresa perdem o acesso até reativar."
                   : "Cancelada: o acesso é encerrado. Use com cuidado."}
               </p>
               <div className="space-y-1.5">
-                <Label htmlFor="confirm-empresa" className="text-xs text-red-800">
+                <Label htmlFor="confirm-empresa" className="text-xs text-danger-strong">
                   Digite <span className="font-semibold">{confirmName}</span> para confirmar
                 </Label>
                 <Input
@@ -1363,6 +1363,7 @@ function EditCompanyDialog({
             Cancelar
           </Button>
           <Button
+            variant="brand"
             onClick={async () => {
               setSaving(true);
               try {
@@ -1437,7 +1438,7 @@ function ArchiveCompanyDialog({
               }
             }}
             disabled={saving || !matches}
-            className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+            className="bg-destructive hover:bg-destructive/90 focus:ring-destructive"
           >
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Arquivar empresa"}
           </AlertDialogAction>

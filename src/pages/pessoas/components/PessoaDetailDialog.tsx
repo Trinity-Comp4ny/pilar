@@ -214,12 +214,12 @@ export function PessoaDetailDialog({ open, onOpenChange, pessoa, isAdmin, onEdit
                   {pessoa.contas_bancarias.map((conta, index) => (
                     <div
                       key={index}
-                      className={`flex items-center justify-between gap-3 bg-gray-50 border rounded-lg px-3 py-2 text-sm ${
-                        conta.is_primary ? "border-brand/50 bg-brand/5" : "border-gray-200"
+                      className={`flex items-center justify-between gap-3 bg-muted border rounded-lg px-3 py-2 text-sm ${
+                        conta.is_primary ? "border-brand/50 bg-brand/5" : "border-border"
                       }`}
                     >
                       <div className="flex items-center gap-3 flex-1 min-w-0">
-                        <div className="p-1.5 rounded-full bg-white border border-gray-100 text-gray-500">
+                        <div className="p-1.5 rounded-full bg-white border border-border text-ink-muted">
                           <Landmark size={14} />
                         </div>
                         <div className="flex flex-col min-w-0">
@@ -233,9 +233,9 @@ export function PessoaDetailDialog({ open, onOpenChange, pessoa, isAdmin, onEdit
                           </div>
                           <div className="flex items-center gap-2 text-xs text-muted-foreground">
                             <span>Ag: {conta.agencia}</span>
-                            <span className="text-gray-300">|</span>
+                            <span className="text-ink-disabled">|</span>
                             <span>Cc: {conta.conta}</span>
-                            <span className="text-gray-300">|</span>
+                            <span className="text-ink-disabled">|</span>
                             <span className="capitalize">{conta.tipo}</span>
                           </div>
                         </div>
@@ -269,7 +269,7 @@ export function PessoaDetailDialog({ open, onOpenChange, pessoa, isAdmin, onEdit
                       </div>
                       <Progress
                         value={percent}
-                        className="h-1.5 bg-gray-100"
+                        className="h-1.5 bg-muted"
                         indicatorClassName={isCompleted ? "bg-positive/100" : "bg-blue-500"}
                       />
                       <div className="flex justify-between text-xs text-muted-foreground">

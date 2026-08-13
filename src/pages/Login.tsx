@@ -128,7 +128,7 @@ export default function Login() {
                 render={({ field }) => (
                   <FormItem className="space-y-2">
                     <FormLabel className="text-ink-soft font-medium">
-                      Email <span className="text-red-500">*</span>
+                      Email <span className="text-danger-mid">*</span>
                     </FormLabel>
                     <FormControl>
                       <div className="relative group">
@@ -154,7 +154,7 @@ export default function Login() {
                   <FormItem className="space-y-2">
                     <div className="flex items-center justify-between">
                       <FormLabel className="text-ink-soft font-medium">
-                        Senha <span className="text-red-500">*</span>
+                        Senha <span className="text-danger-mid">*</span>
                       </FormLabel>
                       <Link
                         to="/forgot-password"

@@ -88,14 +88,14 @@ export function ProjectCard({
                 {projeto.codigo_projeto}
               </span>
               {showMargemAlert && (
-                <span className="inline-flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-yellow-100 text-yellow-700 flex-shrink-0">
+                <span className="inline-flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-warning-soft text-warning-strong flex-shrink-0">
                   <AlertTriangle className="h-2.5 w-2.5" />
                   Margem baixa
                 </span>
               )}
               {planningPending && (
                 <span
-                  className="inline-flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-800 flex-shrink-0"
+                  className="inline-flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-warning-soft text-warning-strong flex-shrink-0"
                   title="Disciplinas sem datas nem responsáveis. Edite o projeto para planejar."
                 >
                   <Clock className="h-2.5 w-2.5" />

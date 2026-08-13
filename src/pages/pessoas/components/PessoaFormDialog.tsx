@@ -373,10 +373,10 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
                     placeholder="Nome"
                     aria-invalid={!!form.formState.errors.primeiro_nome}
                     aria-describedby={form.formState.errors.primeiro_nome ? "primeiro_nome-error" : undefined}
-                    className={cn(form.formState.errors.primeiro_nome && "border-red-500 focus-visible:ring-red-500")}
+                    className={cn(form.formState.errors.primeiro_nome && "border-destructive focus-visible:ring-destructive")}
                   />
                   {form.formState.errors.primeiro_nome && (
-                    <p id="primeiro_nome-error" className="text-xs text-red-600">
+                    <p id="primeiro_nome-error" className="text-xs text-danger-mid">
                       {form.formState.errors.primeiro_nome.message}
                     </p>
                   )}
@@ -391,10 +391,10 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
                     placeholder="Sobrenome"
                     aria-invalid={!!form.formState.errors.sobrenome}
                     aria-describedby={form.formState.errors.sobrenome ? "sobrenome-error" : undefined}
-                    className={cn(form.formState.errors.sobrenome && "border-red-500 focus-visible:ring-red-500")}
+                    className={cn(form.formState.errors.sobrenome && "border-destructive focus-visible:ring-destructive")}
                   />
                   {form.formState.errors.sobrenome && (
-                    <p id="sobrenome-error" className="text-xs text-red-600">
+                    <p id="sobrenome-error" className="text-xs text-danger-mid">
                       {form.formState.errors.sobrenome.message}
                     </p>
                   )}
@@ -412,13 +412,13 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
                     disabled={!canEditSensitive}
                     aria-invalid={!!form.formState.errors.cpf}
                     aria-describedby={form.formState.errors.cpf ? "cpf-error" : undefined}
-                    className={cn(form.formState.errors.cpf && "border-red-500 focus-visible:ring-red-500")}
+                    className={cn(form.formState.errors.cpf && "border-destructive focus-visible:ring-destructive")}
                   />
                   {!canEditSensitive && (
                     <p className="text-[10px] text-muted-foreground">CPF completo restrito a quem tem acesso à folha</p>
                   )}
                   {form.formState.errors.cpf && (
-                    <p className="text-xs text-red-500">{form.formState.errors.cpf.message}</p>
+                    <p className="text-xs text-danger-mid">{form.formState.errors.cpf.message}</p>
                   )}
                 </div>
                 <div className="space-y-1.5">
@@ -457,10 +457,10 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
                     placeholder="Ex: Arquiteto, Projetista"
                     aria-invalid={!!form.formState.errors.cargo}
                     aria-describedby={form.formState.errors.cargo ? "cargo-error" : undefined}
-                    className={cn(form.formState.errors.cargo && "border-red-500 focus-visible:ring-red-500")}
+                    className={cn(form.formState.errors.cargo && "border-destructive focus-visible:ring-destructive")}
                   />
                   {form.formState.errors.cargo && (
-                    <p id="cargo-error" className="text-xs text-red-600">
+                    <p id="cargo-error" className="text-xs text-danger-mid">
                       {form.formState.errors.cargo.message}
                     </p>
                   )}
@@ -488,10 +488,10 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
                     placeholder="email@exemplo.com"
                     aria-invalid={!!form.formState.errors.email}
                     aria-describedby={form.formState.errors.email ? "email-error" : undefined}
-                    className={cn(form.formState.errors.email && "border-red-500 focus-visible:ring-red-500")}
+                    className={cn(form.formState.errors.email && "border-destructive focus-visible:ring-destructive")}
                   />
                   {form.formState.errors.email && (
-                    <p id="email-error" className="text-xs text-red-600">
+                    <p id="email-error" className="text-xs text-danger-mid">
                       {form.formState.errors.email.message}
                     </p>
                   )}
@@ -556,7 +556,7 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
               </div>
 
               {isPJ && (
-                <div className="px-6 py-4 space-y-3 bg-purple-50/30">
+                <div className="px-6 py-4 space-y-3 bg-highlight-soft/30">
                   <Label className="text-[10px] uppercase text-muted-foreground tracking-wider">Dados PJ</Label>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div className="space-y-1.5">
@@ -571,10 +571,10 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
                         placeholder="00.000.000/0000-00"
                         aria-invalid={!!form.formState.errors.cnpj}
                         aria-describedby={form.formState.errors.cnpj ? "cnpj-error" : undefined}
-                        className={cn(form.formState.errors.cnpj && "border-red-500 focus-visible:ring-red-500")}
+                        className={cn(form.formState.errors.cnpj && "border-destructive focus-visible:ring-destructive")}
                       />
                       {form.formState.errors.cnpj && (
-                        <p id="cnpj-error" className="text-xs text-red-600">
+                        <p id="cnpj-error" className="text-xs text-danger-mid">
                           {form.formState.errors.cnpj.message}
                         </p>
                       )}
@@ -590,7 +590,7 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
               )}
 
               {isCLT && (
-                <div className="px-6 py-4 space-y-3 bg-blue-50/30">
+                <div className="px-6 py-4 space-y-3 bg-info-soft/30">
                   <Label className="text-[10px] uppercase text-muted-foreground tracking-wider">Dados CLT</Label>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div className="space-y-1.5">
@@ -663,7 +663,7 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
                       placeholder="dd/mm/aaaa"
                     />
                     {form.formState.errors.data_demissao && (
-                      <p className="text-xs text-red-600">{form.formState.errors.data_demissao.message}</p>
+                      <p className="text-xs text-danger-mid">{form.formState.errors.data_demissao.message}</p>
                     )}
                   </div>
                 </div>
@@ -770,7 +770,7 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
                             type="button"
                             variant="ghost"
                             size="icon"
-                            className="h-7 w-7 text-red-500 shrink-0"
+                            className="h-7 w-7 text-danger-mid shrink-0"
                             onClick={() => handleRemoveConta(index)}
                             aria-label="Remover conta"
                           >
@@ -823,7 +823,7 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
                           <button
                             type="button"
                             onClick={() => handleRemoveChavePix(i)}
-                            className="ml-0.5 hover:text-red-500"
+                            className="ml-0.5 hover:text-danger-mid"
                           >
                             <X className="h-3 w-3" />
                           </button>
@@ -842,7 +842,7 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
             ))}
 
           {/* Footer */}
-          <div className="flex items-center gap-2 px-6 py-4 bg-gray-50/30">
+          <div className="flex items-center gap-2 px-6 py-4 bg-muted/30">
             {step > 1 ? (
               <Button type="button" variant="outline" onClick={goBack} disabled={isSubmitting}>
                 Voltar

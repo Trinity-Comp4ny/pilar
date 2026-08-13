@@ -11,13 +11,13 @@ export function PasswordStrengthIndicator({ password }: { password: string }) {
         {[0, 1, 2, 3].map((i) => (
           <div
             key={i}
-            className={`h-1 flex-1 rounded-full transition-colors ${i < score ? SCORE_COLOR[score] : "bg-slate-200"}`}
+            className={`h-1 flex-1 rounded-full transition-colors ${i < score ? SCORE_COLOR[score] : "bg-muted"}`}
           />
         ))}
       </div>
       <div className="flex items-center justify-between text-xs">
-        <span className="text-slate-500 capitalize">{label}</span>
-        {feedback.length > 0 && <span className="text-amber-600">{feedback[0]}</span>}
+        <span className="text-ink-muted capitalize">{label}</span>
+        {feedback.length > 0 && <span className="text-warning-mid">{feedback[0]}</span>}
       </div>
     </div>
   );

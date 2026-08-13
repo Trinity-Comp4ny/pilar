@@ -120,7 +120,7 @@ export function DisciplinasSection({
 
       {/* Fluxo selector — inside disciplinas section, only when no disciplines yet */}
       {showFluxoSelector && (
-        <div className="mb-4 p-3 bg-blue-50/50 rounded-lg border border-dashed border-blue-200">
+        <div className="mb-4 p-3 bg-info-soft/50 rounded-lg border border-dashed border-info-mid-border">
           <Label className="text-xs text-muted-foreground flex items-center gap-1.5 mb-2">
             <GitBranch className="h-3.5 w-3.5" />
             Aplicar fluxo de disciplinas
@@ -147,16 +147,16 @@ export function DisciplinasSection({
 
       {/* Applied fluxo indicator — when disciplines were applied from a fluxo */}
       {projetosDisciplinas.length > 0 && projetosDisciplinas.some((d) => d.etapa != null) && selectedFluxoId && (
-        <div className="mb-3 flex items-center gap-2 p-2 bg-blue-50 rounded-lg border border-blue-200">
-          <GitBranch className="h-3.5 w-3.5 text-blue-600 flex-shrink-0" />
-          <span className="text-xs text-blue-700 flex-1">
+        <div className="mb-3 flex items-center gap-2 p-2 bg-info-soft rounded-lg border border-info-mid-border">
+          <GitBranch className="h-3.5 w-3.5 text-info-mid flex-shrink-0" />
+          <span className="text-xs text-info-strong flex-1">
             Fluxo aplicado: {fluxosData.find((f) => f.id === selectedFluxoId)?.nome}
           </span>
           <Button
             type="button"
             variant="ghost"
             size="sm"
-            className="h-6 w-6 p-0 text-blue-500 hover:text-red-500"
+            className="h-6 w-6 p-0 text-info-mid hover:text-danger-mid"
             onClick={handleClearFluxo}
           >
             <X size={14} />
@@ -178,13 +178,13 @@ export function DisciplinasSection({
                 {hasEtapas && (
                   <div className="flex items-center gap-2 pt-2">
                     {group.etapa != null && (
-                      <span className="flex items-center justify-center h-5 w-5 rounded-full bg-blue-100 text-blue-700 text-[10px] font-bold flex-shrink-0">
+                      <span className="flex items-center justify-center h-5 w-5 rounded-full bg-info-soft text-info-strong text-[10px] font-bold flex-shrink-0">
                         {group.etapa}
                       </span>
                     )}
                     <span className="text-xs font-semibold text-muted-foreground">{group.nome}</span>
                     {group.etapa != null && group.disciplinas.length > 1 && (
-                      <span className="text-[9px] text-blue-500 bg-blue-50 rounded px-1.5 py-0.5">paralelo</span>
+                      <span className="text-[9px] text-info-mid bg-info-soft rounded px-1.5 py-0.5">paralelo</span>
                     )}
                   </div>
                 )}
@@ -199,7 +199,7 @@ export function DisciplinasSection({
                   return (
                     <div
                       key={idx}
-                      className={`bg-white border rounded-lg transition-shadow ${deadlineStatus?.status_data === "em_atraso" ? "border-red-300" : ""}`}
+                      className={`bg-white border rounded-lg transition-shadow ${deadlineStatus?.status_data === "em_atraso" ? "border-danger-mid-border" : ""}`}
                     >
                       {/* Header row */}
                       <div className="flex items-center justify-between px-3 pt-3 pb-2">
@@ -218,8 +218,8 @@ export function DisciplinasSection({
                               <span
                                 className={`text-[9px] px-1.5 py-0.5 rounded-full font-medium flex items-center gap-0.5 ${
                                   deadlineStatus.status_data === "em_atraso"
-                                    ? "bg-red-100 text-red-700"
-                                    : "bg-yellow-100 text-yellow-700"
+                                    ? "bg-danger-soft text-danger-strong"
+                                    : "bg-warning-soft text-warning-strong"
                                 }`}
                               >
                                 {deadlineStatus.status_data === "em_atraso" ? (
@@ -237,7 +237,7 @@ export function DisciplinasSection({
                             variant="ghost"
                             size="sm"
                             onClick={() => onOpenDetail(idx)}
-                            className="h-6 w-6 p-0 text-blue-500"
+                            className="h-6 w-6 p-0 text-info-mid"
                           >
                             <Edit size={14} />
                           </Button>
@@ -246,7 +246,7 @@ export function DisciplinasSection({
                             variant="ghost"
                             size="sm"
                             onClick={() => onRemoveDisciplina(idx)}
-                            className="h-6 w-6 p-0 text-red-500"
+                            className="h-6 w-6 p-0 text-danger-mid"
                           >
                             <Trash2 size={14} />
                           </Button>
@@ -262,8 +262,8 @@ export function DisciplinasSection({
                             pd.status === "Concluído"
                               ? "text-positive-strong"
                               : pd.status === "Em Andamento"
-                                ? "text-blue-600"
-                                : "text-gray-500"
+                                ? "text-info-mid"
+                                : "text-ink-muted"
                           }`}
                         >
                           {pd.status || "Não Iniciado"}
@@ -276,10 +276,10 @@ export function DisciplinasSection({
                         onClick={() => onExpandToggle(isExpanded ? null : idx)}
                         className={`w-full flex items-center gap-2 px-3 py-2 border-t text-xs transition-colors ${
                           isExpanded
-                            ? "bg-blue-50 text-blue-700 border-blue-100"
+                            ? "bg-info-soft text-info-strong border-info-soft-border"
                             : hasDates
-                              ? "bg-gray-50 text-gray-600 hover:bg-blue-50 hover:text-blue-700"
-                              : "bg-amber-50 text-amber-700 hover:bg-amber-100 border-amber-100"
+                              ? "bg-muted text-ink-muted hover:bg-info-soft hover:text-info-strong"
+                              : "bg-warning-soft text-warning-mid hover:bg-amber-100 border-warning-soft-border"
                         }`}
                       >
                         <CalendarDays className="h-3.5 w-3.5 flex-shrink-0" />
@@ -307,7 +307,7 @@ export function DisciplinasSection({
 
                       {/* Expanded date inputs */}
                       {isExpanded && (
-                        <div className="border-t px-3 pb-3 space-y-3 bg-blue-50/30">
+                        <div className="border-t px-3 pb-3 space-y-3 bg-info-soft/30">
                           <div className="pt-2 space-y-3">
                             {resps.map((resp, rIdx) => (
                               <div key={rIdx} className="space-y-2">
@@ -323,7 +323,7 @@ export function DisciplinasSection({
                                       type="button"
                                       variant="ghost"
                                       size="sm"
-                                      className="h-5 w-5 p-0 text-red-400"
+                                      className="h-5 w-5 p-0 text-danger-mid"
                                       onClick={() => onRemoveResponsavel(idx, rIdx)}
                                     >
                                       <Trash2 size={10} />
@@ -340,10 +340,10 @@ export function DisciplinasSection({
                                       onChange={(v) => onUpdateRespDatas(idx, rIdx, "data_inicio", v)}
                                       minDate={minDate}
                                       maxDate={maxDate}
-                                      className={isOutOfRange(resp.data_inicio) ? "border-orange-400 bg-orange-50" : ""}
+                                      className={isOutOfRange(resp.data_inicio) ? "border-attention-mid-border bg-attention-soft" : ""}
                                     />
                                     {isOutOfRange(resp.data_inicio) && (
-                                      <p className="text-[9px] text-orange-600">Fora do prazo do projeto</p>
+                                      <p className="text-[9px] text-attention-mid">Fora do prazo do projeto</p>
                                     )}
                                   </div>
                                   <div className="space-y-1">
@@ -356,11 +356,11 @@ export function DisciplinasSection({
                                       minDate={minDate}
                                       maxDate={maxDate}
                                       className={
-                                        isOutOfRange(resp.data_previsao) ? "border-orange-400 bg-orange-50" : ""
+                                        isOutOfRange(resp.data_previsao) ? "border-attention-mid-border bg-attention-soft" : ""
                                       }
                                     />
                                     {isOutOfRange(resp.data_previsao) && (
-                                      <p className="text-[9px] text-orange-600">Fora do prazo do projeto</p>
+                                      <p className="text-[9px] text-attention-mid">Fora do prazo do projeto</p>
                                     )}
                                   </div>
                                   <div className="space-y-1">
@@ -373,11 +373,11 @@ export function DisciplinasSection({
                                       minDate={minDate}
                                       maxDate={maxFinalDate}
                                       className={
-                                        isFinalOutOfRange(resp.data_final) ? "border-orange-400 bg-orange-50" : ""
+                                        isFinalOutOfRange(resp.data_final) ? "border-attention-mid-border bg-attention-soft" : ""
                                       }
                                     />
                                     {isFinalOutOfRange(resp.data_final) && (
-                                      <p className="text-[9px] text-orange-600">
+                                      <p className="text-[9px] text-attention-mid">
                                         {minDate && resp.data_final! < minDate
                                           ? "Anterior ao início do projeto"
                                           : "Posterior à conclusão do projeto"}
@@ -390,7 +390,7 @@ export function DisciplinasSection({
                           </div>
 
                           {addingRespToFormDisc === idx ? (
-                            <div className="bg-blue-50 rounded-lg p-2.5 border border-dashed border-blue-200 space-y-2">
+                            <div className="bg-info-soft rounded-lg p-2.5 border border-dashed border-info-mid-border space-y-2">
                               <Select
                                 value={newFormResp.responsavel_id}
                                 onValueChange={(v) => onNewFormRespChange({ ...newFormResp, responsavel_id: v })}
@@ -437,6 +437,7 @@ export function DisciplinasSection({
                               <div className="flex gap-2">
                                 <Button
                                   type="button"
+                                  variant="brand"
                                   size="sm"
                                   className="h-6 text-[10px]"
                                   onClick={() => onAddResponsavel(idx)}
@@ -487,7 +488,7 @@ export function DisciplinasSection({
       {/* Add disciplina */}
       <div className="mt-3">
         {showAddForm ? (
-          <div className="bg-gray-50 p-4 rounded-lg border space-y-4">
+          <div className="bg-muted p-4 rounded-lg border space-y-4">
             <div className="space-y-1">
               <Label className="text-xs">Disciplina</Label>
               <Select
@@ -565,7 +566,7 @@ export function DisciplinasSection({
             </div>
 
             {minDate && maxDate && (
-              <p className="text-[10px] text-muted-foreground bg-blue-50 border border-blue-100 rounded px-2 py-1">
+              <p className="text-[10px] text-muted-foreground bg-info-soft border border-info-soft-border rounded px-2 py-1">
                 Prazo do projeto: {minDate.split("-").reverse().join("/")} → {maxDate.split("-").reverse().join("/")}
               </p>
             )}
@@ -578,10 +579,10 @@ export function DisciplinasSection({
                   onChange={(v) => onTempDisciplinaChange({ ...tempDisciplina, data_inicio: v })}
                   minDate={minDate}
                   maxDate={maxDate}
-                  className={isOutOfRange(tempDisciplina.data_inicio) ? "border-orange-400 bg-orange-50" : ""}
+                  className={isOutOfRange(tempDisciplina.data_inicio) ? "border-attention-mid-border bg-attention-soft" : ""}
                 />
                 {isOutOfRange(tempDisciplina.data_inicio) && (
-                  <p className="text-[9px] text-orange-600">Fora do prazo do projeto</p>
+                  <p className="text-[9px] text-attention-mid">Fora do prazo do projeto</p>
                 )}
               </div>
               <div className="space-y-1">
@@ -591,10 +592,10 @@ export function DisciplinasSection({
                   onChange={(v) => onTempDisciplinaChange({ ...tempDisciplina, data_previsao: v })}
                   minDate={minDate}
                   maxDate={maxDate}
-                  className={isOutOfRange(tempDisciplina.data_previsao) ? "border-orange-400 bg-orange-50" : ""}
+                  className={isOutOfRange(tempDisciplina.data_previsao) ? "border-attention-mid-border bg-attention-soft" : ""}
                 />
                 {isOutOfRange(tempDisciplina.data_previsao) && (
-                  <p className="text-[9px] text-orange-600">Fora do prazo do projeto</p>
+                  <p className="text-[9px] text-attention-mid">Fora do prazo do projeto</p>
                 )}
               </div>
               <div className="space-y-1">
@@ -605,12 +606,12 @@ export function DisciplinasSection({
                   minDate={minDate}
                   className={
                     tempDisciplina.data_final && tempDisciplina.data_final < (minDate ?? "")
-                      ? "border-orange-400 bg-orange-50"
+                      ? "border-attention-mid-border bg-attention-soft"
                       : ""
                   }
                 />
                 {tempDisciplina.data_final && tempDisciplina.data_final < (minDate ?? "") && (
-                  <p className="text-[9px] text-orange-600">Anterior ao início do projeto</p>
+                  <p className="text-[9px] text-attention-mid">Anterior ao início do projeto</p>
                 )}
               </div>
             </div>

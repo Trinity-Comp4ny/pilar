@@ -110,12 +110,12 @@ interface DragOverride {
 }
 
 const STATUS_BAR_COLORS: Record<string, string> = {
-  [PROJECT_STATUS.PLANEJAMENTO]: "bg-yellow-500",
-  [PROJECT_STATUS.EM_ANDAMENTO]: "bg-blue-500",
-  [PROJECT_STATUS.REVISAO]: "bg-purple-500",
+  [PROJECT_STATUS.PLANEJAMENTO]: "bg-status-planning",
+  [PROJECT_STATUS.EM_ANDAMENTO]: "bg-status-progress",
+  [PROJECT_STATUS.REVISAO]: "bg-status-review",
   [PROJECT_STATUS.PARALISADO]: "bg-brand",
   [PROJECT_STATUS.CONCLUIDO]: "bg-positive/100",
-  [PROJECT_STATUS.CANCELADO]: "bg-red-500",
+  [PROJECT_STATUS.CANCELADO]: "bg-status-cancelled",
 };
 
 function formatDateBR(d: string | undefined | Date): string {
@@ -207,7 +207,7 @@ export function CronogramaProjetosTab({ projetos, onDatesChange }: CronogramaPro
       const end = parseDate(p.data_final) || parseDate(p.data_previsao)!;
       const ds = getDeadlineStatus(p);
       const atrasado = ds?.status_data === "em_atraso";
-      const barClass = STATUS_BAR_COLORS[p.status] || "bg-gray-400";
+      const barClass = STATUS_BAR_COLORS[p.status] || "bg-status-unknown";
       const totalDiscs = (p.disciplinas || []).length;
       const discAtrasadas = (p.disciplinas || []).filter((d) => isDiscAtrasada(d)).length;
 
@@ -519,7 +519,7 @@ export function CronogramaProjetosTab({ projetos, onDatesChange }: CronogramaPro
       </Card>
 
       {projetosSemDatas.length > 0 && (
-        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-xs">
+        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-warning-soft border border-warning-mid-border text-warning-strong text-xs">
           <AlertTriangle className="h-3.5 w-3.5 flex-shrink-0" />
           <span>
             {projetosSemDatas.length} projeto{projetosSemDatas.length > 1 ? "s" : ""} sem data de início ou previsão:{" "}
@@ -561,14 +561,14 @@ export function CronogramaProjetosTab({ projetos, onDatesChange }: CronogramaPro
                       onClick={() => navigate(`/projetos/${row.projeto.id}#cronograma`)}
                       className={cn(
                         "w-full h-14 border-b px-3 flex flex-col justify-center text-left hover:bg-muted/50 transition-colors",
-                        row.atrasado && "bg-red-50/40"
+                        row.atrasado && "bg-danger-soft/40"
                       )}
                     >
                       <div className="flex items-center gap-1.5">
                         <span className="text-[10px] font-mono text-muted-foreground">
                           {row.projeto.codigo_projeto}
                         </span>
-                        {row.atrasado && <AlertTriangle className="h-3 w-3 text-red-500 flex-shrink-0" />}
+                        {row.atrasado && <AlertTriangle className="h-3 w-3 text-danger-mid flex-shrink-0" />}
                       </div>
                       <div className="flex items-center gap-1.5 mt-0.5">
                         <span className="text-xs font-medium truncate">{row.projeto.nome}</span>
@@ -623,7 +623,7 @@ export function CronogramaProjetosTab({ projetos, onDatesChange }: CronogramaPro
                     {/* Grid */}
                     <div className="absolute inset-0 flex pointer-events-none" aria-hidden>
                       {columns.map((_, i) => (
-                        <div key={i} className="flex-1 border-r last:border-r-0 border-dashed border-gray-100" />
+                        <div key={i} className="flex-1 border-r last:border-r-0 border-dashed border-border" />
                       ))}
                     </div>
 
@@ -658,7 +658,7 @@ export function CronogramaProjetosTab({ projetos, onDatesChange }: CronogramaPro
                         return (
                           <div
                             key={row.projeto.id}
-                            className={cn("h-14 border-b relative", row.atrasado && "bg-red-50/20")}
+                            className={cn("h-14 border-b relative", row.atrasado && "bg-danger-soft/20")}
                           >
                             <Tooltip open={isThisDragging ? false : undefined}>
                               <TooltipTrigger asChild>
@@ -771,7 +771,7 @@ export function CronogramaProjetosTab({ projetos, onDatesChange }: CronogramaPro
                                       <p>
                                         {row.totalDiscs} disciplina{row.totalDiscs === 1 ? "" : "s"}
                                         {row.discAtrasadas > 0 && (
-                                          <span className="text-red-500 ml-1">
+                                          <span className="text-danger-mid ml-1">
                                             · {row.discAtrasadas} atrasada{row.discAtrasadas === 1 ? "" : "s"}
                                           </span>
                                         )}

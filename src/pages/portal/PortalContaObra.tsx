@@ -78,7 +78,7 @@ export function ContaObraContent({ conta, taxaPct }: { conta: ClienteObraConta; 
             <div className="space-y-3">
               {conta.despesas.map((d, i) => (
                 <div key={`${d.data}-${i}`} className="flex items-center gap-3 p-3 border rounded-lg">
-                  <div className="p-1.5 rounded bg-red-100 text-red-700">
+                  <div className="p-1.5 rounded bg-danger-soft text-danger-strong">
                     <ArrowUpCircle className="h-4 w-4" />
                   </div>
                   <div className="flex-1">

@@ -42,7 +42,7 @@ export function AutomacoesTab() {
           ].map((item) => (
             <div
               key={item.name}
-              className="flex items-center justify-between rounded-lg border border-black/5 bg-gray-50/50 p-4"
+              className="flex items-center justify-between rounded-lg border border-black/5 bg-muted/50 p-4"
             >
               <div className="flex items-center gap-3">
                 <div className="h-9 w-9 rounded-full bg-black/5 flex items-center justify-center">
@@ -89,7 +89,7 @@ function IntegrationRow({
             <Badge
               className={
                 status === "configurado"
-                  ? "bg-emerald-600/15 text-emerald-700 border-transparent hover:bg-emerald-600/15"
+                  ? "bg-success-soft text-success-strong border-transparent hover:bg-success-soft"
                   : "bg-black/5 text-black/50 border-transparent hover:bg-black/5"
               }
             >

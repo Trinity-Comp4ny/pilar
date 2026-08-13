@@ -46,7 +46,7 @@ export default function MetasPage() {
         </PageHeader>
       </div>
 
-      <div className="flex-1 overflow-y-auto w-full bg-gray-50/50 p-6 md:p-8">
+      <div className="flex-1 overflow-y-auto w-full bg-muted/50 p-6 md:p-8">
         <div className="w-full mx-auto space-y-6">
           <MetasDashboard />
         </div>

@@ -51,9 +51,9 @@ interface MarkerDef {
 
 const STATUS_COLORS: Record<string, { bar: string; text: string; bg: string }> = {
   Concluído: { bar: "bg-positive/100", text: "text-positive-strong", bg: "bg-positive/10" },
-  "Em Andamento": { bar: "bg-blue-500", text: "text-blue-700", bg: "bg-blue-50" },
-  Pendente: { bar: "bg-amber-500", text: "text-amber-700", bg: "bg-amber-50" },
-  "Não Iniciado": { bar: "bg-gray-400", text: "text-gray-600", bg: "bg-gray-50" },
+  "Em Andamento": { bar: "bg-status-progress", text: "text-info-strong", bg: "bg-info-soft" },
+  Pendente: { bar: "bg-status-planning", text: "text-warning-mid", bg: "bg-warning-soft" },
+  "Não Iniciado": { bar: "bg-status-unknown", text: "text-ink-muted", bg: "bg-muted" },
 };
 
 function parseDate(d: string | undefined): Date | null {
@@ -646,7 +646,7 @@ export function CronogramaTab({
       </Card>
 
       {discsSemDatas.length > 0 && (
-        <div className="rounded-lg border border-amber-200 bg-amber-50 text-amber-800 text-xs overflow-hidden">
+        <div className="rounded-lg border border-warning-mid-border bg-warning-soft text-warning-strong text-xs overflow-hidden">
           <button
             className="flex items-center gap-2 px-3 py-2 w-full text-left hover:bg-amber-100/60 transition-colors"
             onClick={() => setDiscsSemDatasExpanded((v) => !v)}
@@ -656,10 +656,10 @@ export function CronogramaTab({
               {discsSemDatas.length} disciplina{discsSemDatas.length > 1 ? "s" : ""} sem datas definidas — não exibidas
               no gráfico
             </span>
-            <span className="text-[10px] text-amber-600 opacity-70">{discsSemDatasExpanded ? "▲" : "▼"}</span>
+            <span className="text-[10px] text-warning-mid opacity-70">{discsSemDatasExpanded ? "▲" : "▼"}</span>
           </button>
           {discsSemDatasExpanded && (
-            <div className="border-t border-amber-200 px-3 py-2 space-y-0.5">
+            <div className="border-t border-warning-mid-border px-3 py-2 space-y-0.5">
               {discsSemDatas.map((d) => (
                 <div key={d.disciplina} className="flex items-center gap-1.5 py-0.5">
                   <span className="font-medium">{d.disciplina}</span>
@@ -684,11 +684,11 @@ export function CronogramaTab({
               {rows.map((row, i) => (
                 <div
                   key={i}
-                  className={cn("h-14 border-b px-3 flex flex-col justify-center", row.atrasada && "bg-red-50/40")}
+                  className={cn("h-14 border-b px-3 flex flex-col justify-center", row.atrasada && "bg-danger-soft/40")}
                 >
                   <div className="flex items-center gap-1.5">
                     <span className="text-xs font-medium truncate">{row.disc.disciplina}</span>
-                    {row.atrasada && <AlertTriangle className="h-3 w-3 text-red-500 flex-shrink-0" />}
+                    {row.atrasada && <AlertTriangle className="h-3 w-3 text-danger-mid flex-shrink-0" />}
                   </div>
                   <div className="flex items-center gap-1 mt-0.5">
                     <User className="h-2.5 w-2.5 text-muted-foreground" />
@@ -740,7 +740,7 @@ export function CronogramaTab({
                   {/* Grid lines */}
                   <div className="absolute inset-0 flex pointer-events-none" aria-hidden>
                     {columns.map((_, i) => (
-                      <div key={i} className="flex-1 border-r last:border-r-0 border-dashed border-gray-100" />
+                      <div key={i} className="flex-1 border-r last:border-r-0 border-dashed border-border" />
                     ))}
                   </div>
 
@@ -778,7 +778,7 @@ export function CronogramaTab({
                       const isBeyondEnd = !!(projEndDate && effectiveEnd && effectiveEnd > projEndDate);
 
                       return (
-                        <div key={i} className={cn("h-14 border-b relative", row.atrasada && "bg-red-50/20")}>
+                        <div key={i} className={cn("h-14 border-b relative", row.atrasada && "bg-danger-soft/20")}>
                           {geo && (
                             <Tooltip open={isThisDragging ? false : undefined}>
                               <TooltipTrigger asChild>
@@ -786,15 +786,15 @@ export function CronogramaTab({
                                   className={cn(
                                     "absolute top-3 h-8 rounded-md flex items-center overflow-visible shadow-sm border border-black/5 transition-shadow",
                                     row.colors.bar,
-                                    row.atrasada && !isBeyondEnd && "ring-2 ring-red-300 ring-offset-1",
-                                    isBeyondEnd && !isThisDragging && "ring-2 ring-orange-400 ring-offset-1",
+                                    row.atrasada && !isBeyondEnd && "ring-2 ring-danger-mid-border ring-offset-1",
+                                    isBeyondEnd && !isThisDragging && "ring-2 ring-attention-mid-border ring-offset-1",
                                     isThisDragging &&
                                       !isSnapping &&
                                       !isBeyondEnd &&
                                       "opacity-90 ring-2 ring-white/60 shadow-md",
                                     isThisDragging &&
                                       (isSnapping || isBeyondEnd) &&
-                                      "opacity-90 ring-2 ring-orange-400 ring-offset-1 shadow-md"
+                                      "opacity-90 ring-2 ring-attention-mid-border ring-offset-1 shadow-md"
                                   )}
                                   style={{
                                     left: `${geo.leftPct}%`,
@@ -833,7 +833,7 @@ export function CronogramaTab({
                                     {/* Progress fill for Em Andamento */}
                                     {row.status === "Em Andamento" && row.start && row.end && (
                                       <div
-                                        className="absolute inset-0 bg-blue-700/30 rounded-md"
+                                        className="absolute inset-0 bg-status-progress/30 rounded-md"
                                         style={{
                                           width: `${Math.min(
                                             100,
@@ -915,7 +915,7 @@ export function CronogramaTab({
                               <div
                                 className={cn(
                                   "text-white text-[10px] px-2 py-1 rounded-md whitespace-nowrap shadow-lg font-medium",
-                                  isSnapping ? "bg-orange-600" : isBeyondEnd ? "bg-orange-500" : "bg-gray-900/90"
+                                  isSnapping ? "bg-orange-600" : isBeyondEnd ? "bg-orange-500" : "bg-ink/90"
                                 )}
                               >
                                 {getDragLabel(geo, dragOverride.type)}

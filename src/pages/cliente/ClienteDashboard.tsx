@@ -1,6 +1,6 @@
 import { Link, useOutletContext } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/StatusBadge";
 import { Loader2, FolderKanban, ArrowRight, Building2 } from "lucide-react";
 import { ClienteShell } from "./ClienteShell";
 import { useClienteProjetos, type ClienteProjeto } from "./useClienteProjetos";
@@ -10,22 +10,6 @@ import { usePageTitle } from "@/hooks/usePageTitle";
 
 // Suporte do Pilar encaminha o cliente ao escritório responsável pela conta.
 const SUPORTE_EMAIL = "suporte@pilarsoft.com.br";
-
-const STATUS_COLORS: Record<string, string> = {
-  Planejamento: "bg-blue-100 text-blue-800",
-  "Em andamento": "bg-positive/10 text-positive-strong",
-  Revisão: "bg-purple-100 text-purple-800",
-  Paralisado: "bg-yellow-100 text-yellow-800",
-  Concluído: "bg-gray-100 text-gray-800",
-  Cancelado: "bg-red-100 text-red-800",
-};
-
-const OBRA_STATUS_LABEL: Record<string, string> = {
-  planejada: "Planejada",
-  em_andamento: "Em andamento",
-  paralisada: "Paralisada",
-  concluida: "Concluída",
-};
 
 function calcProgress(disciplinas: ClienteProjeto["disciplinas"]): number {
   if (!Array.isArray(disciplinas) || disciplinas.length === 0) return 0;
@@ -49,7 +33,7 @@ export default function ClienteDashboard() {
       <div className="space-y-6">
         {/* Saudação */}
         <div>
-          <h1 className="text-xl font-semibold text-slate-900">Olá, {account.nome.split(" ")[0]}</h1>
+          <h1 className="text-xl font-semibold text-ink">Olá, {account.nome.split(" ")[0]}</h1>
           <p className="text-sm text-muted-foreground mt-1">Acompanhe o andamento dos seus projetos.</p>
         </div>
 
@@ -63,7 +47,7 @@ export default function ClienteDashboard() {
         {/* Erro */}
         {error && (
           <Card>
-            <CardContent className="p-6 text-center text-sm text-red-600">
+            <CardContent className="p-6 text-center text-sm text-danger-mid">
               Não foi possível carregar seus projetos agora. Atualize a página em instantes ou fale com o escritório se
               o problema continuar.
             </CardContent>
@@ -75,7 +59,7 @@ export default function ClienteDashboard() {
           <Card>
             <CardContent className="p-12 text-center">
               <FolderKanban className="h-10 w-10 mx-auto mb-3 text-muted-foreground opacity-40" />
-              <p className="text-sm font-medium text-slate-900">Você ainda não tem projetos liberados</p>
+              <p className="text-sm font-medium text-ink">Você ainda não tem projetos liberados</p>
               <p className="text-sm text-muted-foreground mt-1">
                 Fale com o escritório para liberar seu acesso ou{" "}
                 <a
@@ -95,7 +79,6 @@ export default function ClienteDashboard() {
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {projetos.map((projeto) => {
               const progress = calcProgress(projeto.disciplinas);
-              const statusColor = STATUS_COLORS[projeto.projeto_status] || "bg-gray-100 text-gray-800";
 
               return (
                 <Link key={projeto.projeto_id} to={`/cliente/projeto/${projeto.projeto_id}`} className="block group">
@@ -107,11 +90,11 @@ export default function ClienteDashboard() {
                           {projeto.projeto_codigo && (
                             <p className="text-xs text-muted-foreground font-mono">{projeto.projeto_codigo}</p>
                           )}
-                          <h3 className="text-sm font-semibold text-slate-900 truncate mt-0.5">
+                          <h3 className="text-sm font-semibold text-ink truncate mt-0.5">
                             {projeto.projeto_nome}
                           </h3>
                         </div>
-                        <Badge className={`text-[10px] shrink-0 ${statusColor}`}>{projeto.projeto_status}</Badge>
+                        <StatusBadge domain="projeto" status={projeto.projeto_status} className="text-[10px] shrink-0" />
                       </div>
 
                       {/* Barra de progresso */}
@@ -121,7 +104,7 @@ export default function ClienteDashboard() {
                           <span className="text-xs font-medium">{progress}%</span>
                         </div>
                         <div
-                          className="w-full bg-gray-200 rounded-full h-2"
+                          className="w-full bg-muted rounded-full h-2"
                           role="progressbar"
                           aria-valuenow={progress}
                           aria-valuemin={0}
@@ -157,7 +140,7 @@ export default function ClienteDashboard() {
         {obras.length > 0 && (
           <div className="space-y-3">
             <div>
-              <h2 className="text-sm font-semibold text-slate-900">Obras</h2>
+              <h2 className="text-sm font-semibold text-ink">Obras</h2>
               <p className="text-xs text-muted-foreground">Acompanhe a execução e a prestação de contas.</p>
             </div>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -168,11 +151,9 @@ export default function ClienteDashboard() {
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0 flex items-center gap-2">
                           <Building2 className="h-4 w-4 text-muted-foreground shrink-0" />
-                          <h3 className="text-sm font-semibold text-slate-900 truncate">{obra.nome}</h3>
+                          <h3 className="text-sm font-semibold text-ink truncate">{obra.nome}</h3>
                         </div>
-                        <Badge className="text-[10px] shrink-0 bg-gray-100 text-gray-800">
-                          {OBRA_STATUS_LABEL[obra.status] ?? obra.status}
-                        </Badge>
+                        <StatusBadge domain="obra" status={obra.status} className="text-[10px] shrink-0" />
                       </div>
                       <div>
                         <div className="flex items-center justify-between mb-1.5">
@@ -180,7 +161,7 @@ export default function ClienteDashboard() {
                           <span className="text-xs font-medium">{obra.avanco_pct}%</span>
                         </div>
                         <div
-                          className="w-full bg-gray-200 rounded-full h-2"
+                          className="w-full bg-muted rounded-full h-2"
                           role="progressbar"
                           aria-valuenow={obra.avanco_pct}
                           aria-valuemin={0}

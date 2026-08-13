@@ -150,7 +150,7 @@ export default function ProfileSetup() {
                 />
                 <div className="leading-tight">
                   <div className="text-sm font-semibold text-ink">
-                    Pilar<sup className="text-[8px] font-normal text-slate-400 ml-0.5 relative -top-1.5">®</sup>
+                    Pilar<sup className="text-[8px] font-normal text-ink-disabled ml-0.5 relative -top-1.5">®</sup>
                   </div>
                   <div className="text-xs text-ink-soft">Configuração inicial · Etapa 1 de 2</div>
                 </div>
@@ -158,7 +158,7 @@ export default function ProfileSetup() {
 
               <div className="flex items-center gap-2">
                 <div className="h-2.5 w-2.5 rounded-full bg-brand shadow-sm shadow-brand/30" />
-                <div className="h-2.5 w-2.5 rounded-full bg-slate-200" />
+                <div className="h-2.5 w-2.5 rounded-full bg-muted" />
               </div>
             </div>
 
@@ -183,7 +183,7 @@ export default function ProfileSetup() {
                   render={({ field }) => (
                     <FormItem className="space-y-2">
                       <FormLabel className="text-ink-soft font-medium">
-                        Nome <span className="text-red-500">*</span>
+                        Nome <span className="text-danger-mid">*</span>
                       </FormLabel>
                       <FormControl>
                         <div className="relative group">
@@ -205,7 +205,7 @@ export default function ProfileSetup() {
                   render={({ field }) => (
                     <FormItem className="space-y-2">
                       <FormLabel className="text-ink-soft font-medium">
-                        Sobrenome <span className="text-red-500">*</span>
+                        Sobrenome <span className="text-danger-mid">*</span>
                       </FormLabel>
                       <FormControl>
                         <Input
@@ -226,7 +226,7 @@ export default function ProfileSetup() {
                 render={({ field }) => (
                   <FormItem className="space-y-2">
                     <FormLabel className="text-ink-soft font-medium">
-                      Telefone <span className="text-red-500">*</span>
+                      Telefone <span className="text-danger-mid">*</span>
                     </FormLabel>
                     <FormControl>
                       <div className="relative group">
@@ -258,7 +258,7 @@ export default function ProfileSetup() {
                 render={({ field }) => (
                   <FormItem className="space-y-2">
                     <FormLabel className="text-ink-soft font-medium">
-                      Nova senha <span className="text-red-500">*</span>
+                      Nova senha <span className="text-danger-mid">*</span>
                     </FormLabel>
                     <FormControl>
                       <div className="relative group">
@@ -294,7 +294,7 @@ export default function ProfileSetup() {
                 render={({ field }) => (
                   <FormItem className="space-y-2">
                     <FormLabel className="text-ink-soft font-medium">
-                      Confirmar senha <span className="text-red-500">*</span>
+                      Confirmar senha <span className="text-danger-mid">*</span>
                     </FormLabel>
                     <FormControl>
                       <div className="relative group">

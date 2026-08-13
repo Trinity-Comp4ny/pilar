@@ -48,8 +48,8 @@ export function CancelDialog({ open, onOpenChange, current }: CancelDialogProps)
       <AlertDialogContent>
         <AlertDialogHeader>
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center">
-              <AlertTriangle className="w-5 h-5 text-amber-600" />
+            <div className="w-10 h-10 rounded-full bg-warning-soft flex items-center justify-center">
+              <AlertTriangle className="w-5 h-5 text-warning-mid" />
             </div>
             <AlertDialogTitle>Cancelar assinatura</AlertDialogTitle>
           </div>
@@ -71,7 +71,7 @@ export function CancelDialog({ open, onOpenChange, current }: CancelDialogProps)
               handleConfirm();
             }}
             disabled={manage.isPending}
-            className="bg-red-600 hover:bg-red-700 text-white"
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
             {manage.isPending ? (
               <>
