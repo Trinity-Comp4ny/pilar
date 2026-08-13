@@ -68,10 +68,10 @@ público → `brand/personas.md`. Cor/token: a verdade é `src/styles/tokens.css
 
 183 migrations em `supabase/migrations/`, dois esquemas convivendo: 000..029 (antigo) e
 timestamp 2026*. Tipos gerados em `src/integrations/supabase/types.ts`.
-Rodar `npm run gen:types` após qualquer migration, e commitar o `types.ts`: **nenhum job
-de CI valida isso hoje**, então esquecer gera código que passa no typecheck e quebra em
-runtime. Ver `docs/operations/PLANO_ENGENHARIA_2026-07.md` (Fase 1) para o gate que fecha
-esse buraco.
+Rodar `npm run gen:types` após qualquer migration, e commitar o `types.ts`. O CI **valida
+isso**: o job `types-sync` (Fase 1 do `docs/operations/PLANO_ENGENHARIA_2026-07.md`, já
+implementada) bloqueia o merge quando o `types.ts` commitado diverge do schema das
+migrations. Esquecer de rodar o `gen:types` reprova o PR, não vaza para runtime.
 
 ## Git, branches e release (REGRA INQUEBRÁVEL)
 
