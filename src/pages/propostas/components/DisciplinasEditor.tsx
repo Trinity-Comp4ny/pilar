@@ -4,7 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Trash2 } from "lucide-react";
-import { formatCurrency } from "@/lib/currencyUtils";
+import { formatCurrency, formatValorToInput, parseCurrencyString } from "@/lib/currencyUtils";
+import { MoneyInput } from "@/components/forms/MoneyInput";
 import { calcDisciplinasTotais, custoLinha, type DisciplinaLinha } from "../lib/disciplinasCalc";
 
 // Catálogo padrão de disciplinas de engenharia multidisciplinar. Mantido em
@@ -121,26 +122,22 @@ export function DisciplinasEditor({ rows, onChange, disabled }: DisciplinasEdito
                     />
                   </TableCell>
                   <TableCell>
-                    <Input
-                      type="number"
-                      min={0}
+                    <MoneyInput
                       className="h-8 text-xs text-right"
-                      value={r.custo_hora || ""}
+                      value={r.custo_hora ? formatValorToInput(r.custo_hora) : ""}
                       disabled={disabled}
-                      onChange={(e) => updateRow(r.id, { custo_hora: parseFloat(e.target.value) || 0 })}
+                      onChange={(v) => updateRow(r.id, { custo_hora: parseCurrencyString(v) })}
                     />
                   </TableCell>
                   <TableCell className="text-xs text-right text-muted-foreground align-middle">
                     {formatCurrency(custoLinha(r))}
                   </TableCell>
                   <TableCell>
-                    <Input
-                      type="number"
-                      min={0}
+                    <MoneyInput
                       className="h-8 text-xs text-right"
-                      value={r.valor_venda || ""}
+                      value={r.valor_venda ? formatValorToInput(r.valor_venda) : ""}
                       disabled={disabled}
-                      onChange={(e) => updateRow(r.id, { valor_venda: parseFloat(e.target.value) || 0 })}
+                      onChange={(v) => updateRow(r.id, { valor_venda: parseCurrencyString(v) })}
                     />
                   </TableCell>
                   {!disabled && (
