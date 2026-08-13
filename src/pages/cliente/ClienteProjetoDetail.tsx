@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { formatCurrency as fmtMoeda } from "@/lib/format";
+import { formatCurrency, formatDate } from "@/lib/format";
 import { useParams, useOutletContext, useLocation } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -18,16 +18,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { getPortalToken } from "@/hooks/useClienteAuth";
 import type { ClienteProjetoData } from "./useClienteProjetoData";
 
-function formatDate(d: string | null | undefined): string {
-  if (!d) return "A definir";
-  return new Date(d + "T00:00:00").toLocaleDateString("pt-BR");
-}
+// Datas do projeto ainda podem não ter sido definidas: mostra "A definir".
+const formatDataProjeto = (d: string | null | undefined) => (d ? formatDate(d) : "A definir");
 
 function AprovarPropostaCard({ projeto, refresh }: { projeto: ClienteProjetoData; refresh: () => void }) {
   const [loading, setLoading] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
-
-  const formatCurrency = (v: number | null) => (v == null ? "R$ 0,00" : fmtMoeda(v));
 
   const escopo = (projeto.disciplinas ?? []).map((d) => d.disciplina).filter((nome): nome is string => !!nome);
   const parcelas = projeto.receitas ?? [];
@@ -105,11 +101,11 @@ function AprovarPropostaCard({ projeto, refresh }: { projeto: ClienteProjetoData
           <div className="grid grid-cols-2 gap-4 px-4 py-3">
             <div>
               <p className="text-xs text-muted-foreground">Início</p>
-              <p className="text-sm font-medium">{formatDate(projeto.data_inicio)}</p>
+              <p className="text-sm font-medium">{formatDataProjeto(projeto.data_inicio)}</p>
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Previsão de conclusão</p>
-              <p className="text-sm font-medium">{formatDate(projeto.data_previsao)}</p>
+              <p className="text-sm font-medium">{formatDataProjeto(projeto.data_previsao)}</p>
             </div>
           </div>
 
@@ -184,13 +180,13 @@ function ProjetoOverview({ projeto, refresh }: { projeto: ClienteProjetoData; re
         <Card>
           <CardContent className="p-4">
             <p className="text-xs text-muted-foreground">Início do Projeto</p>
-            <p className="text-sm font-semibold mt-1">{formatDate(projeto.data_inicio)}</p>
+            <p className="text-sm font-semibold mt-1">{formatDataProjeto(projeto.data_inicio)}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4">
             <p className="text-xs text-muted-foreground">Previsão de Conclusão</p>
-            <p className="text-sm font-semibold mt-1">{formatDate(projeto.data_previsao)}</p>
+            <p className="text-sm font-semibold mt-1">{formatDataProjeto(projeto.data_previsao)}</p>
           </CardContent>
         </Card>
       </div>

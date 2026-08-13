@@ -21,8 +21,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDocument, formatPhone } from "@/lib/maskUtils";
-import { PageLayout } from "@/components/PageLayout";
-import { PageHeader } from "@/components/PageHeader";
+import { PilarPage } from "@/components/PilarPage";
 import { usePermissions } from "@/hooks/usePermissions";
 import { Can } from "@/components/Can";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
@@ -243,16 +242,12 @@ export default function Clientes() {
   };
 
   return (
-    <PageLayout
+    <PilarPage
       className="overflow-y-hidden"
       containerClassName="h-full flex flex-col min-h-0"
-      header={
-        <PageHeader
-          title="Clientes"
-          search={{ value: searchTerm, onChange: setSearchTerm, placeholder: "Buscar por nome, CPF/CNPJ ou email" }}
-          primaryAction={{ label: "Novo cliente", onClick: handleOpenCreate, icon: Plus, feature: "clientes", dataTour: "onb-novo-cliente" }}
-        />
-      }
+      title="Clientes"
+      search={{ value: searchTerm, onChange: setSearchTerm, placeholder: "Buscar por nome, CPF/CNPJ ou email" }}
+      primaryAction={{ label: "Novo cliente", onClick: handleOpenCreate, icon: Plus, feature: "clientes", dataTour: "onb-novo-cliente" }}
     >
       <Card className="rounded-2xl border border-black/5 bg-white w-full flex flex-col flex-1 min-h-0 overflow-hidden">
         <CardHeader>
@@ -521,6 +516,6 @@ export default function Clientes() {
         confirmText="Excluir"
         cancelText="Cancelar"
       />
-    </PageLayout>
+    </PilarPage>
   );
 }

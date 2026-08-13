@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from "react";
-import { formatCurrency as fmtMoeda, formatDecimal } from "@/lib/format";
+import { formatCurrency, formatDate, formatDecimal } from "@/lib/format";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -54,7 +54,7 @@ import {
   PROPOSTA_STATUS_CONFIG,
   type PropostaInsert,
 } from "@/hooks/usePropostas";
-import { formatCurrencyInput, parseCurrencyString, formatCurrency as formatCurrencyBRL } from "@/lib/currencyUtils";
+import { formatCurrencyInput, parseCurrencyString } from "@/lib/currencyUtils";
 import { DisciplinasEditor } from "./components/DisciplinasEditor";
 import { calcDisciplinasTotais, valorDivergeDaSoma, type DisciplinaLinha } from "./lib/disciplinasCalc";
 import { DatePicker } from "@/components/ui/date-picker";
@@ -367,10 +367,6 @@ export default function Propostas() {
     });
   };
 
-  const formatCurrency = (v: number | null) => (v ? fmtMoeda(v) : "—");
-
-  const formatDate = (d: string | null) => (d ? new Date(d + "T00:00:00").toLocaleDateString("pt-BR") : "—");
-
   const hoje = new Date().toISOString().slice(0, 10);
 
   const getDisplayStatus = (p: { status: string; validade: string | null }) => {
@@ -682,7 +678,9 @@ export default function Propostas() {
                           {p.codigo && <p className="text-[11px] text-muted-foreground font-mono">{p.codigo}</p>}
                         </TableCell>
                         <TableCell className="text-sm py-4">{p.cliente_nome || p.lead_nome || "—"}</TableCell>
-                        <TableCell className="text-sm py-4 font-medium">{formatCurrency(p.valor_proposto)}</TableCell>
+                        <TableCell className="text-sm py-4 font-medium">
+                          {p.valor_proposto ? formatCurrency(p.valor_proposto) : "—"}
+                        </TableCell>
                         <TableCell className="text-sm py-4 text-center">
                           <Badge className={`text-xs ${PROPOSTA_STATUS_CONFIG[displayStatus]?.color || ""}`}>
                             {PROPOSTA_STATUS_CONFIG[displayStatus]?.label || displayStatus}
@@ -1009,7 +1007,7 @@ export default function Propostas() {
 
             {disciplinasTotais.totalValor > 0 && (
               <div className="flex flex-wrap items-center gap-2 -mt-2 text-[11px] text-muted-foreground">
-                <span>Soma das disciplinas: {formatCurrencyBRL(disciplinasTotais.totalValor)}</span>
+                <span>Soma das disciplinas: {formatCurrency(disciplinasTotais.totalValor)}</span>
                 {valorDiverge && (
                   <>
                     <span className="text-warning-mid">difere do valor digitado</span>
@@ -1123,7 +1121,9 @@ export default function Propostas() {
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Valor</span>
-                  <span className="font-medium">{formatCurrency(convertProposta.valor_proposto)}</span>
+                  <span className="font-medium">
+                    {convertProposta.valor_proposto ? formatCurrency(convertProposta.valor_proposto) : "—"}
+                  </span>
                 </div>
                 {convertProposta.area_m2 && (
                   <div className="flex justify-between text-sm">

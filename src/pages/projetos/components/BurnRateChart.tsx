@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatCurrency as fmtMoeda } from "@/lib/format";
+import { formatCurrency } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, TrendingUp } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
@@ -19,8 +19,6 @@ import {
 interface BurnRateChartProps {
   projetoId: string;
 }
-
-const formatCurrency = (v: number) => fmtMoeda(v, { decimals: 0 });
 
 export function BurnRateChart({ projetoId }: BurnRateChartProps) {
   const { data, isLoading } = useQuery({
@@ -135,15 +133,15 @@ export function BurnRateChart({ projetoId }: BurnRateChartProps) {
         <div className="flex gap-6 mb-4 text-sm">
           <div>
             <span className="text-muted-foreground">Orçamento: </span>
-            <span className="font-medium">{formatCurrency(orcamentoTotal)}</span>
+            <span className="font-medium">{formatCurrency(orcamentoTotal, { decimals: 0 })}</span>
           </div>
           <div>
             <span className="text-muted-foreground">Custo acum.: </span>
-            <span className={`font-medium ${statusColor}`}>{formatCurrency(custoAcum)}</span>
+            <span className={`font-medium ${statusColor}`}>{formatCurrency(custoAcum, { decimals: 0 })}</span>
           </div>
           <div>
             <span className="text-muted-foreground">Receita acum.: </span>
-            <span className="font-medium text-positive-strong">{formatCurrency(receitaAcum)}</span>
+            <span className="font-medium text-positive-strong">{formatCurrency(receitaAcum, { decimals: 0 })}</span>
           </div>
         </div>
 
@@ -155,7 +153,7 @@ export function BurnRateChart({ projetoId }: BurnRateChartProps) {
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--chart-grid))" />
               <XAxis dataKey="mes" tick={{ fontSize: 11 }} />
               <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
-              <Tooltip formatter={(v: number) => formatCurrency(v)} />
+              <Tooltip formatter={(v: number) => formatCurrency(v, { decimals: 0 })} />
               <Legend fontSize={11} />
               <ReferenceLine
                 y={orcamentoTotal}

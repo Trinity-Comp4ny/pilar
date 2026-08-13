@@ -1,6 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { KPICard } from "@/components/KPICard";
-import { formatCurrency as fmtMoeda, formatDate } from "@/lib/format";
+import { formatCurrency, formatDate } from "@/lib/format";
 import { TrendingUp, TrendingDown, Loader2 } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
 import { ResponsiveContainer, AreaChart, Area, CartesianGrid, XAxis, YAxis, Tooltip } from "recharts";
@@ -64,9 +64,6 @@ export default function ResumoMensal({ dateFrom, dateTo }: ResumoMensalProps) {
   // Calculate totals for top 5 to display
   const totalTopReceitas = topTransactions?.receitas.reduce((acc: number, curr) => acc + Number(curr.valor), 0) || 0;
   const totalTopDespesas = topTransactions?.despesas.reduce((acc: number, curr) => acc + Number(curr.valor), 0) || 0;
-
-  // Format currency
-  const formatCurrency = (val: number) => fmtMoeda(val);
 
   return (
     <div className="space-y-6 w-full max-w-none">

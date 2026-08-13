@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { ArrowDownCircle, ArrowUpCircle, ExternalLink, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { formatCurrency } from "@/lib/format";
 import { formatDateDisplay } from "@/lib/dateUtils";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import type { Lancamento } from "../hooks/useLancamentosUnified";
@@ -17,9 +18,6 @@ interface Props {
   onEditInTab: (l: Lancamento) => void;
   onGroupChanged?: () => void;
 }
-
-const formatBRL = (v: number) =>
-  v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 2 });
 
 export function LancamentoDetailDialog({
   lancamento: l,
@@ -55,7 +53,7 @@ export function LancamentoDetailDialog({
         <div className="grid grid-cols-2 gap-4 pt-2">
           <Field label="Valor">
             <span className={cn("font-bold", isReceita ? "text-positive-strong" : "text-negative-strong")}>
-              {isReceita ? "+" : "−"} {formatBRL(l.valor)}
+              {isReceita ? "+" : "−"} {formatCurrency(l.valor)}
             </span>
           </Field>
           <Field label="Status">

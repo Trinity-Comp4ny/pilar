@@ -11,7 +11,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { getSafeErrorMessage } from "@/lib/safeError";
 import { supabase } from "@/integrations/supabase/client";
-import { formatCurrencyInput, parseCurrencyString, formatCurrency } from "@/lib/currencyUtils";
+import { formatCurrencyInput, parseCurrencyString } from "@/lib/currencyUtils";
+import { formatCurrency, formatDate } from "@/lib/format";
 import { DatePicker } from "@/components/ui/date-picker";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 
@@ -145,8 +146,6 @@ export function BillingMilestonesTab({ projetoId, canEdit }: BillingMilestonesTa
     },
     onError: () => toast.error("Erro"),
   });
-
-  const formatDate = (d: string | null) => (d ? new Date(d + "T00:00:00").toLocaleDateString("pt-BR") : "—");
 
   const totalMarcos = marcos.reduce((s, m) => s + m.valor, 0);
   const totalFaturado = marcos

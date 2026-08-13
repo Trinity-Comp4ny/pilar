@@ -10,6 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { formatCurrency } from "@/lib/format";
 import { formatDateDisplay } from "@/lib/dateUtils";
 import type { Lancamento } from "../hooks/useLancamentosUnified";
 import type { GrupoParcelaResumo } from "../hooks/useGruposParcelaResumo";
@@ -34,9 +35,6 @@ interface Props {
   onMarkPaid: (items: Lancamento[]) => void;
   onDeleteGroup: (items: Lancamento[]) => void;
 }
-
-const formatBRL = (v: number) =>
-  v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 2 });
 
 const STATUS_LABEL: Record<GrupoParcelaResumo["status"], string> = {
   aberto: "Em aberto",
@@ -128,10 +126,10 @@ export function LancamentosGroupRow({
       <td className={cn(cellPad, "text-xs text-muted-foreground whitespace-nowrap")}>{parcelaLabel}</td>
       <td className={cn(cellPad, "text-right tabular-nums", cellTextSize)}>
         <div className={cn("font-semibold", isReceita ? "text-positive-strong" : "text-negative-strong")}>
-          {isReceita ? "+" : "−"} {formatBRL(totalPlano)}
+          {isReceita ? "+" : "−"} {formatCurrency(totalPlano)}
         </div>
         {status !== "quitado" && saldo > 0 && (
-          <div className="text-[11px] text-muted-foreground">falta {formatBRL(saldo)}</div>
+          <div className="text-[11px] text-muted-foreground">falta {formatCurrency(saldo)}</div>
         )}
       </td>
       <td className={cellPad}>
