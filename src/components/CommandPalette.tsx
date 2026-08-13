@@ -27,7 +27,12 @@ import {
 } from "@/components/ui/command";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSettingsModal } from "@/contexts/SettingsModalContext";
-import { useCommandPalette, type PaletteCreateEvent } from "@/hooks/useCommandPalette";
+import { type PaletteCreateEvent } from "@/hooks/useCommandPalette";
+
+interface CommandPaletteProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
 
 type NavCmd = { label: string; path: string; icon: typeof Home; keywords?: string };
 type CreateCmd = {
@@ -95,11 +100,12 @@ const CREATE_COMMANDS: CreateCmd[] = [
   },
 ];
 
-export function CommandPalette() {
-  const { open, setOpen, close } = useCommandPalette();
+export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
   const navigate = useNavigate();
   const { signOut } = useAuth();
   const { openSettings } = useSettingsModal();
+
+  const close = () => onOpenChange(false);
 
   const runNavigate = (path: string) => {
     close();
@@ -125,7 +131,7 @@ export function CommandPalette() {
   };
 
   return (
-    <CommandDialog open={open} onOpenChange={setOpen}>
+    <CommandDialog open={open} onOpenChange={onOpenChange}>
       <CommandInput placeholder="Digite um comando ou busque..." />
       <CommandList>
         <CommandEmpty>Nenhum resultado encontrado.</CommandEmpty>
@@ -179,19 +185,5 @@ export function CommandPalette() {
         </CommandGroup>
       </CommandList>
     </CommandDialog>
-  );
-}
-
-/**
- * Indicador sutil de atalho. Renderizado pelo Layout no canto da tela.
- */
-export function CommandPaletteHint() {
-  const isMac = typeof navigator !== "undefined" && /Mac|iPhone|iPad/i.test(navigator.platform);
-  const combo = isMac ? "⌘K" : "Ctrl+K";
-  return (
-    <div className="pointer-events-none fixed bottom-4 right-4 z-40 hidden select-none items-center gap-1 rounded-md border border-border/60 bg-background/80 px-2 py-1 text-[10px] font-medium text-muted-foreground shadow-sm backdrop-blur md:flex">
-      <kbd className="font-mono">{combo}</kbd>
-      <span>para comandos</span>
-    </div>
   );
 }
