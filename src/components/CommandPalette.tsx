@@ -1,14 +1,17 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   BarChart,
   Building2,
   Calendar,
+  Clock,
   FileText,
   Home,
   LogOut,
   MapPin,
   Plus,
   Settings,
+  Star,
   TrendingDown,
   TrendingUp,
   UserPlus,
@@ -28,6 +31,9 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { useSettingsModal } from "@/contexts/SettingsModalContext";
 import { type PaletteCreateEvent } from "@/hooks/useCommandPalette";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+import { useBuscaGlobal, type BuscaResultado, type BuscaTipo } from "@/hooks/useBuscaGlobal";
+import { useRecentItems, type RecentItem } from "@/hooks/useRecentItems";
 
 interface CommandPaletteProps {
   open: boolean;
@@ -100,12 +106,53 @@ const CREATE_COMMANDS: CreateCmd[] = [
   },
 ];
 
+const TIPO_LABEL: Record<BuscaTipo, string> = {
+  cliente: "cliente",
+  projeto: "projeto",
+  fornecedor: "fornecedor",
+  lead: "lead",
+  proposta: "proposta",
+  pessoa: "pessoa",
+};
+
+const TIPO_ICON: Record<string, typeof Home> = {
+  cliente: Building2,
+  projeto: Calendar,
+  fornecedor: Building2,
+  lead: UserPlus,
+  proposta: FileText,
+  pessoa: Users,
+  pagina: FileText,
+};
+
+const combina = (query: string, ...campos: (string | undefined)[]) => {
+  const q = query.trim().toLowerCase();
+  if (!q) return true;
+  return campos.filter(Boolean).join(" ").toLowerCase().includes(q);
+};
+
 export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
   const navigate = useNavigate();
   const { signOut } = useAuth();
   const { openSettings } = useSettingsModal();
 
-  const close = () => onOpenChange(false);
+  const [query, setQuery] = useState("");
+  const termo = useDebouncedValue(query, 250);
+  const { grupos, isFetching, enabled } = useBuscaGlobal(termo);
+  const { record, recentes, favoritos, toggleFavorito, isFavorito } = useRecentItems();
+
+  const buscando = enabled;
+  const semResultados = enabled && !isFetching && grupos.length === 0;
+  const favs = favoritos();
+  const recs = recentes();
+
+  const navFiltrado = NAV_COMMANDS.filter((cmd) => combina(query, cmd.label, cmd.keywords));
+  const createFiltrado = CREATE_COMMANDS.filter((cmd) => combina(query, cmd.label, cmd.keywords));
+
+  const close = () => {
+    onOpenChange(false);
+    setQuery("");
+  };
 
   const runNavigate = (path: string) => {
     close();
@@ -130,59 +177,176 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
     navigate("/login");
   };
 
+  const abrirResultado = (r: BuscaResultado) => {
+    record({ tipo: r.tipo, id: r.id, label: r.label, rota: r.rota });
+    close();
+    navigate(r.rota);
+  };
+
+  const abrirItem = (item: RecentItem) => {
+    record({ tipo: item.tipo, id: item.id, label: item.label, rota: item.rota });
+    close();
+    navigate(item.rota);
+  };
+
+  const StarButton = ({ item }: { item: Omit<RecentItem, "ts"> }) => {
+    const ativo = isFavorito(item);
+    return (
+      <button
+        type="button"
+        aria-label={ativo ? "Remover dos favoritos" : "Adicionar aos favoritos"}
+        className="ml-auto rounded p-1 text-muted-foreground hover:text-foreground"
+        onMouseDown={(e) => e.preventDefault()}
+        onClick={(e) => {
+          e.stopPropagation();
+          toggleFavorito(item);
+        }}
+      >
+        <Star className={ativo ? "h-4 w-4 fill-current text-brand" : "h-4 w-4"} />
+      </button>
+    );
+  };
+
   return (
-    <CommandDialog open={open} onOpenChange={onOpenChange}>
-      <CommandInput placeholder="Digite um comando ou busque..." />
+    <CommandDialog open={open} onOpenChange={onOpenChange} shouldFilter={false}>
+      <CommandInput
+        placeholder="Digite um comando ou busque..."
+        value={query}
+        onValueChange={setQuery}
+      />
       <CommandList>
-        <CommandEmpty>Nenhum resultado encontrado.</CommandEmpty>
+        {!buscando && favs.length === 0 && recs.length === 0 && navFiltrado.length === 0 && createFiltrado.length === 0 ? (
+          <CommandEmpty>Nenhum resultado encontrado.</CommandEmpty>
+        ) : null}
 
-        <CommandGroup heading="Navegação">
-          {NAV_COMMANDS.map((cmd) => {
-            const Icon = cmd.icon;
-            return (
-              <CommandItem
-                key={cmd.path}
-                value={`nav ${cmd.label} ${cmd.keywords ?? ""}`}
-                onSelect={() => runNavigate(cmd.path)}
-              >
-                <Icon className="mr-2 h-4 w-4" />
-                <span>Ir para {cmd.label}</span>
+        {buscando ? (
+          <CommandGroup heading="Resultados">
+            {isFetching ? (
+              <CommandItem value="__buscando" disabled className="text-muted-foreground">
+                Buscando...
               </CommandItem>
-            );
-          })}
-        </CommandGroup>
-
-        <CommandSeparator />
-
-        <CommandGroup heading="Criar">
-          {CREATE_COMMANDS.map((cmd) => {
-            const Icon = cmd.icon;
-            return (
-              <CommandItem
-                key={cmd.event}
-                value={`criar ${cmd.label} ${cmd.keywords ?? ""}`}
-                onSelect={() => runCreate(cmd)}
-              >
-                <Icon className="mr-2 h-4 w-4" />
-                <span>{cmd.label}</span>
+            ) : null}
+            {semResultados ? (
+              <CommandItem value="__sem-resultados" disabled className="text-muted-foreground">
+                Nenhum registro encontrado
               </CommandItem>
-            );
-          })}
-        </CommandGroup>
+            ) : null}
+            {grupos.flatMap((grupo) =>
+              grupo.itens.map((r) => {
+                const Icon = r.icon;
+                return (
+                  <CommandItem
+                    key={`${r.tipo}-${r.id}`}
+                    value={`resultado-${r.tipo}-${r.id}`}
+                    onSelect={() => abrirResultado(r)}
+                  >
+                    <Icon className="mr-2 h-4 w-4" />
+                    <span className="truncate">{r.label}</span>
+                    <span className="ml-2 text-xs text-muted-foreground">{TIPO_LABEL[r.tipo]}</span>
+                    <StarButton item={{ tipo: r.tipo, id: r.id, label: r.label, rota: r.rota }} />
+                  </CommandItem>
+                );
+              })
+            )}
+          </CommandGroup>
+        ) : null}
 
-        <CommandSeparator />
+        {!buscando && favs.length > 0 ? (
+          <CommandGroup heading="Favoritos">
+            {favs.map((item) => {
+              const Icon = TIPO_ICON[item.tipo] ?? FileText;
+              return (
+                <CommandItem
+                  key={`fav-${item.tipo}-${item.id}`}
+                  value={`fav-${item.tipo}-${item.id}`}
+                  onSelect={() => abrirItem(item)}
+                >
+                  <Icon className="mr-2 h-4 w-4" />
+                  <span className="truncate">{item.label}</span>
+                  <StarButton item={{ tipo: item.tipo, id: item.id, label: item.label, rota: item.rota }} />
+                </CommandItem>
+              );
+            })}
+          </CommandGroup>
+        ) : null}
 
-        <CommandGroup heading="Ações">
-          <CommandItem value="acoes configuracoes perfil ajustes preferencias" onSelect={runSettings}>
-            <Settings className="mr-2 h-4 w-4" />
-            <span>Configurações</span>
-          </CommandItem>
-          <CommandItem value="acoes sair logout signout" onSelect={runLogout}>
-            <LogOut className="mr-2 h-4 w-4" />
-            <span>Sair</span>
-            <CommandShortcut>Logout</CommandShortcut>
-          </CommandItem>
-        </CommandGroup>
+        {!buscando && recs.length > 0 ? (
+          <CommandGroup heading="Recentes">
+            {recs.map((item) => {
+              const Icon = TIPO_ICON[item.tipo] ?? Clock;
+              return (
+                <CommandItem
+                  key={`rec-${item.tipo}-${item.id}`}
+                  value={`rec-${item.tipo}-${item.id}`}
+                  onSelect={() => abrirItem(item)}
+                >
+                  <Icon className="mr-2 h-4 w-4" />
+                  <span className="truncate">{item.label}</span>
+                  <StarButton item={{ tipo: item.tipo, id: item.id, label: item.label, rota: item.rota }} />
+                </CommandItem>
+              );
+            })}
+          </CommandGroup>
+        ) : null}
+
+        {navFiltrado.length > 0 ? (
+          <>
+            {buscando || favs.length > 0 || recs.length > 0 ? <CommandSeparator /> : null}
+            <CommandGroup heading="Navegação">
+              {navFiltrado.map((cmd) => {
+                const Icon = cmd.icon;
+                return (
+                  <CommandItem
+                    key={cmd.path}
+                    value={`nav ${cmd.label} ${cmd.keywords ?? ""}`}
+                    onSelect={() => runNavigate(cmd.path)}
+                  >
+                    <Icon className="mr-2 h-4 w-4" />
+                    <span>Ir para {cmd.label}</span>
+                  </CommandItem>
+                );
+              })}
+            </CommandGroup>
+          </>
+        ) : null}
+
+        {createFiltrado.length > 0 ? (
+          <>
+            <CommandSeparator />
+            <CommandGroup heading="Criar">
+              {createFiltrado.map((cmd) => {
+                const Icon = cmd.icon;
+                return (
+                  <CommandItem
+                    key={cmd.event}
+                    value={`criar ${cmd.label} ${cmd.keywords ?? ""}`}
+                    onSelect={() => runCreate(cmd)}
+                  >
+                    <Icon className="mr-2 h-4 w-4" />
+                    <span>{cmd.label}</span>
+                  </CommandItem>
+                );
+              })}
+            </CommandGroup>
+          </>
+        ) : null}
+
+        {!buscando ? (
+          <>
+            <CommandSeparator />
+            <CommandGroup heading="Ações">
+              <CommandItem value="acoes configuracoes perfil ajustes preferencias" onSelect={runSettings}>
+                <Settings className="mr-2 h-4 w-4" />
+                <span>Configurações</span>
+              </CommandItem>
+              <CommandItem value="acoes sair logout signout" onSelect={runLogout}>
+                <LogOut className="mr-2 h-4 w-4" />
+                <span>Sair</span>
+                <CommandShortcut>Logout</CommandShortcut>
+              </CommandItem>
+            </CommandGroup>
+          </>
+        ) : null}
       </CommandList>
     </CommandDialog>
   );
