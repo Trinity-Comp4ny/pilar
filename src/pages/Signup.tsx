@@ -333,7 +333,7 @@ export default function Signup() {
                 Já tem conta?{" "}
                 <Link
                   to="/login"
-                  className="font-medium text-ink underline underline-offset-2 hover:text-ink-soft"
+                  className="font-medium text-ink decoration-brand underline-offset-2 hover:underline"
                 >
                   Entrar
                 </Link>
