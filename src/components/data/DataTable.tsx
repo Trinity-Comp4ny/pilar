@@ -17,6 +17,7 @@ import {
   Table,
   TableBody,
   TableCell,
+  TableFooter,
   TableHead,
   TableHeader,
   TableRow,
@@ -90,6 +91,12 @@ interface DataTableProps<T> {
    * esconde a coluna. Sem esta prop, todas as colunas ficam visíveis.
    */
   columnVisibility?: Record<string, boolean>;
+  /**
+   * Linha de rodapé opcional (ex.: totais). Recebe as colunas efetivamente
+   * visíveis, na mesma ordem das células do corpo — o chamador retorna uma
+   * `<TableCell>` por coluna. Só renderiza quando há linhas (sem loading/erro/vazio).
+   */
+  footer?: (visibleColumns: ColumnDef<T>[]) => ReactNode;
 }
 
 const alignClass: Record<NonNullable<ColumnDef<unknown>["align"]>, string> = {
@@ -128,6 +135,7 @@ export function DataTable<T>({
   enableRowSelection = false,
   onSelectionChange,
   columnVisibility,
+  footer,
 }: DataTableProps<T>) {
   const { rows, isPending = false, error = null } = data;
 
@@ -181,9 +189,12 @@ export function DataTable<T>({
     ? columns.filter((c) => columnVisibility[c.key] !== false)
     : columns;
   const totalCols = visibleColumns.length + (enableRowSelection ? 1 : 0);
+  // `maxHeight` implica scroll vertical interno (ver wrapper abaixo); o header
+  // gruda no topo desse scroll, senão ele "sobe" e some ao rolar a tabela.
+  const stickyHeader = !!maxHeight;
 
   const selectionHead = enableRowSelection ? (
-    <TableHead className="w-10 sticky left-0 z-20 bg-muted/50">
+    <TableHead className={cn("w-10 sticky left-0 z-20 bg-muted/50", stickyHeader && "top-0 z-30")}>
       <Checkbox
         checked={
           table.getIsAllRowsSelected()
@@ -210,6 +221,8 @@ export function DataTable<T>({
         className={cn(
           col.align && alignClass[col.align],
           col.stickyLeft && "sticky left-0 z-20 bg-muted/50",
+          stickyHeader && "sticky top-0 z-10 bg-card",
+          col.stickyLeft && stickyHeader && "z-30",
           col.className,
         )}
       >
@@ -318,6 +331,8 @@ export function DataTable<T>({
     ));
   };
 
+  const hasRows = !isPending && !error && table.getRowModel().rows.length > 0;
+
   return (
     <div className={cn("w-full", maxHeight && "overflow-y-auto")} style={maxHeight ? { maxHeight } : undefined}>
       <Table style={minWidth ? { minWidth } : undefined}>
@@ -328,6 +343,11 @@ export function DataTable<T>({
           </TableRow>
         </TableHeader>
         <TableBody>{renderBody()}</TableBody>
+        {footer && hasRows && (
+          <TableFooter>
+            <TableRow className="bg-muted/40 font-semibold hover:bg-muted/40">{footer(visibleColumns)}</TableRow>
+          </TableFooter>
+        )}
       </Table>
     </div>
   );

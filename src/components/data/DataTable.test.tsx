@@ -104,6 +104,24 @@ describe("DataTable", () => {
     expect(lastCall.map((r) => r.id).sort()).toEqual(["a", "b", "c"]);
   });
 
+  it("renderiza footer só quando há linhas (não em vazio/erro/loading)", () => {
+    const footer = (cols: ColumnDef<Row>[]) =>
+      cols.map((c) => <td key={c.key} data-testid={`foot-${c.key}`} />);
+
+    const { rerender } = render(
+      <DataTable columns={columns} data={{ rows }} rowKey={(r) => r.id} footer={footer} />,
+    );
+    expect(screen.getByTestId("foot-valor")).toBeInTheDocument();
+
+    rerender(<DataTable columns={columns} data={{ rows: [] }} rowKey={(r) => r.id} footer={footer} />);
+    expect(screen.queryByTestId("foot-valor")).not.toBeInTheDocument();
+
+    rerender(
+      <DataTable columns={columns} data={{ rows: [], isPending: true }} rowKey={(r) => r.id} footer={footer} />,
+    );
+    expect(screen.queryByTestId("foot-valor")).not.toBeInTheDocument();
+  });
+
   it("esconde coluna via columnVisibility controlada", () => {
     render(
       <DataTable
