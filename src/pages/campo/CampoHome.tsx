@@ -1,6 +1,6 @@
 import { useNavigate, useOutletContext } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Camera, ChevronRight, ClipboardList, HardHat, LogOut, Plus, Users } from "lucide-react";
+import { Camera, ChevronRight, ClipboardList, CloudOff, HardHat, Loader2, LogOut, Plus, RefreshCw, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -8,6 +8,7 @@ import { formatDate } from "@/lib/format";
 import { climaLabel } from "@/lib/obras";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { campoLogout, getCampoToken, type CampoAccount } from "./useCampoAuth";
+import { useCampoSync } from "./useCampoSync";
 
 interface RdoDia {
   id: string;
@@ -22,6 +23,7 @@ export default function CampoHome() {
   usePageTitle("Pilar Campo");
   const navigate = useNavigate();
   const { account } = useOutletContext<{ account: CampoAccount }>();
+  const { pendentes, sincronizando, sincronizar } = useCampoSync();
 
   const { data: rdos = [], isLoading } = useQuery({
     queryKey: ["campo_rdos", account.account_id],
@@ -61,6 +63,28 @@ export default function CampoHome() {
           <p className="text-sm text-muted-foreground">Olá,</p>
           <h1 className="text-2xl font-semibold text-ink">{account.nome}</h1>
         </div>
+
+        {pendentes > 0 && (
+          <div className="flex items-center gap-3 rounded-2xl border border-warning-soft bg-warning-soft/40 px-4 py-3">
+            <CloudOff className="h-5 w-5 shrink-0 text-warning-strong" />
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium text-ink">
+                {pendentes} {pendentes === 1 ? "dia aguardando" : "dias aguardando"} envio
+              </p>
+              <p className="text-xs text-muted-foreground">Salvo no aparelho. Envia sozinho com internet.</p>
+            </div>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-9 w-9 shrink-0"
+              onClick={sincronizar}
+              disabled={sincronizando}
+              aria-label="Tentar enviar agora"
+            >
+              {sincronizando ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+            </Button>
+          </div>
+        )}
 
         <Button variant="brand" className="h-14 w-full justify-start text-base" onClick={() => navigate("/campo/dia")}>
           <Plus className="mr-2 h-5 w-5" />
