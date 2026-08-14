@@ -3230,10 +3230,11 @@ export type Database = {
         Row: {
           atividades: string | null
           autor_id: string | null
+          campo_account_id: string | null
           clima: string | null
           condicao_trabalho: string | null
           created_at: string
-          created_by: string
+          created_by: string | null
           data: string
           efetivo: number | null
           empresa_id: string
@@ -3246,10 +3247,11 @@ export type Database = {
         Insert: {
           atividades?: string | null
           autor_id?: string | null
+          campo_account_id?: string | null
           clima?: string | null
           condicao_trabalho?: string | null
           created_at?: string
-          created_by?: string
+          created_by?: string | null
           data: string
           efetivo?: number | null
           empresa_id: string
@@ -3262,10 +3264,11 @@ export type Database = {
         Update: {
           atividades?: string | null
           autor_id?: string | null
+          campo_account_id?: string | null
           clima?: string | null
           condicao_trabalho?: string | null
           created_at?: string
-          created_by?: string
+          created_by?: string | null
           data?: string
           efetivo?: number | null
           empresa_id?: string
@@ -3296,6 +3299,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "view_folha_pagamento"
             referencedColumns: ["pessoa_id"]
+          },
+          {
+            foreignKeyName: "obra_rdo_campo_account_id_fkey"
+            columns: ["campo_account_id"]
+            isOneToOne: false
+            referencedRelation: "campo_accounts"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "obra_rdo_empresa_id_fkey"
@@ -5804,7 +5814,24 @@ export type Database = {
       aprovar_orcamento_agente: { Args: { p_run_id: string }; Returns: Json }
       audit_log_cleanup: { Args: never; Returns: number }
       audit_logs_archive_old: { Args: never; Returns: number }
+      campo_listar_rdos: {
+        Args: { p_limite?: number; p_token: string }
+        Returns: Json
+      }
       campo_login: { Args: { p_email: string; p_senha: string }; Returns: Json }
+      campo_salvar_rdo: {
+        Args: {
+          p_atividades: string
+          p_clima: string
+          p_condicao: string
+          p_data: string
+          p_efetivo: number
+          p_ocorrencias: string
+          p_pendencias: string
+          p_token: string
+        }
+        Returns: Json
+      }
       campo_trocar_senha: {
         Args: { p_nova_senha: string; p_token: string }
         Returns: Json
