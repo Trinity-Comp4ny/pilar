@@ -12,6 +12,8 @@ import { cn } from "@/lib/utils";
 import { CLIMA_OPCOES } from "@/lib/obras";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { getCampoToken } from "./useCampoAuth";
+import { filaOfflineDb } from "./campoOfflineDb";
+import type { FilaDiaPayload, FilaFoto } from "./campoOfflineQueue";
 
 const hoje = () => new Date().toISOString().slice(0, 10);
 
@@ -77,20 +79,38 @@ export default function CampoRegistrarDia() {
       navigate("/campo/login", { replace: true });
       return;
     }
+
+    const dia: FilaDiaPayload = {
+      p_data: data,
+      p_clima: clima,
+      p_condicao: null,
+      p_efetivo: efetivo.trim() === "" ? null : Number(efetivo),
+      p_atividades: atividades,
+      p_ocorrencias: ocorrencias,
+      p_pendencias: null,
+    };
+
+    // Comprime antes de decidir online/offline: o arquivo original some quando
+    // sair da tela, então a versão a subir precisa estar pronta nos dois casos.
+    let fotosComprimidas: FilaFoto[] = [];
     setSaving(true);
     try {
+      fotosComprimidas = await Promise.all(
+        fotos.map(async (f) => ({ contentType: "image/jpeg", imageBase64: await comprimir(f.file), enviada: false }))
+      );
+
+      if (!navigator.onLine) {
+        await enfileirarOffline(dia, fotosComprimidas);
+        toast.success("Sem conexão agora", {
+          description: "Salvo no aparelho. Envia sozinho quando a internet voltar.",
+        });
+        navigate("/campo", { replace: true });
+        return;
+      }
+
       const { data: res, error } = await callUntypedRpc<{ ok: boolean; erro?: string; rdo_id?: string }>(
         "campo_salvar_rdo",
-        {
-          p_token: token,
-          p_data: data,
-          p_clima: clima,
-          p_condicao: null,
-          p_efetivo: efetivo.trim() === "" ? null : Number(efetivo),
-          p_atividades: atividades,
-          p_ocorrencias: ocorrencias,
-          p_pendencias: null,
-        }
+        { p_token: token, ...dia }
       );
       if (error) throw error;
       if (!res?.ok || !res.rdo_id) {
@@ -98,31 +118,42 @@ export default function CampoRegistrarDia() {
         return;
       }
 
-      // Sobe as fotos (comprimidas) para o dia salvo. Falha de foto não perde o
-      // registro do dia — avisa e segue.
+      // Sobe as fotos comprimidas. Falha parcial não perde o dia nem reenvia o
+      // que já subiu: a foto que falhou fica na fila (com o rdo_id já criado).
+      const fotosAtualizadas = [...fotosComprimidas];
       let falhas = 0;
-      for (const f of fotos) {
-        try {
-          const image_base64 = await comprimir(f.file);
-          const { data: up, error: upErr } = await supabase.functions.invoke("campo-upload-foto", {
-            body: { token, rdo_id: res.rdo_id, image_base64, content_type: "image/jpeg" },
-          });
-          if (upErr || !(up as { success?: boolean })?.success) falhas++;
-        } catch {
+      for (let i = 0; i < fotosAtualizadas.length; i++) {
+        const { data: up, error: upErr } = await supabase.functions.invoke("campo-upload-foto", {
+          body: {
+            token,
+            rdo_id: res.rdo_id,
+            image_base64: fotosAtualizadas[i].imageBase64,
+            content_type: fotosAtualizadas[i].contentType,
+          },
+        });
+        if (!upErr && (up as { success?: boolean } | null)?.success) {
+          fotosAtualizadas[i] = { ...fotosAtualizadas[i], enviada: true };
+        } else {
           falhas++;
         }
       }
 
       if (falhas > 0) {
+        await enfileirarOffline(dia, fotosAtualizadas, res.rdo_id);
         toast.warning(`Dia salvo, mas ${falhas} foto${falhas > 1 ? "s" : ""} não subiu`, {
-          description: "Você pode tentar de novo mais tarde.",
+          description: "Vamos tentar de novo automaticamente.",
         });
       } else {
         toast.success("Dia registrado");
       }
       navigate("/campo", { replace: true });
     } catch {
-      toast.error("Falha na conexão", { description: "Verifique a internet e tente de novo." });
+      // Falha de rede no meio do caminho: não perde o que foi preenchido.
+      await enfileirarOffline(dia, fotosComprimidas);
+      toast.success("Sem conexão agora", {
+        description: "Salvo no aparelho. Envia sozinho quando a internet voltar.",
+      });
+      navigate("/campo", { replace: true });
     } finally {
       setSaving(false);
     }
@@ -256,4 +287,16 @@ export default function CampoRegistrarDia() {
       </form>
     </div>
   );
+}
+
+/** Grava o dia na fila offline (IndexedDB) para o `useCampoSync` reenviar depois. */
+async function enfileirarOffline(dia: FilaDiaPayload, fotos: FilaFoto[], rdoId?: string): Promise<void> {
+  await filaOfflineDb.salvar({
+    id: crypto.randomUUID(),
+    criadoEm: Date.now(),
+    dia,
+    fotos,
+    rdoId,
+    tentativas: 0,
+  });
 }
