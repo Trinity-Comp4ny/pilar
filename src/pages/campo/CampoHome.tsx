@@ -1,13 +1,39 @@
 import { useNavigate, useOutletContext } from "react-router-dom";
-import { ClipboardList, HardHat, LogOut } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { ChevronRight, ClipboardList, HardHat, LogOut, Plus, Users } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { formatDate } from "@/lib/format";
+import { climaLabel } from "@/lib/obras";
 import { usePageTitle } from "@/hooks/usePageTitle";
-import { campoLogout, type CampoAccount } from "./useCampoAuth";
+import { campoLogout, getCampoToken, type CampoAccount } from "./useCampoAuth";
+
+interface RdoDia {
+  id: string;
+  data: string;
+  clima: string | null;
+  efetivo: number | null;
+  atividades: string | null;
+}
 
 export default function CampoHome() {
   usePageTitle("Pilar Campo");
   const navigate = useNavigate();
   const { account } = useOutletContext<{ account: CampoAccount }>();
+
+  const { data: rdos = [], isLoading } = useQuery({
+    queryKey: ["campo_rdos", account.account_id],
+    queryFn: async (): Promise<RdoDia[]> => {
+      const token = getCampoToken();
+      if (!token) return [];
+      const { data, error } = await supabase.rpc("campo_listar_rdos", { p_token: token, p_limite: 30 });
+      if (error) throw error;
+      const r = data as unknown as { ok: boolean; rdos?: RdoDia[] };
+      return r?.ok ? (r.rdos ?? []) : [];
+    },
+    staleTime: 1000 * 30,
+  });
 
   const sair = () => {
     campoLogout();
@@ -35,19 +61,46 @@ export default function CampoHome() {
           <h1 className="text-2xl font-semibold text-ink">{account.nome}</h1>
         </div>
 
-        <button
-          type="button"
-          disabled
-          className="flex w-full items-center gap-3 rounded-2xl border border-dashed border-black/10 bg-muted/30 px-4 py-5 text-left"
-        >
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-muted text-muted-foreground">
-            <ClipboardList className="h-5 w-5" />
-          </div>
-          <div>
-            <p className="font-medium text-ink">Registrar o dia</p>
-            <p className="text-sm text-muted-foreground">Em breve: diário, foto e medição pelo celular.</p>
-          </div>
-        </button>
+        <Button variant="brand" className="h-14 w-full justify-start text-base" onClick={() => navigate("/campo/dia")}>
+          <Plus className="mr-2 h-5 w-5" />
+          Registrar o dia
+        </Button>
+
+        <div className="space-y-2">
+          <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Últimos dias</p>
+          {isLoading ? (
+            <div className="space-y-2">
+              <Skeleton className="h-16 w-full rounded-2xl" />
+              <Skeleton className="h-16 w-full rounded-2xl" />
+            </div>
+          ) : rdos.length === 0 ? (
+            <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-black/10 px-4 py-8 text-center">
+              <ClipboardList className="h-6 w-6 text-muted-foreground" />
+              <p className="text-sm text-muted-foreground">Nenhum dia registrado ainda.</p>
+            </div>
+          ) : (
+            <ul className="space-y-2">
+              {rdos.map((r) => (
+                <li key={r.id} className="flex items-center gap-3 rounded-2xl border border-black/5 bg-white px-4 py-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium text-ink">{formatDate(r.data)}</p>
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
+                      {r.clima && <span>{climaLabel(r.clima)}</span>}
+                      {r.efetivo != null && (
+                        <span className="inline-flex items-center gap-1">
+                          <Users className="h-3 w-3" />
+                          {r.efetivo}
+                        </span>
+                      )}
+                      {r.atividades && <span className="truncate">{r.atividades}</span>}
+                    </div>
+                  </div>
+                  <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/50" />
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
 
         <p className="text-center text-xs text-muted-foreground">
           Seu acesso é só desta obra. O que você registrar aqui aparece para o escritório.
