@@ -122,7 +122,10 @@ um PR próprio para `staging`, verificável isolado.
    `emptyState`/`errorState` à `DataTable`. Migrar uma tabela plana representativa
    (`fornecedores/index.tsx`) para a base: ganha ordenação por coluna, preserva os
    empty states ricos via o slot novo. `LancamentosTable` fica custom (ver req. 4).
-   Demais tabelas planas migram "por toque" (regra abaixo), não em lote.
+   Demais tabelas planas migram "por toque" (regra abaixo), não em lote. **Feito
+   também:** `pessoas/components/PessoaTable.tsx` (client-side puro, fit direto;
+   -54 linhas líquidas). `clientes/index.tsx` avaliado e descartado por ora: é
+   server-side com paginação (mesmo motivo do `LancamentosTable`).
 3. **Fase 3 — `<PilarGantt>`.** Extrair um componente único a partir do mais
    completo (`CronogramaTab`), fazendo-o consumir `lib/cronograma.ts`. Migrar os
    3 tabs para ele. Apagar a matemática duplicada.
