@@ -152,9 +152,14 @@ Migração das ~31 tabelas artesanais restantes: **incremental, por toque.** Reg
   motor; JSX per-tab intacto (sem mudança visual). Render/empty verificados em
   Chrome; drag exige teste manual (automação não dispara mousemove de drag custom).
   **Opcional:** um `<PilarGantt>` presentacional único (o motor já é compartilhado).
-- **Fase 4 — pendente.** `<KanbanBoard>` consolidando os 3 boards.
+- **Fase 4 — parcial** (PR #220). `AddColumnInline` compartilhado
+  (`src/components/kanban/`) substitui a "nova coluna inline" duplicada de Projetos
+  e Meu Trabalho (bucket Select via `renderExtra`); -140 linhas, ambos verificados
+  em Chrome. **Pendente:** um `<KanbanBoard>` shell único (merge do wiring de coluna/
+  DnD dos 3 boards; Leads é outlier com colunas fixas) — passo maior, PR próprio.
 - **Fase 5 — parcial.** Regra no `CLAUDE.md` (tabela plana usa `DataTable`, timeline
-  usa `lib/cronograma.ts`). **Pendente:** subir gate de cor crua warn→error.
+  usa `lib/cronograma.ts`). **Pendente:** subir gate de cor crua warn→error (exige
+  antes migrar as cores cruas dos marcadores de Gantt/board; não flipar sem isso).
 
 **Por que 3-full e 4 ficam pendentes:** extrair `<PilarGantt>`/`<KanbanBoard>` é
 reescrever ~4.500 linhas de código de arrastar em telas usadas por cliente real
