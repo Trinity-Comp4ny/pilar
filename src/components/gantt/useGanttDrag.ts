@@ -11,21 +11,18 @@ import {
   type ZoomLevel,
 } from "@/lib/cronograma";
 
-interface DragRow {
-  start: Date | null;
-  end: Date | null;
-}
+type DragKey = string | number;
 
-interface DragState {
-  rowIdx: number;
+interface DragState<K extends DragKey> {
+  key: K;
   type: GanttDragType;
   startX: number;
   origStart: Date;
   origEnd: Date;
 }
 
-export interface DragOverride {
-  rowIdx: number;
+export interface DragOverride<K extends DragKey> {
+  key: K;
   start: Date;
   end: Date;
   type: GanttDragType;
@@ -38,12 +35,11 @@ export interface ConstrainResult {
   snapping: boolean;
 }
 
-interface UseGanttDragOptions<TRow extends DragRow> {
-  rows: TRow[];
+interface UseGanttDragOptions<K extends DragKey> {
   timelineStart: Date;
   timelineEnd: Date;
   zoom: ZoomLevel;
-  /** Habilita o arraste (tipicamente `!!onDatesChange`). */
+  /** Habilita o arraste (tipicamente `!!onDatesChange` ou `canEdit`). */
   enabled: boolean;
   timelineRef: RefObject<HTMLElement | null>;
   scrollRef: RefObject<HTMLElement | null>;
@@ -54,8 +50,8 @@ interface UseGanttDragOptions<TRow extends DragRow> {
    * `skipCommitWhenSnapping` estiver ligado.
    */
   constrain?: (dates: { start: Date; end: Date; type: GanttDragType }) => ConstrainResult;
-  /** Persiste as novas datas ao soltar. */
-  onCommit: (rowIdx: number, dates: { start: Date; end: Date }) => Promise<void>;
+  /** Persiste as novas datas ao soltar. `key` identifica a barra arrastada. */
+  onCommit: (key: K, dates: { start: Date; end: Date }) => Promise<void>;
   /** Não persiste quando a barra foi clampada pela restrição. Padrão: false. */
   skipCommitWhenSnapping?: boolean;
 }
@@ -63,11 +59,13 @@ interface UseGanttDragOptions<TRow extends DragRow> {
 /**
  * Motor de arraste do Gantt, compartilhado pelos cronogramas (projeto, todos os
  * projetos, obra). Encapsula os refs de drag, os listeners de mouse/touch/Escape,
- * o snap de borda, a linha-guia e o commit. O JSX de cada tela fica por fora; só
- * a mecânica (a parte sutil e duplicada) mora aqui. Ver ADR 0020 / SPEC 041.
+ * o snap de borda, a linha-guia e o commit. Cada barra é identificada por uma
+ * `key` opaca (índice, id, ou `"kind:id"` no cronograma hierárquico da obra) e as
+ * datas-base entram por parâmetro, então o hook não depende do formato das linhas.
+ * O JSX de cada tela fica por fora; só a mecânica (a parte sutil e duplicada) mora
+ * aqui. Ver ADR 0020 / SPEC 041.
  */
-export function useGanttDrag<TRow extends DragRow>({
-  rows,
+export function useGanttDrag<K extends DragKey = DragKey>({
   timelineStart,
   timelineEnd,
   zoom,
@@ -77,9 +75,9 @@ export function useGanttDrag<TRow extends DragRow>({
   constrain,
   onCommit,
   skipCommitWhenSnapping = false,
-}: UseGanttDragOptions<TRow>) {
-  const dragRef = useRef<DragState | null>(null);
-  const [override, setOverride] = useState<DragOverride | null>(null);
+}: UseGanttDragOptions<K>) {
+  const dragRef = useRef<DragState<K> | null>(null);
+  const [override, setOverride] = useState<DragOverride<K> | null>(null);
   const [guideX, setGuideX] = useState<number | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   // Marca que a barra realmente mudou de data no arraste, pra o clique de soltar
@@ -91,12 +89,10 @@ export function useGanttDrag<TRow extends DragRow>({
   const overrideRef = useRef(override);
   const constrainRef = useRef(constrain);
   const onCommitRef = useRef(onCommit);
-  const rowsRef = useRef(rows);
   zoomRef.current = zoom;
   overrideRef.current = override;
   constrainRef.current = constrain;
   onCommitRef.current = onCommit;
-  rowsRef.current = rows;
 
   const pxPerDay = useCallback((): number => {
     if (!timelineRef.current) return 1;
@@ -105,17 +101,15 @@ export function useGanttDrag<TRow extends DragRow>({
   }, [timelineStart, timelineEnd, timelineRef]);
 
   const startDrag = useCallback(
-    (clientX: number, rowIdx: number, type: GanttDragType) => {
-      if (!enabled) return;
-      const row = rowsRef.current[rowIdx];
-      if (!row?.start || !row?.end) return;
+    (clientX: number, key: K, type: GanttDragType, base: { start: Date; end: Date } | null) => {
+      if (!enabled || !base) return;
       draggedRef.current = false;
       dragRef.current = {
-        rowIdx,
+        key,
         type,
         startX: clientX,
-        origStart: new Date(row.start),
-        origEnd: new Date(row.end),
+        origStart: new Date(base.start),
+        origEnd: new Date(base.end),
       };
     },
     [enabled]
@@ -147,7 +141,7 @@ export function useGanttDrag<TRow extends DragRow>({
       if (toIso(start) !== toIso(drag.origStart) || toIso(end) !== toIso(drag.origEnd)) {
         draggedRef.current = true;
       }
-      setOverride({ rowIdx: drag.rowIdx, start, end, type: drag.type, snapping });
+      setOverride({ key: drag.key, start, end, type: drag.type, snapping });
     };
 
     const trackGuide = (clientX: number) => {
@@ -183,7 +177,7 @@ export function useGanttDrag<TRow extends DragRow>({
 
       setIsSaving(true);
       try {
-        await onCommitRef.current(ov.rowIdx, { start: ov.start, end: ov.end });
+        await onCommitRef.current(ov.key, { start: ov.start, end: ov.end });
       } finally {
         setIsSaving(false);
       }
@@ -207,11 +201,15 @@ export function useGanttDrag<TRow extends DragRow>({
     };
   }, [pxPerDay, skipCommitWhenSnapping, timelineRef, scrollRef]);
 
-  /** Geometria (%), com a sobreposição do arraste quando a linha está sendo arrastada. */
-  const getBarGeometry = (rowIdx: number) => {
-    const ov = override?.rowIdx === rowIdx ? override : null;
-    const start = ov ? ov.start : rows[rowIdx]?.start;
-    const end = ov ? ov.end : rows[rowIdx]?.end;
+  /**
+   * Geometria (%) de uma barra, com a sobreposição do arraste quando é a barra
+   * sendo arrastada. `base` são as datas atuais; `null` quando a barra não tem
+   * período (não renderiza).
+   */
+  const getBarGeometry = (key: K, base: { start: Date; end: Date } | null) => {
+    const ov = override?.key === key ? override : null;
+    const start = ov ? ov.start : base?.start;
+    const end = ov ? ov.end : base?.end;
     if (!start || !end) return null;
     const { leftPct, widthPct } = barPosition(start, end, timelineStart, timelineEnd);
     return { leftPct, widthPct, start, end };

@@ -199,8 +199,7 @@ export function CronogramaTab({
     getBarGeometry,
     guideDateLabel,
     shouldSuppressClick,
-  } = useGanttDrag({
-    rows,
+  } = useGanttDrag<number>({
     timelineStart,
     timelineEnd,
     zoom,
@@ -490,8 +489,9 @@ export function CronogramaTab({
                   {/* Discipline rows */}
                   <TooltipProvider delayDuration={200}>
                     {rows.map((row, i) => {
-                      const geo = getBarGeometry(i);
-                      const isThisDragging = dragOverride?.rowIdx === i;
+                      const base = row.start && row.end ? { start: row.start, end: row.end } : null;
+                      const geo = getBarGeometry(i, base);
+                      const isThisDragging = dragOverride?.key === i;
                       const canDrag = !!onDatesChange && !!geo;
                       // During drag, recompute beyondProjectEnd from override dates
                       const projEndDate = parseDate(projetoDataPrevisao);
@@ -530,12 +530,12 @@ export function CronogramaTab({
                                       onMouseDown={(e) => {
                                         e.preventDefault();
                                         e.stopPropagation();
-                                        startDrag(e.clientX, i, "left");
+                                        startDrag(e.clientX, i, "left", base);
                                       }}
                                       onTouchStart={(e) => {
                                         e.preventDefault();
                                         e.stopPropagation();
-                                        startDrag(e.touches[0].clientX, i, "left");
+                                        startDrag(e.touches[0].clientX, i, "left", base);
                                       }}
                                     >
                                       <div className="flex gap-[3px]">
@@ -557,7 +557,7 @@ export function CronogramaTab({
                                         ? (e) => {
                                             e.preventDefault();
                                             e.stopPropagation();
-                                            startDrag(e.clientX, i, "move");
+                                            startDrag(e.clientX, i, "move", base);
                                           }
                                         : undefined
                                     }
@@ -566,7 +566,7 @@ export function CronogramaTab({
                                         ? (e) => {
                                             e.preventDefault();
                                             e.stopPropagation();
-                                            startDrag(e.touches[0].clientX, i, "move");
+                                            startDrag(e.touches[0].clientX, i, "move", base);
                                           }
                                         : undefined
                                     }
@@ -602,12 +602,12 @@ export function CronogramaTab({
                                       onMouseDown={(e) => {
                                         e.preventDefault();
                                         e.stopPropagation();
-                                        startDrag(e.clientX, i, "right");
+                                        startDrag(e.clientX, i, "right", base);
                                       }}
                                       onTouchStart={(e) => {
                                         e.preventDefault();
                                         e.stopPropagation();
-                                        startDrag(e.touches[0].clientX, i, "right");
+                                        startDrag(e.touches[0].clientX, i, "right", base);
                                       }}
                                     >
                                       <div className="flex gap-[3px]">

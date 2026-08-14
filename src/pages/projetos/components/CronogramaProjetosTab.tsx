@@ -235,17 +235,15 @@ export function CronogramaProjetosTab({ projetos, onDatesChange }: CronogramaPro
     getBarGeometry,
     guideDateLabel,
     shouldSuppressClick,
-  } = useGanttDrag({
-    rows,
+  } = useGanttDrag<string>({
     timelineStart,
     timelineEnd,
     zoom,
     enabled: !!onDatesChange,
     timelineRef,
     scrollRef,
-    onCommit: async (rowIdx, { start, end }) => {
-      const projetoId = rows[rowIdx]?.projeto.id;
-      if (!projetoId || !onDatesChange) return;
+    onCommit: async (projetoId, { start, end }) => {
+      if (!onDatesChange) return;
       await onDatesChange(projetoId, { data_inicio: toIso(start), data_previsao: toIso(end) });
     },
   });
@@ -498,10 +496,11 @@ export function CronogramaProjetosTab({ projetos, onDatesChange }: CronogramaPro
                     )}
 
                     <TooltipProvider delayDuration={200}>
-                      {rows.map((row, i) => {
+                      {rows.map((row) => {
                         const cfg = PROJECT_STATUS_CONFIG[row.projeto.status];
-                        const geo = getBarGeometry(i);
-                        const isThisDragging = dragOverride?.rowIdx === i;
+                        const base = { start: row.start, end: row.end };
+                        const geo = getBarGeometry(row.projeto.id, base);
+                        const isThisDragging = dragOverride?.key === row.projeto.id;
                         const canDrag = !!onDatesChange && !!geo;
                         if (!geo) return <div key={row.projeto.id} className="h-14 border-b relative" />;
 
@@ -532,11 +531,11 @@ export function CronogramaProjetosTab({ projetos, onDatesChange }: CronogramaPro
                                       onMouseDown={(e) => {
                                         e.preventDefault();
                                         e.stopPropagation();
-                                        startDrag(e.clientX, i, "left");
+                                        startDrag(e.clientX, row.projeto.id, "left", base);
                                       }}
                                       onTouchStart={(e) => {
                                         e.stopPropagation();
-                                        startDrag(e.touches[0].clientX, i, "left");
+                                        startDrag(e.touches[0].clientX, row.projeto.id, "left", base);
                                       }}
                                     >
                                       <div className="flex gap-[3px]">
@@ -556,12 +555,12 @@ export function CronogramaProjetosTab({ projetos, onDatesChange }: CronogramaPro
                                       canDrag
                                         ? (e) => {
                                             e.preventDefault();
-                                            startDrag(e.clientX, i, "move");
+                                            startDrag(e.clientX, row.projeto.id, "move", base);
                                           }
                                         : undefined
                                     }
                                     onTouchStart={
-                                      canDrag ? (e) => startDrag(e.touches[0].clientX, i, "move") : undefined
+                                      canDrag ? (e) => startDrag(e.touches[0].clientX, row.projeto.id, "move", base) : undefined
                                     }
                                     onClick={() => {
                                       if (shouldSuppressClick()) return;
@@ -580,11 +579,11 @@ export function CronogramaProjetosTab({ projetos, onDatesChange }: CronogramaPro
                                       onMouseDown={(e) => {
                                         e.preventDefault();
                                         e.stopPropagation();
-                                        startDrag(e.clientX, i, "right");
+                                        startDrag(e.clientX, row.projeto.id, "right", base);
                                       }}
                                       onTouchStart={(e) => {
                                         e.stopPropagation();
-                                        startDrag(e.touches[0].clientX, i, "right");
+                                        startDrag(e.touches[0].clientX, row.projeto.id, "right", base);
                                       }}
                                     >
                                       <div className="flex gap-[3px]">
