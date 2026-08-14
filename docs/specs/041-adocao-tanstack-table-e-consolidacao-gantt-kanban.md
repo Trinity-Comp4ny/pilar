@@ -143,9 +143,13 @@ Migração das ~31 tabelas artesanais restantes: **incremental, por toque.** Reg
 - **Fase 2 — feito** (PR #220). Slots `emptyState`/`errorState`; `fornecedores/index.tsx`
   migrado (ganha ordenação, mantém empty states ricos), verificado em Chrome.
   `LancamentosTable` fica custom (req. 4). Demais tabelas migram por toque.
-- **Fase 3 — parcial** (PR #220). `CronogramaTab` dedupada contra `lib/cronograma.ts`
-  (-110 linhas), render/marcadores verificados em Chrome. **Pendente:** extrair o
-  `<PilarGantt>` único que os 3 tabs consomem (req. 5).
+- **Fase 3 — em andamento** (PR #220). (a) `CronogramaTab` dedupada contra
+  `lib/cronograma.ts` (-110 linhas), render/marcadores verificados em Chrome.
+  (b) Motor de arraste extraído para `useGanttDrag` (`src/components/gantt/`) +
+  `computeDraggedDates` puro e testado; `CronogramaTab` (com guarda-chuva via
+  `constrain`) e `CronogramaProjetosTab` passam a compartilhá-lo (-120 linhas cada,
+  JSX intacto). **Pendente:** `ObraCronogramaTab` (hierárquico) adotar o hook e um
+  `<PilarGantt>` presentacional único (req. 5).
 - **Fase 4 — pendente.** `<KanbanBoard>` consolidando os 3 boards.
 - **Fase 5 — parcial.** Regra no `CLAUDE.md` (tabela plana usa `DataTable`, timeline
   usa `lib/cronograma.ts`). **Pendente:** subir gate de cor crua warn→error.
