@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Camera, Loader2, X } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { callUntypedRpc } from "@/lib/supabaseRpc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,15 +15,60 @@ import { getCampoToken } from "./useCampoAuth";
 
 const hoje = () => new Date().toISOString().slice(0, 10);
 
+interface FotoLocal {
+  file: File;
+  preview: string;
+}
+
+// Comprime a foto no cliente (max 1600px, JPEG 0.8): essencial para subir em 4G
+// ruim de canteiro. Devolve base64 puro (sem o prefixo data:) para a edge.
+async function comprimir(file: File): Promise<string> {
+  const bitmap = await createImageBitmap(file);
+  const max = 1600;
+  const escala = Math.min(1, max / Math.max(bitmap.width, bitmap.height));
+  const w = Math.round(bitmap.width * escala);
+  const h = Math.round(bitmap.height * escala);
+  const canvas = document.createElement("canvas");
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("canvas");
+  ctx.drawImage(bitmap, 0, 0, w, h);
+  const blob = await new Promise<Blob | null>((res) => canvas.toBlob((b) => res(b), "image/jpeg", 0.8));
+  if (!blob) throw new Error("blob");
+  return await new Promise<string>((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res((r.result as string).split(",")[1] ?? "");
+    r.onerror = () => rej(new Error("read"));
+    r.readAsDataURL(blob);
+  });
+}
+
 export default function CampoRegistrarDia() {
   usePageTitle("Pilar Campo | Registrar o dia");
   const navigate = useNavigate();
+  const fileRef = useRef<HTMLInputElement>(null);
   const [data, setData] = useState(hoje());
   const [clima, setClima] = useState<string | null>(null);
   const [efetivo, setEfetivo] = useState("");
   const [atividades, setAtividades] = useState("");
   const [ocorrencias, setOcorrencias] = useState("");
+  const [fotos, setFotos] = useState<FotoLocal[]>([]);
   const [saving, setSaving] = useState(false);
+
+  const addFotos = (files: FileList | null) => {
+    if (!files) return;
+    const novas = Array.from(files)
+      .filter((f) => f.type.startsWith("image/"))
+      .map((file) => ({ file, preview: URL.createObjectURL(file) }));
+    setFotos((prev) => [...prev, ...novas]);
+  };
+  const removerFoto = (i: number) => {
+    setFotos((prev) => {
+      URL.revokeObjectURL(prev[i].preview);
+      return prev.filter((_, k) => k !== i);
+    });
+  };
 
   const salvar = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,24 +79,47 @@ export default function CampoRegistrarDia() {
     }
     setSaving(true);
     try {
-      // callUntypedRpc: os args da RPC aceitam null (clima/efetivo opcionais), mas
-      // o gen:types marca os parâmetros como não-nulos. Evita o cast solto.
-      const { data: res, error } = await callUntypedRpc<{ ok: boolean; erro?: string }>("campo_salvar_rdo", {
-        p_token: token,
-        p_data: data,
-        p_clima: clima,
-        p_condicao: null,
-        p_efetivo: efetivo.trim() === "" ? null : Number(efetivo),
-        p_atividades: atividades,
-        p_ocorrencias: ocorrencias,
-        p_pendencias: null,
-      });
+      const { data: res, error } = await callUntypedRpc<{ ok: boolean; erro?: string; rdo_id?: string }>(
+        "campo_salvar_rdo",
+        {
+          p_token: token,
+          p_data: data,
+          p_clima: clima,
+          p_condicao: null,
+          p_efetivo: efetivo.trim() === "" ? null : Number(efetivo),
+          p_atividades: atividades,
+          p_ocorrencias: ocorrencias,
+          p_pendencias: null,
+        }
+      );
       if (error) throw error;
-      if (!res?.ok) {
+      if (!res?.ok || !res.rdo_id) {
         toast.error("Não foi possível registrar", { description: res?.erro ?? "Tente de novo" });
         return;
       }
-      toast.success("Dia registrado");
+
+      // Sobe as fotos (comprimidas) para o dia salvo. Falha de foto não perde o
+      // registro do dia — avisa e segue.
+      let falhas = 0;
+      for (const f of fotos) {
+        try {
+          const image_base64 = await comprimir(f.file);
+          const { data: up, error: upErr } = await supabase.functions.invoke("campo-upload-foto", {
+            body: { token, rdo_id: res.rdo_id, image_base64, content_type: "image/jpeg" },
+          });
+          if (upErr || !(up as { success?: boolean })?.success) falhas++;
+        } catch {
+          falhas++;
+        }
+      }
+
+      if (falhas > 0) {
+        toast.warning(`Dia salvo, mas ${falhas} foto${falhas > 1 ? "s" : ""} não subiu`, {
+          description: "Você pode tentar de novo mais tarde.",
+        });
+      } else {
+        toast.success("Dia registrado");
+      }
       navigate("/campo", { replace: true });
     } catch {
       toast.error("Falha na conexão", { description: "Verifique a internet e tente de novo." });
@@ -127,6 +196,45 @@ export default function CampoRegistrarDia() {
             placeholder="Ex: concretagem da laje, alvenaria do 2º pavimento…"
             className="text-base"
           />
+        </div>
+
+        <div className="space-y-2">
+          <Label>Fotos do serviço</Label>
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            multiple
+            className="hidden"
+            onChange={(e) => {
+              addFotos(e.target.files);
+              e.target.value = "";
+            }}
+          />
+          <div className="grid grid-cols-3 gap-2">
+            {fotos.map((f, i) => (
+              <div key={i} className="relative aspect-square overflow-hidden rounded-xl bg-muted">
+                <img src={f.preview} alt="" className="h-full w-full object-cover" />
+                <button
+                  type="button"
+                  onClick={() => removerFoto(i)}
+                  aria-label="Remover foto"
+                  className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-white"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={() => fileRef.current?.click()}
+              className="flex aspect-square flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-black/15 bg-muted/40 text-muted-foreground"
+            >
+              <Camera className="h-6 w-6" />
+              <span className="text-[11px]">Foto</span>
+            </button>
+          </div>
         </div>
 
         <div className="space-y-1.5">
