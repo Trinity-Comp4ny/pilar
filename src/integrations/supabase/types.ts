@@ -517,6 +517,72 @@ export type Database = {
         }
         Relationships: []
       }
+      campo_accounts: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          created_by: string | null
+          email: string | null
+          empresa_id: string
+          id: string
+          must_change_senha: boolean
+          nome: string
+          obra_id: string
+          senha_hash: string | null
+          token_expira_em: string | null
+          token_sessao: string | null
+          ultimo_acesso: string | null
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          empresa_id: string
+          id?: string
+          must_change_senha?: boolean
+          nome: string
+          obra_id: string
+          senha_hash?: string | null
+          token_expira_em?: string | null
+          token_sessao?: string | null
+          ultimo_acesso?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          empresa_id?: string
+          id?: string
+          must_change_senha?: boolean
+          nome?: string
+          obra_id?: string
+          senha_hash?: string | null
+          token_expira_em?: string | null
+          token_sessao?: string | null
+          ultimo_acesso?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campo_accounts_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campo_accounts_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cartoes: {
         Row: {
           conta_pagamento_id: string | null
@@ -5682,6 +5748,17 @@ export type Database = {
       }
     }
     Functions: {
+      _campo_create_account: {
+        Args: {
+          p_created_by: string
+          p_email: string
+          p_empresa_id: string
+          p_nome: string
+          p_obra_id: string
+          p_senha: string
+        }
+        Returns: string
+      }
       _feature_catalog: { Args: never; Returns: string[] }
       _notif_gestao: { Args: { p_empresa: string }; Returns: string[] }
       _notif_resp_disciplina: {
@@ -5727,6 +5804,12 @@ export type Database = {
       aprovar_orcamento_agente: { Args: { p_run_id: string }; Returns: Json }
       audit_log_cleanup: { Args: never; Returns: number }
       audit_logs_archive_old: { Args: never; Returns: number }
+      campo_login: { Args: { p_email: string; p_senha: string }; Returns: Json }
+      campo_trocar_senha: {
+        Args: { p_nova_senha: string; p_token: string }
+        Returns: Json
+      }
+      campo_verify_session: { Args: { p_token: string }; Returns: Json }
       can_view_financeiro: { Args: never; Returns: boolean }
       can_view_folha: { Args: never; Returns: boolean }
       check_convite_rate_limit: {
