@@ -124,8 +124,14 @@ um PR próprio para `staging`, verificável isolado.
    empty states ricos via o slot novo. `LancamentosTable` fica custom (ver req. 4).
    Demais tabelas planas migram "por toque" (regra abaixo), não em lote. **Feito
    também:** `pessoas/components/PessoaTable.tsx` (client-side puro, fit direto;
-   -54 linhas líquidas). `clientes/index.tsx` avaliado e descartado por ora: é
-   server-side com paginação (mesmo motivo do `LancamentosTable`).
+   -54 linhas líquidas) e `pages/Relatorios.tsx` (colunas dinâmicas via
+   `columnVisibility` — primeiro uso real dessa capacidade — e nova linha de
+   totais via o slot `footer`, que ganhou `maxHeight` ⇒ header sticky-on-scroll
+   como efeito colateral opt-in). `clientes/index.tsx` avaliado e descartado por
+   ora: é server-side com paginação (mesmo motivo do `LancamentosTable`).
+   `DisciplinasTableView` avaliado e descartado: toda célula é editável inline
+   (Select/DatePicker/Popover) + linha especial de "adicionar" — grid de domínio,
+   não listagem plana (regra do CLAUDE.md: "regra de domínio, escrever à mão").
 3. **Fase 3 — `<PilarGantt>`.** Extrair um componente único a partir do mais
    completo (`CronogramaTab`), fazendo-o consumir `lib/cronograma.ts`. Migrar os
    3 tabs para ele. Apagar a matemática duplicada.
