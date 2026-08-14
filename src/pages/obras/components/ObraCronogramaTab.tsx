@@ -28,17 +28,15 @@ import {
 } from "@/lib/obras";
 import {
   addDays,
-  barPosition,
-  diffDays,
   endOfMonth,
   generateColumns,
   parseDate,
-  snapToBoundary,
   startOfMonth,
   toIso,
   todayPosition,
   type ZoomLevel,
 } from "@/lib/cronograma";
+import { useGanttDrag } from "@/components/gantt/useGanttDrag";
 import { useObraFrentes, useCreateFrente, useUpdateFrente, type ObraFrenteRow } from "@/hooks/useObraFrentes";
 import { useObraTarefas, useCreateObraTarefa, useUpdateObraTarefa, type ObraTarefa } from "@/hooks/useObraTarefas";
 import { FrenteDetailDialog } from "./FrenteDetailDialog";
@@ -81,24 +79,9 @@ const ROW_H = 56; // linha da etapa
 const SUB_H = 36; // linha da tarefa e do "+ tarefa"
 
 type DragKind = "frente" | "tarefa";
-type DragType = "left" | "right" | "move";
 
-interface DragState {
-  kind: DragKind;
-  id: string;
-  type: DragType;
-  startX: number;
-  origStart: Date;
-  origEnd: Date;
-}
-
-interface DragOverride {
-  kind: DragKind;
-  id: string;
-  type: DragType;
-  start: Date;
-  end: Date;
-}
+/** Chave opaca da barra no motor de drag: distingue etapa de tarefa pelo id. */
+const dragKey = (kind: DragKind, id: string) => `${kind}:${id}`;
 
 type TarefaRow = {
   tarefa: ObraTarefa;
@@ -144,16 +127,6 @@ export function ObraCronogramaTab({
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const timelineRef = useRef<HTMLDivElement>(null);
-  const dragRef = useRef<DragState | null>(null);
-  // Vira true quando o arraste move de fato, para suprimir o clique que o
-  // navegador dispara no fim do drag (senão abriria o dialog sem querer).
-  const dragMovedRef = useRef(false);
-  const zoomRef = useRef<ZoomLevel>(zoom);
-  useEffect(() => {
-    zoomRef.current = zoom;
-  }, [zoom]);
-  const [dragOverride, setDragOverride] = useState<DragOverride | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
 
   const tarefasDe = (frenteId: string | null) => tarefas.filter((t) => (t.obra_frente_id ?? null) === frenteId);
   const semFrente = tarefasDe(null);
@@ -240,113 +213,40 @@ export function ObraCronogramaTab({
     if (todayPct >= 0) scrollToToday();
   }, [todayPct, scrollToToday]);
 
-  // ── Drag ──────────────────────────────────────────────────────────────────
-  const pxPerDay = useCallback((): number => {
-    if (!timelineRef.current) return 1;
-    const total = diffDays(tlStart, tlEnd);
-    return total > 0 ? timelineRef.current.offsetWidth / total : 1;
-  }, [tlStart, tlEnd]);
-
-  const startDrag = useCallback(
-    (e: React.MouseEvent, kind: DragKind, id: string, type: DragType, base: { start: Date; end: Date }) => {
-      if (!canEdit) return;
-      e.preventDefault();
-      e.stopPropagation();
-      dragMovedRef.current = false;
-      dragRef.current = {
-        kind,
-        id,
-        type,
-        startX: e.clientX,
-        origStart: new Date(base.start),
-        origEnd: new Date(base.end),
-      };
-    },
-    [canEdit]
-  );
-
-  useEffect(() => {
-    const reset = () => {
-      dragRef.current = null;
-      setDragOverride(null);
-    };
-
-    const apply = (clientX: number) => {
-      const drag = dragRef.current;
-      if (!drag) return;
-      const deltaDays = Math.round((clientX - drag.startX) / pxPerDay());
-      if (deltaDays !== 0) dragMovedRef.current = true;
-      let newStart = new Date(drag.origStart);
-      let newEnd = new Date(drag.origEnd);
-      if (drag.type === "left") {
-        newStart = addDays(drag.origStart, deltaDays);
-        if (newStart >= newEnd) newStart = addDays(newEnd, -1);
-        newStart = snapToBoundary(newStart, zoomRef.current);
-      } else if (drag.type === "right") {
-        newEnd = addDays(drag.origEnd, deltaDays);
-        if (newEnd <= newStart) newEnd = addDays(newStart, 1);
-        newEnd = snapToBoundary(newEnd, zoomRef.current);
-      } else {
-        newStart = addDays(drag.origStart, deltaDays);
-        newEnd = addDays(drag.origEnd, deltaDays);
-      }
-      setDragOverride({ kind: drag.kind, id: drag.id, type: drag.type, start: newStart, end: newEnd });
-    };
-
-    const onMouseMove = (e: MouseEvent) => {
-      if (dragRef.current) apply(e.clientX);
-    };
-
-    const commit = async () => {
-      const drag = dragRef.current;
-      const override = dragOverride;
-      reset();
-      if (!drag || !override) return;
-      if (toIso(override.start) === toIso(drag.origStart) && toIso(override.end) === toIso(drag.origEnd)) return;
-      setIsSaving(true);
+  // ── Drag: motor compartilhado (etapa e tarefa) ──────────────────────────────
+  const {
+    isSaving,
+    isDragging,
+    startDrag,
+    getBarGeometry,
+    shouldSuppressClick,
+  } = useGanttDrag<string>({
+    timelineStart: tlStart,
+    timelineEnd: tlEnd,
+    zoom,
+    enabled: canEdit,
+    timelineRef,
+    scrollRef,
+    onCommit: async (key, { start, end }) => {
+      const sep = key.indexOf(":");
+      const kind = key.slice(0, sep) as DragKind;
+      const id = key.slice(sep + 1);
       try {
-        if (drag.kind === "frente") {
-          await updateFrente.mutateAsync({
-            id: drag.id,
-            data_inicio: toIso(override.start),
-            data_fim: toIso(override.end),
-          });
+        if (kind === "frente") {
+          await updateFrente.mutateAsync({ id, data_inicio: toIso(start), data_fim: toIso(end) });
         } else {
-          await updateTarefa.mutateAsync({
-            id: drag.id,
-            data_inicio: toIso(override.start),
-            prazo: toIso(override.end),
-          });
+          await updateTarefa.mutateAsync({ id, data_inicio: toIso(start), prazo: toIso(end) });
         }
       } catch (err) {
         toast.error("Não foi possível salvar a data", {
           description: err instanceof Error ? err.message : "Tente novamente",
         });
-      } finally {
-        setIsSaving(false);
       }
-    };
+    },
+  });
 
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && dragRef.current) reset();
-    };
-
-    document.addEventListener("mousemove", onMouseMove);
-    document.addEventListener("mouseup", commit);
-    document.addEventListener("keydown", onKeyDown);
-    return () => {
-      document.removeEventListener("mousemove", onMouseMove);
-      document.removeEventListener("mouseup", commit);
-      document.removeEventListener("keydown", onKeyDown);
-    };
-  }, [dragOverride, pxPerDay, updateFrente, updateTarefa]);
-
-  const geom = (kind: DragKind, id: string, base: { start: Date; end: Date }) => {
-    const ov = dragOverride && dragOverride.kind === kind && dragOverride.id === id ? dragOverride : null;
-    const start = ov ? ov.start : base.start;
-    const end = ov ? ov.end : base.end;
-    return { ...barPosition(start, end, tlStart, tlEnd), start, end };
-  };
+  const geom = (kind: DragKind, id: string, base: { start: Date; end: Date }) =>
+    getBarGeometry(dragKey(kind, id), base);
 
   const addEtapa = async () => {
     if (!novaEtapa.trim()) return;
@@ -400,7 +300,6 @@ export function ObraCronogramaTab({
 
   const vazio = frentes.length === 0 && semFrente.length === 0;
   const temTimeline = frenteRows.length > 0;
-  const isDragging = dragOverride !== null;
 
   return (
     <div className="space-y-4" style={{ userSelect: isDragging ? "none" : undefined }}>
@@ -645,7 +544,11 @@ export function ObraCronogramaTab({
                                     {canEdit && (
                                       <div
                                         className="group/h absolute left-0 top-0 bottom-0 z-10 flex w-4 cursor-col-resize items-center justify-center gap-0.5 rounded-l-md hover:bg-black/20"
-                                        onMouseDown={(e) => startDrag(e, "frente", row.frente.id, "left", row.bar!)}
+                                        onMouseDown={(e) => {
+                                          e.preventDefault();
+                                          e.stopPropagation();
+                                          startDrag(e.clientX, dragKey("frente", row.frente.id), "left", row.bar);
+                                        }}
                                       >
                                         <div className="h-3.5 w-px bg-white/60 group-hover/h:bg-white" />
                                         <div className="h-3.5 w-px bg-white/60 group-hover/h:bg-white" />
@@ -653,15 +556,15 @@ export function ObraCronogramaTab({
                                     )}
                                     <button
                                       onClick={() => {
-                                        if (dragMovedRef.current) {
-                                          dragMovedRef.current = false;
-                                          return;
-                                        }
+                                        if (shouldSuppressClick()) return;
                                         setSelecionada(row.frente);
                                       }}
-                                      onMouseDown={(e) =>
-                                        canEdit && startDrag(e, "frente", row.frente.id, "move", row.bar!)
-                                      }
+                                      onMouseDown={(e) => {
+                                        if (!canEdit) return;
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        startDrag(e.clientX, dragKey("frente", row.frente.id), "move", row.bar);
+                                      }}
                                       title={`${row.frente.nome} · ${ESTADO_LABEL[row.estado]}${row.total > 0 ? ` · ${row.progresso}%` : ""}`}
                                       className={cn(
                                         "flex flex-1 items-center overflow-hidden px-2.5",
@@ -675,7 +578,11 @@ export function ObraCronogramaTab({
                                     {canEdit && (
                                       <div
                                         className="group/h absolute right-0 top-0 bottom-0 z-10 flex w-4 cursor-col-resize items-center justify-center gap-0.5 rounded-r-md hover:bg-black/20"
-                                        onMouseDown={(e) => startDrag(e, "frente", row.frente.id, "right", row.bar!)}
+                                        onMouseDown={(e) => {
+                                          e.preventDefault();
+                                          e.stopPropagation();
+                                          startDrag(e.clientX, dragKey("frente", row.frente.id), "right", row.bar);
+                                        }}
                                       >
                                         <div className="h-3.5 w-px bg-white/60 group-hover/h:bg-white" />
                                         <div className="h-3.5 w-px bg-white/60 group-hover/h:bg-white" />
@@ -709,7 +616,11 @@ export function ObraCronogramaTab({
                                           {canEdit && (
                                             <div
                                               className="absolute left-0 top-0 bottom-0 z-10 flex w-3 cursor-col-resize items-center justify-center gap-px rounded-l hover:bg-black/20"
-                                              onMouseDown={(e) => startDrag(e, "tarefa", t.tarefa.id, "left", t.bar!)}
+                                              onMouseDown={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                startDrag(e.clientX, dragKey("tarefa", t.tarefa.id), "left", t.bar);
+                                              }}
                                             >
                                               <div className="h-2.5 w-px bg-white/70" />
                                               <div className="h-2.5 w-px bg-white/70" />
@@ -717,15 +628,15 @@ export function ObraCronogramaTab({
                                           )}
                                           <button
                                             onClick={() => {
-                                              if (dragMovedRef.current) {
-                                                dragMovedRef.current = false;
-                                                return;
-                                              }
+                                              if (shouldSuppressClick()) return;
                                               setSelecionada(row.frente);
                                             }}
-                                            onMouseDown={(e) =>
-                                              canEdit && startDrag(e, "tarefa", t.tarefa.id, "move", t.bar!)
-                                            }
+                                            onMouseDown={(e) => {
+                                              if (!canEdit) return;
+                                              e.preventDefault();
+                                              e.stopPropagation();
+                                              startDrag(e.clientX, dragKey("tarefa", t.tarefa.id), "move", t.bar);
+                                            }}
                                             title={`${t.tarefa.titulo} · ${ESTADO_TAREFA_LABEL[t.estado]} · ${t.tarefa.data_inicio} → ${t.tarefa.prazo}`}
                                             className={cn(
                                               "flex flex-1 items-center overflow-hidden px-1.5",
@@ -739,7 +650,11 @@ export function ObraCronogramaTab({
                                           {canEdit && (
                                             <div
                                               className="absolute right-0 top-0 bottom-0 z-10 flex w-3 cursor-col-resize items-center justify-center gap-px rounded-r hover:bg-black/20"
-                                              onMouseDown={(e) => startDrag(e, "tarefa", t.tarefa.id, "right", t.bar!)}
+                                              onMouseDown={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                startDrag(e.clientX, dragKey("tarefa", t.tarefa.id), "right", t.bar);
+                                              }}
                                             >
                                               <div className="h-2.5 w-px bg-white/70" />
                                               <div className="h-2.5 w-px bg-white/70" />
