@@ -12,6 +12,7 @@ import { ImpersonationProvider } from "@/contexts/ImpersonationContext";
 import { PageSkeleton } from "@/components/PageSkeleton";
 import { PrivateRoute } from "./components/PrivateRoute";
 import { ClientePrivateRoute } from "./components/ClientePrivateRoute";
+import { CampoPrivateRoute } from "./components/CampoPrivateRoute";
 import { AdminRoute } from "./components/AdminRoute";
 import { UltraAdminRoute } from "./components/UltraAdminRoute";
 import { FeatureRoute } from "./components/FeatureRoute";
@@ -56,6 +57,9 @@ const Capacidade = lazy(() => import("./pages/capacidade"));
 const AiHub = lazy(() => import("./pages/ai"));
 const ProjetoDetail = lazy(() => import("./pages/projetos/ProjetoDetail"));
 const ClienteLogin = lazy(() => import("./pages/cliente/ClienteLogin"));
+const CampoLogin = lazy(() => import("./pages/campo/CampoLogin"));
+const CampoTrocarSenha = lazy(() => import("./pages/campo/CampoTrocarSenha"));
+const CampoHome = lazy(() => import("./pages/campo/CampoHome"));
 const ClienteDashboard = lazy(() => import("./pages/cliente/ClienteDashboard"));
 const ClienteObraDetail = lazy(() => import("./pages/cliente/ClienteObraDetail"));
 const ClienteProjetoDetail = lazy(() => import("./pages/cliente/ClienteProjetoDetail"));
@@ -299,6 +303,13 @@ const App = () => {
                         <Route path="projeto/:id/financeiro" element={<ClienteProjetoDetail />} />
                         <Route path="projeto/:id/entregas" element={<ClienteProjetoDetail />} />
                         <Route path="obra/:id" element={<ClienteObraDetail />} />
+                      </Route>
+
+                      {/* Pilar Campo — app de campo (conta própria, escopo por obra) */}
+                      <Route path="/campo/login" element={<CampoLogin />} />
+                      <Route path="/campo/senha" element={<CampoTrocarSenha />} />
+                      <Route path="/campo" element={<CampoPrivateRoute />}>
+                        <Route index element={<CampoHome />} />
                       </Route>
 
                       <Route path="*" element={<NotFound />} />

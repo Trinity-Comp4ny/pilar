@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
-import { Boxes, CalendarClock, ClipboardList, CloudRain, LayoutList, MapPin, Pencil, Scale, Trash2, User, Wallet } from "lucide-react";
+import { Boxes, CalendarClock, ClipboardList, CloudRain, HardHat, LayoutList, MapPin, Pencil, Scale, Trash2, User, Wallet } from "lucide-react";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -17,6 +17,7 @@ import { useAlertasClimaCronograma } from "@/hooks/useAlertasClima";
 import { formatDate } from "@/lib/format";
 import { sensivelClimaLabel } from "@/lib/obras";
 import { ObraFormDialog } from "../components/ObraFormDialog";
+import { CriarAcessoCampoDialog } from "../components/CriarAcessoCampoDialog";
 import { ObraTimelineTab } from "../components/ObraTimelineTab";
 import { ObraDiarioTab } from "../components/ObraDiarioTab";
 import { ObraCronogramaTab } from "../components/ObraCronogramaTab";
@@ -46,6 +47,7 @@ export default function ObraDetalhePage() {
   const [tab, setTab] = useState("timeline");
   const [editOpen, setEditOpen] = useState(false);
   const [confirmDel, setConfirmDel] = useState(false);
+  const [acessoCampoOpen, setAcessoCampoOpen] = useState(false);
   const del = useDeleteObra();
 
   // Alertas de clima: etapas sensíveis do cronograma vs previsão (spec 040).
@@ -91,6 +93,12 @@ export default function ObraDetalhePage() {
       header={
         <PageHeader title={obra.nome} breadcrumbs={BREADCRUMB}>
           <div className="flex items-center gap-2">
+            {canEdit && (
+              <Button variant="outline" size="sm" onClick={() => setAcessoCampoOpen(true)}>
+                <HardHat className="mr-1.5 h-4 w-4" />
+                Acesso de campo
+              </Button>
+            )}
             {canEdit && (
               <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
                 <Pencil className="mr-1.5 h-4 w-4" />
@@ -220,6 +228,8 @@ export default function ObraDetalhePage() {
       </Tabs>
 
       <ObraFormDialog open={editOpen} onOpenChange={setEditOpen} obra={obra} />
+
+      <CriarAcessoCampoDialog open={acessoCampoOpen} onOpenChange={setAcessoCampoOpen} obraId={obra.id} />
 
       <ConfirmDialog
         open={confirmDel}
