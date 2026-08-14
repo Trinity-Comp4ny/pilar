@@ -1,6 +1,6 @@
 import { useNavigate, useOutletContext } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronRight, ClipboardList, HardHat, LogOut, Plus, Users } from "lucide-react";
+import { Camera, ChevronRight, ClipboardList, HardHat, LogOut, Plus, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -15,6 +15,7 @@ interface RdoDia {
   clima: string | null;
   efetivo: number | null;
   atividades: string | null;
+  fotos?: number;
 }
 
 export default function CampoHome() {
@@ -90,6 +91,12 @@ export default function CampoHome() {
                         <span className="inline-flex items-center gap-1">
                           <Users className="h-3 w-3" />
                           {r.efetivo}
+                        </span>
+                      )}
+                      {!!r.fotos && r.fotos > 0 && (
+                        <span className="inline-flex items-center gap-1">
+                          <Camera className="h-3 w-3" />
+                          {r.fotos}
                         </span>
                       )}
                       {r.atividades && <span className="truncate">{r.atividades}</span>}
