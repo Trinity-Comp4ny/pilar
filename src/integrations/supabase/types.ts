@@ -3378,6 +3378,68 @@ export type Database = {
           },
         ]
       }
+      obra_rdo_foto: {
+        Row: {
+          campo_account_id: string | null
+          created_at: string
+          created_by: string | null
+          empresa_id: string
+          id: string
+          obra_id: string
+          path: string
+          rdo_id: string
+        }
+        Insert: {
+          campo_account_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          empresa_id: string
+          id?: string
+          obra_id: string
+          path: string
+          rdo_id: string
+        }
+        Update: {
+          campo_account_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          empresa_id?: string
+          id?: string
+          obra_id?: string
+          path?: string
+          rdo_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "obra_rdo_foto_campo_account_id_fkey"
+            columns: ["campo_account_id"]
+            isOneToOne: false
+            referencedRelation: "campo_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_rdo_foto_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_rdo_foto_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_rdo_foto_rdo_id_fkey"
+            columns: ["rdo_id"]
+            isOneToOne: false
+            referencedRelation: "obra_rdo"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       obras: {
         Row: {
           cep: string | null
@@ -5768,6 +5830,10 @@ export type Database = {
           p_senha: string
         }
         Returns: string
+      }
+      _campo_registrar_foto: {
+        Args: { p_path: string; p_rdo_id: string; p_token: string }
+        Returns: Json
       }
       _feature_catalog: { Args: never; Returns: string[] }
       _notif_gestao: { Args: { p_empresa: string }; Returns: string[] }
