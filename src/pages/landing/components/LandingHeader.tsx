@@ -44,10 +44,12 @@ export function LandingHeader({ onScrollToTop }: LandingHeaderProps) {
             <img
               src="/pilar-logo.svg"
               alt="Pilar"
+              width={40}
+              height={40}
               className="h-10 w-auto transition-transform duration-500 group-hover:rotate-12"
             />
             <span className="text-[2rem] font-medium tracking-tight text-ink-soft">
-              Pilar<sup className="text-[10px] font-normal text-slate-400 ml-0.5 relative -top-3">®</sup>
+              Pilar<sup className="text-[10px] font-normal text-slate-600 ml-0.5 relative -top-3">®</sup>
             </span>
           </a>
 
@@ -55,20 +57,20 @@ export function LandingHeader({ onScrollToTop }: LandingHeaderProps) {
             <a
               href="/#prova"
               onClick={handleSectionLink("prova")}
-              className="text-[11px] font-medium uppercase tracking-[0.18em] text-slate-500 relative after:absolute after:bottom-[-3px] after:left-0 after:h-px after:w-0 after:bg-brand hover:after:w-full after:transition-all after:duration-300"
+              className="text-[11px] font-medium uppercase tracking-[0.18em] text-slate-600 relative after:absolute after:bottom-[-3px] after:left-0 after:h-px after:w-0 after:bg-brand hover:after:w-full after:transition-all after:duration-300"
             >
               Por que Pilar
             </a>
             <a
               href="/#modulos"
               onClick={handleSectionLink("modulos")}
-              className="text-[11px] font-medium uppercase tracking-[0.18em] text-slate-500 relative after:absolute after:bottom-[-3px] after:left-0 after:h-px after:w-0 after:bg-brand hover:after:w-full after:transition-all after:duration-300"
+              className="text-[11px] font-medium uppercase tracking-[0.18em] text-slate-600 relative after:absolute after:bottom-[-3px] after:left-0 after:h-px after:w-0 after:bg-brand hover:after:w-full after:transition-all after:duration-300"
             >
               Módulos
             </a>
             <Link
               to="/planos"
-              className="text-[11px] font-medium uppercase tracking-[0.18em] text-slate-500 relative after:absolute after:bottom-[-3px] after:left-0 after:h-px after:w-0 after:bg-brand hover:after:w-full after:transition-all after:duration-300"
+              className="text-[11px] font-medium uppercase tracking-[0.18em] text-slate-600 relative after:absolute after:bottom-[-3px] after:left-0 after:h-px after:w-0 after:bg-brand hover:after:w-full after:transition-all after:duration-300"
             >
               Preços
             </Link>
@@ -77,12 +79,12 @@ export function LandingHeader({ onScrollToTop }: LandingHeaderProps) {
           <div className="hidden md:flex items-center gap-4 justify-end">
             <Link
               to="/login"
-              className="text-[11px] font-medium uppercase tracking-[0.12em] text-slate-500 hover:text-slate-800 transition-colors"
+              className="text-[11px] font-medium uppercase tracking-[0.12em] text-slate-600 hover:text-slate-800 transition-colors"
             >
               Entrar
             </Link>
             <Link
-              to="/login"
+              to="/cadastro"
               className="px-6 py-2.5 bg-brand text-ink rounded-full hover:bg-brand/90 transition-all hover:-translate-y-0.5 active:translate-y-0 duration-200 font-medium text-[11px] uppercase tracking-[0.12em]"
             >
               Começar Grátis
@@ -90,15 +92,22 @@ export function LandingHeader({ onScrollToTop }: LandingHeaderProps) {
           </div>
 
           <button
+            type="button"
             className="md:hidden p-2 text-slate-600 col-start-3 justify-self-end"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label={mobileMenuOpen ? "Fechar menu" : "Abrir menu"}
+            aria-expanded={mobileMenuOpen}
+            aria-controls="landing-mobile-menu"
           >
             {mobileMenuOpen ? <X /> : <Menu />}
           </button>
         </div>
 
         {mobileMenuOpen && (
-          <div className="md:hidden absolute top-full left-0 right-0 bg-paper border-b border-paper-border p-6 flex flex-col gap-4 shadow-xl animate-in slide-in-from-top-5">
+          <div
+            id="landing-mobile-menu"
+            className="md:hidden absolute top-full left-0 right-0 bg-paper border-b border-paper-border p-6 flex flex-col gap-4 shadow-xl animate-in slide-in-from-top-5"
+          >
             <a href="/#prova" onClick={handleSectionLink("prova")} className="text-lg font-medium text-slate-600">
               Por que Pilar
             </a>
@@ -109,7 +118,7 @@ export function LandingHeader({ onScrollToTop }: LandingHeaderProps) {
               Preços
             </Link>
             <Link
-              to="/login"
+              to="/cadastro"
               className="px-6 py-3 bg-brand text-ink rounded-full text-center font-medium text-sm uppercase tracking-[0.12em]"
               onClick={() => setMobileMenuOpen(false)}
             >
@@ -117,10 +126,10 @@ export function LandingHeader({ onScrollToTop }: LandingHeaderProps) {
             </Link>
             <Link
               to="/login"
-              className="text-center text-sm font-medium text-slate-400"
+              className="text-center text-sm font-medium text-slate-600"
               onClick={() => setMobileMenuOpen(false)}
             >
-              Já tenho conta — Entrar
+              Já tenho conta, entrar
             </Link>
           </div>
         )}
