@@ -13,6 +13,11 @@ import { test, expect } from "./fixtures";
 
 test.describe("Financeiro — criar receita", () => {
   test("criar receita aparece nos KPIs do dashboard", async ({ page, cleanupAfter: _cleanup }) => {
+    // Descrição única por execução — achado real, 17/08: com texto fixo, toda
+    // reexecução (inclusive no CI a cada push) encontra o lançamento da rodada
+    // anterior e a detecção de duplicata abre um alertdialog de confirmação em
+    // vez de salvar direto, travando o teste no toast de sucesso.
+    const descricaoUnica = `Receita E2E teste automatizado ${Date.now().toString(36)}`;
     // 1. Navegar para /financeiro na aba Lançamentos (que contém Receitas)
     await page.goto("/financeiro?tab=lancamentos");
     await expect(page).toHaveURL(/\/financeiro/);
@@ -51,16 +56,31 @@ test.describe("Financeiro — criar receita", () => {
     await expect(page.getByText("Nova Receita").first()).toBeVisible();
 
     // 5. Preencher descrição
+    // Achado real, 17/08: o dialog "Nova Receita" aberto pela aba Lançamentos é o
+    // LancamentoFormDialog (spec 044), não o FinanceItemForm da aba Receitas —
+    // o Input não tinha `id`, e o placeholder real nunca foi "projeto residencial"
+    // (sempre "Ex: Honorários projeto A"). Os dois lados do `.or()` antigo davam
+    // zero match, e `.fill()` num locator vazio só estoura no timeout de 30s, sem
+    // erro claro. Corrigido na origem (id="descricao" adicionado ao componente).
     const descricaoInput = page.locator('input[id="descricao"]').or(
-      page.getByPlaceholder(/projeto residencial/i)
+      page.getByPlaceholder(/Honorários projeto/i)
     );
-    await descricaoInput.fill("Receita E2E teste automatizado");
+    await descricaoInput.fill(descricaoUnica);
 
     // 6. Preencher valor
     const valorInput = page.locator('input[id="valorTotal"]').or(
       page.getByPlaceholder(/R\$ 0,00/i)
     );
     await valorInput.fill("1000");
+
+    // 6b. Selecionar categoria (obrigatória — achado real, 17/08: o Select não
+    // tinha nenhum jeito acessível de mirar, e a empresa de teste não tinha
+    // nenhuma categoria cadastrada, então "Salvar" sempre travava em validação
+    // client-side. Corrigido: aria-label no trigger + categoria seedada no banco.)
+    const categoriaCombobox = page.getByRole("combobox", { name: "Categoria" });
+    await categoriaCombobox.click();
+    await expect(page.getByRole("option").first()).toBeVisible({ timeout: 8_000 });
+    await page.getByRole("option").first().click();
 
     // 7. Clicar em Próximo para ir ao step 2 (Classificação)
     const proximoBtn = page.getByRole("button", { name: /Próximo|Continuar/i });
@@ -75,15 +95,24 @@ test.describe("Financeiro — criar receita", () => {
     await expect(salvarBtn).toBeVisible({ timeout: 5_000 });
     await salvarBtn.click();
 
+    // 8b. App tem detecção de duplicata (mesma descrição+valor recentes) — se o
+    // alertdialog aparecer, confirmar explicitamente em vez de travar no toast.
+    const duplicataDialog = page.getByRole("alertdialog", { name: /duplicata/i });
+    if (await duplicataDialog.isVisible({ timeout: 2_000 }).catch(() => false)) {
+      await duplicataDialog.getByRole("button", { name: /Salvar mesmo assim/i }).click();
+    }
+
     // 9. Verificar toast de sucesso
     await expect(
       page.getByText(/salvo|criado|sucesso|Receita criada/i).first()
     ).toBeVisible({ timeout: 8_000 });
 
-    // 10. Navegar para /dashboard e verificar KPI "A Receber"
+    // 10. Navegar para /dashboard (redireciona para /inicio — achado real, 17/08,
+    // mesma reorganização de rotas do sidebar-navigation-authenticated.spec.ts)
+    // e verificar KPI "A Receber"
     await page.goto("/dashboard");
     await page.waitForLoadState("networkidle");
-    await expect(page).toHaveURL(/\/dashboard/);
+    await expect(page).toHaveURL(/\/inicio/);
 
     // KPI "A Receber" deve estar visível (independente do valor exato)
     await expect(page.getByText("A Receber")).toBeVisible({ timeout: 10_000 });
