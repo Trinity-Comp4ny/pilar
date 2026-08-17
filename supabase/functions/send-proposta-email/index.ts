@@ -54,10 +54,12 @@ serve(
         return safeErrorResponse(400, `Mensagem excede ${MAX_MESSAGE_LEN} caracteres`, req);
       }
 
-      // Buscar a empresa do usuário autenticado (via JWT, não do corpo da request)
-      const { data: empresaId } = await supabase.rpc("get_user_empresa_id", undefined, {
-        headers: { Authorization: req.headers.get("Authorization") ?? "" },
-      });
+      // Buscar a empresa do usuário autenticado (via JWT, não do corpo da request).
+      // `supabase.rpc()` não aceita `headers` por chamada (isso nunca funcionou:
+      // a Authorization era ignorada e a RPC sempre rodava sem auth.uid(), então
+      // isto sempre devolvia null). `auth.supabase`, que authenticateUser já monta
+      // com a Authorization do caller, é o client certo pra essa chamada.
+      const { data: empresaId } = await auth.supabase.rpc("get_user_empresa_id");
       if (!empresaId) return safeErrorResponse(403, "Empresa não identificada", req);
       const { data: empresa } = await supabase.from("empresas").select("nome").eq("id", empresaId).single();
 
