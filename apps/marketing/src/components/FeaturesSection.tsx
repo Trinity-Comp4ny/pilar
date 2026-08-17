@@ -1,9 +1,10 @@
 const modules = [
   { number: "01", label: "Comercial", headline: "Proposta aprovada vira projeto. Sem retrabalho." },
-  { number: "02", label: "Operação", headline: "Escopos, fases e disciplinas no lugar certo." },
+  { number: "02", label: "Projetos", headline: "Cronograma, escopo e aditivos sem perder o controle." },
   { number: "03", label: "Financeiro", headline: "Resultado do projeto antes de fechar o mês." },
   { number: "04", label: "Equipe", headline: "Custo real de cada profissional por projeto." },
   { number: "05", label: "Portal", headline: "O cliente acompanha. Seu WhatsApp descansa." },
+  { number: "06", label: "Agentes de IA", headline: "Pergunta, ele responde. Ação, você aprova." },
 ];
 
 export function FeaturesSection() {
@@ -18,7 +19,7 @@ export function FeaturesSection() {
               </span>
             </div>
             <h2 className="text-3xl md:text-5xl font-medium text-ink leading-[1.1] tracking-tight">
-              <em className="landing-highlight">Cinco frentes.</em>{" "}
+              <em className="landing-highlight">Seis frentes.</em>{" "}
               <span className="italic text-ink/55">Um sistema. Zero planilha.</span>
             </h2>
           </div>
