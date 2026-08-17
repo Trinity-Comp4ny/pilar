@@ -1,6 +1,6 @@
 import { useNavigate, useOutletContext } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Camera, ChevronRight, ClipboardList, CloudOff, HardHat, Loader2, LogOut, Plus, RefreshCw, Ruler, Users } from "lucide-react";
+import { Camera, CheckSquare, ChevronRight, ClipboardList, CloudOff, HardHat, Loader2, LogOut, Plus, RefreshCw, Ruler, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -18,6 +18,7 @@ interface RdoDia {
   atividades: string | null;
   fotos?: number;
   medicoes?: number;
+  tarefas?: number;
 }
 
 export default function CampoHome() {
@@ -128,6 +129,12 @@ export default function CampoHome() {
                         <span className="inline-flex items-center gap-1">
                           <Ruler className="h-3 w-3" />
                           {r.medicoes}
+                        </span>
+                      )}
+                      {!!r.tarefas && r.tarefas > 0 && (
+                        <span className="inline-flex items-center gap-1">
+                          <CheckSquare className="h-3 w-3" />
+                          {r.tarefas}
                         </span>
                       )}
                       {r.atividades && <span className="truncate">{r.atividades}</span>}

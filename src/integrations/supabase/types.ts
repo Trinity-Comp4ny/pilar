@@ -3455,8 +3455,9 @@ export type Database = {
       }
       obra_rdo_tarefa: {
         Row: {
+          campo_account_id: string | null
           created_at: string
-          created_by: string
+          created_by: string | null
           empresa_id: string
           id: string
           observacao: string | null
@@ -3465,8 +3466,9 @@ export type Database = {
           tarefa_id: string
         }
         Insert: {
+          campo_account_id?: string | null
           created_at?: string
-          created_by?: string
+          created_by?: string | null
           empresa_id: string
           id?: string
           observacao?: string | null
@@ -3475,8 +3477,9 @@ export type Database = {
           tarefa_id: string
         }
         Update: {
+          campo_account_id?: string | null
           created_at?: string
-          created_by?: string
+          created_by?: string | null
           empresa_id?: string
           id?: string
           observacao?: string | null
@@ -3485,6 +3488,13 @@ export type Database = {
           tarefa_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "obra_rdo_tarefa_campo_account_id_fkey"
+            columns: ["campo_account_id"]
+            isOneToOne: false
+            referencedRelation: "campo_accounts"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "obra_rdo_tarefa_empresa_id_fkey"
             columns: ["empresa_id"]
@@ -5128,7 +5138,7 @@ export type Database = {
         Row: {
           comentarios: Json
           created_at: string
-          created_by: string
+          created_by: string | null
           data_inicio: string | null
           descricao: string | null
           empresa_id: string
@@ -5154,7 +5164,7 @@ export type Database = {
         Insert: {
           comentarios?: Json
           created_at?: string
-          created_by?: string
+          created_by?: string | null
           data_inicio?: string | null
           descricao?: string | null
           empresa_id: string
@@ -5180,7 +5190,7 @@ export type Database = {
         Update: {
           comentarios?: Json
           created_at?: string
-          created_by?: string
+          created_by?: string | null
           data_inicio?: string | null
           descricao?: string | null
           empresa_id?: string
@@ -5948,10 +5958,15 @@ export type Database = {
       aprovar_orcamento_agente: { Args: { p_run_id: string }; Returns: Json }
       audit_log_cleanup: { Args: never; Returns: number }
       audit_logs_archive_old: { Args: never; Returns: number }
+      campo_criar_tarefa: {
+        Args: { p_titulo: string; p_token: string }
+        Returns: Json
+      }
       campo_listar_rdos: {
         Args: { p_limite?: number; p_token: string }
         Returns: Json
       }
+      campo_listar_tarefas: { Args: { p_token: string }; Returns: Json }
       campo_login: { Args: { p_email: string; p_senha: string }; Returns: Json }
       campo_registrar_medicao: {
         Args: {
@@ -5960,6 +5975,16 @@ export type Database = {
           p_rdo_id: string
           p_token: string
           p_unidade: string
+        }
+        Returns: Json
+      }
+      campo_registrar_tarefa_rdo: {
+        Args: {
+          p_observacao: string
+          p_rdo_id: string
+          p_resultado: string
+          p_tarefa_id: string
+          p_token: string
         }
         Returns: Json
       }

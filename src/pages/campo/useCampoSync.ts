@@ -3,7 +3,13 @@ import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { callUntypedRpc } from "@/lib/supabaseRpc";
 import { filaOfflineDb } from "./campoOfflineDb";
-import { sincronizarFila, type FilaDiaPayload, type FilaFoto, type FilaMedicao } from "./campoOfflineQueue";
+import {
+  sincronizarFila,
+  type FilaDiaPayload,
+  type FilaFoto,
+  type FilaMedicao,
+  type FilaTarefaVinculo,
+} from "./campoOfflineQueue";
 import { getCampoToken } from "./useCampoAuth";
 
 async function salvarRdoRemoto(token: string, dia: FilaDiaPayload) {
@@ -35,6 +41,18 @@ async function registrarMedicaoRemota(token: string, rdoId: string, medicao: Fil
   return { ok: true as const };
 }
 
+async function registrarTarefaRemota(token: string, rdoId: string, vinculo: FilaTarefaVinculo) {
+  const { data, error } = await callUntypedRpc<{ ok: boolean; erro?: string }>("campo_registrar_tarefa_rdo", {
+    p_token: token,
+    p_rdo_id: rdoId,
+    p_tarefa_id: vinculo.tarefaId,
+    p_resultado: vinculo.resultado,
+    p_observacao: vinculo.observacao,
+  });
+  if (error || !data?.ok) return { ok: false as const, erro: data?.erro ?? error?.message };
+  return { ok: true as const };
+}
+
 /**
  * Sincroniza a fila offline com o servidor: dispara ao montar, quando a rede
  * volta (`online`) e sob demanda (`sincronizar()`). Expõe a contagem de
@@ -59,6 +77,7 @@ export function useCampoSync() {
         salvarRdo: (dia) => salvarRdoRemoto(token, dia),
         subirFoto: (rdoId, foto) => subirFotoRemota(token, rdoId, foto),
         registrarMedicao: (rdoId, medicao) => registrarMedicaoRemota(token, rdoId, medicao),
+        registrarTarefa: (rdoId, vinculo) => registrarTarefaRemota(token, rdoId, vinculo),
       });
       if (resumo.enviados > 0) {
         queryClient.invalidateQueries({ queryKey: ["campo_rdos"] });

@@ -6,6 +6,7 @@ import {
   type FilaFoto,
   type FilaMedicao,
   type FilaStore,
+  type FilaTarefaVinculo,
   type SincronizarDeps,
 } from "./campoOfflineQueue";
 
@@ -34,12 +35,21 @@ const medicao = (over: Partial<FilaMedicao> = {}): FilaMedicao => ({
   ...over,
 });
 
+const tarefaVinculo = (over: Partial<FilaTarefaVinculo> = {}): FilaTarefaVinculo => ({
+  tarefaId: "tarefa-1",
+  resultado: "avancou",
+  observacao: "",
+  enviada: false,
+  ...over,
+});
+
 const item = (over: Partial<FilaDiaItem> = {}): FilaDiaItem => ({
   id: "item-1",
   criadoEm: 1000,
   dia: dia(),
   fotos: [],
   medicoes: [],
+  tarefas: [],
   tentativas: 0,
   ...over,
 });
@@ -48,6 +58,7 @@ const depsOk = (): SincronizarDeps => ({
   salvarRdo: async () => ({ ok: true, rdoId: "rdo-1" }),
   subirFoto: async () => ({ ok: true }),
   registrarMedicao: async () => ({ ok: true }),
+  registrarTarefa: async () => ({ ok: true }),
 });
 
 function memStore(itens: FilaDiaItem[] = []): FilaStore {
@@ -153,17 +164,51 @@ describe("sincronizarItem", () => {
     expect(chamadas).toBe(1);
   });
 
-  it("foto e medição falham de forma independente: cada uma guarda seu próprio progresso", async () => {
+  it("registra os vínculos de tarefa pendentes quando tudo dá certo", async () => {
+    let chamadas = 0;
+    const deps: SincronizarDeps = {
+      ...depsOk(),
+      registrarTarefa: async () => {
+        chamadas++;
+        return { ok: true };
+      },
+    };
+    const r = await sincronizarItem(
+      item({ tarefas: [tarefaVinculo(), tarefaVinculo({ tarefaId: "tarefa-2", resultado: "concluiu" })] }),
+      deps
+    );
+    expect(r.ok).toBe(true);
+    expect(chamadas).toBe(2);
+  });
+
+  it("retry não reenvia vínculo de tarefa já marcado enviado (idempotência)", async () => {
+    let chamadas = 0;
+    const deps: SincronizarDeps = {
+      ...depsOk(),
+      registrarTarefa: async () => {
+        chamadas++;
+        return { ok: true };
+      },
+    };
+    const jaEnviada = item({ rdoId: "rdo-1", tarefas: [tarefaVinculo({ enviada: true }), tarefaVinculo({ enviada: false })] });
+    const r = await sincronizarItem(jaEnviada, deps);
+    expect(r.ok).toBe(true);
+    expect(chamadas).toBe(1);
+  });
+
+  it("foto, medição e tarefa falham de forma independente: cada uma guarda seu próprio progresso", async () => {
     const deps: SincronizarDeps = {
       ...depsOk(),
       subirFoto: async () => ({ ok: false }),
       registrarMedicao: async () => ({ ok: true }),
+      registrarTarefa: async () => ({ ok: false }),
     };
-    const r = await sincronizarItem(item({ fotos: [foto()], medicoes: [medicao()] }), deps);
+    const r = await sincronizarItem(item({ fotos: [foto()], medicoes: [medicao()], tarefas: [tarefaVinculo()] }), deps);
     expect(r.ok).toBe(false);
     if (!r.ok) {
       expect(r.item.fotos[0].enviada).toBe(false); // foto falhou, continua pendente
       expect(r.item.medicoes[0].enviada).toBe(true); // medição não foi afetada pela falha da foto
+      expect(r.item.tarefas[0].enviada).toBe(false); // tarefa falhou, independente das outras
     }
   });
 });
