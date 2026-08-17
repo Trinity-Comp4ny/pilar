@@ -8,6 +8,7 @@ import {
   checkRateLimit,
   callGeminiStructured,
   recordAiUsage,
+  recordAgentRun,
   type AiRequest,
 } from "../_shared/ai-client.ts";
 
@@ -295,7 +296,9 @@ serve(
 
       const files = [{ mimeType, dataBase64: arquivoBase64 }];
       const tamanhoKb = Math.round((arquivoBase64.length * 3) / 4 / 1024);
-      console.log(`[ai-cotacao-import] modo=${modoPedido} lendo ${mimeType} (~${tamanhoKb} KB) para empresa ${empresaId}`);
+      console.log(
+        `[ai-cotacao-import] modo=${modoPedido} lendo ${mimeType} (~${tamanhoKb} KB) para empresa ${empresaId}`
+      );
 
       let tokensEntrada = 0;
       let tokensSaida = 0;
@@ -320,7 +323,9 @@ serve(
         chamadas += clf.attempts;
         modoEfetivo = clf.data.tipo;
         classificacao = { tipo: clf.data.tipo, confianca: clf.data.confianca ?? 0.7, motivo: clf.data.motivo ?? null };
-        console.log(`[ai-cotacao-import] classificado como '${modoEfetivo}' (${clf.data.confianca}) — ${clf.data.motivo ?? ""}`);
+        console.log(
+          `[ai-cotacao-import] classificado como '${modoEfetivo}' (${clf.data.confianca}) — ${clf.data.motivo ?? ""}`
+        );
       } else {
         modoEfetivo = modoPedido;
       }
@@ -332,6 +337,17 @@ serve(
 
       console.log(`[ai-cotacao-import] modo=${ex.modo} concluído em ${chamadas} chamada(s)`);
       await recordAiUsage(adminClient, empresaId, "cotacao-import", tokensEntrada, tokensSaida, chamadas);
+      await recordAgentRun(
+        adminClient,
+        { systemPrompt: "", userMessage: contexto, empresaId, tipo: "cotacao-import" },
+        {
+          conteudo: { modo: ex.modo, classificacao, ...ex.data },
+          resumo: `Cotação de fornecedor (${ex.modo})`,
+          tokensEntrada,
+          tokensSaida,
+        },
+        user.id
+      );
 
       return jsonResponse({ modo: ex.modo, classificacao, ...ex.data }, 200, req);
     } catch (err) {

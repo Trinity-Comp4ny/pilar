@@ -3,6 +3,7 @@ import { withSentry } from "../_shared/sentry.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { isUUID, jsonResponse, optionsResponse, safeErrorResponse } from "../_shared/cors.ts";
 import { createLogger } from "../_shared/logger.ts";
+import { checkDbRateLimit, getClientKey } from "../_shared/db-rate-limit.ts";
 
 const log = createLogger("portal-aprovar-proposta");
 
@@ -11,16 +12,33 @@ serve(
     if (req.method === "OPTIONS") return optionsResponse(req);
     if (req.method !== "POST") return safeErrorResponse(405, "Método não permitido", req);
 
+    const admin = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+    );
+
+    // Público (verify_jwt = false), ação que muda estado (aprova proposta). Sem
+    // limite generoso o bastante pra um cliente real (aprova 1x), mas baixo o
+    // bastante pra travar varredura de token/projeto_id. DB-backed cross-instance.
+    const rl = await checkDbRateLimit(admin, {
+      bucket: "portal_aprovar_proposta",
+      key: getClientKey(req),
+      max: 10,
+      windowSeconds: 60,
+    });
+    if (rl.rpcError) {
+      log.error("rate limit check failed — rejecting request (fail-closed)", { rpcError: rl.rpcError });
+      return safeErrorResponse(503, "Serviço temporariamente indisponível", req);
+    }
+    if (!rl.allowed) {
+      return safeErrorResponse(429, "Muitas tentativas. Aguarde antes de tentar novamente.", req);
+    }
+
     try {
       const { token, projeto_id } = await req.json();
 
       if (!token || typeof token !== "string") return safeErrorResponse(400, "token obrigatório", req);
       if (!isUUID(projeto_id)) return safeErrorResponse(400, "projeto_id inválido", req);
-
-      const admin = createClient(
-        Deno.env.get("SUPABASE_URL") ?? "",
-        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-      );
 
       // Valida sessão via RPC read-only: hash do token (sha256) + expiração
       // deslizante, sem rotacionar. O token_sessao é guardado hasheado; comparar

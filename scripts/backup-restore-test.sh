@@ -79,7 +79,12 @@ run_query() {
     psql "$TEST_DB_URL" -At -c "$1"
 }
 
-declare -A COUNTS
+# Arrays associativos (declare -A) só existem a partir do bash 4. O bash padrão
+# do macOS é o 3.2 (licença GPLv2 travada) — um script de DR que só roda com um
+# bash "de brew" instalado à parte é um risco na hora do incidente de verdade.
+# Duas listas paralelas por índice fazem o mesmo, compatível com bash 3.2+.
+COUNT_NAMES=()
+COUNT_VALUES=()
 FAILS=()
 
 CRITICAL_TABLES=(profiles empresas projetos lancamentos)
@@ -90,7 +95,8 @@ for tbl in "${CRITICAL_TABLES[@]}"; do
         FAILS+=("tabela $tbl não existe ou inacessível")
         continue
     fi
-    COUNTS[$tbl]=$count
+    COUNT_NAMES+=("$tbl")
+    COUNT_VALUES+=("$count")
     if [[ "$count" -le 0 ]]; then
         FAILS+=("$tbl tem $count linhas (esperado > 0)")
     fi
@@ -98,7 +104,9 @@ for tbl in "${CRITICAL_TABLES[@]}"; do
 done
 
 echo ">> Validando RLS habilitado..."
-RLS_TABLES=(profiles empresas projetos lancamentos data_deletion_requests audit_logs)
+# lancamentos é view (spec 033/ADR 0017, security_invoker) desde 17/08 — não tem
+# relrowsecurity próprio. RLS de verdade mora nas tabelas de origem.
+RLS_TABLES=(profiles empresas projetos receitas despesas data_deletion_requests audit_logs)
 for tbl in "${RLS_TABLES[@]}"; do
     rls=$(run_query "SELECT relrowsecurity FROM pg_class WHERE oid = 'public.$tbl'::regclass;" 2>>"$LOG_FILE" || echo "")
     if [[ "$rls" != "t" ]]; then
@@ -128,8 +136,8 @@ echo "================ DR drill report ================"
 echo "Dump:               $BACKUP_DUMP ($DUMP_BYTES bytes)"
 echo "Restore duration:   ${RESTORE_DURATION}s"
 echo "Total duration:     ${TOTAL_DURATION}s"
-for tbl in "${CRITICAL_TABLES[@]}"; do
-    echo "  count($tbl) = ${COUNTS[$tbl]:-N/A}"
+for i in "${!COUNT_NAMES[@]}"; do
+    echo "  count(${COUNT_NAMES[$i]}) = ${COUNT_VALUES[$i]}"
 done
 echo "================================================="
 

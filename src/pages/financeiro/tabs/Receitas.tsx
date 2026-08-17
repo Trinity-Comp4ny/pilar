@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,7 +40,12 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { AsaasCobrancaButton } from "@/components/asaas/AsaasCobrancaButton";
 import { AsaasConfigForm } from "@/components/asaas/AsaasConfigForm";
 import { CobrarPorEmailButton } from "@/components/CobrarPorEmailButton";
-import { useFinanceItems, type ReceitaItem } from "../hooks/useFinanceItems";
+import {
+  useFinanceItemsPaginados,
+  useFinanceItemsAux,
+  type ReceitaItem,
+  type FinanceItemStatusFilter,
+} from "../hooks/useFinanceItems";
 import { useFinanceItemMutations } from "../hooks/useFinanceItemMutations";
 import { useFinanceItemForm } from "../hooks/useFinanceItemForm";
 import { FinanceItemForm, ParcelaBanner, DeleteGroupDialog } from "../components/FinanceItemForm";
@@ -50,7 +55,19 @@ const getReceitaDisplayDate = (r: ReceitaItem): string =>
 
 export default function Receitas() {
   const { canEdit } = useFeatureAccess("financeiro");
-  const { items: receitasRaw, aux, refetch, isError } = useFinanceItems("receita");
+
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<FinanceItemStatusFilter>("todos");
+
+  const {
+    items: receitasRaw,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+    isError,
+    refetch,
+  } = useFinanceItemsPaginados({ tipo: "receita", search: searchTerm, status: statusFilter });
+  const { aux } = useFinanceItemsAux("receita");
   const { categorias, contas, projetos, clientes } = aux;
 
   const { saveReceita, deleteOne, deleteGroup, marcarRecebida, marcarPendente } = useFinanceItemMutations("receita");
@@ -60,30 +77,12 @@ export default function Receitas() {
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [selectedReceita, setSelectedReceita] = useState<ReceitaItem | null>(null);
 
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("todos");
-
   const form = useForm<ReceitaFormData>({
     resolver: zodResolver(receitaSchema),
     defaultValues: receitaDefaultValues,
   });
 
-  const receitas = useMemo(() => receitasRaw, [receitasRaw]);
-
-  const receitasFiltradas = useMemo(() => {
-    return receitas.filter((r) => {
-      const matchSearch =
-        !searchTerm ||
-        r.descricao.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (r.cliente_nome || "").toLowerCase().includes(searchTerm.toLowerCase());
-      const matchStatus =
-        statusFilter === "todos" ||
-        (statusFilter === "recebido" && r.status === "Recebido") ||
-        (statusFilter === "pendente" && r.status === "Pendente") ||
-        (statusFilter === "atrasado" && r.status === "Atrasado");
-      return matchSearch && matchStatus;
-    });
-  }, [receitas, searchTerm, statusFilter]);
+  const receitas = receitasRaw;
 
   const onSave = async (formData: ReceitaFormData) => {
     await saveReceita.mutateAsync({ formData, selected: selectedReceita });
@@ -392,7 +391,7 @@ export default function Receitas() {
           <div>
             <CardTitle className="text-lg font-medium tracking-tight">Lista de Receitas</CardTitle>
             <CardDescription className="text-sm text-black/60 mt-1">
-              Total de {receitas.length} receita(s) cadastrada(s)
+              {receitas.length} receita(s) carregada(s){hasNextPage ? " — role para ver mais" : ""}
             </CardDescription>
           </div>
           <div className="flex gap-2">
@@ -478,7 +477,7 @@ export default function Receitas() {
               onChange={(e) => setSearchTerm(e.target.value)}
               className="h-8 max-w-xs text-sm"
             />
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as FinanceItemStatusFilter)}>
               <SelectTrigger className="h-8 w-[140px] text-xs">
                 <SelectValue />
               </SelectTrigger>
@@ -489,9 +488,6 @@ export default function Receitas() {
                 <SelectItem value="atrasado">Atrasado</SelectItem>
               </SelectContent>
             </Select>
-            <span className="text-xs text-muted-foreground ml-auto">
-              {receitasFiltradas.length} de {receitas.length}
-            </span>
           </div>
           <div className="overflow-x-auto w-full">
             <Table>
@@ -510,7 +506,7 @@ export default function Receitas() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {receitasFiltradas.map((receita) => (
+                {receitas.map((receita) => (
                   <TableRow
                     key={receita.id}
                     className="cursor-pointer hover:bg-muted"
@@ -609,6 +605,13 @@ export default function Receitas() {
               </TableBody>
             </Table>
           </div>
+          {hasNextPage && (
+            <div className="flex justify-center py-4 border-t">
+              <Button variant="outline" size="sm" onClick={() => fetchNextPage()} disabled={isFetchingNextPage}>
+                {isFetchingNextPage ? "Carregando..." : "Carregar mais"}
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
 

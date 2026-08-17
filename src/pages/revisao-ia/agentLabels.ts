@@ -16,6 +16,20 @@ const TYPE_LABEL: Record<string, string> = {
   fechar_folha: "Fechamento de folha",
   acao: "Ação",
   consulta: "Consulta",
+  // IA Hub (spec 045) — copilots dormentes que gravam em agent_runs só como rastro.
+  aditivo_copilot: "Aditivo (copiloto)",
+  diagnostico_precificacao: "Diagnóstico de precificação",
+  documentos: "Documento gerado",
+  fechamento_mensal: "Fechamento mensal",
+  pauta_reuniao: "Pauta de reunião",
+  planejador_contratacao: "Planejamento de contratação",
+  previsao_atraso: "Previsão de atraso",
+  radar_cliente: "Radar de clientes",
+  relatorio_executivo: "Relatório executivo",
+  simulacao_impacto: "Simulação de impacto",
+  perda_cliente: "Risco de perda de cliente",
+  "cotacao-import": "Importação de cotação",
+  "import-financeiro": "Importação financeira",
 };
 
 export function tipoLabel(agentType: string): string {

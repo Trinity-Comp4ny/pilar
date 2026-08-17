@@ -4,6 +4,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 import { isUUID, jsonResponse, optionsResponse, safeErrorResponse } from "../_shared/cors.ts";
 import { createLogger } from "../_shared/logger.ts";
+import { checkDbRateLimit, getClientKey } from "../_shared/db-rate-limit.ts";
 
 const log = createLogger("portal-entrega-download");
 
@@ -21,6 +22,28 @@ serve(
   withSentry("portal-entrega-download", async (req) => {
     if (req.method === "OPTIONS") return optionsResponse(req);
     if (req.method !== "POST") return safeErrorResponse(405, "Method not allowed", req);
+
+    const adminClient = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+    );
+
+    // Público (verify_jwt = false), gera signed URL de download a partir de um
+    // token. Sem limite, um IP consegue varrer entrega_id/token. DB-backed
+    // cross-instance; 30/min cobre baixar vários arquivos numa sessão normal.
+    const rl = await checkDbRateLimit(adminClient, {
+      bucket: "portal_entrega_download",
+      key: getClientKey(req),
+      max: 30,
+      windowSeconds: 60,
+    });
+    if (rl.rpcError) {
+      log.error("rate limit check failed — rejecting request (fail-closed)", { rpcError: rl.rpcError });
+      return safeErrorResponse(503, "Serviço temporariamente indisponível", req);
+    }
+    if (!rl.allowed) {
+      return safeErrorResponse(429, "Muitas tentativas. Aguarde antes de tentar novamente.", req);
+    }
 
     try {
       const payload = await req.json();
@@ -53,11 +76,6 @@ serve(
       }
 
       if (!empresa_id) return safeErrorResponse(401, "Contexto sem escopo", req);
-
-      const adminClient = createClient(
-        Deno.env.get("SUPABASE_URL") ?? "",
-        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-      );
 
       const { data: entrega, error: entregaError } = await adminClient
         .from("portal_entregas")

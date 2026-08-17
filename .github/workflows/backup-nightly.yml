@@ -1,0 +1,70 @@
+name: Backup noturno do banco
+
+# Mitigação gratuita enquanto o projeto está no plano free da Supabase (sem
+# backup automático, PITR desligado — ver docs/operations/DISASTER_RECOVERY.md).
+# Não substitui PITR de verdade (não dá recovery point-in-time, só um snapshot
+# por dia), mas é infinitamente melhor que zero backup, sem custo adicional.
+#
+# Cron/schedule só dispara a partir da branch DEFAULT (main) — mesma pegadinha
+# que deixou o e2e-staging.yml sem rodar por meses. Depois de mergear em
+# staging, este workflow só liga de verdade quando promovido pra main.
+
+on:
+  schedule:
+    - cron: "0 6 * * *" # 03:00 BRT, fora do horário de uso
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write # abre issue quando o cron falha (notify-cron-failure)
+
+env:
+  SUPABASE_CLI_VERSION: "2.109.1"
+
+jobs:
+  backup:
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [Staging, Production]
+    runs-on: ubuntu-latest
+    environment: ${{ matrix.target }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: supabase/setup-cli@v3
+        with:
+          version: ${{ env.SUPABASE_CLI_VERSION }}
+
+      - name: Dump do banco (schema + dados)
+        run: supabase db dump --db-url "$SUPABASE_DB_URL" -f dump.sql
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+
+      - name: Criptografar
+        # AES-256-CBC simétrico com PBKDF2 (openssl já vem no runner). O dump em
+        # texto puro nunca é escrito em disco além deste passo, nem sobe como
+        # artifact — só o .enc.
+        run: |
+          openssl enc -aes-256-cbc -pbkdf2 -salt \
+            -in dump.sql -out "dump-${{ matrix.target }}.sql.enc" \
+            -k "$BACKUP_ENCRYPTION_KEY"
+          rm -f dump.sql
+        env:
+          BACKUP_ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
+
+      - name: Upload do backup criptografado
+        uses: actions/upload-artifact@v4
+        with:
+          name: backup-${{ matrix.target }}-${{ github.run_id }}
+          path: dump-${{ matrix.target }}.sql.enc
+          retention-days: 30
+
+      # Sem isto, o cron pode quebrar em silêncio por semanas (mesma lição do
+      # itau-sync/bradesco-sync) e o "backup" vira uma falsa sensação de segurança.
+      - name: Notificar falha
+        if: failure()
+        uses: ./.github/actions/notify-cron-failure
+        with:
+          job-name: Backup noturno (${{ matrix.target }})
+          token: ${{ github.token }}
