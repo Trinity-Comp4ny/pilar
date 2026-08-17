@@ -289,6 +289,14 @@ jobs:
         run: scripts/retry-on-network-error.sh supabase functions deploy --project-ref "$SUPABASE_PROJECT_REF"
         env:
           SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+      - name: Marcar release nas edge functions (health + Sentry)
+        # Sem isso, health/index.ts e _shared/sentry.ts caem no fallback "unknown"/
+        # undefined pra sempre: nenhum workflow setava RELEASE_SHA nem SENTRY_RELEASE
+        # nos secrets do projeto. `secrets set` é global ao projeto (não precisa de
+        # redeploy) e vale pro próximo cold start de cada function.
+        run: supabase secrets set RELEASE_SHA="$GITHUB_SHA" SENTRY_RELEASE="$GITHUB_SHA" --project-ref "$SUPABASE_PROJECT_REF"
+        env:
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
       - name: Smoke test (health)
         # Deploy verde precisa significar "responde", não só "aplicou".
         # health não está declarado em config.toml, então exige JWT: usa a anon key.
@@ -412,6 +420,11 @@ jobs:
         # "Import 'https://esm.sh/@supabase/supabase-js@2' failed: 522"). O wrapper só
         # repete em erro de transporte; erro de bundle real falha na primeira.
         run: scripts/retry-on-network-error.sh supabase functions deploy --project-ref "$SUPABASE_PROJECT_REF"
+        env:
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+      - name: Marcar release nas edge functions (health + Sentry)
+        # Ver comentário equivalente no job de staging.
+        run: supabase secrets set RELEASE_SHA="$GITHUB_SHA" SENTRY_RELEASE="$GITHUB_SHA" --project-ref "$SUPABASE_PROJECT_REF"
         env:
           SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
       - name: Smoke test (health)
