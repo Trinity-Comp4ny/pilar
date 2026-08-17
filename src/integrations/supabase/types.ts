@@ -5525,6 +5525,10 @@ export type Database = {
     Views: {
       lancamentos: {
         Row: {
+          asaas_billing_type: string | null
+          asaas_payment_id: string | null
+          asaas_payment_status: string | null
+          asaas_payment_url: string | null
           cartao_id: string | null
           categoria_id: string | null
           categoria_nome: string | null
@@ -5554,8 +5558,10 @@ export type Database = {
           observacao: string | null
           parcela_numero: number | null
           parcela_total: number | null
+          periodicidade: string | null
           projeto_codigo: string | null
           projeto_id: string | null
+          recorrente: boolean | null
           status: string | null
           tags: string[] | null
           tipo: string | null
@@ -5914,6 +5920,10 @@ export type Database = {
         Returns: Json
       }
       _feature_catalog: { Args: never; Returns: string[] }
+      _finance_display_date: {
+        Args: { p_efetivacao: string; p_status: string; p_vencimento: string }
+        Returns: string
+      }
       _notif_gestao: { Args: { p_empresa: string }; Returns: string[] }
       _notif_resp_disciplina: {
         Args: { p_disciplina: string }
@@ -6180,6 +6190,36 @@ export type Database = {
       get_cliente_projetos:
         | { Args: never; Returns: Json[] }
         | { Args: { p_token?: string }; Returns: Json[] }
+      get_finance_categorias: {
+        Args: { p_data_fim?: string; p_data_inicio?: string; p_tipo: string }
+        Returns: {
+          categoria_nome: string
+          count: number
+          valor: number
+        }[]
+      }
+      get_finance_chart_mensal: {
+        Args: { p_data_fim?: string; p_data_inicio?: string }
+        Returns: {
+          despesas: number
+          mes: string
+          receitas: number
+          sort_key: string
+        }[]
+      }
+      get_finance_chart_periodo: {
+        Args: { p_data_fim?: string; p_data_inicio?: string }
+        Returns: {
+          bucket_label: string
+          despesas: number
+          receitas: number
+          sort_key: string
+        }[]
+      }
+      get_finance_stats: {
+        Args: { p_data_fim?: string; p_data_inicio?: string }
+        Returns: Json
+      }
       get_financial_chart_data: {
         Args: {
           p_data_fim: string
@@ -6249,6 +6289,10 @@ export type Database = {
           p_valor_min?: number
         }
         Returns: {
+          asaas_billing_type: string | null
+          asaas_payment_id: string | null
+          asaas_payment_status: string | null
+          asaas_payment_url: string | null
           cartao_id: string | null
           categoria_id: string | null
           categoria_nome: string | null
@@ -6278,8 +6322,10 @@ export type Database = {
           observacao: string | null
           parcela_numero: number | null
           parcela_total: number | null
+          periodicidade: string | null
           projeto_codigo: string | null
           projeto_id: string | null
+          recorrente: boolean | null
           status: string | null
           tags: string[] | null
           tipo: string | null
