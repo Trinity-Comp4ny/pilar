@@ -65,6 +65,13 @@ export function LandingHeader({ onScrollToTop }: LandingHeaderProps) {
             >
               Preços
             </a>
+            <a
+              href="#faq"
+              onClick={handleSectionLink("faq")}
+              className="text-[11px] font-medium uppercase tracking-[0.18em] text-slate-600 relative after:absolute after:bottom-[-3px] after:left-0 after:h-px after:w-0 after:bg-brand hover:after:w-full after:transition-all after:duration-300"
+            >
+              FAQ
+            </a>
           </nav>
 
           <div className="hidden md:flex items-center gap-4 justify-end">
@@ -107,6 +114,9 @@ export function LandingHeader({ onScrollToTop }: LandingHeaderProps) {
             </a>
             <a href={`${APP_URL}/planos`} className="text-lg font-medium text-slate-600">
               Preços
+            </a>
+            <a href="#faq" onClick={handleSectionLink("faq")} className="text-lg font-medium text-slate-600">
+              FAQ
             </a>
             <a
               href={`${APP_URL}/cadastro`}
