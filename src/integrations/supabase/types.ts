@@ -3323,61 +3323,6 @@ export type Database = {
           },
         ]
       }
-      obra_rdo_tarefa: {
-        Row: {
-          created_at: string
-          created_by: string
-          empresa_id: string
-          id: string
-          observacao: string | null
-          rdo_id: string
-          resultado: string
-          tarefa_id: string
-        }
-        Insert: {
-          created_at?: string
-          created_by?: string
-          empresa_id: string
-          id?: string
-          observacao?: string | null
-          rdo_id: string
-          resultado: string
-          tarefa_id: string
-        }
-        Update: {
-          created_at?: string
-          created_by?: string
-          empresa_id?: string
-          id?: string
-          observacao?: string | null
-          rdo_id?: string
-          resultado?: string
-          tarefa_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "obra_rdo_tarefa_empresa_id_fkey"
-            columns: ["empresa_id"]
-            isOneToOne: false
-            referencedRelation: "empresas"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "obra_rdo_tarefa_rdo_id_fkey"
-            columns: ["rdo_id"]
-            isOneToOne: false
-            referencedRelation: "obra_rdo"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "obra_rdo_tarefa_tarefa_id_fkey"
-            columns: ["tarefa_id"]
-            isOneToOne: false
-            referencedRelation: "tarefas"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       obra_rdo_foto: {
         Row: {
           campo_account_id: string | null
@@ -3504,6 +3449,61 @@ export type Database = {
             columns: ["rdo_id"]
             isOneToOne: false
             referencedRelation: "obra_rdo"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      obra_rdo_tarefa: {
+        Row: {
+          created_at: string
+          created_by: string
+          empresa_id: string
+          id: string
+          observacao: string | null
+          rdo_id: string
+          resultado: string
+          tarefa_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string
+          empresa_id: string
+          id?: string
+          observacao?: string | null
+          rdo_id: string
+          resultado: string
+          tarefa_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          empresa_id?: string
+          id?: string
+          observacao?: string | null
+          rdo_id?: string
+          resultado?: string
+          tarefa_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "obra_rdo_tarefa_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_rdo_tarefa_rdo_id_fkey"
+            columns: ["rdo_id"]
+            isOneToOne: false
+            referencedRelation: "obra_rdo"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_rdo_tarefa_tarefa_id_fkey"
+            columns: ["tarefa_id"]
+            isOneToOne: false
+            referencedRelation: "tarefas"
             referencedColumns: ["id"]
           },
         ]

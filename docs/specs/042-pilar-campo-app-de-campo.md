@@ -1,7 +1,7 @@
 # SPEC: Pilar Campo — app de campo (offline)
 
 **Data:** 2026-08-13
-**Status:** Em implementação (fase 1: auth)
+**Status:** Entregue (fases 1-5)
 **Autor:** Matheus (design partner VRZ)
 **Módulo:** obras
 
