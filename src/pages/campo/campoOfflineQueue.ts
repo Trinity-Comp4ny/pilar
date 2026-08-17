@@ -21,6 +21,19 @@ export interface FilaMedicao {
   enviada: boolean;
 }
 
+/**
+ * Vínculo com uma tarefa EXISTENTE do cronograma (spec 040). Criar tarefa nova
+ * exige rede (não entra na fila): reconciliar um id local com o id real do
+ * servidor antes de vincular adicionaria uma complexidade desproporcional a um
+ * caso raro — o cronograma normalmente já existe antes do pedreiro reportar.
+ */
+export interface FilaTarefaVinculo {
+  tarefaId: string;
+  resultado: "avancou" | "concluiu" | "parou";
+  observacao: string;
+  enviada: boolean;
+}
+
 export interface FilaDiaPayload {
   p_data: string;
   p_clima: string | null;
@@ -37,6 +50,7 @@ export interface FilaDiaItem {
   dia: FilaDiaPayload;
   fotos: FilaFoto[];
   medicoes: FilaMedicao[];
+  tarefas: FilaTarefaVinculo[];
   /** Preenchido após o primeiro `salvarRdo` bem-sucedido; pula o upsert no retry. */
   rdoId?: string;
   tentativas: number;
@@ -54,6 +68,7 @@ export interface SincronizarDeps {
   salvarRdo(dia: FilaDiaPayload): Promise<{ ok: boolean; rdoId?: string; erro?: string }>;
   subirFoto(rdoId: string, foto: FilaFoto): Promise<{ ok: boolean; erro?: string }>;
   registrarMedicao(rdoId: string, medicao: FilaMedicao): Promise<{ ok: boolean; erro?: string }>;
+  registrarTarefa(rdoId: string, vinculo: FilaTarefaVinculo): Promise<{ ok: boolean; erro?: string }>;
 }
 
 /**
@@ -93,8 +108,16 @@ export async function sincronizarItem(
     else algumaFalhou = true;
   }
 
+  const tarefas = [...item.tarefas];
+  for (let i = 0; i < tarefas.length; i++) {
+    if (tarefas[i].enviada) continue;
+    const r = await deps.registrarTarefa(rdoId, tarefas[i]);
+    if (r.ok) tarefas[i] = { ...tarefas[i], enviada: true };
+    else algumaFalhou = true;
+  }
+
   if (algumaFalhou) {
-    return { ok: false, item: { ...item, rdoId, fotos, medicoes, tentativas: item.tentativas + 1 } };
+    return { ok: false, item: { ...item, rdoId, fotos, medicoes, tarefas, tentativas: item.tentativas + 1 } };
   }
   return { ok: true };
 }
