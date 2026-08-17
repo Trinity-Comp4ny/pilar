@@ -1,19 +1,40 @@
 import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ArrowLeft, Camera, Loader2, Ruler, X } from "lucide-react";
+import { ArrowLeft, Camera, Loader2, Plus, Ruler, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { callUntypedRpc } from "@/lib/supabaseRpc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { CLIMA_OPCOES } from "@/lib/obras";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { getCampoToken } from "./useCampoAuth";
 import { filaOfflineDb } from "./campoOfflineDb";
-import type { FilaDiaPayload, FilaFoto, FilaMedicao } from "./campoOfflineQueue";
+import type { FilaDiaPayload, FilaFoto, FilaMedicao, FilaTarefaVinculo } from "./campoOfflineQueue";
+
+interface TarefaCronograma {
+  id: string;
+  titulo: string;
+  status: string;
+  frente_nome: string | null;
+}
+
+type ResultadoTarefa = "avancou" | "concluiu" | "parou";
+const RESULTADO_OPCOES: ReadonlyArray<{ value: ResultadoTarefa; label: string }> = [
+  { value: "avancou", label: "Avançou" },
+  { value: "concluiu", label: "Concluiu" },
+  { value: "parou", label: "Parou" },
+];
+interface SelTarefa {
+  resultado: ResultadoTarefa;
+  observacao: string;
+}
 
 const hoje = () => new Date().toISOString().slice(0, 10);
 
@@ -64,7 +85,29 @@ export default function CampoRegistrarDia() {
   const [ocorrencias, setOcorrencias] = useState("");
   const [fotos, setFotos] = useState<FotoLocal[]>([]);
   const [medicoes, setMedicoes] = useState<MedicaoLocal[]>([]);
+  const [selTarefas, setSelTarefas] = useState<Record<string, SelTarefa>>({});
+  const [novaTarefaTitulo, setNovaTarefaTitulo] = useState("");
+  const [criandoTarefa, setCriandoTarefa] = useState(false);
+  const [tarefasExtras, setTarefasExtras] = useState<TarefaCronograma[]>([]);
   const [saving, setSaving] = useState(false);
+
+  // Cacheada (react-query): se a conexão cair bem na hora de registrar, a lista
+  // já buscada continua disponível — só a criação de tarefa nova exige rede.
+  const { data: tarefasServidor = [] } = useQuery({
+    queryKey: ["campo_tarefas"],
+    queryFn: async (): Promise<TarefaCronograma[]> => {
+      const token = getCampoToken();
+      if (!token) return [];
+      const { data, error } = await callUntypedRpc<{ ok: boolean; tarefas?: TarefaCronograma[] }>(
+        "campo_listar_tarefas",
+        { p_token: token }
+      );
+      if (error || !data?.ok) return [];
+      return data.tarefas ?? [];
+    },
+    staleTime: 1000 * 60 * 5,
+  });
+  const tarefas = [...tarefasServidor, ...tarefasExtras];
 
   const addFotos = (files: FileList | null) => {
     if (!files) return;
@@ -84,6 +127,50 @@ export default function CampoRegistrarDia() {
   const removerMedicao = (i: number) => setMedicoes((prev) => prev.filter((_, k) => k !== i));
   const setMedicaoCampo = (i: number, campo: keyof MedicaoLocal, valor: string) =>
     setMedicoes((prev) => prev.map((m, k) => (k === i ? { ...m, [campo]: valor } : m)));
+
+  const toggleTarefa = (id: string) => {
+    setSelTarefas((prev) => {
+      const next = { ...prev };
+      if (next[id]) delete next[id];
+      else next[id] = { resultado: "avancou", observacao: "" };
+      return next;
+    });
+  };
+  const setResultadoTarefa = (id: string, resultado: ResultadoTarefa) =>
+    setSelTarefas((prev) => ({ ...prev, [id]: { ...prev[id], resultado } }));
+  const setObsTarefa = (id: string, observacao: string) =>
+    setSelTarefas((prev) => ({ ...prev, [id]: { ...prev[id], observacao } }));
+
+  // Criar tarefa exige rede: precisa do id real do servidor pra já poder ser
+  // vinculada no mesmo envio (ver nota em campoOfflineQueue.ts sobre porquê a
+  // fila offline não cobre este caso).
+  const criarTarefa = async () => {
+    const titulo = novaTarefaTitulo.trim();
+    if (!titulo) return;
+    const token = getCampoToken();
+    if (!token || !navigator.onLine) {
+      toast.error("Precisa de internet para criar uma tarefa nova", {
+        description: "Sem sinal, marque uma tarefa que já existe.",
+      });
+      return;
+    }
+    setCriandoTarefa(true);
+    try {
+      const { data, error } = await callUntypedRpc<{ ok: boolean; tarefa_id?: string; erro?: string }>(
+        "campo_criar_tarefa",
+        { p_token: token, p_titulo: titulo }
+      );
+      if (error || !data?.ok || !data.tarefa_id) {
+        toast.error("Não foi possível criar a tarefa", { description: data?.erro ?? "Tente de novo" });
+        return;
+      }
+      setTarefasExtras((prev) => [...prev, { id: data.tarefa_id!, titulo, status: "a_fazer", frente_nome: null }]);
+      setSelTarefas((prev) => ({ ...prev, [data.tarefa_id!]: { resultado: "avancou", observacao: "" } }));
+      setNovaTarefaTitulo("");
+    } finally {
+      setCriandoTarefa(false);
+    }
+  };
 
   const salvar = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -109,6 +196,13 @@ export default function CampoRegistrarDia() {
       .filter((m) => m.item.trim() !== "" && m.quantidade.trim() !== "" && m.unidade.trim() !== "")
       .map((m) => ({ item: m.item.trim(), quantidade: Number(m.quantidade), unidade: m.unidade.trim(), enviada: false }));
 
+    const tarefasSelecionadas: FilaTarefaVinculo[] = Object.entries(selTarefas).map(([tarefaId, s]) => ({
+      tarefaId,
+      resultado: s.resultado,
+      observacao: s.observacao.trim(),
+      enviada: false,
+    }));
+
     // Comprime antes de decidir online/offline: o arquivo original some quando
     // sair da tela, então a versão a subir precisa estar pronta nos dois casos.
     let fotosComprimidas: FilaFoto[] = [];
@@ -119,7 +213,7 @@ export default function CampoRegistrarDia() {
       );
 
       if (!navigator.onLine) {
-        await enfileirarOffline(dia, fotosComprimidas, medicoesValidas);
+        await enfileirarOffline(dia, fotosComprimidas, medicoesValidas, tarefasSelecionadas);
         toast.success("Sem conexão agora", {
           description: "Salvo no aparelho. Envia sozinho quando a internet voltar.",
         });
@@ -173,8 +267,24 @@ export default function CampoRegistrarDia() {
         }
       }
 
+      const tarefasAtualizadas = [...tarefasSelecionadas];
+      for (let i = 0; i < tarefasAtualizadas.length; i++) {
+        const { data: tRes, error: tErr } = await callUntypedRpc<{ ok: boolean }>("campo_registrar_tarefa_rdo", {
+          p_token: token,
+          p_rdo_id: res.rdo_id,
+          p_tarefa_id: tarefasAtualizadas[i].tarefaId,
+          p_resultado: tarefasAtualizadas[i].resultado,
+          p_observacao: tarefasAtualizadas[i].observacao,
+        });
+        if (!tErr && tRes?.ok) {
+          tarefasAtualizadas[i] = { ...tarefasAtualizadas[i], enviada: true };
+        } else {
+          falhas++;
+        }
+      }
+
       if (falhas > 0) {
-        await enfileirarOffline(dia, fotosAtualizadas, medicoesAtualizadas, res.rdo_id);
+        await enfileirarOffline(dia, fotosAtualizadas, medicoesAtualizadas, tarefasAtualizadas, res.rdo_id);
         toast.warning(`Dia salvo, mas ${falhas} item${falhas > 1 ? "ns" : ""} não subiu`, {
           description: "Vamos tentar de novo automaticamente.",
         });
@@ -184,7 +294,7 @@ export default function CampoRegistrarDia() {
       navigate("/campo", { replace: true });
     } catch {
       // Falha de rede no meio do caminho: não perde o que foi preenchido.
-      await enfileirarOffline(dia, fotosComprimidas, medicoesValidas);
+      await enfileirarOffline(dia, fotosComprimidas, medicoesValidas, tarefasSelecionadas);
       toast.success("Sem conexão agora", {
         description: "Salvo no aparelho. Envia sozinho quando a internet voltar.",
       });
@@ -262,6 +372,90 @@ export default function CampoRegistrarDia() {
             placeholder="Ex: concretagem da laje, alvenaria do 2º pavimento…"
             className="text-base"
           />
+        </div>
+
+        <div className="space-y-2 rounded-xl border border-black/5 p-3">
+          <div className="flex items-center justify-between">
+            <Label className="text-sm">Tarefas do cronograma</Label>
+            <span className="text-[11px] text-muted-foreground">Marque o que andou</span>
+          </div>
+
+          {tarefas.length === 0 ? (
+            <p className="text-xs text-muted-foreground">Nenhuma tarefa no cronograma ainda. Crie a primeira abaixo.</p>
+          ) : (
+            <div className="max-h-56 space-y-1.5 overflow-y-auto">
+              {tarefas.map((t) => {
+                const marcada = !!selTarefas[t.id];
+                return (
+                  <div key={t.id} className="rounded-lg bg-muted/40 px-2.5 py-2">
+                    <div className="flex items-start gap-2">
+                      <Checkbox
+                        id={`ct-${t.id}`}
+                        checked={marcada}
+                        onCheckedChange={() => toggleTarefa(t.id)}
+                        className="mt-0.5"
+                      />
+                      <label htmlFor={`ct-${t.id}`} className="min-w-0 flex-1 cursor-pointer">
+                        <span className="block truncate text-sm text-ink">{t.titulo}</span>
+                        {t.frente_nome && <span className="block text-[11px] text-muted-foreground">{t.frente_nome}</span>}
+                      </label>
+                    </div>
+                    {marcada && (
+                      <div className="mt-2 flex flex-col gap-2 pl-6">
+                        <Select
+                          value={selTarefas[t.id].resultado}
+                          onValueChange={(v) => setResultadoTarefa(t.id, v as ResultadoTarefa)}
+                        >
+                          <SelectTrigger className="h-9 w-full">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {RESULTADO_OPCOES.map((r) => (
+                              <SelectItem key={r.value} value={r.value}>
+                                {r.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <Input
+                          className="h-9"
+                          placeholder="O que foi feito (opcional)"
+                          value={selTarefas[t.id].observacao}
+                          onChange={(e) => setObsTarefa(t.id, e.target.value)}
+                        />
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          <div className="flex items-center gap-2 border-t border-black/5 pt-2">
+            <Input
+              className="h-9 flex-1"
+              placeholder="Nova tarefa (ex: concretar laje)"
+              value={novaTarefaTitulo}
+              onChange={(e) => setNovaTarefaTitulo(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  criarTarefa();
+                }
+              }}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              className="h-9 w-9 shrink-0"
+              onClick={criarTarefa}
+              disabled={!novaTarefaTitulo.trim() || criandoTarefa}
+              aria-label="Criar tarefa"
+            >
+              {criandoTarefa ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+            </Button>
+          </div>
         </div>
 
         <div className="space-y-2">
@@ -374,6 +568,7 @@ async function enfileirarOffline(
   dia: FilaDiaPayload,
   fotos: FilaFoto[],
   medicoes: FilaMedicao[] = [],
+  tarefas: FilaTarefaVinculo[] = [],
   rdoId?: string
 ): Promise<void> {
   await filaOfflineDb.salvar({
@@ -382,6 +577,7 @@ async function enfileirarOffline(
     dia,
     fotos,
     medicoes,
+    tarefas,
     rdoId,
     tentativas: 0,
   });
