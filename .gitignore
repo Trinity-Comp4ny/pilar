@@ -42,3 +42,10 @@ backups/
 
 # temporários do gate de sincronia de tipos (job database do CI)
 /types-gate-*.ts
+
+# Artifacts do Playwright (achado real, 17/08: faltavam aqui — um `npx playwright
+# test` local esteve a um `git add -A` de commitar screenshot/vídeo/trace de
+# sessão autenticada real, incluindo o storageState em .auth/).
+/playwright-report/
+/test-results/
+/.auth/
