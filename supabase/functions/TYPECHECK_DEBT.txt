@@ -1,17 +1,19 @@
 # Edge Functions que ainda NÃO passam no `deno check`.
 #
 # Medido em 2026-07-25, na primeira vez que o CI rodou `deno check` nas 44 funções:
-# 12 erros de tipo concentrados nestas 5. As outras 39 passam limpo e são gate
-# bloqueante desde então, ou seja, função nova ou mexida tem que compilar.
+# 12 erros de tipo concentrados em 5. As outras (agora 41, depois de portal-get-projeto
+# e send-proposta-email saírem em 2026-08-17 — a segunda tinha um bug funcional real,
+# não só de tipo: Authorization passada como opção de `.rpc()`, que não existe nessa
+# posição, então nunca chegava a valer) passam limpo e são gate bloqueante desde então.
 #
 # Esta lista é um ratchet: só encolhe. `scripts/check-migration-safety.test.ts`
 # afirma o tamanho máximo, então adicionar uma linha aqui quebra a suíte de testes.
 # Corrigir uma função é remover a linha dela e ver o CI continuar verde.
 #
-# O erro dominante é o mesmo em todas: o resultado de `.from().select()` do
-# supabase-js sendo tratado como Promise já resolvida (falta `await`, ou o tipo
-# esperado não é `PostgrestFilterBuilder`). Ver TS2739/TS2345 no log do run
-# 30174544332.
+# As 3 restantes são dormentes (IA Hub) com o mesmo erro dominante: o resultado de
+# `.from().select()` do supabase-js sendo tratado como Promise já resolvida (falta
+# `await`, ou o tipo esperado não é `PostgrestFilterBuilder`). Ver TS2739/TS2345 no
+# log do run 30174544332.
 #
 # Um path por linha, relativo à raiz do repo. Linha vazia e # são ignorados.
 
@@ -19,7 +21,3 @@
 supabase/functions/ai-pauta-reuniao/index.ts
 supabase/functions/ai-aditivo-copilot/index.ts
 supabase/functions/ai-diagnostico-precificacao/index.ts
-
-# ATIVAS em produção: prioridade de correção, nesta ordem
-supabase/functions/portal-get-projeto/index.ts
-supabase/functions/send-proposta-email/index.ts
