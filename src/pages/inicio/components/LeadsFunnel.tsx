@@ -1,4 +1,6 @@
 import { Users } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { EmptyState } from "@/components/EmptyState";
 import type { LeadsPipeline } from "@/hooks/useDashboardData";
 
 const PIPELINE_COLORS: Record<string, string> = {
@@ -11,12 +13,17 @@ const PIPELINE_COLORS: Record<string, string> = {
 };
 
 export function LeadsFunnel({ pipeline, total }: { pipeline: LeadsPipeline[]; total: number }) {
+  const navigate = useNavigate();
+
   if (total === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-8 text-ink-disabled">
-        <Users size={24} className="mb-2" />
-        <p className="text-sm">Nenhum lead cadastrado</p>
-      </div>
+      <EmptyState
+        icon={Users}
+        title="Nenhum lead cadastrado"
+        description="Capture leads para acompanhar as oportunidades no funil."
+        action={{ label: "Ir para leads", onClick: () => navigate("/gestao/leads") }}
+        className="py-8"
+      />
     );
   }
 

@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from "react";
-import { formatCurrency as fmtMoeda, formatDecimal } from "@/lib/format";
+import { formatCurrency, formatDate, formatDecimal } from "@/lib/format";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -54,7 +54,7 @@ import {
   PROPOSTA_STATUS_CONFIG,
   type PropostaInsert,
 } from "@/hooks/usePropostas";
-import { formatCurrencyInput, parseCurrencyString, formatCurrency as formatCurrencyBRL } from "@/lib/currencyUtils";
+import { formatCurrencyInput, parseCurrencyString } from "@/lib/currencyUtils";
 import { DisciplinasEditor } from "./components/DisciplinasEditor";
 import { calcDisciplinasTotais, valorDivergeDaSoma, type DisciplinaLinha } from "./lib/disciplinasCalc";
 import { DatePicker } from "@/components/ui/date-picker";
@@ -367,10 +367,6 @@ export default function Propostas() {
     });
   };
 
-  const formatCurrency = (v: number | null) => (v ? fmtMoeda(v) : "—");
-
-  const formatDate = (d: string | null) => (d ? new Date(d + "T00:00:00").toLocaleDateString("pt-BR") : "—");
-
   const hoje = new Date().toISOString().slice(0, 10);
 
   const getDisplayStatus = (p: { status: string; validade: string | null }) => {
@@ -673,7 +669,7 @@ export default function Propostas() {
                         role="button"
                         tabIndex={0}
                         aria-label={`Ver detalhes da proposta ${p.titulo}`}
-                        className="cursor-pointer hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
+                        className="cursor-pointer hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
                         onClick={() => openDetail(p.id)}
                         onKeyDown={(e) => handleRowKeyDown(e, p.id)}
                       >
@@ -682,14 +678,16 @@ export default function Propostas() {
                           {p.codigo && <p className="text-[11px] text-muted-foreground font-mono">{p.codigo}</p>}
                         </TableCell>
                         <TableCell className="text-sm py-4">{p.cliente_nome || p.lead_nome || "—"}</TableCell>
-                        <TableCell className="text-sm py-4 font-medium">{formatCurrency(p.valor_proposto)}</TableCell>
+                        <TableCell className="text-sm py-4 font-medium">
+                          {p.valor_proposto ? formatCurrency(p.valor_proposto) : "—"}
+                        </TableCell>
                         <TableCell className="text-sm py-4 text-center">
                           <Badge className={`text-xs ${PROPOSTA_STATUS_CONFIG[displayStatus]?.color || ""}`}>
                             {PROPOSTA_STATUS_CONFIG[displayStatus]?.label || displayStatus}
                           </Badge>
                         </TableCell>
                         <TableCell
-                          className={`text-sm py-4 ${p.validade && p.validade < hoje ? "text-red-500 font-medium" : ""}`}
+                          className={`text-sm py-4 ${p.validade && p.validade < hoje ? "text-danger-mid font-medium" : ""}`}
                         >
                           {formatDate(p.validade)}
                         </TableCell>
@@ -788,7 +786,7 @@ export default function Propostas() {
                         )}
                         {p.validade && (
                           <div
-                            className={`flex items-center gap-1.5 text-xs ${isExpired ? "text-red-500" : "text-muted-foreground"}`}
+                            className={`flex items-center gap-1.5 text-xs ${isExpired ? "text-danger-mid" : "text-muted-foreground"}`}
                           >
                             <Calendar className="h-3 w-3 flex-shrink-0" />
                             <span>{formatDate(p.validade)}</span>
@@ -808,7 +806,7 @@ export default function Propostas() {
       <Sheet open={isTemplatesOpen} onOpenChange={setIsTemplatesOpen}>
         <SheetContent side="right" className="w-full sm:max-w-2xl overflow-y-auto">
           <SheetHeader className="mb-4">
-            <SheetTitle>Gerenciar Templates</SheetTitle>
+            <SheetTitle>Gerenciar templates</SheetTitle>
           </SheetHeader>
           <TemplatesManager />
         </SheetContent>
@@ -875,7 +873,7 @@ export default function Propostas() {
       >
         <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editingId ? "Editar Proposta" : "Nova Proposta"}</DialogTitle>
+            <DialogTitle>{editingId ? "Editar proposta" : "Nova proposta"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 mt-2">
             <div className="grid grid-cols-2 gap-4">
@@ -887,7 +885,7 @@ export default function Propostas() {
                   placeholder="PROP-001"
                 />
                 {codigoDuplicado && (
-                  <p className="text-[11px] text-amber-600">Já existe uma proposta com este código.</p>
+                  <p className="text-[11px] text-warning-mid">Já existe uma proposta com este código.</p>
                 )}
               </div>
               <div className="space-y-2">
@@ -1009,10 +1007,10 @@ export default function Propostas() {
 
             {disciplinasTotais.totalValor > 0 && (
               <div className="flex flex-wrap items-center gap-2 -mt-2 text-[11px] text-muted-foreground">
-                <span>Soma das disciplinas: {formatCurrencyBRL(disciplinasTotais.totalValor)}</span>
+                <span>Soma das disciplinas: {formatCurrency(disciplinasTotais.totalValor)}</span>
                 {valorDiverge && (
                   <>
-                    <span className="text-amber-600">difere do valor digitado</span>
+                    <span className="text-warning-mid">difere do valor digitado</span>
                     <button
                       type="button"
                       className="text-ink underline underline-offset-2"
@@ -1069,10 +1067,11 @@ export default function Propostas() {
                 Cancelar
               </Button>
               <Button
+                variant="brand"
                 onClick={handleSubmit}
                 disabled={createProposta.isPending || updateProposta.isPending || salvarDisciplinas.isPending}
               >
-                {editingId ? "Salvar Alterações" : "Criar Proposta"}
+                {editingId ? "Salvar alterações" : "Criar proposta"}
               </Button>
             </div>
           </div>
@@ -1084,7 +1083,7 @@ export default function Propostas() {
         onOpenChange={(open) => {
           if (!open) setConfirmDelete(null);
         }}
-        title="Excluir Proposta"
+        title="Excluir proposta"
         itemName={confirmDelete?.titulo}
         description="A proposta sai da lista. Você poderá restaurá-la logo em seguida pelo aviso de desfazer."
         confirmText="Excluir"
@@ -1122,7 +1121,9 @@ export default function Propostas() {
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Valor</span>
-                  <span className="font-medium">{formatCurrency(convertProposta.valor_proposto)}</span>
+                  <span className="font-medium">
+                    {convertProposta.valor_proposto ? formatCurrency(convertProposta.valor_proposto) : "—"}
+                  </span>
                 </div>
                 {convertProposta.area_m2 && (
                   <div className="flex justify-between text-sm">
@@ -1147,7 +1148,7 @@ export default function Propostas() {
                     {convertDisciplinas.map((d: PropostaDisciplina) => (
                       <div
                         key={d.id}
-                        className="flex justify-between items-center text-xs bg-blue-50 rounded px-3 py-1.5"
+                        className="flex justify-between items-center text-xs bg-info-soft rounded px-3 py-1.5"
                       >
                         <span className="font-medium">{d.disciplina}</span>
                         <span className="text-muted-foreground">
@@ -1169,7 +1170,7 @@ export default function Propostas() {
                 />
               )}
 
-              <div className="text-xs text-muted-foreground bg-amber-50 border border-amber-200 rounded-lg p-3">
+              <div className="text-xs text-muted-foreground bg-warning-soft border border-warning-mid-border rounded-lg p-3">
                 O projeto será criado com status "Planejamento" e orçamento por disciplina pré-preenchido. Você poderá
                 editar tudo depois.
               </div>
@@ -1186,7 +1187,7 @@ export default function Propostas() {
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Criando...
                 </>
               ) : (
-                "Criar Projeto"
+                "Criar projeto"
               )}
             </Button>
           </DialogFooter>

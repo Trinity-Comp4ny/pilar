@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { EmptyState } from "@/components/EmptyState";
 import { FileBarChart } from "lucide-react";
+import { ProjetoRentabilidadeDetalheDialog } from "./ProjetoRentabilidadeDetalheDialog";
 import {
   aggregatePorCliente,
   toRentabilidadeProjeto,
@@ -89,6 +90,7 @@ export default function RelatoriosRentabilidade({ modo }: Props) {
   const { data: projetos, isLoading, error } = useRentabilidadeData();
   const [filterCliente, setFilterCliente] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
+  const [detalhe, setDetalhe] = useState<{ id: string; nome: string } | null>(null);
 
   const projetosFiltrados = useMemo(() => {
     const base = projetos ?? [];
@@ -371,11 +373,22 @@ export default function RelatoriosRentabilidade({ modo }: Props) {
       {/* Tabela */}
       <div className="w-full overflow-auto border rounded-xl bg-white" style={{ minHeight: "320px" }}>
         {modo === "projeto" ? (
-          <ProjetoTable rows={projetosFiltrados} totais={totais} margemColor={margemColor} />
+          <ProjetoTable
+            rows={projetosFiltrados}
+            totais={totais}
+            margemColor={margemColor}
+            onRowClick={(id, nome) => setDetalhe({ id, nome })}
+          />
         ) : (
           <ClienteTable rows={clientes} totais={totais} margemColor={margemColor} />
         )}
       </div>
+
+      <ProjetoRentabilidadeDetalheDialog
+        projetoId={detalhe?.id ?? null}
+        projetoNome={detalhe?.nome ?? ""}
+        onClose={() => setDetalhe(null)}
+      />
     </div>
   );
 }
@@ -391,10 +404,12 @@ function ProjetoTable({
   rows,
   totais,
   margemColor,
+  onRowClick,
 }: {
   rows: RentabilidadeProjeto[];
   totais: Totais;
   margemColor: (v: number) => string;
+  onRowClick?: (id: string, nome: string) => void;
 }) {
   return (
     <Table>
@@ -422,7 +437,12 @@ function ProjetoTable({
           </TableRow>
         ) : (
           rows.map((p) => (
-            <TableRow key={p.projeto_id}>
+            <TableRow
+              key={p.projeto_id}
+              onClick={() => onRowClick?.(p.projeto_id, p.projeto_nome)}
+              className={cn(onRowClick && "cursor-pointer hover:bg-muted/40")}
+              title={onRowClick ? "Ver as linhas que compõem a margem" : undefined}
+            >
               <TableCell className="whitespace-nowrap text-xs">{p.codigo_projeto}</TableCell>
               <TableCell className="whitespace-nowrap text-xs font-medium">{p.projeto_nome}</TableCell>
               <TableCell className="whitespace-nowrap text-xs">{p.cliente_nome}</TableCell>

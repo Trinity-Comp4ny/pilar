@@ -5,8 +5,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { DataTable, type ColumnDef } from "@/components/data/DataTable";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { Can } from "@/components/Can";
@@ -16,6 +16,7 @@ import { usePageTitle } from "@/hooks/usePageTitle";
 import { usePermissions } from "@/hooks/usePermissions";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { getSafeErrorMessage } from "@/lib/safeError";
 import { formatCNPJ, formatPhone, onlyDigits, validateEmail } from "@/lib/maskUtils";
 import { isValidCNPJ } from "@/lib/brasilApi";
 import { ReconciliarDialog } from "./ReconciliarDialog";
@@ -67,7 +68,9 @@ export default function Fornecedores() {
     const { data, error } = await supabase.from("fornecedores").select("*").order("nome");
     if (error) {
       setLoadError(true);
-      toast.error("Erro ao carregar fornecedores");
+      toast.error("Não foi possível carregar os fornecedores", {
+        description: getSafeErrorMessage(error, "Atualize a página em instantes."),
+      });
       return;
     }
     setLoadError(false);
@@ -190,7 +193,9 @@ export default function Fornecedores() {
       if (message.includes("unique") || message.includes("duplicate") || message.includes("fornecedores_cnpj")) {
         toast.error("CNPJ já cadastrado para outro fornecedor");
       } else {
-        toast.error("Erro ao salvar fornecedor");
+        toast.error("Não foi possível salvar o fornecedor", {
+          description: getSafeErrorMessage(err, "Confira os dados e tente de novo."),
+        });
       }
     } finally {
       setIsSaving(false);
@@ -210,7 +215,9 @@ export default function Fornecedores() {
     // como cliente/lead — o delete é recuperável (ACH-FOR-01).
     const { error } = await supabase.from("fornecedores").update({ deleted_at: new Date().toISOString() }).eq("id", id);
     if (error) {
-      toast.error("Erro ao excluir fornecedor");
+      toast.error("Não foi possível excluir o fornecedor", {
+        description: getSafeErrorMessage(error, "Tente de novo em instantes."),
+      });
       return;
     }
     toast.success("Fornecedor excluído", {
@@ -218,7 +225,10 @@ export default function Fornecedores() {
         label: "Desfazer",
         onClick: async () => {
           const { error: restoreError } = await supabase.from("fornecedores").update({ deleted_at: null }).eq("id", id);
-          if (restoreError) toast.error("Erro ao restaurar fornecedor");
+          if (restoreError)
+            toast.error("Não foi possível restaurar o fornecedor", {
+              description: getSafeErrorMessage(restoreError, "Tente de novo em instantes."),
+            });
           else {
             toast.success("Fornecedor restaurado");
             fetchFornecedores();
@@ -246,6 +256,98 @@ export default function Fornecedores() {
     });
   }, [fornecedores, searchTerm]);
 
+  const columns: ColumnDef<Fornecedor>[] = [
+    {
+      key: "nome",
+      header: "Nome",
+      className: "font-medium",
+      getSortValue: (f) => f.nome.toLowerCase(),
+      cell: (f) => f.nome,
+    },
+    {
+      key: "cnpj",
+      header: "CNPJ",
+      getSortValue: (f) => f.cnpj ?? "",
+      cell: (f) => (f.cnpj ? formatCNPJ(f.cnpj) : "-"),
+    },
+    {
+      key: "contato",
+      header: "Contato",
+      className: "hidden md:table-cell text-sm text-muted-foreground",
+      getSortValue: (f) => (f.contato ?? "").toLowerCase(),
+      cell: (f) => f.contato || "-",
+    },
+    {
+      key: "telefone",
+      header: "Telefone",
+      className: "hidden lg:table-cell text-sm text-muted-foreground",
+      cell: (f) => (f.telefone ? formatPhone(f.telefone) : "-"),
+    },
+    {
+      key: "email",
+      header: "Email",
+      className: "hidden md:table-cell text-sm text-muted-foreground",
+      getSortValue: (f) => (f.email ?? "").toLowerCase(),
+      cell: (f) => f.email || "-",
+    },
+    ...(canEdit
+      ? [
+          {
+            key: "acoes",
+            header: "Ações",
+            align: "end" as const,
+            cell: (f: Fornecedor) => (
+              <div className="flex justify-end gap-2">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9"
+                  onClick={(e) => handleEditClick(f, e)}
+                  aria-label="Editar fornecedor"
+                >
+                  <Pencil className="h-4 w-4" />
+                </Button>
+                <Can feature="obras" action="delete">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-9 w-9 text-danger-mid"
+                    onClick={(e) => handleDeleteClick(f, e)}
+                    aria-label="Excluir fornecedor"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </Can>
+              </div>
+            ),
+          },
+        ]
+      : []),
+  ];
+
+  const emptyState = loadError ? (
+    <EmptyState
+      icon={Truck}
+      title="Não foi possível carregar os fornecedores"
+      description="Atualize a página em instantes."
+      action={{ label: "Tentar de novo", variant: "outline", onClick: () => fetchFornecedores() }}
+    />
+  ) : fornecedores.length === 0 ? (
+    <EmptyState
+      icon={Truck}
+      title="Nenhum fornecedor cadastrado"
+      description="Crie o primeiro fornecedor para começar."
+      action={can("obras", "create") ? { label: "Novo fornecedor", onClick: handleOpenNew } : undefined}
+    />
+  ) : (
+    <EmptyState
+      icon={Truck}
+      title="Nenhum resultado encontrado"
+      description="Tente ajustar o termo de busca."
+      action={{ label: "Limpar busca", variant: "outline", onClick: () => setSearchTerm("") }}
+    />
+  );
+
   return (
     <PageLayout
       className="overflow-y-hidden"
@@ -254,7 +356,7 @@ export default function Fornecedores() {
         <PageHeader
           title="Fornecedores"
           search={{ value: searchTerm, onChange: setSearchTerm, placeholder: "Buscar fornecedores" }}
-          primaryAction={{ label: "Novo fornecedor", onClick: handleOpenNew, icon: Plus, feature: "obras" }}
+          primaryAction={{ label: "Novo fornecedor", onClick: handleOpenNew, icon: Plus, feature: "obras", dataTour: "onb-novo-fornecedor" }}
           children={
             <>
               {canEdit && (
@@ -272,7 +374,7 @@ export default function Fornecedores() {
               >
                 <DialogContent className="sm:max-w-md">
                   <DialogHeader>
-                    <DialogTitle>{isEditMode ? "Editar Fornecedor" : "Novo Fornecedor"}</DialogTitle>
+                    <DialogTitle>{isEditMode ? "Editar fornecedor" : "Novo fornecedor"}</DialogTitle>
                     <DialogDescription>
                       {isEditMode ? "Atualize os dados do fornecedor" : "Cadastre um novo fornecedor"}
                     </DialogDescription>
@@ -307,10 +409,10 @@ export default function Fornecedores() {
                         placeholder="00.000.000/0000-00"
                         aria-invalid={!!cnpjError}
                         aria-describedby={cnpjError ? "fornecedor-cnpj-error" : undefined}
-                        className={cnpjError ? "border-red-500 focus-visible:ring-red-500" : ""}
+                        className={cnpjError ? "border-danger-mid focus-visible:ring-danger-mid" : ""}
                       />
                       {cnpjError && (
-                        <p id="fornecedor-cnpj-error" role="alert" className="text-xs text-red-600">
+                        <p id="fornecedor-cnpj-error" role="alert" className="text-xs text-danger-mid">
                           {cnpjError}
                         </p>
                       )}
@@ -354,10 +456,10 @@ export default function Fornecedores() {
                         placeholder="email@exemplo.com"
                         aria-invalid={!!emailError}
                         aria-describedby={emailError ? "fornecedor-email-error" : undefined}
-                        className={emailError ? "border-red-500 focus-visible:ring-red-500" : ""}
+                        className={emailError ? "border-danger-mid focus-visible:ring-danger-mid" : ""}
                       />
                       {emailError && (
-                        <p id="fornecedor-email-error" role="alert" className="text-xs text-red-600">
+                        <p id="fornecedor-email-error" role="alert" className="text-xs text-danger-mid">
                           {emailError}
                         </p>
                       )}
@@ -401,97 +503,14 @@ export default function Fornecedores() {
           </div>
         </CardHeader>
         <CardContent className="flex-1 min-h-0">
-          <div className="overflow-x-auto overflow-y-auto w-full h-full">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>CNPJ</TableHead>
-                  <TableHead className="hidden md:table-cell">Contato</TableHead>
-                  <TableHead className="hidden lg:table-cell">Telefone</TableHead>
-                  <TableHead className="hidden md:table-cell">Email</TableHead>
-                  {canEdit && <TableHead className="text-right">Ações</TableHead>}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filtered.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={canEdit ? 6 : 5}>
-                      {loadError ? (
-                        <EmptyState
-                          icon={Truck}
-                          title="Não foi possível carregar os fornecedores"
-                          description="Atualize a página em instantes."
-                          action={{ label: "Tentar de novo", variant: "outline", onClick: () => fetchFornecedores() }}
-                        />
-                      ) : fornecedores.length === 0 ? (
-                        <EmptyState
-                          icon={Truck}
-                          title="Nenhum fornecedor cadastrado"
-                          description="Crie o primeiro fornecedor para começar."
-                          action={
-                            can("obras", "create") ? { label: "Novo Fornecedor", onClick: handleOpenNew } : undefined
-                          }
-                        />
-                      ) : (
-                        <EmptyState
-                          icon={Truck}
-                          title="Nenhum resultado encontrado"
-                          description="Tente ajustar o termo de busca."
-                          action={{ label: "Limpar busca", variant: "outline", onClick: () => setSearchTerm("") }}
-                        />
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filtered.map((f) => (
-                    <TableRow
-                      key={f.id}
-                      className="cursor-pointer"
-                      onClick={() => navigate(`/obras/fornecedores/${f.id}`)}
-                    >
-                      <TableCell className="font-medium">{f.nome}</TableCell>
-                      <TableCell>{f.cnpj ? formatCNPJ(f.cnpj) : "-"}</TableCell>
-                      <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
-                        {f.contato || "-"}
-                      </TableCell>
-                      <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
-                        {f.telefone ? formatPhone(f.telefone) : "-"}
-                      </TableCell>
-                      <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
-                        {f.email || "-"}
-                      </TableCell>
-                      {canEdit && (
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-2">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-9 w-9"
-                              onClick={(e) => handleEditClick(f, e)}
-                              aria-label="Editar fornecedor"
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                            <Can feature="obras" action="delete">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-9 w-9 text-red-500"
-                                onClick={(e) => handleDeleteClick(f, e)}
-                                aria-label="Excluir fornecedor"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </Can>
-                          </div>
-                        </TableCell>
-                      )}
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
+          <div className="w-full h-full">
+            <DataTable
+              columns={columns}
+              data={{ rows: filtered }}
+              rowKey={(f) => f.id}
+              onRowClick={(f) => navigate(`/obras/fornecedores/${f.id}`)}
+              emptyState={emptyState}
+            />
           </div>
         </CardContent>
       </Card>
@@ -500,7 +519,7 @@ export default function Fornecedores() {
         open={confirmDeleteOpen}
         onOpenChange={setConfirmDeleteOpen}
         onConfirm={handleDeleteConfirm}
-        title="Excluir Fornecedor"
+        title="Excluir fornecedor"
         itemName={toDelete?.nome}
         description="O fornecedor sai das listagens e o histórico de despesas é preservado."
         confirmText="Excluir"

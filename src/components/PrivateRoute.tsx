@@ -21,16 +21,16 @@ const subStatusCache: { v: SubStatus | undefined } = { v: undefined };
 function SubscriptionSuspendedScreen() {
   const { openSettings } = useSettingsModal();
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-8">
+    <div className="min-h-screen flex items-center justify-center bg-muted p-8">
       <div className="max-w-md text-center space-y-6">
         <div className="flex justify-center">
-          <div className="p-4 rounded-full bg-amber-100">
-            <AlertTriangle className="h-10 w-10 text-amber-600" />
+          <div className="p-4 rounded-full bg-warning-soft">
+            <AlertTriangle className="h-10 w-10 text-warning-mid" />
           </div>
         </div>
         <div className="space-y-2">
-          <h1 className="text-2xl font-semibold text-slate-900">Acesso suspenso</h1>
-          <p className="text-slate-500 text-sm leading-relaxed">
+          <h1 className="text-2xl font-semibold text-ink">Acesso suspenso</h1>
+          <p className="text-ink-muted text-sm leading-relaxed">
             Sua assinatura está suspensa ou cancelada. Regularize o pagamento para retomar o acesso à plataforma.
           </p>
         </div>
@@ -38,7 +38,7 @@ function SubscriptionSuspendedScreen() {
           <Button variant="brand" onClick={() => openSettings("pagamento")}>
             Ver assinatura
           </Button>
-          <Button variant="ghost" asChild className="text-slate-500">
+          <Button variant="ghost" asChild className="text-ink-muted">
             <Link to="/" onClick={() => supabase.auth.signOut()}>
               Sair da conta
             </Link>

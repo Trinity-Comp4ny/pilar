@@ -221,8 +221,8 @@ export function CheckoutForm({
       {/* Dados pessoais */}
       <section className="space-y-5">
         <div>
-          <h2 className="text-base font-semibold text-slate-900">Seus dados</h2>
-          <p className="text-xs text-slate-500 mt-0.5">Use o CPF/CNPJ que vai constar na nota fiscal.</p>
+          <h2 className="text-base font-semibold text-ink">Seus dados</h2>
+          <p className="text-xs text-ink-muted mt-0.5">Use o CPF/CNPJ que vai constar na nota fiscal.</p>
         </div>
 
         <div className="grid md:grid-cols-2 gap-4">
@@ -272,7 +272,7 @@ export function CheckoutForm({
               required
               placeholder="Ex: Arquitetura Silva"
             />
-            <p className="text-xs text-slate-400">Pode mudar depois nas configurações.</p>
+            <p className="text-xs text-ink-disabled">Pode mudar depois nas configurações.</p>
           </div>
         </div>
       </section>
@@ -280,8 +280,8 @@ export function CheckoutForm({
       {/* Método de pagamento */}
       <section className="space-y-4">
         <div>
-          <h2 className="text-base font-semibold text-slate-900">Pagamento</h2>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <h2 className="text-base font-semibold text-ink">Pagamento</h2>
+          <p className="text-xs text-ink-muted mt-0.5">
             {formatBRL(planValue)} — plano {planNome} {cycle === "yearly" ? "anual" : "mensal"}
           </p>
         </div>
@@ -296,7 +296,7 @@ export function CheckoutForm({
                 "flex items-center justify-center gap-2 py-3 px-4 rounded-xl border text-sm font-medium transition-all",
                 billingType === value
                   ? "border-brand bg-brand/5 text-ink-soft shadow-sm"
-                  : "border-slate-200 text-slate-500 hover:border-slate-300 hover:bg-slate-50"
+                  : "border-border text-ink-muted hover:border-border hover:bg-muted"
               )}
             >
               {icon}
@@ -323,7 +323,7 @@ export function CheckoutForm({
               <Label htmlFor="ccNumber" className="flex items-center justify-between">
                 Número do cartão
                 {cardBrand && (
-                  <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">{cardBrand}</span>
+                  <span className="text-[11px] font-medium text-ink-disabled uppercase tracking-wider">{cardBrand}</span>
                 )}
               </Label>
               <Input
@@ -370,7 +370,7 @@ export function CheckoutForm({
                   <button
                     type="button"
                     onClick={() => setShowCcv((v) => !v)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-disabled hover:text-ink-muted transition-colors"
                     tabIndex={-1}
                     aria-label={showCcv ? "Ocultar CVV" : "Mostrar CVV"}
                   >
@@ -380,8 +380,8 @@ export function CheckoutForm({
               </div>
             </div>
 
-            <div className="pt-1 border-t border-slate-100">
-              <p className="text-xs text-slate-500 mb-3">Endereço de cobrança do titular</p>
+            <div className="pt-1 border-t border-border">
+              <p className="text-xs text-ink-muted mb-3">Endereço de cobrança do titular</p>
               <div className="grid grid-cols-[1fr_110px] gap-4">
                 <div className="space-y-1.5">
                   <Label htmlFor="holderPostalCode">CEP</Label>
@@ -401,7 +401,7 @@ export function CheckoutForm({
                       className={isFetchingCep ? "pr-8" : ""}
                     />
                     {isFetchingCep && (
-                      <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 animate-spin text-slate-400" />
+                      <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 animate-spin text-ink-disabled" />
                     )}
                   </div>
                 </div>
@@ -418,7 +418,7 @@ export function CheckoutForm({
               </div>
 
               {cepAddress && (
-                <div className="mt-3 flex items-start gap-2 px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-600">
+                <div className="mt-3 flex items-start gap-2 px-3 py-2.5 bg-muted border border-border rounded-lg text-xs text-ink-muted">
                   <MapPin className="w-3.5 h-3.5 text-foreground shrink-0 mt-0.5" />
                   <span>
                     {cepAddress.logradouro && `${cepAddress.logradouro}, `}
@@ -432,30 +432,28 @@ export function CheckoutForm({
         )}
 
         {billingType === "PIX" && (
-          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600 space-y-1">
-            <p className="font-medium text-slate-800">Como funciona</p>
+          <div className="rounded-xl border border-border bg-muted p-4 text-sm text-ink-muted space-y-1">
+            <p className="font-medium text-ink">Como funciona</p>
             <p>Após confirmar, você recebe o QR Code e o código copia-e-cola. Liberação automática em segundos.</p>
           </div>
         )}
 
         {billingType === "BOLETO" && (
-          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600 space-y-1">
-            <p className="font-medium text-slate-800">Como funciona</p>
+          <div className="rounded-xl border border-border bg-muted p-4 text-sm text-ink-muted space-y-1">
+            <p className="font-medium text-ink">Como funciona</p>
             <p>Após confirmar, você recebe a linha digitável e o link do PDF. Liberação em 1 a 3 dias úteis.</p>
           </div>
         )}
       </section>
 
       {errorMessage && (
-        <div className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg p-3">{errorMessage}</div>
+        <div className="text-sm text-danger-strong bg-danger-soft border border-danger-mid-border rounded-lg p-3">
+          {errorMessage}
+        </div>
       )}
 
       <div className="space-y-3">
-        <Button
-          type="submit"
-          disabled={isSubmitting}
-          className={cn("w-full h-12 text-sm font-semibold", "bg-brand hover:bg-brand/90 text-ink")}
-        >
+        <Button type="submit" variant="brand" disabled={isSubmitting} className="w-full h-12 text-sm font-semibold">
           {isSubmitting ? (
             <>
               <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Processando...
@@ -467,8 +465,8 @@ export function CheckoutForm({
           )}
         </Button>
 
-        <div className="flex items-center justify-center gap-1.5 text-[11px] text-slate-400">
-          <ShieldCheck className="w-3.5 h-3.5 text-slate-400" />
+        <div className="flex items-center justify-center gap-1.5 text-[11px] text-ink-disabled">
+          <ShieldCheck className="w-3.5 h-3.5 text-ink-disabled" />
           Pagamento 100% seguro · Criptografia SSL
         </div>
       </div>

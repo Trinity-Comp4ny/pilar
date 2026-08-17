@@ -18,7 +18,7 @@ SET search_path = public, extensions;
 -- 20, não 16: o arquivo foi ganhando asserts sem atualizar o plano, e como o job de
 -- pgTAP estava desligado desde f5a86ea ninguém viu. Plano errado faz o pg_prove
 -- reportar "Bad plan" e marcar os asserts extras como falha.
-SELECT plan(24);
+SELECT plan(26);
 
 -- =============================================
 -- Setup: duas empresas e usuários de cada
@@ -229,23 +229,39 @@ SELECT throws_ok(
 -- handle_new_user, não a permissão de tabela.
 RESET ROLE;
 
--- throws_like, não throws_ok: o trigger levanta "Cadastro não autorizado. Entre em
--- contato com a equipe comercial." e throws_ok compara a mensagem inteira, então o
--- teste reprovava por causa do sufixo, com o comportamento correto. Casar por padrão
--- mantém o assert honesto sem prendê-lo à copy exata da mensagem.
-SELECT throws_like(
+-- Spec 039: signup SEM token deixou de ser rejeitado — agora é self-serve legítimo,
+-- que cria uma empresa NOVA + admin + trial (Cenário 3 do handle_new_user). O que ESTE
+-- teste prova é que a brecha SEC-11 NÃO reabre: mesmo com metadata forjado (empresa_id de
+-- outra empresa, role ultra_admin), o cadastro cai numa empresa nova como admin, nunca no
+-- tenant forjado nem com privilégio escolhido pelo cliente.
+SELECT lives_ok(
   $$ INSERT INTO auth.users (id, email, raw_user_meta_data, aud, role)
-     VALUES ('cccccccc-0000-0000-0000-000000000001', 'hacker@evil.com', '{}'::jsonb, 'authenticated', 'authenticated') $$,
-  '%Cadastro não autorizado%',
-  'Signup sem invite_token é rejeitado'
+     VALUES ('cccccccc-0000-0000-0000-000000000001', 'selfserve@example.com',
+             jsonb_build_object('company_name', 'Empresa Nova',
+                                'empresa_id_convite', '11111111-1111-1111-1111-111111111111',
+                                'role', 'ultra_admin'),
+             'authenticated', 'authenticated') $$,
+  'Self-serve: signup sem token cria conta (spec 039)'
+);
+
+SELECT is(
+  (SELECT role::text FROM public.profiles WHERE id = 'cccccccc-0000-0000-0000-000000000001'),
+  'admin',
+  'Self-serve: role fixo admin, role forjado no metadata ignorado'
+);
+
+SELECT isnt(
+  (SELECT empresa_id::text FROM public.profiles WHERE id = 'cccccccc-0000-0000-0000-000000000001'),
+  '11111111-1111-1111-1111-111111111111',
+  'Self-serve: empresa_id forjado ignorado (cai numa empresa nova)'
 );
 
 -- =============================================
--- Teste 11: Convite com token FORJADO — rejeitado
+-- Convite com token FORJADO (não-vazio) — continua rejeitado (Cenário 1/2 → RAISE)
 -- =============================================
 SELECT throws_ok(
   $$ INSERT INTO auth.users (id, email, raw_user_meta_data, aud, role)
-     VALUES ('cccccccc-0000-0000-0000-000000000002', 'hacker@evil.com',
+     VALUES ('cccccccc-0000-0000-0000-000000000002', 'badtoken@evil.com',
              '{"invite_token":"token_fake_12345"}'::jsonb, 'authenticated', 'authenticated') $$,
   'Token de convite inválido ou expirado',
   'Signup com token inválido é rejeitado'

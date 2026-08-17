@@ -6,6 +6,30 @@
 import { parseDate, startOfDay } from "./cronograma";
 
 export type ObraStatus = "planejada" | "em_andamento" | "paralisada" | "concluida";
+
+/** Sensibilidade de uma tarefa ao clima (spec 040): dirige o alerta do cronograma. */
+export type SensivelClima =
+  | "concretagem"
+  | "impermeabilizacao"
+  | "pintura_externa"
+  | "icamento"
+  | "telhado"
+  | "outro";
+
+export const SENSIVEL_CLIMA_OPCOES: ReadonlyArray<{ value: SensivelClima; label: string }> = [
+  { value: "concretagem", label: "Concretagem" },
+  { value: "impermeabilizacao", label: "Impermeabilização" },
+  { value: "pintura_externa", label: "Pintura externa" },
+  { value: "icamento", label: "Içamento" },
+  { value: "telhado", label: "Telhado" },
+  { value: "outro", label: "Outro (sensível a chuva)" },
+];
+
+const SENSIVEL_CLIMA_LABEL: Record<string, string> = Object.fromEntries(
+  SENSIVEL_CLIMA_OPCOES.map((o) => [o.value, o.label])
+);
+export const sensivelClimaLabel = (v: string | null | undefined): string =>
+  v ? (SENSIVEL_CLIMA_LABEL[v] ?? v) : "";
 export type ClimaRdo = "ensolarado" | "nublado" | "chuvoso" | "chuva_forte";
 export type CondicaoTrabalho = "normal" | "parcial" | "paralisada";
 

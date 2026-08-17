@@ -198,7 +198,7 @@ export default function PasswordReset() {
               className="h-10 w-auto hover:rotate-12 transition-transform duration-300"
             />
             <span className="text-2xl font-medium tracking-tight text-ink">
-              Pilar<sup className="text-[10px] font-normal text-slate-400 ml-0.5 relative -top-2.5">®</sup>
+              Pilar<sup className="text-[10px] font-normal text-ink-disabled ml-0.5 relative -top-2.5">®</sup>
             </span>
           </div>
 
@@ -225,8 +225,8 @@ export default function PasswordReset() {
             <div className="space-y-8">
               <div className="text-center space-y-2">
                 <div className="flex justify-center mb-4">
-                  <div className="p-3 rounded-2xl bg-amber-100 border border-amber-200">
-                    <KeyRound className="h-8 w-8 text-amber-600" />
+                  <div className="p-3 rounded-2xl bg-warning-soft border border-warning-mid-border">
+                    <KeyRound className="h-8 w-8 text-warning-mid" />
                   </div>
                 </div>
                 <h1 className="text-2xl font-semibold tracking-tight text-ink">Código de recuperação</h1>
@@ -250,7 +250,8 @@ export default function PasswordReset() {
 
                 <Button
                   onClick={handleBackupCode}
-                  className="w-full h-11 bg-amber-500 hover:bg-amber-600 text-white font-medium"
+                  variant="default"
+                  className="w-full h-11 bg-fill-warning hover:bg-fill-warning/90 text-fill-warning-foreground font-medium"
                   disabled={backupSubmitting || !backupCode.trim()}
                 >
                   {backupSubmitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
@@ -350,7 +351,7 @@ export default function PasswordReset() {
                   render={({ field }) => (
                     <FormItem className="space-y-2">
                       <FormLabel className="text-ink-soft font-medium">
-                        Nova senha <span className="text-red-500">*</span>
+                        Nova senha <span className="text-danger-mid">*</span>
                       </FormLabel>
                       <FormControl>
                         <div className="relative group">
@@ -398,7 +399,7 @@ export default function PasswordReset() {
                   render={({ field }) => (
                     <FormItem className="space-y-2">
                       <FormLabel className="text-ink-soft font-medium">
-                        Confirmar senha <span className="text-red-500">*</span>
+                        Confirmar senha <span className="text-danger-mid">*</span>
                       </FormLabel>
                       <FormControl>
                         <div className="relative group">

@@ -9,7 +9,21 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { formatDate } from "@/lib/format";
 import { climaLabel, condicaoLabel } from "@/lib/obras";
 import { useObraRdos, useDeleteRdo, type RdoRow } from "@/hooks/useObraRdo";
+import { useObraRdoTarefas, type ResultadoRdoTarefa } from "@/hooks/useObraRdoTarefas";
+import { useObraFotos } from "@/hooks/useObraFotos";
+import { useObraMedicoes } from "@/hooks/useObraMedicoes";
 import { RdoFormDialog } from "./RdoFormDialog";
+
+const RESULTADO_LABEL: Record<ResultadoRdoTarefa, string> = {
+  avancou: "Avançou",
+  concluiu: "Concluiu",
+  parou: "Parou",
+};
+const RESULTADO_TONE: Record<ResultadoRdoTarefa, string> = {
+  avancou: "bg-info-soft text-info-mid",
+  concluiu: "bg-positive/15 text-positive-strong",
+  parou: "bg-warning-soft text-warning-strong",
+};
 
 function Campo({ titulo, texto }: { titulo: string; texto: string | null }) {
   if (!texto) return null;
@@ -23,6 +37,9 @@ function Campo({ titulo, texto }: { titulo: string; texto: string | null }) {
 
 export function ObraDiarioTab({ obraId, canEdit }: { obraId: string; canEdit: boolean }) {
   const { data: rdos = [], isLoading } = useObraRdos(obraId);
+  const { data: vinculos = [] } = useObraRdoTarefas(obraId);
+  const { data: fotosPorRdo = {} } = useObraFotos(obraId);
+  const { data: medicoesPorRdo = {} } = useObraMedicoes(obraId);
   const del = useDeleteRdo(obraId);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<RdoRow | null>(null);
@@ -111,11 +128,71 @@ export function ObraDiarioTab({ obraId, canEdit }: { obraId: string; canEdit: bo
                   )}
                 </div>
 
+                {(() => {
+                  const doDia = vinculos.filter((v) => v.rdo_id === r.id);
+                  if (doDia.length === 0) return null;
+                  return (
+                    <div className="space-y-1.5 border-t border-black/5 pt-3">
+                      <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                        Tarefas
+                      </p>
+                      {doDia.map((v) => (
+                        <div key={v.id} className="flex items-start gap-2 text-sm">
+                          <span
+                            className={`mt-0.5 shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-medium ${RESULTADO_TONE[v.resultado]}`}
+                          >
+                            {RESULTADO_LABEL[v.resultado]}
+                          </span>
+                          <span className="min-w-0 text-ink/90">
+                            {v.tarefa?.titulo ?? "Tarefa removida"}
+                            {v.observacao && <span className="text-muted-foreground"> — {v.observacao}</span>}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })()}
+
                 {(r.atividades || r.ocorrencias || r.pendencias) && (
                   <div className="space-y-2 border-t border-black/5 pt-3">
-                    <Campo titulo="Atividades" texto={r.atividades} />
+                    <Campo titulo="Observações" texto={r.atividades} />
                     <Campo titulo="Ocorrências" texto={r.ocorrencias} />
                     <Campo titulo="Pendências" texto={r.pendencias} />
+                  </div>
+                )}
+
+                {(fotosPorRdo[r.id]?.length ?? 0) > 0 && (
+                  <div className="space-y-1.5 border-t border-black/5 pt-3">
+                    <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Fotos</p>
+                    <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">
+                      {fotosPorRdo[r.id].map((f) => (
+                        <a
+                          key={f.id}
+                          href={f.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="aspect-square overflow-hidden rounded-lg bg-muted"
+                        >
+                          <img src={f.url} alt="Foto da obra" className="h-full w-full object-cover" />
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {(medicoesPorRdo[r.id]?.length ?? 0) > 0 && (
+                  <div className="space-y-1.5 border-t border-black/5 pt-3">
+                    <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Medição</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {medicoesPorRdo[r.id].map((m) => (
+                        <span
+                          key={m.id}
+                          className="rounded-full bg-muted px-2.5 py-1 text-xs text-ink/90"
+                        >
+                          {m.item}: {m.quantidade} {m.unidade}
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 )}
               </CardContent>

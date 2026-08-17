@@ -47,7 +47,7 @@ export function AsaasCobrancaButton({
       <Button
         variant="outline"
         size="sm"
-        className="gap-1.5 text-xs h-8 border-blue-200 text-blue-700 hover:bg-blue-50"
+        className="gap-1.5 text-xs h-8 border-info-mid-border text-info-strong hover:bg-info-soft"
         onClick={() => {
           const w = window.open(asaasPaymentUrl, "_blank", "noopener,noreferrer");
           if (w) w.opener = null;
@@ -55,7 +55,7 @@ export function AsaasCobrancaButton({
       >
         <ExternalLink className="h-3 w-3" />
         {asaasBillingType === "PIX" ? "Pix" : "Boleto"} Asaas
-        {statusLabel && <span className="text-blue-400">· {statusLabel}</span>}
+        {statusLabel && <span className="text-info-mid">· {statusLabel}</span>}
       </Button>
     );
   }
@@ -67,7 +67,7 @@ export function AsaasCobrancaButton({
         <Button
           variant="outline"
           size="sm"
-          className="gap-1.5 text-xs h-8 border-blue-200 text-blue-700 hover:bg-blue-50"
+          className="gap-1.5 text-xs h-8 border-info-mid-border text-info-strong hover:bg-info-soft"
           disabled={isLoading}
         >
           {isLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Zap className="h-3 w-3" />}

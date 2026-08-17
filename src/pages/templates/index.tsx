@@ -114,8 +114,8 @@ export default function Templates() {
     <PageLayout>
       <PageHeader title="Templates de Projeto">
         {canEdit && (
-          <Button onClick={openCreate}>
-            <Plus className="h-4 w-4 mr-1" /> Novo Template
+          <Button variant="brand" onClick={openCreate}>
+            <Plus className="h-4 w-4 mr-1" /> Novo template
           </Button>
         )}
       </PageHeader>
@@ -125,7 +125,7 @@ export default function Templates() {
           icon={FileText}
           title="Nenhum template criado ainda"
           description="Templates permitem criar projetos rapidamente com fases e disciplinas pré-definidas."
-          action={canEdit ? { label: "Criar Primeiro Template", variant: "outline", onClick: openCreate } : undefined}
+          action={canEdit ? { label: "Criar primeiro template", variant: "outline", onClick: openCreate } : undefined}
         />
       ) : (
         <div className="space-y-6">
@@ -152,7 +152,7 @@ export default function Templates() {
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-7 w-7 text-red-500"
+                              className="h-7 w-7 text-danger-mid"
                               onClick={() => setConfirmDeleteId(template.id)}
                               aria-label="Excluir template"
                             >
@@ -219,7 +219,7 @@ export default function Templates() {
       >
         <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editingTemplate ? "Editar Template" : "Novo Template"}</DialogTitle>
+            <DialogTitle>{editingTemplate ? "Editar template" : "Novo template"}</DialogTitle>
           </DialogHeader>
           <TemplateForm
             template={editingTemplate}
@@ -239,7 +239,7 @@ export default function Templates() {
         onOpenChange={(open) => {
           if (!open) setConfirmDeleteId(null);
         }}
-        title="Excluir Template"
+        title="Excluir template"
         description="Tem certeza que deseja excluir este template? Esta ação não pode ser desfeita."
         onConfirm={handleDelete}
       />

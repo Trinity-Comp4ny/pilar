@@ -1,8 +1,7 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { HardHat, MapPin, Plus, User, Globe } from "lucide-react";
-import { PageLayout } from "@/components/PageLayout";
-import { PageHeader } from "@/components/PageHeader";
+import { PilarPage } from "@/components/PilarPage";
 import { KPICard } from "@/components/KPICard";
 import { EmptyState } from "@/components/EmptyState";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -80,19 +79,16 @@ export default function ObrasPage() {
   const paralisadas = obras.filter((o) => o.status === "paralisada").length;
 
   return (
-    <PageLayout
-      header={
-        <PageHeader
-          title="Obras"
-          search={{ value: search, onChange: setSearch, placeholder: "Buscar obra ou projeto" }}
-          primaryAction={{
-            label: "Nova obra",
-            onClick: () => setDialogOpen(true),
-            icon: Plus,
-            feature: "obras",
-          }}
-        />
-      }
+    <PilarPage
+      title="Obras"
+      search={{ value: search, onChange: setSearch, placeholder: "Buscar obra ou projeto" }}
+      primaryAction={{
+        label: "Nova obra",
+        onClick: () => setDialogOpen(true),
+        icon: Plus,
+        feature: "obras",
+        dataTour: "onb-nova-obra",
+      }}
     >
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <KPICard label="Obras" value={String(obras.length)} icon={HardHat} loading={isLoading} />
@@ -130,6 +126,6 @@ export default function ObrasPage() {
       )}
 
       <ObraFormDialog open={dialogOpen} onOpenChange={setDialogOpen} />
-    </PageLayout>
+    </PilarPage>
   );
 }

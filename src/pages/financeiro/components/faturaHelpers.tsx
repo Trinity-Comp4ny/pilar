@@ -25,10 +25,10 @@ export function getStatusBadge(status: string, dataVencimento: string) {
   if (status === "Paga")
     return <Badge className="bg-positive/10 text-positive-strong hover:bg-positive/10">Paga</Badge>;
   if (isFaturaVencida(status, dataVencimento))
-    return <Badge className="bg-red-100 text-red-800 hover:bg-red-100">Vencida</Badge>;
-  if (status === "Parcial") return <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">Parcial</Badge>;
-  if (status === "Fechada") return <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">Fechada</Badge>;
-  return <Badge className="bg-gray-100 text-gray-800 hover:bg-gray-100">Aberta</Badge>;
+    return <Badge className="bg-danger-soft text-danger-strong hover:bg-danger-soft">Vencida</Badge>;
+  if (status === "Parcial") return <Badge className="bg-warning-soft text-warning-strong hover:bg-warning-soft">Parcial</Badge>;
+  if (status === "Fechada") return <Badge className="bg-info-soft text-info-strong hover:bg-info-soft">Fechada</Badge>;
+  return <Badge className="bg-muted text-ink hover:bg-muted">Aberta</Badge>;
 }
 
 // Vencimento relativo em linguagem curta: "vencida 2d", "vence hoje", "vence em 3d".

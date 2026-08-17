@@ -44,9 +44,9 @@ export function FolhaHistory({ history, selectedMonth, selectedYear, onOpenDetai
                     variant="secondary"
                     className={`mt-1 capitalize text-[10px] h-5 px-2
                       ${h.status === "pago" ? "bg-positive/100 text-white" : ""}
-                      ${h.status === "pendente" ? "bg-yellow-400 text-black" : ""}
-                      ${h.status === "cancelado" ? "bg-red-500 text-white" : ""}
-                      ${h.status === "misto" ? "bg-orange-400 text-white" : ""}
+                      ${h.status === "pendente" ? "bg-fill-warning text-fill-warning-foreground" : ""}
+                      ${h.status === "cancelado" ? "bg-fill-danger text-fill-danger-foreground" : ""}
+                      ${h.status === "misto" ? "bg-fill-attention text-fill-attention-foreground" : ""}
                     `}
                   >
                     {h.status}

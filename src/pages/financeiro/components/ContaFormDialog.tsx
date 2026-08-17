@@ -59,7 +59,7 @@ export function ContaFormDialog({
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{selectedConta ? "Editar Conta" : "Adicionar Conta Bancária"}</DialogTitle>
+          <DialogTitle>{selectedConta ? "Editar conta" : "Adicionar conta bancária"}</DialogTitle>
           <DialogDescription>Configure sua conta para acompanhamento automático</DialogDescription>
         </DialogHeader>
         <div className="space-y-4 mt-4">

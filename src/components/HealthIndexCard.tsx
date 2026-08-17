@@ -41,7 +41,7 @@ export function HealthIndexCard() {
     return (
       <Card className="w-full">
         <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle className="text-sm font-medium text-black/60">Saúde Operacional</CardTitle>
+          <CardTitle className="text-sm font-medium text-black/60">Saúde operacional</CardTitle>
           <div className="p-2 rounded-full bg-muted text-ink-disabled">
             <Activity size={18} />
           </div>
@@ -58,7 +58,7 @@ export function HealthIndexCard() {
   return (
     <Card className="w-full">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-sm font-medium text-black/60">Saúde Operacional</CardTitle>
+        <CardTitle className="text-sm font-medium text-black/60">Saúde operacional</CardTitle>
         <div className={`p-2 rounded-full ${tone.badge}`}>
           <Activity size={18} />
         </div>

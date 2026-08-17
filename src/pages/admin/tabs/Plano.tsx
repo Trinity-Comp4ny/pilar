@@ -29,7 +29,11 @@ export function PlanoTab({ empresaId, currentPlan }: { empresaId: string | null;
     const load = async () => {
       const [{ count: usuarios }, { count: projetos }, { count: clientes }] = await Promise.all([
         supabase.from("profiles").select("*", { count: "exact", head: true }).eq("empresa_id", empresaId),
-        supabase.from("projetos").select("*", { count: "exact", head: true }).eq("empresa_id", empresaId),
+        supabase
+          .from("projetos")
+          .select("*", { count: "exact", head: true })
+          .eq("empresa_id", empresaId)
+          .is("deleted_at", null),
         supabase.from("clientes").select("*", { count: "exact", head: true }).eq("empresa_id", empresaId),
       ]);
 
@@ -51,7 +55,7 @@ export function PlanoTab({ empresaId, currentPlan }: { empresaId: string | null;
             <div>
               <CardTitle className="text-lg font-medium tracking-tight flex items-center gap-3">
                 Plano Atual
-                <Badge className="bg-brand/10 text-emerald-700 hover:bg-brand/10 border-transparent">
+                <Badge className="bg-brand/10 text-success-strong hover:bg-brand/10 border-transparent">
                   {PLAN_LABELS[currentPlan]}
                 </Badge>
               </CardTitle>
@@ -89,7 +93,7 @@ export function PlanoTab({ empresaId, currentPlan }: { empresaId: string | null;
               "Relatórios",
             ].map((item) => (
               <li key={item} className="flex items-center gap-2 text-black/70">
-                <CheckCircle2 size={14} className="text-emerald-600 flex-shrink-0" />
+                <CheckCircle2 size={14} className="text-success-mid flex-shrink-0" />
                 {item}
               </li>
             ))}
@@ -119,7 +123,7 @@ function Stat({
         {label}
       </div>
       <div
-        className={`mt-2 text-2xl font-medium tracking-tight ${variant === "ok" ? "text-emerald-600" : "text-black"}`}
+        className={`mt-2 text-2xl font-medium tracking-tight ${variant === "ok" ? "text-success-mid" : "text-black"}`}
       >
         {value}
       </div>

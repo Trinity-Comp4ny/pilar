@@ -42,9 +42,9 @@ interface Entrega {
 }
 
 const STATUS_CONFIG: Record<Entrega["status"], { label: string; color: string; icon: typeof Clock }> = {
-  pendente: { label: "Aguardando resposta", color: "bg-yellow-100 text-yellow-800", icon: Clock },
+  pendente: { label: "Aguardando resposta", color: "bg-warning-soft text-warning-strong", icon: Clock },
   aprovado: { label: "Aprovado", color: "bg-positive/10 text-positive-strong", icon: CheckCircle2 },
-  revisao_solicitada: { label: "Revisão solicitada", color: "bg-orange-100 text-orange-800", icon: RotateCcw },
+  revisao_solicitada: { label: "Revisão solicitada", color: "bg-attention-soft text-attention-strong", icon: RotateCcw },
 };
 
 export function EntregasContent({
@@ -175,7 +175,7 @@ export function EntregasContent({
       {pendentes.length > 0 && (
         <section>
           <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
-            <FileCheck className="h-4 w-4 text-yellow-600" />
+            <FileCheck className="h-4 w-4 text-warning-mid" />
             Aguardando sua resposta ({pendentes.length})
           </h3>
           <div className="space-y-3">
@@ -297,7 +297,7 @@ function ThreadPortalCard({
   const hasHistory = thread.versoes.length > 1;
 
   return (
-    <Card className={cn(!historico && current.status === "pendente" && "border-yellow-200")}>
+    <Card className={cn(!historico && current.status === "pendente" && "border-warning-mid-border")}>
       <CardContent className="p-4">
         <div
           role="button"
@@ -338,7 +338,7 @@ function ThreadPortalCard({
                 </span>
               )}
               {current.drive_url && (
-                <span className="flex items-center gap-1 text-blue-700">
+                <span className="flex items-center gap-1 text-info-strong">
                   · <ExternalLink className="h-3 w-3" /> Google Drive
                 </span>
               )}
@@ -395,6 +395,7 @@ function ThreadPortalCard({
               <div className="flex gap-2 flex-wrap">
                 <Button
                   size="sm"
+                  variant="brand"
                   className="h-11 sm:h-9 bg-positive hover:bg-positive/90"
                   onClick={onAprovar}
                   disabled={saving}
@@ -432,7 +433,7 @@ function VersionBlock({ entrega, isLatest, token }: { entrega: Entrega; isLatest
               asChild
               size="sm"
               variant="outline"
-              className="h-11 sm:h-7 text-[11px] border-blue-200 text-blue-700 hover:bg-blue-50"
+              className="h-11 sm:h-7 text-[11px] border-info-mid-border text-info-strong hover:bg-info-soft"
             >
               <a href={entrega.drive_url} target="_blank" rel="noopener noreferrer">
                 <ExternalLink className="h-3 w-3" />
@@ -454,13 +455,13 @@ function VersionBlock({ entrega, isLatest, token }: { entrega: Entrega; isLatest
       {entrega.descricao && <p className="text-foreground">{entrega.descricao}</p>}
 
       {entrega.resposta_empresa && (
-        <div className="rounded p-2 bg-blue-50 border border-blue-100 text-[11px] text-blue-900">
+        <div className="rounded p-2 bg-info-soft border border-info-soft-border text-[11px] text-info-strong">
           <span className="font-medium">Observação do escritório:</span> {entrega.resposta_empresa}
         </div>
       )}
 
       {entrega.resposta_cliente && (
-        <div className="rounded p-2 bg-orange-50 border border-orange-100 text-[11px] text-orange-900">
+        <div className="rounded p-2 bg-attention-soft border border-attention-soft-border text-[11px] text-attention-strong">
           <span className="font-medium">Sua solicitação:</span> {entrega.resposta_cliente}
         </div>
       )}

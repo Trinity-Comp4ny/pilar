@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import type { Json } from "@/integrations/supabase/types";
 import { onlyDigits } from "@/lib/maskUtils";
 import { errorMessage } from "@/lib/errors";
+import { getSafeErrorMessage } from "@/lib/safeError";
 
 export interface ContaBancaria {
   banco: string;
@@ -245,7 +246,7 @@ export const useClientes = (options: UseClientesOptions = {}) => {
           toast.error("Registro duplicado", { description: "Um dos campos já está em uso por outro cliente." });
         }
       } else {
-        toast.error("Erro ao salvar", { description: err.message });
+        toast.error("Erro ao salvar", { description: getSafeErrorMessage(err, "Confira os dados e tente de novo.") });
       }
     },
   });
@@ -336,7 +337,7 @@ export const useClientes = (options: UseClientesOptions = {}) => {
       return { email: data.email as string };
     },
     onError: (error: Error) => {
-      toast.error(error.message || "Erro ao criar acesso");
+      toast.error("Não foi possível criar o acesso", { description: getSafeErrorMessage(error, "Tente novamente.") });
     },
   });
 
@@ -355,7 +356,9 @@ export const useClientes = (options: UseClientesOptions = {}) => {
       return { email: data.email as string };
     },
     onError: (error: Error) => {
-      toast.error(error.message || "Erro ao redefinir senha");
+      toast.error("Não foi possível redefinir a senha", {
+        description: getSafeErrorMessage(error, "Tente novamente."),
+      });
     },
   });
 
@@ -381,7 +384,7 @@ export const useClientes = (options: UseClientesOptions = {}) => {
       toast.success("Acesso ao portal revogado");
     },
     onError: (error: Error) => {
-      toast.error(error.message || "Erro ao revogar acesso");
+      toast.error("Não foi possível revogar o acesso", { description: getSafeErrorMessage(error, "Tente novamente.") });
     },
   });
 

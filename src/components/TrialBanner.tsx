@@ -42,19 +42,19 @@ export function TrialBanner() {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
         <div className="mx-4 max-w-md w-full rounded-2xl bg-white p-8 shadow-2xl text-center space-y-5">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-red-50">
-            <AlertTriangle className="h-7 w-7 text-red-600" strokeWidth={1.5} />
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-danger-soft">
+            <AlertTriangle className="h-7 w-7 text-danger-mid" strokeWidth={1.5} />
           </div>
           <div className="space-y-2">
-            <h2 className="text-xl font-semibold tracking-tight text-gray-900">Seu trial expirou</h2>
-            <p className="text-sm text-gray-500 leading-relaxed">
+            <h2 className="text-xl font-semibold tracking-tight text-ink">Seu trial expirou</h2>
+            <p className="text-sm text-ink-muted leading-relaxed">
               O período gratuito da sua empresa chegou ao fim. Assine um plano para continuar acessando o Pilar.
             </p>
           </div>
-          <Button className="w-full" size="lg" onClick={() => openSettings("pagamento")}>
+          <Button className="w-full" size="lg" variant="brand" onClick={() => openSettings("pagamento")}>
             Assinar para continuar →
           </Button>
-          <p className="text-xs text-gray-400">Precisa de ajuda? Entre em contato com o suporte.</p>
+          <p className="text-xs text-ink-disabled">Precisa de ajuda? Entre em contato com o suporte.</p>
         </div>
       </div>
     );
@@ -77,7 +77,7 @@ export function TrialBanner() {
   return (
     <div
       className={`flex items-center justify-between gap-3 px-4 py-2.5 text-sm font-medium ${
-        urgent ? "bg-red-600 text-white" : "bg-amber-400 text-amber-950"
+        urgent ? "bg-fill-danger text-fill-danger-foreground" : "bg-fill-warning text-fill-warning-foreground"
       }`}
     >
       <div className="flex items-center gap-2">

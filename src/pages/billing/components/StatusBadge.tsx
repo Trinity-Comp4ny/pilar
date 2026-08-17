@@ -11,10 +11,10 @@ const LABELS: Record<MySubscription["status"], string> = {
 
 const COLORS: Record<MySubscription["status"], string> = {
   active: "bg-positive/10 text-positive-strong border-positive/20",
-  trialing: "bg-blue-100 text-blue-700 border-blue-200",
-  overdue: "bg-amber-100 text-amber-700 border-amber-200",
-  canceled: "bg-slate-100 text-slate-600 border-slate-200",
-  expired: "bg-red-100 text-red-700 border-red-200",
+  trialing: "bg-info-soft text-info-strong border-info-mid-border",
+  overdue: "bg-warning-soft text-warning-strong border-warning-mid-border",
+  canceled: "bg-muted text-ink-muted border-border",
+  expired: "bg-danger-soft text-danger-strong border-danger-mid-border",
 };
 
 export function StatusBadge({ status }: { status: MySubscription["status"] }) {

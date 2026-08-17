@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { formatCurrency } from "@/lib/format";
 import { CreditCard, Wallet } from "lucide-react";
+import { EmptyState } from "@/components/EmptyState";
 import { cn } from "@/lib/utils";
 import type { ContaItem, CartaoItem } from "../hooks/useContasCartoes";
 import type { Fatura } from "../hooks/useFaturas";
@@ -61,7 +62,7 @@ function CartaoRow({
           <span
             className={cn(
               "text-[10px] shrink-0 rounded-full px-1.5 py-0.5 leading-none",
-              venc.vencida ? "bg-red-100 text-red-700" : "bg-black/5 text-muted-foreground"
+              venc.vencida ? "bg-danger-soft text-danger-strong" : "bg-black/5 text-muted-foreground"
             )}
           >
             {venc.label}
@@ -72,7 +73,7 @@ function CartaoRow({
         <div
           className={cn(
             "h-1 rounded-full transition-all",
-            pct > 80 ? "bg-red-500" : pct > 50 ? "bg-yellow-500" : "bg-positive"
+            pct > 80 ? "bg-danger-strong" : pct > 50 ? "bg-warning-mid" : "bg-positive"
           )}
           style={{ width: `${Math.min(pct, 100)}%` }}
         />
@@ -154,7 +155,14 @@ export function ContasSidebar({
               </div>
             );
           })}
-          {contas.length === 0 && <p className="text-xs text-muted-foreground px-3 py-2">Nenhuma conta cadastrada</p>}
+          {contas.length === 0 && (
+            <EmptyState
+              icon={Wallet}
+              title="Nenhuma conta cadastrada"
+              description="Cadastre uma conta para começar a organizar saldos e cartões."
+              className="py-8 px-3"
+            />
+          )}
         </div>
       </div>
 

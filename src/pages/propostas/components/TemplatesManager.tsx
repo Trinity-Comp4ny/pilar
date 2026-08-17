@@ -7,7 +7,9 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Upload, FileText, Trash2, Loader2, Eye } from "lucide-react";
+import { EmptyState } from "@/components/EmptyState";
 import { toast } from "sonner";
+import { getSafeErrorMessage } from "@/lib/safeError";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import {
   usePropostaTemplates,
@@ -55,7 +57,10 @@ export function TemplatesManager() {
           toast.success("Template salvo", { description: `${data.variaveis.length} variáveis detectadas` });
           resetForm();
         },
-        onError: (err: Error) => toast.error("Erro", { description: err.message }),
+        onError: (err: Error) =>
+          toast.error("Não foi possível salvar o template", {
+            description: getSafeErrorMessage(err, "Confira o arquivo e tente de novo."),
+          }),
       }
     );
   };
@@ -67,7 +72,10 @@ export function TemplatesManager() {
         toast.success("Template removido");
         setDeleteId(null);
       },
-      onError: (err: Error) => toast.error("Não foi possível remover o template", { description: err.message }),
+      onError: (err: Error) =>
+        toast.error("Não foi possível remover o template", {
+          description: getSafeErrorMessage(err, "Tente de novo em instantes."),
+        }),
     });
   };
 
@@ -135,7 +143,7 @@ export function TemplatesManager() {
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 text-red-500 flex-shrink-0"
+            className="h-8 w-8 text-danger-mid flex-shrink-0"
             onClick={() => setDeleteId(t.id)}
             aria-label="Excluir template"
           >
@@ -148,7 +156,7 @@ export function TemplatesManager() {
             <Badge
               key={v}
               variant="secondary"
-              className={`text-[10px] ${v in AUTO_VARIABLES ? "bg-positive/10 text-positive-strong" : "bg-amber-50 text-amber-700"}`}
+              className={`text-[10px] ${v in AUTO_VARIABLES ? "bg-positive/10 text-positive-strong" : "bg-warning-soft text-warning-strong"}`}
             >
               {v}
             </Badge>
@@ -190,12 +198,13 @@ export function TemplatesManager() {
 
       {templates.length === 0 ? (
         <Card>
-          <CardContent className="py-12 text-center">
-            <FileText className="h-10 w-10 mx-auto mb-3 opacity-40" />
-            <p className="text-sm text-muted-foreground">Nenhum template cadastrado.</p>
-            <p className="text-xs text-muted-foreground mt-1">
-              Crie um documento Word (.docx) com variáveis como {"{{CLIENTE_NOME}}"} e faça upload aqui.
-            </p>
+          <CardContent className="p-0">
+            <EmptyState
+              icon={FileText}
+              title="Nenhum template cadastrado"
+              description="Crie um documento Word (.docx) com variáveis como {{CLIENTE_NOME}} e faça upload aqui."
+              action={{ label: "Upload template", onClick: () => setIsUploadOpen(true) }}
+            />
           </CardContent>
         </Card>
       ) : (
@@ -277,8 +286,8 @@ export function TemplatesManager() {
                     [&_h3]:text-base [&_h3]:font-semibold [&_h3]:mb-2 [&_h3]:mt-3
                     [&_p]:mb-2 [&_p]:leading-relaxed [&_p]:text-sm
                     [&_table]:w-full [&_table]:border-collapse [&_table]:mb-4
-                    [&_td]:border [&_td]:border-gray-300 [&_td]:px-2 [&_td]:py-1 [&_td]:text-sm
-                    [&_th]:border [&_th]:border-gray-300 [&_th]:px-2 [&_th]:py-1 [&_th]:bg-gray-50 [&_th]:text-sm
+                    [&_td]:border [&_td]:border-border [&_td]:px-2 [&_td]:py-1 [&_td]:text-sm
+                    [&_th]:border [&_th]:border-border [&_th]:px-2 [&_th]:py-1 [&_th]:bg-muted [&_th]:text-sm
                     [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:mb-2
                     [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:mb-2
                     [&_li]:text-sm [&_li]:mb-1"
@@ -295,7 +304,7 @@ export function TemplatesManager() {
                   <Badge
                     key={v}
                     variant="secondary"
-                    className={`text-[10px] ${v in AUTO_VARIABLES ? "bg-positive/10 text-positive-strong" : "bg-amber-50 text-amber-700"}`}
+                    className={`text-[10px] ${v in AUTO_VARIABLES ? "bg-positive/10 text-positive-strong" : "bg-warning-soft text-warning-strong"}`}
                   >
                     {`{{${v}}}`}
                   </Badge>
@@ -391,7 +400,7 @@ export function TemplatesManager() {
         onOpenChange={(open) => {
           if (!open) setDeleteId(null);
         }}
-        title="Excluir Template"
+        title="Excluir template"
         description="Tem certeza que deseja excluir este template?"
         onConfirm={handleDelete}
       />

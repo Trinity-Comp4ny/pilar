@@ -16,10 +16,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { MoneyInput } from "@/components/forms/MoneyInput";
+import { parseCurrencyString } from "@/lib/currencyUtils";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { ChevronDown, Pencil, RefreshCw, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
+import { getSafeErrorMessage } from "@/lib/safeError";
 import { supabase } from "@/integrations/supabase/client";
 import type { Lancamento } from "../hooks/useLancamentosUnified";
 
@@ -39,10 +42,10 @@ export function GrupoParcelaActions({ lancamento: l, onChanged }: Props) {
     l.grupo_status === "quitado"
       ? "bg-positive/10 text-positive-strong"
       : l.grupo_status === "parcial"
-        ? "bg-amber-100 text-amber-700"
+        ? "bg-warning-soft text-warning-strong"
         : l.grupo_status === "cancelado"
           ? "bg-muted text-muted-foreground"
-          : "bg-blue-100 text-blue-700";
+          : "bg-info-soft text-info-strong";
 
   return (
     <>
@@ -146,7 +149,9 @@ function EditarEmAbertoDialog({ open, grupoId, onClose, onDone }: OpProps) {
       onDone();
       onClose();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Erro");
+      toast.error("Não foi possível atualizar as parcelas", {
+        description: getSafeErrorMessage(e, "Confira os dados e tente de novo."),
+      });
     } finally {
       setSaving(false);
     }
@@ -179,7 +184,7 @@ function EditarEmAbertoDialog({ open, grupoId, onClose, onDone }: OpProps) {
           <Button variant="outline" onClick={onClose} disabled={saving}>
             Cancelar
           </Button>
-          <Button onClick={submit} disabled={saving}>
+          <Button variant="brand" onClick={submit} disabled={saving}>
             {saving ? "Salvando..." : "Aplicar"}
           </Button>
         </DialogFooter>
@@ -196,7 +201,7 @@ function RenegociarDialog({ open, grupoId, onClose, onDone }: OpProps) {
   const [saving, setSaving] = useState(false);
 
   const submit = async () => {
-    if (!novoTotal || !numParcelas || !primeiraData) {
+    if (parseCurrencyString(novoTotal) <= 0 || !numParcelas || !primeiraData) {
       toast.error("Preencha total, parcelas e primeira data");
       return;
     }
@@ -204,7 +209,7 @@ function RenegociarDialog({ open, grupoId, onClose, onDone }: OpProps) {
     try {
       const { data, error } = await supabase.rpc("rpc_grupo_parcela_renegociar", {
         p_grupo_id: grupoId,
-        p_novo_total: Number(novoTotal),
+        p_novo_total: parseCurrencyString(novoTotal),
         p_novo_num_parcelas: Number(numParcelas),
         p_nova_primeira_data: primeiraData,
         p_observacao: observacao || undefined,
@@ -214,7 +219,9 @@ function RenegociarDialog({ open, grupoId, onClose, onDone }: OpProps) {
       onDone();
       onClose();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Erro");
+      toast.error("Não foi possível renegociar", {
+        description: getSafeErrorMessage(e, "Confira os dados e tente de novo."),
+      });
     } finally {
       setSaving(false);
     }
@@ -232,7 +239,7 @@ function RenegociarDialog({ open, grupoId, onClose, onDone }: OpProps) {
         <div className="space-y-3 py-2">
           <div>
             <Label>Novo total *</Label>
-            <Input type="number" step="0.01" value={novoTotal} onChange={(e) => setNovoTotal(e.target.value)} />
+            <MoneyInput value={novoTotal} onChange={setNovoTotal} />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
@@ -259,7 +266,7 @@ function RenegociarDialog({ open, grupoId, onClose, onDone }: OpProps) {
           <Button variant="outline" onClick={onClose} disabled={saving}>
             Cancelar
           </Button>
-          <Button onClick={submit} disabled={saving}>
+          <Button variant="brand" onClick={submit} disabled={saving}>
             {saving ? "Renegociando..." : "Renegociar"}
           </Button>
         </DialogFooter>
@@ -288,7 +295,9 @@ function QuitarAntecipadoDialog({ open, grupoId, onClose, onDone }: OpProps) {
       onDone();
       onClose();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Erro");
+      toast.error("Não foi possível quitar", {
+        description: getSafeErrorMessage(e, "Confira os dados e tente de novo."),
+      });
     } finally {
       setSaving(false);
     }
@@ -319,7 +328,7 @@ function QuitarAntecipadoDialog({ open, grupoId, onClose, onDone }: OpProps) {
           <Button variant="outline" onClick={onClose} disabled={saving}>
             Cancelar
           </Button>
-          <Button onClick={submit} disabled={saving}>
+          <Button variant="brand" onClick={submit} disabled={saving}>
             {saving ? "Quitando..." : "Quitar"}
           </Button>
         </DialogFooter>

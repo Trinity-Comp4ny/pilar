@@ -1,8 +1,9 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Target, TrendingUp, Wallet, User, Pencil, Trash2 } from "lucide-react";
+import { Target, TrendingUp, Wallet, User, Layers, Pencil, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { formatDate } from "@/lib/format";
 import type { MetaRow } from "./MetaFormDialog";
 
 interface MetaCardProps {
@@ -22,6 +23,7 @@ const formatValor = (value: number, unidade: string | null | undefined) => {
 const getIcon = (meta: MetaRow, isCompleted: boolean) => {
   const cls = cn("h-5 w-5", isCompleted && "text-positive-strong");
   if (meta.tipo === "pessoal") return <User className={cn(cls, !isCompleted && "text-blue-500")} />;
+  if (meta.tipo === "livre") return <Layers className={cn(cls, !isCompleted && "text-ink-muted")} />;
   switch (meta.categoria) {
     case "receita":
       return <TrendingUp className={cn(cls, !isCompleted && "text-positive-strong")} />;
@@ -42,7 +44,7 @@ export function MetaCard({ meta, subtitle, onEdit, onDelete }: MetaCardProps) {
     <Card className={cn("border-2 transition-all", isCompleted && "border-status-done bg-positive/10")}>
       <CardContent className="p-4 space-y-3">
         <div className="flex items-center justify-between">
-          <div className={cn("p-2 rounded-lg", isCompleted ? "bg-positive/10" : "bg-gray-100")}>
+          <div className={cn("p-2 rounded-lg", isCompleted ? "bg-positive/10" : "bg-muted")}>
             {getIcon(meta, isCompleted)}
           </div>
           <div className="flex gap-0.5">
@@ -52,7 +54,7 @@ export function MetaCard({ meta, subtitle, onEdit, onDelete }: MetaCardProps) {
             <Button
               variant="ghost"
               size="icon"
-              className="h-7 w-7 text-red-500 hover:text-red-600"
+              className="h-7 w-7 text-danger-mid hover:text-danger-strong"
               onClick={onDelete}
               aria-label="Excluir meta"
             >
@@ -76,7 +78,7 @@ export function MetaCard({ meta, subtitle, onEdit, onDelete }: MetaCardProps) {
           </span>
         </div>
 
-        <Progress value={percent} className="h-1.5 bg-gray-200" indicatorClassName="bg-positive/100" />
+        <Progress value={percent} className="h-1.5 bg-muted" indicatorClassName="bg-positive/100" />
 
         <div className="flex items-end justify-between">
           <div>
@@ -89,7 +91,7 @@ export function MetaCard({ meta, subtitle, onEdit, onDelete }: MetaCardProps) {
           </div>
         </div>
         <p className="text-xs text-muted-foreground">
-          Prazo: {meta.prazo ? new Date(meta.prazo).toLocaleDateString("pt-BR") : "—"}
+          Prazo: {meta.prazo ? formatDate(meta.prazo) : "—"}
         </p>
       </CardContent>
     </Card>

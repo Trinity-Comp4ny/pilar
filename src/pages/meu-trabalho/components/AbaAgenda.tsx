@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import {
   type CamadaId,
   type PrazoEvento,
@@ -53,7 +53,6 @@ type Props = {
  */
 export function AbaAgenda({ pessoaId, minhaPessoaId, canEdit, temProjetos }: Props) {
   const navigate = useNavigate();
-  const { toast } = useToast();
   const { data: disciplinas } = useDisciplinas(temProjetos ? pessoaId : null, { enabled: temProjetos });
   const { data: tarefas } = useTarefas(pessoaId);
   const { data: pessoas } = usePessoasEmpresa();
@@ -106,10 +105,10 @@ export function AbaAgenda({ pessoaId, minhaPessoaId, canEdit, temProjetos }: Pro
     if (!tarefaAberta) return;
     try {
       await atualizar.mutateAsync({ id: tarefaAberta.id, input });
-      toast({ description: "Tarefa atualizada." });
+      toast.success("Tarefa atualizada.");
       setTarefaAberta(null);
     } catch {
-      toast({ variant: "destructive", description: "Não deu para salvar a tarefa. Tente de novo." });
+      toast.error("Não deu para salvar a tarefa. Tente de novo.");
     }
   };
 

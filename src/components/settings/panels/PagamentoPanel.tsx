@@ -60,12 +60,12 @@ export function PagamentoPanel() {
     <>
       {isLoading && (
         <div className="flex items-center justify-center py-20">
-          <Loader2 className="w-6 h-6 animate-spin text-slate-400" />
+          <Loader2 className="w-6 h-6 animate-spin text-ink-disabled" />
         </div>
       )}
 
       {error && (
-        <div className="p-6 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
+        <div className="p-6 bg-danger-soft border border-danger-mid-border rounded-xl text-sm text-danger-strong">
           Erro ao carregar assinatura. Tente recarregar.
         </div>
       )}
@@ -73,10 +73,10 @@ export function PagamentoPanel() {
       {!isLoading && !subscription && (
         <Card>
           <CardContent className="py-12 text-center space-y-4">
-            <Package className="w-10 h-10 text-slate-300 mx-auto" />
+            <Package className="w-10 h-10 text-ink-disabled mx-auto" />
             <div>
-              <h3 className="text-lg font-medium text-slate-900">Sem assinatura ativa</h3>
-              <p className="text-sm text-slate-500 mt-1">Escolha um plano pra começar a usar o Pilar.</p>
+              <h3 className="text-lg font-medium text-ink">Sem assinatura ativa</h3>
+              <p className="text-sm text-ink-muted mt-1">Escolha um plano pra começar a usar o Pilar.</p>
             </div>
             <Button onClick={goToPlanos} variant="brand">
               Ver planos
@@ -88,13 +88,13 @@ export function PagamentoPanel() {
       {subscription && subscription.plan && (
         <div className="space-y-6">
           {isOverdue && (
-            <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-800">
+            <div className="p-4 bg-warning-soft border border-warning-mid-border rounded-xl text-sm text-warning-strong">
               <strong>Pagamento em atraso.</strong> Regularize a última cobrança pra manter o acesso liberado.
             </div>
           )}
 
           {isCanceled && (
-            <div className="p-4 bg-slate-100 border border-slate-200 rounded-xl text-sm text-slate-700">
+            <div className="p-4 bg-muted border border-border rounded-xl text-sm text-ink-soft">
               <strong>Assinatura cancelada.</strong> Acesso mantido até {formatDate(subscription.current_period_end)}.
             </div>
           )}
@@ -104,48 +104,48 @@ export function PagamentoPanel() {
               <CardHeader className="flex flex-row items-start justify-between">
                 <div>
                   <CardTitle className="text-lg">Plano atual</CardTitle>
-                  <p className="text-sm text-slate-500 mt-1">{subscription.plan.descricao}</p>
+                  <p className="text-sm text-ink-muted mt-1">{subscription.plan.descricao}</p>
                 </div>
                 <StatusBadge status={subscription.status} />
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="flex items-baseline gap-2">
-                  <span className="text-4xl font-semibold text-slate-900">Pilar {subscription.plan.nome}</span>
+                  <span className="text-4xl font-semibold text-ink">Pilar {subscription.plan.nome}</span>
                 </div>
 
-                <div className="flex items-baseline gap-2 pb-6 border-b border-slate-100">
-                  <span className="text-3xl font-semibold text-slate-900">{value ? formatBRL(value) : "—"}</span>
-                  <span className="text-sm text-slate-500">
+                <div className="flex items-baseline gap-2 pb-6 border-b border-border">
+                  <span className="text-3xl font-semibold text-ink">{value ? formatBRL(value) : "—"}</span>
+                  <span className="text-sm text-ink-muted">
                     /{subscription.billing_cycle === "yearly" ? "ano" : "mês"}
                   </span>
                 </div>
 
                 <dl className="grid sm:grid-cols-2 gap-4 text-sm">
                   <div>
-                    <dt className="text-xs uppercase tracking-wider text-slate-400 mb-1 flex items-center gap-1.5">
+                    <dt className="text-xs uppercase tracking-wider text-ink-disabled mb-1 flex items-center gap-1.5">
                       <CreditCard className="w-3.5 h-3.5" /> Forma de pagamento
                     </dt>
-                    <dd className="text-slate-900 font-medium">
+                    <dd className="text-ink font-medium">
                       {BILLING_TYPE_LABELS[subscription.billing_type ?? ""] ?? "—"}
                     </dd>
                   </div>
                   <div>
-                    <dt className="text-xs uppercase tracking-wider text-slate-400 mb-1 flex items-center gap-1.5">
+                    <dt className="text-xs uppercase tracking-wider text-ink-disabled mb-1 flex items-center gap-1.5">
                       <Calendar className="w-3.5 h-3.5" /> Próxima cobrança
                     </dt>
-                    <dd className="text-slate-900 font-medium">
+                    <dd className="text-ink font-medium">
                       {isCanceled ? "—" : formatDate(subscription.current_period_end)}
                     </dd>
                   </div>
                   <div>
-                    <dt className="text-xs uppercase tracking-wider text-slate-400 mb-1">Período atual</dt>
-                    <dd className="text-slate-900">
+                    <dt className="text-xs uppercase tracking-wider text-ink-disabled mb-1">Período atual</dt>
+                    <dd className="text-ink">
                       {formatDate(subscription.current_period_start)} → {formatDate(subscription.current_period_end)}
                     </dd>
                   </div>
                   <div>
-                    <dt className="text-xs uppercase tracking-wider text-slate-400 mb-1">Cliente desde</dt>
-                    <dd className="text-slate-900">{formatDate(subscription.created_at)}</dd>
+                    <dt className="text-xs uppercase tracking-wider text-ink-disabled mb-1">Cliente desde</dt>
+                    <dd className="text-ink">{formatDate(subscription.created_at)}</dd>
                   </div>
                 </dl>
               </CardContent>
@@ -170,7 +170,7 @@ export function PagamentoPanel() {
                       <ExternalLink className="w-4 h-4 mr-2" /> Ver todos os planos
                     </Button>
                     <Button
-                      className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50"
+                      className="w-full justify-start text-danger-mid hover:text-danger-strong hover:bg-danger-soft"
                       variant="outline"
                       disabled={isCanceled}
                       onClick={() => setCancelOpen(true)}
@@ -179,7 +179,7 @@ export function PagamentoPanel() {
                     </Button>
                   </>
                 ) : (
-                  <p className="text-sm text-slate-500">Apenas o admin da empresa pode gerenciar a assinatura.</p>
+                  <p className="text-sm text-ink-muted">Apenas o admin da empresa pode gerenciar a assinatura.</p>
                 )}
               </CardContent>
             </Card>
@@ -192,7 +192,7 @@ export function PagamentoPanel() {
             <CardContent>
               <ul className="grid sm:grid-cols-2 gap-2 text-sm">
                 {subscription.plan.features.map((feature) => (
-                  <li key={feature} className="flex items-center gap-2 text-slate-700">
+                  <li key={feature} className="flex items-center gap-2 text-ink-soft">
                     <span className="w-1.5 h-1.5 rounded-full bg-brand" />
                     {feature}
                   </li>

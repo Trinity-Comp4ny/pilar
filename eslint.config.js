@@ -43,7 +43,8 @@ export default tseslint.config(
     // Warning na onda 1; vira "error" quando a onda correspondente da spec 003
     // zerar as ocorrências legadas.
     files: ["src/pages/**/*.{ts,tsx}", "src/components/**/*.{ts,tsx}"],
-    ignores: ["src/components/ui/**"],
+    // landing/ é superfície de marketing, fora do design system do app (ADR 0008 item 6).
+    ignores: ["src/components/ui/**", "src/pages/landing/**", "src/pages/Landing.tsx"],
     rules: {
       "no-restricted-syntax": [
         "warn",

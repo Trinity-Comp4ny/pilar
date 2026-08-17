@@ -111,8 +111,8 @@ export function MfaChallenge({ onVerified }: MfaChallengeProps) {
       return (
         <div className="space-y-6 text-center">
           <div className="flex justify-center">
-            <div className="p-3 rounded-2xl bg-amber-50 border border-amber-200">
-              <ShieldCheck className="h-8 w-8 text-amber-600" />
+            <div className="p-3 rounded-2xl bg-warning-soft border border-warning-mid-border">
+              <ShieldCheck className="h-8 w-8 text-warning-mid" />
             </div>
           </div>
           <div className="space-y-2">
@@ -123,9 +123,9 @@ export function MfaChallenge({ onVerified }: MfaChallengeProps) {
               Isso acontece quando o QR Code é lido pela câmera padrão em vez do app autenticador.
             </p>
           </div>
-          <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-left space-y-2">
-            <p className="text-xs font-semibold text-amber-800">Como resolver:</p>
-            <ol className="text-xs text-amber-700 space-y-1 list-decimal list-inside">
+          <div className="rounded-xl border border-warning-mid-border bg-warning-soft p-4 text-left space-y-2">
+            <p className="text-xs font-semibold text-warning-strong">Como resolver:</p>
+            <ol className="text-xs text-warning-mid space-y-1 list-decimal list-inside">
               <li>
                 Instale o <strong>Google Authenticator</strong>, <strong>Authy</strong> ou <strong>1Password</strong>
               </li>
@@ -164,8 +164,8 @@ export function MfaChallenge({ onVerified }: MfaChallengeProps) {
       <div className="space-y-8">
         <div className="text-center space-y-2">
           <div className="flex justify-center mb-4">
-            <div className="p-3 rounded-2xl bg-amber-100 border border-amber-200">
-              <KeyRound className="h-8 w-8 text-amber-600" />
+            <div className="p-3 rounded-2xl bg-warning-soft border border-warning-mid-border">
+              <KeyRound className="h-8 w-8 text-warning-mid" />
             </div>
           </div>
           <h2 className="text-2xl font-semibold tracking-tight text-ink">Código de recuperação</h2>
@@ -189,7 +189,8 @@ export function MfaChallenge({ onVerified }: MfaChallengeProps) {
 
           <Button
             onClick={handleBackupCode}
-            className="w-full h-11 bg-amber-500 hover:bg-amber-600 text-white font-medium"
+            variant="outline"
+            className="w-full h-11 bg-fill-warning hover:bg-fill-warning/90 text-fill-warning-foreground font-medium"
             disabled={backupSubmitting || !backupCode.trim()}
           >
             {backupSubmitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}

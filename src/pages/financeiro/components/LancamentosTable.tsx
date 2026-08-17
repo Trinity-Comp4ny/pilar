@@ -3,9 +3,12 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { ArrowDownCircle, ArrowUp, ArrowUpDown, ArrowDown } from "lucide-react";
 import { toast } from "sonner";
+import { getSafeErrorMessage } from "@/lib/safeError";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { getDisplayDate } from "@/lib/dateUtils";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import type { Lancamento } from "../hooks/useLancamentosUnified";
@@ -234,7 +237,9 @@ export function LancamentosTable({ resumo, filters, onFiltersChange, onMutated }
         p_observacao: null,
       } as never);
       if (error) {
-        toast.error("Falha ao atualizar status", { description: error.message });
+        toast.error("Falha ao atualizar status", {
+          description: getSafeErrorMessage(error, "Tente novamente em instantes."),
+        });
         return;
       }
       toast.success("Status atualizado");
@@ -252,7 +257,9 @@ export function LancamentosTable({ resumo, filters, onFiltersChange, onMutated }
     payload[dataField] = isPaying ? today : null;
     const { error } = await supabase.from(table).update(payload as never).eq("id", l.id);
     if (error) {
-      toast.error("Falha ao atualizar status", { description: error.message });
+      toast.error("Não foi possível atualizar o status", {
+        description: getSafeErrorMessage(error, "Tente de novo em instantes."),
+      });
       return;
     }
     toast.success("Status atualizado");
@@ -334,7 +341,9 @@ export function LancamentosTable({ resumo, filters, onFiltersChange, onMutated }
     if (tipo === "transferencia") {
       const { error } = await supabase.rpc("rpc_excluir_transferencia", { p_id: id } as never);
       if (error) {
-        toast.error("Falha ao excluir", { description: error.message });
+        toast.error("Não foi possível excluir", {
+          description: getSafeErrorMessage(error, "Tente de novo em instantes."),
+        });
         return;
       }
       toast.success("Transferência excluída");
@@ -408,14 +417,9 @@ export function LancamentosTable({ resumo, filters, onFiltersChange, onMutated }
               <tr className="text-xs text-muted-foreground">
                 {canEdit && (
                   <th className="w-[40px] px-3 py-2">
-                    <input
-                      type="checkbox"
-                      className="h-4 w-4 rounded border-gray-300"
-                      checked={allSelected}
-                      ref={(el) => {
-                        if (el) el.indeterminate = someSelected && !allSelected;
-                      }}
-                      onChange={toggleAll}
+                    <Checkbox
+                      checked={allSelected ? true : someSelected ? "indeterminate" : false}
+                      onCheckedChange={toggleAll}
                       aria-label="Selecionar todos"
                     />
                   </th>
@@ -542,13 +546,15 @@ export function LancamentosTable({ resumo, filters, onFiltersChange, onMutated }
 
         {paginated.hasNextPage && (
           <div className="border-t border-black/10 bg-white px-4 py-3 flex justify-center">
-            <button
+            <Button
+              variant="outline"
+              size="sm"
               onClick={() => paginated.fetchNextPage()}
               disabled={paginated.isFetchingNextPage}
-              className="text-xs border border-gray-200 rounded-md px-3 py-1.5 hover:bg-gray-50 disabled:opacity-50"
+              className="text-xs"
             >
               {paginated.isFetchingNextPage ? "Carregando…" : "Carregar mais"}
-            </button>
+            </Button>
           </div>
         )}
       </div>

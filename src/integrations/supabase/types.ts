@@ -517,6 +517,72 @@ export type Database = {
         }
         Relationships: []
       }
+      campo_accounts: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          created_by: string | null
+          email: string | null
+          empresa_id: string
+          id: string
+          must_change_senha: boolean
+          nome: string
+          obra_id: string
+          senha_hash: string | null
+          token_expira_em: string | null
+          token_sessao: string | null
+          ultimo_acesso: string | null
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          empresa_id: string
+          id?: string
+          must_change_senha?: boolean
+          nome: string
+          obra_id: string
+          senha_hash?: string | null
+          token_expira_em?: string | null
+          token_sessao?: string | null
+          ultimo_acesso?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          empresa_id?: string
+          id?: string
+          must_change_senha?: boolean
+          nome?: string
+          obra_id?: string
+          senha_hash?: string | null
+          token_expira_em?: string | null
+          token_sessao?: string | null
+          ultimo_acesso?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campo_accounts_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campo_accounts_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cartoes: {
         Row: {
           conta_pagamento_id: string | null
@@ -3164,10 +3230,11 @@ export type Database = {
         Row: {
           atividades: string | null
           autor_id: string | null
+          campo_account_id: string | null
           clima: string | null
           condicao_trabalho: string | null
           created_at: string
-          created_by: string
+          created_by: string | null
           data: string
           efetivo: number | null
           empresa_id: string
@@ -3180,10 +3247,11 @@ export type Database = {
         Insert: {
           atividades?: string | null
           autor_id?: string | null
+          campo_account_id?: string | null
           clima?: string | null
           condicao_trabalho?: string | null
           created_at?: string
-          created_by?: string
+          created_by?: string | null
           data: string
           efetivo?: number | null
           empresa_id: string
@@ -3196,10 +3264,11 @@ export type Database = {
         Update: {
           atividades?: string | null
           autor_id?: string | null
+          campo_account_id?: string | null
           clima?: string | null
           condicao_trabalho?: string | null
           created_at?: string
-          created_by?: string
+          created_by?: string | null
           data?: string
           efetivo?: number | null
           empresa_id?: string
@@ -3232,6 +3301,13 @@ export type Database = {
             referencedColumns: ["pessoa_id"]
           },
           {
+            foreignKeyName: "obra_rdo_campo_account_id_fkey"
+            columns: ["campo_account_id"]
+            isOneToOne: false
+            referencedRelation: "campo_accounts"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "obra_rdo_empresa_id_fkey"
             columns: ["empresa_id"]
             isOneToOne: false
@@ -3243,6 +3319,201 @@ export type Database = {
             columns: ["obra_id"]
             isOneToOne: false
             referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      obra_rdo_foto: {
+        Row: {
+          campo_account_id: string | null
+          created_at: string
+          created_by: string | null
+          empresa_id: string
+          id: string
+          obra_id: string
+          path: string
+          rdo_id: string
+        }
+        Insert: {
+          campo_account_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          empresa_id: string
+          id?: string
+          obra_id: string
+          path: string
+          rdo_id: string
+        }
+        Update: {
+          campo_account_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          empresa_id?: string
+          id?: string
+          obra_id?: string
+          path?: string
+          rdo_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "obra_rdo_foto_campo_account_id_fkey"
+            columns: ["campo_account_id"]
+            isOneToOne: false
+            referencedRelation: "campo_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_rdo_foto_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_rdo_foto_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_rdo_foto_rdo_id_fkey"
+            columns: ["rdo_id"]
+            isOneToOne: false
+            referencedRelation: "obra_rdo"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      obra_rdo_medicao: {
+        Row: {
+          campo_account_id: string | null
+          created_at: string
+          created_by: string | null
+          empresa_id: string
+          id: string
+          item: string
+          obra_id: string
+          quantidade: number
+          rdo_id: string
+          unidade: string
+        }
+        Insert: {
+          campo_account_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          empresa_id: string
+          id?: string
+          item: string
+          obra_id: string
+          quantidade: number
+          rdo_id: string
+          unidade: string
+        }
+        Update: {
+          campo_account_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          empresa_id?: string
+          id?: string
+          item?: string
+          obra_id?: string
+          quantidade?: number
+          rdo_id?: string
+          unidade?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "obra_rdo_medicao_campo_account_id_fkey"
+            columns: ["campo_account_id"]
+            isOneToOne: false
+            referencedRelation: "campo_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_rdo_medicao_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_rdo_medicao_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_rdo_medicao_rdo_id_fkey"
+            columns: ["rdo_id"]
+            isOneToOne: false
+            referencedRelation: "obra_rdo"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      obra_rdo_tarefa: {
+        Row: {
+          campo_account_id: string | null
+          created_at: string
+          created_by: string | null
+          empresa_id: string
+          id: string
+          observacao: string | null
+          rdo_id: string
+          resultado: string
+          tarefa_id: string
+        }
+        Insert: {
+          campo_account_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          empresa_id: string
+          id?: string
+          observacao?: string | null
+          rdo_id: string
+          resultado: string
+          tarefa_id: string
+        }
+        Update: {
+          campo_account_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          empresa_id?: string
+          id?: string
+          observacao?: string | null
+          rdo_id?: string
+          resultado?: string
+          tarefa_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "obra_rdo_tarefa_campo_account_id_fkey"
+            columns: ["campo_account_id"]
+            isOneToOne: false
+            referencedRelation: "campo_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_rdo_tarefa_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_rdo_tarefa_rdo_id_fkey"
+            columns: ["rdo_id"]
+            isOneToOne: false
+            referencedRelation: "obra_rdo"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_rdo_tarefa_tarefa_id_fkey"
+            columns: ["tarefa_id"]
+            isOneToOne: false
+            referencedRelation: "tarefas"
             referencedColumns: ["id"]
           },
         ]
@@ -3935,6 +4206,7 @@ export type Database = {
           last_name: string
           nome: string | null
           onboarding_completed: boolean | null
+          onboarding_state: Json
           role: Database["public"]["Enums"]["user_role"] | null
           updated_at: string | null
           updated_by: string | null
@@ -3952,6 +4224,7 @@ export type Database = {
           last_name?: string
           nome?: string | null
           onboarding_completed?: boolean | null
+          onboarding_state?: Json
           role?: Database["public"]["Enums"]["user_role"] | null
           updated_at?: string | null
           updated_by?: string | null
@@ -3969,6 +4242,7 @@ export type Database = {
           last_name?: string
           nome?: string | null
           onboarding_completed?: boolean | null
+          onboarding_state?: Json
           role?: Database["public"]["Enums"]["user_role"] | null
           updated_at?: string | null
           updated_by?: string | null
@@ -4864,7 +5138,7 @@ export type Database = {
         Row: {
           comentarios: Json
           created_at: string
-          created_by: string
+          created_by: string | null
           data_inicio: string | null
           descricao: string | null
           empresa_id: string
@@ -4881,6 +5155,8 @@ export type Database = {
           prioridade: string
           projeto_id: string | null
           responsavel_id: string | null
+          sensivel_clima: string | null
+          sinalizada: boolean
           status: string
           titulo: string
           updated_at: string
@@ -4888,7 +5164,7 @@ export type Database = {
         Insert: {
           comentarios?: Json
           created_at?: string
-          created_by?: string
+          created_by?: string | null
           data_inicio?: string | null
           descricao?: string | null
           empresa_id: string
@@ -4905,6 +5181,8 @@ export type Database = {
           prioridade?: string
           projeto_id?: string | null
           responsavel_id?: string | null
+          sensivel_clima?: string | null
+          sinalizada?: boolean
           status?: string
           titulo: string
           updated_at?: string
@@ -4912,7 +5190,7 @@ export type Database = {
         Update: {
           comentarios?: Json
           created_at?: string
-          created_by?: string
+          created_by?: string | null
           data_inicio?: string | null
           descricao?: string | null
           empresa_id?: string
@@ -4929,6 +5207,8 @@ export type Database = {
           prioridade?: string
           projeto_id?: string | null
           responsavel_id?: string | null
+          sensivel_clima?: string | null
+          sinalizada?: boolean
           status?: string
           titulo?: string
           updated_at?: string
@@ -5618,6 +5898,21 @@ export type Database = {
       }
     }
     Functions: {
+      _campo_create_account: {
+        Args: {
+          p_created_by: string
+          p_email: string
+          p_empresa_id: string
+          p_nome: string
+          p_obra_id: string
+          p_senha: string
+        }
+        Returns: string
+      }
+      _campo_registrar_foto: {
+        Args: { p_path: string; p_rdo_id: string; p_token: string }
+        Returns: Json
+      }
       _feature_catalog: { Args: never; Returns: string[] }
       _notif_gestao: { Args: { p_empresa: string }; Returns: string[] }
       _notif_resp_disciplina: {
@@ -5663,6 +5958,54 @@ export type Database = {
       aprovar_orcamento_agente: { Args: { p_run_id: string }; Returns: Json }
       audit_log_cleanup: { Args: never; Returns: number }
       audit_logs_archive_old: { Args: never; Returns: number }
+      campo_criar_tarefa: {
+        Args: { p_titulo: string; p_token: string }
+        Returns: Json
+      }
+      campo_listar_rdos: {
+        Args: { p_limite?: number; p_token: string }
+        Returns: Json
+      }
+      campo_listar_tarefas: { Args: { p_token: string }; Returns: Json }
+      campo_login: { Args: { p_email: string; p_senha: string }; Returns: Json }
+      campo_registrar_medicao: {
+        Args: {
+          p_item: string
+          p_quantidade: number
+          p_rdo_id: string
+          p_token: string
+          p_unidade: string
+        }
+        Returns: Json
+      }
+      campo_registrar_tarefa_rdo: {
+        Args: {
+          p_observacao: string
+          p_rdo_id: string
+          p_resultado: string
+          p_tarefa_id: string
+          p_token: string
+        }
+        Returns: Json
+      }
+      campo_salvar_rdo: {
+        Args: {
+          p_atividades: string
+          p_clima: string
+          p_condicao: string
+          p_data: string
+          p_efetivo: number
+          p_ocorrencias: string
+          p_pendencias: string
+          p_token: string
+        }
+        Returns: Json
+      }
+      campo_trocar_senha: {
+        Args: { p_nova_senha: string; p_token: string }
+        Returns: Json
+      }
+      campo_verify_session: { Args: { p_token: string }; Returns: Json }
       can_view_financeiro: { Args: never; Returns: boolean }
       can_view_folha: { Args: never; Returns: boolean }
       check_convite_rate_limit: {
@@ -5985,6 +6328,10 @@ export type Database = {
           status_raw: string
           titulo: string
         }[]
+      }
+      get_projeto_rentabilidade_detalhe: {
+        Args: { p_projeto_id: string }
+        Returns: Json
       }
       get_user_empresa_id: { Args: never; Returns: string }
       get_user_empresa_id_text: { Args: never; Returns: string }
@@ -6338,6 +6685,7 @@ export type Database = {
         Args: { p_bucket: string; p_disciplina_id: string }
         Returns: undefined
       }
+      set_onboarding_state: { Args: { patch: Json }; Returns: Json }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
       start_impersonation: {

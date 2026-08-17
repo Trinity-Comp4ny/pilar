@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { formatCurrency as fmtMoeda } from "@/lib/format";
+import { formatCurrency, formatDate } from "@/lib/format";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -60,10 +60,6 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import type { Cliente } from "@/hooks/useClientes";
 import type { ProjetoResumo, PropostaResumo } from "@/hooks/useClienteDetalhe";
-
-const formatCurrency = (v: number | null) => (v != null ? fmtMoeda(v) : "—");
-
-const formatDate = (d: string | null) => (d ? new Date(d + "T00:00:00").toLocaleDateString("pt-BR") : "—");
 
 const TIPO_NF_LABELS: Record<string, string> = {
   servico: "Serviço",
@@ -391,7 +387,7 @@ function VisaoGeralTab({ cliente, isAdmin }: { cliente: Cliente; isAdmin: boolea
                     variant="outline"
                     onClick={handleRevoke}
                     disabled={isRevokingPortal || isResettingPortal}
-                    className="border-red-200 text-red-700 hover:bg-red-50"
+                    className="border-danger-mid-border text-danger-strong hover:bg-danger-soft"
                   >
                     {isRevokingPortal ? (
                       <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
@@ -402,7 +398,7 @@ function VisaoGeralTab({ cliente, isAdmin }: { cliente: Cliente; isAdmin: boolea
                   </Button>
                 </div>
                 {resetCredentials && (
-                  <div className="border border-amber-200 bg-amber-50 rounded-lg p-3 text-sm text-amber-800">
+                  <div className="border border-warning-mid-border bg-warning-soft rounded-lg p-3 text-sm text-warning-strong">
                     Senha redefinida! Credenciais enviadas para <strong>{resetCredentials.email}</strong>.
                   </div>
                 )}
@@ -459,7 +455,7 @@ function VisaoGeralTab({ cliente, isAdmin }: { cliente: Cliente; isAdmin: boolea
                   </span>
                   .
                 </p>
-                <div className="flex items-start gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2.5 text-blue-800">
+                <div className="flex items-start gap-2 rounded-lg border border-info-mid-border bg-info-soft px-3 py-2.5 text-info-strong">
                   <Send className="h-3.5 w-3.5 mt-0.5 shrink-0" />
                   <p>
                     As credenciais serão enviadas para <strong>{cliente.email}</strong>.
@@ -590,7 +586,7 @@ export default function ClienteDetalhePage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="text-red-600 border-red-200 hover:bg-red-50"
+                  className="text-danger-mid border-danger-mid-border hover:bg-danger-soft"
                   onClick={() => setConfirmDeleteOpen(true)}
                 >
                   <Trash2 className="h-4 w-4 mr-1.5" />
@@ -752,7 +748,7 @@ export default function ClienteDetalhePage() {
         open={confirmDeleteOpen}
         onOpenChange={setConfirmDeleteOpen}
         onConfirm={handleDelete}
-        title="Excluir Cliente"
+        title="Excluir cliente"
         description="Tem certeza que deseja excluir este cliente? Esta ação não pode ser desfeita."
         confirmText="Excluir"
         cancelText="Cancelar"

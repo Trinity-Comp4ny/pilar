@@ -12,6 +12,7 @@ import { ImpersonationProvider } from "@/contexts/ImpersonationContext";
 import { PageSkeleton } from "@/components/PageSkeleton";
 import { PrivateRoute } from "./components/PrivateRoute";
 import { ClientePrivateRoute } from "./components/ClientePrivateRoute";
+import { CampoPrivateRoute } from "./components/CampoPrivateRoute";
 import { AdminRoute } from "./components/AdminRoute";
 import { UltraAdminRoute } from "./components/UltraAdminRoute";
 import { FeatureRoute } from "./components/FeatureRoute";
@@ -30,6 +31,8 @@ const Landing = lazy(() => import("./pages/Landing"));
 const Planos = lazy(() => import("./pages/planos"));
 const Checkout = lazy(() => import("./pages/checkout"));
 const Login = lazy(() => import("./pages/Login"));
+const Signup = lazy(() => import("./pages/Signup"));
+const AuthCallback = lazy(() => import("./pages/AuthCallback"));
 const Inicio = lazy(() => import("./pages/inicio"));
 const MeuTrabalho = lazy(() => import("./pages/meu-trabalho"));
 const Obras = lazy(() => import("./pages/obras"));
@@ -54,6 +57,10 @@ const Capacidade = lazy(() => import("./pages/capacidade"));
 const AiHub = lazy(() => import("./pages/ai"));
 const ProjetoDetail = lazy(() => import("./pages/projetos/ProjetoDetail"));
 const ClienteLogin = lazy(() => import("./pages/cliente/ClienteLogin"));
+const CampoLogin = lazy(() => import("./pages/campo/CampoLogin"));
+const CampoTrocarSenha = lazy(() => import("./pages/campo/CampoTrocarSenha"));
+const CampoHome = lazy(() => import("./pages/campo/CampoHome"));
+const CampoRegistrarDia = lazy(() => import("./pages/campo/CampoRegistrarDia"));
 const ClienteDashboard = lazy(() => import("./pages/cliente/ClienteDashboard"));
 const ClienteObraDetail = lazy(() => import("./pages/cliente/ClienteObraDetail"));
 const ClienteProjetoDetail = lazy(() => import("./pages/cliente/ClienteProjetoDetail"));
@@ -126,6 +133,8 @@ const App = () => {
                       <Route path="/planos" element={<Planos />} />
                       <Route path="/checkout" element={<Checkout />} />
                       <Route path="/login" element={<Login />} />
+                      <Route path="/cadastro" element={<Signup />} />
+                      <Route path="/auth/callback" element={<AuthCallback />} />
                       <Route path="/forgot-password" element={<ForgotPassword />} />
                       <Route path="/reset-password" element={<PasswordReset />} />
                       <Route path="/privacidade" element={<Privacidade />} />
@@ -138,10 +147,16 @@ const App = () => {
                         {/* Obras (reaberto — ADR 0011, spec 015): fase de execução do projeto. */}
                         <Route element={<FeatureRoute feature="obras" />}>
                           <Route path="/obras" element={<Obras />} />
-                          <Route path="/obras/clima" element={<ObraClima />} />
+                          {/* Sub-features do módulo Obras (spec 035): gate próprio,
+                              herda o módulo ligado via parent em features.ts. */}
+                          <Route element={<FeatureRoute feature="obras_clima" />}>
+                            <Route path="/obras/clima" element={<ObraClima />} />
+                          </Route>
                           {/* Fornecedor mora no módulo Obra (spec 026). */}
-                          <Route path="/obras/fornecedores" element={<Fornecedores />} />
-                          <Route path="/obras/fornecedores/:id" element={<FornecedorDetalhe />} />
+                          <Route element={<FeatureRoute feature="obras_fornecedores" />}>
+                            <Route path="/obras/fornecedores" element={<Fornecedores />} />
+                            <Route path="/obras/fornecedores/:id" element={<FornecedorDetalhe />} />
+                          </Route>
                           <Route path="/obras/:id" element={<ObraDetalhe />} />
                         </Route>
 
@@ -289,6 +304,14 @@ const App = () => {
                         <Route path="projeto/:id/financeiro" element={<ClienteProjetoDetail />} />
                         <Route path="projeto/:id/entregas" element={<ClienteProjetoDetail />} />
                         <Route path="obra/:id" element={<ClienteObraDetail />} />
+                      </Route>
+
+                      {/* Pilar Campo — app de campo (conta própria, escopo por obra) */}
+                      <Route path="/campo/login" element={<CampoLogin />} />
+                      <Route path="/campo/senha" element={<CampoTrocarSenha />} />
+                      <Route path="/campo" element={<CampoPrivateRoute />}>
+                        <Route index element={<CampoHome />} />
+                        <Route path="dia" element={<CampoRegistrarDia />} />
                       </Route>
 
                       <Route path="*" element={<NotFound />} />

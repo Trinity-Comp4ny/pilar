@@ -40,7 +40,7 @@ export default function Checkout() {
   if (loadingPlans) {
     return (
       <div className="min-h-screen bg-paper flex items-center justify-center">
-        <Loader2 className="w-6 h-6 animate-spin text-slate-400" />
+        <Loader2 className="w-6 h-6 animate-spin text-ink-disabled" />
       </div>
     );
   }
@@ -61,7 +61,7 @@ export default function Checkout() {
         <div className="container mx-auto px-6 md:px-10 py-4 flex items-center justify-between">
           <Link
             to="/planos"
-            className="flex items-center gap-2 text-slate-500 hover:text-brand transition-colors text-sm font-medium group"
+            className="flex items-center gap-2 text-ink-muted hover:text-brand transition-colors text-sm font-medium group"
           >
             <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
             Voltar
@@ -74,11 +74,11 @@ export default function Checkout() {
               className="h-7 w-auto transition-transform duration-500 group-hover:rotate-12"
             />
             <span className="text-lg font-medium tracking-tight text-ink-soft">
-              Pilar<sup className="text-[9px] font-normal text-slate-400 ml-0.5 relative -top-2">®</sup>
+              Pilar<sup className="text-[9px] font-normal text-ink-disabled ml-0.5 relative -top-2">®</sup>
             </span>
           </a>
 
-          <div className="flex items-center gap-1 text-[11px] text-slate-400">
+          <div className="flex items-center gap-1 text-[11px] text-ink-disabled">
             <ShieldCheck className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Checkout seguro</span>
           </div>
@@ -132,30 +132,30 @@ export default function Checkout() {
           <aside className="sticky top-[73px] space-y-4">
             <div className="bg-white rounded-2xl border border-paper-border p-6 shadow-sm">
               <div className="flex items-center justify-between mb-4">
-                <p className="text-[10px] uppercase tracking-widest text-slate-400">Resumo do pedido</p>
+                <p className="text-[10px] uppercase tracking-widest text-ink-disabled">Resumo do pedido</p>
                 <Link
                   to="/planos"
-                  className="flex items-center gap-1 text-[11px] text-slate-700 hover:text-slate-900 transition-colors font-medium"
+                  className="flex items-center gap-1 text-[11px] text-ink-soft hover:text-ink transition-colors font-medium"
                 >
                   Trocar plano <ArrowRight className="w-3 h-3" />
                 </Link>
               </div>
 
-              <div className="flex items-start justify-between gap-4 pb-4 border-b border-slate-100">
+              <div className="flex items-start justify-between gap-4 pb-4 border-b border-border">
                 <div>
-                  <p className="font-semibold text-slate-900">Pilar {plan.nome}</p>
-                  <p className="text-xs text-slate-500 mt-0.5">
+                  <p className="font-semibold text-ink">Pilar {plan.nome}</p>
+                  <p className="text-xs text-ink-muted mt-0.5">
                     {cycle === "yearly" ? "Assinatura anual" : "Assinatura mensal"}
                   </p>
-                  {plan.descricao && <p className="text-xs text-slate-400 mt-1">{plan.descricao}</p>}
+                  {plan.descricao && <p className="text-xs text-ink-disabled mt-1">{plan.descricao}</p>}
                 </div>
-                <p className="text-sm font-semibold text-slate-900 whitespace-nowrap">{formatBRL(planValue)}</p>
+                <p className="text-sm font-semibold text-ink whitespace-nowrap">{formatBRL(planValue)}</p>
               </div>
 
               {plan.features.length > 0 && (
                 <ul className="mt-4 space-y-2.5">
                   {plan.features.map((feature) => (
-                    <li key={feature} className="flex items-start gap-2.5 text-xs text-slate-600">
+                    <li key={feature} className="flex items-start gap-2.5 text-xs text-ink-muted">
                       <Check className="w-3.5 h-3.5 text-positive-strong flex-shrink-0 mt-0.5" />
                       {feature}
                     </li>
@@ -163,11 +163,11 @@ export default function Checkout() {
                 </ul>
               )}
 
-              <div className="mt-5 pt-4 border-t border-slate-100 flex justify-between items-baseline">
-                <span className="text-xs uppercase tracking-wider text-slate-500">Total</span>
+              <div className="mt-5 pt-4 border-t border-border flex justify-between items-baseline">
+                <span className="text-xs uppercase tracking-wider text-ink-muted">Total</span>
                 <div className="text-right">
-                  <p className="text-2xl font-semibold text-slate-900">{formatBRL(planValue)}</p>
-                  <p className="text-[11px] text-slate-400">{cycle === "yearly" ? "por ano" : "por mês"}</p>
+                  <p className="text-2xl font-semibold text-ink">{formatBRL(planValue)}</p>
+                  <p className="text-[11px] text-ink-disabled">{cycle === "yearly" ? "por ano" : "por mês"}</p>
                 </div>
               </div>
             </div>
@@ -180,7 +180,7 @@ export default function Checkout() {
                 "Acesso imediato após confirmação",
                 "Suporte por email incluso",
               ].map((item) => (
-                <div key={item} className="flex items-center gap-2 text-xs text-slate-500">
+                <div key={item} className="flex items-center gap-2 text-xs text-ink-muted">
                   <ShieldCheck className="w-3.5 h-3.5 text-foreground flex-shrink-0" />
                   {item}
                 </div>

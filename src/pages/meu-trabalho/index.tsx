@@ -6,13 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { PageLayout } from "@/components/PageLayout";
-import { PageHeader } from "@/components/PageHeader";
+import { PilarPage } from "@/components/PilarPage";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import { usePermissions } from "@/hooks/usePermissions";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { QuadroTrabalho } from "./components/QuadroTrabalho";
 import { ListaTrabalho } from "./components/ListaTrabalho";
@@ -71,7 +70,6 @@ function noPeriodo(prazo: string | null, filtro: FiltroData): boolean {
 export default function MeuTrabalho() {
   usePageTitle("Meu trabalho");
   const navigate = useNavigate();
-  const { toast } = useToast();
   const qc = useQueryClient();
   const { isAdmin } = usePermissions();
   const { canView: temProjetos } = useFeatureAccess("projetos");
@@ -168,7 +166,7 @@ export default function MeuTrabalho() {
         await atualizar.mutateAsync({ id: item.id, input: patch });
       } else {
         if (!destino.bucket) {
-          toast({ description: "Essa coluna é só para tarefas." });
+          toast("Essa coluna é só para tarefas.");
           return;
         }
         patchDisciplina(item.id, { status_bucket: destino.bucket });
@@ -176,7 +174,7 @@ export default function MeuTrabalho() {
       }
     } catch {
       qc.invalidateQueries({ queryKey: ["meu-trabalho", item.tipo === "tarefa" ? "tarefas" : "disciplinas"] });
-      toast({ variant: "destructive", description: "Não deu para mover o card." });
+      toast.error("Não deu para mover o card.");
     }
   };
 
@@ -186,7 +184,7 @@ export default function MeuTrabalho() {
       patchTarefa(item.id, { prioridade });
       await atualizar.mutateAsync({ id: item.id, input: { prioridade } });
     } catch {
-      toast({ variant: "destructive", description: "Não deu para mudar a prioridade." });
+      toast.error("Não deu para mudar a prioridade.");
     }
   };
 
@@ -197,7 +195,7 @@ export default function MeuTrabalho() {
       patchTarefa(item.id, { responsaveis: novos, responsavel_id: pessoaIds[0] ?? null });
       await atualizar.mutateAsync({ id: item.id, input: { responsaveis: pessoaIds } });
     } catch {
-      toast({ variant: "destructive", description: "Não deu para mudar os responsáveis." });
+      toast.error("Não deu para mudar os responsáveis.");
     }
   };
 
@@ -207,7 +205,7 @@ export default function MeuTrabalho() {
       patchTarefa(item.id, { prazo: iso });
       await atualizar.mutateAsync({ id: item.id, input: { prazo: iso } });
     } catch {
-      toast({ variant: "destructive", description: "Não deu para mudar o prazo." });
+      toast.error("Não deu para mudar o prazo.");
     }
   };
 
@@ -219,7 +217,7 @@ export default function MeuTrabalho() {
       patchTarefa(item.id, { projeto_id: projetoId, projeto: proj });
       await atualizar.mutateAsync({ id: item.id, input: { projeto_id: projetoId } });
     } catch {
-      toast({ variant: "destructive", description: "Não deu para mudar o projeto." });
+      toast.error("Não deu para mudar o projeto.");
     }
   };
 
@@ -229,7 +227,7 @@ export default function MeuTrabalho() {
       patchTarefa(item.id, { labels });
       await atualizar.mutateAsync({ id: item.id, input: { labels } });
     } catch {
-      toast({ variant: "destructive", description: "Não deu para mudar as etiquetas." });
+      toast.error("Não deu para mudar as etiquetas.");
     }
   };
 
@@ -239,7 +237,7 @@ export default function MeuTrabalho() {
       patchTarefa(item.id, { horas_estimadas: dec });
       await atualizar.mutateAsync({ id: item.id, input: { horas_estimadas: dec } });
     } catch {
-      toast({ variant: "destructive", description: "Não deu para mudar as horas." });
+      toast.error("Não deu para mudar as horas.");
     }
   };
 
@@ -249,7 +247,7 @@ export default function MeuTrabalho() {
       patchTarefa(item.id, { horas_reais: dec });
       await atualizar.mutateAsync({ id: item.id, input: { horas_reais: dec } });
     } catch {
-      toast({ variant: "destructive", description: "Não deu para mudar as horas reais." });
+      toast.error("Não deu para mudar as horas reais.");
     }
   };
 
@@ -281,9 +279,9 @@ export default function MeuTrabalho() {
     if (!aExcluir) return;
     try {
       await excluir.mutateAsync(aExcluir.id);
-      toast({ description: "Tarefa excluída." });
+      toast.success("Tarefa excluída.");
     } catch {
-      toast({ variant: "destructive", description: "Não deu para excluir." });
+      toast.error("Não deu para excluir.");
     } finally {
       setAExcluir(null);
     }
@@ -293,7 +291,7 @@ export default function MeuTrabalho() {
     try {
       if (editando) {
         await atualizar.mutateAsync({ id: editando.id, input });
-        toast({ description: "Tarefa atualizada." });
+        toast.success("Tarefa atualizada.");
       } else {
         // Nova tarefa nasce na primeira coluna (âncora "A fazer") e, se o campo
         // de responsável vier vazio, atribuída a quem está criando.
@@ -303,11 +301,11 @@ export default function MeuTrabalho() {
           etapa_id: input.etapa_id ?? etapaPadrao?.id ?? null,
           responsaveis: input.responsaveis ?? (minhaPessoaId ? [minhaPessoaId] : []),
         });
-        toast({ description: "Tarefa criada." });
+        toast.success("Tarefa criada.");
       }
       setDialogOpen(false);
     } catch {
-      toast({ variant: "destructive", description: "Não deu para salvar a tarefa. Tente de novo." });
+      toast.error("Não deu para salvar a tarefa. Tente de novo.");
     }
   };
 
@@ -324,7 +322,7 @@ export default function MeuTrabalho() {
       await etapaMut.criar.mutateAsync({ nome: limpo, ordem, cor });
       return true;
     } catch {
-      toast({ variant: "destructive", description: "Não deu para criar a coluna." });
+      toast.error("Não deu para criar a coluna.");
       return false;
     }
   };
@@ -337,7 +335,7 @@ export default function MeuTrabalho() {
       await etapaMut.renomear.mutateAsync({ id: renomeando.id, nome });
       setRenomeando(null);
     } catch {
-      toast({ variant: "destructive", description: "Não deu para renomear a coluna." });
+      toast.error("Não deu para renomear a coluna.");
     }
   };
 
@@ -352,7 +350,7 @@ export default function MeuTrabalho() {
         { id: lista[j].id, ordem: lista[i].ordem },
       ]);
     } catch {
-      toast({ variant: "destructive", description: "Não deu para reordenar as colunas." });
+      toast.error("Não deu para reordenar as colunas.");
     }
   };
 
@@ -360,9 +358,9 @@ export default function MeuTrabalho() {
     if (!aEtapaExcluir) return;
     try {
       await etapaMut.excluir.mutateAsync(aEtapaExcluir.id);
-      toast({ description: 'Coluna excluída. As tarefas foram para "A fazer".' });
+      toast.success('Coluna excluída. As tarefas foram para "A fazer".');
     } catch {
-      toast({ variant: "destructive", description: "Não deu para excluir a coluna." });
+      toast.error("Não deu para excluir a coluna.");
     } finally {
       setAEtapaExcluir(null);
     }
@@ -381,17 +379,13 @@ export default function MeuTrabalho() {
   };
 
   return (
-    <PageLayout
-      header={
-        <PageHeader
-          title="Meu trabalho"
-          search={
-            visao !== "agenda" ? { value: busca, onChange: setBusca, placeholder: "Buscar no meu trabalho" } : undefined
-          }
-          primaryAction={
-            visao !== "agenda" ? { label: "Nova tarefa", icon: Plus, onClick: () => abrirNova() } : undefined
-          }
-        />
+    <PilarPage
+      title="Meu trabalho"
+      search={
+        visao !== "agenda" ? { value: busca, onChange: setBusca, placeholder: "Buscar no meu trabalho" } : undefined
+      }
+      primaryAction={
+        visao !== "agenda" ? { label: "Nova tarefa", icon: Plus, onClick: () => abrirNova() } : undefined
       }
     >
       {/* Toolbar: visão + (no quadro) filtros de tipo e data */}
@@ -570,6 +564,6 @@ export default function MeuTrabalho() {
         confirmText="Excluir coluna"
         loading={etapaMut.excluir.isPending}
       />
-    </PageLayout>
+    </PilarPage>
   );
 }

@@ -10,7 +10,7 @@ interface FinanceErrorStateProps {
 export function FinanceErrorState({ onRetry }: FinanceErrorStateProps) {
   return (
     <div className="flex flex-col items-center justify-center gap-3 h-64 text-center">
-      <AlertCircle className="h-8 w-8 text-red-500" />
+      <AlertCircle className="h-8 w-8 text-danger-mid" />
       <div>
         <p className="text-sm font-medium">Não foi possível carregar os dados financeiros</p>
         <p className="text-xs text-muted-foreground mt-1">Verifique a conexão e tente de novo.</p>

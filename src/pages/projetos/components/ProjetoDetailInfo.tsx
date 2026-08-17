@@ -60,8 +60,8 @@ export function ProjetoDetailInfo({ projeto, progress, margemBrutaPct }: Projeto
                   ? margemBrutaPct >= 20
                     ? "text-positive-strong"
                     : margemBrutaPct >= 0
-                      ? "text-yellow-600"
-                      : "text-red-600"
+                      ? "text-ink"
+                      : "text-negative-strong"
                   : ""
               }`}
             >

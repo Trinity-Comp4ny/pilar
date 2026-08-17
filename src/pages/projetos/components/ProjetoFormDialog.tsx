@@ -18,7 +18,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Calendar, Check, DollarSign, FileText, Layers, Loader2, MapPin } from "lucide-react";
 import { DatePicker } from "@/components/ui/date-picker";
 import { cn } from "@/lib/utils";
-import { formatCurrencyInput } from "@/lib/currencyUtils";
+import { MoneyInput } from "@/components/forms/MoneyInput";
 import { PRIORITY_OPTIONS, PROJECT_PRIORITY_CONFIG } from "@/constants";
 import { type Projeto, type ProjetoDisciplinaDB } from "@/types/projetos";
 import { type TemplateProjeto } from "@/hooks/useTemplates";
@@ -187,7 +187,7 @@ export function ProjetoFormDialog({
       >
         <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{form.isEditMode ? "Editar Projeto" : "Novo Projeto"}</DialogTitle>
+            <DialogTitle>{form.isEditMode ? "Editar projeto" : "Novo projeto"}</DialogTitle>
             <DialogDescription>{STEPS.find((s) => s.id === step)?.desc}</DialogDescription>
           </DialogHeader>
 
@@ -459,12 +459,10 @@ export function ProjetoFormDialog({
                       <Label htmlFor="valorTotal" className="text-xs">
                         Valor (R$)
                       </Label>
-                      <Input
+                      <MoneyInput
                         id="valorTotal"
-                        type="text"
                         value={form.formData.valor_contrato}
-                        onChange={(e) => form.handleInputChange("valor_contrato", formatCurrencyInput(e.target.value))}
-                        placeholder="R$ 0,00"
+                        onChange={(v) => form.handleInputChange("valor_contrato", v)}
                       />
                     </div>
                     <div className="space-y-1.5">

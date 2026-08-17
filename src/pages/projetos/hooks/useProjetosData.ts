@@ -60,6 +60,7 @@ export function useProjetosData() {
           )
         `
         )
+        .is("deleted_at", null)
         .order("created_at", { ascending: false });
 
       if (error) throw error;

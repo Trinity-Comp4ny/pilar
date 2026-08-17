@@ -38,3 +38,4 @@ Decisão de arquitetura no meio do caminho vira um [ADR](../architecture/README.
 | [027](./027-cronograma-obra-dois-niveis.md)         | Cronograma da obra em dois níveis (frente + passos) | Em implementação |
 | [029](./029-central-de-notificacoes.md)             | Central de notificações in-app (por destinatário)   | Draft            |
 | [030](./030-obra-no-portal-do-cliente.md)           | Obra no portal do cliente (acompanhamento + contas) | Draft            |
+| [035](./035-controle-de-features-por-modulo-e-em-massa.md) | Controle de features por módulo (3 pilares) + sub-features + ação em massa no ultra admin | Draft |
