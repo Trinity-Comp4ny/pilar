@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { APP_URL } from "../config";
 
 export function LandingFooter() {
   return (
@@ -32,19 +32,19 @@ export function LandingFooter() {
             <h3 className="text-sm font-semibold mb-6 tracking-wider text-white">Produto</h3>
             <ul className="space-y-4 text-slate-300 font-light text-sm">
               <li>
-                <a href="/#prova" className="hover:text-brand transition-colors">
+                <a href="#prova" className="hover:text-brand transition-colors">
                   Por que Pilar
                 </a>
               </li>
               <li>
-                <a href="/#modulos" className="hover:text-brand transition-colors">
+                <a href="#modulos" className="hover:text-brand transition-colors">
                   Módulos
                 </a>
               </li>
               <li>
-                <Link to="/login" className="hover:text-brand transition-colors">
+                <a href={`${APP_URL}/login`} className="hover:text-brand transition-colors">
                   Entrar
-                </Link>
+                </a>
               </li>
             </ul>
           </div>
@@ -53,9 +53,9 @@ export function LandingFooter() {
             <h3 className="text-sm font-semibold mb-6 tracking-wider text-white">Legal</h3>
             <ul className="space-y-4 text-slate-300 font-light text-sm">
               <li>
-                <Link to="/privacidade" className="hover:text-brand transition-colors">
+                <a href={`${APP_URL}/privacidade`} className="hover:text-brand transition-colors">
                   Privacidade
-                </Link>
+                </a>
               </li>
             </ul>
           </div>

@@ -58,7 +58,7 @@ serve(
 
       const respsByDisciplina = new Map<string, string[]>();
       for (const r of todosResps ?? []) {
-        const nome = (r.pessoas as { nome: string } | null)?.nome;
+        const nome = (r as unknown as { pessoas: { nome: string } | null }).pessoas?.nome;
         if (!nome) continue;
         const arr = respsByDisciplina.get(r.projeto_disciplina_id) ?? [];
         arr.push(nome);
