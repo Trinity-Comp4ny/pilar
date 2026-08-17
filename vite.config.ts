@@ -1,6 +1,11 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
+import { sentryVitePlugin } from "@sentry/vite-plugin";
 import path from "path";
+
+// Commit real do deploy (setado pela Vercel). Sem isso, todo erro em prod chega
+// com "release: undefined" no Sentry e não dá pra saber qual deploy introduziu o bug.
+const SENTRY_RELEASE = process.env.VERCEL_GIT_COMMIT_SHA ?? process.env.SENTRY_RELEASE ?? "dev";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
@@ -8,11 +13,30 @@ export default defineConfig(({ mode }) => ({
     host: "::",
     port: 8080,
   },
-  plugins: [react()],
+  plugins: [
+    react(),
+    // Sourcemap upload só roda com token presente (build local/dev nunca tem).
+    // Sem authToken o plugin não falha o build, só pula o upload — mas manter o
+    // guard explícito evita rodar em `vite dev`/testes onde não faz sentido.
+    mode === "production" &&
+      process.env.SENTRY_AUTH_TOKEN &&
+      sentryVitePlugin({
+        org: process.env.SENTRY_ORG ?? "trinity-company",
+        project: process.env.SENTRY_PROJECT,
+        authToken: process.env.SENTRY_AUTH_TOKEN,
+        release: { name: SENTRY_RELEASE },
+        // Sobe o .map pro Sentry pra desmascarar o stack trace, depois apaga do
+        // dist: sourcemap de produção não precisa ficar servível publicamente.
+        sourcemaps: { filesToDeleteAfterUpload: ["dist/**/*.map"] },
+      }),
+  ].filter(Boolean),
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
+  },
+  define: {
+    __SENTRY_RELEASE__: JSON.stringify(SENTRY_RELEASE),
   },
   // Pré-otimiza os deps que só entram via import() (exportação de relatórios). Sem
   // isto, o Vite os descobre em voo no primeiro uso, re-otimiza o cache e troca os
@@ -22,6 +46,9 @@ export default defineConfig(({ mode }) => ({
     include: ["jspdf", "jspdf-autotable", "pizzip"],
   },
   build: {
+    // Necessário pro sentryVitePlugin ter o que subir. É apagado do dist depois
+    // do upload (ver plugin acima), então não fica servido em produção.
+    sourcemap: true,
     rollupOptions: {
       output: {
         manualChunks: {

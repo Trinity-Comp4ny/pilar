@@ -62,6 +62,9 @@ Todas as ações que **precisam** ser feitas manualmente (config de dashboards) 
 - [ ] `VITE_SENTRY_DSN` = DSN do projeto Sentry
 - [ ] `VITE_SENTRY_ENV` = `production`
 - [ ] `VITE_SENTRY_TRACES_SAMPLE_RATE` = `0.1`
+- [ ] `SENTRY_AUTH_TOKEN` = auth token com escopo `project:releases` (build-time, sem prefixo VITE_ — não vai pro bundle)
+- [ ] `SENTRY_ORG` = `trinity-company`
+- [ ] `SENTRY_PROJECT` = slug do projeto React no Sentry
 - [x] `VITE_TURNSTILE_SITE_KEY` = site key Cloudflare (17/08)
 
 ### Project Settings → Security
