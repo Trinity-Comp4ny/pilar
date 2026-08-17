@@ -42,7 +42,7 @@ Todas as ações que **precisam** ser feitas manualmente (config de dashboards) 
 
 - [ ] `SUPER_ADMIN_KEY` = `openssl rand -hex 32`
 - [ ] `ALLOWED_ORIGINS` = `https://pilarsoft.com.br,https://app.pilarsoft.com.br`
-- [ ] `TURNSTILE_SECRET_KEY` = (copiar de Cloudflare após criar widget)
+- [x] `TURNSTILE_SECRET_KEY` = (copiar de Cloudflare após criar widget) (17/08)
 - [ ] `ASAAS_WEBHOOK_TOKEN` = fallback global (opcional; por empresa já tem)
 
 ### Database → Backups
@@ -62,7 +62,7 @@ Todas as ações que **precisam** ser feitas manualmente (config de dashboards) 
 - [ ] `VITE_SENTRY_DSN` = DSN do projeto Sentry
 - [ ] `VITE_SENTRY_ENV` = `production`
 - [ ] `VITE_SENTRY_TRACES_SAMPLE_RATE` = `0.1`
-- [ ] `VITE_TURNSTILE_SITE_KEY` = site key Cloudflare
+- [x] `VITE_TURNSTILE_SITE_KEY` = site key Cloudflare (17/08)
 
 ### Project Settings → Security
 
@@ -76,10 +76,10 @@ Todas as ações que **precisam** ser feitas manualmente (config de dashboards) 
 
 ### Turnstile
 
-- [ ] Criar site para `pilarsoft.com.br`
-- [ ] **Mode:** Managed
-- [ ] Copiar site key → `VITE_TURNSTILE_SITE_KEY`
-- [ ] Copiar secret key → `TURNSTILE_SECRET_KEY` no Supabase
+- [x] Criar site para `pilarsoft.com.br` (17/08)
+- [x] **Mode:** Managed
+- [x] Copiar site key → `VITE_TURNSTILE_SITE_KEY`
+- [x] Copiar secret key → `TURNSTILE_SECRET_KEY` no Supabase
 
 ### WAF (se usar Cloudflare Pro)
 
