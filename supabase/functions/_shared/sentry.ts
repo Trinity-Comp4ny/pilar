@@ -26,6 +26,17 @@
 
 import { AsyncLocalStorage } from "node:async_hooks";
 
+// `EdgeRuntime` só existe no runtime do Supabase (e no `supabase functions serve`
+// local); em `deno check`/testes fora dele, cai no fallback (a promise ainda roda,
+// só sem a garantia de sobreviver ao fim da resposta).
+declare const EdgeRuntime: { waitUntil?: (promise: Promise<unknown>) => void } | undefined;
+
+function waitUntil(promise: Promise<unknown>): void {
+  if (typeof EdgeRuntime !== "undefined" && typeof EdgeRuntime.waitUntil === "function") {
+    EdgeRuntime.waitUntil(promise);
+  }
+}
+
 const DSN = Deno.env.get("SENTRY_DSN") ?? "";
 const ENVIRONMENT = Deno.env.get("SENTRY_ENV") ?? Deno.env.get("DENO_ENV") ?? "production";
 const RELEASE = Deno.env.get("SENTRY_RELEASE") ?? undefined;
@@ -294,8 +305,12 @@ export function withSentry(
     }
 
     if (sampled) {
-      // fire-and-forget pra não atrasar a resposta
-      sendTransaction({
+      // Fire-and-forget pra não atrasar a resposta, mas SEM waitUntil o isolate do
+      // edge-runtime pode congelar assim que a Response é retornada, matando o fetch
+      // do envelope no meio (transaction nunca chega no Sentry). EdgeRuntime.waitUntil
+      // é o mecanismo do próprio runtime da Supabase (mesma ideia do ctx.waitUntil do
+      // Cloudflare Workers) pra manter a promise viva depois da resposta.
+      const task = sendTransaction({
         fnName,
         startMs,
         endMs: Date.now(),
@@ -305,6 +320,7 @@ export function withSentry(
         url: req.url,
         genAiSpans,
       }).catch(() => undefined);
+      waitUntil(task);
     }
 
     return response;
