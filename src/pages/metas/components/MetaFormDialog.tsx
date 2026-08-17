@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
@@ -10,9 +11,11 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { fetchPessoasLookup } from "@/lib/supabaseQueries";
-import { formatCurrencyInput, formatValorToInput, parseCurrencyString } from "@/lib/currencyUtils";
+import { formatValorToInput, parseCurrencyString } from "@/lib/currencyUtils";
+import { MoneyInput } from "@/components/forms/MoneyInput";
+import { NumberInput } from "@/components/forms/NumberInput";
 
-export type MetaTipo = "financeira" | "pessoal";
+export type MetaTipo = "financeira" | "pessoal" | "livre";
 
 export interface MetaRow {
   id: string;
@@ -51,6 +54,23 @@ const CATEGORIAS_PESSOAL = [
   { value: "desenvolvimento", label: "Desenvolvimento" },
 ];
 
+// Meta livre: objetivo de qualquer área da gestão, não atrelado a financeiro
+// nem a um colaborador. A "categoria" guarda o setor. Precisa casar com o CHECK
+// de metas_categoria (migration 20260828000000).
+export const CATEGORIAS_LIVRE = [
+  { value: "geral", label: "Geral" },
+  { value: "rh", label: "RH" },
+  { value: "financeiro", label: "Financeiro" },
+  { value: "comercial", label: "Comercial" },
+  { value: "logistica", label: "Logística" },
+  { value: "administrativo", label: "Administrativo" },
+  { value: "operacoes", label: "Operações" },
+  { value: "inovacao", label: "Inovação" },
+];
+
+const SETOR_LABEL: Record<string, string> = Object.fromEntries(CATEGORIAS_LIVRE.map((c) => [c.value, c.label]));
+export const setorLabel = (v: string | null | undefined): string => (v ? (SETOR_LABEL[v] ?? v) : "Geral");
+
 const UNIDADES = [
   { value: "currency", label: "Valor (R$)" },
   { value: "percentage", label: "Percentual (%)" },
@@ -81,12 +101,13 @@ interface FormState {
 }
 
 function emptyForm(tipo: MetaTipo): FormState {
+  const categoria = tipo === "financeira" ? "receita" : tipo === "livre" ? "geral" : "entregas";
   return {
     nome: "",
     descricao: "",
     pessoa_id: "",
-    categoria: tipo === "financeira" ? "receita" : "entregas",
-    unidade: "currency",
+    categoria,
+    unidade: tipo === "livre" ? "percentage" : "currency",
     alvo: "",
     atual: "",
     prazo: "",
@@ -107,12 +128,14 @@ function parseValor(unidade: string, raw: string): number {
 }
 
 function fromMeta(tipo: MetaTipo, meta: MetaRow): FormState {
-  const unidade = tipo === "financeira" ? "currency" : meta.unidade || "quantity";
+  const unidadeFallback = tipo === "livre" ? "percentage" : "quantity";
+  const unidade = tipo === "financeira" ? "currency" : meta.unidade || unidadeFallback;
+  const categoriaFallback = tipo === "financeira" ? "receita" : tipo === "livre" ? "geral" : "entregas";
   return {
     nome: meta.nome,
     descricao: meta.descricao ?? "",
     pessoa_id: meta.pessoa_id ?? "",
-    categoria: meta.categoria ?? (tipo === "financeira" ? "receita" : "entregas"),
+    categoria: meta.categoria ?? categoriaFallback,
     unidade,
     alvo: valorToInput(unidade, meta.alvo),
     atual: valorToInput(unidade, meta.atual),
@@ -136,7 +159,7 @@ export function MetaFormDialog({ open, onOpenChange, tipo, meta }: MetaFormDialo
   const { data: pessoas } = useQuery({
     queryKey: ["pessoas-list"],
     queryFn: fetchPessoasLookup,
-    enabled: tipo === "pessoal",
+    enabled: tipo === "pessoal" || tipo === "livre",
   });
 
   const set = (field: keyof FormState, value: string | boolean): void => setForm((f) => ({ ...f, [field]: value }));
@@ -153,7 +176,7 @@ export function MetaFormDialog({ open, onOpenChange, tipo, meta }: MetaFormDialo
         unidade,
         tipo,
       };
-      if (tipo === "pessoal") {
+      if (tipo === "pessoal" || tipo === "livre") {
         payload.pessoa_id = form.pessoa_id || null;
         payload.descricao = form.descricao || null;
       }
@@ -197,10 +220,12 @@ export function MetaFormDialog({ open, onOpenChange, tipo, meta }: MetaFormDialo
     mutation.mutate();
   };
 
-  const categorias = tipo === "financeira" ? CATEGORIAS_FINANCEIRA : CATEGORIAS_PESSOAL;
+  const categorias =
+    tipo === "financeira" ? CATEGORIAS_FINANCEIRA : tipo === "livre" ? CATEGORIAS_LIVRE : CATEGORIAS_PESSOAL;
   const unidade = tipo === "financeira" ? "currency" : form.unidade;
 
-  const tituloTipo = tipo === "financeira" ? "Financeira" : "Pessoal";
+  const tituloTipo = tipo === "financeira" ? "Financeira" : tipo === "livre" ? "Livre" : "Pessoal";
+  const labelCategoria = tipo === "livre" ? "Área" : "Categoria";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -212,17 +237,19 @@ export function MetaFormDialog({ open, onOpenChange, tipo, meta }: MetaFormDialo
           <DialogDescription>
             {tipo === "financeira"
               ? "Estabeleça um objetivo de receita, lucro, economia ou investimento."
-              : "Defina uma meta para um colaborador."}
+              : tipo === "livre"
+                ? "Objetivo de qualquer área (RH, logística, administrativo). Você acompanha o progresso na mão."
+                : "Defina uma meta para um colaborador."}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 mt-2">
-          {tipo === "pessoal" && (
+          {(tipo === "pessoal" || tipo === "livre") && (
             <div className="space-y-2">
-              <Label>Colaborador</Label>
+              <Label>{tipo === "livre" ? "Responsável (opcional)" : "Colaborador"}</Label>
               <Select value={form.pessoa_id || undefined} onValueChange={(v) => set("pessoa_id", v)}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione um colaborador" />
+                  <SelectValue placeholder={tipo === "livre" ? "Sem responsável definido" : "Selecione um colaborador"} />
                 </SelectTrigger>
                 <SelectContent>
                   {(pessoas ?? []).map((p) => (
@@ -240,12 +267,18 @@ export function MetaFormDialog({ open, onOpenChange, tipo, meta }: MetaFormDialo
             <Input
               value={form.nome}
               onChange={(e) => set("nome", e.target.value)}
-              placeholder={tipo === "financeira" ? "Ex: Faturamento 2026" : "Ex: Entregas no prazo"}
+              placeholder={
+                tipo === "financeira"
+                  ? "Ex: Faturamento 2026"
+                  : tipo === "livre"
+                    ? "Ex: Organizar a segurança social dos trabalhadores"
+                    : "Ex: Entregas no prazo"
+              }
               required
             />
           </div>
 
-          {tipo === "pessoal" && (
+          {(tipo === "pessoal" || tipo === "livre") && (
             <>
               <div className="space-y-2">
                 <Label>Descrição</Label>
@@ -290,7 +323,7 @@ export function MetaFormDialog({ open, onOpenChange, tipo, meta }: MetaFormDialo
               <DatePicker value={form.prazo} onChange={(v) => set("prazo", v)} />
             </div>
             <div className="space-y-2">
-              <Label>Categoria</Label>
+              <Label>{labelCategoria}</Label>
               <Select value={form.categoria} onValueChange={(v) => set("categoria", v)}>
                 <SelectTrigger>
                   <SelectValue />
@@ -308,15 +341,16 @@ export function MetaFormDialog({ open, onOpenChange, tipo, meta }: MetaFormDialo
 
           {tipo === "financeira" && (
             <div className="space-y-2 border-t pt-4">
-              <label className="flex items-center gap-2 text-sm cursor-pointer">
-                <input
-                  type="checkbox"
-                  className="h-4 w-4 rounded border-gray-300"
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="auto_sync"
                   checked={form.auto_sync}
-                  onChange={(e) => set("auto_sync", e.target.checked)}
+                  onCheckedChange={(checked) => set("auto_sync", checked === true)}
                 />
-                Sincronizar automaticamente
-              </label>
+                <Label htmlFor="auto_sync" className="text-sm cursor-pointer font-normal">
+                  Sincronizar automaticamente
+                </Label>
+              </div>
               {form.auto_sync && (
                 <div className="space-y-1">
                   <Label className="text-xs">Fonte de dados</Label>
@@ -340,8 +374,8 @@ export function MetaFormDialog({ open, onOpenChange, tipo, meta }: MetaFormDialo
             </div>
           )}
 
-          <Button type="submit" variant="brand" className="w-full rounded-full" disabled={mutation.isPending}>
-            {mutation.isPending ? "Salvando..." : isEdit ? "Atualizar meta" : "Salvar meta"}
+          <Button type="submit" variant="brand" className="w-full rounded-full" loading={mutation.isPending}>
+            {isEdit ? "Atualizar meta" : "Salvar meta"}
           </Button>
         </form>
       </DialogContent>
@@ -355,19 +389,11 @@ interface ValorInputProps {
   onChange: (value: string) => void;
 }
 
-// Campo de valor com máscara: moeda (R$) quando a unidade é "currency",
-// numérico simples para percentual/quantidade.
+// Campo de valor: moeda (R$) para "currency", inteiro para "quantity",
+// decimal para o resto (ex.: percentual). Usa os primitivos canônicos.
 function ValorInput({ unidade, value, onChange }: ValorInputProps) {
-  const isCurrency = unidade === "currency";
-  return (
-    <Input
-      inputMode={isCurrency || unidade === "quantity" ? "numeric" : "decimal"}
-      value={value}
-      onChange={(e) =>
-        onChange(isCurrency ? formatCurrencyInput(e.target.value) : e.target.value.replace(/[^\d.,]/g, ""))
-      }
-      placeholder={isCurrency ? "R$ 0,00" : "0"}
-      required
-    />
-  );
+  if (unidade === "currency") {
+    return <MoneyInput value={value} onChange={onChange} required />;
+  }
+  return <NumberInput value={value} onChange={onChange} allowDecimal={unidade !== "quantity"} required />;
 }

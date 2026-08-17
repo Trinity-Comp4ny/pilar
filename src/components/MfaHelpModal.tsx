@@ -49,7 +49,7 @@ export function MfaHelpModal({ open, onOpenChange }: MfaHelpModalProps) {
                     {step.apps.map((app) => (
                       <span
                         key={app}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 rounded-full text-xs font-medium text-slate-700"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-muted rounded-full text-xs font-medium text-ink-soft"
                       >
                         <Smartphone className="w-3.5 h-3.5" />
                         {app}
@@ -61,11 +61,11 @@ export function MfaHelpModal({ open, onOpenChange }: MfaHelpModalProps) {
             </div>
           ))}
 
-          <div className="flex gap-3 p-3 bg-amber-50 rounded-lg border border-amber-200">
-            <Lightbulb className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+          <div className="flex gap-3 p-3 bg-warning-soft rounded-lg border border-warning-mid-border">
+            <Lightbulb className="w-5 h-5 text-warning-mid flex-shrink-0 mt-0.5" />
             <div>
-              <h5 className="font-medium text-sm mb-1 text-amber-900">Troque de celular?</h5>
-              <p className="text-xs text-amber-800">
+              <h5 className="font-medium text-sm mb-1 text-warning-strong">Troque de celular?</h5>
+              <p className="text-xs text-warning-strong">
                 Antes de formatar ou trocar de aparelho, use a opção "Trocar autenticador" para re-configurar. Sem isso,
                 só o suporte consegue liberar a conta.
               </p>

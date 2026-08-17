@@ -1,7 +1,14 @@
 import { useMemo } from "react";
 import { useQueries, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { buscarPrevisao, climaPorCodigo, VENTO_FORTE_KMH } from "@/lib/clima";
+import {
+  alertasClimaTarefas,
+  buscarPrevisao,
+  climaPorCodigo,
+  VENTO_FORTE_KMH,
+  type AlertaClima as AlertaClimaTarefa,
+  type TarefaSensivel,
+} from "@/lib/clima";
 
 export interface AlertaClima {
   obraId: string;
@@ -85,4 +92,25 @@ export function useAlertasClimaObras(enabled: boolean) {
 
   const isLoading = enabled && obras.length > 0 && results.some((r) => r.isLoading);
   return { alertas, isLoading };
+}
+
+/**
+ * Alertas de clima de UMA obra: cruza as tarefas sensíveis do cronograma com a
+ * previsão (spec 040). Só busca previsão quando a obra tem coordenada. Reusa a
+ * mesma chave de cache do Radar ("clima", lat, long).
+ */
+export function useAlertasClimaCronograma(
+  latitude: number | null | undefined,
+  longitude: number | null | undefined,
+  tarefas: ReadonlyArray<TarefaSensivel>
+): AlertaClimaTarefa[] {
+  const temCoord = latitude != null && longitude != null;
+  const { data: previsao } = useQuery({
+    queryKey: ["clima", latitude, longitude],
+    enabled: temCoord,
+    staleTime: 1000 * 60 * 30,
+    queryFn: () => buscarPrevisao(latitude as number, longitude as number),
+  });
+
+  return useMemo(() => (previsao ? alertasClimaTarefas(tarefas, previsao.dias) : []), [previsao, tarefas]);
 }

@@ -14,7 +14,7 @@ export default function ForcarTrocaSenha({ onSuccess }: ForcarTrocaSenhaProps) {
   usePageTitle("Portal | Trocar senha");
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-muted flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardContent className="p-6 sm:p-8 space-y-6">
           <div className="text-center space-y-3">
@@ -22,7 +22,7 @@ export default function ForcarTrocaSenha({ onSuccess }: ForcarTrocaSenhaProps) {
               <ShieldCheck className="h-6 w-6 text-ink" />
             </div>
             <div className="space-y-1">
-              <h1 className="text-xl font-semibold text-slate-900">Defina sua senha</h1>
+              <h1 className="text-xl font-semibold text-ink">Defina sua senha</h1>
               <p className="text-sm text-muted-foreground">
                 Sua senha foi gerada pelo escritório. Crie uma senha própria para continuar.
               </p>

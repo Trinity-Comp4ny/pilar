@@ -33,7 +33,7 @@ export function DuplicateWarningDialog({ open, onOpenChange, duplicates, onConfi
 
         <div className="max-h-48 overflow-y-auto space-y-2 my-2">
           {duplicates.map((dup) => (
-            <div key={dup.id} className="rounded-md border p-3 text-sm bg-amber-50 border-amber-200">
+            <div key={dup.id} className="rounded-md border p-3 text-sm bg-warning-soft border-warning-mid-border">
               <p className="font-medium">{dup.descricao}</p>
               <p className="text-muted-foreground">
                 R$ {dup.valor.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}

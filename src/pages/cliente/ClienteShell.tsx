@@ -64,15 +64,15 @@ export function ClienteShell({
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-muted flex flex-col">
       {/* Header */}
       <header className="bg-white border-b px-6 py-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
             <img src="/pilar-logo.svg" alt="Pilar" className="h-8 w-8" />
             <div>
-              <span className="text-lg font-semibold tracking-tight text-slate-900">
-                Pilar<sup className="text-[9px] font-normal text-slate-400 ml-0.5 relative -top-2">®</sup>
+              <span className="text-lg font-semibold tracking-tight text-ink">
+                Pilar<sup className="text-[9px] font-normal text-ink-disabled ml-0.5 relative -top-2">®</sup>
               </span>
               <span className="text-xs text-muted-foreground ml-2">Portal do Cliente</span>
             </div>
@@ -147,7 +147,7 @@ export function ClienteShell({
                   className={({ isActive }) =>
                     `flex items-center gap-1.5 px-4 py-3 text-sm border-b-2 transition-colors ${
                       isActive
-                        ? "border-brand text-slate-900 font-semibold"
+                        ? "border-brand text-ink font-semibold"
                         : "border-transparent text-muted-foreground hover:text-foreground"
                     }`
                   }

@@ -592,7 +592,7 @@ export default function Leads() {
             icon={TrendingUp}
             title="Nenhum lead cadastrado"
             description="Comece capturando seu primeiro lead para acompanhar oportunidades no pipeline."
-            action={canEdit ? { label: "Criar Primeiro Lead", onClick: () => setIsDialogOpen(true) } : undefined}
+            action={canEdit ? { label: "Criar primeiro lead", onClick: () => setIsDialogOpen(true) } : undefined}
           />
         </div>
       ) : hasNoResults ? (
@@ -825,7 +825,7 @@ export default function Leads() {
         open={!!leadToDelete}
         onOpenChange={(open) => !open && setLeadToDelete(null)}
         onConfirm={handleDeleteConfirm}
-        title="Excluir Lead"
+        title="Excluir lead"
         itemName={leadToDelete?.nome}
         description="O lead sai do pipeline. Você pode desfazer logo após excluir."
         confirmText="Excluir"

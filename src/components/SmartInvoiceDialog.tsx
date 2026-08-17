@@ -4,6 +4,7 @@ import { addMonths, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Loader2, Receipt, Calendar, Milestone, PenLine } from "lucide-react";
 import { toast } from "sonner";
+import { getSafeErrorMessage } from "@/lib/safeError";
 
 import {
   Dialog,
@@ -22,6 +23,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
+import { formatCurrency, formatDate } from "@/lib/format";
 
 // ---------- tipos ----------
 
@@ -51,8 +53,6 @@ export interface SmartInvoiceDialogProps {
 }
 
 // ---------- helpers ----------
-
-const formatBRL = (v: number) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
 
 const buildParcelas = (valor: number, qtd: number, inicio: Date): ParcelaPreview[] =>
   Array.from({ length: qtd }, (_, i) => ({
@@ -148,7 +148,10 @@ export function SmartInvoiceDialog({ open, onClose, projetoId, propostaValor, pr
       await queryClient.invalidateQueries({ queryKey: ["marcos-faturamento", projetoId] });
       onClose();
     },
-    onError: (err) => toast.error(err instanceof Error ? err.message : "Erro ao criar faturas"),
+    onError: (err) =>
+      toast.error("Não foi possível criar as faturas", {
+        description: getSafeErrorMessage(err, "Confira os dados e tente de novo."),
+      }),
   });
 
   const handleConfirmar = () => criar.mutate();
@@ -166,8 +169,8 @@ export function SmartInvoiceDialog({ open, onClose, projetoId, propostaValor, pr
       <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Receipt className="h-4 w-4 text-blue-600" />
-            Gerar Faturas
+            <Receipt className="h-4 w-4 text-info-mid" />
+            Gerar faturas
           </DialogTitle>
           <DialogDescription>
             Deseja gerar as faturas automaticamente para o projeto <strong>{propostaNome}</strong>?
@@ -179,13 +182,13 @@ export function SmartInvoiceDialog({ open, onClose, projetoId, propostaValor, pr
           <label
             htmlFor="opt-parcelas"
             className={`flex items-start gap-3 rounded-lg border p-3 cursor-pointer transition-colors ${
-              opcao === "parcelas" ? "border-blue-500 bg-blue-50" : "border-border hover:bg-muted/50"
+              opcao === "parcelas" ? "border-brand/50 bg-brand/5" : "border-border hover:bg-muted/50"
             }`}
           >
             <RadioGroupItem value="parcelas" id="opt-parcelas" className="mt-0.5" />
             <div className="flex-1 space-y-2">
               <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-blue-600" />
+                <Calendar className="h-4 w-4 text-info-mid" />
                 <span className="text-sm font-medium">Parcelas mensais</span>
               </div>
 
@@ -223,7 +226,7 @@ export function SmartInvoiceDialog({ open, onClose, projetoId, propostaValor, pr
                             <TableRow key={p.numero} className="text-xs">
                               <TableCell className="py-1.5">{p.numero}</TableCell>
                               <TableCell className="py-1.5">{format(p.data, "dd/MM/yyyy", { locale: ptBR })}</TableCell>
-                              <TableCell className="py-1.5 text-right font-medium">{formatBRL(p.valor)}</TableCell>
+                              <TableCell className="py-1.5 text-right font-medium">{formatCurrency(p.valor)}</TableCell>
                             </TableRow>
                           ))}
                         </TableBody>
@@ -239,13 +242,13 @@ export function SmartInvoiceDialog({ open, onClose, projetoId, propostaValor, pr
           <label
             htmlFor="opt-marcos"
             className={`flex items-start gap-3 rounded-lg border p-3 cursor-pointer transition-colors ${
-              opcao === "marcos" ? "border-blue-500 bg-blue-50" : "border-border hover:bg-muted/50"
+              opcao === "marcos" ? "border-brand/50 bg-brand/5" : "border-border hover:bg-muted/50"
             }`}
           >
             <RadioGroupItem value="marcos" id="opt-marcos" className="mt-0.5" />
             <div className="flex-1 space-y-2">
               <div className="flex items-center gap-2">
-                <Milestone className="h-4 w-4 text-blue-600" />
+                <Milestone className="h-4 w-4 text-info-mid" />
                 <span className="text-sm font-medium">Por marcos do projeto</span>
               </div>
 
@@ -258,7 +261,7 @@ export function SmartInvoiceDialog({ open, onClose, projetoId, propostaValor, pr
                       ))}
                     </div>
                   ) : marcos.length === 0 ? (
-                    <p className="text-xs text-muted-foreground bg-amber-50 border border-amber-200 rounded p-2">
+                    <p className="text-xs text-muted-foreground bg-warning-soft border border-warning-mid-border rounded p-2">
                       Nenhum marco cadastrado neste projeto. Cadastre marcos na aba "Faturamento" antes de usar esta
                       opção.
                     </p>
@@ -294,9 +297,9 @@ export function SmartInvoiceDialog({ open, onClose, projetoId, propostaValor, pr
                                 </div>
                               </TableCell>
                               <TableCell className="py-1.5 text-muted-foreground">
-                                {m.data_prevista ? format(new Date(m.data_prevista + "T00:00:00"), "dd/MM/yyyy") : "—"}
+                                {formatDate(m.data_prevista)}
                               </TableCell>
-                              <TableCell className="py-1.5 text-right font-medium">{formatBRL(m.valor)}</TableCell>
+                              <TableCell className="py-1.5 text-right font-medium">{formatCurrency(m.valor)}</TableCell>
                             </TableRow>
                           ))}
                         </TableBody>
@@ -329,16 +332,16 @@ export function SmartInvoiceDialog({ open, onClose, projetoId, propostaValor, pr
           </Button>
 
           {opcao === "manual" ? (
-            <Button onClick={onClose}>Fechar</Button>
+            <Button variant="outline" onClick={onClose}>Fechar</Button>
           ) : (
             <Button
+              variant="brand"
               onClick={handleConfirmar}
               disabled={
                 criar.isPending ||
                 (opcao === "marcos" && marcosChecked.size === 0) ||
                 (opcao === "parcelas" && !(propostaValor > 0))
               }
-              className="bg-blue-600 hover:bg-blue-700 text-white"
             >
               {criar.isPending ? (
                 <>

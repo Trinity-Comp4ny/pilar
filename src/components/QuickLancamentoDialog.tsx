@@ -7,6 +7,7 @@ import { ptBR } from "date-fns/locale";
 import { CalendarIcon, Loader2, Plus, Zap } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { getSafeErrorMessage } from "@/lib/safeError";
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -99,7 +100,7 @@ export function QuickLancamentoDialog({ children, onOpenFullForm }: QuickLancame
       form.reset({ descricao: "", valor: "", data: new Date() });
       setOpen(false);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Erro ao salvar lançamento");
+      toast.error("Erro ao salvar lançamento", { description: getSafeErrorMessage(err, "Confira os dados e tente de novo.") });
     } finally {
       setSaving(false);
     }
@@ -118,7 +119,7 @@ export function QuickLancamentoDialog({ children, onOpenFullForm }: QuickLancame
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Zap className="h-4 w-4 text-yellow-500" />
+              <Zap className="h-4 w-4 text-warning-mid" />
               Lançamento Rápido
             </DialogTitle>
             <DialogDescription>Registre um lançamento em segundos. Campos opcionais podem ser adicionados depois.</DialogDescription>
@@ -132,7 +133,7 @@ export function QuickLancamentoDialog({ children, onOpenFullForm }: QuickLancame
               className={cn(
                 "flex-1 py-2 text-sm font-medium transition-colors",
                 tipo === "despesa"
-                  ? "bg-red-50 text-red-700 border-r border-border"
+                  ? "bg-negative/10 text-negative-strong border-r border-border"
                   : "bg-white text-muted-foreground hover:bg-muted/50 border-r border-border"
               )}
             >
@@ -144,7 +145,7 @@ export function QuickLancamentoDialog({ children, onOpenFullForm }: QuickLancame
               className={cn(
                 "flex-1 py-2 text-sm font-medium transition-colors",
                 tipo === "receita"
-                  ? "bg-green-50 text-green-700"
+                  ? "bg-positive/10 text-positive-strong"
                   : "bg-white text-muted-foreground hover:bg-muted/50"
               )}
             >
@@ -227,11 +228,12 @@ export function QuickLancamentoDialog({ children, onOpenFullForm }: QuickLancame
 
               <Button
                 type="submit"
+                variant="default"
                 disabled={saving}
                 className={cn(
                   tipo === "receita"
-                    ? "bg-green-600 hover:bg-green-700 text-white"
-                    : "bg-red-600 hover:bg-red-700 text-white"
+                    ? "bg-positive hover:bg-positive/90 text-white"
+                    : "bg-negative hover:bg-negative/90 text-white"
                 )}
               >
                 {saving ? (

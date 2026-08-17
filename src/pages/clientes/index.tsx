@@ -21,8 +21,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDocument, formatPhone } from "@/lib/maskUtils";
-import { PageLayout } from "@/components/PageLayout";
-import { PageHeader } from "@/components/PageHeader";
+import { PilarPage } from "@/components/PilarPage";
 import { usePermissions } from "@/hooks/usePermissions";
 import { Can } from "@/components/Can";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
@@ -243,16 +242,12 @@ export default function Clientes() {
   };
 
   return (
-    <PageLayout
+    <PilarPage
       className="overflow-y-hidden"
       containerClassName="h-full flex flex-col min-h-0"
-      header={
-        <PageHeader
-          title="Clientes"
-          search={{ value: searchTerm, onChange: setSearchTerm, placeholder: "Buscar por nome, CPF/CNPJ ou email" }}
-          primaryAction={{ label: "Novo cliente", onClick: handleOpenCreate, icon: Plus, feature: "clientes" }}
-        />
-      }
+      title="Clientes"
+      search={{ value: searchTerm, onChange: setSearchTerm, placeholder: "Buscar por nome, CPF/CNPJ ou email" }}
+      primaryAction={{ label: "Novo cliente", onClick: handleOpenCreate, icon: Plus, feature: "clientes", dataTour: "onb-novo-cliente" }}
     >
       <Card className="rounded-2xl border border-black/5 bg-white w-full flex flex-col flex-1 min-h-0 overflow-hidden">
         <CardHeader>
@@ -405,7 +400,7 @@ export default function Clientes() {
                   clientes.map((cliente) => (
                     <TableRow
                       key={cliente.id}
-                      className="cursor-pointer hover:bg-gray-50"
+                      className="cursor-pointer hover:bg-muted"
                       onClick={() => handleRowClick(cliente)}
                     >
                       <TableCell className="font-medium">
@@ -448,7 +443,7 @@ export default function Clientes() {
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-11 w-11 text-red-500"
+                                className="h-11 w-11 text-danger-mid"
                                 onClick={(e) => handleDeleteClick(cliente.id, e)}
                                 aria-label="Excluir cliente"
                               >
@@ -515,12 +510,12 @@ export default function Clientes() {
         open={confirmDeleteOpen}
         onOpenChange={setConfirmDeleteOpen}
         onConfirm={handleDeleteConfirm}
-        title="Excluir Cliente"
+        title="Excluir cliente"
         itemName={clienteToDelete?.nome}
         description="O cliente sai da lista, mas o histórico é preservado. Você pode desfazer logo após excluir."
         confirmText="Excluir"
         cancelText="Cancelar"
       />
-    </PageLayout>
+    </PilarPage>
   );
 }

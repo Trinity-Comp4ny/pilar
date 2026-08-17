@@ -84,7 +84,7 @@ function LancamentosTable({
         </div>
         <p className="text-sm text-muted-foreground">Nenhum lançamento encontrado</p>
         {onLancar && (
-          <Button size="sm" onClick={onLancar}>
+          <Button size="sm" variant="brand" onClick={onLancar}>
             <Plus className="h-4 w-4 mr-2" />
             Lançar horas
           </Button>
@@ -141,7 +141,7 @@ function LancamentosTable({
                           <Button
                             size="sm"
                             variant="ghost"
-                            className="h-7 px-2 text-xs text-emerald-700"
+                            className="h-7 px-2 text-xs text-success-strong"
                             disabled={isMutando}
                             onClick={() => onAprovar(l)}
                           >
@@ -153,7 +153,7 @@ function LancamentosTable({
                           <Button
                             size="sm"
                             variant="ghost"
-                            className="h-7 px-2 text-xs text-red-600"
+                            className="h-7 px-2 text-xs text-danger-mid"
                             disabled={isMutando}
                             onClick={() => onRejeitar(l)}
                           >
@@ -305,7 +305,7 @@ export default function Timesheet() {
   return (
     <PageLayout>
       <PageHeader title="Timesheet">
-        <Button onClick={() => setDialogAberto(true)}>
+        <Button variant="brand" onClick={() => setDialogAberto(true)}>
           <Plus className="h-4 w-4 mr-2" />
           Lançar horas
         </Button>
@@ -357,7 +357,7 @@ export default function Timesheet() {
                   <p className="text-sm text-muted-foreground whitespace-nowrap">
                     Total: <span className="font-semibold text-foreground">{totalHorasEquipe.toFixed(1)}h</span>
                     {pendentesEquipe.length > 0 && (
-                      <span className="ml-2 text-amber-600">{pendentesEquipe.length} pendente(s)</span>
+                      <span className="ml-2 text-warning-mid">{pendentesEquipe.length} pendente(s)</span>
                     )}
                   </p>
                 )}

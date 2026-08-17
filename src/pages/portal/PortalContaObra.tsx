@@ -1,12 +1,10 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { KPICard } from "@/components/KPICard";
 import { Button } from "@/components/ui/button";
-import { formatCurrency as fmtMoeda } from "@/lib/format";
+import { formatCurrency, formatDate } from "@/lib/format";
 import { ArrowDownCircle, ArrowUpCircle, Receipt, ExternalLink, Percent } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
 import type { ClienteObraConta } from "@/pages/cliente/useClienteObraData";
-
-const formatDate = (d: string | null) => (d ? new Date(d + "T00:00:00").toLocaleDateString("pt-BR") : "—");
 
 /**
  * Prestação de contas da obra para o dono (regime administração). Aportes vs
@@ -14,8 +12,6 @@ const formatDate = (d: string | null) => (d ? new Date(d + "T00:00:00").toLocale
  * despesas já vêm filtradas pelo backend (só confirmada_portal = true).
  */
 export function ContaObraContent({ conta, taxaPct }: { conta: ClienteObraConta; taxaPct: number }) {
-  const formatCurrency = (v: number) => fmtMoeda(v);
-
   return (
     <div className="space-y-4">
       {/* Resumo */}
@@ -78,7 +74,7 @@ export function ContaObraContent({ conta, taxaPct }: { conta: ClienteObraConta; 
             <div className="space-y-3">
               {conta.despesas.map((d, i) => (
                 <div key={`${d.data}-${i}`} className="flex items-center gap-3 p-3 border rounded-lg">
-                  <div className="p-1.5 rounded bg-red-100 text-red-700">
+                  <div className="p-1.5 rounded bg-danger-soft text-danger-strong">
                     <ArrowUpCircle className="h-4 w-4" />
                   </div>
                   <div className="flex-1">

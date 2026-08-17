@@ -6,6 +6,7 @@ import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { DataFrescor } from "@/components/DataFrescor";
 import { ArrowLeftRight, Clock, Plus, TrendingDown, TrendingUp, Upload } from "lucide-react";
 import { LancamentosTable } from "../components/LancamentosTable";
 import { useLancamentosResumo } from "../hooks/useLancamentosResumo";
@@ -73,7 +74,13 @@ export default function Lancamentos() {
   const queryClient = useQueryClient();
   const invalidate = () => invalidateLancamentos(queryClient);
 
-  const { resumo, isLoading: loadingResumo } = useLancamentosResumo(filters);
+  const {
+    resumo,
+    isLoading: loadingResumo,
+    isFetching: fetchingResumo,
+    dataUpdatedAt: resumoUpdatedAt,
+    refetch: refetchResumo,
+  } = useLancamentosResumo(filters);
 
   return (
     <div className="space-y-6 w-full">
@@ -83,6 +90,12 @@ export default function Lancamentos() {
           <p className="text-sm text-muted-foreground">
             Vendo <span className="font-medium text-foreground">{recorteLabel(filters)}</span> · por vencimento
           </p>
+          <DataFrescor
+            updatedAt={resumoUpdatedAt}
+            isFetching={fetchingResumo}
+            onRefresh={() => void refetchResumo()}
+            className="mt-1"
+          />
         </div>
         <div className="flex items-center gap-2">
           <Button

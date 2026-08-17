@@ -7,6 +7,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { Can } from "@/components/Can";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { getSafeErrorMessage } from "@/lib/safeError";
 import { usePermissions } from "@/hooks/usePermissions";
 import { PROJECT_PRIORITY_CONFIG, type ProjectPriority } from "@/constants";
 import { type Projeto, getDeadlineStatus } from "@/types/projetos";
@@ -115,7 +116,9 @@ export default function ProjetosKanban() {
   ) => {
     const { error } = await supabase.from("projetos").update(updates).eq("id", projetoId);
     if (error) {
-      toast.error("Não deu para atualizar as datas", { description: error.message });
+      toast.error("Não deu para atualizar as datas", {
+        description: getSafeErrorMessage(error, "Tente novamente em instantes."),
+      });
       throw error;
     }
     queryClient.invalidateQueries({ queryKey: ["projetos"] });
@@ -123,13 +126,39 @@ export default function ProjetosKanban() {
 
   const handleDeleteConfirm = async () => {
     if (!projetoToDelete) return;
-    const { error } = await supabase.from("projetos").delete().eq("id", projetoToDelete.id);
+    const id = projetoToDelete.id;
+    const nome = projetoToDelete.nome;
+    // Soft delete (deleted_at some das listagens), com "Desfazer" no toast — o delete é recuperável.
+    const { error } = await supabase
+      .from("projetos")
+      .update({ deleted_at: new Date().toISOString() })
+      .eq("id", id);
     if (!error) {
-      toast.success("Projeto excluído");
+      toast.success(`Projeto "${nome}" excluído`, {
+        action: {
+          label: "Desfazer",
+          onClick: async () => {
+            const { error: restoreError } = await supabase
+              .from("projetos")
+              .update({ deleted_at: null })
+              .eq("id", id);
+            if (restoreError) {
+              toast.error("Não foi possível restaurar o projeto", {
+                description: getSafeErrorMessage(restoreError, "Tente novamente em instantes."),
+              });
+            } else {
+              toast.success("Projeto restaurado");
+              queryClient.invalidateQueries({ queryKey: ["projetos"] });
+            }
+          },
+        },
+      });
       setIsDetailOpen(false);
       queryClient.invalidateQueries({ queryKey: ["projetos"] });
     } else {
-      toast.error("Erro ao excluir", { description: error.message });
+      toast.error("Não foi possível excluir o projeto", {
+        description: getSafeErrorMessage(error, "Tente novamente em instantes."),
+      });
     }
     setProjetoToDelete(null);
   };
@@ -325,7 +354,7 @@ export default function ProjetosKanban() {
             onChange: (v) => setFilters((f) => ({ ...f, search: v })),
             placeholder: "Buscar projetos",
           }}
-          primaryAction={{ label: "Novo projeto", onClick: handleNewProjeto, icon: Plus, feature: "projetos" }}
+          primaryAction={{ label: "Novo projeto", onClick: handleNewProjeto, icon: Plus, feature: "projetos", dataTour: "onb-novo-projeto" }}
         >
           <ProjetosFilterBar
             pessoas={pessoas}
@@ -343,7 +372,7 @@ export default function ProjetosKanban() {
           </Can>
 
           <Can feature="projetos" action="edit">
-            <Button variant="outline" className="rounded-full text-sm h-9" onClick={() => setIsFluxosOpen(true)}>
+            <Button variant="outline" className="rounded-full text-sm h-9" data-tour="onb-fluxos" onClick={() => setIsFluxosOpen(true)}>
               <GitBranch className="mr-2 h-4 w-4" />
               Fluxos
             </Button>
@@ -532,7 +561,7 @@ export default function ProjetosKanban() {
         open={!!projetoToDelete}
         onOpenChange={(open) => !open && setProjetoToDelete(null)}
         onConfirm={handleDeleteConfirm}
-        title="Excluir Projeto"
+        title="Excluir projeto"
         itemName={projetoToDelete?.nome}
         description="O projeto sai das listagens e o histórico é preservado. A exclusão é bloqueada se houver lançamentos financeiros vinculados."
         confirmText="Excluir"

@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { callUntypedRpc } from "@/lib/supabaseRpc";
 import { toast } from "sonner";
+import { getSafeErrorMessage } from "@/lib/safeError";
 import { UsersAccessManager, type ManagedUser } from "@/components/admin/UsersAccessManager";
 import { useRequireAal2 } from "@/hooks/useRequireAal2";
 import { parseUserFeatures, type CompanyFeatures, type UserFeatures } from "@/lib/features";
@@ -100,7 +101,9 @@ export function UsuariosTab({ users, setUsers, currentUserId, companyFeatures }:
       if (error) throw error;
       toast.success("Convite reenviado", { description: `Novo e-mail enviado para ${u.email}` });
     } catch (err) {
-      toast.error("Erro ao reenviar", { description: err instanceof Error ? err.message : "Erro inesperado" });
+      toast.error("Não foi possível reenviar o convite", {
+        description: getSafeErrorMessage(err, "Tente de novo em instantes."),
+      });
     }
   };
 
@@ -118,7 +121,9 @@ export function UsuariosTab({ users, setUsers, currentUserId, companyFeatures }:
       setUsers((prev) => prev.filter((x) => x.inviteId !== u.inviteId));
       toast.success("Convite cancelado");
     } catch (err) {
-      toast.error("Erro ao cancelar", { description: err instanceof Error ? err.message : "Erro inesperado" });
+      toast.error("Não foi possível cancelar o convite", {
+        description: getSafeErrorMessage(err, "Tente de novo em instantes."),
+      });
     }
   };
 

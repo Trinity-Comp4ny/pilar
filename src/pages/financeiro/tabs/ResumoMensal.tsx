@@ -1,7 +1,8 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { KPICard } from "@/components/KPICard";
-import { formatCurrency as fmtMoeda } from "@/lib/format";
+import { formatCurrency, formatDate } from "@/lib/format";
 import { TrendingUp, TrendingDown, Loader2 } from "lucide-react";
+import { EmptyState } from "@/components/EmptyState";
 import { ResponsiveContainer, AreaChart, Area, CartesianGrid, XAxis, YAxis, Tooltip } from "recharts";
 import { CustomTooltip } from "../components/CustomTooltip";
 import { FinanceErrorState } from "../components/FinanceErrorState";
@@ -64,9 +65,6 @@ export default function ResumoMensal({ dateFrom, dateTo }: ResumoMensalProps) {
   const totalTopReceitas = topTransactions?.receitas.reduce((acc: number, curr) => acc + Number(curr.valor), 0) || 0;
   const totalTopDespesas = topTransactions?.despesas.reduce((acc: number, curr) => acc + Number(curr.valor), 0) || 0;
 
-  // Format currency
-  const formatCurrency = (val: number) => fmtMoeda(val);
-
   return (
     <div className="space-y-6 w-full max-w-none">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
@@ -111,7 +109,7 @@ export default function ResumoMensal({ dateFrom, dateTo }: ResumoMensalProps) {
 
       <Card className="w-full">
         <CardHeader>
-          <CardTitle>Performance Diária</CardTitle>
+          <CardTitle>Performance diária</CardTitle>
           <CardDescription>Acompanhamento do mês corrente</CardDescription>
         </CardHeader>
         <CardContent>
@@ -175,14 +173,19 @@ export default function ResumoMensal({ dateFrom, dateTo }: ResumoMensalProps) {
                   <div className="flex-1">
                     <p className="text-sm font-medium">{item.descricao}</p>
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      {item.data_recebimento ? new Date(item.data_recebimento).toLocaleDateString("pt-BR") : "—"}
+                      {item.data_recebimento ? formatDate(item.data_recebimento) : "—"}
                     </p>
                   </div>
                   <span className="text-sm font-bold text-positive-strong">{formatCurrency(item.valor)}</span>
                 </div>
               ))}
               {topTransactions?.receitas.length === 0 && (
-                <p className="text-sm text-muted-foreground text-center py-4">Nenhuma receita encontrada.</p>
+                <EmptyState
+                  icon={TrendingUp}
+                  title="Nenhuma receita encontrada"
+                  description="As principais receitas do mês aparecem aqui."
+                  className="py-6"
+                />
               )}
             </div>
             <div className="mt-4 pt-4 border-t border-black/10">
@@ -212,7 +215,7 @@ export default function ResumoMensal({ dateFrom, dateTo }: ResumoMensalProps) {
                   <div className="flex-1">
                     <p className="text-sm font-medium">{item.descricao}</p>
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      {item.data_pagamento ? new Date(item.data_pagamento).toLocaleDateString("pt-BR") : "—"} •{" "}
+                      {item.data_pagamento ? formatDate(item.data_pagamento) : "—"} •{" "}
                       {item.categorias_financeiras?.nome || "Outros"}
                     </p>
                   </div>
@@ -220,7 +223,12 @@ export default function ResumoMensal({ dateFrom, dateTo }: ResumoMensalProps) {
                 </div>
               ))}
               {topTransactions?.despesas.length === 0 && (
-                <p className="text-sm text-muted-foreground text-center py-4">Nenhuma despesa encontrada.</p>
+                <EmptyState
+                  icon={TrendingDown}
+                  title="Nenhuma despesa encontrada"
+                  description="As principais despesas do mês aparecem aqui."
+                  className="py-6"
+                />
               )}
             </div>
             <div className="mt-4 pt-4 border-t border-black/10">

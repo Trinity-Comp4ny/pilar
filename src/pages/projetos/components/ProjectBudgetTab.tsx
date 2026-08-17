@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Save, Trash2, Loader2 } from "lucide-react";
@@ -9,7 +8,10 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { type DisciplinaResponsavel } from "@/types/projetos";
-import { formatCurrency } from "@/lib/currencyUtils";
+import { formatCurrency, formatValorToInput, parseCurrencyString } from "@/lib/currencyUtils";
+import { MoneyInput } from "@/components/forms/MoneyInput";
+import { NumberInput } from "@/components/forms/NumberInput";
+import { PercentInput } from "@/components/forms/PercentInput";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 
 interface ProjectBudgetTabProps {
@@ -150,7 +152,7 @@ export function ProjectBudgetTab({ projetoId, canEdit, disciplinas }: ProjectBud
           <Badge variant="secondary">Custo: {formatCurrency(totalCusto)}</Badge>
           <Badge variant="secondary">Venda: {formatCurrency(totalVenda)}</Badge>
           {totalVenda > 0 && (
-            <Badge className={totalVenda - totalCusto > 0 ? "bg-positive/10 text-positive-strong" : "bg-red-100 text-red-800"}>
+            <Badge className={totalVenda - totalCusto > 0 ? "bg-positive/10 text-positive-strong" : "bg-danger-soft text-danger-strong"}>
               Margem: {(((totalVenda - totalCusto) / totalVenda) * 100).toFixed(1)}%
             </Badge>
           )}
@@ -183,7 +185,7 @@ export function ProjectBudgetTab({ projetoId, canEdit, disciplinas }: ProjectBud
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-6 w-6 text-red-500"
+                      className="h-6 w-6 text-danger-mid"
                       onClick={(e) => {
                         e.stopPropagation();
                         setDeleteRow(o);
@@ -199,45 +201,43 @@ export function ProjectBudgetTab({ projetoId, canEdit, disciplinas }: ProjectBud
 
             {/* Linha de edição */}
             {isEditing && (
-              <TableRow className="bg-blue-50/50">
+              <TableRow className="bg-info-soft/50">
                 <TableCell className="text-xs font-medium">{editRow.disciplina}</TableCell>
                 <TableCell>
-                  <Input
-                    type="number"
+                  <NumberInput
+                    allowDecimal
                     className="h-7 text-xs w-20 ml-auto"
-                    value={editRow.horas_estimadas || ""}
-                    onChange={(e) => setEditRow({ ...editRow, horas_estimadas: parseFloat(e.target.value) || 0 })}
+                    value={editRow.horas_estimadas ? String(editRow.horas_estimadas).replace(".", ",") : ""}
+                    onChange={(v) => setEditRow({ ...editRow, horas_estimadas: parseFloat(v.replace(",", ".")) || 0 })}
                   />
                 </TableCell>
                 <TableCell>
-                  <Input
-                    type="number"
+                  <MoneyInput
                     className="h-7 text-xs w-20 ml-auto"
-                    value={editRow.custo_hora || ""}
-                    onChange={(e) => setEditRow({ ...editRow, custo_hora: parseFloat(e.target.value) || 0 })}
+                    value={editRow.custo_hora ? formatValorToInput(editRow.custo_hora) : ""}
+                    onChange={(v) => setEditRow({ ...editRow, custo_hora: parseCurrencyString(v) })}
                   />
                 </TableCell>
                 <TableCell className="text-xs text-right">
                   {formatCurrency((editRow.horas_estimadas || 0) * (editRow.custo_hora || 0))}
                 </TableCell>
                 <TableCell>
-                  <Input
-                    type="number"
+                  <PercentInput
                     className="h-7 text-xs w-16 ml-auto"
-                    value={editRow.margem_alvo_pct || ""}
-                    onChange={(e) => setEditRow({ ...editRow, margem_alvo_pct: parseFloat(e.target.value) || 0 })}
+                    value={editRow.margem_alvo_pct ? String(editRow.margem_alvo_pct).replace(".", ",") : ""}
+                    onChange={(v) => setEditRow({ ...editRow, margem_alvo_pct: parseFloat(v.replace(",", ".")) || 0 })}
                   />
                 </TableCell>
                 <TableCell>
-                  <Input
-                    type="number"
+                  <MoneyInput
                     className="h-7 text-xs w-24 ml-auto"
-                    value={editRow.valor_venda || ""}
-                    onChange={(e) => setEditRow({ ...editRow, valor_venda: parseFloat(e.target.value) || 0 })}
+                    value={editRow.valor_venda ? formatValorToInput(editRow.valor_venda) : ""}
+                    onChange={(v) => setEditRow({ ...editRow, valor_venda: parseCurrencyString(v) })}
                   />
                 </TableCell>
                 <TableCell className="text-right">
                   <Button
+                    variant="brand"
                     size="icon"
                     className="h-6 w-6"
                     onClick={handleSave}

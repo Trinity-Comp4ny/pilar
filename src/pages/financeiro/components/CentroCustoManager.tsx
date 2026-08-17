@@ -4,8 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Pencil, Plus, Trash2, X } from "lucide-react";
+import { Building2, Pencil, Plus, Trash2, X } from "lucide-react";
+import { EmptyState } from "@/components/EmptyState";
 import { toast } from "sonner";
+import { getSafeErrorMessage } from "@/lib/safeError";
 import { supabase } from "@/integrations/supabase/client";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 
@@ -38,7 +40,10 @@ export function CentroCustoManager({ open, onOpenChange, onChanged }: Props) {
       .select("id, codigo, nome, descricao, ativo")
       .is("deleted_at", null)
       .order("nome");
-    if (error) toast.error("Erro ao carregar centros");
+    if (error)
+      toast.error("Não foi possível carregar os centros de custo", {
+        description: getSafeErrorMessage(error, "Atualize a página em instantes."),
+      });
     setList((data ?? []) as CentroCusto[]);
     setLoading(false);
   };
@@ -90,7 +95,9 @@ export function CentroCustoManager({ open, onOpenChange, onChanged }: Props) {
       await fetchAll();
       onChanged?.();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Erro");
+      toast.error("Não foi possível salvar", {
+        description: getSafeErrorMessage(e, "Confira os dados e tente de novo."),
+      });
     } finally {
       setSaving(false);
     }
@@ -102,7 +109,9 @@ export function CentroCustoManager({ open, onOpenChange, onChanged }: Props) {
       .update({ deleted_at: new Date().toISOString() })
       .eq("id", c.id);
     if (error) {
-      toast.error("Erro ao excluir");
+      toast.error("Não foi possível excluir", {
+        description: getSafeErrorMessage(error, "Tente de novo em instantes."),
+      });
       return;
     }
     toast.success("Centro excluído");
@@ -149,7 +158,7 @@ export function CentroCustoManager({ open, onOpenChange, onChanged }: Props) {
                 <Input value={form.descricao} onChange={(e) => setForm((f) => ({ ...f, descricao: e.target.value }))} />
               </div>
               <div className="flex gap-2">
-                <Button onClick={submit} disabled={saving} className="flex-1">
+                <Button variant="brand" onClick={submit} disabled={saving} className="flex-1">
                   {saving ? "Salvando..." : editing ? "Atualizar" : "Criar"}
                 </Button>
                 {editing && (
@@ -170,7 +179,13 @@ export function CentroCustoManager({ open, onOpenChange, onChanged }: Props) {
               <div className="border rounded max-h-80 overflow-y-auto divide-y">
                 {loading && <div className="p-3 text-xs text-muted-foreground">Carregando...</div>}
                 {!loading && list.length === 0 && (
-                  <div className="p-3 text-xs text-muted-foreground">Nenhum centro cadastrado</div>
+                  <EmptyState
+                    icon={Building2}
+                    title="Nenhum centro cadastrado"
+                    description="Crie centros de custo para agrupar despesas e receitas."
+                    action={{ label: "Novo centro", onClick: startNew }}
+                    className="py-8"
+                  />
                 )}
                 {list.map((c) => (
                   <div key={c.id} className="flex items-center gap-2 p-2 text-sm hover:bg-muted/30">
@@ -212,7 +227,7 @@ export function CentroCustoManager({ open, onOpenChange, onChanged }: Props) {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8 text-red-600"
+                      className="h-8 w-8 text-danger-mid"
                       onClick={() => setDeleteTarget(c)}
                       aria-label={`Excluir ${c.nome}`}
                     >

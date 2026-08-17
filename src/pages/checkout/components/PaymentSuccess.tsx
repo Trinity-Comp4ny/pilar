@@ -14,26 +14,26 @@ export function PaymentSuccess({ email, planNome, inviteDispatched }: PaymentSuc
       </div>
 
       <div>
-        <h2 className="text-3xl font-medium text-slate-900">Pagamento confirmado</h2>
-        <p className="text-slate-500 mt-2">Plano {planNome} ativo. Bem-vindo ao Pilar.</p>
+        <h2 className="text-3xl font-medium text-ink">Pagamento confirmado</h2>
+        <p className="text-ink-muted mt-2">Plano {planNome} ativo. Bem-vindo ao Pilar.</p>
       </div>
 
-      <div className="bg-slate-50 border border-slate-200 rounded-xl p-6 text-left space-y-3">
+      <div className="bg-muted border border-border rounded-xl p-6 text-left space-y-3">
         <div className="flex items-center gap-3">
           <Mail className="w-5 h-5 text-foreground shrink-0" />
           <div>
-            <p className="text-sm font-medium text-slate-900">
+            <p className="text-sm font-medium text-ink">
               {inviteDispatched ? "Email enviado" : "Enviando email..."}
             </p>
-            <p className="text-xs text-slate-500">
-              Verifique <span className="font-medium text-slate-700">{email}</span> pra definir sua senha e entrar no
+            <p className="text-xs text-ink-muted">
+              Verifique <span className="font-medium text-ink-soft">{email}</span> pra definir sua senha e entrar no
               Pilar.
             </p>
           </div>
         </div>
       </div>
 
-      <p className="text-xs text-slate-400">Não chegou em 5 minutos? Confira spam ou entre em contato com o suporte.</p>
+      <p className="text-xs text-ink-disabled">Não chegou em 5 minutos? Confira spam ou entre em contato com o suporte.</p>
     </div>
   );
 }

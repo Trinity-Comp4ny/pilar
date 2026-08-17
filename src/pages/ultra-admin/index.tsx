@@ -42,11 +42,13 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { CompanyFeatureToggles } from "@/components/admin/CompanyFeatureToggles";
+import { BulkFeatureManager, type BulkFeatureInput } from "@/components/admin/BulkFeatureManager";
 import { UsersAccessManager, type ManagedUser } from "@/components/admin/UsersAccessManager";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { getSafeErrorMessage } from "@/lib/safeError";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import {
   parseCompanyFeatures,
@@ -171,7 +173,9 @@ export default function UltraAdmin() {
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [savingFeatures, setSavingFeatures] = useState(false);
   const [query, setQuery] = useState("");
-  const [tab, setTab] = useState<"dashboard" | "empresas" | "usuarios" | "atividade">("dashboard");
+  const [tab, setTab] = useState<"dashboard" | "empresas" | "funcionalidades" | "usuarios" | "atividade">(
+    "dashboard"
+  );
   const [audit, setAudit] = useState<AuditRow[]>([]);
   const [auditFull, setAuditFull] = useState<AuditRow[]>([]);
   const [auditEmpresa, setAuditEmpresa] = useState<string>("all");
@@ -194,7 +198,7 @@ export default function UltraAdmin() {
       setEmpresas(rows);
     } catch (err) {
       toast.error("Erro ao carregar empresas", {
-        description: err instanceof Error ? err.message : "Erro inesperado",
+        description: getSafeErrorMessage(err, "Tente de novo em instantes."),
       });
     } finally {
       setLoading(false);
@@ -204,6 +208,26 @@ export default function UltraAdmin() {
   useEffect(() => {
     fetchEmpresas();
   }, [fetchEmpresas]);
+
+  // Ação em massa (spec 035): liga/desliga uma feature em N empresas via edge
+  // function (PUT ?action=bulk-feature, service_role). Recarrega a lista depois
+  // para as contagens refletirem o novo estado.
+  const handleBulkFeature = useCallback(
+    async (input: BulkFeatureInput): Promise<number> => {
+      const res = (await edgeFetch("ultra-admin-empresas", {
+        method: "PUT",
+        params: { action: "bulk-feature" },
+        body: input,
+      })) as { affected: number; considered: number; failures: number };
+      await fetchEmpresas();
+      toast.success(
+        `${res.affected} ${res.affected === 1 ? "empresa atualizada" : "empresas atualizadas"}`,
+        { description: res.failures > 0 ? `${res.failures} falha(s) ao aplicar` : undefined }
+      );
+      return res.affected;
+    },
+    [fetchEmpresas]
+  );
 
   // Ultra admin lê admin_audit_logs e profiles cross-empresa direto (RLS
   // is_ultra_admin). Uso de IA (ai_usage_logs) fica fora do v1: a policy não
@@ -278,7 +302,7 @@ export default function UltraAdmin() {
       toast.success("Usuário removido");
     } catch (err) {
       toast.error("Erro ao remover usuário", {
-        description: err instanceof Error ? err.message : "Erro inesperado",
+        description: getSafeErrorMessage(err, "Tente de novo em instantes."),
       });
     }
   }, []);
@@ -357,7 +381,7 @@ export default function UltraAdmin() {
       setDetailAudit((aud ?? []) as DataAuditRow[]);
     } catch (err) {
       toast.error("Erro ao carregar empresa", {
-        description: err instanceof Error ? err.message : "Erro inesperado",
+        description: getSafeErrorMessage(err, "Tente de novo em instantes."),
       });
     } finally {
       setLoadingDetail(false);
@@ -378,7 +402,7 @@ export default function UltraAdmin() {
         toast.success("Features atualizadas");
       } catch (err) {
         toast.error("Erro ao salvar features", {
-          description: err instanceof Error ? err.message : "Erro inesperado",
+          description: getSafeErrorMessage(err, "Tente de novo em instantes."),
         });
       } finally {
         setSavingFeatures(false);
@@ -408,7 +432,7 @@ export default function UltraAdmin() {
         toast.success("Usuário atualizado");
       } catch (err) {
         toast.error("Erro ao atualizar usuário", {
-          description: err instanceof Error ? err.message : "Erro inesperado",
+          description: getSafeErrorMessage(err, "Tente de novo em instantes."),
         });
       }
     },
@@ -427,7 +451,7 @@ export default function UltraAdmin() {
         toast.success("Usuário removido");
       } catch (err) {
         toast.error("Erro ao remover usuário", {
-          description: err instanceof Error ? err.message : "Erro inesperado",
+          description: getSafeErrorMessage(err, "Tente de novo em instantes."),
         });
       }
     },
@@ -456,7 +480,7 @@ export default function UltraAdmin() {
         await fetchDetail(detail.id);
       } catch (err) {
         toast.error("Erro ao convidar usuário", {
-          description: err instanceof Error ? err.message : "Erro inesperado",
+          description: getSafeErrorMessage(err, "Tente de novo em instantes."),
         });
       }
     },
@@ -474,7 +498,7 @@ export default function UltraAdmin() {
         toast.success("Convite reenviado", { description: `Novo e-mail enviado para ${user.email}.` });
       } catch (err) {
         toast.error("Erro ao reenviar convite", {
-          description: err instanceof Error ? err.message : "Erro inesperado",
+          description: getSafeErrorMessage(err, "Tente de novo em instantes."),
         });
       }
     },
@@ -495,7 +519,7 @@ export default function UltraAdmin() {
         toast.success("Convite cancelado");
       } catch (err) {
         toast.error("Erro ao cancelar convite", {
-          description: err instanceof Error ? err.message : "Erro inesperado",
+          description: getSafeErrorMessage(err, "Tente de novo em instantes."),
         });
       }
     },
@@ -533,7 +557,7 @@ export default function UltraAdmin() {
         toast.success("Empresa atualizada");
       } catch (err) {
         toast.error("Erro ao atualizar empresa", {
-          description: err instanceof Error ? err.message : "Erro inesperado",
+          description: getSafeErrorMessage(err, "Tente de novo em instantes."),
         });
       }
     },
@@ -586,7 +610,7 @@ export default function UltraAdmin() {
       await fetchEmpresas();
     } catch (err) {
       toast.error("Erro ao criar empresa", {
-        description: err instanceof Error ? err.message : "Erro inesperado",
+        description: getSafeErrorMessage(err, "Tente de novo em instantes."),
       });
     } finally {
       setCreating(false);
@@ -655,7 +679,7 @@ export default function UltraAdmin() {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="rounded-full gap-1.5 border-red-200 text-red-700 hover:bg-red-50 hover:text-red-800"
+                  className="rounded-full gap-1.5 border-danger-mid-border text-danger-strong hover:bg-danger-soft hover:text-danger-strong"
                   onClick={() => setArchiveOpen(true)}
                 >
                   <Archive size={14} />
@@ -776,17 +800,23 @@ export default function UltraAdmin() {
     <PageLayout
       header={
         <PageHeader title="Gestão Pilar">
-          <Button className="rounded-full gap-2" onClick={() => setCreateOpen(true)}>
+          <Button variant="brand" className="rounded-full gap-2" onClick={() => setCreateOpen(true)}>
             <Plus size={16} />
             Criar empresa
           </Button>
         </PageHeader>
       }
     >
-      <Tabs value={tab} onValueChange={(v) => setTab(v as "dashboard" | "empresas" | "usuarios" | "atividade")}>
+      <Tabs
+        value={tab}
+        onValueChange={(v) =>
+          setTab(v as "dashboard" | "empresas" | "funcionalidades" | "usuarios" | "atividade")
+        }
+      >
         <TabsList>
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
           <TabsTrigger value="empresas">Empresas</TabsTrigger>
+          <TabsTrigger value="funcionalidades">Funcionalidades</TabsTrigger>
           <TabsTrigger value="usuarios">Usuários</TabsTrigger>
           <TabsTrigger value="atividade">Atividade</TabsTrigger>
         </TabsList>
@@ -935,6 +965,28 @@ export default function UltraAdmin() {
           </Card>
         </TabsContent>
 
+        <TabsContent value="funcionalidades" className="mt-4">
+          <Card className="border border-black/5">
+            <CardHeader>
+              <CardTitle className="text-base">Funcionalidades</CardTitle>
+              <CardDescription>
+                Ligue ou desligue uma funcionalidade para todas as empresas de uma vez. Aqui a feature é
+                controle de rollout, não de plano.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {loading ? (
+                <div className="flex items-center gap-2 py-8 text-sm text-black/50">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Carregando empresas…
+                </div>
+              ) : (
+                <BulkFeatureManager empresas={empresas} onApply={handleBulkFeature} />
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         <TabsContent value="usuarios" className="mt-4">
           <Card className="border border-black/5">
             <CardHeader>
@@ -1028,7 +1080,7 @@ export default function UltraAdmin() {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                className="rounded-full border-red-200 text-red-700 hover:bg-red-50 hover:text-red-800"
+                                className="rounded-full border-danger-mid-border text-danger-strong hover:bg-danger-soft hover:text-danger-strong"
                                 onClick={() => setUserToDelete(u)}
                                 aria-label="Remover usuário"
                               >
@@ -1145,7 +1197,7 @@ export default function UltraAdmin() {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
-              className="bg-red-600 hover:bg-red-700"
+              className="bg-destructive hover:bg-destructive/90"
               onClick={() => {
                 if (userToDelete) handleCrossDelete(userToDelete);
                 setUserToDelete(null);
@@ -1222,7 +1274,7 @@ export default function UltraAdmin() {
             >
               Cancelar
             </Button>
-            <Button onClick={handleCreateEmpresa} disabled={creating}>
+            <Button variant="brand" onClick={handleCreateEmpresa} disabled={creating}>
               {creating ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
@@ -1241,9 +1293,9 @@ export default function UltraAdmin() {
 
 function StatusBadge({ status }: { status: EmpresaStatus }) {
   const variants: Record<EmpresaStatus, string> = {
-    active: "border-emerald-600/30 bg-emerald-600/10 text-emerald-700",
-    suspended: "border-yellow-600/30 bg-yellow-600/10 text-yellow-700",
-    cancelled: "border-red-600/30 bg-red-600/10 text-red-700",
+    active: "border-success/30 bg-success/10 text-success-strong",
+    suspended: "border-warning/30 bg-warning/10 text-warning-strong",
+    cancelled: "border-danger/30 bg-danger/10 text-danger-strong",
   };
   return (
     <Badge variant="outline" className={`h-6 rounded-full text-[11px] ${variants[status] ?? ""}`}>
@@ -1337,14 +1389,14 @@ function EditCompanyDialog({
             </div>
           </div>
           {dangerous && (
-            <div className="space-y-2 rounded-md border border-red-200 bg-red-50 px-3 py-2.5">
-              <p className="text-xs text-red-700">
+            <div className="space-y-2 rounded-md border border-danger-mid-border bg-danger-soft px-3 py-2.5">
+              <p className="text-xs text-danger-strong">
                 {form.status === "suspended"
                   ? "Suspensa: os usuários da empresa perdem o acesso até reativar."
                   : "Cancelada: o acesso é encerrado. Use com cuidado."}
               </p>
               <div className="space-y-1.5">
-                <Label htmlFor="confirm-empresa" className="text-xs text-red-800">
+                <Label htmlFor="confirm-empresa" className="text-xs text-danger-strong">
                   Digite <span className="font-semibold">{confirmName}</span> para confirmar
                 </Label>
                 <Input
@@ -1363,6 +1415,7 @@ function EditCompanyDialog({
             Cancelar
           </Button>
           <Button
+            variant="brand"
             onClick={async () => {
               setSaving(true);
               try {
@@ -1437,7 +1490,7 @@ function ArchiveCompanyDialog({
               }
             }}
             disabled={saving || !matches}
-            className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+            className="bg-destructive hover:bg-destructive/90 focus:ring-destructive"
           >
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Arquivar empresa"}
           </AlertDialogAction>

@@ -36,23 +36,25 @@ const STATUS_CONFIG = {
     label: "Concluído",
   },
   em_andamento: {
-    bg: "bg-blue-500",
-    border: "border-blue-500",
-    text: "text-blue-700",
+    bg: "bg-status-progress",
+    border: "border-status-progress",
+    text: "text-info-strong",
     icon: Clock,
     label: "Em Andamento",
   },
   atrasado: {
-    bg: "bg-red-500",
-    border: "border-red-500",
-    text: "text-red-700",
+    // bg/border sem token exato: "atrasado" não é um dos 7 status-* (não é o
+    // mesmo conceito de "Cancelado"), deixado cru (ver relatório do lote).
+    bg: "bg-fill-danger",
+    border: "border-fill-danger",
+    text: "text-danger-strong",
     icon: AlertTriangle,
     label: "Atrasado",
   },
   nao_iniciado: {
-    bg: "bg-gray-300",
-    border: "border-gray-300",
-    text: "text-gray-500",
+    bg: "bg-status-unknown",
+    border: "border-border",
+    text: "text-ink-muted",
     icon: PauseCircle,
     label: "Não Iniciado",
   },
@@ -107,7 +109,7 @@ export function FluxoPipeline({ disciplinas }: FluxoPipelineProps) {
                 <div
                   className={cn(
                     "w-6 sm:w-10 h-0.5",
-                    etapas[i - 1].status === "concluido" ? "bg-status-done" : "bg-gray-200"
+                    etapas[i - 1].status === "concluido" ? "bg-status-done" : "bg-muted"
                   )}
                 />
               )}
@@ -142,8 +144,8 @@ export function FluxoPipeline({ disciplinas }: FluxoPipelineProps) {
                             d.status === "Concluído"
                               ? "bg-positive/100"
                               : d.status === "Em Andamento"
-                                ? "bg-blue-500"
-                                : "bg-gray-300"
+                                ? "bg-status-progress"
+                                : "bg-status-unknown"
                           )}
                         />
                         {d.disciplina} — {d.status || "Não Iniciado"}

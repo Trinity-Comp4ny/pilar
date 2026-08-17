@@ -33,7 +33,7 @@ export function LancamentosBulkBar({ count, canEdit, onMarkPaid, onDelete, onCle
             variant="outline"
             size="sm"
             onClick={onDelete}
-            className="h-7 text-xs gap-1 bg-white border-red-300 text-red-600 hover:bg-red-50"
+            className="h-7 text-xs gap-1 bg-white border-danger-mid-border text-danger-mid hover:bg-danger-soft"
           >
             <Trash2 className="h-3 w-3" />
             Excluir

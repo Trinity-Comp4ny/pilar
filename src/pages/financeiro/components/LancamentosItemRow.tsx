@@ -10,6 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { formatCurrency } from "@/lib/format";
 import { formatDateDisplay } from "@/lib/dateUtils";
 import type { Lancamento } from "../hooks/useLancamentosUnified";
 
@@ -32,9 +33,6 @@ interface Props {
   onDelete: (l: Lancamento) => void;
   onStatusChange: (l: Lancamento, s: string) => void;
 }
-
-const formatBRL = (v: number) =>
-  v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 2 });
 
 function StatusBadge({
   l,
@@ -75,9 +73,9 @@ function StatusBadge({
       className={cn(
         "text-xs cursor-pointer transition-colors",
         paid && isReceita && "bg-positive text-white hover:bg-positive/90",
-        paid && !isReceita && !isTransf && "bg-red-600 text-white hover:bg-red-600/90",
-        paid && isTransf && "bg-blue-600 text-white hover:bg-blue-600/90",
-        !paid && overdue && "bg-amber-100 text-amber-800 hover:bg-amber-200"
+        paid && !isReceita && !isTransf && "bg-negative text-white hover:bg-negative/90",
+        paid && isTransf && "bg-info-mid text-white hover:bg-info-mid/90",
+        !paid && overdue && "bg-warning-soft text-warning-strong hover:bg-warning-mid"
       )}
     >
       {overdue && !paid ? "Atrasado" : l.status}
@@ -136,9 +134,9 @@ export function LancamentosItemRow({
       data-index={dataIndex}
       ref={measureRef}
       className={cn(
-        "border-b border-black/5 hover:bg-gray-50 cursor-pointer transition-colors",
+        "border-b border-black/5 hover:bg-muted cursor-pointer transition-colors",
         isSel && "bg-brand/5",
-        isTransf && "bg-blue-50/30",
+        isTransf && "bg-info-soft/30",
         isChild && "bg-white"
       )}
       onClick={() => onRowClick(l)}
@@ -157,10 +155,10 @@ export function LancamentosItemRow({
           className={cn(
             "inline-flex items-center justify-center h-7 w-7 rounded-full",
             isTransf
-              ? "bg-blue-100 text-blue-600"
+              ? "bg-info-soft text-info-mid"
               : isReceita
                 ? "bg-positive/10 text-positive-strong"
-                : "bg-red-50 text-red-600"
+                : "bg-negative/10 text-negative-strong"
           )}
           title={isTransf ? "Transferência" : isReceita ? "Receita" : "Despesa"}
         >
@@ -173,7 +171,7 @@ export function LancamentosItemRow({
           )}
         </span>
       </td>
-      <td className={cn(cellPad, cellTextSize, overdue && "text-red-600 font-medium")}>
+      <td className={cn(cellPad, cellTextSize, overdue && "text-danger-mid font-medium")}>
         {formatDateDisplay(dataExibir)}
         {overdue && <span className="ml-1 text-[10px] uppercase">atrasado</span>}
       </td>
@@ -198,10 +196,10 @@ export function LancamentosItemRow({
           cellPad,
           "text-right font-semibold tabular-nums",
           cellTextSize,
-          isTransf ? "text-blue-600" : isReceita ? "text-positive-strong" : "text-red-600"
+          isTransf ? "text-info-mid" : isReceita ? "text-positive-strong" : "text-negative-strong"
         )}
       >
-        {isTransf ? "⇄" : isReceita ? "+" : "−"} {formatBRL(l.valor)}
+        {isTransf ? "⇄" : isReceita ? "+" : "−"} {formatCurrency(l.valor)}
       </td>
       <td className={cellPad} onClick={(e) => e.stopPropagation()}>
         <StatusBadge
@@ -218,7 +216,7 @@ export function LancamentosItemRow({
             <Button
               variant="ghost"
               size="icon"
-              className="h-10 w-10 sm:h-8 sm:w-8 text-blue-600 hover:bg-blue-50"
+              className="h-10 w-10 sm:h-8 sm:w-8 text-info-mid hover:bg-info-soft"
               onClick={() => onEdit(l)}
               aria-label="Editar lançamento"
             >
@@ -227,7 +225,7 @@ export function LancamentosItemRow({
             <Button
               variant="ghost"
               size="icon"
-              className="h-10 w-10 sm:h-8 sm:w-8 text-red-600 hover:bg-red-50"
+              className="h-10 w-10 sm:h-8 sm:w-8 text-danger-mid hover:bg-danger-soft"
               onClick={() => onDelete(l)}
               aria-label="Excluir lançamento"
             >

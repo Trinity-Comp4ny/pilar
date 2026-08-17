@@ -95,7 +95,7 @@ export function LeadAutoConvertDialog({ open, onOpenChange, isPending, onConvert
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Convertendo...
               </>
             ) : (
-              "Criar Cliente"
+              "Criar cliente"
             )}
           </Button>
         </DialogFooter>
@@ -121,7 +121,7 @@ export function LeadCreatePropostaDialog({ open, onOpenChange, leadNome, isPendi
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5 text-foreground" />
-            Criar Proposta
+            Criar proposta
           </DialogTitle>
           <DialogDescription>
             Deseja criar uma proposta para <span className="font-medium text-foreground">{leadNome}</span>? Você será

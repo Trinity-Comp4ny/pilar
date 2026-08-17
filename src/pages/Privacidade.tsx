@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Download, ShieldCheck, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { getSafeErrorMessage } from "@/lib/safeError";
 
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -79,7 +80,9 @@ export default function Privacidade() {
       setExportRequested(true);
       toast.success("Solicitação registrada. Enviaremos seus dados por email em até 15 dias.");
     } catch (err) {
-      toast.error(`Erro ao registrar solicitação: ${err instanceof Error ? err.message : "Tente novamente."}`);
+      toast.error("Não foi possível registrar a solicitação", {
+        description: getSafeErrorMessage(err, "Tente de novo em instantes."),
+      });
     } finally {
       setExportSubmitting(false);
     }
@@ -103,7 +106,9 @@ export default function Privacidade() {
     setSubmitting(false);
 
     if (error) {
-      toast.error(`Não foi possível registrar a solicitação: ${error.message}`);
+      toast.error("Não foi possível registrar a solicitação", {
+        description: getSafeErrorMessage(error, "Tente de novo em instantes."),
+      });
       return;
     }
 

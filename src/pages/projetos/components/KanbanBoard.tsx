@@ -1,12 +1,8 @@
-import { useState } from "react";
-import { Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { cn } from "@/lib/utils";
 import { PROJECT_STATUS, type ProjectStatus } from "@/constants";
 import { type Projeto } from "@/types/projetos";
 import { type ProjetoEtapa } from "@/pages/projetos/hooks/useProjetoEtapas";
+import { AddColumnInline } from "@/components/kanban/AddColumnInline";
 import { KanbanColumn } from "@/pages/projetos/components/KanbanColumn";
 import { ProjectCard } from "@/pages/projetos/components/ProjectCard";
 
@@ -30,103 +26,6 @@ const BUCKETS: ProjectStatus[] = [
   PROJECT_STATUS.CONCLUIDO,
   PROJECT_STATUS.CANCELADO,
 ];
-
-// "Add group" ao estilo ClickUp: campo inline com nome + cor + balde-âncora.
-function NovaColunaInline({
-  onCriar,
-  criando,
-}: {
-  onCriar: (nome: string, cor: string, bucket: ProjectStatus) => Promise<boolean>;
-  criando: boolean;
-}) {
-  const [aberto, setAberto] = useState(false);
-  const [nome, setNome] = useState("");
-  const [cor, setCor] = useState<string>(CORES_ETAPA_PROJETO[1]);
-  const [bucket, setBucket] = useState<ProjectStatus>(PROJECT_STATUS.EM_ANDAMENTO);
-
-  const fechar = () => {
-    setAberto(false);
-    setNome("");
-    setCor(CORES_ETAPA_PROJETO[1]);
-    setBucket(PROJECT_STATUS.EM_ANDAMENTO);
-  };
-
-  const criar = async () => {
-    if (!nome.trim() || criando) return;
-    const ok = await onCriar(nome, cor, bucket);
-    if (ok) fechar();
-  };
-
-  if (!aberto) {
-    return (
-      <button
-        type="button"
-        onClick={() => setAberto(true)}
-        className="mt-9 flex h-11 w-[280px] shrink-0 items-center justify-center gap-1.5 rounded-lg border border-dashed text-sm text-muted-foreground transition-colors hover:border-brand/50 hover:text-foreground"
-      >
-        <Plus className="h-4 w-4" /> Nova coluna
-      </button>
-    );
-  }
-
-  return (
-    <div className="mt-9 w-[280px] shrink-0 space-y-2 self-start rounded-lg border bg-card p-2.5 shadow-sm">
-      <Input
-        autoFocus
-        value={nome}
-        onChange={(e) => setNome(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") {
-            e.preventDefault();
-            criar();
-          } else if (e.key === "Escape") {
-            fechar();
-          }
-        }}
-        placeholder="Nome da coluna"
-        className="h-8"
-      />
-      <div className="flex flex-wrap gap-1.5 px-0.5">
-        {CORES_ETAPA_PROJETO.map((c) => (
-          <button
-            key={c}
-            type="button"
-            onClick={() => setCor(c)}
-            aria-label={`Cor ${c}`}
-            className={cn(
-              "h-5 w-5 rounded-full ring-offset-2 ring-offset-card transition-shadow",
-              cor === c && "ring-2 ring-foreground/60"
-            )}
-            style={{ backgroundColor: c }}
-          />
-        ))}
-      </div>
-      <div className="space-y-1">
-        <span className="text-[11px] text-muted-foreground">Conta como</span>
-        <Select value={bucket} onValueChange={(v) => setBucket(v as ProjectStatus)}>
-          <SelectTrigger className="h-8 text-xs">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {BUCKETS.map((b) => (
-              <SelectItem key={b} value={b} className="text-xs">
-                {b}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-      <div className="flex items-center gap-2">
-        <Button variant="brand" size="sm" className="h-7" onClick={criar} disabled={!nome.trim() || criando}>
-          Adicionar
-        </Button>
-        <Button variant="ghost" size="sm" className="h-7" onClick={fechar}>
-          Cancelar
-        </Button>
-      </div>
-    </div>
-  );
-}
 
 interface KanbanBoardProps {
   etapas: ProjetoEtapa[];
@@ -222,7 +121,34 @@ export function KanbanBoard({
         </div>
       )}
 
-      {canEdit && <NovaColunaInline onCriar={onCriarEtapa} criando={criandoEtapa} />}
+      {canEdit && (
+        <AddColumnInline<ProjectStatus>
+          colors={CORES_ETAPA_PROJETO}
+          initialColor={CORES_ETAPA_PROJETO[1]}
+          extraInitial={PROJECT_STATUS.EM_ANDAMENTO}
+          busy={criandoEtapa}
+          onCreate={(nome, cor, bucket) => onCriarEtapa(nome, cor, bucket)}
+          renderExtra={(bucket, setBucket) => (
+            <div className="space-y-1">
+              <span className="text-[11px] text-muted-foreground">Conta como</span>
+              <Select value={bucket} onValueChange={(v) => setBucket(v as ProjectStatus)}>
+                <SelectTrigger className="h-8 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {BUCKETS.map((b) => (
+                    <SelectItem key={b} value={b} className="text-xs">
+                      {b}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+          triggerClassName="mt-9 w-[280px] rounded-lg"
+          panelClassName="mt-9 w-[280px] self-start rounded-lg p-2.5"
+        />
+      )}
     </div>
   );
 }

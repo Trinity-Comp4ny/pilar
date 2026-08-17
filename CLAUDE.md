@@ -45,6 +45,30 @@ Relatórios, Portal Cliente.
 - RLS em toda tabela nova; testar com `auth.uid()` correto
 - Edge Functions seguem padrão `_shared/cors.ts` + rate limiting por empresa
 
+## UI e design system
+
+Antes de escrever QUALQUER UI (tela, modal, componente), consultar
+`docs/design/PILAR_DESIGN_SYSTEM.md`: é o contrato visual (o que existe, quando
+usar, o que é proibido). Regras que valem sempre:
+
+- Página nova usa `PilarPage`; modal de formulário usa `FormDialog` (largura só
+  `sm`/`md`/`lg`). Não remontar `PageLayout`+`PageHeader` nem `DialogContent`+footer à mão.
+- Cor só por token semântico de `src/styles/tokens.css`. Nunca paleta crua
+  (`bg-red-100`, `text-amber-700`); o ESLint barra.
+- Botão primário é `variant="brand"`, nunca `className="bg-brand..."`. Status via
+  `StatusBadge` do registry (`src/lib/status.ts`). Dinheiro/data via `@/lib/format`.
+  Exclusão via `ConfirmDialog`. Campo de dinheiro via `MoneyInput`.
+- Componente genérico faltando e repetido 3+ vezes: promover (regra dos 3 usos,
+  ADR 0008), não copiar. Regra de domínio: escrever à mão.
+- Tabela plana (listagem com ordenação/seleção) usa `DataTable`
+  (`src/components/data/DataTable.tsx`, sobre `@tanstack/react-table`), não
+  `<table>` à mão. Empty/erro ricos via os slots `emptyState`/`errorState`.
+  Exceção: tabela server-side + agrupada + scroll infinito (ex. `LancamentosTable`)
+  fica custom. Matemática de timeline/Gantt vem de `src/lib/cronograma.ts`, nunca
+  reimplementada na tela. Ver [ADR 0020](docs/architecture/adr/0020-headless-sim-widget-estilizado-nao.md)
+  e [SPEC 041](docs/specs/041-adocao-tanstack-table-e-consolidacao-gantt-kanban.md):
+  headless (TanStack/dnd-kit) sim, widget estilizado (DHTMLX/ag-Grid) não.
+
 ## Documentação
 
 Toda a documentação vive em `docs/`, organizada por tema com índices navegáveis.
@@ -68,10 +92,10 @@ público → `brand/personas.md`. Cor/token: a verdade é `src/styles/tokens.css
 
 183 migrations em `supabase/migrations/`, dois esquemas convivendo: 000..029 (antigo) e
 timestamp 2026*. Tipos gerados em `src/integrations/supabase/types.ts`.
-Rodar `npm run gen:types` após qualquer migration, e commitar o `types.ts`: **nenhum job
-de CI valida isso hoje**, então esquecer gera código que passa no typecheck e quebra em
-runtime. Ver `docs/operations/PLANO_ENGENHARIA_2026-07.md` (Fase 1) para o gate que fecha
-esse buraco.
+Rodar `npm run gen:types` após qualquer migration, e commitar o `types.ts`. O CI **valida
+isso**: o job `types-sync` (Fase 1 do `docs/operations/PLANO_ENGENHARIA_2026-07.md`, já
+implementada) bloqueia o merge quando o `types.ts` commitado diverge do schema das
+migrations. Esquecer de rodar o `gen:types` reprova o PR, não vaza para runtime.
 
 ## Git, branches e release (REGRA INQUEBRÁVEL)
 

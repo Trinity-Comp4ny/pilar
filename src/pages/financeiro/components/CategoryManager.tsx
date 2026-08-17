@@ -160,13 +160,13 @@ export function CategoryManager({ title, description, type, onCategoryChange }: 
 
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
-            <Button size="sm" className="pilar-button-primary">
+            <Button size="sm" variant="brand">
               <Plus className="h-4 w-4 mr-1" /> Adicionar
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-sm">
             <DialogHeader>
-              <DialogTitle>Nova Categoria</DialogTitle>
+              <DialogTitle>Nova categoria</DialogTitle>
               <DialogDescription>Adicione uma nova categoria de {type.toLowerCase()} ao sistema</DialogDescription>
             </DialogHeader>
 
@@ -244,7 +244,7 @@ export function CategoryManager({ title, description, type, onCategoryChange }: 
                     }}
                     aria-label="Excluir categoria"
                   >
-                    <Trash2 className="h-4 w-4 text-red-500" />
+                    <Trash2 className="h-4 w-4 text-danger-mid" />
                   </Button>
                 </TableCell>
               </TableRow>
@@ -257,7 +257,7 @@ export function CategoryManager({ title, description, type, onCategoryChange }: 
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>Editar Categoria</DialogTitle>
+            <DialogTitle>Editar categoria</DialogTitle>
             <DialogDescription>Altere o nome da categoria</DialogDescription>
           </DialogHeader>
 

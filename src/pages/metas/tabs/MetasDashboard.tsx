@@ -2,8 +2,11 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { KPICard } from "@/components/KPICard";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import type { StatusTone } from "@/lib/status";
-import { Target, TrendingUp, Users, Loader2, CheckCircle2, Clock, AlertTriangle } from "lucide-react";
+import { Target, TrendingUp, Users, Layers, Loader2, CheckCircle2, Clock, AlertTriangle } from "lucide-react";
+import { EmptyState } from "@/components/EmptyState";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,16 +19,14 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
 import { toast } from "sonner";
 import { fetchPessoasLookup } from "@/lib/supabaseQueries";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { MetaCard } from "../components/MetaCard";
-import { MetaFormDialog, type MetaRow, type MetaTipo } from "../components/MetaFormDialog";
+import { MetaFormDialog, setorLabel, type MetaRow, type MetaTipo } from "../components/MetaFormDialog";
 
 export default function MetasDashboard() {
   const queryClient = useQueryClient();
-  const { toast: uiToast } = useToast();
 
   const [editingMeta, setEditingMeta] = useState<MetaRow | null>(null);
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -59,10 +60,8 @@ export default function MetasDashboard() {
       queryClient.invalidateQueries({ queryKey: ["metas"] });
     },
     onError: (error) => {
-      uiToast({
-        title: "Não foi possível atualizar as metas",
+      toast.error("Não foi possível atualizar as metas", {
         description: error instanceof Error ? error.message : "Tente novamente em instantes.",
-        variant: "destructive",
       });
     },
   });
@@ -103,8 +102,9 @@ export default function MetasDashboard() {
   const todas = metas ?? [];
   const financeiras = todas.filter((m) => (m.tipo ?? "financeira") === "financeira");
   const pessoais = todas.filter((m) => m.tipo === "pessoal");
+  const livres = todas.filter((m) => m.tipo === "livre");
   // Metas de projeto foram descontinuadas: prazos moram dentro do projeto.
-  const allMetas = [...financeiras, ...pessoais];
+  const allMetas = [...financeiras, ...pessoais, ...livres];
 
   const calcStats = (items: MetaRow[]) => {
     if (items.length === 0) return { total: 0, completed: 0, avgProgress: 0, overdue: 0 };
@@ -119,10 +119,12 @@ export default function MetasDashboard() {
   const stats = calcStats(allMetas);
   const finStats = calcStats(financeiras);
   const pesStats = calcStats(pessoais);
+  const livStats = calcStats(livres);
 
   const chartData = [
     { name: "Financeiras", total: finStats.total, concluidas: finStats.completed, progresso: finStats.avgProgress },
     { name: "Pessoais", total: pesStats.total, concluidas: pesStats.completed, progresso: pesStats.avgProgress },
+    { name: "Livres", total: livStats.total, concluidas: livStats.completed, progresso: livStats.avgProgress },
   ];
 
   const summaryCards: { label: string; value: string; icon: typeof Target; tone: StatusTone }[] = [
@@ -148,7 +150,8 @@ export default function MetasDashboard() {
     setMetaToDelete(id);
     setDeleteOpen(true);
   };
-  const editTipo: MetaTipo = editingMeta?.tipo === "pessoal" ? "pessoal" : "financeira";
+  const editTipo: MetaTipo =
+    editingMeta?.tipo === "pessoal" ? "pessoal" : editingMeta?.tipo === "livre" ? "livre" : "financeira";
 
   return (
     <div className="space-y-6">
@@ -199,17 +202,23 @@ export default function MetasDashboard() {
           </CardHeader>
           <CardContent className="space-y-4">
             {topMetas.length === 0 ? (
-              <p className="text-center text-muted-foreground py-4">Nenhuma meta cadastrada</p>
+              <EmptyState
+                icon={Target}
+                title="Nenhuma meta cadastrada"
+                description="Crie metas para acompanhar o progresso por aqui."
+                className="py-6"
+              />
             ) : (
               topMetas.map((meta) => {
                 const percent = Math.min(Math.round((meta.atual / meta.alvo) * 100), 100);
-                const tipoLabel = meta.tipo === "pessoal" ? "Pessoal" : "Financeira";
+                const tipoLabel =
+                  meta.tipo === "pessoal" ? "Pessoal" : meta.tipo === "livre" ? "Livre" : "Financeira";
                 return (
                   <div key={meta.id} className="space-y-1.5">
                     <div className="flex justify-between items-center">
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-medium">{meta.nome}</span>
-                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-600">
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-ink-muted">
                           {tipoLabel}
                         </span>
                       </div>
@@ -217,7 +226,7 @@ export default function MetasDashboard() {
                     </div>
                     <Progress
                       value={percent}
-                      className="h-2 bg-gray-100"
+                      className="h-2 bg-muted"
                       indicatorClassName={percent >= 100 ? "bg-positive/100" : "bg-brand"}
                     />
                   </div>
@@ -229,14 +238,14 @@ export default function MetasDashboard() {
       </div>
 
       {/* Colunas por tipo: resumo no topo + cards das metas dentro */}
-      <div className="grid md:grid-cols-2 gap-4 items-start">
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 items-start">
         {[
           {
             label: "Financeiras",
             icon: TrendingUp,
             stats: finStats,
             items: financeiras,
-            isPessoal: false,
+            kind: "financeira" as const,
             color: "text-positive-strong",
             bg: "bg-positive/10",
           },
@@ -245,9 +254,18 @@ export default function MetasDashboard() {
             icon: Users,
             stats: pesStats,
             items: pessoais,
-            isPessoal: true,
-            color: "text-blue-600",
-            bg: "bg-blue-50",
+            kind: "pessoal" as const,
+            color: "text-info-mid",
+            bg: "bg-info-soft",
+          },
+          {
+            label: "Por área",
+            icon: Layers,
+            stats: livStats,
+            items: livres,
+            kind: "livre" as const,
+            color: "text-ink-muted",
+            bg: "bg-muted",
           },
         ].map((item) => {
           const Icon = item.icon;
@@ -267,7 +285,7 @@ export default function MetasDashboard() {
                   </div>
                   <Progress
                     value={item.stats.avgProgress}
-                    className="h-2 bg-gray-100"
+                    className="h-2 bg-muted"
                     indicatorClassName={item.stats.avgProgress >= 100 ? "bg-positive/100" : "bg-brand"}
                   />
                   <div className="flex justify-between mt-2 text-xs text-muted-foreground">
@@ -283,15 +301,24 @@ export default function MetasDashboard() {
                       Nenhuma meta cadastrada. Use "Nova meta" no topo para começar.
                     </p>
                   ) : (
-                    item.items.map((meta) => (
-                      <MetaCard
-                        key={meta.id}
-                        meta={meta}
-                        subtitle={item.isPessoal && meta.pessoa_id ? pessoaMap.get(meta.pessoa_id) : null}
-                        onEdit={() => startEdit(meta)}
-                        onDelete={() => startDelete(meta.id)}
-                      />
-                    ))
+                    item.items.map((meta) => {
+                      const responsavel = meta.pessoa_id ? pessoaMap.get(meta.pessoa_id) : null;
+                      const subtitle =
+                        item.kind === "pessoal"
+                          ? responsavel
+                          : item.kind === "livre"
+                            ? [setorLabel(meta.categoria), responsavel].filter(Boolean).join(" · ")
+                            : null;
+                      return (
+                        <MetaCard
+                          key={meta.id}
+                          meta={meta}
+                          subtitle={subtitle}
+                          onEdit={() => startEdit(meta)}
+                          onDelete={() => startDelete(meta.id)}
+                        />
+                      );
+                    })
                   )}
                 </div>
               </CardContent>
@@ -314,7 +341,7 @@ export default function MetasDashboard() {
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => metaToDelete && deleteMutation.mutate(metaToDelete)}
-              className="bg-red-600 hover:bg-red-700"
+              className={cn(buttonVariants({ variant: "destructive" }))}
               disabled={deleteMutation.isPending}
             >
               {deleteMutation.isPending ? "Excluindo..." : "Excluir"}

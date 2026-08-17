@@ -21,6 +21,7 @@ design system, agentes, engavetados com gatilho). Cada item linka o doc com o de
 | 🛠️ **Operações** | [`operations/`](./operations/) | Deploy, disaster recovery, incident response, runbooks, monitoring, load/versionamento de API |
 | 🏛️ **Arquitetura** | [`architecture/`](./architecture/) | ADRs (decisões arquiteturais registradas) |
 | 📐 **Specs** | [`specs/`](./specs/) | Especificações de feature (Spec Driven Development): quê/porquê antes de codar |
+| 🎨 **Design system** | [`design/`](./design/) | Contrato visual da UI ([`PILAR_DESIGN_SYSTEM.md`](./design/PILAR_DESIGN_SYSTEM.md)): componentes, tokens, padrões e catálogo de deriva |
 | 🧪 **QA** | [`qa/`](./qa/) | Rodadas de QA: catálogos de teste, matriz RLS, achados e status das correções |
 | ⚖️ **Legal** | [`legal/`](./legal/) | Política de privacidade e documentos legais |
 

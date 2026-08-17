@@ -62,12 +62,12 @@ export function MfaBackupCodes() {
 
   if (generatedCodes) {
     return (
-      <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 space-y-3">
+      <div className="rounded-lg border border-warning-mid-border bg-warning-soft p-4 space-y-3">
         <div className="flex items-center gap-2">
-          <ShieldCheck className="h-5 w-5 text-amber-700" />
-          <span className="font-medium text-amber-900">Salve estes códigos agora</span>
+          <ShieldCheck className="h-5 w-5 text-warning-mid" />
+          <span className="font-medium text-warning-strong">Salve estes códigos agora</span>
         </div>
-        <p className="text-xs text-amber-800">
+        <p className="text-xs text-warning-strong">
           Cada código vale uma vez. Use apenas se perder acesso ao autenticador. Não serão exibidos de novo.
         </p>
         <div className="grid grid-cols-2 gap-1.5 p-3 bg-white rounded border font-mono text-sm">

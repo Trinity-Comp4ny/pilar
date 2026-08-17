@@ -70,3 +70,98 @@ reintroduz deriva e o custo de manutenção cresce linearmente com o número de 
 Relacionados: ADR 0005 (permissões/feature flags), spec 001 (shell), spec 002
 (header), `docs/design/CATALOGO_UI.md` (inventário e números), regra de marca em
 `brand/visual.md` e memória "regra verde da marca".
+
+## Adendo 2026-08-12 — hierarquia de botão, variantes de status e conclusão das ondas
+
+A spec 003 ficou em Draft desde 2026-07-25 e só executou parte da onda 1
+(`format.ts`, `StatusBadge`, `KPICard`, `variant="orange"` e `vrz-card` zerados).
+A deriva de cor crua cresceu para ~1.350 ocorrências em produto (catálogo atualizado
+em `docs/architecture/CATALOGO_UI_CONSISTENCIA.md`). Este adendo fecha as decisões
+que faltavam para concluir a migração.
+
+**D1. Verde (`brand`) é a ação primária padrão do sistema.** A cor comunica
+hierarquia, não estética: a ação principal de cada superfície (salvar, confirmar,
+criar, avançar, enviar) é `variant="brand"`. Secundária é `variant="outline"`,
+terciária/discreta é `variant="ghost"`, destrutiva é `variant="destructive"`.
+`variant="default"` (preto) fica reservado a contexto neutro sem cor de marca.
+Uma superfície tem no máximo UMA ação primária verde.
+
+**D2. Todo `<Button>` declara variante por papel; o default do componente vira
+`brand`.** Causa raiz do "preto vs verde na mesma tela": 344 botões omitiam `variant`
+e o default era `default` (preto), então a ação primária saía preta por acidente ao
+lado de uma irmã verde. Correção em duas etapas, nesta ordem para não pintar 344
+botões de verde de uma vez: (1) atribuir variante explícita por papel aos omissos;
+(2) só então trocar `defaultVariant` de `Button` para `brand`, de modo que botão novo
+escrito sem pensar já nasça primário correto.
+
+**D3. `Badge` ganha variantes de status ligadas aos tokens.** Antes o `Badge` só
+tinha as 4 do shadcn, então cada badge de status colava `bg-*-100 text-*-800` na mão.
+Entram as variantes `success | warning | info | attention | highlight | danger |
+neutral | brand` apontando para os tokens. O registry `lib/status.ts` resolve via
+essas variantes; mapas de status locais divergentes (`ClienteDashboard`,
+`faturaHelpers` e ~14 arquivos) são deletados e passam pelo registry. "Planejamento"
+tem a MESMA cor no portal do cliente e no app do dono.
+
+**D4. Migração de cor crua → token conclui em ondas verificáveis.** ~782 ocorrências
+em `src/pages/**` (exceto `landing/`) e `src/components/**` (exceto `ui/`) migram pelo
+mapa cor→intenção→token. `landing/`, mockups, `components/ui/**` e telas dormentes
+ficam fora (item 6 acima). Cada onda mantém `typecheck`, `test:run` e `build:strict`
+verdes e não muda comportamento visual.
+
+**D5. Enforcement vira `error`.** As regras `no-restricted-syntax` do
+`eslint.config.js` (cor primitiva, `bg-brand` re-estilizado, `variant="orange"`,
+`Intl.NumberFormat`) sobem de `warn` para `error` à medida que cada área zera, mais
+`<select>`/`<input type=checkbox>` nativos fora de `components/ui/`.
+
+**D6. Gaps de token abertos (não migrar às cegas):** cores de PRIORIDADE
+(Alta/Média/Baixa) e de status "atrasado/a-iniciar" no Gantt de obras não têm token
+semântico. Ficam crus e anotados até um token dedicado ser criado.
+
+Relacionados adicionais: `docs/architecture/CATALOGO_UI_CONSISTENCIA.md` (inventário
+2026-08-12), `docs/specs/003-design-system.md` (ondas).
+
+## Adendo 2026-08-12 — hierarquia de botão, variantes de status e conclusão das ondas
+
+A spec 003 ficou em Draft desde 2026-07-25 e só executou parte da onda 1
+(`format.ts`, `StatusBadge`, `KPICard`, `variant="orange"` e `vrz-card` zerados).
+A deriva de cor crua cresceu de 177 para ~1.350 ocorrências em produto (catálogo
+atualizado em `docs/architecture/CATALOGO_UI_CONSISTENCIA.md`). Este adendo fecha
+as decisões que faltavam para concluir a migração de uma vez.
+
+**D1. Verde (`brand`) é a ação primária padrão do sistema.** A cor comunica
+hierarquia, não estética: a ação principal de cada superfície (salvar, confirmar,
+criar, avançar, enviar) é `variant="brand"`. Secundária é `variant="outline"`,
+terciária/discreta é `variant="ghost"`, destrutiva é `variant="destructive"`.
+`variant="default"` (preto) fica reservado a contexto neutro sem cor de marca.
+Uma superfície tem no máximo UMA ação primária verde.
+
+**D2. Todo `<Button>` declara variante por papel; o default do componente vira
+`brand`.** Causa raiz do "preto vs verde na mesma tela": 344 botões omitem `variant`
+e o default era `default` (preto), então a ação primária saía preta por acidente ao
+lado de uma irmã verde. Correção em duas etapas, nesta ordem para não pintar 344
+botões de verde de uma vez: (1) atribuir variante explícita por papel aos 344
+omissos; (2) só então trocar `defaultVariant` de `Button` para `brand`, de modo que
+botão novo escrito sem pensar já nasça primário correto.
+
+**D3. `Badge` ganha variantes de status ligadas aos tokens.** Hoje o `Badge` só tem
+as 4 do shadcn, então cada badge de status cola `bg-*-100 text-*-800` na mão. Entram
+as variantes `success | warning | info | attention | highlight | danger` apontando
+para os tokens (`bg-success-soft text-success-strong`, etc). O registry `lib/status.ts`
+passa a resolver via essas variantes; mapas de status locais divergentes
+(`ClienteDashboard`, `faturaHelpers` e ~14 arquivos) são deletados e passam pelo
+registry. "Planejamento" tem a MESMA cor no portal do cliente e no app do dono.
+
+**D4. Migração de cor crua → token conclui em ondas verificáveis.** ~1.350
+ocorrências em `src/pages/**` (exceto `landing/`) e `src/components/**` (exceto `ui/`)
+migram pelo mapa cor→intenção→token da seção 3 do catálogo. `landing/`, mockups,
+`components/ui/**` e telas dormentes ficam fora (item 6 acima). Cada onda mantém
+`typecheck`, `test:run` e `build:strict` verdes e não muda comportamento visual.
+
+**D5. Enforcement vira `error`.** As regras `no-restricted-syntax` do
+`eslint.config.js` (cor primitiva, `bg-brand` re-estilizado, `variant="orange"`,
+`Intl.NumberFormat`) sobem de `warn` para `error` à medida que cada área zera, mais
+`<select>`/`<input type=checkbox>` nativos fora de `components/ui/`. Sem gate a
+dívida volta; qualidade não automatizada não existe.
+
+Relacionados adicionais: `docs/architecture/CATALOGO_UI_CONSISTENCIA.md` (inventário
+2026-08-12), `docs/specs/003-design-system.md` (ondas).

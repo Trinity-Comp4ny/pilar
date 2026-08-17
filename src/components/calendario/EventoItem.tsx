@@ -46,7 +46,7 @@ export function EventoDetalhe({ evento, onOpen }: { evento: PrazoEvento; onOpen:
               </Badge>
             )}
             {evento.estado === "proximo" && (
-              <Badge className="text-[10px] px-1 py-0 bg-amber-500 hover:bg-amber-500 text-white">próximo</Badge>
+              <Badge className="text-[10px] px-1 py-0 bg-fill-warning hover:bg-fill-warning text-fill-warning-foreground">próximo</Badge>
             )}
             {evento.estado === "concluido" && (
               <Badge className="text-[10px] px-1 py-0 bg-positive hover:bg-positive text-ink">OK</Badge>
@@ -66,13 +66,13 @@ export function CalendarioLegenda({ camadas }: { camadas: CamadaId[] }) {
   return (
     <div className="flex items-center gap-4 text-xs text-muted-foreground flex-wrap">
       <div className="flex items-center gap-1.5">
-        <span className="h-2 w-2 rounded-full bg-red-500" /> Em atraso
+        <span className="h-2 w-2 rounded-full bg-chart-danger" /> Em atraso
       </div>
       <div className="flex items-center gap-1.5">
-        <span className="h-2 w-2 rounded-full bg-amber-500" /> Próximos 7 dias
+        <span className="h-2 w-2 rounded-full bg-chart-warning" /> Próximos 7 dias
       </div>
       <div className="flex items-center gap-1.5">
-        <span className="h-2 w-2 rounded-full bg-blue-500" /> Futuro
+        <span className="h-2 w-2 rounded-full bg-chart-info" /> Futuro
       </div>
       <div className="flex items-center gap-1.5">
         <span className="h-2 w-2 rounded-full bg-positive" /> Concluído

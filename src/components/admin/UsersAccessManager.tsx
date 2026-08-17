@@ -169,7 +169,7 @@ export function UsersAccessManager({
                               <Button
                                 variant="outline"
                                 size="sm"
-                                className="rounded-full text-red-600"
+                                className="rounded-full text-danger-mid"
                                 onClick={() => onCancelInvite(u)}
                                 aria-label={`Cancelar convite de ${u.email}`}
                               >
@@ -191,7 +191,7 @@ export function UsersAccessManager({
                             <Button
                               variant="outline"
                               size="sm"
-                              className="rounded-full text-red-600"
+                              className="rounded-full text-danger-mid"
                               onClick={() => setDeleteTarget(u)}
                               disabled={u.id === currentUserId}
                               aria-label={`Remover ${u.name}`}
@@ -249,7 +249,7 @@ export function UsersAccessManager({
                             <Button
                               variant="outline"
                               size="sm"
-                              className="rounded-full text-red-600"
+                              className="rounded-full text-danger-mid"
                               onClick={() => onCancelInvite(u)}
                             >
                               Cancelar
@@ -266,7 +266,7 @@ export function UsersAccessManager({
                             <Button
                               variant="outline"
                               size="sm"
-                              className="rounded-full text-red-600"
+                              className="rounded-full text-danger-mid"
                               onClick={() => setDeleteTarget(u)}
                               disabled={u.id === currentUserId}
                             >
@@ -488,7 +488,7 @@ function EditDialog({ user, onClose, companyFeatures, onSubmit }: EditDialogProp
             evita que admins de empresa promovam ou rebaixem ultra admins pela UI.
           </p>
           <DialogFooter>
-            <Button onClick={onClose}>Entendi</Button>
+            <Button onClick={onClose} variant="brand">Entendi</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

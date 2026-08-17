@@ -135,6 +135,40 @@ export function barPosition(
   return { leftPct, widthPct };
 }
 
+export type GanttDragType = "left" | "right" | "move";
+
+/**
+ * Novas datas de uma barra após arrastar `deltaDays` dias. Redimensiona pela
+ * borda (left/right) ou move a barra inteira, garante duração mínima de 1 dia,
+ * e encaixa a borda arrastada na fronteira de mês/semana (snap). Pura e testável
+ * — a restrição de negócio (ex. guarda-chuva do projeto) é aplicada por fora.
+ */
+export function computeDraggedDates(
+  origStart: Date,
+  origEnd: Date,
+  deltaDays: number,
+  type: GanttDragType,
+  zoom: ZoomLevel
+): { start: Date; end: Date } {
+  let start = new Date(origStart);
+  let end = new Date(origEnd);
+
+  if (type === "left") {
+    start = addDays(origStart, deltaDays);
+    if (start >= end) start = addDays(end, -1);
+    start = snapToBoundary(start, zoom);
+  } else if (type === "right") {
+    end = addDays(origEnd, deltaDays);
+    if (end <= start) end = addDays(start, 1);
+    end = snapToBoundary(end, zoom);
+  } else {
+    start = addDays(origStart, deltaDays);
+    end = addDays(origEnd, deltaDays);
+  }
+
+  return { start, end };
+}
+
 /** Posição do "Hoje" em % da timeline; -1 quando hoje está fora do intervalo. */
 export function todayPosition(timelineStart: Date, timelineEnd: Date, hoje = new Date()): number {
   const today = startOfDay(hoje);

@@ -154,7 +154,7 @@ export function DeleteUserDialog({ open, onOpenChange, onConfirm }: DeleteUserDi
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Cancelar</AlertDialogCancel>
-          <AlertDialogAction className="bg-red-600 hover:bg-red-700" onClick={onConfirm}>
+          <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={onConfirm}>
             Remover
           </AlertDialogAction>
         </AlertDialogFooter>

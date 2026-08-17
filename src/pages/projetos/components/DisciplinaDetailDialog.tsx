@@ -51,10 +51,6 @@ interface DisciplinaDetailDialogProps {
   onDelete?: () => void;
 }
 
-function priorityDot(p: string): string {
-  return p === PROJECT_PRIORITY.ALTA ? "bg-red-500" : p === PROJECT_PRIORITY.MEDIA ? "bg-amber-400" : "bg-blue-400";
-}
-
 function isoSlice(d?: string | null): string | undefined {
   return d ? d.slice(0, 10) : undefined;
 }
@@ -180,7 +176,7 @@ function DisciplinaDetailBody({
             <Button
               variant="ghost"
               size="sm"
-              className="flex-shrink-0 gap-1.5 text-muted-foreground hover:text-red-600"
+              className="flex-shrink-0 gap-1.5 text-muted-foreground hover:text-danger-mid"
               onClick={() => setConfirmDelete(true)}
             >
               <Trash2 className="h-4 w-4" /> Excluir
@@ -243,7 +239,7 @@ function DisciplinaDetailBody({
                     {PRIORITY_OPTIONS.map((p) => (
                       <SelectItem key={p} value={p}>
                         <span className="flex items-center gap-1.5">
-                          <span className={`h-2 w-2 rounded-full ${priorityDot(p)}`} />
+                          <span className={`h-2 w-2 rounded-full ${PROJECT_PRIORITY_CONFIG[p].dotColor}`} />
                           {PROJECT_PRIORITY_CONFIG[p].label}
                         </span>
                       </SelectItem>
@@ -413,7 +409,13 @@ function DisciplinaDetailBody({
                       }
                     }}
                   />
-                  <Button type="button" size="icon" onClick={onAddObservation} aria-label="Adicionar observação">
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="brand"
+                    onClick={onAddObservation}
+                    aria-label="Adicionar observação"
+                  >
                     <Plus size={16} />
                   </Button>
                 </div>
@@ -436,7 +438,7 @@ function DisciplinaDetailBody({
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
-              className="bg-red-600 hover:bg-red-700"
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               onClick={() => {
                 setConfirmDelete(false);
                 onDelete?.();

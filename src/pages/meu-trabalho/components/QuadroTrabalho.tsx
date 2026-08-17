@@ -1,8 +1,6 @@
-import { useState } from "react";
 import { DragDropContext, Draggable, Droppable, type DropResult } from "@hello-pangea/dnd";
-import { ChevronLeft, ChevronRight, MoreHorizontal, Pencil, Plus, Trash2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,6 +12,7 @@ import { cn } from "@/lib/utils";
 import { agruparPorEtapa, type ItemTrabalho } from "../useItensTrabalho";
 import type { Etapa } from "../useEtapas";
 import { corDaEtapa, CORES_ETAPA, type Prioridade } from "../status";
+import { AddColumnInline } from "@/components/kanban/AddColumnInline";
 import { CardTrabalho } from "./CardTrabalho";
 
 export type EtapaControls = {
@@ -25,80 +24,6 @@ export type EtapaControls = {
   onExcluir: (etapa: Etapa) => void;
   onReordenar: (id: string, dir: -1 | 1) => void;
 };
-
-// "Add group" ao estilo ClickUp: um campo inline com nome + cor, sem modal.
-function NovaColunaInline({ onCriar, criando }: Pick<EtapaControls, "onCriar" | "criando">) {
-  const [aberto, setAberto] = useState(false);
-  const [nome, setNome] = useState("");
-  const [cor, setCor] = useState<string>(CORES_ETAPA[0]);
-
-  const fechar = () => {
-    setAberto(false);
-    setNome("");
-    setCor(CORES_ETAPA[0]);
-  };
-
-  const criar = async () => {
-    if (!nome.trim() || criando) return;
-    const ok = await onCriar(nome, cor);
-    if (ok) fechar();
-  };
-
-  if (!aberto) {
-    return (
-      <button
-        type="button"
-        onClick={() => setAberto(true)}
-        className="mt-8 flex h-11 w-56 shrink-0 items-center justify-center gap-1.5 rounded-xl border border-dashed text-sm text-muted-foreground transition-colors hover:border-brand/50 hover:text-foreground"
-      >
-        <Plus className="h-4 w-4" /> Nova coluna
-      </button>
-    );
-  }
-
-  return (
-    <div className="mt-8 w-56 shrink-0 space-y-2 rounded-xl border bg-card p-2 shadow-sm">
-      <Input
-        autoFocus
-        value={nome}
-        onChange={(e) => setNome(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") {
-            e.preventDefault();
-            criar();
-          } else if (e.key === "Escape") {
-            fechar();
-          }
-        }}
-        placeholder="Nome da coluna"
-        className="h-8"
-      />
-      <div className="flex flex-wrap gap-1.5 px-0.5">
-        {CORES_ETAPA.map((c) => (
-          <button
-            key={c}
-            type="button"
-            onClick={() => setCor(c)}
-            aria-label={`Cor ${c}`}
-            className={cn(
-              "h-5 w-5 rounded-full ring-offset-2 ring-offset-card transition-shadow",
-              cor === c && "ring-2 ring-foreground/60"
-            )}
-            style={{ backgroundColor: c }}
-          />
-        ))}
-      </div>
-      <div className="flex items-center gap-2">
-        <Button variant="brand" size="sm" className="h-7" onClick={criar} disabled={!nome.trim() || criando}>
-          Adicionar
-        </Button>
-        <Button variant="ghost" size="sm" className="h-7" onClick={fechar}>
-          Cancelar
-        </Button>
-      </div>
-    </div>
-  );
-}
 
 type Props = {
   itens: ItemTrabalho[];
@@ -214,7 +139,13 @@ export function QuadroTrabalho({ itens, onAbrir, onPrioridade, onExcluir, onMove
           );
         })}
 
-        <NovaColunaInline onCriar={etapaControls.onCriar} criando={etapaControls.criando} />
+        <AddColumnInline
+          colors={CORES_ETAPA}
+          busy={etapaControls.criando}
+          onCreate={(nome, cor) => etapaControls.onCriar(nome, cor)}
+          triggerClassName="mt-8 w-56 rounded-xl"
+          panelClassName="mt-8 w-56 rounded-xl p-2"
+        />
       </div>
     </DragDropContext>
   );

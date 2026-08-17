@@ -109,7 +109,7 @@ export default function ClienteLogin() {
                 className="h-10 w-auto hover:rotate-12 transition-transform duration-300"
               />
               <span className="text-2xl font-medium tracking-tight text-ink">
-                Pilar<sup className="text-[10px] font-normal text-slate-400 ml-0.5 relative -top-2.5">®</sup>
+                Pilar<sup className="text-[10px] font-normal text-ink-disabled ml-0.5 relative -top-2.5">®</sup>
               </span>
             </div>
             <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-ink">Portal do Cliente</h1>
@@ -124,7 +124,7 @@ export default function ClienteLogin() {
                 render={({ field }) => (
                   <FormItem className="space-y-2">
                     <FormLabel className="text-ink-soft font-medium">
-                      Email <span className="text-red-500">*</span>
+                      Email <span className="text-danger-mid">*</span>
                     </FormLabel>
                     <FormControl>
                       <div className="relative group">
@@ -148,7 +148,7 @@ export default function ClienteLogin() {
                 render={({ field }) => (
                   <FormItem className="space-y-2">
                     <FormLabel className="text-ink-soft font-medium">
-                      Senha <span className="text-red-500">*</span>
+                      Senha <span className="text-danger-mid">*</span>
                     </FormLabel>
                     <FormControl>
                       <div className="relative group">

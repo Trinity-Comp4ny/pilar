@@ -58,17 +58,17 @@ interface Entregavel {
 const STATUS_CONFIG: Record<Entregavel["status"], { label: string; className: string; icon: typeof Clock }> = {
   pendente: {
     label: "Aguardando cliente",
-    className: "bg-amber-50 text-amber-800 border-amber-200",
+    className: "bg-warning-soft text-warning-strong border-warning-mid-border",
     icon: Clock,
   },
   aprovado: {
     label: "Aprovado",
-    className: "bg-emerald-50 text-emerald-800 border-emerald-200",
+    className: "bg-success-soft text-success-strong border-success-soft-border",
     icon: CheckCircle2,
   },
   revisao_solicitada: {
     label: "Revisão solicitada",
-    className: "bg-orange-50 text-orange-800 border-orange-200",
+    className: "bg-attention-soft text-attention-strong border-attention-mid-border",
     icon: RotateCcw,
   },
 };
@@ -129,17 +129,17 @@ export function EntregaveisTab({ projetoId, canEdit, disciplinas }: EntregaveisT
               <Clock className="h-3 w-3 mr-1" />
               {stats.pendentes} pendente{stats.pendentes === 1 ? "" : "s"}
             </Badge>
-            <Badge variant="outline" className="text-xs border-emerald-200 text-emerald-700">
+            <Badge variant="outline" className="text-xs border-success-soft-border text-success-strong">
               <CheckCircle2 className="h-3 w-3 mr-1" />
               {stats.aprovados} aprovado{stats.aprovados === 1 ? "" : "s"}
             </Badge>
-            <Badge variant="outline" className="text-xs border-orange-200 text-orange-700">
+            <Badge variant="outline" className="text-xs border-attention-mid-border text-attention-mid">
               <RotateCcw className="h-3 w-3 mr-1" />
               {stats.revisoes} revisão{stats.revisoes === 1 ? "" : "s"} pendente
             </Badge>
           </div>
           {canEdit && (
-            <Button size="sm" onClick={openNew}>
+            <Button size="sm" variant="brand" onClick={openNew}>
               <Plus className="h-3.5 w-3.5 mr-1.5" /> Novo entregável
             </Button>
           )}
@@ -235,8 +235,8 @@ function ThreadCard({
     <div
       className={cn(
         "rounded-lg border transition-all bg-white",
-        current.status === "revisao_solicitada" && "border-orange-200 bg-orange-50/30",
-        current.status === "aprovado" && "border-emerald-200/50"
+        current.status === "revisao_solicitada" && "border-attention-mid-border bg-attention-soft/30",
+        current.status === "aprovado" && "border-success-soft-border/50"
       )}
     >
       <div className="flex items-start gap-3 p-3 cursor-pointer hover:bg-black/[0.015]" onClick={onToggle}>
@@ -264,7 +264,7 @@ function ThreadCard({
               </span>
             )}
             {current.drive_url && (
-              <span className="flex items-center gap-1 text-blue-700">
+              <span className="flex items-center gap-1 text-info-strong">
                 · <ExternalLink className="h-3 w-3" /> Google Drive
               </span>
             )}
@@ -289,7 +289,7 @@ function ThreadCard({
 
           {canEdit && current.status === "revisao_solicitada" && (
             <div className="pt-2 border-t border-dashed">
-              <Button size="sm" onClick={() => onRequestRevision(current)}>
+              <Button size="sm" variant="brand" onClick={() => onRequestRevision(current)}>
                 <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
                 Enviar nova versão (v{current.versao + 1})
               </Button>
@@ -323,16 +323,16 @@ function VersionDetail({ entrega, isLatest }: { entrega: Entregavel; isLatest: b
       {entrega.descricao && <p className="text-xs text-foreground">{entrega.descricao}</p>}
 
       {entrega.resposta_empresa && (
-        <div className="rounded p-2 bg-blue-50 border border-blue-100 text-[11px] text-blue-900">
+        <div className="rounded p-2 bg-info-soft border border-info-soft-border text-[11px] text-info-strong">
           <span className="font-medium">Nossa observação:</span> {entrega.resposta_empresa}
         </div>
       )}
 
       {entrega.resposta_cliente && (
-        <div className="rounded p-2 bg-orange-50 border border-orange-100 text-[11px] text-orange-900">
+        <div className="rounded p-2 bg-attention-soft border border-attention-soft-border text-[11px] text-attention-strong">
           <span className="font-medium">Cliente solicitou:</span> {entrega.resposta_cliente}
           {entrega.respondido_em && (
-            <span className="block mt-0.5 text-[10px] text-orange-700/70">
+            <span className="block mt-0.5 text-[10px] text-attention-mid/70">
               {new Date(entrega.respondido_em).toLocaleString("pt-BR")}
             </span>
           )}
@@ -380,7 +380,7 @@ function DriveLinkButton({ url }: { url: string }) {
       asChild
       size="sm"
       variant="outline"
-      className="h-7 text-[11px] border-blue-200 text-blue-700 hover:bg-blue-50"
+      className="h-7 text-[11px] border-info-mid-border text-info-strong hover:bg-info-soft"
     >
       <a href={url} target="_blank" rel="noopener noreferrer">
         <ExternalLink className="h-3 w-3" />
@@ -550,7 +550,7 @@ function EntregavelForm({
         </DialogHeader>
 
         {parent?.resposta_cliente && (
-          <div className="rounded-md bg-orange-50 border border-orange-200 p-3 text-xs text-orange-900">
+          <div className="rounded-md bg-attention-soft border border-attention-mid-border p-3 text-xs text-attention-strong">
             <p className="font-medium mb-1">Cliente solicitou:</p>
             <p>{parent.resposta_cliente}</p>
           </div>
@@ -672,7 +672,12 @@ function EntregavelForm({
           <Button variant="outline" className="flex-1" onClick={() => onOpenChange(false)} disabled={submitting}>
             Cancelar
           </Button>
-          <Button className="flex-1" onClick={handleSubmit} disabled={submitting || !titulo.trim() || driveUrlInvalid}>
+          <Button
+            variant="brand"
+            className="flex-1"
+            onClick={handleSubmit}
+            disabled={submitting || !titulo.trim() || driveUrlInvalid}
+          >
             {submitting ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (

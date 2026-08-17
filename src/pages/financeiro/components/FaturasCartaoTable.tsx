@@ -1,14 +1,12 @@
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Calendar, DollarSign, ChevronRight } from "lucide-react";
-import { format } from "date-fns";
 import { toast } from "sonner";
 import { DataTable, type ColumnDef } from "@/components/data/DataTable";
 import { toDataSourceResult } from "@/types/dataSource";
+import { formatCurrency, formatDate, formatDateShort } from "@/lib/format";
 import { useFaturas, useInvalidateFaturas, gerarFaturasCartao, type Fatura } from "../hooks/useFaturas";
 import { MESES, getStatusBadge } from "./faturaHelpers";
-
-const formatBRL = (v: number) => v.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
 
 interface FaturasCartaoTableProps {
   cartaoId: string;
@@ -50,8 +48,8 @@ export function FaturasCartaoTable({ cartaoId, onDetalhe, onPagar }: FaturasCart
       cell: (f) => (
         <span className="flex items-center gap-1 text-muted-foreground">
           <Calendar className="h-3 w-3" />
-          {format(new Date(f.data_inicio + "T00:00:00"), "dd/MM")} a{" "}
-          {format(new Date(f.data_fim + "T00:00:00"), "dd/MM")}
+          {formatDateShort(f.data_inicio)} a{" "}
+          {formatDateShort(f.data_fim)}
         </span>
       ),
     },
@@ -59,7 +57,7 @@ export function FaturasCartaoTable({ cartaoId, onDetalhe, onPagar }: FaturasCart
       key: "vencimento",
       header: "Vencimento",
       getSortValue: (f) => f.data_vencimento,
-      cell: (f) => format(new Date(f.data_vencimento + "T00:00:00"), "dd/MM/yyyy"),
+      cell: (f) => formatDate(f.data_vencimento),
     },
     {
       key: "despesas",
@@ -77,9 +75,9 @@ export function FaturasCartaoTable({ cartaoId, onDetalhe, onPagar }: FaturasCart
         const restante = f.valor_total - f.valor_pago;
         return (
           <div className="text-right">
-            <p className="font-semibold">R$ {formatBRL(f.valor_total)}</p>
+            <p className="font-semibold">{formatCurrency(f.valor_total)}</p>
             {f.valor_pago > 0 && f.status !== "Paga" && (
-              <p className="text-xs text-muted-foreground">Restante: R$ {formatBRL(restante)}</p>
+              <p className="text-xs text-muted-foreground">Restante: {formatCurrency(restante)}</p>
             )}
           </div>
         );
