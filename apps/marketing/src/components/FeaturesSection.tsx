@@ -76,7 +76,7 @@ export function FeaturesSection() {
                     <div className="flex items-center justify-between py-4 border-y border-slate-100">
                       <div>
                         <p className="text-xs text-slate-400 font-light mb-1">Fase atual</p>
-                        <p className="text-sm font-medium text-ink-soft">Anteprojeto — revisão 02</p>
+                        <p className="text-sm font-medium text-ink-soft">Anteprojeto · revisão 02</p>
                       </div>
                       <span className="text-xs text-slate-500 font-light tabular-nums">70%</span>
                     </div>

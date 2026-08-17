@@ -1,6 +1,6 @@
 # Pilar
 
-> Plataforma de gestão integrada para empresas de engenharia, conectando comercial, projetos, obras e financeiro.
+> Sistema de gestão para empresas de engenharia multidisciplinar. Conecta proposta, projeto, cobrança e portal do cliente em um único fluxo, e mostra ao dono se cada projeto está dando lucro antes de terminar.
 
 ## Produto
 
@@ -8,4 +8,4 @@
 
 ## Informações
 
-O Pilar atende empresas e escritórios de engenharia multidisciplinar (civil, estrutural, MEP) que projetam e gerenciam obras. A plataforma não substitui ferramentas de cálculo, CAD ou BIM.
+O Pilar atende empresas e escritórios de engenharia multidisciplinar (civil, estrutural, MEP/HVAC) que vendem projeto técnico por proposta. Não é ferramenta de arquitetura nem ERP de construção, e não substitui ferramentas de cálculo, CAD ou BIM.
