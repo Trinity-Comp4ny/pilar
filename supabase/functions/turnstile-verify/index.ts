@@ -25,8 +25,13 @@ serve(
     try {
       const secret = Deno.env.get("TURNSTILE_SECRET_KEY");
       if (!secret) {
-        return new Response(JSON.stringify({ success: true, warning: "turnstile-disabled" }), {
-          status: 200,
+        // Fail-closed: sem secret configurado não dá pra verificar nada, então dizer
+        // "success" mascarava a falta de configuração em vez de acusá-la (achado do
+        // estudo de arquitetura de 2026-08-17). O smoke test do Checkly precisa de um
+        // sinal de falha real aqui, não um 200 que nunca detecta a variável ausente.
+        log.error("TURNSTILE_SECRET_KEY ausente — verificação indisponível");
+        return new Response(JSON.stringify({ success: false, error: "turnstile-not-configured" }), {
+          status: 503,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }

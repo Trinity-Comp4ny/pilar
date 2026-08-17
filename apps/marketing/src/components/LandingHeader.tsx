@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Menu, X } from "lucide-react";
+import { APP_URL } from "../config";
 
 interface LandingHeaderProps {
   onScrollToTop: (e: React.MouseEvent) => void;
@@ -8,20 +8,11 @@ interface LandingHeaderProps {
 
 export function LandingHeader({ onScrollToTop }: LandingHeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const location = useLocation();
-  const navigate = useNavigate();
 
   const handleSectionLink = (sectionId: string) => (e: React.MouseEvent) => {
     e.preventDefault();
     setMobileMenuOpen(false);
-    if (location.pathname === "/") {
-      document.getElementById(sectionId)?.scrollIntoView({ behavior: "smooth" });
-    } else {
-      navigate("/");
-      setTimeout(() => {
-        document.getElementById(sectionId)?.scrollIntoView({ behavior: "smooth" });
-      }, 100);
-    }
+    document.getElementById(sectionId)?.scrollIntoView({ behavior: "smooth" });
   };
 
   return (
@@ -55,40 +46,40 @@ export function LandingHeader({ onScrollToTop }: LandingHeaderProps) {
 
           <nav className="hidden md:flex items-center justify-center gap-10">
             <a
-              href="/#prova"
+              href="#prova"
               onClick={handleSectionLink("prova")}
               className="text-[11px] font-medium uppercase tracking-[0.18em] text-slate-600 relative after:absolute after:bottom-[-3px] after:left-0 after:h-px after:w-0 after:bg-brand hover:after:w-full after:transition-all after:duration-300"
             >
               Por que Pilar
             </a>
             <a
-              href="/#modulos"
+              href="#modulos"
               onClick={handleSectionLink("modulos")}
               className="text-[11px] font-medium uppercase tracking-[0.18em] text-slate-600 relative after:absolute after:bottom-[-3px] after:left-0 after:h-px after:w-0 after:bg-brand hover:after:w-full after:transition-all after:duration-300"
             >
               Módulos
             </a>
-            <Link
-              to="/planos"
+            <a
+              href={`${APP_URL}/planos`}
               className="text-[11px] font-medium uppercase tracking-[0.18em] text-slate-600 relative after:absolute after:bottom-[-3px] after:left-0 after:h-px after:w-0 after:bg-brand hover:after:w-full after:transition-all after:duration-300"
             >
               Preços
-            </Link>
+            </a>
           </nav>
 
           <div className="hidden md:flex items-center gap-4 justify-end">
-            <Link
-              to="/login"
+            <a
+              href={`${APP_URL}/login`}
               className="text-[11px] font-medium uppercase tracking-[0.12em] text-slate-600 hover:text-slate-800 transition-colors"
             >
               Entrar
-            </Link>
-            <Link
-              to="/cadastro"
+            </a>
+            <a
+              href={`${APP_URL}/cadastro`}
               className="px-6 py-2.5 bg-brand text-ink rounded-full hover:bg-brand/90 transition-all hover:-translate-y-0.5 active:translate-y-0 duration-200 font-medium text-[11px] uppercase tracking-[0.12em]"
             >
               Começar Grátis
-            </Link>
+            </a>
           </div>
 
           <button
@@ -108,29 +99,24 @@ export function LandingHeader({ onScrollToTop }: LandingHeaderProps) {
             id="landing-mobile-menu"
             className="md:hidden absolute top-full left-0 right-0 bg-paper border-b border-paper-border p-6 flex flex-col gap-4 shadow-xl animate-in slide-in-from-top-5"
           >
-            <a href="/#prova" onClick={handleSectionLink("prova")} className="text-lg font-medium text-slate-600">
+            <a href="#prova" onClick={handleSectionLink("prova")} className="text-lg font-medium text-slate-600">
               Por que Pilar
             </a>
-            <a href="/#modulos" onClick={handleSectionLink("modulos")} className="text-lg font-medium text-slate-600">
+            <a href="#modulos" onClick={handleSectionLink("modulos")} className="text-lg font-medium text-slate-600">
               Módulos
             </a>
-            <Link to="/planos" className="text-lg font-medium text-slate-600" onClick={() => setMobileMenuOpen(false)}>
+            <a href={`${APP_URL}/planos`} className="text-lg font-medium text-slate-600">
               Preços
-            </Link>
-            <Link
-              to="/cadastro"
+            </a>
+            <a
+              href={`${APP_URL}/cadastro`}
               className="px-6 py-3 bg-brand text-ink rounded-full text-center font-medium text-sm uppercase tracking-[0.12em]"
-              onClick={() => setMobileMenuOpen(false)}
             >
               Começar Grátis
-            </Link>
-            <Link
-              to="/login"
-              className="text-center text-sm font-medium text-slate-600"
-              onClick={() => setMobileMenuOpen(false)}
-            >
+            </a>
+            <a href={`${APP_URL}/login`} className="text-center text-sm font-medium text-slate-600">
               Já tenho conta, entrar
-            </Link>
+            </a>
           </div>
         )}
       </header>

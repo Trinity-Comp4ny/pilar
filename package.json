@@ -3,7 +3,13 @@
   "private": true,
   "version": "1.1.0",
   "type": "module",
+  "workspaces": [
+    "apps/marketing"
+  ],
   "scripts": {
+    "dev:marketing": "npm run dev --workspace=apps/marketing",
+    "build:marketing": "npm run build --workspace=apps/marketing",
+    "typecheck:marketing": "npm run typecheck --workspace=apps/marketing",
     "dev": "vite",
     "dev:local": "bash scripts/dev-local.sh",
     "seed:local": "bash scripts/seed-local.sh",

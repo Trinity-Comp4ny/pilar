@@ -1,30 +1,13 @@
 import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
-import { LandingHeader } from "./landing/components/LandingHeader";
-import { HeroSection } from "./landing/components/HeroSection";
-import { MockupTablet } from "./landing/components/MockupTablet";
-import { ProofSection } from "./landing/components/ProofSection";
-import { FeaturesSection } from "./landing/components/FeaturesSection";
-import { HowItWorksSection } from "./landing/components/HowItWorksSection";
-import { CTASection } from "./landing/components/CTASection";
-import { LandingFooter } from "./landing/components/LandingFooter";
-import { usePageTitle } from "@/hooks/usePageTitle";
+import { LandingHeader } from "./components/LandingHeader";
+import { HeroSection } from "./components/HeroSection";
+import { ProofSection } from "./components/ProofSection";
+import { FeaturesSection } from "./components/FeaturesSection";
+import { HowItWorksSection } from "./components/HowItWorksSection";
+import { CTASection } from "./components/CTASection";
+import { LandingFooter } from "./components/LandingFooter";
 
-export default function Landing() {
-  usePageTitle("Gestão integrada para empresas de engenharia");
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    const checkUser = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (session) navigate("/inicio");
-    };
-    checkUser();
-  }, [navigate]);
-
+export default function App() {
   useEffect(() => {
     const elements = document.querySelectorAll<HTMLElement>(".reveal-up");
     if (!("IntersectionObserver" in window) || elements.length === 0) return;
@@ -63,7 +46,6 @@ export default function Landing() {
             <div className="absolute inset-0 hero-dot-grid" />
           </div>
           <HeroSection />
-          <MockupTablet />
         </section>
 
         <ProofSection />
