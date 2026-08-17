@@ -9,14 +9,14 @@ export function CTASection() {
           <h2 className="text-4xl md:text-6xl font-medium text-ink leading-[1.05] tracking-tight mb-8">
             Comece hoje. <em className="landing-highlight">Tenha total controle do seu escritório.</em>
           </h2>
-          <p className="text-slate-500 text-lg max-w-xl mx-auto mb-4 font-light leading-relaxed">
+          <p className="text-slate-600 text-lg max-w-xl mx-auto mb-4 font-light leading-relaxed">
             14 dias grátis. Sem cartão. Sem contrato. O escritório todo num lugar só.
           </p>
           <p className="text-xs text-ink/40 font-light mb-12">Cancele quando quiser · Migração assistida disponível</p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link
-              to="/login"
+              to="/cadastro"
               className="w-full sm:w-auto px-7 py-3.5 bg-brand text-ink rounded-full font-medium text-sm hover:bg-brand/80 transition-colors flex items-center justify-center gap-2 group"
             >
               Testar grátis por 14 dias
