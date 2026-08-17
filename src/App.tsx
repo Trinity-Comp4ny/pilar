@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-route
 import { toast } from "sonner";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { monitoring } from "@/lib/monitoring";
+import { getSafeErrorMessage, getRawErrorMessage } from "@/lib/safeError";
 import { usePageTracking } from "@/hooks/usePageTracking";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ImpersonationProvider } from "@/contexts/ImpersonationContext";
@@ -84,9 +85,11 @@ const queryClient = new QueryClient({
     },
     mutations: {
       onError: (error, variables) => {
-        const message = error instanceof Error ? error.message : "Erro inesperado";
-        toast.error(message);
-        monitoring.captureException(error instanceof Error ? error : new Error(message), {
+        toast.error(getSafeErrorMessage(error));
+        // Supabase retorna PostgrestError (objeto plano, não instanceof Error);
+        // sem isso o Sentry recebia "[object Object]" e perdia a causa real.
+        const raw = getRawErrorMessage(error) || "Erro inesperado";
+        monitoring.captureException(error instanceof Error ? error : new Error(raw), {
           source: "react-query.mutation",
           variables,
         });
@@ -98,7 +101,8 @@ const queryClient = new QueryClient({
 queryClient.getQueryCache().subscribe((event) => {
   if (event.type === "updated" && event.action.type === "error") {
     const err = event.action.error;
-    monitoring.captureException(err instanceof Error ? err : new Error(String(err)), {
+    const raw = getRawErrorMessage(err) || "Erro inesperado";
+    monitoring.captureException(err instanceof Error ? err : new Error(raw), {
       source: "react-query.query",
       queryKey: event.query.queryKey,
     });

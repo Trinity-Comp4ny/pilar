@@ -13,9 +13,14 @@ Processo de resposta a incidentes de segurança.
 
 ## Papéis
 
-- **Incident Commander (IC):** coordena. Primeiro admin a detectar assume até passar bastão.
-- **Tech Lead:** identifica causa raiz.
-- **Comms:** avisa clientes/Legal quando P0/P1.
+- **Plantão:** Matheus Rezende, único por ora. Empresa pré-lançamento, sem
+  outros pagantes confirmados ainda — formalizar uma escala com mais gente
+  seria over-engineering neste estágio (decisão registrada 17/08, revisar
+  quando houver 1º cliente pagante ou mais alguém no time técnico).
+- **Incident Commander (IC):** o plantão assume, sempre. Sem "primeiro a
+  detectar" — só tem uma pessoa.
+- **Tech Lead:** o plantão (mesma pessoa por ora).
+- **Comms:** o plantão avisa clientes/Legal quando P0/P1.
 
 Contatos: security@labrynth.ai · Slack #security
 

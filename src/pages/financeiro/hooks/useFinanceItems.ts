@@ -1,18 +1,26 @@
 // Cache policy:
-// - itemsQuery (despesas/receitas) = dado financeiro crítico → staleTime 2min,
-//   refetchInterval 5min, refetchOnWindowFocus.
+// - itemsQuery (despesas/receitas) = dado financeiro crítico → staleTime 30s
+//   (mesmo de useLancamentosPaginados/resumo — filtro/busca mudam o resultado a
+//   qualquer momento, não faz sentido cachear por mais tempo que isso).
 // - auxQuery (categorias/contas/cartões/fornecedores) = dado auxiliar que muda
 //   pouco → staleTime 10min, sem refetchInterval.
-import { useQuery } from "@tanstack/react-query";
+//
+// Spec 044: paginação server-side via get_lancamentos_pagina (spec 033/ADR 0017,
+// já suporta p_tipo) — substitui o teto fixo de 2000 linhas (ACH-FIN-07) com busca e
+// ordenação sobre a base inteira, não só sobre o que coube no teto. A view
+// `lancamentos` (estendida com Asaas/recorrente/periodicidade) já cobre os campos de
+// DespesaItem/ReceitaItem; o mapeamento abaixo só reprojeta os nomes genéricos
+// (contraparte_*) para os nomes específicos que o resto do módulo já espera
+// (fornecedor_*/cliente_*), então FinanceItemForm, DespesaDetailDialog etc. não mudam.
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { monitoring } from "@/lib/monitoring";
+import type { Tables } from "@/integrations/supabase/types";
 
-// Teto de segurança contra full-scan (ACH-FIN-07). A tela filtra/ordena no
-// client, então paginação server-side quebraria a busca; o teto evita puxar a
-// base inteira e avisa (via monitoring) quando for hora de paginar de verdade.
-const FINANCE_ITEMS_LIMIT = 2000;
+const PAGE_SIZE = 100;
 
 export type FinanceItemTipo = "despesa" | "receita";
+export type FinanceItemStatusFilter = "todos" | "pago" | "recebido" | "pendente" | "atrasado";
 
 export interface DespesaItem {
   id: string;
@@ -57,7 +65,6 @@ export interface ReceitaItem {
   observacao: string | null;
   cliente_nome?: string;
   projeto_codigo?: string;
-  parcelas?: string;
   grupo_parcela?: string | null;
   parcela_numero?: number | null;
   parcela_total?: number | null;
@@ -86,64 +93,82 @@ const QK = {
   aux: (tipo: FinanceItemTipo) => ["finance-items-aux", tipo] as const,
 };
 
-async function fetchDespesas(): Promise<DespesaItem[]> {
-  const { data, error } = await supabase
-    .from("despesas")
-    .select(`*, projetos (codigo_projeto), fornecedores (nome)`)
-    .eq("is_fatura_payment", false)
-    .is("deleted_at", null)
-    .order("data_pagamento", { ascending: false })
-    .order("data_vencimento", { ascending: false })
-    .limit(FINANCE_ITEMS_LIMIT);
-
-  if (error) throw error;
-
-  if ((data?.length ?? 0) >= FINANCE_ITEMS_LIMIT) {
-    monitoring.captureMessage("Despesas atingiram o teto de listagem; considerar paginação server-side", "warning");
+// Vocabulário de status é compartilhado com Lançamentos (pagos/pendentes/atrasados),
+// mas a UI de Despesas/Receitas usa rótulos por tipo (pago/recebido). "atrasado"
+// mapeado pro banco corrige um bug pré-existente: o filtro client-side antigo
+// comparava contra `status === "Atrasado"`, um valor que nunca existiu na coluna
+// (é status calculado, não armazenado) — o filtro nunca funcionava. A RPC calcula
+// atrasado de verdade (não pago E vencido).
+function statusToRpcArg(status: FinanceItemStatusFilter): string | undefined {
+  switch (status) {
+    case "pago":
+    case "recebido":
+      return "pagos";
+    case "pendente":
+      return "pendentes";
+    case "atrasado":
+      return "atrasados";
+    default:
+      return undefined;
   }
-
-  return (
-    (data ?? []) as unknown as Array<
-      DespesaItem & { projetos?: { codigo_projeto?: string }; fornecedores?: { nome?: string } }
-    >
-  ).map((d) => ({
-    ...d,
-    data_pagamento: d.data_pagamento || d.data_vencimento,
-    projeto_codigo: d.projetos?.codigo_projeto ?? null,
-    fornecedor_nome: d.fornecedores?.nome ?? null,
-  }));
 }
 
-async function fetchReceitas(): Promise<ReceitaItem[]> {
-  const { data, error } = await supabase
-    .from("receitas")
-    .select(`*, categorias_financeiras (nome), clientes (nome), projetos (codigo_projeto)`)
-    .is("deleted_at", null)
-    .order("data_recebimento", { ascending: false })
-    .order("data_vencimento", { ascending: false })
-    .limit(FINANCE_ITEMS_LIMIT);
+type LancamentoRow = Tables<"lancamentos">;
 
-  if (error) throw error;
+function toDespesaItem(l: LancamentoRow): DespesaItem {
+  return {
+    id: l.id!,
+    data_vencimento: l.data_vencimento!,
+    data_pagamento: l.data_efetivacao,
+    descricao: l.descricao ?? "",
+    categoria_id: l.categoria_id,
+    categoria_nome: l.categoria_nome,
+    valor: Number(l.valor),
+    status: l.status ?? "",
+    projeto_id: l.projeto_id,
+    projeto_codigo: l.projeto_codigo,
+    nota_fiscal: l.nota_fiscal,
+    conta_id: l.conta_id,
+    cartao_id: l.cartao_id,
+    observacao: l.observacao,
+    fornecedor_id: l.contraparte_id,
+    fornecedor_nome: l.contraparte_nome,
+    forma_pagamento: l.forma_pagamento,
+    created_by: l.created_by ?? undefined,
+    grupo_parcela: l.grupo_parcela,
+    parcela_numero: l.parcela_numero,
+    parcela_total: l.parcela_total,
+    recorrente: l.recorrente ?? false,
+    periodicidade: l.periodicidade ?? undefined,
+  };
+}
 
-  if ((data?.length ?? 0) >= FINANCE_ITEMS_LIMIT) {
-    monitoring.captureMessage("Receitas atingiram o teto de listagem; considerar paginação server-side", "warning");
-  }
-
-  return (
-    (data ?? []) as unknown as Array<
-      ReceitaItem & {
-        categorias_financeiras?: { nome?: string };
-        clientes?: { nome?: string };
-        projetos?: { codigo_projeto?: string };
-      }
-    >
-  ).map((d) => ({
-    ...d,
-    categoria_nome: d.categorias_financeiras?.nome,
-    cliente_nome: d.clientes?.nome,
-    projeto_codigo: d.projetos?.codigo_projeto,
-    data_recebimento: d.data_recebimento || d.data_vencimento,
-  }));
+function toReceitaItem(l: LancamentoRow): ReceitaItem {
+  return {
+    id: l.id!,
+    data_vencimento: l.data_vencimento!,
+    data_recebimento: l.data_efetivacao,
+    descricao: l.descricao ?? "",
+    projeto_id: l.projeto_id,
+    categoria_id: l.categoria_id,
+    categoria_nome: l.categoria_nome ?? undefined,
+    valor: Number(l.valor),
+    forma_pagamento: l.forma_pagamento,
+    nota_fiscal: l.nota_fiscal,
+    status: l.status ?? "",
+    conta_id: l.conta_id,
+    cliente_id: l.contraparte_id,
+    observacao: l.observacao,
+    cliente_nome: l.contraparte_nome ?? undefined,
+    projeto_codigo: l.projeto_codigo ?? undefined,
+    grupo_parcela: l.grupo_parcela,
+    parcela_numero: l.parcela_numero,
+    parcela_total: l.parcela_total,
+    asaas_payment_id: l.asaas_payment_id,
+    asaas_payment_url: l.asaas_payment_url,
+    asaas_payment_status: l.asaas_payment_status,
+    asaas_billing_type: l.asaas_billing_type,
+  };
 }
 
 async function fetchAuxData(tipo: FinanceItemTipo): Promise<AuxData> {
@@ -189,34 +214,83 @@ async function fetchAuxData(tipo: FinanceItemTipo): Promise<AuxData> {
   };
 }
 
-export function useFinanceItems(tipo: "despesa"): {
-  items: DespesaItem[];
-  aux: AuxData;
+export interface FinanceItemsPaginadosArgs<T extends FinanceItemTipo = FinanceItemTipo> {
+  tipo: T;
+  search: string;
+  status: FinanceItemStatusFilter;
+}
+
+interface FinanceItemsPaginadosResult<T> {
+  items: T[];
   isLoading: boolean;
+  isFetching: boolean;
+  isFetchingNextPage: boolean;
+  hasNextPage: boolean;
+  fetchNextPage: () => void;
   isError: boolean;
-  refetch: () => Promise<unknown>;
-};
-export function useFinanceItems(tipo: "receita"): {
-  items: ReceitaItem[];
-  aux: AuxData;
-  isLoading: boolean;
-  isError: boolean;
-  refetch: () => Promise<unknown>;
-};
-export function useFinanceItems(tipo: FinanceItemTipo): {
-  items: DespesaItem[] | ReceitaItem[];
-  aux: AuxData;
-  isLoading: boolean;
-  isError: boolean;
-  refetch: () => Promise<unknown>;
-} {
-  const itemsQuery = useQuery<DespesaItem[] | ReceitaItem[]>({
-    queryKey: tipo === "despesa" ? QK.despesas : QK.receitas,
-    queryFn: () => (tipo === "despesa" ? fetchDespesas() : fetchReceitas()),
-    staleTime: 2 * 60 * 1000,
-    refetchInterval: 5 * 60 * 1000,
-    refetchOnWindowFocus: true,
+  refetch: () => void;
+}
+
+/**
+ * Paginação server-side (spec 044). Reusa get_lancamentos_pagina (spec 033) fixando
+ * p_tipo — filtro, busca e ordenação por vencimento rodam no banco, sem teto de
+ * linhas. `queryKey` começa com o mesmo prefixo de FINANCE_ITEMS_KEYS, então
+ * useFinanceItemMutations continua invalidando esta query normalmente.
+ */
+export function useFinanceItemsPaginados(
+  args: FinanceItemsPaginadosArgs<"despesa">
+): FinanceItemsPaginadosResult<DespesaItem>;
+export function useFinanceItemsPaginados(
+  args: FinanceItemsPaginadosArgs<"receita">
+): FinanceItemsPaginadosResult<ReceitaItem>;
+export function useFinanceItemsPaginados({
+  tipo,
+  search,
+  status,
+}: FinanceItemsPaginadosArgs): FinanceItemsPaginadosResult<DespesaItem | ReceitaItem> {
+  const baseKey = tipo === "despesa" ? QK.despesas : QK.receitas;
+  const p_status = statusToRpcArg(status);
+  const p_search = search.trim() || undefined;
+
+  const query = useInfiniteQuery({
+    queryKey: [...baseKey, p_search, p_status] as const,
+    initialPageParam: 0,
+    queryFn: async ({ pageParam }) => {
+      const { data, error } = await supabase.rpc("get_lancamentos_pagina", {
+        p_tipo: tipo,
+        p_status,
+        p_search,
+        p_sort_key: "data",
+        p_sort_dir: "desc",
+        p_limit: PAGE_SIZE,
+        p_offset: pageParam,
+      });
+      if (error) throw error;
+      return (data ?? []) as LancamentoRow[];
+    },
+    getNextPageParam: (lastPage, allPages) => (lastPage.length === PAGE_SIZE ? allPages.length * PAGE_SIZE : undefined),
+    staleTime: 30 * 1000,
   });
+
+  const rows = useMemo(() => query.data?.pages.flat() ?? [], [query.data]);
+  const items = useMemo(
+    () => (tipo === "despesa" ? rows.map(toDespesaItem) : rows.map(toReceitaItem)),
+    [rows, tipo]
+  );
+
+  return {
+    items,
+    isLoading: query.isLoading,
+    isFetching: query.isFetching,
+    isFetchingNextPage: query.isFetchingNextPage,
+    hasNextPage: query.hasNextPage ?? false,
+    fetchNextPage: query.fetchNextPage,
+    isError: query.isError,
+    refetch: query.refetch,
+  };
+}
+
+export function useFinanceItemsAux(tipo: FinanceItemTipo) {
   const auxQuery = useQuery({
     queryKey: QK.aux(tipo),
     queryFn: () => fetchAuxData(tipo),
@@ -232,15 +306,7 @@ export function useFinanceItems(tipo: FinanceItemTipo): {
     clientes: [],
   };
 
-  return {
-    items: (itemsQuery.data ?? []) as DespesaItem[] | ReceitaItem[],
-    aux: auxQuery.data ?? emptyAux,
-    isLoading: itemsQuery.isLoading || auxQuery.isLoading,
-    isError: itemsQuery.isError || auxQuery.isError,
-    refetch: async () => {
-      await Promise.all([itemsQuery.refetch(), auxQuery.refetch()]);
-    },
-  };
+  return { aux: auxQuery.data ?? emptyAux, isLoading: auxQuery.isLoading, isError: auxQuery.isError };
 }
 
 export const FINANCE_ITEMS_KEYS = QK;

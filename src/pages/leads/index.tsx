@@ -8,7 +8,7 @@ import { ChevronDown, ChevronLeft, ChevronRight, Plus, TrendingUp, Search, Alert
 import { EmptyState } from "@/components/EmptyState";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { parseCurrencyString, formatCurrency } from "@/lib/currencyUtils";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
@@ -20,6 +20,7 @@ import { LeadsKPIs } from "./LeadsKPIs";
 import { LeadDetailDialog } from "./components/LeadDetailDialog";
 import { LeadFormDialog, EMPTY_LEAD_FORM, type LeadFormData } from "./components/LeadFormDialog";
 import { LeadKanbanCard } from "./components/LeadKanbanCard";
+import { ListaLeads } from "./components/ListaLeads";
 import { LeadMotivoPerdasDialog, LeadCreatePropostaDialog } from "./components/LeadActionDialogs";
 import { LeadCnpjConvertDialog, type ConvertEnrichment } from "./components/LeadCnpjConvertDialog";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
@@ -122,6 +123,19 @@ export default function Leads() {
   const { canEdit } = useFeatureAccess("leads");
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const viewMode: "quadro" | "lista" = searchParams.get("v") === "lista" ? "lista" : "quadro";
+  const setViewMode = (v: "quadro" | "lista") => {
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        if (v === "lista") next.set("v", "lista");
+        else next.delete("v");
+        return next;
+      },
+      { replace: true }
+    );
+  };
 
   // Casa cada lead com suas propostas (só as ligadas a lead; recompra sem lead
   // fica em /documentos nesta v1). A primária enriquece card, KPI e detalhe.
@@ -203,29 +217,30 @@ export default function Leads() {
     });
   };
 
-  const getLeadsByStatus = (status: string) => {
+  const matchesFilters = (lead: Lead) => {
     const q = searchQuery.trim().toLowerCase();
-    const filtered = leads.filter((lead) => {
-      if (lead.status !== status) return false;
-      if (origemFilter && (lead.origem ?? "") !== origemFilter) return false;
-      if (responsavelFilter) {
-        if (responsavelFilter === SEM_RESPONSAVEL) {
-          if (lead.responsavel_id) return false;
-        } else if (lead.responsavel_id !== responsavelFilter) {
-          return false;
-        }
+    if (origemFilter && (lead.origem ?? "") !== origemFilter) return false;
+    if (responsavelFilter) {
+      if (responsavelFilter === SEM_RESPONSAVEL) {
+        if (lead.responsavel_id) return false;
+      } else if (lead.responsavel_id !== responsavelFilter) {
+        return false;
       }
-      if (!matchesPeriodo(lead)) return false;
-      if (!q) return true;
-      const fullName = leadNome(lead).toLowerCase();
-      return (
-        fullName.includes(q) ||
-        (lead.empresa_lead ?? "").toLowerCase().includes(q) ||
-        (lead.email ?? "").toLowerCase().includes(q)
-      );
-    });
-    return sortLeads(filtered);
+    }
+    if (!matchesPeriodo(lead)) return false;
+    if (!q) return true;
+    const fullName = leadNome(lead).toLowerCase();
+    return (
+      fullName.includes(q) ||
+      (lead.empresa_lead ?? "").toLowerCase().includes(q) ||
+      (lead.email ?? "").toLowerCase().includes(q)
+    );
   };
+
+  const getLeadsByStatus = (status: string) =>
+    sortLeads(leads.filter((lead) => lead.status === status && matchesFilters(lead)));
+
+  const getAllFilteredLeads = () => sortLeads(leads.filter(matchesFilters));
 
   const visibleStatuses = Object.keys(statusConfig);
 
@@ -501,6 +516,30 @@ export default function Leads() {
       />
 
       <div className="flex flex-col gap-2 mb-2 mt-1">
+        <div className="hidden md:flex items-center justify-end">
+          <div className="inline-flex rounded-full border p-0.5">
+            <button
+              type="button"
+              onClick={() => setViewMode("quadro")}
+              className={cn(
+                "rounded-full px-3 py-1 text-sm transition-colors",
+                viewMode === "quadro" ? "bg-brand text-ink" : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              Quadro
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode("lista")}
+              className={cn(
+                "rounded-full px-3 py-1 text-sm transition-colors",
+                viewMode === "lista" ? "bg-brand text-ink" : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              Lista
+            </button>
+          </div>
+        </div>
         <div className="flex flex-wrap items-center gap-2">
           {/* Busca de texto migrou para o PageHeader (spec 002). */}
           <Select value={origemFilter || "todas"} onValueChange={(v) => setOrigemFilter(v === "todas" ? "" : v)}>
@@ -606,8 +645,19 @@ export default function Leads() {
         </div>
       ) : (
         <DragDropContext onDragEnd={onDragEnd}>
-          <div className="flex-1 min-h-0">
-            {/* Desktop kanban */}
+          <div className="flex-1 min-h-0 overflow-y-auto md:overflow-visible">
+            {/* Desktop: lista (toggle) ou kanban */}
+            {viewMode === "lista" ? (
+              <ListaLeads
+                leads={getAllFilteredLeads()}
+                leadNome={leadNome}
+                responsavelNome={responsavelNome}
+                primariaDoLead={primariaDoLead}
+                statusDot={STATUS_DOT}
+                statusLabelOf={(status) => statusConfig[status]?.label ?? status}
+                onRowClick={handleCardClick}
+              />
+            ) : (
             <div className="hidden md:flex gap-3 w-full h-full min-h-0 overflow-x-auto pb-2">
               {visibleStatuses.map((status) => {
                 const config = statusConfig[status];
@@ -697,8 +747,9 @@ export default function Leads() {
                 );
               })}
             </div>
+            )}
 
-            {/* Mobile list view */}
+            {/* Mobile list view (accordion por etapa, independe do toggle Quadro/Lista) */}
             <div className="md:hidden space-y-3">
               {visibleStatuses.map((status) => {
                 const config = statusConfig[status];

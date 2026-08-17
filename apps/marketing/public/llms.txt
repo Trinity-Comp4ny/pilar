@@ -1,0 +1,11 @@
+# Pilar
+
+> Plataforma de gestão integrada para empresas de engenharia, conectando comercial, projetos, obras e financeiro.
+
+## Produto
+
+- [Visão geral](https://www.pilarsoft.com.br/)
+
+## Informações
+
+O Pilar atende empresas e escritórios de engenharia multidisciplinar (civil, estrutural, MEP) que projetam e gerenciam obras. A plataforma não substitui ferramentas de cálculo, CAD ou BIM.

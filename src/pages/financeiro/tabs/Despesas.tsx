@@ -32,7 +32,12 @@ import { getDisplayDate, formatDateDisplay } from "@/lib/dateUtils";
 import { DuplicateWarningDialog } from "@/components/DuplicateWarningDialog";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { DespesaDetailDialog } from "./DespesaDetailDialog";
-import { useFinanceItems, type DespesaItem } from "../hooks/useFinanceItems";
+import {
+  useFinanceItemsPaginados,
+  useFinanceItemsAux,
+  type DespesaItem,
+  type FinanceItemStatusFilter,
+} from "../hooks/useFinanceItems";
 import { useFinanceItemMutations } from "../hooks/useFinanceItemMutations";
 import { useFinanceItemForm } from "../hooks/useFinanceItemForm";
 import { FinanceItemForm, ParcelaBanner, DeleteGroupDialog } from "../components/FinanceItemForm";
@@ -42,7 +47,18 @@ const getDespesaDisplayDate = (d: DespesaItem): string =>
 
 export default function Despesas() {
   const { canEdit } = useFeatureAccess("financeiro");
-  const { items: despesasRaw, aux, isError } = useFinanceItems("despesa");
+
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<FinanceItemStatusFilter>("todos");
+
+  const {
+    items: despesasRaw,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+    isError,
+  } = useFinanceItemsPaginados({ tipo: "despesa", search: searchTerm, status: statusFilter });
+  const { aux } = useFinanceItemsAux("despesa");
   const { categorias, contas, cartoes, projetos, fornecedores } = aux;
 
   const { saveDespesa, deleteOne, deleteGroup } = useFinanceItemMutations("despesa");
@@ -51,9 +67,6 @@ export default function Despesas() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [selectedDespesa, setSelectedDespesa] = useState<DespesaItem | null>(null);
-
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("todos");
 
   const form = useForm<DespesaFormData>({
     resolver: zodResolver(despesaSchema),
@@ -74,21 +87,6 @@ export default function Despesas() {
       };
     });
   }, [despesasRaw, categorias, cartoes]);
-
-  const despesasFiltradas = useMemo(() => {
-    return despesas.filter((d) => {
-      const matchSearch =
-        !searchTerm ||
-        d.descricao.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (d.fornecedor_nome || "").toLowerCase().includes(searchTerm.toLowerCase());
-      const matchStatus =
-        statusFilter === "todos" ||
-        (statusFilter === "pago" && d.status === "Pago") ||
-        (statusFilter === "pendente" && d.status === "Pendente") ||
-        (statusFilter === "atrasado" && d.status === "Atrasado");
-      return matchSearch && matchStatus;
-    });
-  }, [despesas, searchTerm, statusFilter]);
 
   const onSave = async (formData: DespesaFormData) => {
     await saveDespesa.mutateAsync({
@@ -441,7 +439,7 @@ export default function Despesas() {
           <div>
             <CardTitle className="text-lg font-medium tracking-tight">Lista de Despesas</CardTitle>
             <CardDescription className="text-sm text-black/60 mt-1">
-              Total de {despesas.length} despesa(s) cadastrada(s)
+              {despesas.length} despesa(s) carregada(s){hasNextPage ? " — role para ver mais" : ""}
             </CardDescription>
           </div>
           <div className="flex gap-2">
@@ -528,7 +526,7 @@ export default function Despesas() {
               onChange={(e) => setSearchTerm(e.target.value)}
               className="h-8 max-w-xs text-sm"
             />
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as FinanceItemStatusFilter)}>
               <SelectTrigger className="h-8 w-[130px] text-xs">
                 <SelectValue />
               </SelectTrigger>
@@ -539,9 +537,6 @@ export default function Despesas() {
                 <SelectItem value="atrasado">Atrasado</SelectItem>
               </SelectContent>
             </Select>
-            <span className="text-xs text-muted-foreground ml-auto">
-              {despesasFiltradas.length} de {despesasRaw.length}
-            </span>
           </div>
           <div className="overflow-x-auto w-full">
             <Table>
@@ -561,7 +556,7 @@ export default function Despesas() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {despesasFiltradas.map((despesa) => (
+                {despesas.map((despesa) => (
                   <TableRow
                     key={despesa.id}
                     className="cursor-pointer hover:bg-muted"
@@ -631,6 +626,13 @@ export default function Despesas() {
               </TableBody>
             </Table>
           </div>
+          {hasNextPage && (
+            <div className="flex justify-center py-4 border-t">
+              <Button variant="outline" size="sm" onClick={() => fetchNextPage()} disabled={isFetchingNextPage}>
+                {isFetchingNextPage ? "Carregando..." : "Carregar mais"}
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
 
