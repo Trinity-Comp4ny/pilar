@@ -1,7 +1,7 @@
 # SPEC: Unificar os 14 agentes de IA em `agent_runs`
 
 **Data:** 2026-08-17
-**Status:** Testado em dev:local, falta deploy em staging
+**Status:** Entregue (PR #251 mergeado; deploy automático via CD concluído em 17/08 17:58 UTC — job "Deploy → staging (Supabase)" da run 32052346829, conclusion success)
 **Autor:** Matheus Rezende (via Claude)
 **Módulo:** IA Hub (dormente)
 
