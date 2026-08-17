@@ -17,7 +17,10 @@ on:
     branches: [staging]
 
 permissions:
-  contents: read
+  # write (não read) porque o job força um push da branch release/staging-to-main —
+  # o GITHUB_TOKEN padrão com contents:read falha esse push com "Permission denied",
+  # mesmo sem chegar perto do create-PR (achado ao vivo rodando isto de verdade).
+  contents: write
   pull-requests: write
 
 concurrency:
@@ -34,12 +37,19 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Abrir ou atualizar o PR staging → main
-        # Prefere um PAT (RELEASE_PAT) se existir: um PR criado com o GITHUB_TOKEN padrão
-        # NÃO dispara os workflows de CI do PR, então required checks em main ficariam
-        # pendentes para sempre. Com o PAT o PR nasce disparando o ci.yml normalmente.
-        # Sem o PAT, ainda cria o PR (o conteúdo de staging já passou pelo CI ao ser
-        # empurrado lá), mas confira a proteção de branch de main.
+      - name: Abrir ou atualizar o PR de release (branch + read-tree)
+        # NUNCA abre PR direto staging→main: o histórico diverge (releases antigos
+        # foram squash), então qualquer método por replay (merge/rebase) dá conflito
+        # falso. Usa o mesmo método do runbook manual (CLAUDE.md /
+        # project_runbook_promocao_staging_main): branch única `release/staging-to-main`
+        # nascida de origin/main, árvore substituída pela de origin/staging via
+        # `read-tree`, um commit, force-push. Reexecuta a cada push em staging: sempre
+        # a MESMA branch, reconstruída do zero a partir de main, então force é
+        # intencional (não é branch de trabalho humano, é gerada).
+        #
+        # Prefere um PAT (RELEASE_PAT) se existir: um PR criado com o GITHUB_TOKEN
+        # padrão não dispara os workflows de CI do PR, então required checks em main
+        # ficariam pendentes para sempre.
         env:
           GH_TOKEN: ${{ secrets.RELEASE_PAT || secrets.GITHUB_TOKEN }}
         run: |
@@ -54,13 +64,29 @@ jobs:
           fi
 
           DATE=$(date -u +%Y-%m-%d)
+          BRANCH="release/staging-to-main"
           TITLE="Release: promote staging to main ($DATE)"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git checkout -B "$BRANCH" origin/main
+          git read-tree --reset -u origin/staging
+
+          if git diff --quiet HEAD; then
+            echo "::notice::árvore de $BRANCH já é idêntica a staging — nada a commitar."
+          else
+            git add -A
+            git commit --no-verify -m "$TITLE"
+          fi
+
+          git push --force origin "$BRANCH"
 
           BODY_FILE=$(mktemp)
           {
             echo "## Promover staging → main"
             echo ""
-            echo "**${AHEAD}** commit(s) à frente de main."
+            echo "**${AHEAD}** commit(s) à frente de main (árvore de \`$BRANCH\` = árvore de \`staging\`)."
             echo ""
             echo "### Commits"
             git log --pretty='- \`%h\` %s' origin/main..origin/staging
@@ -74,19 +100,26 @@ jobs:
             fi
             echo ""
             echo "---"
+            echo "> Merge com \`gh pr merge <n> --admin --squash --delete-branch\` (branch já é 1 commit)."
             echo "> O merge dispara o deploy de produção (gate humano no Environment **Production**)."
             echo "> Confira que \`types.ts\` está em sync e que o \`npm audit\` não tem high aberto."
           } > "$BODY_FILE"
 
-          EXISTING=$(gh pr list --base main --head staging --state open --json number --jq '.[0].number // empty')
+          EXISTING=$(gh pr list --base main --head "$BRANCH" --state open --json number --jq '.[0].number // empty')
           if [ -n "$EXISTING" ]; then
             gh pr edit "$EXISTING" --title "$TITLE" --body-file "$BODY_FILE"
             echo "::notice::PR de release #$EXISTING atualizado."
-          # Sem RELEASE_PAT, o GITHUB_TOKEN padrão não pode criar PR (política do repo/org).
-          # Nesse caso o create falha: tratamos como aviso, não como erro do job, porque o
-          # fluxo aceito é abrir o PR de release na mão. Assim o check não fica vermelho à toa.
-          elif gh pr create --base main --head staging --title "$TITLE" --body-file "$BODY_FILE"; then
+            exit 0
+          fi
+
+          # Sem RELEASE_PAT nem a permissão "Allow GitHub Actions to create and approve
+          # pull requests", o GITHUB_TOKEN padrão não cria PR (política do repo/org) — e
+          # isso precisa FALHAR o job, não virar aviso: um job verde sem PR nenhum aberto
+          # é o oposto de "promoção pronta". A branch já está pronta e pushada; falta só
+          # abrir o PR (na mão, ou configurando um dos dois acima para o job se curar sozinho).
+          if gh pr create --base main --head "$BRANCH" --title "$TITLE" --body-file "$BODY_FILE"; then
             echo "::notice::PR de release criado."
           else
-            echo "::warning::Não criei o PR de release automaticamente (GitHub Actions não pode criar PR sem o secret RELEASE_PAT). Abra o PR staging → main manualmente."
+            echo "::error::Não consegui criar o PR de release. A branch '$BRANCH' já está pronta e pushada — abra manualmente com: gh pr create --base main --head $BRANCH --title \"$TITLE\" --body-file <arquivo>. Para o job se curar sozinho, adicione o secret RELEASE_PAT ou habilite 'Allow GitHub Actions to create and approve pull requests' em Settings → Actions → General."
+            exit 1
           fi
