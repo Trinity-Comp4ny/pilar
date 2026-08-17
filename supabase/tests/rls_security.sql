@@ -18,7 +18,7 @@ SET search_path = public, extensions;
 -- 20, não 16: o arquivo foi ganhando asserts sem atualizar o plano, e como o job de
 -- pgTAP estava desligado desde f5a86ea ninguém viu. Plano errado faz o pg_prove
 -- reportar "Bad plan" e marcar os asserts extras como falha.
-SELECT plan(26);
+SELECT plan(31);
 
 -- =============================================
 -- Setup: duas empresas e usuários de cada
@@ -219,6 +219,49 @@ SELECT throws_ok(
 );
 
 -- =============================================
+-- Teste 9b: RPC rpc_converter_proposta_projeto bloqueia cross-empresa
+-- =============================================
+-- Fechado em 20260835000000, seguindo o mesmo furo de update_projeto_completo/
+-- rpc_faturar_marco/rpc_converter_lead_cliente acima: SECURITY DEFINER sem comparar
+-- a empresa do registro com a de quem chama.
+
+RESET ROLE;
+INSERT INTO public.propostas (id, empresa_id, titulo)
+VALUES ('90aaaaaa-0000-0000-0000-00000000000b', '00000000-0000-0000-0000-00000000000b', 'Proposta B')
+ON CONFLICT (id) DO NOTHING;
+SELECT test_set_auth('aaaaaaaa-0000-0000-0000-000000000001'); -- admin A
+
+SELECT throws_ok(
+  $$ SELECT public.rpc_converter_proposta_projeto('90aaaaaa-0000-0000-0000-00000000000b'::uuid) $$,
+  'Acesso negado',
+  'rpc_converter_proposta_projeto bloqueia cross-empresa'
+);
+
+-- =============================================
+-- Teste 9c: RPC rpc_gerar_parcelas_projeto bloqueia cross-empresa
+-- =============================================
+-- Projeto B ('90000000-...000b') já existe do setup acima, sem valor_contrato: o
+-- tenant check roda ANTES do check de valor_contrato, então a exceção esperada é
+-- sempre 'Acesso negado', não 'Projeto sem valor de contrato'.
+SELECT throws_ok(
+  $$ SELECT public.rpc_gerar_parcelas_projeto('90000000-0000-0000-0000-00000000000b'::uuid) $$,
+  'Acesso negado',
+  'rpc_gerar_parcelas_projeto bloqueia cross-empresa'
+);
+
+-- =============================================
+-- Teste 9d: rpc_gerar_alertas tem uma única assinatura (overload uuid removido)
+-- =============================================
+RESET ROLE;
+SELECT is(
+  (SELECT count(*)::int FROM pg_proc p
+    JOIN pg_namespace n ON n.oid = p.pronamespace
+   WHERE n.nspname = 'public' AND p.proname = 'rpc_gerar_alertas'),
+  1,
+  'rpc_gerar_alertas tem uma única assinatura (overload uuid vulnerável dropado)'
+);
+
+-- =============================================
 -- Teste 10: Convites sem token — signup rejeitado
 -- =============================================
 -- (handle_new_user é chamado por trigger em auth.users; testamos que sem token dá exception)
@@ -306,6 +349,16 @@ SELECT ok(
 SELECT ok(
   NOT has_function_privilege('anon', 'public.rpc_converter_lead_cliente(uuid, boolean)', 'EXECUTE'),
   'anon NÃO executa rpc_converter_lead_cliente'
+);
+
+SELECT ok(
+  NOT has_function_privilege('anon', 'public.rpc_converter_proposta_projeto(uuid)', 'EXECUTE'),
+  'anon NÃO executa rpc_converter_proposta_projeto'
+);
+
+SELECT ok(
+  NOT has_function_privilege('anon', 'public.rpc_gerar_parcelas_projeto(uuid, integer, integer)', 'EXECUTE'),
+  'anon NÃO executa rpc_gerar_parcelas_projeto'
 );
 
 SELECT ok(
