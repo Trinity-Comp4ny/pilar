@@ -1,0 +1,91 @@
+/* CSS específico da landing — compartilhado pelo app (src/pages/Landing.tsx)
+   e por apps/marketing. Mudar aqui propaga pros dois (ADR 0021). */
+
+@layer utilities {
+  .reveal-up {
+    @apply opacity-0 translate-y-8 transition-all duration-700 ease-out;
+  }
+
+  .reveal-up.is-visible {
+    @apply opacity-100 translate-y-0;
+  }
+}
+
+/* Landing page grain texture */
+.landing-grain::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  pointer-events: none;
+  opacity: 0.32;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+  background-size: 180px 180px;
+}
+
+/* Hero dot grid */
+.hero-dot-grid {
+  background-image: radial-gradient(circle, hsl(var(--text-ink) / 0.07) 1px, transparent 1px);
+  background-size: 30px 30px;
+  mask-image: radial-gradient(ellipse 80% 55% at 50% 0%, black 30%, transparent 100%);
+}
+
+/* Hero italic highlight (estilo prototipo 02) — single line */
+.hero-italic-highlight {
+  font-style: italic;
+  font-weight: 300;
+  color: hsl(var(--text-ink));
+  position: relative;
+}
+
+.hero-italic-highlight::before {
+  content: "";
+  position: absolute;
+  left: -8px;
+  right: -8px;
+  bottom: 4px;
+  height: 40%;
+  background: hsl(var(--brand-accent));
+  z-index: -1;
+  border-radius: 3px;
+}
+
+/* Highlight multiline — replica o efeito marker do hero em texto que quebra linha */
+.landing-highlight {
+  font-style: italic;
+  font-weight: 300;
+  color: hsl(var(--text-ink));
+  background: linear-gradient(transparent 58%, hsl(var(--brand-accent)) 58%);
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+/* ============================================================
+ * prefers-reduced-motion — padrão do design system
+ * ============================================================
+ * Quem pede menos movimento recebe uma UI utilizável, sem decoração:
+ * loops infinitos (float/aurora), reveals e sheen viram quase-instantâneos.
+ * Componentes novos que animam devem também usar as utilities motion-reduce:*.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* Reveal on scroll: mostra direto no lugar final */
+  .reveal-up {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  /* Grão animado da landing: mantém a textura, corta o movimento */
+  .landing-grain::after {
+    animation: none !important;
+  }
+}

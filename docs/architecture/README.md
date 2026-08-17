@@ -22,10 +22,11 @@ Um ADR documenta uma decisão técnica relevante, seu contexto e consequências.
 | [0014](./adr/0014-filtros-padronizados-em-componentes-compartilhados.md)         | Filtros padronizados em componentes compartilhados (sem filter-builder genérico)                     |
 | [0015](./adr/0015-notificacoes-por-destinatario.md)                              | Notificações por destinatário (uma linha por usuário, leitura individual)                            |
 | [0016](./adr/0016-rotas-aninhadas-por-modulo.md)                                 | Rotas aninhadas por módulo (/&lt;modulo&gt;/&lt;aba&gt;), com redirects de compat                    |
-| [0017](./adr/0017-lancamentos-pagina-server-side.md)                             | Página de Lançamentos server-side (view + RPCs de paginação/resumo)                  |
-| [0018](./adr/0018-onboarding-guiado-checklist-e-tour.md)                         | Onboarding guiado: checklist derivado de dados + tour por página com driver.js       |
-| [0019](./adr/0019-features-como-controle-de-rollout-nao-de-plano.md)             | Features como controle de rollout por módulo (não paywall); sub-features flat; revisa o 0005 |
-| [0020](./adr/0020-headless-sim-widget-estilizado-nao.md)                         | Adotar biblioteca headless, recusar widget estilizado (Gantt/Kanban custom, tabela via TanStack) |
+| [0017](./adr/0017-lancamentos-pagina-server-side.md)                             | Página de Lançamentos server-side (view + RPCs de paginação/resumo)                                  |
+| [0018](./adr/0018-onboarding-guiado-checklist-e-tour.md)                         | Onboarding guiado: checklist derivado de dados + tour por página com driver.js                       |
+| [0019](./adr/0019-features-como-controle-de-rollout-nao-de-plano.md)             | Features como controle de rollout por módulo (não paywall); sub-features flat; revisa o 0005         |
+| [0020](./adr/0020-headless-sim-widget-estilizado-nao.md)                         | Adotar biblioteca headless, recusar widget estilizado (Gantt/Kanban custom, tabela via TanStack)     |
+| [0021](./adr/0021-marketing-site-separado-do-app.md)                             | Separar o site de marketing (`apps/marketing`) do app autenticado, deploy Vercel próprio             |
 
 ## Guias de reúso
 

@@ -1,5 +1,5 @@
-import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
+import { APP_URL } from "../config";
 
 export function HeroSection() {
   return (
@@ -29,14 +29,14 @@ export function HeroSection() {
         </p>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-16">
-          <Link
-            to="/cadastro"
+          <a
+            href={`${APP_URL}/cadastro`}
             className="relative w-full sm:w-auto px-7 py-3.5 bg-ink-soft text-white rounded-full font-medium text-sm hover:bg-ink transition-colors flex items-center justify-center gap-2 group overflow-hidden"
           >
             <span className="absolute inset-0 -skew-x-12 translate-x-[-160%] group-hover:translate-x-[200%] transition-transform duration-700 bg-white/10 pointer-events-none" />
             Testar grátis por 14 dias
             <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-          </Link>
+          </a>
           <a
             href="https://wa.me/5514998721100"
             target="_blank"
