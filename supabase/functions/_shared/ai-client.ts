@@ -1,5 +1,6 @@
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { z } from "./schemas.ts";
+import { recordGenAiSpan } from "./sentry.ts";
 
 const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY") || "";
 export const GEMINI_MODEL = "gemini-2.5-flash";
@@ -66,17 +67,6 @@ interface AiUsageDetailRow {
   total_requests: number;
   total_tokens_entrada: number;
   total_tokens_saida: number;
-}
-
-/** Record returned from ai_insights after insert */
-export interface AiInsightRow {
-  id: string;
-  empresa_id: string;
-  tipo: string;
-  conteudo: Record<string, unknown>;
-  resumo: string;
-  created_at: string;
-  [key: string]: unknown;
 }
 
 /**
@@ -167,6 +157,32 @@ async function logAiUsage(
   }
 }
 
+/** Span gen_ai.chat de uma chamada ao Gemini (dashboard Insights > Agents do Sentry). */
+function recordGeminiChatSpan(params: {
+  startMs: number;
+  status: "ok" | "error";
+  tokensEntrada?: number;
+  tokensSaida?: number;
+}): void {
+  recordGenAiSpan({
+    op: "gen_ai.chat",
+    name: `chat ${GEMINI_MODEL}`,
+    startMs: params.startMs,
+    endMs: Date.now(),
+    status: params.status,
+    attributes: {
+      "gen_ai.operation.name": "chat",
+      "gen_ai.provider.name": "gemini",
+      "gen_ai.request.model": GEMINI_MODEL,
+      ...(params.status === "ok" && {
+        "gen_ai.response.model": GEMINI_MODEL,
+        "gen_ai.usage.input_tokens": params.tokensEntrada ?? 0,
+        "gen_ai.usage.output_tokens": params.tokensSaida ?? 0,
+      }),
+    },
+  });
+}
+
 /**
  * Chamada bruta ao Gemini. Retorna o texto cru + tokens, sem parsear nem validar.
  * Base compartilhada por callGemini (legado) e callGeminiStructured.
@@ -180,6 +196,7 @@ async function fetchGeminiRaw(
     maxOutputTokens?: number;
   } = {}
 ): Promise<{ text: string; tokensEntrada: number; tokensSaida: number }> {
+  const spanStartMs = Date.now();
   // Multimodal: cada arquivo vira uma part inline_data (base64) junto do texto.
   const userParts: Array<{ text: string } | { inline_data: { mime_type: string; data: string } }> = [
     { text: userMessage },
@@ -226,6 +243,7 @@ async function fetchGeminiRaw(
       signal: controller.signal,
     });
   } catch (e) {
+    recordGeminiChatSpan({ startMs: spanStartMs, status: "error" });
     if (e instanceof DOMException && e.name === "AbortError") {
       throw new Error(`Gemini API timeout após ${timeoutMs}ms`);
     }
@@ -235,6 +253,7 @@ async function fetchGeminiRaw(
   }
 
   if (!response.ok) {
+    recordGeminiChatSpan({ startMs: spanStartMs, status: "error" });
     const errorText = await response.text();
     throw new Error(`Gemini API error (${response.status}): ${errorText}`);
   }
@@ -242,11 +261,10 @@ async function fetchGeminiRaw(
   const result: GeminiApiResponse = await response.json();
   const text = result.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
   const usage = result.usageMetadata || {};
-  return {
-    text,
-    tokensEntrada: usage.promptTokenCount || 0,
-    tokensSaida: usage.candidatesTokenCount || 0,
-  };
+  const tokensEntrada = usage.promptTokenCount || 0;
+  const tokensSaida = usage.candidatesTokenCount || 0;
+  recordGeminiChatSpan({ startMs: spanStartMs, status: "ok", tokensEntrada, tokensSaida });
+  return { text, tokensEntrada, tokensSaida };
 }
 
 export interface GeminiStreamUsage {
@@ -294,6 +312,8 @@ export async function* streamGeminiText(
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   let tokensEntrada = 0;
   let tokensSaida = 0;
+  const spanStartMs = Date.now();
+  let spanStatus: "ok" | "error" = "ok";
 
   try {
     let response: Response;
@@ -308,6 +328,7 @@ export async function* streamGeminiText(
         signal: controller.signal,
       });
     } catch (e) {
+      spanStatus = "error";
       if (e instanceof DOMException && e.name === "AbortError") {
         throw new Error(`Gemini API timeout após ${timeoutMs}ms`);
       }
@@ -315,6 +336,7 @@ export async function* streamGeminiText(
     }
 
     if (!response.ok || !response.body) {
+      spanStatus = "error";
       const errorText = response.body ? await response.text() : "sem corpo";
       throw new Error(`Gemini API error (${response.status}): ${errorText}`);
     }
@@ -353,8 +375,29 @@ export async function* streamGeminiText(
         }
       }
     }
+  } catch (e) {
+    spanStatus = "error";
+    throw e;
   } finally {
     clearTimeout(timer);
+    recordGenAiSpan({
+      op: "gen_ai.chat",
+      name: `chat ${GEMINI_MODEL} (stream)`,
+      startMs: spanStartMs,
+      endMs: Date.now(),
+      status: spanStatus,
+      attributes: {
+        "gen_ai.operation.name": "chat",
+        "gen_ai.provider.name": "gemini",
+        "gen_ai.request.model": GEMINI_MODEL,
+        "gen_ai.response.streaming": true,
+        ...(spanStatus === "ok" && {
+          "gen_ai.response.model": GEMINI_MODEL,
+          "gen_ai.usage.input_tokens": tokensEntrada,
+          "gen_ai.usage.output_tokens": tokensSaida,
+        }),
+      },
+    });
   }
 
   return { tokensEntrada, tokensSaida };
@@ -367,23 +410,50 @@ export async function* streamGeminiText(
  * callGeminiStructured — que valida e nunca silencia erro.
  */
 export async function callGemini(request: AiRequest): Promise<AiResponse> {
-  const { text, tokensEntrada, tokensSaida } = await fetchGeminiRaw(request.systemPrompt, request.userMessage, {
-    deadline: Date.now() + GEMINI_CALL_TIMEOUT_MS,
-  });
-
-  let parsed: Record<string, unknown>;
+  const spanStartMs = Date.now();
   try {
-    parsed = JSON.parse(text) as Record<string, unknown>;
-  } catch {
-    parsed = { texto: text };
-  }
+    const { text, tokensEntrada, tokensSaida } = await fetchGeminiRaw(request.systemPrompt, request.userMessage, {
+      deadline: Date.now() + GEMINI_CALL_TIMEOUT_MS,
+    });
 
-  return {
-    conteudo: parsed,
-    resumo: (parsed.resumo as string) || (parsed.summary as string) || text.substring(0, 200),
-    tokensEntrada,
-    tokensSaida,
-  };
+    let parsed: Record<string, unknown>;
+    try {
+      parsed = JSON.parse(text) as Record<string, unknown>;
+    } catch {
+      parsed = { texto: text };
+    }
+
+    recordGenAiSpan({
+      op: "gen_ai.invoke_agent",
+      name: `invoke_agent ${request.tipo}`,
+      startMs: spanStartMs,
+      endMs: Date.now(),
+      status: "ok",
+      attributes: {
+        "gen_ai.operation.name": "invoke_agent",
+        "gen_ai.agent.name": request.tipo,
+        "gen_ai.usage.input_tokens": tokensEntrada,
+        "gen_ai.usage.output_tokens": tokensSaida,
+      },
+    });
+
+    return {
+      conteudo: parsed,
+      resumo: (parsed.resumo as string) || (parsed.summary as string) || text.substring(0, 200),
+      tokensEntrada,
+      tokensSaida,
+    };
+  } catch (e) {
+    recordGenAiSpan({
+      op: "gen_ai.invoke_agent",
+      name: `invoke_agent ${request.tipo}`,
+      startMs: spanStartMs,
+      endMs: Date.now(),
+      status: "error",
+      attributes: { "gen_ai.operation.name": "invoke_agent", "gen_ai.agent.name": request.tipo },
+    });
+    throw e;
+  }
 }
 
 export interface StructuredResult<T> {
@@ -412,123 +482,122 @@ export async function callGeminiStructured<T>(
   let lastError = "";
   let tokensEntrada = 0;
   let tokensSaida = 0;
+  let attempt = 0;
+  const spanStartMs = Date.now();
 
   // Orçamento total de tempo: o retry sequencial não pode estourar o wall-clock da edge.
   const deadline = Date.now() + GEMINI_TOTAL_BUDGET_MS;
 
-  for (let attempt = 1; attempt <= maxRetries + 1; attempt++) {
-    if (Date.now() >= deadline) {
-      throw new Error(
-        `Gemini structured output esgotou o orçamento de tempo (${GEMINI_TOTAL_BUDGET_MS}ms) após ${
-          attempt - 1
-        } tentativa(s). Último erro: ${lastError || "nenhum"}`
-      );
+  try {
+    for (attempt = 1; attempt <= maxRetries + 1; attempt++) {
+      if (Date.now() >= deadline) {
+        throw new Error(
+          `Gemini structured output esgotou o orçamento de tempo (${GEMINI_TOTAL_BUDGET_MS}ms) após ${
+            attempt - 1
+          } tentativa(s). Último erro: ${lastError || "nenhum"}`
+        );
+      }
+
+      const userMessage =
+        attempt === 1
+          ? request.userMessage
+          : `${request.userMessage}\n\n[Tentativa ${attempt}] A resposta anterior foi rejeitada: ${lastError}. Responda APENAS com JSON válido que satisfaça exatamente o schema exigido.`;
+
+      const raw = await fetchGeminiRaw(request.systemPrompt, userMessage, {
+        deadline,
+        files: request.files,
+        maxOutputTokens: opts.maxOutputTokens,
+      });
+      tokensEntrada += raw.tokensEntrada;
+      tokensSaida += raw.tokensSaida;
+
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(raw.text);
+      } catch (e) {
+        lastError = `JSON inválido (${e instanceof Error ? e.message : "erro de parse"})`;
+        continue;
+      }
+
+      const result = schema.safeParse(parsed);
+      if (result.success) {
+        recordGenAiSpan({
+          op: "gen_ai.invoke_agent",
+          name: `invoke_agent ${request.tipo}`,
+          startMs: spanStartMs,
+          endMs: Date.now(),
+          status: "ok",
+          attributes: {
+            "gen_ai.operation.name": "invoke_agent",
+            "gen_ai.agent.name": request.tipo,
+            "gen_ai.usage.input_tokens": tokensEntrada,
+            "gen_ai.usage.output_tokens": tokensSaida,
+            "pilar.attempts": attempt,
+          },
+        });
+        return { data: result.data, tokensEntrada, tokensSaida, attempts: attempt };
+      }
+      lastError = result.error.issues.map((i) => `${i.path.join(".") || "(raiz)"}: ${i.message}`).join("; ");
     }
 
-    const userMessage =
-      attempt === 1
-        ? request.userMessage
-        : `${request.userMessage}\n\n[Tentativa ${attempt}] A resposta anterior foi rejeitada: ${lastError}. Responda APENAS com JSON válido que satisfaça exatamente o schema exigido.`;
-
-    const raw = await fetchGeminiRaw(request.systemPrompt, userMessage, {
-      deadline,
-      files: request.files,
-      maxOutputTokens: opts.maxOutputTokens,
+    throw new Error(
+      `Gemini structured output falhou após ${maxRetries + 1} tentativas. Último erro de validação: ${lastError}`
+    );
+  } catch (e) {
+    recordGenAiSpan({
+      op: "gen_ai.invoke_agent",
+      name: `invoke_agent ${request.tipo}`,
+      startMs: spanStartMs,
+      endMs: Date.now(),
+      status: "error",
+      attributes: {
+        "gen_ai.operation.name": "invoke_agent",
+        "gen_ai.agent.name": request.tipo,
+        "gen_ai.usage.input_tokens": tokensEntrada,
+        "gen_ai.usage.output_tokens": tokensSaida,
+        "pilar.attempts": attempt,
+      },
     });
-    tokensEntrada += raw.tokensEntrada;
-    tokensSaida += raw.tokensSaida;
-
-    let parsed: unknown;
-    try {
-      parsed = JSON.parse(raw.text);
-    } catch (e) {
-      lastError = `JSON inválido (${e instanceof Error ? e.message : "erro de parse"})`;
-      continue;
-    }
-
-    const result = schema.safeParse(parsed);
-    if (result.success) {
-      return { data: result.data, tokensEntrada, tokensSaida, attempts: attempt };
-    }
-    lastError = result.error.issues.map((i) => `${i.path.join(".") || "(raiz)"}: ${i.message}`).join("; ");
+    throw e;
   }
-
-  throw new Error(
-    `Gemini structured output falhou após ${maxRetries + 1} tentativas. Último erro de validação: ${lastError}`
-  );
 }
 
 /**
- * Salva o insight no banco e atualiza usage
+ * Grava o rastro da execução em agent_runs (mesa de trabalho `/agentes`). Substitui
+ * o antigo saveInsight()/ai_insights (tabela dropada em 20260429400000 — o insert
+ * lá sempre lançava, e por isso nunca chegava a atualizar ai_usage nem agent_runs).
+ *
+ * Sem fluxo de aprovação humana aqui — nasce `executed` porque o resultado já foi
+ * devolvido direto ao chamador (diferente de orcamento_honorarios em agent_runs,
+ * que nasce `pending_review` e é gravado manualmente por ai-proposta-copilot).
+ *
+ * Falha ao gravar é best-effort — nunca quebra o fluxo principal (mesmo padrão de
+ * logAiUsage). Use ao lado de recordAiUsage(), que cuida do contador de
+ * billing/rate-limit — são responsabilidades separadas.
  */
-export async function saveInsight(
+export async function recordAgentRun(
   supabaseAdmin: SupabaseClient,
   request: AiRequest,
   aiResponse: AiResponse,
   userId: string
-): Promise<AiInsightRow> {
-  const now = new Date();
-  const mes = now.getMonth() + 1;
-  const ano = now.getFullYear();
-
-  // Salva insight
-  const { data: insight, error: insightError } = await supabaseAdmin
-    .from("ai_insights")
-    .insert({
+): Promise<void> {
+  try {
+    await supabaseAdmin.from("agent_runs").insert({
       empresa_id: request.empresaId,
-      tipo: request.tipo,
-      referencia_id: request.referenciaId || null,
-      referencia_tipo: request.referenciaTipo || null,
-      conteudo: aiResponse.conteudo,
-      resumo: aiResponse.resumo,
-      modelo_ia: GEMINI_MODEL,
-      tokens_entrada: aiResponse.tokensEntrada,
-      tokens_saida: aiResponse.tokensSaida,
-      mes_referencia: request.mesReferencia || null,
-      ano_referencia: request.anoReferencia || null,
+      agent_type: request.tipo,
+      status: "executed",
+      entity_type: request.referenciaTipo ?? null,
+      entity_id: request.referenciaId ?? null,
+      input: { userMessage: request.userMessage },
+      result: aiResponse.conteudo,
+      model: GEMINI_MODEL,
+      tokens_input: aiResponse.tokensEntrada,
+      tokens_output: aiResponse.tokensSaida,
       created_by: userId,
-    })
-    .select()
-    .single();
-
-  if (insightError) throw insightError;
-
-  // Upsert usage
-  const { data: existingData } = await supabaseAdmin
-    .from("ai_usage")
-    .select("id, total_requests, total_tokens_entrada, total_tokens_saida")
-    .eq("empresa_id", request.empresaId)
-    .eq("mes", mes)
-    .eq("ano", ano)
-    .maybeSingle();
-
-  const existing = existingData as AiUsageDetailRow | null;
-
-  if (existing) {
-    await supabaseAdmin
-      .from("ai_usage")
-      .update({
-        total_requests: existing.total_requests + 1,
-        total_tokens_entrada: existing.total_tokens_entrada + aiResponse.tokensEntrada,
-        total_tokens_saida: existing.total_tokens_saida + aiResponse.tokensSaida,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", existing.id);
-  } else {
-    await supabaseAdmin.from("ai_usage").insert({
-      empresa_id: request.empresaId,
-      mes,
-      ano,
-      total_requests: 1,
-      total_tokens_entrada: aiResponse.tokensEntrada,
-      total_tokens_saida: aiResponse.tokensSaida,
     });
+  } catch {
+    // Rastro é best-effort — nunca quebra o fluxo principal.
   }
-
-  // Registra em ai_usage_logs para billing granular por feature (falha silenciosa)
-  await logAiUsage(supabaseAdmin, request.empresaId, request.tipo, aiResponse.tokensEntrada, aiResponse.tokensSaida);
-
-  return insight as AiInsightRow;
 }
 
 /**
