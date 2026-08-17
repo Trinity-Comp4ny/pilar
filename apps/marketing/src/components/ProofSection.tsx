@@ -1,8 +1,13 @@
 import { ArrowRight } from "lucide-react";
 
-const pains = ["Projeto estoura prazo.", "Proposta no feeling.", "Financeiro descolado da obra."];
+const pains = [
+  "Lead esfria no WhatsApp.",
+  "Proposta no feeling.",
+  "Projeto estoura prazo.",
+  "Financeiro só aparece no fim.",
+];
 
-const flow = ["Proposta", "Projeto", "Entrega", "Cobrança"];
+const flow = ["Lead", "Proposta", "Projeto", "Entrega", "Cobrança"];
 
 export function ProofSection() {
   return (

@@ -25,7 +25,7 @@ export function HeroSection() {
         </h1>
 
         <p className="text-base md:text-lg text-slate-600 max-w-xl mx-auto mb-10 leading-relaxed font-light">
-          Único fluxo: proposta, projeto, cobrança e portal do cliente conectados no mesmo sistema.
+          Do lead à cobrança, um fluxo só: proposta, projeto e portal do cliente conectados no mesmo sistema.
         </p>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-16">

@@ -2,6 +2,7 @@ import { test as setup, expect } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
 import path from "node:path";
 import fs from "node:fs";
+import { generateTotp } from "../src/lib/totp";
 
 /**
  * Auth setup — login programático via Supabase API.
@@ -60,9 +61,52 @@ setup("authenticate as admin", async ({ page, baseURL }) => {
     throw new Error(`[auth.setup] Falha no login Supabase: ${error?.message ?? "sem sessão"}`);
   }
 
+  let session = data.session;
+
+  // O usuário de teste em staging tem MFA obrigatório (mesma regra de qualquer
+  // admin, PrivateRoute.tsx) — signInWithPassword só entrega aal1. Sem completar
+  // o desafio aqui, a app real redireciona pra /mfa/setup em vez do dashboard.
+  const { data: aal, error: aalError } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+  if (aalError) {
+    throw new Error(`[auth.setup] Falha ao checar o nível de MFA: ${aalError.message}`);
+  }
+
+  if (aal.nextLevel === "aal2" && aal.currentLevel !== aal.nextLevel) {
+    const totpSecret = process.env.E2E_TEST_TOTP_SECRET;
+    if (!totpSecret) {
+      throw new Error(
+        "[auth.setup] Este usuário exige MFA (aal2) e E2E_TEST_TOTP_SECRET não foi definida. " +
+          "Cadastre o fator TOTP e configure o secret antes de rodar os specs autenticados."
+      );
+    }
+
+    const { data: factors, error: factorsError } = await supabase.auth.mfa.listFactors();
+    if (factorsError) {
+      throw new Error(`[auth.setup] Falha ao listar fatores de MFA: ${factorsError.message}`);
+    }
+    const totpFactor = factors.totp[0];
+    if (!totpFactor) {
+      throw new Error("[auth.setup] Nenhum fator TOTP verificado encontrado para o usuário de teste.");
+    }
+
+    const { error: verifyError } = await supabase.auth.mfa.challengeAndVerify({
+      factorId: totpFactor.id,
+      code: generateTotp(totpSecret),
+    });
+    if (verifyError) {
+      throw new Error(`[auth.setup] Falha ao verificar o código TOTP: ${verifyError.message}`);
+    }
+
+    const { data: refreshed, error: refreshError } = await supabase.auth.getSession();
+    if (refreshError || !refreshed.session) {
+      throw new Error(`[auth.setup] Sessão aal2 não encontrada após o desafio de MFA: ${refreshError?.message ?? ""}`);
+    }
+    session = refreshed.session;
+  }
+
   // Reproduz a estrutura usada pelo cliente do app (storage-key padrão do supabase-js).
   const storageKey = `sb-${new URL(supabaseUrl).hostname.split(".")[0]}-auth-token`;
-  const sessionPayload = JSON.stringify(data.session);
+  const sessionPayload = JSON.stringify(session);
 
   // Carrega a página primeiro para ter origin, depois injeta sessão e revalida.
   await page.goto(baseURL ?? "/");

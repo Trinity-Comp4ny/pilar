@@ -3,7 +3,11 @@ import { LandingHeader } from "./components/LandingHeader";
 import { HeroSection } from "./components/HeroSection";
 import { ProofSection } from "./components/ProofSection";
 import { FeaturesSection } from "./components/FeaturesSection";
+import { AISection } from "./components/AISection";
+import { RentabilidadeSection } from "./components/RentabilidadeSection";
+import { TargetAudienceSection } from "./components/TargetAudienceSection";
 import { HowItWorksSection } from "./components/HowItWorksSection";
+import { FAQSection } from "./components/FAQSection";
 import { CTASection } from "./components/CTASection";
 import { LandingFooter } from "./components/LandingFooter";
 
@@ -50,7 +54,11 @@ export default function App() {
 
         <ProofSection />
         <FeaturesSection />
+        <AISection />
+        <RentabilidadeSection />
+        <TargetAudienceSection />
         <HowItWorksSection />
+        <FAQSection />
         <CTASection />
       </main>
 

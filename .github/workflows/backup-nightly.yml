@@ -36,6 +36,30 @@ jobs:
         with:
           version: ${{ env.SUPABASE_CLI_VERSION }}
 
+      # A CLI valida o config.toml inteiro antes de QUALQUER comando (mesmo
+      # `db dump --db-url`, que não deveria precisar disso), e
+      # [auth.hook.send_email] referencia env(AUTH_HOOK_SEND_EMAIL_SECRET) —
+      # sem o secret no Environment, o parse aborta com "must be formatted as
+      # v1,whsec_...". Achado real, 17/08 (mesmo padrão dos jobs de deploy do
+      # ci.yml — db dump não aplica config no servidor, então um valor
+      # descartável só pro parse passar é seguro).
+      - name: Gerar secret descartável para o parse do config
+        run: echo "AUTH_HOOK_SEND_EMAIL_SECRET=v1,whsec_$(openssl rand -base64 32)" >> "$GITHUB_ENV"
+
+      # `supabase db dump` roda o pg_dump dentro de um container cuja versão a
+      # CLI escolhe a partir de [db].major_version do config.toml (15, config
+      # do Postgres LOCAL de dev) — mas staging/produção já estão em Postgres
+      # 17 desde 13/07. Sem isto o dump aborta com "aborting because of server
+      # version mismatch" (server 17.6, pg_dump 15.8). Editar só a cópia do
+      # config.toml deste checkout efêmero do runner (nunca committed, nunca
+      # toca o stack de dev local compartilhado entre sessões) resolve sem
+      # trocar de ferramenta — pg_dump raw via libpq não aceita o mesmo
+      # formato de connection string que SUPABASE_DB_URL usa (tentado e
+      # revertido: "could not translate host name" por causa de como o
+      # password é codificado na URI).
+      - name: Ajustar major_version do config.toml só nesta run
+        run: sed -i 's/^major_version = 15$/major_version = 17/' supabase/config.toml
+
       - name: Dump do banco (schema + dados)
         run: supabase db dump --db-url "$SUPABASE_DB_URL" -f dump.sql
         env:

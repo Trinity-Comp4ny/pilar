@@ -1,15 +1,17 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { ArrowRight } from "lucide-react";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { LandingHeader } from "@/pages/landing/components/LandingHeader";
 import { LandingFooter } from "@/pages/landing/components/LandingFooter";
+import { FalarComercialDialog } from "@/components/admin/FalarComercialDialog";
 import { usePlans, calculateYearlySavingPct } from "./hooks/usePlans";
 import { PlanCard } from "./components/PlanCard";
 import { CycleToggle, type BillingCycle } from "./components/CycleToggle";
 
 function PlanSkeleton() {
   return (
-    <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto" aria-hidden="true">
+    <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-6xl mx-auto" aria-hidden="true">
       {[0, 1, 2].map((i) => (
         <div key={i} className="h-[460px] rounded-2xl border border-border bg-white/40 animate-pulse" />
       ))}
@@ -17,10 +19,42 @@ function PlanSkeleton() {
   );
 }
 
+function EnterpriseCard({ onContact }: { onContact: () => void }) {
+  return (
+    <article className="relative flex flex-col rounded-2xl border border-border p-8 bg-paper-alt">
+      <header>
+        <h3 className="text-2xl font-medium text-ink">Enterprise</h3>
+        <p className="text-sm text-ink-muted mt-1">Pra operação completa, sob consulta</p>
+      </header>
+
+      <div className="mt-6 mb-8">
+        <span className="text-2xl font-semibold text-ink">Sob consulta</span>
+        <p className="text-sm text-ink-soft font-medium mt-4">Usuários e projetos ilimitados</p>
+      </div>
+
+      <ul className="space-y-3 mb-8 flex-1">
+        <li className="text-sm text-ink-soft">Tudo do Escala</li>
+        <li className="text-sm text-ink-soft">Implantação assistida</li>
+        <li className="text-sm text-ink-soft">Suporte dedicado</li>
+      </ul>
+
+      <button
+        type="button"
+        onClick={onContact}
+        className="w-full px-6 py-3 rounded-full font-medium text-sm transition-all flex items-center justify-center gap-2 group bg-ink-soft text-white hover:bg-black"
+      >
+        Falar com o comercial
+        <ArrowRight aria-hidden="true" className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+      </button>
+    </article>
+  );
+}
+
 export default function Planos() {
   usePageTitle("Planos");
   const navigate = useNavigate();
   const [cycle, setCycle] = useState<BillingCycle>("monthly");
+  const [contactOpen, setContactOpen] = useState(false);
   const { data: plans, isLoading, error } = usePlans();
 
   const maxSavings = (plans ?? []).reduce<number>((acc, p) => {
@@ -79,10 +113,11 @@ export default function Planos() {
           )}
 
           {plans && plans.length > 0 && (
-            <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-6xl mx-auto">
               {plans.map((plan) => (
                 <PlanCard key={plan.id} plan={plan} cycle={cycle} />
               ))}
+              <EnterpriseCard onContact={() => setContactOpen(true)} />
             </div>
           )}
         </section>
@@ -91,6 +126,7 @@ export default function Planos() {
       </div>
 
       <LandingFooter />
+      <FalarComercialDialog open={contactOpen} onOpenChange={setContactOpen} currentPlan="enterprise-sob-consulta" />
     </div>
   );
 }
