@@ -16,6 +16,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { jsonResponse, optionsResponse } from "../_shared/cors.ts";
 import { getPayment } from "../_shared/asaas-platform.ts";
 import { createLogger } from "../_shared/logger.ts";
+import { checkDbRateLimit, getClientKey } from "../_shared/db-rate-limit.ts";
 
 const log = createLogger("pilar-checkout-status");
 
@@ -24,6 +25,26 @@ serve(
     if (req.method === "OPTIONS") return optionsResponse(req);
     if (req.method !== "POST" && req.method !== "GET") {
       return jsonResponse({ error: "Method not allowed" }, 405, req);
+    }
+
+    const admin = createClient(Deno.env.get("SUPABASE_URL") ?? "", Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "");
+
+    // Polling público (sem JWT) do status de pagamento. O front consulta a cada
+    // 4s enquanto aguarda PIX/boleto (~15 req/min por sessão legítima); 40/min
+    // por IP dá margem folgada pra IP compartilhado (NAT/coworking) sem abrir
+    // brecha pra varredura de session_token.
+    const rl = await checkDbRateLimit(admin, {
+      bucket: "checkout_status",
+      key: getClientKey(req),
+      max: 40,
+      windowSeconds: 60,
+    });
+    if (rl.rpcError) {
+      log.error("rate limit check failed — rejecting request (fail-closed)", { rpcError: rl.rpcError });
+      return jsonResponse({ error: "Serviço temporariamente indisponível. Tente novamente em instantes." }, 503, req);
+    }
+    if (!rl.allowed) {
+      return jsonResponse({ error: "Muitas tentativas. Aguarde antes de tentar novamente." }, 429, req);
     }
 
     let sessionToken: string | null = null;
@@ -43,8 +64,6 @@ serve(
     if (!sessionToken || sessionToken.length < 20) {
       return jsonResponse({ error: "session_token inválido" }, 400, req);
     }
-
-    const admin = createClient(Deno.env.get("SUPABASE_URL") ?? "", Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "");
 
     const { data: signup, error } = await admin
       .from("pilar_pending_signups")
