@@ -6550,9 +6550,7 @@ export type Database = {
       }
       rpc_excluir_transferencia: { Args: { p_id: string }; Returns: undefined }
       rpc_faturar_marco: { Args: { p_marco_id: string }; Returns: string }
-      rpc_gerar_alertas:
-        | { Args: never; Returns: number }
-        | { Args: { p_empresa_id: string }; Returns: number }
+      rpc_gerar_alertas: { Args: never; Returns: number }
       rpc_gerar_despesas_recorrentes: { Args: never; Returns: number }
       rpc_gerar_parcelas_dia_fixo: {
         Args: {
