@@ -3440,6 +3440,74 @@ export type Database = {
           },
         ]
       }
+      obra_rdo_medicao: {
+        Row: {
+          campo_account_id: string | null
+          created_at: string
+          created_by: string | null
+          empresa_id: string
+          id: string
+          item: string
+          obra_id: string
+          quantidade: number
+          rdo_id: string
+          unidade: string
+        }
+        Insert: {
+          campo_account_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          empresa_id: string
+          id?: string
+          item: string
+          obra_id: string
+          quantidade: number
+          rdo_id: string
+          unidade: string
+        }
+        Update: {
+          campo_account_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          empresa_id?: string
+          id?: string
+          item?: string
+          obra_id?: string
+          quantidade?: number
+          rdo_id?: string
+          unidade?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "obra_rdo_medicao_campo_account_id_fkey"
+            columns: ["campo_account_id"]
+            isOneToOne: false
+            referencedRelation: "campo_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_rdo_medicao_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_rdo_medicao_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_rdo_medicao_rdo_id_fkey"
+            columns: ["rdo_id"]
+            isOneToOne: false
+            referencedRelation: "obra_rdo"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       obras: {
         Row: {
           cep: string | null
@@ -5885,6 +5953,16 @@ export type Database = {
         Returns: Json
       }
       campo_login: { Args: { p_email: string; p_senha: string }; Returns: Json }
+      campo_registrar_medicao: {
+        Args: {
+          p_item: string
+          p_quantidade: number
+          p_rdo_id: string
+          p_token: string
+          p_unidade: string
+        }
+        Returns: Json
+      }
       campo_salvar_rdo: {
         Args: {
           p_atividades: string

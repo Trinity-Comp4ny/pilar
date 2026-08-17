@@ -11,6 +11,7 @@ import { climaLabel, condicaoLabel } from "@/lib/obras";
 import { useObraRdos, useDeleteRdo, type RdoRow } from "@/hooks/useObraRdo";
 import { useObraRdoTarefas, type ResultadoRdoTarefa } from "@/hooks/useObraRdoTarefas";
 import { useObraFotos } from "@/hooks/useObraFotos";
+import { useObraMedicoes } from "@/hooks/useObraMedicoes";
 import { RdoFormDialog } from "./RdoFormDialog";
 
 const RESULTADO_LABEL: Record<ResultadoRdoTarefa, string> = {
@@ -38,6 +39,7 @@ export function ObraDiarioTab({ obraId, canEdit }: { obraId: string; canEdit: bo
   const { data: rdos = [], isLoading } = useObraRdos(obraId);
   const { data: vinculos = [] } = useObraRdoTarefas(obraId);
   const { data: fotosPorRdo = {} } = useObraFotos(obraId);
+  const { data: medicoesPorRdo = {} } = useObraMedicoes(obraId);
   const del = useDeleteRdo(obraId);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<RdoRow | null>(null);
@@ -173,6 +175,22 @@ export function ObraDiarioTab({ obraId, canEdit }: { obraId: string; canEdit: bo
                         >
                           <img src={f.url} alt="Foto da obra" className="h-full w-full object-cover" />
                         </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {(medicoesPorRdo[r.id]?.length ?? 0) > 0 && (
+                  <div className="space-y-1.5 border-t border-black/5 pt-3">
+                    <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Medição</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {medicoesPorRdo[r.id].map((m) => (
+                        <span
+                          key={m.id}
+                          className="rounded-full bg-muted px-2.5 py-1 text-xs text-ink/90"
+                        >
+                          {m.item}: {m.quantidade} {m.unidade}
+                        </span>
                       ))}
                     </div>
                   </div>
