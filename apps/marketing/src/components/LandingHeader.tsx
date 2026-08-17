@@ -60,6 +60,13 @@ export function LandingHeader({ onScrollToTop }: LandingHeaderProps) {
               Módulos
             </a>
             <a
+              href="#ia"
+              onClick={handleSectionLink("ia")}
+              className="text-[11px] font-medium uppercase tracking-[0.18em] text-slate-600 relative after:absolute after:bottom-[-3px] after:left-0 after:h-px after:w-0 after:bg-brand hover:after:w-full after:transition-all after:duration-300"
+            >
+              IA
+            </a>
+            <a
               href={`${APP_URL}/planos`}
               className="text-[11px] font-medium uppercase tracking-[0.18em] text-slate-600 relative after:absolute after:bottom-[-3px] after:left-0 after:h-px after:w-0 after:bg-brand hover:after:w-full after:transition-all after:duration-300"
             >
@@ -111,6 +118,9 @@ export function LandingHeader({ onScrollToTop }: LandingHeaderProps) {
             </a>
             <a href="#modulos" onClick={handleSectionLink("modulos")} className="text-lg font-medium text-slate-600">
               Módulos
+            </a>
+            <a href="#ia" onClick={handleSectionLink("ia")} className="text-lg font-medium text-slate-600">
+              IA
             </a>
             <a href={`${APP_URL}/planos`} className="text-lg font-medium text-slate-600">
               Preços
