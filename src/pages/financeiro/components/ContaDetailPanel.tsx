@@ -52,7 +52,7 @@ export function ContaDetailPanel({ conta, canEdit, onEdit, onDelete }: ContaDeta
         <p className="text-3xl font-bold">
           R$ {conta.saldo_atual?.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
         </p>
-        <p className={cn("text-sm mt-1 flex items-center gap-1", variacao >= 0 ? "text-positive-strong" : "text-red-600")}>
+        <p className={cn("text-sm mt-1 flex items-center gap-1", variacao >= 0 ? "text-positive-strong" : "text-negative-strong")}>
           {variacao >= 0 ? <TrendingUp className="h-3.5 w-3.5" /> : <TrendingDown className="h-3.5 w-3.5" />}
           {variacao >= 0 ? "+" : ""}
           {pct.toFixed(1)}% em relação ao saldo inicial
@@ -72,9 +72,9 @@ export function ContaDetailPanel({ conta, canEdit, onEdit, onDelete }: ContaDeta
             + R$ {conta.total_entradas?.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
           </p>
         </div>
-        <div className="p-4 rounded-lg bg-red-50 border border-red-100">
-          <p className="text-xs text-red-600 mb-1">Saídas</p>
-          <p className="text-sm font-semibold text-red-700">
+        <div className="p-4 rounded-lg bg-negative/5 border border-negative/20">
+          <p className="text-xs text-negative-strong mb-1">Saídas</p>
+          <p className="text-sm font-semibold text-negative-strong">
             - R$ {conta.total_saidas?.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
           </p>
         </div>

@@ -45,7 +45,7 @@ export default function MfaChallengePage() {
             />
             <span className="text-2xl font-medium tracking-tight text-ink">
               Pilar
-              <sup className="text-[10px] font-normal text-slate-400 ml-0.5 relative -top-2.5">®</sup>
+              <sup className="text-[10px] font-normal text-ink-disabled ml-0.5 relative -top-2.5">®</sup>
             </span>
           </div>
 

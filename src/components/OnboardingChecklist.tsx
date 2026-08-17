@@ -1,273 +1,239 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { CheckCircle2, Circle, ChevronRight, X, Rocket, ChevronDown, ChevronUp } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
+import {
+  CheckCircle2,
+  Circle,
+  ChevronRight,
+  ChevronDown,
+  ChevronUp,
+  X,
+  Rocket,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
+import { usePermissions } from "@/hooks/usePermissions";
+import {
+  useOnboardingProgress,
+  type OnboardingSectionView,
+  type OnboardingStepView,
+} from "@/hooks/useOnboardingProgress";
+import { useOnboardingState } from "@/hooks/useOnboardingState";
+import type { OnboardingPilar } from "@/lib/onboarding/steps";
 
-const DISMISS_KEY_PREFIX = "pilar_onboarding_dismissed_";
-const COLLAPSE_KEY_PREFIX = "pilar_onboarding_collapsed_";
-
-interface StepConfig {
-  key: string;
-  title: string;
-  description: string;
-  cta: string;
-  ctaPath: string;
-  count: number;
-  required?: boolean;
-}
-
+/**
+ * Painel flutuante de primeiros passos (canto inferior direito). Três seções por
+ * pilar (Gestão / Projetos / Obras), progresso derivado de dados reais. Só para
+ * admin/owner. Minimiza para uma pílula (estado local) e dispensa de vez (banco).
+ */
 export function OnboardingChecklist() {
   const navigate = useNavigate();
-  const { user, profile } = useAuth();
-  const empresaId = profile?.empresa_id ?? null;
-  const userId = user?.id ?? null;
+  const { isAdmin } = usePermissions();
+  const { hasEmpresa, loading, sections, doneSteps, totalSteps, percent, allDone } =
+    useOnboardingProgress();
+  const { state, dismiss, setCompleted } = useOnboardingState();
 
-  const dismissKey = userId ? `${DISMISS_KEY_PREFIX}${userId}` : null;
-  const collapseKey = userId ? `${COLLAPSE_KEY_PREFIX}${userId}` : null;
+  const [open, setOpen] = useState(true);
+  const [collapsed, setCollapsed] = useState<Set<OnboardingPilar>>(new Set());
 
-  const [dismissed, setDismissed] = useState<boolean>(() => {
-    if (!dismissKey) return false;
-    return localStorage.getItem(dismissKey) === "1";
-  });
-
-  const [collapsed, setCollapsed] = useState<boolean>(() => {
-    if (!collapseKey) return false;
-    return localStorage.getItem(collapseKey) === "1";
-  });
-
-  const { data: counts, isLoading } = useQuery({
-    queryKey: ["onboarding-counts", empresaId],
-    queryFn: async () => {
-      if (!empresaId) return null;
-
-      const [pessoasRes, clientesRes, leadsRes, propostasRes, projetosRes, usuariosRes] = await Promise.all([
-        supabase
-          .from("pessoas")
-          .select("id", { count: "exact", head: true })
-          .eq("empresa_id", empresaId)
-          .is("deleted_at", null),
-        supabase
-          .from("clientes")
-          .select("id", { count: "exact", head: true })
-          .eq("empresa_id", empresaId)
-          .is("deleted_at", null),
-        supabase
-          .from("leads")
-          .select("id", { count: "exact", head: true })
-          .eq("empresa_id", empresaId)
-          .is("deleted_at", null),
-        supabase
-          .from("propostas")
-          .select("id", { count: "exact", head: true })
-          .eq("empresa_id", empresaId)
-          .is("deleted_at", null),
-        supabase
-          .from("projetos")
-          .select("id", { count: "exact", head: true })
-          .eq("empresa_id", empresaId)
-          .is("deleted_at", null),
-        supabase.from("profiles").select("id", { count: "exact", head: true }).eq("empresa_id", empresaId),
-      ]);
-
-      return {
-        pessoas: pessoasRes.count ?? 0,
-        clientes: clientesRes.count ?? 0,
-        leads: leadsRes.count ?? 0,
-        propostas: propostasRes.count ?? 0,
-        projetos: projetosRes.count ?? 0,
-        usuarios: usuariosRes.count ?? 0,
-      };
-    },
-    enabled: !!empresaId,
-    staleTime: 1000 * 60 * 2,
-  });
-
-  const steps: StepConfig[] = useMemo(() => {
-    const c = counts ?? { pessoas: 0, clientes: 0, leads: 0, propostas: 0, projetos: 0, usuarios: 0 };
-    return [
-      {
-        key: "pessoa",
-        title: "Cadastre sua primeira pessoa",
-        description: "Equipe técnica que executa os projetos",
-        cta: "Ir para Equipe",
-        ctaPath: "/gestao/equipe",
-        count: c.pessoas,
-      },
-      {
-        key: "cliente",
-        title: "Cadastre seu primeiro cliente",
-        description: "Quem contrata os serviços do escritório",
-        cta: "Ir para Clientes",
-        ctaPath: "/gestao/clientes",
-        count: c.clientes,
-      },
-      {
-        key: "lead",
-        title: "Registre seu primeiro lead",
-        description: "Oportunidade comercial em prospecção",
-        cta: "Ir para Leads",
-        ctaPath: "/gestao/leads",
-        count: c.leads,
-      },
-      {
-        key: "proposta",
-        title: "Crie sua primeira proposta",
-        description: "Orçamento comercial vinculado a um cliente ou lead",
-        cta: "Ir para Propostas",
-        ctaPath: "/gestao/propostas",
-        count: c.propostas,
-      },
-      {
-        key: "projeto",
-        title: "Inicie seu primeiro projeto",
-        description: "Projeto executado com disciplinas, escopo e cronograma",
-        cta: "Ir para Projetos",
-        ctaPath: "/projetos",
-        count: c.projetos,
-      },
-      {
-        key: "time",
-        title: "Convide alguém do seu time",
-        description: "Colaboração só funciona com mais de um usuário",
-        cta: "Abrir Admin Portal",
-        ctaPath: "/admin?tab=usuarios",
-        count: c.usuarios > 1 ? 1 : 0,
-        required: false,
-      },
-    ];
-  }, [counts]);
-
-  const completedSteps = steps.filter((s) => s.count > 0).length;
-  const totalSteps = steps.length;
-  const percent = totalSteps > 0 ? Math.round((completedSteps / totalSteps) * 100) : 0;
-  const allDone = completedSteps === totalSteps;
-
-  const handleDismiss = () => {
-    if (dismissKey) localStorage.setItem(dismissKey, "1");
-    setDismissed(true);
-  };
-
-  const handleToggleCollapse = () => {
-    const next = !collapsed;
-    setCollapsed(next);
-    if (collapseKey) localStorage.setItem(collapseKey, next ? "1" : "0");
-  };
-
-  // Reset dismissed se o user re-iniciar onboarding via botão de reset (não implementado aqui)
   useEffect(() => {
-    if (!dismissKey) return;
-    if (dismissed && localStorage.getItem(dismissKey) !== "1") {
-      setDismissed(false);
-    }
-  }, [dismissKey, dismissed]);
+    if (allDone && !state.completed_at) void setCompleted();
+  }, [allDone, state.completed_at, setCompleted]);
 
-  if (!empresaId || dismissed || isLoading || !counts) return null;
+  if (!isAdmin || !hasEmpresa || loading || state.dismissed || sections.length === 0) {
+    return null;
+  }
 
-  // Oculta automaticamente quando tudo está completo — usuário pode dispensar manualmente também
+  const toggleSection = (pilar: OnboardingPilar) => {
+    setCollapsed((prev) => {
+      const next = new Set(prev);
+      if (next.has(pilar)) next.delete(pilar);
+      else next.add(pilar);
+      return next;
+    });
+  };
+
+  if (!open) {
+    return (
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="fixed bottom-4 right-4 z-40 flex items-center gap-2 rounded-full bg-brand px-4 py-2.5 text-ink shadow-elegant transition-transform hover:scale-[1.02]"
+      >
+        <Rocket className="h-4 w-4" />
+        <span className="text-sm font-medium">Primeiros passos</span>
+        <span className="text-xs font-semibold tabular-nums">
+          {doneSteps}/{totalSteps}
+        </span>
+      </button>
+    );
+  }
+
   if (allDone) {
     return (
-      <Card className="border-emerald-200/70 bg-emerald-50/30">
-        <CardContent className="p-4 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-full bg-emerald-100 flex items-center justify-center">
-              <CheckCircle2 className="h-5 w-5 text-emerald-700" />
+      <div className="fixed bottom-4 right-4 z-40 w-[340px] max-w-[calc(100vw-2rem)]">
+        <Card className="border-success-soft-border bg-success-soft">
+          <CardContent className="flex items-center justify-between gap-3 p-4">
+            <div className="flex items-center gap-3">
+              <div className="grid h-9 w-9 place-items-center rounded-full bg-brand">
+                <CheckCircle2 className="h-5 w-5 text-ink" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-ink">Setup concluído</p>
+                <p className="text-xs text-ink/60">Seu escritório está pronto para operar.</p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm font-medium text-emerald-900">Setup inicial concluído</p>
-              <p className="text-xs text-emerald-700/80">Seu escritório está pronto para operar no Pilar.</p>
-            </div>
-          </div>
-          <Button size="sm" variant="ghost" onClick={handleDismiss}>
-            Dispensar
-          </Button>
-        </CardContent>
-      </Card>
+            <Button size="sm" variant="ghost" onClick={() => void dismiss()}>
+              Ok
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
     );
   }
 
   return (
-    <Card className="border-brand/30 bg-gradient-to-br from-brand/5 to-transparent">
-      <CardContent className="p-4 space-y-4">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="h-9 w-9 rounded-full bg-brand/15 flex items-center justify-center flex-shrink-0">
-              <Rocket className="h-4.5 w-4.5 text-ink" />
+    <div className="fixed bottom-4 right-4 z-40 w-[360px] max-w-[calc(100vw-2rem)]">
+      <Card className="border-brand/30 shadow-elegant">
+        <CardContent className="space-y-3 p-4">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="grid h-9 w-9 flex-shrink-0 place-items-center rounded-full bg-brand/15">
+                <Rocket className="h-4 w-4 text-ink" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-ink">Primeiros passos</p>
+                <p className="text-xs text-ink/60">
+                  {doneSteps} de {totalSteps} concluído{doneSteps === 1 ? "" : "s"} · {percent}%
+                </p>
+              </div>
             </div>
-            <div className="min-w-0">
-              <p className="text-sm font-semibold text-black">Primeiros passos no Pilar</p>
-              <p className="text-xs text-black/60">
-                {completedSteps} de {totalSteps} concluído{completedSteps === 1 ? "" : "s"} · {percent}%
-              </p>
+            <div className="flex flex-shrink-0 items-center gap-1">
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-7 w-7"
+                onClick={() => setOpen(false)}
+                aria-label="Minimizar"
+                title="Minimizar"
+              >
+                <ChevronDown className="h-4 w-4" />
+              </Button>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-7 w-7"
+                onClick={() => void dismiss()}
+                aria-label="Dispensar"
+                title="Dispensar (reative em Configurações)"
+              >
+                <X className="h-4 w-4" />
+              </Button>
             </div>
           </div>
-          <div className="flex items-center gap-1 flex-shrink-0">
-            <Button
-              size="icon"
-              variant="ghost"
-              className="h-7 w-7"
-              onClick={handleToggleCollapse}
-              aria-label={collapsed ? "Expandir" : "Recolher"}
-            >
-              {collapsed ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronUp className="h-3.5 w-3.5" />}
-            </Button>
-            <Button size="icon" variant="ghost" className="h-7 w-7" onClick={handleDismiss} title="Dispensar">
-              <X className="h-3.5 w-3.5" />
-            </Button>
-          </div>
-        </div>
 
-        <Progress value={percent} className="h-1.5" />
+          <Progress value={percent} className="h-1.5" />
 
-        {!collapsed && (
-          <div className="space-y-1.5">
-            {steps.map((step) => (
-              <StepRow key={step.key} step={step} onClick={() => navigate(step.ctaPath)} />
+          <div className="space-y-2">
+            {sections.map((section) => (
+              <SectionBlock
+                key={section.pilar}
+                section={section}
+                collapsed={collapsed.has(section.pilar)}
+                onToggle={() => toggleSection(section.pilar)}
+                onStep={(rota) => navigate(rota)}
+              />
             ))}
           </div>
-        )}
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
 
-function StepRow({ step, onClick }: { step: StepConfig; onClick: () => void }) {
-  const done = step.count > 0;
+function SectionBlock({
+  section,
+  collapsed,
+  onToggle,
+  onStep,
+}: {
+  section: OnboardingSectionView;
+  collapsed: boolean;
+  onToggle: () => void;
+  onStep: (rota: string) => void;
+}) {
+  const done = section.done === section.total;
+  return (
+    <div className="rounded-lg border border-border-subtle">
+      <button
+        type="button"
+        onClick={onToggle}
+        className="flex w-full items-center justify-between gap-2 px-3 py-2"
+      >
+        <span className="flex items-center gap-2 text-sm font-medium text-ink">
+          {section.label}
+          <span
+            className={cn(
+              "rounded-full px-1.5 py-0.5 text-[11px] font-semibold tabular-nums",
+              done ? "bg-success-soft text-positive-strong" : "bg-surface-muted text-ink/60",
+            )}
+          >
+            {section.done}/{section.total}
+          </span>
+        </span>
+        {collapsed ? (
+          <ChevronDown className="h-4 w-4 text-ink/40" />
+        ) : (
+          <ChevronUp className="h-4 w-4 text-ink/40" />
+        )}
+      </button>
+
+      {!collapsed && (
+        <div className="space-y-1 px-2 pb-2">
+          {section.steps.map((step) => (
+            <StepRow key={step.key} step={step} onClick={() => onStep(step.rota)} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function StepRow({ step, onClick }: { step: OnboardingStepView; onClick: () => void }) {
+  const { done } = step;
   return (
     <button
+      type="button"
       onClick={onClick}
       disabled={done}
       className={cn(
-        "w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-left transition-colors",
-        done
-          ? "bg-emerald-50/50 cursor-default"
-          : "bg-white hover:bg-brand/5 border border-black/5 hover:border-brand/30"
+        "flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-left transition-colors",
+        done ? "cursor-default bg-success-soft/50" : "hover:bg-brand/5",
       )}
     >
       {done ? (
-        <CheckCircle2 className="h-4 w-4 text-emerald-600 flex-shrink-0" />
+        <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-positive-strong" />
       ) : (
-        <Circle className="h-4 w-4 text-black/30 flex-shrink-0" />
+        <Circle className="h-4 w-4 flex-shrink-0 text-ink/25" />
       )}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <span className={cn("text-sm font-medium", done && "text-emerald-900 line-through decoration-emerald-300")}>
-            {step.title}
-          </span>
-        </div>
-        {!done && <p className="text-xs text-black/50 mt-0.5">{step.description}</p>}
-      </div>
-      {!done && (
-        <div className="flex items-center gap-1 text-xs text-foreground font-medium flex-shrink-0">
-          {step.cta}
-          <ChevronRight className="h-3.5 w-3.5" />
-        </div>
-      )}
+      <span className="min-w-0 flex-1">
+        <span
+          className={cn(
+            "block text-[13px] font-medium",
+            done ? "text-positive-strong line-through" : "text-ink",
+          )}
+        >
+          {step.titulo}
+          {step.opcional && !done && (
+            <span className="ml-1.5 text-[11px] font-normal text-ink/40">opcional</span>
+          )}
+        </span>
+        {!done && (
+          <span className="mt-0.5 block text-[11px] leading-snug text-ink/50">{step.descricao}</span>
+        )}
+      </span>
+      {!done && <ChevronRight className="h-4 w-4 flex-shrink-0 text-ink/30" />}
     </button>
   );
 }

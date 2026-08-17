@@ -24,7 +24,7 @@ export function IntegracoesTab() {
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-start gap-2 rounded-lg border border-yellow-200 bg-yellow-50 px-3 py-2.5 text-xs text-yellow-800">
+          <div className="flex items-start gap-2 rounded-lg border border-warning-mid-border bg-warning-soft px-3 py-2.5 text-xs text-warning-strong">
             <ShieldAlert className="h-4 w-4 shrink-0 mt-0.5" />
             <span>
               Suas credenciais são armazenadas com criptografia e <strong>nunca</strong> expostas ao cliente final.

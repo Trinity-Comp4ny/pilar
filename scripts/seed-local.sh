@@ -17,6 +17,6 @@ if ! docker ps --format '{{.Names}}' | grep -qx "$CONTAINER"; then
   exit 1
 fi
 
-docker exec -i "$CONTAINER" psql -U supabase_admin -d postgres < scripts/seed-local.sql
+docker exec -i -e PGPASSWORD=postgres "$CONTAINER" psql -U supabase_admin -d postgres < scripts/seed-local.sql
 
 echo "Seed aplicado. Login: dev@local.test / 123456"

@@ -10,6 +10,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
+import { getSafeErrorMessage } from "@/lib/safeError";
 import { useSubscriptionManage } from "../hooks/useSubscriptionManage";
 import type { MySubscription } from "../hooks/useMySubscription";
 
@@ -37,7 +38,9 @@ export function CancelDialog({ open, onOpenChange, current }: CancelDialogProps)
           onOpenChange(false);
         },
         onError: (err) => {
-          toast.error("Erro ao cancelar", { description: (err as Error).message });
+          toast.error("Não foi possível cancelar a assinatura", {
+            description: getSafeErrorMessage(err, "Tente de novo em instantes."),
+          });
         },
       }
     );
@@ -48,8 +51,8 @@ export function CancelDialog({ open, onOpenChange, current }: CancelDialogProps)
       <AlertDialogContent>
         <AlertDialogHeader>
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center">
-              <AlertTriangle className="w-5 h-5 text-amber-600" />
+            <div className="w-10 h-10 rounded-full bg-warning-soft flex items-center justify-center">
+              <AlertTriangle className="w-5 h-5 text-warning-mid" />
             </div>
             <AlertDialogTitle>Cancelar assinatura</AlertDialogTitle>
           </div>
@@ -71,7 +74,7 @@ export function CancelDialog({ open, onOpenChange, current }: CancelDialogProps)
               handleConfirm();
             }}
             disabled={manage.isPending}
-            className="bg-red-600 hover:bg-red-700 text-white"
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
             {manage.isPending ? (
               <>

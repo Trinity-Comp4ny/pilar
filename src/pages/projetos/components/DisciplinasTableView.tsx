@@ -19,6 +19,7 @@ import {
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
 import { AlertTriangle, MessageSquare, Plus, Trash2, User, X, Layers } from "lucide-react";
+import { EmptyState } from "@/components/EmptyState";
 import { cn } from "@/lib/utils";
 import { PROJECT_PRIORITY, PROJECT_PRIORITY_CONFIG, PRIORITY_OPTIONS, type ProjectPriority } from "@/constants";
 import {
@@ -69,9 +70,9 @@ function earlierOf(...ds: (string | null | undefined)[]): string | undefined {
 
 const STATUS_DOT: Record<string, string> = {
   Concluído: "bg-positive/100",
-  "Em Andamento": "bg-blue-500",
-  Pendente: "bg-amber-500",
-  "Não Iniciado": "bg-gray-400",
+  "Em Andamento": "bg-status-progress",
+  Pendente: "bg-status-planning",
+  "Não Iniciado": "bg-status-unknown",
 };
 
 export function DisciplinasTableView({
@@ -141,14 +142,13 @@ export function DisciplinasTableView({
         </div>
 
         {disciplinasLegacy.length === 0 && !isAddingDisc ? (
-          <div className="flex flex-col items-center justify-center py-12 text-muted-foreground border rounded-lg">
-            <Layers className="h-10 w-10 mb-3 opacity-30" />
-            <p className="text-sm font-medium">Nenhuma disciplina definida</p>
-            {canEdit && (
-              <Button size="sm" variant="outline" className="mt-4" onClick={() => setIsAddingDisc(true)}>
-                <Plus className="h-3.5 w-3.5 mr-1.5" /> Adicionar disciplina
-              </Button>
-            )}
+          <div className="border rounded-lg">
+            <EmptyState
+              icon={Layers}
+              title="Nenhuma disciplina definida"
+              description="Adicione as disciplinas deste projeto para acompanhar prazos e responsáveis."
+              action={canEdit ? { label: "Adicionar disciplina", onClick: () => setIsAddingDisc(true) } : undefined}
+            />
           </div>
         ) : (
           <div className="border rounded-lg overflow-hidden bg-white">
@@ -174,7 +174,7 @@ export function DisciplinasTableView({
                   const obsCount = dbDisc?.observacoes ? dbDisc.observacoes.split("\n").filter(Boolean).length : 0;
 
                   return (
-                    <TableRow key={dbDisc?.id || idx} className={cn(atrasada && "bg-red-50/40")}>
+                    <TableRow key={dbDisc?.id || idx} className={cn(atrasada && "bg-danger-soft/40")}>
                       {/* Disciplina */}
                       <TableCell className="py-2">
                         <div className="flex items-center gap-2">
@@ -201,7 +201,7 @@ export function DisciplinasTableView({
                             <span className="text-sm font-medium">{disc.disciplina}</span>
                           )}
                           {atrasada && (
-                            <span className="text-[9px] px-1.5 py-0.5 rounded-full font-semibold bg-red-100 text-red-700 flex items-center gap-1">
+                            <span className="text-[9px] px-1.5 py-0.5 rounded-full font-semibold bg-danger-soft text-danger-strong flex items-center gap-1">
                               <AlertTriangle size={10} /> Atrasada
                             </span>
                           )}
@@ -222,16 +222,7 @@ export function DisciplinasTableView({
                               {PRIORITY_OPTIONS.map((p) => (
                                 <SelectItem key={p} value={p} className="text-xs">
                                   <span className="flex items-center gap-1.5">
-                                    <span
-                                      className={cn(
-                                        "h-2 w-2 rounded-full",
-                                        p === PROJECT_PRIORITY.ALTA
-                                          ? "bg-red-500"
-                                          : p === PROJECT_PRIORITY.MEDIA
-                                            ? "bg-amber-400"
-                                            : "bg-blue-400"
-                                      )}
-                                    />
+                                    <span className={cn("h-2 w-2 rounded-full", PROJECT_PRIORITY_CONFIG[p].dotColor)} />
                                     {PROJECT_PRIORITY_CONFIG[p].label}
                                   </span>
                                 </SelectItem>
@@ -395,6 +386,7 @@ export function DisciplinasTableView({
                                   />
                                   <Button
                                     size="sm"
+                                    variant="brand"
                                     className="h-8"
                                     disabled={!(obsDrafts[dbDisc?.id ?? idx] ?? "").trim()}
                                     onClick={() => {
@@ -421,7 +413,7 @@ export function DisciplinasTableView({
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8 text-muted-foreground hover:text-red-600"
+                            className="h-8 w-8 text-muted-foreground hover:text-danger-mid"
                             onClick={() => setDeleteDiscIdx(idx)}
                             aria-label="Excluir disciplina"
                           >
@@ -477,6 +469,7 @@ export function DisciplinasTableView({
                       <div className="flex gap-1">
                         <Button
                           size="icon"
+                          variant="brand"
                           className="h-8 w-8"
                           onClick={onAddDisc}
                           disabled={!newDisc.disciplina || !newDisc.responsavel_id}
@@ -523,7 +516,7 @@ export function DisciplinasTableView({
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
-              className="bg-red-600 hover:bg-red-700"
+              className="bg-destructive hover:bg-destructive/90"
               onClick={() => {
                 if (deleteDiscIdx !== null) handleRemoveDisc(deleteDiscIdx);
                 setDeleteDiscIdx(null);
@@ -592,7 +585,7 @@ export function DisciplinasTableView({
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-red-500" />
+              <AlertTriangle className="h-5 w-5 text-danger-mid" />
               Justificativa de atraso obrigatória
             </AlertDialogTitle>
             <AlertDialogDescription>
@@ -686,7 +679,7 @@ function ResponsaveisCell({ discIdx, disc, dbDisc, pessoas, canEdit, onAdd, onRe
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-5 w-5 text-muted-foreground hover:text-red-600"
+                      className="h-5 w-5 text-muted-foreground hover:text-danger-mid"
                       onClick={() => onRemove(discIdx, rIdx)}
                       aria-label="Remover responsável"
                     >
@@ -714,6 +707,7 @@ function ResponsaveisCell({ discIdx, disc, dbDisc, pessoas, canEdit, onAdd, onRe
             </Select>
             <Button
               size="icon"
+              variant="brand"
               className="h-8 w-8"
               disabled={!selectedToAdd}
               onClick={async () => {

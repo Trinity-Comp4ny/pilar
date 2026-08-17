@@ -29,7 +29,14 @@ interface PageHeaderProps {
   /** Busca controlada pela página: liga no estado de filtro que a página já tem. */
   search?: { value: string; onChange: (v: string) => void; placeholder?: string };
   /** Ação primária. Com `feature`, aplica getButtonProps(feature, "edit"). */
-  primaryAction?: { label: string; onClick: () => void; icon?: LucideIcon; feature?: Feature };
+  primaryAction?: {
+    label: string;
+    onClick: () => void;
+    icon?: LucideIcon;
+    feature?: Feature;
+    /** Âncora do coach mark de onboarding (vira [data-tour=...] no botão). */
+    dataTour?: string;
+  };
 }
 
 function isTypingTarget(el: Element | null): boolean {
@@ -143,6 +150,7 @@ export function PageHeader({ title, breadcrumbs, children, search, primaryAction
             onClick={primaryAction.onClick}
             variant="brand"
             className="rounded-full h-9 px-4 text-[13px] font-medium"
+            data-tour={primaryAction.dataTour}
             {...gate}
           >
             {PrimaryIcon && <PrimaryIcon size={14} className="mr-1.5" />}

@@ -43,7 +43,7 @@ export function CobrarPorEmailButton({ receitaId, onSuccess }: CobrarPorEmailBut
     <Button
       variant="outline"
       size="sm"
-      className="gap-1.5 text-xs h-8 border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+      className="gap-1.5 text-xs h-8 border-success-mid-border text-success-strong hover:bg-success-soft"
       onClick={handleSend}
       disabled={isSending}
     >

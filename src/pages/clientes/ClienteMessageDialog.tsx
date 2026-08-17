@@ -46,7 +46,7 @@ export function ClienteMessageDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Enviar Mensagem</DialogTitle>
+          <DialogTitle>Enviar mensagem</DialogTitle>
           <DialogDescription>
             Enviar mensagem para {cliente?.nome}
             {cliente?.sobrenome ? ` ${cliente.sobrenome}` : ""}

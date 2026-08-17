@@ -318,6 +318,77 @@ export async function buscarHistorico(latitude: number, longitude: number, dias 
   return { totalDias: dias, diasChuva: comChuva, chuvaMm: Math.round(total) };
 }
 
+// --- Clima × cronograma (spec 040): alerta de etapa sensível vs previsão ------
+
+/** Tarefa do cronograma com sensibilidade a clima e janela prevista. */
+export interface TarefaSensivel {
+  id: string;
+  titulo: string;
+  /** Tipo de sensibilidade (`concretagem`, `icamento`...); null = não sensível. */
+  sensivel_clima: string | null;
+  data_inicio: string | null;
+  prazo: string | null;
+  status?: string | null;
+}
+
+export interface AlertaClima {
+  tarefaId: string;
+  titulo: string;
+  /** Tipo de sensibilidade da tarefa. */
+  tipo: string;
+  /** Primeiro dia de risco dentro da janela da tarefa ("YYYY-MM-DD"). */
+  data: string;
+  motivo: "chuva" | "vento";
+  /** Texto pronto: "chuva forte (85%)" ou "vento 55 km/h". */
+  detalhe: string;
+}
+
+/** Tipos cuja restrição é vento (içamento/grua); o resto é sensível a chuva. */
+const TIPOS_SENSIVEIS_VENTO = new Set(["icamento"]);
+
+/**
+ * Cruza tarefas sensíveis a clima com a previsão diária e devolve, por tarefa,
+ * o PRIMEIRO dia dentro da janela (data_inicio→prazo) que viola a condição:
+ * - chuva: probabilidade ≥ `chuvaProbMin` (padrão 60%) OU código de chuva/tempestade;
+ * - vento (içamento): vento máx ≥ `ventoMaxKmh` (padrão VENTO_FORTE_KMH).
+ * Puro e sem rede. Tarefa concluída, sem tipo ou sem janela não gera alerta.
+ * Datas em "YYYY-MM-DD" comparam corretamente como string.
+ */
+export function alertasClimaTarefas(
+  tarefas: ReadonlyArray<TarefaSensivel>,
+  dias: ReadonlyArray<DiaPrevisao>,
+  opts?: { chuvaProbMin?: number; ventoMaxKmh?: number }
+): AlertaClima[] {
+  const chuvaProbMin = opts?.chuvaProbMin ?? 60;
+  const ventoMaxKmh = opts?.ventoMaxKmh ?? VENTO_FORTE_KMH;
+  const alertas: AlertaClima[] = [];
+
+  for (const t of tarefas) {
+    if (!t.sensivel_clima || t.status === "concluida") continue;
+    if (!t.data_inicio || !t.prazo) continue;
+
+    const porVento = TIPOS_SENSIVEIS_VENTO.has(t.sensivel_clima);
+    const dia = dias.find((d) => {
+      if (d.data < t.data_inicio! || d.data > t.prazo!) return false;
+      if (porVento) return d.ventoMax >= ventoMaxKmh;
+      return d.chuvaProb >= chuvaProbMin || climaPorCodigo(d.code).chuva;
+    });
+    if (!dia) continue;
+
+    alertas.push({
+      tarefaId: t.id,
+      titulo: t.titulo,
+      tipo: t.sensivel_clima,
+      data: dia.data,
+      motivo: porVento ? "vento" : "chuva",
+      detalhe: porVento
+        ? `vento ${dia.ventoMax} km/h`
+        : `${climaPorCodigo(dia.code).label.toLowerCase()} (${dia.chuvaProb}%)`,
+    });
+  }
+  return alertas;
+}
+
 /** Reverse geocoding (coordenada → cidade). Best-effort, sem chave (BigDataCloud). */
 export async function nomeDaCoordenada(latitude: number, longitude: number): Promise<string> {
   try {

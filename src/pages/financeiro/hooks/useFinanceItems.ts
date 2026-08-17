@@ -154,7 +154,7 @@ async function fetchAuxData(tipo: FinanceItemTipo): Promise<AuxData> {
     tipo === "despesa"
       ? supabase.from("cartoes").select("id, nome, tipo, dia_fechamento").is("deleted_at", null)
       : Promise.resolve({ data: [] as never[], error: null }),
-    supabase.from("projetos").select("id, nome, codigo_projeto").order("nome"),
+    supabase.from("projetos").select("id, nome, codigo_projeto").is("deleted_at", null).order("nome"),
     tipo === "despesa"
       ? supabase.from("fornecedores").select("id, nome").order("nome")
       : Promise.resolve({ data: [] as never[], error: null }),

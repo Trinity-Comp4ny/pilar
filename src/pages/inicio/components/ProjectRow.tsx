@@ -48,7 +48,7 @@ export function ProjectRow({ project, onClick }: { project: DashboardProjeto; on
               className={`text-xs flex items-center gap-0.5 ${isAtrasado ? "text-chart-danger" : "text-ink-disabled"}`}
             >
               <Clock size={10} />
-              {new Date(project.dataPrevisao).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}
+              {new Date(project.dataPrevisao + "T00:00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}
             </span>
           )}
         </div>

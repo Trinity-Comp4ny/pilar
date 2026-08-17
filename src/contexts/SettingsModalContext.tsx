@@ -4,7 +4,7 @@ import { createContext, useContext, useState, useCallback, type ReactNode } from
 // /billing — spec do modal único). O estado vive aqui, não na URL: qualquer ponto da
 // área autenticada abre a aba certa com openSettings(secao), inclusive as telas de
 // bloqueio (trial expirado, assinatura suspensa) que rodam fora do Layout.
-export type SettingsSection = "conta" | "seguranca" | "empresa" | "uso" | "pagamento";
+export type SettingsSection = "conta" | "seguranca" | "empresa" | "uso" | "pagamento" | "informacoes";
 
 interface SettingsModalValue {
   isOpen: boolean;

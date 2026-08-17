@@ -1,6 +1,6 @@
 # Backlog do Pilar
 
-← [voltar ao índice](./README.md) · **Última revisão: 2026-07-27**
+← [voltar ao índice](./README.md) · **Última revisão: 2026-08-13**
 
 Índice único do que falta fazer. Cada item aponta para o doc que tem o detalhe;
 aqui fica só o quê, o porquê em uma linha e o estado. **Não duplicar conteúdo:**
@@ -72,7 +72,20 @@ Detalhe: [decisão 25/07, tese B](./strategy/DECISAO_PILARES_E_AGENTES_2026-07-2
 | Agentes proativos / Caixa de Decisões                                                                                                                                                                                                                                                                 | Gate de margem fechado                                                            |
 | Anunciar os 3 produtos publicamente                                                                                                                                                                                                                                                                   | Produto 2 existir + 1 cliente pagando por ele                                     |
 
-## 7. Pendências operacionais
+## 7. Obra: frentes de evolução (ideias, não priorizadas)
+
+Registradas em 2026-08-13. Todas estendem o módulo Obras ([spec 015](./specs/015-obras-mvp.md),
+[spec 027](./specs/027-cronograma-obra-dois-niveis.md)). Não priorizadas ainda; guardadas
+para decidir sequência depois. Não virar ERP, requisição ≠ controle de estoque.
+
+| #   | Item                                                                                                                                          | Esforço | Onde está / conecta                                |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------- | ------- | -------------------------------------------------- |
+| O1  | **Medição / avanço físico das frentes** ◆ North Star: % concluído por frente ligado ao dinheiro liberado; conecta o Diário à Conta da obra    | M       | Frentes e Timeline vivos; falta o eixo de medição  |
+| O2  | **Planejamento de gasto por frente** (meta de custo por frente da obra), par natural do avanço físico (O1: planejado vs realizado por frente) | M       | Deriva de O1 + Conta da obra                       |
+| O3  | **Requisição de material (leve)**: campo pede insumo ao escritório; requisição, não controle de estoque                                       | M       | Não existe; conecta a Fornecedores e Conta da obra |
+| O4  | **Checklist de qualidade / inspeção**: conferência por etapa, aprovado/reprovado + responsável                                                | M       | Não existe                                         |
+
+## 8. Pendências operacionais
 
 - **Commit em branch errada:** `origin/feat/enable-e2e-in-ci` contém `068503e` (design system), que não pertence a ela. Se virar PR, leva UI junto. Corrigir com reset para `a3b14b4` ou rebase — reescreve branch, exige decisão do CEO
 - **Sessões paralelas no mesmo working tree** misturaram commits em 27/07: usar `git worktree` para trabalho simultâneo ([armadilhas de toolchain](../CLAUDE.md) e memória do projeto)

@@ -106,13 +106,13 @@ export function ManageDisciplinasDialog({
                   filtered.map((d) => (
                     <div
                       key={d.id}
-                      className="flex items-center justify-between px-4 py-2.5 hover:bg-gray-50 transition-colors group"
+                      className="flex items-center justify-between px-4 py-2.5 hover:bg-muted transition-colors group"
                     >
                       <span className="text-sm font-medium">{d.nome}</span>
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-8 w-8 p-0 text-muted-foreground hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="h-8 w-8 p-0 text-muted-foreground hover:text-danger-mid opacity-0 group-hover:opacity-100 transition-opacity"
                         onClick={() => setDeleteId(d.id)}
                       >
                         <Trash2 size={16} />
@@ -141,7 +141,7 @@ export function ManageDisciplinasDialog({
       >
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>Nova Disciplina</DialogTitle>
+            <DialogTitle>Nova disciplina</DialogTitle>
           </DialogHeader>
           <div className="space-y-3 mt-2">
             <div className="space-y-1.5">

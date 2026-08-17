@@ -2,7 +2,7 @@ import { useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSettingsModal } from "@/contexts/SettingsModalContext";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { mfaDevBypass } from "@/lib/mfaDevBypass";
 
 /**
@@ -22,7 +22,6 @@ export function useRequireAal2() {
   const { mfaCurrentLevel, mfaNextLevel } = useAuth();
   const navigate = useNavigate();
   const { openSettings } = useSettingsModal();
-  const { toast } = useToast();
 
   return useCallback(async (): Promise<boolean> => {
     if (mfaDevBypass()) return true;
@@ -30,12 +29,10 @@ export function useRequireAal2() {
 
     const needsEnroll = mfaNextLevel !== "aal2";
 
-    toast({
-      title: "Verificação em duas etapas necessária",
+    toast.error("Verificação em duas etapas necessária", {
       description: needsEnroll
         ? "Ative o 2FA na aba Segurança antes de executar esta ação."
         : "Confirme seu código 2FA para continuar.",
-      variant: "destructive",
     });
 
     if (needsEnroll) {

@@ -236,7 +236,7 @@ export default function MfaSetupPage() {
                 className="h-10 w-auto hover:rotate-12 transition-transform duration-300"
               />
               <span className="text-2xl font-medium tracking-tight text-ink">
-                Pilar<sup className="text-[10px] font-normal text-slate-400 ml-0.5 relative -top-2.5">®</sup>
+                Pilar<sup className="text-[10px] font-normal text-ink-disabled ml-0.5 relative -top-2.5">®</sup>
               </span>
             </div>
 
@@ -331,9 +331,9 @@ export default function MfaSetupPage() {
                   </ol>
                 </div>
 
-                <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 flex items-start gap-3">
-                  <AlertCircle className="h-4 w-4 text-red-500 flex-shrink-0 mt-0.5" />
-                  <p className="text-xs text-red-700">
+                <div className="rounded-xl border border-danger-mid-border bg-danger-soft px-4 py-3 flex items-start gap-3">
+                  <AlertCircle className="h-4 w-4 text-danger-mid flex-shrink-0 mt-0.5" />
+                  <p className="text-xs text-danger-strong">
                     <strong>Não abra a câmera padrão do celular.</strong> O QR Code só funciona dentro do app
                     autenticador.
                   </p>

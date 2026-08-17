@@ -418,10 +418,10 @@ export function ClienteFormDialog({ open, onOpenChange, cliente, onSaved }: Clie
                       inputMode="numeric"
                       aria-invalid={!!cpfCnpjError}
                       aria-describedby={cpfCnpjError ? "cliente-doc-error" : undefined}
-                      className={cpfCnpjError ? "border-red-500 focus-visible:ring-red-500" : ""}
+                      className={cpfCnpjError ? "border-danger-strong focus-visible:ring-danger-strong" : ""}
                     />
                     {cpfCnpjError && (
-                      <p id="cliente-doc-error" role="alert" className="text-xs text-red-600">
+                      <p id="cliente-doc-error" role="alert" className="text-xs text-danger-mid">
                         {cpfCnpjError}
                       </p>
                     )}
@@ -441,10 +441,10 @@ export function ClienteFormDialog({ open, onOpenChange, cliente, onSaved }: Clie
                       placeholder="email@exemplo.com"
                       aria-invalid={!!emailError}
                       aria-describedby={emailError ? "cliente-email-error" : undefined}
-                      className={emailError ? "border-red-500 focus-visible:ring-red-500" : ""}
+                      className={emailError ? "border-danger-strong focus-visible:ring-danger-strong" : ""}
                     />
                     {emailError && (
-                      <p id="cliente-email-error" role="alert" className="text-xs text-red-600">
+                      <p id="cliente-email-error" role="alert" className="text-xs text-danger-mid">
                         {emailError}
                       </p>
                     )}
@@ -617,7 +617,7 @@ export function ClienteFormDialog({ open, onOpenChange, cliente, onSaved }: Clie
                           type="button"
                           variant="ghost"
                           size="icon"
-                          className="h-7 w-7 text-red-500 shrink-0"
+                          className="h-7 w-7 text-danger-mid shrink-0"
                           onClick={() => handleRemoveConta(index)}
                           aria-label="Remover conta"
                         >
@@ -683,7 +683,7 @@ export function ClienteFormDialog({ open, onOpenChange, cliente, onSaved }: Clie
                         <button
                           type="button"
                           onClick={() => handleRemoveChavePix(i)}
-                          className="ml-0.5 hover:text-red-500"
+                          className="ml-0.5 hover:text-danger-mid"
                           aria-label="Remover chave PIX"
                         >
                           <X className="h-3 w-3" />
@@ -697,7 +697,7 @@ export function ClienteFormDialog({ open, onOpenChange, cliente, onSaved }: Clie
           )}
 
           {/* Footer */}
-          <div className="flex items-center gap-2 px-6 py-4 bg-gray-50/30">
+          <div className="flex items-center gap-2 px-6 py-4 bg-muted/30">
             <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} disabled={isSaving}>
               Cancelar
             </Button>

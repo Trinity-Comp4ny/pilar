@@ -53,11 +53,11 @@ export function PixPayment({ encodedImage, payload, expirationDate, value, isPol
   if (expired) {
     return (
       <div className="flex flex-col items-center gap-4 py-12 text-center">
-        <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-amber-100">
-          <AlertTriangle className="w-7 h-7 text-amber-600" />
+        <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-warning-soft">
+          <AlertTriangle className="w-7 h-7 text-warning-mid" />
         </div>
-        <h2 className="text-xl font-medium text-slate-900">PIX expirado</h2>
-        <p className="text-sm text-slate-500 max-w-xs">
+        <h2 className="text-xl font-medium text-ink">PIX expirado</h2>
+        <p className="text-sm text-ink-muted max-w-xs">
           O QR Code expirou após 30 minutos. Volte à página inicial e gere um novo pagamento.
         </p>
         <Button variant="outline" onClick={() => window.location.reload()} className="mt-2">
@@ -73,11 +73,11 @@ export function PixPayment({ encodedImage, payload, expirationDate, value, isPol
         <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-brand/10 text-ink mb-3">
           <QrCode className="w-6 h-6" />
         </div>
-        <h2 className="text-2xl font-medium text-slate-900">Pague com PIX</h2>
-        <p className="text-sm text-slate-500 mt-1">Valor: {formatBRL(value)}</p>
+        <h2 className="text-2xl font-medium text-ink">Pague com PIX</h2>
+        <p className="text-sm text-ink-muted mt-1">Valor: {formatBRL(value)}</p>
       </header>
 
-      <div className="bg-white border border-slate-200 rounded-2xl p-6 flex flex-col items-center">
+      <div className="bg-white border border-border rounded-2xl p-6 flex flex-col items-center">
         <img
           src={`data:image/png;base64,${encodedImage}`}
           alt="QR Code PIX"
@@ -85,7 +85,7 @@ export function PixPayment({ encodedImage, payload, expirationDate, value, isPol
           style={{ opacity: secondsLeft < 120 ? 0.6 : 1 }}
         />
         <div
-          className={`mt-4 flex items-center gap-1.5 text-sm font-mono font-semibold ${secondsLeft < 120 ? "text-red-500" : "text-slate-500"}`}
+          className={`mt-4 flex items-center gap-1.5 text-sm font-mono font-semibold ${secondsLeft < 120 ? "text-danger-mid" : "text-ink-muted"}`}
         >
           {secondsLeft < 120 && <AlertTriangle className="w-4 h-4" />}
           {display}
@@ -93,9 +93,9 @@ export function PixPayment({ encodedImage, payload, expirationDate, value, isPol
       </div>
 
       <div>
-        <p className="text-xs text-slate-500 mb-2">Ou copie o código:</p>
+        <p className="text-xs text-ink-muted mb-2">Ou copie o código:</p>
         <div className="flex gap-2">
-          <div className="flex-1 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono text-slate-700 truncate">
+          <div className="flex-1 px-3 py-2 bg-muted border border-border rounded-lg text-xs font-mono text-ink-soft truncate">
             {payload}
           </div>
           <Button type="button" variant="outline" onClick={handleCopy} className="shrink-0">
@@ -104,7 +104,7 @@ export function PixPayment({ encodedImage, payload, expirationDate, value, isPol
         </div>
       </div>
 
-      <div className="flex items-center justify-center gap-2 text-sm text-slate-500 pt-2">
+      <div className="flex items-center justify-center gap-2 text-sm text-ink-muted pt-2">
         {isPolling ? (
           <>
             <Loader2 className="w-4 h-4 animate-spin" /> Aguardando pagamento...

@@ -196,14 +196,14 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <GitBranch className="h-5 w-5" />
-              {mode === "list" ? "Fluxos de Disciplinas" : editingId ? "Editar Fluxo" : "Novo Fluxo"}
+              {mode === "list" ? "Fluxos de disciplinas" : editingId ? "Editar fluxo" : "Novo fluxo"}
             </DialogTitle>
           </DialogHeader>
 
           {mode === "list" ? (
             <div className="space-y-4 mt-2">
               <Button onClick={handleNew} variant="brand" className="w-full">
-                <Plus className="mr-2 h-4 w-4" /> Novo Fluxo
+                <Plus className="mr-2 h-4 w-4" /> Novo fluxo
               </Button>
 
               {fluxos.length === 0 ? (
@@ -219,7 +219,7 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
                     return (
                       <div
                         key={fluxo.id}
-                        className="bg-gray-50 rounded-lg p-3 border hover:border-gray-300 transition-colors"
+                        className="bg-muted rounded-lg p-3 border hover:border-border transition-colors"
                       >
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex-1 min-w-0">
@@ -250,7 +250,7 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="h-8 w-8 p-0 text-blue-500"
+                              className="h-8 w-8 p-0 text-info-mid"
                               onClick={() => handleEdit(fluxo)}
                             >
                               <Edit size={16} />
@@ -258,7 +258,7 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="h-8 w-8 p-0 text-red-500"
+                              className="h-8 w-8 p-0 text-danger-mid"
                               onClick={() => setConfirmDeleteId(fluxo.id)}
                             >
                               <Trash2 size={16} />
@@ -312,7 +312,7 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
                     return (
                       <div key={etapaIdx} className="border rounded-lg p-3 bg-white space-y-2">
                         <div className="flex items-center gap-2">
-                          <span className="flex items-center justify-center h-7 w-7 rounded-full bg-blue-100 text-blue-700 text-sm font-bold flex-shrink-0">
+                          <span className="flex items-center justify-center h-7 w-7 rounded-full bg-info-soft text-info-strong text-sm font-bold flex-shrink-0">
                             {etapaIdx + 1}
                           </span>
                           <Input
@@ -346,7 +346,7 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
                               type="button"
                               variant="ghost"
                               size="sm"
-                              className="h-8 w-8 p-0 text-red-500"
+                              className="h-8 w-8 p-0 text-danger-mid"
                               onClick={() => removeEtapa(etapaIdx)}
                             >
                               <Trash2 size={14} />
@@ -357,7 +357,7 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
                         {/* Disciplinas com responsável */}
                         <div className="space-y-1.5">
                           {etapa.disciplinas.map((disc, discIdx) => (
-                            <div key={discIdx} className="flex items-center gap-2 bg-gray-50 rounded px-2 py-1.5">
+                            <div key={discIdx} className="flex items-center gap-2 bg-muted rounded px-2 py-1.5">
                               <Badge variant="secondary" className="text-sm flex-shrink-0">
                                 {disc.nome}
                               </Badge>
@@ -390,7 +390,7 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
                                 className="hover:bg-gray-300 rounded-full p-1 flex-shrink-0"
                                 onClick={() => removeDisciplinaFromEtapa(etapaIdx, discIdx)}
                               >
-                                <X size={14} className="text-red-500" />
+                                <X size={14} className="text-danger-mid" />
                               </button>
                             </div>
                           ))}
@@ -426,23 +426,23 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
                   className="w-full mt-3 text-sm h-9"
                   onClick={addEtapa}
                 >
-                  <Plus className="mr-1 h-4 w-4" /> Adicionar Etapa
+                  <Plus className="mr-1 h-4 w-4" /> Adicionar etapa
                 </Button>
               </div>
 
               {/* Preview */}
               {form.etapas.length > 0 && form.etapas.some((e) => e.disciplinas.length > 0) && (
-                <div className="bg-gray-50 rounded-lg p-3 border">
+                <div className="bg-muted rounded-lg p-3 border">
                   <Label className="text-xs text-muted-foreground mb-2 block">Prévia do fluxo</Label>
                   <div className="flex items-center gap-2 flex-wrap">
                     {form.etapas.map((etapa, i) => (
                       <div key={i} className="flex items-center gap-2">
                         {i > 0 && <span className="text-muted-foreground text-sm">→</span>}
                         <div className="bg-white border rounded-md px-2.5 py-1.5">
-                          <span className="text-xs font-medium text-blue-700">{etapa.nome}</span>
+                          <span className="text-xs font-medium text-info-strong">{etapa.nome}</span>
                           <div className="flex flex-col gap-0.5 mt-1">
                             {etapa.disciplinas.map((d, di) => (
-                              <span key={di} className="text-[10px] bg-blue-50 text-blue-600 rounded px-1.5 py-0.5">
+                              <span key={di} className="text-[10px] bg-info-soft text-info-mid rounded px-1.5 py-0.5">
                                 {d.nome}
                                 {d.responsavel_nome ? ` (${d.responsavel_nome})` : ""}
                               </span>
@@ -462,7 +462,7 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
                   className="w-full"
                   disabled={createFluxo.isPending || updateFluxo.isPending}
                 >
-                  {editingId ? "Salvar Alterações" : "Criar Fluxo"}
+                  {editingId ? "Salvar alterações" : "Criar fluxo"}
                 </Button>
                 <Button variant="outline" className="w-full" onClick={resetToList}>
                   Cancelar

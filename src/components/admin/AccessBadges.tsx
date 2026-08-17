@@ -24,7 +24,7 @@ export function AccessBadges({
       <Badge
         variant="outline"
         className={cn(
-          "h-6 gap-1 rounded-full border-red-600/30 bg-red-600/10 px-2 text-[11px] font-medium text-red-700",
+          "h-6 gap-1 rounded-full border-danger-strong/30 bg-danger-strong/10 px-2 text-[11px] font-medium text-danger-strong",
           className
         )}
       >
@@ -74,7 +74,7 @@ export function AccessBadges({
             className={cn(
               "h-6 rounded-full px-2 text-[11px] font-medium",
               isEditor
-                ? "border-emerald-600/30 bg-emerald-600/10 text-emerald-700"
+                ? "border-success-strong/30 bg-success-strong/10 text-success-strong"
                 : "border-black/15 bg-black/5 text-black/60"
             )}
             title={`${def.label}: ${isEditor ? "Editor" : "Viewer"}`}

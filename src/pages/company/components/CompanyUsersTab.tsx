@@ -108,7 +108,7 @@ export function CompanyUsersTab({
                 className="rounded-full"
                 disabled={isInviting || !inviteFirstName.trim() || !inviteEmail.trim()}
               >
-                {isInviting ? "Enviando convite..." : "Adicionar Usuário"}
+                {isInviting ? "Enviando convite..." : "Adicionar usuário"}
               </Button>
               <p className="text-xs text-black/50">
                 O convite será enviado por email e o usuário aparecerá como pendente.
@@ -155,7 +155,7 @@ export function CompanyUsersTab({
                           <Button
                             variant="outline"
                             size="sm"
-                            className="rounded-full text-red-600"
+                            className="rounded-full text-danger-mid"
                             onClick={() => onDeleteUser(u.id)}
                             disabled={u.id === currentUserId}
                           >
@@ -198,7 +198,7 @@ export function CompanyUsersTab({
                         <Button
                           variant="outline"
                           size="sm"
-                          className="rounded-full text-red-600"
+                          className="rounded-full text-danger-mid"
                           onClick={() => onDeleteUser(u.id)}
                           disabled={u.id === currentUserId}
                         >

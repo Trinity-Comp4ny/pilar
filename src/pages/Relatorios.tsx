@@ -2,7 +2,8 @@ import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { statusBadgeClasses, statusLabel } from "@/lib/status";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { TableCell } from "@/components/ui/table";
+import { DataTable, type ColumnDef } from "@/components/data/DataTable";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { FiltroPeriodo } from "@/components/filters/FiltroPeriodo";
@@ -53,6 +54,10 @@ const RelatoriosChart = lazy(() => import("./relatorios/RelatoriosChart"));
 const RelatoriosRentabilidade = lazy(() => import("./relatorios/RelatoriosRentabilidade"));
 
 type RentabilidadeMode = "projeto" | "cliente";
+
+// DataTable exige rowKey estável; ReportRow não tem id próprio (é linha
+// derivada de agregação), então carimba o índice original em cada linha.
+type IndexedReportRow = ReportRow & { __idx: number };
 
 // Cores derivam do registry único (ADR 0008): "Pago" tem a MESMA cor em todas
 // as telas. Mudar tom = src/lib/status.ts.
@@ -437,6 +442,19 @@ export default function Relatorios() {
     return String(value);
   };
 
+  const rowsWithIndex: IndexedReportRow[] = filteredData.map((row, idx) => ({ ...row, __idx: idx }));
+
+  const reportColumns: ColumnDef<IndexedReportRow>[] = ALL_COLUMNS.map((key) => ({
+    key,
+    header: key,
+    className: "whitespace-nowrap text-xs align-top",
+    cell: (row) => renderCellValue(key, row[key]),
+  }));
+
+  const reportColumnVisibility: Record<string, boolean> = Object.fromEntries(
+    ALL_COLUMNS.map((c) => [c, visibleColumns.has(c)])
+  );
+
   const renderFilterSelect = (value: string, onChange: (v: string) => void, options: string[], placeholder: string) => (
     <Select value={value} onValueChange={onChange}>
       <SelectTrigger className="h-9 text-xs bg-white">
@@ -647,58 +665,28 @@ export default function Relatorios() {
             </div>
 
             {/* Tabela */}
-            <div
-              className="w-full overflow-auto border rounded-xl bg-white max-h-[60vh]"
-              style={{ minHeight: "320px" }}
-            >
-              {(() => {
-                const cols = ALL_COLUMNS.filter((c) => visibleColumns.has(c));
-                const valorIdx = cols.indexOf("Valor");
-                const footerTotal = computeReportTotal(filteredData);
-                return (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        {cols.map((key) => (
-                          <TableHead key={key} className="whitespace-nowrap text-xs sticky top-0 z-10 bg-white">
-                            {key}
-                          </TableHead>
-                        ))}
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredData.length === 0 ? (
-                        <TableRow>
-                          <TableCell colSpan={cols.length} className="text-center py-10 text-muted-foreground text-sm">
-                            Nenhum registro encontrado com os filtros aplicados.
+            <div className="w-full border rounded-xl bg-white" style={{ minHeight: "320px" }}>
+              <DataTable
+                columns={reportColumns}
+                columnVisibility={reportColumnVisibility}
+                data={{ rows: rowsWithIndex }}
+                rowKey={(row) => String(row.__idx)}
+                maxHeight="60vh"
+                emptyMessage="Nenhum registro encontrado com os filtros aplicados."
+                footer={
+                  visibleColumns.has("Valor")
+                    ? (cols) => {
+                        const footerTotal = computeReportTotal(filteredData);
+                        const valorIdx = cols.findIndex((c) => c.key === "Valor");
+                        return cols.map((c, i) => (
+                          <TableCell key={c.key} className="text-xs">
+                            {i === 0 ? footerTotal.label : i === valorIdx ? toCurrency(footerTotal.value) : ""}
                           </TableCell>
-                        </TableRow>
-                      ) : (
-                        filteredData.map((row, idx) => (
-                          <TableRow key={idx}>
-                            {cols.map((key) => (
-                              <TableCell key={key} className="align-top whitespace-nowrap text-xs">
-                                {renderCellValue(key, row[key as keyof ReportRow])}
-                              </TableCell>
-                            ))}
-                          </TableRow>
-                        ))
-                      )}
-                    </TableBody>
-                    {filteredData.length > 0 && valorIdx >= 0 && (
-                      <TableFooter>
-                        <TableRow className="bg-black/[0.02] font-semibold">
-                          {cols.map((key, i) => (
-                            <TableCell key={key} className="text-xs">
-                              {i === 0 ? footerTotal.label : i === valorIdx ? toCurrency(footerTotal.value) : ""}
-                            </TableCell>
-                          ))}
-                        </TableRow>
-                      </TableFooter>
-                    )}
-                  </Table>
-                );
-              })()}
+                        ));
+                      }
+                    : undefined
+                }
+              />
             </div>
           </>
         )}

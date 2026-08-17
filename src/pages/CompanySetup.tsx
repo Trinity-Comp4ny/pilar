@@ -115,7 +115,7 @@ export default function CompanySetup() {
                 />
                 <div className="leading-tight">
                   <div className="text-sm font-semibold text-ink">
-                    Pilar<sup className="text-[8px] font-normal text-slate-400 ml-0.5 relative -top-1.5">®</sup>
+                    Pilar<sup className="text-[8px] font-normal text-ink-disabled ml-0.5 relative -top-1.5">®</sup>
                   </div>
                   <div className="text-xs text-ink-soft">Configuração inicial · Etapa 2 de 2</div>
                 </div>
@@ -136,33 +136,20 @@ export default function CompanySetup() {
 
           <div className="space-y-2">
             <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-ink">Sua empresa</h1>
-            <p className="text-sm text-ink-soft">Confirme o nome da organização e o CNPJ para emissão e cadastro.</p>
+            <p className="text-sm text-ink-soft">Só falta o CNPJ para emissão e cadastro.</p>
           </div>
 
           <Form {...form}>
             <form onSubmit={form.handleSubmit(handleUpdate)} className="space-y-5">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem className="space-y-2">
-                    <FormLabel className="text-ink-soft font-medium">
-                      Razão social / Nome fantasia <span className="text-red-500">*</span>
-                    </FormLabel>
-                    <FormControl>
-                      <div className="relative group">
-                        <Building2 className="absolute left-3 top-3 h-4 w-4 text-ink/40 group-focus-within:text-brand transition-colors" />
-                        <Input
-                          {...field}
-                          placeholder="Ex: Construtora Pilar Ltda"
-                          className="pl-10 h-11 bg-paper-alt border-paper-border focus:border-brand focus:ring-brand/20 transition-all"
-                        />
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {/* Nome já veio do cadastro; aqui é só confirmação. Ajuste depois em
+                  Configurações › Empresa, se precisar. */}
+              <div className="space-y-2">
+                <span className="text-ink-soft font-medium text-sm">Empresa</span>
+                <div className="flex items-center gap-2 rounded-md border border-paper-border bg-paper-alt px-3 h-11">
+                  <Building2 className="h-4 w-4 text-ink/40 flex-shrink-0" />
+                  <span className="text-sm text-ink truncate">{form.watch("name") || "Sua empresa"}</span>
+                </div>
+              </div>
 
               <FormField
                 control={form.control}

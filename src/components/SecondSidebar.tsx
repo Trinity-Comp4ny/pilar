@@ -8,6 +8,8 @@ export type SecondSidebarTab = {
   icon?: LucideIcon;
   disabled?: boolean;
   badge?: string | number;
+  /** Âncora do coach mark de onboarding (vira [data-tour=...] na aba). */
+  dataTour?: string;
 };
 
 type Props = {
@@ -72,6 +74,7 @@ export function SecondSidebar({ tabs, value, onValueChange, className }: Props) 
               onClick={() => onValueChange(tab.id)}
               aria-label={tab.label}
               aria-current={isActive ? "page" : undefined}
+              data-tour={tab.dataTour}
               className={cn(
                 "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs whitespace-nowrap transition-colors flex-shrink-0",
                 isActive ? "bg-brand text-black/80 font-medium" : "text-black/60 hover:bg-brand/20"
@@ -145,6 +148,7 @@ export function SecondSidebar({ tabs, value, onValueChange, className }: Props) 
                 onClick={() => onValueChange(tab.id)}
                 aria-label={tab.label}
                 aria-current={isActive ? "page" : undefined}
+                data-tour={tab.dataTour}
                 title={collapsed ? tab.label : undefined}
                 className={cn(
                   "w-full flex items-center gap-3 px-3 py-2 rounded-full text-sm transition-all duration-200 text-left",

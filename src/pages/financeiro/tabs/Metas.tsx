@@ -13,9 +13,11 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DatePicker } from "@/components/ui/date-picker";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { formatDate } from "@/lib/format";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -212,12 +214,12 @@ export default function Metas() {
               <DialogTrigger asChild>
                 <Button variant="brand" className="rounded-full">
                   <Plus className="mr-2 h-4 w-4" />
-                  Nova Meta
+                  Nova meta
                 </Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-md">
                 <DialogHeader>
-                  <DialogTitle>Definir Nova Meta</DialogTitle>
+                  <DialogTitle>Definir nova meta</DialogTitle>
                   <DialogDescription>Estabeleça um novo objetivo financeiro para sua empresa.</DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4 mt-4">
@@ -258,16 +260,20 @@ export default function Metas() {
                   </div>
                   <div className="space-y-2">
                     <Label>Categoria</Label>
-                    <select
-                      className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    <Select
                       value={novaMeta.categoria}
-                      onChange={(e) => setNovaMeta({ ...novaMeta, categoria: e.target.value })}
+                      onValueChange={(v) => setNovaMeta({ ...novaMeta, categoria: v })}
                     >
-                      <option value="receita">Receita</option>
-                      <option value="lucro">Lucro</option>
-                      <option value="economia">Economia</option>
-                      <option value="investimento">Investimento</option>
-                    </select>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="receita">Receita</SelectItem>
+                        <SelectItem value="lucro">Lucro</SelectItem>
+                        <SelectItem value="economia">Economia</SelectItem>
+                        <SelectItem value="investimento">Investimento</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                   <Button
                     type="submit"
@@ -287,7 +293,7 @@ export default function Metas() {
           <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
             <DialogContent className="sm:max-w-md">
               <DialogHeader>
-                <DialogTitle>Editar Meta</DialogTitle>
+                <DialogTitle>Editar meta</DialogTitle>
                 <DialogDescription>Atualize as informações da meta financeira.</DialogDescription>
               </DialogHeader>
               {editingMeta && (
@@ -332,18 +338,22 @@ export default function Metas() {
                   </div>
                   <div className="space-y-2">
                     <Label>Categoria</Label>
-                    <select
-                      className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    <Select
                       value={editingMeta.categoria}
-                      onChange={(e) =>
-                        setEditingMeta({ ...editingMeta, categoria: e.target.value as Meta["categoria"] })
+                      onValueChange={(v) =>
+                        setEditingMeta({ ...editingMeta, categoria: v as Meta["categoria"] })
                       }
                     >
-                      <option value="receita">Receita</option>
-                      <option value="lucro">Lucro</option>
-                      <option value="economia">Economia</option>
-                      <option value="investimento">Investimento</option>
-                    </select>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="receita">Receita</SelectItem>
+                        <SelectItem value="lucro">Lucro</SelectItem>
+                        <SelectItem value="economia">Economia</SelectItem>
+                        <SelectItem value="investimento">Investimento</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                   <Button
                     type="submit"
@@ -371,7 +381,7 @@ export default function Metas() {
                 <AlertDialogCancel>Cancelar</AlertDialogCancel>
                 <AlertDialogAction
                   onClick={handleDeleteConfirm}
-                  className="bg-red-600 hover:bg-red-700"
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                   disabled={deleteMetaMutation.isPending}
                 >
                   {deleteMetaMutation.isPending ? "Excluindo..." : "Excluir"}
@@ -383,7 +393,7 @@ export default function Metas() {
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 w-full">
             {metas?.length === 0 && (
               <div className="col-span-full text-center py-10 text-muted-foreground">
-                Nenhuma meta cadastrada. Clique em "Nova Meta" para começar.
+                Nenhuma meta cadastrada. Clique em "Nova meta" para começar.
               </div>
             )}
             {metas?.map((meta) => {
@@ -397,12 +407,12 @@ export default function Metas() {
                   <CardHeader className="pb-2">
                     <div className="flex justify-between items-start">
                       <div className="flex items-center gap-3 flex-1">
-                        <div className={cn("p-2 rounded-lg", isCompleted ? "bg-positive/10" : "bg-gray-50")}>
+                        <div className={cn("p-2 rounded-lg", isCompleted ? "bg-positive/10" : "bg-muted")}>
                           {getIcon(meta.categoria)}
                         </div>
                         <div>
                           <CardTitle className="text-base">{meta.nome}</CardTitle>
-                          <CardDescription>Prazo: {new Date(meta.prazo).toLocaleDateString("pt-BR")}</CardDescription>
+                          <CardDescription>Prazo: {formatDate(meta.prazo)}</CardDescription>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
@@ -421,7 +431,7 @@ export default function Metas() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8 text-red-600 hover:text-red-700"
+                          className="h-8 w-8 text-danger-mid hover:text-danger-strong"
                           onClick={() => handleDeleteClick(meta.id)}
                           aria-label="Excluir meta"
                         >

@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { formatCurrency, formatDateTime, formatNumber, formatPercent } from "./format";
+import {
+  formatCurrency,
+  formatDateTime,
+  formatDecimal,
+  formatNumber,
+  formatNumberCompact,
+  formatPercent,
+} from "./format";
 
 // pt-BR usa espaço não separável entre "R$" e o valor.
 const nbsp = " ";
@@ -41,6 +48,44 @@ describe("formatNumber / formatPercent", () => {
   it("percentual com casas controladas", () => {
     expect(formatPercent(12.345)).toBe("12,3%");
     expect(formatPercent(12.345, 0)).toBe("12%");
+  });
+});
+
+describe("formatDecimal", () => {
+  it("número sem símbolo de moeda, 2 casas por padrão", () => {
+    expect(formatDecimal(1234.5)).toBe("1.234,50");
+  });
+
+  it("casas configuráveis", () => {
+    expect(formatDecimal(3.14159, 3)).toBe("3,142");
+    expect(formatDecimal(10, 0)).toBe("10");
+  });
+
+  it("valor não finito vira 0", () => {
+    expect(formatDecimal(NaN)).toBe("0,00");
+    expect(formatDecimal(Infinity)).toBe("0,00");
+  });
+});
+
+describe("formatNumberCompact", () => {
+  it("abrevia milhar e milhão", () => {
+    expect(formatNumberCompact(1200)).toMatch(/mil/);
+    expect(formatNumberCompact(3_400_000)).toMatch(/mi/);
+  });
+
+  it("valor não finito vira 0", () => {
+    expect(formatNumberCompact(NaN)).toBe("0");
+  });
+});
+
+describe("formatPercent — bordas", () => {
+  it("zero e negativo", () => {
+    expect(formatPercent(0)).toBe("0,0%");
+    expect(formatPercent(-5.5)).toBe("-5,5%");
+  });
+
+  it("valor não finito vira 0%", () => {
+    expect(formatPercent(NaN)).toBe("0,0%");
   });
 });
 

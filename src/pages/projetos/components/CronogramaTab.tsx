@@ -1,10 +1,22 @@
-import { useEffect, useMemo, useRef, useState, useCallback } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Calendar, User, AlertTriangle, Layers, ZoomIn, ZoomOut } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  type GanttDragType,
+  type ZoomLevel,
+  parseDate,
+  addDays,
+  diffDays,
+  endOfMonth,
+  generateColumns,
+  barPosition,
+  toIso,
+} from "@/lib/cronograma";
+import { useGanttDrag } from "@/components/gantt/useGanttDrag";
 import {
   type DisciplinaResponsavel,
   isDiscAtrasada,
@@ -20,24 +32,6 @@ interface CronogramaTabProps {
   onDisciplinaClick?: (disc: DisciplinaResponsavel) => void;
 }
 
-type ZoomLevel = "months" | "weeks";
-type DragType = "left" | "right" | "move";
-
-interface DragState {
-  discIdx: number;
-  type: DragType;
-  startX: number;
-  origStart: Date;
-  origEnd: Date;
-}
-
-interface DragOverride {
-  discIdx: number;
-  start: Date;
-  end: Date;
-  type: DragType;
-}
-
 const CHIP_COLLISION_PCT = 6;
 
 interface MarkerDef {
@@ -51,49 +45,10 @@ interface MarkerDef {
 
 const STATUS_COLORS: Record<string, { bar: string; text: string; bg: string }> = {
   Concluído: { bar: "bg-positive/100", text: "text-positive-strong", bg: "bg-positive/10" },
-  "Em Andamento": { bar: "bg-blue-500", text: "text-blue-700", bg: "bg-blue-50" },
-  Pendente: { bar: "bg-amber-500", text: "text-amber-700", bg: "bg-amber-50" },
-  "Não Iniciado": { bar: "bg-gray-400", text: "text-gray-600", bg: "bg-gray-50" },
+  "Em Andamento": { bar: "bg-status-progress", text: "text-info-strong", bg: "bg-info-soft" },
+  Pendente: { bar: "bg-status-planning", text: "text-warning-mid", bg: "bg-warning-soft" },
+  "Não Iniciado": { bar: "bg-status-unknown", text: "text-ink-muted", bg: "bg-muted" },
 };
-
-function parseDate(d: string | undefined): Date | null {
-  if (!d) return null;
-  const date = new Date(d + "T00:00:00");
-  return isNaN(date.getTime()) ? null : date;
-}
-
-function addDays(date: Date, days: number): Date {
-  const result = new Date(date);
-  result.setDate(result.getDate() + days);
-  return result;
-}
-
-function diffDays(a: Date, b: Date): number {
-  return Math.round((b.getTime() - a.getTime()) / (1000 * 60 * 60 * 24));
-}
-
-function startOfMonth(date: Date): Date {
-  return new Date(date.getFullYear(), date.getMonth(), 1);
-}
-
-function endOfMonth(date: Date): Date {
-  return new Date(date.getFullYear(), date.getMonth() + 1, 0);
-}
-
-function startOfWeek(date: Date): Date {
-  const d = new Date(date);
-  const day = d.getDay();
-  d.setDate(d.getDate() - (day === 0 ? 6 : day - 1));
-  return d;
-}
-
-function formatMonthYear(date: Date): string {
-  return date.toLocaleDateString("pt-BR", { month: "short", year: "numeric" });
-}
-
-function formatWeekLabel(date: Date): string {
-  return date.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
-}
 
 function formatDateBR(d: string | undefined | Date): string {
   if (!d) return "—";
@@ -103,67 +58,6 @@ function formatDateBR(d: string | undefined | Date): string {
 
 function formatDateShort(d: Date): string {
   return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
-}
-
-function toIso(date: Date): string {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-}
-
-const SNAP_BOUNDARY_MONTHS = 4;
-const SNAP_BOUNDARY_WEEKS = 2;
-
-function snapToBoundary(date: Date, zoomLevel: ZoomLevel): Date {
-  if (zoomLevel === "months") {
-    const som = startOfMonth(date);
-    const nextMonth = new Date(date.getFullYear(), date.getMonth() + 1, 1);
-    if (Math.abs(diffDays(som, date)) <= SNAP_BOUNDARY_MONTHS) return som;
-    if (Math.abs(diffDays(nextMonth, date)) <= SNAP_BOUNDARY_MONTHS) return nextMonth;
-  } else {
-    const sow = startOfWeek(date);
-    const nextWeek = addDays(sow, 7);
-    if (Math.abs(diffDays(sow, date)) <= SNAP_BOUNDARY_WEEKS) return sow;
-    if (Math.abs(diffDays(nextWeek, date)) <= SNAP_BOUNDARY_WEEKS) return nextWeek;
-  }
-  return date;
-}
-
-interface TimelineColumn {
-  label: string;
-  start: Date;
-  end: Date;
-}
-
-function generateColumns(timelineStart: Date, timelineEnd: Date, zoom: ZoomLevel): TimelineColumn[] {
-  const cols: TimelineColumn[] = [];
-
-  if (zoom === "months") {
-    let current = startOfMonth(timelineStart);
-    while (current <= timelineEnd) {
-      const monthEnd = endOfMonth(current);
-      cols.push({
-        label: formatMonthYear(current),
-        start: new Date(current),
-        end: monthEnd > timelineEnd ? new Date(timelineEnd) : monthEnd,
-      });
-      current = new Date(current.getFullYear(), current.getMonth() + 1, 1);
-    }
-  } else {
-    let current = startOfWeek(timelineStart);
-    while (current <= timelineEnd) {
-      const weekEnd = addDays(current, 6);
-      cols.push({
-        label: formatWeekLabel(current),
-        start: new Date(current),
-        end: weekEnd > timelineEnd ? new Date(timelineEnd) : weekEnd,
-      });
-      current = addDays(current, 7);
-    }
-  }
-
-  return cols;
 }
 
 export function CronogramaTab({
@@ -176,21 +70,6 @@ export function CronogramaTab({
   const [zoom, setZoom] = useState<ZoomLevel>("months");
   const scrollRef = useRef<HTMLDivElement>(null);
   const timelineRef = useRef<HTMLDivElement>(null);
-
-  // Drag state via ref (stable closures) + minimal state for re-renders
-  const dragRef = useRef<DragState | null>(null);
-  const [dragOverride, setDragOverride] = useState<DragOverride | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
-  // guideX: cursor X in px relative to timeline left (accounts for scroll)
-  const [guideX, setGuideX] = useState<number | null>(null);
-  // isSnapping as both state (for visual) and ref (readable inside useEffect closure)
-  const [isSnapping, setIsSnapping] = useState(false);
-  const isSnappingRef = useRef(false);
-  // zoomRef: keeps zoom level readable inside useEffect closures
-  const zoomRef = useRef<ZoomLevel>(zoom);
-  useEffect(() => {
-    zoomRef.current = zoom;
-  }, [zoom]);
   // collapsible section for disciplines without dates
   const [discsSemDatasExpanded, setDiscsSemDatasExpanded] = useState(false);
 
@@ -261,15 +140,13 @@ export function CronogramaTab({
       let leftPct = 0;
       let widthPct = 0;
 
-      if (start && end && totalDays > 0) {
-        leftPct = Math.max(0, (diffDays(tlStart, start) / totalDays) * 100);
-        widthPct = Math.max(1, (diffDays(start, end) / totalDays) * 100);
+      if (start && end) {
+        ({ leftPct, widthPct } = barPosition(start, end, tlStart, tlEnd));
       } else if (start && totalDays > 0) {
         leftPct = Math.max(0, (diffDays(tlStart, start) / totalDays) * 100);
         widthPct = 2;
+        if (leftPct + widthPct > 100) widthPct = 100 - leftPct;
       }
-
-      if (leftPct + widthPct > 100) widthPct = 100 - leftPct;
 
       return { disc, start, end, resps, atrasada, deadlineStatus, status, colors, leftPct, widthPct, beyondProjectEnd };
     });
@@ -311,89 +188,29 @@ export function CronogramaTab({
     if (todayPct >= 0) scrollToToday();
   }, [todayPct]);
 
-  // ── Drag logic ──────────────────────────────────────────────────────────────
+  // ── Drag: motor compartilhado + guarda-chuva do projeto ──────────────────────
 
-  const pxPerDay = useCallback((): number => {
-    if (!timelineRef.current) return 1;
-    const totalDays = diffDays(timelineStart, timelineEnd);
-    return totalDays > 0 ? timelineRef.current.offsetWidth / totalDays : 1;
-  }, [timelineStart, timelineEnd]);
-
-  const startDrag = useCallback(
-    (e: React.MouseEvent, discIdx: number, type: DragType) => {
-      if (!onDatesChange) return;
-      e.preventDefault();
-      e.stopPropagation();
-
-      const row = rows[discIdx];
-      if (!row.start || !row.end) return;
-
-      dragRef.current = {
-        discIdx,
-        type,
-        startX: e.clientX,
-        origStart: new Date(row.start),
-        origEnd: new Date(row.end),
-      };
-    },
-    [rows, onDatesChange]
-  );
-
-  const startTouchDrag = useCallback(
-    (e: React.TouchEvent, discIdx: number, type: DragType) => {
-      if (!onDatesChange) return;
-      e.preventDefault();
-      e.stopPropagation();
-      const touch = e.touches[0];
-      const row = rows[discIdx];
-      if (!row.start || !row.end) return;
-      dragRef.current = {
-        discIdx,
-        type,
-        startX: touch.clientX,
-        origStart: new Date(row.start),
-        origEnd: new Date(row.end),
-      };
-    },
-    [rows, onDatesChange]
-  );
-
-  useEffect(() => {
-    const resetDrag = () => {
-      dragRef.current = null;
-      setDragOverride(null);
-      setGuideX(null);
-      isSnappingRef.current = false;
-      setIsSnapping(false);
-    };
-
-    const applyDragDelta = (clientX: number) => {
-      const drag = dragRef.current;
-      if (!drag) return;
-
-      const deltaX = clientX - drag.startX;
-      const deltaDays = Math.round(deltaX / pxPerDay());
-
-      let newStart = new Date(drag.origStart);
-      let newEnd = new Date(drag.origEnd);
-
-      if (drag.type === "left") {
-        newStart = addDays(drag.origStart, deltaDays);
-        if (newStart >= newEnd) newStart = addDays(newEnd, -1);
-        // Snap to month/week boundary on start handle
-        newStart = snapToBoundary(newStart, zoomRef.current);
-      } else if (drag.type === "right") {
-        newEnd = addDays(drag.origEnd, deltaDays);
-        if (newEnd <= newStart) newEnd = addDays(newStart, 1);
-        // Snap to month/week boundary on end handle
-        newEnd = snapToBoundary(newEnd, zoomRef.current);
-      } else {
-        newStart = addDays(drag.origStart, deltaDays);
-        newEnd = addDays(drag.origEnd, deltaDays);
-      }
-
-      // Guarda-chuva do projeto: a disciplina não sai das datas do projeto —
-      // nem antes do início, nem depois da previsão.
+  const {
+    override: dragOverride,
+    guideX,
+    isSaving,
+    isDragging,
+    startDrag,
+    getBarGeometry,
+    guideDateLabel,
+    shouldSuppressClick,
+  } = useGanttDrag<number>({
+    timelineStart,
+    timelineEnd,
+    zoom,
+    enabled: !!onDatesChange,
+    timelineRef,
+    scrollRef,
+    // Guarda-chuva: a disciplina não sai das datas do projeto (nem antes do
+    // início, nem depois da previsão). Clampou ⇒ snapping ⇒ não salva.
+    constrain: ({ start, end, type }) => {
+      let newStart = start;
+      let newEnd = end;
       let snapping = false;
       const projStart = parseDate(projetoDataInicio);
       const projEnd = parseDate(projetoDataPrevisao);
@@ -401,129 +218,34 @@ export function CronogramaTab({
 
       if (projEnd && newEnd > projEnd) {
         newEnd = projEnd;
-        if (drag.type === "move") newStart = addDays(projEnd, -dur);
+        if (type === "move") newStart = addDays(projEnd, -dur);
         snapping = true;
       }
       if (projStart && newStart < projStart) {
         newStart = projStart;
-        if (drag.type === "move") newEnd = addDays(projStart, dur);
+        if (type === "move") newEnd = addDays(projStart, dur);
         snapping = true;
       }
-      // Projeto mais curto que a barra arrastada: preenche o intervalo do projeto.
       if (projStart && newStart < projStart) newStart = projStart;
       if (projEnd && newEnd > projEnd) newEnd = projEnd;
       if (newStart >= newEnd && projStart && projEnd) {
         newStart = projStart;
         newEnd = projEnd;
       }
+      return { start: newStart, end: newEnd, snapping };
+    },
+    skipCommitWhenSnapping: true,
+    onCommit: async (rowIdx, { start, end }) => {
+      if (!onDatesChange) return;
+      await onDatesChange(rowIdx, { data_inicio: toIso(start), data_previsao: toIso(end) });
+    },
+  });
 
-      isSnappingRef.current = snapping;
-      setIsSnapping(snapping);
-      setDragOverride({ discIdx: drag.discIdx, start: newStart, end: newEnd, type: drag.type });
-    };
-
-    const onMouseMove = (e: MouseEvent) => {
-      if (!dragRef.current) return;
-
-      // Compute cursor X relative to timeline (includes scroll offset)
-      if (timelineRef.current && scrollRef.current) {
-        const rect = timelineRef.current.getBoundingClientRect();
-        const x = e.clientX - rect.left + scrollRef.current.scrollLeft;
-        setGuideX(Math.max(0, x));
-      }
-
-      applyDragDelta(e.clientX);
-    };
-
-    const onTouchMove = (e: TouchEvent) => {
-      if (!dragRef.current) return;
-      e.preventDefault();
-      const touch = e.touches[0];
-
-      if (timelineRef.current && scrollRef.current) {
-        const rect = timelineRef.current.getBoundingClientRect();
-        const x = touch.clientX - rect.left + scrollRef.current.scrollLeft;
-        setGuideX(Math.max(0, x));
-      }
-
-      applyDragDelta(touch.clientX);
-    };
-
-    const commitDrag = async () => {
-      const drag = dragRef.current;
-      const override = dragOverride;
-      const wasSnapping = isSnappingRef.current;
-      resetDrag();
-
-      if (!drag || !override || !onDatesChange) return;
-      if (wasSnapping) return;
-      if (toIso(override.start) === toIso(drag.origStart) && toIso(override.end) === toIso(drag.origEnd)) return;
-
-      setIsSaving(true);
-      try {
-        await onDatesChange(override.discIdx, {
-          data_inicio: toIso(override.start),
-          data_previsao: toIso(override.end),
-        });
-      } finally {
-        setIsSaving(false);
-      }
-    };
-
-    const onMouseUp = () => commitDrag();
-    const onTouchEnd = () => commitDrag();
-
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && dragRef.current) resetDrag();
-    };
-
-    document.addEventListener("mousemove", onMouseMove);
-    document.addEventListener("mouseup", onMouseUp);
-    document.addEventListener("touchmove", onTouchMove, { passive: false });
-    document.addEventListener("touchend", onTouchEnd);
-    document.addEventListener("keydown", onKeyDown);
-    return () => {
-      document.removeEventListener("mousemove", onMouseMove);
-      document.removeEventListener("mouseup", onMouseUp);
-      document.removeEventListener("touchmove", onTouchMove);
-      document.removeEventListener("touchend", onTouchEnd);
-      document.removeEventListener("keydown", onKeyDown);
-    };
-  }, [dragOverride, onDatesChange, pxPerDay, projetoDataInicio, projetoDataPrevisao]);
-
-  // ── Bar geometry (with drag override) ───────────────────────────────────────
-
-  const getBarGeometry = (rowIdx: number) => {
-    const totalDays = diffDays(timelineStart, timelineEnd);
-    if (totalDays <= 0) return null;
-
-    const override = dragOverride?.discIdx === rowIdx ? dragOverride : null;
-    const start = override ? override.start : rows[rowIdx].start;
-    const end = override ? override.end : rows[rowIdx].end;
-    if (!start || !end) return null;
-
-    const leftPct = Math.max(0, (diffDays(timelineStart, start) / totalDays) * 100);
-    let widthPct = Math.max(1, (diffDays(start, end) / totalDays) * 100);
-    if (leftPct + widthPct > 100) widthPct = 100 - leftPct;
-
-    return { leftPct, widthPct, start, end };
-  };
-
-  // ── Guide line date label ────────────────────────────────────────────────────
-
-  const guideDateLabel = (): string => {
-    if (guideX === null || !timelineRef.current) return "";
-    const totalDays = diffDays(timelineStart, timelineEnd);
-    const totalWidth = timelineRef.current.offsetWidth;
-    if (totalWidth <= 0) return "";
-    const dayOffset = Math.round((guideX / totalWidth) * totalDays);
-    const d = addDays(timelineStart, Math.max(0, Math.min(totalDays, dayOffset)));
-    return formatDateShort(d);
-  };
+  const isSnapping = dragOverride?.snapping ?? false;
 
   // ── Drag tooltip label content ───────────────────────────────────────────────
 
-  const getDragLabel = (geo: { start: Date; end: Date }, type: DragType): string => {
+  const getDragLabel = (geo: { start: Date; end: Date }, type: GanttDragType): string => {
     const dur = diffDays(geo.start, geo.end);
     const durLabel = `${dur}d`;
     if (type === "left") return `Início: ${formatDateBR(geo.start)} · ${durLabel}`;
@@ -594,8 +316,6 @@ export function CronogramaTab({
     return !resps.some((r) => r.data_inicio || r.data_previsao);
   });
 
-  const isDragging = dragRef.current !== null || dragOverride !== null;
-
   return (
     <div className="space-y-4" style={{ userSelect: isDragging ? "none" : undefined }}>
       {/* Header */}
@@ -646,7 +366,7 @@ export function CronogramaTab({
       </Card>
 
       {discsSemDatas.length > 0 && (
-        <div className="rounded-lg border border-amber-200 bg-amber-50 text-amber-800 text-xs overflow-hidden">
+        <div className="rounded-lg border border-warning-mid-border bg-warning-soft text-warning-strong text-xs overflow-hidden">
           <button
             className="flex items-center gap-2 px-3 py-2 w-full text-left hover:bg-amber-100/60 transition-colors"
             onClick={() => setDiscsSemDatasExpanded((v) => !v)}
@@ -656,10 +376,10 @@ export function CronogramaTab({
               {discsSemDatas.length} disciplina{discsSemDatas.length > 1 ? "s" : ""} sem datas definidas — não exibidas
               no gráfico
             </span>
-            <span className="text-[10px] text-amber-600 opacity-70">{discsSemDatasExpanded ? "▲" : "▼"}</span>
+            <span className="text-[10px] text-warning-mid opacity-70">{discsSemDatasExpanded ? "▲" : "▼"}</span>
           </button>
           {discsSemDatasExpanded && (
-            <div className="border-t border-amber-200 px-3 py-2 space-y-0.5">
+            <div className="border-t border-warning-mid-border px-3 py-2 space-y-0.5">
               {discsSemDatas.map((d) => (
                 <div key={d.disciplina} className="flex items-center gap-1.5 py-0.5">
                   <span className="font-medium">{d.disciplina}</span>
@@ -684,11 +404,11 @@ export function CronogramaTab({
               {rows.map((row, i) => (
                 <div
                   key={i}
-                  className={cn("h-14 border-b px-3 flex flex-col justify-center", row.atrasada && "bg-red-50/40")}
+                  className={cn("h-14 border-b px-3 flex flex-col justify-center", row.atrasada && "bg-danger-soft/40")}
                 >
                   <div className="flex items-center gap-1.5">
                     <span className="text-xs font-medium truncate">{row.disc.disciplina}</span>
-                    {row.atrasada && <AlertTriangle className="h-3 w-3 text-red-500 flex-shrink-0" />}
+                    {row.atrasada && <AlertTriangle className="h-3 w-3 text-danger-mid flex-shrink-0" />}
                   </div>
                   <div className="flex items-center gap-1 mt-0.5">
                     <User className="h-2.5 w-2.5 text-muted-foreground" />
@@ -740,7 +460,7 @@ export function CronogramaTab({
                   {/* Grid lines */}
                   <div className="absolute inset-0 flex pointer-events-none" aria-hidden>
                     {columns.map((_, i) => (
-                      <div key={i} className="flex-1 border-r last:border-r-0 border-dashed border-gray-100" />
+                      <div key={i} className="flex-1 border-r last:border-r-0 border-dashed border-border" />
                     ))}
                   </div>
 
@@ -769,8 +489,9 @@ export function CronogramaTab({
                   {/* Discipline rows */}
                   <TooltipProvider delayDuration={200}>
                     {rows.map((row, i) => {
-                      const geo = getBarGeometry(i);
-                      const isThisDragging = dragOverride?.discIdx === i;
+                      const base = row.start && row.end ? { start: row.start, end: row.end } : null;
+                      const geo = getBarGeometry(i, base);
+                      const isThisDragging = dragOverride?.key === i;
                       const canDrag = !!onDatesChange && !!geo;
                       // During drag, recompute beyondProjectEnd from override dates
                       const projEndDate = parseDate(projetoDataPrevisao);
@@ -778,7 +499,7 @@ export function CronogramaTab({
                       const isBeyondEnd = !!(projEndDate && effectiveEnd && effectiveEnd > projEndDate);
 
                       return (
-                        <div key={i} className={cn("h-14 border-b relative", row.atrasada && "bg-red-50/20")}>
+                        <div key={i} className={cn("h-14 border-b relative", row.atrasada && "bg-danger-soft/20")}>
                           {geo && (
                             <Tooltip open={isThisDragging ? false : undefined}>
                               <TooltipTrigger asChild>
@@ -786,15 +507,15 @@ export function CronogramaTab({
                                   className={cn(
                                     "absolute top-3 h-8 rounded-md flex items-center overflow-visible shadow-sm border border-black/5 transition-shadow",
                                     row.colors.bar,
-                                    row.atrasada && !isBeyondEnd && "ring-2 ring-red-300 ring-offset-1",
-                                    isBeyondEnd && !isThisDragging && "ring-2 ring-orange-400 ring-offset-1",
+                                    row.atrasada && !isBeyondEnd && "ring-2 ring-danger-mid-border ring-offset-1",
+                                    isBeyondEnd && !isThisDragging && "ring-2 ring-attention-mid-border ring-offset-1",
                                     isThisDragging &&
                                       !isSnapping &&
                                       !isBeyondEnd &&
                                       "opacity-90 ring-2 ring-white/60 shadow-md",
                                     isThisDragging &&
                                       (isSnapping || isBeyondEnd) &&
-                                      "opacity-90 ring-2 ring-orange-400 ring-offset-1 shadow-md"
+                                      "opacity-90 ring-2 ring-attention-mid-border ring-offset-1 shadow-md"
                                   )}
                                   style={{
                                     left: `${geo.leftPct}%`,
@@ -806,8 +527,16 @@ export function CronogramaTab({
                                   {canDrag && (
                                     <div
                                       className="absolute left-0 top-0 bottom-0 w-4 cursor-col-resize z-10 flex items-center justify-center group/handle rounded-l-md hover:bg-black/20 transition-colors"
-                                      onMouseDown={(e) => startDrag(e, i, "left")}
-                                      onTouchStart={(e) => startTouchDrag(e, i, "left")}
+                                      onMouseDown={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        startDrag(e.clientX, i, "left", base);
+                                      }}
+                                      onTouchStart={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        startDrag(e.touches[0].clientX, i, "left", base);
+                                      }}
                                     >
                                       <div className="flex gap-[3px]">
                                         <div className="w-px h-3.5 bg-white/55 rounded group-hover/handle:bg-white transition-colors" />
@@ -823,17 +552,33 @@ export function CronogramaTab({
                                       canDrag ? "mx-4 cursor-grab active:cursor-grabbing" : "mx-2",
                                       onDisciplinaClick && "cursor-pointer"
                                     )}
-                                    onMouseDown={canDrag ? (e) => startDrag(e, i, "move") : undefined}
-                                    onTouchStart={canDrag ? (e) => startTouchDrag(e, i, "move") : undefined}
+                                    onMouseDown={
+                                      canDrag
+                                        ? (e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            startDrag(e.clientX, i, "move", base);
+                                          }
+                                        : undefined
+                                    }
+                                    onTouchStart={
+                                      canDrag
+                                        ? (e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            startDrag(e.touches[0].clientX, i, "move", base);
+                                          }
+                                        : undefined
+                                    }
                                     onClick={() => {
-                                      if (dragRef.current) return;
+                                      if (shouldSuppressClick()) return;
                                       onDisciplinaClick?.(row.disc);
                                     }}
                                   >
                                     {/* Progress fill for Em Andamento */}
                                     {row.status === "Em Andamento" && row.start && row.end && (
                                       <div
-                                        className="absolute inset-0 bg-blue-700/30 rounded-md"
+                                        className="absolute inset-0 bg-status-progress/30 rounded-md"
                                         style={{
                                           width: `${Math.min(
                                             100,
@@ -854,8 +599,16 @@ export function CronogramaTab({
                                   {canDrag && (
                                     <div
                                       className="absolute right-0 top-0 bottom-0 w-4 cursor-col-resize z-10 flex items-center justify-center group/handle rounded-r-md hover:bg-black/20 transition-colors"
-                                      onMouseDown={(e) => startDrag(e, i, "right")}
-                                      onTouchStart={(e) => startTouchDrag(e, i, "right")}
+                                      onMouseDown={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        startDrag(e.clientX, i, "right", base);
+                                      }}
+                                      onTouchStart={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        startDrag(e.touches[0].clientX, i, "right", base);
+                                      }}
                                     >
                                       <div className="flex gap-[3px]">
                                         <div className="w-px h-3.5 bg-white/55 rounded group-hover/handle:bg-white transition-colors" />
@@ -915,7 +668,7 @@ export function CronogramaTab({
                               <div
                                 className={cn(
                                   "text-white text-[10px] px-2 py-1 rounded-md whitespace-nowrap shadow-lg font-medium",
-                                  isSnapping ? "bg-orange-600" : isBeyondEnd ? "bg-orange-500" : "bg-gray-900/90"
+                                  isSnapping ? "bg-orange-600" : isBeyondEnd ? "bg-orange-500" : "bg-ink/90"
                                 )}
                               >
                                 {getDragLabel(geo, dragOverride.type)}

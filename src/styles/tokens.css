@@ -178,6 +178,22 @@
   --status-cancelled: var(--c-red-500);
   --status-unknown: var(--c-gray-500);
 
+  /* ── Fill sólido/saturado (ADR 0008 D6) ───────────────────── */
+  /* Fundo CHEIO e saturado para banner, CTA de alerta e badge sólido, com
+   * texto claro/escuro por cima (par -fg com contraste AA). Diferente das
+   * tinted surfaces (-soft), que são fundo suave. Consumir via classes bg-fill-X
+   * com o par text-fill-X-foreground. */
+  --fill-danger: var(--c-red-600); /* banner urgente / destrutivo cheio */
+  --fill-danger-fg: 0 0% 100%; /* branco (12.6:1 sobre red-600) */
+  --fill-warning: var(--c-amber-500); /* aviso sólido */
+  --fill-warning-fg: var(--c-ink-900); /* tinta (amarelo pede texto escuro) */
+  --fill-attention: var(--c-orange-500); /* atenção sólida */
+  --fill-attention-fg: 0 0% 100%;
+  --fill-info: var(--c-blue-600); /* info sólida */
+  --fill-info-fg: 0 0% 100%;
+  --fill-success: var(--c-green-600); /* sucesso sólido */
+  --fill-success-fg: 0 0% 100%;
+
   /* ── Tinted surfaces / strong text para KPIs e badges ─────── */
   /* Cada família expõe três aliases:
    *   surface-*-soft   → bg sutil (50)

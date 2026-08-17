@@ -16,6 +16,7 @@ import {
 import { type TemplateProjeto } from "@/hooks/useTemplates";
 import type { FluxoDisciplinas } from "@/types/fluxoDisciplinas";
 import { toast } from "sonner";
+import { getSafeErrorMessage } from "@/lib/safeError";
 import { useBulkSaveDisciplinas } from "@/hooks/useProjetoDisciplinas";
 import { useFormPersist, clearFormPersist } from "@/hooks/useFormPersist";
 
@@ -625,7 +626,10 @@ export function useProjetoForm({
       } else {
         // Código gerado automático (PRJ-XXXX sequencial por empresa): não se pede
         // ao usuário. A RLS de projetos escopa a busca à empresa do chamador.
-        const { data: codigosExistentes } = await supabase.from("projetos").select("codigo_projeto");
+        const { data: codigosExistentes } = await supabase
+          .from("projetos")
+          .select("codigo_projeto")
+          .is("deleted_at", null);
         let maxSeq = 0;
         for (const c of codigosExistentes ?? []) {
           const m = /^PRJ-(\d+)$/i.exec((c.codigo_projeto ?? "").trim());
@@ -697,7 +701,9 @@ export function useProjetoForm({
             p_dia_fixo: diaFixo,
           });
           if (parcelasError) {
-            toast.error("Projeto salvo, mas falhou ao gerar parcelas", { description: parcelasError.message });
+            toast.error("Projeto salvo, mas as parcelas não foram geradas", {
+              description: getSafeErrorMessage(parcelasError, "Gere as parcelas de novo na aba de pagamentos."),
+            });
           } else {
             toast.success(`${numParcelas} parcela(s) geradas`, {
               description: `Vencimento dia ${diaFixo} de cada mês`,

@@ -32,7 +32,7 @@ export function useLancamentosFiltersData(): FiltersData {
       try {
         const [cats, projs, clis, forns] = await Promise.all([
           supabase.from("categorias_financeiras").select("id, nome, tipo").order("nome"),
-          supabase.from("projetos").select("id, codigo_projeto").order("nome"),
+          supabase.from("projetos").select("id, codigo_projeto").is("deleted_at", null).order("nome"),
           supabase.from("clientes").select("id, nome").order("nome"),
           // gen:types não inclui "fornecedores" ainda; cast defensivo até regeneração.
           supabase.from("fornecedores").select("id, nome").order("nome") as unknown as Promise<{

@@ -1,13 +1,10 @@
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, DollarSign } from "lucide-react";
-import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-import { formatCurrency } from "@/lib/currencyUtils";
+import { formatCurrency, formatDateShort } from "@/lib/format";
 import type { Fatura } from "../hooks/useFaturas";
 import type { ContaItem } from "../hooks/useContasCartoes";
 import { MESES, vencimentoRelativo } from "./faturaHelpers";
-
-const formatBRL = (v: number) => v.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
 
 interface CarteiraOverviewProps {
   contas: ContaItem[];
@@ -33,7 +30,7 @@ export function CarteiraOverview({ contas, faturas, onDetalhe, onPagar }: Cartei
         </div>
         <div className="p-5 rounded-lg border bg-muted/30">
           <p className="text-xs text-muted-foreground mb-1">Faturas a pagar</p>
-          <p className={cn("text-3xl font-bold", totalAPagar > 0 && "text-red-600")}>{formatCurrency(totalAPagar)}</p>
+          <p className={cn("text-3xl font-bold", totalAPagar > 0 && "text-negative-strong")}>{formatCurrency(totalAPagar)}</p>
           <p className="text-xs text-muted-foreground mt-1">
             {faturas.length} fatura{faturas.length === 1 ? "" : "s"} em aberto
           </p>
@@ -67,19 +64,19 @@ export function CarteiraOverview({ contas, faturas, onDetalhe, onPagar }: Cartei
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium truncate">{f.cartao_nome}</p>
                     <p className="text-xs text-muted-foreground">
-                      {MESES[f.mes_referencia - 1]} · vence {format(new Date(f.data_vencimento + "T00:00:00"), "dd/MM")}
+                      {MESES[f.mes_referencia - 1]} · vence {formatDateShort(f.data_vencimento)}
                     </p>
                   </div>
                   <span
                     className={cn(
                       "text-xs shrink-0 tabular-nums",
-                      venc.vencida ? "text-red-600 font-medium" : "text-muted-foreground"
+                      venc.vencida ? "text-danger-mid font-medium" : "text-muted-foreground"
                     )}
                   >
                     {venc.label}
                   </span>
                   <span className="text-sm font-semibold shrink-0 tabular-nums w-28 text-right">
-                    R$ {formatBRL(restante)}
+                    {formatCurrency(restante)}
                   </span>
                   {isPagavel ? (
                     <Button

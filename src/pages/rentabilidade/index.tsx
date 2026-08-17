@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatCurrency as fmtMoeda } from "@/lib/format";
+import { formatCurrency } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -13,15 +13,13 @@ import {
   useProjetosDrenandoCaixa,
 } from "@/hooks/useRentabilidade";
 
-const formatCurrency = (value: number) => fmtMoeda(value);
-
 const formatPct = (value: number) => `${value.toFixed(1)}%`;
 
 function MargemBadge({ pct }: { pct: number }) {
   if (pct >= 30) return <Badge className="bg-positive/10 text-positive-strong text-xs">{formatPct(pct)}</Badge>;
-  if (pct >= 15) return <Badge className="bg-yellow-100 text-yellow-800 text-xs">{formatPct(pct)}</Badge>;
-  if (pct >= 0) return <Badge className="bg-orange-100 text-orange-800 text-xs">{formatPct(pct)}</Badge>;
-  return <Badge className="bg-red-100 text-red-800 text-xs">{formatPct(pct)}</Badge>;
+  if (pct >= 15) return <Badge variant="warning" className="text-xs">{formatPct(pct)}</Badge>;
+  if (pct >= 0) return <Badge variant="attention" className="text-xs">{formatPct(pct)}</Badge>;
+  return <Badge variant="danger" className="text-xs">{formatPct(pct)}</Badge>;
 }
 
 export default function Rentabilidade() {
@@ -153,7 +151,7 @@ export default function Rentabilidade() {
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium flex items-center gap-2">
-                  <TrendingDown className="h-4 w-4 text-red-600" /> Menos Rentáveis
+                  <TrendingDown className="h-4 w-4 text-negative-strong" /> Menos Rentáveis
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -227,7 +225,7 @@ export default function Rentabilidade() {
                           <TableCell className="text-xs py-2 text-center">
                             {p.horas_orcadas > 0 ? (
                               <span
-                                className={p.horas_consumidas > p.horas_orcadas ? "text-red-600 font-semibold" : ""}
+                                className={p.horas_consumidas > p.horas_orcadas ? "text-danger-mid font-semibold" : ""}
                               >
                                 {p.horas_consumidas.toFixed(0)}/{p.horas_orcadas.toFixed(0)}h
                               </span>
@@ -292,12 +290,12 @@ function RentabilidadePorClienteTab() {
   return (
     <div className="space-y-6">
       {clienteConcentrado && (
-        <Card className="border-amber-200 bg-amber-50">
+        <Card className="border-warning-mid-border bg-warning-soft">
           <CardContent className="p-4 flex items-center gap-3">
-            <AlertTriangle className="h-5 w-5 text-amber-600 flex-shrink-0" />
+            <AlertTriangle className="h-5 w-5 text-warning-mid flex-shrink-0" />
             <div>
-              <p className="text-sm font-medium text-amber-800">Risco de concentração</p>
-              <p className="text-xs text-amber-700">
+              <p className="text-sm font-medium text-warning-strong">Risco de concentração</p>
+              <p className="text-xs text-warning-mid">
                 {clienteConcentrado.cliente_nome} representa {clienteConcentrado.concentracao_pct.toFixed(0)}% da
                 receita total. Diversifique sua base para reduzir risco.
               </p>
@@ -447,12 +445,14 @@ function RiscosTab() {
         </Card>
       ) : (
         <>
-          <Card className="border-red-200 bg-red-50">
+          <Card className="border-danger-mid-border bg-danger-soft">
             <CardContent className="p-4 flex items-center gap-3">
-              <AlertTriangle className="h-5 w-5 text-red-600 flex-shrink-0" />
+              <AlertTriangle className="h-5 w-5 text-danger-mid flex-shrink-0" />
               <div>
-                <p className="text-sm font-medium text-red-800">{projetosDrenando.length} projeto(s) drenando caixa</p>
-                <p className="text-xs text-red-700">Déficit total: {formatCurrency(totalDeficit)}</p>
+                <p className="text-sm font-medium text-danger-strong">
+                  {projetosDrenando.length} projeto(s) drenando caixa
+                </p>
+                <p className="text-xs text-danger-strong">Déficit total: {formatCurrency(totalDeficit)}</p>
               </div>
             </CardContent>
           </Card>
@@ -460,7 +460,7 @@ function RiscosTab() {
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <TrendingDown className="h-4 w-4 text-red-600" /> Projetos com Margem Negativa
+                <TrendingDown className="h-4 w-4 text-negative-strong" /> Projetos com Margem Negativa
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -479,7 +479,7 @@ function RiscosTab() {
                   </TableHeader>
                   <TableBody>
                     {projetosDrenando.map((p) => (
-                      <TableRow key={p.projeto_id} className="bg-red-50/50">
+                      <TableRow key={p.projeto_id} className="bg-danger-soft/50">
                         <TableCell className="text-xs py-2">
                           <span className="font-medium">{p.codigo_projeto}</span>
                           <span className="text-muted-foreground ml-1">- {p.projeto_nome}</span>
@@ -491,7 +491,7 @@ function RiscosTab() {
                         </TableCell>
                         <TableCell className="text-xs py-2 text-right">{formatCurrency(p.receitas_total)}</TableCell>
                         <TableCell className="text-xs py-2 text-right">{formatCurrency(p.despesas_diretas)}</TableCell>
-                        <TableCell className="text-xs py-2 text-right text-red-600 font-semibold">
+                        <TableCell className="text-xs py-2 text-right text-negative-strong font-semibold">
                           {formatCurrency(Math.abs(p.margem_bruta))}
                         </TableCell>
                         <TableCell className="text-xs py-2 text-center">
@@ -499,7 +499,7 @@ function RiscosTab() {
                         </TableCell>
                         <TableCell className="text-xs py-2 text-center">
                           {p.horas_orcadas > 0 ? (
-                            <span className={p.horas_consumidas > p.horas_orcadas ? "text-red-600 font-semibold" : ""}>
+                            <span className={p.horas_consumidas > p.horas_orcadas ? "text-danger-mid font-semibold" : ""}>
                               {p.horas_consumidas.toFixed(0)}/{p.horas_orcadas.toFixed(0)}h
                             </span>
                           ) : (
