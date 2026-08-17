@@ -113,13 +113,14 @@ const sentryMonitoring: Monitoring = {
     Sentry.init({
       dsn: DSN,
       environment: ENV,
+      release: __SENTRY_RELEASE__,
       tracesSampleRate: TRACES_RATE,
       replaysSessionSampleRate: 0,
       replaysOnErrorSampleRate: 1.0,
       sendDefaultPii: false,
       integrations: [
         Sentry.browserTracingIntegration(),
-        Sentry.replayIntegration({ maskAllText: true, blockAllMedia: true }),
+        Sentry.replayIntegration({ maskAllText: false, blockAllMedia: false }),
       ],
       beforeSendTransaction(event) {
         const txName = event.transaction ?? "";
