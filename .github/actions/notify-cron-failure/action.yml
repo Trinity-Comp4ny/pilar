@@ -10,7 +10,15 @@ inputs:
     description: Nome legível do job agendado (ex.- "Extrato Itaú")
     required: true
   token:
-    description: Token com permissão issues:write (use ${{ github.token }})
+    # Nunca escrever a sintaxe de expressão literal (chaves duplas) aqui: o
+    # parser do runner avalia QUALQUER "${{ }}" que encontrar no arquivo,
+    # mesmo dentro de um campo de texto livre como este, e "github" não é um
+    # contexto válido nesse ponto — o load da action inteira falha com
+    # "Unrecognized named-value: 'github'" (achado real, 17/08: quebrava
+    # bem na hora que o job agendado falhava, ou seja, o próprio aviso de
+    # "cron quebrado" ficava quebrado). Passe o token do contexto github.token
+    # do workflow que CHAMA esta action.
+    description: Token com permissão issues:write (passe o token de contexto do GitHub do workflow chamador)
     required: true
 
 runs:
