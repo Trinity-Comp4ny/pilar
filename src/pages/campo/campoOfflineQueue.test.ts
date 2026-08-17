@@ -4,6 +4,7 @@ import {
   sincronizarItem,
   type FilaDiaItem,
   type FilaFoto,
+  type FilaMedicao,
   type FilaStore,
   type SincronizarDeps,
 } from "./campoOfflineQueue";
@@ -25,13 +26,28 @@ const foto = (over: Partial<FilaFoto> = {}): FilaFoto => ({
   ...over,
 });
 
+const medicao = (over: Partial<FilaMedicao> = {}): FilaMedicao => ({
+  item: "Concreto",
+  quantidade: 12.5,
+  unidade: "m3",
+  enviada: false,
+  ...over,
+});
+
 const item = (over: Partial<FilaDiaItem> = {}): FilaDiaItem => ({
   id: "item-1",
   criadoEm: 1000,
   dia: dia(),
   fotos: [],
+  medicoes: [],
   tentativas: 0,
   ...over,
+});
+
+const depsOk = (): SincronizarDeps => ({
+  salvarRdo: async () => ({ ok: true, rdoId: "rdo-1" }),
+  subirFoto: async () => ({ ok: true }),
+  registrarMedicao: async () => ({ ok: true }),
 });
 
 function memStore(itens: FilaDiaItem[] = []): FilaStore {
@@ -51,32 +67,25 @@ function memStore(itens: FilaDiaItem[] = []): FilaStore {
 
 describe("sincronizarItem", () => {
   it("cria o RDO e sobe as fotos quando tudo dá certo", async () => {
-    const deps: SincronizarDeps = {
-      salvarRdo: async () => ({ ok: true, rdoId: "rdo-1" }),
-      subirFoto: async () => ({ ok: true }),
-    };
-    const r = await sincronizarItem(item({ fotos: [foto(), foto()] }), deps);
+    const r = await sincronizarItem(item({ fotos: [foto(), foto()] }), depsOk());
     expect(r.ok).toBe(true);
   });
 
   it("não chama salvarRdo de novo quando já tem rdoId (evita duplicar o dia)", async () => {
     let chamadasSalvar = 0;
     const deps: SincronizarDeps = {
+      ...depsOk(),
       salvarRdo: async () => {
         chamadasSalvar++;
         return { ok: true, rdoId: "rdo-1" };
       },
-      subirFoto: async () => ({ ok: true }),
     };
     await sincronizarItem(item({ rdoId: "rdo-existente", fotos: [foto()] }), deps);
     expect(chamadasSalvar).toBe(0);
   });
 
   it("falha ao salvar o RDO: devolve o item com tentativas+1 e sem rdoId", async () => {
-    const deps: SincronizarDeps = {
-      salvarRdo: async () => ({ ok: false, erro: "sem rede" }),
-      subirFoto: async () => ({ ok: true }),
-    };
+    const deps: SincronizarDeps = { ...depsOk(), salvarRdo: async () => ({ ok: false, erro: "sem rede" }) };
     const r = await sincronizarItem(item({ tentativas: 2 }), deps);
     expect(r.ok).toBe(false);
     if (!r.ok) {
@@ -88,7 +97,7 @@ describe("sincronizarItem", () => {
 
   it("RDO sobe mas 1 de 2 fotos falha: marca só a que subiu como enviada e guarda o rdoId", async () => {
     const deps: SincronizarDeps = {
-      salvarRdo: async () => ({ ok: true, rdoId: "rdo-1" }),
+      ...depsOk(),
       subirFoto: async (_rdoId, f) => (f.imageBase64 === "falha" ? { ok: false } : { ok: true }),
     };
     const r = await sincronizarItem(item({ fotos: [foto({ imageBase64: "ok" }), foto({ imageBase64: "falha" })] }), deps);
@@ -103,7 +112,7 @@ describe("sincronizarItem", () => {
   it("retry não reenvia foto já marcada enviada (idempotência)", async () => {
     let chamadasUpload = 0;
     const deps: SincronizarDeps = {
-      salvarRdo: async () => ({ ok: true, rdoId: "rdo-1" }),
+      ...depsOk(),
       subirFoto: async () => {
         chamadasUpload++;
         return { ok: true };
@@ -114,30 +123,62 @@ describe("sincronizarItem", () => {
     expect(r.ok).toBe(true);
     expect(chamadasUpload).toBe(1); // só a pendente
   });
+
+  it("registra as medições pendentes quando tudo dá certo", async () => {
+    let chamadas = 0;
+    const deps: SincronizarDeps = {
+      ...depsOk(),
+      registrarMedicao: async () => {
+        chamadas++;
+        return { ok: true };
+      },
+    };
+    const r = await sincronizarItem(item({ medicoes: [medicao(), medicao({ item: "Tijolo", unidade: "un" })] }), deps);
+    expect(r.ok).toBe(true);
+    expect(chamadas).toBe(2);
+  });
+
+  it("retry não reenvia medição já marcada enviada (idempotência)", async () => {
+    let chamadas = 0;
+    const deps: SincronizarDeps = {
+      ...depsOk(),
+      registrarMedicao: async () => {
+        chamadas++;
+        return { ok: true };
+      },
+    };
+    const jaEnviada = item({ rdoId: "rdo-1", medicoes: [medicao({ enviada: true }), medicao({ enviada: false })] });
+    const r = await sincronizarItem(jaEnviada, deps);
+    expect(r.ok).toBe(true);
+    expect(chamadas).toBe(1);
+  });
+
+  it("foto e medição falham de forma independente: cada uma guarda seu próprio progresso", async () => {
+    const deps: SincronizarDeps = {
+      ...depsOk(),
+      subirFoto: async () => ({ ok: false }),
+      registrarMedicao: async () => ({ ok: true }),
+    };
+    const r = await sincronizarItem(item({ fotos: [foto()], medicoes: [medicao()] }), deps);
+    expect(r.ok).toBe(false);
+    if (!r.ok) {
+      expect(r.item.fotos[0].enviada).toBe(false); // foto falhou, continua pendente
+      expect(r.item.medicoes[0].enviada).toBe(true); // medição não foi afetada pela falha da foto
+    }
+  });
 });
 
 describe("sincronizarFila", () => {
   it("processa em ordem de criação e remove os que completaram", async () => {
-    const ordem: string[] = [];
     const store = memStore([item({ id: "b", criadoEm: 2000 }), item({ id: "a", criadoEm: 1000 })]);
-    const deps: SincronizarDeps = {
-      salvarRdo: async () => {
-        ordem.push("salvou");
-        return { ok: true, rdoId: "rdo-x" };
-      },
-      subirFoto: async () => ({ ok: true }),
-    };
-    const resumo = await sincronizarFila(store, deps);
+    const resumo = await sincronizarFila(store, depsOk());
     expect(resumo).toEqual({ enviados: 2, pendentes: 0 });
     expect(await store.listar()).toHaveLength(0);
   });
 
   it("mantém na fila os que falharam, sem perder os que deram certo", async () => {
     const store = memStore([item({ id: "ok" }), item({ id: "falha" })]);
-    const deps: SincronizarDeps = {
-      salvarRdo: async () => ({ ok: false, erro: "rede" }),
-      subirFoto: async () => ({ ok: true }),
-    };
+    const deps: SincronizarDeps = { ...depsOk(), salvarRdo: async () => ({ ok: false, erro: "rede" }) };
     const resumo = await sincronizarFila(store, deps);
     expect(resumo.pendentes).toBe(2);
     const restantes = await store.listar();
@@ -148,13 +189,7 @@ describe("sincronizarFila", () => {
   it("fila vazia devolve zeros sem chamar as deps", async () => {
     const store = memStore([]);
     let chamou = false;
-    const deps: SincronizarDeps = {
-      salvarRdo: async () => {
-        chamou = true;
-        return { ok: true, rdoId: "x" };
-      },
-      subirFoto: async () => ({ ok: true }),
-    };
+    const deps: SincronizarDeps = { ...depsOk(), salvarRdo: async () => ((chamou = true), { ok: true, rdoId: "x" }) };
     const resumo = await sincronizarFila(store, deps);
     expect(resumo).toEqual({ enviados: 0, pendentes: 0 });
     expect(chamou).toBe(false);

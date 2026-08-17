@@ -1,16 +1,23 @@
 /**
- * Fila offline do Pilar Campo (spec 042, fase 4). Quando "salvar o dia" falha
- * por falta de conexão, a captura não se perde: fica na fila (IndexedDB) e
- * sincroniza sozinha quando a rede volta.
+ * Fila offline do Pilar Campo (spec 042, fases 4-5). Quando "salvar o dia"
+ * falha por falta de conexão, a captura não se perde: fica na fila
+ * (IndexedDB) e sincroniza sozinha quando a rede volta.
  *
  * `campo_salvar_rdo` é upsert por obra+data, então reprocessar o mesmo item é
- * seguro (nunca duplica o dia); cada foto é marcada `enviada` individualmente
- * para uma falha parcial não reenviar o que já subiu.
+ * seguro (nunca duplica o dia); cada foto e cada medição é marcada `enviada`
+ * individualmente para uma falha parcial não reenviar o que já subiu.
  */
 
 export interface FilaFoto {
   contentType: string;
   imageBase64: string;
+  enviada: boolean;
+}
+
+export interface FilaMedicao {
+  item: string;
+  quantidade: number;
+  unidade: string;
   enviada: boolean;
 }
 
@@ -29,6 +36,7 @@ export interface FilaDiaItem {
   criadoEm: number;
   dia: FilaDiaPayload;
   fotos: FilaFoto[];
+  medicoes: FilaMedicao[];
   /** Preenchido após o primeiro `salvarRdo` bem-sucedido; pula o upsert no retry. */
   rdoId?: string;
   tentativas: number;
@@ -45,12 +53,15 @@ export interface FilaStore {
 export interface SincronizarDeps {
   salvarRdo(dia: FilaDiaPayload): Promise<{ ok: boolean; rdoId?: string; erro?: string }>;
   subirFoto(rdoId: string, foto: FilaFoto): Promise<{ ok: boolean; erro?: string }>;
+  registrarMedicao(rdoId: string, medicao: FilaMedicao): Promise<{ ok: boolean; erro?: string }>;
 }
 
 /**
- * Sincroniza um item: cria/atualiza o RDO (se ainda não tem `rdoId`) e sobe as
- * fotos pendentes uma a uma. Devolve o item atualizado quando algo falha, para
- * o chamador regravar na fila com o progresso (rdoId e fotos já enviadas).
+ * Sincroniza um item: cria/atualiza o RDO (se ainda não tem `rdoId`), sobe as
+ * fotos pendentes e registra as medições pendentes. Fotos e medições são
+ * independentes entre si (uma falhar não trava a outra); devolve o item
+ * atualizado quando algo falha, para o chamador regravar na fila com o
+ * progresso (rdoId e o que já foi enviado).
  */
 export async function sincronizarItem(
   item: FilaDiaItem,
@@ -74,8 +85,16 @@ export async function sincronizarItem(
     else algumaFalhou = true;
   }
 
+  const medicoes = [...item.medicoes];
+  for (let i = 0; i < medicoes.length; i++) {
+    if (medicoes[i].enviada) continue;
+    const r = await deps.registrarMedicao(rdoId, medicoes[i]);
+    if (r.ok) medicoes[i] = { ...medicoes[i], enviada: true };
+    else algumaFalhou = true;
+  }
+
   if (algumaFalhou) {
-    return { ok: false, item: { ...item, rdoId, fotos, tentativas: item.tentativas + 1 } };
+    return { ok: false, item: { ...item, rdoId, fotos, medicoes, tentativas: item.tentativas + 1 } };
   }
   return { ok: true };
 }
