@@ -12,8 +12,30 @@
  *   - SENTRY_TRACES_RATE (default 0.1) — fração de invocações enviadas como transaction.
  *   - Cada transaction tem op="edge.function", name=fnName, duração medida via Date.now().
  *
+ * AI Agent Monitoring (dashboard Insights > Agents):
+ *   - recordGenAiSpan() registra spans `gen_ai.*` (convenção OTel Gen AI que o Sentry lê
+ *     pra popular o dashboard de agentes: modelo, tokens, custo, execuções).
+ *   - Cada invocação de withSentry abre um AsyncLocalStorage novo pra coletar os spans
+ *     chamados durante aquele request (ex.: em ai-client.ts), sem precisar passar
+ *     contexto manualmente pelos 14 handlers `ai-*`.
+ *   - De propósito SEM `gen_ai.input.messages`/`gen_ai.output.messages`: manda o prompt
+ *     completo pro Sentry seria vazar dado de cliente; só token count e modelo.
+ *
  * Sem DSN: roda em no-op (apenas console).
  */
+
+import { AsyncLocalStorage } from "node:async_hooks";
+
+// `EdgeRuntime` só existe no runtime do Supabase (e no `supabase functions serve`
+// local); em `deno check`/testes fora dele, cai no fallback (a promise ainda roda,
+// só sem a garantia de sobreviver ao fim da resposta).
+declare const EdgeRuntime: { waitUntil?: (promise: Promise<unknown>) => void } | undefined;
+
+function waitUntil(promise: Promise<unknown>): void {
+  if (typeof EdgeRuntime !== "undefined" && typeof EdgeRuntime.waitUntil === "function") {
+    EdgeRuntime.waitUntil(promise);
+  }
+}
 
 const DSN = Deno.env.get("SENTRY_DSN") ?? "";
 const ENVIRONMENT = Deno.env.get("SENTRY_ENV") ?? Deno.env.get("DENO_ENV") ?? "production";
@@ -56,6 +78,27 @@ export interface SentryContext {
   user?: { id?: string; empresa_id?: string };
   tags?: Record<string, string>;
   extra?: Record<string, unknown>;
+}
+
+/** Span `gen_ai.*` (convenção OTel Gen AI). Ver recordGenAiSpan. */
+export interface GenAiSpanInput {
+  op: "gen_ai.chat" | "gen_ai.invoke_agent" | "gen_ai.execute_tool";
+  name: string;
+  attributes: Record<string, string | number | boolean>;
+  startMs: number;
+  endMs: number;
+  status?: "ok" | "error";
+}
+
+const genAiSpanStore = new AsyncLocalStorage<GenAiSpanInput[]>();
+
+/**
+ * Registra um span gen_ai.* pra aparecer no dashboard Insights > Agents do Sentry.
+ * Só tem efeito dentro do ciclo de vida de um handler envolvido por withSentry
+ * (fora disso, getStore() é undefined e a chamada é um no-op silencioso).
+ */
+export function recordGenAiSpan(span: GenAiSpanInput): void {
+  genAiSpanStore.getStore()?.push(span);
 }
 
 const SENSITIVE_KEYS = /password|senha|token|api_key|secret|authorization|cookie|cpf|cnpj/i;
@@ -153,6 +196,7 @@ async function sendTransaction(params: {
   httpStatus?: number;
   method?: string;
   url?: string;
+  genAiSpans?: GenAiSpanInput[];
 }): Promise<void> {
   if (!PARSED) return;
 
@@ -162,6 +206,18 @@ async function sendTransaction(params: {
   const sentAt = new Date().toISOString();
   const startTs = params.startMs / 1000;
   const endTs = params.endMs / 1000;
+
+  const spans = (params.genAiSpans ?? []).map((s) => ({
+    span_id: crypto.randomUUID().replace(/-/g, "").slice(0, 16),
+    trace_id: traceId,
+    parent_span_id: spanId,
+    op: s.op,
+    description: s.name,
+    start_timestamp: s.startMs / 1000,
+    timestamp: s.endMs / 1000,
+    status: s.status ?? "ok",
+    data: s.attributes,
+  }));
 
   const event = {
     event_id: eventId,
@@ -188,7 +244,7 @@ async function sendTransaction(params: {
         ...(params.url && { data: { "http.url": params.url } }),
       },
     },
-    spans: [],
+    spans,
   };
 
   const envelopeHeader = JSON.stringify({ event_id: eventId, sent_at: sentAt, dsn: DSN });
@@ -228,9 +284,10 @@ export function withSentry(
     let response: Response;
     let status: "ok" | "internal_error" = "ok";
     let httpStatus: number | undefined;
+    const genAiSpans: GenAiSpanInput[] = [];
 
     try {
-      response = await handler(req);
+      response = await genAiSpanStore.run(genAiSpans, () => handler(req));
       httpStatus = response.status;
       if (response.status >= 500) status = "internal_error";
     } catch (err) {
@@ -248,8 +305,12 @@ export function withSentry(
     }
 
     if (sampled) {
-      // fire-and-forget pra não atrasar a resposta
-      sendTransaction({
+      // Fire-and-forget pra não atrasar a resposta, mas SEM waitUntil o isolate do
+      // edge-runtime pode congelar assim que a Response é retornada, matando o fetch
+      // do envelope no meio (transaction nunca chega no Sentry). EdgeRuntime.waitUntil
+      // é o mecanismo do próprio runtime da Supabase (mesma ideia do ctx.waitUntil do
+      // Cloudflare Workers) pra manter a promise viva depois da resposta.
+      const task = sendTransaction({
         fnName,
         startMs,
         endMs: Date.now(),
@@ -257,7 +318,9 @@ export function withSentry(
         httpStatus,
         method: req.method,
         url: req.url,
+        genAiSpans,
       }).catch(() => undefined);
+      waitUntil(task);
     }
 
     return response;

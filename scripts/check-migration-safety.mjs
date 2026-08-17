@@ -60,6 +60,31 @@ const BLOCKING_PATTERNS = [
   },
 ];
 
+/**
+ * ADD COLUMN ... NOT NULL sem DEFAULT falha na hora se a tabela já tem linha
+ * (achado real de um drill de recuperação de migration, 17/08 — Postgres não
+ * sabe que valor pôr nas linhas existentes). Não é perda de dado (a instrução
+ * falha inteira, atômica, nada é escrito), mas é o jeito mais comum de um
+ * deploy travar no meio. Aviso, não bloqueio: tabela nova (0 linhas) ou
+ * backfill na mesma migration antes do NOT NULL são casos legítimos que este
+ * regex não sabe distinguir.
+ */
+function findUnsafeNotNullAdds(sql) {
+  const findings = [];
+  const re = /\bADD\s+COLUMN\s+(?:IF\s+NOT\s+EXISTS\s+)?("[^"]+"|[\w]+)\s+[\w][^,;]*?\bNOT\s+NULL\b([^,;]*)/gi;
+  let m;
+  while ((m = re.exec(sql)) !== null) {
+    if (!/\bDEFAULT\b/i.test(m[0])) {
+      findings.push({
+        id: "add-column-not-null-no-default",
+        blocking: false,
+        message: `ADD COLUMN ${m[1]} NOT NULL sem DEFAULT falha se a tabela já tem linhas — confirme que a tabela está vazia ou adicione DEFAULT/backfill antes`,
+      });
+    }
+  }
+  return findings;
+}
+
 /** DELETE sem WHERE apaga a tabela inteira; com WHERE é operação normal de dado. */
 function findUnscopedDeletes(sql) {
   const findings = [];
@@ -149,6 +174,7 @@ export function analyzeSql(rawSql) {
 
   findings.push(...findUnscopedDeletes(sql));
   findings.push(...findOrphanDrops(sql));
+  findings.push(...findUnsafeNotNullAdds(sql));
   return findings;
 }
 

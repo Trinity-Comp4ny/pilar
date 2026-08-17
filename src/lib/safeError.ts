@@ -13,6 +13,20 @@ const KNOWN_USER_ERRORS: Record<string, string> = {
 };
 
 /**
+ * Extrai a mensagem crua de um erro desconhecido, incluindo PostgrestError
+ * (objeto plano com `.message`, não é `instanceof Error`). Uso: telemetria
+ * (Sentry precisa da mensagem real, não da sanitizada por getSafeErrorMessage).
+ */
+export function getRawErrorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  if (typeof error === "string") return error;
+  if (typeof error === "object" && error !== null && "message" in error) {
+    return String((error as { message: unknown }).message);
+  }
+  return "";
+}
+
+/**
  * Converts an unknown error into a user-safe message.
  * Prevents leaking internal database schema, table names, or constraint details.
  *
@@ -20,15 +34,7 @@ const KNOWN_USER_ERRORS: Record<string, string> = {
  * (which are plain objects with a `message` property, not Error instances).
  */
 export function getSafeErrorMessage(error: unknown, fallback = "Ocorreu um erro. Tente novamente."): string {
-  let raw = "";
-
-  if (error instanceof Error) {
-    raw = error.message;
-  } else if (typeof error === "string") {
-    raw = error;
-  } else if (typeof error === "object" && error !== null && "message" in error) {
-    raw = String((error as { message: unknown }).message);
-  }
+  const raw = getRawErrorMessage(error);
 
   for (const [pattern, userMessage] of Object.entries(KNOWN_USER_ERRORS)) {
     if (raw.toLowerCase().includes(pattern.toLowerCase())) {
