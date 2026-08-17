@@ -2,8 +2,13 @@ import { Check, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { formatBRL } from "@/lib/currency";
+import { FEATURES } from "@/lib/features";
 import type { Plan } from "../hooks/usePlans";
 import type { BillingCycle } from "./CycleToggle";
+
+// A coluna `features` guarda FeatureKeys (chave estável usada em src/lib/features.ts
+// pro gate real), não texto de exibição. Aqui só traduz pra rótulo amigável na vitrine.
+const FEATURE_LABEL: Record<string, string> = Object.fromEntries(FEATURES.map((f) => [f.key, f.label]));
 
 interface PlanCardProps {
   plan: Plan;
@@ -43,13 +48,18 @@ export function PlanCard({ plan, cycle }: PlanCardProps) {
         {cycle === "yearly" && (
           <p className="text-xs text-ink-disabled mt-1">Cobrado {formatBRL(fullPrice)} por ano</p>
         )}
+        <p className="text-sm text-ink-soft font-medium mt-4">
+          {plan.max_usuarios == null ? "Usuários ilimitados" : `Até ${plan.max_usuarios} usuários`}
+          {" · "}
+          {plan.max_projetos == null ? "projetos ilimitados" : `até ${plan.max_projetos} projetos ativos`}
+        </p>
       </div>
 
       <ul className="space-y-3 mb-8 flex-1">
         {plan.features.map((feature) => (
           <li key={feature} className="flex items-start gap-3 text-sm text-ink-soft">
             <Check aria-hidden="true" className="w-4 h-4 text-positive-strong flex-shrink-0 mt-0.5" />
-            <span>{feature}</span>
+            <span>{FEATURE_LABEL[feature] ?? feature}</span>
           </li>
         ))}
       </ul>

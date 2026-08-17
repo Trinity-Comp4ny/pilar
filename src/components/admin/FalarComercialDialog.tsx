@@ -38,7 +38,7 @@ export function FalarComercialDialog({ open, onOpenChange, defaultEmail = "", de
       toast.error("Nome e email são obrigatórios");
       return;
     }
-    const subject = `Contato comercial — ${interesse.toUpperCase()}`;
+    const subject = `Contato comercial: ${interesse.toUpperCase()}`;
     const body = [
       `Nome: ${nome}`,
       `Email: ${email}`,
@@ -97,9 +97,10 @@ export function FalarComercialDialog({ open, onOpenChange, defaultEmail = "", de
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="starter">Starter</SelectItem>
-                  <SelectItem value="pro">Pro</SelectItem>
-                  <SelectItem value="enterprise">Enterprise</SelectItem>
+                  <SelectItem value="starter">Essencial</SelectItem>
+                  <SelectItem value="pro">Profissional</SelectItem>
+                  <SelectItem value="enterprise">Escala</SelectItem>
+                  <SelectItem value="enterprise-sob-consulta">Enterprise (sob consulta)</SelectItem>
                 </SelectContent>
               </Select>
             </div>

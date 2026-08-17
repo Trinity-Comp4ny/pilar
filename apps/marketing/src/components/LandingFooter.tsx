@@ -42,6 +42,11 @@ export function LandingFooter() {
                 </a>
               </li>
               <li>
+                <a href="#faq" className="hover:text-brand transition-colors">
+                  FAQ
+                </a>
+              </li>
+              <li>
                 <a href={`${APP_URL}/login`} className="hover:text-brand transition-colors">
                   Entrar
                 </a>
