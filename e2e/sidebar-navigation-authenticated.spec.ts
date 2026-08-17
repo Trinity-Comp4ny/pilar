@@ -14,15 +14,21 @@ import { test, expect } from "./fixtures";
  *   npx playwright test --project=authenticated e2e/sidebar-navigation-authenticated.spec.ts
  */
 
+// Achado real, 17/08: /dashboard, /pessoas e /relatorios são hoje redirects
+// permanentes (App.tsx) pra rotas novas (reorg de navegação por persona,
+// 11/08) — o app troca de URL de propósito, não é crash. `expectedPath`
+// declara o destino real quando diverge do path visitado; sem isso o teste
+// nunca tinha passado desde a reorg (só descoberto agora porque o project
+// "authenticated" nunca tinha rodado de verdade em CI).
 const ROTAS_PRINCIPAIS = [
-  { path: "/dashboard", label: "Dashboard" },
+  { path: "/dashboard", expectedPath: "/inicio", label: "Dashboard" },
   { path: "/projetos", label: "Projetos" },
   { path: "/clientes", label: "Clientes" },
   { path: "/financeiro", label: "Financeiro" },
   { path: "/leads", label: "Leads" },
   { path: "/propostas", label: "Propostas" },
-  { path: "/pessoas", label: "Pessoas" },
-  { path: "/relatorios", label: "Relatórios" },
+  { path: "/pessoas", expectedPath: "/gestao/equipe", label: "Pessoas" },
+  { path: "/relatorios", expectedPath: "/gestao/financeiro", label: "Relatórios" },
 ];
 
 test.describe("Navegação sidebar — rotas principais", () => {
@@ -36,7 +42,8 @@ test.describe("Navegação sidebar — rotas principais", () => {
 
       // Não deve ter caído na landing (proteção de rota funcionando)
       await expect(page).not.toHaveURL(/^\//);
-      await expect(page).toHaveURL(new RegExp(rota.path.replace("/", "\\/")));
+      const destino = rota.expectedPath ?? rota.path;
+      await expect(page).toHaveURL(new RegExp(destino.replace("/", "\\/")));
 
       // ErrorBoundary padrão do React mostra "Something went wrong"
       // Nosso app pode usar mensagem em PT-BR
