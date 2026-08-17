@@ -3,6 +3,7 @@ import { withSentry } from "../_shared/sentry.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { isUUID, jsonResponse, optionsResponse, safeErrorResponse } from "../_shared/cors.ts";
 import { createLogger } from "../_shared/logger.ts";
+import { checkDbRateLimit, getClientKey } from "../_shared/db-rate-limit.ts";
 
 const log = createLogger("portal-get-projeto");
 
@@ -11,12 +12,29 @@ serve(
     if (req.method === "OPTIONS") return optionsResponse(req);
     if (req.method !== "POST") return safeErrorResponse(405, "Method not allowed", req);
 
+    const admin = createClient(Deno.env.get("SUPABASE_URL") ?? "", Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "");
+
+    // Público (verify_jwt = false, auth própria via token do portal). Sem rate
+    // limit, um IP consegue varrer tokens de sessão por força bruta. DB-backed
+    // pra valer entre instâncias/regiões da function.
+    const rl = await checkDbRateLimit(admin, {
+      bucket: "portal_get_projeto",
+      key: getClientKey(req),
+      max: 60,
+      windowSeconds: 60,
+    });
+    if (rl.rpcError) {
+      log.error("rate limit check failed — rejecting request (fail-closed)", { rpcError: rl.rpcError });
+      return safeErrorResponse(503, "Serviço temporariamente indisponível", req);
+    }
+    if (!rl.allowed) {
+      return safeErrorResponse(429, "Muitas tentativas. Aguarde antes de tentar novamente.", req);
+    }
+
     try {
       const { token, projeto_id } = await req.json();
       if (!token || typeof token !== "string") return safeErrorResponse(400, "token obrigatório", req);
       if (!isUUID(projeto_id)) return safeErrorResponse(400, "projeto_id inválido", req);
-
-      const admin = createClient(Deno.env.get("SUPABASE_URL") ?? "", Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "");
 
       // Valida sessão via RPC read-only (hash do token + expiração deslizante, sem
       // rotacionar). Comparar o token puro na coluna hasheada nunca bate.
