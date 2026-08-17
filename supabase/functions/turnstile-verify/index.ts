@@ -2,6 +2,8 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { withSentry } from "../_shared/sentry.ts";
 import { getCorsHeaders } from "../_shared/cors.ts";
 import { createLogger } from "../_shared/logger.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { checkDbRateLimit, getClientKey } from "../_shared/db-rate-limit.ts";
 
 const log = createLogger("turnstile-verify");
 
@@ -19,6 +21,31 @@ serve(
       return new Response(JSON.stringify({ error: "Method not allowed" }), {
         status: 405,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Endpoint público (verify_jwt = false, roda antes do login existir), sem
+    // rate limit até aqui. Sem isso, um script abusa da API do Cloudflare (custo)
+    // e usa a resposta pra tentar inferir bypass do captcha. DB-backed = vale
+    // pra todas as instâncias da function, não só a que atendeu o request.
+    const admin = createClient(Deno.env.get("SUPABASE_URL") ?? "", Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "");
+    const rl = await checkDbRateLimit(admin, {
+      bucket: "turnstile_verify",
+      key: getClientKey(req),
+      max: 20,
+      windowSeconds: 60,
+    });
+    if (rl.rpcError) {
+      log.error("rate limit check failed — rejecting request (fail-closed)", { rpcError: rl.rpcError });
+      return new Response(JSON.stringify({ success: false, error: "temporarily-unavailable" }), {
+        status: 503,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    if (!rl.allowed) {
+      return new Response(JSON.stringify({ success: false, error: "rate-limited" }), {
+        status: 429,
+        headers: { ...corsHeaders, "Content-Type": "application/json", "Retry-After": "60" },
       });
     }
 
