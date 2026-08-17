@@ -3,7 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { callUntypedRpc } from "@/lib/supabaseRpc";
 import { filaOfflineDb } from "./campoOfflineDb";
-import { sincronizarFila, type FilaDiaPayload, type FilaFoto } from "./campoOfflineQueue";
+import { sincronizarFila, type FilaDiaPayload, type FilaFoto, type FilaMedicao } from "./campoOfflineQueue";
 import { getCampoToken } from "./useCampoAuth";
 
 async function salvarRdoRemoto(token: string, dia: FilaDiaPayload) {
@@ -20,6 +20,18 @@ async function subirFotoRemota(token: string, rdoId: string, foto: FilaFoto) {
     body: { token, rdo_id: rdoId, image_base64: foto.imageBase64, content_type: foto.contentType },
   });
   if (error || !(data as { success?: boolean } | null)?.success) return { ok: false as const };
+  return { ok: true as const };
+}
+
+async function registrarMedicaoRemota(token: string, rdoId: string, medicao: FilaMedicao) {
+  const { data, error } = await callUntypedRpc<{ ok: boolean; erro?: string }>("campo_registrar_medicao", {
+    p_token: token,
+    p_rdo_id: rdoId,
+    p_item: medicao.item,
+    p_quantidade: medicao.quantidade,
+    p_unidade: medicao.unidade,
+  });
+  if (error || !data?.ok) return { ok: false as const, erro: data?.erro ?? error?.message };
   return { ok: true as const };
 }
 
@@ -46,6 +58,7 @@ export function useCampoSync() {
       const resumo = await sincronizarFila(filaOfflineDb, {
         salvarRdo: (dia) => salvarRdoRemoto(token, dia),
         subirFoto: (rdoId, foto) => subirFotoRemota(token, rdoId, foto),
+        registrarMedicao: (rdoId, medicao) => registrarMedicaoRemota(token, rdoId, medicao),
       });
       if (resumo.enviados > 0) {
         queryClient.invalidateQueries({ queryKey: ["campo_rdos"] });
