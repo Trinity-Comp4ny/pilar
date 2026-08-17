@@ -40,3 +40,4 @@ Decisão de arquitetura no meio do caminho vira um [ADR](../architecture/README.
 | [030](./030-obra-no-portal-do-cliente.md)                  | Obra no portal do cliente (acompanhamento + contas)                                       | Draft            |
 | [035](./035-controle-de-features-por-modulo-e-em-massa.md) | Controle de features por módulo (3 pilares) + sub-features + ação em massa no ultra admin | Draft            |
 | [043](./043-marketing-site-separado.md)                    | Site de marketing separado do app (`apps/marketing`), Fase 1 da auditoria de performance  | Draft            |
+| [044](./044-financeiro-dashboard-e-listagens-server-side.md) | Dashboard financeiro e listagens de Despesas/Receitas server-side (RPC, sem full-scan)   | Draft            |
