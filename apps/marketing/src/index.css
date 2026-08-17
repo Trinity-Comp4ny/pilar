@@ -1,4 +1,4 @@
-/* Tokens e CSS de landing são a fonte única de verdade do app raiz —
+/* Tokens e CSS de landing são a fonte única de verdade do app raiz:
    importados, não duplicados (ADR 0021). */
 @import "../../../src/styles/tokens.css";
 @import "../../../src/styles/landing.css";

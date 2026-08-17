@@ -7,10 +7,10 @@ export function CTASection() {
       <div className="container mx-auto px-6 md:px-10">
         <div className="max-w-4xl mx-auto text-center reveal-up">
           <h2 className="text-4xl md:text-6xl font-medium text-ink leading-[1.05] tracking-tight mb-8">
-            Comece hoje. <em className="landing-highlight">Tenha total controle do seu escritório.</em>
+            Veja o Pilar rodando. <em className="landing-highlight">Do lead ao resultado do projeto.</em>
           </h2>
           <p className="text-slate-600 text-lg max-w-xl mx-auto mb-4 font-light leading-relaxed">
-            14 dias grátis. Sem cartão. Sem contrato. O escritório todo num lugar só.
+            14 dias grátis. Sem cartão. Sem contrato. O fluxo inteiro num lugar só.
           </p>
           <p className="text-xs text-ink/40 font-light mb-12">Cancele quando quiser · Migração assistida disponível</p>
 

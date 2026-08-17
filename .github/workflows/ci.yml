@@ -338,13 +338,24 @@ jobs:
       VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.STAGING_SUPABASE_ANON_KEY }}
       E2E_TEST_EMAIL: ${{ secrets.E2E_TEST_EMAIL }}
       E2E_TEST_PASSWORD: ${{ secrets.E2E_TEST_PASSWORD }}
+      # admin-e2e@pilar.test tem MFA obrigatório (mesma regra de qualquer admin em
+      # staging/produção, PrivateRoute.tsx). Fator TOTP cadastrado de verdade via API
+      # (17/08); auth.setup.ts gera o código a cada login (ver src/lib/totp.ts).
+      E2E_TEST_TOTP_SECRET: ${{ secrets.E2E_TEST_TOTP_SECRET }}
       E2E_PORTAL_EMAIL: ${{ secrets.E2E_PORTAL_EMAIL }}
       E2E_PORTAL_PASSWORD: ${{ secrets.E2E_PORTAL_PASSWORD }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
         with:
-          node-version: 20
+          # Só este job usa 22 (o resto do ci.yml fica em 20, sem motivo pra mudar).
+          # e2e/auth.setup.ts cria um client Supabase, e o construtor sempre inicializa
+          # o RealtimeClient internamente (mesmo sem chamar .channel() nunca) — sem
+          # WebSocket nativo (Node 22+) ele derruba com "Node.js detected but native
+          # WebSocket not found". Achado real, 17/08: os specs autenticados nunca
+          # tinham rodado de verdade em CI (secrets não existiam até esta sessão), e
+          # assim que passaram a rodar, quebravam aqui — antes mesmo de chegar no login.
+          node-version: 22
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps chromium
