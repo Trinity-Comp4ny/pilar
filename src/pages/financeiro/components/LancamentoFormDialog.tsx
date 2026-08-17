@@ -412,8 +412,13 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
                 </p>
 
                 <div className="space-y-1.5">
-                  <Label className="text-xs">Descrição *</Label>
-                  <Input {...form.register("descricao")} placeholder="Ex: Honorários projeto A" className="h-9" />
+                  <Label htmlFor="descricao" className="text-xs">Descrição *</Label>
+                  <Input
+                    id="descricao"
+                    {...form.register("descricao")}
+                    placeholder="Ex: Honorários projeto A"
+                    className="h-9"
+                  />
                   {form.formState.errors.descricao && (
                     <p className="text-xs text-destructive">{form.formState.errors.descricao.message}</p>
                   )}
@@ -581,7 +586,10 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
                     value={form.watch("categoriaId")}
                     onValueChange={(v) => form.setValue("categoriaId", v, { shouldValidate: true })}
                   >
-                    <SelectTrigger className={cn("h-9", form.formState.errors.categoriaId && "border-destructive")}>
+                    <SelectTrigger
+                      aria-label="Categoria"
+                      className={cn("h-9", form.formState.errors.categoriaId && "border-destructive")}
+                    >
                       <SelectValue placeholder="Selecione" />
                     </SelectTrigger>
                     <SelectContent>
