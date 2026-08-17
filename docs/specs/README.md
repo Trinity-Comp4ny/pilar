@@ -39,3 +39,4 @@ Decisão de arquitetura no meio do caminho vira um [ADR](../architecture/README.
 | [029](./029-central-de-notificacoes.md)             | Central de notificações in-app (por destinatário)   | Draft            |
 | [030](./030-obra-no-portal-do-cliente.md)           | Obra no portal do cliente (acompanhamento + contas) | Draft            |
 | [035](./035-controle-de-features-por-modulo-e-em-massa.md) | Controle de features por módulo (3 pilares) + sub-features + ação em massa no ultra admin | Draft |
+| [043](./043-financeiro-dashboard-e-listagens-server-side.md) | Dashboard financeiro e listagens de Despesas/Receitas server-side (RPC, sem full-scan) | Draft |
