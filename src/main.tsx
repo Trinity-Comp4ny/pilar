@@ -3,10 +3,12 @@ import App from "./App.tsx";
 import "./index.css";
 import { initMonitoring, monitoring } from "./lib/monitoring";
 import { initAnalytics } from "./lib/analytics";
+import { initStaleChunkReload } from "./lib/staleChunkReload";
 import { envWarnings } from "./lib/env";
 
 initMonitoring();
 initAnalytics();
+initStaleChunkReload();
 
 // Config ausente que degrada o produto sem impedir o boot (captcha, Sentry, analytics).
 // Reportado depois do initMonitoring para chegar no Sentry: antes, um deploy sem
