@@ -209,7 +209,7 @@ jobs:
       # do esm.sh, e um 5xx de lá reprova o gate sem haver nada errado no código (foi
       # o que aconteceu no run 30176697516). A chave inclui os imports das funções,
       # então mudar dependência invalida o cache.
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with:
           path: ~/.cache/deno
           key: deno-${{ runner.os }}-${{ hashFiles('supabase/functions/**/*.ts') }}
