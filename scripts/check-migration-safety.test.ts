@@ -76,6 +76,22 @@ describe("check-migration-safety: o que NÃO pode reprovar", () => {
                  ALTER TABLE public.jobs_queue ENABLE ROW LEVEL SECURITY;`;
     expect(analyzeSql(sql)).toEqual([]);
   });
+
+  it("aceita ADD COLUMN NOT NULL com DEFAULT", () => {
+    const sql = `ALTER TABLE public.categorias_financeiras ADD COLUMN codigo_interno text NOT NULL DEFAULT '';`;
+    expect(analyzeSql(sql)).toEqual([]);
+  });
+});
+
+describe("check-migration-safety: aviso (não bloqueia)", () => {
+  it("avisa em ADD COLUMN NOT NULL sem DEFAULT — falha se a tabela já tem linhas", () => {
+    // Achado real de um drill de recuperação (17/08): a instrução falha inteira
+    // (atômica, sem perda de dado), mas é a causa mais comum de deploy travado.
+    const sql = `ALTER TABLE public.categorias_financeiras ADD COLUMN codigo_interno text NOT NULL;`;
+    const ids = allIds(sql);
+    expect(ids).toContain("add-column-not-null-no-default");
+    expect(blockingIds(sql)).toEqual([]);
+  });
 });
 
 describe("stripComments", () => {
