@@ -146,25 +146,33 @@ serve(
         });
       }
 
-      // Invalida convites anteriores não usados para o mesmo email
-      await supabaseAdmin
-        .from("empresa_owners_pending")
-        .update({ usado_em: new Date().toISOString() })
-        .eq("email", email)
-        .is("usado_em", null);
-
       // Cria novo token pendente. O token cru só trafega no invite; no banco
       // guardamos apenas o hash sha256 (ACH-AUTH-04), igual ao convite de equipe.
+      // Upsert atômico por email (email é UNIQUE na tabela): substitui o padrão
+      // anterior de "invalida convite antigo, depois insere novo", que falhava
+      // com 23505 ao reconvidar um email que já teve QUALQUER pending anterior
+      // (usado ou expirado) e também deixava uma janela de corrida entre os dois
+      // requests em cliques duplicados.
       const rawToken = generateInviteToken();
       const tokenHash = await sha256Hex(rawToken);
-      const { data: pending, error: insertError } = await supabaseAdmin
+      const { data: pending, error: upsertError } = await supabaseAdmin
         .from("empresa_owners_pending")
-        .insert({ email, company_name, nome: nome ?? null, token_hash: tokenHash })
+        .upsert(
+          {
+            email,
+            company_name,
+            nome: nome ?? null,
+            token_hash: tokenHash,
+            usado_em: null,
+            expira_em: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+          },
+          { onConflict: "email" }
+        )
         .select("id")
         .single();
 
-      if (insertError || !pending?.id) {
-        throw new Error(insertError?.message ?? "Falha ao criar convite");
+      if (upsertError || !pending?.id) {
+        throw new Error(upsertError?.message ?? "Falha ao criar convite");
       }
 
       const { error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {

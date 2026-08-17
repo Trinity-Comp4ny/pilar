@@ -22,6 +22,19 @@ import { safeEqual } from "../_shared/crypto.ts";
 
 const log = createLogger("pilar-checkout-webhook");
 
+// Token de convite: 32 bytes aleatórios em hex. Só o hash é persistido
+// (mesmo padrão de create-company-owner e create_convite).
+function generateInviteToken(): string {
+  const bytes = new Uint8Array(32);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+async function sha256Hex(input: string): Promise<string> {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(input));
+  return Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, "0")).join("");
+}
+
 interface WebhookPayload {
   event: string;
   payment?: {
@@ -168,22 +181,29 @@ serve(
 
         // 2. Disparar invite se ainda não foi
         if (signup && !signup.invite_dispatched_at) {
-          // Cria empresa_owners_pending (reusa fluxo de convite existente)
-          // Invalida pendentes antigos do mesmo email primeiro
-          await admin
-            .from("empresa_owners_pending")
-            .update({ usado_em: new Date().toISOString() })
-            .eq("email", signup.email)
-            .is("usado_em", null);
+          // Cria empresa_owners_pending (reusa fluxo de convite existente).
+          // Upsert atômico por email: cobre tanto a corrida de dois webhooks
+          // concorrentes pro mesmo email quanto o re-convite de um email que já
+          // teve um pending anterior (usado ou expirado) — email é UNIQUE na
+          // tabela, então um INSERT simples falharia nesse segundo caso.
+          // Token: só o hash é persistido (o plaintext trafega apenas no invite).
+          const rawToken = generateInviteToken();
+          const tokenHash = await sha256Hex(rawToken);
 
           const { data: ownerPending, error: ownerErr } = await admin
             .from("empresa_owners_pending")
-            .insert({
-              email: signup.email,
-              company_name: signup.company_name,
-              nome: signup.nome,
-            })
-            .select("id, token")
+            .upsert(
+              {
+                email: signup.email,
+                company_name: signup.company_name,
+                nome: signup.nome,
+                token_hash: tokenHash,
+                usado_em: null,
+                expira_em: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+              },
+              { onConflict: "email" }
+            )
+            .select("id")
             .single();
 
           if (ownerErr || !ownerPending) {
@@ -196,7 +216,7 @@ serve(
             const { error: inviteErr } = await admin.auth.admin.inviteUserByEmail(signup.email, {
               redirectTo: `${appOrigin()}/profile-setup`,
               data: {
-                invite_token: ownerPending.token,
+                invite_token: rawToken,
                 nome: signup.nome,
                 is_pilar_subscriber: true,
               },
