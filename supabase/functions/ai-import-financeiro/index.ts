@@ -8,6 +8,7 @@ import {
   checkRateLimit,
   callGeminiStructured,
   recordAiUsage,
+  recordAgentRun,
   type AiRequest,
 } from "../_shared/ai-client.ts";
 
@@ -140,6 +141,17 @@ serve(
         result.tokensEntrada,
         result.tokensSaida,
         result.attempts
+      );
+      await recordAgentRun(
+        adminClient,
+        aiRequest,
+        {
+          conteudo: result.data as Record<string, unknown>,
+          resumo: "Importação de lançamentos financeiros",
+          tokensEntrada: result.tokensEntrada,
+          tokensSaida: result.tokensSaida,
+        },
+        user.id
       );
 
       return new Response(JSON.stringify(result.data), {

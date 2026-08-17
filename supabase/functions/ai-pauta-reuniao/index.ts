@@ -6,7 +6,8 @@ import {
   createAdminClient,
   checkRateLimit,
   callGemini,
-  saveInsight,
+  recordAiUsage,
+  recordAgentRun,
   type AiRequest,
 } from "../_shared/ai-client.ts";
 
@@ -206,9 +207,10 @@ Tipos de reunião:
       };
 
       const aiResponse = await callGemini(aiRequest);
-      const insight = await saveInsight(adminClient, aiRequest, aiResponse, user.id);
+      await recordAiUsage(adminClient, empresaId, aiRequest.tipo, aiResponse.tokensEntrada, aiResponse.tokensSaida);
+      await recordAgentRun(adminClient, aiRequest, aiResponse, user.id);
 
-      return new Response(JSON.stringify(insight), {
+      return new Response(JSON.stringify(aiResponse), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
       });
