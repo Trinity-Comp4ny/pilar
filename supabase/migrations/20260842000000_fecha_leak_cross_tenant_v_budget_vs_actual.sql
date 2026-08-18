@@ -1,0 +1,16 @@
+-- v_budget_vs_actual rodava sem security_invoker (achado ERROR do Security Advisor
+-- do Supabase, confirmado em staging e prod). Diferente de pessoas_safe (que roda
+-- como definer DE PROPÓSITO e replica o predicado multi-tenant no WHERE), esta view
+-- não tinha nenhum filtro de empresa: ao rodar com o privilégio do dono, bypassava
+-- a RLS de projeto_orcamento_fases/projetos e expunha orçamento/custo de projeto de
+-- QUALQUER empresa pra qualquer usuário authenticated (a view tem GRANT SELECT pra
+-- authenticated, e o PostgREST expõe views automaticamente).
+--
+-- security_invoker=true faz a view rodar com o privilégio de quem consulta: passa a
+-- herdar a RLS já correta das tabelas base (empresa_id = get_user_empresa_id() +
+-- user_has_feature('projetos','viewer'/'editor'), ver 20260504280000_policies_projetos_feature_based.sql).
+--
+-- Verificado localmente (duas empresas fictícias + JWT simulado via
+-- request.jwt.claims): sem o fix, um usuário da empresa A lia o orçamento/custo da
+-- empresa B via este SELECT direto; com o fix, só vê a própria linha.
+ALTER VIEW public.v_budget_vs_actual SET (security_invoker = true);
