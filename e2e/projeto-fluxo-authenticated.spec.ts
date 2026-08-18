@@ -32,13 +32,11 @@ test.describe("Projetos — criação e navegação", () => {
     await expect(page.getByRole("dialog")).toBeVisible({ timeout: 5_000 });
     await expect(page.getByText("Novo Projeto").first()).toBeVisible();
 
-    // 3. Preencher Passo 1 — campos obrigatórios
-    // Código do projeto
-    const codigoInput = page.locator('input[id="codigo_projeto"]').or(
-      page.getByPlaceholder(/PRJ-\d{4}-\d{3}/i)
-    );
-    await codigoInput.fill(`E2E-${testEmpresa.slug.slice(0, 12).toUpperCase()}`);
-
+    // 3. Preencher Passo 1 — campo obrigatório
+    // Achado real, 17/08: não existe campo de código do projeto no formulário —
+    // codigo_projeto é gerado no backend (padrão PRJ-<n>, ver create_projeto_completo
+    // em useProjetoForm.ts), nunca foi digitado pelo usuário. Único campo
+    // obrigatório do Passo 1 é "Nome do Projeto *"; Cliente é opcional.
     // Nome do projeto (campo "nome")
     const nomeInput = page.locator('input[id="nome"]').or(
       page.getByPlaceholder(/nome do projeto/i)
@@ -51,27 +49,12 @@ test.describe("Projetos — criação e navegação", () => {
       await page.getByLabel(/Nome/i).fill(testEmpresa.nome);
     }
 
-    // Cliente — seleciona o primeiro da lista (select shadcn/ui)
-    const clienteSelect = page.getByLabel(/Cliente/i).or(
-      page.locator('[id="cliente"]')
-    );
-    const clienteSelectVisible = await clienteSelect.isVisible().catch(() => false);
-    if (clienteSelectVisible) {
-      await clienteSelect.click();
-      // Seleciona a primeira opção disponível
-      const primeiraOpcao = page.getByRole("option").first();
-      const temOpcao = await primeiraOpcao.isVisible({ timeout: 3_000 }).catch(() => false);
-      if (temOpcao) {
-        await primeiraOpcao.click();
-      }
-    } else {
-      // Fallback: SelectTrigger do shadcn renderizado como button
-      const selectTrigger = page.locator('[role="combobox"]').first();
-      await selectTrigger.click();
-      const primeiraOpcao = page.getByRole("option").first();
-      const temOpcao = await primeiraOpcao.isVisible({ timeout: 3_000 }).catch(() => false);
-      if (temOpcao) await primeiraOpcao.click();
-    }
+    // Cliente é opcional (form/useProjetoForm.ts só valida "nome") — achado
+    // real, 17/08: a empresa de teste não tem nenhum cliente cadastrado, então
+    // abrir o Select e não achar opção deixava o listbox do Radix aberto,
+    // marcando o resto do dialog como aria-hidden e travando o "Próximo"
+    // seguinte (accessibility tree não encontrava mais o botão). Sem cliente
+    // pra selecionar, não há motivo pra sequer abrir o dropdown.
 
     // 4. Avançar para passo 2
     const proximoBtn = page.getByRole("button", { name: /Próximo|Continuar|Avançar/i });
@@ -101,9 +84,7 @@ test.describe("Projetos — criação e navegação", () => {
     });
 
     // 8. Nome do projeto deve aparecer na página (no kanban ou no detalhe)
-    await expect(
-      page.getByText(testEmpresa.nome).or(page.getByText(/E2E-/i)).first()
-    ).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText(testEmpresa.nome).first()).toBeVisible({ timeout: 10_000 });
   });
 
   test("página de projetos carrega e exibe kanban ou empty state", async ({ page }) => {
