@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
 import { APP_URL } from "../config";
+import { trackCta } from "../analytics";
 
 interface LandingHeaderProps {
   onScrollToTop: (e: React.MouseEvent) => void;
@@ -90,6 +91,7 @@ export function LandingHeader({ onScrollToTop }: LandingHeaderProps) {
             </a>
             <a
               href={`${APP_URL}/cadastro`}
+              onClick={() => trackCta("comecar_gratis", "header_desktop")}
               className="px-6 py-2.5 bg-brand text-ink rounded-full hover:bg-brand/90 transition-all hover:-translate-y-0.5 active:translate-y-0 duration-200 font-medium text-[11px] uppercase tracking-[0.12em]"
             >
               Começar Grátis
@@ -130,6 +132,7 @@ export function LandingHeader({ onScrollToTop }: LandingHeaderProps) {
             </a>
             <a
               href={`${APP_URL}/cadastro`}
+              onClick={() => trackCta("comecar_gratis", "header_mobile")}
               className="px-6 py-3 bg-brand text-ink rounded-full text-center font-medium text-sm uppercase tracking-[0.12em]"
             >
               Começar Grátis

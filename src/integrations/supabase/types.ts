@@ -194,6 +194,56 @@ export type Database = {
           },
         ]
       }
+      ai_usage: {
+        Row: {
+          ano: number
+          created_at: string | null
+          custo_estimado_total: number | null
+          empresa_id: string
+          id: string
+          limite_requests: number | null
+          mes: number
+          total_requests: number | null
+          total_tokens_entrada: number | null
+          total_tokens_saida: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          ano: number
+          created_at?: string | null
+          custo_estimado_total?: number | null
+          empresa_id: string
+          id?: string
+          limite_requests?: number | null
+          mes: number
+          total_requests?: number | null
+          total_tokens_entrada?: number | null
+          total_tokens_saida?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          ano?: number
+          created_at?: string | null
+          custo_estimado_total?: number | null
+          empresa_id?: string
+          id?: string
+          limite_requests?: number | null
+          mes?: number
+          total_requests?: number | null
+          total_tokens_entrada?: number | null
+          total_tokens_saida?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_usage_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_usage_logs: {
         Row: {
           created_at: string | null

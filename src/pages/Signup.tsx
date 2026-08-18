@@ -123,13 +123,11 @@ export default function Signup() {
                 <h2 className="text-lg font-semibold text-ink">Confira seu email</h2>
                 <p className="text-sm text-ink-soft">
                   Enviamos um link de confirmação para{" "}
-                  <span className="font-medium text-ink">{form.getValues("email")}</span>. Clique nele para
-                  ativar sua conta e continuar.
+                  <span className="font-medium text-ink">{form.getValues("email")}</span>. Clique nele para ativar sua
+                  conta e continuar.
                 </p>
               </div>
-              <p className="text-xs text-ink/40">
-                Não recebeu? Verifique o spam ou tente criar a conta novamente.
-              </p>
+              <p className="text-xs text-ink/40">Não recebeu? Verifique o spam ou tente criar a conta novamente.</p>
               <Button
                 variant="outline"
                 className="w-full h-10 border-paper-border text-ink-soft hover:text-brand hover:border-brand/50 hover:bg-brand/10 transition-all text-sm font-medium"
@@ -244,7 +242,7 @@ export default function Signup() {
                           </div>
                         </FormControl>
                         {password && <PasswordStrengthIndicator password={password} />}
-                        {password && <PasswordRequirements password={password} />}
+                        <PasswordRequirements password={password ?? ""} />
                         <FormMessage />
                       </FormItem>
                     )}
@@ -265,8 +263,16 @@ export default function Signup() {
                               {...field}
                               type={showPassword ? "text" : "password"}
                               placeholder="••••••••"
-                              className="pl-10 h-11 bg-paper-alt border-paper-border focus:border-brand focus:ring-brand/20 transition-all"
+                              className="pl-10 pr-10 h-11 bg-paper-alt border-paper-border focus:border-brand focus:ring-brand/20 transition-all"
                             />
+                            <button
+                              type="button"
+                              onClick={() => setShowPassword((v) => !v)}
+                              className="absolute right-3 top-3 text-ink/40 hover:text-brand transition-colors"
+                              aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
+                            >
+                              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                            </button>
                           </div>
                         </FormControl>
                         <FormMessage />
@@ -331,10 +337,7 @@ export default function Signup() {
 
               <p className="text-center text-sm text-ink-soft">
                 Já tem conta?{" "}
-                <Link
-                  to="/login"
-                  className="font-medium text-ink decoration-brand underline-offset-2 hover:underline"
-                >
+                <Link to="/login" className="font-medium text-ink decoration-brand underline-offset-2 hover:underline">
                   Entrar
                 </Link>
               </p>

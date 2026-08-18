@@ -1,4 +1,4 @@
-import { Suspense, lazy } from "react";
+import { Suspense, lazy, useEffect } from "react";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -28,7 +28,6 @@ const SettingsDialog = lazy(() =>
   import("./components/settings/SettingsDialog").then((m) => ({ default: m.SettingsDialog }))
 );
 
-const Landing = lazy(() => import("./pages/Landing"));
 const Planos = lazy(() => import("./pages/planos"));
 const Checkout = lazy(() => import("./pages/checkout"));
 const Login = lazy(() => import("./pages/Login"));
@@ -118,6 +117,15 @@ function RedirectPrefix({ from, to }: { from: string; to: string }) {
   return <Navigate to={`${to}${rest}${location.search}`} replace />;
 }
 
+// A landing pública vive em pilarsoft.com.br (apps/marketing, ADR 0021); "/"
+// aqui só existe pra quem ainda tem o link antigo salvo.
+function LandingRedirect() {
+  useEffect(() => {
+    window.location.replace("https://pilarsoft.com.br");
+  }, []);
+  return null;
+}
+
 const App = () => {
   return (
     <ErrorBoundary>
@@ -133,7 +141,7 @@ const App = () => {
                   <TrialBanner />
                   <Suspense fallback={<PageSkeleton />}>
                     <Routes>
-                      <Route path="/" element={<Landing />} />
+                      <Route path="/" element={<LandingRedirect />} />
                       <Route path="/planos" element={<Planos />} />
                       <Route path="/checkout" element={<Checkout />} />
                       <Route path="/login" element={<Login />} />
