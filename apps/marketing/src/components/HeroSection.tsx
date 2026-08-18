@@ -1,5 +1,6 @@
 import { ArrowRight } from "lucide-react";
 import { APP_URL } from "../config";
+import { trackCta } from "../analytics";
 
 export function HeroSection() {
   return (
@@ -31,6 +32,7 @@ export function HeroSection() {
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-16">
           <a
             href={`${APP_URL}/cadastro`}
+            onClick={() => trackCta("testar_gratis", "hero")}
             className="relative w-full sm:w-auto px-7 py-3.5 bg-ink-soft text-white rounded-full font-medium text-sm hover:bg-ink transition-colors flex items-center justify-center gap-2 group overflow-hidden"
           >
             <span className="absolute inset-0 -skew-x-12 translate-x-[-160%] group-hover:translate-x-[200%] transition-transform duration-700 bg-white/10 pointer-events-none" />
@@ -41,6 +43,7 @@ export function HeroSection() {
             href="https://wa.me/5514998721100"
             target="_blank"
             rel="noopener noreferrer"
+            onClick={() => trackCta("agende_demo", "hero")}
             className="w-full sm:w-auto px-6 py-3 text-slate-600 rounded-full font-medium text-sm hover:text-ink-soft hover:bg-slate-50 transition-colors"
           >
             Agende uma demo →

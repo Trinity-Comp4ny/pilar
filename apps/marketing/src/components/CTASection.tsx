@@ -1,5 +1,6 @@
 import { ArrowRight } from "lucide-react";
 import { APP_URL } from "../config";
+import { trackCta } from "../analytics";
 
 export function CTASection() {
   return (
@@ -17,6 +18,7 @@ export function CTASection() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <a
               href={`${APP_URL}/cadastro`}
+              onClick={() => trackCta("testar_gratis", "cta_final")}
               className="w-full sm:w-auto px-7 py-3.5 bg-brand text-ink rounded-full font-medium text-sm hover:bg-brand/80 transition-colors flex items-center justify-center gap-2 group"
             >
               Testar grátis por 14 dias
@@ -24,6 +26,7 @@ export function CTASection() {
             </a>
             <a
               href={`${APP_URL}/planos`}
+              onClick={() => trackCta("ver_planos", "cta_final")}
               className="w-full sm:w-auto px-6 py-3 text-ink-soft rounded-full font-medium text-sm hover:text-ink hover:bg-slate-50 transition-colors underline decoration-brand underline-offset-4"
             >
               Ver planos
