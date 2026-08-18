@@ -1,4 +1,4 @@
-import { Building2, CreditCard, Gauge, Info, ShieldCheck, User } from "lucide-react";
+import { Building2, CreditCard, Gauge, Info, Lock, ShieldCheck, User } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { useSettingsModal, type SettingsSection } from "@/contexts/SettingsModalContext";
@@ -7,6 +7,7 @@ import { SegurancaPanel } from "./panels/SegurancaPanel";
 import { EmpresaPanel } from "./panels/EmpresaPanel";
 import { UsoPanel } from "./panels/UsoPanel";
 import { PagamentoPanel } from "./panels/PagamentoPanel";
+import { PrivacidadePanel } from "./panels/PrivacidadePanel";
 import { NovidadesPanel } from "./panels/NovidadesPanel";
 
 type SectionDef = {
@@ -22,6 +23,7 @@ const SECTIONS: SectionDef[] = [
   { id: "empresa", label: "Empresa", icon: Building2, Panel: EmpresaPanel },
   { id: "uso", label: "Uso", icon: Gauge, Panel: UsoPanel },
   { id: "pagamento", label: "Pagamento", icon: CreditCard, Panel: PagamentoPanel },
+  { id: "privacidade", label: "Privacidade", icon: Lock, Panel: PrivacidadePanel },
   { id: "informacoes", label: "Informações", icon: Info, Panel: NovidadesPanel },
 ];
 

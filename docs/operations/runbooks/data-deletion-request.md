@@ -137,8 +137,8 @@ Sua conta foi removida. Caso queira voltar a usar o serviço, será
 necessário criar uma nova conta.
 
 Atenciosamente,
-DPO — Labrynth AI
-dpo@labrynth.ai
+DPO, Pilar
+privacidade@pilarsoft.com.br
 ```
 
 ## Pós-mortem
