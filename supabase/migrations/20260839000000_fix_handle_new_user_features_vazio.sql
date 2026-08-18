@@ -195,12 +195,16 @@ $function$;
 -- cenários acima, não um admin convidado normalmente por outra pessoa) E
 -- ainda está com features vazio (não sobrescreve quem já ganhou permissão
 -- manual desde então).
+--
+-- Objeto de features espelha só o que a empresa tem true (não um catálogo
+-- fixo): catálogo mudou desde 04/2026 (ex. MF Construção nunca teve
+-- 'planejamento', só 'obras') e o trigger tg_validate_features_subset
+-- rejeita profiles.features com chave que a empresa não habilitou.
 UPDATE public.profiles p
-SET features = jsonb_build_object(
-  'dashboard', 'editor', 'relatorios', 'editor', 'leads', 'editor', 'propostas', 'editor',
-  'clientes', 'editor', 'projetos', 'editor', 'planejamento', 'editor', 'timesheet', 'editor',
-  'mapa', 'editor', 'financeiro', 'editor', 'pessoas', 'editor', 'metas', 'editor',
-  'portal_cliente', 'editor'
+SET features = (
+  SELECT coalesce(jsonb_object_agg(feat.key, 'editor'), '{}'::jsonb)
+  FROM jsonb_each(e.features) AS feat
+  WHERE (feat.value)::boolean IS TRUE
 )
 FROM public.empresas e
 WHERE e.id = p.empresa_id
