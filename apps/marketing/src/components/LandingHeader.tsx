@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Menu, X } from "lucide-react";
 import { APP_URL } from "../config";
 import { trackCta } from "../analytics";
+import { useLoginHint } from "../loginHint";
 
 interface LandingHeaderProps {
   onScrollToTop: (e: React.MouseEvent) => void;
@@ -9,6 +10,7 @@ interface LandingHeaderProps {
 
 export function LandingHeader({ onScrollToTop }: LandingHeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const loggedIn = useLoginHint();
 
   const handleSectionLink = (sectionId: string) => (e: React.MouseEvent) => {
     e.preventDefault();
@@ -83,19 +85,31 @@ export function LandingHeader({ onScrollToTop }: LandingHeaderProps) {
           </nav>
 
           <div className="hidden md:flex items-center gap-4 justify-end">
-            <a
-              href={`${APP_URL}/login`}
-              className="text-[11px] font-medium uppercase tracking-[0.12em] text-slate-600 hover:text-slate-800 transition-colors"
-            >
-              Entrar
-            </a>
-            <a
-              href={`${APP_URL}/cadastro`}
-              onClick={() => trackCta("comecar_gratis", "header_desktop")}
-              className="px-6 py-2.5 bg-brand text-ink rounded-full hover:bg-brand/90 transition-all hover:-translate-y-0.5 active:translate-y-0 duration-200 font-medium text-[11px] uppercase tracking-[0.12em]"
-            >
-              Começar Grátis
-            </a>
+            {loggedIn ? (
+              <a
+                href={`${APP_URL}/inicio`}
+                onClick={() => trackCta("abrir_pilar", "header_desktop")}
+                className="px-6 py-2.5 bg-brand text-ink rounded-full hover:bg-brand/90 transition-all hover:-translate-y-0.5 active:translate-y-0 duration-200 font-medium text-[11px] uppercase tracking-[0.12em]"
+              >
+                Abrir Pilar
+              </a>
+            ) : (
+              <>
+                <a
+                  href={`${APP_URL}/login`}
+                  className="text-[11px] font-medium uppercase tracking-[0.12em] text-slate-600 hover:text-slate-800 transition-colors"
+                >
+                  Entrar
+                </a>
+                <a
+                  href={`${APP_URL}/cadastro`}
+                  onClick={() => trackCta("comecar_gratis", "header_desktop")}
+                  className="px-6 py-2.5 bg-brand text-ink rounded-full hover:bg-brand/90 transition-all hover:-translate-y-0.5 active:translate-y-0 duration-200 font-medium text-[11px] uppercase tracking-[0.12em]"
+                >
+                  Começar Grátis
+                </a>
+              </>
+            )}
           </div>
 
           <button
@@ -130,16 +144,28 @@ export function LandingHeader({ onScrollToTop }: LandingHeaderProps) {
             <a href="#faq" onClick={handleSectionLink("faq")} className="text-lg font-medium text-slate-600">
               FAQ
             </a>
-            <a
-              href={`${APP_URL}/cadastro`}
-              onClick={() => trackCta("comecar_gratis", "header_mobile")}
-              className="px-6 py-3 bg-brand text-ink rounded-full text-center font-medium text-sm uppercase tracking-[0.12em]"
-            >
-              Começar Grátis
-            </a>
-            <a href={`${APP_URL}/login`} className="text-center text-sm font-medium text-slate-600">
-              Já tenho conta, entrar
-            </a>
+            {loggedIn ? (
+              <a
+                href={`${APP_URL}/inicio`}
+                onClick={() => trackCta("abrir_pilar", "header_mobile")}
+                className="px-6 py-3 bg-brand text-ink rounded-full text-center font-medium text-sm uppercase tracking-[0.12em]"
+              >
+                Abrir Pilar
+              </a>
+            ) : (
+              <>
+                <a
+                  href={`${APP_URL}/cadastro`}
+                  onClick={() => trackCta("comecar_gratis", "header_mobile")}
+                  className="px-6 py-3 bg-brand text-ink rounded-full text-center font-medium text-sm uppercase tracking-[0.12em]"
+                >
+                  Começar Grátis
+                </a>
+                <a href={`${APP_URL}/login`} className="text-center text-sm font-medium text-slate-600">
+                  Já tenho conta, entrar
+                </a>
+              </>
+            )}
           </div>
         )}
       </header>
