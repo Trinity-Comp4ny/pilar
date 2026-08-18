@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { CreditCard, Calendar, Package, ExternalLink, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,6 +8,7 @@ import { StatusBadge } from "@/pages/billing/components/StatusBadge";
 import { ChangePlanDialog } from "@/pages/billing/components/ChangePlanDialog";
 import { CancelDialog } from "@/pages/billing/components/CancelDialog";
 import { useSettingsModal } from "@/contexts/SettingsModalContext";
+import { MARKETING_URL } from "@/lib/marketingSite";
 
 function formatBRL(value: number): string {
   return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -34,7 +34,6 @@ const BILLING_TYPE_LABELS: Record<string, string> = {
 // acesso NÃO passa por step-up de MFA aqui de propósito: é a rota de fuga do cliente
 // inadimplente para regularizar a assinatura. Ações destrutivas seguem só-admin.
 export function PagamentoPanel() {
-  const navigate = useNavigate();
   const { closeSettings } = useSettingsModal();
   const { data: role } = useUserRole();
   const isAdmin = role === "admin" || role === "ultra_admin";
@@ -48,7 +47,7 @@ export function PagamentoPanel() {
 
   const goToPlanos = () => {
     closeSettings();
-    navigate("/planos");
+    window.location.href = `${MARKETING_URL}/planos`;
   };
 
   const value =

@@ -1,4 +1,6 @@
+import { Link } from "react-router-dom";
 import { APP_URL } from "../config";
+import { requestCookieConsentReview } from "../cookieConsent";
 
 export function LandingFooter() {
   return (
@@ -37,8 +39,8 @@ export function LandingFooter() {
                 </a>
               </li>
               <li>
-                <a href="#modulos" className="hover:text-brand transition-colors">
-                  Módulos
+                <a href="#produto" className="hover:text-brand transition-colors">
+                  Produto
                 </a>
               </li>
               <li>
@@ -58,27 +60,30 @@ export function LandingFooter() {
             <h3 className="text-sm font-semibold mb-6 tracking-wider text-white">Legal</h3>
             <ul className="space-y-4 text-slate-300 font-light text-sm">
               <li>
-                <a href={`${APP_URL}/privacidade`} className="hover:text-brand transition-colors">
+                <Link to="/termos" className="hover:text-brand transition-colors">
+                  Termos de Uso
+                </Link>
+              </li>
+              <li>
+                <Link to="/privacidade" className="hover:text-brand transition-colors">
                   Privacidade
-                </a>
+                </Link>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  onClick={requestCookieConsentReview}
+                  className="hover:text-brand transition-colors text-left"
+                >
+                  Preferências de cookies
+                </button>
               </li>
             </ul>
           </div>
         </div>
 
-        <div className="border-t border-white/5 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-slate-300 font-light">
+        <div className="border-t border-white/5 pt-8 flex items-center justify-center text-xs text-slate-300 font-light">
           <p>&copy; {new Date().getFullYear()} Pilar. Todos os direitos reservados.</p>
-          <div className="flex items-center gap-1">
-            <span>Impulsionado por</span>
-            <a
-              href="https://trnty.com.br"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-slate-300 hover:text-brand transition-colors font-medium"
-            >
-              Trinity Company
-            </a>
-          </div>
         </div>
       </div>
     </footer>

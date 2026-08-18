@@ -1,4 +1,5 @@
 import { ArrowRight } from "lucide-react";
+import { Reveal } from "./Reveal";
 
 const pains = [
   "Lead esfria no WhatsApp.",
@@ -14,30 +15,26 @@ export function ProofSection() {
     <section id="prova" className="py-28 md:py-36 bg-paper-alt border-t border-paper-border scroll-mt-20">
       <div className="container mx-auto px-6 md:px-10">
         <div className="max-w-6xl mx-auto">
-          <div className="mb-14 reveal-up">
+          <Reveal className="mb-14">
             <span className="inline-block px-3 py-1 bg-brand text-ink text-xs font-medium uppercase tracking-[0.2em] rounded-sm">
               O que trava seu escritório
             </span>
-          </div>
+          </Reveal>
 
-          {/* Pain points riscados */}
-          <div className="mb-14 reveal-up">
-            {pains.map((pain, i) => (
+          <Reveal className="mb-14">
+            {pains.map((pain) => (
               <p
                 key={pain}
                 className="text-3xl md:text-5xl lg:text-6xl font-medium tracking-tight leading-[1.15] text-ink/20 line-through decoration-ink/15 decoration-1"
-                style={{ animationDelay: `${i * 60}ms` }}
               >
                 {pain}
               </p>
             ))}
-          </div>
+          </Reveal>
 
-          {/* Divisor */}
-          <div className="w-full h-px bg-slate-200 mb-14 reveal-up" />
+          <Reveal className="w-full h-px bg-slate-200 mb-14" />
 
-          {/* Solução */}
-          <div className="grid md:grid-cols-2 gap-12 md:gap-20 items-end mb-20 reveal-up">
+          <Reveal className="grid md:grid-cols-2 gap-12 md:gap-20 items-end mb-20">
             <h2 className="text-3xl md:text-5xl font-medium text-ink leading-[1.1] tracking-tight">
               <em className="landing-highlight">Controle total dos projetos.</em>{" "}
               <span className="italic text-ink/55">Mais margem no escritório.</span>
@@ -58,7 +55,7 @@ export function ProofSection() {
                 Cada etapa alimenta a próxima. Sem retrabalho. Sem conciliação manual.
               </p>
             </div>
-          </div>
+          </Reveal>
         </div>
       </div>
     </section>

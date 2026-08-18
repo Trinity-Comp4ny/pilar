@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
+import { Reveal } from "./Reveal";
 
 const faqs = [
   {
@@ -20,7 +21,8 @@ const faqs = [
   },
   {
     question: "Serve pro meu escritório?",
-    answer: "Feito pra engenharia multidisciplinar: civil, estrutural, MEP/HVAC. Não é ERP de obra nem ferramenta de arquitetura.",
+    answer:
+      "Feito pra engenharia multidisciplinar: civil, estrutural, MEP/HVAC. Não é ERP de obra nem ferramenta de arquitetura.",
   },
 ];
 
@@ -31,7 +33,7 @@ export function FAQSection() {
     <section id="faq" className="py-28 md:py-36 bg-paper scroll-mt-20">
       <div className="container mx-auto px-6 md:px-10">
         <div className="max-w-3xl mx-auto">
-          <div className="mb-16 reveal-up">
+          <Reveal className="mb-16">
             <div className="mb-6">
               <span className="inline-block px-3 py-1 bg-brand text-ink text-xs font-medium uppercase tracking-[0.2em] rounded-sm">
                 Perguntas frequentes
@@ -41,9 +43,9 @@ export function FAQSection() {
               <em className="landing-highlight">Antes de perguntar,</em>{" "}
               <span className="italic text-ink/55">responda.</span>
             </h2>
-          </div>
+          </Reveal>
 
-          <div className="reveal-up">
+          <Reveal>
             {faqs.map((faq, i) => {
               const isOpen = openIndex === i;
               return (
@@ -62,14 +64,12 @@ export function FAQSection() {
                     />
                   </button>
                   {isOpen && (
-                    <p className="text-base text-slate-500 font-light leading-relaxed pb-6 max-w-2xl">
-                      {faq.answer}
-                    </p>
+                    <p className="text-base text-slate-500 font-light leading-relaxed pb-6 max-w-2xl">{faq.answer}</p>
                   )}
                 </div>
               );
             })}
-          </div>
+          </Reveal>
         </div>
       </div>
     </section>
