@@ -20,7 +20,9 @@ import { FeatureRoute } from "./components/FeatureRoute";
 import { AdminOnlyRoute } from "./components/AdminOnlyRoute";
 import { ImpersonationBanner } from "./components/ImpersonationBanner";
 import { TrialBanner } from "./components/TrialBanner";
+import { CookieConsentBanner } from "./components/CookieConsentBanner";
 import { SettingsModalProvider } from "./contexts/SettingsModalContext";
+import { MARKETING_URL } from "./lib/marketingSite";
 
 // Modal de configuracoes: so monta quando o usuario abre. Estatico, arrastava os
 // 6 paineis (empresa, pagamento, uso...) pro entry chunk e estourava o budget.
@@ -28,7 +30,6 @@ const SettingsDialog = lazy(() =>
   import("./components/settings/SettingsDialog").then((m) => ({ default: m.SettingsDialog }))
 );
 
-const Planos = lazy(() => import("./pages/planos"));
 const Checkout = lazy(() => import("./pages/checkout"));
 const Login = lazy(() => import("./pages/Login"));
 const Signup = lazy(() => import("./pages/Signup"));
@@ -72,7 +73,6 @@ const MfaSetupPage = lazy(() => import("./pages/MfaSetupPage"));
 const PasswordReset = lazy(() => import("./pages/PasswordReset"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
 const SemAcesso = lazy(() => import("./pages/SemAcesso"));
-const Privacidade = lazy(() => import("./pages/Privacidade"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -117,12 +117,13 @@ function RedirectPrefix({ from, to }: { from: string; to: string }) {
   return <Navigate to={`${to}${rest}${location.search}`} replace />;
 }
 
-// A landing pública vive em pilarsoft.com.br (apps/marketing, ADR 0021); "/"
-// aqui só existe pra quem ainda tem o link antigo salvo.
-function LandingRedirect() {
+// Conteúdo público (landing, planos, termos, privacidade) vive em
+// pilarsoft.com.br (apps/marketing, ADR 0021/0025); estas rotas só existem
+// aqui pra quem ainda tem o link antigo salvo.
+function ExternalRedirect({ path = "" }: { path?: string }) {
   useEffect(() => {
-    window.location.replace("https://pilarsoft.com.br");
-  }, []);
+    window.location.replace(`${MARKETING_URL}${path}`);
+  }, [path]);
   return null;
 }
 
@@ -134,6 +135,7 @@ const App = () => {
           <Toaster />
           <BrowserRouter>
             <PageTracker />
+            <CookieConsentBanner />
             <AuthProvider>
               <ImpersonationProvider>
                 <SettingsModalProvider>
@@ -141,15 +143,16 @@ const App = () => {
                   <TrialBanner />
                   <Suspense fallback={<PageSkeleton />}>
                     <Routes>
-                      <Route path="/" element={<LandingRedirect />} />
-                      <Route path="/planos" element={<Planos />} />
+                      <Route path="/" element={<ExternalRedirect />} />
+                      <Route path="/planos" element={<ExternalRedirect path="/planos" />} />
+                      <Route path="/termos" element={<ExternalRedirect path="/termos" />} />
+                      <Route path="/privacidade" element={<ExternalRedirect path="/privacidade" />} />
                       <Route path="/checkout" element={<Checkout />} />
                       <Route path="/login" element={<Login />} />
                       <Route path="/cadastro" element={<Signup />} />
                       <Route path="/auth/callback" element={<AuthCallback />} />
                       <Route path="/forgot-password" element={<ForgotPassword />} />
                       <Route path="/reset-password" element={<PasswordReset />} />
-                      <Route path="/privacidade" element={<Privacidade />} />
 
                       <Route element={<PrivateRoute />}>
                         <Route path="/inicio" element={<Inicio />} />

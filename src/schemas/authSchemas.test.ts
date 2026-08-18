@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { companySetupSchema, loginSchema, profileSetupSchema } from "./authSchemas";
+import { companySetupSchema, loginSchema, profileSetupSchema, signupSchema } from "./authSchemas";
 
 describe("companySetupSchema — CNPJ checksum", () => {
   it("aceita CNPJ válido formatado", () => {
@@ -49,6 +49,31 @@ describe("loginSchema", () => {
   it("normaliza email para lowercase", () => {
     const r = loginSchema.safeParse({ email: "User@Empresa.COM", password: "x" });
     if (r.success) expect(r.data.email).toBe("user@empresa.com");
+  });
+});
+
+describe("signupSchema: aceite dos Termos (SPEC 049)", () => {
+  const validBase = {
+    nome: "João",
+    email: "joao@empresa.com",
+    telefone: "11999999999",
+    password: "Senha@123456!",
+    confirmPassword: "Senha@123456!",
+    companyName: "Empresa X",
+    termsAccepted: true,
+  };
+
+  it("aceita quando termsAccepted é true", () => {
+    expect(signupSchema.safeParse(validBase).success).toBe(true);
+  });
+
+  it("rejeita quando termsAccepted é false", () => {
+    const r = signupSchema.safeParse({ ...validBase, termsAccepted: false });
+    expect(r.success).toBe(false);
+    if (!r.success) {
+      const issue = r.error.issues.find((i) => i.path.includes("termsAccepted"));
+      expect(issue?.message).toContain("Termos de Uso");
+    }
   });
 });
 
