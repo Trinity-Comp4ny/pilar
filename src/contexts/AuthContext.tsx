@@ -31,6 +31,17 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
+// Cookie não sensível (sem token) compartilhado com pilarsoft.com.br pra landing trocar o CTA; quem autentica de verdade continua sendo o redirect em Login/Signup.
+const LOGIN_HINT_COOKIE = "pilar_logged_hint";
+
+function setLoginHintCookie(loggedIn: boolean) {
+  const { hostname } = window.location;
+  const domainAttr = hostname.endsWith("pilarsoft.com.br") ? "; domain=.pilarsoft.com.br" : "";
+  document.cookie = loggedIn
+    ? `${LOGIN_HINT_COOKIE}=1; path=/; max-age=2592000; samesite=lax${domainAttr}`
+    : `${LOGIN_HINT_COOKIE}=; path=/; max-age=0${domainAttr}`;
+}
+
 export function useAuth(): AuthContextValue {
   const ctx = useContext(AuthContext);
   if (!ctx) {
@@ -116,10 +127,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!session) {
           setUser(null);
           setProfile(null);
+          setLoginHintCookie(false);
           return;
         }
 
         setUser(session.user);
+        setLoginHintCookie(true);
         await fetchProfile(session.user.id);
         // refreshMfaLevel é seguro aqui: initializePromise já resolveu
         await refreshMfaLevel();
@@ -147,10 +160,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setMfaNextLevel("aal1");
         setHasVerifiedMfaFactor(false);
         setLoading(false);
+        setLoginHintCookie(false);
         return;
       }
 
       setUser(session.user);
+      setLoginHintCookie(true);
       // _notifyAllSubscribers awaita este callback de dentro do lock de
       // initializePromise. Qualquer supabase.from() ou supabase.auth.* aqui
       // chama getSession() → tenta o mesmo lock → deadlock infinito.

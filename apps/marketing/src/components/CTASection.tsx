@@ -1,8 +1,11 @@
 import { ArrowRight } from "lucide-react";
 import { APP_URL } from "../config";
 import { trackCta } from "../analytics";
+import { useLoginHint } from "../loginHint";
 
 export function CTASection() {
+  const loggedIn = useLoginHint();
+
   return (
     <section className="py-28 md:py-36 bg-paper">
       <div className="container mx-auto px-6 md:px-10">
@@ -16,14 +19,25 @@ export function CTASection() {
           <p className="text-xs text-ink/40 font-light mb-12">Cancele quando quiser · Migração assistida disponível</p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-            <a
-              href={`${APP_URL}/cadastro`}
-              onClick={() => trackCta("testar_gratis", "cta_final")}
-              className="w-full sm:w-auto px-7 py-3.5 bg-brand text-ink rounded-full font-medium text-sm hover:bg-brand/80 transition-colors flex items-center justify-center gap-2 group"
-            >
-              Testar grátis por 14 dias
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-            </a>
+            {loggedIn ? (
+              <a
+                href={`${APP_URL}/inicio`}
+                onClick={() => trackCta("abrir_pilar", "cta_final")}
+                className="w-full sm:w-auto px-7 py-3.5 bg-brand text-ink rounded-full font-medium text-sm hover:bg-brand/80 transition-colors flex items-center justify-center gap-2 group"
+              >
+                Abrir Pilar
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+              </a>
+            ) : (
+              <a
+                href={`${APP_URL}/cadastro`}
+                onClick={() => trackCta("testar_gratis", "cta_final")}
+                className="w-full sm:w-auto px-7 py-3.5 bg-brand text-ink rounded-full font-medium text-sm hover:bg-brand/80 transition-colors flex items-center justify-center gap-2 group"
+              >
+                Testar grátis por 14 dias
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+              </a>
+            )}
             <a
               href={`${APP_URL}/planos`}
               onClick={() => trackCta("ver_planos", "cta_final")}
