@@ -213,7 +213,10 @@ export default function Login() {
                     onCheckedChange={(v) => setRememberMe(!!v)}
                     className="data-[state=checked]:bg-brand data-[state=checked]:border-brand data-[state=checked]:text-ink"
                   />
-                  <label htmlFor="remember-me" className="text-sm text-ink-soft cursor-pointer select-none leading-none">
+                  <label
+                    htmlFor="remember-me"
+                    className="text-sm text-ink-soft cursor-pointer select-none leading-none"
+                  >
                     Lembre-me
                   </label>
                 </div>
@@ -259,10 +262,7 @@ export default function Login() {
 
           <p className="text-center text-sm text-ink-soft">
             Ainda não tem conta?{" "}
-            <Link
-              to="/cadastro"
-              className="font-medium text-ink decoration-brand underline-offset-2 hover:underline"
-            >
+            <Link to="/cadastro" className="font-medium text-ink decoration-brand underline-offset-2 hover:underline">
               Criar conta
             </Link>
           </p>
@@ -297,12 +297,6 @@ export default function Login() {
           </div>
 
           <div className="space-y-8 max-w-lg ml-auto text-right animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-150">
-            <div className="flex justify-end">
-              <span className="inline-flex items-center rounded-full border border-white/30 bg-white/10 px-3 py-1 text-xs font-medium text-white backdrop-blur-sm">
-                Impulsionado por Trinity Company
-              </span>
-            </div>
-
             <blockquote className="text-3xl font-light leading-snug">
               "A gestão eficiente é o alicerce onde grandes empresas constroem seu futuro."
             </blockquote>

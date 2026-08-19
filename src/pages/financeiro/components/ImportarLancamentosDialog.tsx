@@ -1,14 +1,5 @@
 import { useMemo, useRef, useState } from "react";
-import {
-  Sparkles,
-  AlertTriangle,
-  Undo2,
-  Upload,
-  Trash2,
-  ArrowDownLeft,
-  ArrowUpRight,
-  Info,
-} from "lucide-react";
+import { Sparkles, AlertTriangle, Undo2, Upload, Trash2, ArrowDownLeft, ArrowUpRight, Info } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,6 +12,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
+import { reportInvokeError } from "@/lib/monitoring";
 import { formatCurrency } from "@/lib/format";
 import { formatCurrencyInput, formatValorToInput, parseCurrencyString } from "@/lib/currencyUtils";
 import { lineHash, type ImportTipoDoc } from "@/lib/importFinanceiro";
@@ -152,6 +144,7 @@ export function ImportarLancamentosDialog({ open, onOpenChange, onImported }: Pr
         }
       }
     } catch (err) {
+      reportInvokeError(err, "financeiro-import:ler-arquivo");
       toast.error("Erro ao ler arquivo", { description: msg(err) });
     } finally {
       setFase("idle");
@@ -171,6 +164,7 @@ export function ImportarLancamentosDialog({ open, onOpenChange, onImported }: Pr
         toast.error("Nenhum lançamento extraído", { description: "Revise o texto." });
       }
     } catch (err) {
+      reportInvokeError(err, "financeiro-import:extrair-texto");
       toast.error("Falha ao extrair", { description: msg(err) });
     } finally {
       setFase("idle");
@@ -193,6 +187,7 @@ export function ImportarLancamentosDialog({ open, onOpenChange, onImported }: Pr
         description: `${r.criados} lançamento(s) criado(s), ${r.conciliados} conciliado(s).`,
       });
     } catch (err) {
+      reportInvokeError(err, "financeiro-import:gravar-lote");
       toast.error("Erro ao gravar", { description: msg(err) });
     }
   }
@@ -204,6 +199,7 @@ export function ImportarLancamentosDialog({ open, onOpenChange, onImported }: Pr
       onImported?.();
       toast.success("Importação desfeita");
     } catch (err) {
+      reportInvokeError(err, "financeiro-import:desfazer");
       toast.error("Erro ao desfazer", { description: msg(err) });
     }
   }

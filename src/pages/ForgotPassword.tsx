@@ -173,12 +173,6 @@ export default function ForgotPassword() {
           </div>
 
           <div className="space-y-8 max-w-lg ml-auto text-right animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-150">
-            <div className="flex justify-end">
-              <span className="inline-flex items-center rounded-full border border-white/30 bg-white/10 px-3 py-1 text-xs font-medium text-white backdrop-blur-sm">
-                Impulsionado por Trinity Company
-              </span>
-            </div>
-
             <blockquote className="text-3xl font-light leading-snug">
               "A gestão eficiente é o alicerce onde grandes empresas constroem seu futuro."
             </blockquote>

@@ -1,5 +1,5 @@
 /**
- * Analytics layer — PostHog backed com fallback no-op.
+ * Analytics layer: PostHog backed com fallback no-op.
  *
  * Ativação:
  *   1. Definir VITE_POSTHOG_KEY no .env (obrigatório para envio real)
@@ -7,12 +7,18 @@
  *
  * Sem key, roda em no-op (console.debug em dev, silêncio em prod).
  *
- * PII scrubbing: todos os traits/properties passam por scrub() antes de sair —
+ * Consentimento (ADR 0022): nada aqui toca o PostHog sem consentimento de
+ * analytics salvo via `saveCookieConsent(true)`. Sem decisão, o padrão é não
+ * rastrear (fail-closed). `applyCookieConsent()` é chamado pelo banner/pela
+ * página de privacidade quando o usuário decide ou revoga.
+ *
+ * PII scrubbing: todos os traits/properties passam por scrub() antes de sair,
  * mesma blocklist e regex do monitoring.ts.
  */
 
 import posthog from "posthog-js";
 import { env } from "./env";
+import { getCookieConsent, saveCookieConsent } from "./cookieConsent";
 
 type Props = Record<string, unknown>;
 
@@ -115,30 +121,47 @@ const noopAnalytics: Analytics = {
   },
 };
 
+let posthogInitialized = false;
+
+function hasAnalyticsConsent(): boolean {
+  return getCookieConsent()?.analytics === true;
+}
+
+function ensurePosthogInit() {
+  if (posthogInitialized || !KEY) return;
+  posthog.init(KEY, {
+    api_host: HOST,
+    capture_pageview: true,
+    capture_pageleave: true,
+    autocapture: false,
+    person_profiles: "identified_only",
+    disable_session_recording: true,
+    bootstrap: { distinctID: ensureAnonId() },
+    sanitize_properties: (props) => scrub(props) as Record<string, unknown>,
+  });
+  posthogInitialized = true;
+}
+
 const posthogAnalytics: Analytics = {
   init() {
-    if (!KEY) return;
-    posthog.init(KEY, {
-      api_host: HOST,
-      capture_pageview: true,
-      capture_pageleave: true,
-      autocapture: false,
-      person_profiles: "identified_only",
-      disable_session_recording: true,
-      bootstrap: { distinctID: ensureAnonId() },
-      sanitize_properties: (props) => scrub(props) as Record<string, unknown>,
-    });
+    if (!hasAnalyticsConsent()) return;
+    ensurePosthogInit();
   },
   identify(userId, traits) {
+    if (!hasAnalyticsConsent()) return;
+    ensurePosthogInit();
     posthog.identify(userId, scrub(traits) as Record<string, unknown> | undefined);
   },
   track(event, properties) {
+    if (!hasAnalyticsConsent()) return;
+    ensurePosthogInit();
     posthog.capture(event, scrub(properties) as Record<string, unknown> | undefined);
   },
   reset() {
-    posthog.reset();
+    if (posthogInitialized) posthog.reset();
   },
   isFeatureEnabled(key) {
+    if (!hasAnalyticsConsent() || !posthogInitialized) return undefined;
     return posthog.isFeatureEnabled(key);
   },
   getAnonId() {
@@ -150,4 +173,18 @@ export const analytics: Analytics = KEY ? posthogAnalytics : noopAnalytics;
 
 export function initAnalytics() {
   analytics.init();
+}
+
+/** Chamado pelo banner de consentimento e por "alterar preferências" em /privacidade. */
+export function applyCookieConsent(analyticsAccepted: boolean) {
+  saveCookieConsent(analyticsAccepted);
+  if (analyticsAccepted) {
+    analytics.init();
+    return;
+  }
+  if (posthogInitialized) {
+    posthog.opt_out_capturing();
+    posthog.reset();
+    posthogInitialized = false;
+  }
 }

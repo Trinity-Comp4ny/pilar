@@ -78,6 +78,22 @@ export default {
         brand: {
           DEFAULT: "hsl(var(--brand-accent) / <alpha-value>)",
         },
+        // Identidade por módulo na landing. DEFAULT = fill (pílula/card),
+        // strong = texto/traço (WCAG AA). Ver tokens.css.
+        modulo: {
+          gestao: {
+            DEFAULT: "hsl(var(--modulo-gestao) / <alpha-value>)",
+            strong: "hsl(var(--modulo-gestao-strong) / <alpha-value>)",
+          },
+          projetos: {
+            DEFAULT: "hsl(var(--modulo-projetos) / <alpha-value>)",
+            strong: "hsl(var(--modulo-projetos-strong) / <alpha-value>)",
+          },
+          obra: {
+            DEFAULT: "hsl(var(--modulo-obra) / <alpha-value>)",
+            strong: "hsl(var(--modulo-obra-strong) / <alpha-value>)",
+          },
+        },
         // DEFAULT = fill (bg/barras); strong = texto (WCAG AA). Ver tokens.css.
         positive: {
           DEFAULT: "hsl(var(--positive) / <alpha-value>)",

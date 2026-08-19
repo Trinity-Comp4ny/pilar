@@ -151,7 +151,8 @@ begin
     ('00000000-0000-0000-0000-000000000806', v_emp, 'Materiais de escritório', 780, 'Pendente', d + 5, null, '00000000-0000-0000-0000-000000000626', '00000000-0000-0000-0000-000000000642', '00000000-0000-0000-0000-000000000611', '00000000-0000-0000-0000-000000000631', 'Cartão', v_usr);
 
   insert into public.faturas (id, empresa_id, cartao_id, mes_referencia, ano_referencia, data_inicio, data_fim, data_vencimento, valor_total, valor_pago, status, conta_pagamento_id) values
-    ('00000000-0000-0000-0000-000000000901', v_emp, '00000000-0000-0000-0000-000000000611', extract(month from d)::int, extract(year from d)::int, date_trunc('month', d)::date, (date_trunc('month', d) + interval '1 month' - interval '1 day')::date, d + 5, 3980, 0, 'Aberta', '00000000-0000-0000-0000-000000000601');
+    ('00000000-0000-0000-0000-000000000901', v_emp, '00000000-0000-0000-0000-000000000611', extract(month from d)::int, extract(year from d)::int, date_trunc('month', d)::date, (date_trunc('month', d) + interval '1 month' - interval '1 day')::date, d + 5, 3980, 0, 'Aberta', '00000000-0000-0000-0000-000000000601')
+  on conflict on constraint faturas_unique_cartao_mes do nothing;
 
   -- =====================================================================
   -- OBRAS (administração + preço fechado) + frentes, orçamento, conta, RDO

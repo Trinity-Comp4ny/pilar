@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { callUntypedRpc } from "@/lib/supabaseRpc";
 import { toast } from "sonner";
+import { reportInvokeError } from "@/lib/monitoring";
 import { getSafeErrorMessage } from "@/lib/safeError";
 import { UsersAccessManager, type ManagedUser } from "@/components/admin/UsersAccessManager";
 import { useRequireAal2 } from "@/hooks/useRequireAal2";
@@ -82,6 +83,7 @@ export function UsuariosTab({ users, setUsers, currentUserId, companyFeatures }:
       ]);
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Erro inesperado";
+      reportInvokeError(err, "invite-user:convidar");
       toast.error("Erro ao convidar", { description: msg });
       throw err; // mantém o modal aberto com o formulário preenchido
     } finally {
@@ -101,6 +103,7 @@ export function UsuariosTab({ users, setUsers, currentUserId, companyFeatures }:
       if (error) throw error;
       toast.success("Convite reenviado", { description: `Novo e-mail enviado para ${u.email}` });
     } catch (err) {
+      reportInvokeError(err, "invite-user:resend");
       toast.error("Não foi possível reenviar o convite", {
         description: getSafeErrorMessage(err, "Tente de novo em instantes."),
       });
@@ -121,6 +124,7 @@ export function UsuariosTab({ users, setUsers, currentUserId, companyFeatures }:
       setUsers((prev) => prev.filter((x) => x.inviteId !== u.inviteId));
       toast.success("Convite cancelado");
     } catch (err) {
+      reportInvokeError(err, "invite-user:cancel");
       toast.error("Não foi possível cancelar o convite", {
         description: getSafeErrorMessage(err, "Tente de novo em instantes."),
       });
@@ -144,6 +148,7 @@ export function UsuariosTab({ users, setUsers, currentUserId, companyFeatures }:
       toast.success("Acessos atualizados");
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Erro inesperado";
+      reportInvokeError(err, "ultra-admin-usuarios:salvar-acessos");
       toast.error("Erro ao salvar", { description: msg });
     }
   };
@@ -157,7 +162,8 @@ export function UsuariosTab({ users, setUsers, currentUserId, companyFeatures }:
       if (error) throw error;
       setUsers((prev) => prev.filter((u) => u.id !== id));
       toast.success("Usuário removido");
-    } catch {
+    } catch (err) {
+      reportInvokeError(err, "delete-user");
       toast.error("Erro ao remover usuário");
     }
   };
