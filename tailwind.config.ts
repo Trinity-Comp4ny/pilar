@@ -66,6 +66,7 @@ export default {
         paper: {
           DEFAULT: "hsl(var(--surface-landing) / <alpha-value>)",
           alt: "hsl(var(--surface-landing-alt) / <alpha-value>)",
+          white: "hsl(var(--surface-landing-white) / <alpha-value>)",
           border: "hsl(var(--border-landing) / <alpha-value>)",
         },
         ink: {
