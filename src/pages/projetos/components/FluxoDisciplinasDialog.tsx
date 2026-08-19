@@ -1,15 +1,18 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
-import { LabelsEditor } from "@/components/LabelsEditor";
+import { TarefasEditor } from "@/components/TarefasEditor";
 import { toast } from "sonner";
 import { useFluxosDisciplinas, useCreateFluxo, useUpdateFluxo, useDeleteFluxo } from "@/hooks/useFluxosDisciplinas";
 import type { FluxoDisciplinas, FluxoEtapa } from "@/types/fluxoDisciplinas";
+import { FluxoPipelineGraph, type FluxoPipelineStage } from "./FluxoPipelineGraph";
 import {
   Plus,
   Trash2,
@@ -22,8 +25,6 @@ import {
   Layers,
   User,
   ListChecks,
-  ChevronDown,
-  ChevronUp,
 } from "lucide-react";
 
 interface FluxoDisciplinasDialogProps {
@@ -33,13 +34,35 @@ interface FluxoDisciplinasDialogProps {
   pessoas: { id: string; nome: string }[];
 }
 
+/** Etapa do form: `_key` é só de UI (estável ao reordenar), nunca persistida. */
+type FluxoEtapaForm = FluxoEtapa & { _key: string };
+
 interface FluxoFormState {
   nome: string;
   descricao: string;
-  etapas: FluxoEtapa[];
+  etapas: FluxoEtapaForm[];
+}
+
+function novaEtapaForm(ordem: number): FluxoEtapaForm {
+  return { ordem, nome: `Etapa ${ordem}`, disciplinas: [], _key: crypto.randomUUID() };
 }
 
 const emptyForm: FluxoFormState = { nome: "", descricao: "", etapas: [] };
+
+function buildPreviewStages(etapas: FluxoEtapaForm[]): FluxoPipelineStage[] {
+  return etapas.map((etapa, i) => ({
+    key: etapa._key,
+    titulo: etapa.nome || `Etapa ${i + 1}`,
+    subtitulo: etapa.duracao_dias_uteis ? `${etapa.duracao_dias_uteis} dias úteis` : undefined,
+    nodes: etapa.disciplinas.map((disc, di) => ({
+      key: `${etapa._key}-${di}`,
+      titulo: disc.nome,
+      status: "nao_iniciado" as const,
+      responsavelNome: disc.responsavel_nome || undefined,
+      checklistLabel: disc.checklist_padrao?.length ? `${disc.checklist_padrao.length} itens` : undefined,
+    })),
+  }));
+}
 
 export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoas }: FluxoDisciplinasDialogProps) {
   const { data: fluxos = [] } = useFluxosDisciplinas();
@@ -50,6 +73,7 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
   const [mode, setMode] = useState<"list" | "form">("list");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<FluxoFormState>(emptyForm);
+  const [expandedEtapas, setExpandedEtapas] = useState<string[]>([]);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const resetToList = () => {
@@ -59,21 +83,22 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
   };
 
   const handleEdit = (fluxo: FluxoDisciplinas) => {
+    const etapas = fluxo.etapas.map((e) => ({
+      ...e,
+      disciplinas: e.disciplinas.map((d) => ({ ...d })),
+      _key: crypto.randomUUID(),
+    }));
     setEditingId(fluxo.id);
-    setForm({
-      nome: fluxo.nome,
-      descricao: fluxo.descricao || "",
-      etapas: fluxo.etapas.map((e) => ({
-        ...e,
-        disciplinas: e.disciplinas.map((d) => ({ ...d })),
-      })),
-    });
+    setForm({ nome: fluxo.nome, descricao: fluxo.descricao || "", etapas });
+    setExpandedEtapas(etapas.map((e) => e._key));
     setMode("form");
   };
 
   const handleNew = () => {
+    const etapa = novaEtapaForm(1);
     setEditingId(null);
-    setForm({ nome: "", descricao: "", etapas: [{ ordem: 1, nome: "Etapa 1", disciplinas: [] }] });
+    setForm({ nome: "", descricao: "", etapas: [etapa] });
+    setExpandedEtapas([etapa._key]);
     setMode("form");
   };
 
@@ -106,7 +131,7 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
     const payload = {
       nome: form.nome.trim(),
       descricao: form.descricao.trim() || undefined,
-      etapas: form.etapas.map((e, i) => ({ ...e, ordem: i + 1 })),
+      etapas: form.etapas.map(({ _key, ...etapa }, i) => ({ ...etapa, ordem: i + 1 })),
     };
 
     try {
@@ -124,13 +149,9 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
   };
 
   const addEtapa = () => {
-    setForm((prev) => ({
-      ...prev,
-      etapas: [
-        ...prev.etapas,
-        { ordem: prev.etapas.length + 1, nome: `Etapa ${prev.etapas.length + 1}`, disciplinas: [] },
-      ],
-    }));
+    const etapa = novaEtapaForm(form.etapas.length + 1);
+    setForm((prev) => ({ ...prev, etapas: [...prev.etapas, etapa] }));
+    setExpandedEtapas((prev) => [...prev, etapa._key]);
   };
 
   const removeEtapa = (index: number) => {
@@ -160,13 +181,7 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
     setForm((prev) => {
       const etapas = [...prev.etapas];
       [etapas[index], etapas[target]] = [etapas[target], etapas[index]];
-      // Rename default labels to match new positions
-      return {
-        ...prev,
-        etapas: etapas.map((e, i) =>
-          e.nome === `Etapa ${index + 1}` || e.nome === `Etapa ${target + 1}` ? { ...e, nome: `Etapa ${i + 1}` } : e
-        ),
-      };
+      return { ...prev, etapas };
     });
   };
 
@@ -219,10 +234,9 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
     }));
   };
 
-  const [expandedChecklist, setExpandedChecklist] = useState<string | null>(null);
-
   const usedDisciplinas = new Set(form.etapas.flatMap((e) => e.disciplinas.map((d) => d.nome)));
   const totalDisciplinas = form.etapas.reduce((sum, e) => sum + e.disciplinas.length, 0);
+  const previewStages = useMemo(() => buildPreviewStages(form.etapas), [form.etapas]);
 
   return (
     <>
@@ -233,16 +247,20 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
           onOpenChange(v);
         }}
       >
-        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <GitBranch className="h-5 w-5" />
-              {mode === "list" ? "Fluxos de disciplinas" : editingId ? "Editar fluxo" : "Novo fluxo"}
-            </DialogTitle>
-          </DialogHeader>
-
+        <DialogContent
+          className={
+            mode === "form"
+              ? "max-w-none w-[94vw] h-[88vh] p-0 gap-0 overflow-hidden flex flex-col"
+              : "sm:max-w-2xl max-h-[90vh] overflow-y-auto"
+          }
+        >
           {mode === "list" ? (
             <div className="space-y-4 mt-2">
+              <DialogTitle className="flex items-center gap-2">
+                <GitBranch className="h-5 w-5" />
+                Fluxos de disciplinas
+              </DialogTitle>
+
               <Button onClick={handleNew} variant="brand" className="w-full">
                 <Plus className="mr-2 h-4 w-4" /> Novo fluxo
               </Button>
@@ -313,239 +331,235 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
               )}
             </div>
           ) : (
-            <div className="space-y-4 mt-2">
-              <Button variant="ghost" size="sm" className="text-sm -ml-2" onClick={resetToList}>
-                <ArrowLeft className="mr-1 h-4 w-4" /> Voltar
-              </Button>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <Label className="text-sm">Nome do Fluxo *</Label>
-                  <Input
-                    value={form.nome}
-                    onChange={(e) => setForm((prev) => ({ ...prev, nome: e.target.value }))}
-                    placeholder="Ex: Fluxo Residencial"
-                    className="h-10"
-                  />
+            <div className="flex h-full min-h-0 flex-col">
+              <div className="flex-shrink-0 border-b px-6 py-4 space-y-3">
+                <div className="flex items-center gap-2">
+                  <Button variant="ghost" size="sm" className="text-sm -ml-2" onClick={resetToList}>
+                    <ArrowLeft className="mr-1 h-4 w-4" /> Voltar
+                  </Button>
+                  <DialogTitle className="flex items-center gap-2 text-base">
+                    <GitBranch className="h-4 w-4" />
+                    {editingId ? "Editar fluxo" : "Novo fluxo"}
+                  </DialogTitle>
                 </div>
-                <div className="space-y-1.5">
-                  <Label className="text-sm">Descrição</Label>
-                  <Input
-                    value={form.descricao}
-                    onChange={(e) => setForm((prev) => ({ ...prev, descricao: e.target.value }))}
-                    placeholder="Opcional"
-                    className="h-10"
-                  />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-sm">Nome do Fluxo *</Label>
+                    <Input
+                      value={form.nome}
+                      onChange={(e) => setForm((prev) => ({ ...prev, nome: e.target.value }))}
+                      placeholder="Ex: Fluxo Residencial"
+                      className="h-9"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-sm">Descrição</Label>
+                    <Input
+                      value={form.descricao}
+                      onChange={(e) => setForm((prev) => ({ ...prev, descricao: e.target.value }))}
+                      placeholder="Opcional"
+                      className="h-9"
+                    />
+                  </div>
                 </div>
               </div>
 
-              <div>
-                <Label className="text-sm font-semibold mb-2 block">
-                  Etapas ({form.etapas.length}) — {totalDisciplinas} disciplina{totalDisciplinas !== 1 ? "s" : ""}
-                </Label>
+              <ResizablePanelGroup direction="horizontal" className="flex-1 min-h-0">
+                <ResizablePanel defaultSize={62} minSize={40}>
+                  <div className="h-full overflow-y-auto p-5 space-y-3">
+                    <Label className="text-sm font-semibold block">
+                      Etapas ({form.etapas.length}), {totalDisciplinas} disciplina{totalDisciplinas !== 1 ? "s" : ""}
+                    </Label>
 
-                <div className="space-y-3">
-                  {form.etapas.map((etapa, etapaIdx) => {
-                    const selectableDisciplinas = disciplinas
-                      .filter((d) => !usedDisciplinas.has(d.nome) || etapa.disciplinas.some((ed) => ed.nome === d.nome))
-                      .filter((d) => !etapa.disciplinas.some((ed) => ed.nome === d.nome));
+                    <Accordion
+                      type="multiple"
+                      value={expandedEtapas}
+                      onValueChange={setExpandedEtapas}
+                      className="space-y-3"
+                    >
+                      {form.etapas.map((etapa, etapaIdx) => {
+                        const selectableDisciplinas = disciplinas
+                          .filter(
+                            (d) => !usedDisciplinas.has(d.nome) || etapa.disciplinas.some((ed) => ed.nome === d.nome)
+                          )
+                          .filter((d) => !etapa.disciplinas.some((ed) => ed.nome === d.nome));
 
-                    return (
-                      <div key={etapaIdx} className="border rounded-lg p-3 bg-white space-y-2">
-                        <div className="flex items-center gap-2">
-                          <span className="flex items-center justify-center h-7 w-7 rounded-full bg-info-soft text-info-strong text-sm font-bold flex-shrink-0">
-                            {etapaIdx + 1}
-                          </span>
-                          <Input
-                            value={etapa.nome}
-                            onChange={(e) => updateEtapaNome(etapaIdx, e.target.value)}
-                            placeholder="Nome da etapa"
-                            className="h-9 text-sm flex-1"
-                          />
-                          <Input
-                            type="number"
-                            min={1}
-                            value={etapa.duracao_dias_uteis ?? ""}
-                            onChange={(e) => updateEtapaDuracao(etapaIdx, e.target.value)}
-                            placeholder="dias úteis"
-                            className="h-9 text-sm w-28 flex-shrink-0"
-                          />
-                          <div className="flex gap-0.5 flex-shrink-0">
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 w-8 p-0"
-                              disabled={etapaIdx === 0}
-                              onClick={() => moveEtapa(etapaIdx, "up")}
-                            >
-                              <ArrowUp size={14} />
-                            </Button>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 w-8 p-0"
-                              disabled={etapaIdx === form.etapas.length - 1}
-                              onClick={() => moveEtapa(etapaIdx, "down")}
-                            >
-                              <ArrowDown size={14} />
-                            </Button>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 w-8 p-0 text-danger-mid"
-                              onClick={() => removeEtapa(etapaIdx)}
-                            >
-                              <Trash2 size={14} />
-                            </Button>
-                          </div>
-                        </div>
+                        return (
+                          <AccordionItem
+                            key={etapa._key}
+                            value={etapa._key}
+                            className="rounded-lg border bg-white overflow-hidden"
+                          >
+                            <div className="flex items-center gap-2 px-3 py-2 bg-muted/30">
+                              <AccordionTrigger className="p-0 hover:no-underline flex-shrink-0">
+                                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-info-soft text-info-strong text-sm font-bold">
+                                  {etapaIdx + 1}
+                                </span>
+                              </AccordionTrigger>
+                              <Input
+                                value={etapa.nome}
+                                onChange={(e) => updateEtapaNome(etapaIdx, e.target.value)}
+                                placeholder="Nome da etapa"
+                                className="h-9 text-sm font-medium flex-1"
+                              />
+                              <div className="flex items-center gap-1.5 rounded-full border bg-white px-2.5 h-8 flex-shrink-0">
+                                <Input
+                                  type="number"
+                                  min={1}
+                                  value={etapa.duracao_dias_uteis ?? ""}
+                                  onChange={(e) => updateEtapaDuracao(etapaIdx, e.target.value)}
+                                  placeholder="—"
+                                  className="h-6 w-9 border-none p-0 text-xs text-right shadow-none focus-visible:ring-0"
+                                />
+                                <span className="text-[11px] text-muted-foreground whitespace-nowrap">dias úteis</span>
+                              </div>
+                              <div className="flex gap-0.5 flex-shrink-0">
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-8 w-8 p-0"
+                                  disabled={etapaIdx === 0}
+                                  onClick={() => moveEtapa(etapaIdx, "up")}
+                                >
+                                  <ArrowUp size={14} />
+                                </Button>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-8 w-8 p-0"
+                                  disabled={etapaIdx === form.etapas.length - 1}
+                                  onClick={() => moveEtapa(etapaIdx, "down")}
+                                >
+                                  <ArrowDown size={14} />
+                                </Button>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-8 w-8 p-0 text-danger-mid"
+                                  onClick={() => removeEtapa(etapaIdx)}
+                                >
+                                  <Trash2 size={14} />
+                                </Button>
+                              </div>
+                            </div>
 
-                        {/* Disciplinas com responsável */}
-                        <div className="space-y-1.5">
-                          {etapa.disciplinas.map((disc, discIdx) => {
-                            const checklistKey = `${etapaIdx}-${discIdx}`;
-                            const checklist = disc.checklist_padrao ?? [];
-                            const isExpanded = expandedChecklist === checklistKey;
-                            return (
-                              <div key={discIdx} className="bg-muted rounded px-2 py-1.5 space-y-1.5">
-                                <div className="flex items-center gap-2">
-                                  <Badge variant="secondary" className="text-sm flex-shrink-0">
-                                    {disc.nome}
-                                  </Badge>
-                                  <Select
-                                    value={disc.responsavel_id || ""}
-                                    onValueChange={(val) => updateDisciplinaResponsavel(etapaIdx, discIdx, val)}
-                                  >
-                                    <SelectTrigger className="h-8 text-xs flex-1 min-w-[140px]">
-                                      <SelectValue placeholder="Responsável (opcional)">
-                                        {disc.responsavel_nome ? (
-                                          <span className="flex items-center gap-1">
-                                            <User className="h-3 w-3" />
-                                            {disc.responsavel_nome}
-                                          </span>
-                                        ) : (
-                                          "Responsável (opcional)"
-                                        )}
-                                      </SelectValue>
+                            <AccordionContent className="px-3">
+                              <div className="space-y-2 pt-1">
+                                {etapa.disciplinas.map((disc, discIdx) => (
+                                  <div key={discIdx} className="rounded-md border bg-muted/30 p-2.5 space-y-2">
+                                    <div className="flex items-center gap-2">
+                                      <Badge variant="secondary" className="text-sm flex-shrink-0">
+                                        {disc.nome}
+                                      </Badge>
+                                      <Select
+                                        value={disc.responsavel_id || ""}
+                                        onValueChange={(val) => updateDisciplinaResponsavel(etapaIdx, discIdx, val)}
+                                      >
+                                        <SelectTrigger className="h-8 text-xs flex-1 min-w-[140px]">
+                                          <SelectValue placeholder="Responsável (opcional)">
+                                            {disc.responsavel_nome ? (
+                                              <span className="flex items-center gap-1">
+                                                <User className="h-3 w-3" />
+                                                {disc.responsavel_nome}
+                                              </span>
+                                            ) : (
+                                              "Responsável (opcional)"
+                                            )}
+                                          </SelectValue>
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          {pessoas.map((p) => (
+                                            <SelectItem key={p.id} value={p.id} className="text-sm">
+                                              {p.nome}
+                                            </SelectItem>
+                                          ))}
+                                        </SelectContent>
+                                      </Select>
+                                      <button
+                                        type="button"
+                                        className="text-muted-foreground hover:text-danger-mid flex-shrink-0"
+                                        onClick={() => removeDisciplinaFromEtapa(etapaIdx, discIdx)}
+                                      >
+                                        <X size={14} />
+                                      </button>
+                                    </div>
+                                    <div className="border-t pt-2">
+                                      <Label className="text-[11px] text-muted-foreground mb-1 flex items-center gap-1">
+                                        <ListChecks className="h-3 w-3" /> Tarefas do checklist
+                                      </Label>
+                                      <TarefasEditor
+                                        value={disc.checklist_padrao ?? []}
+                                        onChange={(next) => updateDisciplinaChecklist(etapaIdx, discIdx, next)}
+                                      />
+                                    </div>
+                                  </div>
+                                ))}
+
+                                {selectableDisciplinas.length > 0 && (
+                                  <Select onValueChange={(val) => addDisciplinaToEtapa(etapaIdx, val)} value="">
+                                    <SelectTrigger className="h-9 text-sm">
+                                      <SelectValue placeholder="Adicionar disciplina..." />
                                     </SelectTrigger>
                                     <SelectContent>
-                                      {pessoas.map((p) => (
-                                        <SelectItem key={p.id} value={p.id} className="text-sm">
-                                          {p.nome}
+                                      {selectableDisciplinas.map((d) => (
+                                        <SelectItem key={d.id} value={d.nome} className="text-sm">
+                                          {d.nome}
                                         </SelectItem>
                                       ))}
                                     </SelectContent>
                                   </Select>
-                                  <button
-                                    type="button"
-                                    className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground flex-shrink-0"
-                                    onClick={() => setExpandedChecklist(isExpanded ? null : checklistKey)}
-                                  >
-                                    <ListChecks size={14} />
-                                    {checklist.length > 0 && checklist.length}
-                                    {isExpanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
-                                  </button>
-                                  <button
-                                    type="button"
-                                    className="hover:bg-gray-300 rounded-full p-1 flex-shrink-0"
-                                    onClick={() => removeDisciplinaFromEtapa(etapaIdx, discIdx)}
-                                  >
-                                    <X size={14} className="text-danger-mid" />
-                                  </button>
-                                </div>
-                                {isExpanded && (
-                                  <div className="pt-1 border-t">
-                                    <Label className="text-[11px] text-muted-foreground mb-1 block">
-                                      Checklist padrão (copiado ao aplicar o fluxo)
-                                    </Label>
-                                    <LabelsEditor
-                                      value={checklist}
-                                      onChange={(next) => updateDisciplinaChecklist(etapaIdx, discIdx, next)}
-                                    />
-                                  </div>
+                                )}
+
+                                {etapa.disciplinas.length > 1 && (
+                                  <p className="text-xs text-muted-foreground">
+                                    Disciplinas nesta etapa rodam em paralelo
+                                  </p>
                                 )}
                               </div>
-                            );
-                          })}
-                        </div>
+                            </AccordionContent>
+                          </AccordionItem>
+                        );
+                      })}
+                    </Accordion>
 
-                        {selectableDisciplinas.length > 0 && (
-                          <Select onValueChange={(val) => addDisciplinaToEtapa(etapaIdx, val)} value="">
-                            <SelectTrigger className="h-9 text-sm">
-                              <SelectValue placeholder="Adicionar disciplina..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {selectableDisciplinas.map((d) => (
-                                <SelectItem key={d.id} value={d.nome} className="text-sm">
-                                  {d.nome}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        )}
-
-                        {etapa.disciplinas.length > 1 && (
-                          <p className="text-xs text-muted-foreground">Disciplinas nesta etapa rodam em paralelo</p>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="w-full mt-3 text-sm h-9"
-                  onClick={addEtapa}
-                >
-                  <Plus className="mr-1 h-4 w-4" /> Adicionar etapa
-                </Button>
-              </div>
-
-              {/* Preview */}
-              {form.etapas.length > 0 && form.etapas.some((e) => e.disciplinas.length > 0) && (
-                <div className="bg-muted rounded-lg p-3 border">
-                  <Label className="text-xs text-muted-foreground mb-2 block">Prévia do fluxo</Label>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    {form.etapas.map((etapa, i) => (
-                      <div key={i} className="flex items-center gap-2">
-                        {i > 0 && <span className="text-muted-foreground text-sm">→</span>}
-                        <div className="bg-white border rounded-md px-2.5 py-1.5">
-                          <span className="text-xs font-medium text-info-strong">
-                            {etapa.nome}
-                            {etapa.duracao_dias_uteis ? ` · ${etapa.duracao_dias_uteis} dias úteis` : ""}
-                          </span>
-                          <div className="flex flex-col gap-0.5 mt-1">
-                            {etapa.disciplinas.map((d, di) => (
-                              <span key={di} className="text-[10px] bg-info-soft text-info-mid rounded px-1.5 py-0.5">
-                                {d.nome}
-                                {d.responsavel_nome ? ` (${d.responsavel_nome})` : ""}
-                                {d.checklist_padrao?.length ? ` · ${d.checklist_padrao.length} itens` : ""}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
+                    <Button type="button" variant="outline" size="sm" className="w-full h-9" onClick={addEtapa}>
+                      <Plus className="mr-1 h-4 w-4" /> Adicionar etapa
+                    </Button>
                   </div>
-                </div>
-              )}
+                </ResizablePanel>
 
-              <div className="flex flex-col gap-2 pt-2">
-                <Button
-                  onClick={handleSave}
-                  variant="brand"
-                  className="w-full"
-                  disabled={createFluxo.isPending || updateFluxo.isPending}
-                >
-                  {editingId ? "Salvar alterações" : "Criar fluxo"}
-                </Button>
-                <Button variant="outline" className="w-full" onClick={resetToList}>
+                <ResizableHandle withHandle />
+
+                <ResizablePanel defaultSize={38} minSize={25}>
+                  <div className="flex h-full flex-col bg-muted/20">
+                    <div className="flex-shrink-0 border-b px-4 py-3">
+                      <Label className="text-xs font-semibold text-muted-foreground">Prévia ao vivo</Label>
+                    </div>
+                    <div className="flex-1 min-h-0 overflow-auto p-4">
+                      {previewStages.length === 0 || totalDisciplinas === 0 ? (
+                        <div className="flex h-full flex-col items-center justify-center gap-2 text-center text-muted-foreground px-6">
+                          <GitBranch className="h-8 w-8 opacity-30" />
+                          <p className="text-xs max-w-[200px]">
+                            Adicione etapas e disciplinas para ver o fluxo montado aqui
+                          </p>
+                        </div>
+                      ) : (
+                        <FluxoPipelineGraph stages={previewStages} />
+                      )}
+                    </div>
+                  </div>
+                </ResizablePanel>
+              </ResizablePanelGroup>
+
+              <div className="flex-shrink-0 border-t px-6 py-4 flex items-center justify-end gap-2">
+                <Button variant="outline" onClick={resetToList}>
                   Cancelar
+                </Button>
+                <Button onClick={handleSave} variant="brand" disabled={createFluxo.isPending || updateFluxo.isPending}>
+                  {editingId ? "Salvar alterações" : "Criar fluxo"}
                 </Button>
               </div>
             </div>
