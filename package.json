@@ -35,6 +35,8 @@
     "functions:deploy:staging": "scripts/supabase-target.sh deploy staging",
     "functions:deploy:prod": "scripts/supabase-target.sh deploy prod",
     "audit:ci": "npm audit --audit-level=high",
+    "audit:security:staging": "node scripts/audit-security.mjs staging",
+    "audit:security:prod": "node scripts/audit-security.mjs prod",
     "check:bundle-size": "node scripts/check-bundle-size.mjs",
     "check:migrations": "node scripts/check-migration-safety.mjs --base origin/staging",
     "test": "vitest",
