@@ -403,7 +403,8 @@ export type Database = {
       asaas_config: {
         Row: {
           ambiente: string
-          api_key: string
+          api_key: string | null
+          api_key_secret_id: string | null
           created_at: string
           empresa_id: string
           id: string
@@ -411,7 +412,8 @@ export type Database = {
         }
         Insert: {
           ambiente?: string
-          api_key: string
+          api_key?: string | null
+          api_key_secret_id?: string | null
           created_at?: string
           empresa_id: string
           id?: string
@@ -419,7 +421,8 @@ export type Database = {
         }
         Update: {
           ambiente?: string
-          api_key?: string
+          api_key?: string | null
+          api_key_secret_id?: string | null
           created_at?: string
           empresa_id?: string
           id?: string
@@ -6274,6 +6277,7 @@ export type Database = {
         Returns: string
       }
       gerar_notificacoes_ambient: { Args: never; Returns: number }
+      get_asaas_api_key: { Args: { p_empresa_id: string }; Returns: string }
       get_cliente_obra_detail: {
         Args: { p_obra_id: string; p_token: string }
         Returns: Json
@@ -6818,6 +6822,10 @@ export type Database = {
       rpc_sync_metas: { Args: never; Returns: number }
       set_access_profile: {
         Args: { p_perfil: string; p_user_id: string }
+        Returns: undefined
+      }
+      set_asaas_api_key: {
+        Args: { p_api_key: string; p_empresa_id: string }
         Returns: undefined
       }
       set_disciplina_status: {
