@@ -5,8 +5,7 @@ import { CompanyFeatureToggles } from "@/components/admin/CompanyFeatureToggles"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useRequireAal2 } from "@/hooks/useRequireAal2";
-import { useSettingsModal } from "@/contexts/SettingsModalContext";
-import { parseUserFeatures, type CompanyFeatures, type FeatureKey, type SubscriptionPlanSlug } from "@/lib/features";
+import { parseUserFeatures, type CompanyFeatures, type FeatureKey } from "@/lib/features";
 
 type RawUser = {
   id: string;
@@ -17,12 +16,10 @@ type RawUser = {
 type Props = {
   companyFeatures: CompanyFeatures;
   setCompanyFeatures: (next: CompanyFeatures) => void;
-  currentPlan: SubscriptionPlanSlug;
   users: RawUser[];
 };
 
-export function FeaturesEmpresaTab({ companyFeatures, setCompanyFeatures, currentPlan, users }: Props) {
-  const { openSettings } = useSettingsModal();
+export function FeaturesEmpresaTab({ companyFeatures, setCompanyFeatures, users }: Props) {
   const requireAal2 = useRequireAal2();
   const [draft, setDraft] = useState<CompanyFeatures>(companyFeatures);
   const [isSaving, setIsSaving] = useState(false);
@@ -66,19 +63,14 @@ export function FeaturesEmpresaTab({ companyFeatures, setCompanyFeatures, curren
   return (
     <Card className="rounded-2xl border border-black/5 bg-white">
       <CardHeader>
-        <CardTitle className="text-lg font-medium tracking-tight">Features da Empresa</CardTitle>
+        <CardTitle className="text-lg font-medium tracking-tight">Acesso antecipado</CardTitle>
         <CardDescription>
-          Ative ou desative módulos. O plano sugere o conjunto incluso; add-ons são cobrados à parte.
+          Módulo maduro (Financeiro, Projetos, Obras...) já vem ligado pra sua empresa, sem precisar ativar aqui.
+          Isto é só para dar acesso cedo a um módulo ainda não lançado pra todo mundo.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-5">
-        <CompanyFeatureToggles
-          value={draft}
-          onChange={setDraft}
-          currentPlan={currentPlan}
-          usersByFeature={usersByFeature}
-          onChangePlan={() => openSettings("pagamento")}
-        />
+        <CompanyFeatureToggles value={draft} onChange={setDraft} usersByFeature={usersByFeature} />
 
         <div className="flex items-center justify-end gap-2">
           <Button variant="outline" onClick={() => setDraft(companyFeatures)} disabled={!dirty || isSaving}>
