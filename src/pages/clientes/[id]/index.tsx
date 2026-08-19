@@ -58,6 +58,7 @@ import { PROJECT_STATUS_CONFIG } from "@/constants";
 import { PROPOSTA_STATUS_CONFIG } from "@/hooks/usePropostas";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { reportInvokeError } from "@/lib/monitoring";
 import type { Cliente } from "@/hooks/useClientes";
 import type { ProjetoResumo, PropostaResumo } from "@/hooks/useClienteDetalhe";
 
@@ -523,7 +524,8 @@ export default function ClienteDetalhePage() {
       });
       if (error) throw error;
       toast.success(`Mensagem enviada para ${clienteNomeCompleto}`);
-    } catch {
+    } catch (err) {
+      reportInvokeError(err, "send-manual-client-email");
       toast.error("Erro ao enviar mensagem");
     }
     setIsMessageOpen(false);

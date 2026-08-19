@@ -170,3 +170,12 @@ export const monitoring: Monitoring = DSN ? sentryMonitoring : noopMonitoring;
 export function initMonitoring() {
   monitoring.init();
 }
+
+/**
+ * Reporta falha de `functions.invoke`/`fetch`/`.rpc` pro Sentry antes do catch
+ * virar mensagem de UX. Sem isso, erro de rede/CORS/timeout nessas chamadas
+ * nunca aparece no Sentry: o client engole a exceção pra mostrar um toast.
+ */
+export function reportInvokeError(error: unknown, fn: string, extra?: Extra): string | undefined {
+  return monitoring.captureException(error, { fn, ...extra });
+}

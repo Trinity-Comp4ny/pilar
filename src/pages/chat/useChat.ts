@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { msgErroChat } from "./erros";
 import { env } from "@/lib/env";
+import { reportInvokeError } from "@/lib/monitoring";
 
 export type AgenteMeta = {
   agente: string;
@@ -522,6 +523,7 @@ export function useChat() {
           setMessages((prev) => [...prev, { id: novoId(), role: "assistant", content: "Geração interrompida." }]);
           return;
         }
+        reportInvokeError(err, "ai-chat", { porTimeout });
         setMessages((prev) => [
           ...prev,
           { id: novoId(), role: "assistant", content: msgErroChat(err, porTimeout), erro: true },

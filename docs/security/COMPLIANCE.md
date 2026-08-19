@@ -6,9 +6,10 @@ Status de conformidade LGPD + roadmap SOC2/ISO.
 
 ### Papéis
 
-- **Controlador:** cliente do Pilar (escritório de arquitetura/engenharia) — controla dados dos seus próprios clientes finais
-- **Operador:** Labrynth AI (Pilar) — processa dados em nome do controlador
-- **DPO:** [nome do DPO] · dpo@labrynth.ai
+- **Controlador:** cliente do Pilar (escritório de engenharia), controla dados dos seus próprios clientes finais
+- **Operador:** Pilar (razão social e CNPJ próprios em regularização, ver
+  [docs/legal/README.md](../legal/README.md))
+- **DPO:** privacidade@pilarsoft.com.br
 
 ### Bases legais de tratamento
 
@@ -41,7 +42,11 @@ Template em `docs/templates/DPA_TEMPLATE.md` (TODO)
 
 ### Incidentes e notificação
 
-- Vazamento de dados pessoais → notificar ANPD em **até 2 dias úteis** (Art. 48)
+- Vazamento de dados pessoais → notificar ANPD em **até 3 dias úteis** (LGPD
+  Art. 48 + Resolução CD/ANPD nº 15/2024, que regulamenta o prazo; confirmar
+  com o DPO/advogado antes de tratar isso como definitivo). Corrigido em
+  2026-08-18: este documento dizia 2 dias úteis, `INCIDENT_RESPONSE.md` dizia
+  3; os dois precisam bater.
 - Ver `../operations/INCIDENT_RESPONSE.md` seção 6
 
 ### Transferência internacional
@@ -74,13 +79,20 @@ Template em `docs/templates/DPA_TEMPLATE.md` (TODO)
 
 ## Fornecedores críticos
 
-| Vendor                 | Dado processado                  | Certificações           | DPA          |
-| ---------------------- | -------------------------------- | ----------------------- | ------------ |
-| Supabase               | Todos dados do DB                | SOC2 Type II            | ✅ (assinar) |
-| Vercel                 | Logs + traces                    | SOC2 Type II, ISO 27001 | ✅           |
-| Sentry                 | Error stacktraces (PII scrubbed) | SOC2 Type II            | ✅           |
-| Asaas                  | Dados de pagamento               | PCI-DSS                 | ✅ (assinar) |
-| Cloudflare (Turnstile) | IP + cookie anti-bot             | SOC2 Type II            | ✅           |
+Coluna DPA corrigida em 2026-08-18: a versão anterior marcava Supabase e Asaas
+com "✅ (assinar)" ao mesmo tempo (contraditório: ✅ = feito, "assinar" = não
+feito). `docs/legal/PRIVACY_POLICY.md` chegou a citar "DPA assinado" pra todos
+os vendors com base nesse ✅ ambíguo, o que era impreciso. Sem verificação
+recente do estado real de cada um, a coluna abaixo assume pendente por padrão
+até alguém confirmar contrato/aceite de cada vendor.
+
+| Vendor                 | Dado processado                  | Certificações           | DPA            |
+| ---------------------- | -------------------------------- | ----------------------- | -------------- |
+| Supabase               | Todos dados do DB                | SOC2 Type II            | 🟡 a confirmar |
+| Vercel                 | Logs + traces                    | SOC2 Type II, ISO 27001 | 🟡 a confirmar |
+| Sentry                 | Error stacktraces (PII scrubbed) | SOC2 Type II            | 🟡 a confirmar |
+| Asaas                  | Dados de pagamento               | PCI-DSS                 | 🟡 a confirmar |
+| Cloudflare (Turnstile) | IP + cookie anti-bot             | SOC2 Type II            | 🟡 a confirmar |
 
 ## Roadmap realista
 

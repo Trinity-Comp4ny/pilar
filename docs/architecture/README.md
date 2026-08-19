@@ -27,6 +27,10 @@ Um ADR documenta uma decisão técnica relevante, seu contexto e consequências.
 | [0019](./adr/0019-features-como-controle-de-rollout-nao-de-plano.md)             | Features como controle de rollout por módulo (não paywall); sub-features flat; revisa o 0005         |
 | [0020](./adr/0020-headless-sim-widget-estilizado-nao.md)                         | Adotar biblioteca headless, recusar widget estilizado (Gantt/Kanban custom, tabela via TanStack)     |
 | [0021](./adr/0021-marketing-site-separado-do-app.md)                             | Separar o site de marketing (`apps/marketing`) do app autenticado, deploy Vercel próprio             |
+| [0022](./adr/0022-consentimento-cookies-client-side.md)                          | Consentimento de cookies client-side (banner + localStorage), sem CMP de terceiro                    |
+| [0023](./adr/0023-framer-motion-no-site-de-marketing.md)                         | Adotar Framer Motion para animações do site de marketing                                             |
+| [0024](./adr/0024-react-router-em-marketing.md)                                  | Adotar react-router-dom em apps/marketing para rotas internas (Produto/Soluções)                     |
+| [0025](./adr/0025-planos-termos-privacidade-para-marketing.md)                   | Mover Planos/Termos/Privacidade (texto) para apps/marketing; ações LGPD para o SettingsDialog do app |
 
 ## Guias de reúso
 
