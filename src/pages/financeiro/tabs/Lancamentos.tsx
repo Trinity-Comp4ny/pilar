@@ -7,11 +7,9 @@ import { ptBR } from "date-fns/locale";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { DataFrescor } from "@/components/DataFrescor";
-import { ArrowLeftRight, Clock, Plus, TrendingDown, TrendingUp, Upload } from "lucide-react";
+import { Clock, TrendingDown, TrendingUp, Upload } from "lucide-react";
 import { LancamentosTable } from "../components/LancamentosTable";
 import { useLancamentosResumo } from "../hooks/useLancamentosResumo";
-import { LancamentoFormDialog } from "../components/LancamentoFormDialog";
-import { TransferenciaFormDialog } from "../components/TransferenciaFormDialog";
 import { ImportarLancamentosDialog } from "../components/ImportarLancamentosDialog";
 import {
   periodoRange,
@@ -19,7 +17,6 @@ import {
   writeFiltersToParams,
   type LancamentosFilters,
 } from "../components/lancamentosFilters";
-import type { TipoLancamento } from "../hooks/useLancamentosUnified";
 
 /** Invalida as três queries da tela (página, resumo, grupos) de uma vez. */
 export function invalidateLancamentos(qc: ReturnType<typeof useQueryClient>) {
@@ -67,8 +64,6 @@ export default function Lancamentos() {
     [filters, setFilters]
   );
 
-  const [newTipo, setNewTipo] = useState<TipoLancamento | null>(null);
-  const [newTransferencia, setNewTransferencia] = useState(false);
   const [importar, setImportar] = useState(false);
 
   const queryClient = useQueryClient();
@@ -98,33 +93,6 @@ export default function Lancamentos() {
           />
         </div>
         <div className="flex items-center gap-2">
-          <Button
-            size="sm"
-            variant="outline"
-            className="h-9 rounded-full gap-1 border-positive text-positive-strong hover:bg-positive/10"
-            onClick={() => setNewTipo("receita")}
-          >
-            <Plus className="h-3.5 w-3.5" />
-            Nova receita
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            className="h-9 rounded-full gap-1 border-danger-mid text-danger-mid hover:bg-danger-soft"
-            onClick={() => setNewTipo("despesa")}
-          >
-            <Plus className="h-3.5 w-3.5" />
-            Nova despesa
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            className="h-9 rounded-full gap-1 border-info-mid text-info-mid hover:bg-info-soft"
-            onClick={() => setNewTransferencia(true)}
-          >
-            <ArrowLeftRight className="h-3.5 w-3.5" />
-            Transferência
-          </Button>
           <Button size="sm" variant="outline" className="h-9 rounded-full gap-1" onClick={() => setImportar(true)}>
             <Upload className="h-3.5 w-3.5" />
             Importar
@@ -172,39 +140,9 @@ export default function Lancamentos() {
 
       <Card className="rounded-2xl border border-black/5 bg-white p-4">
         <CardContent className="p-0">
-          <LancamentosTable
-            resumo={resumo}
-            filters={filters}
-            onFiltersChange={setFilters}
-            onMutated={invalidate}
-          />
+          <LancamentosTable resumo={resumo} filters={filters} onFiltersChange={setFilters} onMutated={invalidate} />
 
-          {newTipo && (
-            <LancamentoFormDialog
-              open
-              onOpenChange={(v) => !v && setNewTipo(null)}
-              tipo={newTipo}
-              onSaved={() => {
-                setNewTipo(null);
-                invalidate();
-              }}
-            />
-          )}
-
-          <TransferenciaFormDialog
-            open={newTransferencia}
-            onOpenChange={setNewTransferencia}
-            onSaved={() => {
-              setNewTransferencia(false);
-              invalidate();
-            }}
-          />
-
-          <ImportarLancamentosDialog
-            open={importar}
-            onOpenChange={setImportar}
-            onImported={invalidate}
-          />
+          <ImportarLancamentosDialog open={importar} onOpenChange={setImportar} onImported={invalidate} />
         </CardContent>
       </Card>
     </div>
