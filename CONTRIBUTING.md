@@ -33,17 +33,18 @@ npm run gen:types
 
 ## Scripts
 
-| Comando                     | Para quê                                       |
-| --------------------------- | ---------------------------------------------- |
-| `npm run dev`               | Vite dev server                                |
-| `npm run typecheck`         | `tsc --noEmit`                                 |
-| `npm run test:run`          | Vitest unit tests                              |
-| `npm run test:e2e`          | Playwright (precisa `npm run preview` rodando) |
-| `npm run build`             | Produção                                       |
-| `npm run build:strict`      | typecheck + build                              |
-| `npm run check:bundle-size` | Falha se chunk passa do budget                 |
-| `npm run lint` / `lint:fix` | ESLint                                         |
-| `npm run format`            | Prettier                                       |
+| Comando                     | Para quê                                           |
+| --------------------------- | -------------------------------------------------- |
+| `npm run dev`               | Ambiente completo: Supabase + functions + app + LP |
+| `npm run dev:app`           | Vite dev server (só o app, sem Supabase)           |
+| `npm run typecheck`         | `tsc --noEmit`                                     |
+| `npm run test:run`          | Vitest unit tests                                  |
+| `npm run test:e2e`          | Playwright (precisa `npm run preview` rodando)     |
+| `npm run build`             | Produção                                           |
+| `npm run build:strict`      | typecheck + build                                  |
+| `npm run check:bundle-size` | Falha se chunk passa do budget                     |
+| `npm run lint` / `lint:fix` | ESLint                                             |
+| `npm run format`            | Prettier                                           |
 
 ## Convenções
 
