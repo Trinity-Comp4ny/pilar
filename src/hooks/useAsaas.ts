@@ -9,7 +9,6 @@ export type AsaasAmbiente = "sandbox" | "producao";
 export interface AsaasConfig {
   configurado: boolean;
   ambiente: AsaasAmbiente;
-  webhook_token: string;
 }
 
 export interface AsaasCobrancaResult {
@@ -67,7 +66,6 @@ export function useAsaasCriarCobranca(onSuccess?: () => void) {
 export function useAsaasConfig() {
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [isRegenerando, setIsRegenerando] = useState(false);
   const [isRemovendo, setIsRemovendo] = useState(false);
   const [isTestando, setIsTestando] = useState(false);
 
@@ -80,12 +78,11 @@ export function useAsaasConfig() {
 
       if (error) throw error;
 
-      const result = data as { data: { configurado: boolean; ambiente: string; webhook_token: string } | null };
+      const result = data as { data: { configurado: boolean; ambiente: string } | null };
       return result?.data
         ? {
             configurado: result.data.configurado,
             ambiente: result.data.ambiente as AsaasAmbiente,
-            webhook_token: result.data.webhook_token,
           }
         : null;
     } catch (err) {
@@ -118,30 +115,6 @@ export function useAsaasConfig() {
       return null;
     } finally {
       setIsSaving(false);
-    }
-  };
-
-  const regenerarToken = async (): Promise<string | null> => {
-    setIsRegenerando(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("asaas-config", {
-        body: { action: "regenerar_token" },
-      });
-
-      if (error) throw error;
-
-      const result = data as { success?: boolean; webhook_token?: string; error?: string };
-      if (result?.error) throw new Error(result.error);
-
-      toast.success("Token regenerado", { description: "Atualize o token no painel Asaas" });
-      return result.webhook_token ?? null;
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Erro ao regenerar token";
-      reportInvokeError(err, "asaas-config:regenerar-token");
-      toast.error("Erro", { description: message });
-      return null;
-    } finally {
-      setIsRegenerando(false);
     }
   };
 
@@ -203,12 +176,10 @@ export function useAsaasConfig() {
   return {
     carregarConfig,
     salvarConfig,
-    regenerarToken,
     removerConfig,
     testarConexao,
     isSaving,
     isLoading,
-    isRegenerando,
     isRemovendo,
     isTestando,
   };
