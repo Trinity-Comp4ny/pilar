@@ -22,6 +22,7 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { portalLogout, type ClienteAccount } from "@/hooks/useClienteAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { Logo } from "@/components/Logo";
 import { TrocarSenhaForm } from "./TrocarSenhaForm";
 
 interface ClienteShellProps {
@@ -69,11 +70,9 @@ export function ClienteShell({
       <header className="bg-white border-b px-6 py-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <img src="/pilar-logo.svg" alt="Pilar" className="h-8 w-8" />
+            <Logo variant="mark" size="sm" />
             <div>
-              <span className="text-lg font-semibold tracking-tight text-ink">
-                Pilar<sup className="text-[9px] font-normal text-ink-disabled ml-0.5 relative -top-2">®</sup>
-              </span>
+              <span className="text-lg font-semibold tracking-tight text-ink">Pilar</span>
               <span className="text-xs text-muted-foreground ml-2">Portal do Cliente</span>
             </div>
           </div>
