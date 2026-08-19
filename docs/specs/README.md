@@ -45,3 +45,5 @@ Decisão de arquitetura no meio do caminho vira um [ADR](../architecture/README.
 | [048](./048-consentimento-cookies.md)                        | Consentimento de cookies (banner + gate no analytics), ADR 0022                                   | Em implementação |
 | [049](./049-aceite-termos-de-uso-onboarding.md)              | Aceite explícito dos Termos de Uso em /cadastro e /profile-setup, tabela terms_acceptances        | Em implementação |
 | [050](./050-planos-termos-privacidade-no-marketing.md)       | Planos, Termos e Privacidade (texto) migram para apps/marketing; ações LGPD para o SettingsDialog | Em implementação |
+| [051](./051-duracao-por-etapa-fluxo-prazo-cascata.md)        | Duração por etapa do fluxo com prazo em cascata (data_previsao automática ao aplicar fluxo)        | Draft            |
+| [052](./052-features-universais-por-empresa-capacidade-de-plano.md) | Features universais por empresa (fim do toggle por plano); capacidade (max_projetos) vira o limitador real | Em implementação |

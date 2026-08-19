@@ -31,6 +31,7 @@ Um ADR documenta uma decisão técnica relevante, seu contexto e consequências.
 | [0023](./adr/0023-framer-motion-no-site-de-marketing.md)                         | Adotar Framer Motion para animações do site de marketing                                             |
 | [0024](./adr/0024-react-router-em-marketing.md)                                  | Adotar react-router-dom em apps/marketing para rotas internas (Produto/Soluções)                     |
 | [0025](./adr/0025-planos-termos-privacidade-para-marketing.md)                   | Mover Planos/Termos/Privacidade (texto) para apps/marketing; ações LGPD para o SettingsDialog do app |
+| [0026](./adr/0026-feature-madura-universal-toggle-vira-capacidade.md)            | Feature madura vira universal por empresa (sem toggle); toggle sobra só pra early access de módulo não pronto; capacidade (projetos) é o novo limitador de plano; revisa o 0019 |
 
 ## Guias de reúso
 

@@ -1,7 +1,7 @@
 # ADR 0019: Features como controle de rollout por módulo, não como paywall de plano
 
 **Data:** 2026-08-13  
-**Status:** Proposed
+**Status:** Superseded por [ADR 0026](./0026-feature-madura-universal-toggle-vira-capacidade.md)
 
 ## Contexto
 

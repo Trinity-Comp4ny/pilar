@@ -13,35 +13,39 @@ import {
 } from "./features";
 import { MODULES } from "./modules";
 
-describe("isFeatureEnabledForCompany — herança de sub-feature (ADR 0019)", () => {
+describe("isFeatureEnabledForCompany: universal ignora o JSONB da empresa (ADR 0026)", () => {
   it("core sempre liga, mesmo sem entrada no JSONB", () => {
     expect(isFeatureEnabledForCompany({}, "dashboard")).toBe(true);
     expect(isFeatureEnabledForCompany(null, "meu_trabalho")).toBe(true);
   });
 
-  it("feature-raiz normal depende do boolean explícito", () => {
-    expect(isFeatureEnabledForCompany({}, "obras")).toBe(false);
-    expect(isFeatureEnabledForCompany({ obras: true }, "obras")).toBe(true);
+  it("feature universal (obras) liga mesmo sem nenhuma entrada na empresa", () => {
+    expect(isFeatureEnabledForCompany({}, "obras")).toBe(true);
+    expect(isFeatureEnabledForCompany(null, "obras")).toBe(true);
+    expect(isFeatureEnabledForCompany({ obras: false }, "obras")).toBe(true);
   });
 
-  it("sub-feature exige o módulo-pai ligado", () => {
-    expect(isFeatureEnabledForCompany({}, "obras_estoque")).toBe(false);
-    expect(isFeatureEnabledForCompany({ obras: true }, "obras_estoque")).toBe(true);
+  it("feature NÃO universal (dormant) continua dependendo do boolean explícito", () => {
+    expect(isFeatureEnabledForCompany({}, "ai_hub")).toBe(false);
+    expect(isFeatureEnabledForCompany({ ai_hub: true }, "ai_hub")).toBe(true);
   });
 
-  it("sub ausente no JSONB herda o pai ligado (não retira tela de quem já usa)", () => {
-    expect(isFeatureEnabledForCompany({ obras: true }, "obras_clima")).toBe(true);
-    expect(isFeatureEnabledForCompany({ obras: true }, "obras_diario")).toBe(true);
+  it("sub-feature de Obras é universal: liga mesmo sem o pai marcado no JSONB", () => {
+    expect(isFeatureEnabledForCompany({}, "obras_estoque")).toBe(true);
+    expect(isFeatureEnabledForCompany({}, "obras_clima")).toBe(true);
   });
 
-  it("sub com false explícito desliga mesmo com o pai ligado", () => {
-    expect(isFeatureEnabledForCompany({ obras: true, obras_clima: false }, "obras_clima")).toBe(false);
-    // As outras subs seguem ligadas.
-    expect(isFeatureEnabledForCompany({ obras: true, obras_clima: false }, "obras_estoque")).toBe(true);
-  });
-
-  it("sub true não vale nada se o pai estiver desligado", () => {
-    expect(isFeatureEnabledForCompany({ obras_clima: true }, "obras_clima")).toBe(false);
+  it("todo item com parent no catálogo hoje é universal (invariante do ADR 0026)", () => {
+    // Documenta o estado atual: a lógica de herança pai→filho em
+    // isFeatureEnabledForCompany/applyFeatureToggle (ADR 0019) continua no
+    // código para uma futura sub-feature não-universal, mas nenhuma existe
+    // hoje: todas as 7 sub-features de Obras já são universais. Se este
+    // teste falhar, alguém adicionou uma sub-feature não-universal: ótimo,
+    // mas então os testes de herança abaixo precisam de um exemplo real de
+    // novo, não mais deste comentário.
+    for (const f of FEATURES) {
+      if (f.parent) expect(f.universal, `${f.key} tem parent mas não é universal`).toBe(true);
+    }
   });
 });
 
@@ -130,6 +134,83 @@ describe("sincronia catálogo front ↔ backend (_feature_catalog SQL)", () => {
     for (const f of FEATURES) {
       if (f.core) continue;
       expect(sql, `feature '${f.key}' ausente no catálogo SQL (${latest})`).toContain(`'${f.key}'`);
+    }
+  });
+});
+
+describe("sincronia universal front ↔ backend (_universal_features SQL, ADR 0026)", () => {
+  it("toda feature universal (não-core) do front existe em _universal_features() no banco", () => {
+    const here = path.dirname(fileURLToPath(import.meta.url));
+    const migDir = path.resolve(here, "../../supabase/migrations");
+    const files = fs
+      .readdirSync(migDir)
+      .filter((f) => f.includes("universal_features"))
+      .sort();
+    expect(files.length, "nenhuma migration de _universal_features encontrada").toBeGreaterThan(0);
+    const latest = files[files.length - 1];
+    const sql = fs.readFileSync(path.join(migDir, latest), "utf8");
+    // Core (dashboard, meu_trabalho) tem bypass próprio, não entra em
+    // _universal_features(), ver comentário da função no banco.
+    for (const f of FEATURES) {
+      if (!f.universal || f.core) continue;
+      expect(sql, `feature universal '${f.key}' ausente em _universal_features() (${latest})`).toContain(
+        `'${f.key}'`
+      );
+    }
+  });
+
+  it("nenhuma feature não-universal aparece em _universal_features()", () => {
+    const here = path.dirname(fileURLToPath(import.meta.url));
+    const migDir = path.resolve(here, "../../supabase/migrations");
+    const files = fs
+      .readdirSync(migDir)
+      .filter((f) => f.includes("universal_features"))
+      .sort();
+    const latest = files[files.length - 1];
+    const sql = fs.readFileSync(path.join(migDir, latest), "utf8");
+    const match = sql.match(/_universal_features\(\)[\s\S]*?SELECT ARRAY\[([\s\S]*?)\];/);
+    expect(match, "não achou o corpo de _universal_features() na migration").not.toBeNull();
+    const sqlKeys = (match?.[1] ?? "").match(/'([a-z_]+)'/g)?.map((s) => s.slice(1, -1)) ?? [];
+    for (const key of sqlKeys) {
+      const feature = FEATURES.find((f) => f.key === key);
+      expect(feature, `_universal_features() cita '${key}', que não existe em FEATURES`).toBeDefined();
+      expect(feature?.universal, `_universal_features() cita '${key}', que não é universal no front`).toBe(true);
+    }
+  });
+});
+
+describe("sincronia FEATURE_KEYS do invite-user (edge function) com o catálogo do front", () => {
+  it("toda FeatureKey do front (exceto core) é aceita pelo invite-user", () => {
+    const here = path.dirname(fileURLToPath(import.meta.url));
+    const fnPath = path.resolve(here, "../../supabase/functions/invite-user/index.ts");
+    const src = fs.readFileSync(fnPath, "utf8");
+    const match = src.match(/const FEATURE_KEYS = new Set\(\[([\s\S]*?)\]\);/);
+    expect(match, "não achou FEATURE_KEYS em invite-user/index.ts").not.toBeNull();
+    const acceptedKeys = new Set((match?.[1] ?? "").match(/"([a-z_]+)"/g)?.map((s) => s.slice(1, -1)) ?? []);
+    // Core (dashboard, meu_trabalho) nunca aparece no formulário de convite
+    // (FeatureAccessGrid filtra !f.core), então não precisa estar na whitelist.
+    for (const f of FEATURES) {
+      if (f.core) continue;
+      expect(acceptedKeys.has(f.key), `invite-user rejeitaria a feature '${f.key}'`).toBe(true);
+    }
+  });
+});
+
+describe("sincronia UNIVERSAL_FEATURES do ultra-admin-empresas (edge function) com o catálogo do front", () => {
+  it("toda feature universal do front é recusada em bulk-feature pelo mesmo motivo (ADR 0026)", () => {
+    const here = path.dirname(fileURLToPath(import.meta.url));
+    const fnPath = path.resolve(here, "../../supabase/functions/ultra-admin-empresas/index.ts");
+    const src = fs.readFileSync(fnPath, "utf8");
+    const match = src.match(/const UNIVERSAL_FEATURES = new Set\(\[([\s\S]*?)\]\);/);
+    expect(match, "não achou UNIVERSAL_FEATURES em ultra-admin-empresas/index.ts").not.toBeNull();
+    const listedKeys = new Set((match?.[1] ?? "").match(/"([a-z_]+)"/g)?.map((s) => s.slice(1, -1)) ?? []);
+    for (const f of FEATURES) {
+      if (f.core || !f.universal) continue;
+      expect(listedKeys.has(f.key), `ultra-admin-empresas não recusaria ação em massa em '${f.key}'`).toBe(true);
+    }
+    for (const key of listedKeys) {
+      const feature = FEATURES.find((f) => f.key === key);
+      expect(feature?.universal, `UNIVERSAL_FEATURES cita '${key}', que não é universal no front`).toBe(true);
     }
   });
 });
