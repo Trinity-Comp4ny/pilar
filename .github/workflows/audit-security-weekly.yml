@@ -1,0 +1,95 @@
+name: Auditoria de segurança do banco
+
+# Existe porque até 2026-08-19 a auditoria de segurança era disparada por EVENTO
+# (refactor grande, dúvida externa sobre o schema), e evento não cobre o que não
+# é bug de feature. Uma varredura ao vivo naquela data levou minutos e achou duas
+# coisas que nenhuma revisão de PR pegaria, porque são propriedade do AMBIENTE:
+#
+#   1. a api_key do Asaas em texto puro em PRODUÇÃO. A migration 021 cifra com
+#      pgsodium e tem fallback silencioso quando a extensão não existe. pgsodium
+#      está instalado em staging e NÃO em produção: o fallback degradou exatamente
+#      no ambiente que importa, e a existência da migration dava a impressão de
+#      estar resolvido.
+#   2. drift de extensão nos dois sentidos (pg_net só em prod, pg_graphql e
+#      pgsodium só em staging), o que faz staging ter MAIS superfície que produção
+#      e deixar de validá-la.
+#
+# Complementa o job `database` do ci.yml, não substitui: lá o pgTAP roda contra um
+# banco novo construído a partir das migrations; aqui roda contra o banco REAL.
+# A diferença entre os dois é justamente o que revela drift.
+#
+# Cron só dispara a partir da branch DEFAULT (main), mesma pegadinha que deixou o
+# e2e-staging.yml sem rodar por meses. Depois de mergear em staging, este workflow
+# só liga de verdade quando promovido pra main.
+
+on:
+  schedule:
+    - cron: "0 9 * * 1" # segunda, 06:00 BRT — achado da semana chega no começo dela
+  workflow_dispatch:
+  # Também roda quando o próprio script ou a baseline mudam, pra PR que mexe na
+  # baseline ser obrigado a provar que os números novos batem com o banco real.
+  pull_request:
+    paths:
+      - scripts/audit-security.mjs
+      - scripts/audit-security-baseline.json
+      - .github/workflows/audit-security-weekly.yml
+
+permissions:
+  contents: read
+  issues: write # abre issue quando o cron falha (notify-cron-failure)
+
+jobs:
+  audit:
+    strategy:
+      fail-fast: false # um ambiente reprovando não deve esconder o resultado do outro
+      matrix:
+        include:
+          - environment: Staging
+            target: staging
+          - environment: Production
+            target: prod
+    runs-on: ubuntu-latest
+    environment: ${{ matrix.environment }}
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 20
+
+      # psql do cliente do Postgres 17: os bancos de staging e produção estão em
+      # 17 desde 13/07, e o runner do Ubuntu traz 16 por padrão. Só o cliente,
+      # nenhum servidor: este job não sobe banco, só consulta catálogo.
+      - name: Instalar psql 17
+        run: |
+          set -euo pipefail
+          sudo install -d /usr/share/postgresql-common/pgdg
+          sudo curl -fsSL -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc \
+            https://www.postgresql.org/media/keys/ACCC4CF8.asc
+          echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] \
+            https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" \
+            | sudo tee /etc/apt/sources.list.d/pgdg.list > /dev/null
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends postgresql-client-17
+          psql --version
+
+      # Tudo que o script roda é SELECT em catálogo do Postgres: nenhuma query lê
+      # dado de cliente, nenhuma escreve. Por isso produção não exige o opt-in
+      # nomeado ALLOW_PROD_DB_PUSH (mesma lógica da ação `types` do
+      # scripts/supabase-target.sh, ver ADR 0007).
+      - name: Auditar (${{ matrix.target }})
+        run: node scripts/audit-security.mjs ${{ matrix.target }}
+        env:
+          SUPABASE_DB_URL_STAGING: ${{ secrets.SUPABASE_DB_URL }}
+          SUPABASE_DB_URL_PROD: ${{ secrets.SUPABASE_DB_URL }}
+
+      # Sem isto o cron quebra em silêncio por semanas e a "auditoria semanal"
+      # vira falsa sensação de segurança, mesma lição do itau-sync/bradesco-sync
+      # (30 dias falhando sem ninguém receber nada) e do backup-nightly.
+      - name: Notificar falha
+        if: failure() && github.event_name != 'pull_request'
+        uses: ./.github/actions/notify-cron-failure
+        with:
+          job-name: Auditoria de segurança do banco (${{ matrix.environment }})
+          token: ${{ github.token }}
