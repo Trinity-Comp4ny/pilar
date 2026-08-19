@@ -32,6 +32,7 @@ Um ADR documenta uma decisão técnica relevante, seu contexto e consequências.
 | [0024](./adr/0024-react-router-em-marketing.md)                                  | Adotar react-router-dom em apps/marketing para rotas internas (Produto/Soluções)                                                                                                |
 | [0025](./adr/0025-planos-termos-privacidade-para-marketing.md)                   | Mover Planos/Termos/Privacidade (texto) para apps/marketing; ações LGPD para o SettingsDialog do app                                                                            |
 | [0026](./adr/0026-feature-madura-universal-toggle-vira-capacidade.md)            | Feature madura vira universal por empresa (sem toggle); toggle sobra só pra early access de módulo não pronto; capacidade (projetos) é o novo limitador de plano; revisa o 0019 |
+| [0027](./adr/0027-sentry-metrics-e-agent-replay-completo.md)                     | Ativar Sentry Application Metrics (envelope estendido) e replay completo de mensagens de agente IA em produção (aceita trade-off de enviar conteúdo ao Sentry); revisa o 0004   |
 | [0028](./adr/0028-asaas-como-gateway-do-mrr-com-pix-automatico.md)               | Cobrar o MRR do Pilar pelo Asaas com Pix Automático como método padrão; fronteira única em `asaas-platform.ts`; NFS-e no próprio Asaas; Stripe/MoR só por novo ADR              |
 
 ## Guias de reúso
