@@ -1507,6 +1507,8 @@ export type Database = {
           features: Json
           id: string
           logo_url: string | null
+          max_projetos_override: number | null
+          max_usuarios_override: number | null
           nome: string
           onboarding_completed: boolean | null
           owner_id: string | null
@@ -1529,6 +1531,8 @@ export type Database = {
           features?: Json
           id?: string
           logo_url?: string | null
+          max_projetos_override?: number | null
+          max_usuarios_override?: number | null
           nome: string
           onboarding_completed?: boolean | null
           owner_id?: string | null
@@ -1551,6 +1555,8 @@ export type Database = {
           features?: Json
           id?: string
           logo_url?: string | null
+          max_projetos_override?: number | null
+          max_usuarios_override?: number | null
           nome?: string
           onboarding_completed?: boolean | null
           owner_id?: string | null

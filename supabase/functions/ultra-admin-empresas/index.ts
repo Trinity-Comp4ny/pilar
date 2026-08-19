@@ -73,17 +73,28 @@ serve(
         if (empErr || !empresa) return safeErrorResponse(404, "Empresa não encontrada", req);
         if (usrErr) return safeErrorResponse(500, "Falha ao buscar usuários da empresa", req);
 
-        // Buscar plano da empresa
+        // Buscar plano da empresa + limites de capacidade do plano
         const { data: sub } = await svc
           .from("pilar_subscriptions")
-          .select("plan_id, pilar_subscription_plans(slug)")
+          .select("plan_id, pilar_subscription_plans(slug, max_projetos, max_usuarios)")
           .eq("empresa_id", id)
           .maybeSingle();
+
+        const plan = sub?.pilar_subscription_plans as {
+          slug?: string;
+          max_projetos?: number | null;
+          max_usuarios?: number | null;
+        } | null;
 
         return jsonResponse(
           {
             empresa,
-            plano: (sub?.pilar_subscription_plans as { slug?: string } | null)?.slug ?? "starter",
+            plano: plan?.slug ?? "starter",
+            // Padrão do plano. O override (empresa.max_projetos_override /
+            // max_usuarios_override, já incluso em `empresa` via select "*")
+            // vale por cima quando não for null. Ver spec 052, requisito 8.
+            planoMaxProjetos: plan?.max_projetos ?? null,
+            planoMaxUsuarios: plan?.max_usuarios ?? null,
             usuarios: usuarios ?? [],
             convites: convites ?? [],
           },
@@ -292,7 +303,17 @@ serve(
     // ─── PUT: atualizar empresa (features, dados cadastrais, status, plano) ─
     if (req.method === "PUT") {
       const body = await req.json();
-      const { empresa_id, features, nome, cnpj, status, plano, confirm_name } = body ?? {};
+      const {
+        empresa_id,
+        features,
+        nome,
+        cnpj,
+        status,
+        plano,
+        confirm_name,
+        max_projetos_override,
+        max_usuarios_override,
+      } = body ?? {};
 
       if (!isUUID(empresa_id)) return safeErrorResponse(400, "empresa_id inválido", req);
 
@@ -308,6 +329,22 @@ serve(
       if (features && typeof features === "object") empresaUpdate.features = features;
       if (typeof nome === "string" && nome.trim()) empresaUpdate.nome = nome.trim();
       if (typeof cnpj === "string") empresaUpdate.cnpj = cnpj.trim() || null;
+      // Override de capacidade (spec 052, requisito 8): null limpa (volta a usar
+      // o padrão do plano), inteiro >= 0 sobrescreve, undefined não mexe.
+      for (const [key, value] of [
+        ["max_projetos_override", max_projetos_override],
+        ["max_usuarios_override", max_usuarios_override],
+      ] as const) {
+        if (value === undefined) continue;
+        if (value === null) {
+          empresaUpdate[key] = null;
+          continue;
+        }
+        if (typeof value !== "number" || !Number.isInteger(value) || value < 0) {
+          return safeErrorResponse(400, `${key} deve ser um inteiro >= 0 ou null`, req);
+        }
+        empresaUpdate[key] = value;
+      }
       if (typeof status === "string") {
         if (!["active", "suspended", "cancelled"].includes(status)) {
           return safeErrorResponse(400, "status inválido", req);

@@ -72,6 +72,12 @@ type EmpresaRow = {
 
 type EmpresaDetail = EmpresaRow & {
   usuarios: ManagedUser[];
+  /** Override por empresa (spec 052); null = usa o padrão do plano. */
+  maxProjetosOverride: number | null;
+  maxUsuariosOverride: number | null;
+  /** Padrão do plano atual, só leitura (mostrado pra dar contexto do override). */
+  planoMaxProjetos: number | null;
+  planoMaxUsuarios: number | null;
 };
 
 type AuditRow = {
@@ -116,6 +122,36 @@ const PLAN_LABEL: Record<SubscriptionPlanSlug, string> = {
   pro: "Pro",
   enterprise: "Enterprise",
 };
+
+/** Limite efetivo pra exibição: override vence, senão o padrão do plano, null = ilimitado. */
+function formatLimite(override: number | null, planoDefault: number | null): string {
+  const efetivo = override ?? planoDefault;
+  return efetivo === null ? "Ilimitado" : String(efetivo);
+}
+
+/** String do form pro override: vazia = sem override (null, usa o padrão do plano). */
+function parseOverride(raw: string): number | null {
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
+  const n = Number(trimmed);
+  return Number.isInteger(n) && n >= 0 ? n : null;
+}
+
+function CapacidadeStat({ label, value, overridden }: { label: string; value: string; overridden?: boolean }) {
+  return (
+    <div className="rounded-lg border border-black/10 bg-black/[0.015] p-3">
+      <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-black/40">{label}</div>
+      <div className="mt-1 flex items-center gap-2">
+        <span className="text-lg font-medium text-black/80">{value}</span>
+        {overridden && (
+          <Badge variant="outline" className="h-5 rounded-full border-brand/30 bg-brand px-2 text-[10px] text-ink">
+            Override
+          </Badge>
+        )}
+      </div>
+    </div>
+  );
+}
 
 const ROLE_LABEL: Record<PilarRole, string> = {
   ultra_admin: "Ultra Admin",
@@ -311,8 +347,18 @@ export default function UltraAdmin() {
     setLoadingDetail(true);
     try {
       const raw = (await edgeFetch("ultra-admin-empresas", { params: { id } })) as {
-        empresa: { id: string; nome: string; cnpj: string | null; status: string | null; features: unknown };
+        empresa: {
+          id: string;
+          nome: string;
+          cnpj: string | null;
+          status: string | null;
+          features: unknown;
+          max_projetos_override: number | null;
+          max_usuarios_override: number | null;
+        };
         plano: SubscriptionPlanSlug | null;
+        planoMaxProjetos: number | null;
+        planoMaxUsuarios: number | null;
         usuarios: Array<{
           id: string;
           nome: string | null;
@@ -336,6 +382,10 @@ export default function UltraAdmin() {
         status: raw.empresa.status ?? "active",
         features: parseCompanyFeatures(raw.empresa.features),
         plano: raw.plano ?? "starter",
+        maxProjetosOverride: raw.empresa.max_projetos_override,
+        maxUsuariosOverride: raw.empresa.max_usuarios_override,
+        planoMaxProjetos: raw.planoMaxProjetos,
+        planoMaxUsuarios: raw.planoMaxUsuarios,
         usersCount: raw.usuarios.length,
         usuarios: (
           raw.usuarios as Array<{
@@ -540,6 +590,8 @@ export default function UltraAdmin() {
       status?: EmpresaStatus;
       plano?: SubscriptionPlanSlug;
       confirm_name?: string;
+      max_projetos_override?: number | null;
+      max_usuarios_override?: number | null;
     }) => {
       if (!detail) return;
       try {
@@ -547,7 +599,23 @@ export default function UltraAdmin() {
           method: "PUT",
           body: { empresa_id: detail.id, ...patch },
         });
-        setDetail((prev) => (prev ? { ...prev, ...patch } : prev));
+        setDetail((prev) =>
+          prev
+            ? {
+                ...prev,
+                ...(patch.nome !== undefined ? { nome: patch.nome } : {}),
+                ...(patch.cnpj !== undefined ? { cnpj: patch.cnpj } : {}),
+                ...(patch.status !== undefined ? { status: patch.status } : {}),
+                ...(patch.plano !== undefined ? { plano: patch.plano } : {}),
+                ...(patch.max_projetos_override !== undefined
+                  ? { maxProjetosOverride: patch.max_projetos_override }
+                  : {}),
+                ...(patch.max_usuarios_override !== undefined
+                  ? { maxUsuariosOverride: patch.max_usuarios_override }
+                  : {}),
+              }
+            : prev
+        );
         setEmpresas((prev) =>
           prev.map((e) =>
             e.id === detail.id
@@ -583,7 +651,10 @@ export default function UltraAdmin() {
     cnpj: string;
     status: EmpresaStatus;
     plano: SubscriptionPlanSlug;
-  }>({ nome: "", cnpj: "", status: "active", plano: "starter" });
+    /** String vazia = sem override (usa o padrão do plano). */
+    maxProjetosOverride: string;
+    maxUsuariosOverride: string;
+  }>({ nome: "", cnpj: "", status: "active", plano: "starter", maxProjetosOverride: "", maxUsuariosOverride: "" });
 
   const resetForm = () => setForm({ nome: "", cnpj: "", ownerEmail: "", ownerNome: "" });
 
@@ -677,6 +748,10 @@ export default function UltraAdmin() {
                     cnpj: detail.cnpj ?? "",
                     status: detail.status as EmpresaStatus,
                     plano: detail.plano,
+                    maxProjetosOverride:
+                      detail.maxProjetosOverride === null ? "" : String(detail.maxProjetosOverride),
+                    maxUsuariosOverride:
+                      detail.maxUsuariosOverride === null ? "" : String(detail.maxUsuariosOverride),
                   });
                   setEditCompanyOpen(true);
                 }}
@@ -711,6 +786,31 @@ export default function UltraAdmin() {
           </PageHeader>
         }
       >
+        <Card className="border border-black/5">
+          <CardHeader>
+            <CardTitle className="text-base">Capacidade</CardTitle>
+            <CardDescription>
+              O plano define o padrão de limite; o override vale só pra esta empresa (caso negociado fora da tabela
+              padrão). Edite em "Editar empresa". Ainda não bloqueia a criação de projeto na prática, ver SPEC 052.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 sm:grid-cols-3">
+              <CapacidadeStat label="Plano" value={PLAN_LABEL[detail.plano]} />
+              <CapacidadeStat
+                label="Projetos ativos"
+                value={formatLimite(detail.maxProjetosOverride, detail.planoMaxProjetos)}
+                overridden={detail.maxProjetosOverride !== null}
+              />
+              <CapacidadeStat
+                label="Usuários"
+                value={formatLimite(detail.maxUsuariosOverride, detail.planoMaxUsuarios)}
+                overridden={detail.maxUsuariosOverride !== null}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
         <Card className="border border-black/5">
           <CardHeader>
             <CardTitle className="text-base">Acesso antecipado</CardTitle>
@@ -787,6 +887,8 @@ export default function UltraAdmin() {
               status: companyForm.status,
               plano: companyForm.plano,
               confirm_name: confirmName,
+              max_projetos_override: parseOverride(companyForm.maxProjetosOverride),
+              max_usuarios_override: parseOverride(companyForm.maxUsuariosOverride),
             });
             setEditCompanyOpen(false);
           }}
@@ -1311,7 +1413,14 @@ function StatusBadge({ status }: { status: EmpresaStatus }) {
   );
 }
 
-type CompanyForm = { nome: string; cnpj: string; status: EmpresaStatus; plano: SubscriptionPlanSlug };
+type CompanyForm = {
+  nome: string;
+  cnpj: string;
+  status: EmpresaStatus;
+  plano: SubscriptionPlanSlug;
+  maxProjetosOverride: string;
+  maxUsuariosOverride: string;
+};
 
 function EditCompanyDialog({
   open,
@@ -1344,7 +1453,8 @@ function EditCompanyDialog({
         <DialogHeader>
           <DialogTitle>Editar empresa</DialogTitle>
           <DialogDescription>
-            Dados cadastrais, status de acesso e plano. Suspender ou cancelar bloqueia o acesso da empresa.
+            Dados cadastrais, status de acesso, plano e capacidade. Suspender ou cancelar bloqueia o acesso da
+            empresa.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-3 py-2">
@@ -1395,6 +1505,31 @@ function EditCompanyDialog({
               </Select>
             </div>
           </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="edit-max-projetos">Override de projetos</Label>
+              <Input
+                id="edit-max-projetos"
+                type="number"
+                min={0}
+                placeholder="usa o padrão do plano"
+                value={form.maxProjetosOverride}
+                onChange={(e) => setForm((f) => ({ ...f, maxProjetosOverride: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="edit-max-usuarios">Override de usuários</Label>
+              <Input
+                id="edit-max-usuarios"
+                type="number"
+                min={0}
+                placeholder="usa o padrão do plano"
+                value={form.maxUsuariosOverride}
+                onChange={(e) => setForm((f) => ({ ...f, maxUsuariosOverride: e.target.value }))}
+              />
+            </div>
+          </div>
+          <p className="text-xs text-black/40">Deixe em branco pra voltar a usar o limite do plano.</p>
           {dangerous && (
             <div className="space-y-2 rounded-md border border-danger-mid-border bg-danger-soft px-3 py-2.5">
               <p className="text-xs text-danger-strong">
