@@ -13,6 +13,7 @@ import { ArrowLeft, ArrowRight, Building2, Hash, Loader2 } from "lucide-react";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useAuth } from "@/contexts/AuthContext";
 import { companySetupSchema, companySetupDefaultValues, type CompanySetupFormData } from "@/schemas";
+import { Logo } from "@/components/Logo";
 
 export default function CompanySetup() {
   usePageTitle("Configuração da Empresa");
@@ -108,15 +109,9 @@ export default function CompanySetup() {
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <img
-                  src="/pilar-logo.svg"
-                  alt="Pilar"
-                  className="h-10 w-auto hover:rotate-12 transition-transform duration-300"
-                />
+                <Logo variant="mark" size="md" />
                 <div className="leading-tight">
-                  <div className="text-sm font-semibold text-ink">
-                    Pilar<sup className="text-[8px] font-normal text-ink-disabled ml-0.5 relative -top-1.5">®</sup>
-                  </div>
+                  <div className="text-sm font-semibold text-ink">Pilar</div>
                   <div className="text-xs text-ink-soft">Configuração inicial · Etapa 2 de 2</div>
                 </div>
               </div>
@@ -227,15 +222,8 @@ export default function CompanySetup() {
 
         <div className="relative z-10 flex flex-col justify-between h-full w-full p-16 text-white">
           <div className="animate-in fade-in slide-in-from-top-8 duration-700 flex justify-end">
-            <div className="flex items-center gap-3 opacity-80">
-              <img
-                src="/pilar-logo.svg"
-                alt="Pilar"
-                className="h-8 w-8 brightness-0 invert hover:rotate-12 transition-transform duration-300"
-              />
-              <span className="text-xl font-medium tracking-tight">
-                Pilar<sup className="text-[9px] font-normal text-white/50 ml-0.5 relative -top-2">®</sup>
-              </span>
+            <div className="opacity-80">
+              <Logo tone="inverted" size="sm" />
             </div>
           </div>
 

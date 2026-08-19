@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { marcarLogin } from "@/lib/ultimoLogin";
 import { translateAuthError } from "@/lib/authErrors";
+import { Logo } from "@/components/Logo";
 
 // Retorno do OAuth (Google). O detectSessionInUrl (default do supabase-js) troca o
 // code/hash por sessão automaticamente; aqui só esperamos ela existir e roteamos.
@@ -27,7 +28,8 @@ export default function AuthCallback() {
     // Erro do provedor pode vir na query (?error=) ou no hash (#error=).
     const query = new URLSearchParams(window.location.search);
     const hash = new URLSearchParams(window.location.hash.replace(/^#/, ""));
-    const oauthError = query.get("error_description") || query.get("error") || hash.get("error_description") || hash.get("error");
+    const oauthError =
+      query.get("error_description") || query.get("error") || hash.get("error_description") || hash.get("error");
     if (oauthError) {
       falhar(translateAuthError(oauthError));
       return;
@@ -67,7 +69,7 @@ export default function AuthCallback() {
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-paper">
       <div className="flex flex-col items-center gap-4 text-center animate-in fade-in duration-500">
-        <img src="/pilar-logo.svg" alt="Pilar" className="h-10 w-auto" />
+        <Logo variant="mark" size="md" />
         <div className="flex items-center gap-2 text-ink-soft">
           <Loader2 className="h-4 w-4 animate-spin" />
           <span className="text-sm font-medium">Entrando...</span>
