@@ -123,4 +123,5 @@ CREATE TRIGGER trg_recalc_disciplina_status_checklist
   AFTER INSERT OR UPDATE OR DELETE ON public.projeto_disciplina_checklist
   FOR EACH ROW EXECUTE FUNCTION public.tr_recalc_disciplina_status_checklist();
 
+REVOKE ALL ON FUNCTION public.recalc_disciplina_status_por_checklist(uuid) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.recalc_disciplina_status_por_checklist(uuid) TO authenticated;
