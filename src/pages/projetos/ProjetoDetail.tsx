@@ -4,6 +4,7 @@ import { Loader2, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useRecentes } from "@/hooks/useRecentes";
 import { useProjetoDetail } from "./hooks/useProjetoDetail";
@@ -34,6 +35,11 @@ export default function ProjetoDetail() {
     handleSaveDiscChanges,
     handleAddResponsavel,
     handleRemoveResponsavel,
+    handleQuickUpdateProjeto,
+    handleQuickUpdateStatus,
+    pendingReopenStatus,
+    setPendingReopenStatus,
+    applyStatusUpdate,
     clientes,
     currentUser,
     templatesData,
@@ -85,9 +91,23 @@ export default function ProjetoDetail() {
         </PageHeader>
       }
     >
-      <ProjetoDetailHeader projeto={projeto} deadline={deadline} />
+      <ProjetoDetailHeader
+        projeto={projeto}
+        deadline={deadline}
+        canEdit={canEdit}
+        onUpdateStatus={handleQuickUpdateStatus}
+        onUpdatePrioridade={(prioridade) => handleQuickUpdateProjeto({ prioridade })}
+      />
 
-      <ProjetoDetailInfo projeto={projeto} progress={progress} margemBrutaPct={margemBrutaPct} />
+      <ProjetoDetailInfo
+        projeto={projeto}
+        progress={progress}
+        margemBrutaPct={margemBrutaPct}
+        canEdit={canEdit}
+        onUpdatePrazo={(data_previsao) => handleQuickUpdateProjeto({ data_previsao })}
+        onUpdateContrato={(valor_contrato) => handleQuickUpdateProjeto({ valor_contrato })}
+        onUpdateArea={(area_m2) => handleQuickUpdateProjeto({ area_m2 })}
+      />
 
       <ProjetoDetailTabs
         projeto={projeto}
@@ -116,6 +136,19 @@ export default function ProjetoDetail() {
         currentUser={currentUser}
         onSaved={refetchProjeto}
         existingDisciplinas={dbDisciplinas}
+      />
+
+      <ConfirmDialog
+        open={pendingReopenStatus !== null}
+        onOpenChange={(open) => !open && setPendingReopenStatus(null)}
+        onConfirm={() => {
+          if (pendingReopenStatus) void applyStatusUpdate(pendingReopenStatus, true);
+          setPendingReopenStatus(null);
+        }}
+        variant="default"
+        title="Reabrir projeto"
+        description="Este projeto está marcado como concluído. Mudar o status agora limpa a data de conclusão registrada."
+        confirmText="Reabrir"
       />
     </PageLayout>
   );
