@@ -29,6 +29,7 @@ import {
   formatDateShort,
   isDiscAtrasada,
 } from "@/types/projetos";
+import type { ChecklistCounts } from "@/hooks/useProjetoDisciplinaChecklist";
 
 interface DisciplinasTableViewProps {
   canEdit: boolean;
@@ -36,6 +37,8 @@ interface DisciplinasTableViewProps {
   dbDisciplinas: ProjetoDisciplinaDB[];
   disciplinasCatalog: { id: string; nome: string }[];
   pessoas: { id: string; nome: string }[];
+  /** Chave = projeto_disciplina.id. Ausente = disciplina sem checklist (status manual sem restrição). */
+  checklistCounts?: Record<string, ChecklistCounts>;
   applyDiscStatusChange: (
     idx: number,
     newStatus: string,
@@ -81,6 +84,7 @@ export function DisciplinasTableView({
   dbDisciplinas,
   disciplinasCatalog,
   pessoas,
+  checklistCounts,
   applyDiscStatusChange,
   handleRemoveDisc,
   handleAddDisc,
@@ -172,6 +176,8 @@ export function DisciplinasTableView({
                   const atrasada = isDiscAtrasada(disc);
                   const dpc = disc.prioridade ? PROJECT_PRIORITY_CONFIG[disc.prioridade as ProjectPriority] : null;
                   const obsCount = dbDisc?.observacoes ? dbDisc.observacoes.split("\n").filter(Boolean).length : 0;
+                  const counts = dbDisc?.id ? checklistCounts?.[dbDisc.id] : undefined;
+                  const checklistIncompleto = !!counts && counts.total > 0 && counts.concluidos < counts.total;
 
                   return (
                     <TableRow key={dbDisc?.id || idx} className={cn(atrasada && "bg-danger-soft/40")}>
@@ -184,12 +190,11 @@ export function DisciplinasTableView({
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
-                                {disc.disciplina &&
-                                  !disciplinasCatalog.some((d) => d.nome === disc.disciplina) && (
-                                    <SelectItem value={disc.disciplina} className="text-xs">
-                                      {disc.disciplina}
-                                    </SelectItem>
-                                  )}
+                                {disc.disciplina && !disciplinasCatalog.some((d) => d.nome === disc.disciplina) && (
+                                  <SelectItem value={disc.disciplina} className="text-xs">
+                                    {disc.disciplina}
+                                  </SelectItem>
+                                )}
                                 {disciplinasCatalog.map((d) => (
                                   <SelectItem key={d.id} value={d.nome} className="text-xs">
                                     {d.nome}
@@ -257,7 +262,17 @@ export function DisciplinasTableView({
                             </SelectTrigger>
                             <SelectContent>
                               {disciplinaStatusOptions.map((s) => (
-                                <SelectItem key={s} value={s} className="text-xs">
+                                <SelectItem
+                                  key={s}
+                                  value={s}
+                                  className="text-xs"
+                                  disabled={s === "Concluído" && checklistIncompleto}
+                                  title={
+                                    s === "Concluído" && checklistIncompleto
+                                      ? "Conclua todos os itens do checklist antes"
+                                      : undefined
+                                  }
+                                >
                                   <span className="flex items-center gap-1.5">
                                     <span className={cn("h-2 w-2 rounded-full", STATUS_DOT[s])} />
                                     {s}
@@ -345,9 +360,7 @@ export function DisciplinasTableView({
                               variant="ghost"
                               size="sm"
                               className="h-7 px-2 text-xs"
-                              onClick={() =>
-                                setObsDrafts((prev) => ({ ...prev, [dbDisc?.id ?? idx]: "" }))
-                              }
+                              onClick={() => setObsDrafts((prev) => ({ ...prev, [dbDisc?.id ?? idx]: "" }))}
                             >
                               <MessageSquare className="h-3.5 w-3.5 mr-1" />
                               {obsCount > 0 ? obsCount : ""}
@@ -510,7 +523,8 @@ export function DisciplinasTableView({
           <AlertDialogHeader>
             <AlertDialogTitle>Excluir disciplina</AlertDialogTitle>
             <AlertDialogDescription>
-              Remove a disciplina do projeto junto com os responsáveis, status e datas vinculados (em cascata). Esta ação não pode ser desfeita.
+              Remove a disciplina do projeto junto com os responsáveis, status e datas vinculados (em cascata). Esta
+              ação não pode ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

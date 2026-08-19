@@ -49,6 +49,8 @@ export interface DisciplinaResponsavel {
   labels?: string[];
   links?: LinkItem[];
   comentarios?: DisciplinaComentario[];
+  /** Itens de checklist do template do fluxo, propagados até o submit do form de criação. */
+  checklist_padrao?: string[];
 }
 
 export function isDiscAtrasada(disc: DisciplinaResponsavel): boolean {
