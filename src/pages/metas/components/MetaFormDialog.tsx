@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { FormDialog } from "@/components/FormDialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -215,8 +214,7 @@ export function MetaFormDialog({ open, onOpenChange, tipo, meta }: MetaFormDialo
     },
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = () => {
     mutation.mutate();
   };
 
@@ -228,158 +226,152 @@ export function MetaFormDialog({ open, onOpenChange, tipo, meta }: MetaFormDialo
   const labelCategoria = tipo === "livre" ? "Área" : "Categoria";
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>
-            {isEdit ? `Editar meta ${tituloTipo.toLowerCase()}` : `Nova meta ${tituloTipo.toLowerCase()}`}
-          </DialogTitle>
-          <DialogDescription>
-            {tipo === "financeira"
-              ? "Estabeleça um objetivo de receita, lucro, economia ou investimento."
+    <FormDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title={isEdit ? `Editar meta ${tituloTipo.toLowerCase()}` : `Nova meta ${tituloTipo.toLowerCase()}`}
+      description={
+        tipo === "financeira"
+          ? "Estabeleça um objetivo de receita, lucro, economia ou investimento."
+          : tipo === "livre"
+            ? "Objetivo de qualquer área (RH, logística, administrativo). Você acompanha o progresso na mão."
+            : "Defina uma meta para um colaborador."
+      }
+      size="md"
+      onSubmit={handleSubmit}
+      isPending={mutation.isPending}
+      submitLabel={isEdit ? "Atualizar meta" : "Salvar meta"}
+    >
+      {(tipo === "pessoal" || tipo === "livre") && (
+        <div className="space-y-2">
+          <Label>{tipo === "livre" ? "Responsável (opcional)" : "Colaborador"}</Label>
+          <Select value={form.pessoa_id || undefined} onValueChange={(v) => set("pessoa_id", v)}>
+            <SelectTrigger>
+              <SelectValue placeholder={tipo === "livre" ? "Sem responsável definido" : "Selecione um colaborador"} />
+            </SelectTrigger>
+            <SelectContent>
+              {(pessoas ?? []).map((p) => (
+                <SelectItem key={p.id} value={p.id}>
+                  {p.nome}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
+      <div className="space-y-2">
+        <Label>Nome da meta</Label>
+        <Input
+          value={form.nome}
+          onChange={(e) => set("nome", e.target.value)}
+          placeholder={
+            tipo === "financeira"
+              ? "Ex: Faturamento 2026"
               : tipo === "livre"
-                ? "Objetivo de qualquer área (RH, logística, administrativo). Você acompanha o progresso na mão."
-                : "Defina uma meta para um colaborador."}
-          </DialogDescription>
-        </DialogHeader>
+                ? "Ex: Organizar a segurança social dos trabalhadores"
+                : "Ex: Entregas no prazo"
+          }
+          required
+        />
+      </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4 mt-2">
-          {(tipo === "pessoal" || tipo === "livre") && (
-            <div className="space-y-2">
-              <Label>{tipo === "livre" ? "Responsável (opcional)" : "Colaborador"}</Label>
-              <Select value={form.pessoa_id || undefined} onValueChange={(v) => set("pessoa_id", v)}>
-                <SelectTrigger>
-                  <SelectValue placeholder={tipo === "livre" ? "Sem responsável definido" : "Selecione um colaborador"} />
-                </SelectTrigger>
-                <SelectContent>
-                  {(pessoas ?? []).map((p) => (
-                    <SelectItem key={p.id} value={p.id}>
-                      {p.nome}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-
+      {(tipo === "pessoal" || tipo === "livre") && (
+        <>
           <div className="space-y-2">
-            <Label>Nome da meta</Label>
+            <Label>Descrição</Label>
             <Input
-              value={form.nome}
-              onChange={(e) => set("nome", e.target.value)}
-              placeholder={
-                tipo === "financeira"
-                  ? "Ex: Faturamento 2026"
-                  : tipo === "livre"
-                    ? "Ex: Organizar a segurança social dos trabalhadores"
-                    : "Ex: Entregas no prazo"
-              }
-              required
+              value={form.descricao}
+              onChange={(e) => set("descricao", e.target.value)}
+              placeholder="Descreva o objetivo"
             />
           </div>
-
-          {(tipo === "pessoal" || tipo === "livre") && (
-            <>
-              <div className="space-y-2">
-                <Label>Descrição</Label>
-                <Input
-                  value={form.descricao}
-                  onChange={(e) => set("descricao", e.target.value)}
-                  placeholder="Descreva o objetivo"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Unidade</Label>
-                <Select value={form.unidade} onValueChange={(v) => set("unidade", v)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {UNIDADES.map((u) => (
-                      <SelectItem key={u.value} value={u.value}>
-                        {u.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </>
-          )}
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>{unidade === "currency" ? "Valor alvo" : "Alvo"}</Label>
-              <ValorInput unidade={unidade} value={form.alvo} onChange={(v) => set("alvo", v)} />
-            </div>
-            <div className="space-y-2">
-              <Label>{unidade === "currency" ? "Valor atual" : "Atual"}</Label>
-              <ValorInput unidade={unidade} value={form.atual} onChange={(v) => set("atual", v)} />
-            </div>
+          <div className="space-y-2">
+            <Label>Unidade</Label>
+            <Select value={form.unidade} onValueChange={(v) => set("unidade", v)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {UNIDADES.map((u) => (
+                  <SelectItem key={u.value} value={u.value}>
+                    {u.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
+        </>
+      )}
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Prazo</Label>
-              <DatePicker value={form.prazo} onChange={(v) => set("prazo", v)} />
-            </div>
-            <div className="space-y-2">
-              <Label>{labelCategoria}</Label>
-              <Select value={form.categoria} onValueChange={(v) => set("categoria", v)}>
-                <SelectTrigger>
-                  <SelectValue />
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label>{unidade === "currency" ? "Valor alvo" : "Alvo"}</Label>
+          <ValorInput unidade={unidade} value={form.alvo} onChange={(v) => set("alvo", v)} />
+        </div>
+        <div className="space-y-2">
+          <Label>{unidade === "currency" ? "Valor atual" : "Atual"}</Label>
+          <ValorInput unidade={unidade} value={form.atual} onChange={(v) => set("atual", v)} />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label>Prazo</Label>
+          <DatePicker value={form.prazo} onChange={(v) => set("prazo", v)} />
+        </div>
+        <div className="space-y-2">
+          <Label>{labelCategoria}</Label>
+          <Select value={form.categoria} onValueChange={(v) => set("categoria", v)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {categorias.map((c) => (
+                <SelectItem key={c.value} value={c.value}>
+                  {c.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {tipo === "financeira" && (
+        <div className="space-y-2 border-t pt-4">
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="auto_sync"
+              checked={form.auto_sync}
+              onCheckedChange={(checked) => set("auto_sync", checked === true)}
+            />
+            <Label htmlFor="auto_sync" className="text-sm cursor-pointer font-normal">
+              Sincronizar automaticamente
+            </Label>
+          </div>
+          {form.auto_sync && (
+            <div className="space-y-1">
+              <Label className="text-xs">Fonte de dados</Label>
+              <Select value={form.sync_fonte || undefined} onValueChange={(v) => set("sync_fonte", v)}>
+                <SelectTrigger className="h-9">
+                  <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
                 <SelectContent>
-                  {categorias.map((c) => (
-                    <SelectItem key={c.value} value={c.value}>
-                      {c.label}
+                  {SYNC_FONTES.map((s) => (
+                    <SelectItem key={s.value} value={s.value}>
+                      {s.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-            </div>
-          </div>
-
-          {tipo === "financeira" && (
-            <div className="space-y-2 border-t pt-4">
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  id="auto_sync"
-                  checked={form.auto_sync}
-                  onCheckedChange={(checked) => set("auto_sync", checked === true)}
-                />
-                <Label htmlFor="auto_sync" className="text-sm cursor-pointer font-normal">
-                  Sincronizar automaticamente
-                </Label>
-              </div>
-              {form.auto_sync && (
-                <div className="space-y-1">
-                  <Label className="text-xs">Fonte de dados</Label>
-                  <Select value={form.sync_fonte || undefined} onValueChange={(v) => set("sync_fonte", v)}>
-                    <SelectTrigger className="h-9">
-                      <SelectValue placeholder="Selecione" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {SYNC_FONTES.map((s) => (
-                        <SelectItem key={s.value} value={s.value}>
-                          {s.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-[10px] text-muted-foreground">
-                    O valor atual é atualizado ao clicar em "Atualizar" no painel.
-                  </p>
-                </div>
-              )}
+              <p className="text-[10px] text-muted-foreground">
+                O valor atual é atualizado ao clicar em "Atualizar" no painel.
+              </p>
             </div>
           )}
-
-          <Button type="submit" variant="brand" className="w-full rounded-full" loading={mutation.isPending}>
-            {isEdit ? "Atualizar meta" : "Salvar meta"}
-          </Button>
-        </form>
-      </DialogContent>
-    </Dialog>
+        </div>
+      )}
+    </FormDialog>
   );
 }
 
