@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { reportInvokeError } from "@/lib/monitoring";
 import { cn } from "@/lib/utils";
 import { getPortalToken } from "@/hooks/useClienteAuth";
 import { EmptyState } from "@/components/EmptyState";
@@ -44,7 +45,11 @@ interface Entrega {
 const STATUS_CONFIG: Record<Entrega["status"], { label: string; color: string; icon: typeof Clock }> = {
   pendente: { label: "Aguardando resposta", color: "bg-warning-soft text-warning-strong", icon: Clock },
   aprovado: { label: "Aprovado", color: "bg-positive/10 text-positive-strong", icon: CheckCircle2 },
-  revisao_solicitada: { label: "Revisão solicitada", color: "bg-attention-soft text-attention-strong", icon: RotateCcw },
+  revisao_solicitada: {
+    label: "Revisão solicitada",
+    color: "bg-attention-soft text-attention-strong",
+    icon: RotateCcw,
+  },
 };
 
 export function EntregasContent({
@@ -88,7 +93,8 @@ export function EntregasContent({
         if (fetchError) throw fetchError;
         if (data) setEntregas(data as unknown as Entrega[]);
       }
-    } catch {
+    } catch (err) {
+      reportInvokeError(err, "portal-entregas:carregar");
       setLoadError(true);
     } finally {
       setLoading(false);
@@ -515,7 +521,8 @@ function PortalDownloadButton({
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-    } catch {
+    } catch (err) {
+      reportInvokeError(err, "portal-entrega-download");
       toast.error("Não foi possível baixar o arquivo");
     } finally {
       setDownloading(false);

@@ -49,6 +49,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { getSafeErrorMessage } from "@/lib/safeError";
+import { reportInvokeError } from "@/lib/monitoring";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import {
   parseCompanyFeatures,
@@ -173,9 +174,7 @@ export default function UltraAdmin() {
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [savingFeatures, setSavingFeatures] = useState(false);
   const [query, setQuery] = useState("");
-  const [tab, setTab] = useState<"dashboard" | "empresas" | "funcionalidades" | "usuarios" | "atividade">(
-    "dashboard"
-  );
+  const [tab, setTab] = useState<"dashboard" | "empresas" | "funcionalidades" | "usuarios" | "atividade">("dashboard");
   const [audit, setAudit] = useState<AuditRow[]>([]);
   const [auditFull, setAuditFull] = useState<AuditRow[]>([]);
   const [auditEmpresa, setAuditEmpresa] = useState<string>("all");
@@ -197,6 +196,7 @@ export default function UltraAdmin() {
       }));
       setEmpresas(rows);
     } catch (err) {
+      reportInvokeError(err, "ultra-admin-empresas:list");
       toast.error("Erro ao carregar empresas", {
         description: getSafeErrorMessage(err, "Tente de novo em instantes."),
       });
@@ -220,10 +220,9 @@ export default function UltraAdmin() {
         body: input,
       })) as { affected: number; considered: number; failures: number };
       await fetchEmpresas();
-      toast.success(
-        `${res.affected} ${res.affected === 1 ? "empresa atualizada" : "empresas atualizadas"}`,
-        { description: res.failures > 0 ? `${res.failures} falha(s) ao aplicar` : undefined }
-      );
+      toast.success(`${res.affected} ${res.affected === 1 ? "empresa atualizada" : "empresas atualizadas"}`, {
+        description: res.failures > 0 ? `${res.failures} falha(s) ao aplicar` : undefined,
+      });
       return res.affected;
     },
     [fetchEmpresas]
@@ -301,6 +300,7 @@ export default function UltraAdmin() {
       setUsers((prev) => prev.filter((u) => u.id !== user.id));
       toast.success("Usuário removido");
     } catch (err) {
+      reportInvokeError(err, "ultra-admin-usuarios:cross-delete");
       toast.error("Erro ao remover usuário", {
         description: getSafeErrorMessage(err, "Tente de novo em instantes."),
       });
@@ -380,6 +380,7 @@ export default function UltraAdmin() {
         .limit(20);
       setDetailAudit((aud ?? []) as DataAuditRow[]);
     } catch (err) {
+      reportInvokeError(err, "ultra-admin-empresas:detail");
       toast.error("Erro ao carregar empresa", {
         description: getSafeErrorMessage(err, "Tente de novo em instantes."),
       });
@@ -401,6 +402,7 @@ export default function UltraAdmin() {
         setEmpresas((prev) => prev.map((e) => (e.id === detail.id ? { ...e, features: next } : e)));
         toast.success("Features atualizadas");
       } catch (err) {
+        reportInvokeError(err, "ultra-admin-empresas:features");
         toast.error("Erro ao salvar features", {
           description: getSafeErrorMessage(err, "Tente de novo em instantes."),
         });
@@ -431,6 +433,7 @@ export default function UltraAdmin() {
         );
         toast.success("Usuário atualizado");
       } catch (err) {
+        reportInvokeError(err, "ultra-admin-usuarios:update");
         toast.error("Erro ao atualizar usuário", {
           description: getSafeErrorMessage(err, "Tente de novo em instantes."),
         });
@@ -450,6 +453,7 @@ export default function UltraAdmin() {
         setDetail((prev) => (prev ? { ...prev, usuarios: prev.usuarios.filter((u) => u.id !== userId) } : prev));
         toast.success("Usuário removido");
       } catch (err) {
+        reportInvokeError(err, "ultra-admin-usuarios:delete");
         toast.error("Erro ao remover usuário", {
           description: getSafeErrorMessage(err, "Tente de novo em instantes."),
         });
@@ -479,6 +483,7 @@ export default function UltraAdmin() {
         toast.success("Convite enviado");
         await fetchDetail(detail.id);
       } catch (err) {
+        reportInvokeError(err, "ultra-admin-usuarios:invite");
         toast.error("Erro ao convidar usuário", {
           description: getSafeErrorMessage(err, "Tente de novo em instantes."),
         });
@@ -497,6 +502,7 @@ export default function UltraAdmin() {
         });
         toast.success("Convite reenviado", { description: `Novo e-mail enviado para ${user.email}.` });
       } catch (err) {
+        reportInvokeError(err, "ultra-admin-usuarios:resend-invite");
         toast.error("Erro ao reenviar convite", {
           description: getSafeErrorMessage(err, "Tente de novo em instantes."),
         });
@@ -518,6 +524,7 @@ export default function UltraAdmin() {
         );
         toast.success("Convite cancelado");
       } catch (err) {
+        reportInvokeError(err, "ultra-admin-usuarios:cancel-invite");
         toast.error("Erro ao cancelar convite", {
           description: getSafeErrorMessage(err, "Tente de novo em instantes."),
         });
@@ -556,6 +563,7 @@ export default function UltraAdmin() {
         );
         toast.success("Empresa atualizada");
       } catch (err) {
+        reportInvokeError(err, "ultra-admin-empresas:update");
         toast.error("Erro ao atualizar empresa", {
           description: getSafeErrorMessage(err, "Tente de novo em instantes."),
         });
@@ -609,6 +617,7 @@ export default function UltraAdmin() {
       resetForm();
       await fetchEmpresas();
     } catch (err) {
+      reportInvokeError(err, "ultra-admin-empresas:create");
       toast.error("Erro ao criar empresa", {
         description: getSafeErrorMessage(err, "Tente de novo em instantes."),
       });
@@ -809,9 +818,7 @@ export default function UltraAdmin() {
     >
       <Tabs
         value={tab}
-        onValueChange={(v) =>
-          setTab(v as "dashboard" | "empresas" | "funcionalidades" | "usuarios" | "atividade")
-        }
+        onValueChange={(v) => setTab(v as "dashboard" | "empresas" | "funcionalidades" | "usuarios" | "atividade")}
       >
         <TabsList>
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
@@ -970,8 +977,8 @@ export default function UltraAdmin() {
             <CardHeader>
               <CardTitle className="text-base">Funcionalidades</CardTitle>
               <CardDescription>
-                Ligue ou desligue uma funcionalidade para todas as empresas de uma vez. Aqui a feature é
-                controle de rollout, não de plano.
+                Ligue ou desligue uma funcionalidade para todas as empresas de uma vez. Aqui a feature é controle de
+                rollout, não de plano.
               </CardDescription>
             </CardHeader>
             <CardContent>

@@ -14,6 +14,7 @@ import { PendenciasCard } from "@/pages/portal/PendenciasCard";
 import type { ClienteAccount } from "@/hooks/useClienteAuth";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { toast } from "sonner";
+import { reportInvokeError } from "@/lib/monitoring";
 import { supabase } from "@/integrations/supabase/client";
 import { getPortalToken } from "@/hooks/useClienteAuth";
 import type { ClienteProjetoData } from "./useClienteProjetoData";
@@ -47,7 +48,8 @@ function AprovarPropostaCard({ projeto, refresh }: { projeto: ClienteProjetoData
         description: "Seu projeto foi confirmado. Em breve entraremos em contato.",
       });
       refresh();
-    } catch {
+    } catch (err) {
+      reportInvokeError(err, "portal-aprovar-proposta");
       toast.error("Erro ao aprovar proposta", {
         description: "Tente novamente em instantes.",
       });

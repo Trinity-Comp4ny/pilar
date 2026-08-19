@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { Download, Loader2, FileText, Check, Send, ArrowLeft, Eye, Mail } from "lucide-react";
 import { toast } from "sonner";
+import { reportInvokeError } from "@/lib/monitoring";
 import { saveAs } from "file-saver";
 import { usePropostaTemplates, downloadTemplateFile } from "@/hooks/usePropostaTemplates";
 import { AUTO_VARIABLES, buildVariableData, generateDocx } from "@/lib/docxUtils";
@@ -226,6 +227,7 @@ export function GerarPropostaDialog({
       setPreviewHtml(result.value);
       setStep("preview");
     } catch (err: unknown) {
+      reportInvokeError(err, "proposta:gerar-preview");
       toast.error(`Erro ao gerar preview`, {
         description: err instanceof Error ? err.message : undefined,
       });
@@ -284,6 +286,7 @@ export function GerarPropostaDialog({
       onSent?.();
       onOpenChange(false);
     } catch (err: unknown) {
+      reportInvokeError(err, "send-proposta-email");
       toast.error("Erro ao enviar email", {
         description: err instanceof Error ? err.message : undefined,
       });
