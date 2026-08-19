@@ -3,8 +3,11 @@
 ## Scripts
 
 ```
-npm run dev          # Vite dev server (só o front)
-npm run dev:local    # ambiente local completo: Supabase + migrations pendentes + functions + Vite
+npm run dev           # ambiente local completo: Supabase + migrations pendentes + functions + app + LP marketing
+npm run dev:app        # só o Vite do app (sem Supabase/functions/LP)
+npm run dev:marketing  # só o Vite da LP (apps/marketing)
+npm run dev:all        # app + LP juntos, sem Supabase (front puro, mais rápido, não exige Docker)
+npm run dev:local      # Supabase + migrations pendentes + functions + app (sem LP marketing)
 npm run build:strict # Build com typecheck
 npm run typecheck    # tsc sem emitir
 npm run test         # Vitest watch
@@ -15,11 +18,14 @@ npm run db:push:staging          # aplica migrations em staging
 npm run functions:deploy:staging # deploya edge functions em staging
 ```
 
-`dev:local` aplica as migrations pendentes no banco local automaticamente
-(`supabase migration up`, incremental, não apaga dados): criou migration, é só
-rodar/reiniciar o `dev:local` e ela entra. Para os tipos refletirem o schema
-local, rode `gen:types:local`. Antes de PR/deploy, a migration vai pro staging e
-o `types.ts` canônico fecha com `gen:types` (staging).
+`npm run dev` (e `dev:local`) aplicam as migrations pendentes no banco local
+automaticamente (`supabase migration up`, incremental, não apaga dados): criou
+migration, é só rodar/reiniciar o `dev` e ela entra. Para os tipos refletirem o
+schema local, rode `gen:types:local`. Antes de PR/deploy, a migration vai pro
+staging e o `types.ts` canônico fecha com `gen:types` (staging).
+
+`npm run dev` exige Docker rodando (sobe o Supabase local). Pra trabalhar só no
+front sem Docker, use `dev:app` (só o app) ou `dev:all` (app+LP).
 
 Comando que muta banco ou funções exige ambiente explícito e passa por
 `scripts/supabase-target.sh`. Produção só com `ALLOW_PROD_DB_PUSH=true`. Ver ADR 0007.
@@ -104,21 +110,25 @@ Fluxo e higiene não negociáveis. Aplicar sempre, sem perguntar, em toda mudan�
 O repo permite squash e rebase, mas BLOQUEIA merge commit.
 
 **Branches**
+
 - Feature/fix nasce de `origin/staging` e o PR vai SEMPRE para `staging`, nunca direto para `main`.
 - Merge do PR de feature com `gh pr merge <n> --rebase --delete-branch`: preserva os commits em linha e mantém `staging` linear. Curar a branch antes (sem commits "wip/typo"), porque o rebase reaplica todos no log.
 - Zero commit direto em `staging` ou `main`.
 - Entre trabalhos só sobrevivem `main` e `staging`. Nenhuma branch órfã.
 
 **Promoção staging→main (release)**
+
 - NUNCA PR direto de `staging` para `main`: o histórico divergiu (releases antigos foram squash) e qualquer método por replay (rebase ou merge) dá conflito falso.
 - Método correto: branch `release/staging-AAAA-MM-DD[-slug]` a partir de `origin/main`, depois `git read-tree --reset -u origin/staging`, `git commit --no-verify`, e PR para `main`. Isso vira UM commit cuja árvore = `staging`, sem replay de histórico.
 - Merge do PR de release com `gh pr merge <n> --admin --squash --delete-branch` (`enforce_admins=false` deixa o admin passar o review requerido). Como a branch release já é 1 commit, squash e rebase são equivalentes aqui.
 - Só mergear com TODOS os checks verdes, incluindo Security audit e "types.ts em sync".
 
 **Limpeza obrigatória após CADA merge**
+
 - Deletar a branch merged, local e remota (`--delete-branch`, ou `git branch -D` + `git push origin --delete`).
 - Fechar manualmente as issues resolvidas: `Closes #` não dispara porque o merge é em `staging`, não na branch default `main`. Comentar o PR/commit que corrigiu.
 - Trocar para `staging`, `git pull --ff-only`, e apagar as branches locais já merged.
 
 **Verificação de fecho**
+
 - Após o release, confirmar `git diff --stat origin/main origin/staging` vazio (árvore idêntica = promoção completa).
