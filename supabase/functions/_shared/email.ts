@@ -308,64 +308,12 @@ export function templateConfirmacaoCadastro(link: string): string {
   });
 }
 
-export function templateProjetoConcluido(projetoNome: string): string {
-  return baseHtml({
-    preview: `Projeto ${projetoNome} concluído`,
-    content: `
-      ${title(`Projeto ${accent("concluído")}`)}
-      ${body(`O projeto ${strong(projetoNome)} foi marcado como ${strong("Concluído")}.`)}
-      ${hr()}
-      ${hint("Entre em contato com a equipe caso tenha alguma dúvida.")}
-    `,
-  });
-}
-
-export function templateDisciplinaConcluida(disciplinaNome: string): string {
-  return baseHtml({
-    preview: `Disciplina ${disciplinaNome} concluída`,
-    content: `
-      ${title(`Etapa ${accent("concluída")}`)}
-      ${body(`A disciplina ${strong(disciplinaNome)} foi marcada como concluída.`)}
-      ${hr()}
-      ${hint("Acesse o Pilar para acompanhar o andamento do projeto.")}
-    `,
-  });
-}
-
 export function templateMensagemManual(mensagem: string): string {
   return baseHtml({
     preview: "Mensagem do Pilar",
     content: `
       ${title(`Mensagem do ${accent("Pilar")}`)}
       ${body(mensagem.replace(/\n/g, "<br/>"))}
-    `,
-  });
-}
-
-export function templateNotificacaoProjeto(nomePessoa: string, projetoNome: string, novoStatus: string): string {
-  return baseHtml({
-    preview: `Status do projeto ${projetoNome} atualizado`,
-    content: `
-      ${title(`Olá, ${accent(nomePessoa)}!`)}
-      ${body(`O status do projeto ${strong(projetoNome)} foi atualizado para ${strong(novoStatus)}.`)}
-      ${hr()}
-      ${hint("Acesse o Pilar para mais detalhes.")}
-    `,
-  });
-}
-
-export function templateProximaEtapa(
-  nomePessoa: string,
-  projetoNome: string,
-  disciplinaConcluida: string,
-  suaDisciplina: string
-): string {
-  return baseHtml({
-    preview: `Sua disciplina ${suaDisciplina} pode começar`,
-    content: `
-      ${title(`Sua vez, ${accent(nomePessoa)}!`)}
-      ${body(`A etapa ${strong(disciplinaConcluida)} do projeto ${strong(projetoNome)} foi concluída.`)}
-      ${body(`Sua disciplina ${strong(suaDisciplina)} pode começar agora.`, "14px")}
     `,
   });
 }

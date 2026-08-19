@@ -6771,6 +6771,14 @@ export type Database = {
         }
         Returns: number
       }
+      rpc_notificar_projeto_status: {
+        Args: { p_novo_status: string; p_projeto_id: string }
+        Returns: number
+      }
+      rpc_notificar_proxima_etapa: {
+        Args: { p_disciplina_id: string }
+        Returns: number
+      }
       rpc_obra_despesa_excluir: { Args: { p_id: string }; Returns: undefined }
       rpc_obra_despesa_salvar: {
         Args: {
