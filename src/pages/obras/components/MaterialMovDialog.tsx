@@ -3,16 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import { FormDialog } from "@/components/FormDialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -137,131 +128,116 @@ export function MaterialMovDialog({
   const saving = saveMaterial.isPending || saveMov.isPending;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle>{editando ? "Editar movimento" : "Registrar movimento"}</DialogTitle>
-          <DialogDescription>
-            Entrada é o material comprado que chegou. Baixa é o que foi aplicado na obra.
-          </DialogDescription>
-        </DialogHeader>
+    <FormDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title={editando ? "Editar movimento" : "Registrar movimento"}
+      description="Entrada é o material comprado que chegou. Baixa é o que foi aplicado na obra."
+      size="md"
+      onSubmit={onSubmit}
+      isPending={saving}
+    >
+      {/* Material */}
+      <div className="space-y-1.5">
+        <Label htmlFor="material">Material *</Label>
+        {editando ? (
+          <Input value={materialFixoNome ?? "Material"} disabled />
+        ) : (
+          <Select value={material} onValueChange={(v) => setValue("material", v)}>
+            <SelectTrigger id="material">
+              <SelectValue placeholder="Escolha ou cadastre" />
+            </SelectTrigger>
+            <SelectContent>
+              {materiais.map((m) => (
+                <SelectItem key={m.id} value={m.id}>
+                  {m.nome} ({m.unidade})
+                </SelectItem>
+              ))}
+              <SelectItem value={NOVO}>+ Novo material</SelectItem>
+            </SelectContent>
+          </Select>
+        )}
+        {formState.errors.material && <p className="text-xs text-danger-strong">{formState.errors.material.message}</p>}
+      </div>
 
-        <form onSubmit={onSubmit} className="space-y-4">
-          {/* Material */}
+      {!editando && material === NOVO && (
+        <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1.5">
-            <Label htmlFor="material">Material *</Label>
-            {editando ? (
-              <Input value={materialFixoNome ?? "Material"} disabled />
-            ) : (
-              <Select value={material} onValueChange={(v) => setValue("material", v)}>
-                <SelectTrigger id="material">
-                  <SelectValue placeholder="Escolha ou cadastre" />
-                </SelectTrigger>
-                <SelectContent>
-                  {materiais.map((m) => (
-                    <SelectItem key={m.id} value={m.id}>
-                      {m.nome} ({m.unidade})
-                    </SelectItem>
-                  ))}
-                  <SelectItem value={NOVO}>+ Novo material</SelectItem>
-                </SelectContent>
-              </Select>
-            )}
-            {formState.errors.material && (
-              <p className="text-xs text-danger-strong">{formState.errors.material.message}</p>
-            )}
+            <Label htmlFor="nome">Nome *</Label>
+            <Input id="nome" placeholder="Cimento CP-II" {...register("nome")} />
+            {formState.errors.nome && <p className="text-xs text-danger-strong">{formState.errors.nome.message}</p>}
           </div>
-
-          {!editando && material === NOVO && (
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label htmlFor="nome">Nome *</Label>
-                <Input id="nome" placeholder="Cimento CP-II" {...register("nome")} />
-                {formState.errors.nome && <p className="text-xs text-danger-strong">{formState.errors.nome.message}</p>}
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="unidade">Unidade *</Label>
-                <Input id="unidade" placeholder="sc, kg, m², un" {...register("unidade")} />
-                {formState.errors.unidade && (
-                  <p className="text-xs text-danger-strong">{formState.errors.unidade.message}</p>
-                )}
-              </div>
-            </div>
-          )}
-
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="tipo">Tipo *</Label>
-              <Select value={tipo} onValueChange={(v) => setValue("tipo", v as "entrada" | "baixa")}>
-                <SelectTrigger id="tipo">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {TIPO_MOVIMENTO_OPCOES.map((o) => (
-                    <SelectItem key={o.value} value={o.value}>
-                      {o.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="quantidade">Quantidade *</Label>
-              <Input id="quantidade" inputMode="decimal" placeholder="0" {...register("quantidade")} />
-              {formState.errors.quantidade && (
-                <p className="text-xs text-danger-strong">{formState.errors.quantidade.message}</p>
-              )}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="data">Data *</Label>
-              <Input id="data" type="date" max={hoje()} {...register("data")} />
-              {formState.errors.data && <p className="text-xs text-danger-strong">{formState.errors.data.message}</p>}
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="frente">Etapa</Label>
-              <Select value={watch("obra_frente_id")} onValueChange={(v) => setValue("obra_frente_id", v)}>
-                <SelectTrigger id="frente">
-                  <SelectValue placeholder="Sem etapa" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={SEM_FRENTE}>Sem etapa</SelectItem>
-                  {frentes.map((f) => (
-                    <SelectItem key={f.id} value={f.id}>
-                      {f.nome}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          {tipo === "entrada" && (
-            <div className="space-y-1.5">
-              <Label htmlFor="valor_unitario">Valor unitário (R$, opcional)</Label>
-              <Input id="valor_unitario" inputMode="decimal" placeholder="0,00" {...register("valor_unitario")} />
-              <p className="text-xs text-muted-foreground">Usado para valorizar o saldo parado no canteiro.</p>
-            </div>
-          )}
-
           <div className="space-y-1.5">
-            <Label htmlFor="observacoes">Observações</Label>
-            <Textarea id="observacoes" rows={2} {...register("observacoes")} />
+            <Label htmlFor="unidade">Unidade *</Label>
+            <Input id="unidade" placeholder="sc, kg, m², un" {...register("unidade")} />
+            {formState.errors.unidade && (
+              <p className="text-xs text-danger-strong">{formState.errors.unidade.message}</p>
+            )}
           </div>
+        </div>
+      )}
 
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Cancelar
-            </Button>
-            <Button type="submit" variant="brand" disabled={saving}>
-              {saving && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}
-              Salvar
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-1.5">
+          <Label htmlFor="tipo">Tipo *</Label>
+          <Select value={tipo} onValueChange={(v) => setValue("tipo", v as "entrada" | "baixa")}>
+            <SelectTrigger id="tipo">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {TIPO_MOVIMENTO_OPCOES.map((o) => (
+                <SelectItem key={o.value} value={o.value}>
+                  {o.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="quantidade">Quantidade *</Label>
+          <Input id="quantidade" inputMode="decimal" placeholder="0" {...register("quantidade")} />
+          {formState.errors.quantidade && (
+            <p className="text-xs text-danger-strong">{formState.errors.quantidade.message}</p>
+          )}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-1.5">
+          <Label htmlFor="data">Data *</Label>
+          <Input id="data" type="date" max={hoje()} {...register("data")} />
+          {formState.errors.data && <p className="text-xs text-danger-strong">{formState.errors.data.message}</p>}
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="frente">Etapa</Label>
+          <Select value={watch("obra_frente_id")} onValueChange={(v) => setValue("obra_frente_id", v)}>
+            <SelectTrigger id="frente">
+              <SelectValue placeholder="Sem etapa" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={SEM_FRENTE}>Sem etapa</SelectItem>
+              {frentes.map((f) => (
+                <SelectItem key={f.id} value={f.id}>
+                  {f.nome}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {tipo === "entrada" && (
+        <div className="space-y-1.5">
+          <Label htmlFor="valor_unitario">Valor unitário (R$, opcional)</Label>
+          <Input id="valor_unitario" inputMode="decimal" placeholder="0,00" {...register("valor_unitario")} />
+          <p className="text-xs text-muted-foreground">Usado para valorizar o saldo parado no canteiro.</p>
+        </div>
+      )}
+
+      <div className="space-y-1.5">
+        <Label htmlFor="observacoes">Observações</Label>
+        <Textarea id="observacoes" rows={2} {...register("observacoes")} />
+      </div>
+    </FormDialog>
   );
 }
