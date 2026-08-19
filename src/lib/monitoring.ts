@@ -29,6 +29,8 @@ interface Monitoring {
   captureMessage(message: string, level?: "info" | "warning" | "error", extra?: Extra): void;
   setUser(user: MonitoringUser | null): void;
   addBreadcrumb(message: string, data?: Extra): void;
+  /** Envia um bug report pro Sentry (User Feedback), sem abrir UI própria do SDK. */
+  submitBugFeedback(message: string, opts?: { email?: string; name?: string }): Promise<void>;
 }
 
 const DEV = import.meta.env.DEV;
@@ -40,7 +42,7 @@ const ENV = env.VITE_SENTRY_ENV ?? import.meta.env.MODE;
 const TRACES_RATE = sentryTracesSampleRate;
 
 // Rotas públicas / pouco interessantes — drop transactions para economizar quota.
-const IGNORED_TX_ROUTES = [/^\/privacidade/, /^\/cliente\/login/, /^\/login/, /^\/forgot-password/];
+const IGNORED_TX_ROUTES = [/^\/privacidade/, /^\/cliente\/login/, /^\/login/, /^\/forgot-password/, /^\/status/];
 
 const SENSITIVE_KEYS =
   /password|senha|token|api_key|secret|authorization|cookie|cpf|cnpj|rg|pix|conta_bancaria|agencia|salario/i;
@@ -105,6 +107,9 @@ const noopMonitoring: Monitoring = {
   addBreadcrumb(message, data) {
     if (DEV) console.debug("[monitoring] breadcrumb", message, scrub(data));
   },
+  async submitBugFeedback(message) {
+    if (DEV) console.info("[monitoring] bug feedback (no-op)", message);
+  },
 };
 
 const sentryMonitoring: Monitoring = {
@@ -140,6 +145,14 @@ const sentryMonitoring: Monitoring = {
         return event;
       },
     });
+    // beforeSend só roda pra eventos de erro: sendFeedback() emite um evento
+    // tipo "feedback" à parte, que precisa do próprio scrub aqui.
+    Sentry.getClient()?.on("beforeSendFeedback", (feedback) => {
+      const ctx = feedback.contexts?.feedback;
+      if (!ctx) return;
+      ctx.message = scrubString(ctx.message);
+      if (ctx.name) ctx.name = scrubString(ctx.name);
+    });
   },
   captureException(error, extra) {
     return Sentry.captureException(error, { extra: scrub(extra) as Record<string, unknown> });
@@ -162,6 +175,9 @@ const sentryMonitoring: Monitoring = {
       data: scrub(data) as Record<string, unknown>,
       level: "info",
     });
+  },
+  async submitBugFeedback(message, opts = {}) {
+    await Sentry.sendFeedback({ message, email: opts.email, name: opts.name });
   },
 };
 

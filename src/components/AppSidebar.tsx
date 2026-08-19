@@ -10,6 +10,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Settings,
+  MessageSquare,
 } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
@@ -24,6 +25,7 @@ import { cn } from "@/lib/utils";
 import { useState, useEffect, useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSettingsModal } from "@/contexts/SettingsModalContext";
+import { FeedbackDialog } from "@/components/FeedbackDialog";
 import { usePermissions } from "@/hooks/usePermissions";
 import { ImpersonationPicker } from "@/components/ImpersonationPicker";
 import { NotificationInbox } from "@/components/NotificationInbox";
@@ -52,6 +54,7 @@ export function AppSidebar() {
   const currentPath = location.pathname;
   const [sidebarWidth, setSidebarWidth] = useState(state === "collapsed" ? "64px" : "240px");
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
 
   const USER_ROUTES = ["/admin", "/ultra-admin"];
   const isUserRouteActive = USER_ROUTES.some((r) => currentPath.startsWith(r)) || isSettingsOpen;
@@ -386,6 +389,10 @@ export function AppSidebar() {
                   <Settings size={16} className="flex-shrink-0 text-muted-foreground" />
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => setFeedbackOpen(true)} className="justify-between">
+                  Feedback
+                  <MessageSquare size={16} className="text-muted-foreground" />
+                </DropdownMenuItem>
                 {isAdmin && !isUltraAdmin && (
                   <DropdownMenuItem onClick={handleAdmin} className="justify-between">
                     Portal Admin
@@ -409,6 +416,7 @@ export function AppSidebar() {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+            <FeedbackDialog open={feedbackOpen} onOpenChange={setFeedbackOpen} />
           </div>
           <NotificationInbox />
         </div>

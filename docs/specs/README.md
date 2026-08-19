@@ -49,3 +49,5 @@ Decisão de arquitetura no meio do caminho vira um [ADR](../architecture/README.
 | [052](./052-features-universais-por-empresa-capacidade-de-plano.md) | Features universais por empresa (fim do toggle por plano); capacidade (max_projetos) vira o limitador real  | Em implementação |
 | [053](./053-pix-automatico-e-regua-de-inadimplencia.md)             | Pix Automático como método padrão do MRR e régua de inadimplência (aviso, suspensão, recuperação), ADR 0028 | Draft            |
 | [057](./057-webhook-asaas-resolucao-tenant.md)                      | Corrige resolução de tenant no webhook Asaas (coluna `webhook_token` removida, achado ao cifrar a api_key)  | Draft            |
+| [055](./055-status-page-publica.md)                                 | Status page pública (`/status`), incidentes declarados manualmente via `/ultra-admin`, sem uptime check automático | Entregue         |
+| [056](./056-feedback-bug-e-sugestao-feature.md)                     | Feedback do usuário: modal único (bug via Sentry `sendFeedback`, sugestão só no banco, triagem no ultra-admin)     | Entregue         |

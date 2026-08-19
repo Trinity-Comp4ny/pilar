@@ -1857,6 +1857,33 @@ export type Database = {
         }
         Relationships: []
       }
+      feature_suggestions: {
+        Row: {
+          created_at: string
+          created_by: string
+          descricao: string
+          id: string
+          status_interno: string
+          titulo: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          descricao: string
+          id?: string
+          status_interno?: string
+          titulo: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          descricao?: string
+          id?: string
+          status_interno?: string
+          titulo?: string
+        }
+        Relationships: []
+      }
       fluxos_disciplinas: {
         Row: {
           ativo: boolean | null
@@ -5075,6 +5102,126 @@ export type Database = {
           },
         ]
       }
+      status_components: {
+        Row: {
+          id: string
+          nome_exibicao: string
+          ordem: number
+          slug: string
+        }
+        Insert: {
+          id?: string
+          nome_exibicao: string
+          ordem?: number
+          slug: string
+        }
+        Update: {
+          id?: string
+          nome_exibicao?: string
+          ordem?: number
+          slug?: string
+        }
+        Relationships: []
+      }
+      status_incident_components: {
+        Row: {
+          component_id: string
+          incident_id: string
+        }
+        Insert: {
+          component_id: string
+          incident_id: string
+        }
+        Update: {
+          component_id?: string
+          incident_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "status_incident_components_component_id_fkey"
+            columns: ["component_id"]
+            isOneToOne: false
+            referencedRelation: "status_components"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "status_incident_components_component_id_fkey"
+            columns: ["component_id"]
+            isOneToOne: false
+            referencedRelation: "status_current"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "status_incident_components_incident_id_fkey"
+            columns: ["incident_id"]
+            isOneToOne: false
+            referencedRelation: "status_incidents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      status_incident_updates: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          incident_id: string
+          mensagem: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          incident_id: string
+          mensagem: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          incident_id?: string
+          mensagem?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "status_incident_updates_incident_id_fkey"
+            columns: ["incident_id"]
+            isOneToOne: false
+            referencedRelation: "status_incidents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      status_incidents: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          resolved_at: string | null
+          severidade: string
+          status: string
+          titulo: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          resolved_at?: string | null
+          severidade: string
+          status?: string
+          titulo: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          resolved_at?: string | null
+          severidade?: string
+          status?: string
+          titulo?: string
+        }
+        Relationships: []
+      }
       tarefa_contadores: {
         Row: {
           empresa_id: string
@@ -5779,6 +5926,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      status_current: {
+        Row: {
+          id: string | null
+          nome_exibicao: string | null
+          ordem: number | null
+          slug: string | null
+          status_efetivo: string | null
+        }
+        Insert: {
+          id?: string | null
+          nome_exibicao?: string | null
+          ordem?: number | null
+          slug?: string | null
+          status_efetivo?: never
+        }
+        Update: {
+          id?: string | null
+          nome_exibicao?: string | null
+          ordem?: number | null
+          slug?: string | null
+          status_efetivo?: never
+        }
+        Relationships: []
       }
       v_budget_vs_actual: {
         Row: {

@@ -9,15 +9,7 @@
  */
 
 export type StatusTone =
-  | "neutral"
-  | "info"
-  | "warning"
-  | "attention"
-  | "positive"
-  | "danger"
-  | "brand"
-  | "done"
-  | "highlight";
+  "neutral" | "info" | "warning" | "attention" | "positive" | "danger" | "brand" | "done" | "highlight";
 
 /** Badge/chip: fundo suave + texto forte (contraste AA nos tokens). */
 export const TONE_BADGE: Record<StatusTone, string> = {
@@ -62,7 +54,16 @@ export const TONE_COLUMN: Record<StatusTone, string> = {
   highlight: "bg-highlight-soft/50",
 };
 
-export type StatusDomain = "projeto" | "proposta" | "lead" | "financeiro" | "tipo" | "obra" | "cotacao";
+export type StatusDomain =
+  | "projeto"
+  | "proposta"
+  | "lead"
+  | "financeiro"
+  | "tipo"
+  | "obra"
+  | "cotacao"
+  | "status_componente"
+  | "status_incidente";
 
 type StatusDef = { label: string; tone: StatusTone };
 
@@ -113,6 +114,18 @@ export const STATUS_REGISTRY: Record<StatusDomain, Record<string, StatusDef>> = 
     aberta: { label: "Aberta", tone: "info" },
     decidida: { label: "Decidida", tone: "positive" },
     cancelada: { label: "Cancelada", tone: "neutral" },
+  },
+  status_componente: {
+    operacional: { label: "Operacional", tone: "positive" },
+    degradado: { label: "Degradado", tone: "warning" },
+    parcial: { label: "Parcial", tone: "attention" },
+    outage: { label: "Fora do ar", tone: "danger" },
+  },
+  status_incidente: {
+    investigando: { label: "Investigando", tone: "warning" },
+    identificado: { label: "Identificado", tone: "attention" },
+    monitorando: { label: "Monitorando", tone: "info" },
+    resolvido: { label: "Resolvido", tone: "positive" },
   },
 };
 
