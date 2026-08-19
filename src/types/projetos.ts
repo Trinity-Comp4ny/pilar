@@ -183,6 +183,7 @@ export interface ProjetoDisciplinaDB {
   created_at?: string;
   updated_at?: string;
   responsaveis?: Array<{ id: string; nome: string }>;
+  ordem_etapa?: number | null;
 }
 
 /** Convert relational DB disciplina to the legacy JSONB shape used by UI components */
@@ -216,6 +217,7 @@ export function dbDisciplinaToLegacy(d: ProjetoDisciplinaDB): DisciplinaResponsa
     labels: d.labels ?? [],
     links: d.links ?? [],
     comentarios: d.comentarios ?? [],
+    etapa: d.ordem_etapa ?? undefined,
   };
 }
 

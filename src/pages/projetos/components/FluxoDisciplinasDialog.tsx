@@ -129,6 +129,16 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
     }));
   };
 
+  const updateEtapaDuracao = (index: number, raw: string) => {
+    const parsed = raw.trim() ? Math.max(1, parseInt(raw, 10)) : undefined;
+    setForm((prev) => ({
+      ...prev,
+      etapas: prev.etapas.map((e, i) =>
+        i === index ? { ...e, duracao_dias_uteis: Number.isNaN(parsed) ? undefined : parsed } : e
+      ),
+    }));
+  };
+
   const moveEtapa = (index: number, direction: "up" | "down") => {
     const target = direction === "up" ? index - 1 : index + 1;
     if (target < 0 || target >= form.etapas.length) return;
@@ -321,6 +331,14 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
                             placeholder="Nome da etapa"
                             className="h-9 text-sm flex-1"
                           />
+                          <Input
+                            type="number"
+                            min={1}
+                            value={etapa.duracao_dias_uteis ?? ""}
+                            onChange={(e) => updateEtapaDuracao(etapaIdx, e.target.value)}
+                            placeholder="dias úteis"
+                            className="h-9 text-sm w-28 flex-shrink-0"
+                          />
                           <div className="flex gap-0.5 flex-shrink-0">
                             <Button
                               type="button"
@@ -439,7 +457,10 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
                       <div key={i} className="flex items-center gap-2">
                         {i > 0 && <span className="text-muted-foreground text-sm">→</span>}
                         <div className="bg-white border rounded-md px-2.5 py-1.5">
-                          <span className="text-xs font-medium text-info-strong">{etapa.nome}</span>
+                          <span className="text-xs font-medium text-info-strong">
+                            {etapa.nome}
+                            {etapa.duracao_dias_uteis ? ` · ${etapa.duracao_dias_uteis} dias úteis` : ""}
+                          </span>
                           <div className="flex flex-col gap-0.5 mt-1">
                             {etapa.disciplinas.map((d, di) => (
                               <span key={di} className="text-[10px] bg-info-soft text-info-mid rounded px-1.5 py-0.5">

@@ -3,6 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { formatValorToInput, parseCurrencyString } from "@/lib/currencyUtils";
 import { supabase } from "@/integrations/supabase/client";
 import { addBusinessDays, formatDateLocal, parseDateLocal } from "@/lib/businessDays";
+import { calcularDatasEtapasFluxo } from "@/lib/fluxoCascata";
 import { PROJECT_STATUS, PROJECT_PRIORITY, type ProjectPriority } from "@/constants";
 import {
   type Projeto,
@@ -476,19 +477,34 @@ export function useProjetoForm({
     const fluxo = fluxosData.find((f) => f.id === fluxoId);
     if (!fluxo) return;
 
-    const novasDisciplinas: DisciplinaResponsavel[] = fluxo.etapas.flatMap((etapa) =>
-      etapa.disciplinas.map((d) => ({
+    const datasPorEtapa = new Map(
+      calcularDatasEtapasFluxo(fluxo.etapas, formData.data_inicio || undefined).map((e) => [e.ordem, e])
+    );
+
+    const novasDisciplinas: DisciplinaResponsavel[] = fluxo.etapas.flatMap((etapa) => {
+      const datas = datasPorEtapa.get(etapa.ordem);
+      return etapa.disciplinas.map((d) => ({
         disciplina: d.nome,
         responsavel_id: d.responsavel_id || "",
         responsavel_nome: d.responsavel_nome || "",
         status: "Não Iniciado",
         etapa: etapa.ordem,
+        data_inicio: datas?.data_inicio,
+        data_previsao: datas?.data_previsao,
         observacoes: [],
         responsaveis: d.responsavel_id
-          ? [{ responsavel_id: d.responsavel_id, responsavel_nome: d.responsavel_nome || "", status: "Não Iniciado" }]
+          ? [
+              {
+                responsavel_id: d.responsavel_id,
+                responsavel_nome: d.responsavel_nome || "",
+                status: "Não Iniciado",
+                data_inicio: datas?.data_inicio,
+                data_previsao: datas?.data_previsao,
+              },
+            ]
           : [],
-      }))
-    );
+      }));
+    });
 
     setProjetosDisciplinas(novasDisciplinas);
     toast.success("Fluxo aplicado", {
@@ -614,6 +630,7 @@ export function useProjetoForm({
             data_fim_real: d.data_final || null,
             prioridade: d.prioridade || null,
             justificativa_atraso: d.justificativa_atraso || null,
+            ordem_etapa: d.etapa ?? null,
             responsavel_ids: resps.map((r) => r.responsavel_id).filter(Boolean),
           };
         });
@@ -670,6 +687,7 @@ export function useProjetoForm({
               data_fim_real: d.data_final || null,
               prioridade: d.prioridade || null,
               justificativa_atraso: d.justificativa_atraso || null,
+              ordem_etapa: d.etapa ?? null,
               responsavel_ids: resps.map((r) => r.responsavel_id).filter(Boolean),
             };
           });
