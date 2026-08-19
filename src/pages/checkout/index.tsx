@@ -1,7 +1,8 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, Navigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft, ArrowRight, Check, Loader2, ShieldCheck } from "lucide-react";
 import { usePageTitle } from "@/hooks/usePageTitle";
+import { monitoring } from "@/lib/monitoring";
 import { usePlans } from "@/pages/planos/hooks/usePlans";
 import type { BillingCycle } from "@/pages/planos/components/CycleToggle";
 import { CheckoutForm } from "./components/CheckoutForm";
@@ -35,6 +36,18 @@ export default function Checkout() {
 
   const effectiveStatus = status?.payment_status ?? checkoutResult?.payment_status ?? null;
   const inviteDispatched = status?.invite_dispatched ?? false;
+
+  // Guard por ref: effectiveStatus continua "paid" em re-renders subsequentes,
+  // sem isso a métrica dispararia de novo a cada render.
+  const checkoutCompletedRef = useRef(false);
+  useEffect(() => {
+    if (effectiveStatus === "paid" && !checkoutCompletedRef.current) {
+      checkoutCompletedRef.current = true;
+      monitoring.recordMetric("checkout.completed", 1, {
+        tags: { plan: planSlug, billing_type: checkoutResult?.billing_type ?? "", cycle },
+      });
+    }
+  }, [effectiveStatus, planSlug, checkoutResult?.billing_type, cycle]);
 
   if (!planSlug) return <Navigate to="/planos" replace />;
 

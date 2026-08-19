@@ -18,8 +18,16 @@
  *   - Cada invocação de withSentry abre um AsyncLocalStorage novo pra coletar os spans
  *     chamados durante aquele request (ex.: em ai-client.ts), sem precisar passar
  *     contexto manualmente pelos 14 handlers `ai-*`.
- *   - De propósito SEM `gen_ai.input.messages`/`gen_ai.output.messages`: manda o prompt
- *     completo pro Sentry seria vazar dado de cliente; só token count e modelo.
+ *   - Inclui `gen_ai.input.messages`/`gen_ai.output.messages` (replay de conversa em
+ *     Insights > Agents), passado por scrub() antes de sair (ver ADR 0027). Trade-off
+ *     aceito conscientemente: conteúdo de conversa passa a trafegar pro Sentry.
+ *   - `gen_ai.conversation.id` (setado pelo caller) agrupa spans da mesma conversa na
+ *     tela Conversations. `setSentryUser()` identifica quem está por trás da conversa.
+ *
+ * Application Metrics (dashboard Explore > Metrics):
+ *   - recordMetric() manda um envelope `trace_metric` (contador/gauge/distribuição,
+ *     ver ADR 0027). Não é amostrado por SENTRY_TRACES_RATE: métrica agregada perde
+ *     precisão se for sampleada como uma trace.
  *
  * Sem DSN: roda em no-op (apenas console).
  */
@@ -84,7 +92,9 @@ export interface SentryContext {
 export interface GenAiSpanInput {
   op: "gen_ai.chat" | "gen_ai.invoke_agent" | "gen_ai.execute_tool";
   name: string;
-  attributes: Record<string, string | number | boolean>;
+  // unknown (não só string|number|boolean) porque gen_ai.input.messages/output.messages
+  // carregam array de {role, content}, não um valor primitivo.
+  attributes: Record<string, unknown>;
   startMs: number;
   endMs: number;
   status?: "ok" | "error";
@@ -101,11 +111,50 @@ export function recordGenAiSpan(span: GenAiSpanInput): void {
   genAiSpanStore.getStore()?.push(span);
 }
 
+export interface SentryUserInfo {
+  id?: string;
+  email?: string;
+  empresa_id?: string;
+}
+
+const sentryUserStore = new AsyncLocalStorage<{ value?: SentryUserInfo }>();
+
+/**
+ * Identifica o usuário/empresa da invocação atual, pra popular a coluna "User" do
+ * dashboard Conversations (Insights > Agents) do Sentry (ver ADR 0027). Chamar dentro
+ * de um handler envolvido por withSentry, assim que o usuário for resolvido (ex.: logo
+ * após auth.getUser()). Sem efeito fora desse ciclo de vida (no-op silencioso).
+ */
+export function setSentryUser(user: SentryUserInfo): void {
+  const box = sentryUserStore.getStore();
+  if (box) box.value = user;
+}
+
 const SENSITIVE_KEYS = /password|senha|token|api_key|secret|authorization|cookie|cpf|cnpj/i;
 
-function scrub(value: unknown, depth = 0): unknown {
+// Padrões PII brasileiros: mascarados em valores string mesmo quando a key é benigna
+// (relevante pro conteúdo livre de gen_ai.input.messages/output.messages). Espelha
+// src/lib/monitoring.ts (runtime separado, Deno edge não importa código do Vite app).
+const PII_PATTERNS: Array<{ re: RegExp; replace: string }> = [
+  { re: /\b\d{3}\.?\d{3}\.?\d{3}-?\d{2}\b/g, replace: "[CPF]" },
+  { re: /\b\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2}\b/g, replace: "[CNPJ]" },
+  { re: /\b\d{5}-?\d{3}\b/g, replace: "[CEP]" },
+  { re: /\b(?:\d[ -]?){13,16}\d\b/g, replace: "[CARD]" },
+];
+
+function scrubString(s: string): string {
+  let out = s;
+  for (const { re, replace } of PII_PATTERNS) {
+    out = out.replace(re, replace);
+  }
+  return out;
+}
+
+/** Mascara chaves sensíveis e padrões de PII brasileiros em qualquer valor aninhado. */
+export function scrub(value: unknown, depth = 0): unknown {
   if (depth > 4) return "[max depth]";
   if (value === null || value === undefined) return value;
+  if (typeof value === "string") return scrubString(value);
   if (typeof value !== "object") return value;
   if (Array.isArray(value)) return value.slice(0, 20).map((v) => scrub(v, depth + 1));
   const out: Record<string, unknown> = {};
@@ -197,6 +246,7 @@ async function sendTransaction(params: {
   method?: string;
   url?: string;
   genAiSpans?: GenAiSpanInput[];
+  user?: SentryUserInfo;
 }): Promise<void> {
   if (!PARSED) return;
 
@@ -229,6 +279,7 @@ async function sendTransaction(params: {
     server_name: params.fnName,
     timestamp: endTs,
     start_timestamp: startTs,
+    user: params.user ? { id: params.user.id, email: params.user.email, segment: params.user.empresa_id } : undefined,
     tags: {
       runtime: "deno-edge",
       fn: params.fnName,
@@ -279,15 +330,20 @@ export function withSentry(
   handler: (req: Request) => Promise<Response>
 ): (req: Request) => Promise<Response> {
   return async (req: Request) => {
-    const sampled = PARSED ? Math.random() < TRACES_RATE : false;
-    const startMs = sampled ? Date.now() : 0;
+    // Amostragem de performance (custo): só uma fração das invocações vira transaction
+    // "normal". Mas se a invocação gerou spans gen_ai.* (Insights > Agents), a transaction
+    // sempre sai (genAiSpans.length > 0 abaixo), senão o dashboard de agentes perderia ~90%
+    // das execuções por causa de uma amostragem que não tem relação com agent monitoring.
+    const performanceSampled = PARSED ? Math.random() < TRACES_RATE : false;
+    const startMs = Date.now();
     let response: Response;
     let status: "ok" | "internal_error" = "ok";
     let httpStatus: number | undefined;
     const genAiSpans: GenAiSpanInput[] = [];
+    const userBox: { value?: SentryUserInfo } = {};
 
     try {
-      response = await genAiSpanStore.run(genAiSpans, () => handler(req));
+      response = await sentryUserStore.run(userBox, () => genAiSpanStore.run(genAiSpans, () => handler(req)));
       httpStatus = response.status;
       if (response.status >= 500) status = "internal_error";
     } catch (err) {
@@ -296,6 +352,7 @@ export function withSentry(
         fn: fnName,
         tags: { method: req.method },
         extra: { url: req.url },
+        user: userBox.value,
       });
       response = new Response(JSON.stringify({ error: "Internal Server Error" }), {
         status: 500,
@@ -304,7 +361,7 @@ export function withSentry(
       httpStatus = 500;
     }
 
-    if (sampled) {
+    if (performanceSampled || genAiSpans.length > 0) {
       // Fire-and-forget pra não atrasar a resposta, mas SEM waitUntil o isolate do
       // edge-runtime pode congelar assim que a Response é retornada, matando o fetch
       // do envelope no meio (transaction nunca chega no Sentry). EdgeRuntime.waitUntil
@@ -315,6 +372,7 @@ export function withSentry(
         startMs,
         endMs: Date.now(),
         status,
+        user: userBox.value,
         httpStatus,
         method: req.method,
         url: req.url,
@@ -325,4 +383,69 @@ export function withSentry(
 
     return response;
   };
+}
+
+export type MetricType = "counter" | "gauge" | "distribution";
+
+/**
+ * Registra uma métrica de aplicação (dashboard Explore > Metrics) via envelope
+ * `trace_metric`. Fire-and-forget (waitUntil), nunca atrasa nem quebra o handler.
+ *
+ * Sem trace/span pai: cada chamada gera um trace_id próprio (SDKs do Sentry aceitam
+ * misturar métricas de traces diferentes no mesmo envelope), o que é suficiente pra
+ * agregação numérica, não precisamos correlacionar com a transaction da request.
+ */
+export function recordMetric(
+  name: string,
+  value: number,
+  opts: { type?: MetricType; unit?: string; tags?: Record<string, string | number | boolean> } = {}
+): void {
+  if (!PARSED) return;
+
+  const attributes: Record<string, { value: string | number | boolean; type: string }> | undefined = opts.tags
+    ? Object.fromEntries(
+        Object.entries(scrub(opts.tags) as Record<string, string | number | boolean>).map(([k, v]) => [
+          k,
+          {
+            value: v,
+            type: typeof v === "boolean" ? "boolean" : typeof v === "number" ? "double" : "string",
+          },
+        ])
+      )
+    : undefined;
+
+  const item = {
+    timestamp: Date.now() / 1000,
+    trace_id: crypto.randomUUID().replace(/-/g, ""),
+    name,
+    type: opts.type ?? "counter",
+    value,
+    ...(opts.unit && { unit: opts.unit }),
+    ...(attributes && { attributes }),
+  };
+
+  const eventId = genEventId();
+  const envelopeHeader = JSON.stringify({ event_id: eventId, sent_at: new Date().toISOString(), dsn: DSN });
+  const itemHeader = JSON.stringify({
+    type: "trace_metric",
+    item_count: 1,
+    content_type: "application/vnd.sentry.items.trace-metric+json",
+  });
+  const body = `${envelopeHeader}\n${itemHeader}\n${JSON.stringify({ items: [item] })}`;
+
+  const task = fetch(PARSED.envelopeUrl, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-sentry-envelope",
+      "X-Sentry-Auth": `Sentry sentry_version=7, sentry_key=${PARSED.publicKey}, sentry_client=pilar-edge/1.0`,
+    },
+    body,
+  })
+    .then((res) => {
+      if (!res.ok) console.warn(`[sentry] metric envelope rejected ${res.status}`);
+    })
+    .catch((e) => {
+      console.warn(`[sentry] metric failed to send: ${e instanceof Error ? e.message : String(e)}`);
+    });
+  waitUntil(task);
 }
