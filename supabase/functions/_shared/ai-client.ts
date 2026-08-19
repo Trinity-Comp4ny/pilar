@@ -1,6 +1,6 @@
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { z } from "./schemas.ts";
-import { recordGenAiSpan } from "./sentry.ts";
+import { recordGenAiSpan, recordMetric, scrub } from "./sentry.ts";
 
 const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY") || "";
 export const GEMINI_MODEL = "gemini-2.5-flash";
@@ -32,6 +32,9 @@ export interface AiRequest {
   // Anexos multimodais (PDF/imagem em base64) enviados junto do prompt.
   // Usado no import de orçamento por IA (spec 023). Vazio/ausente = texto puro.
   files?: Array<{ mimeType: string; dataBase64: string }>;
+  // ID de conversa (thread), vira gen_ai.conversation.id nos spans (Conversations do
+  // Sentry, ADR 0027). Só populado por fluxos multi-turno (ex.: ai-chat com sessionId).
+  conversationId?: string;
 }
 
 export interface AiResponse {
@@ -157,12 +160,20 @@ async function logAiUsage(
   }
 }
 
-/** Span gen_ai.chat de uma chamada ao Gemini (dashboard Insights > Agents do Sentry). */
+/**
+ * Span gen_ai.chat de uma chamada ao Gemini (dashboard Insights > Agents do Sentry).
+ * Inclui input.messages/output.messages (replay de conversa, ADR 0027) passados por
+ * scrub(): trade-off aceito conscientemente de mandar conteúdo pro Sentry.
+ */
 function recordGeminiChatSpan(params: {
   startMs: number;
   status: "ok" | "error";
   tokensEntrada?: number;
   tokensSaida?: number;
+  inputMessages?: Array<{ role: string; content: string }>;
+  outputText?: string;
+  conversationId?: string;
+  empresaId?: string;
 }): void {
   recordGenAiSpan({
     op: "gen_ai.chat",
@@ -174,10 +185,16 @@ function recordGeminiChatSpan(params: {
       "gen_ai.operation.name": "chat",
       "gen_ai.provider.name": "gemini",
       "gen_ai.request.model": GEMINI_MODEL,
+      ...(params.conversationId && { "gen_ai.conversation.id": params.conversationId }),
+      ...(params.empresaId && { "pilar.empresa_id": params.empresaId }),
+      ...(params.inputMessages && { "gen_ai.input.messages": scrub(params.inputMessages) }),
       ...(params.status === "ok" && {
         "gen_ai.response.model": GEMINI_MODEL,
         "gen_ai.usage.input_tokens": params.tokensEntrada ?? 0,
         "gen_ai.usage.output_tokens": params.tokensSaida ?? 0,
+        ...(params.outputText !== undefined && {
+          "gen_ai.output.messages": scrub([{ role: "assistant", content: params.outputText }]),
+        }),
       }),
     },
   });
@@ -194,9 +211,16 @@ async function fetchGeminiRaw(
     deadline?: number;
     files?: Array<{ mimeType: string; dataBase64: string }>;
     maxOutputTokens?: number;
+    conversationId?: string;
+    empresaId?: string;
   } = {}
 ): Promise<{ text: string; tokensEntrada: number; tokensSaida: number }> {
   const spanStartMs = Date.now();
+  // Mensagens pro span gen_ai (Insights > Agents): só o texto, nunca os anexos base64.
+  const inputMessages = [
+    { role: "system", content: systemPrompt },
+    { role: "user", content: userMessage },
+  ];
   // Multimodal: cada arquivo vira uma part inline_data (base64) junto do texto.
   const userParts: Array<{ text: string } | { inline_data: { mime_type: string; data: string } }> = [
     { text: userMessage },
@@ -243,7 +267,13 @@ async function fetchGeminiRaw(
       signal: controller.signal,
     });
   } catch (e) {
-    recordGeminiChatSpan({ startMs: spanStartMs, status: "error" });
+    recordGeminiChatSpan({
+      startMs: spanStartMs,
+      status: "error",
+      inputMessages,
+      conversationId: opts.conversationId,
+      empresaId: opts.empresaId,
+    });
     if (e instanceof DOMException && e.name === "AbortError") {
       throw new Error(`Gemini API timeout após ${timeoutMs}ms`);
     }
@@ -253,7 +283,13 @@ async function fetchGeminiRaw(
   }
 
   if (!response.ok) {
-    recordGeminiChatSpan({ startMs: spanStartMs, status: "error" });
+    recordGeminiChatSpan({
+      startMs: spanStartMs,
+      status: "error",
+      inputMessages,
+      conversationId: opts.conversationId,
+      empresaId: opts.empresaId,
+    });
     const errorText = await response.text();
     throw new Error(`Gemini API error (${response.status}): ${errorText}`);
   }
@@ -263,7 +299,16 @@ async function fetchGeminiRaw(
   const usage = result.usageMetadata || {};
   const tokensEntrada = usage.promptTokenCount || 0;
   const tokensSaida = usage.candidatesTokenCount || 0;
-  recordGeminiChatSpan({ startMs: spanStartMs, status: "ok", tokensEntrada, tokensSaida });
+  recordGeminiChatSpan({
+    startMs: spanStartMs,
+    status: "ok",
+    tokensEntrada,
+    tokensSaida,
+    inputMessages,
+    outputText: text,
+    conversationId: opts.conversationId,
+    empresaId: opts.empresaId,
+  });
   return { text, tokensEntrada, tokensSaida };
 }
 
@@ -284,7 +329,7 @@ export interface GeminiStreamUsage {
 export async function* streamGeminiText(
   systemPrompt: string,
   userMessage: string,
-  opts: { deadline?: number } = {}
+  opts: { deadline?: number; conversationId?: string; empresaId?: string } = {}
 ): AsyncGenerator<string, GeminiStreamUsage, unknown> {
   const body = {
     system_instruction: {
@@ -312,8 +357,13 @@ export async function* streamGeminiText(
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   let tokensEntrada = 0;
   let tokensSaida = 0;
+  let outputText = "";
   const spanStartMs = Date.now();
   let spanStatus: "ok" | "error" = "ok";
+  const inputMessages = [
+    { role: "system", content: systemPrompt },
+    { role: "user", content: userMessage },
+  ];
 
   try {
     let response: Response;
@@ -366,7 +416,10 @@ export async function* streamGeminiText(
           continue;
         }
         const txt = parsed.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (txt) yield txt;
+        if (txt) {
+          outputText += txt;
+          yield txt;
+        }
         const usage = parsed.usageMetadata;
         if (usage) {
           // usageMetadata é cumulativa: fica com o último valor visto.
@@ -391,10 +444,14 @@ export async function* streamGeminiText(
         "gen_ai.provider.name": "gemini",
         "gen_ai.request.model": GEMINI_MODEL,
         "gen_ai.response.streaming": true,
+        "gen_ai.input.messages": scrub(inputMessages),
+        ...(opts.conversationId && { "gen_ai.conversation.id": opts.conversationId }),
+        ...(opts.empresaId && { "pilar.empresa_id": opts.empresaId }),
         ...(spanStatus === "ok" && {
           "gen_ai.response.model": GEMINI_MODEL,
           "gen_ai.usage.input_tokens": tokensEntrada,
           "gen_ai.usage.output_tokens": tokensSaida,
+          "gen_ai.output.messages": scrub([{ role: "assistant", content: outputText }]),
         }),
       },
     });
@@ -414,6 +471,8 @@ export async function callGemini(request: AiRequest): Promise<AiResponse> {
   try {
     const { text, tokensEntrada, tokensSaida } = await fetchGeminiRaw(request.systemPrompt, request.userMessage, {
       deadline: Date.now() + GEMINI_CALL_TIMEOUT_MS,
+      conversationId: request.conversationId,
+      empresaId: request.empresaId,
     });
 
     let parsed: Record<string, unknown>;
@@ -434,6 +493,8 @@ export async function callGemini(request: AiRequest): Promise<AiResponse> {
         "gen_ai.agent.name": request.tipo,
         "gen_ai.usage.input_tokens": tokensEntrada,
         "gen_ai.usage.output_tokens": tokensSaida,
+        "pilar.empresa_id": request.empresaId,
+        ...(request.conversationId && { "gen_ai.conversation.id": request.conversationId }),
       },
     });
 
@@ -450,7 +511,12 @@ export async function callGemini(request: AiRequest): Promise<AiResponse> {
       startMs: spanStartMs,
       endMs: Date.now(),
       status: "error",
-      attributes: { "gen_ai.operation.name": "invoke_agent", "gen_ai.agent.name": request.tipo },
+      attributes: {
+        "gen_ai.operation.name": "invoke_agent",
+        "gen_ai.agent.name": request.tipo,
+        "pilar.empresa_id": request.empresaId,
+        ...(request.conversationId && { "gen_ai.conversation.id": request.conversationId }),
+      },
     });
     throw e;
   }
@@ -507,6 +573,8 @@ export async function callGeminiStructured<T>(
         deadline,
         files: request.files,
         maxOutputTokens: opts.maxOutputTokens,
+        conversationId: request.conversationId,
+        empresaId: request.empresaId,
       });
       tokensEntrada += raw.tokensEntrada;
       tokensSaida += raw.tokensSaida;
@@ -533,6 +601,8 @@ export async function callGeminiStructured<T>(
             "gen_ai.usage.input_tokens": tokensEntrada,
             "gen_ai.usage.output_tokens": tokensSaida,
             "pilar.attempts": attempt,
+            "pilar.empresa_id": request.empresaId,
+            ...(request.conversationId && { "gen_ai.conversation.id": request.conversationId }),
           },
         });
         return { data: result.data, tokensEntrada, tokensSaida, attempts: attempt };
@@ -556,6 +626,8 @@ export async function callGeminiStructured<T>(
         "gen_ai.usage.input_tokens": tokensEntrada,
         "gen_ai.usage.output_tokens": tokensSaida,
         "pilar.attempts": attempt,
+        "pilar.empresa_id": request.empresaId,
+        ...(request.conversationId && { "gen_ai.conversation.id": request.conversationId }),
       },
     });
     throw e;
@@ -676,6 +748,10 @@ export async function recordAiUsage(
   }
 
   await logAiUsage(supabaseAdmin, empresaId, featureKey, tokensInput, tokensOutput);
+
+  recordMetric("ai.calls", calls, { tags: { empresa_id: empresaId, feature: featureKey } });
+  recordMetric("ai.tokens_input", tokensInput, { type: "distribution", tags: { feature: featureKey } });
+  recordMetric("ai.tokens_output", tokensOutput, { type: "distribution", tags: { feature: featureKey } });
 }
 
 /**

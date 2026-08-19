@@ -7,6 +7,9 @@
  *   3. Opcional: VITE_SENTRY_TRACES_RATE (default: 0.1) — sample rate de transactions
  *      (legacy: VITE_SENTRY_TRACES_SAMPLE_RATE também aceito)
  *
+ * Application Metrics (dashboard Explore > Metrics, ver ADR 0027): recordMetric()
+ * usa a API nativa Sentry.metrics.{count,gauge,distribution} do SDK (>= 10.25.0).
+ *
  * Sem DSN, roda em no-op (console em dev, silêncio em prod).
  */
 
@@ -14,6 +17,8 @@ import * as Sentry from "@sentry/react";
 import { env, sentryTracesSampleRate } from "./env";
 
 type Extra = Record<string, unknown>;
+type MetricTags = Record<string, string | number | boolean>;
+export type MetricType = "count" | "gauge" | "distribution";
 
 export interface MonitoringUser {
   id?: string;
@@ -31,6 +36,8 @@ interface Monitoring {
   addBreadcrumb(message: string, data?: Extra): void;
   /** Envia um bug report pro Sentry (User Feedback), sem abrir UI própria do SDK. */
   submitBugFeedback(message: string, opts?: { email?: string; name?: string }): Promise<void>;
+  /** Métrica de aplicação (dashboard Explore > Metrics). Ver ADR 0027. */
+  recordMetric(name: string, value: number, opts?: { type?: MetricType; unit?: string; tags?: MetricTags }): void;
 }
 
 const DEV = import.meta.env.DEV;
@@ -110,6 +117,9 @@ const noopMonitoring: Monitoring = {
   async submitBugFeedback(message) {
     if (DEV) console.info("[monitoring] bug feedback (no-op)", message);
   },
+  recordMetric(name, value, opts) {
+    if (DEV) console.debug("[monitoring] metric", name, value, opts);
+  },
 };
 
 const sentryMonitoring: Monitoring = {
@@ -179,6 +189,16 @@ const sentryMonitoring: Monitoring = {
   async submitBugFeedback(message, opts = {}) {
     await Sentry.sendFeedback({ message, email: opts.email, name: opts.name });
   },
+  recordMetric(name, value, opts = {}) {
+    const { type = "count", unit, tags } = opts;
+    const options = {
+      ...(unit && { unit }),
+      ...(tags && { attributes: scrub(tags) as MetricTags }),
+    };
+    if (type === "gauge") Sentry.metrics.gauge(name, value, options);
+    else if (type === "distribution") Sentry.metrics.distribution(name, value, options);
+    else Sentry.metrics.count(name, value, options);
+  },
 };
 
 export const monitoring: Monitoring = DSN ? sentryMonitoring : noopMonitoring;
@@ -193,5 +213,10 @@ export function initMonitoring() {
  * nunca aparece no Sentry: o client engole a exceção pra mostrar um toast.
  */
 export function reportInvokeError(error: unknown, fn: string, extra?: Extra): string | undefined {
+  // FunctionsHttpError do supabase-js carrega o Response da function em `context`.
+  const status = (error as { context?: { status?: number } })?.context?.status;
+  if (status === 429) {
+    monitoring.recordMetric("ai.rate_limited", 1, { tags: { fn } });
+  }
   return monitoring.captureException(error, { fn, ...extra });
 }
