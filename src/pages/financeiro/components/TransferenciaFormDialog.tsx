@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import { FormDialog } from "@/components/FormDialog";
 import { Input } from "@/components/ui/input";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
@@ -146,100 +145,91 @@ export function TransferenciaFormDialog({ open, onOpenChange, transferencia, onS
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>{isEdit ? "Editar transferência" : "Nova transferência"}</DialogTitle>
-        </DialogHeader>
-
-        <div className="space-y-4 pt-2">
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label>Conta de origem *</Label>
-              <Select value={form.conta_origem_id} onValueChange={(v) => set("conta_origem_id", v)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecionar..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {contas.map((c) => (
-                    <SelectItem key={c.id} value={c.id} disabled={c.id === form.conta_destino_id}>
-                      {c.nome}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label>Conta de destino *</Label>
-              <Select value={form.conta_destino_id} onValueChange={(v) => set("conta_destino_id", v)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecionar..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {contas.map((c) => (
-                    <SelectItem key={c.id} value={c.id} disabled={c.id === form.conta_origem_id}>
-                      {c.nome}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label>Valor *</Label>
-              <Input
-                inputMode="numeric"
-                value={form.valor}
-                onChange={(e) => set("valor", formatCurrencyInput(e.target.value))}
-                placeholder="R$ 0,00"
-              />
-            </div>
-            <div>
-              <Label>Data *</Label>
-              <DatePicker value={form.data} onChange={(v) => set("data", v)} />
-            </div>
-          </div>
-
-          <div>
-            <Label>Descrição</Label>
-            <Input value={form.descricao} onChange={(e) => set("descricao", e.target.value)} placeholder="Opcional" />
-          </div>
-
-          <div>
-            <Label>Status</Label>
-            <Select value={form.status} onValueChange={(v) => set("status", v)}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Concluída">Concluída</SelectItem>
-                <SelectItem value="Pendente">Pendente</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div>
-            <Label>Observação</Label>
-            <Textarea
-              value={form.observacao}
-              onChange={(e) => set("observacao", e.target.value)}
-              rows={2}
-              placeholder="Opcional"
-            />
-          </div>
-
-          <div className="flex justify-end gap-2 pt-1">
-            <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
-              Cancelar
-            </Button>
-            <Button onClick={handleSave} disabled={saving}>
-              {saving ? "Salvando..." : isEdit ? "Atualizar" : "Criar"}
-            </Button>
-          </div>
+    <FormDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title={isEdit ? "Editar transferência" : "Nova transferência"}
+      size="md"
+      onSubmit={handleSave}
+      isPending={saving}
+      submitLabel={isEdit ? "Atualizar" : "Criar"}
+    >
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <Label>Conta de origem *</Label>
+          <Select value={form.conta_origem_id} onValueChange={(v) => set("conta_origem_id", v)}>
+            <SelectTrigger>
+              <SelectValue placeholder="Selecionar..." />
+            </SelectTrigger>
+            <SelectContent>
+              {contas.map((c) => (
+                <SelectItem key={c.id} value={c.id} disabled={c.id === form.conta_destino_id}>
+                  {c.nome}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
-      </DialogContent>
-    </Dialog>
+        <div>
+          <Label>Conta de destino *</Label>
+          <Select value={form.conta_destino_id} onValueChange={(v) => set("conta_destino_id", v)}>
+            <SelectTrigger>
+              <SelectValue placeholder="Selecionar..." />
+            </SelectTrigger>
+            <SelectContent>
+              {contas.map((c) => (
+                <SelectItem key={c.id} value={c.id} disabled={c.id === form.conta_origem_id}>
+                  {c.nome}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <Label>Valor *</Label>
+          <Input
+            inputMode="numeric"
+            value={form.valor}
+            onChange={(e) => set("valor", formatCurrencyInput(e.target.value))}
+            placeholder="R$ 0,00"
+          />
+        </div>
+        <div>
+          <Label>Data *</Label>
+          <DatePicker value={form.data} onChange={(v) => set("data", v)} />
+        </div>
+      </div>
+
+      <div>
+        <Label>Descrição</Label>
+        <Input value={form.descricao} onChange={(e) => set("descricao", e.target.value)} placeholder="Opcional" />
+      </div>
+
+      <div>
+        <Label>Status</Label>
+        <Select value={form.status} onValueChange={(v) => set("status", v)}>
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="Concluída">Concluída</SelectItem>
+            <SelectItem value="Pendente">Pendente</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div>
+        <Label>Observação</Label>
+        <Textarea
+          value={form.observacao}
+          onChange={(e) => set("observacao", e.target.value)}
+          rows={2}
+          placeholder="Opcional"
+        />
+      </div>
+    </FormDialog>
   );
 }
