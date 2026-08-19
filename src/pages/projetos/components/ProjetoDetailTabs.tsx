@@ -19,6 +19,7 @@ import { PagamentosTab } from "./PagamentosTab";
 import { DisciplinasTableView } from "./DisciplinasTableView";
 import { DisciplinaDetailDialog } from "./DisciplinaDetailDialog";
 import { FluxoPipeline } from "./FluxoPipeline";
+import { useProjetoDisciplinaChecklistCounts } from "@/hooks/useProjetoDisciplinaChecklist";
 
 interface ProjetoDetailTabsProps {
   projeto: Projeto;
@@ -65,6 +66,7 @@ export function ProjetoDetailTabs({
   handleRemoveResponsavel,
 }: ProjetoDetailTabsProps) {
   const { profile } = useAuth();
+  const { data: checklistCounts } = useProjetoDisciplinaChecklistCounts(projeto.id);
 
   const handleCronogramaDatesChange = async (
     discIdx: number,
@@ -244,6 +246,7 @@ export function ProjetoDetailTabs({
                       dbDisciplinas={dbDisciplinas}
                       disciplinasCatalog={disciplinasCatalog}
                       pessoas={pessoas}
+                      checklistCounts={checklistCounts}
                       applyDiscStatusChange={applyDiscStatusChange}
                       handleRemoveDisc={handleRemoveDisc}
                       handleAddDisc={handleAddDisc}
@@ -264,7 +267,11 @@ export function ProjetoDetailTabs({
                   onDisciplinaClick={handleDiscClick}
                 />
               ) : (
-                <FluxoPipeline disciplinas={disciplinasLegacy} onOpenDisciplina={handleDiscClick} />
+                <FluxoPipeline
+                  disciplinas={disciplinasLegacy}
+                  onOpenDisciplina={handleDiscClick}
+                  checklistCounts={checklistCounts}
+                />
               )}
             </div>
           </TabsContent>

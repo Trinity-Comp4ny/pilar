@@ -347,6 +347,7 @@ export function useBulkSaveDisciplinas() {
         horas_estimadas?: number;
         custo_hora?: number;
         ordem_etapa?: number | null;
+        checklist_padrao?: string[];
         responsavel_ids: string[];
       }>;
     }) => {
@@ -408,6 +409,19 @@ export function useBulkSaveDisciplinas() {
             .single();
           if (error) throw error;
           discId = data.id;
+
+          // Checklist padrão só é copiado na criação da disciplina (a partir
+          // do template do fluxo aplicado); disciplina já existente não é tocada.
+          if (disc.checklist_padrao?.length) {
+            const { error: checklistError } = await supabase.from("projeto_disciplina_checklist").insert(
+              disc.checklist_padrao.map((texto, i) => ({
+                projeto_disciplina_id: discId!,
+                texto,
+                ordem: i,
+              }))
+            );
+            if (checklistError) throw checklistError;
+          }
         }
 
         // Sync responsaveis transacional (insere novos, remove os que saíram)
