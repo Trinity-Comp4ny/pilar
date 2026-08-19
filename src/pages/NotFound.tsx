@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { usePageTitle } from "@/hooks/usePageTitle";
+import { Logo } from "@/components/Logo";
 
 const NotFound = () => {
   usePageTitle("Página não encontrada");
@@ -42,11 +43,8 @@ const NotFound = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-white to-slate-50 px-6 py-12">
       <div className="w-full max-w-2xl">
-        <div className="mb-6 flex items-center justify-center gap-3">
-          <img src="/pilar-logo.svg" alt="Pilar" className="h-10 w-10" />
-          <span className="text-lg font-medium tracking-tight text-ink">
-            Pilar<sup className="text-[9px] font-normal text-ink-disabled ml-0.5 relative -top-2">®</sup>
-          </span>
+        <div className="mb-6 flex justify-center">
+          <Logo size="sm" className="text-ink" />
         </div>
 
         <Card className="border-border/70 shadow-sm">
