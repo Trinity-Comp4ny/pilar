@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,6 +17,7 @@ import { TurnstileWidget } from "@/components/TurnstileWidget";
 import { env } from "@/lib/env";
 import { signupSchema, signupDefaultValues, type SignupFormData } from "@/schemas";
 import { translateAuthError } from "@/lib/authErrors";
+import { TERMS_VERSION, PRIVACY_VERSION } from "@/lib/legalVersions";
 
 export default function Signup() {
   usePageTitle("Criar conta");
@@ -36,6 +38,7 @@ export default function Signup() {
   });
 
   const password = form.watch("password");
+  const termsAccepted = form.watch("termsAccepted");
 
   useEffect(() => {
     const checkUser = async () => {
@@ -58,6 +61,9 @@ export default function Signup() {
           nome: values.nome.trim(),
           telefone: values.telefone.trim(),
           company_name: values.companyName.trim(),
+          terms_accepted: values.termsAccepted,
+          terms_version: TERMS_VERSION,
+          privacy_version: PRIVACY_VERSION,
         },
         emailRedirectTo: `${window.location.origin}/auth/callback`,
         ...(captchaToken ? { captchaToken } : {}),
@@ -307,6 +313,45 @@ export default function Signup() {
                     <TurnstileWidget onToken={setCaptchaToken} onError={() => setCaptchaToken(null)} />
                   )}
 
+                  <FormField
+                    control={form.control}
+                    name="termsAccepted"
+                    render={({ field }) => (
+                      <FormItem className="space-y-0">
+                        <div className="flex items-start gap-2">
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                              className="mt-0.5 data-[state=checked]:bg-brand data-[state=checked]:border-brand data-[state=checked]:text-ink"
+                            />
+                          </FormControl>
+                          <label className="text-sm text-ink-soft leading-snug cursor-pointer select-none">
+                            Li e concordo com os{" "}
+                            <Link
+                              to="/termos"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-ink underline underline-offset-2"
+                            >
+                              Termos de Uso
+                            </Link>{" "}
+                            e a{" "}
+                            <Link
+                              to="/privacidade"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-ink underline underline-offset-2"
+                            >
+                              Política de Privacidade
+                            </Link>
+                          </label>
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
                   <Button
                     variant="brand"
                     className="w-full h-11 font-medium shadow-lg shadow-brand/20 hover:shadow-brand/30 transition-all active:scale-[0.98] text-sm"
@@ -333,7 +378,7 @@ export default function Signup() {
                 </div>
               </div>
 
-              <GoogleButton onClick={handleGoogle} loading={isGoogleLoading} disabled={isLoading} />
+              <GoogleButton onClick={handleGoogle} loading={isGoogleLoading} disabled={isLoading || !termsAccepted} />
 
               <p className="text-center text-sm text-ink-soft">
                 Já tem conta?{" "}

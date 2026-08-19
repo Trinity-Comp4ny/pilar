@@ -16,10 +16,15 @@ export const signupSchema = z
     password: passwordSchema,
     confirmPassword: z.string().min(1, "Confirme a senha"),
     companyName: z.string().trim().min(1, "Nome da empresa é obrigatório"),
+    termsAccepted: z.boolean(),
   })
   .refine((d) => d.password === d.confirmPassword, {
     message: "As senhas não coincidem",
     path: ["confirmPassword"],
+  })
+  .refine((d) => d.termsAccepted === true, {
+    message: "Você precisa aceitar os Termos de Uso e a Política de Privacidade",
+    path: ["termsAccepted"],
   });
 export type SignupFormData = z.infer<typeof signupSchema>;
 export const signupDefaultValues: SignupFormData = {
@@ -29,6 +34,7 @@ export const signupDefaultValues: SignupFormData = {
   password: "",
   confirmPassword: "",
   companyName: "",
+  termsAccepted: false,
 };
 
 export const forgotPasswordSchema = z.object({
@@ -49,6 +55,9 @@ export const passwordResetSchema = z
 export type PasswordResetFormData = z.infer<typeof passwordResetSchema>;
 export const passwordResetDefaultValues: PasswordResetFormData = { password: "", confirmPassword: "" };
 
+// termsAccepted fica opcional no schema: a obrigatoriedade (só quando ainda não
+// existe aceite registrado, ver SPEC 049) é decidida no componente, não aqui,
+// porque depende de estado carregado do banco (mesmo padrão do captcha em Signup).
 export const profileSetupSchema = z
   .object({
     firstName: z.string().trim().min(1, "Nome é obrigatório"),
@@ -56,6 +65,7 @@ export const profileSetupSchema = z
     phone: z.string().trim().min(10, "Telefone obrigatório"),
     password: passwordSchema,
     confirmPassword: z.string().min(1, "Confirme a senha"),
+    termsAccepted: z.boolean().optional(),
   })
   .refine((d) => d.password === d.confirmPassword, {
     message: "As senhas não coincidem",
@@ -67,6 +77,7 @@ export const profileSetupOAuthSchema = z.object({
   firstName: z.string().trim().min(1, "Nome é obrigatório"),
   lastName: z.string().trim().min(1, "Sobrenome é obrigatório"),
   phone: z.string().trim().min(10, "Telefone obrigatório"),
+  termsAccepted: z.boolean().optional(),
 });
 
 export type ProfileSetupFormData = z.infer<typeof profileSetupSchema>;
@@ -76,6 +87,7 @@ export const profileSetupDefaultValues: ProfileSetupFormData = {
   phone: "",
   password: "",
   confirmPassword: "",
+  termsAccepted: false,
 };
 
 function validCnpjChecksum(digits: string): boolean {

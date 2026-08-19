@@ -1,68 +1,53 @@
-import { useEffect } from "react";
+import { lazy, Suspense, useEffect } from "react";
+import { Route, Routes, useLocation } from "react-router-dom";
+import { domAnimation, LazyMotion } from "framer-motion";
 import { LandingHeader } from "./components/LandingHeader";
-import { HeroSection } from "./components/HeroSection";
-import { ProofSection } from "./components/ProofSection";
-import { FeaturesSection } from "./components/FeaturesSection";
-import { AISection } from "./components/AISection";
-import { RentabilidadeSection } from "./components/RentabilidadeSection";
-import { TargetAudienceSection } from "./components/TargetAudienceSection";
-import { HowItWorksSection } from "./components/HowItWorksSection";
-import { FAQSection } from "./components/FAQSection";
-import { CTASection } from "./components/CTASection";
 import { LandingFooter } from "./components/LandingFooter";
+import { CookieConsentBanner } from "./components/CookieConsentBanner";
+import { Home } from "./pages/Home";
+
+// Só a home entra no bundle inicial. Páginas de módulo e FAQ viram chunks
+// próprios: ninguém que cai na landing paga por elas no primeiro carregamento.
+const ModulePage = lazy(() => import("./pages/ModulePage").then((m) => ({ default: m.ModulePage })));
+const Faq = lazy(() => import("./pages/Faq").then((m) => ({ default: m.Faq })));
+const Planos = lazy(() => import("./pages/Planos").then((m) => ({ default: m.Planos })));
+const Termos = lazy(() => import("./pages/Termos").then((m) => ({ default: m.Termos })));
+const Privacidade = lazy(() => import("./pages/Privacidade").then((m) => ({ default: m.Privacidade })));
+
+/** Troca de rota volta ao topo: sem isso a página nova abre no meio. */
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "auto" });
+  }, [pathname]);
+  return null;
+}
 
 export default function App() {
-  useEffect(() => {
-    const elements = document.querySelectorAll<HTMLElement>(".reveal-up");
-    if (!("IntersectionObserver" in window) || elements.length === 0) return;
-
-    const io = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) {
-            entry.target.classList.add("is-visible");
-            io.unobserve(entry.target);
-          }
-        }
-      },
-      { root: null, rootMargin: "0px 0px -10% 0px", threshold: 0.1 }
-    );
-
-    elements.forEach((el) => io.observe(el));
-    return () => io.disconnect();
-  }, []);
-
-  const scrollToTop = (e: React.MouseEvent) => {
-    e.preventDefault();
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
-
   return (
-    <div className="landing-grain min-h-screen bg-paper text-ink-soft font-sans selection:bg-brand/30 selection:text-ink">
-      <LandingHeader onScrollToTop={scrollToTop} />
+    <LazyMotion features={domAnimation} strict>
+      <div className="landing-grain min-h-screen bg-paper text-ink-soft font-sans selection:bg-brand/30 selection:text-ink">
+        <ScrollToTop />
+        <LandingHeader />
 
-      <main>
-        <section className="relative pt-40 pb-24 md:pt-56 md:pb-32 overflow-hidden">
-          {/* Fundo aurora */}
-          <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/3 w-[900px] h-[600px] bg-brand/7 rounded-full blur-[130px] animate-aurora" />
-            <div className="absolute top-1/4 right-0 w-[500px] h-[400px] bg-blue-400/5 rounded-full blur-[100px] animate-aurora-alt" />
-            <div className="absolute inset-0 hero-dot-grid" />
-          </div>
-          <HeroSection />
-        </section>
+        <main>
+          <Suspense fallback={<div className="min-h-screen" />}>
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/gestao" element={<ModulePage slug="gestao" />} />
+              <Route path="/projetos" element={<ModulePage slug="projetos" />} />
+              <Route path="/obra" element={<ModulePage slug="obra" />} />
+              <Route path="/faq" element={<Faq />} />
+              <Route path="/planos" element={<Planos />} />
+              <Route path="/termos" element={<Termos />} />
+              <Route path="/privacidade" element={<Privacidade />} />
+            </Routes>
+          </Suspense>
+        </main>
 
-        <ProofSection />
-        <FeaturesSection />
-        <AISection />
-        <RentabilidadeSection />
-        <TargetAudienceSection />
-        <HowItWorksSection />
-        <FAQSection />
-        <CTASection />
-      </main>
-
-      <LandingFooter />
-    </div>
+        <LandingFooter />
+        <CookieConsentBanner />
+      </div>
+    </LazyMotion>
   );
 }

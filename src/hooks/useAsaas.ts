@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { reportInvokeError } from "@/lib/monitoring";
 
 export type BillingType = "PIX" | "BOLETO";
 export type AsaasAmbiente = "sandbox" | "producao";
@@ -52,6 +53,7 @@ export function useAsaasCriarCobranca(onSuccess?: () => void) {
       return result;
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Erro ao criar cobrança";
+      reportInvokeError(err, "asaas-criar-cobranca");
       toast.error("Erro Asaas", { description: message });
       return null;
     } finally {
@@ -86,7 +88,8 @@ export function useAsaasConfig() {
             webhook_token: result.data.webhook_token,
           }
         : null;
-    } catch {
+    } catch (err) {
+      reportInvokeError(err, "asaas-config:get");
       toast.error("Erro ao carregar configuração Asaas");
       return null;
     } finally {
@@ -110,6 +113,7 @@ export function useAsaasConfig() {
       return result.data ?? null;
     } catch (err) {
       const message = err instanceof Error ? err.message : "Erro ao salvar";
+      reportInvokeError(err, "asaas-config:save");
       toast.error("Erro ao salvar", { description: message });
       return null;
     } finally {
@@ -133,6 +137,7 @@ export function useAsaasConfig() {
       return result.webhook_token ?? null;
     } catch (err) {
       const message = err instanceof Error ? err.message : "Erro ao regenerar token";
+      reportInvokeError(err, "asaas-config:regenerar-token");
       toast.error("Erro", { description: message });
       return null;
     } finally {
@@ -153,6 +158,7 @@ export function useAsaasConfig() {
       return true;
     } catch (err) {
       const message = err instanceof Error ? err.message : "Erro ao remover integração";
+      reportInvokeError(err, "asaas-config:remover");
       toast.error("Erro ao remover", { description: message });
       return false;
     } finally {
@@ -167,7 +173,13 @@ export function useAsaasConfig() {
         body: { action: "testar" },
       });
       if (error) throw error;
-      const result = data as { success?: boolean; valido?: boolean; conta?: string | null; mensagem?: string; error?: string };
+      const result = data as {
+        success?: boolean;
+        valido?: boolean;
+        conta?: string | null;
+        mensagem?: string;
+        error?: string;
+      };
       if (result?.error) throw new Error(result.error);
 
       if (result.valido) {
@@ -180,6 +192,7 @@ export function useAsaasConfig() {
       return false;
     } catch (err) {
       const message = err instanceof Error ? err.message : "Erro ao testar conexão";
+      reportInvokeError(err, "asaas-config:testar");
       toast.error("Erro ao testar", { description: message });
       return null;
     } finally {

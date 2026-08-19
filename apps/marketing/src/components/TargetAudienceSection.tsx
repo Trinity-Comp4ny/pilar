@@ -1,4 +1,5 @@
 import { Check, X } from "lucide-react";
+import { Reveal } from "./Reveal";
 
 const isFor = [
   "Escritório de engenharia multidisciplinar: civil, estrutural, MEP/HVAC.",
@@ -17,7 +18,7 @@ export function TargetAudienceSection() {
     <section id="para-quem" className="py-28 md:py-36 bg-paper-alt border-t border-paper-border scroll-mt-20">
       <div className="container mx-auto px-6 md:px-10">
         <div className="max-w-6xl mx-auto">
-          <div className="max-w-2xl mb-16 reveal-up">
+          <Reveal className="max-w-2xl mb-16">
             <div className="mb-6">
               <span className="inline-block px-3 py-1 bg-brand text-ink text-xs font-medium uppercase tracking-[0.2em] rounded-sm">
                 Para quem é
@@ -27,10 +28,10 @@ export function TargetAudienceSection() {
               <em className="landing-highlight">Feito pra engenharia.</em>{" "}
               <span className="italic text-ink/55">Não é ERP nem ferramenta de arquitetura.</span>
             </h2>
-          </div>
+          </Reveal>
 
           <div className="grid md:grid-cols-2 gap-12 md:gap-20">
-            <div className="reveal-up">
+            <Reveal>
               <p className="text-xs uppercase tracking-[0.2em] text-slate-500 font-medium mb-6">Feito para</p>
               <ul className="space-y-4">
                 {isFor.map((item) => (
@@ -40,9 +41,9 @@ export function TargetAudienceSection() {
                   </li>
                 ))}
               </ul>
-            </div>
+            </Reveal>
 
-            <div className="reveal-up" style={{ transitionDelay: "80ms" }}>
+            <Reveal delay={0.08}>
               <p className="text-xs uppercase tracking-[0.2em] text-slate-500 font-medium mb-6">Não é para</p>
               <ul className="space-y-4">
                 {isNotFor.map((item) => (
@@ -52,7 +53,7 @@ export function TargetAudienceSection() {
                   </li>
                 ))}
               </ul>
-            </div>
+            </Reveal>
           </div>
         </div>
       </div>

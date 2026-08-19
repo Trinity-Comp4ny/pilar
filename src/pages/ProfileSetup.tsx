@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
@@ -13,6 +14,7 @@ import { ArrowLeft, ArrowRight, Eye, EyeOff, Loader2, Lock, Phone, User } from "
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { PasswordStrengthIndicator } from "@/components/PasswordStrengthIndicator";
 import { getSafeErrorMessage } from "@/lib/safeError";
+import { TERMS_VERSION, PRIVACY_VERSION } from "@/lib/legalVersions";
 import {
   profileSetupSchema,
   profileSetupOAuthSchema,
@@ -32,6 +34,9 @@ export default function ProfileSetup() {
   // Ref para o resolver ler o valor atual sem recriar o form; state para re-render.
   const [pulaSenha, setPulaSenha] = useState(false);
   const pulaSenhaRef = useRef(false);
+  // null = ainda não sabemos (carregando); evita liberar o botão antes de checar.
+  const [hasAcceptedTerms, setHasAcceptedTerms] = useState<boolean | null>(null);
+  const [empresaId, setEmpresaId] = useState<string | null>(null);
   const navigate = useNavigate();
   const { refreshProfile } = useAuth();
 
@@ -49,6 +54,7 @@ export default function ProfileSetup() {
   });
 
   const password = form.watch("password");
+  const termsAccepted = form.watch("termsAccepted");
 
   const targetProgress = useMemo(() => {
     const step = 1;
@@ -86,7 +92,7 @@ export default function ProfileSetup() {
 
         const { data: profile } = await supabase
           .from("profiles")
-          .select("first_name, last_name, contato, email")
+          .select("first_name, last_name, contato, email, empresa_id")
           .eq("id", user.id)
           .single();
 
@@ -98,7 +104,18 @@ export default function ProfileSetup() {
             password: "",
             confirmPassword: "",
           });
+          setEmpresaId(profile.empresa_id ?? null);
         }
+
+        // SPEC 049: quem já aceitou em /cadastro (self-serve com terms_accepted
+        // no metadata) não vê o checkbox de novo aqui.
+        const { data: acceptance } = await supabase
+          .from("terms_acceptances")
+          .select("id")
+          .eq("user_id", user.id)
+          .limit(1)
+          .maybeSingle();
+        setHasAcceptedTerms(Boolean(acceptance));
       } finally {
         // profile load complete
       }
@@ -125,7 +142,21 @@ export default function ProfileSetup() {
         if (pwdError) throw pwdError;
       }
 
-      // 2. Só então gravar o perfil e concluir o onboarding.
+      // 2. Registrar o aceite dos Termos/Privacidade se ainda não existir (SPEC 049).
+      //    Quem já aceitou em /cadastro (self-serve) chega aqui com hasAcceptedTerms
+      //    true e pula isso; Google/convite/checkout gravam aqui pela primeira vez.
+      if (!hasAcceptedTerms) {
+        const { error: termsError } = await supabase.from("terms_acceptances").insert({
+          user_id: user.id,
+          empresa_id: empresaId,
+          terms_version: TERMS_VERSION,
+          privacy_version: PRIVACY_VERSION,
+          source: "profile_setup",
+        });
+        if (termsError) throw termsError;
+      }
+
+      // 3. Só então gravar o perfil e concluir o onboarding.
       const { error } = await supabase
         .from("profiles")
         .update({
@@ -138,7 +169,7 @@ export default function ProfileSetup() {
 
       if (error) throw error;
 
-      // 3. Forçar refresh do contexto para garantir que PrivateRoute leia onboarding_completed: true
+      // 4. Forçar refresh do contexto para garantir que PrivateRoute leia onboarding_completed: true
       await refreshProfile();
 
       toast.success("Perfil atualizado!", { description: "Você já pode acessar o sistema." });
@@ -294,81 +325,135 @@ export default function ProfileSetup() {
 
               {!pulaSenha && (
                 <>
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem className="space-y-2">
-                    <FormLabel className="text-ink-soft font-medium">
-                      Nova senha <span className="text-danger-mid">*</span>
-                    </FormLabel>
-                    <FormControl>
-                      <div className="relative group">
-                        <Lock className="absolute left-3 top-3 h-4 w-4 text-ink/40 group-focus-within:text-brand transition-colors" />
-                        <Input
-                          {...field}
-                          type={showPassword ? "text" : "password"}
-                          placeholder="••••••••"
-                          className="pl-10 pr-10 h-11 bg-paper-alt border-paper-border focus:border-brand focus:ring-brand/20 transition-all"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword((v) => !v)}
-                          className="absolute right-3 top-3 text-ink/40 hover:text-brand transition-colors"
-                          aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
-                        >
-                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                        </button>
-                      </div>
-                    </FormControl>
-                    {password && <PasswordStrengthIndicator password={password} />}
-                    <p className="text-xs text-ink-soft">
-                      Mínimo 12 caracteres, com maiúscula, minúscula, número e símbolo.
-                    </p>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                  <FormField
+                    control={form.control}
+                    name="password"
+                    render={({ field }) => (
+                      <FormItem className="space-y-2">
+                        <FormLabel className="text-ink-soft font-medium">
+                          Nova senha <span className="text-danger-mid">*</span>
+                        </FormLabel>
+                        <FormControl>
+                          <div className="relative group">
+                            <Lock className="absolute left-3 top-3 h-4 w-4 text-ink/40 group-focus-within:text-brand transition-colors" />
+                            <Input
+                              {...field}
+                              type={showPassword ? "text" : "password"}
+                              placeholder="••••••••"
+                              className="pl-10 pr-10 h-11 bg-paper-alt border-paper-border focus:border-brand focus:ring-brand/20 transition-all"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setShowPassword((v) => !v)}
+                              className="absolute right-3 top-3 text-ink/40 hover:text-brand transition-colors"
+                              aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
+                            >
+                              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                            </button>
+                          </div>
+                        </FormControl>
+                        {password && <PasswordStrengthIndicator password={password} />}
+                        <p className="text-xs text-ink-soft">
+                          Mínimo 12 caracteres, com maiúscula, minúscula, número e símbolo.
+                        </p>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-              <FormField
-                control={form.control}
-                name="confirmPassword"
-                render={({ field }) => (
-                  <FormItem className="space-y-2">
-                    <FormLabel className="text-ink-soft font-medium">
-                      Confirmar senha <span className="text-danger-mid">*</span>
-                    </FormLabel>
-                    <FormControl>
-                      <div className="relative group">
-                        <Lock className="absolute left-3 top-3 h-4 w-4 text-ink/40 group-focus-within:text-brand transition-colors" />
-                        <Input
-                          {...field}
-                          type={showConfirmPassword ? "text" : "password"}
-                          placeholder="••••••••"
-                          className="pl-10 pr-10 h-11 bg-paper-alt border-paper-border focus:border-brand focus:ring-brand/20 transition-all"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowConfirmPassword((v) => !v)}
-                          className="absolute right-3 top-3 text-ink/40 hover:text-brand transition-colors"
-                          aria-label={showConfirmPassword ? "Ocultar senha" : "Mostrar senha"}
-                        >
-                          {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                        </button>
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                  <FormField
+                    control={form.control}
+                    name="confirmPassword"
+                    render={({ field }) => (
+                      <FormItem className="space-y-2">
+                        <FormLabel className="text-ink-soft font-medium">
+                          Confirmar senha <span className="text-danger-mid">*</span>
+                        </FormLabel>
+                        <FormControl>
+                          <div className="relative group">
+                            <Lock className="absolute left-3 top-3 h-4 w-4 text-ink/40 group-focus-within:text-brand transition-colors" />
+                            <Input
+                              {...field}
+                              type={showConfirmPassword ? "text" : "password"}
+                              placeholder="••••••••"
+                              className="pl-10 pr-10 h-11 bg-paper-alt border-paper-border focus:border-brand focus:ring-brand/20 transition-all"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setShowConfirmPassword((v) => !v)}
+                              className="absolute right-3 top-3 text-ink/40 hover:text-brand transition-colors"
+                              aria-label={showConfirmPassword ? "Ocultar senha" : "Mostrar senha"}
+                            >
+                              {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                            </button>
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </>
+              )}
+
+              {hasAcceptedTerms === false && (
+                <FormField
+                  control={form.control}
+                  name="termsAccepted"
+                  render={({ field }) => (
+                    <FormItem className="space-y-0">
+                      <div className="flex items-start gap-2">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                            className="mt-0.5 data-[state=checked]:bg-brand data-[state=checked]:border-brand data-[state=checked]:text-ink"
+                          />
+                        </FormControl>
+                        <label className="text-sm text-ink-soft leading-snug cursor-pointer select-none">
+                          Li e concordo com os{" "}
+                          <Link
+                            to="/termos"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-ink underline underline-offset-2"
+                          >
+                            Termos de Uso
+                          </Link>{" "}
+                          e a{" "}
+                          <Link
+                            to="/privacidade"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-ink underline underline-offset-2"
+                          >
+                            Política de Privacidade
+                          </Link>
+                        </label>
+                      </div>
+                    </FormItem>
+                  )}
+                />
+              )}
+
+              {hasAcceptedTerms === true && (
+                <p className="text-xs text-ink-soft">
+                  Você já aceitou os{" "}
+                  <Link to="/termos" target="_blank" rel="noopener noreferrer" className="text-ink underline">
+                    Termos de Uso
+                  </Link>{" "}
+                  e a{" "}
+                  <Link to="/privacidade" target="_blank" rel="noopener noreferrer" className="text-ink underline">
+                    Política de Privacidade
+                  </Link>
+                  .
+                </p>
               )}
 
               <Button
                 variant="brand"
                 className="w-full h-11 font-medium shadow-lg shadow-brand/20 hover:shadow-brand/30 transition-all active:scale-[0.98] text-sm"
                 type="submit"
-                disabled={isLoading}
+                disabled={isLoading || hasAcceptedTerms === null || (hasAcceptedTerms === false && !termsAccepted)}
               >
                 {isLoading ? (
                   <>
