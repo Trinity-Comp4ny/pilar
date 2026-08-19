@@ -50,3 +50,5 @@ Decisão de arquitetura no meio do caminho vira um [ADR](../architecture/README.
 | [053](./053-pix-automatico-e-regua-de-inadimplencia.md)             | Pix Automático como método padrão do MRR e régua de inadimplência (aviso, suspensão, recuperação), ADR 0028 | Draft            |
 | [054](./054-policies-to-authenticated.md)                           | Migrar ~180 policies de `TO PUBLIC` para `TO authenticated`; fecha o grant de anon nos helpers de RLS e prepara o fix de `auth_rls_initplan` | Draft            |
 | [057](./057-webhook-asaas-resolucao-tenant.md)                      | Corrige resolução de tenant no webhook Asaas (coluna `webhook_token` removida, achado ao cifrar a api_key)  | Draft            |
+| [055](./055-status-page-publica.md)                                 | Status page pública (`/status`), incidentes declarados manualmente via `/ultra-admin`, sem uptime check automático | Entregue         |
+| [056](./056-feedback-bug-e-sugestao-feature.md)                     | Feedback do usuário: modal único (bug via Sentry `sendFeedback`, sugestão só no banco, triagem no ultra-admin)     | Entregue         |
