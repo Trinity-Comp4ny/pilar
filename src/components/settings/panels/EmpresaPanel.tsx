@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
+import { reportInvokeError } from "@/lib/monitoring";
 import { getSafeErrorMessage } from "@/lib/safeError";
 import { Building2, Users as UsersIcon, Palette } from "lucide-react";
 import { formatCNPJ, formatPhone, onlyDigits } from "@/lib/maskUtils";
@@ -137,11 +138,12 @@ export function EmpresaPanel() {
     };
 
     fetchData()
-      .catch((err) =>
+      .catch((err) => {
+        reportInvokeError(err, "empresa-panel:carregar");
         toast.error("Não foi possível carregar os dados da empresa", {
           description: getSafeErrorMessage(err, "Atualize a página em instantes."),
-        })
-      )
+        });
+      })
       .finally(() => setIsLoading(false));
   }, []);
 
@@ -201,6 +203,7 @@ export function EmpresaPanel() {
       setEditingCompany(false);
       toast.success("Dados salvos", { description: "Informações da empresa atualizadas com sucesso" });
     } catch (err: unknown) {
+      reportInvokeError(err, "empresa-panel:salvar-empresa");
       toast.error("Não foi possível salvar", {
         description: getSafeErrorMessage(err, "Confira os dados e tente de novo."),
       });
@@ -230,7 +233,8 @@ export function EmpresaPanel() {
       setInviteLastName("");
       setInviteEmail("");
       setInviteRole("user");
-    } catch {
+    } catch (err) {
+      reportInvokeError(err, "invite-user:empresa-panel");
       toast.error("Erro ao convidar", {
         description: "Verifique se a função 'invite-user' está implantada ou tente novamente.",
       });
@@ -282,6 +286,7 @@ export function EmpresaPanel() {
       setIsEditUserOpen(false);
       toast.success("Usuário atualizado");
     } catch (err) {
+      reportInvokeError(err, "empresa-panel:atualizar-usuario");
       toast.error("Não foi possível atualizar o usuário", {
         description: getSafeErrorMessage(err, "Tente de novo em instantes."),
       });
@@ -304,6 +309,7 @@ export function EmpresaPanel() {
       setDeleteUserId(null);
       toast.success("Usuário removido");
     } catch (err) {
+      reportInvokeError(err, "delete-user:empresa-panel");
       toast.error("Não foi possível remover o usuário", {
         description: getSafeErrorMessage(err, "Tente de novo em instantes."),
       });
@@ -358,6 +364,7 @@ export function EmpresaPanel() {
       setEditingVisual(false);
       toast.success("Configuração salva", { description: "Visual da empresa atualizado com sucesso" });
     } catch (err) {
+      reportInvokeError(err, "empresa-panel:upload-logo");
       toast.error("Não foi possível salvar o logo", {
         description: getSafeErrorMessage(err, "Confira o arquivo e tente de novo."),
       });

@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2, Mail } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { reportInvokeError } from "@/lib/monitoring";
 
 interface CobrarPorEmailButtonProps {
   receitaId: string;
@@ -31,6 +32,7 @@ export function CobrarPorEmailButton({ receitaId, onSuccess }: CobrarPorEmailBut
       });
       onSuccess?.();
     } catch (err: unknown) {
+      reportInvokeError(err, "send-invoice-reminder");
       toast.error("Erro ao enviar cobrança", {
         description: err instanceof Error ? err.message : undefined,
       });
