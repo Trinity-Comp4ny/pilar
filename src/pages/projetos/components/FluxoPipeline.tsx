@@ -3,6 +3,7 @@ import { CheckCircle2, Clock, AlertTriangle, Circle, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { type DisciplinaResponsavel, getDiscDeadlineStatus } from "@/types/projetos";
 import { formatDateShort } from "@/lib/dateUtils";
+import type { ChecklistCounts } from "@/hooks/useProjetoDisciplinaChecklist";
 
 type DiscStatusVisual = "concluido" | "em_andamento" | "atrasado" | "nao_iniciado";
 
@@ -106,9 +107,11 @@ function useEtapaConnectors(stageCount: number) {
 interface FluxoPipelineProps {
   disciplinas: DisciplinaResponsavel[];
   onOpenDisciplina?: (disc: DisciplinaResponsavel) => void;
+  /** Chave = projeto_disciplina.id. Ausente = disciplina sem checklist (sem badge). */
+  checklistCounts?: Record<string, ChecklistCounts>;
 }
 
-export function FluxoPipeline({ disciplinas, onOpenDisciplina }: FluxoPipelineProps) {
+export function FluxoPipeline({ disciplinas, onOpenDisciplina, checklistCounts }: FluxoPipelineProps) {
   const etapas = useMemo(() => groupByEtapa(disciplinas).filter((e) => e.etapa != null), [disciplinas]);
   const reducedMotion = usePrefersReducedMotion();
   const { containerRef, stageRefs, paths } = useEtapaConnectors(etapas.length);
@@ -177,6 +180,7 @@ export function FluxoPipeline({ disciplinas, onOpenDisciplina }: FluxoPipelinePr
                   const visual = getDiscStatusVisual(disc);
                   const config = STATUS_VISUAL_CONFIG[visual];
                   const Icon = config.icon;
+                  const counts = disc.id ? checklistCounts?.[disc.id] : undefined;
                   return (
                     <button
                       key={di}
@@ -204,6 +208,11 @@ export function FluxoPipeline({ disciplinas, onOpenDisciplina }: FluxoPipelinePr
                             </span>
                           )}
                           {disc.data_previsao && <span>{formatDateShort(disc.data_previsao)}</span>}
+                          {counts && counts.total > 0 && (
+                            <span className="flex-shrink-0">
+                              {counts.concluidos}/{counts.total}
+                            </span>
+                          )}
                         </span>
                       </span>
                     </button>

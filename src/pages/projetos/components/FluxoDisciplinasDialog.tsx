@@ -6,10 +6,25 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { LabelsEditor } from "@/components/LabelsEditor";
 import { toast } from "sonner";
 import { useFluxosDisciplinas, useCreateFluxo, useUpdateFluxo, useDeleteFluxo } from "@/hooks/useFluxosDisciplinas";
 import type { FluxoDisciplinas, FluxoEtapa } from "@/types/fluxoDisciplinas";
-import { Plus, Trash2, Edit, ArrowUp, ArrowDown, X, ArrowLeft, GitBranch, Layers, User } from "lucide-react";
+import {
+  Plus,
+  Trash2,
+  Edit,
+  ArrowUp,
+  ArrowDown,
+  X,
+  ArrowLeft,
+  GitBranch,
+  Layers,
+  User,
+  ListChecks,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react";
 
 interface FluxoDisciplinasDialogProps {
   open: boolean;
@@ -189,6 +204,22 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
       ),
     }));
   };
+
+  const updateDisciplinaChecklist = (etapaIndex: number, discIndex: number, checklist: string[]) => {
+    setForm((prev) => ({
+      ...prev,
+      etapas: prev.etapas.map((e, i) =>
+        i === etapaIndex
+          ? {
+              ...e,
+              disciplinas: e.disciplinas.map((d, di) => (di === discIndex ? { ...d, checklist_padrao: checklist } : d)),
+            }
+          : e
+      ),
+    }));
+  };
+
+  const [expandedChecklist, setExpandedChecklist] = useState<string | null>(null);
 
   const usedDisciplinas = new Set(form.etapas.flatMap((e) => e.disciplinas.map((d) => d.nome)));
   const totalDisciplinas = form.etapas.reduce((sum, e) => sum + e.disciplinas.length, 0);
@@ -374,44 +405,71 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
 
                         {/* Disciplinas com responsável */}
                         <div className="space-y-1.5">
-                          {etapa.disciplinas.map((disc, discIdx) => (
-                            <div key={discIdx} className="flex items-center gap-2 bg-muted rounded px-2 py-1.5">
-                              <Badge variant="secondary" className="text-sm flex-shrink-0">
-                                {disc.nome}
-                              </Badge>
-                              <Select
-                                value={disc.responsavel_id || ""}
-                                onValueChange={(val) => updateDisciplinaResponsavel(etapaIdx, discIdx, val)}
-                              >
-                                <SelectTrigger className="h-8 text-xs flex-1 min-w-[140px]">
-                                  <SelectValue placeholder="Responsável (opcional)">
-                                    {disc.responsavel_nome ? (
-                                      <span className="flex items-center gap-1">
-                                        <User className="h-3 w-3" />
-                                        {disc.responsavel_nome}
-                                      </span>
-                                    ) : (
-                                      "Responsável (opcional)"
-                                    )}
-                                  </SelectValue>
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {pessoas.map((p) => (
-                                    <SelectItem key={p.id} value={p.id} className="text-sm">
-                                      {p.nome}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                              <button
-                                type="button"
-                                className="hover:bg-gray-300 rounded-full p-1 flex-shrink-0"
-                                onClick={() => removeDisciplinaFromEtapa(etapaIdx, discIdx)}
-                              >
-                                <X size={14} className="text-danger-mid" />
-                              </button>
-                            </div>
-                          ))}
+                          {etapa.disciplinas.map((disc, discIdx) => {
+                            const checklistKey = `${etapaIdx}-${discIdx}`;
+                            const checklist = disc.checklist_padrao ?? [];
+                            const isExpanded = expandedChecklist === checklistKey;
+                            return (
+                              <div key={discIdx} className="bg-muted rounded px-2 py-1.5 space-y-1.5">
+                                <div className="flex items-center gap-2">
+                                  <Badge variant="secondary" className="text-sm flex-shrink-0">
+                                    {disc.nome}
+                                  </Badge>
+                                  <Select
+                                    value={disc.responsavel_id || ""}
+                                    onValueChange={(val) => updateDisciplinaResponsavel(etapaIdx, discIdx, val)}
+                                  >
+                                    <SelectTrigger className="h-8 text-xs flex-1 min-w-[140px]">
+                                      <SelectValue placeholder="Responsável (opcional)">
+                                        {disc.responsavel_nome ? (
+                                          <span className="flex items-center gap-1">
+                                            <User className="h-3 w-3" />
+                                            {disc.responsavel_nome}
+                                          </span>
+                                        ) : (
+                                          "Responsável (opcional)"
+                                        )}
+                                      </SelectValue>
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {pessoas.map((p) => (
+                                        <SelectItem key={p.id} value={p.id} className="text-sm">
+                                          {p.nome}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                  <button
+                                    type="button"
+                                    className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground flex-shrink-0"
+                                    onClick={() => setExpandedChecklist(isExpanded ? null : checklistKey)}
+                                  >
+                                    <ListChecks size={14} />
+                                    {checklist.length > 0 && checklist.length}
+                                    {isExpanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className="hover:bg-gray-300 rounded-full p-1 flex-shrink-0"
+                                    onClick={() => removeDisciplinaFromEtapa(etapaIdx, discIdx)}
+                                  >
+                                    <X size={14} className="text-danger-mid" />
+                                  </button>
+                                </div>
+                                {isExpanded && (
+                                  <div className="pt-1 border-t">
+                                    <Label className="text-[11px] text-muted-foreground mb-1 block">
+                                      Checklist padrão (copiado ao aplicar o fluxo)
+                                    </Label>
+                                    <LabelsEditor
+                                      value={checklist}
+                                      onChange={(next) => updateDisciplinaChecklist(etapaIdx, discIdx, next)}
+                                    />
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
                         </div>
 
                         {selectableDisciplinas.length > 0 && (
@@ -466,6 +524,7 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
                               <span key={di} className="text-[10px] bg-info-soft text-info-mid rounded px-1.5 py-0.5">
                                 {d.nome}
                                 {d.responsavel_nome ? ` (${d.responsavel_nome})` : ""}
+                                {d.checklist_padrao?.length ? ` · ${d.checklist_padrao.length} itens` : ""}
                               </span>
                             ))}
                           </div>

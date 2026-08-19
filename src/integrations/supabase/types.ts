@@ -4316,6 +4316,68 @@ export type Database = {
           },
         ]
       }
+      projeto_disciplina_checklist: {
+        Row: {
+          concluido: boolean
+          concluido_em: string | null
+          concluido_por: string | null
+          created_at: string
+          id: string
+          ordem: number
+          projeto_disciplina_id: string
+          texto: string
+        }
+        Insert: {
+          concluido?: boolean
+          concluido_em?: string | null
+          concluido_por?: string | null
+          created_at?: string
+          id?: string
+          ordem?: number
+          projeto_disciplina_id: string
+          texto: string
+        }
+        Update: {
+          concluido?: boolean
+          concluido_em?: string | null
+          concluido_por?: string | null
+          created_at?: string
+          id?: string
+          ordem?: number
+          projeto_disciplina_id?: string
+          texto?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projeto_disciplina_checklist_concluido_por_fkey"
+            columns: ["concluido_por"]
+            isOneToOne: false
+            referencedRelation: "pessoas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projeto_disciplina_checklist_concluido_por_fkey"
+            columns: ["concluido_por"]
+            isOneToOne: false
+            referencedRelation: "pessoas_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projeto_disciplina_checklist_concluido_por_fkey"
+            columns: ["concluido_por"]
+            isOneToOne: false
+            referencedRelation: "view_folha_pagamento"
+            referencedColumns: ["pessoa_id"]
+          },
+          {
+            foreignKeyName: "projeto_disciplina_checklist_projeto_disciplina_id_fkey"
+            columns: ["projeto_disciplina_id"]
+            isOneToOne: false
+            referencedRelation: "projeto_disciplinas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       projeto_disciplina_responsaveis: {
         Row: {
           id: string
@@ -6642,6 +6704,10 @@ export type Database = {
         Returns: Json
       }
       rate_limit_cleanup: { Args: never; Returns: undefined }
+      recalc_disciplina_status_por_checklist: {
+        Args: { p_disciplina_id: string }
+        Returns: undefined
+      }
       recalc_grupo_parcela_status: {
         Args: { p_grupo_id: string }
         Returns: undefined
@@ -6769,6 +6835,14 @@ export type Database = {
           p_rateios: Json
           p_tipo_lancamento: string
         }
+        Returns: number
+      }
+      rpc_notificar_projeto_status: {
+        Args: { p_novo_status: string; p_projeto_id: string }
+        Returns: number
+      }
+      rpc_notificar_proxima_etapa: {
+        Args: { p_disciplina_id: string }
         Returns: number
       }
       rpc_obra_despesa_excluir: { Args: { p_id: string }; Returns: undefined }

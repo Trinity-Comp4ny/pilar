@@ -491,6 +491,7 @@ export function useProjetoForm({
         etapa: etapa.ordem,
         data_inicio: datas?.data_inicio,
         data_previsao: datas?.data_previsao,
+        checklist_padrao: d.checklist_padrao,
         observacoes: [],
         responsaveis: d.responsavel_id
           ? [
@@ -631,6 +632,7 @@ export function useProjetoForm({
             prioridade: d.prioridade || null,
             justificativa_atraso: d.justificativa_atraso || null,
             ordem_etapa: d.etapa ?? null,
+            checklist_padrao: d.checklist_padrao,
             responsavel_ids: resps.map((r) => r.responsavel_id).filter(Boolean),
           };
         });
@@ -688,6 +690,7 @@ export function useProjetoForm({
               prioridade: d.prioridade || null,
               justificativa_atraso: d.justificativa_atraso || null,
               ordem_etapa: d.etapa ?? null,
+              checklist_padrao: d.checklist_padrao,
               responsavel_ids: resps.map((r) => r.responsavel_id).filter(Boolean),
             };
           });
