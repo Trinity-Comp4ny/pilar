@@ -1,7 +1,7 @@
 # SPEC: Features universais por empresa, capacidade vira o limitador de plano
 
 **Data:** 2026-08-18  
-**Status:** Em implementação (fase 1 entregue, ver nota abaixo)  
+**Status:** Em implementação (fases 1 e 2 entregues, ver nota abaixo)  
 **Autor:** Matheus  
 **Módulo:** plataforma / ultra-admin / billing
 
@@ -11,10 +11,13 @@
 > early access, `invite-user` sincronizado + teste de sincronia, bypass de
 > `universal` em `user_has_feature`/`_validate_features_payload`/
 > `tg_validate_features_subset`/`tg_validate_convite_features_subset`).
-> **Adiado, não entregue nesta rodada:** requisitos 8, 9 e 11 (colunas de
-> override de capacidade, card "Capacidade" no ultra-admin, enforcement de
-> `max_projetos` em `create_projeto_completo`, backfill de plano das 4
-> empresas legadas). Motivo: `create_projeto_completo` tem **3 overloads**
+> **Fase 2 (19/08):** requisito 8 entregue (colunas `max_projetos_override`/
+> `max_usuarios_override` em `empresas`, card "Capacidade" no detalhe da
+> empresa no ultra-admin mostrando plano + limite efetivo, override editável
+> em "Editar empresa"). **Adiado, não entregue:** requisito 9 (enforcement de
+> `max_projetos` em `create_projeto_completo`: o override fica visível e
+> editável, mas ainda não bloqueia nada na prática) e requisito 11 (backfill
+> de plano das 4 empresas legadas). Motivo do requisito 9: `create_projeto_completo` tem **3 overloads**
 > ativos em produção hoje (achado ao investigar); mexer nele com segurança
 > exige isolar qual overload o front realmente chama e um DROP+CREATE
 > explícito (ver `feedback_supabase_function_overload` na memória do projeto),
