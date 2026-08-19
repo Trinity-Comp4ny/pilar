@@ -48,4 +48,5 @@ Decisão de arquitetura no meio do caminho vira um [ADR](../architecture/README.
 | [051](./051-duracao-por-etapa-fluxo-prazo-cascata.md)               | Duração por etapa do fluxo com prazo em cascata (data_previsao automática ao aplicar fluxo)                 | Draft            |
 | [052](./052-features-universais-por-empresa-capacidade-de-plano.md) | Features universais por empresa (fim do toggle por plano); capacidade (max_projetos) vira o limitador real  | Em implementação |
 | [053](./053-pix-automatico-e-regua-de-inadimplencia.md)             | Pix Automático como método padrão do MRR e régua de inadimplência (aviso, suspensão, recuperação), ADR 0028 | Draft            |
+| [054](./054-policies-to-authenticated.md)                           | Migrar ~180 policies de `TO PUBLIC` para `TO authenticated`; fecha o grant de anon nos helpers de RLS e prepara o fix de `auth_rls_initplan` | Draft            |
 | [057](./057-webhook-asaas-resolucao-tenant.md)                      | Corrige resolução de tenant no webhook Asaas (coluna `webhook_token` removida, achado ao cifrar a api_key)  | Draft            |
