@@ -16,6 +16,31 @@ import { requireUltraAdmin } from "../_shared/admin-auth.ts";
 import { logAction } from "../_shared/audit.ts";
 import { withSentry } from "../_shared/sentry.ts";
 
+// Espelha universal:true de src/lib/features.ts / _universal_features() no
+// banco (migration 20260845000000). Coberto por teste de sincronia em
+// src/lib/features.test.ts. Ver ADR 0026.
+const UNIVERSAL_FEATURES = new Set([
+  "relatorios",
+  "leads",
+  "propostas",
+  "clientes",
+  "projetos",
+  "mapa",
+  "financeiro",
+  "pessoas",
+  "metas",
+  "portal_cliente",
+  "ai_chat",
+  "obras",
+  "obras_fornecedores",
+  "obras_clima",
+  "obras_diario",
+  "obras_cronograma",
+  "obras_cotacoes",
+  "obras_estoque",
+  "obras_conta",
+]);
+
 serve(
   withSentry("ultra-admin-empresas", async (req) => {
     if (req.method === "OPTIONS") return optionsResponse(req);
@@ -197,6 +222,18 @@ serve(
       if (scope !== "all" && scope !== "has_parent") return safeErrorResponse(400, "scope inválido", req);
       if (scope === "has_parent" && !parent) {
         return safeErrorResponse(400, "parent é obrigatório para scope has_parent", req);
+      }
+      // ADR 0026: feature universal não passa mais por empresas.features (toda
+      // empresa já tem). A UI (BulkFeatureManager) já restringe a lista, mas o
+      // endpoint precisa recusar direto: desligar em massa uma chave universal
+      // aciona tg_cascade_feature_revocation e revoga o grant de todo mundo em
+      // profiles.features sem necessidade (achado em auditoria de RLS, 18/08).
+      if (UNIVERSAL_FEATURES.has(feature)) {
+        return safeErrorResponse(
+          400,
+          `"${feature}" é universal (toda empresa já tem, sem toggle); ação em massa não se aplica`,
+          req
+        );
       }
 
       const { data: empresas, error: listErr } = await svc.from("empresas").select("id, features");

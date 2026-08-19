@@ -713,16 +713,16 @@ export default function UltraAdmin() {
       >
         <Card className="border border-black/5">
           <CardHeader>
-            <CardTitle className="text-base">Features da empresa</CardTitle>
+            <CardTitle className="text-base">Acesso antecipado</CardTitle>
             <CardDescription>
-              Como ultra admin, você pode ativar qualquer feature — inclusive add-ons ainda não contratados.
+              Módulo maduro (Financeiro, Projetos, Obras...) é universal, toda empresa já tem, sem toggle. Aqui só
+              dá acesso cedo a módulo ainda não pronto pra lançamento geral.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <CompanyFeatureToggles
               value={detail.features}
               onChange={handleChangeFeatures}
-              currentPlan={detail.plano}
               usersByFeature={usersByFeature}
               disabled={savingFeatures}
             />

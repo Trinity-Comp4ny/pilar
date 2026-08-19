@@ -6035,6 +6035,7 @@ export type Database = {
         Args: { p_account_id: string; p_nova_senha: string }
         Returns: undefined
       }
+      _universal_features: { Args: never; Returns: string[] }
       _validate_features_payload: {
         Args: { p_empresa_id: string; p_features: Json }
         Returns: undefined
