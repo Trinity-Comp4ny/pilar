@@ -1,162 +1,218 @@
-import { useMemo } from "react";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { CheckCircle2, Clock, AlertTriangle, PauseCircle } from "lucide-react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { CheckCircle2, Clock, AlertTriangle, Circle, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { type DisciplinaResponsavel, getDiscDeadlineStatus } from "@/types/projetos";
+import { formatDateShort } from "@/lib/dateUtils";
 
-interface EtapaGroup {
-  etapa: number;
-  disciplinas: DisciplinaResponsavel[];
-  status: "concluido" | "em_andamento" | "atrasado" | "nao_iniciado";
-  label: string;
-}
+type DiscStatusVisual = "concluido" | "em_andamento" | "atrasado" | "nao_iniciado";
 
-function getEtapaStatus(disciplinas: DisciplinaResponsavel[]): EtapaGroup["status"] {
-  const hasAtrasada = disciplinas.some((d) => {
-    const s = getDiscDeadlineStatus(d);
-    return s?.status_data === "em_atraso";
-  });
-  if (hasAtrasada) return "atrasado";
-
-  const allConcluido = disciplinas.every((d) => d.status === "Concluído");
-  if (allConcluido) return "concluido";
-
-  const hasEmAndamento = disciplinas.some((d) => d.status === "Em Andamento" || d.status === "Pendente");
-  if (hasEmAndamento) return "em_andamento";
-
+function getDiscStatusVisual(disc: DisciplinaResponsavel): DiscStatusVisual {
+  if (disc.status === "Concluído") return "concluido";
+  const deadline = getDiscDeadlineStatus(disc);
+  if (deadline?.status_data === "em_atraso") return "atrasado";
+  if (disc.status === "Em Andamento") return "em_andamento";
   return "nao_iniciado";
 }
 
-const STATUS_CONFIG = {
-  concluido: {
-    bg: "bg-positive/100",
-    border: "border-status-done",
-    text: "text-positive-strong",
-    icon: CheckCircle2,
-    label: "Concluído",
-  },
+const STATUS_VISUAL_CONFIG: Record<
+  DiscStatusVisual,
+  { dotClass: string; icon: typeof CheckCircle2; iconClass: string; label: string; pulse?: boolean }
+> = {
+  concluido: { dotClass: "bg-status-done", icon: CheckCircle2, iconClass: "text-white", label: "Concluído" },
   em_andamento: {
-    bg: "bg-status-progress",
-    border: "border-status-progress",
-    text: "text-info-strong",
+    dotClass: "bg-status-progress",
     icon: Clock,
-    label: "Em Andamento",
+    iconClass: "text-white",
+    label: "Em andamento",
+    pulse: true,
   },
-  atrasado: {
-    // bg/border sem token exato: "atrasado" não é um dos 7 status-* (não é o
-    // mesmo conceito de "Cancelado"), deixado cru (ver relatório do lote).
-    bg: "bg-fill-danger",
-    border: "border-fill-danger",
-    text: "text-danger-strong",
-    icon: AlertTriangle,
-    label: "Atrasado",
-  },
+  atrasado: { dotClass: "bg-status-cancelled", icon: AlertTriangle, iconClass: "text-white", label: "Atrasado" },
   nao_iniciado: {
-    bg: "bg-status-unknown",
-    border: "border-border",
-    text: "text-ink-muted",
-    icon: PauseCircle,
-    label: "Não Iniciado",
+    dotClass: "bg-white border-2 border-status-unknown",
+    icon: Circle,
+    iconClass: "text-status-unknown",
+    label: "Não iniciado",
   },
 };
 
-interface FluxoPipelineProps {
-  disciplinas: DisciplinaResponsavel[];
+function usePrefersReducedMotion(): boolean {
+  const [reduced, setReduced] = useState(
+    () => typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  );
+
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const handler = () => setReduced(mq.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+
+  return reduced;
 }
 
-export function FluxoPipeline({ disciplinas }: FluxoPipelineProps) {
-  const etapas = useMemo((): EtapaGroup[] => {
-    const map = new Map<number, DisciplinaResponsavel[]>();
+interface ConnectorPath {
+  d: string;
+  length: number;
+}
 
-    for (const d of disciplinas) {
-      if (d.etapa == null) continue;
-      if (!map.has(d.etapa)) map.set(d.etapa, []);
-      map.get(d.etapa)!.push(d);
+/** Mede as caixas de etapa (via ref) e calcula um path bezier entre cada par consecutivo. */
+function useEtapaConnectors(stageCount: number) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const stageRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const [paths, setPaths] = useState<ConnectorPath[]>([]);
+
+  useLayoutEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const measure = () => {
+      const containerRect = container.getBoundingClientRect();
+      const boxes = stageRefs.current.slice(0, stageCount).map((el) => el?.getBoundingClientRect());
+      const next: ConnectorPath[] = [];
+
+      for (let i = 0; i < boxes.length - 1; i++) {
+        const a = boxes[i];
+        const b = boxes[i + 1];
+        if (!a || !b) continue;
+
+        const x1 = a.right - containerRect.left;
+        const y1 = a.top + a.height / 2 - containerRect.top;
+        const x2 = b.left - containerRect.left;
+        const y2 = b.top + b.height / 2 - containerRect.top;
+        const mx = (x1 + x2) / 2;
+
+        next.push({
+          d: `M ${x1} ${y1} C ${mx} ${y1}, ${mx} ${y2}, ${x2} ${y2}`,
+          length: Math.abs(x2 - x1) + Math.abs(y2 - y1),
+        });
+      }
+
+      setPaths(next);
+    };
+
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(container);
+    window.addEventListener("resize", measure);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", measure);
+    };
+  }, [stageCount]);
+
+  return { containerRef, stageRefs, paths };
+}
+
+interface FluxoPipelineProps {
+  disciplinas: DisciplinaResponsavel[];
+  onOpenDisciplina?: (disc: DisciplinaResponsavel) => void;
+}
+
+export function FluxoPipeline({ disciplinas, onOpenDisciplina }: FluxoPipelineProps) {
+  const etapas = useMemo(() => groupByEtapa(disciplinas).filter((e) => e.etapa != null), [disciplinas]);
+  const reducedMotion = usePrefersReducedMotion();
+  const { containerRef, stageRefs, paths } = useEtapaConnectors(etapas.length);
+  const [drawn, setDrawn] = useState(reducedMotion);
+
+  useEffect(() => {
+    if (reducedMotion) {
+      setDrawn(true);
+      return;
     }
-
-    return Array.from(map.entries())
-      .sort(([a], [b]) => a - b)
-      .map(([etapa, discs]) => ({
-        etapa,
-        disciplinas: discs,
-        status: getEtapaStatus(discs),
-        label: discs.map((d) => d.disciplina).join(", "),
-      }));
-  }, [disciplinas]);
+    setDrawn(false);
+    const raf = requestAnimationFrame(() => requestAnimationFrame(() => setDrawn(true)));
+    return () => cancelAnimationFrame(raf);
+    // Redesenha quando o número de conectores muda (etapas adicionadas/removidas).
+  }, [paths.length, reducedMotion]);
 
   if (etapas.length === 0) return null;
 
-  const concluidas = etapas.filter((e) => e.status === "concluido").length;
-  const progresso = Math.round((concluidas / etapas.length) * 100);
+  const totalDiscs = disciplinas.filter((d) => d.etapa != null).length;
+  const concluidas = disciplinas.filter((d) => d.etapa != null && getDiscStatusVisual(d) === "concluido").length;
+  const progresso = totalDiscs > 0 ? Math.round((concluidas / totalDiscs) * 100) : 0;
 
   return (
     <div className="bg-white border rounded-lg p-4 space-y-3">
       <div className="flex items-center justify-between">
         <span className="text-xs font-medium text-muted-foreground">Fluxo de Disciplinas</span>
         <span className="text-xs text-muted-foreground">
-          {concluidas}/{etapas.length} etapas concluídas ({progresso}%)
+          {concluidas}/{totalDiscs} disciplinas concluídas ({progresso}%)
         </span>
       </div>
 
-      <div className="flex items-center gap-0 overflow-x-auto py-1">
-        {etapas.map((etapa, i) => {
-          const config = STATUS_CONFIG[etapa.status];
-          const Icon = config.icon;
+      <div className="overflow-x-auto">
+        <div ref={containerRef} className="relative flex items-stretch gap-14 py-1 min-w-max">
+          <svg className="absolute inset-0 pointer-events-none" width="100%" height="100%">
+            {paths.map((p, i) => (
+              <path
+                key={i}
+                d={p.d}
+                fill="none"
+                className="stroke-border"
+                strokeWidth={2}
+                strokeDasharray={p.length}
+                strokeDashoffset={drawn ? 0 : p.length}
+                style={reducedMotion ? undefined : { transition: `stroke-dashoffset 700ms ${i * 90}ms ease-out` }}
+              />
+            ))}
+          </svg>
 
-          return (
-            <div key={etapa.etapa} className="flex items-center flex-shrink-0">
-              {i > 0 && (
-                <div
-                  className={cn(
-                    "w-6 sm:w-10 h-0.5",
-                    etapas[i - 1].status === "concluido" ? "bg-status-done" : "bg-muted"
-                  )}
-                />
+          {etapas.map((etapa, i) => (
+            <div
+              key={etapa.etapa ?? i}
+              ref={(el) => {
+                stageRefs.current[i] = el;
+              }}
+              className={cn(
+                "relative z-[1] w-60 flex-shrink-0 rounded-lg border bg-white shadow-sm overflow-hidden",
+                !reducedMotion && "animate-fade-up"
               )}
-
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="flex flex-col items-center gap-1 cursor-default">
-                    <div
-                      className={cn(
-                        "flex items-center justify-center h-8 w-8 rounded-full border-2 transition-colors",
-                        config.border,
-                        etapa.status === "concluido" ? config.bg : "bg-white"
-                      )}
+              style={!reducedMotion ? { animationDelay: `${i * 90}ms` } : undefined}
+            >
+              <div className="px-3 py-2 border-b bg-muted/40">
+                <span className="text-xs font-semibold text-info-strong">{etapa.nome}</span>
+              </div>
+              <div>
+                {etapa.disciplinas.map((disc, di) => {
+                  const visual = getDiscStatusVisual(disc);
+                  const config = STATUS_VISUAL_CONFIG[visual];
+                  const Icon = config.icon;
+                  return (
+                    <button
+                      key={di}
+                      type="button"
+                      onClick={() => onOpenDisciplina?.(disc)}
+                      className="w-full flex items-center gap-2 px-3 py-2 border-b last:border-b-0 hover:bg-muted/40 transition-colors text-left"
                     >
-                      <Icon className={cn("h-4 w-4", etapa.status === "concluido" ? "text-white" : config.text)} />
-                    </div>
-                    <span className={cn("text-[10px] font-medium max-w-[80px] truncate text-center", config.text)}>
-                      Etapa {etapa.etapa}
-                    </span>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent side="bottom" className="text-xs">
-                  <div className="space-y-1">
-                    <div className="font-medium">
-                      Etapa {etapa.etapa} — {config.label}
-                    </div>
-                    {etapa.disciplinas.map((d, di) => (
-                      <div key={di} className="flex items-center gap-1.5">
-                        <span
-                          className={cn(
-                            "h-1.5 w-1.5 rounded-full",
-                            d.status === "Concluído"
-                              ? "bg-positive/100"
-                              : d.status === "Em Andamento"
-                                ? "bg-status-progress"
-                                : "bg-status-unknown"
+                      <span
+                        className={cn(
+                          "relative flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full",
+                          config.dotClass
+                        )}
+                      >
+                        <Icon className={cn("h-3 w-3", config.iconClass)} />
+                        {config.pulse && !reducedMotion && (
+                          <span className="absolute inset-0 rounded-full bg-status-progress animate-ping opacity-60" />
+                        )}
+                      </span>
+                      <span className="flex-1 min-w-0">
+                        <span className="block text-xs font-medium truncate">{disc.disciplina}</span>
+                        <span className="flex items-center gap-2 text-[10px] text-muted-foreground">
+                          {disc.responsavel_nome && (
+                            <span className="flex items-center gap-0.5 truncate">
+                              <User className="h-2.5 w-2.5" /> {disc.responsavel_nome}
+                            </span>
                           )}
-                        />
-                        {d.disciplina} — {d.status || "Não Iniciado"}
-                      </div>
-                    ))}
-                  </div>
-                </TooltipContent>
-              </Tooltip>
+                          {disc.data_previsao && <span>{formatDateShort(disc.data_previsao)}</span>}
+                        </span>
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-          );
-        })}
+          ))}
+        </div>
       </div>
     </div>
   );

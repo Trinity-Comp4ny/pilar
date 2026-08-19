@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
-import { Layers, DollarSign, Table as TableIcon, GanttChart } from "lucide-react";
+import { Layers, DollarSign, Table as TableIcon, GanttChart, GitBranch } from "lucide-react";
 import { SecondSidebar, type SecondSidebarTab } from "@/components/SecondSidebar";
 import { cn } from "@/lib/utils";
 import {
@@ -18,6 +18,7 @@ import { CronogramaTab } from "./CronogramaTab";
 import { PagamentosTab } from "./PagamentosTab";
 import { DisciplinasTableView } from "./DisciplinasTableView";
 import { DisciplinaDetailDialog } from "./DisciplinaDetailDialog";
+import { FluxoPipeline } from "./FluxoPipeline";
 
 interface ProjetoDetailTabsProps {
   projeto: Projeto;
@@ -46,7 +47,7 @@ const PROJETO_TABS: SecondSidebarTab[] = [
   { id: "pagamentos", label: "Pagamentos", icon: DollarSign },
 ];
 
-type DisciplinaView = "tabela" | "gantt";
+type DisciplinaView = "tabela" | "gantt" | "fluxo";
 
 export function ProjetoDetailTabs({
   projeto,
@@ -223,6 +224,14 @@ export function ProjetoDetailTabs({
                   >
                     <GanttChart className="h-3.5 w-3.5" /> Gantt
                   </Button>
+                  <Button
+                    variant={disciplinaView === "fluxo" ? "secondary" : "ghost"}
+                    size="sm"
+                    className={cn("h-8 text-xs rounded-none px-3 gap-1.5")}
+                    onClick={() => handleViewChange("fluxo")}
+                  >
+                    <GitBranch className="h-3.5 w-3.5" /> Fluxo
+                  </Button>
                 </div>
               </div>
 
@@ -246,7 +255,7 @@ export function ProjetoDetailTabs({
                     />
                   </CardContent>
                 </Card>
-              ) : (
+              ) : disciplinaView === "gantt" ? (
                 <CronogramaTab
                   disciplinas={disciplinasLegacy}
                   projetoDataInicio={projeto.data_inicio}
@@ -254,6 +263,8 @@ export function ProjetoDetailTabs({
                   onDatesChange={canEdit ? handleCronogramaDatesChange : undefined}
                   onDisciplinaClick={handleDiscClick}
                 />
+              ) : (
+                <FluxoPipeline disciplinas={disciplinasLegacy} onOpenDisciplina={handleDiscClick} />
               )}
             </div>
           </TabsContent>
