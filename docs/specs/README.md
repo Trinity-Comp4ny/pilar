@@ -45,7 +45,7 @@ Decisão de arquitetura no meio do caminho vira um [ADR](../architecture/README.
 | [048](./048-consentimento-cookies.md)                               | Consentimento de cookies (banner + gate no analytics), ADR 0022                                             | Em implementação |
 | [049](./049-aceite-termos-de-uso-onboarding.md)                     | Aceite explícito dos Termos de Uso em /cadastro e /profile-setup, tabela terms_acceptances                  | Em implementação |
 | [050](./050-planos-termos-privacidade-no-marketing.md)              | Planos, Termos e Privacidade (texto) migram para apps/marketing; ações LGPD para o SettingsDialog           | Em implementação |
-| [051](./051-duracao-por-etapa-fluxo-prazo-cascata.md)               | Duração por etapa do fluxo com prazo em cascata (data_previsao automática ao aplicar fluxo)                 | Draft            |
+| [051](./051-duracao-por-etapa-fluxo-prazo-cascata.md)               | Fluxo de disciplinas: prazo em cascata, grafo visual (estilo pipeline CI) e checklist por etapa             | Entregue         |
 | [052](./052-features-universais-por-empresa-capacidade-de-plano.md) | Features universais por empresa (fim do toggle por plano); capacidade (max_projetos) vira o limitador real  | Em implementação |
 | [053](./053-pix-automatico-e-regua-de-inadimplencia.md)             | Pix Automático como método padrão do MRR e régua de inadimplência (aviso, suspensão, recuperação), ADR 0028 | Draft            |
 | [054](./054-policies-to-authenticated.md)                           | Migrar ~180 policies de `TO PUBLIC` para `TO authenticated`; fecha o grant de anon nos helpers de RLS e prepara o fix de `auth_rls_initplan` | Draft            |
