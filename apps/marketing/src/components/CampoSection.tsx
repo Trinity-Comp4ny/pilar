@@ -184,7 +184,10 @@ export function CampoSection() {
             </Reveal>
           </div>
 
-          <div className="grid lg:grid-cols-[290px_1fr] gap-10 lg:gap-14 items-start">
+          {/* Sem `items-start`: a coluna do texto estica até a altura do celular e
+              distribui a folga entre os blocos, em vez de largar ~80px de vazio
+              embaixo. */}
+          <div className="grid lg:grid-cols-[290px_1fr] gap-10 lg:gap-14">
             {/* O celular sobe um pouco mais devagar que o resto: a diferença de
                 velocidade é o que dá profundidade à coluna. */}
             <Parallax distance={-40} className="flex justify-center lg:justify-start">
@@ -193,7 +196,7 @@ export function CampoSection() {
               </Reveal>
             </Parallax>
 
-            <div className="flex flex-col gap-8">
+            <div className="flex flex-col gap-8 h-full justify-between">
               <RevealGroup className="grid sm:grid-cols-3 gap-6" stagger={0.09}>
                 {PONTOS.map((p) => (
                   <RevealGroup.Item key={p.titulo} variant="up">
@@ -211,7 +214,7 @@ export function CampoSection() {
                 ))}
               </RevealGroup>
 
-              <Reveal variant="mask" delay={0.15}>
+              <Reveal variant="up" delay={0.15}>
                 <Escritorio />
               </Reveal>
             </div>

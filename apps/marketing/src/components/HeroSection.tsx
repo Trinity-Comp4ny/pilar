@@ -24,7 +24,7 @@ export function HeroSection() {
   const reducedMotion = useReducedMotion();
 
   return (
-    <section className="relative pt-24 pb-14 md:pt-28 md:pb-18 overflow-hidden bg-paper-white">
+    <section className="relative pt-12 pb-14 md:pt-16 md:pb-20 overflow-hidden bg-paper-white">
       <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/3 w-[900px] h-[600px] bg-brand/7 rounded-full blur-[130px] animate-aurora" />
         <div className="absolute top-1/4 right-0 w-[500px] h-[400px] bg-modulo-projetos/20 rounded-full blur-[100px] animate-aurora-alt" />
@@ -40,15 +40,6 @@ export function HeroSection() {
           animate="visible"
           variants={staggerContainer(0.09, 0.05)}
         >
-          <m.div variants={sobe} transition={{ duration: 0.7, ease: EASE.out }}>
-            <span className="inline-flex items-center gap-2 mb-5 px-3 py-1.5 rounded-full border border-paper-border bg-white/70 backdrop-blur text-[11.5px] text-ink-soft">
-              <span className="relative flex w-1.5 h-1.5">
-                <span className="absolute inline-flex w-full h-full rounded-full bg-modulo-gestao-strong opacity-70 motion-safe:animate-ping" />
-                <span className="relative inline-flex w-1.5 h-1.5 rounded-full bg-modulo-gestao-strong" />
-              </span>
-              Para escritórios de engenharia multidisciplinar
-            </span>
-          </m.div>
 
           {/* Tipografia calibrada pela hero do Notion: peso 600 (teto da variable
               font Inter hospedada, que só cobre de 300 a 600), tracking -0.046em. A

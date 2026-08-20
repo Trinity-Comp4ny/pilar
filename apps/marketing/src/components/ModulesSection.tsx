@@ -1,55 +1,11 @@
-import { useRef } from "react";
 import { Link } from "react-router-dom";
-import { m, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import { ArrowRight, Check } from "lucide-react";
 import { Reveal } from "./Reveal";
 import { SpotlightCard } from "./SpotlightCard";
 import { ModuleMiniature } from "./modules/ModuleMiniatures";
+import { ModuleRelay } from "./modules/ModuleRelay";
 import { TextReveal } from "./motion";
-import { EASE } from "../lib/motion";
 import { MODULOS } from "../lib/modules";
-
-/**
- * Trilho que liga os 3 módulos. O traço se desenha conforme o visitante desce,
- * e os nós acendem quando o traço passa por eles: dá forma visual ao "fecham o
- * ciclo" que antes existia só na copy.
- *
- * Substitui o pulso em loop infinito da versão anterior (Animated Beam do
- * MagicUI, adaptado), que rodava sozinho e não tinha relação com a leitura.
- */
-function ModuleRail() {
-  const ref = useRef<HTMLDivElement>(null);
-  const reducedMotion = useReducedMotion();
-  const { scrollYProgress } = useScroll({ target: ref, offset: ["start 0.85", "start 0.35"] });
-  const escala = useTransform(scrollYProgress, [0, 1], [0, 1]);
-
-  if (reducedMotion) return null;
-
-  return (
-    <div ref={ref} className="hidden md:block relative mb-12" aria-hidden="true">
-      <span className="absolute left-0 right-0 top-[5px] h-px bg-paper-border" />
-      <m.span
-        className="absolute left-0 right-0 top-[5px] h-px bg-ink/25 origin-left"
-        style={{ scaleX: escala }}
-      />
-
-      <div className="relative flex justify-between">
-        {MODULOS.map((mo, i) => (
-          <div key={mo.slug} className="flex flex-col items-start gap-2.5">
-            <m.span
-              className={`w-2.5 h-2.5 rounded-full ${mo.cor.strong}`}
-              initial={{ scale: 0.4, opacity: 0.25 }}
-              whileInView={{ scale: 1, opacity: 1 }}
-              viewport={{ once: true, amount: 1 }}
-              transition={{ duration: 0.4, delay: i * 0.18, ease: EASE.out }}
-            />
-            <span className="text-[10px] uppercase tracking-[0.14em] text-ink-muted font-medium">{mo.nome}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
 
 /** Substitui o antigo fluxo de 5 etapas, que refletia o sistema de um módulo só. */
 export function ModulesSection() {
@@ -83,7 +39,7 @@ export function ModulesSection() {
             </Reveal>
           </div>
 
-          <ModuleRail />
+          <ModuleRelay />
 
           <div className="grid md:grid-cols-3 gap-4">
             {MODULOS.map((mo, i) => (
