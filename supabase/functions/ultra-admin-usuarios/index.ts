@@ -1,7 +1,7 @@
 /**
  * Edge function: ultra-admin-usuarios
  *
- * PUT  → atualizar role + features de um usuário (cross-empresa)
+ * PUT  → atualizar role de um usuário (cross-empresa)
  * POST → convidar usuário em nome de outra empresa
  *
  * Requer role = ultra_admin.
@@ -14,35 +14,6 @@ import { requireUltraAdmin } from "../_shared/admin-auth.ts";
 import { logAction } from "../_shared/audit.ts";
 import { withSentry } from "../_shared/sentry.ts";
 
-const FEATURE_KEYS = new Set([
-  "dashboard",
-  "relatorios",
-  "leads",
-  "propostas",
-  "clientes",
-  "projetos",
-  "mapa",
-  "financeiro",
-  "pessoas",
-  "metas",
-  "portal_cliente",
-  "ai_hub",
-  "capacidade",
-  "templates",
-]);
-const VALID_LEVELS = new Set(["viewer", "editor"]);
-
-function sanitizeFeatures(raw: unknown): Record<string, "viewer" | "editor"> {
-  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return {};
-  const result: Record<string, "viewer" | "editor"> = {};
-  for (const [key, value] of Object.entries(raw as Record<string, unknown>)) {
-    if (!FEATURE_KEYS.has(key)) continue;
-    if (typeof value !== "string" || !VALID_LEVELS.has(value)) continue;
-    result[key] = value as "viewer" | "editor";
-  }
-  return result;
-}
-
 serve(
   withSentry("ultra-admin-usuarios", async (req) => {
     if (req.method === "OPTIONS") return optionsResponse(req);
@@ -54,7 +25,7 @@ serve(
     // ─── PUT: atualizar usuário existente ─────────────────────────────────
     if (req.method === "PUT") {
       const body = await req.json();
-      const { user_id, role, features: rawFeatures, empresa_id } = body ?? {};
+      const { user_id, role, empresa_id } = body ?? {};
 
       if (!isUUID(user_id)) return safeErrorResponse(400, "user_id inválido", req);
 
@@ -66,10 +37,10 @@ serve(
 
       if (targetErr || !target) return safeErrorResponse(404, "Usuário não encontrado", req);
 
+      // ADR 0029: só o role muda. Acesso é role + módulo da empresa.
       const safeRole = ["admin", "user"].includes(role) ? role : target.role;
-      const safeFeatures = safeRole === "admin" ? {} : sanitizeFeatures(rawFeatures);
 
-      const { error } = await svc.from("profiles").update({ role: safeRole, features: safeFeatures }).eq("id", user_id);
+      const { error } = await svc.from("profiles").update({ role: safeRole }).eq("id", user_id);
 
       if (error) return safeErrorResponse(400, error.message, req);
 
@@ -148,7 +119,7 @@ serve(
     // ─── POST: convidar usuário OU reenviar convite pendente ──────────────
     if (req.method === "POST") {
       const body = await req.json();
-      const { empresa_id, email, nome, role, features: rawFeatures, resend, convite_id } = body ?? {};
+      const { empresa_id, email, nome, role, resend, convite_id } = body ?? {};
 
       const redirectOriginResend = getTrustedOrigin(req);
 
@@ -197,7 +168,6 @@ serve(
       if (!email || typeof email !== "string") return safeErrorResponse(400, "email obrigatório", req);
 
       const safeRole = ["admin", "user"].includes(role) ? role : "user";
-      const safeFeatures = safeRole === "admin" ? {} : sanitizeFeatures(rawFeatures);
 
       const redirectOrigin = getTrustedOrigin(req);
       if (!redirectOrigin) return safeErrorResponse(500, "Server CORS misconfigured", req);
@@ -208,7 +178,6 @@ serve(
         p_email: email,
         p_cargo: safeRole,
         p_nome: nome || null,
-        p_features: safeFeatures,
       });
 
       if (convErr || !inviteToken) return safeErrorResponse(400, convErr?.message ?? "Falha ao criar convite", req);
