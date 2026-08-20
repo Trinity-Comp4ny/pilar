@@ -50,7 +50,7 @@ function SubscriptionSuspendedScreen() {
 }
 
 export function PrivateRoute() {
-  const { isAuthenticated, profile, loading, mfaChallengeRequired, hasVerifiedMfaFactor } = useAuth();
+  const { isAuthenticated, profile, loading, mfaChallengeRequired } = useAuth();
   const location = useLocation();
 
   const mfaBypass = mfaDevBypass();
@@ -119,10 +119,8 @@ export function PrivateRoute() {
       return <Navigate to="/inicio" replace />;
     }
 
-    const onboardingComplete = profileDone && (!isAdmin || companyDone);
-    if (onboardingComplete && !hasVerifiedMfaFactor && !mfaBypass && !isMfaSetup) {
-      return <Navigate to="/mfa/setup" replace />;
-    }
+    // MFA é opcional (ADR 0031): ninguém é empurrado para /mfa/setup antes de
+    // usar o produto. A ativação vive em Configurações > Segurança.
   }
 
   if (
