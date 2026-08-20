@@ -52,7 +52,6 @@ export function useDisciplinasEditor({ pessoas, templatesData, fluxosData, curre
   const [selectedDisciplinaIndex, setSelectedDisciplinaIndex] = useState<number | null>(null);
   const [isDisciplinaDetailOpen, setIsDisciplinaDetailOpen] = useState(false);
   const [newObservation, setNewObservation] = useState("");
-  const [expandedFormDiscIdx, setExpandedFormDiscIdx] = useState<number | null>(null);
   const [addingRespToFormDisc, setAddingRespToFormDisc] = useState<number | null>(null);
   const [newFormResp, setNewFormResp] = useState({
     responsavel_id: "",
@@ -141,13 +140,9 @@ export function useDisciplinasEditor({ pessoas, templatesData, fluxosData, curre
     setTempDisciplina(EMPTY_TEMP_DISCIPLINA);
   }, [tempDisciplina, pessoas]);
 
-  const removeProjetoDisciplina = useCallback(
-    (index: number) => {
-      setProjetosDisciplinas((prev) => prev.filter((_, i) => i !== index));
-      if (expandedFormDiscIdx === index) setExpandedFormDiscIdx(null);
-    },
-    [expandedFormDiscIdx]
-  );
+  const removeProjetoDisciplina = useCallback((index: number) => {
+    setProjetosDisciplinas((prev) => prev.filter((_, i) => i !== index));
+  }, []);
 
   const addResponsavelToDisc = useCallback(
     (discIdx: number) => {
@@ -307,8 +302,6 @@ export function useDisciplinasEditor({ pessoas, templatesData, fluxosData, curre
     setTempDisciplina,
     addProjetoDisciplina,
     removeProjetoDisciplina,
-    expandedFormDiscIdx,
-    setExpandedFormDiscIdx,
     addingRespToFormDisc,
     setAddingRespToFormDisc,
     newFormResp,

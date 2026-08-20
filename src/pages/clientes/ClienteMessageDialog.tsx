@@ -1,10 +1,8 @@
 import { useState } from "react";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import { FormDialog } from "@/components/FormDialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2 } from "lucide-react";
 import type { Cliente } from "@/hooks/useClientes";
 
 interface ClienteMessageDialogProps {
@@ -14,8 +12,8 @@ interface ClienteMessageDialogProps {
   message: string;
   onSubjectChange: (v: string) => void;
   onMessageChange: (v: string) => void;
-  onCancel: () => void;
   onSend: () => void | Promise<void>;
+  /** Fecha o dialog. Chamado tanto pelo Cancelar quanto por Escape/overlay/X, sempre reseta os campos no pai. */
   onOpenChange: (open: boolean) => void;
 }
 
@@ -26,7 +24,6 @@ export function ClienteMessageDialog({
   message,
   onSubjectChange,
   onMessageChange,
-  onCancel,
   onSend,
   onOpenChange,
 }: ClienteMessageDialogProps) {
@@ -43,58 +40,38 @@ export function ClienteMessageDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Enviar mensagem</DialogTitle>
-          <DialogDescription>
-            Enviar mensagem para {cliente?.nome}
-            {cliente?.sobrenome ? ` ${cliente.sobrenome}` : ""}
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="space-y-4 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="subject">Assunto</Label>
-            <Input
-              id="subject"
-              value={subject}
-              onChange={(e) => onSubjectChange(e.target.value)}
-              placeholder="Assunto"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="message">Mensagem</Label>
-            <Textarea
-              id="message"
-              value={message}
-              onChange={(e) => onMessageChange(e.target.value)}
-              placeholder="Digite sua mensagem aqui..."
-              rows={4}
-            />
-          </div>
+    <FormDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title="Enviar mensagem"
+      description={
+        <>
+          Enviar mensagem para {cliente?.nome}
+          {cliente?.sobrenome ? ` ${cliente.sobrenome}` : ""}
+        </>
+      }
+      size="md"
+      onSubmit={handleSend}
+      isPending={isSending}
+      submitDisabled={!message || !subject || !cliente}
+      submitLabel="Enviar"
+    >
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="subject">Assunto</Label>
+          <Input id="subject" value={subject} onChange={(e) => onSubjectChange(e.target.value)} placeholder="Assunto" />
         </div>
-
-        <div className="flex gap-2 pt-4">
-          <Button variant="outline" onClick={onCancel} className="flex-1" disabled={isSending}>
-            Cancelar
-          </Button>
-          <Button
-            onClick={handleSend}
-            variant="brand"
-            className="flex-1"
-            disabled={!message || !subject || !cliente || isSending}
-          >
-            {isSending ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Enviando...
-              </>
-            ) : (
-              "Enviar"
-            )}
-          </Button>
+        <div className="space-y-2">
+          <Label htmlFor="message">Mensagem</Label>
+          <Textarea
+            id="message"
+            value={message}
+            onChange={(e) => onMessageChange(e.target.value)}
+            placeholder="Digite sua mensagem aqui..."
+            rows={4}
+          />
         </div>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </FormDialog>
   );
 }

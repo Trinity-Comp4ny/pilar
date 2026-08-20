@@ -3,20 +3,8 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DatePicker } from "@/components/ui/date-picker";
-import { useState } from "react";
-import {
-  Plus,
-  Trash2,
-  Edit,
-  User,
-  ChevronDown,
-  ChevronUp,
-  AlertTriangle,
-  Clock,
-  GitBranch,
-  X,
-  CalendarDays,
-} from "lucide-react";
+import { useMemo, useState } from "react";
+import { Plus, Trash2, Edit, User, Info, AlertTriangle, Clock, GitBranch, X } from "lucide-react";
 import { PROJECT_PRIORITY, PRIORITY_OPTIONS, PROJECT_PRIORITY_CONFIG, type ProjectPriority } from "@/constants";
 import {
   type DisciplinaResponsavel,
@@ -25,7 +13,26 @@ import {
   getDiscDeadlineStatus,
 } from "@/types/projetos";
 import type { FluxoDisciplinas } from "@/types/fluxoDisciplinas";
+import { formatDateShort } from "@/lib/format";
 import { groupByEtapa } from "./FluxoPipeline";
+import { FluxoPipelineGraph, type FluxoPipelineStage } from "./FluxoPipelineGraph";
+
+function buildWizardPreviewStages(groups: ReturnType<typeof groupByEtapa>): FluxoPipelineStage[] {
+  return groups
+    .filter((g) => g.etapa != null)
+    .map((group) => ({
+      key: String(group.etapa),
+      titulo: group.nome,
+      nodes: group.disciplinas.map((disc, i) => ({
+        key: disc.id ?? `${group.etapa}-${i}`,
+        titulo: disc.disciplina,
+        status: "nao_iniciado" as const,
+        responsavelNome: disc.responsavel_nome || undefined,
+        metaLabel: disc.data_previsao ? formatDateShort(disc.data_previsao) : undefined,
+        checklistLabel: disc.checklist_padrao?.length ? `${disc.checklist_padrao.length} itens` : undefined,
+      })),
+    }));
+}
 
 interface DisciplinasSectionProps {
   disciplinas: { id: string; nome: string }[];
@@ -38,8 +45,6 @@ interface DisciplinasSectionProps {
   onAddDisciplina: () => void;
   onRemoveDisciplina: (index: number) => void;
   onOpenDetail: (index: number) => void;
-  expandedFormDiscIdx: number | null;
-  onExpandToggle: (index: number | null) => void;
   addingRespToFormDisc: number | null;
   onSetAddingResp: (index: number | null) => void;
   newFormResp: { responsavel_id: string; data_inicio: string; data_previsao: string; data_final: string };
@@ -68,8 +73,6 @@ export function DisciplinasSection({
   onAddDisciplina,
   onRemoveDisciplina,
   onOpenDetail,
-  expandedFormDiscIdx,
-  onExpandToggle,
   addingRespToFormDisc,
   onSetAddingResp,
   newFormResp,
@@ -114,6 +117,10 @@ export function DisciplinasSection({
 
   const showFluxoSelector = fluxosData.length > 0 && onApplyFluxo && projetosDisciplinas.length === 0;
 
+  const groups = useMemo(() => groupByEtapa(projetosDisciplinas), [projetosDisciplinas]);
+  const hasEtapas = groups.some((g) => g.etapa != null);
+  const previewStages = useMemo(() => (hasEtapas ? buildWizardPreviewStages(groups) : []), [groups, hasEtapas]);
+
   return (
     <div className="pt-2">
       <Label className="text-base font-semibold mb-3 block">Disciplinas e Prazos</Label>
@@ -146,342 +153,328 @@ export function DisciplinasSection({
       )}
 
       {/* Applied fluxo indicator — when disciplines were applied from a fluxo */}
-      {projetosDisciplinas.length > 0 && projetosDisciplinas.some((d) => d.etapa != null) && selectedFluxoId && (
+      {hasEtapas && (
         <div className="mb-3 flex items-center gap-2 p-2 bg-info-soft rounded-lg border border-info-mid-border">
           <GitBranch className="h-3.5 w-3.5 text-info-mid flex-shrink-0" />
           <span className="text-xs text-info-strong flex-1">
-            Fluxo aplicado: {fluxosData.find((f) => f.id === selectedFluxoId)?.nome}
+            {selectedFluxoId
+              ? `Fluxo aplicado: ${fluxosData.find((f) => f.id === selectedFluxoId)?.nome}`
+              : "Fluxo de etapas aplicado"}
           </span>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="h-6 w-6 p-0 text-info-mid hover:text-danger-mid"
-            onClick={handleClearFluxo}
-          >
-            <X size={14} />
-          </Button>
+          {selectedFluxoId && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-6 w-6 p-0 text-info-mid hover:text-danger-mid"
+              onClick={handleClearFluxo}
+            >
+              <X size={14} />
+            </Button>
+          )}
+        </div>
+      )}
+
+      {/* Prévia do prazo: grafo das etapas aplicadas */}
+      {previewStages.length > 0 && (
+        <div className="mb-4 bg-white border rounded-lg p-3">
+          <FluxoPipelineGraph stages={previewStages} />
         </div>
       )}
 
       {/* Disciplinas list */}
       {projetosDisciplinas.length > 0 && (
         <div className="space-y-2 mt-4">
-          {(() => {
-            const hasEtapas = projetosDisciplinas.some((d) => d.etapa != null);
-            const groups = hasEtapas
-              ? groupByEtapa(projetosDisciplinas)
-              : [{ etapa: null, nome: "", disciplinas: projetosDisciplinas }];
+          {groups.map((group) => (
+            <div key={group.etapa ?? "avulsas"} className="space-y-2">
+              {hasEtapas && (
+                <div className="flex items-center gap-2 pt-2">
+                  {group.etapa != null && (
+                    <span className="flex items-center justify-center h-5 w-5 rounded-full bg-info-soft text-info-strong text-[10px] font-bold flex-shrink-0">
+                      {group.etapa}
+                    </span>
+                  )}
+                  <span className="text-xs font-semibold text-muted-foreground">{group.nome}</span>
+                  {group.etapa != null && group.disciplinas.length > 1 && (
+                    <span className="text-[9px] text-info-mid bg-info-soft rounded px-1.5 py-0.5">paralelo</span>
+                  )}
+                </div>
+              )}
+              {group.disciplinas.map((pd) => {
+                const idx = projetosDisciplinas.indexOf(pd);
+                const resps = getResponsaveisList(pd);
+                const deadlineStatus = getDiscDeadlineStatus(pd);
 
-            return groups.map((group) => (
-              <div key={group.etapa ?? "avulsas"} className="space-y-2">
-                {hasEtapas && (
-                  <div className="flex items-center gap-2 pt-2">
-                    {group.etapa != null && (
-                      <span className="flex items-center justify-center h-5 w-5 rounded-full bg-info-soft text-info-strong text-[10px] font-bold flex-shrink-0">
-                        {group.etapa}
-                      </span>
-                    )}
-                    <span className="text-xs font-semibold text-muted-foreground">{group.nome}</span>
-                    {group.etapa != null && group.disciplinas.length > 1 && (
-                      <span className="text-[9px] text-info-mid bg-info-soft rounded px-1.5 py-0.5">paralelo</span>
-                    )}
-                  </div>
-                )}
-                {group.disciplinas.map((pd) => {
-                  const idx = projetosDisciplinas.indexOf(pd);
-                  const resps = getResponsaveisList(pd);
-                  const isExpanded = expandedFormDiscIdx === idx;
-                  const deadlineStatus = getDiscDeadlineStatus(pd);
-                  const hasDates = resps.some((r) => r.data_inicio || r.data_previsao || r.data_final);
-                  const fmt = (d?: string) => d?.split("-").reverse().join("/") ?? "";
-
-                  return (
-                    <div
-                      key={idx}
-                      className={`bg-white border rounded-lg transition-shadow ${deadlineStatus?.status_data === "em_atraso" ? "border-danger-mid-border" : ""}`}
-                    >
-                      {/* Header row */}
-                      <div className="flex items-center justify-between px-3 pt-3 pb-2">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <Badge variant="outline">{pd.disciplina}</Badge>
-                          {pd.prioridade && (
+                return (
+                  <div
+                    key={idx}
+                    className={`bg-white border rounded-lg transition-shadow ${deadlineStatus?.status_data === "em_atraso" ? "border-danger-mid-border" : ""}`}
+                  >
+                    {/* Header row */}
+                    <div className="flex items-center justify-between px-3 pt-3 pb-2">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <Badge variant="outline">{pd.disciplina}</Badge>
+                        {pd.prioridade && (
+                          <span
+                            className={`text-[10px] px-1.5 py-0 rounded-full font-medium ${PROJECT_PRIORITY_CONFIG[pd.prioridade as ProjectPriority]?.bgColor || ""} ${PROJECT_PRIORITY_CONFIG[pd.prioridade as ProjectPriority]?.color || ""}`}
+                          >
+                            {PROJECT_PRIORITY_CONFIG[pd.prioridade as ProjectPriority]?.label || pd.prioridade}
+                          </span>
+                        )}
+                        {deadlineStatus &&
+                          (deadlineStatus.status_data === "em_atraso" || deadlineStatus.status_data === "atencao") && (
                             <span
-                              className={`text-[10px] px-1.5 py-0 rounded-full font-medium ${PROJECT_PRIORITY_CONFIG[pd.prioridade as ProjectPriority]?.bgColor || ""} ${PROJECT_PRIORITY_CONFIG[pd.prioridade as ProjectPriority]?.color || ""}`}
+                              className={`text-[9px] px-1.5 py-0.5 rounded-full font-medium flex items-center gap-0.5 ${
+                                deadlineStatus.status_data === "em_atraso"
+                                  ? "bg-danger-soft text-danger-strong"
+                                  : "bg-warning-soft text-warning-strong"
+                              }`}
                             >
-                              {PROJECT_PRIORITY_CONFIG[pd.prioridade as ProjectPriority]?.label || pd.prioridade}
+                              {deadlineStatus.status_data === "em_atraso" ? (
+                                <AlertTriangle size={10} />
+                              ) : (
+                                <Clock size={10} />
+                              )}
+                              {deadlineStatus.label} {deadlineStatus.days > 0 ? `(${deadlineStatus.days}d)` : ""}
                             </span>
                           )}
-                          {deadlineStatus &&
-                            (deadlineStatus.status_data === "em_atraso" ||
-                              deadlineStatus.status_data === "atencao") && (
-                              <span
-                                className={`text-[9px] px-1.5 py-0.5 rounded-full font-medium flex items-center gap-0.5 ${
-                                  deadlineStatus.status_data === "em_atraso"
-                                    ? "bg-danger-soft text-danger-strong"
-                                    : "bg-warning-soft text-warning-strong"
-                                }`}
-                              >
-                                {deadlineStatus.status_data === "em_atraso" ? (
-                                  <AlertTriangle size={10} />
-                                ) : (
-                                  <Clock size={10} />
-                                )}
-                                {deadlineStatus.label} {deadlineStatus.days > 0 ? `(${deadlineStatus.days}d)` : ""}
-                              </span>
-                            )}
-                        </div>
-                        <div className="flex gap-1">
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => onOpenDetail(idx)}
-                            className="h-6 w-6 p-0 text-info-mid"
-                          >
-                            <Edit size={14} />
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => onRemoveDisciplina(idx)}
-                            className="h-6 w-6 p-0 text-danger-mid"
-                          >
-                            <Trash2 size={14} />
-                          </Button>
-                        </div>
                       </div>
-
-                      {/* Responsável + status row */}
-                      <div className="flex items-center gap-2 px-3 pb-2 text-xs text-muted-foreground">
-                        <User className="h-3 w-3 flex-shrink-0" />
-                        <span>{resps.map((r) => r.responsavel_nome).join(", ")}</span>
-                        <span
-                          className={`ml-auto text-[10px] font-medium ${
-                            pd.status === "Concluído"
-                              ? "text-positive-strong"
-                              : pd.status === "Em Andamento"
-                                ? "text-info-mid"
-                                : "text-ink-muted"
-                          }`}
+                      <div className="flex gap-1">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => onOpenDetail(idx)}
+                          className="h-6 w-6 p-0 text-info-mid"
                         >
-                          {pd.status || "Não Iniciado"}
-                        </span>
+                          <Edit size={14} />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => onRemoveDisciplina(idx)}
+                          className="h-6 w-6 p-0 text-danger-mid"
+                        >
+                          <Trash2 size={14} />
+                        </Button>
                       </div>
+                    </div>
 
-                      {/* Dates toggle row */}
-                      <button
-                        type="button"
-                        onClick={() => onExpandToggle(isExpanded ? null : idx)}
-                        className={`w-full flex items-center gap-2 px-3 py-2 border-t text-xs transition-colors ${
-                          isExpanded
-                            ? "bg-info-soft text-info-strong border-info-soft-border"
-                            : hasDates
-                              ? "bg-muted text-ink-muted hover:bg-info-soft hover:text-info-strong"
-                              : "bg-warning-soft text-warning-mid hover:bg-amber-100 border-warning-soft-border"
+                    {/* Responsável + status row */}
+                    <div className="flex items-center gap-2 px-3 pb-2 text-xs text-muted-foreground">
+                      <User className="h-3 w-3 flex-shrink-0" />
+                      <span>{resps.map((r) => r.responsavel_nome).join(", ")}</span>
+                      <span
+                        className={`ml-auto text-[10px] font-medium ${
+                          pd.status === "Concluído"
+                            ? "text-positive-strong"
+                            : pd.status === "Em Andamento"
+                              ? "text-info-mid"
+                              : "text-ink-muted"
                         }`}
                       >
-                        <CalendarDays className="h-3.5 w-3.5 flex-shrink-0" />
-                        {hasDates ? (
-                          <span className="flex-1 text-left flex items-center gap-4">
-                            <span>
-                              Início: <strong>{fmt(resps[0]?.data_inicio) || "—"}</strong>
-                            </span>
-                            <span>
-                              Previsão: <strong>{fmt(resps[0]?.data_previsao) || "—"}</strong>
-                            </span>
-                            <span>
-                              Conclusão: <strong>{fmt(resps[0]?.data_final) || "—"}</strong>
-                            </span>
-                          </span>
-                        ) : (
-                          <span className="flex-1 text-left font-medium">Definir datas</span>
-                        )}
-                        {isExpanded ? (
-                          <ChevronUp className="h-3.5 w-3.5 ml-auto" />
-                        ) : (
-                          <ChevronDown className="h-3.5 w-3.5 ml-auto" />
-                        )}
-                      </button>
+                        {pd.status || "Não Iniciado"}
+                      </span>
+                    </div>
 
-                      {/* Expanded date inputs */}
-                      {isExpanded && (
-                        <div className="border-t px-3 pb-3 space-y-3 bg-info-soft/30">
-                          <div className="pt-2 space-y-3">
-                            {resps.map((resp, rIdx) => (
-                              <div key={rIdx} className="space-y-2">
-                                {resps.length > 1 && (
-                                  <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-1.5">
-                                      <User className="h-3 w-3 text-muted-foreground" />
-                                      <span className="text-xs font-medium text-muted-foreground">
-                                        {resp.responsavel_nome}
-                                      </span>
+                    {/* Datas sempre visíveis, sem toggle */}
+                    <div className="border-t px-3 pb-3 space-y-3 bg-info-soft/30">
+                      <div className="pt-2 space-y-3">
+                        {resps.map((resp, rIdx) => {
+                          const semPrazo = group.etapa != null && !resp.data_previsao;
+                          return (
+                            <div key={rIdx} className="space-y-2">
+                              {resps.length > 1 && (
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-1.5">
+                                    <User className="h-3 w-3 text-muted-foreground" />
+                                    <span className="text-xs font-medium text-muted-foreground">
+                                      {resp.responsavel_nome}
+                                    </span>
+                                  </div>
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-5 w-5 p-0 text-danger-mid"
+                                    onClick={() => onRemoveResponsavel(idx, rIdx)}
+                                  >
+                                    <Trash2 size={10} />
+                                  </Button>
+                                </div>
+                              )}
+                              <div className="grid grid-cols-3 gap-2">
+                                <div className="space-y-1">
+                                  <Label className="text-[9px] text-muted-foreground uppercase tracking-wide">
+                                    Início
+                                  </Label>
+                                  <DatePicker
+                                    value={resp.data_inicio}
+                                    onChange={(v) => onUpdateRespDatas(idx, rIdx, "data_inicio", v)}
+                                    minDate={minDate}
+                                    maxDate={maxDate}
+                                    className={
+                                      isOutOfRange(resp.data_inicio)
+                                        ? "border-attention-mid-border bg-attention-soft"
+                                        : ""
+                                    }
+                                  />
+                                  {isOutOfRange(resp.data_inicio) && (
+                                    <p className="text-[9px] text-attention-mid">Fora do prazo do projeto</p>
+                                  )}
+                                </div>
+                                <div className="space-y-1">
+                                  <Label className="text-[9px] text-muted-foreground uppercase tracking-wide">
+                                    Previsão
+                                  </Label>
+                                  {semPrazo ? (
+                                    <div className="h-9 flex items-center gap-1.5 px-2 rounded-md border border-dashed bg-muted text-[11px] text-muted-foreground">
+                                      <Info className="h-3 w-3 flex-shrink-0" />
+                                      sem prazo definido
                                     </div>
-                                    <Button
-                                      type="button"
-                                      variant="ghost"
-                                      size="sm"
-                                      className="h-5 w-5 p-0 text-danger-mid"
-                                      onClick={() => onRemoveResponsavel(idx, rIdx)}
-                                    >
-                                      <Trash2 size={10} />
-                                    </Button>
-                                  </div>
-                                )}
-                                <div className="grid grid-cols-3 gap-2">
-                                  <div className="space-y-1">
-                                    <Label className="text-[9px] text-muted-foreground uppercase tracking-wide">
-                                      Início
-                                    </Label>
-                                    <DatePicker
-                                      value={resp.data_inicio}
-                                      onChange={(v) => onUpdateRespDatas(idx, rIdx, "data_inicio", v)}
-                                      minDate={minDate}
-                                      maxDate={maxDate}
-                                      className={isOutOfRange(resp.data_inicio) ? "border-attention-mid-border bg-attention-soft" : ""}
-                                    />
-                                    {isOutOfRange(resp.data_inicio) && (
-                                      <p className="text-[9px] text-attention-mid">Fora do prazo do projeto</p>
-                                    )}
-                                  </div>
-                                  <div className="space-y-1">
-                                    <Label className="text-[9px] text-muted-foreground uppercase tracking-wide">
-                                      Previsão
-                                    </Label>
+                                  ) : (
                                     <DatePicker
                                       value={resp.data_previsao}
                                       onChange={(v) => onUpdateRespDatas(idx, rIdx, "data_previsao", v)}
                                       minDate={minDate}
                                       maxDate={maxDate}
                                       className={
-                                        isOutOfRange(resp.data_previsao) ? "border-attention-mid-border bg-attention-soft" : ""
+                                        isOutOfRange(resp.data_previsao)
+                                          ? "border-attention-mid-border bg-attention-soft"
+                                          : ""
                                       }
                                     />
-                                    {isOutOfRange(resp.data_previsao) && (
-                                      <p className="text-[9px] text-attention-mid">Fora do prazo do projeto</p>
-                                    )}
-                                  </div>
-                                  <div className="space-y-1">
-                                    <Label className="text-[9px] text-muted-foreground uppercase tracking-wide">
-                                      Conclusão
-                                    </Label>
-                                    <DatePicker
-                                      value={resp.data_final}
-                                      onChange={(v) => onUpdateRespDatas(idx, rIdx, "data_final", v)}
-                                      minDate={minDate}
-                                      maxDate={maxFinalDate}
-                                      className={
-                                        isFinalOutOfRange(resp.data_final) ? "border-attention-mid-border bg-attention-soft" : ""
-                                      }
-                                    />
-                                    {isFinalOutOfRange(resp.data_final) && (
-                                      <p className="text-[9px] text-attention-mid">
-                                        {minDate && resp.data_final! < minDate
-                                          ? "Anterior ao início do projeto"
-                                          : "Posterior à conclusão do projeto"}
-                                      </p>
-                                    )}
-                                  </div>
+                                  )}
+                                  {semPrazo && (
+                                    <p className="text-[9px] text-muted-foreground">
+                                      Etapa sem duração configurada no fluxo
+                                    </p>
+                                  )}
+                                  {!semPrazo && isOutOfRange(resp.data_previsao) && (
+                                    <p className="text-[9px] text-attention-mid">Fora do prazo do projeto</p>
+                                  )}
                                 </div>
-                              </div>
-                            ))}
-                          </div>
-
-                          {addingRespToFormDisc === idx ? (
-                            <div className="bg-info-soft rounded-lg p-2.5 border border-dashed border-info-mid-border space-y-2">
-                              <Select
-                                value={newFormResp.responsavel_id}
-                                onValueChange={(v) => onNewFormRespChange({ ...newFormResp, responsavel_id: v })}
-                              >
-                                <SelectTrigger className="h-7 text-xs">
-                                  <SelectValue placeholder="Selecione o responsável" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {pessoas.map((p) => (
-                                    <SelectItem key={p.id} value={p.id} className="text-xs">
-                                      {p.nome}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                              <div className="grid grid-cols-3 gap-1.5">
-                                <div className="space-y-0.5">
-                                  <Label className="text-[9px] text-muted-foreground">Início</Label>
+                                <div className="space-y-1">
+                                  <Label className="text-[9px] text-muted-foreground uppercase tracking-wide">
+                                    Conclusão
+                                  </Label>
                                   <DatePicker
-                                    value={newFormResp.data_inicio}
-                                    onChange={(v) => onNewFormRespChange({ ...newFormResp, data_inicio: v })}
+                                    value={resp.data_final}
+                                    onChange={(v) => onUpdateRespDatas(idx, rIdx, "data_final", v)}
                                     minDate={minDate}
-                                    maxDate={maxDate}
+                                    maxDate={maxFinalDate}
+                                    className={
+                                      isFinalOutOfRange(resp.data_final)
+                                        ? "border-attention-mid-border bg-attention-soft"
+                                        : ""
+                                    }
                                   />
+                                  {isFinalOutOfRange(resp.data_final) && (
+                                    <p className="text-[9px] text-attention-mid">
+                                      {minDate && resp.data_final! < minDate
+                                        ? "Anterior ao início do projeto"
+                                        : "Posterior à conclusão do projeto"}
+                                    </p>
+                                  )}
                                 </div>
-                                <div className="space-y-0.5">
-                                  <Label className="text-[9px] text-muted-foreground">Previsão</Label>
-                                  <DatePicker
-                                    value={newFormResp.data_previsao}
-                                    onChange={(v) => onNewFormRespChange({ ...newFormResp, data_previsao: v })}
-                                    minDate={minDate}
-                                    maxDate={maxDate}
-                                  />
-                                </div>
-                                <div className="space-y-0.5">
-                                  <Label className="text-[9px] text-muted-foreground">Final</Label>
-                                  <DatePicker
-                                    value={newFormResp.data_final}
-                                    onChange={(v) => onNewFormRespChange({ ...newFormResp, data_final: v })}
-                                    minDate={minDate}
-                                  />
-                                </div>
-                              </div>
-                              <div className="flex gap-2">
-                                <Button
-                                  type="button"
-                                  variant="brand"
-                                  size="sm"
-                                  className="h-6 text-[10px]"
-                                  onClick={() => onAddResponsavel(idx)}
-                                >
-                                  Adicionar
-                                </Button>
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-6 text-[10px]"
-                                  onClick={() => {
-                                    onSetAddingResp(null);
-                                    onNewFormRespChange({
-                                      responsavel_id: "",
-                                      data_inicio: "",
-                                      data_previsao: "",
-                                      data_final: "",
-                                    });
-                                  }}
-                                >
-                                  Cancelar
-                                </Button>
                               </div>
                             </div>
-                          ) : (
+                          );
+                        })}
+                      </div>
+
+                      {addingRespToFormDisc === idx ? (
+                        <div className="bg-info-soft rounded-lg p-2.5 border border-dashed border-info-mid-border space-y-2">
+                          <Select
+                            value={newFormResp.responsavel_id}
+                            onValueChange={(v) => onNewFormRespChange({ ...newFormResp, responsavel_id: v })}
+                          >
+                            <SelectTrigger className="h-7 text-xs">
+                              <SelectValue placeholder="Selecione o responsável" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {pessoas.map((p) => (
+                                <SelectItem key={p.id} value={p.id} className="text-xs">
+                                  {p.nome}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <div className="grid grid-cols-3 gap-1.5">
+                            <div className="space-y-0.5">
+                              <Label className="text-[9px] text-muted-foreground">Início</Label>
+                              <DatePicker
+                                value={newFormResp.data_inicio}
+                                onChange={(v) => onNewFormRespChange({ ...newFormResp, data_inicio: v })}
+                                minDate={minDate}
+                                maxDate={maxDate}
+                              />
+                            </div>
+                            <div className="space-y-0.5">
+                              <Label className="text-[9px] text-muted-foreground">Previsão</Label>
+                              <DatePicker
+                                value={newFormResp.data_previsao}
+                                onChange={(v) => onNewFormRespChange({ ...newFormResp, data_previsao: v })}
+                                minDate={minDate}
+                                maxDate={maxDate}
+                              />
+                            </div>
+                            <div className="space-y-0.5">
+                              <Label className="text-[9px] text-muted-foreground">Final</Label>
+                              <DatePicker
+                                value={newFormResp.data_final}
+                                onChange={(v) => onNewFormRespChange({ ...newFormResp, data_final: v })}
+                                minDate={minDate}
+                              />
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button
+                              type="button"
+                              variant="brand"
+                              size="sm"
+                              className="h-6 text-[10px]"
+                              onClick={() => onAddResponsavel(idx)}
+                            >
+                              Adicionar
+                            </Button>
                             <Button
                               type="button"
                               variant="ghost"
                               size="sm"
-                              className="h-6 text-[10px] w-full text-muted-foreground"
-                              onClick={() => onSetAddingResp(idx)}
+                              className="h-6 text-[10px]"
+                              onClick={() => {
+                                onSetAddingResp(null);
+                                onNewFormRespChange({
+                                  responsavel_id: "",
+                                  data_inicio: "",
+                                  data_previsao: "",
+                                  data_final: "",
+                                });
+                              }}
                             >
-                              <Plus className="h-3 w-3 mr-1" /> Adicionar responsável
+                              Cancelar
                             </Button>
-                          )}
+                          </div>
                         </div>
+                      ) : (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 text-[10px] w-full text-muted-foreground"
+                          onClick={() => onSetAddingResp(idx)}
+                        >
+                          <Plus className="h-3 w-3 mr-1" /> Adicionar responsável
+                        </Button>
                       )}
                     </div>
-                  );
-                })}
-              </div>
-            ));
-          })()}
+                  </div>
+                );
+              })}
+            </div>
+          ))}
         </div>
       )}
 
@@ -567,7 +560,7 @@ export function DisciplinasSection({
 
             {minDate && maxDate && (
               <p className="text-[10px] text-muted-foreground bg-info-soft border border-info-soft-border rounded px-2 py-1">
-                Prazo do projeto: {minDate.split("-").reverse().join("/")} → {maxDate.split("-").reverse().join("/")}
+                Prazo do projeto: {formatDateShort(minDate)} → {formatDateShort(maxDate)}
               </p>
             )}
 
@@ -579,7 +572,9 @@ export function DisciplinasSection({
                   onChange={(v) => onTempDisciplinaChange({ ...tempDisciplina, data_inicio: v })}
                   minDate={minDate}
                   maxDate={maxDate}
-                  className={isOutOfRange(tempDisciplina.data_inicio) ? "border-attention-mid-border bg-attention-soft" : ""}
+                  className={
+                    isOutOfRange(tempDisciplina.data_inicio) ? "border-attention-mid-border bg-attention-soft" : ""
+                  }
                 />
                 {isOutOfRange(tempDisciplina.data_inicio) && (
                   <p className="text-[9px] text-attention-mid">Fora do prazo do projeto</p>
@@ -592,7 +587,9 @@ export function DisciplinasSection({
                   onChange={(v) => onTempDisciplinaChange({ ...tempDisciplina, data_previsao: v })}
                   minDate={minDate}
                   maxDate={maxDate}
-                  className={isOutOfRange(tempDisciplina.data_previsao) ? "border-attention-mid-border bg-attention-soft" : ""}
+                  className={
+                    isOutOfRange(tempDisciplina.data_previsao) ? "border-attention-mid-border bg-attention-soft" : ""
+                  }
                 />
                 {isOutOfRange(tempDisciplina.data_previsao) && (
                   <p className="text-[9px] text-attention-mid">Fora do prazo do projeto</p>
