@@ -135,6 +135,10 @@ export function Privacidade() {
                 </strong>
                 .
               </p>
+              <p className="text-sm text-muted-foreground leading-relaxed mt-2">
+                Sua escolha vale neste site e no aplicativo. Se você tem conta no Pilar, ela fica registrada na conta e
+                pode ser alterada a qualquer momento em Configurações, Privacidade.
+              </p>
             </div>
           </div>
           <button

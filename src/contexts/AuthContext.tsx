@@ -4,6 +4,7 @@ import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { monitoring } from "@/lib/monitoring";
+import { syncConsentForUser } from "@/lib/cookieConsentSync";
 import { STORAGE_KEYS } from "@/constants";
 
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
@@ -136,6 +137,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await fetchProfile(session.user.id);
         // refreshMfaLevel é seguro aqui: initializePromise já resolveu
         await refreshMfaLevel();
+        // Preferência de cookie da conta vence o cookie do navegador (ADR 0032).
+        // Não bloqueia o boot: falhar aqui só mantém o fail-closed do analytics.
+        void syncConsentForUser(session.user.id);
       } catch {
         if (mounted) {
           setUser(null);
@@ -172,6 +176,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // setTimeout(0) escapa para a macrotask queue, após o lock ser liberado.
       setTimeout(() => {
         if (!mounted) return;
+        void syncConsentForUser(session.user.id);
         fetchProfile(session.user.id)
           .then(() => refreshMfaLevel())
           .catch(() => {

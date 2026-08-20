@@ -1,7 +1,11 @@
 # ADR 0022: Consentimento de cookies client-side com gate no analytics, sem CMP de terceiro
 
 **Data:** 2026-08-18
-**Status:** Accepted
+**Status:** Accepted, com a decisão de armazenamento revisada pelo
+[ADR 0032](./0032-consentimento-de-cookies-por-conta-e-por-dominio.md): o gate
+fail-closed e o banner da landing continuam valendo, mas a decisão não vive mais
+em `localStorage` por origem, e sim em cookie de `.pilarsoft.com.br` mais a
+tabela `cookie_consents` para usuário autenticado.
 
 ## Contexto
 
