@@ -584,8 +584,6 @@ export function ProjetoFormDialog({
                   onAddDisciplina={form.addProjetoDisciplina}
                   onRemoveDisciplina={form.removeProjetoDisciplina}
                   onOpenDetail={form.handleOpenDisciplinaDetail}
-                  expandedFormDiscIdx={form.expandedFormDiscIdx}
-                  onExpandToggle={form.setExpandedFormDiscIdx}
                   addingRespToFormDisc={form.addingRespToFormDisc}
                   onSetAddingResp={form.setAddingRespToFormDisc}
                   newFormResp={form.newFormResp}
