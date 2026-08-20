@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { expectAnonRedirectedOut } from "./helpers/guards";
 
 test("portal cliente login carrega", async ({ page }) => {
   await page.goto("/cliente/login");
@@ -7,8 +8,7 @@ test("portal cliente login carrega", async ({ page }) => {
 });
 
 test("rota autenticada redireciona sem sessão", async ({ page }) => {
-  await page.goto("/dashboard");
-  await expect(page).toHaveURL("/");
+  await expectAnonRedirectedOut(page, "/dashboard");
 });
 
 test("cliente dashboard redireciona sem token", async ({ page }) => {
