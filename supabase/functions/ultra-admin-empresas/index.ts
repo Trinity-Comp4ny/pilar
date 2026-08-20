@@ -4,7 +4,7 @@
  * GET    /ultra-admin-empresas           → lista empresas (com contagem de usuários)
  * GET    /ultra-admin-empresas?id=<uuid> → detalhe: empresa + usuários
  * POST   /ultra-admin-empresas           → criar empresa + assinatura Starter + convidar dono
- * PUT    /ultra-admin-empresas           → atualizar features de uma empresa
+ * PUT    /ultra-admin-empresas           → atualizar early access de uma empresa
  *
  * Requer role = ultra_admin.
  */
@@ -61,10 +61,10 @@ serve(
         const [{ data: empresa, error: empErr }, { data: usuarios, error: usrErr }, { data: convites }] =
           await Promise.all([
             svc.from("empresas").select("*").eq("id", id).single(),
-            svc.from("profiles").select("id, nome, email, role, features").eq("empresa_id", id),
+            svc.from("profiles").select("id, nome, email, role").eq("empresa_id", id),
             svc
               .from("convites")
-              .select("id, email, nome, cargo, features, expira_em")
+              .select("id, email, nome, cargo, expira_em")
               .eq("empresa_id", id)
               .is("usado_em", null)
               .gt("expira_em", new Date().toISOString()),
@@ -184,7 +184,6 @@ serve(
           p_email: ownerEmail,
           p_cargo: "admin",
           p_nome: ownerNome,
-          p_features: {},
         });
 
         if (convErr || !inviteToken) {
@@ -234,11 +233,9 @@ serve(
       if (scope === "has_parent" && !parent) {
         return safeErrorResponse(400, "parent é obrigatório para scope has_parent", req);
       }
-      // ADR 0026: feature universal não passa mais por empresas.features (toda
-      // empresa já tem). A UI (BulkFeatureManager) já restringe a lista, mas o
-      // endpoint precisa recusar direto: desligar em massa uma chave universal
-      // aciona tg_cascade_feature_revocation e revoga o grant de todo mundo em
-      // profiles.features sem necessidade (achado em auditoria de RLS, 18/08).
+      // ADR 0026: feature universal não passa por empresas.features (toda empresa
+      // já tem). A UI (BulkFeatureManager) já restringe a lista, mas o endpoint
+      // recusa direto, senão a ação em massa escreve um toggle que ninguém lê.
       if (UNIVERSAL_FEATURES.has(feature)) {
         return safeErrorResponse(
           400,
@@ -279,7 +276,7 @@ serve(
       );
 
       // Se nada foi aplicado e houve falhas, é erro (ex.: feature fora do catálogo,
-      // rejeitada pela trigger _validate_features_payload em todas as empresas).
+      // recusada pela validação de empresas.features em todas as empresas).
       if (affected === 0 && failures.length > 0) {
         return safeErrorResponse(400, failures[0] ?? "Falha ao aplicar em massa", req);
       }

@@ -6,7 +6,6 @@ import {
   FEATURES,
   type CompanyFeatures,
   type FeatureDefinition,
-  type FeatureKey,
 } from "@/lib/features";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
@@ -24,7 +23,6 @@ import {
 export type CompanyFeatureTogglesProps = {
   value: CompanyFeatures;
   onChange: (next: CompanyFeatures) => void;
-  usersByFeature?: Partial<Record<FeatureKey, number>>;
   className?: string;
   /** Desabilita todos os toggles (ex.: enquanto uma alteração é salva). */
   disabled?: boolean;
@@ -39,7 +37,6 @@ export type CompanyFeatureTogglesProps = {
 export function CompanyFeatureToggles({
   value,
   onChange,
-  usersByFeature,
   className,
   disabled = false,
 }: CompanyFeatureTogglesProps) {
@@ -52,8 +49,8 @@ export function CompanyFeatureToggles({
   };
 
   const handleToggle = (feature: FeatureDefinition, nextEnabled: boolean) => {
-    const usersAffected = usersByFeature?.[feature.key] ?? 0;
-    if (!nextEnabled && usersAffected > 0) {
+    // Desligar tira o módulo de todos na empresa: confirma antes.
+    if (!nextEnabled && Boolean(value[feature.key])) {
       setPendingDisable(feature);
       return;
     }
@@ -84,7 +81,6 @@ export function CompanyFeatureToggles({
               key={feature.key}
               feature={feature}
               enabled={Boolean(value[feature.key])}
-              usersAffected={usersByFeature?.[feature.key] ?? 0}
               onToggle={(next) => handleToggle(feature, next)}
               isLast={idx === earlyAccessFeatures.length - 1}
               disabled={disabled}
@@ -106,12 +102,8 @@ export function CompanyFeatureToggles({
               Desativar {pendingDisable?.label}?
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {pendingDisable && (
-                <>
-                  <strong>{usersByFeature?.[pendingDisable.key] ?? 0}</strong> usuário(s) têm acesso a essa feature
-                  hoje. Ao desativar, perdem o acesso imediatamente. Você pode reativar depois sem perda de dados.
-                </>
-              )}
+              Todo mundo nesta empresa perde o acesso ao módulo na hora. Você pode reativar depois, sem perda de
+              dados.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -132,13 +124,12 @@ export function CompanyFeatureToggles({
 type EarlyAccessRowProps = {
   feature: FeatureDefinition;
   enabled: boolean;
-  usersAffected: number;
   onToggle: (next: boolean) => void;
   isLast: boolean;
   disabled?: boolean;
 };
 
-function EarlyAccessRow({ feature, enabled, usersAffected, onToggle, isLast, disabled = false }: EarlyAccessRowProps) {
+function EarlyAccessRow({ feature, enabled, onToggle, isLast, disabled = false }: EarlyAccessRowProps) {
   const Icon = feature.icon;
   return (
     <div
@@ -175,9 +166,6 @@ function EarlyAccessRow({ feature, enabled, usersAffected, onToggle, isLast, dis
             </Badge>
           </div>
           <p className="text-xs text-black/50">{feature.description}</p>
-          {enabled && usersAffected > 0 && (
-            <p className="mt-1 text-[11px] text-black/40">{usersAffected} usuário(s) com acesso</p>
-          )}
         </div>
       </div>
 

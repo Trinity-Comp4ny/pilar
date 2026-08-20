@@ -3,10 +3,7 @@ import {
   FEATURES_BY_KEY,
   type CompanyFeatures,
   type FeatureKey,
-  type PermissionLevel,
-  type UserFeatures,
   isFeatureEnabledForCompany,
-  meetsLevel,
 } from "@/lib/features";
 
 export type UserRole = Database["public"]["Enums"]["user_role"];
@@ -35,34 +32,25 @@ export const ROLE_LABEL: Record<string, string> = {
 export type Feature = FeatureKey | "admin_portal" | "billing";
 export type Action = "view" | "create" | "edit" | "delete" | "manage";
 
-/**
- * Mapeia ação → nível mínimo necessário em profiles.features.
- *   view              → viewer
- *   create/edit/delete/manage → editor
- */
-function actionToLevel(action: Action): PermissionLevel {
-  return action === "view" ? "viewer" : "editor";
-}
-
 type AccessContext = {
   role: UserRole | null | undefined;
-  userFeatures: UserFeatures;
   companyFeatures: CompanyFeatures;
 };
 
 /**
- * Verifica acesso considerando role + empresa.features + profile.features.
- * - ultra_admin: bypass total.
- * - admin: bypass dentro da empresa (precisa empresa ter feature ligada,
- *   exceto para 'dashboard' que é core).
- * - user/legados: precisa nível suficiente em profile.features.
+ * Verifica acesso: role + módulo habilitado na empresa. Mesma regra que a RLS
+ * aplica em user_has_feature, para a UI não oferecer o que o banco nega (ADR 0029).
+ * - ultra_admin: bypass total (plataforma).
+ * - membro da empresa: lê e escreve no que a empresa tem habilitado. `action`
+ *   fica na assinatura porque as telas passam, e para um RBAC por role no futuro.
+ * - sem role: nada.
  */
-export function canDo(ctx: AccessContext | null, feature: Feature, action: Action = "view"): boolean {
+export function canDo(ctx: AccessContext | null, feature: Feature, _action: Action = "view"): boolean {
   if (!ctx) return false;
   const { role } = ctx;
   if (!role) return false;
 
-  // Pseudo-features
+  // Pseudo-features controladas por role, não pelo catálogo.
   if (feature === "admin_portal" || feature === "billing") {
     return (role as string) === "ultra_admin" || role === "admin";
   }
@@ -74,27 +62,14 @@ export function canDo(ctx: AccessContext | null, feature: Feature, action: Actio
     return false;
   }
 
-  if (role === "admin") return true;
-
-  const minLevel = actionToLevel(action);
-  const current = ctx.userFeatures[feature];
-
-  if (current) return meetsLevel(current, minLevel);
-
-  // Core (dashboard) sempre dá viewer mesmo sem entrada explícita
-  if (isCore && minLevel === "viewer") return true;
-
-  return false;
+  return true;
 }
 
-export function reasonFor(feature: Feature, action: Action = "view"): string {
-  const minLevel = actionToLevel(action);
+export function reasonFor(feature: Feature, _action: Action = "view"): string {
   if (feature === "admin_portal" || feature === "billing") {
     return "Requer perfil Admin ou Ultra Admin";
   }
-  return `Requer ${minLevel === "editor" ? "Editor" : "Viewer ou Editor"} em ${
-    FEATURES_BY_KEY[feature]?.label ?? feature
-  }`;
+  return `${FEATURES_BY_KEY[feature]?.label ?? feature} não está habilitado para esta empresa`;
 }
 
 /** Retrocompat: matriz não é mais a fonte da verdade, retorna lista vazia. */

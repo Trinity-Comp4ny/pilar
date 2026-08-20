@@ -29,13 +29,13 @@ ON CONFLICT (id) DO NOTHING;
 
 SET LOCAL session_replication_role = 'origin';
 
-INSERT INTO public.profiles (id, empresa_id, first_name, last_name, email, role, onboarding_completed, features)
+INSERT INTO public.profiles (id, empresa_id, first_name, last_name, email, role, onboarding_completed)
 VALUES
-  ('77777777-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000ccc', 'Leads', 'Editor', 'leads_editor@test.com', 'user', TRUE, '{"leads": "editor"}'::jsonb),
-  ('77777777-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000ccc', 'Cli', 'Viewer', 'clientes_viewer@test.com', 'user', TRUE, '{"clientes": "viewer"}'::jsonb),
-  ('77777777-0000-0000-0000-000000000003', '00000000-0000-0000-0000-000000000ccc', 'No', 'CRM', 'no_crm@test.com', 'user', TRUE, '{}'::jsonb),
-  ('77777777-0000-0000-0000-000000000004', '00000000-0000-0000-0000-000000000ccc', 'Props', 'Editor', 'props_editor@test.com', 'user', TRUE, '{"propostas": "editor"}'::jsonb)
-ON CONFLICT (id) DO UPDATE SET features = EXCLUDED.features, role = EXCLUDED.role;
+  ('77777777-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000ccc', 'Leads', 'Editor', 'leads_editor@test.com', 'user', TRUE),
+  ('77777777-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000ccc', 'Cli', 'Viewer', 'clientes_viewer@test.com', 'user', TRUE),
+  ('77777777-0000-0000-0000-000000000003', '00000000-0000-0000-0000-000000000ccc', 'No', 'CRM', 'no_crm@test.com', 'user', TRUE),
+  ('77777777-0000-0000-0000-000000000004', '00000000-0000-0000-0000-000000000ccc', 'Props', 'Editor', 'props_editor@test.com', 'user', TRUE)
+ON CONFLICT (id) DO UPDATE SET role = EXCLUDED.role;
 
 CREATE OR REPLACE FUNCTION test_set_auth(p_user_id UUID)
 RETURNS VOID LANGUAGE plpgsql AS $$
@@ -70,12 +70,13 @@ SELECT lives_ok(
 );
 
 -- =============================================
--- Teste 2: leads_editor NÃO lê clientes (sem feature clientes)
+-- Teste 2: membro da empresa lê clientes (ADR 0029: acesso é role + módulo da
+-- empresa; não existe mais recorte por feature no usuário)
 -- =============================================
 SELECT is(
   (SELECT COUNT(*)::INTEGER FROM public.clientes WHERE empresa_id = '00000000-0000-0000-0000-000000000ccc'),
-  0,
-  'leads:editor SEM clientes feature: SELECT clientes retorna 0'
+  1,
+  'membro da empresa lê clientes mesmo sem grant individual'
 );
 
 -- =============================================
@@ -89,29 +90,29 @@ SELECT is(
   'clientes:viewer lê clientes'
 );
 
-SELECT throws_ok(
+SELECT lives_ok(
   $$ INSERT INTO public.clientes (empresa_id, nome, contato, email)
-     VALUES ('00000000-0000-0000-0000-000000000ccc', 'Cli viewer', 'a@a.com', 'a@a.com') $$,
-  '42501',
-  NULL,
-  'clientes:viewer NÃO insere clientes'
+     VALUES ('00000000-0000-0000-0000-000000000ccc', 'Cli membro', 'a@a.com', 'a@a.com') $$,
+  'membro da empresa insere cliente (todo membro é editor, ADR 0029)'
 );
 
 -- =============================================
--- Teste 4: user sem nenhuma feature CRM → vê 0 em todas
+-- Teste 4: user sem grant individual vê o CRM da própria empresa
 -- =============================================
 SELECT test_set_auth('77777777-0000-0000-0000-000000000003');
 
-SELECT is(
+SELECT cmp_ok(
   (SELECT COUNT(*)::INTEGER FROM public.leads WHERE empresa_id = '00000000-0000-0000-0000-000000000ccc'),
-  0,
-  'user sem CRM features: leads retorna 0'
+  '>=',
+  1,
+  'user sem grant: lê leads da própria empresa'
 );
 
-SELECT is(
+SELECT cmp_ok(
   (SELECT COUNT(*)::INTEGER FROM public.clientes WHERE empresa_id = '00000000-0000-0000-0000-000000000ccc'),
-  0,
-  'user sem CRM features: clientes retorna 0'
+  '>=',
+  1,
+  'user sem grant: lê clientes da própria empresa'
 );
 
 -- =============================================
@@ -127,12 +128,13 @@ SELECT lives_ok(
 );
 
 -- =============================================
--- Teste 6: props_editor NÃO lê leads
+-- Teste 6: quem trabalha em propostas também vê os leads da empresa
 -- =============================================
-SELECT is(
+SELECT cmp_ok(
   (SELECT COUNT(*)::INTEGER FROM public.leads WHERE empresa_id = '00000000-0000-0000-0000-000000000ccc'),
-  0,
-  'props:editor sem leads feature: SELECT leads retorna 0'
+  '>=',
+  1,
+  'membro da empresa lê leads (o recorte por feature no usuário não existe mais)'
 );
 
 SELECT * FROM finish();

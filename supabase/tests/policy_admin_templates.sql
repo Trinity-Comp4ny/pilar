@@ -28,12 +28,12 @@ ON CONFLICT (id) DO NOTHING;
 
 SET LOCAL session_replication_role = 'origin';
 
-INSERT INTO public.profiles (id, empresa_id, first_name, last_name, email, role, onboarding_completed, features)
+INSERT INTO public.profiles (id, empresa_id, first_name, last_name, email, role, onboarding_completed)
 VALUES
-  ('99999999-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000eee', 'Admin', 'Final', 'admin_final@test.com', 'admin', TRUE, '{"templates": "editor"}'::jsonb),
-  ('99999999-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000eee', 'User', 'Tpl', 'user_tpl@test.com', 'user', TRUE, '{"templates": "editor"}'::jsonb),
-  ('99999999-0000-0000-0000-000000000003', '00000000-0000-0000-0000-000000000eee', 'User', 'NoTpl', 'user_no_tpl@test.com', 'user', TRUE, '{}'::jsonb)
-ON CONFLICT (id) DO UPDATE SET features = EXCLUDED.features, role = EXCLUDED.role;
+  ('99999999-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000eee', 'Admin', 'Final', 'admin_final@test.com', 'admin', TRUE),
+  ('99999999-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000eee', 'User', 'Tpl', 'user_tpl@test.com', 'user', TRUE),
+  ('99999999-0000-0000-0000-000000000003', '00000000-0000-0000-0000-000000000eee', 'User', 'NoTpl', 'user_no_tpl@test.com', 'user', TRUE)
+ON CONFLICT (id) DO UPDATE SET role = EXCLUDED.role;
 
 CREATE OR REPLACE FUNCTION test_set_auth(p_user_id UUID)
 RETURNS VOID LANGUAGE plpgsql AS $$
@@ -56,16 +56,15 @@ SELECT lives_ok(
 );
 
 -- =============================================
--- Teste 2: user sem feature templates NÃO insere
+-- Teste 2: membro da empresa com templates em early access insere (ADR 0029:
+-- o gate que sobrou é o da empresa, não o do usuário)
 -- =============================================
 SELECT test_set_auth('99999999-0000-0000-0000-000000000003');
 
-SELECT throws_ok(
+SELECT lives_ok(
   $$ INSERT INTO public.templates_projeto (empresa_id, nome, descricao, tipo_servico)
-     VALUES ('00000000-0000-0000-0000-000000000eee', 'Tpl hack', 'd', 'arquitetura') $$,
-  '42501',
-  NULL,
-  'user sem templates: INSERT BLOQUEADO'
+     VALUES ('00000000-0000-0000-0000-000000000eee', 'Tpl membro', 'd', 'arquitetura') $$,
+  'membro da empresa com templates ligado: INSERT funciona'
 );
 
 -- =============================================
@@ -101,9 +100,9 @@ SELECT is(
 SELECT test_set_auth('99999999-0000-0000-0000-000000000001');
 
 SELECT lives_ok(
-  $$ UPDATE public.profiles SET features = '{}'::jsonb
+  $$ UPDATE public.profiles SET last_name = 'EditadoPeloAdmin'
      WHERE id = '99999999-0000-0000-0000-000000000003' $$,
-  'admin atualiza features de outro profile da mesma empresa'
+  'admin atualiza profile de outro membro da mesma empresa'
 );
 
 -- =============================================
@@ -112,7 +111,7 @@ SELECT lives_ok(
 SELECT public.start_impersonation('user', NULL, 'pgtap');
 
 WITH updated AS (
-  UPDATE public.profiles SET features = '{"templates": "viewer"}'::jsonb
+  UPDATE public.profiles SET last_name = 'NaoDeveriaPassar'
   WHERE id = '99999999-0000-0000-0000-000000000002'
   RETURNING 1
 )
@@ -140,7 +139,7 @@ SELECT cmp_ok(
 -- Teste 8: user comum NÃO atualiza profile de outro
 -- =============================================
 WITH updated AS (
-  UPDATE public.profiles SET features = '{}'::jsonb
+  UPDATE public.profiles SET last_name = 'NaoDeveriaPassar'
   WHERE id = '99999999-0000-0000-0000-000000000002'
   RETURNING 1
 )
