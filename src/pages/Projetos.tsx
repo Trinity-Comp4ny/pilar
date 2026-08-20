@@ -26,7 +26,7 @@ import { ListaProjetos } from "@/pages/projetos/components/ListaProjetos";
 import { MapaTab } from "@/pages/projetos/components/MapaTab";
 import { ProjetosMobileList } from "@/pages/projetos/components/ProjetosMobileList";
 import { SortControl } from "@/pages/projetos/components/SortControl";
-import { NotifyTeamDialog, ReopenProjetoDialog } from "@/pages/projetos/components/ProjetoStatusDialogs";
+import { ReopenProjetoDialog } from "@/pages/projetos/components/ProjetoStatusDialogs";
 import { useProjetosData } from "@/pages/projetos/hooks/useProjetosData";
 import { useProjetosUrlState } from "@/pages/projetos/hooks/useProjetosUrlState";
 import { useProjetoStatusMove } from "@/pages/projetos/hooks/useProjetoStatusMove";
@@ -77,16 +77,11 @@ export default function ProjetosKanban() {
   const [renomeando, setRenomeando] = useState<{ id: string; nome: string } | null>(null);
   const [aEtapaExcluir, setAEtapaExcluir] = useState<ProjetoEtapa | null>(null);
 
-  const {
-    pendingDrag,
-    setPendingDrag,
-    pendingReopen,
-    setPendingReopen,
-    applyStatusMove,
-    handleMoveStatus,
-    onDragEnd,
-    notifyProjectStatusChange,
-  } = useProjetoStatusMove(projetos, canEdit, etapas);
+  const { pendingReopen, setPendingReopen, applyStatusMove, handleMoveStatus, onDragEnd } = useProjetoStatusMove(
+    projetos,
+    canEdit,
+    etapas
+  );
 
   const handleCardClick = (projeto: Projeto) => {
     setSelectedProjeto(projeto);
@@ -129,19 +124,13 @@ export default function ProjetosKanban() {
     const id = projetoToDelete.id;
     const nome = projetoToDelete.nome;
     // Soft delete (deleted_at some das listagens), com "Desfazer" no toast — o delete é recuperável.
-    const { error } = await supabase
-      .from("projetos")
-      .update({ deleted_at: new Date().toISOString() })
-      .eq("id", id);
+    const { error } = await supabase.from("projetos").update({ deleted_at: new Date().toISOString() }).eq("id", id);
     if (!error) {
       toast.success(`Projeto "${nome}" excluído`, {
         action: {
           label: "Desfazer",
           onClick: async () => {
-            const { error: restoreError } = await supabase
-              .from("projetos")
-              .update({ deleted_at: null })
-              .eq("id", id);
+            const { error: restoreError } = await supabase.from("projetos").update({ deleted_at: null }).eq("id", id);
             if (restoreError) {
               toast.error("Não foi possível restaurar o projeto", {
                 description: getSafeErrorMessage(restoreError, "Tente novamente em instantes."),
@@ -354,7 +343,13 @@ export default function ProjetosKanban() {
             onChange: (v) => setFilters((f) => ({ ...f, search: v })),
             placeholder: "Buscar projetos",
           }}
-          primaryAction={{ label: "Novo projeto", onClick: handleNewProjeto, icon: Plus, feature: "projetos", dataTour: "onb-novo-projeto" }}
+          primaryAction={{
+            label: "Novo projeto",
+            onClick: handleNewProjeto,
+            icon: Plus,
+            feature: "projetos",
+            dataTour: "onb-novo-projeto",
+          }}
         >
           <ProjetosFilterBar
             pessoas={pessoas}
@@ -372,7 +367,12 @@ export default function ProjetosKanban() {
           </Can>
 
           <Can feature="projetos" action="edit">
-            <Button variant="outline" className="rounded-full text-sm h-9" data-tour="onb-fluxos" onClick={() => setIsFluxosOpen(true)}>
+            <Button
+              variant="outline"
+              className="rounded-full text-sm h-9"
+              data-tour="onb-fluxos"
+              onClick={() => setIsFluxosOpen(true)}
+            >
               <GitBranch className="mr-2 h-4 w-4" />
               Fluxos
             </Button>
@@ -531,18 +531,6 @@ export default function ProjetosKanban() {
         onOpenChange={setIsFluxosOpen}
         disciplinas={disciplinas}
         pessoas={pessoas}
-      />
-
-      <NotifyTeamDialog
-        pending={pendingDrag}
-        onOpenChange={(open) => !open && setPendingDrag(null)}
-        onCancel={() => setPendingDrag(null)}
-        onConfirm={async () => {
-          if (pendingDrag) {
-            await notifyProjectStatusChange(pendingDrag.projetoId, pendingDrag.newStatus);
-            setPendingDrag(null);
-          }
-        }}
       />
 
       <ReopenProjetoDialog

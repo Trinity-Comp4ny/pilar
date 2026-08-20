@@ -12,7 +12,7 @@ const statusConfig = PROJECT_STATUS_CONFIG;
 
 type PendingMove = {
   projetoId: string;
-  /** Status canônico de destino (o bucket da etapa) — usado no email de notificação. */
+  /** Status canônico de destino (o bucket da etapa). */
   newStatus: string;
   /** Etapa de destino no desktop; ausente no mobile (que move por status). */
   etapaId?: string;
@@ -21,17 +21,16 @@ type PendingMove = {
 };
 
 // Regra de mudança de status/coluna do projeto: update otimista no cache + banco,
-// confirmação de notificação por email (pendingDrag), e confirmação de reabertura
-// ao sair de uma coluna do bucket "Concluído" (pendingReopen, que zera data_final).
-// No desktop o board move por etapa_id (o status deriva do bucket no banco); no
-// mobile, que agrupa pelos 6 status canônicos, move por status direto.
+// notificação in-app automática dos responsáveis (sem perguntar, sem email — ver
+// rpc_notificar_projeto_status), e confirmação de reabertura ao sair de uma coluna
+// do bucket "Concluído" (pendingReopen, que zera data_final). No desktop o board
+// move por etapa_id (o status deriva do bucket no banco); no mobile, que agrupa
+// pelos 6 status canônicos, move por status direto.
 export function useProjetoStatusMove(projetos: Projeto[], canEdit: boolean, etapas: ProjetoEtapa[] = []) {
   const queryClient = useQueryClient();
 
   const bucketDe = (etapaId?: string | null) => etapas.find((e) => e.id === etapaId)?.bucket;
   const nomeDe = (etapaId?: string | null) => etapas.find((e) => e.id === etapaId)?.nome;
-
-  const [pendingDrag, setPendingDrag] = useState<PendingMove | null>(null);
 
   // Reabertura: quando projeto sai de uma coluna "Concluído", pede confirmação
   // antes de remover a data_final registrada — evita perda silenciosa em drag acidental.
@@ -104,7 +103,7 @@ export function useProjetoStatusMove(projetos: Projeto[], canEdit: boolean, etap
     if (!ok) return;
 
     if (newStatus !== PROJECT_STATUS.CANCELADO) {
-      setPendingDrag({ projetoId, newStatus, projetoNome: projeto?.nome ?? undefined });
+      void notifyProjectStatusChange(projetoId, newStatus);
     }
   };
 
@@ -138,38 +137,31 @@ export function useProjetoStatusMove(projetos: Projeto[], canEdit: boolean, etap
     if (!ok) return;
 
     if (bucketDestino !== PROJECT_STATUS.CANCELADO) {
-      setPendingDrag({
-        projetoId: draggableId,
-        newStatus: bucketDestino,
-        etapaId: etapaDestino,
-        projetoNome: projeto?.nome ?? undefined,
-      });
+      void notifyProjectStatusChange(draggableId, bucketDestino);
     }
   };
 
-  const notifyProjectStatusChange = async (draggableId: string, newStatus: string) => {
+  // Notifica in-app os responsáveis das disciplinas do projeto (sino), silenciosamente —
+  // sem diálogo de confirmação e sem email. Falha aqui não deve travar o fluxo de mover.
+  const notifyProjectStatusChange = async (projetoId: string, newStatus: string) => {
     try {
-      const { error } = await supabase.functions.invoke("notify-project-people", {
-        body: { projetoId: draggableId, novoStatus: newStatus },
+      const { error } = await supabase.rpc("rpc_notificar_projeto_status", {
+        p_projeto_id: projetoId,
+        p_novo_status: newStatus,
       });
       if (error) {
-        toast.error("Erro ao enviar notificação por email");
-        return;
+        monitoring.captureException(error, { context: "notifyProjectStatusChange" });
       }
-      toast.success("Notificação por email enviada");
     } catch (err) {
       monitoring.captureException(err, { context: "notifyProjectStatusChange" });
     }
   };
 
   return {
-    pendingDrag,
-    setPendingDrag,
     pendingReopen,
     setPendingReopen,
     applyStatusMove,
     handleMoveStatus,
     onDragEnd,
-    notifyProjectStatusChange,
   };
 }

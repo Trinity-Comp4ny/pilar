@@ -18,6 +18,7 @@ import { env } from "@/lib/env";
 import { signupSchema, signupDefaultValues, type SignupFormData } from "@/schemas";
 import { translateAuthError } from "@/lib/authErrors";
 import { TERMS_VERSION, PRIVACY_VERSION } from "@/lib/legalVersions";
+import { Logo } from "@/components/Logo";
 
 export default function Signup() {
   usePageTitle("Criar conta");
@@ -108,11 +109,7 @@ export default function Signup() {
         <div className="w-full max-w-[400px] space-y-8 animate-in fade-in slide-in-from-left-8 duration-700">
           <div className="text-center space-y-2">
             <div className="flex justify-center mb-6">
-              <img
-                src="/pilar-logo.svg"
-                alt="Pilar"
-                className="h-12 w-auto hover:rotate-12 transition-transform duration-300"
-              />
+              <Logo size="lg" />
             </div>
             <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-ink">Criar conta</h1>
             <p className="text-sm text-ink-soft">14 dias grátis, sem cartão</p>
@@ -408,13 +405,8 @@ export default function Signup() {
 
         <div className="relative z-10 flex flex-col justify-between h-full w-full p-16 text-white">
           <div className="animate-in fade-in slide-in-from-top-8 duration-700 flex justify-end">
-            <div className="flex items-center gap-3 opacity-80">
-              <img
-                src="/pilar-logo.svg"
-                alt="Pilar"
-                className="h-8 w-8 brightness-0 invert hover:rotate-12 transition-transform duration-300"
-              />
-              <span className="text-xl font-medium tracking-tight">Pilar</span>
+            <div className="opacity-80">
+              <Logo tone="inverted" size="sm" />
             </div>
           </div>
 

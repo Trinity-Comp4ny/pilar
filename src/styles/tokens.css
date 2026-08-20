@@ -123,6 +123,7 @@
   /* Landing */
   --surface-landing: var(--c-paper-100);
   --surface-landing-alt: var(--c-paper-200);
+  --surface-landing-white: var(--c-paper-0); /* hero: branco puro, referência Notion */
   --border-landing: var(--c-paper-300);
 
   /* App shell — consumidas via shadcn/ui (ver index.css) */

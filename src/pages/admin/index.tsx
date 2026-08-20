@@ -225,7 +225,6 @@ export default function Admin() {
           <FeaturesEmpresaTab
             companyFeatures={companyFeatures}
             setCompanyFeatures={setCompanyFeatures}
-            currentPlan={currentPlan}
             users={users}
           />
         </TabsContent>

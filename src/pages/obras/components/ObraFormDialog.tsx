@@ -7,15 +7,7 @@ import { toast } from "sonner";
 import { Loader2, MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Switch } from "@/components/ui/switch";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import { FormDialog } from "@/components/FormDialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -204,200 +196,188 @@ export function ObraFormDialog({ open, onOpenChange, obra, onSaved }: Props) {
   const saving = criar.isPending || atualizar.isPending;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle>{isEdit ? "Editar obra" : "Nova obra"}</DialogTitle>
-          <DialogDescription>
-            Registre a obra e a localização. O CEP alimenta a previsão do tempo na aba Clima.
-          </DialogDescription>
-        </DialogHeader>
+    <FormDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title={isEdit ? "Editar obra" : "Nova obra"}
+      description="Registre a obra e a localização. O CEP alimenta a previsão do tempo na aba Clima."
+      size="md"
+      onSubmit={onSubmit}
+      isPending={saving}
+      submitLabel={isEdit ? "Salvar" : "Criar obra"}
+    >
+      <div className="space-y-1.5">
+        <Label htmlFor="nome">Nome da obra *</Label>
+        <Input id="nome" {...register("nome")} placeholder="Ex.: Residência Alphaville" />
+        {formState.errors.nome && <p className="text-xs text-danger-strong">{formState.errors.nome.message}</p>}
+      </div>
 
-        <form onSubmit={onSubmit} className="space-y-4">
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-1.5">
+          <Label htmlFor="status">Status</Label>
+          <Select value={watch("status")} onValueChange={(v) => setValue("status", v as FormData["status"])}>
+            <SelectTrigger id="status">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {STATUS_OBRA_OPCOES.map((s) => (
+                <SelectItem key={s.value} value={s.value}>
+                  {s.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="responsavel">Responsável</Label>
+          <Select value={watch("responsavel_id")} onValueChange={(v) => setValue("responsavel_id", v)}>
+            <SelectTrigger id="responsavel">
+              <SelectValue placeholder="Ninguém" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={SEM_RESPONSAVEL}>Ninguém</SelectItem>
+              {pessoas.map((p) => (
+                <SelectItem key={p.id} value={p.id}>
+                  {p.nome}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-1.5">
+          <Label htmlFor="modelo_cobranca">Cobrança</Label>
+          <Select
+            value={watch("modelo_cobranca")}
+            onValueChange={(v) => setValue("modelo_cobranca", v as FormData["modelo_cobranca"])}
+          >
+            <SelectTrigger id="modelo_cobranca">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="administracao">Administração</SelectItem>
+              <SelectItem value="preco_fechado">Preço fechado</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        {watch("modelo_cobranca") === "administracao" && (
           <div className="space-y-1.5">
-            <Label htmlFor="nome">Nome da obra *</Label>
-            <Input id="nome" {...register("nome")} placeholder="Ex.: Residência Alphaville" />
-            {formState.errors.nome && <p className="text-xs text-danger-strong">{formState.errors.nome.message}</p>}
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="status">Status</Label>
-              <Select value={watch("status")} onValueChange={(v) => setValue("status", v as FormData["status"])}>
-                <SelectTrigger id="status">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {STATUS_OBRA_OPCOES.map((s) => (
-                    <SelectItem key={s.value} value={s.value}>
-                      {s.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="responsavel">Responsável</Label>
-              <Select value={watch("responsavel_id")} onValueChange={(v) => setValue("responsavel_id", v)}>
-                <SelectTrigger id="responsavel">
-                  <SelectValue placeholder="Ninguém" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={SEM_RESPONSAVEL}>Ninguém</SelectItem>
-                  {pessoas.map((p) => (
-                    <SelectItem key={p.id} value={p.id}>
-                      {p.nome}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="modelo_cobranca">Cobrança</Label>
-              <Select
-                value={watch("modelo_cobranca")}
-                onValueChange={(v) => setValue("modelo_cobranca", v as FormData["modelo_cobranca"])}
-              >
-                <SelectTrigger id="modelo_cobranca">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="administracao">Administração</SelectItem>
-                  <SelectItem value="preco_fechado">Preço fechado</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            {watch("modelo_cobranca") === "administracao" && (
-              <div className="space-y-1.5">
-                <Label htmlFor="taxa">Taxa de administração (%)</Label>
-                <Input
-                  id="taxa"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  max="100"
-                  placeholder="Ex.: 10"
-                  {...register("taxa_administracao_pct")}
-                />
-              </div>
-            )}
-          </div>
-          {watch("modelo_cobranca") === "administracao" && (
-            <p className="-mt-2 text-xs text-muted-foreground">
-              A taxa vira receita do escritório automaticamente a cada despesa lançada na conta da obra.
-            </p>
-          )}
-
-          <div className="space-y-1.5">
-            <Label htmlFor="cep">CEP da obra</Label>
-            <div className="relative">
-              <Input
-                id="cep"
-                inputMode="numeric"
-                placeholder="00000-000"
-                {...register("cep", {
-                  onChange: (e) => buscarCep(e.target.value),
-                })}
-              />
-              {buscandoCep && (
-                <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-muted-foreground" />
-              )}
-            </div>
-            {local?.localizacao && (
-              <p className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-                <MapPin className="h-3.5 w-3.5" />
-                {local.localizacao}
-                {local.latitude == null && " (sem coordenadas — clima indisponível)"}
-              </p>
-            )}
-          </div>
-
-          {mostrarProjeto && (
-            <div className="space-y-1.5">
-              <Label htmlFor="projeto">Projeto (opcional)</Label>
-              <Select value={watch("projeto_id")} onValueChange={(v) => setValue("projeto_id", v)}>
-                <SelectTrigger id="projeto">
-                  <SelectValue placeholder="Sem projeto" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={SEM_PROJETO}>Sem projeto</SelectItem>
-                  {projetosDisponiveis.map((p) => (
-                    <SelectItem key={p.id} value={p.id}>
-                      {p.nome}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-muted-foreground">
-                Vincule para conectar a execução ao faturamento e à margem do projeto.
-              </p>
-            </div>
-          )}
-
-          {/* Portal do cliente: quem vê e se está publicada */}
-          <div className="space-y-1.5">
-            <Label htmlFor="cliente">Cliente</Label>
-            <Select value={watch("cliente_id")} onValueChange={(v) => setValue("cliente_id", v)}>
-              <SelectTrigger id="cliente">
-                <SelectValue placeholder="Sem cliente" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={SEM_CLIENTE}>Sem cliente</SelectItem>
-                {clientes.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>
-                    {c.nome}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="flex items-start justify-between gap-3 rounded-lg border p-3">
-            <div className="space-y-0.5">
-              <Label htmlFor="visivel_portal">Visível no portal do cliente</Label>
-              <p className="text-xs text-muted-foreground">
-                O dono acompanha o andamento e a prestação de contas. Só vale para obra em administração com cliente
-                vinculado.
-              </p>
-            </div>
-            <Switch
-              id="visivel_portal"
-              checked={watch("visivel_portal")}
-              onCheckedChange={(v) => setValue("visivel_portal", v)}
+            <Label htmlFor="taxa">Taxa de administração (%)</Label>
+            <Input
+              id="taxa"
+              type="number"
+              step="0.01"
+              min="0"
+              max="100"
+              placeholder="Ex.: 10"
+              {...register("taxa_administracao_pct")}
             />
           </div>
+        )}
+      </div>
+      {watch("modelo_cobranca") === "administracao" && (
+        <p className="-mt-2 text-xs text-muted-foreground">
+          A taxa vira receita do escritório automaticamente a cada despesa lançada na conta da obra.
+        </p>
+      )}
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="inicio">Início previsto</Label>
-              <Input id="inicio" type="date" {...register("data_inicio_prevista")} />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="fim">Fim previsto</Label>
-              <Input id="fim" type="date" {...register("data_fim_prevista")} />
-            </div>
-          </div>
+      <div className="space-y-1.5">
+        <Label htmlFor="cep">CEP da obra</Label>
+        <div className="relative">
+          <Input
+            id="cep"
+            inputMode="numeric"
+            placeholder="00000-000"
+            {...register("cep", {
+              onChange: (e) => buscarCep(e.target.value),
+            })}
+          />
+          {buscandoCep && (
+            <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-muted-foreground" />
+          )}
+        </div>
+        {local?.localizacao && (
+          <p className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+            <MapPin className="h-3.5 w-3.5" />
+            {local.localizacao}
+            {local.latitude == null && " (sem coordenadas — clima indisponível)"}
+          </p>
+        )}
+      </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="obs">Observações</Label>
-            <Textarea id="obs" rows={2} {...register("observacoes")} />
-          </div>
+      {mostrarProjeto && (
+        <div className="space-y-1.5">
+          <Label htmlFor="projeto">Projeto (opcional)</Label>
+          <Select value={watch("projeto_id")} onValueChange={(v) => setValue("projeto_id", v)}>
+            <SelectTrigger id="projeto">
+              <SelectValue placeholder="Sem projeto" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={SEM_PROJETO}>Sem projeto</SelectItem>
+              {projetosDisponiveis.map((p) => (
+                <SelectItem key={p.id} value={p.id}>
+                  {p.nome}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-muted-foreground">
+            Vincule para conectar a execução ao faturamento e à margem do projeto.
+          </p>
+        </div>
+      )}
 
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Cancelar
-            </Button>
-            <Button type="submit" variant="brand" disabled={saving}>
-              {saving && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}
-              {isEdit ? "Salvar" : "Criar obra"}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+      {/* Portal do cliente: quem vê e se está publicada */}
+      <div className="space-y-1.5">
+        <Label htmlFor="cliente">Cliente</Label>
+        <Select value={watch("cliente_id")} onValueChange={(v) => setValue("cliente_id", v)}>
+          <SelectTrigger id="cliente">
+            <SelectValue placeholder="Sem cliente" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={SEM_CLIENTE}>Sem cliente</SelectItem>
+            {clientes.map((c) => (
+              <SelectItem key={c.id} value={c.id}>
+                {c.nome}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="flex items-start justify-between gap-3 rounded-lg border p-3">
+        <div className="space-y-0.5">
+          <Label htmlFor="visivel_portal">Visível no portal do cliente</Label>
+          <p className="text-xs text-muted-foreground">
+            O dono acompanha o andamento e a prestação de contas. Só vale para obra em administração com cliente
+            vinculado.
+          </p>
+        </div>
+        <Switch
+          id="visivel_portal"
+          checked={watch("visivel_portal")}
+          onCheckedChange={(v) => setValue("visivel_portal", v)}
+        />
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-1.5">
+          <Label htmlFor="inicio">Início previsto</Label>
+          <Input id="inicio" type="date" {...register("data_inicio_prevista")} />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="fim">Fim previsto</Label>
+          <Input id="fim" type="date" {...register("data_fim_prevista")} />
+        </div>
+      </div>
+
+      <div className="space-y-1.5">
+        <Label htmlFor="obs">Observações</Label>
+        <Textarea id="obs" rows={2} {...register("observacoes")} />
+      </div>
+    </FormDialog>
   );
 }
 

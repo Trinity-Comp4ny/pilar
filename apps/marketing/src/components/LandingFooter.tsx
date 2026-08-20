@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { APP_URL } from "../config";
 import { requestCookieConsentReview } from "../cookieConsent";
+import { Logo } from "./Logo";
 
 export function LandingFooter() {
   return (
@@ -8,21 +9,8 @@ export function LandingFooter() {
       <div className="container mx-auto px-6 md:px-10">
         <div className="grid md:grid-cols-4 gap-12 mb-12">
           <div className="col-span-1 md:col-span-2">
-            <div className="flex items-center gap-3 mb-6">
-              <img
-                src="/pilar-logo.svg"
-                alt="Pilar"
-                width={32}
-                height={32}
-                className="h-8 w-8 brightness-0 invert hover:rotate-12 transition-transform duration-300"
-              />
-              <span className="text-xl font-medium tracking-tight">
-                Pilar<sup className="text-[9px] font-normal text-slate-300 ml-0.5 relative -top-2">®</sup>
-              </span>
-              <span className="relative flex h-1.5 w-1.5 ml-1">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand opacity-60" />
-                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-brand" />
-              </span>
+            <div className="mb-6">
+              <Logo tone="inverted" size="sm" />
             </div>
             <p className="text-slate-300 max-w-sm mb-6 font-light leading-relaxed">
               O sistema de gestão dos escritórios brasileiros de engenharia, com PIX, nota fiscal e linguagem técnica

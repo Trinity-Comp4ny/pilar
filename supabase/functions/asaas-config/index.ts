@@ -26,7 +26,7 @@ serve(
       const empresaId = profile.empresa_id as string;
 
       const { action, api_key, ambiente } = (await req.json()) as {
-        action: "get" | "save" | "regenerar_token" | "remover" | "testar";
+        action: "get" | "save" | "remover" | "testar";
         api_key?: string;
         ambiente?: string;
       };
@@ -35,19 +35,23 @@ serve(
       if (action === "get") {
         const { data } = await adminClient
           .from("asaas_config")
-          .select("ambiente, webhook_token, updated_at")
+          .select("ambiente, updated_at")
           .eq("empresa_id", empresaId)
           .maybeSingle();
 
         return new Response(
           JSON.stringify({
-            data: data ? { configurado: true, ambiente: data.ambiente, webhook_token: data.webhook_token } : null,
+            data: data ? { configurado: true, ambiente: data.ambiente } : null,
           }),
           { headers: { ...corsH, "Content-Type": "application/json" }, status: 200 }
         );
       }
 
-      // Salva config
+      // Salva config. A api_key nunca é escrita direto na tabela: primeiro
+      // garante a linha (ambiente + empresa_id, sem segredo), depois — só se
+      // uma chave nova foi enviada — chama a RPC que cifra antes de gravar
+      // (set_asaas_api_key, migration 20260850000000). Nunca no mesmo upsert:
+      // a RPC precisa que a linha já exista pra fazer o UPDATE.
       if (action === "save") {
         if (!["sandbox", "producao"].includes(ambiente ?? "")) throw new Error("Ambiente inválido");
 
@@ -60,53 +64,36 @@ serve(
 
         if (!existing && !api_key?.trim()) throw new Error("API key é obrigatória na primeira configuração");
 
-        const upsertPayload: Record<string, unknown> = {
-          empresa_id: empresaId,
-          ambiente,
-          updated_at: new Date().toISOString(),
-        };
+        const { error: upsertError } = await adminClient
+          .from("asaas_config")
+          .upsert(
+            { empresa_id: empresaId, ambiente, updated_at: new Date().toISOString() },
+            { onConflict: "empresa_id" }
+          );
+
+        if (upsertError) throw upsertError;
 
         if (api_key?.trim()) {
-          upsertPayload.api_key = api_key.trim();
+          const { error: keyError } = await adminClient.rpc("set_asaas_api_key", {
+            p_empresa_id: empresaId,
+            p_api_key: api_key.trim(),
+          });
+          if (keyError) throw keyError;
         }
 
-        const { error } = await adminClient.from("asaas_config").upsert(upsertPayload, { onConflict: "empresa_id" });
-
-        if (error) throw error;
-
-        // Retorna config atualizada (com webhook_token)
         const { data: updated } = await adminClient
           .from("asaas_config")
-          .select("ambiente, webhook_token")
+          .select("ambiente")
           .eq("empresa_id", empresaId)
           .single();
 
         return new Response(
           JSON.stringify({
             success: true,
-            data: updated
-              ? { configurado: true, ambiente: updated.ambiente, webhook_token: updated.webhook_token }
-              : null,
+            data: updated ? { configurado: true, ambiente: updated.ambiente } : null,
           }),
           { headers: { ...corsH, "Content-Type": "application/json" }, status: 200 }
         );
-      }
-
-      // Regenera o webhook_token da empresa
-      if (action === "regenerar_token") {
-        const novoToken = crypto.randomUUID().replace(/-/g, "") + crypto.randomUUID().replace(/-/g, "");
-
-        const { error } = await adminClient
-          .from("asaas_config")
-          .update({ webhook_token: novoToken, updated_at: new Date().toISOString() })
-          .eq("empresa_id", empresaId);
-
-        if (error) throw error;
-
-        return new Response(JSON.stringify({ success: true, webhook_token: novoToken }), {
-          headers: { ...corsH, "Content-Type": "application/json" },
-          status: 200,
-        });
       }
 
       // Remove a integração (desconecta o Asaas desta empresa)
@@ -119,23 +106,30 @@ serve(
         });
       }
 
-      // Testa a conexão com o Asaas usando a chave salva (server-side)
+      // Testa a conexão com o Asaas usando a chave salva (server-side). A chave
+      // nunca é selecionada direto da coluna: sempre via get_asaas_api_key, que
+      // decifra (migration 20260850000000). ambiente continua vindo direto da
+      // tabela porque não é segredo.
       if (action === "testar") {
         const { data: cfg } = await adminClient
           .from("asaas_config")
-          .select("api_key, ambiente")
+          .select("ambiente")
           .eq("empresa_id", empresaId)
           .maybeSingle();
 
-        if (!cfg?.api_key) throw new Error("Nenhuma integração configurada para testar");
+        if (!cfg) throw new Error("Nenhuma integração configurada para testar");
 
-        const base =
-          cfg.ambiente === "producao" ? "https://api.asaas.com/v3" : "https://sandbox.asaas.com/api/v3";
+        const { data: apiKeyDecifrada, error: keyError } = await adminClient.rpc("get_asaas_api_key", {
+          p_empresa_id: empresaId,
+        });
+        if (keyError || !apiKeyDecifrada) throw new Error("Nenhuma integração configurada para testar");
+
+        const base = cfg.ambiente === "producao" ? "https://api.asaas.com/v3" : "https://sandbox.asaas.com/api/v3";
 
         let res: Response;
         try {
           res = await fetch(`${base}/myAccount`, {
-            headers: { access_token: cfg.api_key as string, "Content-Type": "application/json" },
+            headers: { access_token: apiKeyDecifrada as string, "Content-Type": "application/json" },
           });
         } catch {
           return new Response(
@@ -146,9 +140,7 @@ serve(
 
         if (!res.ok) {
           const mensagem =
-            res.status === 401
-              ? "Chave inválida ou sem permissão."
-              : `Falha na conexão (HTTP ${res.status}).`;
+            res.status === 401 ? "Chave inválida ou sem permissão." : `Falha na conexão (HTTP ${res.status}).`;
           return new Response(JSON.stringify({ success: true, valido: false, mensagem }), {
             headers: { ...corsH, "Content-Type": "application/json" },
             status: 200,
@@ -156,10 +148,10 @@ serve(
         }
 
         const acc = (await res.json().catch(() => ({}))) as { name?: string; email?: string };
-        return new Response(
-          JSON.stringify({ success: true, valido: true, conta: acc?.name ?? acc?.email ?? null }),
-          { headers: { ...corsH, "Content-Type": "application/json" }, status: 200 }
-        );
+        return new Response(JSON.stringify({ success: true, valido: true, conta: acc?.name ?? acc?.email ?? null }), {
+          headers: { ...corsH, "Content-Type": "application/json" },
+          status: 200,
+        });
       }
 
       throw new Error("action inválida");

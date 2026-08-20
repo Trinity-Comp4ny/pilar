@@ -45,8 +45,13 @@ VITE_SUPABASE_ANON_KEY=sua_chave_anonima_do_supabase
 4. **Inicie o servidor de desenvolvimento**
 
 ```bash
-npm run dev
+npm run dev:app
 ```
+
+> `npm run dev` (sem sufixo) sobe o ambiente local completo (Supabase via Docker
+>
+> - edge functions + app + LP marketing) — exige Docker e `supabase start`. Pra
+>   só rodar o front contra o Supabase remoto configurado acima, use `dev:app`.
 
 ## 📁 Estrutura do Projeto
 
@@ -134,8 +139,11 @@ O projeto usa Supabase como backend. As tabelas principais incluem:
 ## 🛠️ Scripts Disponíveis
 
 ```bash
-# Desenvolvimento
+# Desenvolvimento (Supabase local + functions + app + LP)
 npm run dev
+
+# Desenvolvimento (só o app, contra Supabase remoto)
+npm run dev:app
 
 # Build para produção
 npm run build

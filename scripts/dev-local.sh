@@ -32,10 +32,10 @@ fi
 echo "▶ aplicando migrations pendentes no banco local…"
 supabase migration up --local
 
-echo "▶ servindo Edge Functions + Vite — Ctrl+C encerra os dois."
+echo "▶ servindo Edge Functions + Vite (só o app, sem LP marketing) — Ctrl+C encerra os dois."
 supabase functions serve &
 FUNCS_PID=$!
-npm run dev &
+npm run dev:app &
 VITE_PID=$!
 
 trap 'echo; echo "▶ encerrando…"; kill "$FUNCS_PID" "$VITE_PID" 2>/dev/null || true' INT TERM

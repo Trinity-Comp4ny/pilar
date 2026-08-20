@@ -66,6 +66,7 @@ const ClienteDashboard = lazy(() => import("./pages/cliente/ClienteDashboard"));
 const ClienteObraDetail = lazy(() => import("./pages/cliente/ClienteObraDetail"));
 const ClienteProjetoDetail = lazy(() => import("./pages/cliente/ClienteProjetoDetail"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+const StatusPage = lazy(() => import("./pages/status"));
 const Admin = lazy(() => import("./pages/admin"));
 const UltraAdmin = lazy(() => import("./pages/ultra-admin"));
 const MfaChallengePage = lazy(() => import("./pages/MfaChallengePage"));
@@ -153,6 +154,7 @@ const App = () => {
                       <Route path="/auth/callback" element={<AuthCallback />} />
                       <Route path="/forgot-password" element={<ForgotPassword />} />
                       <Route path="/reset-password" element={<PasswordReset />} />
+                      <Route path="/status" element={<StatusPage />} />
 
                       <Route element={<PrivateRoute />}>
                         <Route path="/inicio" element={<Inicio />} />

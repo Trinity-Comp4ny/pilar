@@ -25,7 +25,7 @@ const SIZE = {
 interface FormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  title: string;
+  title: React.ReactNode;
   description?: React.ReactNode;
   size?: keyof typeof SIZE;
   /** Disparado no submit do form (o preventDefault já é aplicado). */
@@ -55,7 +55,7 @@ export function FormDialog({
   children,
 }: FormDialogProps) {
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(next) => !isPending && onOpenChange(next)}>
       {/* max-w vem por último no cn: tailwind-merge sobrepõe o default do DialogContent. */}
       <DialogContent className={cn(SIZE[size])}>
         <DialogHeader>

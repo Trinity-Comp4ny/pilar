@@ -1,7 +1,8 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, Navigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft, ArrowRight, Check, Loader2, ShieldCheck } from "lucide-react";
 import { usePageTitle } from "@/hooks/usePageTitle";
+import { monitoring } from "@/lib/monitoring";
 import { usePlans } from "@/pages/planos/hooks/usePlans";
 import type { BillingCycle } from "@/pages/planos/components/CycleToggle";
 import { CheckoutForm } from "./components/CheckoutForm";
@@ -10,6 +11,7 @@ import { BoletoPayment } from "./components/BoletoPayment";
 import { PaymentSuccess } from "./components/PaymentSuccess";
 import { useCheckoutCreate, type CheckoutResponse } from "./hooks/useCheckoutCreate";
 import { useCheckoutStatus } from "./hooks/useCheckoutStatus";
+import { Logo } from "@/components/Logo";
 
 function formatBRL(value: number): string {
   return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -34,6 +36,18 @@ export default function Checkout() {
 
   const effectiveStatus = status?.payment_status ?? checkoutResult?.payment_status ?? null;
   const inviteDispatched = status?.invite_dispatched ?? false;
+
+  // Guard por ref: effectiveStatus continua "paid" em re-renders subsequentes,
+  // sem isso a métrica dispararia de novo a cada render.
+  const checkoutCompletedRef = useRef(false);
+  useEffect(() => {
+    if (effectiveStatus === "paid" && !checkoutCompletedRef.current) {
+      checkoutCompletedRef.current = true;
+      monitoring.recordMetric("checkout.completed", 1, {
+        tags: { plan: planSlug, billing_type: checkoutResult?.billing_type ?? "", cycle },
+      });
+    }
+  }, [effectiveStatus, planSlug, checkoutResult?.billing_type, cycle]);
 
   if (!planSlug) return <Navigate to="/planos" replace />;
 
@@ -67,15 +81,8 @@ export default function Checkout() {
             Voltar
           </Link>
 
-          <a href="/" className="flex items-center gap-2 group">
-            <img
-              src="/pilar-logo.svg"
-              alt="Pilar"
-              className="h-7 w-auto transition-transform duration-500 group-hover:rotate-12"
-            />
-            <span className="text-lg font-medium tracking-tight text-ink-soft">
-              Pilar<sup className="text-[9px] font-normal text-ink-disabled ml-0.5 relative -top-2">®</sup>
-            </span>
+          <a href="/">
+            <Logo size="xs" className="text-ink-soft" />
           </a>
 
           <div className="flex items-center gap-1 text-[11px] text-ink-disabled">
@@ -87,7 +94,6 @@ export default function Checkout() {
 
       <main className="container mx-auto px-6 md:px-10 py-10 max-w-5xl">
         <div className="grid lg:grid-cols-[1fr_360px] gap-8 items-start">
-
           {/* Formulário */}
           <section className="bg-white rounded-2xl border border-paper-border p-8 shadow-sm">
             {effectiveStatus === "paid" ? (

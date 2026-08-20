@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
@@ -16,13 +17,27 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
-import { Calendar, CircleDot, Clock, Flag, Layers, MessageSquare, Plus, Tag, Trash2, User } from "lucide-react";
+import {
+  Calendar,
+  CircleDot,
+  Clock,
+  Flag,
+  Layers,
+  ListChecks,
+  MessageSquare,
+  Plus,
+  Tag,
+  Trash2,
+  User,
+  X,
+} from "lucide-react";
 import { PROJECT_PRIORITY, PRIORITY_OPTIONS, PROJECT_PRIORITY_CONFIG } from "@/constants";
 import { type DisciplinaComentario, type DisciplinaResponsavel, disciplinaStatusOptions } from "@/types/projetos";
 import { DatePicker } from "@/components/ui/date-picker";
 import { LabelsEditor } from "@/components/LabelsEditor";
 import { LinksEditor, type LinkItem } from "@/components/LinksEditor";
 import { AtividadeComposer } from "./AtividadeComposer";
+import { useDisciplinaChecklist } from "@/hooks/useProjetoDisciplinaChecklist";
 
 interface DisciplinaDetailDialogProps {
   open: boolean;
@@ -133,6 +148,11 @@ function DisciplinaDetailBody({
   const persistida = !!disciplina.id;
   const comentarios = disciplina.comentarios ?? [];
   const temAtividades = persistida && !!onUpdateComentarios;
+  const checklist = useDisciplinaChecklist(persistida ? disciplina.id : undefined);
+  const checklistItens = checklist.data ?? [];
+  const checklistConcluidos = checklistItens.filter((i) => i.concluido).length;
+  const checklistIncompleto = checklistItens.length > 0 && checklistConcluidos < checklistItens.length;
+  const [novoItemChecklist, setNovoItemChecklist] = useState("");
 
   const salvarNumero = (raw: string, inicial: string, save?: (n: number) => void) => {
     if (!save || raw.trim() === inicial.trim()) return;
@@ -198,7 +218,16 @@ function DisciplinaDetailBody({
                   </SelectTrigger>
                   <SelectContent>
                     {disciplinaStatusOptions.map((opt) => (
-                      <SelectItem key={opt} value={opt}>
+                      <SelectItem
+                        key={opt}
+                        value={opt}
+                        disabled={opt === "Concluído" && checklistIncompleto}
+                        title={
+                          opt === "Concluído" && checklistIncompleto
+                            ? "Conclua todos os itens do checklist antes"
+                            : undefined
+                        }
+                      >
                         {opt}
                       </SelectItem>
                     ))}
@@ -349,6 +378,69 @@ function DisciplinaDetailBody({
                   rows={5}
                   placeholder="Detalhes, escopo, o que precisa ser entregue..."
                 />
+              </div>
+            )}
+
+            {persistida && (
+              <div className="space-y-2 border-t pt-6">
+                <Label className="flex items-center gap-2 text-sm font-semibold">
+                  <ListChecks className="h-4 w-4" /> Checklist
+                  {checklistItens.length > 0 && (
+                    <span className="font-normal text-xs text-muted-foreground">
+                      {checklistConcluidos}/{checklistItens.length}
+                    </span>
+                  )}
+                </Label>
+                <div className="max-w-2xl space-y-1">
+                  {checklistItens.map((item) => (
+                    <div key={item.id} className="flex items-center gap-2 rounded px-1 py-1 hover:bg-muted/40">
+                      <Checkbox
+                        checked={item.concluido}
+                        onCheckedChange={(checked) =>
+                          checklist.toggleItem.mutate({ id: item.id, concluido: checked === true })
+                        }
+                      />
+                      <span className={item.concluido ? "text-sm text-muted-foreground line-through" : "text-sm"}>
+                        {item.texto}
+                      </span>
+                      <button
+                        type="button"
+                        className="ml-auto text-muted-foreground hover:text-danger-mid"
+                        onClick={() => checklist.removeItem.mutate(item.id)}
+                        aria-label={`Remover item ${item.texto}`}
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                  <div className="flex gap-2 pt-1">
+                    <Input
+                      value={novoItemChecklist}
+                      onChange={(e) => setNovoItemChecklist(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key !== "Enter" || !novoItemChecklist.trim()) return;
+                        e.preventDefault();
+                        checklist.addItem.mutate(novoItemChecklist.trim());
+                        setNovoItemChecklist("");
+                      }}
+                      placeholder="Adicionar item…"
+                      className="h-9 text-sm"
+                    />
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="outline"
+                      disabled={!novoItemChecklist.trim()}
+                      onClick={() => {
+                        checklist.addItem.mutate(novoItemChecklist.trim());
+                        setNovoItemChecklist("");
+                      }}
+                      aria-label="Adicionar item ao checklist"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
               </div>
             )}
 

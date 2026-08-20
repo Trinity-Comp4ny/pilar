@@ -21,6 +21,9 @@ const log = createLogger("invite-user");
 const ASSIGNABLE_ROLES = ["admin", "user"] as const;
 type AssignableRole = (typeof ASSIGNABLE_ROLES)[number];
 
+// Espelha FeatureKey de src/lib/features.ts (Deno não importa do app Vite).
+// Coberto por src/lib/features.test.ts (teste de sincronia): mudar o catálogo
+// do front sem atualizar aqui quebra o teste, não silenciosamente em produção.
 const FEATURE_KEYS = new Set([
   "dashboard",
   "relatorios",
@@ -28,16 +31,25 @@ const FEATURE_KEYS = new Set([
   "propostas",
   "clientes",
   "projetos",
-  "planejamento",
-  "timesheet",
   "mapa",
   "financeiro",
   "pessoas",
   "metas",
   "portal_cliente",
+  "ai_chat",
+  "meu_trabalho",
+  "obras",
+  "obras_fornecedores",
+  "obras_clima",
+  "obras_diario",
+  "obras_cronograma",
+  "obras_cotacoes",
+  "obras_estoque",
+  "obras_conta",
   "ai_hub",
   "capacidade",
   "templates",
+  "timesheet",
 ]);
 
 const VALID_LEVELS = new Set(["viewer", "editor"]);

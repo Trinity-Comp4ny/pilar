@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -238,6 +239,15 @@ export function CronogramaTab({
     onCommit: async (rowIdx, { start, end }) => {
       if (!onDatesChange) return;
       await onDatesChange(rowIdx, { data_inicio: toIso(start), data_previsao: toIso(end) });
+    },
+    onBlockedCommit: (rowIdx) => {
+      const disc = rows[rowIdx]?.disc.disciplina;
+      toast.info(
+        disc ? `"${disc}" não pode sair do período do projeto` : "Disciplina não pode sair do período do projeto",
+        {
+          description: "Ajuste o início ou a previsão do projeto para liberar essa data.",
+        }
+      );
     },
   });
 
@@ -549,8 +559,9 @@ export function CronogramaTab({
                                   <div
                                     className={cn(
                                       "flex-1 flex items-center overflow-hidden",
-                                      canDrag ? "mx-4 cursor-grab active:cursor-grabbing" : "mx-2",
-                                      onDisciplinaClick && "cursor-pointer"
+                                      canDrag
+                                        ? "mx-4 cursor-grab active:cursor-grabbing"
+                                        : cn("mx-2", onDisciplinaClick && "cursor-pointer")
                                     )}
                                     onMouseDown={
                                       canDrag
