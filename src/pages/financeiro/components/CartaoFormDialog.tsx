@@ -2,14 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { FormDialog } from "@/components/FormDialog";
 import { Plus } from "lucide-react";
 import { formatCurrencyInput } from "@/lib/currencyUtils";
 import type { ContaItem, CartaoItem } from "../hooks/useContasCartoes";
@@ -60,20 +53,22 @@ export function CartaoFormDialog({
   onSave,
 }: CartaoFormDialogProps) {
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <>
       {showTrigger && (
-        <DialogTrigger asChild>
-          <Button variant="ghost" className="h-6 w-6" onClick={onAddClick} aria-label="Adicionar cartão">
-            <Plus className="h-3.5 w-3.5" />
-          </Button>
-        </DialogTrigger>
+        <Button variant="ghost" className="h-6 w-6" onClick={onAddClick} aria-label="Adicionar cartão">
+          <Plus className="h-3.5 w-3.5" />
+        </Button>
       )}
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>{selectedCartao ? "Editar cartão" : "Adicionar cartão"}</DialogTitle>
-          <DialogDescription>Configure as datas do seu cartão para melhor controle financeiro</DialogDescription>
-        </DialogHeader>
-        <div className="space-y-4 mt-4">
+      <FormDialog
+        open={open}
+        onOpenChange={onOpenChange}
+        title={selectedCartao ? "Editar cartão" : "Adicionar cartão"}
+        description="Configure as datas do seu cartão para melhor controle financeiro"
+        size="md"
+        onSubmit={onSave}
+        submitLabel={selectedCartao ? "Atualizar cartão" : "Salvar cartão"}
+      >
+        <div className="space-y-4">
           <div className="space-y-2">
             <Label>Tipo de Cartão</Label>
             <Select value={tipoCartao} onValueChange={(v) => setTipoCartao(v as "credito" | "debito")}>
@@ -146,11 +141,8 @@ export function CartaoFormDialog({
             </Select>
             <p className="text-xs text-muted-foreground">Conta padrão usada ao pagar faturas deste cartão</p>
           </div>
-          <Button variant="brand" className="w-full rounded-full px-5 py-2.5 text-sm" onClick={onSave}>
-            {selectedCartao ? "Atualizar Cartão" : "Salvar Cartão"}
-          </Button>
         </div>
-      </DialogContent>
-    </Dialog>
+      </FormDialog>
+    </>
   );
 }

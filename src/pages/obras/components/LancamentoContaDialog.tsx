@@ -1,9 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import { FormDialog } from "@/components/FormDialog";
 import { Input } from "@/components/ui/input";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
@@ -80,134 +78,126 @@ export function LancamentoContaDialog({ open, onOpenChange, obraId, tipo, lancam
   const titulo = tipo === "aporte" ? "Aporte do cliente" : isEdit ? "Editar despesa" : "Nova despesa";
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>{titulo}</DialogTitle>
-        </DialogHeader>
-
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="lanc-data">Data</Label>
-              <DatePicker id="lanc-data" value={data} onChange={setData} />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="lanc-valor">Valor (R$)</Label>
-              <Input
-                id="lanc-valor"
-                type="number"
-                step="0.01"
-                min="0"
-                value={valor}
-                onChange={(e) => setValor(e.target.value)}
-                placeholder="0,00"
-              />
-            </div>
-          </div>
-
+    <FormDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title={titulo}
+      size="md"
+      onSubmit={submit}
+      isPending={saving}
+      submitLabel={isEdit ? "Salvar" : "Registrar"}
+    >
+      <div className="space-y-4">
+        <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1.5">
-            <Label htmlFor="lanc-desc">Descrição</Label>
+            <Label htmlFor="lanc-data">Data</Label>
+            <DatePicker id="lanc-data" value={data} onChange={setData} />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="lanc-valor">Valor (R$)</Label>
             <Input
-              id="lanc-desc"
-              value={descricao}
-              onChange={(e) => setDescricao(e.target.value)}
-              placeholder={tipo === "aporte" ? "Ex.: Aporte inicial do cliente" : "Ex.: Concreto usinado 10 m³"}
+              id="lanc-valor"
+              type="number"
+              step="0.01"
+              min="0"
+              value={valor}
+              onChange={(e) => setValor(e.target.value)}
+              placeholder="0,00"
             />
           </div>
+        </div>
 
-          {tipo === "despesa" && (
-            <>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <Label>Etapa</Label>
-                  <Select value={frenteId} onValueChange={setFrenteId}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Sem etapa" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value={SEM_FRENTE}>Sem etapa</SelectItem>
-                      {frentes.map((f) => (
-                        <SelectItem key={f.id} value={f.id}>
-                          {f.nome}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-1.5">
-                  <Label>Fornecedor</Label>
-                  <Select value={fornecedorId} onValueChange={setFornecedorId}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Sem fornecedor" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value={SEM_FORNECEDOR}>Sem fornecedor</SelectItem>
-                      {fornecedores.map((f) => (
-                        <SelectItem key={f.id} value={f.id}>
-                          {f.nome}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="lanc-desc">Descrição</Label>
+          <Input
+            id="lanc-desc"
+            value={descricao}
+            onChange={(e) => setDescricao(e.target.value)}
+            placeholder={tipo === "aporte" ? "Ex.: Aporte inicial do cliente" : "Ex.: Concreto usinado 10 m³"}
+          />
+        </div>
 
+        {tipo === "despesa" && (
+          <>
+            <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label>Pago com</Label>
-                <Select value={pagoPor} onValueChange={(v) => setPagoPor(v as PagoPor)}>
+                <Label>Etapa</Label>
+                <Select value={frenteId} onValueChange={setFrenteId}>
                   <SelectTrigger>
-                    <SelectValue />
+                    <SelectValue placeholder="Sem etapa" />
                   </SelectTrigger>
                   <SelectContent>
-                    {PAGO_POR_OPCOES.map((o) => (
-                      <SelectItem key={o.value} value={o.value}>
-                        {o.label}
+                    <SelectItem value={SEM_FRENTE}>Sem etapa</SelectItem>
+                    {frentes.map((f) => (
+                      <SelectItem key={f.id} value={f.id}>
+                        {f.nome}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
-
               <div className="space-y-1.5">
-                <Label htmlFor="lanc-comprovante">Comprovante (link da nota)</Label>
-                <Input
-                  id="lanc-comprovante"
-                  type="url"
-                  inputMode="url"
-                  value={comprovanteUrl}
-                  onChange={(e) => setComprovanteUrl(e.target.value)}
-                  placeholder="https://drive.google.com/..."
-                />
+                <Label>Fornecedor</Label>
+                <Select value={fornecedorId} onValueChange={setFornecedorId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sem fornecedor" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={SEM_FORNECEDOR}>Sem fornecedor</SelectItem>
+                    {fornecedores.map((f) => (
+                      <SelectItem key={f.id} value={f.id}>
+                        {f.nome}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>Pago com</Label>
+              <Select value={pagoPor} onValueChange={(v) => setPagoPor(v as PagoPor)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {PAGO_POR_OPCOES.map((o) => (
+                    <SelectItem key={o.value} value={o.value}>
+                      {o.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="lanc-comprovante">Comprovante (link da nota)</Label>
+              <Input
+                id="lanc-comprovante"
+                type="url"
+                inputMode="url"
+                value={comprovanteUrl}
+                onChange={(e) => setComprovanteUrl(e.target.value)}
+                placeholder="https://drive.google.com/..."
+              />
+              <p className="text-xs text-muted-foreground">
+                Link do Drive. Aparece como "Ver nota" na prestação de contas do cliente.
+              </p>
+            </div>
+
+            <div className="flex items-start justify-between gap-3 rounded-lg border p-3">
+              <div className="space-y-0.5">
+                <Label htmlFor="lanc-segura">Segurar do portal</Label>
                 <p className="text-xs text-muted-foreground">
-                  Link do Drive. Aparece como "Ver nota" na prestação de contas do cliente.
+                  Em conferência: não aparece para o cliente até você liberar.
                 </p>
               </div>
-
-              <div className="flex items-start justify-between gap-3 rounded-lg border p-3">
-                <div className="space-y-0.5">
-                  <Label htmlFor="lanc-segura">Segurar do portal</Label>
-                  <p className="text-xs text-muted-foreground">
-                    Em conferência: não aparece para o cliente até você liberar.
-                  </p>
-                </div>
-                <Switch id="lanc-segura" checked={seguraPortal} onCheckedChange={setSeguraPortal} />
-              </div>
-            </>
-          )}
-        </div>
-
-        <DialogFooter>
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-            Cancelar
-          </Button>
-          <Button type="button" variant="brand" onClick={submit} disabled={saving}>
-            {saving && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}
-            {isEdit ? "Salvar" : "Registrar"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+              <Switch id="lanc-segura" checked={seguraPortal} onCheckedChange={setSeguraPortal} />
+            </div>
+          </>
+        )}
+      </div>
+    </FormDialog>
   );
 }
 

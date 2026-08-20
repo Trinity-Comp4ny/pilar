@@ -1,8 +1,9 @@
 import { useState, useEffect, useMemo, lazy, Suspense } from "react";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { useSearchParams } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { startOfMonth, endOfMonth, parseISO, format, isValid } from "date-fns";
-import { LayoutDashboard, Receipt, Users2, Wallet, FileBarChart } from "lucide-react";
+import { LayoutDashboard, Plus, Receipt, Users2, Wallet, FileBarChart } from "lucide-react";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { PeriodoPopover } from "./financeiro/components/PeriodoPopover";
@@ -11,6 +12,10 @@ import { usePageTitle } from "@/hooks/usePageTitle";
 import { useRegistrarPagina } from "@/hooks/useRecentes";
 import { SecondSidebar, type SecondSidebarTab } from "@/components/SecondSidebar";
 import { FinanceFilterProvider, type Visualizacao } from "./financeiro/contexts/FinanceFilterContext";
+import { NovoLancamentoDialog } from "./financeiro/components/NovoLancamentoDialog";
+import { LancamentoFormDialog } from "./financeiro/components/LancamentoFormDialog";
+import { TransferenciaFormDialog } from "./financeiro/components/TransferenciaFormDialog";
+import type { TipoLancamento } from "./financeiro/hooks/useLancamentosUnified";
 
 const VisaoGeral = lazy(() => import("./financeiro/tabs/VisaoGeral"));
 const Carteira = lazy(() => import("./financeiro/tabs/Carteira"));
@@ -82,6 +87,23 @@ export default function Financeiro() {
 
   const handleTabChange = (v: string) => setActiveTab(v);
 
+  const queryClient = useQueryClient();
+  const [escolhendoTipo, setEscolhendoTipo] = useState(false);
+  const [newTipo, setNewTipo] = useState<TipoLancamento | null>(null);
+  const [newTransferencia, setNewTransferencia] = useState(false);
+
+  // União das queries que Visão Geral, Lançamentos e Carteira mantêm sobre o
+  // mesmo dado: o botão global fica fora de qualquer aba, então precisa
+  // invalidar tudo de uma vez, não só o que a aba ativa no momento usa.
+  const invalidateFinanceiro = () => {
+    queryClient.invalidateQueries({ queryKey: ["lancamentos-pagina"] });
+    queryClient.invalidateQueries({ queryKey: ["lancamentos-resumo"] });
+    queryClient.invalidateQueries({ queryKey: ["grupos-parcela-resumo"] });
+    queryClient.invalidateQueries({ queryKey: ["finance-data"] });
+    queryClient.invalidateQueries({ queryKey: ["lancamentos-recentes"] });
+    queryClient.invalidateQueries({ queryKey: ["dashboard-v2"] });
+  };
+
   const filterValue = useMemo(
     () => ({ dateFrom, setDateFrom, dateTo, setDateTo, visualizacao, setVisualizacao }),
     [dateFrom, dateTo, visualizacao]
@@ -98,6 +120,7 @@ export default function Financeiro() {
           <PageHeader
             title={isRoot ? "Financeiro" : activeLabel}
             breadcrumbs={isRoot ? undefined : [{ label: "Financeiro", onClick: () => handleTabChange("visao-geral") }]}
+            primaryAction={{ label: "Novo lançamento", icon: Plus, onClick: () => setEscolhendoTipo(true) }}
           >
             <PeriodoPopover activeTab={activeTab} />
           </PageHeader>
@@ -108,7 +131,7 @@ export default function Financeiro() {
           <TabsContent value="visao-geral" className="mt-0 w-full focus-visible:ring-0">
             {activeTab === "visao-geral" && (
               <Suspense fallback={<Skeleton className="h-64 w-full" />}>
-                <VisaoGeral onNavigateTab={handleTabChange} />
+                <VisaoGeral onNavigateTab={handleTabChange} onNovoLancamento={() => setEscolhendoTipo(true)} />
               </Suspense>
             )}
           </TabsContent>
@@ -146,6 +169,36 @@ export default function Financeiro() {
           </TabsContent>
         </Tabs>
       </PageLayout>
+
+      <NovoLancamentoDialog
+        open={escolhendoTipo}
+        onOpenChange={setEscolhendoTipo}
+        onEscolher={(escolha) => {
+          if (escolha === "transferencia") setNewTransferencia(true);
+          else setNewTipo(escolha);
+        }}
+      />
+
+      {newTipo && (
+        <LancamentoFormDialog
+          open
+          onOpenChange={(v) => !v && setNewTipo(null)}
+          tipo={newTipo}
+          onSaved={() => {
+            setNewTipo(null);
+            invalidateFinanceiro();
+          }}
+        />
+      )}
+
+      <TransferenciaFormDialog
+        open={newTransferencia}
+        onOpenChange={setNewTransferencia}
+        onSaved={() => {
+          setNewTransferencia(false);
+          invalidateFinanceiro();
+        }}
+      />
     </FinanceFilterProvider>
   );
 }

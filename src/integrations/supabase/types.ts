@@ -403,7 +403,8 @@ export type Database = {
       asaas_config: {
         Row: {
           ambiente: string
-          api_key: string
+          api_key: string | null
+          api_key_secret_id: string | null
           created_at: string
           empresa_id: string
           id: string
@@ -411,7 +412,8 @@ export type Database = {
         }
         Insert: {
           ambiente?: string
-          api_key: string
+          api_key?: string | null
+          api_key_secret_id?: string | null
           created_at?: string
           empresa_id: string
           id?: string
@@ -419,7 +421,8 @@ export type Database = {
         }
         Update: {
           ambiente?: string
-          api_key?: string
+          api_key?: string | null
+          api_key_secret_id?: string | null
           created_at?: string
           empresa_id?: string
           id?: string
@@ -1507,6 +1510,8 @@ export type Database = {
           features: Json
           id: string
           logo_url: string | null
+          max_projetos_override: number | null
+          max_usuarios_override: number | null
           nome: string
           onboarding_completed: boolean | null
           owner_id: string | null
@@ -1529,6 +1534,8 @@ export type Database = {
           features?: Json
           id?: string
           logo_url?: string | null
+          max_projetos_override?: number | null
+          max_usuarios_override?: number | null
           nome: string
           onboarding_completed?: boolean | null
           owner_id?: string | null
@@ -1551,6 +1558,8 @@ export type Database = {
           features?: Json
           id?: string
           logo_url?: string | null
+          max_projetos_override?: number | null
+          max_usuarios_override?: number | null
           nome?: string
           onboarding_completed?: boolean | null
           owner_id?: string | null
@@ -1845,6 +1854,33 @@ export type Database = {
           key?: string
           percentage?: number
           updated_at?: string
+        }
+        Relationships: []
+      }
+      feature_suggestions: {
+        Row: {
+          created_at: string
+          created_by: string
+          descricao: string
+          id: string
+          status_interno: string
+          titulo: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          descricao: string
+          id?: string
+          status_interno?: string
+          titulo: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          descricao?: string
+          id?: string
+          status_interno?: string
+          titulo?: string
         }
         Relationships: []
       }
@@ -4307,6 +4343,68 @@ export type Database = {
           },
         ]
       }
+      projeto_disciplina_checklist: {
+        Row: {
+          concluido: boolean
+          concluido_em: string | null
+          concluido_por: string | null
+          created_at: string
+          id: string
+          ordem: number
+          projeto_disciplina_id: string
+          texto: string
+        }
+        Insert: {
+          concluido?: boolean
+          concluido_em?: string | null
+          concluido_por?: string | null
+          created_at?: string
+          id?: string
+          ordem?: number
+          projeto_disciplina_id: string
+          texto: string
+        }
+        Update: {
+          concluido?: boolean
+          concluido_em?: string | null
+          concluido_por?: string | null
+          created_at?: string
+          id?: string
+          ordem?: number
+          projeto_disciplina_id?: string
+          texto?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projeto_disciplina_checklist_concluido_por_fkey"
+            columns: ["concluido_por"]
+            isOneToOne: false
+            referencedRelation: "pessoas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projeto_disciplina_checklist_concluido_por_fkey"
+            columns: ["concluido_por"]
+            isOneToOne: false
+            referencedRelation: "pessoas_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projeto_disciplina_checklist_concluido_por_fkey"
+            columns: ["concluido_por"]
+            isOneToOne: false
+            referencedRelation: "view_folha_pagamento"
+            referencedColumns: ["pessoa_id"]
+          },
+          {
+            foreignKeyName: "projeto_disciplina_checklist_projeto_disciplina_id_fkey"
+            columns: ["projeto_disciplina_id"]
+            isOneToOne: false
+            referencedRelation: "projeto_disciplinas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       projeto_disciplina_responsaveis: {
         Row: {
           id: string
@@ -5066,6 +5164,126 @@ export type Database = {
           },
         ]
       }
+      status_components: {
+        Row: {
+          id: string
+          nome_exibicao: string
+          ordem: number
+          slug: string
+        }
+        Insert: {
+          id?: string
+          nome_exibicao: string
+          ordem?: number
+          slug: string
+        }
+        Update: {
+          id?: string
+          nome_exibicao?: string
+          ordem?: number
+          slug?: string
+        }
+        Relationships: []
+      }
+      status_incident_components: {
+        Row: {
+          component_id: string
+          incident_id: string
+        }
+        Insert: {
+          component_id: string
+          incident_id: string
+        }
+        Update: {
+          component_id?: string
+          incident_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "status_incident_components_component_id_fkey"
+            columns: ["component_id"]
+            isOneToOne: false
+            referencedRelation: "status_components"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "status_incident_components_component_id_fkey"
+            columns: ["component_id"]
+            isOneToOne: false
+            referencedRelation: "status_current"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "status_incident_components_incident_id_fkey"
+            columns: ["incident_id"]
+            isOneToOne: false
+            referencedRelation: "status_incidents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      status_incident_updates: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          incident_id: string
+          mensagem: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          incident_id: string
+          mensagem: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          incident_id?: string
+          mensagem?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "status_incident_updates_incident_id_fkey"
+            columns: ["incident_id"]
+            isOneToOne: false
+            referencedRelation: "status_incidents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      status_incidents: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          resolved_at: string | null
+          severidade: string
+          status: string
+          titulo: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          resolved_at?: string | null
+          severidade: string
+          status?: string
+          titulo: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          resolved_at?: string | null
+          severidade?: string
+          status?: string
+          titulo?: string
+        }
+        Relationships: []
+      }
       tarefa_contadores: {
         Row: {
           empresa_id: string
@@ -5771,6 +5989,30 @@ export type Database = {
           },
         ]
       }
+      status_current: {
+        Row: {
+          id: string | null
+          nome_exibicao: string | null
+          ordem: number | null
+          slug: string | null
+          status_efetivo: string | null
+        }
+        Insert: {
+          id?: string | null
+          nome_exibicao?: string | null
+          ordem?: number | null
+          slug?: string | null
+          status_efetivo?: never
+        }
+        Update: {
+          id?: string | null
+          nome_exibicao?: string | null
+          ordem?: number | null
+          slug?: string | null
+          status_efetivo?: never
+        }
+        Relationships: []
+      }
       v_budget_vs_actual: {
         Row: {
           custo_orcado: number | null
@@ -6035,6 +6277,7 @@ export type Database = {
         Args: { p_account_id: string; p_nova_senha: string }
         Returns: undefined
       }
+      _universal_features: { Args: never; Returns: string[] }
       _validate_features_payload: {
         Args: { p_empresa_id: string; p_features: Json }
         Returns: undefined
@@ -6267,6 +6510,7 @@ export type Database = {
         Returns: string
       }
       gerar_notificacoes_ambient: { Args: never; Returns: number }
+      get_asaas_api_key: { Args: { p_empresa_id: string }; Returns: string }
       get_cliente_obra_detail: {
         Args: { p_obra_id: string; p_token: string }
         Returns: Json
@@ -6631,6 +6875,10 @@ export type Database = {
         Returns: Json
       }
       rate_limit_cleanup: { Args: never; Returns: undefined }
+      recalc_disciplina_status_por_checklist: {
+        Args: { p_disciplina_id: string }
+        Returns: undefined
+      }
       recalc_grupo_parcela_status: {
         Args: { p_grupo_id: string }
         Returns: undefined
@@ -6760,6 +7008,14 @@ export type Database = {
         }
         Returns: number
       }
+      rpc_notificar_projeto_status: {
+        Args: { p_novo_status: string; p_projeto_id: string }
+        Returns: number
+      }
+      rpc_notificar_proxima_etapa: {
+        Args: { p_disciplina_id: string }
+        Returns: number
+      }
       rpc_obra_despesa_excluir: { Args: { p_id: string }; Returns: undefined }
       rpc_obra_despesa_salvar: {
         Args: {
@@ -6811,6 +7067,10 @@ export type Database = {
       rpc_sync_metas: { Args: never; Returns: number }
       set_access_profile: {
         Args: { p_perfil: string; p_user_id: string }
+        Returns: undefined
+      }
+      set_asaas_api_key: {
+        Args: { p_api_key: string; p_empresa_id: string }
         Returns: undefined
       }
       set_disciplina_status: {

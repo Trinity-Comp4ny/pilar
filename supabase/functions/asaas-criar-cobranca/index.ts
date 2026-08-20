@@ -30,14 +30,25 @@ serve(
       if (!profile?.empresa_id) throw new Error("Usuário não vinculado a empresa");
       const empresaId = profile.empresa_id as string;
 
-      // Buscar config Asaas da empresa
+      // Buscar config Asaas da empresa. api_key nunca vem direto da coluna: a
+      // coluna só guarda texto puro em cenário legado, a chave real é lida
+      // decifrada via get_asaas_api_key (migration 20260850000000).
       const { data: config } = await adminClient
         .from("asaas_config")
-        .select("api_key, ambiente")
+        .select("ambiente")
         .eq("empresa_id", empresaId)
         .maybeSingle();
 
       if (!config) {
+        throw new Error(
+          "Configuração Asaas não encontrada. Configure a API key em Financeiro → Receitas → Configurações → Asaas."
+        );
+      }
+
+      const { data: apiKeyDecifrada, error: apiKeyError } = await adminClient.rpc("get_asaas_api_key", {
+        p_empresa_id: empresaId,
+      });
+      if (apiKeyError || !apiKeyDecifrada) {
         throw new Error(
           "Configuração Asaas não encontrada. Configure a API key em Financeiro → Receitas → Configurações → Asaas."
         );
@@ -72,7 +83,7 @@ serve(
       const baseUrl = ASAAS_BASE_URL[config.ambiente as keyof typeof ASAAS_BASE_URL];
       const asaasHeaders = {
         "Content-Type": "application/json",
-        access_token: config.api_key,
+        access_token: apiKeyDecifrada as string,
       };
 
       // Criar ou reutilizar customer Asaas

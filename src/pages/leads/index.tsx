@@ -252,8 +252,7 @@ export default function Leads() {
     setIsDetailOpen(true);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = () => {
     if (formData.email) {
       const emailLower = formData.email.toLowerCase();
       const duplicate = leads.find((l) => (l.email ?? "").toLowerCase() === emailLower);
@@ -285,8 +284,7 @@ export default function Leads() {
     );
   };
 
-  const handleEditSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleEditSubmit = () => {
     if (!selectedLead) return;
     if (editFormData.email) {
       const emailLower = editFormData.email.toLowerCase();
@@ -658,95 +656,101 @@ export default function Leads() {
                 onRowClick={handleCardClick}
               />
             ) : (
-            <div className="hidden md:flex gap-3 w-full h-full min-h-0 overflow-x-auto pb-2">
-              {visibleStatuses.map((status) => {
-                const config = statusConfig[status];
-                const items = getLeadsByStatus(status);
-                const isCollapsed = collapsedColumns.has(status);
-                const dotColor = STATUS_DOT[status] || "bg-pipeline-perdido";
+              <div className="hidden md:flex gap-3 w-full h-full min-h-0 overflow-x-auto pb-2">
+                {visibleStatuses.map((status) => {
+                  const config = statusConfig[status];
+                  const items = getLeadsByStatus(status);
+                  const isCollapsed = collapsedColumns.has(status);
+                  const dotColor = STATUS_DOT[status] || "bg-pipeline-perdido";
 
-                if (isCollapsed) {
+                  if (isCollapsed) {
+                    return (
+                      <div
+                        key={status}
+                        className="flex flex-col w-10 flex-shrink-0 min-h-0 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer"
+                        onClick={() => toggleColumn(status)}
+                      >
+                        <div className="flex flex-col items-center gap-2 py-3">
+                          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                          <span className={cn("h-2 w-2 rounded-full", dotColor)} />
+                        </div>
+                        <div className="flex-1 flex items-center justify-center">
+                          <span
+                            className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide whitespace-nowrap"
+                            style={{ writingMode: "vertical-rl", transform: "rotate(180deg)" }}
+                          >
+                            {config.label} · {items.length}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  }
+
                   return (
-                    <div
-                      key={status}
-                      className="flex flex-col w-10 flex-shrink-0 min-h-0 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer"
-                      onClick={() => toggleColumn(status)}
-                    >
-                      <div className="flex flex-col items-center gap-2 py-3">
-                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                        <span className={cn("h-2 w-2 rounded-full", dotColor)} />
-                      </div>
-                      <div className="flex-1 flex items-center justify-center">
-                        <span
-                          className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide whitespace-nowrap"
-                          style={{ writingMode: "vertical-rl", transform: "rotate(180deg)" }}
+                    <div key={status} className="flex flex-col min-w-[280px] w-[280px] flex-shrink-0 min-h-0">
+                      <div className="flex items-center gap-2 px-2 py-2.5">
+                        <span className={cn("h-2 w-2 rounded-full flex-shrink-0", dotColor)} />
+                        <h3 className="text-xs font-medium text-foreground/80 uppercase tracking-wide">
+                          {config.label}
+                        </h3>
+                        <span className="text-[11px] text-muted-foreground tabular-nums">{items.length}</span>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="ml-auto min-h-[44px] min-w-[44px] text-muted-foreground"
+                          onClick={() => toggleColumn(status)}
+                          title="Minimizar coluna"
+                          aria-label="Minimizar coluna"
                         >
-                          {config.label} · {items.length}
-                        </span>
+                          <ChevronLeft className="h-4 w-4" />
+                        </Button>
                       </div>
+
+                      <Droppable droppableId={status}>
+                        {(provided, snapshot) => (
+                          <div
+                            ref={provided.innerRef}
+                            {...provided.droppableProps}
+                            className={cn(
+                              "flex-1 min-h-0 overflow-y-auto p-2 space-y-2 rounded-lg bg-muted/30 transition-all",
+                              snapshot.isDraggingOver && "ring-2 ring-brand/40 bg-brand/5"
+                            )}
+                          >
+                            {items.length === 0 && !snapshot.isDraggingOver && (
+                              <div className="flex items-center justify-center py-8 px-2 text-center text-[11px] text-muted-foreground/70 border border-dashed border-muted-foreground/20 rounded-md">
+                                Arraste leads para cá
+                              </div>
+                            )}
+                            {items.map((lead, index) => (
+                              <Draggable key={lead.id} draggableId={lead.id} index={index}>
+                                {(provided, snapshot) => (
+                                  <div
+                                    ref={provided.innerRef}
+                                    {...provided.draggableProps}
+                                    {...provided.dragHandleProps}
+                                  >
+                                    <LeadKanbanCard
+                                      lead={lead}
+                                      leadNome={leadNome}
+                                      onClick={() => handleCardClick(lead)}
+                                      canEdit={canEdit}
+                                      onMoveStatus={handleMobileMove}
+                                      dragging={snapshot.isDragging}
+                                      proposta={primariaDoLead(lead.id)}
+                                      responsavelNome={responsavelNome(lead.responsavel_id)}
+                                    />
+                                  </div>
+                                )}
+                              </Draggable>
+                            ))}
+                            {provided.placeholder}
+                          </div>
+                        )}
+                      </Droppable>
                     </div>
                   );
-                }
-
-                return (
-                  <div key={status} className="flex flex-col min-w-[280px] w-[280px] flex-shrink-0 min-h-0">
-                    <div className="flex items-center gap-2 px-2 py-2.5">
-                      <span className={cn("h-2 w-2 rounded-full flex-shrink-0", dotColor)} />
-                      <h3 className="text-xs font-medium text-foreground/80 uppercase tracking-wide">{config.label}</h3>
-                      <span className="text-[11px] text-muted-foreground tabular-nums">{items.length}</span>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="ml-auto min-h-[44px] min-w-[44px] text-muted-foreground"
-                        onClick={() => toggleColumn(status)}
-                        title="Minimizar coluna"
-                        aria-label="Minimizar coluna"
-                      >
-                        <ChevronLeft className="h-4 w-4" />
-                      </Button>
-                    </div>
-
-                    <Droppable droppableId={status}>
-                      {(provided, snapshot) => (
-                        <div
-                          ref={provided.innerRef}
-                          {...provided.droppableProps}
-                          className={cn(
-                            "flex-1 min-h-0 overflow-y-auto p-2 space-y-2 rounded-lg bg-muted/30 transition-all",
-                            snapshot.isDraggingOver && "ring-2 ring-brand/40 bg-brand/5"
-                          )}
-                        >
-                          {items.length === 0 && !snapshot.isDraggingOver && (
-                            <div className="flex items-center justify-center py-8 px-2 text-center text-[11px] text-muted-foreground/70 border border-dashed border-muted-foreground/20 rounded-md">
-                              Arraste leads para cá
-                            </div>
-                          )}
-                          {items.map((lead, index) => (
-                            <Draggable key={lead.id} draggableId={lead.id} index={index}>
-                              {(provided, snapshot) => (
-                                <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
-                                  <LeadKanbanCard
-                                    lead={lead}
-                                    leadNome={leadNome}
-                                    onClick={() => handleCardClick(lead)}
-                                    canEdit={canEdit}
-                                    onMoveStatus={handleMobileMove}
-                                    dragging={snapshot.isDragging}
-                                    proposta={primariaDoLead(lead.id)}
-                                    responsavelNome={responsavelNome(lead.responsavel_id)}
-                                  />
-                                </div>
-                              )}
-                            </Draggable>
-                          ))}
-                          {provided.placeholder}
-                        </div>
-                      )}
-                    </Droppable>
-                  </div>
-                );
-              })}
-            </div>
+                })}
+              </div>
             )}
 
             {/* Mobile list view (accordion por etapa, independe do toggle Quadro/Lista) */}

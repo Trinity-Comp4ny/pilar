@@ -6,7 +6,10 @@
 --  3. admin COM feature passa
 --  4. user com feature passa
 --  5. user sem feature falha
---  6. empresa sem feature no plano: admin com feature no profile FALHA
+--  6. feature universal (ADR 0026, ex. financeiro): empresa sem o JSONB marcado
+--     não bloqueia mais: só o nível no profile importa (6a/6b)
+--  6c. feature NÃO universal (ex. templates): empresa sem o JSONB marcado
+--      continua bloqueando de verdade: prova que o bypass é escopado
 --  7. operações administrativas (audit_logs, convites) não exigem feature, só role admin/ultra_admin
 
 BEGIN;
@@ -14,7 +17,7 @@ BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 SET search_path = public, extensions;
 
-SELECT plan(12);
+SELECT plan(14);
 
 -- =============================================
 -- Setup: 2 empresas, planos diferentes
@@ -178,24 +181,45 @@ SELECT ok(
 );
 
 -- =============================================
--- Teste 6a: admin de empresa SEM financeiro no plano → user_has_feature retorna FALSE
+-- Teste 6a: admin de empresa SEM financeiro no profile → user_has_feature FALSE
+-- (financeiro é universal desde o ADR 0026: a empresa não precisa mais ter o
+-- JSONB marcado, mas o profile ainda precisa do nível explícito)
 -- =============================================
 SELECT test_set_auth('44444444-0000-0000-0000-000000000006');
 
 SELECT ok(
   NOT public.user_has_feature('financeiro', 'editor'),
-  'admin de empresa sem plano financeiro: user_has_feature = FALSE'
+  'admin sem financeiro no profile: user_has_feature = FALSE (mesmo sendo universal)'
 );
 
 -- =============================================
--- Teste 6b: trigger impede atribuir feature acima do plano da empresa
+-- Teste 6b: feature universal (financeiro) pode ser atribuída mesmo numa
+-- empresa cujo JSONB não tem a chave marcada: é o próprio bug que motivou o
+-- ADR 0026 (convite quase saiu sem 'obras' por causa deste tipo de trava)
+-- =============================================
+SELECT lives_ok(
+  $$ UPDATE public.profiles SET features = '{"financeiro": "editor"}'::jsonb
+     WHERE id = '44444444-0000-0000-0000-000000000006' $$,
+  'feature universal: atribuir no profile funciona mesmo sem o plano da empresa marcar'
+);
+
+SELECT test_set_auth('44444444-0000-0000-0000-000000000006');
+
+SELECT ok(
+  public.user_has_feature('financeiro', 'editor'),
+  'depois de atribuída, financeiro:editor passa (universal ignora o JSONB da empresa)'
+);
+
+-- =============================================
+-- Teste 6c (controle): feature NÃO universal (templates) continua bloqueada
+-- pela mesma empresa, prova que o bypass é só pras chaves de _universal_features()
 -- =============================================
 SELECT throws_ok(
-  $$ UPDATE public.profiles SET features = '{"financeiro": "editor"}'::jsonb
+  $$ UPDATE public.profiles SET features = '{"templates": "editor"}'::jsonb
      WHERE id = '44444444-0000-0000-0000-000000000006' $$,
   NULL,
   NULL,
-  'trigger bloqueia atribuir feature acima do plano da empresa'
+  'feature não-universal: trigger ainda bloqueia acima do que a empresa tem marcado'
 );
 
 -- =============================================

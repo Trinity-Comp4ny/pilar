@@ -14,7 +14,7 @@ import {
   useDeleteDisciplina,
   useUpdateDisciplinaStatus,
 } from "@/hooks/useProjetoDisciplinas";
-import { PROJECT_PRIORITY, type ProjectPriority } from "@/constants";
+import { PROJECT_PRIORITY, PROJECT_STATUS, PROJECT_STATUS_CONFIG, type ProjectPriority } from "@/constants";
 import {
   type Projeto,
   type DisciplinaResponsavel,
@@ -133,8 +133,8 @@ export function useProjetoDetail(id: string | undefined) {
         });
         toast.success(`${dbDisc.nome}: ${newStatus}`);
 
-        // Ao concluir, notifica APENAS responsáveis da próxima etapa do fluxo.
-        // Não dispara email ao cliente — comunicação com cliente é manual.
+        // Ao concluir, notifica in-app (sino) os responsáveis da próxima etapa do
+        // fluxo — nunca o cliente, que segue avisado só manualmente fora daqui.
         if (isFinished) {
           void notifyNextStage(dbDisc.id);
         }
@@ -148,16 +148,11 @@ export function useProjetoDetail(id: string | undefined) {
 
   const notifyNextStage = async (disciplinaId: string) => {
     try {
-      const { data, error } = await supabase.functions.invoke("notify-next-stage", {
-        body: { disciplina_id: disciplinaId },
+      const { error } = await supabase.rpc("rpc_notificar_proxima_etapa", {
+        p_disciplina_id: disciplinaId,
       });
       if (error) {
         monitoring.captureException(error, { context: "notify-next-stage" });
-        return;
-      }
-      const result = data as { notificados?: number; skipped?: string };
-      if (result?.notificados && result.notificados > 0) {
-        toast.success(`${result.notificados} responsável(is) da próxima etapa notificado(s)`);
       }
     } catch (err) {
       monitoring.captureException(err, { context: "notify-next-stage unexpected" });
@@ -307,6 +302,99 @@ export function useProjetoDetail(id: string | undefined) {
     queryClient.invalidateQueries({ queryKey: ["projeto-detail", id] });
   }, [queryClient, id]);
 
+  // ---- Quick edit inline (header/KPIs) — patch pontual, sem passar pela RPC
+  // completa de update_projeto_completo (que também revalida disciplinas). ----
+  const invalidateProjeto = useCallback(() => {
+    refetchProjeto();
+    queryClient.invalidateQueries({ queryKey: ["projetos"] });
+  }, [refetchProjeto, queryClient]);
+
+  const handleQuickUpdateProjeto = useCallback(
+    async (patch: {
+      data_previsao?: string;
+      valor_contrato?: number;
+      area_m2?: number;
+      prioridade?: ProjectPriority;
+    }) => {
+      if (!projeto) return;
+
+      // Guarda-chuva: a nova previsão não pode ficar antes de uma disciplina já
+      // agendada (mesma checagem do ProjetoFormDialog, só que pra 1 campo).
+      if (patch.data_previsao) {
+        const violacao = disciplinasLegacy.find(
+          (d) =>
+            (d.data_previsao && d.data_previsao > patch.data_previsao!) ||
+            (d.data_final && d.data_final > patch.data_previsao!)
+        );
+        if (violacao) {
+          toast.error("Data inválida", {
+            description: `A disciplina "${violacao.disciplina}" tem data além dessa previsão`,
+          });
+          return;
+        }
+      }
+
+      try {
+        const { error } = await supabase
+          .from("projetos")
+          .update(patch as never)
+          .eq("id", projeto.id);
+        if (error) throw error;
+        toast.success("Projeto atualizado");
+        invalidateProjeto();
+      } catch (err: unknown) {
+        toast.error("Erro ao salvar", { description: errorMessage(err) });
+      }
+    },
+    [projeto, disciplinasLegacy, invalidateProjeto, toast]
+  );
+
+  // Reabertura: sair de "Concluído" pede confirmação antes de zerar data_final
+  // (mesma regra do Kanban, ver useProjetoStatusMove) — evita perda silenciosa.
+  const [pendingReopenStatus, setPendingReopenStatus] = useState<string | null>(null);
+
+  const applyStatusUpdate = useCallback(
+    async (newStatus: string, clearDataFinal: boolean) => {
+      if (!projeto) return;
+      const updateData: Record<string, string | null> = { status: newStatus };
+      if (clearDataFinal) updateData.data_final = null;
+
+      try {
+        const { error } = await supabase
+          .from("projetos")
+          .update(updateData as never)
+          .eq("id", projeto.id);
+        if (error) throw error;
+        toast.success(
+          `Status: ${PROJECT_STATUS_CONFIG[newStatus as keyof typeof PROJECT_STATUS_CONFIG]?.label ?? newStatus}`
+        );
+        invalidateProjeto();
+        if (newStatus !== PROJECT_STATUS.CANCELADO) {
+          const { error: notifyError } = await supabase.rpc("rpc_notificar_projeto_status", {
+            p_projeto_id: projeto.id,
+            p_novo_status: newStatus,
+          });
+          if (notifyError) monitoring.captureException(notifyError, { context: "notifyProjectStatusChange" });
+        }
+      } catch (err: unknown) {
+        toast.error("Erro ao mudar status", { description: errorMessage(err) });
+      }
+    },
+    [projeto, invalidateProjeto, toast]
+  );
+
+  const handleQuickUpdateStatus = useCallback(
+    (newStatus: string) => {
+      if (!projeto) return;
+      if (projeto.status === PROJECT_STATUS.CONCLUIDO && newStatus !== PROJECT_STATUS.CONCLUIDO) {
+        setPendingReopenStatus(newStatus);
+        return;
+      }
+      void applyStatusUpdate(newStatus, false);
+    },
+    [projeto, applyStatusUpdate]
+  );
+
   // ---- Derived data ----
   const deadline = projeto ? getDeadlineStatus(projeto) : null;
   const progress = getProjectProgress(disciplinasLegacy);
@@ -339,6 +427,13 @@ export function useProjetoDetail(id: string | undefined) {
     handleSaveDiscChanges,
     handleAddResponsavel,
     handleRemoveResponsavel,
+
+    // Quick edit inline (header/KPIs do projeto)
+    handleQuickUpdateProjeto,
+    handleQuickUpdateStatus,
+    pendingReopenStatus,
+    setPendingReopenStatus,
+    applyStatusUpdate,
 
     // Edit dialog support
     clientes,

@@ -54,6 +54,12 @@ interface UseGanttDragOptions<K extends DragKey> {
   onCommit: (key: K, dates: { start: Date; end: Date }) => Promise<void>;
   /** Não persiste quando a barra foi clampada pela restrição. Padrão: false. */
   skipCommitWhenSnapping?: boolean;
+  /**
+   * Chamado quando o arraste é descartado por causa do `skipCommitWhenSnapping`
+   * (a barra só ficou dentro dos limites por causa do clamp). Sem isto, o
+   * usuário solta o arraste e nada acontece, sem explicação.
+   */
+  onBlockedCommit?: (key: K) => void;
 }
 
 /**
@@ -75,6 +81,7 @@ export function useGanttDrag<K extends DragKey = DragKey>({
   constrain,
   onCommit,
   skipCommitWhenSnapping = false,
+  onBlockedCommit,
 }: UseGanttDragOptions<K>) {
   const dragRef = useRef<DragState<K> | null>(null);
   const [override, setOverride] = useState<DragOverride<K> | null>(null);
@@ -89,10 +96,12 @@ export function useGanttDrag<K extends DragKey = DragKey>({
   const overrideRef = useRef(override);
   const constrainRef = useRef(constrain);
   const onCommitRef = useRef(onCommit);
+  const onBlockedCommitRef = useRef(onBlockedCommit);
   zoomRef.current = zoom;
   overrideRef.current = override;
   constrainRef.current = constrain;
   onCommitRef.current = onCommit;
+  onBlockedCommitRef.current = onBlockedCommit;
 
   const pxPerDay = useCallback((): number => {
     if (!timelineRef.current) return 1;
@@ -172,7 +181,10 @@ export function useGanttDrag<K extends DragKey = DragKey>({
       reset();
 
       if (!drag || !ov) return;
-      if (skipCommitWhenSnapping && wasSnapping) return;
+      if (skipCommitWhenSnapping && wasSnapping) {
+        onBlockedCommitRef.current?.(drag.key);
+        return;
+      }
       if (toIso(ov.start) === toIso(drag.origStart) && toIso(ov.end) === toIso(drag.origEnd)) return;
 
       setIsSaving(true);

@@ -2,14 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { FormDialog } from "@/components/FormDialog";
 import { Plus } from "lucide-react";
 import { detectTipoChavePix, TIPO_CHAVE_PIX_LABEL, type TipoChavePix } from "@/lib/pixUtils";
 import { formatCurrencyInput } from "@/lib/currencyUtils";
@@ -51,18 +44,20 @@ export function ContaFormDialog({
   onSave,
 }: ContaFormDialogProps) {
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogTrigger asChild>
-        <Button variant="ghost" className="h-6 w-6" onClick={onAddClick} aria-label="Adicionar conta">
-          <Plus className="h-3.5 w-3.5" />
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>{selectedConta ? "Editar conta" : "Adicionar conta bancária"}</DialogTitle>
-          <DialogDescription>Configure sua conta para acompanhamento automático</DialogDescription>
-        </DialogHeader>
-        <div className="space-y-4 mt-4">
+    <>
+      <Button variant="ghost" className="h-6 w-6" onClick={onAddClick} aria-label="Adicionar conta">
+        <Plus className="h-3.5 w-3.5" />
+      </Button>
+      <FormDialog
+        open={open}
+        onOpenChange={onOpenChange}
+        title={selectedConta ? "Editar conta" : "Adicionar conta bancária"}
+        description="Configure sua conta para acompanhamento automático"
+        size="md"
+        onSubmit={onSave}
+        submitLabel={selectedConta ? "Atualizar conta" : "Salvar conta"}
+      >
+        <div className="space-y-4">
           <div className="space-y-2">
             <Label>
               Nome da Conta <span className="text-destructive">*</span>
@@ -122,11 +117,8 @@ export function ContaFormDialog({
               placeholder="CPF, CNPJ, e-mail, celular ou chave aleatória"
             />
           </div>
-          <Button variant="brand" className="w-full rounded-full px-5 py-2.5 text-sm" onClick={onSave}>
-            {selectedConta ? "Atualizar Conta" : "Salvar Conta"}
-          </Button>
         </div>
-      </DialogContent>
-    </Dialog>
+      </FormDialog>
+    </>
   );
 }

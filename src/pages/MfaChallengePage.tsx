@@ -3,6 +3,7 @@ import { MfaChallenge } from "@/components/MfaChallenge";
 import { useAuth } from "@/contexts/AuthContext";
 import { CheckCircle2, ArrowLeft } from "lucide-react";
 import { usePageTitle } from "@/hooks/usePageTitle";
+import { Logo } from "@/components/Logo";
 
 export default function MfaChallengePage() {
   usePageTitle("Verificação de dois fatores");
@@ -37,16 +38,8 @@ export default function MfaChallengePage() {
         </button>
 
         <div className="w-full max-w-[400px] space-y-8 animate-in fade-in slide-in-from-left-8 duration-700">
-          <div className="flex justify-center items-center gap-2">
-            <img
-              src="/pilar-logo.svg"
-              alt="Pilar"
-              className="h-10 w-auto hover:rotate-12 transition-transform duration-300"
-            />
-            <span className="text-2xl font-medium tracking-tight text-ink">
-              Pilar
-              <sup className="text-[10px] font-normal text-ink-disabled ml-0.5 relative -top-2.5">®</sup>
-            </span>
+          <div className="flex justify-center">
+            <Logo size="lg" className="text-ink" />
           </div>
 
           <MfaChallenge onVerified={handleVerified} />
@@ -71,16 +64,8 @@ export default function MfaChallengePage() {
 
         <div className="relative z-10 flex flex-col justify-between h-full w-full p-16 text-white">
           <div className="animate-in fade-in slide-in-from-top-8 duration-700 flex justify-end">
-            <div className="flex items-center gap-3 opacity-80">
-              <img
-                src="/pilar-logo.svg"
-                alt="Pilar"
-                className="h-8 w-8 brightness-0 invert hover:rotate-12 transition-transform duration-300"
-              />
-              <span className="text-xl font-medium tracking-tight">
-                Pilar
-                <sup className="text-[9px] font-normal text-white/50 ml-0.5 relative -top-2">®</sup>
-              </span>
+            <div className="opacity-80">
+              <Logo tone="inverted" size="sm" />
             </div>
           </div>
 

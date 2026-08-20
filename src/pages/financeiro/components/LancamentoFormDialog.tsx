@@ -4,11 +4,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { format, addMonths } from "date-fns";
 import { toast } from "sonner";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { FormDialog } from "@/components/FormDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -43,7 +44,7 @@ const schema = z
         const n = parseInt(v || "1", 10);
         return Number.isInteger(n) && n >= 1 && n <= 60;
       }, "Parcelas deve ser entre 1 e 60"),
-    categoriaId: z.string().min(1, "Categoria obrigatória"),
+    categoriaId: z.string().optional().default(""),
     projetoId: z.string().optional().default(""),
     contaId: z.string().optional().default(""),
     cartaoId: z.string().optional().default(""),
@@ -53,6 +54,8 @@ const schema = z
     dataCompetencia: z.date().optional(),
     notaFiscal: z.string().optional().default(""),
     observacao: z.string().optional().default(""),
+    recorrente: z.boolean().optional().default(false),
+    periodicidade: z.string().optional().default("mensal"),
   })
   .refine(
     (d) => {
@@ -90,12 +93,19 @@ const defaultValues = (tipo: TipoLancamento): FormData => ({
   dataCompetencia: undefined,
   notaFiscal: "",
   observacao: "",
+  recorrente: false,
+  periodicidade: "mensal",
 });
 
 export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onSaved }: LancamentoFormDialogProps) {
   const isEdit = !!lancamento;
   const isReceita = tipo === "receita";
   const aux = useFinanceAuxData(tipo as "receita" | "despesa");
+  // Recorrência só existe na tabela despesas. Em edição só é seguro
+  // mostrar/gravar quando o `lancamento` já traz o valor real (get_lancamentos_pagina
+  // devolve a coluna, mas um `Lancamento` montado à mão por fora do RPC pode não
+  // trazer) — senão o form mostraria "desligado" e apagaria um valor real ao salvar.
+  const recorrenteApplicable = !isReceita && (!isEdit || lancamento?.recorrente !== undefined);
 
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -146,8 +156,10 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
         fornecedorId: !isReceita ? (lancamento.contraparte_id ?? "") : "",
         centroCustoId: lancamento.centro_custo_id ?? "",
         dataCompetencia: lancamento.data_competencia ? new Date(lancamento.data_competencia + "T12:00:00") : undefined,
-        notaFiscal: "",
-        observacao: "",
+        notaFiscal: lancamento.nota_fiscal ?? "",
+        observacao: lancamento.observacao ?? "",
+        recorrente: lancamento.recorrente ?? false,
+        periodicidade: lancamento.periodicidade ?? "mensal",
       });
       if (lancamento.categoria_id || lancamento.projeto_id || lancamento.contraparte_id) setAdvancedOpen(false);
 
@@ -250,6 +262,9 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
               centro_custo_id: data.centroCustoId || null,
               nota_fiscal: data.notaFiscal || null,
               observacao: data.observacao || null,
+              ...(recorrenteApplicable
+                ? { recorrente: data.recorrente, periodicidade: data.recorrente ? data.periodicidade : null }
+                : {}),
             };
         const { error } = await supabase
           .from(table)
@@ -310,6 +325,8 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
                 grupo_parcela: grupoParcela,
                 parcela_numero: numParcelas > 1 ? i + 1 : null,
                 parcela_total: numParcelas > 1 ? numParcelas : null,
+                recorrente: data.recorrente,
+                periodicidade: data.recorrente ? data.periodicidade : null,
               };
         });
         const { data: inserted, error } = await supabase
@@ -380,7 +397,10 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
     return (
       <Badge
         variant="secondary"
-        className={cn("tabular-nums", ok ? "bg-positive/10 text-positive-strong" : "bg-warning-soft text-warning-strong")}
+        className={cn(
+          "tabular-nums",
+          ok ? "bg-positive/10 text-positive-strong" : "bg-warning-soft text-warning-strong"
+        )}
       >
         Soma: {soma.toFixed(2)}%
       </Badge>
@@ -389,466 +409,464 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
 
   return (
     <>
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-2xl max-h-[92vh] overflow-y-auto p-0">
-          <div className="px-6 pt-6 pb-4 border-b">
-            <DialogHeader>
-              <DialogTitle>
-                {isEdit ? "Editar" : "Nova"} {isReceita ? "Receita" : "Despesa"}
-              </DialogTitle>
-              <DialogDescription>
-                {isEdit ? "Altere os campos e salve" : "Campos obrigatórios marcados com *"}
-              </DialogDescription>
-            </DialogHeader>
-          </div>
+      <FormDialog
+        open={open}
+        onOpenChange={onOpenChange}
+        title={`${isEdit ? "Editar" : "Nova"} ${isReceita ? "Receita" : "Despesa"}`}
+        description={isEdit ? "Altere os campos e salve" : "Campos obrigatórios marcados com *"}
+        size="lg"
+        onSubmit={onSubmit}
+        isPending={saving}
+        submitLabel={isEdit ? "Atualizar" : "Salvar"}
+      >
+        {/* Linha principal */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Coluna esquerda — obrigatórios */}
+          <div className="space-y-3">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Dados principais</p>
 
-          <form onSubmit={onSubmit} className="divide-y">
-            {/* Linha principal */}
-            <div className="px-6 py-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Coluna esquerda — obrigatórios */}
-              <div className="space-y-3">
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  Dados principais
-                </p>
+            <div className="space-y-1.5">
+              <Label htmlFor="descricao" className="text-xs">
+                Descrição *
+              </Label>
+              <Input
+                id="descricao"
+                {...form.register("descricao")}
+                placeholder="Ex: Honorários projeto A"
+                className="h-9"
+              />
+              {form.formState.errors.descricao && (
+                <p className="text-xs text-destructive">{form.formState.errors.descricao.message}</p>
+              )}
+            </div>
 
-                <div className="space-y-1.5">
-                  <Label htmlFor="descricao" className="text-xs">Descrição *</Label>
-                  <Input
-                    id="descricao"
-                    {...form.register("descricao")}
-                    placeholder="Ex: Honorários projeto A"
-                    className="h-9"
-                  />
-                  {form.formState.errors.descricao && (
-                    <p className="text-xs text-destructive">{form.formState.errors.descricao.message}</p>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="space-y-1.5">
-                    <Label className="text-xs">Valor total (R$) *</Label>
-                    <MoneyInput
-                      value={form.watch("valorTotal")}
-                      onChange={(v) => form.setValue("valorTotal", v)}
-                      className="h-9"
-                    />
-                    {form.formState.errors.valorTotal && (
-                      <p className="text-xs text-destructive">{form.formState.errors.valorTotal.message}</p>
-                    )}
-                  </div>
-                  {!isEdit && (
-                    <div className="space-y-1.5">
-                      <Label className="text-xs">Parcelas</Label>
-                      <Input type="number" min="1" max="60" {...form.register("parcelas")} className="h-9" />
-                    </div>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="space-y-1.5">
-                    <Label className="text-xs">Vencimento *</Label>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          className={cn(
-                            "w-full h-9 justify-start text-xs font-normal",
-                            !form.watch("dataVencimento") && "text-muted-foreground"
-                          )}
-                        >
-                          <CalendarIcon className="mr-1.5 h-3 w-3" />
-                          {form.watch("dataVencimento")
-                            ? format(form.watch("dataVencimento"), "dd/MM/yyyy")
-                            : "Selecionar"}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={form.watch("dataVencimento")}
-                          onSelect={(d) => d && form.setValue("dataVencimento", d)}
-                          autoFocus
-                        />
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-xs">Status</Label>
-                    <Select value={form.watch("status")} onValueChange={(v) => form.setValue("status", v)}>
-                      <SelectTrigger className="h-9">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {statusOptions.map((o) => (
-                          <SelectItem key={o.value} value={o.value}>
-                            {o.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div className="space-y-1.5">
-                  <Label className="text-xs">Forma de pagamento</Label>
-                  <Select
-                    value={form.watch("formaPagamento")}
-                    onValueChange={(v) => form.setValue("formaPagamento", v)}
-                  >
-                    <SelectTrigger className="h-9">
-                      <SelectValue placeholder="Selecione" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="PIX">PIX</SelectItem>
-                      <SelectItem value="Transferência">Transferência</SelectItem>
-                      <SelectItem value="Boleto">Boleto</SelectItem>
-                      <SelectItem value="Dinheiro">Dinheiro</SelectItem>
-                      <SelectItem value="Cartão de Crédito">Cartão de Crédito</SelectItem>
-                      <SelectItem value="Cartão de Débito">Cartão de Débito</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-1.5">
+                <Label className="text-xs">Valor total (R$) *</Label>
+                <MoneyInput
+                  value={form.watch("valorTotal")}
+                  onChange={(v) => form.setValue("valorTotal", v)}
+                  className="h-9"
+                />
+                {form.formState.errors.valorTotal && (
+                  <p className="text-xs text-destructive">{form.formState.errors.valorTotal.message}</p>
+                )}
               </div>
-
-              {/* Coluna direita — vínculos */}
-              <div className="space-y-3">
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Vínculos</p>
-
-                {isReceita ? (
-                  <div className="space-y-1.5">
-                    <Label className="text-xs">Cliente (pagante)</Label>
-                    <Select value={form.watch("clienteId")} onValueChange={(v) => form.setValue("clienteId", v)}>
-                      <SelectTrigger className="h-9">
-                        <SelectValue placeholder="Selecione" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {aux.clientes.map((c) => (
-                          <SelectItem key={c.id} value={c.id}>
-                            {c.nome}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {chavesPixCliente.length > 0 && (
-                      <div className="rounded-md border border-dashed px-3 py-2 space-y-1 bg-muted/30">
-                        {chavesPixCliente.map((c, i) => (
-                          <div key={i} className="flex items-center gap-2 text-xs">
-                            <QrCode className="h-3 w-3 shrink-0 text-muted-foreground" />
-                            <span className="font-medium">{c.chave}</span>
-                            <Badge variant="outline" className="text-[10px] h-4 px-1 ml-auto">
-                              {TIPO_CHAVE_PIX_LABEL[c.tipo as keyof typeof TIPO_CHAVE_PIX_LABEL] ?? c.tipo}
-                            </Badge>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="space-y-1.5">
-                    <Label className="text-xs">Fornecedor</Label>
-                    <Select value={form.watch("fornecedorId")} onValueChange={(v) => form.setValue("fornecedorId", v)}>
-                      <SelectTrigger className="h-9">
-                        <SelectValue placeholder="Selecione" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {aux.fornecedores.map((f) => (
-                          <SelectItem key={f.id} value={f.id}>
-                            {f.nome}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-
+              {!isEdit && (
                 <div className="space-y-1.5">
-                  <Label className="text-xs">Projeto</Label>
-                  <Select value={form.watch("projetoId")} onValueChange={(v) => form.setValue("projetoId", v)}>
-                    <SelectTrigger className="h-9">
-                      <SelectValue placeholder="Selecione" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {aux.projetos.map((p) => (
-                        <SelectItem key={p.id} value={p.id}>
-                          {p.codigo || "—"}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Label className="text-xs">Parcelas</Label>
+                  <Input type="number" min="1" max="60" {...form.register("parcelas")} className="h-9" />
                 </div>
+              )}
+            </div>
 
-                <div className="space-y-1.5">
-                  <Label className="text-xs">
-                    Categoria<span className="text-destructive ml-0.5">*</span>
-                  </Label>
-                  <Select
-                    value={form.watch("categoriaId")}
-                    onValueChange={(v) => form.setValue("categoriaId", v, { shouldValidate: true })}
-                  >
-                    <SelectTrigger
-                      aria-label="Categoria"
-                      className={cn("h-9", form.formState.errors.categoriaId && "border-destructive")}
-                    >
-                      <SelectValue placeholder="Selecione" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {aux.categorias.map((c) => (
-                        <SelectItem key={c.id} value={c.id}>
-                          {c.nome}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {form.formState.errors.categoriaId && (
-                    <p className="text-xs text-destructive">{form.formState.errors.categoriaId.message}</p>
-                  )}
-                </div>
-
-                {isCartaoPayment && !isReceita ? (
-                  <div className="space-y-1.5">
-                    <Label className="text-xs">
-                      {formaPagamento}
-                      {form.watch("status") === "Pago" && <span className="text-destructive ml-0.5">*</span>}
-                    </Label>
-                    <Select value={form.watch("cartaoId")} onValueChange={(v) => form.setValue("cartaoId", v)}>
-                      <SelectTrigger className={cn("h-9", form.formState.errors.cartaoId && "border-destructive")}>
-                        <SelectValue placeholder="Selecione o cartão" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {cartoesFiltrados.map((c) => (
-                          <SelectItem key={c.id} value={c.id}>
-                            {c.nome}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {form.formState.errors.cartaoId && (
-                      <p className="text-xs text-destructive">{form.formState.errors.cartaoId.message}</p>
-                    )}
-                  </div>
-                ) : (
-                  <div className="space-y-1.5">
-                    <Label className="text-xs">
-                      Conta
-                      {(form.watch("status") === "Recebida" || form.watch("status") === "Pago") && (
-                        <span className="text-destructive ml-0.5">*</span>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-1.5">
+                <Label className="text-xs">Vencimento *</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className={cn(
+                        "w-full h-9 justify-start text-xs font-normal",
+                        !form.watch("dataVencimento") && "text-muted-foreground"
                       )}
-                    </Label>
-                    <Select value={form.watch("contaId")} onValueChange={(v) => form.setValue("contaId", v)}>
-                      <SelectTrigger className={cn("h-9", form.formState.errors.contaId && "border-destructive")}>
-                        <SelectValue placeholder="Selecione a conta" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {aux.contas.map((c) => (
-                          <SelectItem key={c.id} value={c.id}>
-                            {c.nome}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {form.formState.errors.contaId && (
-                      <p className="text-xs text-destructive">{form.formState.errors.contaId.message}</p>
-                    )}
-                  </div>
-                )}
+                    >
+                      <CalendarIcon className="mr-1.5 h-3 w-3" />
+                      {form.watch("dataVencimento") ? format(form.watch("dataVencimento"), "dd/MM/yyyy") : "Selecionar"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={form.watch("dataVencimento")}
+                      onSelect={(d) => d && form.setValue("dataVencimento", d)}
+                      autoFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Status</Label>
+                <Select value={form.watch("status")} onValueChange={(v) => form.setValue("status", v)}>
+                  <SelectTrigger className="h-9">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {statusOptions.map((o) => (
+                      <SelectItem key={o.value} value={o.value}>
+                        {o.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
-            {/* Seção avançada colapsável */}
-            <Collapsible open={advancedOpen} onOpenChange={setAdvancedOpen}>
-              <CollapsibleTrigger asChild>
-                <button
-                  type="button"
-                  className="w-full flex items-center justify-between px-6 py-3 text-xs text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
-                >
-                  <span className="font-medium uppercase tracking-wider">Mais opções</span>
-                  <ChevronDown className={cn("h-4 w-4 transition-transform", advancedOpen && "rotate-180")} />
-                </button>
-              </CollapsibleTrigger>
-              <CollapsibleContent>
-                <div className="px-6 pb-4 grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <div className="space-y-1.5">
-                    <Label className="text-xs">Data de competência</Label>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          className={cn(
-                            "w-full h-9 justify-start text-xs font-normal",
-                            !form.watch("dataCompetencia") && "text-muted-foreground"
-                          )}
-                        >
-                          <CalendarIcon className="mr-1.5 h-3 w-3" />
-                          {form.watch("dataCompetencia")
-                            ? format(form.watch("dataCompetencia") as Date, "dd/MM/yyyy")
-                            : "Igual ao vencimento"}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={form.watch("dataCompetencia")}
-                          onSelect={(d) => form.setValue("dataCompetencia", d)}
-                          autoFocus
-                        />
-                      </PopoverContent>
-                    </Popover>
-                  </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Forma de pagamento</Label>
+              <Select value={form.watch("formaPagamento")} onValueChange={(v) => form.setValue("formaPagamento", v)}>
+                <SelectTrigger className="h-9">
+                  <SelectValue placeholder="Selecione" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="PIX">PIX</SelectItem>
+                  <SelectItem value="Transferência">Transferência</SelectItem>
+                  <SelectItem value="Boleto">Boleto</SelectItem>
+                  <SelectItem value="Dinheiro">Dinheiro</SelectItem>
+                  <SelectItem value="Cartão de Crédito">Cartão de Crédito</SelectItem>
+                  <SelectItem value="Cartão de Débito">Cartão de Débito</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
 
-                  <div className="space-y-1.5">
-                    <Label className="text-xs flex items-center justify-between">
-                      Centro de custo
-                      <button
-                        type="button"
-                        className="text-[10px] text-ink hover:underline inline-flex items-center gap-0.5"
-                        onClick={() => setCcManagerOpen(true)}
-                      >
-                        <Settings2 className="h-3 w-3" /> gerenciar
-                      </button>
-                    </Label>
-                    <Select
-                      value={form.watch("centroCustoId")}
-                      onValueChange={(v) => form.setValue("centroCustoId", v)}
-                      disabled={rateioOn}
+          {/* Coluna direita — vínculos */}
+          <div className="space-y-3">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Vínculos</p>
+
+            {isReceita ? (
+              <div className="space-y-1.5">
+                <Label className="text-xs">Cliente (pagante)</Label>
+                <Select value={form.watch("clienteId")} onValueChange={(v) => form.setValue("clienteId", v)}>
+                  <SelectTrigger className="h-9">
+                    <SelectValue placeholder="Selecione" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {aux.clientes.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.nome}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {chavesPixCliente.length > 0 && (
+                  <div className="rounded-md border border-dashed px-3 py-2 space-y-1 bg-muted/30">
+                    {chavesPixCliente.map((c, i) => (
+                      <div key={i} className="flex items-center gap-2 text-xs">
+                        <QrCode className="h-3 w-3 shrink-0 text-muted-foreground" />
+                        <span className="font-medium">{c.chave}</span>
+                        <Badge variant="outline" className="text-[10px] h-4 px-1 ml-auto">
+                          {TIPO_CHAVE_PIX_LABEL[c.tipo as keyof typeof TIPO_CHAVE_PIX_LABEL] ?? c.tipo}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-1.5">
+                <Label className="text-xs">Fornecedor</Label>
+                <Select value={form.watch("fornecedorId")} onValueChange={(v) => form.setValue("fornecedorId", v)}>
+                  <SelectTrigger className="h-9">
+                    <SelectValue placeholder="Selecione" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {aux.fornecedores.map((f) => (
+                      <SelectItem key={f.id} value={f.id}>
+                        {f.nome}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            <div className="space-y-1.5">
+              <Label className="text-xs">Projeto</Label>
+              <Select value={form.watch("projetoId")} onValueChange={(v) => form.setValue("projetoId", v)}>
+                <SelectTrigger className="h-9">
+                  <SelectValue placeholder="Selecione" />
+                </SelectTrigger>
+                <SelectContent>
+                  {aux.projetos.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.codigo || "—"}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-xs">Categoria</Label>
+              <Select value={form.watch("categoriaId")} onValueChange={(v) => form.setValue("categoriaId", v)}>
+                <SelectTrigger aria-label="Categoria" className="h-9">
+                  <SelectValue placeholder="Selecione" />
+                </SelectTrigger>
+                <SelectContent>
+                  {aux.categorias.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {isCartaoPayment && !isReceita ? (
+              <div className="space-y-1.5">
+                <Label className="text-xs">
+                  {formaPagamento}
+                  {form.watch("status") === "Pago" && <span className="text-destructive ml-0.5">*</span>}
+                </Label>
+                <Select value={form.watch("cartaoId")} onValueChange={(v) => form.setValue("cartaoId", v)}>
+                  <SelectTrigger className={cn("h-9", form.formState.errors.cartaoId && "border-destructive")}>
+                    <SelectValue placeholder="Selecione o cartão" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {cartoesFiltrados.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.nome}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {form.formState.errors.cartaoId && (
+                  <p className="text-xs text-destructive">{form.formState.errors.cartaoId.message}</p>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-1.5">
+                <Label className="text-xs">
+                  Conta
+                  {(form.watch("status") === "Recebida" || form.watch("status") === "Pago") && (
+                    <span className="text-destructive ml-0.5">*</span>
+                  )}
+                </Label>
+                <Select value={form.watch("contaId")} onValueChange={(v) => form.setValue("contaId", v)}>
+                  <SelectTrigger className={cn("h-9", form.formState.errors.contaId && "border-destructive")}>
+                    <SelectValue placeholder="Selecione a conta" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {aux.contas.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.nome}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {form.formState.errors.contaId && (
+                  <p className="text-xs text-destructive">{form.formState.errors.contaId.message}</p>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Seção avançada colapsável */}
+        <Collapsible open={advancedOpen} onOpenChange={setAdvancedOpen}>
+          <CollapsibleTrigger asChild>
+            <button
+              type="button"
+              className="w-full flex items-center justify-between py-3 text-xs text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+            >
+              <span className="font-medium uppercase tracking-wider">Mais opções</span>
+              <ChevronDown className={cn("h-4 w-4 transition-transform", advancedOpen && "rotate-180")} />
+            </button>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <div className="pb-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs">Data de competência</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className={cn(
+                        "w-full h-9 justify-start text-xs font-normal",
+                        !form.watch("dataCompetencia") && "text-muted-foreground"
+                      )}
                     >
-                      <SelectTrigger className="h-9">
-                        <SelectValue placeholder={rateioOn ? "Definido por rateio" : "Selecione"} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {aux.centrosCusto.map((c) => (
-                          <SelectItem key={c.id} value={c.id}>
-                            {c.codigo ? `${c.codigo} — ` : ""}
-                            {c.nome}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                      <CalendarIcon className="mr-1.5 h-3 w-3" />
+                      {form.watch("dataCompetencia")
+                        ? format(form.watch("dataCompetencia") as Date, "dd/MM/yyyy")
+                        : "Igual ao vencimento"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={form.watch("dataCompetencia")}
+                      onSelect={(d) => form.setValue("dataCompetencia", d)}
+                      autoFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
 
-                  <div className="md:col-span-2 space-y-2 rounded-md border p-3 bg-muted/20">
-                    <div className="flex items-center justify-between">
-                      <Label className="text-xs font-medium">Rateio entre centros de custo</Label>
-                      <button
-                        type="button"
-                        className={cn(
-                          "text-[10px] px-2 py-0.5 rounded border",
-                          rateioOn ? "bg-brand text-ink border-brand" : "bg-transparent text-muted-foreground"
-                        )}
-                        onClick={() => {
-                          const next = !rateioOn;
-                          setRateioOn(next);
-                          if (next && rateios.length === 0) {
-                            setRateios([
-                              { centro_custo_id: "", percentual: "" },
-                              { centro_custo_id: "", percentual: "" },
-                            ]);
-                          }
-                        }}
-                      >
-                        {rateioOn ? "ON" : "OFF"}
-                      </button>
-                    </div>
-                    {rateioOn && (
-                      <>
-                        <div className="space-y-1.5">
-                          {rateios.map((r, i) => (
-                            <div key={i} className="flex items-center gap-2">
-                              <Select
-                                value={r.centro_custo_id}
-                                onValueChange={(v) =>
-                                  setRateios((prev) =>
-                                    prev.map((p, idx) => (idx === i ? { ...p, centro_custo_id: v } : p))
-                                  )
-                                }
-                              >
-                                <SelectTrigger className="h-8 flex-1 text-xs">
-                                  <SelectValue placeholder="Centro" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {aux.centrosCusto.map((c) => (
-                                    <SelectItem key={c.id} value={c.id}>
-                                      {c.codigo ? `${c.codigo} — ` : ""}
-                                      {c.nome}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                              <Input
-                                type="number"
-                                step="0.01"
-                                min="0"
-                                max="100"
-                                placeholder="%"
-                                className="h-8 w-20 text-xs"
-                                value={r.percentual}
-                                onChange={(e) =>
-                                  setRateios((prev) =>
-                                    prev.map((p, idx) => (idx === i ? { ...p, percentual: e.target.value } : p))
-                                  )
-                                }
-                              />
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                className="h-7 w-7 text-danger-mid"
-                                onClick={() => setRateios((prev) => prev.filter((_, idx) => idx !== i))}
-                                aria-label="Remover rateio"
-                              >
-                                <Trash2 className="h-3 w-3" />
-                              </Button>
-                            </div>
-                          ))}
-                        </div>
-                        <div className="flex items-center justify-between text-xs">
+              <div className="space-y-1.5">
+                <Label className="text-xs flex items-center justify-between">
+                  Centro de custo
+                  <button
+                    type="button"
+                    className="text-[10px] text-ink hover:underline inline-flex items-center gap-0.5"
+                    onClick={() => setCcManagerOpen(true)}
+                  >
+                    <Settings2 className="h-3 w-3" /> gerenciar
+                  </button>
+                </Label>
+                <Select
+                  value={form.watch("centroCustoId")}
+                  onValueChange={(v) => form.setValue("centroCustoId", v)}
+                  disabled={rateioOn}
+                >
+                  <SelectTrigger className="h-9">
+                    <SelectValue placeholder={rateioOn ? "Definido por rateio" : "Selecione"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {aux.centrosCusto.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.codigo ? `${c.codigo} — ` : ""}
+                        {c.nome}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="md:col-span-2 space-y-2 rounded-md border p-3 bg-muted/20">
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs font-medium">Rateio entre centros de custo</Label>
+                  <button
+                    type="button"
+                    className={cn(
+                      "text-[10px] px-2 py-0.5 rounded border",
+                      rateioOn ? "bg-brand text-ink border-brand" : "bg-transparent text-muted-foreground"
+                    )}
+                    onClick={() => {
+                      const next = !rateioOn;
+                      setRateioOn(next);
+                      if (next && rateios.length === 0) {
+                        setRateios([
+                          { centro_custo_id: "", percentual: "" },
+                          { centro_custo_id: "", percentual: "" },
+                        ]);
+                      }
+                    }}
+                  >
+                    {rateioOn ? "ON" : "OFF"}
+                  </button>
+                </div>
+                {rateioOn && (
+                  <>
+                    <div className="space-y-1.5">
+                      {rateios.map((r, i) => (
+                        <div key={i} className="flex items-center gap-2">
+                          <Select
+                            value={r.centro_custo_id}
+                            onValueChange={(v) =>
+                              setRateios((prev) => prev.map((p, idx) => (idx === i ? { ...p, centro_custo_id: v } : p)))
+                            }
+                          >
+                            <SelectTrigger className="h-8 flex-1 text-xs">
+                              <SelectValue placeholder="Centro" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {aux.centrosCusto.map((c) => (
+                                <SelectItem key={c.id} value={c.id}>
+                                  {c.codigo ? `${c.codigo} — ` : ""}
+                                  {c.nome}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            max="100"
+                            placeholder="%"
+                            className="h-8 w-20 text-xs"
+                            value={r.percentual}
+                            onChange={(e) =>
+                              setRateios((prev) =>
+                                prev.map((p, idx) => (idx === i ? { ...p, percentual: e.target.value } : p))
+                              )
+                            }
+                          />
                           <Button
                             type="button"
                             variant="ghost"
-                            size="sm"
-                            onClick={() => setRateios((prev) => [...prev, { centro_custo_id: "", percentual: "" }])}
+                            size="icon"
+                            className="h-7 w-7 text-danger-mid"
+                            onClick={() => setRateios((prev) => prev.filter((_, idx) => idx !== i))}
+                            aria-label="Remover rateio"
                           >
-                            <Plus className="h-3 w-3 mr-1" />
-                            Adicionar centro
+                            <Trash2 className="h-3 w-3" />
                           </Button>
-                          <RateioSomaBadge rateios={rateios} />
                         </div>
-                      </>
+                      ))}
+                    </div>
+                    <div className="flex items-center justify-between text-xs">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setRateios((prev) => [...prev, { centro_custo_id: "", percentual: "" }])}
+                      >
+                        <Plus className="h-3 w-3 mr-1" />
+                        Adicionar centro
+                      </Button>
+                      <RateioSomaBadge rateios={rateios} />
+                    </div>
+                  </>
+                )}
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs">Nota fiscal</Label>
+                <Select value={form.watch("notaFiscal")} onValueChange={(v) => form.setValue("notaFiscal", v)}>
+                  <SelectTrigger className="h-9">
+                    <SelectValue placeholder="Selecione" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Sim">Sim</SelectItem>
+                    <SelectItem value="Não">Não</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5 md:col-span-2">
+                <Label className="text-xs">Observação</Label>
+                <Input {...form.register("observacao")} placeholder="Observações adicionais" className="h-9" />
+              </div>
+
+              {recorrenteApplicable && (
+                <div className="space-y-1.5 md:col-span-2">
+                  <Label className="text-xs">Recorrência</Label>
+                  <div className="flex items-center gap-4">
+                    <label className="flex items-center gap-2 text-sm cursor-pointer">
+                      <Checkbox
+                        checked={form.watch("recorrente")}
+                        onCheckedChange={(checked) => form.setValue("recorrente", checked === true)}
+                      />
+                      Despesa recorrente
+                    </label>
+                    {form.watch("recorrente") && (
+                      <Select
+                        value={form.watch("periodicidade")}
+                        onValueChange={(v) => form.setValue("periodicidade", v)}
+                      >
+                        <SelectTrigger className="h-9 w-[160px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="mensal">Mensal</SelectItem>
+                          <SelectItem value="trimestral">Trimestral</SelectItem>
+                          <SelectItem value="semestral">Semestral</SelectItem>
+                          <SelectItem value="anual">Anual</SelectItem>
+                        </SelectContent>
+                      </Select>
                     )}
                   </div>
-
-                  <div className="space-y-1.5">
-                    <Label className="text-xs">Nota fiscal</Label>
-                    <Select value={form.watch("notaFiscal")} onValueChange={(v) => form.setValue("notaFiscal", v)}>
-                      <SelectTrigger className="h-9">
-                        <SelectValue placeholder="Selecione" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Sim">Sim</SelectItem>
-                        <SelectItem value="Não">Não</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-1.5 md:col-span-2">
-                    <Label className="text-xs">Observação</Label>
-                    <Input {...form.register("observacao")} placeholder="Observações adicionais" className="h-9" />
-                  </div>
                 </div>
-              </CollapsibleContent>
-            </Collapsible>
-
-            <div className="flex items-center justify-end gap-2 px-6 py-4 bg-muted/30">
-              <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} disabled={saving}>
-                Cancelar
-              </Button>
-              <Button type="submit" variant="brand" loading={saving}>
-                {isEdit ? "Atualizar" : "Salvar"}
-              </Button>
+              )}
             </div>
-          </form>
-        </DialogContent>
-      </Dialog>
+          </CollapsibleContent>
+        </Collapsible>
+      </FormDialog>
 
       <CentroCustoManager
         open={ccManagerOpen}

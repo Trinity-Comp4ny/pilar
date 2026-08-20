@@ -1,27 +1,11 @@
 import { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { KPICard } from "@/components/KPICard";
 import { DataFrescor } from "@/components/DataFrescor";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { formatCurrency } from "@/lib/format";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  ArrowUpRight,
-  ArrowDownRight,
-  ArrowRight,
-  BarChart3,
-  Trophy,
-  CalendarClock,
-  Receipt,
-  Plus,
-} from "lucide-react";
+import { ArrowUpRight, ArrowDownRight, ArrowRight, BarChart3, Trophy, CalendarClock, Receipt } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
 import { formatDateDisplay } from "@/lib/dateUtils";
 import { cn } from "@/lib/utils";
@@ -46,12 +30,10 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { CustomTooltip } from "../components/CustomTooltip";
 import { FinanceErrorState } from "../components/FinanceErrorState";
 import { CategoriaDetalheDialog } from "../components/CategoriaDetalheDialog";
-import { LancamentoFormDialog } from "../components/LancamentoFormDialog";
 import { useFinanceData } from "@/hooks/useFinanceData";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { useFinanceFilter } from "../hooks/useFinanceFilter";
 import { useLancamentosRecentes } from "../hooks/useLancamentosRecentes";
-import type { TipoLancamento } from "../hooks/useLancamentosUnified";
 import { VencimentoRow } from "../components/VencimentoRow";
 
 function VisaoGeralSkeleton() {
@@ -175,30 +157,27 @@ function DonutChart({ data, totalLabel }: DonutProps) {
 interface VisaoGeralProps {
   /** Troca de aba dentro do Financeiro (ex.: atalho "Ver todos" → Lançamentos). */
   onNavigateTab?: (tab: string) => void;
+  /** Abre o seletor de tipo de lançamento (botão global "Novo lançamento" do header). */
+  onNovoLancamento?: () => void;
 }
 
-export default function VisaoGeral({ onNavigateTab }: VisaoGeralProps) {
+export default function VisaoGeral({ onNavigateTab, onNovoLancamento }: VisaoGeralProps) {
   const { visualizacao, dateFrom, dateTo } = useFinanceFilter();
-  const { data: dashboardData, isLoading, isFetching, dataUpdatedAt, isError, refetch } = useFinanceData(
-    dateFrom,
-    dateTo
-  );
+  const {
+    data: dashboardData,
+    isLoading,
+    isFetching,
+    dataUpdatedAt,
+    isError,
+    refetch,
+  } = useFinanceData(dateFrom, dateTo);
   // Próximos vencimentos migraram do antigo Dashboard (spec 005). Sem args, reusa o
   // cache que a Início já mantém; a lista independe do filtro de período (é a partir de hoje).
   const { data: radar } = useDashboardData();
   const { data: recentes = [], isLoading: recentesLoading } = useLancamentosRecentes();
 
-  const queryClient = useQueryClient();
   const [detalheCategoria, setDetalheCategoria] = useState<"receitas" | "despesas" | null>(null);
-  const [novoLancamento, setNovoLancamento] = useState<TipoLancamento | null>(null);
   const [chartView, setChartView] = useState<"comparativo" | "performance">("comparativo");
-
-  const onLancamentoSaved = () => {
-    setNovoLancamento(null);
-    void queryClient.invalidateQueries({ queryKey: ["finance-data"] });
-    void queryClient.invalidateQueries({ queryKey: ["lancamentos-recentes"] });
-    void queryClient.invalidateQueries({ queryKey: ["dashboard-v2"] });
-  };
 
   if (isLoading) return <VisaoGeralSkeleton />;
 
@@ -354,7 +333,13 @@ export default function VisaoGeral({ onNavigateTab }: VisaoGeralProps) {
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={chartDataDiario}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--chart-grid))" />
-                    <XAxis dataKey="dia" stroke="hsl(var(--chart-neutral))" fontSize={12} axisLine={false} tickLine={false} />
+                    <XAxis
+                      dataKey="dia"
+                      stroke="hsl(var(--chart-neutral))"
+                      fontSize={12}
+                      axisLine={false}
+                      tickLine={false}
+                    />
                     <YAxis stroke="hsl(var(--chart-neutral))" fontSize={12} axisLine={false} tickLine={false} />
                     <Tooltip content={<CustomTooltip />} />
                     <Legend />
@@ -530,26 +515,12 @@ export default function VisaoGeral({ onNavigateTab }: VisaoGeralProps) {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
         {/* Atalho para Lançamentos: ver os últimos e criar um novo sem sair da Visão Geral */}
         <Card className="w-full">
-          <CardHeader className="flex flex-row items-start justify-between gap-2 space-y-0">
-            <div>
-              <CardTitle className="text-base flex items-center gap-2">
-                <Receipt size={18} className="text-muted-foreground" />
-                Lançamentos recentes
-              </CardTitle>
-              <CardDescription>Últimos registros no financeiro</CardDescription>
-            </div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button size="sm" className="h-8 shrink-0 gap-1 rounded-full">
-                  <Plus className="h-3.5 w-3.5" />
-                  Novo lançamento
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => setNovoLancamento("receita")}>Nova receita</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setNovoLancamento("despesa")}>Nova despesa</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <Receipt size={18} className="text-muted-foreground" />
+              Lançamentos recentes
+            </CardTitle>
+            <CardDescription>Últimos registros no financeiro</CardDescription>
           </CardHeader>
           <CardContent>
             {recentesLoading ? (
@@ -563,7 +534,7 @@ export default function VisaoGeral({ onNavigateTab }: VisaoGeralProps) {
                 icon={Receipt}
                 title="Nenhum lançamento ainda"
                 description="Registre a primeira receita ou despesa para acompanhar o financeiro."
-                action={{ label: "Novo lançamento", onClick: () => setNovoLancamento("receita") }}
+                action={onNovoLancamento ? { label: "Novo lançamento", onClick: onNovoLancamento } : undefined}
                 className="py-6"
               />
             ) : (
@@ -580,7 +551,11 @@ export default function VisaoGeral({ onNavigateTab }: VisaoGeralProps) {
                       <span
                         className={cn(
                           "text-sm font-semibold tabular-nums whitespace-nowrap",
-                          isReceita ? "text-positive-strong" : isDespesa ? "text-negative-strong" : "text-muted-foreground"
+                          isReceita
+                            ? "text-positive-strong"
+                            : isDespesa
+                              ? "text-negative-strong"
+                              : "text-muted-foreground"
                         )}
                       >
                         {isDespesa ? "- " : isReceita ? "+ " : ""}
@@ -647,15 +622,6 @@ export default function VisaoGeral({ onNavigateTab }: VisaoGeralProps) {
         tone="danger"
         data={despesasCategoriaData}
       />
-
-      {novoLancamento && (
-        <LancamentoFormDialog
-          open
-          onOpenChange={(v) => !v && setNovoLancamento(null)}
-          tipo={novoLancamento}
-          onSaved={onLancamentoSaved}
-        />
-      )}
     </div>
   );
 }
