@@ -13,6 +13,7 @@ import {
   MessageSquare,
 } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
+import { Logo } from "@/components/Logo";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import {
   DropdownMenu,
@@ -25,10 +26,10 @@ import { cn } from "@/lib/utils";
 import { useState, useEffect, useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSettingsModal } from "@/contexts/SettingsModalContext";
-import { FeedbackDialog } from "@/components/FeedbackDialog";
 import { usePermissions } from "@/hooks/usePermissions";
 import { ImpersonationPicker } from "@/components/ImpersonationPicker";
 import { NotificationInbox } from "@/components/NotificationInbox";
+import { FeedbackDialog } from "@/components/FeedbackDialog";
 import {
   EMPRESA_ITEMS,
   MODULE_ORDER,
@@ -230,12 +231,7 @@ export function AppSidebar() {
       <div className="flex items-center justify-between h-16 px-4 group">
         {!collapsed ? (
           <>
-            <div className="flex items-center gap-3">
-              <img src="/pilar-logo.svg" alt="Pilar" className="h-7 w-7" />
-              <span className="text-base font-normal tracking-tight">
-                Pilar<sup className="text-[8px] font-normal text-ink-disabled ml-0.5 relative -top-2">®</sup>
-              </span>
-            </div>
+            <Logo size="xs" />
             <button
               type="button"
               onClick={toggleSidebar}
@@ -248,7 +244,7 @@ export function AppSidebar() {
         ) : (
           <div className="flex items-center justify-center w-full relative group">
             <div className="group-hover:opacity-0 transition-opacity">
-              <img src="/pilar-logo.svg" alt="Pilar" className="h-8 w-8" />
+              <Logo variant="mark" size="sm" />
             </div>
             <button
               type="button"
