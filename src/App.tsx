@@ -20,7 +20,6 @@ import { FeatureRoute } from "./components/FeatureRoute";
 import { AdminOnlyRoute } from "./components/AdminOnlyRoute";
 import { ImpersonationBanner } from "./components/ImpersonationBanner";
 import { TrialBanner } from "./components/TrialBanner";
-import { CookieConsentBanner } from "./components/CookieConsentBanner";
 import { SettingsModalProvider } from "./contexts/SettingsModalContext";
 import { MARKETING_URL } from "./lib/marketingSite";
 
@@ -136,7 +135,6 @@ const App = () => {
           <Toaster />
           <BrowserRouter>
             <PageTracker />
-            <CookieConsentBanner />
             <AuthProvider>
               <ImpersonationProvider>
                 <SettingsModalProvider>
