@@ -52,3 +52,4 @@ Decisão de arquitetura no meio do caminho vira um [ADR](../architecture/README.
 | [057](./057-webhook-asaas-resolucao-tenant.md)                      | Corrige resolução de tenant no webhook Asaas (coluna `webhook_token` removida, achado ao cifrar a api_key)  | Draft            |
 | [055](./055-status-page-publica.md)                                 | Status page pública (`/status`), incidentes declarados manualmente via `/ultra-admin`, sem uptime check automático | Entregue         |
 | [056](./056-feedback-bug-e-sugestao-feature.md)                     | Feedback do usuário: modal único (bug via Sentry `sendFeedback`, sugestão só no banco, triagem no ultra-admin)     | Entregue         |
+| [058](./058-acesso-por-role-observabilidade-total-mfa-opcional.md)  | Acesso é role + módulo da empresa (features por usuário saem), erro de fronteira sempre no Sentry, MFA opcional    | Em implementação |
