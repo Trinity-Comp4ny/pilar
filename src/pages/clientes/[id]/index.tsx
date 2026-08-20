@@ -516,6 +516,12 @@ export default function ClienteDetalhePage() {
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
 
+  const closeMessageDialog = () => {
+    setIsMessageOpen(false);
+    setMessageSubject("");
+    setMessageText("");
+  };
+
   const handleSendMessage = async () => {
     if (!cliente || !messageText || !messageSubject) return;
     try {
@@ -528,9 +534,7 @@ export default function ClienteDetalhePage() {
       reportInvokeError(err, "send-manual-client-email");
       toast.error("Erro ao enviar mensagem");
     }
-    setIsMessageOpen(false);
-    setMessageSubject("");
-    setMessageText("");
+    closeMessageDialog();
   };
 
   const handleDelete = async () => {
@@ -735,13 +739,8 @@ export default function ClienteDetalhePage() {
         message={messageText}
         onSubjectChange={setMessageSubject}
         onMessageChange={setMessageText}
-        onCancel={() => {
-          setIsMessageOpen(false);
-          setMessageSubject("");
-          setMessageText("");
-        }}
         onSend={handleSendMessage}
-        onOpenChange={setIsMessageOpen}
+        onOpenChange={(v) => (v ? setIsMessageOpen(true) : closeMessageDialog())}
       />
 
       <ClienteFormDialog open={isEditOpen} onOpenChange={setIsEditOpen} cliente={cliente} />
