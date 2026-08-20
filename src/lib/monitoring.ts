@@ -17,6 +17,13 @@ import * as Sentry from "@sentry/react";
 import { env, sentryTracesSampleRate } from "./env";
 
 type Extra = Record<string, unknown>;
+/** Ajustes de agrupamento/severidade para um evento específico. */
+export type CaptureOptions = {
+  level?: "warning" | "error" | "fatal";
+  /** Agrupa eventos parecidos num issue só (ex.: todo 403 da mesma rota). */
+  fingerprint?: string[];
+  tags?: Record<string, string>;
+};
 type MetricTags = Record<string, string | number | boolean>;
 export type MetricType = "count" | "gauge" | "distribution";
 
@@ -30,7 +37,7 @@ export interface MonitoringUser {
 interface Monitoring {
   init(): void;
   /** Retorna o event id (Sentry) quando disponível, para exibir como código de referência. */
-  captureException(error: unknown, extra?: Extra): string | undefined;
+  captureException(error: unknown, extra?: Extra, opts?: CaptureOptions): string | undefined;
   captureMessage(message: string, level?: "info" | "warning" | "error", extra?: Extra): void;
   setUser(user: MonitoringUser | null): void;
   addBreadcrumb(message: string, data?: Extra): void;
@@ -103,8 +110,8 @@ const noopMonitoring: Monitoring = {
   init() {
     if (DEV) console.info("[monitoring] no-op mode (no VITE_SENTRY_DSN)");
   },
-  captureException(error, extra) {
-    if (DEV) console.error("[monitoring] exception", error, scrub(extra));
+  captureException(error, extra, opts) {
+    if (DEV) console.error("[monitoring] exception", error, scrub(extra), opts);
     return undefined;
   },
   captureMessage(message, level = "info", extra) {
@@ -164,8 +171,16 @@ const sentryMonitoring: Monitoring = {
       if (ctx.name) ctx.name = scrubString(ctx.name);
     });
   },
-  captureException(error, extra) {
-    return Sentry.captureException(error, { extra: scrub(extra) as Record<string, unknown> });
+  captureException(error, extra, opts) {
+    const scrubbed = scrub(extra) as Record<string, unknown>;
+    if (!opts) return Sentry.captureException(error, { extra: scrubbed });
+
+    return Sentry.withScope((scope) => {
+      if (opts.level) scope.setLevel(opts.level);
+      if (opts.fingerprint) scope.setFingerprint(opts.fingerprint);
+      if (opts.tags) scope.setTags(opts.tags);
+      return Sentry.captureException(error, { extra: scrubbed });
+    });
   },
   captureMessage(message, level = "info", extra) {
     Sentry.captureMessage(message, { level, extra: scrub(extra) as Record<string, unknown> });
