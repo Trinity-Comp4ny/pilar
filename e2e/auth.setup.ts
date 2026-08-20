@@ -63,9 +63,12 @@ setup("authenticate as admin", async ({ page, baseURL }) => {
 
   let session = data.session;
 
-  // O usuário de teste em staging tem MFA obrigatório (mesma regra de qualquer
-  // admin, PrivateRoute.tsx) — signInWithPassword só entrega aal1. Sem completar
-  // o desafio aqui, a app real redireciona pra /mfa/setup em vez do dashboard.
+  // MFA é opcional desde o ADR 0031: PrivateRoute não redireciona mais ninguém
+  // pra /mfa/setup. O que ainda vale é o desafio de quem TEM fator ativo, e o
+  // usuário de teste em staging tem um, então signInWithPassword entrega só
+  // aal1 e o desafio precisa ser completado aqui. A checagem abaixo é por
+  // nextLevel justamente para não presumir: se o fator for removido, o setup
+  // segue funcionando sem TOTP.
   const { data: aal, error: aalError } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
   if (aalError) {
     throw new Error(`[auth.setup] Falha ao checar o nível de MFA: ${aalError.message}`);
