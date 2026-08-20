@@ -28,12 +28,12 @@ ON CONFLICT (id) DO NOTHING;
 
 SET LOCAL session_replication_role = 'origin';
 
-INSERT INTO public.profiles (id, empresa_id, first_name, last_name, email, role, onboarding_completed, features)
+INSERT INTO public.profiles (id, empresa_id, first_name, last_name, email, role, onboarding_completed)
 VALUES
-  ('88888888-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000ddd', 'Pess', 'Editor', 'pessoas_editor@test.com', 'user', TRUE, '{"pessoas": "editor"}'::jsonb),
-  ('88888888-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000ddd', 'No', 'Pess', 'no_pessoas@test.com', 'user', TRUE, '{}'::jsonb),
-  ('88888888-0000-0000-0000-000000000003', '00000000-0000-0000-0000-000000000ddd', 'Portal', 'Editor', 'portal_editor@test.com', 'user', TRUE, '{"portal_cliente": "editor"}'::jsonb)
-ON CONFLICT (id) DO UPDATE SET features = EXCLUDED.features, role = EXCLUDED.role;
+  ('88888888-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000ddd', 'Pess', 'Editor', 'pessoas_editor@test.com', 'user', TRUE),
+  ('88888888-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000ddd', 'No', 'Pess', 'no_pessoas@test.com', 'user', TRUE),
+  ('88888888-0000-0000-0000-000000000003', '00000000-0000-0000-0000-000000000ddd', 'Portal', 'Editor', 'portal_editor@test.com', 'user', TRUE)
+ON CONFLICT (id) DO UPDATE SET role = EXCLUDED.role;
 
 CREATE OR REPLACE FUNCTION test_set_auth(p_user_id UUID)
 RETURNS VOID LANGUAGE plpgsql AS $$
@@ -56,16 +56,14 @@ SELECT lives_ok(
 );
 
 -- =============================================
--- Teste 2: user sem feature pessoas NÃO insere
+-- Teste 2: membro da empresa insere pessoa (ADR 0029)
 -- =============================================
 SELECT test_set_auth('88888888-0000-0000-0000-000000000002');
 
-SELECT throws_ok(
+SELECT lives_ok(
   $$ INSERT INTO public.pessoas (empresa_id, nome, email, cpf, telefone, primeiro_nome, sobrenome)
-     VALUES ('00000000-0000-0000-0000-000000000ddd', 'Pess hack', 'h@h.com', '999.888.777-66', '11888888888', 'Pess', 'Hack') $$,
-  '42501',
-  NULL,
-  'user sem pessoas: INSERT BLOQUEADO'
+     VALUES ('00000000-0000-0000-0000-000000000ddd', 'Pess membro', 'h@h.com', '999.888.777-66', '11888888888', 'Pess', 'Membro') $$,
+  'membro da empresa insere pessoa (todo membro é editor)'
 );
 
 -- =============================================
@@ -81,14 +79,15 @@ SELECT cmp_ok(
 );
 
 -- =============================================
--- Teste 4: user sem feature pessoas NÃO lê
+-- Teste 4: membro da empresa lê pessoas
 -- =============================================
 SELECT test_set_auth('88888888-0000-0000-0000-000000000002');
 
-SELECT is(
+SELECT cmp_ok(
   (SELECT COUNT(*)::INTEGER FROM public.pessoas WHERE empresa_id = '00000000-0000-0000-0000-000000000ddd'),
-  0,
-  'user sem pessoas feature: SELECT retorna 0'
+  '>=',
+  1,
+  'membro da empresa lê pessoas mesmo sem grant individual'
 );
 
 -- =============================================

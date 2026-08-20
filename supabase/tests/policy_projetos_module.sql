@@ -30,13 +30,13 @@ ON CONFLICT (id) DO NOTHING;
 
 SET LOCAL session_replication_role = 'origin';
 
-INSERT INTO public.profiles (id, empresa_id, first_name, last_name, email, role, onboarding_completed, features)
+INSERT INTO public.profiles (id, empresa_id, first_name, last_name, email, role, onboarding_completed)
 VALUES
-  ('66666666-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000aaa', 'Proj', 'Editor', 'proj_editor@test.com', 'user', TRUE, '{"projetos": "editor"}'::jsonb),
-  ('66666666-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000aaa', 'Proj', 'Viewer', 'proj_viewer@test.com', 'user', TRUE, '{"projetos": "viewer"}'::jsonb),
-  ('66666666-0000-0000-0000-000000000003', '00000000-0000-0000-0000-000000000aaa', 'No', 'Proj', 'no_proj@test.com', 'user', TRUE, '{}'::jsonb),
-  ('66666666-0000-0000-0000-000000000004', '00000000-0000-0000-0000-000000000aaa', 'Ultra', 'Proj', 'ultra_proj@test.com', 'ultra_admin', TRUE, '{}'::jsonb)
-ON CONFLICT (id) DO UPDATE SET features = EXCLUDED.features, role = EXCLUDED.role;
+  ('66666666-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000aaa', 'Proj', 'Editor', 'proj_editor@test.com', 'user', TRUE),
+  ('66666666-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000aaa', 'Proj', 'Viewer', 'proj_viewer@test.com', 'user', TRUE),
+  ('66666666-0000-0000-0000-000000000003', '00000000-0000-0000-0000-000000000aaa', 'No', 'Proj', 'no_proj@test.com', 'user', TRUE),
+  ('66666666-0000-0000-0000-000000000004', '00000000-0000-0000-0000-000000000aaa', 'Ultra', 'Proj', 'ultra_proj@test.com', 'ultra_admin', TRUE)
+ON CONFLICT (id) DO UPDATE SET role = EXCLUDED.role;
 
 INSERT INTO public.clientes (id, empresa_id, nome, contato, email)
 VALUES ('dddddddd-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000aaa', 'Cli Proj', 'cli@proj.com', 'cli@proj.com')
@@ -73,15 +73,13 @@ SELECT is(
 );
 
 -- =============================================
--- Teste 2: viewer NÃO insere projetos
+-- Teste 2: membro da empresa insere projeto (ADR 0029)
 -- =============================================
-SELECT throws_ok(
+SELECT lives_ok(
   $$ INSERT INTO public.projetos (empresa_id, nome, status, cliente_id)
-     VALUES ('00000000-0000-0000-0000-000000000aaa', 'tentativa', 'Planejamento',
+     VALUES ('00000000-0000-0000-0000-000000000aaa', 'projeto membro', 'Planejamento',
              'dddddddd-0000-0000-0000-000000000001') $$,
-  '42501',
-  NULL,
-  'viewer NÃO insere projetos'
+  'membro da empresa insere projeto'
 );
 
 -- =============================================
@@ -97,14 +95,15 @@ SELECT lives_ok(
 );
 
 -- =============================================
--- Teste 4: user sem feature NÃO lê
+-- Teste 4: user sem grant individual lê os projetos da empresa
 -- =============================================
 SELECT test_set_auth('66666666-0000-0000-0000-000000000003');
 
-SELECT is(
+SELECT cmp_ok(
   (SELECT COUNT(*)::INTEGER FROM public.projetos WHERE empresa_id = '00000000-0000-0000-0000-000000000aaa'),
-  0,
-  'user sem feature: SELECT projetos retorna 0'
+  '>=',
+  1,
+  'user sem grant: lê projetos da própria empresa'
 );
 
 -- =============================================
@@ -152,37 +151,27 @@ VALUES ('66666666-0000-0000-0000-000000000005', 'admin_proj@test.com', '{}'::jso
 ON CONFLICT DO NOTHING;
 SET LOCAL session_replication_role = 'origin';
 
-INSERT INTO public.profiles (id, empresa_id, first_name, last_name, email, role, onboarding_completed, features)
+INSERT INTO public.profiles (id, empresa_id, first_name, last_name, email, role, onboarding_completed)
 VALUES (
   '66666666-0000-0000-0000-000000000005',
   '00000000-0000-0000-0000-000000000bbb',
-  'Admin', 'Proj', 'admin_proj@test.com', 'admin', TRUE,
-  '{"projetos": "editor"}'::jsonb
+  'Admin', 'Proj', 'admin_proj@test.com', 'admin', TRUE
 )
-ON CONFLICT (id) DO UPDATE SET features = EXCLUDED.features, role = EXCLUDED.role;
+ON CONFLICT (id) DO UPDATE SET role = EXCLUDED.role;
 
 SELECT test_set_auth('66666666-0000-0000-0000-000000000005');
 
--- TODO, não asserção ajustada: o schema e este teste discordam, e resolver isso é
--- decisão de produto, não de teste.
+-- `disciplinas` é catálogo COLABORATIVO: qualquer membro de empresa com o módulo
+-- Projetos adiciona uma disciplina (`disciplinas_insert`), e `disciplinas_manage`
+-- dá gestão total ao ultra_admin. A pergunta que ficou em aberto neste teste
+-- ("curado ou colaborativo?") foi respondida na prática: era este INSERT que
+-- respondia 403 para o design partner e motivou o ADR 0029.
 --
--- Estado real: `disciplinas` tem DUAS policies permissivas de escrita,
--- `disciplinas_manage` (ALL, current_effective_role() = 'ultra_admin') e
--- `disciplinas_insert` (WITH CHECK user_has_feature('projetos','editor')). Policies
--- PERMISSIVE se combinam com OR, então um editor de projetos de QUALQUER empresa
--- insere no catálogo global, que é compartilhado por todas.
---
--- Pergunta aberta: o catálogo é curado (só ultra_admin, como este teste afirma) ou
--- colaborativo (editor pode adicionar, como o schema permite)? Se for curado,
--- `disciplinas_insert` precisa sair. Se for colaborativo, este assert é que sai.
--- Marcado como TODO para não travar o gate nem mentir sobre o comportamento.
-SELECT todo('disciplinas_insert permite editor; decisão de produto pendente', 1);
-
-SELECT throws_ok(
+-- Fica um problema de tenancy à parte, registrado na SPEC 058 como follow-up: a
+-- tabela não tem empresa_id, então o catálogo é compartilhado entre empresas.
+SELECT lives_ok(
   $$ INSERT INTO public.disciplinas (nome) VALUES ('Disciplina-pgtap-admin') $$,
-  '42501',
-  NULL,
-  'admin NÃO escreve em disciplinas (catálogo global, só ultra_admin)'
+  'membro de empresa com Projetos adiciona disciplina ao catálogo'
 );
 
 -- =============================================

@@ -25,11 +25,11 @@ VALUES
 ON CONFLICT (id) DO NOTHING;
 SET LOCAL session_replication_role = 'origin';
 
-INSERT INTO public.profiles (id, empresa_id, first_name, last_name, email, role, onboarding_completed, features)
+INSERT INTO public.profiles (id, empresa_id, first_name, last_name, email, role, onboarding_completed)
 VALUES
-  ('aaaaaaaa-fd00-0000-0000-000000000001', '00000000-0000-0000-0000-00000000fd0a', 'Admin', 'A', 'admin_finda@test.com', 'admin', TRUE, '{"financeiro":"editor"}'::jsonb),
-  ('bbbbbbbb-fd00-0000-0000-000000000001', '00000000-0000-0000-0000-00000000fd0b', 'Admin', 'B', 'admin_findb@test.com', 'admin', TRUE, '{"financeiro":"editor"}'::jsonb)
-ON CONFLICT (id) DO UPDATE SET features = EXCLUDED.features;
+  ('aaaaaaaa-fd00-0000-0000-000000000001', '00000000-0000-0000-0000-00000000fd0a', 'Admin', 'A', 'admin_finda@test.com', 'admin', TRUE),
+  ('bbbbbbbb-fd00-0000-0000-000000000001', '00000000-0000-0000-0000-00000000fd0b', 'Admin', 'B', 'admin_findb@test.com', 'admin', TRUE)
+ON CONFLICT (id) DO NOTHING;
 
 -- Empresa A: 1000 em receita. Empresa B: 9999 em receita (valor bem diferente pra
 -- qualquer vazamento aparecer óbvio nos totais).

@@ -2,7 +2,7 @@ import { useContext, useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { ImpersonationContext } from "@/contexts/ImpersonationContext";
 import { canDo, reasonFor, type Action, type Feature, type UserRole } from "@/lib/permissions";
-import { parseCompanyFeatures, parseUserFeatures } from "@/lib/features";
+import { parseCompanyFeatures } from "@/lib/features";
 
 type ButtonProps = {
   disabled: boolean;
@@ -25,18 +25,13 @@ export function usePermissions() {
       ? impersonation.viewAsRole
       : realRole;
 
-  const userFeatures = useMemo(
-    () => parseUserFeatures((profile as { features?: unknown } | null)?.features),
-    [profile]
-  );
-
   const companyFeatures = useMemo(
     () => parseCompanyFeatures((profile as { empresas?: { features?: unknown } | null } | null)?.empresas?.features),
     [profile]
   );
 
   return useMemo(() => {
-    const ctx = { role: effectiveRole, userFeatures, companyFeatures };
+    const ctx = { role: effectiveRole, companyFeatures };
 
     const can = (feature: Feature, action: Action = "view") => canDo(ctx, feature, action);
     const cannot = (feature: Feature, action: Action = "view") => !can(feature, action);
@@ -64,12 +59,11 @@ export function usePermissions() {
       isImpersonating: impersonation?.isImpersonating ?? false,
       isAdmin: effectiveRole === "admin" || effectiveRole === ("ultra_admin" as UserRole),
       isUltraAdmin: effectiveRole === ("ultra_admin" as UserRole),
-      userFeatures,
       companyFeatures,
       can,
       cannot,
       getButtonProps,
       getNavItemProps,
     };
-  }, [effectiveRole, realRole, impersonation?.isImpersonating, userFeatures, companyFeatures]);
+  }, [effectiveRole, realRole, impersonation?.isImpersonating, companyFeatures]);
 }
