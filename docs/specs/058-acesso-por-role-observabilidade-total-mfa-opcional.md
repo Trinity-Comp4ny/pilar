@@ -141,13 +141,16 @@ invisível, e MFA como escolha do usuário, não pedágio de entrada.
 - Enforcement de `max_projetos` (requisito 9 da spec 052), ainda pendente.
 - Reescrever os 429 `toast.error` um por um: o interceptor cobre a origem; os
   catches migram para `reportError` conforme as telas forem tocadas.
-- **Follow-up de tenancy (achado, não corrigido aqui):** `disciplinas` não tem
-  `empresa_id`. É um catálogo global compartilhado por todas as empresas (13
-  linhas em produção hoje), então uma disciplina cadastrada por um cliente
-  aparece para os outros. O teste pgTAP `policy_projetos_module` já registrava a
-  dúvida "catálogo curado ou colaborativo?"; a resposta prática é colaborativo,
-  mas o isolamento por empresa continua faltando. Precisa de spec própria
-  (migration com `empresa_id` + backfill + decisão sobre um catálogo semente).
+- ~~Follow-up de tenancy: `disciplinas` sem `empresa_id`.~~ **Entregue em
+  20/08**, na migration `20260857000000`: a coluna entrou como nullable, onde
+  `NULL` é a semente padrão do produto (as 14 disciplinas de engenharia que toda
+  empresa vê) e um valor preenchido é a disciplina própria da empresa. O
+  `DEFAULT public.get_user_empresa_id()` garante que nenhum caminho de cliente
+  escreva na semente, inclusive o `.insert({ nome })` do
+  `ManageDisciplinasDialog`, que não passa `empresa_id`. Policies de
+  SELECT/INSERT/UPDATE/DELETE com escopo de empresa, e `disciplinas_manage`
+  (ultra_admin) segue curando a semente. Coberto por
+  `supabase/tests/policy_disciplinas_tenancy.sql` (9 asserts).
 
 ## Critérios de aceite
 
@@ -165,6 +168,10 @@ invisível, e MFA como escolha do usuário, não pedágio de entrada.
 8. `npm run test:run` e os testes pgTAP de RLS passam.
 9. `asaas_config` continua invisível para membro sem role administrativo (o
    teste pgTAP de RLS cobre).
+10. Empresa não vê disciplina de outra empresa, e nenhuma escreve na semente
+    padrão (`policy_disciplinas_tenancy.sql`).
+11. O smoke test do CD tenta novamente antes de reprovar e imprime o status HTTP
+    quando desiste (`scripts/smoke-health.sh`).
 
 ## Riscos
 
