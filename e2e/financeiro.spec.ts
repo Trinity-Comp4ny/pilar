@@ -1,10 +1,12 @@
-import { test, expect } from "@playwright/test";
+import { test } from "@playwright/test";
+import { expectAnonRedirectedOut } from "./helpers/guards";
 
 /**
  * Financeiro — testes que rodam sem auth fixture (smoke).
  *
- * Rotas protegidas devem redirecionar para landing quando não há sessão.
- * Isso valida que PrivateRoute + RLS do Supabase não vazam dados sensíveis.
+ * Rota protegida sem sessão manda o anônimo para fora do app (ADR 0021/0025:
+ * a raiz é um redirect para o site de marketing). Isso valida que o
+ * PrivateRoute não deixa a tela renderizar sem sessão.
  *
  * Fluxos autenticados (smoke + happy paths) ficam em
  * `financeiro-authenticated.spec.ts`, que roda no projeto "authenticated" e
@@ -15,24 +17,20 @@ import { test, expect } from "@playwright/test";
  */
 
 test.describe("Financeiro — guard de rota sem sessão", () => {
-  test("/financeiro redireciona para landing", async ({ page }) => {
-    await page.goto("/financeiro");
-    await expect(page).toHaveURL("/");
+  test("/financeiro sem sessão sai do app", async ({ page }) => {
+    await expectAnonRedirectedOut(page, "/financeiro");
   });
 
-  test("/relatorios redireciona para landing", async ({ page }) => {
-    await page.goto("/relatorios");
-    await expect(page).toHaveURL("/");
+  test("/relatorios sem sessão sai do app", async ({ page }) => {
+    await expectAnonRedirectedOut(page, "/relatorios");
   });
 
-  test("/admin redireciona para landing", async ({ page }) => {
-    await page.goto("/admin");
-    await expect(page).toHaveURL("/");
+  test("/admin sem sessão sai do app", async ({ page }) => {
+    await expectAnonRedirectedOut(page, "/admin");
   });
 
-  test("/ultra-admin redireciona para landing", async ({ page }) => {
-    await page.goto("/ultra-admin");
-    await expect(page).toHaveURL("/");
+  test("/ultra-admin sem sessão sai do app", async ({ page }) => {
+    await expectAnonRedirectedOut(page, "/ultra-admin");
   });
 });
 
