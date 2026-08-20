@@ -4,6 +4,7 @@ import { domAnimation, LazyMotion } from "framer-motion";
 import { LandingHeader } from "./components/LandingHeader";
 import { LandingFooter } from "./components/LandingFooter";
 import { CookieConsentBanner } from "./components/CookieConsentBanner";
+import { ScrollProgress } from "./components/motion";
 import { Home } from "./pages/Home";
 
 // Só a home entra no bundle inicial. Páginas de módulo e FAQ viram chunks
@@ -28,6 +29,7 @@ export default function App() {
     <LazyMotion features={domAnimation} strict>
       <div className="landing-grain min-h-screen bg-paper text-ink-soft font-sans selection:bg-brand/30 selection:text-ink">
         <ScrollToTop />
+        <ScrollProgress />
         <LandingHeader />
 
         <main>

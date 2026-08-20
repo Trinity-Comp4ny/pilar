@@ -5,7 +5,7 @@ import { Logo } from "./Logo";
 
 export function LandingFooter() {
   return (
-    <footer className="bg-ink-soft text-white py-12">
+    <footer className="bg-ink-soft text-white py-12 border-t border-white/10">
       <div className="container mx-auto px-6 md:px-10">
         <div className="grid md:grid-cols-4 gap-12 mb-12">
           <div className="col-span-1 md:col-span-2">
