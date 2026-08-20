@@ -31,16 +31,16 @@
     ]
   },
   "staging": {
-    "verificado_em": "2026-08-19",
+    "verificado_em": "2026-08-20",
     "tabelas_sem_rls": 0,
     "anon_chamavel": 0,
-    "anon_trigger_inerte": 27,
-    "rls_sem_policy_com_grant": 6,
+    "anon_trigger_inerte": 30,
+    "rls_sem_policy_com_grant": 0,
     "view_sem_invoker_nao_revisada": 0,
-    "authenticated_chamavel": 128,
-    "search_path_mutavel": 9,
-    "policy_auth_por_linha": 22,
-    "fk_sem_indice": 101,
+    "authenticated_chamavel": 131,
+    "search_path_mutavel": 0,
+    "policy_auth_por_linha": 23,
+    "fk_sem_indice": 104,
     "extensoes": [
       "pg_cron@1.6.4",
       "pg_graphql@1.6.1",
