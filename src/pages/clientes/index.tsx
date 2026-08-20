@@ -247,7 +247,13 @@ export default function Clientes() {
       containerClassName="h-full flex flex-col min-h-0"
       title="Clientes"
       search={{ value: searchTerm, onChange: setSearchTerm, placeholder: "Buscar por nome, CPF/CNPJ ou email" }}
-      primaryAction={{ label: "Novo cliente", onClick: handleOpenCreate, icon: Plus, feature: "clientes", dataTour: "onb-novo-cliente" }}
+      primaryAction={{
+        label: "Novo cliente",
+        onClick: handleOpenCreate,
+        icon: Plus,
+        feature: "clientes",
+        dataTour: "onb-novo-cliente",
+      }}
     >
       <Card className="rounded-2xl border border-black/5 bg-white w-full flex flex-col flex-1 min-h-0 overflow-hidden">
         <CardHeader>
@@ -501,9 +507,8 @@ export default function Clientes() {
         message={messageText}
         onSubjectChange={setSubjectText}
         onMessageChange={setMessageText}
-        onCancel={resetMessageModal}
         onSend={handleSendMessage}
-        onOpenChange={setIsMessageModalOpen}
+        onOpenChange={(v) => (v ? setIsMessageModalOpen(true) : resetMessageModal())}
       />
 
       <ConfirmDialog
