@@ -315,15 +315,36 @@ function imprimirItens(itens, limite = 15) {
 // ambientes divergirem entre si: aí staging deixa de validar produção, e nenhum
 // dos dois acusa nada olhando só pra si mesmo. Roda a partir da baseline
 // commitada, sem consultar banco.
+// Nome@versão -> nome, pra separar "extensão ausente num ambiente" (invariante,
+// staging não valida um caminho que prod tem ou vice-versa) de "mesma extensão,
+// versão diferente" (higiene, não segurança — vira aviso, não bloqueio, porque
+// o painel do Supabase às vezes não oferece update de versão pro usuário).
+const nomeExtensao = (entry) => entry.split("@")[0];
+
 function relatarDriftEntreAmbientes(baseline) {
   const prod = new Set(baseline.prod?.extensoes ?? []);
   const staging = new Set(baseline.staging?.extensoes ?? []);
   if (prod.size === 0 || staging.size === 0) return [];
 
-  const soProd = [...prod].filter((e) => !staging.has(e));
-  const soStaging = [...staging].filter((e) => !prod.has(e));
+  const nomesProd = new Set([...prod].map(nomeExtensao));
+  const nomesStaging = new Set([...staging].map(nomeExtensao));
+
+  const soProd = [...prod].filter((e) => !staging.has(e) && !nomesStaging.has(nomeExtensao(e)));
+  const soStaging = [...staging].filter((e) => !prod.has(e) && !nomesProd.has(nomeExtensao(e)));
+  const versaoDivergente = [...prod]
+    .filter((e) => !staging.has(e) && nomesStaging.has(nomeExtensao(e)))
+    .map((e) => {
+      const versaoStaging = [...staging].find((s) => nomeExtensao(s) === nomeExtensao(e));
+      return `${nomeExtensao(e)}: prod ${e.split("@")[1]} / staging ${versaoStaging.split("@")[1]}`;
+    });
+
+  if (versaoDivergente.length) {
+    console.log("  ⚠ extensões com versão divergente entre prod e staging (não bloqueia):");
+    imprimirItens(versaoDivergente);
+  }
+
   if (soProd.length === 0 && soStaging.length === 0) {
-    console.log("  ✓ extensões: prod e staging idênticos");
+    console.log("  ✓ extensões: prod e staging com o mesmo conjunto (versão à parte)");
     return [];
   }
 
