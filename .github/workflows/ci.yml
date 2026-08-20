@@ -300,20 +300,15 @@ jobs:
       - name: Smoke test (health)
         # Deploy verde precisa significar "responde", não só "aplicou".
         # health não está declarado em config.toml, então exige JWT: usa a anon key.
-        # Se o secret ainda não existe no Environment, o step avisa e passa, em vez de
-        # deixar o CD vermelho por falta de provisionamento (o deploy em si já rodou).
+        # Se o secret ainda não existe no Environment, o script avisa e passa, em vez
+        # de deixar o CD vermelho por falta de provisionamento (o deploy já rodou).
+        # O retry vive no script: propagação das functions passa dos 20s (ver o
+        # comentário em scripts/smoke-health.sh).
         env:
           PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
           ANON_KEY: ${{ secrets.STAGING_SUPABASE_ANON_KEY }}
-        run: |
-          if [ -z "$ANON_KEY" ]; then
-            echo "::notice::STAGING_SUPABASE_ANON_KEY não configurado — smoke test pulado."
-            exit 0
-          fi
-          sleep 20
-          curl -sf --max-time 30 "https://${PROJECT_REF}.supabase.co/functions/v1/health" \
-            -H "Authorization: Bearer ${ANON_KEY}" | tee /tmp/health.json
-          grep -q '"status"' /tmp/health.json
+          EXPECTED_SHA: ${{ github.sha }}
+        run: scripts/smoke-health.sh
 
   # E2E contra o staging recém-deployado. Vive AQUI, e não num workflow próprio, pelo
   # mesmo motivo do deploy: `workflow_run` só se registra a partir da branch DEFAULT, e
@@ -439,15 +434,9 @@ jobs:
         env:
           SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
       - name: Smoke test (health)
+        # Mesmo script do staging (retry + status no log). Ver scripts/smoke-health.sh.
         env:
           PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
           ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
-        run: |
-          if [ -z "$ANON_KEY" ]; then
-            echo "::notice::SUPABASE_ANON_KEY não configurado no Environment Production — smoke test pulado."
-            exit 0
-          fi
-          sleep 20
-          curl -sf --max-time 30 "https://${PROJECT_REF}.supabase.co/functions/v1/health" \
-            -H "Authorization: Bearer ${ANON_KEY}" | tee /tmp/health.json
-          grep -q '"status"' /tmp/health.json
+          EXPECTED_SHA: ${{ github.sha }}
+        run: scripts/smoke-health.sh
