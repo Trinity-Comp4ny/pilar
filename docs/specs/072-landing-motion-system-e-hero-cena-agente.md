@@ -56,9 +56,9 @@ seguinte); mudança de paleta ou de tipografia da marca (Paper + Ink permanece).
    pode ser apenas `Reveal` com os valores padrão.
 6. O ritmo de fundo alterna claro e escuro. A seção de agentes é o clímax escuro
    (fundo `ink`), e o CTA final fecha em escuro.
-7. A home ganha uma faixa de prova entre a hero e os módulos (números do produto,
-   não depoimento inventado).
-8. O `ChatDemo` nunca renderiza vazio: sem animação disponível, nasce completo.
+7. O `ChatDemo` nunca renderiza vazio: sem animação disponível, nasce completo.
+8. O header não pode deixar conteúdo da página aparecer acima dele durante o
+   scroll, e a home abre no topo mesmo depois de um reload.
 
 Não-funcionais:
 
@@ -113,7 +113,9 @@ Nenhum. É front puro em `apps/marketing`, sem tabela, RPC ou edge function.
    sem a moldura do app, com o mesmo relógio e o mesmo roteiro.
 4. `HeroSection` passa a usar `HeroScene`; `ProductTour` e `ProductShowcase` saem
    da home.
-5. `ProofStrip` nova, entre hero e módulos.
+5. Header passa de `fixed` para `sticky` e as páginas perdem o respiro de topo
+   que compensava a sobreposição; `ScrollToTop` desliga a restauração de scroll
+   do navegador.
 6. Retrabalho de `ModulesSection`, `AgentsSection` (fundo escuro + fix do chat),
    `CampoSection`, `PortalSection` e `CTASection`, cada uma com coreografia própria.
 7. Verificação ao vivo no Chrome (desktop e mobile) + `typecheck` + `build`.
@@ -133,3 +135,35 @@ Nenhum. É front puro em `apps/marketing`, sem tabela, RPC ou edge function.
 - **Risco:** o mock da hero envelhece em relação ao produto real. Mitigação: o mock
   reproduz layout e linguagem, não pixels; e o critério é a história, não a
   fidelidade de cada campo.
+
+## Revisão após o primeiro corte (20/08)
+
+Ajustes pedidos depois de ver a página rodando:
+
+- **Selo da hero removido.** "Para escritórios de engenharia multidisciplinar"
+  saiu: a segmentação já está na copy do subtítulo e o selo empurrava a cena
+  para baixo da dobra.
+- **Faixa de capacidades removida.** O marquee "Um sistema só, do primeiro
+  contato à última medição" saiu da home junto com o componente.
+- **Header `fixed` para `sticky`.** No iOS Safari um header fixo é posicionado
+  contra o viewport de layout; enquanto a barra de endereço encolhe ele fica
+  deslocado do viewport visual e o conteúdo aparece numa faixa acima dele.
+  Sticky participa do fluxo e não tem esse descompasso. Como agora ocupa altura
+  real, o `pt-32/pt-40` das páginas caiu para `pt-16/pt-24` e Termos e
+  Privacidade perderam o `pt-16`.
+- **Restauração de scroll desligada.** O navegador devolvia a posição anterior
+  no reload e a home abria dentro da hero, com o header já exibindo a linha de
+  "rolou".
+- **Conector dos módulos refeito** (`ModuleRelay`). O traço com preenchimento
+  por scroll virou um bastão em loop: o feixe corre o trecho, o nó de destino
+  pulsa ao receber e a legenda nomeia o que foi passado ("Proposta aprovada
+  vira projeto", "Cronograma vira frente de obra").
+- **Sem quadriculado no escuro.** `GridBackdrop` saiu das seções de fundo `ink`;
+  restou só o halo de cor. Segue em uso na hero, que é clara.
+- **Campo sem vão.** A coluna de texto não usa mais `items-start`: estica até a
+  altura do celular e distribui a folga, em vez de largar ~80px vazios embaixo.
+- **`/planos` consertada.** O fetch mandava só o header `apikey`. Com as chaves
+  novas (`sb_publishable_...`) o PostgREST também espera
+  `Authorization: Bearer`, que é o par que o supabase-js envia sempre. Sem ele a
+  leitura era recusada mesmo com GRANT SELECT para anon e a política
+  `plans_public_read` no lugar.

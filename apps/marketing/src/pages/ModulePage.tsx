@@ -25,7 +25,7 @@ export function ModulePage({ slug }: { slug: ModuloSlug }) {
 
   return (
     <>
-      <section className="pt-32 pb-16 md:pt-40 md:pb-20">
+      <section className="pt-16 pb-16 md:pt-24 md:pb-20">
         <div className="container mx-auto px-6 md:px-10">
           <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-10 lg:gap-14 items-center">
             <div>

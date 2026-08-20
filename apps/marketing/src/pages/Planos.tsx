@@ -71,8 +71,14 @@ function usePublicPlans() {
     url.searchParams.set("ativo", "eq.true");
     url.searchParams.set("order", "ordem.asc");
 
+    // `apikey` + `Authorization: Bearer` com a mesma chave publicável: é o par
+    // que o supabase-js manda em toda requisição. Só com `apikey` o PostgREST
+    // não recebe JWT nenhum e recusa a leitura, mesmo a tabela tendo GRANT
+    // SELECT para anon.
+    const chave = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
     fetch(url, {
-      headers: { apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY },
+      headers: { apikey: chave, Authorization: `Bearer ${chave}`, Accept: "application/json" },
     })
       .then((res) => {
         if (!res.ok) throw new Error(`status ${res.status}`);
@@ -255,7 +261,7 @@ export function Planos() {
 
   return (
     <>
-      <section className="relative py-24 md:py-32 overflow-hidden">
+      <section className="relative py-16 md:py-24 overflow-hidden">
         <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
           <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/3 w-[900px] h-[600px] bg-brand/7 rounded-full blur-[130px] animate-aurora" />
           <div className="absolute top-1/4 right-0 w-[500px] h-[400px] bg-blue-400/5 rounded-full blur-[100px] animate-aurora-alt" />

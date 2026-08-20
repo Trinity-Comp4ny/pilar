@@ -15,12 +15,27 @@ const Planos = lazy(() => import("./pages/Planos").then((m) => ({ default: m.Pla
 const Termos = lazy(() => import("./pages/Termos").then((m) => ({ default: m.Termos })));
 const Privacidade = lazy(() => import("./pages/Privacidade").then((m) => ({ default: m.Privacidade })));
 
-/** Troca de rota volta ao topo: sem isso a página nova abre no meio. */
+/**
+ * Troca de rota volta ao topo: sem isso a página nova abre no meio.
+ *
+ * Também desliga a restauração automática de scroll do navegador. Com ela
+ * ligada (o padrão), recarregar a home devolvia a posição anterior: a página
+ * abria já dentro da hero, com o header exibindo a linha divisória de
+ * "rolou" antes de o visitante rolar qualquer coisa.
+ */
 function ScrollToTop() {
   const { pathname } = useLocation();
+
+  useEffect(() => {
+    if ("scrollRestoration" in window.history) {
+      window.history.scrollRestoration = "manual";
+    }
+  }, []);
+
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "auto" });
   }, [pathname]);
+
   return null;
 }
 
