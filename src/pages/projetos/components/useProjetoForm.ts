@@ -171,7 +171,6 @@ export function useProjetoForm({
   const [selectedDisciplinaIndex, setSelectedDisciplinaIndex] = useState<number | null>(null);
   const [isDisciplinaDetailOpen, setIsDisciplinaDetailOpen] = useState(false);
   const [newObservation, setNewObservation] = useState("");
-  const [expandedFormDiscIdx, setExpandedFormDiscIdx] = useState<number | null>(null);
   const [addingRespToFormDisc, setAddingRespToFormDisc] = useState<number | null>(null);
   const [newFormResp, setNewFormResp] = useState({
     responsavel_id: "",
@@ -367,7 +366,6 @@ export function useProjetoForm({
 
   const removeProjetoDisciplina = (index: number) => {
     setProjetosDisciplinas((prev) => prev.filter((_, i) => i !== index));
-    if (expandedFormDiscIdx === index) setExpandedFormDiscIdx(null);
   };
 
   const addResponsavelToDisc = (discIdx: number) => {
@@ -832,8 +830,6 @@ export function useProjetoForm({
     setTempDisciplina,
     addProjetoDisciplina,
     removeProjetoDisciplina,
-    expandedFormDiscIdx,
-    setExpandedFormDiscIdx,
     addingRespToFormDisc,
     setAddingRespToFormDisc,
     newFormResp,

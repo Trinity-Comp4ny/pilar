@@ -418,8 +418,6 @@ export function ProjetoConfirmationCard({ index, draft, onConfirmar, onCancelar,
                 onAddDisciplina={disc.addProjetoDisciplina}
                 onRemoveDisciplina={disc.removeProjetoDisciplina}
                 onOpenDetail={disc.handleOpenDisciplinaDetail}
-                expandedFormDiscIdx={disc.expandedFormDiscIdx}
-                onExpandToggle={disc.setExpandedFormDiscIdx}
                 addingRespToFormDisc={disc.addingRespToFormDisc}
                 onSetAddingResp={disc.setAddingRespToFormDisc}
                 newFormResp={disc.newFormResp}
