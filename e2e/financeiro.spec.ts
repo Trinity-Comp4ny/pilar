@@ -57,11 +57,14 @@ test.describe("Financeiro — fluxo completo (skip até fixture de auth)", () =>
     // 4. assert que apenas um lançamento foi criado
   });
 
-  test.skip("MFA step-up é forçado em /admin", async ({ page: _page }) => {
-    // 1. login com sessão AAL1 (sem challenge MFA)
-    // 2. goto /admin
-    // 3. assert redirect para /mfa
-    // 4. completar challenge
-    // 5. assert que /admin agora carrega
+  // Trocado de "/admin exige step-up" para o que o ADR 0031 decidiu: aal2
+  // obrigatório sobrou só no acesso cross-tenant do ultra-admin. Um placeholder
+  // descrevendo a regra antiga ia enganar quem lesse depois.
+  test.skip("aal2 é exigido em /ultra-admin, não em /admin", async ({ page: _page }) => {
+    // 1. login com sessão AAL1 (sem completar o desafio de MFA)
+    // 2. goto /admin → assert que carrega (admin de empresa não exige aal2)
+    // 3. goto /ultra-admin → assert redirect para /mfa (ou /mfa/setup sem fator)
+    // 4. completar o desafio
+    // 5. assert que /ultra-admin agora carrega
   });
 });
