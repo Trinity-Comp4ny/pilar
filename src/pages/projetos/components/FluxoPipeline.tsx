@@ -1,163 +1,76 @@
 import { useMemo } from "react";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { CheckCircle2, Clock, AlertTriangle, PauseCircle } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { type DisciplinaResponsavel, getDiscDeadlineStatus } from "@/types/projetos";
+import { formatDateShort } from "@/lib/dateUtils";
+import type { ChecklistCounts } from "@/hooks/useProjetoDisciplinaChecklist";
+import { FluxoPipelineGraph, type FluxoNodeStatus, type FluxoPipelineStage } from "./FluxoPipelineGraph";
 
-interface EtapaGroup {
-  etapa: number;
-  disciplinas: DisciplinaResponsavel[];
-  status: "concluido" | "em_andamento" | "atrasado" | "nao_iniciado";
-  label: string;
-}
-
-function getEtapaStatus(disciplinas: DisciplinaResponsavel[]): EtapaGroup["status"] {
-  const hasAtrasada = disciplinas.some((d) => {
-    const s = getDiscDeadlineStatus(d);
-    return s?.status_data === "em_atraso";
-  });
-  if (hasAtrasada) return "atrasado";
-
-  const allConcluido = disciplinas.every((d) => d.status === "Concluído");
-  if (allConcluido) return "concluido";
-
-  const hasEmAndamento = disciplinas.some((d) => d.status === "Em Andamento" || d.status === "Pendente");
-  if (hasEmAndamento) return "em_andamento";
-
+function getDiscStatusVisual(disc: DisciplinaResponsavel): FluxoNodeStatus {
+  if (disc.status === "Concluído") return "concluido";
+  const deadline = getDiscDeadlineStatus(disc);
+  if (deadline?.status_data === "em_atraso") return "atrasado";
+  if (disc.status === "Em Andamento") return "em_andamento";
   return "nao_iniciado";
 }
 
-const STATUS_CONFIG = {
-  concluido: {
-    bg: "bg-positive/100",
-    border: "border-status-done",
-    text: "text-positive-strong",
-    icon: CheckCircle2,
-    label: "Concluído",
-  },
-  em_andamento: {
-    bg: "bg-status-progress",
-    border: "border-status-progress",
-    text: "text-info-strong",
-    icon: Clock,
-    label: "Em Andamento",
-  },
-  atrasado: {
-    // bg/border sem token exato: "atrasado" não é um dos 7 status-* (não é o
-    // mesmo conceito de "Cancelado"), deixado cru (ver relatório do lote).
-    bg: "bg-fill-danger",
-    border: "border-fill-danger",
-    text: "text-danger-strong",
-    icon: AlertTriangle,
-    label: "Atrasado",
-  },
-  nao_iniciado: {
-    bg: "bg-status-unknown",
-    border: "border-border",
-    text: "text-ink-muted",
-    icon: PauseCircle,
-    label: "Não Iniciado",
-  },
-};
-
 interface FluxoPipelineProps {
   disciplinas: DisciplinaResponsavel[];
+  onOpenDisciplina?: (disc: DisciplinaResponsavel) => void;
+  /** Chave = projeto_disciplina.id. Ausente = disciplina sem checklist (sem badge). */
+  checklistCounts?: Record<string, ChecklistCounts>;
 }
 
-export function FluxoPipeline({ disciplinas }: FluxoPipelineProps) {
-  const etapas = useMemo((): EtapaGroup[] => {
-    const map = new Map<number, DisciplinaResponsavel[]>();
+/** Key do nó no grafo: disc.id quando persistida, senão um índice estável dentro da etapa. */
+function nodeKeyFor(disc: DisciplinaResponsavel, etapa: number | null, index: number): string {
+  return disc.id ?? `${etapa}-${index}`;
+}
 
-    for (const d of disciplinas) {
-      if (d.etapa == null) continue;
-      if (!map.has(d.etapa)) map.set(d.etapa, []);
-      map.get(d.etapa)!.push(d);
-    }
+export function FluxoPipeline({ disciplinas, onOpenDisciplina, checklistCounts }: FluxoPipelineProps) {
+  const etapas = useMemo(() => groupByEtapa(disciplinas).filter((e) => e.etapa != null), [disciplinas]);
 
-    return Array.from(map.entries())
-      .sort(([a], [b]) => a - b)
-      .map(([etapa, discs]) => ({
-        etapa,
-        disciplinas: discs,
-        status: getEtapaStatus(discs),
-        label: discs.map((d) => d.disciplina).join(", "),
-      }));
-  }, [disciplinas]);
+  const { stages, nodeMap } = useMemo(() => {
+    const map = new Map<string, DisciplinaResponsavel>();
+    const built: FluxoPipelineStage[] = etapas.map((etapa) => ({
+      key: String(etapa.etapa),
+      titulo: etapa.nome,
+      nodes: etapa.disciplinas.map((disc, i) => {
+        const key = nodeKeyFor(disc, etapa.etapa, i);
+        map.set(key, disc);
+        const counts = disc.id ? checklistCounts?.[disc.id] : undefined;
+        return {
+          key,
+          titulo: disc.disciplina,
+          status: getDiscStatusVisual(disc),
+          responsavelNome: disc.responsavel_nome || undefined,
+          metaLabel: disc.data_previsao ? formatDateShort(disc.data_previsao) : undefined,
+          checklistLabel: counts && counts.total > 0 ? `${counts.concluidos}/${counts.total}` : undefined,
+        };
+      }),
+    }));
+    return { stages: built, nodeMap: map };
+  }, [etapas, checklistCounts]);
 
   if (etapas.length === 0) return null;
 
-  const concluidas = etapas.filter((e) => e.status === "concluido").length;
-  const progresso = Math.round((concluidas / etapas.length) * 100);
+  const totalDiscs = disciplinas.filter((d) => d.etapa != null).length;
+  const concluidas = disciplinas.filter((d) => d.etapa != null && getDiscStatusVisual(d) === "concluido").length;
+  const progresso = totalDiscs > 0 ? Math.round((concluidas / totalDiscs) * 100) : 0;
 
   return (
     <div className="bg-white border rounded-lg p-4 space-y-3">
       <div className="flex items-center justify-between">
         <span className="text-xs font-medium text-muted-foreground">Fluxo de Disciplinas</span>
         <span className="text-xs text-muted-foreground">
-          {concluidas}/{etapas.length} etapas concluídas ({progresso}%)
+          {concluidas}/{totalDiscs} disciplinas concluídas ({progresso}%)
         </span>
       </div>
 
-      <div className="flex items-center gap-0 overflow-x-auto py-1">
-        {etapas.map((etapa, i) => {
-          const config = STATUS_CONFIG[etapa.status];
-          const Icon = config.icon;
-
-          return (
-            <div key={etapa.etapa} className="flex items-center flex-shrink-0">
-              {i > 0 && (
-                <div
-                  className={cn(
-                    "w-6 sm:w-10 h-0.5",
-                    etapas[i - 1].status === "concluido" ? "bg-status-done" : "bg-muted"
-                  )}
-                />
-              )}
-
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="flex flex-col items-center gap-1 cursor-default">
-                    <div
-                      className={cn(
-                        "flex items-center justify-center h-8 w-8 rounded-full border-2 transition-colors",
-                        config.border,
-                        etapa.status === "concluido" ? config.bg : "bg-white"
-                      )}
-                    >
-                      <Icon className={cn("h-4 w-4", etapa.status === "concluido" ? "text-white" : config.text)} />
-                    </div>
-                    <span className={cn("text-[10px] font-medium max-w-[80px] truncate text-center", config.text)}>
-                      Etapa {etapa.etapa}
-                    </span>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent side="bottom" className="text-xs">
-                  <div className="space-y-1">
-                    <div className="font-medium">
-                      Etapa {etapa.etapa} — {config.label}
-                    </div>
-                    {etapa.disciplinas.map((d, di) => (
-                      <div key={di} className="flex items-center gap-1.5">
-                        <span
-                          className={cn(
-                            "h-1.5 w-1.5 rounded-full",
-                            d.status === "Concluído"
-                              ? "bg-positive/100"
-                              : d.status === "Em Andamento"
-                                ? "bg-status-progress"
-                                : "bg-status-unknown"
-                          )}
-                        />
-                        {d.disciplina} — {d.status || "Não Iniciado"}
-                      </div>
-                    ))}
-                  </div>
-                </TooltipContent>
-              </Tooltip>
-            </div>
-          );
-        })}
-      </div>
+      <FluxoPipelineGraph
+        stages={stages}
+        onNodeClick={(key) => {
+          const disc = nodeMap.get(key);
+          if (disc) onOpenDisciplina?.(disc);
+        }}
+      />
     </div>
   );
 }

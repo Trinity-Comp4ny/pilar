@@ -29,6 +29,9 @@ export interface KPICardProps {
   /** Força a cor do número, ignorando o `tone`. Use quando o número deve ficar
    *  neutro mas o ícone/badge carrega o tom (raro). */
   valueTone?: StatusTone;
+  /** Substitui o `value` formatado por um campo editável (ex.: DatePicker, MoneyInput).
+   *  `value` continua obrigatório como fallback pro estado não-editável/loading. */
+  valueSlot?: React.ReactNode;
 }
 
 export function KPICard({
@@ -43,6 +46,7 @@ export function KPICard({
   onClick,
   className,
   valueTone,
+  valueSlot,
 }: KPICardProps) {
   const subiu = (delta?.value ?? 0) > 0;
   const bom = delta?.invert ? !subiu : subiu;
@@ -83,15 +87,19 @@ export function KPICard({
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <p className="text-xs text-muted-foreground uppercase tracking-wider">{label}</p>
-          <p className={cn("text-lg font-bold mt-1 whitespace-nowrap tabular-nums", TONE_VALUE[valueTone ?? tone])}>
-            {loading ? (
-              <Skeleton className="inline-block h-6 w-24 align-middle" />
-            ) : typeof value === "number" ? (
-              formatCurrency(value)
-            ) : (
-              value
-            )}
-          </p>
+          {!loading && valueSlot ? (
+            <div className="mt-1 -ml-1">{valueSlot}</div>
+          ) : (
+            <p className={cn("text-lg font-bold mt-1 whitespace-nowrap tabular-nums", TONE_VALUE[valueTone ?? tone])}>
+              {loading ? (
+                <Skeleton className="inline-block h-6 w-24 align-middle" />
+              ) : typeof value === "number" ? (
+                formatCurrency(value)
+              ) : (
+                value
+              )}
+            </p>
+          )}
           {!loading && deltaNode && <p className="text-xs mt-1 flex items-center gap-1">{deltaNode}</p>}
           {!loading && subtitle && (
             <p

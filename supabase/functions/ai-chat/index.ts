@@ -10,7 +10,7 @@
 // filtro manual. (Corrige por construção o padrão service_role dos ai-* legados.)
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { withSentry } from "../_shared/sentry.ts";
+import { withSentry, setSentryUser } from "../_shared/sentry.ts";
 import { getCorsHeaders, SECURITY_HEADERS, jsonResponse, optionsResponse } from "../_shared/cors.ts";
 import {
   createAuthClient,
@@ -1111,6 +1111,7 @@ serve(
       const { data: profile } = await authClient.from("profiles").select("empresa_id").eq("id", user.id).single();
       if (!profile?.empresa_id) return jsonResponse({ error: "Perfil não encontrado" }, 403, req);
       const empresaId = profile.empresa_id as string;
+      setSentryUser({ id: user.id, email: user.email, empresa_id: empresaId });
 
       if (!(await checkRateLimit(adminClient, empresaId))) {
         return jsonResponse({ error: "Limite mensal de IA atingido" }, 429, req);
@@ -1167,6 +1168,7 @@ serve(
           ),
           empresaId,
           tipo: FEATURE_KEY,
+          conversationId: sessionId,
         },
         IntentSchema
       );
@@ -1329,6 +1331,7 @@ serve(
           userMessage,
           empresaId,
           tipo: FEATURE_KEY,
+          conversationId: sessionId,
         },
         RespostaSchema
       );
@@ -1425,7 +1428,10 @@ function streamConsulta(o: {
 
       try {
         try {
-          const gen = streamGeminiText(respostaPromptStream(o.agente), o.userMessage);
+          const gen = streamGeminiText(respostaPromptStream(o.agente), o.userMessage, {
+            conversationId: o.sessionId,
+            empresaId: o.empresaId,
+          });
           let r = await gen.next();
           while (!r.done) {
             full += r.value;
@@ -1445,6 +1451,7 @@ function streamConsulta(o: {
               userMessage: o.userMessage,
               empresaId: o.empresaId,
               tipo: FEATURE_KEY,
+              conversationId: o.sessionId,
             },
             RespostaSchema
           );
@@ -1529,6 +1536,7 @@ async function processarCriacao(o: {
       userMessage: comContexto(o.historico, o.message, o.instrucao),
       empresaId: o.empresaId,
       tipo: FEATURE_KEY,
+      conversationId: o.sessionId,
     },
     o.schema
   );

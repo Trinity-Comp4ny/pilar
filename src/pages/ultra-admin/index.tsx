@@ -44,6 +44,17 @@ import {
 import { CompanyFeatureToggles } from "@/components/admin/CompanyFeatureToggles";
 import { BulkFeatureManager, type BulkFeatureInput } from "@/components/admin/BulkFeatureManager";
 import { UsersAccessManager, type ManagedUser } from "@/components/admin/UsersAccessManager";
+import {
+  FeatureSuggestionsTriage,
+  type FeatureSuggestionStatus,
+  type ManagedFeatureSuggestion,
+} from "@/components/admin/FeatureSuggestionsTriage";
+import {
+  IncidentsManager,
+  type CreateIncidentPayload,
+  type ManagedIncident,
+  type StatusComponentOption,
+} from "@/components/admin/IncidentsManager";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { supabase } from "@/integrations/supabase/client";
@@ -72,6 +83,12 @@ type EmpresaRow = {
 
 type EmpresaDetail = EmpresaRow & {
   usuarios: ManagedUser[];
+  /** Override por empresa (spec 052); null = usa o padrão do plano. */
+  maxProjetosOverride: number | null;
+  maxUsuariosOverride: number | null;
+  /** Padrão do plano atual, só leitura (mostrado pra dar contexto do override). */
+  planoMaxProjetos: number | null;
+  planoMaxUsuarios: number | null;
 };
 
 type AuditRow = {
@@ -102,6 +119,15 @@ type DataAuditRow = {
   created_at: string;
 };
 
+type FeatureSuggestionRawRow = {
+  id: string;
+  titulo: string;
+  descricao: string;
+  created_at: string;
+  status_interno: string;
+  created_by: string;
+};
+
 const AUDIT_CATEGORIAS = [
   { value: "all", label: "Todas as categorias" },
   { value: "user", label: "Usuários" },
@@ -116,6 +142,36 @@ const PLAN_LABEL: Record<SubscriptionPlanSlug, string> = {
   pro: "Pro",
   enterprise: "Enterprise",
 };
+
+/** Limite efetivo pra exibição: override vence, senão o padrão do plano, null = ilimitado. */
+function formatLimite(override: number | null, planoDefault: number | null): string {
+  const efetivo = override ?? planoDefault;
+  return efetivo === null ? "Ilimitado" : String(efetivo);
+}
+
+/** String do form pro override: vazia = sem override (null, usa o padrão do plano). */
+function parseOverride(raw: string): number | null {
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
+  const n = Number(trimmed);
+  return Number.isInteger(n) && n >= 0 ? n : null;
+}
+
+function CapacidadeStat({ label, value, overridden }: { label: string; value: string; overridden?: boolean }) {
+  return (
+    <div className="rounded-lg border border-black/10 bg-black/[0.015] p-3">
+      <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-black/40">{label}</div>
+      <div className="mt-1 flex items-center gap-2">
+        <span className="text-lg font-medium text-black/80">{value}</span>
+        {overridden && (
+          <Badge variant="outline" className="h-5 rounded-full border-brand/30 bg-brand px-2 text-[10px] text-ink">
+            Override
+          </Badge>
+        )}
+      </div>
+    </div>
+  );
+}
 
 const ROLE_LABEL: Record<PilarRole, string> = {
   ultra_admin: "Ultra Admin",
@@ -174,7 +230,9 @@ export default function UltraAdmin() {
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [savingFeatures, setSavingFeatures] = useState(false);
   const [query, setQuery] = useState("");
-  const [tab, setTab] = useState<"dashboard" | "empresas" | "funcionalidades" | "usuarios" | "atividade">("dashboard");
+  const [tab, setTab] = useState<
+    "dashboard" | "empresas" | "funcionalidades" | "usuarios" | "atividade" | "feedback" | "status"
+  >("dashboard");
   const [audit, setAudit] = useState<AuditRow[]>([]);
   const [auditFull, setAuditFull] = useState<AuditRow[]>([]);
   const [auditEmpresa, setAuditEmpresa] = useState<string>("all");
@@ -185,6 +243,10 @@ export default function UltraAdmin() {
   const [userRole, setUserRole] = useState<string>("all");
   const [userToDelete, setUserToDelete] = useState<CrossUserRow | null>(null);
   const [detailAudit, setDetailAudit] = useState<DataAuditRow[]>([]);
+  const [suggestionsRaw, setSuggestionsRaw] = useState<FeatureSuggestionRawRow[]>([]);
+  const [statusComponents, setStatusComponents] = useState<StatusComponentOption[]>([]);
+  const [incidents, setIncidents] = useState<ManagedIncident[]>([]);
+  const [creatingIncident, setCreatingIncident] = useState(false);
 
   const fetchEmpresas = useCallback(async () => {
     setLoading(true);
@@ -259,10 +321,122 @@ export default function UltraAdmin() {
     );
   }, []);
 
+  // Spec 056: feedback enviado pelo modal (bug vai pro Sentry, sugestão cai
+  // aqui). Autor resolvido via `users` (já carregado por fetchUsers).
+  const fetchSuggestions = useCallback(async () => {
+    const { data, error } = await supabase
+      .from("feature_suggestions")
+      .select("id, titulo, descricao, created_at, status_interno, created_by")
+      .order("created_at", { ascending: false });
+    if (error) return;
+    setSuggestionsRaw((data ?? []) as FeatureSuggestionRawRow[]);
+  }, []);
+
+  const handleChangeSuggestionStatus = useCallback(async (id: string, status: FeatureSuggestionStatus) => {
+    const { error } = await supabase.from("feature_suggestions").update({ status_interno: status }).eq("id", id);
+    if (error) {
+      toast.error("Erro ao atualizar sugestão", { description: getSafeErrorMessage(error) });
+      return;
+    }
+    setSuggestionsRaw((prev) => prev.map((s) => (s.id === id ? { ...s, status_interno: status } : s)));
+  }, []);
+
+  // Spec 055: status page pública. Componentes são catálogo fixo (seed via
+  // migration); incidentes carregam junto com os componentes afetados e a
+  // timeline de atualizações.
+  const fetchStatusComponents = useCallback(async () => {
+    const { data, error } = await supabase
+      .from("status_components")
+      .select("id, slug, nome_exibicao, ordem")
+      .order("ordem");
+    if (error) return;
+    setStatusComponents((data ?? []).map((c) => ({ id: c.id, slug: c.slug, nomeExibicao: c.nome_exibicao })));
+  }, []);
+
+  const fetchIncidents = useCallback(async () => {
+    const { data, error } = await supabase
+      .from("status_incidents")
+      .select(
+        "id, titulo, severidade, status, created_at, status_incident_components(component_id), status_incident_updates(id, mensagem, created_at)"
+      )
+      .order("created_at", { ascending: false });
+    if (error) return;
+    setIncidents(
+      (data ?? []).map((i) => ({
+        id: i.id,
+        titulo: i.titulo,
+        severidade: i.severidade as ManagedIncident["severidade"],
+        status: i.status as ManagedIncident["status"],
+        createdAt: i.created_at,
+        componentIds: (i.status_incident_components ?? []).map((c) => c.component_id),
+        updates: (i.status_incident_updates ?? [])
+          .slice()
+          .sort((a, b) => (a.created_at < b.created_at ? 1 : -1))
+          .map((u) => ({ id: u.id, mensagem: u.mensagem, createdAt: u.created_at })),
+      }))
+    );
+  }, []);
+
+  const handleCreateIncident = useCallback(
+    async (payload: CreateIncidentPayload) => {
+      setCreatingIncident(true);
+      try {
+        const { data: incident, error } = await supabase
+          .from("status_incidents")
+          .insert({ titulo: payload.titulo, severidade: payload.severidade })
+          .select("id")
+          .single();
+        if (error || !incident) throw error;
+        const { error: linkError } = await supabase
+          .from("status_incident_components")
+          .insert(payload.componentIds.map((component_id) => ({ incident_id: incident.id, component_id })));
+        if (linkError) throw linkError;
+        toast.success("Incidente criado");
+        await fetchIncidents();
+      } catch (err) {
+        reportInvokeError(err, "ultra-admin:create-incident");
+        toast.error("Erro ao criar incidente", { description: getSafeErrorMessage(err) });
+      } finally {
+        setCreatingIncident(false);
+      }
+    },
+    [fetchIncidents]
+  );
+
+  const handleAddIncidentUpdate = useCallback(
+    async (incidentId: string, mensagem: string) => {
+      const { error } = await supabase.from("status_incident_updates").insert({ incident_id: incidentId, mensagem });
+      if (error) {
+        toast.error("Erro ao adicionar atualização", { description: getSafeErrorMessage(error) });
+        return;
+      }
+      await fetchIncidents();
+    },
+    [fetchIncidents]
+  );
+
+  const handleResolveIncident = useCallback(
+    async (incidentId: string) => {
+      const { error } = await supabase
+        .from("status_incidents")
+        .update({ status: "resolvido", resolved_at: new Date().toISOString() })
+        .eq("id", incidentId);
+      if (error) {
+        toast.error("Erro ao resolver incidente", { description: getSafeErrorMessage(error) });
+        return;
+      }
+      await fetchIncidents();
+    },
+    [fetchIncidents]
+  );
+
   useEffect(() => {
     fetchAudit();
     fetchUsers();
-  }, [fetchAudit, fetchUsers]);
+    fetchSuggestions();
+    fetchStatusComponents();
+    fetchIncidents();
+  }, [fetchAudit, fetchUsers, fetchSuggestions, fetchStatusComponents, fetchIncidents]);
 
   // Aba Atividade: log administrativo completo, com filtros de empresa e categoria.
   useEffect(() => {
@@ -291,6 +465,19 @@ export default function UltraAdmin() {
     });
   }, [users, userQuery, userEmpresa, userRole]);
 
+  const suggestions: ManagedFeatureSuggestion[] = useMemo(
+    () =>
+      suggestionsRaw.map((s) => ({
+        id: s.id,
+        titulo: s.titulo,
+        descricao: s.descricao,
+        createdAt: s.created_at,
+        authorEmail: users.find((u) => u.id === s.created_by)?.email ?? null,
+        statusInterno: s.status_interno as FeatureSuggestionStatus,
+      })),
+    [suggestionsRaw, users]
+  );
+
   const handleCrossDelete = useCallback(async (user: CrossUserRow) => {
     try {
       await edgeFetch("ultra-admin-usuarios", {
@@ -311,8 +498,18 @@ export default function UltraAdmin() {
     setLoadingDetail(true);
     try {
       const raw = (await edgeFetch("ultra-admin-empresas", { params: { id } })) as {
-        empresa: { id: string; nome: string; cnpj: string | null; status: string | null; features: unknown };
+        empresa: {
+          id: string;
+          nome: string;
+          cnpj: string | null;
+          status: string | null;
+          features: unknown;
+          max_projetos_override: number | null;
+          max_usuarios_override: number | null;
+        };
         plano: SubscriptionPlanSlug | null;
+        planoMaxProjetos: number | null;
+        planoMaxUsuarios: number | null;
         usuarios: Array<{
           id: string;
           nome: string | null;
@@ -336,6 +533,10 @@ export default function UltraAdmin() {
         status: raw.empresa.status ?? "active",
         features: parseCompanyFeatures(raw.empresa.features),
         plano: raw.plano ?? "starter",
+        maxProjetosOverride: raw.empresa.max_projetos_override,
+        maxUsuariosOverride: raw.empresa.max_usuarios_override,
+        planoMaxProjetos: raw.planoMaxProjetos,
+        planoMaxUsuarios: raw.planoMaxUsuarios,
         usersCount: raw.usuarios.length,
         usuarios: (
           raw.usuarios as Array<{
@@ -540,6 +741,8 @@ export default function UltraAdmin() {
       status?: EmpresaStatus;
       plano?: SubscriptionPlanSlug;
       confirm_name?: string;
+      max_projetos_override?: number | null;
+      max_usuarios_override?: number | null;
     }) => {
       if (!detail) return;
       try {
@@ -547,7 +750,23 @@ export default function UltraAdmin() {
           method: "PUT",
           body: { empresa_id: detail.id, ...patch },
         });
-        setDetail((prev) => (prev ? { ...prev, ...patch } : prev));
+        setDetail((prev) =>
+          prev
+            ? {
+                ...prev,
+                ...(patch.nome !== undefined ? { nome: patch.nome } : {}),
+                ...(patch.cnpj !== undefined ? { cnpj: patch.cnpj } : {}),
+                ...(patch.status !== undefined ? { status: patch.status } : {}),
+                ...(patch.plano !== undefined ? { plano: patch.plano } : {}),
+                ...(patch.max_projetos_override !== undefined
+                  ? { maxProjetosOverride: patch.max_projetos_override }
+                  : {}),
+                ...(patch.max_usuarios_override !== undefined
+                  ? { maxUsuariosOverride: patch.max_usuarios_override }
+                  : {}),
+              }
+            : prev
+        );
         setEmpresas((prev) =>
           prev.map((e) =>
             e.id === detail.id
@@ -583,7 +802,10 @@ export default function UltraAdmin() {
     cnpj: string;
     status: EmpresaStatus;
     plano: SubscriptionPlanSlug;
-  }>({ nome: "", cnpj: "", status: "active", plano: "starter" });
+    /** String vazia = sem override (usa o padrão do plano). */
+    maxProjetosOverride: string;
+    maxUsuariosOverride: string;
+  }>({ nome: "", cnpj: "", status: "active", plano: "starter", maxProjetosOverride: "", maxUsuariosOverride: "" });
 
   const resetForm = () => setForm({ nome: "", cnpj: "", ownerEmail: "", ownerNome: "" });
 
@@ -677,6 +899,8 @@ export default function UltraAdmin() {
                     cnpj: detail.cnpj ?? "",
                     status: detail.status as EmpresaStatus,
                     plano: detail.plano,
+                    maxProjetosOverride: detail.maxProjetosOverride === null ? "" : String(detail.maxProjetosOverride),
+                    maxUsuariosOverride: detail.maxUsuariosOverride === null ? "" : String(detail.maxUsuariosOverride),
                   });
                   setEditCompanyOpen(true);
                 }}
@@ -713,16 +937,41 @@ export default function UltraAdmin() {
       >
         <Card className="border border-black/5">
           <CardHeader>
-            <CardTitle className="text-base">Features da empresa</CardTitle>
+            <CardTitle className="text-base">Capacidade</CardTitle>
             <CardDescription>
-              Como ultra admin, você pode ativar qualquer feature — inclusive add-ons ainda não contratados.
+              O plano define o padrão de limite; o override vale só pra esta empresa (caso negociado fora da tabela
+              padrão). Edite em "Editar empresa". Ainda não bloqueia a criação de projeto na prática, ver SPEC 052.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 sm:grid-cols-3">
+              <CapacidadeStat label="Plano" value={PLAN_LABEL[detail.plano]} />
+              <CapacidadeStat
+                label="Projetos ativos"
+                value={formatLimite(detail.maxProjetosOverride, detail.planoMaxProjetos)}
+                overridden={detail.maxProjetosOverride !== null}
+              />
+              <CapacidadeStat
+                label="Usuários"
+                value={formatLimite(detail.maxUsuariosOverride, detail.planoMaxUsuarios)}
+                overridden={detail.maxUsuariosOverride !== null}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border border-black/5">
+          <CardHeader>
+            <CardTitle className="text-base">Acesso antecipado</CardTitle>
+            <CardDescription>
+              Módulo maduro (Financeiro, Projetos, Obras...) é universal, toda empresa já tem, sem toggle. Aqui só dá
+              acesso cedo a módulo ainda não pronto pra lançamento geral.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <CompanyFeatureToggles
               value={detail.features}
               onChange={handleChangeFeatures}
-              currentPlan={detail.plano}
               usersByFeature={usersByFeature}
               disabled={savingFeatures}
             />
@@ -787,6 +1036,8 @@ export default function UltraAdmin() {
               status: companyForm.status,
               plano: companyForm.plano,
               confirm_name: confirmName,
+              max_projetos_override: parseOverride(companyForm.maxProjetosOverride),
+              max_usuarios_override: parseOverride(companyForm.maxUsuariosOverride),
             });
             setEditCompanyOpen(false);
           }}
@@ -826,6 +1077,8 @@ export default function UltraAdmin() {
           <TabsTrigger value="funcionalidades">Funcionalidades</TabsTrigger>
           <TabsTrigger value="usuarios">Usuários</TabsTrigger>
           <TabsTrigger value="atividade">Atividade</TabsTrigger>
+          <TabsTrigger value="feedback">Feedback</TabsTrigger>
+          <TabsTrigger value="status">Status</TabsTrigger>
         </TabsList>
 
         <TabsContent value="dashboard" className="mt-4 space-y-4">
@@ -1191,6 +1444,21 @@ export default function UltraAdmin() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        <TabsContent value="feedback" className="mt-4">
+          <FeatureSuggestionsTriage suggestions={suggestions} onChangeStatus={handleChangeSuggestionStatus} />
+        </TabsContent>
+
+        <TabsContent value="status" className="mt-4">
+          <IncidentsManager
+            components={statusComponents}
+            incidents={incidents}
+            isCreating={creatingIncident}
+            onCreateIncident={handleCreateIncident}
+            onAddUpdate={handleAddIncidentUpdate}
+            onResolve={handleResolveIncident}
+          />
+        </TabsContent>
       </Tabs>
 
       <AlertDialog open={!!userToDelete} onOpenChange={(o) => !o && setUserToDelete(null)}>
@@ -1311,7 +1579,14 @@ function StatusBadge({ status }: { status: EmpresaStatus }) {
   );
 }
 
-type CompanyForm = { nome: string; cnpj: string; status: EmpresaStatus; plano: SubscriptionPlanSlug };
+type CompanyForm = {
+  nome: string;
+  cnpj: string;
+  status: EmpresaStatus;
+  plano: SubscriptionPlanSlug;
+  maxProjetosOverride: string;
+  maxUsuariosOverride: string;
+};
 
 function EditCompanyDialog({
   open,
@@ -1344,7 +1619,7 @@ function EditCompanyDialog({
         <DialogHeader>
           <DialogTitle>Editar empresa</DialogTitle>
           <DialogDescription>
-            Dados cadastrais, status de acesso e plano. Suspender ou cancelar bloqueia o acesso da empresa.
+            Dados cadastrais, status de acesso, plano e capacidade. Suspender ou cancelar bloqueia o acesso da empresa.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-3 py-2">
@@ -1395,6 +1670,31 @@ function EditCompanyDialog({
               </Select>
             </div>
           </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="edit-max-projetos">Override de projetos</Label>
+              <Input
+                id="edit-max-projetos"
+                type="number"
+                min={0}
+                placeholder="usa o padrão do plano"
+                value={form.maxProjetosOverride}
+                onChange={(e) => setForm((f) => ({ ...f, maxProjetosOverride: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="edit-max-usuarios">Override de usuários</Label>
+              <Input
+                id="edit-max-usuarios"
+                type="number"
+                min={0}
+                placeholder="usa o padrão do plano"
+                value={form.maxUsuariosOverride}
+                onChange={(e) => setForm((f) => ({ ...f, maxUsuariosOverride: e.target.value }))}
+              />
+            </div>
+          </div>
+          <p className="text-xs text-black/40">Deixe em branco pra voltar a usar o limite do plano.</p>
           {dangerous && (
             <div className="space-y-2 rounded-md border border-danger-mid-border bg-danger-soft px-3 py-2.5">
               <p className="text-xs text-danger-strong">

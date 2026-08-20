@@ -41,4 +41,14 @@ export interface Lancamento {
   grupo_total_original: number | null;
   tags: string[] | null;
   transferencia_par_id: string | null;
+  /**
+   * A view `lancamentos` já tem essas colunas (get_lancamentos_pagina devolve o
+   * SETOF inteiro e useLancamentosPaginados espalha a linha crua sem cortar
+   * campo), só não estavam declaradas aqui. Opcionais só porque um objeto
+   * `Lancamento` construído à mão (fora do spread do RPC) pode não trazê-las.
+   */
+  nota_fiscal?: string | null;
+  observacao?: string | null;
+  recorrente?: boolean;
+  periodicidade?: string | null;
 }

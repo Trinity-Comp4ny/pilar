@@ -1,0 +1,62 @@
+{
+  "_leia_me": "Baseline do scripts/audit-security.mjs. Número aqui é dívida conhecida, só pode DESCER. Se um número sobe, o PR tem que explicar por quê antes de regravar com --snapshot. Medido ao vivo em 2026-08-19 nos dois projetos Supabase.",
+  "_metas": {
+    "anon_chamavel": "INVARIANTE em 0, não é ratchet. Conta função SECURITY DEFINER chamável por anon fora da allowlist do script, que espelha a de supabase/tests/anon_function_grants.sql. Os 15 helpers de RLS estão na allowlist de propósito: as policies são TO PUBLIC e precisam avaliá-los para anon, revogar troca resultado vazio por erro 500. Esse vetor já reabriu 3 vezes na história do projeto quando alguém criou RPC nova e esqueceu de revogar.",
+    "rls_sem_policy_com_grant": "0. mfa_backup_codes e rate_limit_attempts são controle de segurança e hoje estão protegidos pela AUSÊNCIA de policy, não pela presença de regra. Revogar o grant fecha em profundidade.",
+    "search_path_mutavel": "0. Função SECURITY DEFINER sem search_path fixo aceita shadowing de schema.",
+    "anon_trigger_inerte": "0, mas prioridade baixa: Postgres recusa chamar função que retorna trigger fora de contexto de trigger, então não é caminho de exploração. Limpar só pra parar de mascarar achado real no advisor.",
+    "policy_auth_por_linha": "0. Trocar auth.uid() por (select auth.uid()) na policy. É performance, não segurança, e só dói quando a tabela cresce.",
+    "fk_sem_indice": "descer. Cada FK sem índice deixa delete e join lentos."
+  },
+  "prod": {
+    "verificado_em": "2026-08-20",
+    "tabelas_sem_rls": 0,
+    "anon_chamavel": 0,
+    "anon_trigger_inerte": 27,
+    "rls_sem_policy_com_grant": 6,
+    "view_sem_invoker_nao_revisada": 0,
+    "authenticated_chamavel": 128,
+    "search_path_mutavel": 9,
+    "policy_auth_por_linha": 22,
+    "fk_sem_indice": 101,
+    "extensoes": [
+      "pg_cron@1.6.4",
+      "pg_net@0.19.5",
+      "pg_stat_statements@1.11",
+      "pg_trgm@1.6",
+      "pgcrypto@1.3",
+      "pgsodium@3.1.8",
+      "plpgsql@1.0",
+      "supabase_vault@0.3.1",
+      "uuid-ossp@1.1"
+    ]
+  },
+  "staging": {
+    "verificado_em": "2026-08-20",
+    "tabelas_sem_rls": 0,
+    "anon_chamavel": 0,
+    "anon_trigger_inerte": 30,
+    "rls_sem_policy_com_grant": 0,
+    "view_sem_invoker_nao_revisada": 0,
+    "authenticated_chamavel": 131,
+    "search_path_mutavel": 0,
+    "policy_auth_por_linha": 23,
+    "fk_sem_indice": 104,
+    "extensoes": [
+      "pg_cron@1.6.4",
+      "pg_net@0.20.3",
+      "pg_stat_statements@1.11",
+      "pg_trgm@1.6",
+      "pgcrypto@1.3",
+      "pgsodium@3.1.8",
+      "plpgsql@1.0",
+      "supabase_vault@0.3.1",
+      "uuid-ossp@1.1"
+    ]
+  },
+  "_drift_conhecido_2026_08_19": {
+    "so_em_prod": ["pg_net@0.19.5"],
+    "so_em_staging": ["pg_graphql@1.6.1", "pgsodium@3.1.8"],
+    "impacto": "pg_net só em prod: qualquer cron que faça HTTP do banco funciona em prod e falha em staging, então staging não valida esse caminho. pg_graphql só em staging: ~93 tabelas expostas por uma API que prod não tem, staging com MAIS superfície que prod. pgsodium só em staging: a migration 021 cifra a api_key do Asaas quando a extensão existe e cai em texto puro quando não existe, então a chave está cifrada em staging e EM TEXTO PURO em produção."
+  }
+}

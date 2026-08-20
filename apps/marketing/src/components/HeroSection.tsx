@@ -14,7 +14,7 @@ const ROTATING_WORDS: PillWord[] = [
 
 export function HeroSection() {
   return (
-    <section className="relative pt-32 pb-24 md:pt-40 md:pb-28 overflow-hidden">
+    <section className="relative pt-32 pb-24 md:pt-40 md:pb-28 overflow-hidden bg-paper-white">
       <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/3 w-[900px] h-[600px] bg-brand/7 rounded-full blur-[130px] animate-aurora" />
         <div className="absolute top-1/4 right-0 w-[500px] h-[400px] bg-modulo-projetos/20 rounded-full blur-[100px] animate-aurora-alt" />
@@ -23,7 +23,8 @@ export function HeroSection() {
 
       <div className="container mx-auto px-6 md:px-10">
         <div className="text-center">
-          {/* Tipografia calibrada pela hero do Notion: peso 500, tracking
+          {/* Tipografia calibrada pela hero do Notion: peso 600 (teto da
+              variable font Inter hospedada, que só cobre 300–600), tracking
               -0.046em. Sem quebra de linha forçada: a pílula é uma unidade
               que não quebra sozinha, então se o container for estreito
               demais pro tamanho da fonte, ela "sobra" pra própria linha.
@@ -31,7 +32,7 @@ export function HeroSection() {
               mecanismo do Notion), e o max-width/tamanho de fonte foram
               recalibrados pra sempre caber ao lado de uma palavra vizinha,
               inclusive no verbo mais longo ("centralizam"). */}
-          <h1 className="text-balance text-[clamp(36px,6.2vw,72px)] font-medium tracking-[-0.046em] text-ink mb-6 leading-[1.1] max-w-6xl mx-auto">
+          <h1 className="text-balance text-[clamp(40px,7vw,84px)] font-semibold tracking-[-0.046em] text-ink mb-6 leading-[1.1] max-w-7xl mx-auto">
             Onde times e agentes <RotatingPill words={ROTATING_WORDS} /> gestão, projetos e obras.
           </h1>
 

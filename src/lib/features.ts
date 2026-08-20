@@ -74,10 +74,16 @@ export type FeatureDefinition = {
   group: FeatureGroup;
   icon: LucideIcon;
   core: boolean;
+  /**
+   * Toda empresa tem, sem toggle: não depende de `empresas.features`
+   * (ver `isFeatureEnabledForCompany`). Distinto de `core`: `core` é sobre
+   * nível de acesso individual (usuário sempre vê, mesmo sem entrada em
+   * `profiles.features`); `universal` é sobre a empresa. Ver ADR 0026.
+   */
+  universal: boolean;
   addon: boolean;
   addonPriceLabel?: string;
   dormant?: boolean;
-  includedInPlans: readonly SubscriptionPlanSlug[];
   /**
    * Feature-pai (módulo) desta sub-feature. Uma sub-feature só vale se o pai
    * estiver ligado; ausente do JSONB herda o pai (ligado). Ver ADR 0019.
@@ -111,8 +117,8 @@ export const FEATURES: readonly FeatureDefinition[] = [
     group: "visao",
     icon: Home,
     core: true,
+    universal: true,
     addon: false,
-    includedInPlans: ["starter", "pro", "enterprise"],
   },
   {
     key: "relatorios",
@@ -121,8 +127,8 @@ export const FEATURES: readonly FeatureDefinition[] = [
     group: "visao",
     icon: BarChart,
     core: false,
+    universal: true,
     addon: false,
-    includedInPlans: ["pro", "enterprise"],
   },
   {
     key: "leads",
@@ -131,8 +137,8 @@ export const FEATURES: readonly FeatureDefinition[] = [
     group: "comercial",
     icon: UserPlus,
     core: false,
+    universal: true,
     addon: false,
-    includedInPlans: ["pro", "enterprise"],
   },
   {
     key: "propostas",
@@ -141,8 +147,8 @@ export const FEATURES: readonly FeatureDefinition[] = [
     group: "comercial",
     icon: FileText,
     core: false,
+    universal: true,
     addon: false,
-    includedInPlans: ["pro", "enterprise"],
   },
   {
     key: "clientes",
@@ -151,8 +157,8 @@ export const FEATURES: readonly FeatureDefinition[] = [
     group: "comercial",
     icon: Building2,
     core: false,
+    universal: true,
     addon: false,
-    includedInPlans: ["starter", "pro", "enterprise"],
   },
   {
     key: "projetos",
@@ -161,8 +167,8 @@ export const FEATURES: readonly FeatureDefinition[] = [
     group: "operacao",
     icon: Calendar,
     core: false,
+    universal: true,
     addon: false,
-    includedInPlans: ["starter", "pro", "enterprise"],
   },
   {
     key: "mapa",
@@ -171,8 +177,8 @@ export const FEATURES: readonly FeatureDefinition[] = [
     group: "operacao",
     icon: MapPin,
     core: false,
+    universal: true,
     addon: false,
-    includedInPlans: ["pro", "enterprise"],
   },
   {
     key: "financeiro",
@@ -181,8 +187,8 @@ export const FEATURES: readonly FeatureDefinition[] = [
     group: "financeiro",
     icon: Wallet,
     core: false,
+    universal: true,
     addon: false,
-    includedInPlans: ["starter", "pro", "enterprise"],
   },
   {
     key: "pessoas",
@@ -191,8 +197,8 @@ export const FEATURES: readonly FeatureDefinition[] = [
     group: "equipe",
     icon: Users,
     core: false,
+    universal: true,
     addon: false,
-    includedInPlans: ["starter", "pro", "enterprise"],
   },
   {
     key: "metas",
@@ -201,8 +207,8 @@ export const FEATURES: readonly FeatureDefinition[] = [
     group: "equipe",
     icon: Target,
     core: false,
+    universal: true,
     addon: false,
-    includedInPlans: ["enterprise"],
   },
   {
     key: "portal_cliente",
@@ -211,8 +217,8 @@ export const FEATURES: readonly FeatureDefinition[] = [
     group: "extras",
     icon: Globe,
     core: false,
+    universal: true,
     addon: false,
-    includedInPlans: ["pro", "enterprise"],
   },
   {
     key: "ai_chat",
@@ -221,9 +227,9 @@ export const FEATURES: readonly FeatureDefinition[] = [
     group: "visao",
     icon: Sparkles,
     core: false,
+    universal: true,
     addon: false,
     dormant: false,
-    includedInPlans: ["pro", "enterprise"],
   },
   {
     key: "meu_trabalho",
@@ -235,8 +241,8 @@ export const FEATURES: readonly FeatureDefinition[] = [
     // a tela fica sempre disponível e a escrita segue gated em 'editor'.
     icon: ListTodo,
     core: true,
+    universal: true,
     addon: false,
-    includedInPlans: ["starter", "pro", "enterprise"],
   },
   {
     key: "obras",
@@ -245,10 +251,10 @@ export const FEATURES: readonly FeatureDefinition[] = [
     group: "operacao",
     icon: HardHat,
     core: false,
+    // Universal desde o ADR 0026 (18/08): Obras deixou de ser experimental
+    // (2 empresas usando de verdade) e não depende mais de toggle por empresa.
+    universal: true,
     addon: false,
-    // Reaberto em 2026-07-30 (ADR 0011, spec 015). Fica off por padrão e é
-    // ligado por empresa (design partner VRZ); por isso não entra em plano ainda.
-    includedInPlans: [],
   },
   // Sub-features de Obras (spec 035, ADR 0019). Todas com parent "obras": só
   // valem se o módulo estiver ligado; ausência no JSONB herda o pai (ligado),
@@ -260,8 +266,8 @@ export const FEATURES: readonly FeatureDefinition[] = [
     group: "operacao",
     icon: Truck,
     core: false,
+    universal: true,
     addon: false,
-    includedInPlans: [],
     parent: "obras",
   },
   {
@@ -271,8 +277,8 @@ export const FEATURES: readonly FeatureDefinition[] = [
     group: "operacao",
     icon: CloudSun,
     core: false,
+    universal: true,
     addon: false,
-    includedInPlans: [],
     parent: "obras",
   },
   {
@@ -282,8 +288,8 @@ export const FEATURES: readonly FeatureDefinition[] = [
     group: "operacao",
     icon: ClipboardList,
     core: false,
+    universal: true,
     addon: false,
-    includedInPlans: [],
     parent: "obras",
   },
   {
@@ -293,8 +299,8 @@ export const FEATURES: readonly FeatureDefinition[] = [
     group: "operacao",
     icon: GanttChartSquare,
     core: false,
+    universal: true,
     addon: false,
-    includedInPlans: [],
     parent: "obras",
   },
   {
@@ -304,8 +310,8 @@ export const FEATURES: readonly FeatureDefinition[] = [
     group: "operacao",
     icon: Scale,
     core: false,
+    universal: true,
     addon: false,
-    includedInPlans: [],
     parent: "obras",
   },
   {
@@ -315,8 +321,8 @@ export const FEATURES: readonly FeatureDefinition[] = [
     group: "operacao",
     icon: Boxes,
     core: false,
+    universal: true,
     addon: false,
-    includedInPlans: [],
     parent: "obras",
   },
   {
@@ -326,8 +332,8 @@ export const FEATURES: readonly FeatureDefinition[] = [
     group: "operacao",
     icon: Wallet,
     core: false,
+    universal: true,
     addon: false,
-    includedInPlans: [],
     parent: "obras",
   },
   {
@@ -337,10 +343,10 @@ export const FEATURES: readonly FeatureDefinition[] = [
     group: "extras",
     icon: Brain,
     core: false,
+    universal: false,
     addon: true,
     addonPriceLabel: "+R$ 97/mês",
     dormant: true,
-    includedInPlans: [],
   },
   {
     key: "capacidade",
@@ -349,10 +355,10 @@ export const FEATURES: readonly FeatureDefinition[] = [
     group: "extras",
     icon: Workflow,
     core: false,
+    universal: false,
     addon: true,
     addonPriceLabel: "+R$ 49/mês",
     dormant: true,
-    includedInPlans: ["enterprise"],
   },
   {
     key: "templates",
@@ -361,10 +367,10 @@ export const FEATURES: readonly FeatureDefinition[] = [
     group: "extras",
     icon: LayoutTemplate,
     core: false,
+    universal: false,
     addon: true,
     addonPriceLabel: "+R$ 29/mês",
     dormant: true,
-    includedInPlans: ["enterprise"],
   },
   {
     key: "timesheet",
@@ -373,10 +379,10 @@ export const FEATURES: readonly FeatureDefinition[] = [
     group: "operacao",
     icon: Workflow,
     core: false,
+    universal: false,
     addon: true,
     addonPriceLabel: "+R$ 49/mês",
     dormant: true,
-    includedInPlans: ["enterprise"],
   },
 ];
 
@@ -503,7 +509,9 @@ export function isFeatureEnabledForCompany(
   key: FeatureKey
 ): boolean {
   const feature = FEATURES_BY_KEY[key];
-  if (feature?.core) return true;
+  // core: sempre visível (nível de acesso individual). universal: toda
+  // empresa tem, sem toggle (ver ADR 0026): ignora o JSONB da empresa.
+  if (feature?.core || feature?.universal) return true;
   // Sub-feature: exige o módulo-pai ligado; ausência no JSONB herda o pai
   // (ligado). Desligar uma sub-feature grava false explícito. Ver ADR 0019.
   if (feature?.parent) {

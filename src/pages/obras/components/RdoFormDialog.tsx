@@ -4,14 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
 import { Loader2, Plus } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { FormDialog } from "@/components/FormDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -151,8 +144,7 @@ export function RdoFormDialog({ open, onOpenChange, obraId, rdos, rdoInicial }: 
   };
   const setResultado = (id: string, resultado: ResultadoRdoTarefa) =>
     setSel((prev) => ({ ...prev, [id]: { ...prev[id], resultado } }));
-  const setObs = (id: string, observacao: string) =>
-    setSel((prev) => ({ ...prev, [id]: { ...prev[id], observacao } }));
+  const setObs = (id: string, observacao: string) => setSel((prev) => ({ ...prev, [id]: { ...prev[id], observacao } }));
 
   const adicionarTarefa = async () => {
     const titulo = novaTarefa.titulo.trim();
@@ -206,195 +198,182 @@ export function RdoFormDialog({ open, onOpenChange, obraId, rdos, rdoInicial }: 
   const saving = criar.isPending || atualizar.isPending || salvarTarefas.isPending;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle>{editandoId ? "Editar dia" : "Registrar dia"}</DialogTitle>
-          <DialogDescription>Diário de obra (RDO). Um registro por dia.</DialogDescription>
-        </DialogHeader>
+    <FormDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title={editandoId ? "Editar dia" : "Registrar dia"}
+      description="Diário de obra (RDO). Um registro por dia."
+      size="md"
+      onSubmit={onSubmit}
+      isPending={saving}
+    >
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-1.5">
+          <Label htmlFor="data">Data *</Label>
+          <Input id="data" type="date" max={hoje()} {...register("data")} />
+          {formState.errors.data && <p className="text-xs text-danger-strong">{formState.errors.data.message}</p>}
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="efetivo">Efetivo (pessoas)</Label>
+          <Input id="efetivo" type="number" min={0} {...register("efetivo")} />
+        </div>
+      </div>
 
-        <form onSubmit={onSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="data">Data *</Label>
-              <Input id="data" type="date" max={hoje()} {...register("data")} />
-              {formState.errors.data && <p className="text-xs text-danger-strong">{formState.errors.data.message}</p>}
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="efetivo">Efetivo (pessoas)</Label>
-              <Input id="efetivo" type="number" min={0} {...register("efetivo")} />
-            </div>
-          </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-1.5">
+          <Label htmlFor="clima">Clima</Label>
+          <Select value={watch("clima")} onValueChange={(v) => setValue("clima", v)}>
+            <SelectTrigger id="clima">
+              <SelectValue placeholder="Não informado" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={NAO_INFORMADO}>Não informado</SelectItem>
+              {CLIMA_OPCOES.map((c) => (
+                <SelectItem key={c.value} value={c.value}>
+                  {c.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="condicao">Condição de trabalho</Label>
+          <Select value={watch("condicao_trabalho")} onValueChange={(v) => setValue("condicao_trabalho", v)}>
+            <SelectTrigger id="condicao">
+              <SelectValue placeholder="Não informado" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={NAO_INFORMADO}>Não informado</SelectItem>
+              {CONDICAO_OPCOES.map((c) => (
+                <SelectItem key={c.value} value={c.value}>
+                  {c.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="clima">Clima</Label>
-              <Select value={watch("clima")} onValueChange={(v) => setValue("clima", v)}>
-                <SelectTrigger id="clima">
-                  <SelectValue placeholder="Não informado" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={NAO_INFORMADO}>Não informado</SelectItem>
-                  {CLIMA_OPCOES.map((c) => (
-                    <SelectItem key={c.value} value={c.value}>
-                      {c.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="condicao">Condição de trabalho</Label>
-              <Select value={watch("condicao_trabalho")} onValueChange={(v) => setValue("condicao_trabalho", v)}>
-                <SelectTrigger id="condicao">
-                  <SelectValue placeholder="Não informado" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={NAO_INFORMADO}>Não informado</SelectItem>
-                  {CONDICAO_OPCOES.map((c) => (
-                    <SelectItem key={c.value} value={c.value}>
-                      {c.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          {/* Tarefas do cronograma reportadas no dia — o loop que mantém o
+      {/* Tarefas do cronograma reportadas no dia — o loop que mantém o
               cronograma vivo: concluir aqui fecha a tarefa e move o avanço. */}
-          <div className="space-y-2 rounded-xl border border-black/5 p-3">
-            <div className="flex items-center justify-between">
-              <Label className="text-sm">Tarefas do cronograma</Label>
-              <span className="text-[11px] text-muted-foreground">Marque o que andou hoje</span>
-            </div>
+      <div className="space-y-2 rounded-xl border border-black/5 p-3">
+        <div className="flex items-center justify-between">
+          <Label className="text-sm">Tarefas do cronograma</Label>
+          <span className="text-[11px] text-muted-foreground">Marque o que andou hoje</span>
+        </div>
 
-            {tarefas.length === 0 ? (
-              <p className="text-xs text-muted-foreground">
-                Nenhuma tarefa no cronograma ainda. Crie a primeira abaixo.
-              </p>
-            ) : (
-              <div className="max-h-56 space-y-1.5 overflow-y-auto">
-                {tarefas.map((t) => {
-                  const marcada = !!sel[t.id];
-                  return (
-                    <div key={t.id} className="rounded-lg bg-muted/40 px-2.5 py-2">
-                      <div className="flex items-start gap-2">
-                        <Checkbox
-                          id={`t-${t.id}`}
-                          checked={marcada}
-                          onCheckedChange={() => toggleTarefa(t.id)}
-                          className="mt-0.5"
-                        />
-                        <label htmlFor={`t-${t.id}`} className="min-w-0 flex-1 cursor-pointer">
-                          <span className="block truncate text-sm text-ink">{t.titulo}</span>
-                          {t.obra_frente_id && (
-                            <span className="block text-[11px] text-muted-foreground">
-                              {frenteNome.get(t.obra_frente_id) ?? ""}
-                            </span>
-                          )}
-                        </label>
-                      </div>
-                      {marcada && (
-                        <div className="mt-2 flex flex-col gap-2 pl-6 sm:flex-row">
-                          <Select
-                            value={sel[t.id].resultado}
-                            onValueChange={(v) => setResultado(t.id, v as ResultadoRdoTarefa)}
-                          >
-                            <SelectTrigger className="h-8 w-full sm:w-36">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {RESULTADO_OPCOES.map((r) => (
-                                <SelectItem key={r.value} value={r.value}>
-                                  {r.label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <Input
-                            className="h-8 flex-1"
-                            placeholder="O que foi feito (opcional)"
-                            value={sel[t.id].observacao}
-                            onChange={(e) => setObs(t.id, e.target.value)}
-                          />
-                        </div>
+        {tarefas.length === 0 ? (
+          <p className="text-xs text-muted-foreground">Nenhuma tarefa no cronograma ainda. Crie a primeira abaixo.</p>
+        ) : (
+          <div className="max-h-56 space-y-1.5 overflow-y-auto">
+            {tarefas.map((t) => {
+              const marcada = !!sel[t.id];
+              return (
+                <div key={t.id} className="rounded-lg bg-muted/40 px-2.5 py-2">
+                  <div className="flex items-start gap-2">
+                    <Checkbox
+                      id={`t-${t.id}`}
+                      checked={marcada}
+                      onCheckedChange={() => toggleTarefa(t.id)}
+                      className="mt-0.5"
+                    />
+                    <label htmlFor={`t-${t.id}`} className="min-w-0 flex-1 cursor-pointer">
+                      <span className="block truncate text-sm text-ink">{t.titulo}</span>
+                      {t.obra_frente_id && (
+                        <span className="block text-[11px] text-muted-foreground">
+                          {frenteNome.get(t.obra_frente_id) ?? ""}
+                        </span>
                       )}
+                    </label>
+                  </div>
+                  {marcada && (
+                    <div className="mt-2 flex flex-col gap-2 pl-6 sm:flex-row">
+                      <Select
+                        value={sel[t.id].resultado}
+                        onValueChange={(v) => setResultado(t.id, v as ResultadoRdoTarefa)}
+                      >
+                        <SelectTrigger className="h-8 w-full sm:w-36">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {RESULTADO_OPCOES.map((r) => (
+                            <SelectItem key={r.value} value={r.value}>
+                              {r.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Input
+                        className="h-8 flex-1"
+                        placeholder="O que foi feito (opcional)"
+                        value={sel[t.id].observacao}
+                        onChange={(e) => setObs(t.id, e.target.value)}
+                      />
                     </div>
-                  );
-                })}
-              </div>
-            )}
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
 
-            {/* Criar tarefa na hora, se não estiver no cronograma. */}
-            <div className="flex flex-col gap-2 border-t border-black/5 pt-2 sm:flex-row">
-              <Input
-                className="h-8 flex-1"
-                placeholder="Nova tarefa (ex: concretar laje)"
-                value={novaTarefa.titulo}
-                onChange={(e) => setNovaTarefa((p) => ({ ...p, titulo: e.target.value }))}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    adicionarTarefa();
-                  }
-                }}
-              />
-              {frentes.length > 0 && (
-                <Select
-                  value={novaTarefa.frenteId || NAO_INFORMADO}
-                  onValueChange={(v) => setNovaTarefa((p) => ({ ...p, frenteId: v === NAO_INFORMADO ? "" : v }))}
-                >
-                  <SelectTrigger className="h-8 w-full sm:w-40">
-                    <SelectValue placeholder="Sem frente" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={NAO_INFORMADO}>Sem frente</SelectItem>
-                    {frentes.map((f) => (
-                      <SelectItem key={f.id} value={f.id}>
-                        {f.nome}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="h-8 shrink-0"
-                onClick={adicionarTarefa}
-                disabled={!novaTarefa.titulo.trim() || criarTarefa.isPending}
-              >
-                {criarTarefa.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-              </Button>
-            </div>
-          </div>
+        {/* Criar tarefa na hora, se não estiver no cronograma. */}
+        <div className="flex flex-col gap-2 border-t border-black/5 pt-2 sm:flex-row">
+          <Input
+            className="h-8 flex-1"
+            placeholder="Nova tarefa (ex: concretar laje)"
+            value={novaTarefa.titulo}
+            onChange={(e) => setNovaTarefa((p) => ({ ...p, titulo: e.target.value }))}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                adicionarTarefa();
+              }
+            }}
+          />
+          {frentes.length > 0 && (
+            <Select
+              value={novaTarefa.frenteId || NAO_INFORMADO}
+              onValueChange={(v) => setNovaTarefa((p) => ({ ...p, frenteId: v === NAO_INFORMADO ? "" : v }))}
+            >
+              <SelectTrigger className="h-8 w-full sm:w-40">
+                <SelectValue placeholder="Sem frente" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={NAO_INFORMADO}>Sem frente</SelectItem>
+                {frentes.map((f) => (
+                  <SelectItem key={f.id} value={f.id}>
+                    {f.nome}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-8 shrink-0"
+            onClick={adicionarTarefa}
+            disabled={!novaTarefa.titulo.trim() || criarTarefa.isPending}
+          >
+            {criarTarefa.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+          </Button>
+        </div>
+      </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="atividades">Observações do dia</Label>
-            <Textarea id="atividades" rows={2} placeholder="Nota livre (opcional)" {...register("atividades")} />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="ocorrencias">Ocorrências</Label>
-            <Textarea id="ocorrencias" rows={2} {...register("ocorrencias")} />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="pendencias">Pendências</Label>
-            <Textarea id="pendencias" rows={2} {...register("pendencias")} />
-          </div>
-
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Cancelar
-            </Button>
-            <Button type="submit" variant="brand" disabled={saving}>
-              {saving && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}
-              Salvar
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+      <div className="space-y-1.5">
+        <Label htmlFor="atividades">Observações do dia</Label>
+        <Textarea id="atividades" rows={2} placeholder="Nota livre (opcional)" {...register("atividades")} />
+      </div>
+      <div className="space-y-1.5">
+        <Label htmlFor="ocorrencias">Ocorrências</Label>
+        <Textarea id="ocorrencias" rows={2} {...register("ocorrencias")} />
+      </div>
+      <div className="space-y-1.5">
+        <Label htmlFor="pendencias">Pendências</Label>
+        <Textarea id="pendencias" rows={2} {...register("pendencias")} />
+      </div>
+    </FormDialog>
   );
 }

@@ -1,24 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Pilar">
   <defs>
-    <!-- Mesmo verde/gradiente do ícone de app (opção 2) -->
+    <!-- Verde da marca (token c-brand-500 = #A4EC86), com tinta clara no centro pra dar volume -->
     <radialGradient id="disco" cx="50%" cy="40%" r="65%">
-      <stop offset="0%" stop-color="#C6F3AB" />
-      <stop offset="100%" stop-color="#88D46A" />
+      <stop offset="0%" stop-color="#D8F7CA" />
+      <stop offset="100%" stop-color="#A4EC86" />
     </radialGradient>
   </defs>
   <!-- Disco preenche a aba (nítido em 16px) -->
   <circle cx="16" cy="16" r="16" fill="url(#disco)" />
-  <!-- Mesma marca do ícone de app: 4 colunas, capitel + ábaco, sem base -->
-  <g stroke="#0A0A0A" stroke-linecap="round" fill="none">
+  <!-- Marca real (pilar-logo.svg), escalada 0.85x e centrada no disco -->
+  <g stroke="#0A0A0A" stroke-width="1.36" stroke-linecap="round" fill="none">
     <!-- Capitel -->
-    <line x1="6" y1="10" x2="26" y2="10" stroke-width="2.6" />
+    <line x1="4.95" y1="7.08" x2="27.05" y2="7.08" />
     <!-- Ábaco -->
-    <line x1="8" y1="12.6" x2="24" y2="12.6" stroke-width="1.3" opacity="0.9" />
+    <line x1="6.65" y1="10.48" x2="25.35" y2="10.48" opacity="0.85" />
     <!-- Fustes -->
-    <line x1="9.5" y1="15" x2="9.5" y2="23" stroke-width="2" />
-    <line x1="13.83" y1="15" x2="13.83" y2="23" stroke-width="2" />
-    <line x1="18.17" y1="15" x2="18.17" y2="23" stroke-width="2" />
-    <line x1="22.5" y1="15" x2="22.5" y2="23" stroke-width="2" />
+    <line x1="10.05" y1="13.03" x2="10.05" y2="24.93" />
+    <line x1="14.3" y1="13.03" x2="14.3" y2="24.93" />
+    <line x1="18.55" y1="13.03" x2="18.55" y2="24.93" />
+    <line x1="22.8" y1="13.03" x2="22.8" y2="24.93" />
   </g>
 </svg>

@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Key, Copy, RefreshCw, CheckCircle2, Trash2, PlugZap } from "lucide-react";
+import { Loader2, Key, Copy, CheckCircle2, Trash2, PlugZap } from "lucide-react";
 import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { useAsaasConfig, type AsaasAmbiente } from "@/hooks/useAsaas";
@@ -12,23 +12,11 @@ import { env } from "@/lib/env";
 const SUPABASE_URL = env.VITE_SUPABASE_URL;
 
 export function AsaasConfigForm() {
-  const {
-    carregarConfig,
-    salvarConfig,
-    regenerarToken,
-    removerConfig,
-    testarConexao,
-    isSaving,
-    isLoading,
-    isRegenerando,
-    isRemovendo,
-    isTestando,
-  } = useAsaasConfig();
+  const { carregarConfig, salvarConfig, removerConfig, testarConexao, isSaving, isLoading, isRemovendo, isTestando } =
+    useAsaasConfig();
   const [apiKey, setApiKey] = useState("");
   const [ambiente, setAmbiente] = useState<AsaasAmbiente>("sandbox");
   const [jaConfigurado, setJaConfigurado] = useState(false);
-  const [webhookToken, setWebhookToken] = useState("");
-  const [confirmRegenOpen, setConfirmRegenOpen] = useState(false);
   const [confirmRemoveOpen, setConfirmRemoveOpen] = useState(false);
 
   const webhookUrl = `${SUPABASE_URL}/functions/v1/asaas-webhook`;
@@ -38,15 +26,13 @@ export function AsaasConfigForm() {
       if (config) {
         setJaConfigurado(config.configurado);
         setAmbiente(config.ambiente);
-        setWebhookToken(config.webhook_token);
       }
     });
   }, []);
 
   const handleSalvar = async () => {
     const result = await salvarConfig({ apiKey: apiKey.trim() || undefined, ambiente });
-    if (result?.webhook_token) {
-      setWebhookToken(result.webhook_token);
+    if (result) {
       setJaConfigurado(true);
       setApiKey("");
     }
@@ -57,16 +43,10 @@ export function AsaasConfigForm() {
     toast.success("Copiado");
   };
 
-  const handleRegenerarToken = async () => {
-    const novoToken = await regenerarToken();
-    if (novoToken) setWebhookToken(novoToken);
-  };
-
   const handleRemover = async () => {
     const ok = await removerConfig();
     if (ok) {
       setJaConfigurado(false);
-      setWebhookToken("");
       setApiKey("");
       setAmbiente("sandbox");
     }
@@ -172,56 +152,13 @@ export function AsaasConfigForm() {
                 <Copy className="h-4 w-4" />
               </Button>
             </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label className="text-xs">Token de Acesso do Webhook</Label>
-            <div className="flex gap-2">
-              <Input
-                readOnly
-                value={webhookToken}
-                type="password"
-                className="text-xs text-muted-foreground bg-muted font-mono"
-              />
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                onClick={() => handleCopiar(webhookToken)}
-                title="Copiar token"
-                aria-label="Copiar"
-              >
-                <Copy className="h-4 w-4" />
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                onClick={() => setConfirmRegenOpen(true)}
-                disabled={isRegenerando}
-                title="Regenerar token"
-                aria-label="Regenerar token do webhook"
-              >
-                <RefreshCw className={`h-4 w-4 ${isRegenerando ? "animate-spin" : ""}`} />
-              </Button>
-            </div>
             <p className="text-xs text-muted-foreground">
-              Configure a URL e este token em{" "}
-              <span className="font-medium">Configurações → Integrações → Webhooks</span> no painel Asaas.
+              Configure esta URL em <span className="font-medium">Configurações → Integrações → Webhooks</span> no
+              painel Asaas.
             </p>
           </div>
         </div>
       )}
-
-      <ConfirmDialog
-        open={confirmRegenOpen}
-        onOpenChange={setConfirmRegenOpen}
-        onConfirm={handleRegenerarToken}
-        title="Regenerar token do webhook"
-        description="O token atual será invalidado imediatamente. O webhook já configurado no Asaas vai parar de funcionar até você atualizar o novo token lá. Deseja continuar?"
-        variant="destructive"
-        confirmText="Regenerar"
-      />
 
       <ConfirmDialog
         open={confirmRemoveOpen}

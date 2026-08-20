@@ -49,6 +49,8 @@ export interface DisciplinaResponsavel {
   labels?: string[];
   links?: LinkItem[];
   comentarios?: DisciplinaComentario[];
+  /** Itens de checklist do template do fluxo, propagados até o submit do form de criação. */
+  checklist_padrao?: string[];
 }
 
 export function isDiscAtrasada(disc: DisciplinaResponsavel): boolean {
@@ -183,6 +185,7 @@ export interface ProjetoDisciplinaDB {
   created_at?: string;
   updated_at?: string;
   responsaveis?: Array<{ id: string; nome: string }>;
+  ordem_etapa?: number | null;
 }
 
 /** Convert relational DB disciplina to the legacy JSONB shape used by UI components */
@@ -216,6 +219,7 @@ export function dbDisciplinaToLegacy(d: ProjetoDisciplinaDB): DisciplinaResponsa
     labels: d.labels ?? [],
     links: d.links ?? [],
     comentarios: d.comentarios ?? [],
+    etapa: d.ordem_etapa ?? undefined,
   };
 }
 
