@@ -1,5 +1,4 @@
 import { HeroSection } from "../components/HeroSection";
-import { CapabilityStrip } from "../components/CapabilityStrip";
 import { ModulesSection } from "../components/ModulesSection";
 import { AgentsSection } from "../components/AgentsSection";
 import { CampoSection } from "../components/CampoSection";
@@ -19,7 +18,6 @@ export function Home() {
   return (
     <>
       <HeroSection />
-      <CapabilityStrip />
       <ModulesSection />
       <AgentsSection />
       <CampoSection />

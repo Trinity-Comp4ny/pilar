@@ -5,7 +5,7 @@ import { APP_URL } from "../config";
 import { trackCta } from "../analytics";
 import { useLoginHint } from "../loginHint";
 import { Reveal } from "./Reveal";
-import { GridBackdrop, TextReveal } from "./motion";
+import { TextReveal } from "./motion";
 import { EASE } from "../lib/motion";
 
 /**
@@ -24,7 +24,6 @@ export function CTASection() {
 
   return (
     <section className="relative py-28 md:py-36 bg-ink text-white overflow-hidden">
-      <GridBackdrop tom="ink" mascara="center" />
       <div
         aria-hidden="true"
         className="absolute bottom-[-30%] left-1/2 -translate-x-1/2 w-[820px] h-[520px] rounded-full bg-brand/14 blur-[130px] pointer-events-none"

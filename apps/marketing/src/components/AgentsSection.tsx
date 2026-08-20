@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { m, useInView, useReducedMotion } from "framer-motion";
 import { ClipboardList, FileSpreadsheet, ImageIcon, Lock, ScrollText, Sparkles, Timer, Undo2 } from "lucide-react";
 import { Reveal } from "./Reveal";
-import { GridBackdrop, RevealGroup, TextReveal } from "./motion";
+import { RevealGroup, TextReveal } from "./motion";
 import { EASE } from "../lib/motion";
 
 /**
@@ -178,7 +178,6 @@ function ChatDemo() {
 export function AgentsSection() {
   return (
     <section id="agentes" className="relative py-24 md:py-32 bg-ink text-white scroll-mt-20 overflow-hidden">
-      <GridBackdrop tom="ink" mascara="center" />
       <div
         aria-hidden="true"
         className="absolute -top-24 left-1/2 -translate-x-1/2 w-[760px] h-[420px] rounded-full bg-brand/12 blur-[120px] pointer-events-none"

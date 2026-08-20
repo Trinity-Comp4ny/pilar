@@ -61,7 +61,7 @@ export function Faq() {
 
   return (
     <>
-      <section className="pt-32 pb-14 md:pt-40 md:pb-16">
+      <section className="pt-16 pb-14 md:pt-24 md:pb-16">
         <div className="container mx-auto px-6 md:px-10">
           <div className="max-w-3xl mx-auto">
             <h1 className="text-[clamp(30px,4.4vw,48px)] font-medium tracking-[-0.032em] text-ink leading-[1.06] mb-4">

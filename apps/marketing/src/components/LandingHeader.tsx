@@ -57,8 +57,14 @@ export function LandingHeader() {
     "text-[13.5px] font-normal text-ink-soft px-3.5 py-2 rounded-full hover:bg-paper-alt hover:text-ink transition-colors";
 
   return (
+    // `sticky`, não `fixed`: no iOS Safari um header fixo é posicionado contra o
+    // viewport de layout, e enquanto a barra de endereço encolhe ele fica
+    // deslocado do viewport visual, e o conteúdo da página aparece numa faixa
+    // acima dele durante o scroll. Sticky participa do fluxo e não tem esse
+    // descompasso. Como agora ocupa altura de verdade, o respiro do topo saiu
+    // das páginas (elas compensavam um header sobreposto).
     <header
-      className={`fixed top-0 inset-x-0 z-50 bg-paper-white border-b transition-colors duration-300 transform-gpu ${
+      className={`sticky top-0 z-50 bg-paper-white border-b transition-colors duration-300 ${
         rolou ? "border-paper-border/70" : "border-transparent"
       }`}
       style={{ paddingTop: "env(safe-area-inset-top)" }}

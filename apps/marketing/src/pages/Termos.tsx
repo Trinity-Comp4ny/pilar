@@ -204,7 +204,7 @@ export function Termos() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-background pt-16">
+    <div className="min-h-screen bg-background">
       <header className="border-b">
         <div className="container mx-auto px-6 py-6 flex items-center gap-4">
           <Link
