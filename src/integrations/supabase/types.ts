@@ -1113,6 +1113,30 @@ export type Database = {
           },
         ]
       }
+      cookie_consents: {
+        Row: {
+          analytics: boolean
+          created_at: string
+          id: string
+          source: string
+          user_id: string
+        }
+        Insert: {
+          analytics: boolean
+          created_at?: string
+          id?: string
+          source: string
+          user_id: string
+        }
+        Update: {
+          analytics?: boolean
+          created_at?: string
+          id?: string
+          source?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       critical_alerts: {
         Row: {
           actor_email: string | null
