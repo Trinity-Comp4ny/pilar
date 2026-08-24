@@ -6306,6 +6306,8 @@ export type Database = {
         Args: { p_account_id: string; p_nova_senha: string }
         Returns: undefined
       }
+      _soft_delete_feature: { Args: { p_tabela: string }; Returns: string }
+      _soft_delete_guard: { Args: { p_tabela: string }; Returns: string }
       _universal_features: { Args: never; Returns: string[] }
       admin_create_company_owner: {
         Args: { p_company_name?: string; p_email: string; p_nome: string }
@@ -7084,10 +7086,22 @@ export type Database = {
         Args: { p_projeto_id: string }
         Returns: Json
       }
+      rpc_restaurar: {
+        Args: { p_id: string; p_tabela: string }
+        Returns: undefined
+      }
       rpc_restaurar_projeto: { Args: { p_id: string }; Returns: undefined }
       rpc_salvar_proposta_disciplinas: {
         Args: { p_disciplinas: Json; p_proposta_id: string }
         Returns: undefined
+      }
+      rpc_soft_delete: {
+        Args: { p_id: string; p_tabela: string }
+        Returns: undefined
+      }
+      rpc_soft_delete_grupo: {
+        Args: { p_grupo: string; p_tabela: string }
+        Returns: number
       }
       rpc_sync_metas: { Args: never; Returns: number }
       set_access_profile: {
