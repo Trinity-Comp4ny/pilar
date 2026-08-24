@@ -1,5 +1,5 @@
 {
-  "_leia_me": "Baseline do scripts/audit-security.mjs. Número aqui é dívida conhecida, só pode DESCER. Se um número sobe, o PR tem que explicar por quê antes de regravar com --snapshot. Medido ao vivo em 2026-08-19 nos dois projetos Supabase.",
+  "_leia_me": "Baseline do scripts/audit-security.mjs. Número aqui é dívida conhecida, só pode DESCER. Se um número sobe, o PR tem que explicar por quê antes de regravar com --snapshot. Medido ao vivo em 2026-08-24 nos dois projetos Supabase, depois do release da SPEC 058.",
   "_metas": {
     "anon_chamavel": "INVARIANTE em 0, não é ratchet. Conta função SECURITY DEFINER chamável por anon fora da allowlist do script, que espelha a de supabase/tests/anon_function_grants.sql. Os 15 helpers de RLS estão na allowlist de propósito: as policies são TO PUBLIC e precisam avaliá-los para anon, revogar troca resultado vazio por erro 500. Esse vetor já reabriu 3 vezes na história do projeto quando alguém criou RPC nova e esqueceu de revogar.",
     "rls_sem_policy_com_grant": "0. mfa_backup_codes e rate_limit_attempts são controle de segurança e hoje estão protegidos pela AUSÊNCIA de policy, não pela presença de regra. Revogar o grant fecha em profundidade.",
@@ -9,16 +9,16 @@
     "fk_sem_indice": "descer. Cada FK sem índice deixa delete e join lentos."
   },
   "prod": {
-    "verificado_em": "2026-08-20",
+    "verificado_em": "2026-08-24",
     "tabelas_sem_rls": 0,
     "anon_chamavel": 0,
     "anon_trigger_inerte": 27,
-    "rls_sem_policy_com_grant": 6,
+    "rls_sem_policy_com_grant": 0,
     "view_sem_invoker_nao_revisada": 0,
-    "authenticated_chamavel": 128,
-    "search_path_mutavel": 9,
-    "policy_auth_por_linha": 22,
-    "fk_sem_indice": 101,
+    "authenticated_chamavel": 136,
+    "search_path_mutavel": 0,
+    "policy_auth_por_linha": 25,
+    "fk_sem_indice": 104,
     "extensoes": [
       "pg_cron@1.6.4",
       "pg_net@0.19.5",
@@ -32,15 +32,15 @@
     ]
   },
   "staging": {
-    "verificado_em": "2026-08-20",
+    "verificado_em": "2026-08-24",
     "tabelas_sem_rls": 0,
     "anon_chamavel": 0,
-    "anon_trigger_inerte": 30,
+    "anon_trigger_inerte": 27,
     "rls_sem_policy_com_grant": 0,
     "view_sem_invoker_nao_revisada": 0,
-    "authenticated_chamavel": 131,
+    "authenticated_chamavel": 136,
     "search_path_mutavel": 0,
-    "policy_auth_por_linha": 23,
+    "policy_auth_por_linha": 25,
     "fk_sem_indice": 104,
     "extensoes": [
       "pg_cron@1.6.4",
@@ -54,9 +54,21 @@
       "uuid-ossp@1.1"
     ]
   },
-  "_drift_conhecido_2026_08_19": {
-    "so_em_prod": ["pg_net@0.19.5"],
-    "so_em_staging": ["pg_graphql@1.6.1", "pgsodium@3.1.8"],
-    "impacto": "pg_net só em prod: qualquer cron que faça HTTP do banco funciona em prod e falha em staging, então staging não valida esse caminho. pg_graphql só em staging: ~93 tabelas expostas por uma API que prod não tem, staging com MAIS superfície que prod. pgsodium só em staging: a migration 021 cifra a api_key do Asaas quando a extensão existe e cai em texto puro quando não existe, então a chave está cifrada em staging e EM TEXTO PURO em produção."
+  "_drift_2026_08_24": {
+    "so_em_prod": [],
+    "so_em_staging": [],
+    "diferenca_de_versao": [
+      "pg_net: 0.19.5 em prod, 0.20.3 em staging"
+    ],
+    "impacto": "Drift de PRESENÇA acabou. O bloco anterior (19/08) registrava pg_graphql só em staging (~93 tabelas expostas por uma API que prod não tinha) e pgsodium só em staging, o que deixava a api_key do Asaas EM TEXTO PURO em produção. Os dois fecharam: pg_graphql não está em nenhum dos dois, pgsodium está nos dois, e a migration 20260850000000 chegou em prod no release de 24/08. Verificado em produção nesta data: asaas_config tem o segredo no Vault (api_key_secret_id preenchido) e a coluna api_key vazia. Sobra diferença de VERSÃO do pg_net, que o repo já trata como não bloqueante (commit e5c4060)."
+  },
+  "_mudou_em_2026_08_24": {
+    "motivo": "Release da SPEC 058 (PR #324): acesso por role, MFA opcional, disciplinas por empresa, soft delete de projeto por RPC.",
+    "authenticated_chamavel": "131 (staging) / 128 (prod) -> 136 nos dois. SUBIU e é intencional. Entraram: has_aal2, mfa_generate_backup_codes, mfa_consume_backup_code e mfa_backup_codes_remaining (migration 20260855000000, funções que a 026 registrou mas nunca criou nos bancos remotos), mais rpc_excluir_projeto e rpc_restaurar_projeto (20260858000000, soft delete que o cliente não conseguia fazer por UPDATE direto). Todas com REVOKE de PUBLIC/anon e GRANT só pra authenticated, e todas com search_path fixo. Saíram _validate_features_payload e as funções de validação de features por usuário.",
+    "policy_auth_por_linha": "23 (staging) / 22 (prod) -> 25 nos dois. SUBIU: são as 2 policies de cookie_consents (`user_id = auth.uid()`, migration 20260856000000). É performance, não segurança, e a tabela tende a ter uma linha por usuário. Entra na dívida junto com as outras 23; o fix é a SPEC 054, que troca por (select auth.uid()) ao migrar as policies para TO authenticated.",
+    "anon_trigger_inerte": "30 (staging) / 27 (prod) -> 27 nos dois. DESCEU em staging: os 5 triggers de validação de features saíram com a migration 20260854000000.",
+    "rls_sem_policy_com_grant": "6 (prod) -> 0. A baseline de 20/08 retratou produção ANTES de a leva de hardening (20260849000000) fazer efeito lá; o número de prod estava velho, não piorou nem melhorou por acidente.",
+    "search_path_mutavel": "9 (prod) -> 0. Mesma explicação do item acima, mais _feature_catalog e _universal_features fixadas na 20260857000000.",
+    "paridade": "Pela primeira vez os dois ambientes têm NÚMEROS IDÊNTICOS em todos os contadores. Era o objetivo do check de drift: staging só valida produção enquanto os dois forem parecidos."
   }
 }
