@@ -64,7 +64,6 @@ import { reportInvokeError } from "@/lib/monitoring";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import {
   parseCompanyFeatures,
-  parseUserFeatures,
   type CompanyFeatures,
   type SubscriptionPlanSlug,
 } from "@/lib/features";
@@ -544,14 +543,12 @@ export default function UltraAdmin() {
             nome: string | null;
             email: string | null;
             role: string | null;
-            features: unknown;
           }>
         ).map((u) => ({
           id: u.id,
           name: u.nome ?? u.email ?? u.id,
           email: u.email ?? "",
           role: normalizeRole(u.role),
-          features: parseUserFeatures(u.features),
         })),
       };
 
@@ -563,7 +560,6 @@ export default function UltraAdmin() {
           name: c.nome ?? c.email,
           email: c.email,
           role: normalizeRole(c.cargo),
-          features: parseUserFeatures(c.features),
           isPending: true,
         });
       }
@@ -615,20 +611,18 @@ export default function UltraAdmin() {
   );
 
   const handleUpdateUser = useCallback(
-    async (payload: { id: string; role: "admin" | "user"; features: import("@/lib/features").UserFeatures }) => {
+    async (payload: { id: string; role: "admin" | "user" }) => {
       if (!detail) return;
       try {
         await edgeFetch("ultra-admin-usuarios", {
           method: "PUT",
-          body: { user_id: payload.id, role: payload.role, features: payload.features, empresa_id: detail.id },
+          body: { user_id: payload.id, role: payload.role, empresa_id: detail.id },
         });
         setDetail((prev) =>
           prev
             ? {
                 ...prev,
-                usuarios: prev.usuarios.map((u) =>
-                  u.id === payload.id ? { ...u, role: payload.role, features: payload.features } : u
-                ),
+                usuarios: prev.usuarios.map((u) => (u.id === payload.id ? { ...u, role: payload.role } : u)),
               }
             : prev
         );
@@ -664,12 +658,7 @@ export default function UltraAdmin() {
   );
 
   const handleInviteUser = useCallback(
-    async (payload: {
-      name: string;
-      email: string;
-      role: "admin" | "user";
-      features: import("@/lib/features").UserFeatures;
-    }) => {
+    async (payload: { name: string; email: string; role: "admin" | "user" }) => {
       if (!detail) return;
       try {
         await edgeFetch("ultra-admin-usuarios", {
@@ -678,7 +667,6 @@ export default function UltraAdmin() {
             email: payload.email,
             nome: payload.name,
             role: payload.role,
-            features: payload.features,
           },
         });
         toast.success("Convite enviado");
@@ -872,17 +860,6 @@ export default function UltraAdmin() {
   }
 
   if (selectedId && detail) {
-    const usersByFeature = detail.usuarios.reduce(
-      (acc, u) => {
-        if (u.role !== "user") return acc;
-        for (const key of Object.keys(u.features)) {
-          acc[key] = (acc[key] ?? 0) + 1;
-        }
-        return acc;
-      },
-      {} as Record<string, number>
-    );
-
     return (
       <PageLayout
         header={
@@ -972,7 +949,6 @@ export default function UltraAdmin() {
             <CompanyFeatureToggles
               value={detail.features}
               onChange={handleChangeFeatures}
-              usersByFeature={usersByFeature}
               disabled={savingFeatures}
             />
           </CardContent>
@@ -980,7 +956,6 @@ export default function UltraAdmin() {
 
         <UsersAccessManager
           users={detail.usuarios}
-          companyFeatures={detail.features}
           currentUserId={null}
           canManage
           onInvite={handleInviteUser}

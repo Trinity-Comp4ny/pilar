@@ -34,13 +34,13 @@ ON CONFLICT (id) DO NOTHING;
 
 SET LOCAL session_replication_role = 'origin';
 
-INSERT INTO public.profiles (id, empresa_id, first_name, last_name, email, role, onboarding_completed, features)
+INSERT INTO public.profiles (id, empresa_id, first_name, last_name, email, role, onboarding_completed)
 VALUES
-  ('55555555-0000-0000-0000-000000000001', '00000000-0000-0000-0000-0000000000ff', 'Fin', 'Editor', 'fin_editor@test.com', 'user', TRUE, '{"financeiro": "editor"}'::jsonb),
-  ('55555555-0000-0000-0000-000000000002', '00000000-0000-0000-0000-0000000000ff', 'Fin', 'Viewer', 'fin_viewer@test.com', 'user', TRUE, '{"financeiro": "viewer"}'::jsonb),
-  ('55555555-0000-0000-0000-000000000003', '00000000-0000-0000-0000-0000000000ff', 'No', 'Fin', 'no_fin@test.com', 'user', TRUE, '{}'::jsonb),
-  ('55555555-0000-0000-0000-000000000004', '00000000-0000-0000-0000-0000000000ff', 'Ultra', 'Fin', 'ultra_fin@test.com', 'ultra_admin', TRUE, '{}'::jsonb)
-ON CONFLICT (id) DO UPDATE SET features = EXCLUDED.features, role = EXCLUDED.role;
+  ('55555555-0000-0000-0000-000000000001', '00000000-0000-0000-0000-0000000000ff', 'Fin', 'Editor', 'fin_editor@test.com', 'user', TRUE),
+  ('55555555-0000-0000-0000-000000000002', '00000000-0000-0000-0000-0000000000ff', 'Fin', 'Viewer', 'fin_viewer@test.com', 'user', TRUE),
+  ('55555555-0000-0000-0000-000000000003', '00000000-0000-0000-0000-0000000000ff', 'No', 'Fin', 'no_fin@test.com', 'user', TRUE),
+  ('55555555-0000-0000-0000-000000000004', '00000000-0000-0000-0000-0000000000ff', 'Ultra', 'Fin', 'ultra_fin@test.com', 'ultra_admin', TRUE)
+ON CONFLICT (id) DO UPDATE SET role = EXCLUDED.role;
 
 CREATE OR REPLACE FUNCTION test_set_auth(p_user_id UUID)
 RETURNS VOID LANGUAGE plpgsql AS $$
@@ -79,28 +79,27 @@ SELECT is(
 );
 
 -- =============================================
--- Teste 2: viewer NÃO escreve receitas
+-- Teste 2: membro da empresa escreve receitas (ADR 0029: todo membro é editor;
+-- a granularidade viewer/editor por usuário deixou de existir)
 -- =============================================
-SELECT throws_ok(
+SELECT lives_ok(
   $$ INSERT INTO public.receitas (empresa_id, descricao, valor, data_vencimento, status)
-     VALUES ('00000000-0000-0000-0000-0000000000ff', 'tentativa viewer', 100, CURRENT_DATE, 'Pendente') $$,
-  '42501',
-  NULL,
-  'viewer NÃO insere receitas'
+     VALUES ('00000000-0000-0000-0000-0000000000ff', 'insert membro', 100, CURRENT_DATE, 'Pendente') $$,
+  'membro da empresa insere receita'
 );
 
 -- =============================================
--- Teste 3: viewer NÃO atualiza despesas
+-- Teste 3: membro da empresa atualiza despesa da própria empresa
 -- =============================================
 WITH updated AS (
-  UPDATE public.despesas SET descricao = 'hack viewer'
+  UPDATE public.despesas SET descricao = 'editado por membro'
   WHERE id = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'
   RETURNING 1
 )
 SELECT is(
   (SELECT COUNT(*)::INTEGER FROM updated),
-  0,
-  'viewer UPDATE despesas: 0 rows (RLS oculta)'
+  1,
+  'membro da empresa: UPDATE despesas afeta a linha'
 );
 
 -- =============================================
@@ -115,22 +114,23 @@ SELECT lives_ok(
 );
 
 -- =============================================
--- Teste 5: user sem feature financeiro NÃO lê receitas
+-- Teste 5: user sem grant individual lê e escreve no financeiro da empresa.
+-- É a consequência explícita da decisão do ADR 0029 (risco registrado lá):
+-- o financeiro deixa de ter recorte por usuário.
 -- =============================================
 SELECT test_set_auth('55555555-0000-0000-0000-000000000003');
 
-SELECT is(
+SELECT cmp_ok(
   (SELECT COUNT(*)::INTEGER FROM public.receitas WHERE empresa_id = '00000000-0000-0000-0000-0000000000ff'),
-  0,
-  'user sem feature financeiro: SELECT retorna 0 (RLS oculta)'
+  '>=',
+  1,
+  'user sem grant: lê receitas da própria empresa'
 );
 
-SELECT throws_ok(
+SELECT lives_ok(
   $$ INSERT INTO public.receitas (empresa_id, descricao, valor, data_vencimento, status)
-     VALUES ('00000000-0000-0000-0000-0000000000ff', 'tentativa sem fin', 100, CURRENT_DATE, 'Pendente') $$,
-  '42501',
-  NULL,
-  'user sem feature: INSERT receitas BLOQUEADO'
+     VALUES ('00000000-0000-0000-0000-0000000000ff', 'insert sem grant', 100, CURRENT_DATE, 'Pendente') $$,
+  'user sem grant: INSERT receitas funciona'
 );
 
 -- =============================================
@@ -163,16 +163,14 @@ SELECT lives_ok(
 );
 
 -- =============================================
--- Teste 8: viewer NÃO escreve em fornecedores
+-- Teste 8: membro da empresa escreve em fornecedores
 -- =============================================
 SELECT test_set_auth('55555555-0000-0000-0000-000000000002');
 
-SELECT throws_ok(
+SELECT lives_ok(
   $$ INSERT INTO public.fornecedores (empresa_id, nome, cnpj)
-     VALUES ('00000000-0000-0000-0000-0000000000ff', 'Forn viewer', '99.888.777/0001-66') $$,
-  '42501',
-  NULL,
-  'viewer INSERT fornecedores BLOQUEADO'
+     VALUES ('00000000-0000-0000-0000-0000000000ff', 'Forn membro', '99.888.777/0001-66') $$,
+  'membro da empresa insere fornecedor'
 );
 
 SELECT * FROM finish();

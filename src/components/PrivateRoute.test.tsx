@@ -53,7 +53,7 @@ const baseAuth = {
   signOut: vi.fn(),
   refreshProfile: vi.fn(),
   mfaChallengeRequired: false,
-  hasVerifiedMfaFactor: true,
+  hasVerifiedMfaFactor: false,
 };
 
 describe("PrivateRoute", () => {
@@ -142,6 +142,29 @@ describe("PrivateRoute", () => {
 
     await waitFor(() => {
       expect(screen.getByTestId("company-setup")).toBeInTheDocument();
+    });
+  });
+
+  it("não empurra para /mfa/setup quem não tem MFA ativo (ADR 0031)", async () => {
+    mockUseAuth.mockReturnValue({
+      ...baseAuth,
+      isAuthenticated: true,
+      loading: false,
+      profile: {
+        id: "user-123",
+        nome: "Rafael",
+        email: "rafael@empresa.com",
+        contato: "(11) 99999-9999",
+        role: "admin",
+        onboarding_completed: true,
+        empresas: { onboarding_completed: true } as ProfileWithEmpresa["empresas"],
+      } as ProfileWithEmpresa,
+    });
+
+    renderWithRouter();
+
+    await waitFor(() => {
+      expect(screen.getByTestId("layout")).toBeInTheDocument();
     });
   });
 });

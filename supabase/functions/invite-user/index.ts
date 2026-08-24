@@ -21,50 +21,6 @@ const log = createLogger("invite-user");
 const ASSIGNABLE_ROLES = ["admin", "user"] as const;
 type AssignableRole = (typeof ASSIGNABLE_ROLES)[number];
 
-// Espelha FeatureKey de src/lib/features.ts (Deno não importa do app Vite).
-// Coberto por src/lib/features.test.ts (teste de sincronia): mudar o catálogo
-// do front sem atualizar aqui quebra o teste, não silenciosamente em produção.
-const FEATURE_KEYS = new Set([
-  "dashboard",
-  "relatorios",
-  "leads",
-  "propostas",
-  "clientes",
-  "projetos",
-  "mapa",
-  "financeiro",
-  "pessoas",
-  "metas",
-  "portal_cliente",
-  "ai_chat",
-  "meu_trabalho",
-  "obras",
-  "obras_fornecedores",
-  "obras_clima",
-  "obras_diario",
-  "obras_cronograma",
-  "obras_cotacoes",
-  "obras_estoque",
-  "obras_conta",
-  "ai_hub",
-  "capacidade",
-  "templates",
-  "timesheet",
-]);
-
-const VALID_LEVELS = new Set(["viewer", "editor"]);
-
-function sanitizeFeatures(raw: unknown): Record<string, "viewer" | "editor"> {
-  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return {};
-  const result: Record<string, "viewer" | "editor"> = {};
-  for (const [key, value] of Object.entries(raw as Record<string, unknown>)) {
-    if (!FEATURE_KEYS.has(key)) continue;
-    if (typeof value !== "string" || !VALID_LEVELS.has(value)) continue;
-    result[key] = value as "viewer" | "editor";
-  }
-  return result;
-}
-
 serve(
   withSentry("invite-user", async (req) => {
     if (req.method === "OPTIONS") return optionsResponse(req);
@@ -158,14 +114,15 @@ serve(
         return jsonResponse({ success: true }, 200, req);
       }
 
-      const { email, nome, role, features: rawFeatures } = body ?? {};
+      const { email, nome, role } = body ?? {};
 
       if (!email || !EMAIL_RE.test(String(email))) {
         return safeErrorResponse(400, "Invalid email format", req);
       }
 
+      // ADR 0029: o convite carrega só o cargo. Acesso é role + módulo da
+      // empresa; não existe mais nível por feature no usuário.
       const safeRole: AssignableRole = ASSIGNABLE_ROLES.includes(role) ? role : "user";
-      const safeFeatures = safeRole === "admin" ? {} : sanitizeFeatures(rawFeatures);
 
       // Verificar limite de usuários do plano da empresa
       const { data: planLimit } = await supabaseClient
@@ -211,7 +168,6 @@ serve(
         p_email: email,
         p_cargo: safeRole,
         p_nome: nome || null,
-        p_features: safeFeatures,
       });
 
       if (conviteError || !token) {

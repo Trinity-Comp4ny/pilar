@@ -18,11 +18,13 @@ import {
 } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { requestCookieConsentReview, getCookieConsent, CONSENT_CHANGED_EVENT } from "@/lib/cookieConsent";
+import { getCookieConsent, CONSENT_CHANGED_EVENT } from "@/lib/cookieConsent";
+import { setAnalyticsConsent } from "@/lib/cookieConsentSync";
+import { Switch } from "@/components/ui/switch";
 
 // Ações de autoatendimento LGPD (exportar/excluir dados), que exigem sessão
 // autenticada. O texto legal completo mora em pilarsoft.com.br/privacidade
-// (marketing, sem login) — ver ADR 0025.
+// (marketing, sem login), ver ADR 0025.
 export function PrivacidadePanel() {
   const { user } = useAuth();
   const [motivo, setMotivo] = useState("");
@@ -30,13 +32,32 @@ export function PrivacidadePanel() {
   const [open, setOpen] = useState(false);
   const [exportSubmitting, setExportSubmitting] = useState(false);
   const [exportRequested, setExportRequested] = useState(false);
-  const [analyticsConsent, setAnalyticsConsent] = useState(() => getCookieConsent()?.analytics ?? false);
+  const [analyticsConsent, setAnalyticsConsentState] = useState(() => getCookieConsent()?.analytics ?? false);
+  const [consentSaving, setConsentSaving] = useState(false);
 
   useEffect(() => {
-    const onConsentChanged = () => setAnalyticsConsent(getCookieConsent()?.analytics ?? false);
+    const onConsentChanged = () => setAnalyticsConsentState(getCookieConsent()?.analytics ?? false);
     window.addEventListener(CONSENT_CHANGED_EVENT, onConsentChanged);
     return () => window.removeEventListener(CONSENT_CHANGED_EVENT, onConsentChanged);
   }, []);
+
+  const handleToggleAnalytics = async (aceito: boolean) => {
+    if (!user) return;
+    setConsentSaving(true);
+    try {
+      await setAnalyticsConsent(user.id, aceito);
+      setAnalyticsConsentState(aceito);
+    } catch (err) {
+      // Reverte o toggle: o PostHog já foi ligado/desligado, mas a preferência
+      // não ficou registrada na conta e voltaria no próximo login.
+      setAnalyticsConsentState(getCookieConsent()?.analytics ?? false);
+      toast.error("Não foi possível salvar a preferência", {
+        description: getSafeErrorMessage(err, "Tente de novo em instantes."),
+      });
+    } finally {
+      setConsentSaving(false);
+    }
+  };
 
   const handleRequestExport = async () => {
     if (!user) return;
@@ -194,14 +215,26 @@ export function PrivacidadePanel() {
             Cookies
           </CardTitle>
           <CardDescription>
-            Cookies de análise hoje:{" "}
-            <strong className="text-foreground">{analyticsConsent ? "aceitos" : "recusados"}</strong>.
+            Cookies essenciais mantêm sua sessão e não podem ser desligados. Os de análise são opcionais.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Button variant="outline" size="sm" onClick={requestCookieConsentReview}>
-            Alterar preferências de cookies
-          </Button>
+          <div className="flex items-start justify-between gap-4">
+            <div className="space-y-1">
+              <label htmlFor="analytics-consent" className="text-sm font-medium">
+                Cookies de análise
+              </label>
+              <p className="text-sm text-muted-foreground">
+                Medem como o produto é usado para orientar melhorias. Vale em todos os seus dispositivos.
+              </p>
+            </div>
+            <Switch
+              id="analytics-consent"
+              checked={analyticsConsent}
+              disabled={consentSaving}
+              onCheckedChange={handleToggleAnalytics}
+            />
+          </div>
         </CardContent>
       </Card>
     </div>

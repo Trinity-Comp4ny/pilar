@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { Pencil, Trash2, UserPlus, Users as UsersIcon, ShieldCheck, ShieldAlert } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { CompanyFeatures, UserFeatures } from "@/lib/features";
 import type { PilarRole } from "@/lib/roles";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -17,8 +16,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { FeatureAccessGrid } from "@/components/admin/FeatureAccessGrid";
-import { AccessBadges } from "@/components/admin/AccessBadges";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 
 export type ManagedUser = {
@@ -29,7 +26,16 @@ export type ManagedUser = {
   isPending?: boolean;
   /** id do convite (quando isPending) — necessário para reenviar/cancelar */
   inviteId?: string | null;
-  features: UserFeatures;
+};
+
+/**
+ * Acesso é role + módulo habilitado na empresa (ADR 0029): não existe mais
+ * nível por feature no usuário, então a UI edita só o tipo de conta.
+ */
+const ROLE_BADGE: Record<PilarRole, string> = {
+  ultra_admin: "Ultra admin",
+  admin: "Admin da empresa",
+  user: "Usuário",
 };
 
 /** Convite/edição via UI: apenas admin ou user. ultra_admin só por SQL. */
@@ -39,18 +45,15 @@ export type InvitePayload = {
   name: string;
   email: string;
   role: AssignableRole;
-  features: UserFeatures;
 };
 
 export type UpdatePayload = {
   id: string;
   role: AssignableRole;
-  features: UserFeatures;
 };
 
 export type UsersAccessManagerProps = {
   users: ManagedUser[];
-  companyFeatures: CompanyFeatures;
   currentUserId: string | null;
   canManage: boolean;
   isInviting?: boolean;
@@ -67,7 +70,6 @@ export type UsersAccessManagerProps = {
 
 export function UsersAccessManager({
   users,
-  companyFeatures,
   currentUserId,
   canManage,
   isInviting = false,
@@ -100,7 +102,7 @@ export function UsersAccessManager({
             <UsersIcon size={20} strokeWidth={1.5} />
             Usuários da Empresa
           </CardTitle>
-          <CardDescription>Controle quem acessa cada módulo e com que nível.</CardDescription>
+          <CardDescription>Convide quem trabalha com você e defina quem administra a conta.</CardDescription>
         </div>
         {canManage && (
           <Button type="button" onClick={openInvite} variant="brand" className="rounded-full">
@@ -117,7 +119,7 @@ export function UsersAccessManager({
               <TableRow>
                 <TableHead>Nome</TableHead>
                 <TableHead>Email</TableHead>
-                <TableHead>Acessos</TableHead>
+                <TableHead>Tipo de conta</TableHead>
                 <TableHead className="w-32 text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
@@ -149,7 +151,9 @@ export function UsersAccessManager({
                       </TableCell>
                       <TableCell className="text-black/70">{u.email}</TableCell>
                       <TableCell>
-                        <AccessBadges role={u.role} features={u.features} />
+                        <Badge variant="outline" className="rounded-full border-black/10 bg-black/5 text-black/70">
+                          {ROLE_BADGE[u.role]}
+                        </Badge>
                       </TableCell>
                       <TableCell className="text-right">
                         {canManage && u.isPending ? (
@@ -276,7 +280,9 @@ export function UsersAccessManager({
                         )
                       )}
                     </div>
-                    <AccessBadges role={u.role} features={u.features} />
+                    <Badge variant="outline" className="rounded-full border-black/10 bg-black/5 text-black/70">
+                      {ROLE_BADGE[u.role]}
+                    </Badge>
                   </CardContent>
                 </Card>
               );
@@ -288,7 +294,6 @@ export function UsersAccessManager({
       <InviteDialog
         open={inviteOpen}
         onClose={() => setInviteOpen(false)}
-        companyFeatures={companyFeatures}
         isSubmitting={isInviting}
         onSubmit={async (payload) => {
           try {
@@ -303,7 +308,6 @@ export function UsersAccessManager({
       <EditDialog
         user={editTarget}
         onClose={() => setEditTarget(null)}
-        companyFeatures={companyFeatures}
         onSubmit={(payload) => {
           onUpdate(payload);
           setEditTarget(null);
@@ -332,19 +336,17 @@ export function UsersAccessManager({
 type InviteDialogProps = {
   open: boolean;
   onClose: () => void;
-  companyFeatures: CompanyFeatures;
   isSubmitting: boolean;
   onSubmit: (payload: InvitePayload) => void;
 };
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-function InviteDialog({ open, onClose, companyFeatures, isSubmitting, onSubmit }: InviteDialogProps) {
+function InviteDialog({ open, onClose, isSubmitting, onSubmit }: InviteDialogProps) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [emailError, setEmailError] = useState("");
   const [role, setRole] = useState<AssignableRole>("user");
-  const [features, setFeatures] = useState<UserFeatures>({});
 
   useEffect(() => {
     if (!open) {
@@ -352,12 +354,10 @@ function InviteDialog({ open, onClose, companyFeatures, isSubmitting, onSubmit }
       setEmail("");
       setEmailError("");
       setRole("user");
-      setFeatures({});
     }
   }, [open]);
 
   const canSubmit = name.trim().length > 0 && email.trim().length > 0 && !isSubmitting;
-  const isAdmin = role === "admin";
 
   const handleEmailChange = (value: string) => {
     setEmail(value);
@@ -375,16 +375,17 @@ function InviteDialog({ open, onClose, companyFeatures, isSubmitting, onSubmit }
       setEmailError("Email inválido");
       return;
     }
-    onSubmit({ name: name.trim(), email: trimmed, role, features: isAdmin ? {} : features });
+    onSubmit({ name: name.trim(), email: trimmed, role });
   };
 
   return (
     <Dialog open={open} onOpenChange={(v) => (!v ? onClose() : undefined)}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Convidar usuário</DialogTitle>
           <DialogDescription>
-            Envie um convite por email e defina o nível de acesso deste usuário aos módulos da empresa.
+            Envie um convite por email. Quem entra acessa os módulos da empresa; o tipo de conta define quem
+            administra usuários e plano.
           </DialogDescription>
         </DialogHeader>
 
@@ -420,23 +421,6 @@ function InviteDialog({ open, onClose, companyFeatures, isSubmitting, onSubmit }
           </div>
 
           <RoleSelector value={role} onChange={setRole} />
-
-          <div>
-            <Label className="text-sm font-medium">Acessos</Label>
-            <p className="mt-1 text-xs text-black/50">
-              {isAdmin
-                ? "Admin da empresa tem acesso total — configuração individual desativada."
-                : "Defina o nível por módulo. Apenas features ativas na empresa aparecem."}
-            </p>
-            <div className="mt-3">
-              <FeatureAccessGrid
-                value={features}
-                onChange={setFeatures}
-                companyFeatures={companyFeatures}
-                disabled={isAdmin}
-              />
-            </div>
-          </div>
         </div>
 
         <DialogFooter>
@@ -455,18 +439,15 @@ function InviteDialog({ open, onClose, companyFeatures, isSubmitting, onSubmit }
 type EditDialogProps = {
   user: ManagedUser | null;
   onClose: () => void;
-  companyFeatures: CompanyFeatures;
   onSubmit: (payload: UpdatePayload) => void;
 };
 
-function EditDialog({ user, onClose, companyFeatures, onSubmit }: EditDialogProps) {
+function EditDialog({ user, onClose, onSubmit }: EditDialogProps) {
   const [role, setRole] = useState<AssignableRole>("user");
-  const [features, setFeatures] = useState<UserFeatures>({});
 
   useEffect(() => {
     if (user && user.role !== "ultra_admin") {
       setRole(user.role);
-      setFeatures(user.features);
     }
   }, [user]);
 
@@ -495,32 +476,23 @@ function EditDialog({ user, onClose, companyFeatures, onSubmit }: EditDialogProp
     );
   }
 
-  const isAdmin = role === "admin";
-
   return (
     <Dialog open onOpenChange={(v) => (!v ? onClose() : undefined)}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Editar acessos — {user.name}</DialogTitle>
-          <DialogDescription>Ajuste o tipo de conta e o nível de acesso por módulo.</DialogDescription>
+          <DialogTitle>Tipo de conta: {user.name}</DialogTitle>
+          <DialogDescription>Define quem administra usuários, plano e configuração da empresa.</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-5">
           <RoleSelector value={role} onChange={setRole} />
-
-          <FeatureAccessGrid
-            value={features}
-            onChange={setFeatures}
-            companyFeatures={companyFeatures}
-            disabled={isAdmin}
-          />
         </div>
 
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>
             Cancelar
           </Button>
-          <Button onClick={() => onSubmit({ id: user.id, role, features: isAdmin ? {} : features })} variant="brand">
+          <Button onClick={() => onSubmit({ id: user.id, role })} variant="brand">
             Salvar alterações
           </Button>
         </DialogFooter>
@@ -543,13 +515,13 @@ const ROLE_OPTIONS: readonly {
   {
     value: "user",
     title: "Usuário",
-    description: "Acesso granular por feature (viewer ou editor)",
+    description: "Usa todos os módulos da empresa",
     icon: UsersIcon,
   },
   {
     value: "admin",
     title: "Admin da empresa",
-    description: "Gerencia usuários, features e plano. Bypass em tudo da empresa.",
+    description: "Usa tudo e ainda gerencia usuários, plano e configuração",
     icon: ShieldCheck,
   },
 ];
