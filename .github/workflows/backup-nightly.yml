@@ -26,9 +26,26 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        target: [Staging, Production]
+        # `environment` e `target` separados de propósito: o environment define
+        # QUEM aprova, o target nomeia arquivo e artifact. Antes os dois eram o
+        # mesmo campo, e foi isso que amarrou o backup ao gate humano.
+        include:
+          - environment: Staging
+            target: Staging
+          - environment: production-automation
+            target: Production
     runs-on: ubuntu-latest
-    environment: ${{ matrix.target }}
+    # Environment com reviewer obrigatório PARA UM CRON é o mesmo que não ter o
+    # cron: o job entra em `waiting` esperando um clique que ninguém dá às 3 da
+    # manhã. Medido em 24/08: todo run desde 17/08 ficou `waiting` na perna de
+    # produção (a de staging, sem gate, rodou liso), enquanto a issue #267
+    # acumulava um comentário por noite. Com o PITR desligado no plano free, o
+    # efeito real foi produção passar uma semana SEM BACKUP NENHUM.
+    #
+    # O gate humano fica onde faz sentido: no environment `Production`, que
+    # guarda o deploy interativo. `production-automation` tem os mesmos segredos
+    # e nenhum reviewer, e só cron aponta pra ele.
+    environment: ${{ matrix.environment }}
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
