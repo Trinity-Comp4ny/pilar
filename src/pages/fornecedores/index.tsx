@@ -20,6 +20,7 @@ import { getSafeErrorMessage } from "@/lib/safeError";
 import { formatCNPJ, formatPhone, onlyDigits, validateEmail } from "@/lib/maskUtils";
 import { isValidCNPJ } from "@/lib/brasilApi";
 import { ReconciliarDialog } from "./ReconciliarDialog";
+import { softDelete, restaurar } from "@/lib/softDelete";
 
 interface Fornecedor {
   id: string;
@@ -213,7 +214,8 @@ export default function Fornecedores() {
     const id = toDelete.id;
     // Soft delete (a RLS já esconde deleted_at da lista), com "Desfazer" no toast
     // como cliente/lead — o delete é recuperável (ACH-FOR-01).
-    const { error } = await supabase.from("fornecedores").update({ deleted_at: new Date().toISOString() }).eq("id", id);
+    // Via RPC: a policy de SELECT esconde deletado, então UPDATE direto leva 42501.
+    const error = await softDelete("fornecedores", id);
     if (error) {
       toast.error("Não foi possível excluir o fornecedor", {
         description: getSafeErrorMessage(error, "Tente de novo em instantes."),
@@ -224,7 +226,7 @@ export default function Fornecedores() {
       action: {
         label: "Desfazer",
         onClick: async () => {
-          const { error: restoreError } = await supabase.from("fornecedores").update({ deleted_at: null }).eq("id", id);
+          const restoreError = await restaurar("fornecedores", id);
           if (restoreError)
             toast.error("Não foi possível restaurar o fornecedor", {
               description: getSafeErrorMessage(restoreError, "Tente de novo em instantes."),
