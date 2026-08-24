@@ -15,7 +15,7 @@
     "anon_trigger_inerte": 27,
     "rls_sem_policy_com_grant": 0,
     "view_sem_invoker_nao_revisada": 0,
-    "authenticated_chamavel": 136,
+    "authenticated_chamavel": 140,
     "search_path_mutavel": 0,
     "policy_auth_por_linha": 25,
     "fk_sem_indice": 104,
@@ -38,7 +38,7 @@
     "anon_trigger_inerte": 27,
     "rls_sem_policy_com_grant": 0,
     "view_sem_invoker_nao_revisada": 0,
-    "authenticated_chamavel": 136,
+    "authenticated_chamavel": 140,
     "search_path_mutavel": 0,
     "policy_auth_por_linha": 25,
     "fk_sem_indice": 104,
@@ -69,6 +69,7 @@
     "anon_trigger_inerte": "30 (staging) / 27 (prod) -> 27 nos dois. DESCEU em staging: os 5 triggers de validação de features saíram com a migration 20260854000000.",
     "rls_sem_policy_com_grant": "6 (prod) -> 0. A baseline de 20/08 retratou produção ANTES de a leva de hardening (20260849000000) fazer efeito lá; o número de prod estava velho, não piorou nem melhorou por acidente.",
     "search_path_mutavel": "9 (prod) -> 0. Mesma explicação do item acima, mais _feature_catalog e _universal_features fixadas na 20260857000000.",
-    "paridade": "Pela primeira vez os dois ambientes têm NÚMEROS IDÊNTICOS em todos os contadores. Era o objetivo do check de drift: staging só valida produção enquanto os dois forem parecidos."
+    "paridade": "Pela primeira vez os dois ambientes têm NÚMEROS IDÊNTICOS em todos os contadores. Era o objetivo do check de drift: staging só valida produção enquanto os dois forem parecidos.",
+    "authenticated_chamavel_segundo_bump": "136 -> 140, no mesmo dia. A migration 20260859000000 (soft delete por RPC) criou 4 funções SECURITY DEFINER chamáveis por authenticated: _soft_delete_guard, rpc_soft_delete, rpc_soft_delete_grupo e rpc_restaurar. Todas com REVOKE de PUBLIC/anon e search_path fixo. _soft_delete_feature não conta: é SQL IMMUTABLE sem SECURITY DEFINER. Medido em staging nesta data; produção fica em 136 até o release passar, e ficar ABAIXO da baseline não reprova (o ratchet só barra crescimento). Lição de processo: PR que cria função SECURITY DEFINER precisa bumpar a baseline no MESMO PR, senão a auditoria reprova o release seguinte, que foi o que aconteceu aqui."
   }
 }
