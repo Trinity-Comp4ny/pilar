@@ -46,7 +46,12 @@ jobs:
         include:
           - environment: Staging
             target: staging
-          - environment: Production
+          # `production-automation`, não `Production`: environment com reviewer
+          # obrigatório trava cron em `waiting`. Esta auditoria é só SELECT em
+          # catálogo e mesmo assim a perna de produção passou dias esperando
+          # aprovação. Mesma causa que deixou o backup noturno 7 noites sem
+          # rodar (issue #267).
+          - environment: production-automation
             target: prod
     runs-on: ubuntu-latest
     environment: ${{ matrix.environment }}
