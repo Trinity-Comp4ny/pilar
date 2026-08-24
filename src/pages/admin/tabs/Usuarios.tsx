@@ -6,7 +6,6 @@ import { reportInvokeError } from "@/lib/monitoring";
 import { getSafeErrorMessage } from "@/lib/safeError";
 import { UsersAccessManager, type ManagedUser } from "@/components/admin/UsersAccessManager";
 import { useRequireAal2 } from "@/hooks/useRequireAal2";
-import { parseUserFeatures, type CompanyFeatures, type UserFeatures } from "@/lib/features";
 import type { PilarRole } from "@/lib/roles";
 
 type RawUser = {
@@ -14,7 +13,6 @@ type RawUser = {
   nome: string;
   email: string;
   role: string | null;
-  features?: unknown;
   isPending?: boolean;
   inviteId?: string | null;
 };
@@ -23,7 +21,6 @@ type Props = {
   users: RawUser[];
   setUsers: (updater: (prev: RawUser[]) => RawUser[]) => void;
   currentUserId: string | null;
-  companyFeatures: CompanyFeatures;
 };
 
 function normalizeRole(role: string | null | undefined): PilarRole {
@@ -32,7 +29,7 @@ function normalizeRole(role: string | null | undefined): PilarRole {
   return "user";
 }
 
-export function UsuariosTab({ users, setUsers, currentUserId, companyFeatures }: Props) {
+export function UsuariosTab({ users, setUsers, currentUserId }: Props) {
   const requireAal2 = useRequireAal2();
   const [isInviting, setIsInviting] = useState(false);
 
@@ -43,19 +40,13 @@ export function UsuariosTab({ users, setUsers, currentUserId, companyFeatures }:
         name: u.nome,
         email: u.email,
         role: normalizeRole(u.role),
-        features: parseUserFeatures(u.features),
         isPending: u.isPending ?? u.id.startsWith("pending-"),
         inviteId: u.inviteId,
       })),
     [users]
   );
 
-  const handleInvite = async (payload: {
-    name: string;
-    email: string;
-    role: "admin" | "user";
-    features: UserFeatures;
-  }) => {
+  const handleInvite = async (payload: { name: string; email: string; role: "admin" | "user" }) => {
     if (!(await requireAal2())) return;
     setIsInviting(true);
     try {
@@ -64,7 +55,6 @@ export function UsuariosTab({ users, setUsers, currentUserId, companyFeatures }:
           email: payload.email,
           nome: payload.name,
           role: payload.role,
-          features: payload.features,
         },
       });
       if (error) throw error;
@@ -77,7 +67,6 @@ export function UsuariosTab({ users, setUsers, currentUserId, companyFeatures }:
           nome: payload.name,
           email: payload.email,
           role: payload.role,
-          features: payload.features,
           isPending: true,
         },
       ]);
@@ -131,21 +120,18 @@ export function UsuariosTab({ users, setUsers, currentUserId, companyFeatures }:
     }
   };
 
-  const handleUpdate = async (payload: { id: string; role: "admin" | "user"; features: UserFeatures }) => {
+  const handleUpdate = async (payload: { id: string; role: "admin" | "user" }) => {
     if (!(await requireAal2())) return;
     try {
       // gen:types ainda não inclui update_user_access
       const { error } = await callUntypedRpc("update_user_access", {
         p_user_id: payload.id,
         p_role: payload.role,
-        p_features: payload.features,
       });
       if (error) throw error;
 
-      setUsers((prev) =>
-        prev.map((u) => (u.id === payload.id ? { ...u, role: payload.role, features: payload.features } : u))
-      );
-      toast.success("Acessos atualizados");
+      setUsers((prev) => prev.map((u) => (u.id === payload.id ? { ...u, role: payload.role } : u)));
+      toast.success("Tipo de conta atualizado");
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Erro inesperado";
       reportInvokeError(err, "ultra-admin-usuarios:salvar-acessos");
@@ -171,7 +157,6 @@ export function UsuariosTab({ users, setUsers, currentUserId, companyFeatures }:
   return (
     <UsersAccessManager
       users={managed}
-      companyFeatures={companyFeatures}
       currentUserId={currentUserId}
       canManage
       isInviting={isInviting}

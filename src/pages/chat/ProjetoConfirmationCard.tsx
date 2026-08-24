@@ -111,7 +111,7 @@ export function ProjetoConfirmationCard({ index, draft, onConfirmar, onCancelar,
         try {
           await bulkSaveDisciplinas.mutateAsync({ projetoId, disciplinas });
         } catch (e) {
-          await supabase.from("projetos").update({ deleted_at: new Date().toISOString() }).eq("id", projetoId);
+          await supabase.rpc("rpc_excluir_projeto", { p_id: projetoId });
           throw e;
         }
       });

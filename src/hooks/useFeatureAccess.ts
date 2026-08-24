@@ -10,7 +10,7 @@ export type FeatureAccessResult = {
   canEdit: boolean;
   /** True se o user é viewer mas não editor. */
   isViewerOnly: boolean;
-  /** Nível efetivo do user (null se sem acesso). admin/ultra_admin retornam 'editor'. */
+  /** Nível efetivo (null se sem acesso). Membro da empresa é 'editor' (ADR 0029). */
   level: PermissionLevel | null;
   /** True quando role é admin/ultra_admin (bypass). */
   isAdmin: boolean;
@@ -24,21 +24,14 @@ export type FeatureAccessResult = {
  *   const { canView } = useFeatureAccess("ai_hub");
  */
 export function useFeatureAccess(feature: FeatureKey): FeatureAccessResult {
-  const { can, isAdmin, userFeatures } = usePermissions();
+  const { can, isAdmin } = usePermissions();
 
   return useMemo(() => {
     const f = feature as Feature;
     const canView = can(f, "view");
     const canEdit = can(f, "edit");
 
-    let level: PermissionLevel | null = null;
-    if (isAdmin) {
-      level = "editor";
-    } else if (userFeatures[feature]) {
-      level = userFeatures[feature] ?? null;
-    } else if (canView) {
-      level = "viewer";
-    }
+    const level: PermissionLevel | null = canEdit ? "editor" : canView ? "viewer" : null;
 
     return {
       canView,
@@ -47,5 +40,5 @@ export function useFeatureAccess(feature: FeatureKey): FeatureAccessResult {
       level,
       isAdmin,
     };
-  }, [feature, can, isAdmin, userFeatures]);
+  }, [feature, can, isAdmin]);
 }

@@ -6,9 +6,10 @@
  * Diferente de src/lib/analytics.ts (app): sem identify/scrub de PII, a LP não
  * tem formulário nem usuário autenticado, só pageview e clique em CTA.
  *
- * Consentimento (ADR 0022): nada aqui chama posthog.init() sem consentimento
- * salvo via saveCookieConsent(true). applyCookieConsent() é chamado pelo
- * banner e pelo link "Preferências de cookies" no rodapé.
+ * Consentimento (ADR 0022 + ADR 0032): nada aqui chama posthog.init() sem
+ * consentimento salvo via saveCookieConsent(true). applyCookieConsent() é
+ * chamado pelo banner e pelo link "Preferências de cookies" no rodapé. A
+ * decisão é gravada em cookie de .pilarsoft.com.br, então já vale no app.
  */
 import posthog from "posthog-js";
 import { getCookieConsent, saveCookieConsent } from "./cookieConsent";

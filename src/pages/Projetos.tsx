@@ -124,13 +124,15 @@ export default function ProjetosKanban() {
     const id = projetoToDelete.id;
     const nome = projetoToDelete.nome;
     // Soft delete (deleted_at some das listagens), com "Desfazer" no toast — o delete é recuperável.
-    const { error } = await supabase.from("projetos").update({ deleted_at: new Date().toISOString() }).eq("id", id);
+    // Via RPC: um UPDATE direto de deleted_at viola RLS, porque a policy de SELECT
+    // esconde deletados e o Postgres re-checa a linha nova contra ela (42501).
+    const { error } = await supabase.rpc("rpc_excluir_projeto", { p_id: id });
     if (!error) {
       toast.success(`Projeto "${nome}" excluído`, {
         action: {
           label: "Desfazer",
           onClick: async () => {
-            const { error: restoreError } = await supabase.from("projetos").update({ deleted_at: null }).eq("id", id);
+            const { error: restoreError } = await supabase.rpc("rpc_restaurar_projeto", { p_id: id });
             if (restoreError) {
               toast.error("Não foi possível restaurar o projeto", {
                 description: getSafeErrorMessage(restoreError, "Tente novamente em instantes."),

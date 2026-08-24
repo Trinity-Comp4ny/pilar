@@ -1071,7 +1071,6 @@ export type Database = {
           email: string
           empresa_id: string
           expira_em: string
-          features: Json
           id: string
           nome: string | null
           token: string | null
@@ -1085,7 +1084,6 @@ export type Database = {
           email: string
           empresa_id: string
           expira_em?: string
-          features?: Json
           id?: string
           nome?: string | null
           token?: string | null
@@ -1099,7 +1097,6 @@ export type Database = {
           email?: string
           empresa_id?: string
           expira_em?: string
-          features?: Json
           id?: string
           nome?: string | null
           token?: string | null
@@ -1115,6 +1112,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      cookie_consents: {
+        Row: {
+          analytics: boolean
+          created_at: string
+          id: string
+          source: string
+          user_id: string
+        }
+        Insert: {
+          analytics: boolean
+          created_at?: string
+          id?: string
+          source: string
+          user_id: string
+        }
+        Update: {
+          analytics?: boolean
+          created_at?: string
+          id?: string
+          source?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       critical_alerts: {
         Row: {
@@ -1442,20 +1463,31 @@ export type Database = {
       disciplinas: {
         Row: {
           created_at: string
+          empresa_id: string | null
           id: string
           nome: string
         }
         Insert: {
           created_at?: string
+          empresa_id?: string | null
           id?: string
           nome: string
         }
         Update: {
           created_at?: string
+          empresa_id?: string | null
           id?: string
           nome?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "disciplinas_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       empresa_owners_pending: {
         Row: {
@@ -4286,7 +4318,6 @@ export type Database = {
           created_by: string | null
           email: string
           empresa_id: string
-          features: Json
           first_name: string
           id: string
           last_name: string
@@ -4304,7 +4335,6 @@ export type Database = {
           created_by?: string | null
           email: string
           empresa_id: string
-          features?: Json
           first_name?: string
           id: string
           last_name?: string
@@ -4322,7 +4352,6 @@ export type Database = {
           created_by?: string | null
           email?: string
           empresa_id?: string
-          features?: Json
           first_name?: string
           id?: string
           last_name?: string
@@ -6278,10 +6307,6 @@ export type Database = {
         Returns: undefined
       }
       _universal_features: { Args: never; Returns: string[] }
-      _validate_features_payload: {
-        Args: { p_empresa_id: string; p_features: Json }
-        Returns: undefined
-      }
       admin_create_company_owner: {
         Args: { p_company_name?: string; p_email: string; p_nome: string }
         Returns: Json
@@ -6291,7 +6316,6 @@ export type Database = {
           p_cargo: string
           p_email: string
           p_empresa_id: string
-          p_features?: Json
           p_nome?: string
         }
         Returns: string
@@ -6392,12 +6416,7 @@ export type Database = {
       cleanup_expired_pending_signups: { Args: never; Returns: number }
       cleanup_pending_signups: { Args: never; Returns: number }
       create_convite: {
-        Args: {
-          p_cargo: string
-          p_email: string
-          p_features?: Json
-          p_nome?: string
-        }
+        Args: { p_cargo: string; p_email: string; p_nome?: string }
         Returns: string
       }
       create_portal_token: {
@@ -6715,6 +6734,7 @@ export type Database = {
       get_user_empresa_id_text: { Args: never; Returns: string }
       get_user_role: { Args: never; Returns: string }
       guard_login_attempt: { Args: { p_email: string }; Returns: boolean }
+      has_aal2: { Args: never; Returns: boolean }
       has_role: {
         Args: { allowed_roles: Database["public"]["Enums"]["user_role"][] }
         Returns: boolean
@@ -6781,6 +6801,9 @@ export type Database = {
           origem: string
         }[]
       }
+      mfa_backup_codes_remaining: { Args: never; Returns: number }
+      mfa_consume_backup_code: { Args: { p_code: string }; Returns: boolean }
+      mfa_generate_backup_codes: { Args: never; Returns: string[] }
       my_empresa_id: { Args: never; Returns: string }
       notificar: {
         Args: {
@@ -6930,6 +6953,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      rpc_excluir_projeto: { Args: { p_id: string }; Returns: undefined }
       rpc_excluir_transferencia: { Args: { p_id: string }; Returns: undefined }
       rpc_faturar_marco: { Args: { p_marco_id: string }; Returns: string }
       rpc_gerar_alertas: { Args: never; Returns: number }
@@ -7060,6 +7084,7 @@ export type Database = {
         Args: { p_projeto_id: string }
         Returns: Json
       }
+      rpc_restaurar_projeto: { Args: { p_id: string }; Returns: undefined }
       rpc_salvar_proposta_disciplinas: {
         Args: { p_disciplinas: Json; p_proposta_id: string }
         Returns: undefined
@@ -7114,7 +7139,7 @@ export type Database = {
         Returns: undefined
       }
       update_user_access: {
-        Args: { p_features?: Json; p_role: string; p_user_id: string }
+        Args: { p_role: string; p_user_id: string }
         Returns: undefined
       }
       user_has_feature: {

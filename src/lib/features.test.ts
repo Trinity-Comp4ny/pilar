@@ -179,20 +179,30 @@ describe("sincronia universal front ↔ backend (_universal_features SQL, ADR 00
   });
 });
 
-describe("sincronia FEATURE_KEYS do invite-user (edge function) com o catálogo do front", () => {
-  it("toda FeatureKey do front (exceto core) é aceita pelo invite-user", () => {
+describe("convite não carrega mais features de usuário (ADR 0029)", () => {
+  const FUNCOES_DE_CONVITE = ["invite-user", "ultra-admin-usuarios", "ultra-admin-empresas"];
+
+  it("nenhuma edge function de convite manda p_features nem grava profiles.features", () => {
     const here = path.dirname(fileURLToPath(import.meta.url));
-    const fnPath = path.resolve(here, "../../supabase/functions/invite-user/index.ts");
-    const src = fs.readFileSync(fnPath, "utf8");
-    const match = src.match(/const FEATURE_KEYS = new Set\(\[([\s\S]*?)\]\);/);
-    expect(match, "não achou FEATURE_KEYS em invite-user/index.ts").not.toBeNull();
-    const acceptedKeys = new Set((match?.[1] ?? "").match(/"([a-z_]+)"/g)?.map((s) => s.slice(1, -1)) ?? []);
-    // Core (dashboard, meu_trabalho) nunca aparece no formulário de convite
-    // (FeatureAccessGrid filtra !f.core), então não precisa estar na whitelist.
-    for (const f of FEATURES) {
-      if (f.core) continue;
-      expect(acceptedKeys.has(f.key), `invite-user rejeitaria a feature '${f.key}'`).toBe(true);
+    for (const fn of FUNCOES_DE_CONVITE) {
+      const src = fs.readFileSync(path.resolve(here, `../../supabase/functions/${fn}/index.ts`), "utf8");
+      expect(src.includes("p_features"), `${fn} ainda passa p_features para a RPC de convite`).toBe(false);
+      expect(src.includes("sanitizeFeatures"), `${fn} ainda sanitiza features de usuário`).toBe(false);
     }
+  });
+
+  it("a migration que remove o eixo por usuário derruba as colunas", () => {
+    const here = path.dirname(fileURLToPath(import.meta.url));
+    const migDir = path.resolve(here, "../../supabase/migrations");
+    const arquivo = fs
+      .readdirSync(migDir)
+      .filter((f) => f.includes("acesso_por_role"))
+      .sort()
+      .pop();
+    expect(arquivo, "não achou a migration de acesso por role").toBeDefined();
+    const sql = fs.readFileSync(path.join(migDir, arquivo as string), "utf8");
+    expect(sql).toContain("ALTER TABLE public.profiles DROP COLUMN IF EXISTS features");
+    expect(sql).toContain("ALTER TABLE public.convites DROP COLUMN IF EXISTS features");
   });
 });
 

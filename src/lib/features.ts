@@ -62,8 +62,12 @@ export type FeatureGroup = "visao" | "comercial" | "operacao" | "financeiro" | "
  */
 export type FeatureModuleId = "gestao" | "projetos" | "obras";
 
+/**
+ * Nível de acesso de leitura/escrita. Desde o ADR 0029 não é concedido por
+ * usuário: todo membro da empresa é editor no que a empresa tem habilitado. O
+ * tipo fica para o front descrever o que a UI pode fazer.
+ */
 export type PermissionLevel = "viewer" | "editor";
-export type FeatureAccess = PermissionLevel | null;
 
 export type SubscriptionPlanSlug = "starter" | "pro" | "enterprise";
 
@@ -76,9 +80,9 @@ export type FeatureDefinition = {
   core: boolean;
   /**
    * Toda empresa tem, sem toggle: não depende de `empresas.features`
-   * (ver `isFeatureEnabledForCompany`). Distinto de `core`: `core` é sobre
-   * nível de acesso individual (usuário sempre vê, mesmo sem entrada em
-   * `profiles.features`); `universal` é sobre a empresa. Ver ADR 0026.
+   * (ver `isFeatureEnabledForCompany`). Distinto de `core`: `core` libera
+   * mesmo quando a empresa não tem nada habilitado; `universal` é o que toda
+   * empresa tem por padrão. Ver ADR 0026 e ADR 0029.
    */
   universal: boolean;
   addon: boolean;
@@ -448,25 +452,6 @@ export function rootFeaturesOfModule(moduleId: FeatureModuleId): FeatureDefiniti
 }
 
 export type CompanyFeatures = Partial<Record<FeatureKey, boolean>>;
-export type UserFeatures = Partial<Record<FeatureKey, PermissionLevel>>;
-
-const VALID_LEVELS: readonly PermissionLevel[] = ["viewer", "editor"];
-
-/**
- * Coerciona JSONB cru de profiles.features para UserFeatures válido.
- * Filtra chaves desconhecidas e valores inválidos. Nunca lança.
- */
-export function parseUserFeatures(raw: unknown): UserFeatures {
-  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return {};
-  const result: UserFeatures = {};
-  for (const [key, value] of Object.entries(raw as Record<string, unknown>)) {
-    if (!(key in FEATURES_BY_KEY)) continue;
-    if (typeof value !== "string") continue;
-    if (!VALID_LEVELS.includes(value as PermissionLevel)) continue;
-    result[key as FeatureKey] = value as PermissionLevel;
-  }
-  return result;
-}
 
 /** Coerciona JSONB cru de empresas.features para CompanyFeatures válido. */
 export function parseCompanyFeatures(raw: unknown): CompanyFeatures {
@@ -478,16 +463,6 @@ export function parseCompanyFeatures(raw: unknown): CompanyFeatures {
     result[key as FeatureKey] = value;
   }
   return result;
-}
-
-const LEVEL_RANK: Record<PermissionLevel, number> = {
-  viewer: 1,
-  editor: 2,
-};
-
-export function meetsLevel(current: FeatureAccess, required: PermissionLevel): boolean {
-  if (!current) return false;
-  return LEVEL_RANK[current] >= LEVEL_RANK[required];
 }
 
 export function groupFeatures(

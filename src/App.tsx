@@ -20,7 +20,6 @@ import { FeatureRoute } from "./components/FeatureRoute";
 import { AdminOnlyRoute } from "./components/AdminOnlyRoute";
 import { ImpersonationBanner } from "./components/ImpersonationBanner";
 import { TrialBanner } from "./components/TrialBanner";
-import { CookieConsentBanner } from "./components/CookieConsentBanner";
 import { SettingsModalProvider } from "./contexts/SettingsModalContext";
 import { MARKETING_URL } from "./lib/marketingSite";
 
@@ -136,7 +135,6 @@ const App = () => {
           <Toaster />
           <BrowserRouter>
             <PageTracker />
-            <CookieConsentBanner />
             <AuthProvider>
               <ImpersonationProvider>
                 <SettingsModalProvider>
@@ -192,8 +190,8 @@ const App = () => {
                         <Route element={<FeatureRoute feature="propostas" />}>
                           <Route path="/gestao/propostas" element={<Propostas />} />
                         </Route>
-                        {/* Financeiro: acesso granular por usuário (profiles.features)
-                          + RLS. Quem não tem a feature não vê. */}
+                        {/* Financeiro: gate de módulo da empresa + RLS. Desde o
+                          ADR 0029 não há recorte por usuário. */}
                         <Route element={<FeatureRoute feature="financeiro" />}>
                           <Route path="/gestao/financeiro" element={<Financeiro />} />
                         </Route>

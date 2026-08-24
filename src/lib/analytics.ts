@@ -7,10 +7,12 @@
  *
  * Sem key, roda em no-op (console.debug em dev, silêncio em prod).
  *
- * Consentimento (ADR 0022): nada aqui toca o PostHog sem consentimento de
- * analytics salvo via `saveCookieConsent(true)`. Sem decisão, o padrão é não
- * rastrear (fail-closed). `applyCookieConsent()` é chamado pelo banner/pela
- * página de privacidade quando o usuário decide ou revoga.
+ * Consentimento (ADR 0022 + ADR 0032): nada aqui toca o PostHog sem
+ * consentimento de analytics salvo via `saveCookieConsent(true)`. Sem decisão,
+ * o padrão é não rastrear (fail-closed). O app não tem banner: quem chama
+ * `applyCookieConsent()` é o `cookieConsentSync.ts`, seja reconciliando a
+ * preferência da conta no login, seja pelo toggle em Configurações →
+ * Privacidade.
  *
  * PII scrubbing: todos os traits/properties passam por scrub() antes de sair,
  * mesma blocklist e regex do monitoring.ts.
@@ -175,7 +177,7 @@ export function initAnalytics() {
   analytics.init();
 }
 
-/** Chamado pelo banner de consentimento e por "alterar preferências" em /privacidade. */
+/** Único ponto que liga/desliga o PostHog em runtime. Chamado por cookieConsentSync.ts. */
 export function applyCookieConsent(analyticsAccepted: boolean) {
   saveCookieConsent(analyticsAccepted);
   if (analyticsAccepted) {
