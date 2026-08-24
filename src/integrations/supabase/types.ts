@@ -6953,6 +6953,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      rpc_excluir_projeto: { Args: { p_id: string }; Returns: undefined }
       rpc_excluir_transferencia: { Args: { p_id: string }; Returns: undefined }
       rpc_faturar_marco: { Args: { p_marco_id: string }; Returns: string }
       rpc_gerar_alertas: { Args: never; Returns: number }
@@ -7083,6 +7084,7 @@ export type Database = {
         Args: { p_projeto_id: string }
         Returns: Json
       }
+      rpc_restaurar_projeto: { Args: { p_id: string }; Returns: undefined }
       rpc_salvar_proposta_disciplinas: {
         Args: { p_disciplinas: Json; p_proposta_id: string }
         Returns: undefined
