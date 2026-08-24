@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 import { env } from "./env";
+import { createInstrumentedFetch } from "./supabaseFetch";
 
 const SUPABASE_URL = env.VITE_SUPABASE_URL;
 const SUPABASE_ANON_KEY = env.VITE_SUPABASE_PUBLISHABLE_KEY;
@@ -34,6 +35,10 @@ const adaptiveStorage = {
 };
 
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  // Toda falha de REST/RPC/Storage/Auth vai pro Sentry aqui, no único ponto por
+  // onde todas passam, em vez de depender de captureException em cada tela.
+  // Ver ADR 0030.
+  global: { fetch: createInstrumentedFetch() },
   auth: {
     storage: adaptiveStorage,
     persistSession: true,

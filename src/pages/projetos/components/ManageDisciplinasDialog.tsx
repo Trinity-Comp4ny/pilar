@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Trash2, Plus, Search, Layers } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { reportError } from "@/lib/reportError";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 
 interface ManageDisciplinasDialogProps {
@@ -40,7 +41,8 @@ export function ManageDisciplinasDialog({
     const { error } = await supabase.from("disciplinas").insert({ nome });
     setAdding(false);
     if (error) {
-      toast.error("Erro ao adicionar disciplina");
+      const { message } = reportError(error, { context: "disciplina:criar", extra: { nome } });
+      toast.error("Não foi possível adicionar a disciplina", { description: message });
     } else {
       toast.success("Disciplina adicionada");
       setNewDisciplina("");
@@ -53,7 +55,8 @@ export function ManageDisciplinasDialog({
     if (!deleteId) return;
     const { error } = await supabase.from("disciplinas").delete().eq("id", deleteId);
     if (error) {
-      toast.error("Erro ao excluir disciplina");
+      const { message } = reportError(error, { context: "disciplina:excluir", extra: { id: deleteId } });
+      toast.error("Não foi possível excluir a disciplina", { description: message });
     } else {
       toast.success("Disciplina excluída");
       onDisciplinasChanged();

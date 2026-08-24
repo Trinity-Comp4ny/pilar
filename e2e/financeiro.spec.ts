@@ -1,10 +1,12 @@
-import { test, expect } from "@playwright/test";
+import { test } from "@playwright/test";
+import { expectAnonRedirectedOut } from "./helpers/guards";
 
 /**
  * Financeiro — testes que rodam sem auth fixture (smoke).
  *
- * Rotas protegidas devem redirecionar para landing quando não há sessão.
- * Isso valida que PrivateRoute + RLS do Supabase não vazam dados sensíveis.
+ * Rota protegida sem sessão manda o anônimo para fora do app (ADR 0021/0025:
+ * a raiz é um redirect para o site de marketing). Isso valida que o
+ * PrivateRoute não deixa a tela renderizar sem sessão.
  *
  * Fluxos autenticados (smoke + happy paths) ficam em
  * `financeiro-authenticated.spec.ts`, que roda no projeto "authenticated" e
@@ -15,24 +17,20 @@ import { test, expect } from "@playwright/test";
  */
 
 test.describe("Financeiro — guard de rota sem sessão", () => {
-  test("/financeiro redireciona para landing", async ({ page }) => {
-    await page.goto("/financeiro");
-    await expect(page).toHaveURL("/");
+  test("/financeiro sem sessão sai do app", async ({ page }) => {
+    await expectAnonRedirectedOut(page, "/financeiro");
   });
 
-  test("/relatorios redireciona para landing", async ({ page }) => {
-    await page.goto("/relatorios");
-    await expect(page).toHaveURL("/");
+  test("/relatorios sem sessão sai do app", async ({ page }) => {
+    await expectAnonRedirectedOut(page, "/relatorios");
   });
 
-  test("/admin redireciona para landing", async ({ page }) => {
-    await page.goto("/admin");
-    await expect(page).toHaveURL("/");
+  test("/admin sem sessão sai do app", async ({ page }) => {
+    await expectAnonRedirectedOut(page, "/admin");
   });
 
-  test("/ultra-admin redireciona para landing", async ({ page }) => {
-    await page.goto("/ultra-admin");
-    await expect(page).toHaveURL("/");
+  test("/ultra-admin sem sessão sai do app", async ({ page }) => {
+    await expectAnonRedirectedOut(page, "/ultra-admin");
   });
 });
 
@@ -57,11 +55,14 @@ test.describe("Financeiro — fluxo completo (skip até fixture de auth)", () =>
     // 4. assert que apenas um lançamento foi criado
   });
 
-  test.skip("MFA step-up é forçado em /admin", async ({ page: _page }) => {
-    // 1. login com sessão AAL1 (sem challenge MFA)
-    // 2. goto /admin
-    // 3. assert redirect para /mfa
-    // 4. completar challenge
-    // 5. assert que /admin agora carrega
+  // Trocado de "/admin exige step-up" para o que o ADR 0031 decidiu: aal2
+  // obrigatório sobrou só no acesso cross-tenant do ultra-admin. Um placeholder
+  // descrevendo a regra antiga ia enganar quem lesse depois.
+  test.skip("aal2 é exigido em /ultra-admin, não em /admin", async ({ page: _page }) => {
+    // 1. login com sessão AAL1 (sem completar o desafio de MFA)
+    // 2. goto /admin → assert que carrega (admin de empresa não exige aal2)
+    // 3. goto /ultra-admin → assert redirect para /mfa (ou /mfa/setup sem fator)
+    // 4. completar o desafio
+    // 5. assert que /ultra-admin agora carrega
   });
 });

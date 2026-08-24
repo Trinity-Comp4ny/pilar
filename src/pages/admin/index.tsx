@@ -3,17 +3,16 @@ import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { untypedFrom } from "@/lib/supabaseRpc";
 import { toast } from "sonner";
-import { Building2, CreditCard, Link2, ShieldCheck, SlidersHorizontal, Sparkles, Users, Zap } from "lucide-react";
+import { Building2, CreditCard, Link2, ShieldCheck, SlidersHorizontal, Users, Zap } from "lucide-react";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { SecondSidebar, type SecondSidebarTab } from "@/components/SecondSidebar";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import type { CompanyData } from "@/pages/company/types";
-import { parseCompanyFeatures, type CompanyFeatures, type SubscriptionPlanSlug } from "@/lib/features";
+import { type SubscriptionPlanSlug } from "@/lib/features";
 import { UsuariosTab } from "./tabs/Usuarios";
 import { EmpresaTab } from "./tabs/Empresa";
-import { FeaturesEmpresaTab } from "./tabs/Features";
 import { ParametrosTab } from "./tabs/Parametros";
 import { AutomacoesTab } from "./tabs/Automacoes";
 import { AuditoriaTab } from "./tabs/Auditoria";
@@ -26,7 +25,6 @@ type RawUser = {
   nome: string;
   email: string;
   role: string | null;
-  features?: unknown;
   contato?: string | null;
   isPending?: boolean;
   inviteId?: string | null;
@@ -34,7 +32,6 @@ type RawUser = {
 
 const VALID_TABS = [
   "usuarios",
-  "features",
   "empresa",
   "parametros",
   "automacoes",
@@ -46,7 +43,6 @@ type AdminTab = (typeof VALID_TABS)[number];
 
 const ADMIN_TABS: SecondSidebarTab[] = [
   { id: "usuarios", label: "Usuários", icon: Users },
-  { id: "features", label: "Features", icon: Sparkles },
   { id: "empresa", label: "Empresa", icon: Building2 },
   { id: "parametros", label: "Parâmetros", icon: SlidersHorizontal },
   { id: "automacoes", label: "Automações", icon: Zap },
@@ -66,7 +62,6 @@ export default function Admin() {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [users, setUsers] = useState<RawUser[]>([]);
-  const [companyFeatures, setCompanyFeatures] = useState<CompanyFeatures>({});
   const [currentPlan, setCurrentPlan] = useState<SubscriptionPlanSlug>("starter");
   const [companyData, setCompanyData] = useState<CompanyData>({
     nomeEmpresa: "",
@@ -114,7 +109,6 @@ export default function Admin() {
             status: emp.status || "active",
             logoUrl: emp.logo_url || "",
           });
-          setCompanyFeatures(parseCompanyFeatures(emp.features));
         }
 
         if (profile?.empresa_id) {
@@ -138,11 +132,11 @@ export default function Admin() {
           const [{ data: companyUsers }, { data: pendingConvites }] = await Promise.all([
             supabase
               .from("profiles")
-              .select("id, first_name, last_name, email, role, features, contato, onboarding_completed")
+              .select("id, first_name, last_name, email, role, contato, onboarding_completed")
               .eq("empresa_id", profile.empresa_id),
             supabase
               .from("convites")
-              .select("id, nome, email, cargo, features")
+              .select("id, nome, email, cargo")
               .eq("empresa_id", profile.empresa_id)
               .is("usado_em", null)
               .gt("expira_em", new Date().toISOString()),
@@ -157,7 +151,6 @@ export default function Admin() {
                 .trim() || u.email,
             email: u.email,
             role: u.role,
-            features: u.features,
             contato: (u as { contato?: string | null }).contato,
             isPending: (u as { onboarding_completed?: boolean | null }).onboarding_completed === false,
           }));
@@ -168,7 +161,6 @@ export default function Admin() {
             nome: c.nome ?? c.email,
             email: c.email,
             role: c.cargo,
-            features: c.features,
             isPending: true,
           }));
 
@@ -213,20 +205,7 @@ export default function Admin() {
     >
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
         <TabsContent value="usuarios" className="mt-6">
-          <UsuariosTab
-            users={users}
-            setUsers={setUsers}
-            currentUserId={currentUserId}
-            companyFeatures={companyFeatures}
-          />
-        </TabsContent>
-
-        <TabsContent value="features" className="mt-6">
-          <FeaturesEmpresaTab
-            companyFeatures={companyFeatures}
-            setCompanyFeatures={setCompanyFeatures}
-            users={users}
-          />
+          <UsuariosTab users={users} setUsers={setUsers} currentUserId={currentUserId} />
         </TabsContent>
 
         <TabsContent value="empresa" className="mt-6">
