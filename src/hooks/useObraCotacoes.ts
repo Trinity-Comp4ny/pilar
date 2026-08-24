@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tansta
 import { FunctionsHttpError } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
+import { softDelete } from "@/lib/softDelete";
 
 export type CotacaoRow = Tables<"obra_cotacao">;
 export type PropostaRow = Tables<"obra_cotacao_proposta">;
@@ -96,10 +97,8 @@ export function useDeleteCotacao(obraId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string): Promise<void> => {
-      const { error } = await supabase
-        .from("obra_cotacao")
-        .update({ deleted_at: new Date().toISOString() })
-        .eq("id", id);
+      // Via RPC: a policy de SELECT esconde deletado, então UPDATE direto leva 42501.
+      const error = await softDelete("obra_cotacao", id);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: cotacoesKey(obraId) }),
@@ -195,10 +194,7 @@ export function useDeleteProposta(obraId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string): Promise<void> => {
-      const { error } = await supabase
-        .from("obra_cotacao_proposta")
-        .update({ deleted_at: new Date().toISOString() })
-        .eq("id", id);
+      const error = await softDelete("obra_cotacao_proposta", id);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: cotacoesKey(obraId) }),

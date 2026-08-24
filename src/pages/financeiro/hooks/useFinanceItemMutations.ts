@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { errorMessage } from "@/lib/errors";
 import { FINANCE_ITEMS_KEYS, type FinanceItemTipo } from "./useFinanceItems";
+import { softDelete, softDeleteGrupo } from "@/lib/softDelete";
 
 export function useFinanceItemMutations(tipo: FinanceItemTipo) {
   const qc = useQueryClient();
@@ -60,9 +61,9 @@ export function useFinanceItemMutations(tipo: FinanceItemTipo) {
 
   const deleteOne = useMutation({
     mutationFn: async (id: string) => {
-      // Soft-delete: marca deleted_at (as listas filtram is("deleted_at", null)).
-      const { error } = await supabase.from(tableName).update({ deleted_at: new Date().toISOString() }).eq("id", id);
-      if (error) throw new Error(error.message + (error.details ? ` (${error.details})` : ""));
+      // Via RPC: a policy de SELECT esconde deletado, então UPDATE direto leva 42501.
+      const error = await softDelete(tableName, id);
+      if (error) throw new Error(error.message);
     },
     onSuccess: () => {
       toast.success(`${labelSingular} excluída`);
@@ -76,18 +77,13 @@ export function useFinanceItemMutations(tipo: FinanceItemTipo) {
 
   const deleteGroup = useMutation({
     mutationFn: async ({ id, grupoId, mode }: { id: string; grupoId: string; mode: "single" | "all" }) => {
-      // Soft-delete: marca deleted_at (as listas filtram is("deleted_at", null)).
-      const deletedAt = new Date().toISOString();
+      // Via RPC, pelo mesmo motivo do deleteOne.
       if (mode === "all") {
-        const { error } = await supabase
-          .from(tableName)
-          .update({ deleted_at: deletedAt })
-          .eq("grupo_parcela", grupoId)
-          .is("deleted_at", null);
+        const error = await softDeleteGrupo(tableName, grupoId);
         if (error) throw error;
         return "all" as const;
       }
-      const { error } = await supabase.from(tableName).update({ deleted_at: deletedAt }).eq("id", id);
+      const error = await softDelete(tableName, id);
       if (error) throw error;
       return "single" as const;
     },

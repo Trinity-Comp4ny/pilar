@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables, TablesInsert, TablesUpdate } from "@/integrations/supabase/types";
 import { calcularAvanco } from "@/lib/obras";
+import { softDelete } from "@/lib/softDelete";
 
 export type ObraRow = Tables<"obras">;
 
@@ -110,7 +111,8 @@ export function useDeleteObra() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string): Promise<void> => {
-      const { error } = await supabase.from("obras").update({ deleted_at: new Date().toISOString() }).eq("id", id);
+      // Via RPC: a policy de SELECT esconde deletado, então UPDATE direto leva 42501.
+      const error = await softDelete("obras", id);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: OBRAS_KEY }),
