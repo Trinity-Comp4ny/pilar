@@ -15,6 +15,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Plus, Pencil, Trash2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { softDelete } from "@/lib/softDelete";
 
 interface Category {
   id: string;
@@ -131,11 +132,8 @@ export function CategoryManager({ title, description, type, onCategoryChange }: 
 
     setIsDeleting(true);
     try {
-      const { error } = await supabase
-        .from("categorias_financeiras")
-        .update({ deleted_at: new Date().toISOString() } as never)
-        .eq("id", deleteCategory.id);
-
+      // Via RPC: a policy de SELECT esconde deletado, então UPDATE direto leva 42501.
+      const error = await softDelete("categorias_financeiras", deleteCategory.id);
       if (error) throw error;
 
       toast.success("Categoria removida", { description: "A categoria foi removida com sucesso" });

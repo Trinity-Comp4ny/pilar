@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
+import { softDelete } from "@/lib/softDelete";
 
 export type MaterialRow = Tables<"obra_material">;
 export type MovimentoRow = Tables<"obra_material_mov">;
@@ -73,10 +74,8 @@ export function useDeleteMaterial(obraId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string): Promise<void> => {
-      const { error } = await supabase
-        .from("obra_material")
-        .update({ deleted_at: new Date().toISOString() })
-        .eq("id", id);
+      // Via RPC: a policy de SELECT esconde deletado, então UPDATE direto leva 42501.
+      const error = await softDelete("obra_material", id);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: estoqueKey(obraId) }),
@@ -121,10 +120,7 @@ export function useDeleteMovimento(obraId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string): Promise<void> => {
-      const { error } = await supabase
-        .from("obra_material_mov")
-        .update({ deleted_at: new Date().toISOString() })
-        .eq("id", id);
+      const error = await softDelete("obra_material_mov", id);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: estoqueKey(obraId) }),
