@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { detectTipoChavePix, type TipoChavePix } from "@/lib/pixUtils";
 import { parseCurrencyString } from "@/lib/currencyUtils";
+import { softDelete } from "@/lib/softDelete";
 
 export interface ContaItem {
   id: string;
@@ -235,10 +236,8 @@ async function deleteContaImpl(id: string) {
     );
   }
   // Soft delete: mantém histórico; a view_financas_resumo filtra deleted_at.
-  const { error } = await supabase
-    .from("contas")
-    .update({ deleted_at: new Date().toISOString() })
-    .eq("id", id);
+  // Via RPC: a policy de SELECT esconde deletado, então UPDATE direto leva 42501.
+  const error = await softDelete("contas", id);
   if (error) throw new MutationToastError("Não foi possível excluir a conta. Tente novamente.");
 }
 
@@ -256,10 +255,7 @@ async function deleteCartaoImpl(id: string) {
     );
   }
   // Soft delete: a view_cartao_resumo filtra deleted_at.
-  const { error } = await supabase
-    .from("cartoes")
-    .update({ deleted_at: new Date().toISOString() })
-    .eq("id", id);
+  const error = await softDelete("cartoes", id);
   if (error) throw new MutationToastError("Não foi possível excluir o cartão. Tente novamente.");
 }
 

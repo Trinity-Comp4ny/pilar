@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tansta
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 import type { PagoPor } from "@/lib/obras";
+import { softDelete } from "@/lib/softDelete";
 
 export type ObraLancamentoRow = Tables<"obra_conta_lancamento">;
 
@@ -122,10 +123,8 @@ export function useDeleteLancamento(obraId: string) {
         if (error) throw error;
         return;
       }
-      const { error } = await supabase
-        .from("obra_conta_lancamento")
-        .update({ deleted_at: new Date().toISOString() })
-        .eq("id", id);
+      // Via RPC: a policy de SELECT esconde deletado, então UPDATE direto leva 42501.
+      const error = await softDelete("obra_conta_lancamento", id);
       if (error) throw error;
     },
     onSuccess: () => {

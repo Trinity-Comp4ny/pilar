@@ -133,7 +133,14 @@ export function ImpersonationProvider({ children }: { children: ReactNode }) {
 
       try {
         await callImpersonationFn("start", role);
-        monitoring.captureMessage("impersonation_start", "warning", { role });
+        // Breadcrumb em vez de mensagem capturada: impersonação é evento de
+        // auditoria, e o registro dela já vive em audit_logs pela edge function
+        // log-impersonation. Emitida com nível warning/info, ela abria issue no
+        // Sentry (PILAR-B e PILAR-C) e a lista de erros virava lista de eventos
+        // normais. Como breadcrumb, aparece anexada a qualquer erro real que
+        // aconteça DURANTE a impersonação, que é quando isso importa.
+        monitoring.addBreadcrumb("impersonation_start", { role });
+        monitoring.recordMetric("impersonation.start", 1, { tags: { role } });
       } catch (err) {
         // Rollback — servidor rejeitou
         setViewAsRole(prev);
@@ -154,7 +161,7 @@ export function ImpersonationProvider({ children }: { children: ReactNode }) {
 
     try {
       await callImpersonationFn("stop", prev);
-      monitoring.captureMessage("impersonation_stop", "info");
+      monitoring.addBreadcrumb("impersonation_stop", { role: prev });
     } catch (err) {
       // Reverter UI — servidor não conseguiu encerrar (sessão pode estar zumbi).
       // Estratégia conservadora: deixar UI sem impersonation; servidor expira em 30min.

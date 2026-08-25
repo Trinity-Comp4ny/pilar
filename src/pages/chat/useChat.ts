@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { msgErroChat } from "./erros";
 import { env } from "@/lib/env";
 import { reportInvokeError } from "@/lib/monitoring";
+import { softDelete, softDeleteGrupo } from "@/lib/softDelete";
 
 export type AgenteMeta = {
   agente: string;
@@ -621,10 +622,10 @@ export function useChat() {
    */
   const desfazer = useCallback(
     async (runId: string, entidade: Entidade, entityId: string, porGrupo = false) => {
-      const table = TABELA_BY_ENTIDADE[entidade] as Parameters<typeof supabase.from>[0];
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const q = supabase.from(table).update({ deleted_at: new Date().toISOString() } as never) as any;
-      const { error } = await (porGrupo ? q.eq("grupo_parcela", entityId) : q.eq("id", entityId));
+      // O helper decide entre RPC e UPDATE direto: as tabelas cuja policy de
+      // SELECT esconde deletado precisam da RPC, o resto não (ver softDelete.ts).
+      const table = TABELA_BY_ENTIDADE[entidade];
+      const error = porGrupo ? await softDeleteGrupo(table, entityId) : await softDelete(table, entityId);
       if (error) throw error;
       await supabase.from("agent_runs").update({ status: "rejected" }).eq("id", runId);
       patchDraft(runId, { status: "cancelado" });
