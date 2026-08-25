@@ -5,6 +5,7 @@ import type { Json } from "@/integrations/supabase/types";
 import { onlyDigits } from "@/lib/maskUtils";
 import { errorMessage } from "@/lib/errors";
 import { getSafeErrorMessage } from "@/lib/safeError";
+import { softDelete, restaurar } from "@/lib/softDelete";
 
 export interface ContaBancaria {
   banco: string;
@@ -254,7 +255,7 @@ export const useClientes = (options: UseClientesOptions = {}) => {
   // Restaura um cliente soft-deletado (usado pelo "Desfazer" do toast).
   const restoreMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("clientes").update({ deleted_at: null }).eq("id", id);
+      const error = await restaurar("clientes", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -270,10 +271,8 @@ export const useClientes = (options: UseClientesOptions = {}) => {
     // Soft delete: preserva receitas/propostas/leads históricos (FK ON DELETE
     // SET NULL orfanaria esses registros num hard delete).
     mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from("clientes")
-        .update({ deleted_at: new Date().toISOString() })
-        .eq("id", id);
+      // Via RPC: a policy de SELECT esconde deletado, então UPDATE direto leva 42501.
+      const error = await softDelete("clientes", id);
       if (error) throw error;
     },
     onSuccess: (_data, id) => {

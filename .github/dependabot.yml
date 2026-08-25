@@ -18,7 +18,10 @@ updates:
       day: monday
       time: "06:00"
       timezone: America/Sao_Paulo
-    open-pull-requests-limit: 5
+    # 8, não 5: com 5 o limite estourou em 24/08 e a PR do react-dom foi engolida
+    # silenciosamente, deixando a do react órfã. Limite baixo não reduz trabalho,
+    # esconde metade dele.
+    open-pull-requests-limit: 8
     versioning-strategy: increase
     labels:
       - dependencies
@@ -28,7 +31,26 @@ updates:
       include: scope
     # Agrupa minor/patch para cortar ruído de PR. Major fica separado (1 PR por pacote),
     # porque tende a exigir revisão manual de breaking change.
+    #
+    # EXCEÇÃO: a família do React anda junta, em qualquer tipo de update. Em 24/08 o
+    # Dependabot abriu uma PR de `react` 18 → 19 SEM `react-dom`, que ficou em 18, e
+    # o CI quebrou com `Cannot read properties of undefined (reading
+    # 'ReactCurrentDispatcher')`: react-dom 18 lendo um interno que o React 19
+    # removeu. A PR era impossível de mergear e ninguém percebeu de imediato porque a
+    # falha parecia problema de teste. Causa: major vira 1 PR por pacote e o
+    # `open-pull-requests-limit: 5` estourou, então a PR do react-dom nunca nasceu.
+    # Com o grupo abaixo, a família vem numa PR só e nunca meio-atualizada.
     groups:
+      react-family:
+        patterns:
+          - react
+          - react-dom
+          - "@types/react"
+          - "@types/react-dom"
+        update-types:
+          - major
+          - minor
+          - patch
       dev-minor-patch:
         dependency-type: development
         update-types:
