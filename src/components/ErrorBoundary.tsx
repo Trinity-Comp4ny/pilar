@@ -1,5 +1,6 @@
 import { Component, type ErrorInfo, type ReactNode } from "react";
 import { monitoring } from "@/lib/monitoring";
+import { isStaleChunkError, tentarReloadPorChunkVelho } from "@/lib/staleChunkReload";
 
 interface Props {
   children: ReactNode;
@@ -23,6 +24,14 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
+    // Chunk velho depois de um deploy não é erro de aplicação: o bundle na aba do
+    // usuário ficou órfão. Recarregar uma vez (guarda de sessionStorage em
+    // staleChunkReload) resolve, e é melhor que tela de erro. Ver PILAR-D.
+    if (isStaleChunkError(error) && tentarReloadPorChunkVelho()) {
+      monitoring.addBreadcrumb("stale_chunk_reload", { origem: "ErrorBoundary" });
+      return;
+    }
+
     const eventId = monitoring.captureException(error, {
       componentStack: errorInfo.componentStack,
     });

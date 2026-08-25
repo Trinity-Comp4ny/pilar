@@ -112,15 +112,42 @@ jobs:
       - name: Guard de migration destrutiva
         env:
           ALLOW_DESTRUCTIVE_MIGRATION: ${{ vars.ALLOW_DESTRUCTIVE_MIGRATION }}
-          # staging é o tronco de integração real deste repo, então é a base de
-          # comparação fora de PR. Comparar com main acusaria as migrations
-          # destrutivas já mergeadas (main está muito atrás), que não são deste diff.
-          BASE_REF: ${{ github.event_name == 'pull_request' && github.base_ref || 'staging' }}
+          # Em PR: a branch de destino. Em push: o commit ANTERIOR ao push, que é
+          # literalmente "o que este push acrescentou".
+          #
+          # Antes daqui usava-se `staging` fixo em push, e isso reprovava todo
+          # release em main (visto em 25/08, run 32838892456): `A...B` resolve pelo
+          # MERGE BASE, e como main e staging divergiram de propósito (cada release
+          # é um squash), o merge base fica muito atrás e o guard reanalisava
+          # migrations antigas, acusando um DROP COLUMN já revisado e já aplicado.
+          # O efeito não era só o X vermelho: `CI OK` e o deploy de produção viravam
+          # `skipped`, então o release não chegava em produção e parecia ter chegado.
+          #
+          # Pior efeito de segundo nível: a saída era ligar
+          # ALLOW_DESTRUCTIVE_MIGRATION em TODO release, ou seja, criar rotina de
+          # desligar a proteção. Guard que grita sempre deixa de ser guard.
+          BASE_REF_PR: ${{ github.base_ref }}
+          ANTES_DO_PUSH: ${{ github.event.before }}
+          EVENTO: ${{ github.event_name }}
         run: |
-          # actions/checkout não cria remote-tracking ref das outras branches nem com
-          # fetch-depth 0, então busca explicitamente a base antes de comparar.
-          git fetch --no-tags origin "$BASE_REF"
-          node scripts/check-migration-safety.mjs --base FETCH_HEAD
+          set -euo pipefail
+          if [ "$EVENTO" = "pull_request" ]; then
+            # actions/checkout não cria remote-tracking ref das outras branches nem
+            # com fetch-depth 0, então busca a base antes de comparar.
+            git fetch --no-tags origin "$BASE_REF_PR"
+            BASE=FETCH_HEAD
+          else
+            BASE="$ANTES_DO_PUSH"
+            # Branch nova, force-push ou histórico raso: cai no pai do HEAD, que é a
+            # melhor aproximação disponível de "antes deste push".
+            if [ -z "$BASE" ] || [ "$BASE" = "0000000000000000000000000000000000000000" ] \
+               || ! git cat-file -e "$BASE^{commit}" 2>/dev/null; then
+              echo "::notice::github.event.before indisponível ($BASE); comparando com HEAD^."
+              BASE="HEAD^"
+            fi
+          fi
+          echo "Comparando migrations novas contra: $BASE"
+          node scripts/check-migration-safety.mjs --base "$BASE"
 
       - uses: supabase/setup-cli@v3
         with:
