@@ -58,7 +58,7 @@ function Linha({ label, valor, tom, atraso }: { label: string; valor: string; to
       ) : (
         <span
           className={`text-[8px] uppercase tracking-[0.08em] px-2 py-0.5 rounded-full ${
-            tom === "ok" ? "bg-brand/40 text-modulo-gestao-strong" : "bg-paper-alt text-ink-muted"
+            tom === "ok" ? "bg-brand text-ink" : "bg-paper-alt text-ink-muted"
           }`}
         >
           {valor}
@@ -81,7 +81,7 @@ function CardVisao({ dados, atraso }: { dados: typeof PROJETO; atraso: number })
       <div className="px-4 pt-4">
         <div className="h-1.5 rounded-full bg-paper-alt overflow-hidden mb-1.5">
           <m.span
-            className="block h-full w-full rounded-full bg-modulo-gestao-strong origin-left"
+            className="block h-full w-full rounded-full bg-brand origin-left"
             initial={reducedMotion ? false : { scaleX: 0 }}
             whileInView={{ scaleX: dados.progresso }}
             viewport={{ once: true, amount: 0.5 }}

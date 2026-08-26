@@ -39,8 +39,8 @@ export function LandingFooter() {
           <div>
             <Logo size="sm" className="text-ink mb-5" />
             <p className="text-[13.5px] text-ink/65 max-w-xs leading-relaxed">
-              O sistema de gestão dos escritórios brasileiros de engenharia, com PIX, nota fiscal e linguagem técnica
-              nativa.
+              Saiba se cada projeto está dando lucro antes de terminar. Feito para escritórios de engenharia
+              multidisciplinar, com agentes que preparam o trabalho e esperam o seu aval.
             </p>
           </div>
 

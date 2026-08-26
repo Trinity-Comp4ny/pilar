@@ -30,7 +30,7 @@ function CartaoLead({
   return (
     <div
       className={`rounded-lg bg-white border px-2.5 py-2 ${
-        destacado ? "border-modulo-gestao-strong shadow-[0_8px_22px_-10px_rgba(0,0,0,0.3)]" : "border-black/5"
+        destacado ? "border-brand shadow-[0_8px_22px_-10px_rgba(0,0,0,0.3)]" : "border-black/5"
       }`}
     >
       <div className="flex items-start gap-1.5 mb-1">

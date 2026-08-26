@@ -3,15 +3,17 @@ import { AnimatePresence, m, useReducedMotion } from "framer-motion";
 import { EASE } from "../lib/motion";
 
 /**
- * Verbo que gira dentro do H1.
+ * Verbo que gira dentro do H1, sobre o verde da marca.
  *
- * A palavra sai por cima e a próxima entra por baixo, dentro de uma janela que
- * corta o transbordo, e a largura da janela anima junto para o resto da frase
- * acompanhar sem salto. Um espelho invisível mede a palavra na tipografia real
- * antes da troca, então a largura nunca é chute.
+ * O verde `#A4EC86` só pode aparecer como fundo com tinta escura por cima
+ * (regra da marca), então a palavra vem em pílula verde com texto ink, e não
+ * pintada de verde. A pílula sai por cima e a próxima entra por baixo, dentro
+ * de uma janela que corta o transbordo, e a largura anima junto para o resto da
+ * frase acompanhar sem salto.
  *
- * Substitui a antiga pílula colorida (RotatingPill): no arranjo novo o destaque
- * é o itálico verde do título, e uma pílula ali competiria com ele.
+ * A largura vem de um espelho invisível medido na tipografia real, somada a uma
+ * fatia proporcional ao corpo da fonte: a caixa de um itálico não contém a
+ * barriga da última letra, e medir só pelo rect cortava o "m" final.
  */
 
 interface RotatingWordProps {
@@ -29,16 +31,14 @@ export function RotatingWord({ palavras, intervalMs = 2600, atraso = 0 }: Rotati
 
   const atual = palavras[i];
 
-  // Mede antes da pintura: a largura inicial não pode "pular" no primeiro quadro.
   useLayoutEffect(() => {
     const el = espelho.current;
     if (!el) return;
-    // `scrollWidth` junto com o rect porque a caixa de um itálico não contém a
-    // barriga da última letra: medindo só pelo rect, a janela corta o "m" final.
-    // O respiro extra é proporcional ao corpo da fonte, então vale em qualquer
-    // tamanho do clamp.
     const corpo = parseFloat(getComputedStyle(el).fontSize) || 16;
-    setLargura(Math.max(el.scrollWidth, el.getBoundingClientRect().width) + corpo * 0.09);
+    // 0.12em para a barriga do itálico, que o rect não mede, mais os 0.32em de
+    // respiro da pílula: como a caixa é `border-box`, o padding entra na
+    // largura e comeria a última letra se não fosse somado aqui.
+    setLargura(Math.max(el.scrollWidth, el.getBoundingClientRect().width) + corpo * 0.44);
   }, [atual]);
 
   useEffect(() => {
@@ -52,7 +52,7 @@ export function RotatingWord({ palavras, intervalMs = 2600, atraso = 0 }: Rotati
 
   return (
     <m.span
-      className="relative inline-flex overflow-hidden align-bottom pb-[0.1em] -mb-[0.1em]"
+      className="relative inline-flex overflow-hidden rounded-[0.28em] bg-brand align-baseline px-[0.16em]"
       animate={{ width: largura ? Math.ceil(largura) : undefined }}
       transition={{ duration: 0.42, ease: EASE.out }}
       style={{ width: largura ? Math.ceil(largura) : undefined }}
@@ -60,7 +60,7 @@ export function RotatingWord({ palavras, intervalMs = 2600, atraso = 0 }: Rotati
       <AnimatePresence mode="popLayout" initial={false}>
         <m.span
           key={atual}
-          className="italic text-modulo-gestao-strong whitespace-nowrap"
+          className="italic text-ink whitespace-nowrap"
           initial={reducedMotion ? false : { y: "-105%", opacity: 0 }}
           animate={{ y: "0%", opacity: 1 }}
           exit={reducedMotion ? undefined : { y: "105%", opacity: 0 }}

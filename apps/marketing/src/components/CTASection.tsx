@@ -4,6 +4,7 @@ import { trackCta } from "../analytics";
 import { useLoginHint } from "../loginHint";
 import { Reveal } from "./Reveal";
 import { SplitButton } from "./ui/SplitButton";
+import { HeroBackdrop } from "./hero/HeroBackdrop";
 import { EASE } from "../lib/motion";
 
 /**
@@ -24,19 +25,10 @@ export function CTASection() {
     <section className="w-full bg-paper px-6 md:px-10 pb-14 md:pb-20">
       <Reveal variant="scale" loose className="max-w-6xl mx-auto">
         <div className="relative overflow-hidden rounded-[32px] px-6 py-20 md:py-28 text-center">
-          {/* Paisagem borrada: mesma família do fundo da hero, agora como cor
-              chapada em movimento lento, sem desenho competindo com o texto. */}
-          <div aria-hidden="true" className="absolute inset-0 bg-card-brand">
-            <m.div
-              className="absolute -inset-1/4"
-              animate={reducedMotion ? undefined : { rotate: [0, 8, 0], scale: [1, 1.08, 1] }}
-              transition={{ duration: 28, repeat: Infinity, ease: "easeInOut" }}
-              style={{
-                background:
-                  "radial-gradient(closest-side, hsl(var(--surface-landing-white) / 0.85), transparent 70%), radial-gradient(closest-side at 70% 60%, hsl(160 60% 72% / 0.75), transparent 70%)",
-                filter: "blur(48px)",
-              }}
-            />
+          {/* A mesma paisagem da hero, agora preenchendo o cartão: o fecho da
+              página rima com a abertura em vez de inventar outro fundo. */}
+          <div aria-hidden="true" className="absolute inset-0 bg-card-brand-soft">
+            <HeroBackdrop variante="cartao" />
           </div>
 
           <div className="relative">
