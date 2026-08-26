@@ -64,6 +64,14 @@ export function LandingHeader() {
   const navLink =
     "flex items-center gap-1 text-[14px] text-ink-soft px-3 py-2 rounded-full hover:text-ink transition-colors";
 
+  /** Na home, rola suave até os módulos; fora dela, deixa o Link navegar. */
+  const irParaProduto = (e: React.MouseEvent) => {
+    const alvo = document.getElementById("produto");
+    if (!alvo) return;
+    e.preventDefault();
+    alvo.scrollIntoView({ behavior: "smooth" });
+  };
+
   return (
     <header
       className="fixed inset-x-0 z-50 flex justify-center px-3 md:px-6"
@@ -115,11 +123,13 @@ export function LandingHeader() {
               </div>
             </div>
 
+            {/* Âncora, não rota: leva à seção dos módulos na home. Fora da
+                home, o Link com hash navega e depois desce até a seção. */}
+            <Link to="/#produto" className={navLink} onClick={irParaProduto}>
+              Funcionalidades
+            </Link>
             <Link to="/planos" className={navLink}>
               Planos
-            </Link>
-            <Link to="/faq" className={navLink}>
-              Perguntas frequentes
             </Link>
           </nav>
 
@@ -179,11 +189,18 @@ export function LandingHeader() {
             </Link>
           ))}
           <span className="h-px bg-paper-border my-2" />
+          <Link
+            to="/#produto"
+            onClick={(e) => {
+              setMobileMenuOpen(false);
+              irParaProduto(e);
+            }}
+            className="py-2.5 text-[15px] text-ink"
+          >
+            Funcionalidades
+          </Link>
           <Link to="/planos" onClick={() => setMobileMenuOpen(false)} className="py-2.5 text-[15px] text-ink">
             Planos
-          </Link>
-          <Link to="/faq" onClick={() => setMobileMenuOpen(false)} className="py-2.5 text-[15px] text-ink">
-            Perguntas frequentes
           </Link>
           <SplitButton
             className="mt-3"
