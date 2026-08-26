@@ -63,9 +63,7 @@ export function ProjectCard({
   const disciplinas = projeto.disciplinas || [];
   const planningPending =
     disciplinas.length > 0 &&
-    disciplinas.every(
-      (d) => !d.data_inicio && !d.data_previsao && getResponsaveisList(d).length === 0
-    );
+    disciplinas.every((d) => !d.data_inicio && !d.data_previsao && getResponsaveisList(d).length === 0);
 
   return (
     <HoverCard openDelay={500} closeDelay={100}>
@@ -73,7 +71,7 @@ export function ProjectCard({
         <Card
           onClick={() => onClick(projeto)}
           className={cn(
-            "cursor-pointer hover:shadow-sm hover:border-foreground/20 transition-all w-full p-3 space-y-2 bg-white",
+            "cursor-pointer hover:shadow-sm hover:border-foreground/20 transition-all w-full p-3 space-y-1.5 bg-white",
             isDragging && "shadow-md rotate-1"
           )}
         >
@@ -187,10 +185,7 @@ export function ProjectCard({
               })()}
               {deadline && (
                 <Badge
-                  className={cn(
-                    "inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0 font-normal",
-                    deadline.color
-                  )}
+                  className={cn("inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0 font-normal", deadline.color)}
                   title={
                     deadline.status_data === "em_atraso"
                       ? `Em atraso há ${deadline.days} dia(s)`
@@ -287,7 +282,9 @@ export function ProjectCard({
                     key={i}
                     className={cn(
                       "text-[10px] px-1.5 py-0.5 rounded",
-                      disc.status === "Concluído" ? "bg-positive/10 text-positive-strong" : "bg-muted text-muted-foreground"
+                      disc.status === "Concluído"
+                        ? "bg-positive/10 text-positive-strong"
+                        : "bg-muted text-muted-foreground"
                     )}
                   >
                     {disc.disciplina}
