@@ -54,10 +54,11 @@ export function LeadsKPIs({ leads, propostasByLead, onFilterProximos, proximosAt
   }, [leads, propostasByLead]);
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-5 gap-2 mb-4 flex-shrink-0">
-      <KPICard icon={Layers} label="Pipeline ativo" value={stats.total.toString()} tone="neutral" />
-      <KPICard icon={TrendingUp} label="Valor no funil" value={stats.valorPipeline} tone="positive" />
+    <div className="grid grid-cols-2 md:grid-cols-5 gap-2 flex-shrink-0">
+      <KPICard density="compact" icon={Layers} label="Pipeline ativo" value={stats.total.toString()} tone="neutral" />
+      <KPICard density="compact" icon={TrendingUp} label="Valor no funil" value={stats.valorPipeline} tone="positive" />
       <KPICard
+        density="compact"
         icon={CalendarClock}
         label="Fecham em 7 dias"
         value={stats.proximos.toString()}
@@ -66,6 +67,7 @@ export function LeadsKPIs({ leads, propostasByLead, onFilterProximos, proximosAt
         className={proximosAtivo ? "border-brand ring-1 ring-brand bg-brand/5" : undefined}
       />
       <KPICard
+        density="compact"
         icon={PercentCircle}
         label="Conversão de leads"
         value={stats.conversaoLeads !== null ? `${stats.conversaoLeads}%` : "0%"}
@@ -78,6 +80,7 @@ export function LeadsKPIs({ leads, propostasByLead, onFilterProximos, proximosAt
         }
       />
       <KPICard
+        density="compact"
         icon={Handshake}
         label="Fechamento de propostas"
         value={stats.fechamentoPropostas !== null ? `${stats.fechamentoPropostas}%` : "—"}
