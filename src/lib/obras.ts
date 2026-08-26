@@ -240,6 +240,54 @@ export function totalAdiantadoEscritorio(lancamentos: ReadonlyArray<LancamentoCa
     .reduce((acc, l) => acc + num(l.valor), 0);
 }
 
+// --- Desembolso realizado por período (spec 066) -------------------------------
+
+export interface PontoDesembolso {
+  mes: string; // "YYYY-MM"
+  acumuladoRealizado: number;
+}
+
+type LancamentoComData = { tipo: string; valor: number | string; data: string };
+
+/**
+ * Desembolso (despesas) acumulado mês a mês, do mês do lançamento mais antigo
+ * até o mês atual — mesmo sem despesa recente, o gráfico chega até hoje pra
+ * não parecer que a obra parou de gastar.
+ */
+export function desembolsoAcumuladoPorMes(lancamentos: ReadonlyArray<LancamentoComData>): PontoDesembolso[] {
+  const despesas = lancamentos.filter((l) => l.tipo === "despesa");
+  if (despesas.length === 0) return [];
+
+  const mesDe = (data: string): string => data.slice(0, 7);
+  const porMes = new Map<string, number>();
+  for (const d of despesas) {
+    const mes = mesDe(d.data);
+    porMes.set(mes, (porMes.get(mes) ?? 0) + num(d.valor));
+  }
+
+  const mesAtual = mesDe(toIso(new Date()));
+  const mesesComDespesa = [...porMes.keys()].sort();
+  const primeiroMes = mesesComDespesa[0];
+  const ultimoMesComDespesa = mesesComDespesa[mesesComDespesa.length - 1];
+  const ultimoMes = ultimoMesComDespesa > mesAtual ? ultimoMesComDespesa : mesAtual;
+
+  const pontos: PontoDesembolso[] = [];
+  let acumulado = 0;
+  let [ano, mes] = primeiroMes.split("-").map(Number);
+  for (;;) {
+    const chave = `${ano}-${String(mes).padStart(2, "0")}`;
+    acumulado += porMes.get(chave) ?? 0;
+    pontos.push({ mes: chave, acumuladoRealizado: acumulado });
+    if (chave === ultimoMes) break;
+    mes += 1;
+    if (mes > 12) {
+      mes = 1;
+      ano += 1;
+    }
+  }
+  return pontos;
+}
+
 // --- Cotações (spec 018) ------------------------------------------------------
 
 export type CotacaoStatus = "aberta" | "decidida" | "cancelada";

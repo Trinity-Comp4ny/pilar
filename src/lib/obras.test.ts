@@ -23,6 +23,7 @@ import {
   curvaSObra,
   ordenarCotacoesPendentes,
   urgenciaLabel,
+  desembolsoAcumuladoPorMes,
 } from "./obras";
 import { statusLabel } from "./status";
 
@@ -481,5 +482,54 @@ describe("urgenciaLabel (spec 064)", () => {
   it("singular quando é exatamente 1 dia", () => {
     expect(urgenciaLabel("2026-08-27", hoje)).toBe("vence em 1 dia");
     expect(urgenciaLabel("2026-08-25", hoje)).toBe("atrasada há 1 dia");
+  });
+});
+
+describe("desembolsoAcumuladoPorMes (spec 066)", () => {
+  it("[] quando não há despesas", () => {
+    expect(desembolsoAcumuladoPorMes([])).toEqual([]);
+    expect(desembolsoAcumuladoPorMes([{ tipo: "aporte", valor: 5000, data: "2026-06-10" }])).toEqual([]);
+  });
+
+  it("acumula mês a mês (critério de aceite): 10k em junho, +15k em julho = 25k", () => {
+    const pontos = desembolsoAcumuladoPorMes([
+      { tipo: "despesa", valor: 10000, data: "2026-06-05" },
+      { tipo: "despesa", valor: 15000, data: "2026-07-20" },
+    ]);
+    expect(pontos.find((p) => p.mes === "2026-06")?.acumuladoRealizado).toBe(10000);
+    expect(pontos.find((p) => p.mes === "2026-07")?.acumuladoRealizado).toBe(25000);
+  });
+
+  it("ignora aportes, só soma despesas", () => {
+    const pontos = desembolsoAcumuladoPorMes([
+      { tipo: "aporte", valor: 50000, data: "2026-06-01" },
+      { tipo: "despesa", valor: 1000, data: "2026-06-15" },
+    ]);
+    expect(pontos.find((p) => p.mes === "2026-06")?.acumuladoRealizado).toBe(1000);
+  });
+
+  it("preenche mês sem despesa no meio, carregando o acumulado anterior", () => {
+    const pontos = desembolsoAcumuladoPorMes([
+      { tipo: "despesa", valor: 4000, data: "2026-06-10" },
+      { tipo: "despesa", valor: 2000, data: "2026-08-10" },
+    ]);
+    expect(pontos.find((p) => p.mes === "2026-07")?.acumuladoRealizado).toBe(4000);
+    expect(pontos.find((p) => p.mes === "2026-08")?.acumuladoRealizado).toBe(6000);
+  });
+
+  it("soma várias despesas do mesmo mês", () => {
+    const pontos = desembolsoAcumuladoPorMes([
+      { tipo: "despesa", valor: 1000, data: "2026-06-01" },
+      { tipo: "despesa", valor: 500, data: "2026-06-20" },
+    ]);
+    expect(pontos.find((p) => p.mes === "2026-06")?.acumuladoRealizado).toBe(1500);
+  });
+
+  it("chega até o mês atual mesmo sem despesa recente (requisito 1)", () => {
+    const mesAtual = new Date().toISOString().slice(0, 7);
+    const pontos = desembolsoAcumuladoPorMes([{ tipo: "despesa", valor: 1000, data: "2026-01-10" }]);
+    const ultimo = pontos[pontos.length - 1];
+    expect(ultimo.mes >= mesAtual).toBe(true);
+    expect(ultimo.acumuladoRealizado).toBe(1000);
   });
 });

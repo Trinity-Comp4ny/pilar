@@ -20,6 +20,7 @@ import {
   totalAdiantadoEscritorio,
 } from "@/lib/obras";
 import { LancamentoContaDialog } from "./LancamentoContaDialog";
+import { ObraDesembolsoChart } from "./ObraDesembolsoChart";
 
 function Kpi({ label, value, tone }: { label: string; value: string; tone?: "danger" | "muted" }) {
   return (
@@ -122,6 +123,13 @@ export function ObraContaTab({ obra, canEdit }: { obra: ObraResumo; canEdit: boo
         <Kpi label="Despesas" value={formatCurrency(totalDespesas)} />
         {adiantado > 0 && <Kpi label="Escritório adiantou" value={formatCurrency(adiantado)} tone="danger" />}
       </div>
+
+      <Card className="rounded-2xl border border-black/5 bg-white">
+        <CardContent className="p-4">
+          <h3 className="mb-1 text-sm font-medium text-ink">Desembolso realizado</h3>
+          <ObraDesembolsoChart lancamentos={lancamentos} orcamentos={orcamentos} />
+        </CardContent>
+      </Card>
 
       {taxaAtiva && (
         <p className="text-xs text-muted-foreground">
