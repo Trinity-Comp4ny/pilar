@@ -14,6 +14,7 @@ import { parseCurrencyString, formatCurrency } from "@/lib/currencyUtils";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
+import { CollapsibleKpiSection } from "@/components/CollapsibleKpiSection";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useRegistrarPagina } from "@/hooks/useRecentes";
 import { LeadsKPIs } from "./LeadsKPIs";
@@ -90,7 +91,7 @@ function KanbanSkeleton() {
               <Skeleton className="h-2 w-2 rounded-full" />
               <Skeleton className="h-3 w-24" />
             </div>
-            <div className="flex-1 min-h-0 p-2 space-y-2 rounded-lg bg-muted/30">
+            <div className="flex-1 min-h-0 p-2 space-y-2 rounded-lg bg-muted">
               {Array.from({ length: colIndex % 2 === 0 ? 3 : 2 }).map((_, i) => (
                 <Skeleton key={i} className="h-24 w-full rounded-md" />
               ))}
@@ -506,111 +507,116 @@ export default function Leads() {
         />
       }
     >
-      <LeadsKPIs
-        leads={leads}
-        propostasByLead={propostasByLead}
-        onFilterProximos={() => setPeriodo((p) => (p === "prox7" ? "todos" : "prox7"))}
-        proximosAtivo={periodo === "prox7"}
-      />
+      <CollapsibleKpiSection
+        storageKey="leads"
+        controls={
+          <>
+            <div className="hidden md:inline-flex rounded-full border p-0.5">
+              <button
+                type="button"
+                onClick={() => setViewMode("quadro")}
+                className={cn(
+                  "rounded-full px-3 py-1 text-sm transition-colors",
+                  viewMode === "quadro" ? "bg-brand text-ink" : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                Quadro
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode("lista")}
+                className={cn(
+                  "rounded-full px-3 py-1 text-sm transition-colors",
+                  viewMode === "lista" ? "bg-brand text-ink" : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                Lista
+              </button>
+            </div>
 
-      <div className="flex flex-col gap-2 mb-2 mt-1">
-        <div className="hidden md:flex items-center justify-end">
-          <div className="inline-flex rounded-full border p-0.5">
-            <button
-              type="button"
-              onClick={() => setViewMode("quadro")}
-              className={cn(
-                "rounded-full px-3 py-1 text-sm transition-colors",
-                viewMode === "quadro" ? "bg-brand text-ink" : "text-muted-foreground hover:text-foreground"
-              )}
+            {/* Busca de texto migrou para o PageHeader (spec 002). */}
+            <Select value={origemFilter || "todas"} onValueChange={(v) => setOrigemFilter(v === "todas" ? "" : v)}>
+              <SelectTrigger className="h-9 w-auto min-w-[140px] text-sm" aria-label="Filtrar por origem">
+                <SelectValue placeholder="Origem" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todas">Todas as origens</SelectItem>
+                {origemOptions.map((o) => (
+                  <SelectItem key={o} value={o}>
+                    {o}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select
+              value={responsavelFilter || "todos"}
+              onValueChange={(v) => setResponsavelFilter(v === "todos" ? "" : v)}
             >
-              Quadro
-            </button>
-            <button
-              type="button"
-              onClick={() => setViewMode("lista")}
-              className={cn(
-                "rounded-full px-3 py-1 text-sm transition-colors",
-                viewMode === "lista" ? "bg-brand text-ink" : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              Lista
-            </button>
-          </div>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Busca de texto migrou para o PageHeader (spec 002). */}
-          <Select value={origemFilter || "todas"} onValueChange={(v) => setOrigemFilter(v === "todas" ? "" : v)}>
-            <SelectTrigger className="h-9 w-auto min-w-[140px] text-sm" aria-label="Filtrar por origem">
-              <SelectValue placeholder="Origem" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="todas">Todas as origens</SelectItem>
-              {origemOptions.map((o) => (
-                <SelectItem key={o} value={o}>
-                  {o}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+              <SelectTrigger className="h-9 w-auto min-w-[150px] text-sm" aria-label="Filtrar por responsável">
+                <SelectValue placeholder="Responsável" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos os responsáveis</SelectItem>
+                <SelectItem value={SEM_RESPONSAVEL}>Sem responsável</SelectItem>
+                {members.map((m) => (
+                  <SelectItem key={m.id} value={m.id}>
+                    {m.first_name} {m.last_name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-          <Select
-            value={responsavelFilter || "todos"}
-            onValueChange={(v) => setResponsavelFilter(v === "todos" ? "" : v)}
-          >
-            <SelectTrigger className="h-9 w-auto min-w-[150px] text-sm" aria-label="Filtrar por responsável">
-              <SelectValue placeholder="Responsável" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="todos">Todos os responsáveis</SelectItem>
-              <SelectItem value={SEM_RESPONSAVEL}>Sem responsável</SelectItem>
-              {members.map((m) => (
-                <SelectItem key={m.id} value={m.id}>
-                  {m.first_name} {m.last_name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            <Select value={periodo} onValueChange={(v) => setPeriodo(v as PeriodoFilter)}>
+              <SelectTrigger
+                className="h-9 w-auto min-w-[150px] text-sm"
+                aria-label="Filtrar por previsão de fechamento"
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {PERIODO_OPTIONS.map((o) => (
+                  <SelectItem key={o.value} value={o.value}>
+                    {o.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-          <Select value={periodo} onValueChange={(v) => setPeriodo(v as PeriodoFilter)}>
-            <SelectTrigger className="h-9 w-auto min-w-[150px] text-sm" aria-label="Filtrar por previsão de fechamento">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {PERIODO_OPTIONS.map((o) => (
-                <SelectItem key={o.value} value={o.value}>
-                  {o.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortBy)}>
+              <SelectTrigger className="h-9 w-auto min-w-[150px] text-sm" aria-label="Ordenar leads">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {SORT_OPTIONS.map((o) => (
+                  <SelectItem key={o.value} value={o.value}>
+                    {o.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-          <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortBy)}>
-            <SelectTrigger className="h-9 w-auto min-w-[150px] text-sm" aria-label="Ordenar leads">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {SORT_OPTIONS.map((o) => (
-                <SelectItem key={o.value} value={o.value}>
-                  {o.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          {filtersActive && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleClearFilters}
-              className="h-9 text-sm text-muted-foreground"
-            >
-              <X className="mr-1 h-3.5 w-3.5" />
-              Limpar
-            </Button>
-          )}
-        </div>
-      </div>
+            {filtersActive && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleClearFilters}
+                className="h-9 text-sm text-muted-foreground"
+              >
+                <X className="mr-1 h-3.5 w-3.5" />
+                Limpar
+              </Button>
+            )}
+          </>
+        }
+      >
+        <LeadsKPIs
+          leads={leads}
+          propostasByLead={propostasByLead}
+          onFilterProximos={() => setPeriodo((p) => (p === "prox7" ? "todos" : "prox7"))}
+          proximosAtivo={periodo === "prox7"}
+        />
+      </CollapsibleKpiSection>
 
       {isLoading ? (
         <KanbanSkeleton />
@@ -712,7 +718,7 @@ export default function Leads() {
                             ref={provided.innerRef}
                             {...provided.droppableProps}
                             className={cn(
-                              "flex-1 min-h-0 overflow-y-auto p-2 space-y-2 rounded-lg bg-muted/30 transition-all",
+                              "flex-1 min-h-0 overflow-y-auto p-2 space-y-2 rounded-lg bg-muted transition-all",
                               snapshot.isDraggingOver && "ring-2 ring-brand/40 bg-brand/5"
                             )}
                           >

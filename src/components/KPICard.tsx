@@ -32,6 +32,8 @@ export interface KPICardProps {
   /** Substitui o `value` formatado por um campo editável (ex.: DatePicker, MoneyInput).
    *  `value` continua obrigatório como fallback pro estado não-editável/loading. */
   valueSlot?: React.ReactNode;
+  /** "compact" reduz o padding, para caber mais em faixas colapsáveis (spec 061). */
+  density?: "default" | "compact";
 }
 
 export function KPICard({
@@ -47,6 +49,7 @@ export function KPICard({
   className,
   valueTone,
   valueSlot,
+  density = "default",
 }: KPICardProps) {
   const subiu = (delta?.value ?? 0) > 0;
   const bom = delta?.invert ? !subiu : subiu;
@@ -65,7 +68,8 @@ export function KPICard({
   return (
     <Card
       className={cn(
-        "rounded-2xl border border-black/5 bg-white p-4 w-full",
+        "rounded-2xl border border-black/5 bg-white w-full",
+        density === "compact" ? "p-3" : "p-4",
         interactive &&
           "cursor-pointer transition-all hover:shadow-md hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         className

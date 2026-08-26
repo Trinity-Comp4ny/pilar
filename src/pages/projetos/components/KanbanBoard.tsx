@@ -105,7 +105,7 @@ export function KanbanBoard({
             <h3 className="text-xs font-medium text-foreground/80 uppercase tracking-wide">Sem coluna</h3>
             <span className="text-[11px] text-muted-foreground tabular-nums">{orfaos.length}</span>
           </div>
-          <div className="flex-1 min-h-0 overflow-y-auto p-2 space-y-2 rounded-lg bg-muted/30">
+          <div className="flex-1 min-h-0 overflow-y-auto p-2 space-y-2 rounded-lg bg-muted">
             {orfaos.map((projeto) => (
               <ProjectCard
                 key={projeto.id}
