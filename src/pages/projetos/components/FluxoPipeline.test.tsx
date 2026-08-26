@@ -53,7 +53,11 @@ describe("FluxoPipeline", () => {
   it("disciplina com previsão vencida e não concluída aparece marcada como atrasada", () => {
     const ontem = new Date();
     ontem.setDate(ontem.getDate() - 1);
-    const dataPassada = ontem.toISOString().slice(0, 10);
+    // toISOString() converte pra UTC: à noite no fuso do Brasil (UTC-3) já é
+    // "amanhã" em UTC, e "ontem" vira a data de hoje — o teste passa a
+    // comparar hoje com hoje e nunca fica "em_atraso". Monta a string local.
+    const pad = (n: number) => String(n).padStart(2, "0");
+    const dataPassada = `${ontem.getFullYear()}-${pad(ontem.getMonth() + 1)}-${pad(ontem.getDate())}`;
 
     render(
       <FluxoPipeline
