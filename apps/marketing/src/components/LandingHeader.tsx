@@ -70,7 +70,7 @@ export function LandingHeader() {
       style={{ top: "var(--frame-w)" }}
     >
       <div
-        className={`relative w-full max-w-[1024px] rounded-b-[22px] bg-frame transition-shadow duration-300 ${
+        className={`relative w-full max-w-[1216px] rounded-b-[22px] bg-frame transition-shadow duration-300 ${
           rolou ? "shadow-[0_10px_36px_-16px_rgba(0,0,0,0.28)]" : "shadow-[0_2px_10px_-6px_rgba(0,0,0,0.14)]"
         }`}
       >

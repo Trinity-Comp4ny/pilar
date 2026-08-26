@@ -3,7 +3,8 @@ import { APP_URL } from "../config";
 import { trackCta } from "../analytics";
 import { HeroScene } from "./hero/HeroScene";
 import { HeroBackdrop } from "./hero/HeroBackdrop";
-import { Pill, SplitButton } from "./ui/SplitButton";
+import { SplitButton } from "./ui/SplitButton";
+import { RotatingWord } from "./RotatingWord";
 import { EASE } from "../lib/motion";
 
 /**
@@ -17,8 +18,10 @@ import { EASE } from "../lib/motion";
  */
 
 const LINHA_1 = "Onde times e agentes";
-const DESTAQUE = "organizam";
 const LINHA_2 = "gestão, projetos e obras.";
+
+/** Os verbos que giram no lugar do destaque, um por matiz de módulo. */
+const VERBOS = ["organizam", "conectam", "centralizam", "executam"];
 
 /** Cada palavra sobe de dentro da própria linha, escalonada. */
 function Palavras({ texto, atraso = 0, className }: { texto: string; atraso?: number; className?: string }) {
@@ -51,21 +54,12 @@ export function HeroSection() {
     <section className="relative isolate overflow-hidden pt-28 md:pt-36 pb-14 md:pb-20">
       <HeroBackdrop />
 
-      <div className="relative z-10 container mx-auto px-6 md:px-10">
+      <div className="relative z-10 mx-auto max-w-6xl px-6 md:px-10">
         <div className="text-center">
-          <m.div
-            initial={reducedMotion ? false : { opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, ease: EASE.out }}
-            className="mb-7"
-          >
-            <Pill>Agentes de IA para engenharia</Pill>
-          </m.div>
-
           <h1 className="text-[clamp(36px,5.6vw,74px)] font-medium tracking-[-0.035em] leading-[1.05] text-ink mb-6 max-w-[18ch] md:max-w-[22ch] mx-auto">
             <span className="block">
               <Palavras texto={LINHA_1} atraso={0.1} />{" "}
-              <Palavras texto={DESTAQUE} atraso={0.26} className="italic text-modulo-gestao-strong" />
+              <RotatingWord palavras={VERBOS} atraso={0.26} />
             </span>
             <span className="block">
               <Palavras texto={LINHA_2} atraso={0.34} />
@@ -104,9 +98,9 @@ export function HeroSection() {
         initial={reducedMotion ? false : { opacity: 0, y: 48 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 1, ease: EASE.out, delay: 0.8 }}
-        className="relative z-10 container mx-auto px-6 md:px-10 mt-16 md:mt-20"
+        className="relative z-10 mx-auto max-w-6xl px-6 md:px-10 mt-16 md:mt-20"
       >
-        <div className="max-w-5xl mx-auto">
+        <div className="mx-auto">
           <HeroScene />
         </div>
       </m.div>
