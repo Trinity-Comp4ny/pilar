@@ -6,9 +6,16 @@
  * marca, cobertas por uma trama de pontos que dá o grão do dithering. Pesa
  * ~2KB, escala em qualquer largura e não depende de arte externa.
  */
-export function HeroBackdrop() {
+export function HeroBackdrop({ variante = "hero" }: { variante?: "hero" | "cartao" } = {}) {
+  // No cartão do CTA a paisagem preenche a caixa inteira e não dissolve no
+  // topo: ali ela é o fundo, não o horizonte atrás de um título.
+  const cartao = variante === "cartao";
+
   return (
-    <div className="absolute inset-x-0 top-0 h-[720px] md:h-[860px] overflow-hidden" aria-hidden="true">
+    <div
+      className={cartao ? "absolute inset-0 overflow-hidden" : "absolute inset-x-0 top-0 h-[720px] md:h-[860px] overflow-hidden"}
+      aria-hidden="true"
+    >
       <svg className="absolute inset-0 w-full h-full" viewBox="0 0 1440 860" preserveAspectRatio="xMidYMax slice">
         <defs>
           <linearGradient id="ceu" x1="0" y1="0" x2="0" y2="1">
@@ -45,8 +52,8 @@ export function HeroBackdrop() {
 
           {/* A paisagem inteira desvanece antes de encostar no conteúdo. */}
           <linearGradient id="dissolve" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="white" stopOpacity="0" />
-            <stop offset="40%" stopColor="white" stopOpacity="0.5" />
+            <stop offset="0%" stopColor="white" stopOpacity={cartao ? 0.55 : 0} />
+            <stop offset="40%" stopColor="white" stopOpacity={cartao ? 0.85 : 0.5} />
             <stop offset="62%" stopColor="white" stopOpacity="1" />
             <stop offset="100%" stopColor="white" stopOpacity="1" />
           </linearGradient>
@@ -78,7 +85,7 @@ export function HeroBackdrop() {
       </svg>
 
       {/* Fecho em degradê para a cor da página, para não haver linha de corte. */}
-      <div className="absolute inset-x-0 bottom-0 h-56 bg-gradient-to-b from-transparent to-paper" />
+      {!cartao && <div className="absolute inset-x-0 bottom-0 h-56 bg-gradient-to-b from-transparent to-paper" />}
     </div>
   );
 }

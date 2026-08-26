@@ -56,12 +56,17 @@ export function HeroSection() {
 
       <div className="relative z-10 mx-auto max-w-6xl px-6 md:px-10">
         <div className="text-center">
-          <h1 className="text-[clamp(36px,5.6vw,74px)] font-medium tracking-[-0.035em] leading-[1.05] text-ink mb-6 max-w-[18ch] md:max-w-[22ch] mx-auto">
-            <span className="block">
+          {/* Duas linhas, sempre. A largura não é limitada por `ch` e cada linha
+              é `whitespace-nowrap`: com limite em ch, o verbo mais longo
+              ("centralizam") empurrava o título para três linhas e a hero
+              saltava a cada troca de palavra. O corpo cai um pouco para a linha
+              mais larga caber. */}
+          <h1 className="text-[clamp(28px,4.6vw,62px)] font-medium tracking-[-0.035em] leading-[1.1] text-ink mb-6 mx-auto">
+            <span className="block whitespace-nowrap">
               <Palavras texto={LINHA_1} atraso={0.1} />{" "}
               <RotatingWord palavras={VERBOS} atraso={0.26} />
             </span>
-            <span className="block">
+            <span className="block whitespace-nowrap">
               <Palavras texto={LINHA_2} atraso={0.34} />
             </span>
           </h1>

@@ -54,12 +54,10 @@ export function HeroSceneMobile({ ato, estatico }: { ato: number; estatico: bool
       className="relative rounded-2xl border border-paper-border bg-white overflow-hidden shadow-[0_2px_4px_rgba(0,0,0,0.04),0_20px_50px_-24px_rgba(0,0,0,0.3)]"
     >
       <div className="flex items-center gap-2 px-4 py-3 border-b border-paper-border/70 bg-paper-alt/60">
-        <span className="w-5 h-5 rounded bg-ink flex items-center justify-center shrink-0">
-          <span className="w-2 h-2.5 border-x border-t border-white/80" />
-        </span>
+        <img src="/pilar-logo.svg" alt="" className="w-5 h-5 shrink-0" />
         <span className="text-[12px] font-medium text-ink">Copiloto do escritório</span>
         <m.span
-          className="ml-auto w-1.5 h-1.5 rounded-full bg-modulo-gestao-strong"
+          className="ml-auto w-1.5 h-1.5 rounded-full bg-brand"
           animate={estatico ? undefined : { opacity: [1, 0.3, 1] }}
           transition={{ duration: 1.9, repeat: Infinity }}
         />
@@ -115,7 +113,7 @@ export function HeroSceneMobile({ ato, estatico }: { ato: number; estatico: bool
           animate={{ opacity: mostraRascunho ? 1 : 0, y: mostraRascunho ? 0 : 14 }}
           transition={{ duration: 0.45, ease: EASE.out }}
         >
-          <p className="text-[8.5px] uppercase tracking-[0.11em] text-modulo-gestao-strong mb-2.5">
+          <p className="text-[8.5px] uppercase tracking-[0.11em] text-ink mb-2.5">
             Rascunho, aguardando aprovação
           </p>
           {RASCUNHO.map(([chave, valor]) => (
@@ -130,7 +128,7 @@ export function HeroSceneMobile({ ato, estatico }: { ato: number; estatico: bool
           <m.div
             className="mt-3 flex items-center justify-center gap-1.5 rounded-full py-2 text-[12px] font-medium"
             animate={{
-              backgroundColor: aprovado ? "hsl(var(--modulo-gestao-strong))" : "hsl(var(--brand-accent))",
+              backgroundColor: aprovado ? "hsl(var(--brand-accent))" : "hsl(var(--brand-accent))",
               color: aprovado ? "#ffffff" : "hsl(var(--text-on-brand))",
             }}
             transition={{ duration: 0.3 }}
@@ -148,17 +146,17 @@ export function HeroSceneMobile({ ato, estatico }: { ato: number; estatico: bool
         >
           <div className="rounded-xl border border-paper-border/70 bg-paper-alt/50 px-3 py-2.5">
             <p className="text-[8.5px] uppercase tracking-[0.1em] text-ink-muted mb-1">Recebido no mês</p>
-            <p className="text-[15px] font-medium text-modulo-gestao-strong tabular-nums">R$ 412.900</p>
+            <p className="text-[15px] font-medium text-ink tabular-nums">R$ 412.900</p>
           </div>
           <div className="rounded-xl border border-paper-border/70 bg-paper-alt/50 px-3 py-2.5">
             <p className="text-[8.5px] uppercase tracking-[0.1em] text-ink-muted mb-1">Margem do projeto</p>
-            <p className="text-[15px] font-medium text-modulo-gestao-strong tabular-nums">31,4%</p>
+            <p className="text-[15px] font-medium text-ink tabular-nums">31,4%</p>
           </div>
         </m.div>
       </div>
 
       <div className="flex items-center gap-2 px-4 py-3 border-t border-paper-border/70">
-        <Sparkles className="w-3.5 h-3.5 text-modulo-gestao-strong shrink-0" strokeWidth={1.9} />
+        <Sparkles className="w-3.5 h-3.5 text-ink shrink-0" strokeWidth={1.9} />
         <p className="text-[11px] text-ink-muted leading-snug">Nada é gravado sem o seu aval.</p>
       </div>
     </div>

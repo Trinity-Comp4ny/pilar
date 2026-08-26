@@ -77,9 +77,8 @@ export function AppSidebar({ ato }: { ato: number }) {
     <div className="w-[240px] shrink-0 flex flex-col border-r border-black/5 bg-white">
       {/* Topo: marca + recolher. */}
       <div className="h-16 flex items-center gap-2 px-4 shrink-0">
-        <span className="w-7 h-7 rounded-md bg-ink flex items-center justify-center shrink-0">
-          <span className="w-2.5 h-3 border-x border-t border-white/80" />
-        </span>
+        {/* A marca de verdade, o mesmo SVG que o app serve. */}
+        <img src="/pilar-logo.svg" alt="" className="w-7 h-7 shrink-0" />
         <span className="text-[15px] font-medium tracking-tight text-ink">Pilar</span>
         <PanelLeftClose className="ml-auto w-4 h-4 text-black/30" strokeWidth={1.5} />
       </div>

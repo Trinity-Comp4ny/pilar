@@ -17,17 +17,18 @@ export const PALCO = { largura: 1120, altura: 700 };
 /** Nomes na ordem em que acontecem. O índice do relógio indexa este array. */
 export const ATOS = [
   "repouso",
-  "vaiCopiloto",
-  "clicaCopiloto",
+  "vaiAgentes",
+  "clicaAgentes",
   "digita",
   "pensa",
   "rascunho",
   "vaiConfirmar",
   "confirma",
+  "vaiLeads",
   "funil",
   "vaiFinanceiro",
   "financeiro",
-  "vaiProjeto",
+  "vaiProjetos",
   "projeto",
   "respira",
 ] as const;
@@ -35,23 +36,24 @@ export const ATOS = [
 export type Ato = (typeof ATOS)[number];
 
 export const MARCOS = [
-  0, // repouso
-  500, // vaiCopiloto
-  1350, // clicaCopiloto
-  1650, // digita
-  4600, // pensa
-  5500, // rascunho
-  7300, // vaiConfirmar
-  8150, // confirma
-  8800, // funil
-  10400, // vaiFinanceiro
-  11250, // financeiro
-  13900, // vaiProjeto
-  14750, // projeto
-  17300, // respira
+  0, // repouso, no funil
+  700, // vaiAgentes
+  1500, // clicaAgentes
+  1900, // digita
+  4900, // pensa
+  5800, // rascunho
+  7600, // vaiConfirmar
+  8400, // confirma
+  9300, // vaiLeads
+  10100, // funil
+  11900, // vaiFinanceiro
+  12700, // financeiro
+  15300, // vaiProjetos
+  16100, // projeto
+  18600, // respira
 ] as const;
 
-export const DURACAO_LOOP = 19800;
+export const DURACAO_LOOP = 21000;
 
 /** Índice de um ato, para comparar com o índice publicado pelo relógio. */
 export const idx = (ato: Ato) => ATOS.indexOf(ato);
@@ -60,26 +62,29 @@ export const FRASE = "Recebi 128 mil do centro cirúrgico, primeira de três par
 
 /** Onde o cursor está em cada ato, e o rótulo que ele carrega. */
 export const CURSOR: Record<Ato, { x: number; y: number; rotulo: string | null }> = {
-  repouso: { x: 686, y: 250, rotulo: null },
-  vaiCopiloto: { x: 470, y: 616, rotulo: "Agente" },
-  clicaCopiloto: { x: 470, y: 616, rotulo: "Agente" },
-  digita: { x: 470, y: 616, rotulo: "Escrevendo o pedido" },
-  pensa: { x: 618, y: 500, rotulo: "Lendo o pedido" },
-  rascunho: { x: 700, y: 430, rotulo: "Montando o lançamento" },
-  vaiConfirmar: { x: 958, y: 543, rotulo: "Aguardando você" },
-  confirma: { x: 958, y: 543, rotulo: "Aprovado" },
-  funil: { x: 800, y: 300, rotulo: "Atualizando o funil" },
-  vaiFinanceiro: { x: 104, y: 344, rotulo: "Conferindo o caixa" },
-  financeiro: { x: 104, y: 344, rotulo: "Conferindo o caixa" },
-  vaiProjeto: { x: 104, y: 288, rotulo: "Recalculando a margem" },
-  projeto: { x: 104, y: 288, rotulo: "Recalculando a margem" },
-  respira: { x: 660, y: 260, rotulo: null },
+  repouso: { x: 690, y: 300, rotulo: null },
+  vaiAgentes: { x: 96, y: 214, rotulo: "Agente" },
+  clicaAgentes: { x: 96, y: 214, rotulo: "Abrindo os agentes" },
+  digita: { x: 660, y: 470, rotulo: "Escrevendo o pedido" },
+  pensa: { x: 660, y: 430, rotulo: "Lendo o pedido" },
+  rascunho: { x: 700, y: 380, rotulo: "Montando o lançamento" },
+  vaiConfirmar: { x: 512, y: 452, rotulo: "Aguardando você" },
+  confirma: { x: 512, y: 452, rotulo: "Aprovado" },
+  vaiLeads: { x: 96, y: 500, rotulo: "Atualizando o funil" },
+  funil: { x: 96, y: 500, rotulo: "Atualizando o funil" },
+  vaiFinanceiro: { x: 96, y: 342, rotulo: "Conferindo o caixa" },
+  financeiro: { x: 96, y: 342, rotulo: "Conferindo o caixa" },
+  vaiProjetos: { x: 96, y: 300, rotulo: "Recalculando a margem" },
+  projeto: { x: 96, y: 300, rotulo: "Recalculando a margem" },
+  respira: { x: 680, y: 320, rotulo: null },
 };
 
 /** Qual tela do produto está no palco em cada ato. */
-export function telaDoAto(i: number): "funil" | "financeiro" | "projeto" {
-  if (i >= idx("vaiProjeto")) return "projeto";
+export function telaDoAto(i: number): "agentes" | "funil" | "financeiro" | "projeto" {
+  if (i >= idx("vaiProjetos")) return "projeto";
   if (i >= idx("vaiFinanceiro")) return "financeiro";
+  if (i >= idx("vaiLeads")) return "funil";
+  if (i >= idx("clicaAgentes")) return "agentes";
   return "funil";
 }
 
@@ -89,6 +94,7 @@ export function moduloAtivo(i: number): string {
   const tela = telaDoAto(i);
   if (tela === "projeto") return "Projetos";
   if (tela === "financeiro") return "Financeiro";
+  if (tela === "agentes") return "Agentes";
   return "Leads";
 }
 
