@@ -34,10 +34,9 @@ carrega ainda não têm lugar estruturado:
 
 O diário passa a ter três estruturas pequenas, todas no mesmo formulário do dia
 (sem etapa nova de wizard): efetivo por fornecedor (com contagem), impedimento
-como registro tipado e destacado (podendo levar foto, via o pipeline do Pilar
-Campo já existente), e visita ligada ao cadastro de fornecedor. Depois desta
-feature, abrir uma obra responde de bate-pronto "quem estava lá", "o que está
-travando" e "quem visitou", sem reler texto livre.
+como registro tipado e destacado, e visita ligada ao cadastro de fornecedor.
+Depois desta feature, abrir uma obra responde de bate-pronto "quem estava lá",
+"o que está travando" e "quem visitou", sem reler texto livre.
 
 **Fora de escopo:**
 
@@ -54,11 +53,22 @@ travando" e "quem visitou", sem reler texto livre.
 - Alterar `obra_rdo.efetivo` (o número agregado continua existindo, calculado
   como a soma do efetivo por fornecedor quando houver algum lançado, ou editável
   à mão quando não houver — não quebra o dado histórico já lançado).
-- Mudar o Pilar Campo (spec 042): os três campos novos entram no mesmo
-  formulário que o campo já usa offline (`obra_rdo` + tabelas satélite), sem
-  telas exclusivas de escritório. A foto do impedimento reusa o pipeline de
-  `obra_rdo_foto`/bucket `obra-campo` já entregue na spec 042 fase 3, incluindo
-  o caminho offline (fila local até sincronizar).
+- **Foto no impedimento (revisado no plano, 26/08).** O pipeline de foto atual
+  (`_campo_registrar_foto`) só sabe anexar à `rdo_id`, que já existe no momento
+  do upload. Um impedimento criado na mesma sessão offline só ganha `id` real
+  depois de sincronizar — anexar foto exigiria uma segunda etapa de resolução
+  de dependência (sincroniza impedimento → guarda o id real → só então sobe a
+  foto), que a fila atual não tem para nenhum registro filho hoje (nem
+  medição, nem tarefa). Implementar isso direito é a própria spec seguinte, não
+  um adendo de uma tarde. Aqui o impedimento é descrição + tipo, sem foto; a
+  foto do dia (já suportada) continua servindo como evidência geral do RDO.
+- Mudar o Pilar Campo (spec 042) além do formulário do dia: os três campos
+  novos entram no componente `CampoRegistrarDia.tsx` que já existe, seguindo
+  exatamente o padrão "registrar item a item" que `medição` já usa
+  (`campo_registrar_medicao`), não o padrão "substituir o conjunto" que
+  `obra_rdo_tarefa` usa no escritório (motivo: a fila offline reenviar o mesmo
+  item duas vezes é seguro em registro append-only; um "substituir tudo" pelo
+  campo arriscaria apagar lançamento de outro dispositivo).
 
 ## Requisitos
 
@@ -72,10 +82,9 @@ Funcionais:
    lançada; sem nenhuma linha, continua editável como número solto (não quebra
    o comportamento atual nem o histórico).
 2. O usuário pode registrar um ou mais **impedimentos** do dia: descrição
-   (obrigatória), tipo (`falta_material`, `clima`, `pendencia_projeto`,
-   `mao_de_obra`, `outro`), e opcionalmente uma foto (reusa o mesmo componente/
-   pipeline de foto do RDO). Um impedimento pertence a um dia (`rdo_id`), nunca
-   solto.
+   (obrigatória) e tipo (`falta_material`, `clima`, `pendencia_projeto`,
+   `mao_de_obra`, `outro`). Um impedimento pertence a um dia (`rdo_id`), nunca
+   solto. Sem foto neste MVP (ver "Fora de escopo").
 3. Impedimentos do dia aparecem **destacados** no card do dia no Diário (cor de
    alerta, ícone), separados da textarea "Ocorrências" (que continua existindo
    para nota livre solta que não é impedimento).
@@ -115,17 +124,21 @@ Não-funcionais:
 - [ ] Dado que lanço 2 linhas de efetivo (Empreiteira A: 5, Empreiteira B: 3),
       quando salvo o dia, então o total do RDO mostra 8 e o card do dia lista as
       2 linhas com o nome de cada fornecedor.
-- [ ] Dado que registro um impedimento "Falta de cimento" tipo `falta_material`
-      com uma foto, quando salvo, então ele aparece destacado no card do dia,
-      distinto da textarea de Ocorrências, com a foto visível.
+- [ ] Dado que registro um impedimento "Falta de cimento" tipo `falta_material`,
+      quando salvo, então ele aparece destacado no card do dia, distinto da
+      textarea de Ocorrências.
 - [ ] Dado que registro uma visita do fornecedor "Estrutural XYZ Ltda" com
       observação "vistoria de fundação", quando salvo, então ela aparece no
       card do dia com o nome do fornecedor.
 - [ ] Dado um fornecedor não cadastrado, quando lanço efetivo ou visita com nome
       livre, então o lançamento salva normalmente e exibe o nome digitado.
 - [ ] Caso de borda: usuário do Pilar Campo sem rede lança 1 linha de efetivo, 1
-      impedimento com foto e 1 visita; quando a rede volta, então os três
-      sincronizam e aparecem no diário do escritório.
+      impedimento e 1 visita; quando a rede volta, então os três sincronizam e
+      aparecem no diário do escritório.
+- [ ] Caso de borda: o mesmo item da fila offline é reenviado duas vezes (retry
+      após falha parcial); então não duplica (register-one é idempotente o
+      bastante para o caso real: pior cenário é um lançamento duplicado visível
+      e removível à mão, nunca perda de dado).
 - [ ] Caso de borda: `fornecedor_id` de outra empresa é rejeitado pela RLS no
       INSERT de qualquer uma das 3 tabelas novas.
 - [ ] Multi-tenant: sessão de campo da obra X não grava efetivo/impedimento/
@@ -150,7 +163,7 @@ CREATE TABLE public.obra_rdo_efetivo (
   CHECK (fornecedor_id IS NOT NULL OR fornecedor_nome IS NOT NULL)
 );
 
--- obra_rdo_impedimento: o que travou o serviço no dia, com destaque e foto opcional
+-- obra_rdo_impedimento: o que travou o serviço no dia, com destaque (sem foto no MVP)
 CREATE TABLE public.obra_rdo_impedimento (
   id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   empresa_id  uuid NOT NULL REFERENCES public.empresas(id) ON DELETE CASCADE,
@@ -161,9 +174,6 @@ CREATE TABLE public.obra_rdo_impedimento (
   created_by  uuid,
   created_at  timestamptz NOT NULL DEFAULT now()
 );
--- foto de impedimento reusa obra_rdo_foto (spec 042), adicionando a FK opcional:
-ALTER TABLE public.obra_rdo_foto
-  ADD COLUMN impedimento_id uuid REFERENCES public.obra_rdo_impedimento(id) ON DELETE CASCADE;
 
 -- obra_rdo_visita: quem visitou a obra no dia
 CREATE TABLE public.obra_rdo_visita (
@@ -182,36 +192,86 @@ CREATE TABLE public.obra_rdo_visita (
 RLS nas três tabelas, padrão de `obra_rdo_tarefa` (spec 040): SELECT/INSERT/
 UPDATE/DELETE por `empresa_id = get_user_empresa_id()`, com `EXISTS` revalidando
 `rdo_id` (mesma empresa) e `fornecedor_id` (quando não nulo, mesma empresa) no
-INSERT. A policy de escrita da sessão de campo segue o padrão já usado em
-`obra_rdo_foto`/`obra_rdo` (revalida `obra_id` do token via join a `obra_rdo`).
+INSERT. Esta é a via de escrita do **escritório** (usuário autenticado, direto
+pelo cliente Supabase).
+
+**Escrita do Pilar Campo** não passa pelo RLS acima (a conta de campo não tem
+`auth.uid()`, igual a `obra_rdo`/`obra_rdo_medicao`): três RPCs
+`SECURITY DEFINER` novas, no padrão exato de `campo_registrar_medicao`
+(20260833000000_campo_medicao.sql) — token → `campo_accounts` → valida
+`obra_id`/`rdo_id` → insere uma linha:
+
+```sql
+campo_registrar_efetivo(p_token text, p_rdo_id uuid, p_fornecedor_id uuid, p_fornecedor_nome text, p_quantidade int) RETURNS json
+campo_registrar_impedimento(p_token text, p_rdo_id uuid, p_descricao text, p_tipo text) RETURNS json
+campo_registrar_visita(p_token text, p_rdo_id uuid, p_fornecedor_id uuid, p_fornecedor_nome text, p_observacao text) RETURNS json
+```
+
+Cada uma revalida, quando `p_fornecedor_id` não é nulo, que o fornecedor é da
+`empresa_id` da sessão (`EXISTS` contra `fornecedores`). `campo_listar_rdos`
+ganha as três listas agregadas por dia (mesmo padrão de `fotos`/`medicoes`
+já devolvidos hoje).
 
 Isto muda o schema → `npm run gen:types` depois de aplicar no staging, commitar
 `types.ts` (o gate `types-sync` bloqueia se esquecer, ADR do CI).
 
-Front consome via três hooks novos (`useObraRdoEfetivo`, `useObraRdoImpedimentos`,
-`useObraRdoVisitas`), seguindo o padrão de `useObraRdoTarefas` (spec 040): leem e
-escrevem por `rdoId`, mutations com `onSuccess` invalidando a query do RDO.
+Front do escritório consome via três hooks novos (`useObraRdoEfetivo`,
+`useObraRdoImpedimentos`, `useObraRdoVisitas`), seguindo o padrão de
+`useObraRdoTarefas` (spec 040): leem por `rdoId`/`obraId`, mutation de
+**substituir o conjunto do dia** (delete + insert), `onSuccess` invalida a
+query. Front do Pilar Campo chama as RPCs uma linha por vez (padrão de
+`campo_registrar_medicao`), com os itens novos entrando na fila offline
+(`campoOfflineQueue.ts`) do mesmo jeito que `FilaMedicao`/`FilaTarefaVinculo`
+já entram hoje.
 
 ## Plano de implementação
 
-Preenchido/refinado em plan mode e aprovado antes de gerar código. Esboço:
+Refinado em 26/08 depois de ler o código real (`RdoFormDialog.tsx`,
+`useObraRdoTarefas.ts`, `CampoRegistrarDia.tsx`, `campoOfflineQueue.ts`,
+`20260833000000_campo_medicao.sql`, `useFornecedorDetalhe.ts`). Passos
+ordenados e verificáveis:
 
-1. Migration das 3 tabelas + coluna `impedimento_id` em `obra_rdo_foto` + RLS
-   (padrão de `obra_rdo_tarefa`); aplicar no staging pelo CD (nunca MCP direto);
-   `gen:types`; commitar `types.ts`.
-2. Hooks `useObraRdoEfetivo`, `useObraRdoImpedimentos`, `useObraRdoVisitas`.
-3. `RdoFormDialog`: três blocos novos (efetivo por fornecedor com combobox +
-   quantidade, impedimento com tipo + descrição + foto opcional, visita com
-   combobox + observação), cada um com "adicionar linha" no padrão que já existe
-   pro checklist de tarefas. `efetivo` (total) vira somatório quando há linhas,
-   input editável quando não há.
-4. `ObraDiarioTab`: card do dia ganha os três blocos condicionais (só renderiza
-   se tiver dado), impedimento com estilo de destaque (cor de alerta).
-5. Pilar Campo (spec 042): confirmar que o mesmo `RdoFormDialog`/fluxo é reusado
-   pela UI mobile (se a UI de campo tiver componente próprio, replicar os três
-   blocos lá; testar o caminho offline explicitamente, inclusive foto do
-   impedimento na fila local).
-6. Testes dos critérios de aceite (hooks + RLS) + QA visual (dark mode, mobile).
+1. **Migration** `supabase/migrations/20260860000000_diario_efetivo_impedimento_visita.sql`
+   (continua a sequência numérica já usada pelas migrations de Obras/Campo):
+   3 tabelas + RLS de escritório (padrão `obra_rdo_tarefa`) + 3 RPCs de campo
+   (padrão `campo_registrar_medicao`) + `campo_listar_rdos` estendida com as
+   3 listas novas. Aplicar local (`supabase migration up`, automático no
+   `npm run dev`), depois `npm run gen:types:local`.
+2. **`useFornecedoresLite`** (`src/hooks/useFornecedorDetalhe.ts`): incluir
+   `cnpj` no select (mudança aditiva, não quebra os consumidores atuais que só
+   usam `id`/`nome`).
+3. **Três hooks novos** em `src/hooks/useObraRdoSatelites.ts` (ou um arquivo por
+   hook, decidir na hora olhando o tamanho): `useObraRdoEfetivo`,
+   `useObraRdoImpedimentos`, `useObraRdoVisitas`, cada um com `useQuery` (join
+   com `obra_rdo!inner(obra_id)` igual a `useObraRdoTarefas`) e uma mutation
+   `useSaveRdoEfetivo`/`useSaveRdoImpedimentos`/`useSaveRdoVisitas` que
+   substitui o conjunto do dia (delete + insert, como `useSaveRdoTarefas`).
+4. **`RdoFormDialog.tsx`** (escritório): três blocos novos entre "Tarefas do
+   cronograma" e "Observações do dia", no mesmo padrão visual de linha
+   adicionável. `efetivo` (total) vira somatório das linhas quando houver
+   alguma, e mantém o input solto quando não houver nenhuma (checar no
+   `onSubmit`: se `efetivoLinhas.length > 0`, sobrescrever `d.efetivo` pela
+   soma antes de montar o payload do RDO).
+5. **`ObraDiarioTab.tsx`** (escritório): três blocos condicionais no card do
+   dia, impedimento com `bg-warning-soft`/ícone de alerta (token semântico,
+   nunca cor crua).
+6. **`CampoRegistrarDia.tsx`** + **`campoOfflineQueue.ts`** (Pilar Campo):
+   estender `FilaDiaItem` com `efetivos: FilaEfetivo[]`, `impedimentos:
+FilaImpedimento[]`, `visitas: FilaVisita[]` (mesma forma de `FilaMedicao`:
+   payload + `enviada: boolean`); UI mobile com os três blocos (reaproveitando
+   o padrão de "+ item" que a etapa de medição já usa); sincronização chama
+   as 3 RPCs novas uma linha por vez, marcando `enviada` por item (mesmo loop
+   que já existe para fotos/medições/tarefas).
+7. **Edge function `campo-upload-foto`**: nenhuma mudança (impedimento não leva
+   foto neste MVP).
+8. **Testes**: unit do hook de soma de efetivo (função pura, extrair para
+   `src/lib/obras.ts` como `somaEfetivo(linhas)` e testar isolado); teste de
+   RLS/RPC (INSERT cross-tenant rejeitado) se o padrão de teste de RLS do
+   projeto cobrir isso hoje (checar `supabase/migrations/*.test.*` ou
+   equivalente antes de inventar um mecanismo novo); `npm run typecheck` e
+   `npm run test:run` verdes antes de commitar.
+9. **`npm run gen:types:local`** final depois de qualquer ajuste de schema no
+   meio do caminho, e commit do `types.ts` junto.
 
 ## Decisões e riscos
 
@@ -226,10 +286,18 @@ Preenchido/refinado em plan mode e aprovado antes de gerar código. Esboço:
   não cadastrado é a maioria dos casos numa obra pequena), o campo `*_nome`
   livre absorve o uso real sem travar a feature — mesma decisão que a spec 018
   já tomou para propostas de cotação.
-- **Risco:** Pilar Campo é PWA offline; qualquer campo novo no formulário do dia
-  precisa entrar também na fila de sincronização local. Se a UI de campo for um
-  componente diferente do `RdoFormDialog` do escritório, checar isso
-  explicitamente no plano antes de codar (evita a feature "funcionar no
-  escritório, sumir no campo").
+- **Confirmado no plano (26/08):** o Pilar Campo é de fato um componente
+  separado (`CampoRegistrarDia.tsx`, não reusa `RdoFormDialog`), com sua
+  própria fila offline baseada em RPCs "registrar um item por vez"
+  (`campo_registrar_medicao` é o precedente exato). Os três campos novos
+  seguem esse padrão no campo e o de "substituir o conjunto" no escritório —
+  são modelos de escrita diferentes de propósito (ver "Fora de escopo"), não
+  inconsistência.
+- **Decisão (26/08):** foto no impedimento sai do MVP. O pipeline de foto atual
+  só resolve a dependência rdo→foto (o rdo já tem id real antes de subir
+  qualquer foto); impedimento criado offline só ganha id real depois de
+  sincronizar, e nenhum registro filho hoje (medição, tarefa) tem esse segundo
+  nível de espera. Fazer direito é spec própria; forçar agora seria a raiz de
+  um bug de sincronização.
 - Nenhuma decisão de arquitetura transversal aqui (extensão de padrão já
   existente); não abre ADR novo.
