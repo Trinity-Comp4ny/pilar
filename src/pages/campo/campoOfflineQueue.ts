@@ -34,6 +34,29 @@ export interface FilaTarefaVinculo {
   enviada: boolean;
 }
 
+/** Uma linha de efetivo por fornecedor lançada no dia (spec 062). */
+export interface FilaEfetivo {
+  fornecedorId: string | null;
+  fornecedorNome: string | null;
+  quantidade: number;
+  enviada: boolean;
+}
+
+/** Um impedimento lançado no dia (spec 062, sem foto neste MVP). */
+export interface FilaImpedimento {
+  descricao: string;
+  tipo: "falta_material" | "clima" | "pendencia_projeto" | "mao_de_obra" | "outro";
+  enviada: boolean;
+}
+
+/** Uma visita registrada no dia (spec 062). */
+export interface FilaVisita {
+  fornecedorId: string | null;
+  fornecedorNome: string | null;
+  observacao: string | null;
+  enviada: boolean;
+}
+
 export interface FilaDiaPayload {
   p_data: string;
   p_clima: string | null;
@@ -51,6 +74,9 @@ export interface FilaDiaItem {
   fotos: FilaFoto[];
   medicoes: FilaMedicao[];
   tarefas: FilaTarefaVinculo[];
+  efetivos: FilaEfetivo[];
+  impedimentos: FilaImpedimento[];
+  visitas: FilaVisita[];
   /** Preenchido após o primeiro `salvarRdo` bem-sucedido; pula o upsert no retry. */
   rdoId?: string;
   tentativas: number;
@@ -69,6 +95,9 @@ export interface SincronizarDeps {
   subirFoto(rdoId: string, foto: FilaFoto): Promise<{ ok: boolean; erro?: string }>;
   registrarMedicao(rdoId: string, medicao: FilaMedicao): Promise<{ ok: boolean; erro?: string }>;
   registrarTarefa(rdoId: string, vinculo: FilaTarefaVinculo): Promise<{ ok: boolean; erro?: string }>;
+  registrarEfetivo(rdoId: string, efetivo: FilaEfetivo): Promise<{ ok: boolean; erro?: string }>;
+  registrarImpedimento(rdoId: string, impedimento: FilaImpedimento): Promise<{ ok: boolean; erro?: string }>;
+  registrarVisita(rdoId: string, visita: FilaVisita): Promise<{ ok: boolean; erro?: string }>;
 }
 
 /**
@@ -116,8 +145,45 @@ export async function sincronizarItem(
     else algumaFalhou = true;
   }
 
+  const efetivos = [...item.efetivos];
+  for (let i = 0; i < efetivos.length; i++) {
+    if (efetivos[i].enviada) continue;
+    const r = await deps.registrarEfetivo(rdoId, efetivos[i]);
+    if (r.ok) efetivos[i] = { ...efetivos[i], enviada: true };
+    else algumaFalhou = true;
+  }
+
+  const impedimentos = [...item.impedimentos];
+  for (let i = 0; i < impedimentos.length; i++) {
+    if (impedimentos[i].enviada) continue;
+    const r = await deps.registrarImpedimento(rdoId, impedimentos[i]);
+    if (r.ok) impedimentos[i] = { ...impedimentos[i], enviada: true };
+    else algumaFalhou = true;
+  }
+
+  const visitas = [...item.visitas];
+  for (let i = 0; i < visitas.length; i++) {
+    if (visitas[i].enviada) continue;
+    const r = await deps.registrarVisita(rdoId, visitas[i]);
+    if (r.ok) visitas[i] = { ...visitas[i], enviada: true };
+    else algumaFalhou = true;
+  }
+
   if (algumaFalhou) {
-    return { ok: false, item: { ...item, rdoId, fotos, medicoes, tarefas, tentativas: item.tentativas + 1 } };
+    return {
+      ok: false,
+      item: {
+        ...item,
+        rdoId,
+        fotos,
+        medicoes,
+        tarefas,
+        efetivos,
+        impedimentos,
+        visitas,
+        tentativas: item.tentativas + 1,
+      },
+    };
   }
   return { ok: true };
 }
