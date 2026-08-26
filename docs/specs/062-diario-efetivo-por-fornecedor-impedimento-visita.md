@@ -96,8 +96,7 @@ Funcionais:
    fornecedor, os impedimentos (destacados) e as visitas — cada bloco só
    aparece se tiver algo lançado (sem bloco vazio poluindo o card).
 6. Tudo isto funciona **offline no Pilar Campo** igual ao resto do formulário do
-   dia: lançamentos ficam na fila local e sincronizam quando a rede volta,
-   incluindo a foto do impedimento.
+   dia: lançamentos ficam na fila local e sincronizam quando a rede volta.
 
 Não-funcionais:
 

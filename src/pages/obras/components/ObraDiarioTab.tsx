@@ -1,17 +1,20 @@
 import { useState } from "react";
 import { toast } from "sonner";
-import { CalendarClock, ClipboardList, Pencil, Plus, Trash2, Users } from "lucide-react";
+import { AlertTriangle, CalendarClock, ClipboardList, Pencil, Plus, Trash2, UserCheck, Users } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/EmptyState";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { formatDate } from "@/lib/format";
-import { climaLabel, condicaoLabel } from "@/lib/obras";
+import { climaLabel, condicaoLabel, tipoImpedimentoLabel } from "@/lib/obras";
 import { useObraRdos, useDeleteRdo, type RdoRow } from "@/hooks/useObraRdo";
 import { useObraRdoTarefas, type ResultadoRdoTarefa } from "@/hooks/useObraRdoTarefas";
 import { useObraFotos } from "@/hooks/useObraFotos";
 import { useObraMedicoes } from "@/hooks/useObraMedicoes";
+import { useObraRdoEfetivo } from "@/hooks/useObraRdoEfetivo";
+import { useObraRdoImpedimentos } from "@/hooks/useObraRdoImpedimentos";
+import { useObraRdoVisitas } from "@/hooks/useObraRdoVisitas";
 import { RdoFormDialog } from "./RdoFormDialog";
 
 const RESULTADO_LABEL: Record<ResultadoRdoTarefa, string> = {
@@ -40,6 +43,9 @@ export function ObraDiarioTab({ obraId, canEdit }: { obraId: string; canEdit: bo
   const { data: vinculos = [] } = useObraRdoTarefas(obraId);
   const { data: fotosPorRdo = {} } = useObraFotos(obraId);
   const { data: medicoesPorRdo = {} } = useObraMedicoes(obraId);
+  const { data: efetivos = [] } = useObraRdoEfetivo(obraId);
+  const { data: impedimentos = [] } = useObraRdoImpedimentos(obraId);
+  const { data: visitas = [] } = useObraRdoVisitas(obraId);
   const del = useDeleteRdo(obraId);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<RdoRow | null>(null);
@@ -133,9 +139,7 @@ export function ObraDiarioTab({ obraId, canEdit }: { obraId: string; canEdit: bo
                   if (doDia.length === 0) return null;
                   return (
                     <div className="space-y-1.5 border-t border-black/5 pt-3">
-                      <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-                        Tarefas
-                      </p>
+                      <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Tarefas</p>
                       {doDia.map((v) => (
                         <div key={v.id} className="flex items-start gap-2 text-sm">
                           <span
@@ -145,6 +149,66 @@ export function ObraDiarioTab({ obraId, canEdit }: { obraId: string; canEdit: bo
                           </span>
                           <span className="min-w-0 text-ink/90">
                             {v.tarefa?.titulo ?? "Tarefa removida"}
+                            {v.observacao && <span className="text-muted-foreground"> — {v.observacao}</span>}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })()}
+
+                {(() => {
+                  const doDia = efetivos.filter((e) => e.rdo_id === r.id);
+                  if (doDia.length === 0) return null;
+                  return (
+                    <div className="space-y-1.5 border-t border-black/5 pt-3">
+                      <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                        Efetivo por fornecedor
+                      </p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {doDia.map((e) => (
+                          <span
+                            key={e.id}
+                            className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-1 text-xs text-ink/90"
+                          >
+                            <Users className="h-3 w-3 text-muted-foreground" />
+                            {e.fornecedor?.nome ?? e.fornecedor_nome ?? "Sem nome"}: {e.quantidade}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {(() => {
+                  const doDia = impedimentos.filter((i) => i.rdo_id === r.id);
+                  if (doDia.length === 0) return null;
+                  return (
+                    <div className="space-y-1.5 rounded-lg border border-warning-mid-border bg-warning-soft p-2.5">
+                      <p className="inline-flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-warning-strong">
+                        <AlertTriangle className="h-3.5 w-3.5" />
+                        Impedimentos
+                      </p>
+                      {doDia.map((i) => (
+                        <p key={i.id} className="text-sm text-ink/90">
+                          <span className="font-medium">{tipoImpedimentoLabel(i.tipo)}:</span> {i.descricao}
+                        </p>
+                      ))}
+                    </div>
+                  );
+                })()}
+
+                {(() => {
+                  const doDia = visitas.filter((v) => v.rdo_id === r.id);
+                  if (doDia.length === 0) return null;
+                  return (
+                    <div className="space-y-1.5 border-t border-black/5 pt-3">
+                      <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Visitas</p>
+                      {doDia.map((v) => (
+                        <div key={v.id} className="flex items-start gap-2 text-sm">
+                          <UserCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                          <span className="min-w-0 text-ink/90">
+                            {v.fornecedor?.nome ?? v.fornecedor_nome ?? "Sem nome"}
                             {v.observacao && <span className="text-muted-foreground"> — {v.observacao}</span>}
                           </span>
                         </div>
@@ -185,10 +249,7 @@ export function ObraDiarioTab({ obraId, canEdit }: { obraId: string; canEdit: bo
                     <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Medição</p>
                     <div className="flex flex-wrap gap-1.5">
                       {medicoesPorRdo[r.id].map((m) => (
-                        <span
-                          key={m.id}
-                          className="rounded-full bg-muted px-2.5 py-1 text-xs text-ink/90"
-                        >
+                        <span key={m.id} className="rounded-full bg-muted px-2.5 py-1 text-xs text-ink/90">
                           {m.item}: {m.quantidade} {m.unidade}
                         </span>
                       ))}

@@ -17,6 +17,9 @@ import {
   SEM_ETAPA,
   STATUS_OBRA_OPCOES,
   totalAdiantadoEscritorio,
+  somaEfetivo,
+  tipoImpedimentoLabel,
+  TIPO_IMPEDIMENTO_OPCOES,
 } from "./obras";
 import { statusLabel } from "./status";
 
@@ -165,6 +168,29 @@ describe("labels de RDO", () => {
   it("devolve vazio para nulo", () => {
     expect(climaLabel(null)).toBe("");
     expect(condicaoLabel(undefined)).toBe("");
+  });
+});
+
+describe("somaEfetivo (spec 062)", () => {
+  it("null quando não há nenhuma linha (mantém o campo manual)", () => {
+    expect(somaEfetivo([])).toBeNull();
+  });
+
+  it("soma a quantidade de todas as linhas", () => {
+    expect(somaEfetivo([{ quantidade: 5 }, { quantidade: 3 }])).toBe(8);
+  });
+});
+
+describe("tipoImpedimentoLabel (spec 062)", () => {
+  it("traduz todos os tipos do registry", () => {
+    for (const opt of TIPO_IMPEDIMENTO_OPCOES) {
+      expect(tipoImpedimentoLabel(opt.value)).toBe(opt.label);
+    }
+  });
+
+  it("devolve vazio para nulo", () => {
+    expect(tipoImpedimentoLabel(null)).toBe("");
+    expect(tipoImpedimentoLabel(undefined)).toBe("");
   });
 });
 
