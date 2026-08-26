@@ -29,7 +29,7 @@ function SetaDiagonal({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 16 16" fill="none" className={className} aria-hidden="true">
       <path
-        d="M4.5 4.5h7v7M11.5 4.5 4.5 11.5"
+        d="M11.5 4.5v7h-7M11.5 11.5 4.5 4.5"
         stroke="currentColor"
         strokeWidth="1.6"
         strokeLinecap="round"
@@ -52,13 +52,10 @@ export function SplitButton({ children, href, to, onClick, tamanho = "md", class
       <span
         className={`relative flex items-center justify-center overflow-hidden rounded-r-full bg-brand text-ink ${m.quadrado}`}
       >
-        {/* A seta sai pela diagonal e uma cópia entra atrás, então o movimento
-            é contínuo em vez de um respiro no lugar. */}
+        {/* Uma seta só. A versão com cópia entrando por trás mostrava as duas
+            ao mesmo tempo em qualquer quadro intermediário, e lia como defeito. */}
         <SetaDiagonal
-          className={`${m.seta} transition-transform duration-300 group-hover:translate-x-3.5 group-hover:-translate-y-3.5`}
-        />
-        <SetaDiagonal
-          className={`${m.seta} absolute -translate-x-3.5 translate-y-3.5 transition-transform duration-300 group-hover:translate-x-0 group-hover:translate-y-0`}
+          className={`${m.seta} transition-transform duration-300 group-hover:translate-x-0.5 group-hover:translate-y-0.5`}
         />
       </span>
     </>
