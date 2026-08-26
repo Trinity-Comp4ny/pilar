@@ -37,23 +37,23 @@ export type Ato = (typeof ATOS)[number];
 
 export const MARCOS = [
   0, // repouso, no funil
-  700, // vaiAgentes
-  1500, // clicaAgentes
-  1900, // digita
-  4900, // pensa
-  5800, // rascunho
-  7600, // vaiConfirmar
-  8400, // confirma
-  9300, // vaiLeads
-  10100, // funil
-  11900, // vaiFinanceiro
-  12700, // financeiro
-  15300, // vaiProjetos
-  16100, // projeto
-  18600, // respira
+  1400, // vaiAgentes
+  2600, // clicaAgentes
+  3300, // digita
+  7200, // pensa
+  8600, // rascunho
+  11600, // vaiConfirmar
+  12800, // confirma
+  14400, // vaiLeads
+  15600, // funil
+  18600, // vaiFinanceiro
+  19800, // financeiro
+  23800, // vaiProjetos
+  25000, // projeto
+  29000, // respira
 ] as const;
 
-export const DURACAO_LOOP = 21000;
+export const DURACAO_LOOP = 32500;
 
 /** Índice de um ato, para comparar com o índice publicado pelo relógio. */
 export const idx = (ato: Ato) => ATOS.indexOf(ato);
