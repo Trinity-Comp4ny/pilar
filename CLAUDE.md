@@ -78,7 +78,13 @@ usar, o que é proibido). Regras que valem sempre:
 ## Documentação
 
 Toda a documentação vive em `docs/`, organizada por tema com índices navegáveis.
-Comece por `docs/README.md` (índice mestre). Temas: `strategy/` (produto, ICP,
+Comece por `docs/README.md` (índice mestre).
+
+**Decisões de direção do CEO: `docs/strategy/DECISOES.md`** (log vivo, mais recente primeiro).
+Toda decisão de direção nova entra lá na hora; quando conflitar com doc de estratégia mais
+antigo, vale o DECISOES.md. Os agentes de time (`.claude/agents/`) leem esse arquivo antes de
+qualquer análise (protocolo escrito nos próprios agentes). Decisão sensível (segurança, marca)
+fica fora do repo público, na memória do projeto. Temas: `strategy/` (produto, ICP,
 roadmap, **pricing**, concorrência), `security/` (segurança, compliance, auditoria),
 `operations/` (deploy, DR, incident, runbooks, monitoring), `architecture/` (ADRs),
 `legal/`. Inteligência de mercado em `research/` (índice `research/INDEX.md`).
