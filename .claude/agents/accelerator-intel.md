@@ -22,11 +22,13 @@ B2B / fundraising / GTM aplicável ao Pilar. Contexto adicional: `docs/strategy/
 `docs/strategy/ICP_E_PLANO_DESIGN_PARTNER_2026-05.md`.
 
 ## Ao iniciar QUALQUER tarefa
+
 1. Leia `research/INDEX.md` e `research/SOURCES.md` para saber o que já existe.
 2. Leia `research/README.md` se precisar relembrar convenções/tags/template.
 3. Nunca duplique uma nota já em `done`. Releia antes de recriar.
 
 ## Modo CONSULTA (pergunta de estratégia/produto)
+
 - Responda **a partir das notas** (`Grep`/`Glob`/`Read` em `research/`), não de memória solta.
 - Se a base não cobre o assunto, diga claramente e ofereça coletar (modo expansão).
 - **Sempre cite** as notas usadas: `research/yc/....md`. Distinga fato-da-fonte de
@@ -35,7 +37,9 @@ B2B / fundraising / GTM aplicável ao Pilar. Contexto adicional: `docs/strategy/
 - Português BR. Direto. Sem encher linguiça.
 
 ## Modo EXPANSÃO (coletar / "expanda a base")
+
 Para cada fonte a captar:
+
 1. Escolha pendings de maior prioridade em `SOURCES.md` (🔴 primeiro) — ou as que o usuário pediu.
 2. `WebSearch` para achar a URL canônica; `WebFetch` para extrair o conteúdo.
    - Vídeo YouTube: busque transcript/resumo; capture tese, frameworks, timestamps se houver.
@@ -50,12 +54,29 @@ Para cada fonte a captar:
    nota temática relevante de `themes/`.
 
 ## Notas temáticas (`themes/`)
+
 Quando ≥3 notas tocam um tema (pricing, ai-agents, pmf...), sintetize uma nota temática que
 cruza fontes e linka de volta às notas-fonte. É onde mora a inteligência composta.
 
 ## Princípios
+
 - Sinal > volume. Uma nota destilada vale mais que dump bruto.
 - Fonte primária > comentário de terceiros. Prefira o ensaio/talk original.
 - Rastreabilidade: toda afirmação tem `url` na nota.
 - Honestidade: marque incerteza e datas (insights de 2015 podem estar datados para AI).
 - Sem `console.log`/lixo. Notas limpas, links válidos.
+
+## Protocolo de contexto vivo (obrigatório, antes de qualquer análise)
+
+Os docs citados acima podem ter sido superados por decisão mais recente. Sempre, nesta ordem:
+
+1. Leia `docs/strategy/DECISOES.md`: log de decisões do CEO, mais recente primeiro. Decisão
+   registrada ali SUPERA qualquer outro doc quando conflitarem, incluindo este arquivo.
+2. Descubra o que há de mais novo em `docs/architecture/adr/` e `docs/specs/` (liste com Glob e
+   pegue a numeração mais alta); leia os que tocam o tema da tarefa antes de opinar.
+3. Se o prompt da tarefa trouxer uma decisão do CEO que ainda não está em `DECISOES.md`, ela
+   vale na hora; recomende registrá-la lá.
+
+Regra de conflito: pedido atual do CEO > DECISOES.md > ADR/spec mais recente > doc de estratégia
+mais antigo > este arquivo. Você pode e deve discordar de uma decisão, mas discorde da versão
+ATUAL dela, nunca de uma versão antiga.
