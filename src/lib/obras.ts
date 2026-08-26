@@ -8,13 +8,7 @@ import { parseDate, startOfDay } from "./cronograma";
 export type ObraStatus = "planejada" | "em_andamento" | "paralisada" | "concluida";
 
 /** Sensibilidade de uma tarefa ao clima (spec 040): dirige o alerta do cronograma. */
-export type SensivelClima =
-  | "concretagem"
-  | "impermeabilizacao"
-  | "pintura_externa"
-  | "icamento"
-  | "telhado"
-  | "outro";
+export type SensivelClima = "concretagem" | "impermeabilizacao" | "pintura_externa" | "icamento" | "telhado" | "outro";
 
 export const SENSIVEL_CLIMA_OPCOES: ReadonlyArray<{ value: SensivelClima; label: string }> = [
   { value: "concretagem", label: "Concretagem" },
@@ -28,8 +22,7 @@ export const SENSIVEL_CLIMA_OPCOES: ReadonlyArray<{ value: SensivelClima; label:
 const SENSIVEL_CLIMA_LABEL: Record<string, string> = Object.fromEntries(
   SENSIVEL_CLIMA_OPCOES.map((o) => [o.value, o.label])
 );
-export const sensivelClimaLabel = (v: string | null | undefined): string =>
-  v ? (SENSIVEL_CLIMA_LABEL[v] ?? v) : "";
+export const sensivelClimaLabel = (v: string | null | undefined): string => (v ? (SENSIVEL_CLIMA_LABEL[v] ?? v) : "");
 export type ClimaRdo = "ensolarado" | "nublado" | "chuvoso" | "chuva_forte";
 export type CondicaoTrabalho = "normal" | "parcial" | "paralisada";
 
@@ -58,6 +51,22 @@ const CONDICAO_LABEL: Record<string, string> = Object.fromEntries(CONDICAO_OPCOE
 
 export const climaLabel = (v: string | null | undefined): string => (v ? (CLIMA_LABEL[v] ?? v) : "");
 export const condicaoLabel = (v: string | null | undefined): string => (v ? (CONDICAO_LABEL[v] ?? v) : "");
+
+export type TipoImpedimento = "falta_material" | "clima" | "pendencia_projeto" | "mao_de_obra" | "outro";
+
+export const TIPO_IMPEDIMENTO_OPCOES: ReadonlyArray<{ value: TipoImpedimento; label: string }> = [
+  { value: "falta_material", label: "Falta de material" },
+  { value: "clima", label: "Clima" },
+  { value: "pendencia_projeto", label: "Pendência de projeto" },
+  { value: "mao_de_obra", label: "Mão de obra" },
+  { value: "outro", label: "Outro" },
+];
+
+const TIPO_IMPEDIMENTO_LABEL: Record<string, string> = Object.fromEntries(
+  TIPO_IMPEDIMENTO_OPCOES.map((o) => [o.value, o.label])
+);
+export const tipoImpedimentoLabel = (v: string | null | undefined): string =>
+  v ? (TIPO_IMPEDIMENTO_LABEL[v] ?? v) : "";
 
 /**
  * Avanço da obra = tarefas concluídas / total, em % inteiro (spec 015: avanço é
@@ -309,4 +318,15 @@ export function saldoMaterial(movs: ReadonlyArray<MovimentoCalc>): {
   const saldo = comprado - aplicado;
   const custoMedio = custoMedioEntradas(movs);
   return { comprado, aplicado, saldo, valorParado: custoMedio == null ? null : saldo * custoMedio };
+}
+
+/**
+ * Soma o efetivo por fornecedor lançado no dia (spec 062). Quando não há
+ * nenhuma linha, devolve `null` para o form manter o campo `efetivo` (total)
+ * como número solto editável — só passa a ser derivado quando há ao menos uma
+ * linha.
+ */
+export function somaEfetivo(linhas: ReadonlyArray<{ quantidade: number }>): number | null {
+  if (linhas.length === 0) return null;
+  return linhas.reduce((total, l) => total + l.quantidade, 0);
 }
