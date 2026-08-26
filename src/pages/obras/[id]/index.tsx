@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import {
   Boxes,
@@ -133,7 +133,11 @@ export default function ObraDetalhePage() {
     >
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
         <StatusBadge domain="obra" status={obra.status} />
-        {obra.projeto?.nome && <span>{obra.projeto.nome}</span>}
+        {obra.projeto?.nome && (
+          <Link to={`/projetos/${obra.projeto.id}`} className="underline-offset-2 hover:underline">
+            {obra.projeto.nome}
+          </Link>
+        )}
         <span className="inline-flex items-center gap-1.5">
           <User className="h-3.5 w-3.5" />
           {obra.responsavel?.nome ?? "Sem responsável"}
