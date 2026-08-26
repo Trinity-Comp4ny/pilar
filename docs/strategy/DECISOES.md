@@ -16,6 +16,32 @@ Regras de manutenção:
 
 ---
 
+## 2026-08-26 (à noite) · Gate D2 fechado: orçamento continua por disciplina/etapa, não por ambiente
+
+**Decisão:** o Pilar não migra pra orçamento paramétrico por ambiente (pavimento → ambiente →
+composição de custo, no espírito do Time 2 Build). O modelo atual (Escopo/Aditivo, por
+disciplina e etapa) é o certo pro ICP de engenharia multidisciplinar.
+
+**Contexto:** o gate D2 do backlog T2B→Pilar estava em aberto desde 25/08, com recomendação da
+mesa de agentes de só reabrir com sinal comportamental de design partner pagante (a amostra de
+validação disponível é viciada: Mawe é escritório de arquitetura, anti-ICP declarado; VRZ não
+paga). O CEO decidiu direto, sem esperar essa validação: disciplina/etapa é o modelo certo.
+
+**Supera:** fecha definitivamente a trilha C do Mapa de Melhorias (catálogo de composição de
+custo, templates por tipo de obra, composição global por pontos, BDI em cascata, orçamento por
+ambiente, IA de leitura de planta) — deixa de ser "gated D2, aguardando validação" e vira "não
+faz, decisão tomada". OBR-7 fecha. O item H4 do backlog original (perguntar aos design
+partners) fica sem objeto: a resposta não muda mais a decisão.
+
+**Como aplicar:** qualquer pedido futuro de "orçamento por ambiente" ou "catálogo de
+composição" nasce contra esta decisão; um agente pode discordar, mas citando este registro,
+não uma comparação genérica com concorrente. OBR-3 (medição → fatura) segue como indicador de
+avanço junto ao marco de faturamento (Opção A), nunca como motor automático de cobrança
+derivado de composição de preço, porque essa peça de infraestrutura (catálogo com preço
+unitário por item) não vai existir.
+
+---
+
 ## 2026-08-26 · Correção factual: Obras não está tão fraco quanto a entrada de 25/08 supõe
 
 **Não é uma nova decisão de direção** (a de 25/08 abaixo continua valendo: Obras é prioridade),
