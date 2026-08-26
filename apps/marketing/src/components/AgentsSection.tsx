@@ -1,6 +1,7 @@
 import { Lock, ScrollText, Sparkles, Undo2 } from "lucide-react";
 import { Reveal } from "./Reveal";
 import { RevealGroup, TextReveal } from "./motion";
+import { AgentDemo } from "./agents/AgentDemo";
 
 /**
  * Agentes de IA, o clímax escuro da página.
@@ -15,9 +16,21 @@ import { RevealGroup, TextReveal } from "./motion";
  */
 
 const PASSOS = [
-  { n: "01", titulo: "Você escreve em português", texto: "“Recebi 128 mil do centro cirúrgico, primeira de três”." },
-  { n: "02", titulo: "O agente monta o registro", texto: "Acha o projeto, calcula a parcela e prepara o lançamento." },
-  { n: "03", titulo: "Você confirma", texto: "Só depois do seu aval alguma coisa é gravada." },
+  {
+    n: "01",
+    titulo: "Você escreve em português",
+    texto: "Nada de formulário: o pedido vai como você contaria para alguém da equipe.",
+  },
+  {
+    n: "02",
+    titulo: "O agente monta o registro",
+    texto: "Acha o projeto pelo nome, calcula a parcela e preenche o lançamento inteiro.",
+  },
+  {
+    n: "03",
+    titulo: "Você confirma, e só então grava",
+    texto: "O número aparece no financeiro e a margem do projeto se refaz na hora.",
+  },
 ];
 
 const GARANTIAS = [
@@ -28,37 +41,46 @@ const GARANTIAS = [
 
 export function AgentsSection() {
   return (
-    <section id="agentes" className="relative py-24 md:py-32 bg-ink text-white scroll-mt-28 overflow-hidden">
+    <section id="agentes" className="relative py-16 md:py-32 bg-ink text-white scroll-mt-28 overflow-hidden">
       <div
         aria-hidden="true"
         className="absolute -top-24 left-1/2 -translate-x-1/2 w-[760px] h-[420px] rounded-full bg-brand/12 blur-[120px] pointer-events-none"
       />
 
-      <div className="relative mx-auto max-w-6xl px-6 md:px-10">
+      <div className="relative mx-auto max-w-6xl px-5 md:px-10">
         <div className="max-w-2xl mb-14">
           <TextReveal
             as="h2"
             text="A IA prepara o trabalho. Você dá a palavra final."
             highlight="Você dá a palavra final."
             highlightClassName="italic text-white/45"
-            className="text-[clamp(30px,4.2vw,52px)] font-medium text-white leading-[1.08] tracking-[-0.035em]"
+            className="text-[52px] max-[1100px]:text-[42px] max-[850px]:text-[29px] max-[420px]:text-[25px] font-medium text-white leading-[1.08] tracking-[-0.035em]"
           />
         </div>
 
-        {/* Três passos, uma linha cada. */}
-        <RevealGroup className="grid md:grid-cols-3 gap-x-8 gap-y-10 mb-14" stagger={0.1}>
-          {PASSOS.map((p) => (
-            <RevealGroup.Item key={p.n} variant="up">
-              <div>
-                <span className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-brand text-ink text-[12px] font-semibold mb-4">
-                  {p.n}
-                </span>
-                <h3 className="text-[17px] font-medium text-white mb-1.5">{p.titulo}</h3>
-                <p className="text-[13.5px] text-white/55 leading-relaxed">{p.texto}</p>
-              </div>
-            </RevealGroup.Item>
-          ))}
-        </RevealGroup>
+        {/* A demonstração à esquerda, os passos à direita: o visitante vê
+            acontecendo e lê o que está acontecendo, lado a lado. */}
+        <div className="grid lg:grid-cols-[1.05fr_1fr] gap-8 lg:gap-14 items-center mb-14">
+          <Reveal variant="left" loose>
+            <AgentDemo />
+          </Reveal>
+
+          <RevealGroup className="flex flex-col gap-7" stagger={0.12}>
+            {PASSOS.map((p) => (
+              <RevealGroup.Item key={p.n} variant="right">
+                <div className="flex gap-4">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand text-[12px] font-semibold text-ink">
+                    {p.n}
+                  </span>
+                  <div className="pt-1">
+                    <h3 className="mb-1.5 text-[17px] font-medium text-white">{p.titulo}</h3>
+                    <p className="text-[13.5px] leading-relaxed text-white/55">{p.texto}</p>
+                  </div>
+                </div>
+              </RevealGroup.Item>
+            ))}
+          </RevealGroup>
+        </div>
 
         <Reveal variant="fade" delay={0.1}>
           <div className="flex flex-wrap items-center gap-x-8 gap-y-3 pt-8 border-t border-white/10">
