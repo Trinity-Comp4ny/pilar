@@ -2,11 +2,16 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { createInstrumentedFetch, routeOf, redactQuery, SupabaseRequestError } from "./supabaseFetch";
 
 const captureException = vi.fn((..._args: unknown[]) => "evt-1");
+const refreshSession = vi.fn(async () => ({ error: null as { message: string } | null }));
 
 vi.mock("./monitoring", () => ({
   monitoring: {
     captureException: (...args: unknown[]) => captureException(...args),
   },
+}));
+
+vi.mock("./supabase", () => ({
+  supabase: { auth: { refreshSession: () => refreshSession() } },
 }));
 
 const URL_BASE = "https://proj.supabase.co/rest/v1/disciplinas";
@@ -52,7 +57,10 @@ describe("createInstrumentedFetch", () => {
 
   it("reporta 403 de RLS como warning agrupado por rota e status", async () => {
     const f = createInstrumentedFetch(async () =>
-      jsonResponse(403, { code: "42501", message: 'new row violates row-level security policy for table "disciplinas"' })
+      jsonResponse(403, {
+        code: "42501",
+        message: 'new row violates row-level security policy for table "disciplinas"',
+      })
     );
 
     await f(URL_BASE, { method: "POST" });
@@ -134,5 +142,55 @@ describe("createInstrumentedFetch", () => {
 
     const [error] = captureException.mock.calls[0] as unknown as [SupabaseRequestError];
     expect(error.message).toContain("DELETE");
+  });
+});
+
+describe("retry em JWT com iat no futuro (PGRST303)", () => {
+  beforeEach(() => {
+    captureException.mockClear();
+    refreshSession.mockClear();
+    refreshSession.mockResolvedValue({ error: null });
+  });
+
+  it("renova a sessão e repete a chamada sem reportar falha", async () => {
+    let calls = 0;
+    const f = createInstrumentedFetch(async () => {
+      calls++;
+      return calls === 1
+        ? jsonResponse(401, { code: "PGRST303", message: "JWT issued at future" })
+        : jsonResponse(200, [{ id: "1" }]);
+    });
+
+    const res = await f(URL_BASE);
+    await flush();
+
+    expect(calls).toBe(2);
+    expect(refreshSession).toHaveBeenCalledTimes(1);
+    expect(res.status).toBe(200);
+    expect(captureException).not.toHaveBeenCalled();
+  });
+
+  it("reporta a falha original quando o refresh não resolve", async () => {
+    refreshSession.mockResolvedValue({ error: { message: "refresh failed" } });
+    const f = createInstrumentedFetch(async () =>
+      jsonResponse(401, { code: "PGRST303", message: "JWT issued at future" })
+    );
+
+    const res = await f(URL_BASE);
+    await flush();
+
+    expect(refreshSession).toHaveBeenCalledTimes(1);
+    expect(res.status).toBe(401);
+    expect(captureException).toHaveBeenCalledTimes(1);
+  });
+
+  it("não mexe em 401 sem o code PGRST303", async () => {
+    const f = createInstrumentedFetch(async () => jsonResponse(401, { message: "JWT expired" }));
+
+    await f(URL_BASE);
+    await flush();
+
+    expect(refreshSession).not.toHaveBeenCalled();
+    expect(captureException).toHaveBeenCalledTimes(1);
   });
 });
