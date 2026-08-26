@@ -1,7 +1,9 @@
 import { useLayoutEffect, useRef } from "react";
 import { m, useInView, useReducedMotion } from "framer-motion";
 import { EASE } from "../../lib/motion";
-import { BarraCopiloto, BarraLateral, BarraTopo, CartaoRascunho, CursorAgente, TelaFinanceiro, TelaFunil, TelaProjeto } from "./SceneParts";
+import { BarraCopiloto, CartaoRascunho, CursorAgente } from "./SceneParts";
+import { AppSidebar, BarraNavegador } from "./SceneChrome";
+import { TelaFinanceiro, TelaLeads, TelaProjeto } from "./SceneScreens";
 import { HeroSceneMobile } from "./HeroSceneMobile";
 import { CURSOR, DURACAO_LOOP, MARCOS, PALCO, ATOS, idx, telaDoAto } from "./scene";
 import { useAbaVisivel, useScene } from "./useScene";
@@ -79,10 +81,10 @@ export function HeroScene() {
           className="absolute top-0 left-0 origin-top-left"
           style={{ width: PALCO.largura, height: PALCO.altura, transform: "scale(var(--escala, 1))" }}
         >
-          <BarraTopo />
+          <BarraNavegador />
 
-          <div className="flex" style={{ height: PALCO.altura - 44 }}>
-            <BarraLateral ato={ato} />
+          <div className="flex" style={{ height: PALCO.altura - 40 }}>
+            <AppSidebar ato={ato} />
 
             <div className="relative flex-1 overflow-hidden">
               {/* Uma tela por vez, com troca suave: é o agente navegando, não um
@@ -94,7 +96,7 @@ export function HeroScene() {
                 animate={{ opacity: 1, x: 0, filter: "blur(0px)" }}
                 transition={{ duration: 0.5, ease: EASE.out }}
               >
-                {tela === "funil" && <TelaFunil ato={ato} />}
+                {tela === "funil" && <TelaLeads ato={ato} />}
                 {tela === "financeiro" && <TelaFinanceiro ato={ato} />}
                 {tela === "projeto" && <TelaProjeto ato={ato} />}
               </m.div>
