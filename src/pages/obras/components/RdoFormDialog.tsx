@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
-import { Loader2, Plus } from "lucide-react";
+import { AlertTriangle, Loader2, Plus, Trash2, UserCheck, Users } from "lucide-react";
 import { FormDialog } from "@/components/FormDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,13 +11,22 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CLIMA_OPCOES, CONDICAO_OPCOES } from "@/lib/obras";
+import { CLIMA_OPCOES, CONDICAO_OPCOES, TIPO_IMPEDIMENTO_OPCOES, somaEfetivo, type TipoImpedimento } from "@/lib/obras";
 import { useCreateRdo, useUpdateRdo, type RdoRow } from "@/hooks/useObraRdo";
 import { useObraTarefas, useCreateObraTarefa } from "@/hooks/useObraTarefas";
 import { useObraFrentes } from "@/hooks/useObraFrentes";
 import { useObraRdoTarefas, useSaveRdoTarefas, type ResultadoRdoTarefa } from "@/hooks/useObraRdoTarefas";
+import { useFornecedoresLite } from "@/hooks/useFornecedorDetalhe";
+import { useObraRdoEfetivo, useSaveRdoEfetivo, type EntradaEfetivo } from "@/hooks/useObraRdoEfetivo";
+import {
+  useObraRdoImpedimentos,
+  useSaveRdoImpedimentos,
+  type EntradaImpedimento,
+} from "@/hooks/useObraRdoImpedimentos";
+import { useObraRdoVisitas, useSaveRdoVisitas, type EntradaVisita } from "@/hooks/useObraRdoVisitas";
 
 const NAO_INFORMADO = "__none__";
+const OUTRO = "__outro__";
 
 const RESULTADO_OPCOES: ReadonlyArray<{ value: ResultadoRdoTarefa; label: string }> = [
   { value: "avancou", label: "Avançou" },
@@ -78,16 +87,41 @@ export function RdoFormDialog({ open, onOpenChange, obraId, rdos, rdoInicial }: 
   const criar = useCreateRdo();
   const atualizar = useUpdateRdo();
   const salvarTarefas = useSaveRdoTarefas();
+  const salvarEfetivo = useSaveRdoEfetivo();
+  const salvarImpedimentos = useSaveRdoImpedimentos();
+  const salvarVisitas = useSaveRdoVisitas();
   const criarTarefa = useCreateObraTarefa(obraId, null);
   const [editandoId, setEditandoId] = useState<string | null>(null);
 
   const { data: tarefas = [] } = useObraTarefas(obraId);
   const { data: frentes = [] } = useObraFrentes(obraId);
   const { data: vinculos = [] } = useObraRdoTarefas(obraId);
+  const { data: fornecedores = [] } = useFornecedoresLite();
+  const { data: efetivoExistente = [] } = useObraRdoEfetivo(obraId);
+  const { data: impedimentosExistentes = [] } = useObraRdoImpedimentos(obraId);
+  const { data: visitasExistentes = [] } = useObraRdoVisitas(obraId);
 
   // tarefaId → seleção do dia (resultado + observação).
   const [sel, setSel] = useState<Record<string, SelTarefa>>({});
   const [novaTarefa, setNovaTarefa] = useState<{ titulo: string; frenteId: string }>({ titulo: "", frenteId: "" });
+
+  const [efetivoLinhas, setEfetivoLinhas] = useState<EntradaEfetivo[]>([]);
+  const [impedimentoLinhas, setImpedimentoLinhas] = useState<EntradaImpedimento[]>([]);
+  const [visitaLinhas, setVisitaLinhas] = useState<EntradaVisita[]>([]);
+  const [novoEfetivo, setNovoEfetivo] = useState<{ fornecedorId: string; nomeLivre: string; quantidade: string }>({
+    fornecedorId: "",
+    nomeLivre: "",
+    quantidade: "",
+  });
+  const [novoImpedimento, setNovoImpedimento] = useState<{ descricao: string; tipo: TipoImpedimento }>({
+    descricao: "",
+    tipo: "falta_material",
+  });
+  const [novaVisita, setNovaVisita] = useState<{ fornecedorId: string; nomeLivre: string; observacao: string }>({
+    fornecedorId: "",
+    nomeLivre: "",
+    observacao: "",
+  });
 
   const form = useForm<FormData>({ resolver: zodResolver(schema), defaultValues: vazio() });
   const { register, handleSubmit, reset, watch, setValue, formState } = form;
@@ -96,6 +130,9 @@ export function RdoFormDialog({ open, onOpenChange, obraId, rdos, rdoInicial }: 
   useEffect(() => {
     if (!open) return;
     setNovaTarefa({ titulo: "", frenteId: "" });
+    setNovoEfetivo({ fornecedorId: "", nomeLivre: "", quantidade: "" });
+    setNovoImpedimento({ descricao: "", tipo: "falta_material" });
+    setNovaVisita({ fornecedorId: "", nomeLivre: "", observacao: "" });
     if (rdoInicial) {
       setEditandoId(rdoInicial.id);
       reset(doRdo(rdoInicial));
@@ -118,6 +155,32 @@ export function RdoFormDialog({ open, onOpenChange, obraId, rdos, rdoInicial }: 
     );
   }, [open, editandoId, vinculos]);
 
+  // Prefill de efetivo/impedimento/visita quando edita um dia existente.
+  useEffect(() => {
+    if (!open) return;
+    if (!editandoId) {
+      setEfetivoLinhas([]);
+      setImpedimentoLinhas([]);
+      setVisitaLinhas([]);
+      return;
+    }
+    setEfetivoLinhas(
+      efetivoExistente
+        .filter((e) => e.rdo_id === editandoId)
+        .map((e) => ({ fornecedor_id: e.fornecedor_id, fornecedor_nome: e.fornecedor_nome, quantidade: e.quantidade }))
+    );
+    setImpedimentoLinhas(
+      impedimentosExistentes
+        .filter((i) => i.rdo_id === editandoId)
+        .map((i) => ({ descricao: i.descricao, tipo: i.tipo }))
+    );
+    setVisitaLinhas(
+      visitasExistentes
+        .filter((v) => v.rdo_id === editandoId)
+        .map((v) => ({ fornecedor_id: v.fornecedor_id, fornecedor_nome: v.fornecedor_nome, observacao: v.observacao }))
+    );
+  }, [open, editandoId, efetivoExistente, impedimentosExistentes, visitasExistentes]);
+
   // Regra de 1 por dia: se a data escolhida já tem RDO, passa a editar aquele.
   useEffect(() => {
     if (!open || !dataSel) return;
@@ -132,7 +195,60 @@ export function RdoFormDialog({ open, onOpenChange, obraId, rdos, rdoInicial }: 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dataSel]);
 
+  // Mantém o campo "Efetivo (total)" visualmente em sincronia com a soma das
+  // linhas por fornecedor, mesmo desabilitado (spec 062).
+  useEffect(() => {
+    const total = somaEfetivo(efetivoLinhas);
+    if (total != null) setValue("efetivo", String(total));
+  }, [efetivoLinhas, setValue]);
+
   const frenteNome = useMemo(() => new Map(frentes.map((f) => [f.id, f.nome])), [frentes]);
+  const fornecedorNomePorId = useMemo(() => new Map(fornecedores.map((f) => [f.id, f.nome])), [fornecedores]);
+
+  const nomeLinhaFornecedor = (fornecedorId?: string | null, fornecedorNome?: string | null) =>
+    (fornecedorId && fornecedorNomePorId.get(fornecedorId)) || fornecedorNome || "Sem nome";
+
+  const adicionarEfetivo = () => {
+    const quantidade = Number(novoEfetivo.quantidade);
+    if (!Number.isFinite(quantidade) || quantidade <= 0) return;
+    const usaLivre = novoEfetivo.fornecedorId === OUTRO;
+    if (!novoEfetivo.fornecedorId) return;
+    if (usaLivre && !novoEfetivo.nomeLivre.trim()) return;
+    setEfetivoLinhas((prev) => [
+      ...prev,
+      {
+        fornecedor_id: usaLivre ? null : novoEfetivo.fornecedorId,
+        fornecedor_nome: usaLivre ? novoEfetivo.nomeLivre.trim() : null,
+        quantidade,
+      },
+    ]);
+    setNovoEfetivo({ fornecedorId: "", nomeLivre: "", quantidade: "" });
+  };
+  const removerEfetivo = (i: number) => setEfetivoLinhas((prev) => prev.filter((_, idx) => idx !== i));
+
+  const adicionarImpedimento = () => {
+    const descricao = novoImpedimento.descricao.trim();
+    if (!descricao) return;
+    setImpedimentoLinhas((prev) => [...prev, { descricao, tipo: novoImpedimento.tipo }]);
+    setNovoImpedimento({ descricao: "", tipo: "falta_material" });
+  };
+  const removerImpedimento = (i: number) => setImpedimentoLinhas((prev) => prev.filter((_, idx) => idx !== i));
+
+  const adicionarVisita = () => {
+    const usaLivre = novaVisita.fornecedorId === OUTRO;
+    if (!novaVisita.fornecedorId) return;
+    if (usaLivre && !novaVisita.nomeLivre.trim()) return;
+    setVisitaLinhas((prev) => [
+      ...prev,
+      {
+        fornecedor_id: usaLivre ? null : novaVisita.fornecedorId,
+        fornecedor_nome: usaLivre ? novaVisita.nomeLivre.trim() : null,
+        observacao: novaVisita.observacao.trim() || null,
+      },
+    ]);
+    setNovaVisita({ fornecedorId: "", nomeLivre: "", observacao: "" });
+  };
+  const removerVisita = (i: number) => setVisitaLinhas((prev) => prev.filter((_, idx) => idx !== i));
 
   const toggleTarefa = (id: string) => {
     setSel((prev) => {
@@ -164,12 +280,15 @@ export function RdoFormDialog({ open, onOpenChange, obraId, rdos, rdoInicial }: 
   };
 
   const onSubmit = handleSubmit(async (d) => {
+    // efetivo (total) é derivado da soma das linhas quando há alguma lançada;
+    // sem nenhuma linha, continua o número solto do campo (spec 062).
+    const efetivoDerivado = somaEfetivo(efetivoLinhas);
     const payload = {
       obra_id: obraId,
       data: d.data,
       clima: d.clima === NAO_INFORMADO ? null : d.clima,
       condicao_trabalho: d.condicao_trabalho === NAO_INFORMADO ? null : d.condicao_trabalho,
-      efetivo: d.efetivo.trim() === "" ? null : Number(d.efetivo),
+      efetivo: efetivoDerivado ?? (d.efetivo.trim() === "" ? null : Number(d.efetivo)),
       atividades: d.atividades.trim() || null,
       ocorrencias: d.ocorrencias.trim() || null,
       pendencias: d.pendencias.trim() || null,
@@ -184,7 +303,12 @@ export function RdoFormDialog({ open, onOpenChange, obraId, rdos, rdoInicial }: 
         resultado: s.resultado,
         observacao: s.observacao,
       }));
-      await salvarTarefas.mutateAsync({ rdoId: rdo.id, obraId, entradas });
+      await Promise.all([
+        salvarTarefas.mutateAsync({ rdoId: rdo.id, obraId, entradas }),
+        salvarEfetivo.mutateAsync({ rdoId: rdo.id, obraId, entradas: efetivoLinhas }),
+        salvarImpedimentos.mutateAsync({ rdoId: rdo.id, obraId, entradas: impedimentoLinhas }),
+        salvarVisitas.mutateAsync({ rdoId: rdo.id, obraId, entradas: visitaLinhas }),
+      ]);
 
       toast.success(editandoId ? "Registro atualizado" : "Dia registrado");
       onOpenChange(false);
@@ -195,7 +319,13 @@ export function RdoFormDialog({ open, onOpenChange, obraId, rdos, rdoInicial }: 
     }
   });
 
-  const saving = criar.isPending || atualizar.isPending || salvarTarefas.isPending;
+  const saving =
+    criar.isPending ||
+    atualizar.isPending ||
+    salvarTarefas.isPending ||
+    salvarEfetivo.isPending ||
+    salvarImpedimentos.isPending ||
+    salvarVisitas.isPending;
 
   return (
     <FormDialog
@@ -215,7 +345,10 @@ export function RdoFormDialog({ open, onOpenChange, obraId, rdos, rdoInicial }: 
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="efetivo">Efetivo (pessoas)</Label>
-          <Input id="efetivo" type="number" min={0} {...register("efetivo")} />
+          <Input id="efetivo" type="number" min={0} disabled={efetivoLinhas.length > 0} {...register("efetivo")} />
+          {efetivoLinhas.length > 0 && (
+            <p className="text-[11px] text-muted-foreground">Somado a partir do efetivo por fornecedor abaixo.</p>
+          )}
         </div>
       </div>
 
@@ -358,6 +491,214 @@ export function RdoFormDialog({ open, onOpenChange, obraId, rdos, rdoInicial }: 
             disabled={!novaTarefa.titulo.trim() || criarTarefa.isPending}
           >
             {criarTarefa.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+          </Button>
+        </div>
+      </div>
+
+      {/* Efetivo por fornecedor — quem esteve na obra, não só quantas pessoas (spec 062). */}
+      <div className="space-y-2 rounded-xl border border-black/5 p-3">
+        <Label className="text-sm">Efetivo por fornecedor</Label>
+        {efetivoLinhas.length > 0 && (
+          <div className="space-y-1">
+            {efetivoLinhas.map((e, i) => (
+              <div
+                key={i}
+                className="flex items-center justify-between gap-2 rounded-lg bg-muted/40 px-2.5 py-1.5 text-sm"
+              >
+                <span className="inline-flex items-center gap-1.5 text-ink/90">
+                  <Users className="h-3.5 w-3.5 text-muted-foreground" />
+                  {nomeLinhaFornecedor(e.fornecedor_id, e.fornecedor_nome)}: {e.quantidade}
+                </span>
+                <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => removerEfetivo(i)}>
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
+        <div className="flex flex-col gap-2 border-t border-black/5 pt-2 sm:flex-row">
+          <Select
+            value={novoEfetivo.fornecedorId || NAO_INFORMADO}
+            onValueChange={(v) => setNovoEfetivo((p) => ({ ...p, fornecedorId: v === NAO_INFORMADO ? "" : v }))}
+          >
+            <SelectTrigger className="h-8 flex-1">
+              <SelectValue placeholder="Fornecedor" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={NAO_INFORMADO}>Selecione</SelectItem>
+              {fornecedores.map((f) => (
+                <SelectItem key={f.id} value={f.id}>
+                  {f.nome}
+                  {f.cnpj ? ` · ${f.cnpj}` : ""}
+                </SelectItem>
+              ))}
+              <SelectItem value={OUTRO}>Outro (digitar nome)</SelectItem>
+            </SelectContent>
+          </Select>
+          {novoEfetivo.fornecedorId === OUTRO && (
+            <Input
+              className="h-8 flex-1"
+              placeholder="Nome do prestador"
+              value={novoEfetivo.nomeLivre}
+              onChange={(e) => setNovoEfetivo((p) => ({ ...p, nomeLivre: e.target.value }))}
+            />
+          )}
+          <Input
+            className="h-8 w-full sm:w-24"
+            type="number"
+            min={1}
+            placeholder="Qtd"
+            value={novoEfetivo.quantidade}
+            onChange={(e) => setNovoEfetivo((p) => ({ ...p, quantidade: e.target.value }))}
+          />
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-8 shrink-0"
+            onClick={adicionarEfetivo}
+            disabled={!novoEfetivo.fornecedorId || !novoEfetivo.quantidade}
+          >
+            <Plus className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+
+      {/* Impedimentos — o que travou o serviço, tipado e destacado, separado de Ocorrências (spec 062). */}
+      <div className="space-y-2 rounded-xl border border-black/5 p-3">
+        <Label className="inline-flex items-center gap-1.5 text-sm">
+          <AlertTriangle className="h-3.5 w-3.5 text-warning-strong" />
+          Impedimentos
+        </Label>
+        {impedimentoLinhas.length > 0 && (
+          <div className="space-y-1">
+            {impedimentoLinhas.map((i, idx) => (
+              <div
+                key={idx}
+                className="flex items-start justify-between gap-2 rounded-lg bg-warning-soft px-2.5 py-1.5 text-sm"
+              >
+                <span className="text-ink/90">
+                  <span className="font-medium">{TIPO_IMPEDIMENTO_OPCOES.find((o) => o.value === i.tipo)?.label}:</span>{" "}
+                  {i.descricao}
+                </span>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6 shrink-0"
+                  onClick={() => removerImpedimento(idx)}
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
+        <div className="flex flex-col gap-2 border-t border-black/5 pt-2 sm:flex-row">
+          <Select
+            value={novoImpedimento.tipo}
+            onValueChange={(v) => setNovoImpedimento((p) => ({ ...p, tipo: v as TipoImpedimento }))}
+          >
+            <SelectTrigger className="h-8 w-full sm:w-44">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {TIPO_IMPEDIMENTO_OPCOES.map((o) => (
+                <SelectItem key={o.value} value={o.value}>
+                  {o.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Input
+            className="h-8 flex-1"
+            placeholder="O que travou (ex: falta de cimento)"
+            value={novoImpedimento.descricao}
+            onChange={(e) => setNovoImpedimento((p) => ({ ...p, descricao: e.target.value }))}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                adicionarImpedimento();
+              }
+            }}
+          />
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-8 shrink-0"
+            onClick={adicionarImpedimento}
+            disabled={!novoImpedimento.descricao.trim()}
+          >
+            <Plus className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+
+      {/* Visitas — quem esteve na obra sem trabalhar (arquiteto, cliente, fiscal) (spec 062). */}
+      <div className="space-y-2 rounded-xl border border-black/5 p-3">
+        <Label className="text-sm">Visitas</Label>
+        {visitaLinhas.length > 0 && (
+          <div className="space-y-1">
+            {visitaLinhas.map((v, i) => (
+              <div
+                key={i}
+                className="flex items-center justify-between gap-2 rounded-lg bg-muted/40 px-2.5 py-1.5 text-sm"
+              >
+                <span className="inline-flex items-center gap-1.5 text-ink/90">
+                  <UserCheck className="h-3.5 w-3.5 text-muted-foreground" />
+                  {nomeLinhaFornecedor(v.fornecedor_id, v.fornecedor_nome)}
+                  {v.observacao && <span className="text-muted-foreground"> — {v.observacao}</span>}
+                </span>
+                <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => removerVisita(i)}>
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
+        <div className="flex flex-col gap-2 border-t border-black/5 pt-2 sm:flex-row">
+          <Select
+            value={novaVisita.fornecedorId || NAO_INFORMADO}
+            onValueChange={(v) => setNovaVisita((p) => ({ ...p, fornecedorId: v === NAO_INFORMADO ? "" : v }))}
+          >
+            <SelectTrigger className="h-8 flex-1">
+              <SelectValue placeholder="Visitante" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={NAO_INFORMADO}>Selecione</SelectItem>
+              {fornecedores.map((f) => (
+                <SelectItem key={f.id} value={f.id}>
+                  {f.nome}
+                  {f.cnpj ? ` · ${f.cnpj}` : ""}
+                </SelectItem>
+              ))}
+              <SelectItem value={OUTRO}>Outro (digitar nome)</SelectItem>
+            </SelectContent>
+          </Select>
+          {novaVisita.fornecedorId === OUTRO && (
+            <Input
+              className="h-8 flex-1"
+              placeholder="Nome do visitante"
+              value={novaVisita.nomeLivre}
+              onChange={(e) => setNovaVisita((p) => ({ ...p, nomeLivre: e.target.value }))}
+            />
+          )}
+          <Input
+            className="h-8 flex-1"
+            placeholder="Motivo (opcional)"
+            value={novaVisita.observacao}
+            onChange={(e) => setNovaVisita((p) => ({ ...p, observacao: e.target.value }))}
+          />
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-8 shrink-0"
+            onClick={adicionarVisita}
+            disabled={!novaVisita.fornecedorId}
+          >
+            <Plus className="h-4 w-4" />
           </Button>
         </div>
       </div>

@@ -3441,6 +3441,71 @@ export type Database = {
           },
         ]
       }
+      obra_rdo_efetivo: {
+        Row: {
+          campo_account_id: string | null
+          created_at: string
+          created_by: string | null
+          empresa_id: string
+          fornecedor_id: string | null
+          fornecedor_nome: string | null
+          id: string
+          quantidade: number
+          rdo_id: string
+        }
+        Insert: {
+          campo_account_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          empresa_id: string
+          fornecedor_id?: string | null
+          fornecedor_nome?: string | null
+          id?: string
+          quantidade: number
+          rdo_id: string
+        }
+        Update: {
+          campo_account_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          empresa_id?: string
+          fornecedor_id?: string | null
+          fornecedor_nome?: string | null
+          id?: string
+          quantidade?: number
+          rdo_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "obra_rdo_efetivo_campo_account_id_fkey"
+            columns: ["campo_account_id"]
+            isOneToOne: false
+            referencedRelation: "campo_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_rdo_efetivo_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_rdo_efetivo_fornecedor_id_fkey"
+            columns: ["fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "fornecedores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_rdo_efetivo_rdo_id_fkey"
+            columns: ["rdo_id"]
+            isOneToOne: false
+            referencedRelation: "obra_rdo"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       obra_rdo_foto: {
         Row: {
           campo_account_id: string | null
@@ -3496,6 +3561,61 @@ export type Database = {
           },
           {
             foreignKeyName: "obra_rdo_foto_rdo_id_fkey"
+            columns: ["rdo_id"]
+            isOneToOne: false
+            referencedRelation: "obra_rdo"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      obra_rdo_impedimento: {
+        Row: {
+          campo_account_id: string | null
+          created_at: string
+          created_by: string | null
+          descricao: string
+          empresa_id: string
+          id: string
+          rdo_id: string
+          tipo: string
+        }
+        Insert: {
+          campo_account_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          descricao: string
+          empresa_id: string
+          id?: string
+          rdo_id: string
+          tipo: string
+        }
+        Update: {
+          campo_account_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          descricao?: string
+          empresa_id?: string
+          id?: string
+          rdo_id?: string
+          tipo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "obra_rdo_impedimento_campo_account_id_fkey"
+            columns: ["campo_account_id"]
+            isOneToOne: false
+            referencedRelation: "campo_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_rdo_impedimento_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_rdo_impedimento_rdo_id_fkey"
             columns: ["rdo_id"]
             isOneToOne: false
             referencedRelation: "obra_rdo"
@@ -3632,6 +3752,71 @@ export type Database = {
             columns: ["tarefa_id"]
             isOneToOne: false
             referencedRelation: "tarefas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      obra_rdo_visita: {
+        Row: {
+          campo_account_id: string | null
+          created_at: string
+          created_by: string | null
+          empresa_id: string
+          fornecedor_id: string | null
+          fornecedor_nome: string | null
+          id: string
+          observacao: string | null
+          rdo_id: string
+        }
+        Insert: {
+          campo_account_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          empresa_id: string
+          fornecedor_id?: string | null
+          fornecedor_nome?: string | null
+          id?: string
+          observacao?: string | null
+          rdo_id: string
+        }
+        Update: {
+          campo_account_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          empresa_id?: string
+          fornecedor_id?: string | null
+          fornecedor_nome?: string | null
+          id?: string
+          observacao?: string | null
+          rdo_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "obra_rdo_visita_campo_account_id_fkey"
+            columns: ["campo_account_id"]
+            isOneToOne: false
+            referencedRelation: "campo_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_rdo_visita_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_rdo_visita_fornecedor_id_fkey"
+            columns: ["fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "fornecedores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_rdo_visita_rdo_id_fkey"
+            columns: ["rdo_id"]
+            isOneToOne: false
+            referencedRelation: "obra_rdo"
             referencedColumns: ["id"]
           },
         ]
@@ -6335,6 +6520,25 @@ export type Database = {
       }
       campo_listar_tarefas: { Args: { p_token: string }; Returns: Json }
       campo_login: { Args: { p_email: string; p_senha: string }; Returns: Json }
+      campo_registrar_efetivo: {
+        Args: {
+          p_fornecedor_id: string
+          p_fornecedor_nome: string
+          p_quantidade: number
+          p_rdo_id: string
+          p_token: string
+        }
+        Returns: Json
+      }
+      campo_registrar_impedimento: {
+        Args: {
+          p_descricao: string
+          p_rdo_id: string
+          p_tipo: string
+          p_token: string
+        }
+        Returns: Json
+      }
       campo_registrar_medicao: {
         Args: {
           p_item: string
@@ -6351,6 +6555,16 @@ export type Database = {
           p_rdo_id: string
           p_resultado: string
           p_tarefa_id: string
+          p_token: string
+        }
+        Returns: Json
+      }
+      campo_registrar_visita: {
+        Args: {
+          p_fornecedor_id: string
+          p_fornecedor_nome: string
+          p_observacao: string
+          p_rdo_id: string
           p_token: string
         }
         Returns: Json
