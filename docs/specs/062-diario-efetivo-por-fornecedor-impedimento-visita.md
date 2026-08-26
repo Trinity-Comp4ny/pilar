@@ -1,7 +1,7 @@
 # SPEC: Diário de obra — efetivo por fornecedor, impedimento e visita
 
 **Data:** 2026-08-26
-**Status:** Draft
+**Status:** Em implementação
 **Autor:** Matheus (com apoio de agente de IA)
 **Módulo:** obras
 **Estende:** [015 — Obras MVP](015-obras-mvp.md), [040 — Obra inteligente](040-obra-inteligente-cronograma-diario-clima.md), [042 — Pilar Campo](042-pilar-campo-app-de-campo.md)
@@ -119,30 +119,46 @@ Não-funcionais:
 
 - [ ] Dado um RDO sem nenhuma linha de efetivo por fornecedor, quando edito o
       campo "Efetivo (total)" à mão, então salva como hoje (comportamento
-      preservado).
-- [ ] Dado que lanço 2 linhas de efetivo (Empreiteira A: 5, Empreiteira B: 3),
+      preservado). _(não verificado manualmente ainda; código preserva o valor
+      quando `efetivoLinhas.length === 0`.)_
+- [x] Dado que lanço 2 linhas de efetivo (Empreiteira A: 5, Empreiteira B: 3),
       quando salvo o dia, então o total do RDO mostra 8 e o card do dia lista as
-      2 linhas com o nome de cada fornecedor.
-- [ ] Dado que registro um impedimento "Falta de cimento" tipo `falta_material`,
+      2 linhas com o nome de cada fornecedor. Verificado no browser (1 linha,
+      6 pessoas, total derivado 6) + unit test de `somaEfetivo` com 2 linhas
+      (5+3=8) em `obras.test.ts`.
+- [x] Dado que registro um impedimento "Falta de cimento" tipo `falta_material`,
       quando salvo, então ele aparece destacado no card do dia, distinto da
-      textarea de Ocorrências.
+      textarea de Ocorrências. Verificado no browser (dev local), ida e volta
+      completa incluindo reabrir para edição.
 - [ ] Dado que registro uma visita do fornecedor "Estrutural XYZ Ltda" com
       observação "vistoria de fundação", quando salvo, então ela aparece no
-      card do dia com o nome do fornecedor.
-- [ ] Dado um fornecedor não cadastrado, quando lanço efetivo ou visita com nome
+      card do dia com o nome do fornecedor. _(testado com nome livre, não com
+      fornecedor cadastrado + observação; mesmo caminho de código do critério
+      abaixo, mas não exercitado nessa combinação exata.)_
+- [x] Dado um fornecedor não cadastrado, quando lanço efetivo ou visita com nome
       livre, então o lançamento salva normalmente e exibe o nome digitado.
+      Verificado no browser: visita "Arquiteta Mariana" via "Outro (digitar
+      nome)".
 - [ ] Caso de borda: usuário do Pilar Campo sem rede lança 1 linha de efetivo, 1
       impedimento e 1 visita; quando a rede volta, então os três sincronizam e
-      aparecem no diário do escritório.
-- [ ] Caso de borda: o mesmo item da fila offline é reenviado duas vezes (retry
+      aparecem no diário do escritório. _(coberto por unit test da fila
+      offline; não testado manualmente num dispositivo/navegador com rede
+      simulada.)_
+- [x] Caso de borda: o mesmo item da fila offline é reenviado duas vezes (retry
       após falha parcial); então não duplica (register-one é idempotente o
       bastante para o caso real: pior cenário é um lançamento duplicado visível
-      e removível à mão, nunca perda de dado).
+      e removível à mão, nunca perda de dado). Coberto pelos testes de
+      idempotência em `campoOfflineQueue.test.ts` (efetivo/impedimento/visita).
 - [ ] Caso de borda: `fornecedor_id` de outra empresa é rejeitado pela RLS no
-      INSERT de qualquer uma das 3 tabelas novas.
+      INSERT de qualquer uma das 3 tabelas novas. _(RLS escrita seguindo
+      exatamente o padrão já auditado de `obra_rdo_tarefa`; não testado ao vivo
+      com uma segunda empresa.)_
 - [ ] Multi-tenant: sessão de campo da obra X não grava efetivo/impedimento/
-      visita em RDO da obra Y.
-- [ ] `npm run test:run` e `npm run typecheck` verdes.
+      visita em RDO da obra Y. _(RPC segue exatamente o padrão de
+      `campo_registrar_medicao`, já em produção; não testado ao vivo com uma
+      segunda obra.)_
+- [x] `npm run test:run` e `npm run typecheck` verdes. 712 testes, 0 erros de
+      tipo (confirmado logo antes deste commit).
 
 ## Dados e contratos
 
