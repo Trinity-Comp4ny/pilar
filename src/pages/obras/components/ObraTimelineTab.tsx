@@ -10,6 +10,7 @@ import { useObraFrentes } from "@/hooks/useObraFrentes";
 import { useObraTarefas } from "@/hooks/useObraTarefas";
 import { useObraRdos } from "@/hooks/useObraRdo";
 import type { ObraResumo } from "@/hooks/useObras";
+import { ObraCurvaS } from "./ObraCurvaS";
 
 /** Marcos de faturamento do projeto (somente leitura no MVP — spec 015). */
 function useMarcosProjeto(projetoId: string | null) {
@@ -61,6 +62,12 @@ export function ObraTimelineTab({ obra, onIrParaDiario }: { obra: ObraResumo; on
         </div>
         <Progress value={obra.avanco} className="h-2" />
       </Bloco>
+
+      <div className="lg:col-span-2">
+        <Bloco titulo="Curva S — planejado × realizado">
+          <ObraCurvaS obraId={obra.id} />
+        </Bloco>
+      </div>
 
       <Bloco titulo="Etapas">
         {frentes.length === 0 ? (

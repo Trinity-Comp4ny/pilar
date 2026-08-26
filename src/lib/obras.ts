@@ -3,7 +3,7 @@
  * dependência de rede, para serem testáveis e reusados por hooks e telas.
  */
 
-import { parseDate, startOfDay } from "./cronograma";
+import { addDays, parseDate, startOfDay, startOfWeek, toIso } from "./cronograma";
 
 export type ObraStatus = "planejada" | "em_andamento" | "paralisada" | "concluida";
 
@@ -318,6 +318,90 @@ export function saldoMaterial(movs: ReadonlyArray<MovimentoCalc>): {
   const saldo = comprado - aplicado;
   const custoMedio = custoMedioEntradas(movs);
   return { comprado, aplicado, saldo, valorParado: custoMedio == null ? null : saldo * custoMedio };
+}
+
+// --- Curva S da obra (spec 063: planejado × realizado, sem tabela nova) -----
+
+export interface PontoCurvaS {
+  /** ISO (YYYY-MM-DD) da segunda-feira da semana. */
+  semana: string;
+  planejadoPct: number;
+  realizadoPct: number;
+}
+
+interface TarefaCurvaS {
+  id: string;
+  status: string;
+  data_inicio: string | null;
+  prazo: string | null;
+  updated_at: string;
+}
+
+const dataDoTimestamp = (iso: string): string => iso.slice(0, 10);
+
+/**
+ * Curva S: planejado (% de tarefas com prazo cujo prazo já passou) contra
+ * realizado (% de todas as tarefas concluídas, mesmo denominador do header
+ * "Avanço") acumulados semana a semana. `concluidasPorRdo` mapeia
+ * tarefa_id → data (YYYY-MM-DD) do RDO mais antigo que marcou `concluiu`;
+ * tarefa concluída sem entrada nesse mapa cai para `updated_at`.
+ *
+ * `[]` quando não há nenhuma tarefa com prazo definido — nesse caso não dá
+ * pra desenhar planejado no tempo, e a tela mostra o empty state em vez do
+ * gráfico (spec 063, critério de borda).
+ */
+export function curvaSObra(
+  tarefas: ReadonlyArray<TarefaCurvaS>,
+  concluidasPorRdo: ReadonlyMap<string, string>
+): PontoCurvaS[] {
+  const comPrazo = tarefas.filter((t) => t.prazo != null);
+  if (comPrazo.length === 0) return [];
+
+  const conclusaoDe = (t: TarefaCurvaS): Date | null => {
+    if (t.status !== "concluida") return null;
+    const dataRdo = concluidasPorRdo.get(t.id);
+    return parseDate(dataRdo ?? dataDoTimestamp(t.updated_at));
+  };
+
+  const datas: Date[] = [];
+  for (const t of comPrazo) {
+    const inicio = parseDate(t.data_inicio);
+    const prazo = parseDate(t.prazo);
+    if (inicio) datas.push(inicio);
+    if (prazo) datas.push(prazo);
+  }
+  for (const t of tarefas) {
+    const c = conclusaoDe(t);
+    if (c) datas.push(c);
+  }
+  if (datas.length === 0) return [];
+
+  const hoje = startOfDay(new Date());
+  const inicioRange = startOfWeek(datas.reduce((a, b) => (b < a ? b : a)));
+  const fimDados = datas.reduce((a, b) => (b > a ? b : a));
+  const fimRange = startOfWeek(fimDados > hoje ? fimDados : hoje);
+
+  const pontos: PontoCurvaS[] = [];
+  for (let semana = inicioRange; semana <= fimRange; semana = addDays(semana, 7)) {
+    const cutoff = addDays(semana, 6); // domingo, "fim daquela semana"
+
+    const planejadas = comPrazo.filter((t) => {
+      const prazo = parseDate(t.prazo);
+      return prazo != null && prazo <= cutoff;
+    }).length;
+
+    const realizadas = tarefas.filter((t) => {
+      const c = conclusaoDe(t);
+      return c != null && c <= cutoff;
+    }).length;
+
+    pontos.push({
+      semana: toIso(semana),
+      planejadoPct: Math.round((planejadas / comPrazo.length) * 100),
+      realizadoPct: Math.round((realizadas / tarefas.length) * 100),
+    });
+  }
+  return pontos;
 }
 
 /**

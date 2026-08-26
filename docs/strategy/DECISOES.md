@@ -51,3 +51,22 @@ um não; vira uma questão de PROFUNDIDADE, ainda aberta (até onde entrar: acom
 estruturado já decidido; PCP por ciclos completo e orçamento por ambiente seguem em avaliação,
 ver gate D2). Agentes devem argumentar a partir desta decisão, podendo discordar dela, mas da
 versão atual, não da antiga.
+
+---
+
+## 2026-08-26 (mais tarde) · Achado: OBR-3 (medição vira fatura) tem dependência de arquitetura não resolvida
+
+**Não é uma decisão de direção**, é um achado técnico que muda a ordem de execução dentro da
+Frente Obras. Ao escopar a spec seguinte (OBR-3, medições por período ligadas à fatura), a
+leitura de `marcos_faturamento` (`005_orcamento_marcos_faturas.sql`) mostrou que o marco é
+vinculado a **`projeto_id`** (não a `obra_id`), tem `valor` fixo definido na proposta/orçamento,
+e vira receita via `rpc_faturar_marco` sem depender de medição física nenhuma.
+
+"Medição de obra fecha em fatura", no espírito do T2B, não tem onde encaixar nesse modelo sem
+uma decisão real: um marco pode nascer do progresso medido, ou a medição só serve de evidência
+pra decidir manualmente faturar um marco já existente? Isso é decisão de produto (como o Pilar
+liga execução física a faturamento), não implementação.
+
+**Ordem revisada:** OBR-4 (Curva S da obra) entra antes de OBR-3, por ser autocontido — usa
+`obra_rdo_tarefa` (spec 040) e as datas do cronograma de 2 níveis (spec 027), sem tocar em
+faturamento. OBR-3 volta à fila quando essa decisão de marco↔medição estiver tomada.
