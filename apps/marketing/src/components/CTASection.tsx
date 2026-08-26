@@ -22,17 +22,17 @@ export function CTASection() {
     : { href: `${APP_URL}/cadastro`, label: "Testar grátis por 14 dias", evento: "testar_gratis" };
 
   return (
-    <section className="w-full bg-paper px-6 md:px-10 pb-14 md:pb-20">
+    <section className="w-full bg-paper px-4 md:px-10 pb-10 md:pb-20">
       <Reveal variant="scale" loose className="max-w-6xl mx-auto">
-        <div className="relative overflow-hidden rounded-[32px] px-6 py-20 md:py-28 text-center">
+        <div className="relative overflow-hidden rounded-[24px] md:rounded-[32px] px-5 md:px-6 py-14 md:py-28 text-center">
           {/* A mesma paisagem da hero, agora preenchendo o cartão: o fecho da
               página rima com a abertura em vez de inventar outro fundo. */}
-          <div aria-hidden="true" className="absolute inset-0 bg-card-brand-soft">
+          <div aria-hidden="true" className="absolute inset-0 bg-card-brand-soft/50">
             <HeroBackdrop variante="cartao" />
           </div>
 
           <div className="relative">
-            <h2 className="text-[clamp(30px,4.6vw,58px)] font-medium tracking-[-0.035em] leading-[1.06] text-ink mb-5 max-w-[20ch] mx-auto">
+            <h2 className="text-[58px] max-[1100px]:text-[44px] max-[850px]:text-[30px] max-[420px]:text-[26px] font-medium tracking-[-0.035em] leading-[1.06] text-ink mb-5 max-w-[20ch] mx-auto">
               Saiba se cada projeto está dando lucro{" "}
               <span className="italic">antes de terminar.</span>
             </h2>

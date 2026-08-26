@@ -52,8 +52,8 @@ export function HeroBackdrop({ variante = "hero" }: { variante?: "hero" | "carta
 
           {/* A paisagem inteira desvanece antes de encostar no conteúdo. */}
           <linearGradient id="dissolve" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="white" stopOpacity={cartao ? 0.55 : 0} />
-            <stop offset="40%" stopColor="white" stopOpacity={cartao ? 0.85 : 0.5} />
+            <stop offset="0%" stopColor="white" stopOpacity={cartao ? 0.78 : 0} />
+            <stop offset="40%" stopColor="white" stopOpacity={cartao ? 0.92 : 0.5} />
             <stop offset="62%" stopColor="white" stopOpacity="1" />
             <stop offset="100%" stopColor="white" stopOpacity="1" />
           </linearGradient>
@@ -68,17 +68,17 @@ export function HeroBackdrop({ variante = "hero" }: { variante?: "hero" | "carta
           <path
             d="M0 690 C160 640 260 664 400 652 C560 638 640 590 800 606 C960 622 1060 660 1200 648 C1320 638 1380 656 1440 668 V860 H0Z"
             fill="url(#morroLonge)"
-            opacity="0.75"
+            opacity={cartao ? 0.3 : 0.75}
           />
           <path
             d="M0 752 C180 714 300 742 460 730 C620 718 720 682 880 700 C1020 716 1140 744 1280 732 C1350 726 1400 736 1440 744 V860 H0Z"
             fill="url(#morroMeio)"
-            opacity="0.8"
+            opacity={cartao ? 0.32 : 0.8}
           />
           <path
             d="M0 806 C200 778 340 800 520 792 C700 784 800 758 980 772 C1140 784 1260 802 1440 794 V860 H0Z"
             fill="url(#morroPerto)"
-            opacity="0.72"
+            opacity={cartao ? 0.26 : 0.72}
           />
           <rect width="1440" height="860" fill="url(#trama)" mask="url(#mascaraTrama)" style={{ mixBlendMode: "screen" }} />
         </g>

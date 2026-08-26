@@ -30,9 +30,9 @@ export function StatementSection() {
   const palavras = FRASE.split(" ");
 
   return (
-    <section className="w-full bg-paper px-6 md:px-10 py-24 md:py-36">
+    <section className="w-full bg-paper px-5 md:px-10 py-16 md:py-36">
       <div ref={ref} className="max-w-5xl mx-auto">
-        <p className="text-[clamp(26px,3.9vw,48px)] font-medium tracking-[-0.03em] leading-[1.24] text-ink">
+        <p className="text-[48px] max-[1100px]:text-[38px] max-[850px]:text-[26px] max-[420px]:text-[22px] font-medium tracking-[-0.03em] leading-[1.24] text-ink">
           {reducedMotion
             ? FRASE
             : palavras.map((p, i) => (

@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { m, useReducedMotion } from "framer-motion";
-import { ArrowRight, WifiOff } from "lucide-react";
+import { ArrowRight, Link2, WifiOff } from "lucide-react";
 import { Reveal } from "./Reveal";
 import { EASE } from "../lib/motion";
 import { MODULOS } from "../lib/modules";
@@ -50,53 +50,75 @@ function CartaoGestao() {
         </p>
 
         <Celular>
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-[8.5px] font-medium text-ink">Funil de leads</p>
-            <span className="text-[7px] text-ink-muted">12 ativos</span>
+          {/* Cabeçalho da tela, como no app: título e ação. */}
+          <div className="flex items-center justify-between pt-1 pb-2.5">
+            <span className="text-[10px] font-semibold tracking-tight text-ink">Leads</span>
+            <span className="flex items-center justify-center w-4 h-4 rounded-full bg-brand text-ink text-[9px] leading-none font-semibold">
+              +
+            </span>
+          </div>
+
+          {/* Duas métricas antes da lista: dá contexto ao que vem abaixo. */}
+          <div className="grid grid-cols-2 gap-1.5 mb-2.5">
+            {[
+              { r: "No funil", v: "R$ 399.600" },
+              { r: "Fecham em 7d", v: "3" },
+            ].map((k, i) => (
+              <m.div
+                key={k.r}
+                className="rounded-lg bg-paper-alt px-2 py-1.5"
+                initial={{ opacity: 0, y: 6 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={VISTA}
+                transition={{ duration: 0.4, delay: 0.1 + i * 0.08, ease: EASE.out }}
+              >
+                <span className="block text-[6.5px] uppercase tracking-wider text-ink-muted mb-[2px]">{k.r}</span>
+                <span className="block text-[10px] font-semibold text-ink tabular-nums leading-none">{k.v}</span>
+              </m.div>
+            ))}
           </div>
 
           {[
-            { nome: "Retrofit elétrico", valor: "R$ 84.000", etapa: "Em contato", dot: "bg-pipeline-contato" },
-            { nome: "Centro cirúrgico", valor: "R$ 128.400", etapa: "Ganho", dot: "bg-status-done", ganho: true },
-            { nome: "Gases medicinais", valor: "R$ 56.000", etapa: "Proposta", dot: "bg-chart-warning" },
+            { nome: "Retrofit elétrico", cli: "Hospital Santa Rita", valor: "84.000", etapa: "Em contato", dot: "bg-pipeline-contato" },
+            { nome: "Centro cirúrgico", cli: "Hospital Santa Rita", valor: "128.400", etapa: "Ganho", dot: "bg-status-done", ganho: true },
+            { nome: "Gases medicinais", cli: "Clínica Vitta", valor: "56.000", etapa: "Proposta", dot: "bg-chart-warning" },
           ].map((c, i) => (
             <m.div
               key={c.nome}
-              className={`rounded-lg px-2 py-1.5 mb-1.5 border ${
-                c.ganho ? "bg-white border-ink/15 shadow-sm" : "bg-paper-alt border-transparent"
+              className={`relative rounded-lg px-2 py-1.5 mb-1.5 overflow-hidden ${
+                c.ganho ? "bg-white shadow-[0_2px_8px_-2px_rgba(0,0,0,0.16)]" : "bg-paper-alt"
               }`}
-              initial={{ opacity: 0, x: -12 }}
+              initial={{ opacity: 0, x: -14 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={VISTA}
-              transition={{ duration: 0.5, delay: 0.15 + i * 0.11, ease: EASE.out }}
+              transition={{ duration: 0.5, delay: 0.25 + i * 0.12, ease: EASE.out }}
             >
-              <p className="text-[9px] text-ink leading-tight mb-1 truncate">{c.nome}</p>
-              <div className="flex items-center justify-between">
-                <span className="flex items-center gap-1">
-                  <span className={`w-1.5 h-1.5 rounded-full ${c.dot}`} />
-                  <span className="text-[7px] text-ink-muted">{c.etapa}</span>
-                </span>
-                <span className="text-[8px] font-medium text-ink tabular-nums">{c.valor}</span>
+              {/* Fio de cor da etapa na borda esquerda, como no cartão do app. */}
+              <span className={`absolute left-0 inset-y-0 w-[2.5px] ${c.dot}`} />
+              <p className="pl-1.5 text-[9px] font-medium text-ink leading-tight truncate">{c.nome}</p>
+              <p className="pl-1.5 text-[7px] text-ink-muted truncate mb-1">{c.cli}</p>
+              <div className="pl-1.5 flex items-center justify-between">
+                <span className="text-[6.5px] uppercase tracking-wider text-ink-muted">{c.etapa}</span>
+                <span className="text-[8.5px] font-semibold text-ink tabular-nums">R$ {c.valor}</span>
               </div>
             </m.div>
           ))}
-
-          {/* O total sobe quando o lead entra em Ganho. */}
-          <m.div
-            className="mt-2 flex items-center justify-between rounded-lg bg-ink px-2 py-1.5"
-            initial={{ opacity: 0, y: 8 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={VISTA}
-            transition={{ duration: 0.45, delay: 0.55, ease: EASE.out }}
-          >
-            <span className="text-[7px] uppercase tracking-wider text-white/50">Valor no funil</span>
-            <span className="text-[9px] font-semibold text-white tabular-nums">R$ 399.600</span>
-          </m.div>
         </Celular>
+
+        <m.div
+          className="mt-7 flex items-center justify-between rounded-xl bg-ink px-4 py-3"
+          initial={{ opacity: 0, y: 10 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={VISTA}
+          transition={{ duration: 0.5, delay: 0.65, ease: EASE.out }}
+        >
+          <span className="text-[9px] uppercase tracking-[0.12em] text-white/45">Fechado neste mês</span>
+          <span className="text-[15px] font-semibold tabular-nums text-brand">R$ 128.400</span>
+        </m.div>
 
         <Link
           to={`/${mo.slug}`}
-          className="mt-8 inline-flex items-center justify-center gap-1.5 text-[13.5px] font-medium text-ink group/l"
+          className="mt-5 inline-flex items-center justify-center gap-1.5 text-[13.5px] font-medium text-ink group/l"
         >
           Ver Gestão
           <ArrowRight className="w-3.5 h-3.5 group-hover/l:translate-x-1 transition-transform" />
@@ -275,6 +297,8 @@ function CartaoObra() {
 
 /** Cartão 4: portal do cliente, claro e estreito. */
 function CartaoPortal() {
+  const reducedMotion = useReducedMotion();
+
   return (
     <Reveal variant="scale" delay={0.24} className="h-full">
       <div className="h-full rounded-[26px] bg-card-brand-soft p-7 md:p-9 flex flex-col justify-between gap-7">
@@ -288,20 +312,72 @@ function CartaoPortal() {
           </p>
         </div>
 
-        <div className="rounded-2xl bg-frame border border-paper-border/70 p-4">
-          {[
-            ["Estrutural", "Entregue"],
-            ["Climatização", "Em revisão"],
-            ["Parcela 2 de 3", "R$ 42.800"],
-          ].map(([k, v]) => (
-            <div
-              key={k}
-              className="flex justify-between items-center text-[11.5px] py-1.5 border-b border-paper-border/50 last:border-0"
-            >
-              <span className="text-ink-muted">{k}</span>
-              <span className="text-ink font-medium tabular-nums">{v}</span>
+        <div className="rounded-2xl bg-frame border border-paper-border/70 overflow-hidden">
+          {/* Barra de link: é assim que o cliente chega, sem conta e sem app.
+              Deliberadamente diferente da lista de checks do canteiro. */}
+          <div className="flex items-center gap-2 border-b border-paper-border/60 bg-paper-alt/60 px-3 py-2">
+            <Link2 className="w-3 h-3 text-ink-muted shrink-0" strokeWidth={1.8} />
+            <span className="text-[8.5px] text-ink-muted truncate">pilarsoft.com.br/portal/santa-rita</span>
+            <span className="ml-auto text-[7px] uppercase tracking-wider text-ink-muted shrink-0">Só leitura</span>
+          </div>
+
+          <div className="flex items-center gap-4 p-4">
+            {/* Anel de progresso: uma leitura só, à distância. */}
+            <div className="relative w-[62px] h-[62px] shrink-0">
+              <svg viewBox="0 0 44 44" className="w-full h-full -rotate-90">
+                <circle cx="22" cy="22" r="19" fill="none" stroke="hsl(var(--border-landing))" strokeWidth="5" />
+                <m.circle
+                  cx="22"
+                  cy="22"
+                  r="19"
+                  fill="none"
+                  stroke="hsl(var(--brand-accent))"
+                  strokeWidth="5"
+                  strokeLinecap="round"
+                  pathLength={1}
+                  initial={reducedMotion ? false : { pathLength: 0 }}
+                  whileInView={{ pathLength: 0.72 }}
+                  viewport={VISTA}
+                  transition={{ duration: 1.1, delay: 0.2, ease: EASE.out }}
+                />
+              </svg>
+              <span className="absolute inset-0 flex items-center justify-center text-[13px] font-semibold text-ink tabular-nums">
+                72%
+              </span>
             </div>
-          ))}
+
+            <div className="min-w-0 flex-1">
+              <p className="text-[10.5px] font-medium text-ink mb-2">Climatização, centro cirúrgico</p>
+              {[
+                { d: "Estrutural", e: "Entregue", ok: true },
+                { d: "Elétrico", e: "Entregue", ok: true },
+                { d: "Climatização", e: "Em revisão", ok: false },
+              ].map((l, i) => (
+                <m.div
+                  key={l.d}
+                  className="flex items-center justify-between gap-2 py-[3px]"
+                  initial={reducedMotion ? false : { opacity: 0, x: 8 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={VISTA}
+                  transition={{ duration: 0.38, delay: 0.35 + i * 0.1, ease: EASE.out }}
+                >
+                  <span className="text-[9px] text-ink-soft truncate">{l.d}</span>
+                  <span
+                    className={`shrink-0 rounded-full px-1.5 py-[1px] text-[7px] uppercase tracking-wider ${
+                      l.ok ? "bg-brand text-ink" : "bg-paper-alt text-ink-muted"
+                    }`}
+                  >
+                    {l.e}
+                  </span>
+                </m.div>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between border-t border-paper-border/60 px-4 py-2.5">
+            <span className="text-[8.5px] text-ink-muted">Parcela 2 de 3</span>
+            <span className="text-[10px] font-semibold text-ink tabular-nums">R$ 42.800</span>
+          </div>
         </div>
       </div>
     </Reveal>
@@ -310,10 +386,10 @@ function CartaoPortal() {
 
 export function BentoSection() {
   return (
-    <section id="produto" className="w-full bg-paper px-6 md:px-10 pb-24 md:pb-32 scroll-mt-28">
+    <section id="produto" className="w-full bg-paper px-5 md:px-10 pb-16 md:pb-32 scroll-mt-28">
       <div className="max-w-6xl mx-auto">
         <Reveal variant="up" className="max-w-2xl mb-10">
-          <h2 className="text-[clamp(30px,4.2vw,52px)] font-medium tracking-[-0.035em] leading-[1.08] text-ink">
+          <h2 className="text-[52px] max-[1100px]:text-[42px] max-[850px]:text-[29px] max-[420px]:text-[25px] font-medium tracking-[-0.035em] leading-[1.08] text-ink">
             Cada módulo resolve uma fase.{" "}
             <span className="italic text-ink/45">Juntos, fecham o ciclo.</span>
           </h2>

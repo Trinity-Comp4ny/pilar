@@ -44,10 +44,10 @@ const PLANOS = [
 
 export function PricingSection() {
   return (
-    <section id="planos" className="w-full bg-paper px-6 md:px-10 py-24 md:py-32 scroll-mt-28">
+    <section id="planos" className="w-full bg-paper px-5 md:px-10 py-16 md:py-32 scroll-mt-28">
       <div className="max-w-6xl mx-auto">
         <Reveal variant="up" className="text-center max-w-2xl mx-auto mb-12">
-          <h2 className="text-[clamp(30px,4.2vw,52px)] font-medium tracking-[-0.035em] leading-[1.08] text-ink mb-4">
+          <h2 className="text-[52px] max-[1100px]:text-[42px] max-[850px]:text-[29px] max-[420px]:text-[25px] font-medium tracking-[-0.035em] leading-[1.08] text-ink mb-4">
             Preço claro. <span className="italic text-ink/45">Ativa em minutos.</span>
           </h2>
           <p className="text-[15px] text-ink-soft leading-relaxed">
