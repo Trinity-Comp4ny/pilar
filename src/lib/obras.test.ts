@@ -20,6 +20,7 @@ import {
   somaEfetivo,
   tipoImpedimentoLabel,
   TIPO_IMPEDIMENTO_OPCOES,
+  curvaSObra,
 } from "./obras";
 import { statusLabel } from "./status";
 
@@ -191,6 +192,83 @@ describe("tipoImpedimentoLabel (spec 062)", () => {
   it("devolve vazio para nulo", () => {
     expect(tipoImpedimentoLabel(null)).toBe("");
     expect(tipoImpedimentoLabel(undefined)).toBe("");
+  });
+});
+
+describe("curvaSObra (spec 063)", () => {
+  const tarefa = (over: Partial<Parameters<typeof curvaSObra>[0][number]> = {}) => ({
+    id: "t1",
+    status: "a_fazer",
+    data_inicio: null,
+    prazo: null,
+    updated_at: "2026-06-01T12:00:00.000Z",
+    ...over,
+  });
+
+  it("[] quando nenhuma tarefa tem prazo (empty state)", () => {
+    expect(curvaSObra([tarefa({ id: "a" }), tarefa({ id: "b" })], new Map())).toEqual([]);
+  });
+
+  it("[] quando não há tarefas", () => {
+    expect(curvaSObra([], new Map())).toEqual([]);
+  });
+
+  it("realizado = 50% a partir da semana em que a 2ª de 4 tarefas concluiu", () => {
+    const tarefas = [
+      tarefa({ id: "a", prazo: "2026-06-05", status: "concluida", updated_at: "2026-06-01T00:00:00.000Z" }),
+      tarefa({ id: "b", prazo: "2026-06-12", status: "concluida", updated_at: "2026-06-08T00:00:00.000Z" }),
+      tarefa({ id: "c", prazo: "2026-06-19" }),
+      tarefa({ id: "d", prazo: "2026-06-26" }),
+    ];
+    const pontos = curvaSObra(tarefas, new Map());
+    // segunda-feira da semana que contém 08/06/2026 (uma segunda-feira)
+    const pontoAposSegunda = pontos.find((p) => p.semana === "2026-06-08");
+    expect(pontoAposSegunda?.realizadoPct).toBe(50);
+  });
+
+  it("tarefa concluída pelo diário conta a partir da semana do RDO, não antes", () => {
+    const tarefas = [
+      tarefa({ id: "a", prazo: "2026-06-30", status: "concluida", updated_at: "2026-08-01T00:00:00.000Z" }),
+    ];
+    // concluída de fato em 10/08 pelo diário, mesmo com updated_at posterior
+    const concluidasPorRdo = new Map([["a", "2026-08-10"]]);
+    const pontos = curvaSObra(tarefas, concluidasPorRdo);
+    const antes = pontos.find((p) => p.semana === "2026-08-03"); // semana antes do RDO
+    const depois = pontos.find((p) => p.semana === "2026-08-10"); // semana do RDO
+    expect(antes?.realizadoPct).toBe(0);
+    expect(depois?.realizadoPct).toBe(100);
+  });
+
+  it("tarefa concluída fora do diário usa updated_at como aproximação", () => {
+    const tarefas = [
+      tarefa({ id: "a", prazo: "2026-06-30", status: "concluida", updated_at: "2026-07-15T00:00:00.000Z" }),
+    ];
+    const pontos = curvaSObra(tarefas, new Map());
+    const antes = pontos.find((p) => p.semana === "2026-07-06");
+    const depois = pontos.find((p) => p.semana === "2026-07-13");
+    expect(antes?.realizadoPct).toBe(0);
+    expect(depois?.realizadoPct).toBe(100);
+  });
+
+  it("o último ponto bate com calcularAvanco (mesmo denominador e regra)", () => {
+    const tarefas = [
+      tarefa({ id: "a", status: "concluida", prazo: "2026-06-05", updated_at: "2026-06-05T00:00:00.000Z" }),
+      tarefa({ id: "b", status: "concluida", prazo: "2026-06-12", updated_at: "2026-06-12T00:00:00.000Z" }),
+      tarefa({ id: "c", prazo: "2026-06-19" }),
+    ];
+    const pontos = curvaSObra(tarefas, new Map());
+    const ultimo = pontos[pontos.length - 1];
+    expect(ultimo.realizadoPct).toBe(calcularAvanco(tarefas));
+  });
+
+  it("planejado só conta tarefas com prazo definido", () => {
+    const tarefas = [
+      tarefa({ id: "a", prazo: "2026-06-05" }),
+      tarefa({ id: "b", prazo: null }), // sem prazo, fora do denominador de planejado
+    ];
+    const pontos = curvaSObra(tarefas, new Map());
+    const depois = pontos.find((p) => p.semana === "2026-06-08");
+    expect(depois?.planejadoPct).toBe(100); // 1 de 1 com prazo, não 1 de 2
   });
 });
 
