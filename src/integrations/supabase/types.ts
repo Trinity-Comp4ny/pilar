@@ -6514,6 +6514,7 @@ export type Database = {
         Args: { p_titulo: string; p_token: string }
         Returns: Json
       }
+      campo_listar_fornecedores: { Args: { p_token: string }; Returns: Json }
       campo_listar_rdos: {
         Args: { p_limite?: number; p_token: string }
         Returns: Json
