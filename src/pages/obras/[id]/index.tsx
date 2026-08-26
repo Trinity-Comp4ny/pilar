@@ -1,7 +1,20 @@
 import { useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
-import { Boxes, CalendarClock, ClipboardList, CloudRain, HardHat, LayoutList, MapPin, Pencil, Scale, Trash2, User, Wallet } from "lucide-react";
+import {
+  Boxes,
+  CalendarClock,
+  ClipboardList,
+  CloudRain,
+  HardHat,
+  LayoutList,
+  MapPin,
+  Pencil,
+  Scale,
+  Trash2,
+  User,
+  Wallet,
+} from "lucide-react";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -44,7 +57,10 @@ export default function ObraDetalhePage() {
   const { data: obra, isLoading } = useObra(id);
   usePageTitle(obra?.nome ?? "Obra");
 
-  const [tab, setTab] = useState("timeline");
+  // Deep link (ex.: fila de cotações pendentes em /obras, spec 064): abre
+  // direto na aba pedida via ?tab=, sem sincronizar de volta na URL depois.
+  const [searchParams] = useSearchParams();
+  const [tab, setTab] = useState(searchParams.get("tab") ?? "timeline");
   const [editOpen, setEditOpen] = useState(false);
   const [confirmDel, setConfirmDel] = useState(false);
   const [acessoCampoOpen, setAcessoCampoOpen] = useState(false);

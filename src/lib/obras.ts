@@ -3,7 +3,7 @@
  * dependência de rede, para serem testáveis e reusados por hooks e telas.
  */
 
-import { addDays, parseDate, startOfDay, startOfWeek, toIso } from "./cronograma";
+import { addDays, diffDays, parseDate, startOfDay, startOfWeek, toIso } from "./cronograma";
 
 export type ObraStatus = "planejada" | "em_andamento" | "paralisada" | "concluida";
 
@@ -413,4 +413,43 @@ export function curvaSObra(
 export function somaEfetivo(linhas: ReadonlyArray<{ quantidade: number }>): number | null {
   if (linhas.length === 0) return null;
   return linhas.reduce((total, l) => total + l.quantidade, 0);
+}
+
+// --- Fila de cotações pendentes, cross-obra (spec 064) -----------------------
+
+interface CotacaoParaOrdenar {
+  id: string;
+  prazo_necessidade: string | null;
+  created_at: string;
+}
+
+/**
+ * Ordena cotações abertas por urgência: prazo de necessidade mais próximo
+ * (ou já vencido) primeiro; sem prazo vai por último, ordenado por criação
+ * mais antiga primeiro (spec 064, requisito 1).
+ */
+export function ordenarCotacoesPendentes<T extends CotacaoParaOrdenar>(cotacoes: ReadonlyArray<T>): T[] {
+  return [...cotacoes].sort((a, b) => {
+    if (a.prazo_necessidade && b.prazo_necessidade) {
+      return a.prazo_necessidade < b.prazo_necessidade ? -1 : a.prazo_necessidade > b.prazo_necessidade ? 1 : 0;
+    }
+    if (a.prazo_necessidade) return -1;
+    if (b.prazo_necessidade) return 1;
+    return a.created_at < b.created_at ? -1 : a.created_at > b.created_at ? 1 : 0;
+  });
+}
+
+/**
+ * Texto de urgência de uma cotação frente ao prazo de necessidade (spec 064,
+ * requisito 2). `null` quando não há prazo definido — sem alarmar com uma
+ * data que não existe.
+ */
+export function urgenciaLabel(prazoNecessidade: string | null, hoje: Date = new Date()): string {
+  if (!prazoNecessidade) return "sem prazo";
+  const prazo = parseDate(prazoNecessidade);
+  if (!prazo) return "sem prazo";
+  const dias = diffDays(startOfDay(hoje), prazo);
+  if (dias < 0) return `atrasada há ${Math.abs(dias)} dia${Math.abs(dias) > 1 ? "s" : ""}`;
+  if (dias === 0) return "vence hoje";
+  return `vence em ${dias} dia${dias > 1 ? "s" : ""}`;
 }
