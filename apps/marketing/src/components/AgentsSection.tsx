@@ -186,17 +186,14 @@ export function AgentsSection() {
       <div className="relative container mx-auto px-6 md:px-10">
         <div className="max-w-6xl mx-auto">
           <div className="max-w-2xl mb-12">
-            <Reveal variant="down" className="mb-5">
-              <span className="inline-block px-3 py-1 bg-brand text-ink-on-brand text-xs font-medium uppercase tracking-[0.2em] rounded-sm">
-                Agentes de IA
-              </span>
-            </Reveal>
+            {/* Sem a etiqueta em caixa alta: no arranjo novo o título grande já
+                abre a seção, e a etiqueta só empurrava tudo para baixo. */}
             <TextReveal
               as="h2"
               text="A IA prepara o trabalho. Você dá a palavra final."
               highlight="Você dá a palavra final."
-              highlightClassName="italic text-white/45"
-              className="text-3xl md:text-[44px] font-medium text-white leading-[1.1] tracking-tight mb-5"
+              highlightClassName="italic text-brand"
+              className="text-[clamp(30px,4.2vw,52px)] font-medium text-white leading-[1.08] tracking-[-0.035em] mb-5"
             />
             <Reveal variant="fade" delay={0.25}>
               <p className="text-[15px] text-white/60 font-light leading-relaxed">

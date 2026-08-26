@@ -1,27 +1,28 @@
 import { HeroSection } from "../components/HeroSection";
-import { ModulesSection } from "../components/ModulesSection";
+import { StatementSection } from "../components/StatementSection";
+import { BentoSection } from "../components/BentoSection";
 import { AgentsSection } from "../components/AgentsSection";
-import { CampoSection } from "../components/CampoSection";
-import { PortalSection } from "../components/PortalSection";
+import { PricingSection } from "../components/PricingSection";
+import { FaqSection } from "../components/FaqSection";
 import { CTASection } from "../components/CTASection";
 
 /**
- * "Para quem é" e a FAQ saíram da home por decisão do CEO (18/08) e viraram
- * a página /faq, linkada no header. O fluxo de 5 etapas foi removido: refletia
- * o sistema de um módulo só, e quem conta a história agora é ModulesSection.
+ * Ordem da home, no arranjo da referência: hero, tese em texto grande, bento
+ * dos módulos, os agentes, preço, dúvidas e o fecho.
  *
- * A ordem alterna claro e escuro de propósito (SPEC 060): a seção de agentes é
- * o clímax escuro no meio da página, e o CTA fecha em escuro. Antes eram cinco
- * seções seguidas em dois cinzas quase idênticos, sem nenhum ponto de virada.
+ * Campo e Portal deixaram de ter seção própria: viraram cartões do bento, e
+ * repetir os dois logo abaixo só alongava a página dizendo a mesma coisa duas
+ * vezes. Quem quiser o detalhe entra em /obra.
  */
 export function Home() {
   return (
     <>
       <HeroSection />
-      <ModulesSection />
+      <StatementSection />
+      <BentoSection />
       <AgentsSection />
-      <CampoSection />
-      <PortalSection />
+      <PricingSection />
+      <FaqSection />
       <CTASection />
     </>
   );
