@@ -19,7 +19,7 @@ const VISTA = { once: true, amount: 0.35 } as const;
 /** Celular dos cartões: moldura com ilha, barra de status e conteúdo por dentro. */
 function Celular({ children }: { children: React.ReactNode }) {
   return (
-    <div className="relative mx-auto w-[196px]">
+    <div className="relative mx-auto w-[212px]">
       <div className="rounded-[26px] border-[7px] border-ink bg-frame overflow-hidden shadow-[0_22px_50px_-20px_rgba(0,0,0,0.5)]">
         {/* Barra de status com a ilha, como num aparelho de verdade. */}
         <div className="relative h-6 bg-frame flex items-center justify-between px-3">
@@ -30,7 +30,7 @@ function Celular({ children }: { children: React.ReactNode }) {
             <span className="w-[9px] h-[5px] rounded-[1px] border border-ink/50" />
           </span>
         </div>
-        <div className="px-2.5 pb-3">{children}</div>
+        <div className="px-2.5 pb-4">{children}</div>
       </div>
     </div>
   );
@@ -42,6 +42,7 @@ function CartaoGestao() {
   return (
     <Reveal variant="scale" className="h-full">
       <div className="h-full rounded-[26px] bg-card-brand p-7 md:p-9 flex flex-col justify-center">
+        <p className="text-center text-[10px] uppercase tracking-[0.16em] text-ink/50 mb-2">Gestão</p>
         <h3 className="text-[26px] md:text-[30px] font-medium tracking-[-0.03em] leading-[1.1] text-ink text-center mb-2.5">
           Do lead ao dinheiro na conta
         </h3>
@@ -105,20 +106,38 @@ function CartaoGestao() {
           ))}
         </Celular>
 
-        <m.div
-          className="mt-7 flex items-center justify-between rounded-xl bg-ink px-4 py-3"
-          initial={{ opacity: 0, y: 10 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={VISTA}
-          transition={{ duration: 0.5, delay: 0.65, ease: EASE.out }}
-        >
-          <span className="text-[9px] uppercase tracking-[0.12em] text-white/45">Fechado neste mês</span>
-          <span className="text-[15px] font-semibold tabular-nums text-brand">R$ 128.400</span>
-        </m.div>
+        {/* A cadeia que dá nome ao cartão. Ele ocupa duas linhas da grade e
+            sobrava quase meio metro de verde embaixo do celular. */}
+        <div className="mt-8 mx-auto w-full max-w-[240px]">
+          {[
+            { etapa: "Lead", detalhe: "entra pelo funil" },
+            { etapa: "Proposta", detalhe: "no seu template, em DOCX" },
+            { etapa: "Contrato", detalhe: "vira projeto com as parcelas" },
+            { etapa: "Financeiro", detalhe: "a receita já nasce lançada" },
+          ].map((e, i, arr) => (
+            <m.div
+              key={e.etapa}
+              className="flex items-start gap-3"
+              initial={{ opacity: 0, x: -10 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={VISTA}
+              transition={{ duration: 0.45, delay: 0.5 + i * 0.12, ease: EASE.out }}
+            >
+              <span className="flex flex-col items-center self-stretch">
+                <span className="mt-[5px] h-2 w-2 shrink-0 rounded-full bg-ink" />
+                {i < arr.length - 1 && <span className="w-px flex-1 bg-ink/20" />}
+              </span>
+              <span className="pb-4 text-left">
+                <span className="block text-[13px] font-medium leading-none text-ink">{e.etapa}</span>
+                <span className="block text-[11.5px] text-ink/55">{e.detalhe}</span>
+              </span>
+            </m.div>
+          ))}
+        </div>
 
         <Link
           to={`/${mo.slug}`}
-          className="mt-5 inline-flex items-center justify-center gap-1.5 text-[13.5px] font-medium text-ink group/l"
+          className="mt-2 inline-flex items-center justify-center gap-1.5 text-[13.5px] font-medium text-ink group/l"
         >
           Ver Gestão
           <ArrowRight className="w-3.5 h-3.5 group-hover/l:translate-x-1 transition-transform" />
@@ -141,6 +160,7 @@ function CartaoProjetos() {
     <Reveal variant="scale" delay={0.08} className="h-full">
       <div className="h-full rounded-[26px] bg-card-brand-soft p-7 md:p-9 flex flex-col justify-between gap-8">
         <div>
+          <p className="text-[10px] uppercase tracking-[0.16em] text-ink/50 mb-2">Projetos</p>
           <h3 className="text-[24px] md:text-[28px] font-medium tracking-[-0.03em] leading-[1.12] text-ink mb-2.5">
             Disciplina, prazo e responsável
           </h3>
@@ -200,6 +220,14 @@ function CartaoProjetos() {
             Elétrico concluiu: <span className="text-ink font-medium">Climatização foi avisada</span>
           </m.p>
         </div>
+
+        <Link
+          to="/projetos"
+          className="mt-6 inline-flex items-center gap-1.5 text-[13.5px] font-medium text-ink group/l"
+        >
+          Ver Projetos
+          <ArrowRight className="w-3.5 h-3.5 group-hover/l:translate-x-1 transition-transform" />
+        </Link>
       </div>
     </Reveal>
   );
@@ -212,6 +240,7 @@ function CartaoObra() {
     <Reveal variant="scale" delay={0.16} className="h-full">
       <div className="h-full rounded-[26px] bg-card-brand p-7 md:p-9 flex flex-col justify-between gap-7">
         <div>
+          <p className="text-[10px] uppercase tracking-[0.16em] text-ink/50 mb-2">Obras · Pilar Campo</p>
           <h3 className="text-[24px] md:text-[28px] font-medium tracking-[-0.03em] leading-[1.12] text-ink mb-2.5">
             O canteiro alimenta o escritório
           </h3>
@@ -290,6 +319,14 @@ function CartaoObra() {
             Sincronizado <span className="text-ink font-medium">assim que a rede voltou</span>
           </m.p>
         </div>
+
+        <Link
+          to="/campo"
+          className="mt-6 inline-flex items-center gap-1.5 text-[13.5px] font-medium text-ink group/l"
+        >
+          Ver Pilar Campo
+          <ArrowRight className="w-3.5 h-3.5 group-hover/l:translate-x-1 transition-transform" />
+        </Link>
       </div>
     </Reveal>
   );
@@ -303,6 +340,7 @@ function CartaoPortal() {
     <Reveal variant="scale" delay={0.24} className="h-full">
       <div className="h-full rounded-[26px] bg-card-brand-soft p-7 md:p-9 flex flex-col justify-between gap-7">
         <div>
+          <p className="text-[10px] uppercase tracking-[0.16em] text-ink/50 mb-2">Portal do cliente</p>
           <h3 className="text-[24px] md:text-[28px] font-medium tracking-[-0.03em] leading-[1.12] text-ink mb-2.5">
             Seu cliente acompanha sozinho
           </h3>
@@ -379,6 +417,14 @@ function CartaoPortal() {
             <span className="text-[10px] font-semibold text-ink tabular-nums">R$ 42.800</span>
           </div>
         </div>
+
+        <Link
+          to="/portal"
+          className="mt-6 inline-flex items-center gap-1.5 text-[13.5px] font-medium text-ink group/l"
+        >
+          Ver Portal do cliente
+          <ArrowRight className="w-3.5 h-3.5 group-hover/l:translate-x-1 transition-transform" />
+        </Link>
       </div>
     </Reveal>
   );

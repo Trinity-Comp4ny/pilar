@@ -58,6 +58,8 @@ export default function App() {
               <Route path="/gestao" element={<ModulePage slug="gestao" />} />
               <Route path="/projetos" element={<ModulePage slug="projetos" />} />
               <Route path="/obra" element={<ModulePage slug="obra" />} />
+              <Route path="/portal" element={<ModulePage slug="portal" />} />
+              <Route path="/campo" element={<ModulePage slug="campo" />} />
               <Route path="/faq" element={<Faq />} />
               <Route path="/planos" element={<Planos />} />
               <Route path="/termos" element={<Termos />} />
