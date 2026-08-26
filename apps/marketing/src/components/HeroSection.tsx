@@ -51,22 +51,29 @@ export function HeroSection() {
   const reducedMotion = useReducedMotion();
 
   return (
-    <section className="relative isolate overflow-hidden pt-28 md:pt-36 pb-14 md:pb-20">
+    <section className="relative isolate overflow-hidden pt-20 md:pt-36 pb-10 md:pb-20">
       <HeroBackdrop />
 
-      <div className="relative z-10 mx-auto max-w-6xl px-6 md:px-10">
+      <div className="relative z-10 mx-auto max-w-6xl px-4 md:px-10">
         <div className="text-center">
           {/* Duas linhas, sempre. A largura não é limitada por `ch` e cada linha
               é `whitespace-nowrap`: com limite em ch, o verbo mais longo
               ("centralizam") empurrava o título para três linhas e a hero
               saltava a cada troca de palavra. O corpo cai um pouco para a linha
               mais larga caber. */}
-          <h1 className="text-[clamp(28px,4.6vw,62px)] font-medium tracking-[-0.035em] leading-[1.1] text-ink mb-6 mx-auto">
-            <span className="block whitespace-nowrap">
-              <Palavras texto={LINHA_1} atraso={0.1} />{" "}
-              <RotatingWord palavras={VERBOS} atraso={0.26} />
+          <h1 className="text-[62px] max-[1100px]:text-[50px] max-[850px]:text-[34px] max-[420px]:text-[27px] font-medium tracking-[-0.035em] leading-[1.1] text-ink mb-6 mx-auto">
+            {/* Acima de 850px as duas linhas não quebram, então trocar o verbo
+                nunca vira uma terceira linha. Abaixo disso o `nowrap` faria o
+                título vazar a tela, então a pílula cai para uma linha só dela:
+                são três linhas fixas no celular, igualmente estáveis. */}
+            <span className="block max-[850px]:whitespace-normal min-[851px]:whitespace-nowrap">
+              <Palavras texto={LINHA_1} atraso={0.1} />
+              <span className="max-[850px]:block min-[851px]:inline">
+                <span className="max-[850px]:hidden"> </span>
+                <RotatingWord palavras={VERBOS} atraso={0.26} />
+              </span>
             </span>
-            <span className="block whitespace-nowrap">
+            <span className="block max-[850px]:whitespace-normal min-[851px]:whitespace-nowrap">
               <Palavras texto={LINHA_2} atraso={0.34} />
             </span>
           </h1>
@@ -75,7 +82,7 @@ export function HeroSection() {
             initial={reducedMotion ? false : { opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, ease: EASE.out, delay: 0.55 }}
-            className="text-[15px] md:text-[17px] text-ink-soft max-w-xl mx-auto mb-9 leading-relaxed"
+            className="text-[14px] md:text-[17px] text-ink-soft max-w-xl mx-auto mb-8 md:mb-9 leading-relaxed px-2"
           >
             Feche propostas, controle cronogramas e acompanhe obras, com agentes de IA feitos pro seu escritório de
             engenharia.
@@ -103,7 +110,7 @@ export function HeroSection() {
         initial={reducedMotion ? false : { opacity: 0, y: 48 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 1, ease: EASE.out, delay: 0.8 }}
-        className="relative z-10 mx-auto max-w-6xl px-6 md:px-10 mt-16 md:mt-20"
+        className="relative z-10 mx-auto max-w-6xl px-4 md:px-10 mt-10 md:mt-20"
       >
         <div className="mx-auto">
           <HeroScene />
