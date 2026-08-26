@@ -16,6 +16,25 @@ Regras de manutenção:
 
 ---
 
+## 2026-08-26 · Correção factual: Obras não está tão fraco quanto a entrada de 25/08 supõe
+
+**Não é uma nova decisão de direção** (a de 25/08 abaixo continua valendo: Obras é prioridade),
+é uma correção de premissa que mudaria a leitura de quem ler só a entrada de 25/08. Ao escrever
+a spec 062, a leitura de `docs/specs/040-obra-inteligente-cronograma-diario-clima.md`,
+`018-cotacoes-na-obra.md` e `042-pilar-campo-app-de-campo.md` (todas "Entregue" ou "Em
+implementação") mostrou que o diário já reporta contra o cronograma com alerta de clima, a
+cotação já compara fornecedores e decide, e existe um **PWA offline completo para o campo**
+(Pilar Campo, spec 042, credencial gerada pelo gestor, foto, fila de sincronização) que a
+memória de 11-13/08 registrava como pendente e já está nas fases 1-5 entregues.
+
+**Como isso muda a execução (não a prioridade):** o gap real em Obras é mais estreito e mais
+barato do que "diário estruturado do zero" sugeria: ver spec 062 (efetivo por fornecedor,
+impedimento tipado, visita ligada ao cadastro) como o primeiro corte, não um redesenho do
+módulo. Antes de especificar a próxima peça de Obras, ler as specs 015/018/020/027/040/042
+inteiras, não só a memória de sessões passadas.
+
+---
+
 ## 2026-08-25 · Módulo Obras é a frente prioritária de melhoria do produto
 
 **Decisão:** melhorar o módulo Obras (hoje o mais fraco do produto) é a prioridade de roadmap,
