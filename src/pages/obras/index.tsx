@@ -12,6 +12,7 @@ import { usePageTitle } from "@/hooks/usePageTitle";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useObras, type ObraResumo } from "@/hooks/useObras";
 import { ObraFormDialog } from "./components/ObraFormDialog";
+import { FilaCotacoesPendentes } from "./components/FilaCotacoesPendentes";
 
 function ObraCard({ obra }: { obra: ObraResumo }) {
   return (
@@ -95,6 +96,8 @@ export default function ObrasPage() {
         <KPICard label="Em andamento" value={String(ativas)} tone="info" loading={isLoading} />
         <KPICard label="Paralisadas" value={String(paralisadas)} tone="attention" loading={isLoading} />
       </div>
+
+      <FilaCotacoesPendentes />
 
       {isLoading ? (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
