@@ -21,6 +21,8 @@ import {
   tipoImpedimentoLabel,
   TIPO_IMPEDIMENTO_OPCOES,
   curvaSObra,
+  ordenarCotacoesPendentes,
+  urgenciaLabel,
 } from "./obras";
 import { statusLabel } from "./status";
 
@@ -416,5 +418,68 @@ describe("estoque da obra (spec 019)", () => {
     const movs = [{ tipo: "entrada", quantidade: 100 }];
     expect(custoMedioEntradas(movs)).toBeNull();
     expect(saldoMaterial(movs).valorParado).toBeNull();
+  });
+});
+
+describe("ordenarCotacoesPendentes (spec 064)", () => {
+  const c = (over: Partial<{ id: string; prazo_necessidade: string | null; created_at: string }> = {}) => ({
+    id: "c1",
+    prazo_necessidade: null,
+    created_at: "2026-08-01T00:00:00.000Z",
+    ...over,
+  });
+
+  it("prazo mais próximo (ou vencido) vem primeiro", () => {
+    const cotacoes = [
+      c({ id: "longe", prazo_necessidade: "2026-09-10" }),
+      c({ id: "vencida", prazo_necessidade: "2026-08-01" }),
+      c({ id: "perto", prazo_necessidade: "2026-08-28" }),
+    ];
+    expect(ordenarCotacoesPendentes(cotacoes).map((x) => x.id)).toEqual(["vencida", "perto", "longe"]);
+  });
+
+  it("sem prazo vai por último, ordenado por criação mais antiga primeiro", () => {
+    const cotacoes = [
+      c({ id: "sem-prazo-nova", prazo_necessidade: null, created_at: "2026-08-10T00:00:00.000Z" }),
+      c({ id: "com-prazo", prazo_necessidade: "2026-09-01" }),
+      c({ id: "sem-prazo-antiga", prazo_necessidade: null, created_at: "2026-08-01T00:00:00.000Z" }),
+    ];
+    expect(ordenarCotacoesPendentes(cotacoes).map((x) => x.id)).toEqual([
+      "com-prazo",
+      "sem-prazo-antiga",
+      "sem-prazo-nova",
+    ]);
+  });
+
+  it("não muta o array original", () => {
+    const cotacoes = [c({ id: "a", prazo_necessidade: "2026-09-01" }), c({ id: "b", prazo_necessidade: "2026-08-20" })];
+    const original = [...cotacoes];
+    ordenarCotacoesPendentes(cotacoes);
+    expect(cotacoes).toEqual(original);
+  });
+});
+
+describe("urgenciaLabel (spec 064)", () => {
+  const hoje = new Date("2026-08-26T12:00:00");
+
+  it("sem prazo → 'sem prazo'", () => {
+    expect(urgenciaLabel(null, hoje)).toBe("sem prazo");
+  });
+
+  it("prazo no passado → atrasada há N dias", () => {
+    expect(urgenciaLabel("2026-08-21", hoje)).toBe("atrasada há 5 dias");
+  });
+
+  it("prazo é hoje → 'vence hoje'", () => {
+    expect(urgenciaLabel("2026-08-26", hoje)).toBe("vence hoje");
+  });
+
+  it("prazo no futuro → vence em N dias", () => {
+    expect(urgenciaLabel("2026-08-29", hoje)).toBe("vence em 3 dias");
+  });
+
+  it("singular quando é exatamente 1 dia", () => {
+    expect(urgenciaLabel("2026-08-27", hoje)).toBe("vence em 1 dia");
+    expect(urgenciaLabel("2026-08-25", hoje)).toBe("atrasada há 1 dia");
   });
 });

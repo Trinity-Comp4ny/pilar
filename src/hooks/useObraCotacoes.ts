@@ -310,12 +310,19 @@ export function useImportarOrcamento() {
 
       // Em 'auto' o backend decide; o modo real vem no próprio payload.
       const payload = data as { modo?: string; classificacao?: ClassificacaoOrcamento | null };
-      const modoRet = payload.modo === "comparativo" || payload.modo === "cesta" || payload.modo === "item" ? payload.modo : modo;
+      const modoRet =
+        payload.modo === "comparativo" || payload.modo === "cesta" || payload.modo === "item" ? payload.modo : modo;
       const classificacao = payload.classificacao ?? null;
 
       if (modoRet === "cesta") {
         const res = data as { fornecedor_nome?: string | null; itens?: PropostaItemInput[]; avisos?: string[] };
-        return { modo: "cesta", classificacao, fornecedor_nome: res.fornecedor_nome ?? null, itens: res.itens ?? [], avisos: res.avisos ?? [] };
+        return {
+          modo: "cesta",
+          classificacao,
+          fornecedor_nome: res.fornecedor_nome ?? null,
+          itens: res.itens ?? [],
+          avisos: res.avisos ?? [],
+        };
       }
       if (modoRet === "comparativo") {
         const res = data as {
@@ -427,5 +434,52 @@ export function useDecidirCotacao(obraId: string) {
       qc.invalidateQueries({ queryKey: cotacoesKey(obraId) });
       invalidarFinancas(qc, obraId);
     },
+  });
+}
+
+export interface CotacaoPendente {
+  id: string;
+  obra_id: string;
+  obra_nome: string;
+  descricao: string;
+  prazo_necessidade: string | null;
+  created_at: string;
+}
+
+/**
+ * Cotações abertas de TODAS as obras da empresa (spec 064): sem `.eq("obra_id", ...)`,
+ * a própria RLS de `obra_cotacao` (por `empresa_id`) já restringe à empresa do
+ * usuário. Ordenação de urgência fica no cliente (`ordenarCotacoesPendentes`).
+ */
+export function useCotacoesPendentesEmpresa() {
+  return useQuery({
+    queryKey: ["obra_cotacao_pendentes"],
+    queryFn: async (): Promise<CotacaoPendente[]> => {
+      const { data, error } = await supabase
+        .from("obra_cotacao")
+        .select("id, obra_id, descricao, prazo_necessidade, created_at, obras(nome)")
+        .eq("status", "aberta")
+        .is("deleted_at", null)
+        .returns<
+          Array<{
+            id: string;
+            obra_id: string;
+            descricao: string;
+            prazo_necessidade: string | null;
+            created_at: string;
+            obras: { nome: string } | null;
+          }>
+        >();
+      if (error) throw error;
+      return (data ?? []).map((c) => ({
+        id: c.id,
+        obra_id: c.obra_id,
+        obra_nome: c.obras?.nome ?? "Obra removida",
+        descricao: c.descricao,
+        prazo_necessidade: c.prazo_necessidade,
+        created_at: c.created_at,
+      }));
+    },
+    staleTime: 1000 * 30,
   });
 }
