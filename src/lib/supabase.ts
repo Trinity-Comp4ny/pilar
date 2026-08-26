@@ -16,21 +16,43 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
 // gravada em localStorage antes do login. O storage adaptativo redireciona
 // a sessão para sessionStorage (morre ao fechar o browser), ou para
 // localStorage quando marcado (persiste entre sessões).
+//
+// try/catch em cada acesso: o GoTrueClient dispara carregamento de sessão em
+// background na criação do client (persistSession/autoRefreshToken), sem
+// ninguém aguardar essa promise. Em modo privado o browser pode lançar ao
+// acessar localStorage; em teste (jsdom), o worker pode reciclar o ambiente
+// antes dessa promise em background resolver, e localStorage/sessionStorage
+// deixam de existir no escopo. Os dois casos são "storage indisponível",
+// mesmo tratamento do resto do projeto (ex.: usePersistedOpen.ts).
 const adaptiveStorage = {
-  getItem: (key: string) => sessionStorage.getItem(key) ?? localStorage.getItem(key),
+  getItem: (key: string) => {
+    try {
+      return sessionStorage.getItem(key) ?? localStorage.getItem(key);
+    } catch {
+      return null;
+    }
+  },
   setItem: (key: string, value: string) => {
-    const remember = localStorage.getItem("pilar-remember-me") !== "false";
-    if (remember) {
-      localStorage.setItem(key, value);
-      sessionStorage.removeItem(key);
-    } else {
-      sessionStorage.setItem(key, value);
-      localStorage.removeItem(key);
+    try {
+      const remember = localStorage.getItem("pilar-remember-me") !== "false";
+      if (remember) {
+        localStorage.setItem(key, value);
+        sessionStorage.removeItem(key);
+      } else {
+        sessionStorage.setItem(key, value);
+        localStorage.removeItem(key);
+      }
+    } catch {
+      // storage indisponível: sem persistência, sem erro.
     }
   },
   removeItem: (key: string) => {
-    localStorage.removeItem(key);
-    sessionStorage.removeItem(key);
+    try {
+      localStorage.removeItem(key);
+      sessionStorage.removeItem(key);
+    } catch {
+      // storage indisponível: sem persistência, sem erro.
+    }
   },
 };
 
