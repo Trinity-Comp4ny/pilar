@@ -1,9 +1,10 @@
 import { useLayoutEffect, useRef } from "react";
 import { m, useInView, useReducedMotion } from "framer-motion";
 import { EASE } from "../../lib/motion";
-import { BarraCopiloto, CartaoRascunho, CursorAgente } from "./SceneParts";
+import { CursorAgente } from "./SceneParts";
 import { AppSidebar, BarraNavegador } from "./SceneChrome";
 import { TelaFinanceiro, TelaLeads, TelaProjeto } from "./SceneScreens";
+import { TelaAgentes } from "./TelaAgentes";
 import { HeroSceneMobile } from "./HeroSceneMobile";
 import { CURSOR, DURACAO_LOOP, MARCOS, PALCO, ATOS, idx, telaDoAto } from "./scene";
 import { useAbaVisivel, useScene } from "./useScene";
@@ -96,6 +97,7 @@ export function HeroScene() {
                 animate={{ opacity: 1, x: 0, filter: "blur(0px)" }}
                 transition={{ duration: 0.5, ease: EASE.out }}
               >
+                {tela === "agentes" && <TelaAgentes ato={ato} />}
                 {tela === "funil" && <TelaLeads ato={ato} />}
                 {tela === "financeiro" && <TelaFinanceiro ato={ato} />}
                 {tela === "projeto" && <TelaProjeto ato={ato} />}
@@ -103,8 +105,6 @@ export function HeroScene() {
             </div>
           </div>
 
-          <BarraCopiloto ato={ato} />
-          <CartaoRascunho ato={ato} />
           <CursorAgente ato={ato} x={cursor.x} y={cursor.y} rotulo={cursor.rotulo} />
         </div>
       </div>

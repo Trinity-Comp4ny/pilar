@@ -48,7 +48,7 @@ export function PricingSection() {
       <div className="max-w-6xl mx-auto">
         <Reveal variant="up" className="text-center max-w-2xl mx-auto mb-12">
           <h2 className="text-[clamp(30px,4.2vw,52px)] font-medium tracking-[-0.035em] leading-[1.08] text-ink mb-4">
-            Preço claro. <span className="italic text-modulo-gestao-strong">Ativa em minutos.</span>
+            Preço claro. <span className="italic text-ink/45">Ativa em minutos.</span>
           </h2>
           <p className="text-[15px] text-ink-soft leading-relaxed">
             Pague por cartão, PIX ou boleto. Sem fidelidade, e 14 dias grátis em qualquer plano.
@@ -61,7 +61,7 @@ export function PricingSection() {
               <div
                 className={`relative h-full rounded-[26px] p-7 md:p-8 flex flex-col ${
                   p.destaque
-                    ? "bg-frame border-2 border-modulo-gestao-strong shadow-[0_24px_60px_-30px_rgba(0,0,0,0.35)]"
+                    ? "bg-frame border-2 border-brand shadow-[0_24px_60px_-30px_rgba(0,0,0,0.35)]"
                     : "bg-frame border border-paper-border"
                 }`}
               >
@@ -96,7 +96,7 @@ export function PricingSection() {
                 <ul className="flex flex-col gap-2.5">
                   {p.itens.map((item) => (
                     <li key={item} className="flex gap-2.5 items-start">
-                      <Check className="w-3.5 h-3.5 mt-[3px] shrink-0 text-modulo-gestao-strong" strokeWidth={2.6} />
+                      <Check className="w-3.5 h-3.5 mt-[3px] shrink-0 text-ink" strokeWidth={2.6} />
                       <span className="text-[13px] text-ink-soft leading-snug">{item}</span>
                     </li>
                   ))}

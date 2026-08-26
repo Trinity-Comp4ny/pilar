@@ -2,11 +2,12 @@ import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 
 /**
- * Botão partido: corpo escuro com o rótulo, e um quadrado do verde da marca com
- * a seta. As duas metades encostam e formam uma pílula só, e a seta desliza na
- * diagonal no hover.
+ * Botão principal da landing: pílula inteira no verde da marca, com tinta
+ * escura por cima (a regra da marca: o verde é fundo, nunca texto).
  *
- * É o botão principal da landing inteira (header, hero, CTA final).
+ * A seta é reta e aponta para a direita; no hover ela gira para cima, no gesto
+ * de "abrir". Antes o botão era partido, com só a ponta verde e uma seta
+ * diagonal duplicada, o que lia como defeito de renderização.
  */
 
 interface SplitButtonProps {
@@ -16,52 +17,49 @@ interface SplitButtonProps {
   onClick?: () => void;
   /** `sm` no header, `md` na hero e no CTA final. */
   tamanho?: "sm" | "md";
+  /** Variante de contorno, para o secundário ao lado do primário. */
+  fantasma?: boolean;
   className?: string;
 }
 
 const MEDIDAS = {
-  sm: { corpo: "h-9 pl-4 pr-3.5 text-[13.5px]", quadrado: "h-9 w-9", seta: "w-3.5 h-3.5" },
-  md: { corpo: "h-12 pl-6 pr-5 text-[15px]", quadrado: "h-12 w-12", seta: "w-4 h-4" },
+  sm: { corpo: "h-9 pl-4 pr-3 gap-2 text-[13.5px]", seta: "w-3.5 h-3.5" },
+  md: { corpo: "h-12 pl-6 pr-5 gap-2.5 text-[15px]", seta: "w-4 h-4" },
 };
 
-/** Seta diagonal para baixo e à direita, o mesmo glifo em todos os tamanhos. */
-function SetaDiagonal({ className }: { className?: string }) {
+/** Seta reta. Aponta à direita e sobe no hover. */
+function Seta({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 16 16" fill="none" className={className} aria-hidden="true">
-      <path
-        d="M11.5 4.5v7h-7M11.5 11.5 4.5 4.5"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
+      <path d="M3 8h10M9.5 4.5 13 8l-3.5 3.5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
 
-export function SplitButton({ children, href, to, onClick, tamanho = "md", className }: SplitButtonProps) {
+export function SplitButton({
+  children,
+  href,
+  to,
+  onClick,
+  tamanho = "md",
+  fantasma = false,
+  className,
+}: SplitButtonProps) {
   const m = MEDIDAS[tamanho];
+
+  const classe = [
+    "group inline-flex items-center justify-center rounded-full font-medium transition-colors",
+    m.corpo,
+    fantasma ? "border border-paper-border bg-frame text-ink hover:bg-paper-alt" : "bg-brand text-ink hover:bg-brand/85",
+    className ?? "",
+  ].join(" ");
 
   const conteudo = (
     <>
-      <span
-        className={`flex items-center justify-center rounded-l-full bg-ink text-white font-medium transition-colors group-hover:bg-ink/90 ${m.corpo}`}
-      >
-        {children}
-      </span>
-      <span
-        className={`relative flex items-center justify-center overflow-hidden rounded-r-full bg-brand text-ink ${m.quadrado}`}
-      >
-        {/* Uma seta só. A versão com cópia entrando por trás mostrava as duas
-            ao mesmo tempo em qualquer quadro intermediário, e lia como defeito. */}
-        <SetaDiagonal
-          className={`${m.seta} transition-transform duration-300 group-hover:translate-x-0.5 group-hover:translate-y-0.5`}
-        />
-      </span>
+      {children}
+      <Seta className={`${m.seta} transition-transform duration-300 group-hover:-rotate-90`} />
     </>
   );
-
-  const classe = `group inline-flex items-center gap-px ${className ?? ""}`;
 
   if (to) {
     return (
@@ -75,17 +73,5 @@ export function SplitButton({ children, href, to, onClick, tamanho = "md", class
     <a href={href} onClick={onClick} className={classe}>
       {conteudo}
     </a>
-  );
-}
-
-/** Pílula de aviso da hero, com o brilho do verde no fim. */
-export function Pill({ children }: { children: ReactNode }) {
-  return (
-    <span className="inline-flex items-center gap-2 rounded-full border border-paper-border bg-frame px-3.5 py-1.5 text-[13px] text-ink-soft shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
-      {children}
-      <svg viewBox="0 0 16 16" className="w-3.5 h-3.5 text-modulo-gestao-strong" fill="currentColor" aria-hidden="true">
-        <path d="M8 0.5 9.6 6.4 15.5 8 9.6 9.6 8 15.5 6.4 9.6 0.5 8 6.4 6.4Z" />
-      </svg>
-    </span>
   );
 }
