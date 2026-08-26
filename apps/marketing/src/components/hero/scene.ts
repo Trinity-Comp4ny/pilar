@@ -12,7 +12,7 @@
  * literal, e o enquadramento é idêntico em qualquer tela.
  */
 
-export const PALCO = { largura: 1120, altura: 680 };
+export const PALCO = { largura: 1120, altura: 700 };
 
 /** Nomes na ordem em que acontecem. O índice do relógio indexa este array. */
 export const ATOS = [
@@ -84,6 +84,7 @@ export function telaDoAto(i: number): "funil" | "financeiro" | "projeto" {
 }
 
 /** Item da barra lateral em destaque, acompanhando a tela. */
+/** Item do menu em destaque, acompanhando a tela. */
 export function moduloAtivo(i: number): string {
   const tela = telaDoAto(i);
   if (tela === "projeto") return "Projetos";
@@ -91,40 +92,85 @@ export function moduloAtivo(i: number): string {
   return "Leads";
 }
 
-export const NAV = [
-  { nome: "Início", grupo: "topo" },
-  { nome: "Leads", grupo: "gestao" },
-  { nome: "Propostas", grupo: "gestao" },
-  { nome: "Projetos", grupo: "gestao" },
-  { nome: "Financeiro", grupo: "gestao" },
-  { nome: "Obras", grupo: "obra" },
-  { nome: "Portal", grupo: "obra" },
-] as const;
+/**
+ * Navegação do mock, copiada da real (`src/lib/modules.ts` do app).
+ *
+ * O app não tem uma lista plana: tem um seletor de módulo (Gestão, Projetos,
+ * Obras) e, dentro do módulo escolhido, itens agrupados por rótulo. A cena
+ * mostra o módulo Gestão aberto, que é onde a história acontece.
+ */
+export const MODULOS_APP = ["Gestão", "Projetos", "Obras"] as const;
 
-export const COLUNAS = [
+/** Itens de cada módulo, na ordem do app. Gestão agrupa; Projetos não. */
+export const NAV_POR_MODULO: Record<string, { nome: string; grupo?: string }[]> = {
+  Gestão: [
+    { nome: "Meu trabalho", grupo: "Empresa" },
+    { nome: "Financeiro", grupo: "Empresa" },
+    { nome: "Equipe", grupo: "Empresa" },
+    { nome: "Metas", grupo: "Empresa" },
+    { nome: "Leads", grupo: "Comercial" },
+    { nome: "Clientes", grupo: "Comercial" },
+    { nome: "Propostas", grupo: "Comercial" },
+  ],
+  Projetos: [{ nome: "Projetos" }, { nome: "Disciplinas" }, { nome: "Cronograma" }, { nome: "Mapa" }],
+};
+
+/**
+ * Módulo aberto no seletor. A tela de projeto vive sob Projetos no app, então a
+ * barra lateral troca junto: seria falso mostrar o menu de Gestão com um
+ * breadcrumb de Projetos no cabeçalho.
+ */
+export function moduloAppAtivo(i: number): string {
+  return telaDoAto(i) === "projeto" ? "Projetos" : "Gestão";
+}
+
+export const COLUNAS: { nome: string; dot: string; cards: { titulo: string; empresa: string; valor: string }[] }[] = [
+  { nome: "Novo", dot: "bg-chart-info", cards: [{ titulo: "Reforma de laboratório", empresa: "Bioteste", valor: "R$ 38.500" }] },
   {
-    nome: "Em contato",
-    cor: "bg-ink/20",
+    nome: "Em Contato",
+    dot: "bg-pipeline-contato",
     cards: [
-      { titulo: "Retrofit elétrico, hospital", valor: "R$ 84.000" },
-      { titulo: "SPDA, galpão logístico", valor: "R$ 21.500" },
+      { titulo: "Retrofit elétrico", empresa: "Hospital Santa Rita", valor: "R$ 84.000" },
+      { titulo: "SPDA de galpão", empresa: "Log Sul", valor: "R$ 21.500" },
     ],
   },
   {
-    nome: "Proposta",
-    cor: "bg-modulo-projetos-strong",
-    cards: [{ titulo: "Gases medicinais, clínica", valor: "R$ 56.000" }],
+    nome: "Proposta Enviada",
+    dot: "bg-chart-warning",
+    cards: [{ titulo: "Gases medicinais", empresa: "Clínica Vitta", valor: "R$ 56.000" }],
   },
-  {
-    nome: "Negociação",
-    cor: "bg-modulo-obra-strong",
-    cards: [{ titulo: "Fotovoltaico, condomínio", valor: "R$ 71.200" }],
-  },
-  { nome: "Ganho", cor: "bg-modulo-gestao-strong", cards: [] },
-] as const;
+  { nome: "Em Negociação", dot: "bg-brand", cards: [{ titulo: "Fotovoltaico", empresa: "Cond. Alvorada", valor: "R$ 71.200" }] },
+  { nome: "Ganho", dot: "bg-status-done", cards: [] },
+  { nome: "Perdido", dot: "bg-status-cancelled", cards: [] },
+];
 
-/** O lead que o agente move: sai de "Proposta" e cai em "Ganho". */
-export const LEAD_HEROI = { titulo: "Climatização, centro cirúrgico", valor: "R$ 128.400" };
+/** O lead que o agente move: sai de "Proposta Enviada" e cai em "Ganho". */
+export const LEAD_HEROI = {
+  titulo: "Climatização de centro cirúrgico",
+  empresa: "Hospital Santa Rita",
+  valor: "R$ 128.400",
+};
+
+/** Os cinco KPIs do topo do funil, com os rótulos exatos do app. */
+export const KPIS_LEADS: { rotulo: string; valor: string; tom?: "positivo" }[] = [
+  { rotulo: "Pipeline ativo", valor: "12" },
+  { rotulo: "Valor no funil", valor: "R$ 399.600", tom: "positivo" },
+  { rotulo: "Fecham em 7 dias", valor: "3" },
+  { rotulo: "Conversão de leads", valor: "62%", tom: "positivo" },
+  { rotulo: "Fechamento de propostas", valor: "45%" },
+];
+
+/** Os cinco KPIs da Visão Geral do Financeiro, na ordem real. */
+export const KPIS_FINANCEIRO: { rotulo: string; valor: number; sub: string; tom: "positivo" | "negativo" }[] = [
+  { rotulo: "Lucro líquido", valor: 148450, sub: "Margem de 31,4%", tom: "positivo" },
+  { rotulo: "Receitas totais", valor: 412900, sub: "18% vs período anterior", tom: "positivo" },
+  { rotulo: "Despesas totais", valor: 264450, sub: "6% vs período anterior", tom: "negativo" },
+  { rotulo: "A receber", valor: 268300, sub: "9 lançamentos pendentes", tom: "positivo" },
+  { rotulo: "A pagar", valor: 74100, sub: "4 lançamentos pendentes", tom: "negativo" },
+];
+
+/** Itens da barra secundária do Financeiro. */
+export const MENU_FINANCEIRO = ["Visão Geral", "Lançamentos", "Folha de Pagamento", "Carteira", "Relatórios"] as const;
 
 export const RASCUNHO = [
   ["Projeto", "Climatização, centro cirúrgico"],
