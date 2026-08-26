@@ -1,13 +1,17 @@
 /**
- * Fonte única dos 3 módulos da landing: alimenta o mega-menu do header, a
- * seção de módulos da home e as páginas /gestao, /projetos e /obra.
+ * Fonte única dos módulos da landing: alimenta o mega-menu do header, a seção
+ * de módulos da home e as páginas /gestao, /projetos, /obra, /portal e /campo.
+ *
+ * Portal e Campo entraram como entradas próprias porque são o que o cliente e
+ * o canteiro veem, e cada um merece uma página para onde mandar quem se
+ * interessou pelo cartão do bento.
  *
  * Só entra aqui funcionalidade que existe de fato no produto. Escopo, aditivo
  * e orçamento por fase ficaram de fora de propósito: as tabelas existem, a
  * tela não.
  */
 
-export type ModuloSlug = "gestao" | "projetos" | "obra";
+export type ModuloSlug = "gestao" | "projetos" | "obra" | "portal" | "campo";
 
 export interface Modulo {
   slug: ModuloSlug;
@@ -227,6 +231,84 @@ export const MODULOS: Modulo[] = [
         slug: "projetos",
         texto: "A obra executa o que o projeto especificou, e o cliente vê os dois no mesmo portal.",
       },
+    ],
+    ctaPrimario: { label: "Falar com a gente", tipo: "contato" },
+  },
+  {
+    slug: "portal",
+    numero: "Portal do cliente",
+    nome: "Portal do cliente",
+    resumo: "Seu cliente acompanha sozinho.",
+    headline: "Seu cliente acompanha sozinho. Seu WhatsApp descansa.",
+    lede: "Um link só de leitura, sem conta e sem aplicativo. Quem contratou projeto vê disciplina e entrega; quem contratou obra vê aporte, despesa com comprovante e a sua taxa.",
+    url: "app.pilarsoft.com.br/portal/santa-rita",
+    cor: {
+      fill: "bg-modulo-gestao",
+      strong: "bg-modulo-gestao-strong",
+      text: "text-modulo-gestao-strong",
+      border: "border-modulo-gestao-strong",
+      glow: "hsla(102, 73%, 60%, 0.28)",
+    },
+    features: [
+      {
+        titulo: "Um link, sem cadastro",
+        texto: "O cliente abre e vê. Não cria conta, não instala nada, não pede senha para ninguém.",
+      },
+      {
+        titulo: "Só leitura, sempre",
+        texto: "Ele acompanha o andamento, mas não altera nada. O que ele vê é o que está no sistema, sem você exportar.",
+      },
+      {
+        titulo: "Duas visões, um portal",
+        texto: "Projeto mostra disciplina, entrega e parcela. Obra mostra aporte, despesa com comprovante e saldo em conta.",
+      },
+      {
+        titulo: "Menos cobrança no seu telefone",
+        texto: "A pergunta de sexta à tarde some quando o cliente tem onde olhar no horário dele.",
+      },
+    ],
+    conecta: [
+      { slug: "projetos", texto: "O andamento que ele vê vem do cronograma por disciplina." },
+      { slug: "obra", texto: "A prestação de contas sai da conta da obra, sem planilha paralela." },
+    ],
+    ctaPrimario: { label: "Testar grátis", tipo: "cadastro" },
+  },
+  {
+    slug: "campo",
+    numero: "Pilar Campo",
+    nome: "Pilar Campo",
+    resumo: "O canteiro registra, sem sinal.",
+    headline: "O canteiro registra. Sem sinal e sem e-mail.",
+    lede: "O encarregado abre no navegador do celular, registra o dia e vai embora. Sem rede, tudo fica no aparelho e sobe sozinho quando o sinal volta.",
+    url: "app.pilarsoft.com.br/campo/diario",
+    cor: {
+      fill: "bg-modulo-obra",
+      strong: "bg-modulo-obra-strong",
+      text: "text-modulo-obra-strong",
+      border: "border-modulo-obra-strong",
+      glow: "hsla(32, 78%, 58%, 0.26)",
+    },
+    features: [
+      {
+        titulo: "Funciona no subsolo",
+        texto: "Sem rede, o dia inteiro fica guardado no aparelho e sobe sozinho quando o sinal volta, foto por foto, sem duplicar.",
+      },
+      {
+        titulo: "Login que o gestor entrega na mão",
+        texto: "Quem trabalha em obra costuma não ter e-mail corporativo. O gestor gera usuário e senha, com acesso limitado a uma obra.",
+      },
+      {
+        titulo: "Foto, medição e tarefa na mesma tela",
+        texto: "Clima, efetivo, atividade, foto do serviço, quantidade executada e a tarefa do cronograma marcada como concluída.",
+      },
+      {
+        titulo: "Chega pronto no escritório",
+        texto: "O que o encarregado registrou aparece no diário da obra sem ninguém digitar de novo.",
+      },
+    ],
+    conecta: [
+      { slug: "obra", texto: "O registro do dia alimenta o diário e o cronograma da obra." },
+      { slug: "portal", texto: "O que foi medido no canteiro vira andamento no portal do cliente." },
     ],
     ctaPrimario: { label: "Falar com a gente", tipo: "contato" },
   },

@@ -15,21 +15,32 @@ import { AgentDemo } from "./agents/AgentDemo";
  * o mesmo diálogo mais abaixo não acrescentava nada.
  */
 
+/**
+ * Os passos falam da dor, não do mecanismo.
+ *
+ * A versão anterior anunciava "você escreve em português", que não é benefício
+ * nenhum: ninguém troca de sistema para poder escrever no próprio idioma. O que
+ * o sócio reconhece é a noite de sexta lançando o que aconteceu na semana, e o
+ * projeto que ele descobre no vermelho quando já acabou.
+ */
 const PASSOS = [
   {
     n: "01",
-    titulo: "Você escreve em português",
-    texto: "Nada de formulário: o pedido vai como você contaria para alguém da equipe.",
+    titulo: "Some o lançamento manual",
+    texto:
+      "Aquela hora de sexta abrindo formulário, escolhendo categoria e conferindo parcela. Você conta o que aconteceu e acabou.",
   },
   {
     n: "02",
-    titulo: "O agente monta o registro",
-    texto: "Acha o projeto pelo nome, calcula a parcela e preenche o lançamento inteiro.",
+    titulo: "Ele não erra o projeto",
+    texto:
+      "Acha pelo nome, calcula a parcela, categoriza no seu plano de contas. É o trabalho que o estagiário faria, sem a revisão que ele exigiria.",
   },
   {
     n: "03",
-    titulo: "Você confirma, e só então grava",
-    texto: "O número aparece no financeiro e a margem do projeto se refaz na hora.",
+    titulo: "A margem se refaz na hora",
+    texto:
+      "No segundo em que você aprova, o projeto sabe se ainda está dando lucro. Você descobre agora, não quando já entregou.",
   },
 ];
 
@@ -51,8 +62,8 @@ export function AgentsSection() {
         <div className="max-w-2xl mb-14">
           <TextReveal
             as="h2"
-            text="A IA prepara o trabalho. Você dá a palavra final."
-            highlight="Você dá a palavra final."
+            text="A IA faz o trabalho chato. Você só dá o aval."
+            highlight="Você só dá o aval."
             highlightClassName="italic text-white/45"
             className="text-[52px] max-[1100px]:text-[42px] max-[850px]:text-[29px] max-[420px]:text-[25px] font-medium text-white leading-[1.08] tracking-[-0.035em]"
           />

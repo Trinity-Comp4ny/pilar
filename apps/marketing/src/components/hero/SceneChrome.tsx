@@ -103,12 +103,31 @@ export function AppSidebar({ ato }: { ato: number }) {
         {[
           { nome: "Início", Icone: Home },
           { nome: "Agentes", Icone: Sparkles },
-        ].map(({ nome, Icone }) => (
-          <div key={nome} className="flex items-center gap-3 px-3 py-2 rounded-full text-[13px] text-black/70">
-            <Icone className="w-[17px] h-[17px] shrink-0" strokeWidth={1.5} />
-            {nome}
-          </div>
-        ))}
+        ].map(({ nome, Icone }) => {
+          // Transversal também acende: com a tela de Agentes aberta e o item
+          // apagado, o mock mostrava um estado que o app nunca produz.
+          const selecionado = nome === ativo;
+          return (
+            <div key={nome} className="relative px-3 py-2 rounded-full">
+              {selecionado && (
+                <m.span
+                  className="absolute inset-0 rounded-full bg-brand"
+                  initial={{ opacity: 0, scale: 0.96 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.28, ease: EASE.out }}
+                />
+              )}
+              <span
+                className={`relative flex items-center gap-3 text-[13px] ${
+                  selecionado ? "text-black/80 font-medium" : "text-black/70"
+                }`}
+              >
+                <Icone className="w-[17px] h-[17px] shrink-0" strokeWidth={1.5} />
+                {nome}
+              </span>
+            </div>
+          );
+        })}
 
         {grupos.map((grupo) => (
           <div key={grupo || "sem-grupo"} className="mt-3">
