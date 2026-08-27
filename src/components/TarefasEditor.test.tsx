@@ -1,14 +1,36 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { TarefasEditor } from "./TarefasEditor";
 
+const pessoas = [
+  { id: "p1", nome: "Beatriz Rocha" },
+  { id: "p2", nome: "Carlos Souza" },
+];
+
+class ResizeObserverStub {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+
 describe("TarefasEditor", () => {
+  // O popover de responsáveis (cmdk) usa ResizeObserver e scrollIntoView, ausentes no jsdom.
+  beforeEach(() => {
+    vi.stubGlobal("ResizeObserver", ResizeObserverStub);
+    Element.prototype.scrollIntoView = vi.fn();
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
   it("renderiza uma linha por item existente", () => {
     render(
       <TarefasEditor
         value={[{ texto: "Visita ao terreno" }, { texto: "Briefing com cliente", duracao_dias_uteis: 2 }]}
         onChange={vi.fn()}
+        pessoas={pessoas}
       />
     );
     expect(screen.getByDisplayValue("Visita ao terreno")).toBeInTheDocument();
@@ -18,7 +40,7 @@ describe("TarefasEditor", () => {
 
   it("Enter no campo de rascunho adiciona um item novo sem duração e limpa o campo", async () => {
     const onChange = vi.fn();
-    render(<TarefasEditor value={[{ texto: "Item 1" }]} onChange={onChange} />);
+    render(<TarefasEditor value={[{ texto: "Item 1" }]} onChange={onChange} pessoas={pessoas} />);
 
     const draft = screen.getByPlaceholderText("Adicionar tarefa…");
     await userEvent.type(draft, "Item 2{Enter}");
@@ -28,7 +50,7 @@ describe("TarefasEditor", () => {
 
   it("não adiciona item vazio", async () => {
     const onChange = vi.fn();
-    render(<TarefasEditor value={[]} onChange={onChange} />);
+    render(<TarefasEditor value={[]} onChange={onChange} pessoas={pessoas} />);
 
     const draft = screen.getByPlaceholderText("Adicionar tarefa…");
     await userEvent.type(draft, "   {Enter}");
@@ -38,7 +60,7 @@ describe("TarefasEditor", () => {
 
   it("botão remover tira o item da lista", async () => {
     const onChange = vi.fn();
-    render(<TarefasEditor value={[{ texto: "Item 1" }, { texto: "Item 2" }]} onChange={onChange} />);
+    render(<TarefasEditor value={[{ texto: "Item 1" }, { texto: "Item 2" }]} onChange={onChange} pessoas={pessoas} />);
 
     await userEvent.click(screen.getByRole("button", { name: "Remover tarefa Item 1" }));
 
@@ -47,7 +69,9 @@ describe("TarefasEditor", () => {
 
   it("editar o texto de um item existente propaga a mudança preservando o resto", async () => {
     const onChange = vi.fn();
-    render(<TarefasEditor value={[{ texto: "Item 1", duracao_dias_uteis: 3 }]} onChange={onChange} />);
+    render(
+      <TarefasEditor value={[{ texto: "Item 1", duracao_dias_uteis: 3 }]} onChange={onChange} pessoas={pessoas} />
+    );
 
     const input = screen.getByDisplayValue("Item 1");
     await userEvent.type(input, "!");
@@ -57,7 +81,7 @@ describe("TarefasEditor", () => {
 
   it("preencher dias úteis de um item propaga só esse campo", async () => {
     const onChange = vi.fn();
-    render(<TarefasEditor value={[{ texto: "Briefing" }]} onChange={onChange} />);
+    render(<TarefasEditor value={[{ texto: "Briefing" }]} onChange={onChange} pessoas={pessoas} />);
 
     const diasInput = screen.getByLabelText("Dias úteis de Briefing");
     await userEvent.type(diasInput, "2");
@@ -67,11 +91,23 @@ describe("TarefasEditor", () => {
 
   it("preencher horas estimadas nunca aparece como dias úteis", async () => {
     const onChange = vi.fn();
-    render(<TarefasEditor value={[{ texto: "Ligação rápida" }]} onChange={onChange} />);
+    render(<TarefasEditor value={[{ texto: "Ligação rápida" }]} onChange={onChange} pessoas={pessoas} />);
 
     const horasInput = screen.getByLabelText("Horas estimadas de Ligação rápida");
     await userEvent.type(horasInput, "2");
 
     expect(onChange).toHaveBeenLastCalledWith([{ texto: "Ligação rápida", horas_estimadas: 2 }]);
+  });
+
+  it("escolher um responsável no item propaga ids e nomes", async () => {
+    const onChange = vi.fn();
+    render(<TarefasEditor value={[{ texto: "Concretagem" }]} onChange={onChange} pessoas={pessoas} />);
+
+    await userEvent.click(screen.getByRole("button", { name: "Responsáveis" }));
+    await userEvent.click(await screen.findByText("Beatriz Rocha"));
+
+    expect(onChange).toHaveBeenLastCalledWith([
+      { texto: "Concretagem", responsaveis_ids: ["p1"], responsaveis_nomes: ["Beatriz Rocha"] },
+    ]);
   });
 });

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { calcularDatasFluxo, duracaoEfetiva } from "./fluxoCascata";
+import { calcularDatasFluxo, duracaoEfetiva, responsaveisEfetivos } from "./fluxoCascata";
 
 describe("calcularDatasFluxo", () => {
   it("encadeia data_previsao de uma disciplina como data_inicio da próxima, pulando fim de semana", () => {
@@ -94,5 +94,33 @@ describe("duracaoEfetiva", () => {
         checklist_padrao: [{ texto: "Ligação rápida", horas_estimadas: 2 }],
       })
     ).toBeUndefined();
+  });
+});
+
+describe("responsaveisEfetivos", () => {
+  it("une os responsáveis das tarefas que têm, sem duplicar", () => {
+    const efetivos = responsaveisEfetivos({
+      responsaveis_ids: ["fallback"],
+      responsaveis_nomes: ["Fallback"],
+      checklist_padrao: [
+        { texto: "Fôrma", responsaveis_ids: ["p1", "p2"], responsaveis_nomes: ["Beatriz", "Carlos"] },
+        { texto: "Concretagem", responsaveis_ids: ["p2"], responsaveis_nomes: ["Carlos"] },
+        { texto: "Sem responsável" },
+      ],
+    });
+
+    expect(efetivos).toEqual({ ids: ["p1", "p2"], nomes: ["Beatriz", "Carlos"] });
+  });
+
+  it("sem nenhuma tarefa com responsável, cai no fallback manual da disciplina", () => {
+    expect(
+      responsaveisEfetivos({
+        responsaveis_ids: ["p1"],
+        responsaveis_nomes: ["Beatriz"],
+        checklist_padrao: [{ texto: "Sem responsável" }],
+      })
+    ).toEqual({ ids: ["p1"], nomes: ["Beatriz"] });
+
+    expect(responsaveisEfetivos({})).toEqual({ ids: [], nomes: [] });
   });
 });
