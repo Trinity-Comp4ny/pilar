@@ -18,6 +18,7 @@ import { type TemplateProjeto } from "@/hooks/useTemplates";
 import type { FluxoDisciplinas } from "@/types/fluxoDisciplinas";
 import { toast } from "sonner";
 import { getSafeErrorMessage } from "@/lib/safeError";
+import { lookupCEP } from "@/lib/brasilApi";
 import { useBulkSaveDisciplinas } from "@/hooks/useProjetoDisciplinas";
 import { useFormPersist, clearFormPersist } from "@/hooks/useFormPersist";
 
@@ -179,34 +180,28 @@ export function useProjetoForm({
     data_final: "",
   });
 
-  const fetchCep = useCallback(
-    async (cep: string) => {
-      const digits = cep.replace(/\D/g, "");
-      if (digits.length !== 8) return;
+  const fetchCep = useCallback(async (cep: string) => {
+    const digits = cep.replace(/\D/g, "");
+    if (digits.length !== 8) return;
 
-      setIsFetchingCep(true);
-      try {
-        const res = await fetch(`https://viacep.com.br/ws/${digits}/json/`);
-        const data = await res.json();
-        if (data.erro) {
-          toast.error("CEP não encontrado");
-          return;
-        }
-        setFormData((prev) => ({
-          ...prev,
-          loc_logradouro: data.logradouro || prev.loc_logradouro,
-          loc_bairro: data.bairro || prev.loc_bairro,
-          loc_cidade: data.localidade || prev.loc_cidade,
-          loc_estado: data.uf || prev.loc_estado,
-        }));
-      } catch {
-        toast.error("Erro ao buscar CEP");
-      } finally {
-        setIsFetchingCep(false);
+    setIsFetchingCep(true);
+    try {
+      const end = await lookupCEP(digits);
+      if (!end) {
+        toast.error("CEP não encontrado");
+        return;
       }
-    },
-    [toast]
-  );
+      setFormData((prev) => ({
+        ...prev,
+        loc_logradouro: end.street || prev.loc_logradouro,
+        loc_bairro: end.neighborhood || prev.loc_bairro,
+        loc_cidade: end.city || prev.loc_cidade,
+        loc_estado: end.state || prev.loc_estado,
+      }));
+    } finally {
+      setIsFetchingCep(false);
+    }
+  }, []);
 
   useEffect(() => {
     if (!open) return;

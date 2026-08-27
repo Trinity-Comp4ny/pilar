@@ -1,4 +1,5 @@
 import { onlyDigits } from "./maskUtils";
+import { supabase } from "@/integrations/supabase/client";
 
 const BASE = "https://brasilapi.com.br/api";
 
@@ -42,20 +43,27 @@ export function isValidCNPJ(value: string): boolean {
   return calc(d.slice(0, 12), w1) === Number(d[12]) && calc(d.slice(0, 13), w2) === Number(d[13]);
 }
 
+type LookupCepResponse = { found: true } & CepLookup;
+
+/**
+ * Busca CEP via edge function `lookup-cep`: proxy com fallback entre
+ * provedores (BrasilAPI → ViaCEP) e validação de schema no servidor, pra não
+ * quebrar no cliente se um provedor mudar de formato ou cair (ADR 0033).
+ */
 export async function lookupCEP(cep: string): Promise<CepLookup | null> {
   const d = onlyDigits(cep);
   if (d.length !== 8) return null;
   try {
-    const res = await fetch(`${BASE}/cep/v2/${d}`);
-    if (!res.ok) return null;
-    const json = (await res.json()) as Partial<CepLookup>;
-    if (!json.city || !json.state) return null;
+    const { data, error } = await supabase.functions.invoke<LookupCepResponse | { found: false }>("lookup-cep", {
+      body: { cep: d },
+    });
+    if (error || !data?.found) return null;
     return {
-      cep: json.cep ?? d,
-      street: json.street ?? "",
-      neighborhood: json.neighborhood ?? "",
-      city: json.city,
-      state: json.state,
+      cep: data.cep,
+      street: data.street,
+      neighborhood: data.neighborhood,
+      city: data.city,
+      state: data.state,
     };
   } catch {
     return null;
