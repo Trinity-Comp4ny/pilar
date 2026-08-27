@@ -62,7 +62,7 @@ export function Planos() {
           <Reveal variant="up" className="mb-12 max-w-2xl">
             <h1 className="mb-4 text-[58px] font-medium leading-[1.06] tracking-[-0.035em] text-ink max-[1100px]:text-[44px] max-[850px]:text-[32px] max-[420px]:text-[27px]">
               Um preço por escritório.{" "}
-              <span className="rounded-[0.28em] bg-brand px-[0.16em] italic">sem contar cabeças.</span>
+              <span className="italic text-ink/45">Sem contar cabeças.</span>
             </h1>
             <p className="text-[15px] leading-relaxed text-ink-soft">
               Todo plano tem a plataforma inteira. O que muda é quantos projetos você toca ao mesmo tempo e quanto de IA

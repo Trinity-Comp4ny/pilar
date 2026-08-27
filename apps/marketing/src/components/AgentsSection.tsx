@@ -1,4 +1,3 @@
-import { Lock, ScrollText, Sparkles, Undo2 } from "lucide-react";
 import { Reveal } from "./Reveal";
 import { RevealGroup, TextReveal } from "./motion";
 import { AgentDemo } from "./agents/AgentDemo";
@@ -44,12 +43,6 @@ const PASSOS = [
   },
 ];
 
-const GARANTIAS = [
-  { icone: Undo2, texto: "Desfazer apaga exatamente o que aquela execução criou" },
-  { icone: Lock, texto: "O agente lê com a sua permissão, nunca com chave de administrador" },
-  { icone: ScrollText, texto: "Cada execução fica registrada e auditável" },
-];
-
 export function AgentsSection() {
   return (
     <section id="agentes" className="relative py-16 md:py-32 bg-ink text-white scroll-mt-28 overflow-hidden">
@@ -92,21 +85,6 @@ export function AgentsSection() {
             ))}
           </RevealGroup>
         </div>
-
-        <Reveal variant="fade" delay={0.1}>
-          <div className="flex flex-wrap items-center gap-x-8 gap-y-3 pt-8 border-t border-white/10">
-            <span className="flex items-center gap-2 text-[12px] font-medium text-brand">
-              <Sparkles className="w-3.5 h-3.5" strokeWidth={1.9} />
-              Três agentes rodando hoje
-            </span>
-            {GARANTIAS.map((g) => (
-              <span key={g.texto} className="flex items-center gap-2 text-[12px] text-white/50">
-                <g.icone className="w-3.5 h-3.5 shrink-0" strokeWidth={1.8} />
-                {g.texto}
-              </span>
-            ))}
-          </div>
-        </Reveal>
       </div>
     </section>
   );

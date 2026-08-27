@@ -16,27 +16,53 @@ import { MODULOS } from "../lib/modules";
 
 const VISTA = { once: true, amount: 0.35 } as const;
 
-/** Celular dos cartões: moldura com ilha, barra de status e conteúdo por dentro. */
-function Celular({ children }: { children: React.ReactNode }) {
+/**
+ * Celular dos cartões: moldura com ilha, barra de status e conteúdo por
+ * dentro. Aceita um `flutuante`, um cartão que estoura a borda inferior do
+ * aparelho, no truque visual da referência (React Bits): dá peso ao conjunto
+ * sem custar uma linha de texto a mais.
+ */
+function Celular({ children, flutuante }: { children: React.ReactNode; flutuante?: React.ReactNode }) {
   return (
-    <div className="relative mx-auto w-[212px]">
-      <div className="rounded-[26px] border-[7px] border-ink bg-frame overflow-hidden shadow-[0_22px_50px_-20px_rgba(0,0,0,0.5)]">
+    <div className="relative mx-auto w-[256px] pb-8">
+      <div className="rounded-[30px] border-[8px] border-ink bg-frame overflow-hidden shadow-[0_26px_58px_-20px_rgba(0,0,0,0.5)]">
         {/* Barra de status com a ilha, como num aparelho de verdade. */}
-        <div className="relative h-6 bg-frame flex items-center justify-between px-3">
-          <span className="text-[7px] font-medium text-ink/70 tabular-nums">9:41</span>
-          <span className="absolute left-1/2 -translate-x-1/2 top-1 w-11 h-3 rounded-full bg-ink" />
+        <div className="relative h-7 bg-frame flex items-center justify-between px-3.5">
+          <span className="text-[8px] font-medium text-ink/70 tabular-nums">9:41</span>
+          <span className="absolute left-1/2 -translate-x-1/2 top-1.5 w-12 h-3.5 rounded-full bg-ink" />
           <span className="flex items-center gap-[3px]">
-            <span className="w-[7px] h-[5px] rounded-[1px] bg-ink/60" />
-            <span className="w-[9px] h-[5px] rounded-[1px] border border-ink/50" />
+            <span className="w-2 h-[6px] rounded-[1px] bg-ink/60" />
+            <span className="w-2.5 h-[6px] rounded-[1px] border border-ink/50" />
           </span>
         </div>
-        <div className="px-2.5 pb-4">{children}</div>
+        <div className="px-3 pb-5">{children}</div>
       </div>
+
+      {flutuante && (
+        <m.div
+          className="absolute inset-x-3 -bottom-1"
+          initial={{ opacity: 0, y: 10 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={VISTA}
+          transition={{ duration: 0.5, delay: 0.55, ease: EASE.out }}
+        >
+          {flutuante}
+        </m.div>
+      )}
     </div>
   );
 }
 
-/** Cartão 1: o funil, no verde cheio. */
+/**
+ * Cartão 1: o funil, no verde cheio.
+ *
+ * A versão anterior tinha uma lista de 3 leads com nome do cliente dentro do
+ * celular e, embaixo dele, uma cadeia de 4 passos em texto para preencher o
+ * verde sobrando. As duas coisas iam contra a referência: menos densidade
+ * dentro da tela, e o espaço embaixo se resolve com forma, não com parágrafo.
+ * Agora o celular mostra só 2 cartões, maiores, e um cartão escuro estoura a
+ * borda de baixo do aparelho com o número que fecha a história.
+ */
 function CartaoGestao() {
   const mo = MODULOS[0];
   return (
@@ -46,98 +72,51 @@ function CartaoGestao() {
         <h3 className="text-[26px] md:text-[30px] font-medium tracking-[-0.03em] leading-[1.1] text-ink text-center mb-2.5">
           Do lead ao dinheiro na conta
         </h3>
-        <p className="text-[13.5px] text-ink/65 text-center leading-relaxed mb-7 max-w-[30ch] mx-auto">
-          Funil, proposta no seu template, contrato e financeiro sem redigitar nada entre as etapas.
-        </p>
+        <p className="text-[13.5px] text-ink/65 text-center leading-relaxed mb-8">Sem redigitar nada entre as etapas.</p>
 
-        <Celular>
-          {/* Cabeçalho da tela, como no app: título e ação. */}
-          <div className="flex items-center justify-between pt-1 pb-2.5">
-            <span className="text-[10px] font-semibold tracking-tight text-ink">Leads</span>
-            <span className="flex items-center justify-center w-4 h-4 rounded-full bg-brand text-ink text-[9px] leading-none font-semibold">
+        <Celular
+          flutuante={
+            <div className="rounded-xl bg-ink px-4 py-3 shadow-[0_16px_32px_-10px_rgba(0,0,0,0.5)] flex items-center justify-between">
+              <span className="text-[9px] uppercase tracking-wider text-white/45">Fechado</span>
+              <span className="text-[14.5px] font-semibold text-brand tabular-nums">R$ 128.400</span>
+            </div>
+          }
+        >
+          <div className="flex items-center justify-between pt-1.5 pb-3.5">
+            <span className="text-[12.5px] font-semibold tracking-tight text-ink">Leads</span>
+            <span className="flex items-center justify-center w-[18px] h-[18px] rounded-full bg-brand text-ink text-[10px] leading-none font-semibold">
               +
             </span>
           </div>
 
-          {/* Duas métricas antes da lista: dá contexto ao que vem abaixo. */}
-          <div className="grid grid-cols-2 gap-1.5 mb-2.5">
-            {[
-              { r: "No funil", v: "R$ 399.600" },
-              { r: "Fecham em 7d", v: "3" },
-            ].map((k, i) => (
-              <m.div
-                key={k.r}
-                className="rounded-lg bg-paper-alt px-2 py-1.5"
-                initial={{ opacity: 0, y: 6 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={VISTA}
-                transition={{ duration: 0.4, delay: 0.1 + i * 0.08, ease: EASE.out }}
-              >
-                <span className="block text-[6.5px] uppercase tracking-wider text-ink-muted mb-[2px]">{k.r}</span>
-                <span className="block text-[10px] font-semibold text-ink tabular-nums leading-none">{k.v}</span>
-              </m.div>
-            ))}
-          </div>
-
           {[
-            { nome: "Retrofit elétrico", cli: "Hospital Santa Rita", valor: "84.000", etapa: "Em contato", dot: "bg-pipeline-contato" },
-            { nome: "Centro cirúrgico", cli: "Hospital Santa Rita", valor: "128.400", etapa: "Ganho", dot: "bg-status-done", ganho: true },
-            { nome: "Gases medicinais", cli: "Clínica Vitta", valor: "56.000", etapa: "Proposta", dot: "bg-chart-warning" },
+            { nome: "Retrofit elétrico", valor: "84.000", etapa: "Em contato", dot: "bg-pipeline-contato" },
+            { nome: "Centro cirúrgico", valor: "128.400", etapa: "Ganho", dot: "bg-status-done", ganho: true },
+            { nome: "Fotovoltaico", valor: "71.200", etapa: "Negociação", dot: "bg-brand" },
           ].map((c, i) => (
             <m.div
               key={c.nome}
-              className={`relative rounded-lg px-2 py-1.5 mb-1.5 overflow-hidden ${
+              className={`relative rounded-lg px-3 py-3 mb-2.5 overflow-hidden ${
                 c.ganho ? "bg-white shadow-[0_2px_8px_-2px_rgba(0,0,0,0.16)]" : "bg-paper-alt"
               }`}
               initial={{ opacity: 0, x: -14 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={VISTA}
-              transition={{ duration: 0.5, delay: 0.25 + i * 0.12, ease: EASE.out }}
+              transition={{ duration: 0.5, delay: 0.25 + i * 0.14, ease: EASE.out }}
             >
-              {/* Fio de cor da etapa na borda esquerda, como no cartão do app. */}
-              <span className={`absolute left-0 inset-y-0 w-[2.5px] ${c.dot}`} />
-              <p className="pl-1.5 text-[9px] font-medium text-ink leading-tight truncate">{c.nome}</p>
-              <p className="pl-1.5 text-[7px] text-ink-muted truncate mb-1">{c.cli}</p>
+              <span className={`absolute left-0 inset-y-0 w-[3px] ${c.dot}`} />
+              <p className="pl-1.5 text-[12px] font-medium text-ink leading-tight mb-2">{c.nome}</p>
               <div className="pl-1.5 flex items-center justify-between">
-                <span className="text-[6.5px] uppercase tracking-wider text-ink-muted">{c.etapa}</span>
-                <span className="text-[8.5px] font-semibold text-ink tabular-nums">R$ {c.valor}</span>
+                <span className="text-[7.5px] uppercase tracking-wider text-ink-muted">{c.etapa}</span>
+                <span className="text-[10.5px] font-semibold text-ink tabular-nums">R$ {c.valor}</span>
               </div>
             </m.div>
           ))}
         </Celular>
 
-        {/* A cadeia que dá nome ao cartão. Ele ocupa duas linhas da grade e
-            sobrava quase meio metro de verde embaixo do celular. */}
-        <div className="mt-8 mx-auto w-full max-w-[240px]">
-          {[
-            { etapa: "Lead", detalhe: "entra pelo funil" },
-            { etapa: "Proposta", detalhe: "no seu template, em DOCX" },
-            { etapa: "Contrato", detalhe: "vira projeto com as parcelas" },
-            { etapa: "Financeiro", detalhe: "a receita já nasce lançada" },
-          ].map((e, i, arr) => (
-            <m.div
-              key={e.etapa}
-              className="flex items-start gap-3"
-              initial={{ opacity: 0, x: -10 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={VISTA}
-              transition={{ duration: 0.45, delay: 0.5 + i * 0.12, ease: EASE.out }}
-            >
-              <span className="flex flex-col items-center self-stretch">
-                <span className="mt-[5px] h-2 w-2 shrink-0 rounded-full bg-ink" />
-                {i < arr.length - 1 && <span className="w-px flex-1 bg-ink/20" />}
-              </span>
-              <span className="pb-4 text-left">
-                <span className="block text-[13px] font-medium leading-none text-ink">{e.etapa}</span>
-                <span className="block text-[11.5px] text-ink/55">{e.detalhe}</span>
-              </span>
-            </m.div>
-          ))}
-        </div>
-
         <Link
           to={`/${mo.slug}`}
-          className="mt-2 inline-flex items-center justify-center gap-1.5 text-[13.5px] font-medium text-ink group/l"
+          className="mt-4 inline-flex items-center justify-center gap-1.5 text-[13.5px] font-medium text-ink group/l"
         >
           Ver Gestão
           <ArrowRight className="w-3.5 h-3.5 group-hover/l:translate-x-1 transition-transform" />
@@ -158,16 +137,13 @@ function CartaoProjetos() {
 
   return (
     <Reveal variant="scale" delay={0.08} className="h-full">
-      <div className="h-full rounded-[26px] bg-card-brand-soft p-7 md:p-9 flex flex-col justify-between gap-8">
+      <div className="h-full rounded-[26px] bg-card-brand-soft p-7 md:p-9 flex flex-col gap-6">
         <div>
           <p className="text-[10px] uppercase tracking-[0.16em] text-ink/50 mb-2">Projetos</p>
           <h3 className="text-[24px] md:text-[28px] font-medium tracking-[-0.03em] leading-[1.12] text-ink mb-2.5">
             Disciplina, prazo e responsável
           </h3>
-          <p className="text-[13.5px] text-ink/60 leading-relaxed max-w-[38ch]">
-            Projeto não é uma tarefa: é um conjunto de disciplinas com gente e data em cada uma. Concluiu, o próximo já
-            sabe.
-          </p>
+          <p className="text-[13.5px] text-ink/60 leading-relaxed">Concluiu uma disciplina, o próximo já sabe.</p>
         </div>
 
         <div className="rounded-2xl bg-frame border border-paper-border/70 p-4">
@@ -217,13 +193,13 @@ function CartaoProjetos() {
             viewport={VISTA}
             transition={{ duration: 0.4, delay: 0.75 }}
           >
-            Elétrico concluiu: <span className="text-ink font-medium">Climatização foi avisada</span>
+            Concluiu, <span className="text-ink font-medium">próximo avisado na hora</span>
           </m.p>
         </div>
 
         <Link
           to="/projetos"
-          className="mt-6 inline-flex items-center gap-1.5 text-[13.5px] font-medium text-ink group/l"
+          className="mt-auto pt-2 inline-flex items-center gap-1.5 text-[13.5px] font-medium text-ink group/l"
         >
           Ver Projetos
           <ArrowRight className="w-3.5 h-3.5 group-hover/l:translate-x-1 transition-transform" />
@@ -238,15 +214,13 @@ function CartaoObra() {
   const reducedMotion = useReducedMotion();
   return (
     <Reveal variant="scale" delay={0.16} className="h-full">
-      <div className="h-full rounded-[26px] bg-card-brand p-7 md:p-9 flex flex-col justify-between gap-7">
+      <div className="h-full rounded-[26px] bg-card-brand p-7 md:p-9 flex flex-col gap-6">
         <div>
           <p className="text-[10px] uppercase tracking-[0.16em] text-ink/50 mb-2">Obras · Pilar Campo</p>
           <h3 className="text-[24px] md:text-[28px] font-medium tracking-[-0.03em] leading-[1.12] text-ink mb-2.5">
             O canteiro alimenta o escritório
           </h3>
-          <p className="text-[13.5px] text-ink/65 leading-relaxed max-w-[36ch]">
-            Diário preenchido no celular, sem sinal e sem e-mail. Sobe sozinho quando a rede volta.
-          </p>
+          <p className="text-[13.5px] text-ink/65 leading-relaxed">Sem sinal e sem e-mail, sobe sozinho depois.</p>
         </div>
 
         <div className="rounded-2xl bg-frame/90 backdrop-blur-sm border border-white/60 p-4">
@@ -267,22 +241,20 @@ function CartaoObra() {
             </m.span>
           </div>
 
-          {[
-            { label: "Registro do dia", detalhe: "Clima, efetivo, atividade" },
-            { label: "3 fotos", detalhe: "Alvenaria, fachada norte" },
-            { label: "Medição", detalhe: "62 m² executados" },
-          ].map((f, i) => (
+          {/* Dois itens, maiores, em vez de três com legenda embaixo de cada
+              um: o quadrado que se preenche já é a forma, não precisa de mais
+              texto explicando. */}
+          {["Registro do dia", "3 fotos"].map((label, i) => (
             <m.div
-              key={f.label}
-              className="flex items-start gap-2.5 mb-2.5 last:mb-0"
+              key={label}
+              className="flex items-center gap-2.5 mb-2.5 last:mb-0"
               initial={reducedMotion ? false : { opacity: 0, x: -8 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={VISTA}
               transition={{ duration: 0.4, delay: 0.15 + i * 0.12, ease: EASE.out }}
             >
-              {/* O quadrado se preenche e o traço do check é desenhado. */}
               <m.span
-                className="w-4 h-4 rounded-[5px] shrink-0 flex items-center justify-center mt-[1px]"
+                className="w-4 h-4 rounded-[5px] shrink-0 flex items-center justify-center"
                 initial={reducedMotion ? false : { backgroundColor: "rgba(0,0,0,0.06)" }}
                 whileInView={{ backgroundColor: "hsl(var(--positive-strong))" }}
                 viewport={VISTA}
@@ -302,10 +274,7 @@ function CartaoObra() {
                   />
                 </svg>
               </m.span>
-              <span className="min-w-0">
-                <span className="block text-[10.5px] text-ink leading-tight">{f.label}</span>
-                <span className="block text-[8.5px] text-ink-muted truncate">{f.detalhe}</span>
-              </span>
+              <span className="text-[11px] text-ink">{label}</span>
             </m.div>
           ))}
 
@@ -322,7 +291,7 @@ function CartaoObra() {
 
         <Link
           to="/campo"
-          className="mt-6 inline-flex items-center gap-1.5 text-[13.5px] font-medium text-ink group/l"
+          className="mt-auto pt-2 inline-flex items-center gap-1.5 text-[13.5px] font-medium text-ink group/l"
         >
           Ver Pilar Campo
           <ArrowRight className="w-3.5 h-3.5 group-hover/l:translate-x-1 transition-transform" />
@@ -338,16 +307,13 @@ function CartaoPortal() {
 
   return (
     <Reveal variant="scale" delay={0.24} className="h-full">
-      <div className="h-full rounded-[26px] bg-card-brand-soft p-7 md:p-9 flex flex-col justify-between gap-7">
+      <div className="h-full rounded-[26px] bg-card-brand-soft p-7 md:p-9 flex flex-col gap-6">
         <div>
           <p className="text-[10px] uppercase tracking-[0.16em] text-ink/50 mb-2">Portal do cliente</p>
           <h3 className="text-[24px] md:text-[28px] font-medium tracking-[-0.03em] leading-[1.12] text-ink mb-2.5">
             Seu cliente acompanha sozinho
           </h3>
-          <p className="text-[13.5px] text-ink/60 leading-relaxed max-w-[34ch]">
-            Um portal, duas visões: quem contratou projeto vê disciplina e entrega, quem contratou obra vê prestação de
-            contas.
-          </p>
+          <p className="text-[13.5px] text-ink/60 leading-relaxed">Sem conta, sem app: só um link.</p>
         </div>
 
         <div className="rounded-2xl bg-frame border border-paper-border/70 overflow-hidden">
@@ -420,7 +386,7 @@ function CartaoPortal() {
 
         <Link
           to="/portal"
-          className="mt-6 inline-flex items-center gap-1.5 text-[13.5px] font-medium text-ink group/l"
+          className="mt-auto pt-2 inline-flex items-center gap-1.5 text-[13.5px] font-medium text-ink group/l"
         >
           Ver Portal do cliente
           <ArrowRight className="w-3.5 h-3.5 group-hover/l:translate-x-1 transition-transform" />

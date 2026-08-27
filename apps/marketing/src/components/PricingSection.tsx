@@ -14,7 +14,7 @@ export function PricingSection() {
         <Reveal variant="up" className="text-center max-w-2xl mx-auto mb-12">
           <h2 className="text-[52px] max-[1100px]:text-[42px] max-[850px]:text-[29px] max-[420px]:text-[25px] font-medium tracking-[-0.035em] leading-[1.08] text-ink mb-4">
             Um preço por escritório.{" "}
-            <span className="rounded-[0.28em] bg-brand px-[0.16em] italic">sem contar cabeças.</span>
+            <span className="italic text-ink/45">Sem contar cabeças.</span>
           </h2>
           <p className="text-[15px] text-ink-soft leading-relaxed">
             Todo plano tem a plataforma inteira. O que muda é quantos projetos você toca ao mesmo tempo.
