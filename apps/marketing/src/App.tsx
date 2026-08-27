@@ -12,6 +12,7 @@ import { Home } from "./pages/Home";
 // Só a home entra no bundle inicial. Páginas de módulo e FAQ viram chunks
 // próprios: ninguém que cai na landing paga por elas no primeiro carregamento.
 const ModulePage = lazy(() => import("./pages/ModulePage").then((m) => ({ default: m.ModulePage })));
+const ComparativoPage = lazy(() => import("./pages/ComparativoPage").then((m) => ({ default: m.ComparativoPage })));
 const Faq = lazy(() => import("./pages/Faq").then((m) => ({ default: m.Faq })));
 const Planos = lazy(() => import("./pages/Planos").then((m) => ({ default: m.Planos })));
 const Termos = lazy(() => import("./pages/Termos").then((m) => ({ default: m.Termos })));
@@ -60,6 +61,8 @@ export default function App() {
               <Route path="/obra" element={<ModulePage slug="obra" />} />
               <Route path="/portal" element={<ModulePage slug="portal" />} />
               <Route path="/campo" element={<ModulePage slug="campo" />} />
+              <Route path="/vs/planilha" element={<ComparativoPage slug="planilha" />} />
+              <Route path="/vs/trello" element={<ComparativoPage slug="trello" />} />
               <Route path="/faq" element={<Faq />} />
               <Route path="/planos" element={<Planos />} />
               <Route path="/termos" element={<Termos />} />
