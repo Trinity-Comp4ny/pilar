@@ -19,8 +19,10 @@ export interface Modulo {
   nome: string;
   /** Frase curta do card no mega-menu. */
   resumo: string;
-  /** Headline da página do módulo. */
+  /** Headline da página do módulo (parte reta). */
   headline: string;
+  /** Fim da headline, renderizado em itálico apagado, no padrão das seções da home. */
+  headlineFim: string;
   lede: string;
   /** URL falsa mostrada na barra do frame de produto. */
   url: string;
@@ -49,7 +51,8 @@ export const MODULOS: Modulo[] = [
     numero: "Módulo 01",
     nome: "Gestão",
     resumo: "Do lead ao dinheiro na conta.",
-    headline: "Do primeiro contato ao dinheiro na conta.",
+    headline: "Do primeiro contato",
+    headlineFim: "ao dinheiro na conta.",
     lede: "Funil, proposta, contrato e financeiro no mesmo lugar. O lead que entra hoje vira a receita que você concilia no fim do mês, sem redigitar nada.",
     url: "app.pilarsoft.com.br/gestao/leads",
     cor: {
@@ -112,7 +115,8 @@ export const MODULOS: Modulo[] = [
     numero: "Módulo 02",
     nome: "Projetos",
     resumo: "Disciplina, prazo e responsável.",
-    headline: "Disciplina, prazo e responsável sob controle.",
+    headline: "Disciplina, prazo e responsável",
+    headlineFim: "sob controle.",
     lede: "Feito do jeito que escritório multidisciplinar trabalha: o projeto não é uma tarefa, é um conjunto de disciplinas com gente e data em cada uma.",
     url: "app.pilarsoft.com.br/projetos/cronograma",
     cor: {
@@ -176,7 +180,8 @@ export const MODULOS: Modulo[] = [
     numero: "Módulo 03",
     nome: "Obra",
     resumo: "O canteiro alimenta o escritório.",
-    headline: "O canteiro alimenta o escritório.",
+    headline: "O canteiro alimenta",
+    headlineFim: "o escritório.",
     lede: "Diário de obra que chega preenchido do celular, cotação de material comparada lado a lado e prestação de contas para quem administra obra por taxa.",
     url: "app.pilarsoft.com.br/obras/diario",
     cor: {
@@ -239,7 +244,8 @@ export const MODULOS: Modulo[] = [
     numero: "Portal do cliente",
     nome: "Portal do cliente",
     resumo: "Seu cliente acompanha sozinho.",
-    headline: "Seu cliente acompanha sozinho. Seu WhatsApp descansa.",
+    headline: "Seu cliente acompanha sozinho.",
+    headlineFim: "Seu WhatsApp descansa.",
     lede: "Um link só de leitura, sem conta e sem aplicativo. Quem contratou projeto vê disciplina e entrega; quem contratou obra vê aporte, despesa com comprovante e a sua taxa.",
     url: "app.pilarsoft.com.br/portal/santa-rita",
     cor: {
@@ -256,11 +262,13 @@ export const MODULOS: Modulo[] = [
       },
       {
         titulo: "Só leitura, sempre",
-        texto: "Ele acompanha o andamento, mas não altera nada. O que ele vê é o que está no sistema, sem você exportar.",
+        texto:
+          "Ele acompanha o andamento, mas não altera nada. O que ele vê é o que está no sistema, sem você exportar.",
       },
       {
         titulo: "Duas visões, um portal",
-        texto: "Projeto mostra disciplina, entrega e parcela. Obra mostra aporte, despesa com comprovante e saldo em conta.",
+        texto:
+          "Projeto mostra disciplina, entrega e parcela. Obra mostra aporte, despesa com comprovante e saldo em conta.",
       },
       {
         titulo: "Menos cobrança no seu telefone",
@@ -278,7 +286,8 @@ export const MODULOS: Modulo[] = [
     numero: "Pilar Campo",
     nome: "Pilar Campo",
     resumo: "O canteiro registra, sem sinal.",
-    headline: "O canteiro registra. Sem sinal e sem e-mail.",
+    headline: "O canteiro registra.",
+    headlineFim: "Sem sinal e sem e-mail.",
     lede: "O encarregado abre no navegador do celular, registra o dia e vai embora. Sem rede, tudo fica no aparelho e sobe sozinho quando o sinal volta.",
     url: "app.pilarsoft.com.br/campo/diario",
     cor: {
@@ -291,15 +300,18 @@ export const MODULOS: Modulo[] = [
     features: [
       {
         titulo: "Funciona no subsolo",
-        texto: "Sem rede, o dia inteiro fica guardado no aparelho e sobe sozinho quando o sinal volta, foto por foto, sem duplicar.",
+        texto:
+          "Sem rede, o dia inteiro fica guardado no aparelho e sobe sozinho quando o sinal volta, foto por foto, sem duplicar.",
       },
       {
         titulo: "Login que o gestor entrega na mão",
-        texto: "Quem trabalha em obra costuma não ter e-mail corporativo. O gestor gera usuário e senha, com acesso limitado a uma obra.",
+        texto:
+          "Quem trabalha em obra costuma não ter e-mail corporativo. O gestor gera usuário e senha, com acesso limitado a uma obra.",
       },
       {
         titulo: "Foto, medição e tarefa na mesma tela",
-        texto: "Clima, efetivo, atividade, foto do serviço, quantidade executada e a tarefa do cronograma marcada como concluída.",
+        texto:
+          "Clima, efetivo, atividade, foto do serviço, quantidade executada e a tarefa do cronograma marcada como concluída.",
       },
       {
         titulo: "Chega pronto no escritório",

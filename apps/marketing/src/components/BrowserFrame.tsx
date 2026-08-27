@@ -6,17 +6,23 @@ interface BrowserFrameProps {
   className?: string;
 }
 
-/** Frame de "navegador" (dots + barra de URL) que envolve screenshots do produto. */
+/**
+ * Frame de "navegador" (dots + barra de URL) que envolve as telas de produto.
+ * Todo em token do design system: a versão anterior usava slate-* cru, que
+ * destoava do resto da landing.
+ */
 export function BrowserFrame({ url, children, className }: BrowserFrameProps) {
   return (
     <div
-      className={`bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-[0_1px_2px_rgba(0,0,0,0.04),0_8px_32px_-12px_rgba(0,0,0,0.08)] ${className ?? ""}`}
+      className={`overflow-hidden rounded-[20px] border border-paper-border/80 bg-frame shadow-[0_28px_56px_-24px_rgba(0,0,0,0.22)] ${className ?? ""}`}
     >
-      <div className="px-6 py-3 flex items-center gap-2 border-b border-slate-100">
-        <span className="w-2 h-2 rounded-full bg-slate-200" />
-        <span className="w-2 h-2 rounded-full bg-slate-200" />
-        <span className="w-2 h-2 rounded-full bg-slate-200" />
-        <span className="ml-3 text-[11px] text-slate-400 font-light tabular-nums tracking-tight">{url}</span>
+      <div className="flex items-center gap-1.5 border-b border-paper-border/60 bg-paper-alt/60 px-5 py-2.5">
+        <span className="h-2 w-2 rounded-full bg-paper-border" />
+        <span className="h-2 w-2 rounded-full bg-paper-border" />
+        <span className="h-2 w-2 rounded-full bg-paper-border" />
+        <span className="ml-3 max-w-[380px] flex-1 truncate rounded-full border border-paper-border/60 bg-frame px-3.5 py-1 text-[11px] tabular-nums text-ink-muted">
+          {url}
+        </span>
       </div>
       {children}
     </div>
