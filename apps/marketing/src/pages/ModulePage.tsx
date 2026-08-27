@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Check } from "lucide-react";
 import { APP_URL } from "../config";
@@ -10,6 +10,7 @@ import { GroupMock } from "../components/mock/ModuleScreens";
 import { Reveal } from "../components/Reveal";
 import { SplitButton } from "../components/ui/SplitButton";
 import { MODULOS, MODULOS_POR_SLUG, type MockNome, type Modulo, type ModuloSlug } from "../lib/modules";
+import { usePageMeta } from "../lib/seo";
 
 const WHATSAPP = "https://wa.me/5514998721100";
 
@@ -65,9 +66,11 @@ function PrintReal({ img, alt, mock, modulo }: { img: string; alt: string; mock:
 export function ModulePage({ slug }: { slug: ModuloSlug }) {
   const modulo = MODULOS_POR_SLUG[slug];
 
-  useEffect(() => {
-    document.title = `${modulo.nome} | Pilar`;
-  }, [modulo.nome]);
+  usePageMeta({
+    titulo: `${modulo.nome} | Pilar`,
+    descricao: modulo.lede,
+    caminho: `/${slug}`,
+  });
 
   const primario =
     modulo.ctaPrimario.tipo === "cadastro"

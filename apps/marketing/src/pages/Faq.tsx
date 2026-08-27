@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Check, ChevronDown, X } from "lucide-react";
 import { Reveal } from "../components/Reveal";
+import { useJsonLd, usePageMeta } from "../lib/seo";
 
 /**
  * FAQ e qualificação de público, que saíram da home (decisão do CEO, 18/08).
@@ -55,9 +56,24 @@ const FAQS = [
 export function Faq() {
   const [aberta, setAberta] = useState<number | null>(0);
 
-  useEffect(() => {
-    document.title = "Perguntas frequentes | Pilar";
-  }, []);
+  usePageMeta({
+    titulo: "Perguntas frequentes | Pilar",
+    descricao:
+      "Para quem é o Pilar, como os módulos se conectam e o que a IA faz (e o que ela nunca faz sem o seu aval). As respostas antes de testar.",
+    caminho: "/faq",
+  });
+
+  // FAQPage structured data: habilita rich result de FAQ na busca e dá aos
+  // assistentes de IA as respostas prontas na fonte.
+  useJsonLd({
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: FAQS.map((f) => ({
+      "@type": "Question",
+      name: f.pergunta,
+      acceptedAnswer: { "@type": "Answer", text: f.resposta },
+    })),
+  });
 
   return (
     <>
