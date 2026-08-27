@@ -475,7 +475,7 @@ export function useProjetoForm({
     const novasDisciplinas: DisciplinaResponsavel[] = fluxo.disciplinas.map((d, i) => {
       const dataDisc = datas[i];
       // União dos responsáveis das tarefas (ou fallback manual da disciplina,
-      // se nenhuma tarefa tiver responsável) — spec 067 revisão.
+      // se nenhuma tarefa tiver responsável) — spec 071 revisão.
       const { ids: responsaveisIds, nomes: responsaveisNomes } = responsaveisEfetivos(d);
       return {
         disciplina: d.nome,

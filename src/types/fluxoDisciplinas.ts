@@ -52,7 +52,7 @@ function comOrdemGarantida(itens: FluxoDisciplinaTemplate[]): FluxoDisciplinaTem
 
 /**
  * Achata o formato legado (spec 051: etapa nomeada → disciplinas dentro, um
- * responsável, checklist só texto) para a lista flat de disciplinas (spec 067).
+ * responsável, checklist só texto) para a lista flat de disciplinas (spec 071).
  * Fluxos já no formato novo passam só pela garantia de `ordem`. Disciplina sem
  * `ordem` reconhecível vai pro fim da lista em vez de quebrar a tela.
  */
