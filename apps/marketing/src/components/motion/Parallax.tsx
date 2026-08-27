@@ -11,7 +11,7 @@ interface ParallaxProps {
 /**
  * Deslocamento acoplado ao scroll. É o que faz camadas diferentes andarem em
  * velocidades diferentes, e é a peça que faltava para a página parecer ter
- * profundidade em vez de blocos que só aparecem (SPEC 060).
+ * profundidade em vez de blocos que só aparecem (SPEC 072).
  */
 export function Parallax({ children, distance = -60, className }: ParallaxProps) {
   const ref = useRef<HTMLDivElement>(null);

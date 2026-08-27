@@ -9,7 +9,7 @@ import { useEffect, useRef, useState } from "react";
  * ~15 renders por volta de 20 segundos.
  *
  * `ativo` false congela o tempo em vez de zerar. Isso atende dois requisitos da
- * SPEC 060 de uma vez: a cena não gasta CPU fora da viewport nem com a aba em
+ * SPEC 072 de uma vez: a cena não gasta CPU fora da viewport nem com a aba em
  * segundo plano, e ao voltar retoma exatamente de onde parou, sem pular atos.
  */
 export function useScene(marcos: readonly number[], duracaoTotal: number, ativo: boolean) {

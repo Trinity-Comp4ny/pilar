@@ -12,7 +12,7 @@ import { EASE } from "../lib/motion";
  * não app de loja) e não promete reconhecimento de imagem por IA na obra,
  * que não existe: a foto do canteiro vai direta para o armazenamento.
  *
- * O layout passou a ser duas colunas equilibradas (SPEC 060). Antes o celular
+ * O layout passou a ser duas colunas equilibradas (SPEC 072). Antes o celular
  * ocupava 300px numa faixa de 1100, e sobrava um vazio de ~400px à direita.
  */
 
