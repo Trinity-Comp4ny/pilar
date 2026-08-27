@@ -64,12 +64,15 @@ export function ModulesSection() {
                   </h3>
 
                   <ul className="flex flex-col gap-2.5 mb-6">
-                    {mo.features.slice(0, 4).map((f) => (
-                      <li key={f.titulo} className="flex gap-2.5 items-start">
-                        <Check className={`w-3.5 h-3.5 mt-[3px] shrink-0 ${mo.cor.text}`} strokeWidth={2.4} />
-                        <span className="text-[13px] text-ink-soft font-light leading-snug">{f.titulo}</span>
-                      </li>
-                    ))}
+                    {mo.grupos
+                      .flatMap((g) => g.features)
+                      .slice(0, 4)
+                      .map((f) => (
+                        <li key={f.titulo} className="flex gap-2.5 items-start">
+                          <Check className={`w-3.5 h-3.5 mt-[3px] shrink-0 ${mo.cor.text}`} strokeWidth={2.4} />
+                          <span className="text-[13px] text-ink-soft font-light leading-snug">{f.titulo}</span>
+                        </li>
+                      ))}
                   </ul>
 
                   <Link

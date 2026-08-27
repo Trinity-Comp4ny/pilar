@@ -35,7 +35,18 @@ export interface Modulo {
     /** Mesmo matiz do fill, em hsla, pro spotlight que segue o mouse (não dá pra usar classe Tailwind num gradient inline). */
     glow: string;
   };
-  features: { titulo: string; texto: string }[];
+  /**
+   * Funcionalidades organizadas em grupos temáticos: a página do módulo
+   * renderiza um bloco por grupo, com o print da tela ao lado.
+   * `img` aponta pro print real em public/screens; enquanto o arquivo não
+   * existe, a página cai no desenho vetorial do módulo.
+   */
+  grupos: {
+    titulo: string;
+    frase: string;
+    img: string;
+    features: { titulo: string; texto: string }[];
+  }[];
   /** Para onde este módulo aponta, na seção "Conecta com". */
   conecta: { slug: ModuloSlug; texto: string }[];
   /**
@@ -62,43 +73,66 @@ export const MODULOS: Modulo[] = [
       border: "border-modulo-gestao-strong",
       glow: "hsla(102, 73%, 60%, 0.28)",
     },
-    features: [
+    grupos: [
       {
-        titulo: "Funil de leads em kanban",
-        texto:
-          "Seis colunas, arrastar entre elas, KPIs de conversão e motivo de perda obrigatório, então você aprende por que perdeu.",
+        titulo: "Do lead à proposta assinada",
+        frase: "O comercial inteiro numa tela: quem entrou, em que etapa está e por que saiu.",
+        img: "/screens/gestao-comercial.png",
+        features: [
+          {
+            titulo: "Funil de leads em kanban",
+            texto:
+              "Seis colunas, arrastar entre elas, KPIs de conversão e motivo de perda obrigatório, então você aprende por que perdeu.",
+          },
+          {
+            titulo: "Cliente preenchido pelo CNPJ",
+            texto: "Digite o CNPJ e o cadastro vem pronto, sem copiar razão social e endereço na mão.",
+          },
+          {
+            titulo: "Proposta por disciplina, no seu template",
+            texto:
+              "Monte o escopo por disciplina, gere o documento em DOCX com o modelo do escritório e envie por e-mail sem sair do sistema.",
+          },
+        ],
       },
       {
-        titulo: "Cliente preenchido pelo CNPJ",
-        texto: "Digite o CNPJ e o cadastro vem pronto, sem copiar razão social e endereço na mão.",
+        titulo: "Aprovou, virou projeto e receita",
+        frase: "O aceite do cliente dispara o resto: projeto criado, parcelas no financeiro, nada redigitado.",
+        img: "/screens/gestao-financeiro.png",
+        features: [
+          {
+            titulo: "Aprovou, virou projeto",
+            texto:
+              "A proposta aceita vira projeto com as disciplinas, e você escolhe parcelas mensais ou marcos: as receitas nascem no financeiro no mesmo clique.",
+          },
+          {
+            titulo: "Extrato e fatura lidos por IA",
+            texto:
+              "Solte o PDF do banco ou do cartão. O agente separa receita de despesa, identifica parcela 3 de 12 e sugere a categoria do seu plano de contas.",
+          },
+          {
+            titulo: "Carteira: contas e cartões juntos",
+            texto:
+              "Saldo das contas e faturas de cartão na mesma tela, com pagamento de fatura, sem controle paralelo.",
+          },
+        ],
       },
       {
-        titulo: "Proposta por disciplina, no seu template",
-        texto:
-          "Monte o escopo por disciplina, gere o documento em DOCX com o modelo do escritório e envie por e-mail sem sair do sistema.",
-      },
-      {
-        titulo: "Aprovou, virou projeto",
-        texto:
-          "A proposta aceita vira projeto com as disciplinas, e você escolhe parcelas mensais ou marcos: as receitas nascem no financeiro no mesmo clique.",
-      },
-      {
-        titulo: "Extrato e fatura lidos por IA",
-        texto:
-          "Solte o PDF do banco ou do cartão. O agente separa receita de despesa, identifica parcela 3 de 12 e sugere a categoria do seu plano de contas.",
-      },
-      {
-        titulo: "Folha com comprovante em PDF",
-        texto:
-          "Feche a competência e cada pessoa recebe o comprovante individual, com chave PIX e os projetos que tocou no mês.",
-      },
-      {
-        titulo: "Carteira: contas e cartões juntos",
-        texto: "Saldo das contas e faturas de cartão na mesma tela, com pagamento de fatura, sem controle paralelo.",
-      },
-      {
-        titulo: "Relatório que sai igual à tela",
-        texto: "Cinco relatórios com prévia e export em CSV, Excel ou PDF, levando só as colunas que ficaram visíveis.",
+        titulo: "O mês fecha sem planilha",
+        frase: "Folha, comprovante e relatório saem do mesmo lugar em que o dinheiro entrou.",
+        img: "/screens/gestao-fechamento.png",
+        features: [
+          {
+            titulo: "Folha com comprovante em PDF",
+            texto:
+              "Feche a competência e cada pessoa recebe o comprovante individual, com chave PIX e os projetos que tocou no mês.",
+          },
+          {
+            titulo: "Relatório que sai igual à tela",
+            texto:
+              "Cinco relatórios com prévia e export em CSV, Excel ou PDF, levando só as colunas que ficaram visíveis.",
+          },
+        ],
       },
     ],
     conecta: [
@@ -126,44 +160,67 @@ export const MODULOS: Modulo[] = [
       border: "border-modulo-projetos-strong",
       glow: "hsla(210, 68%, 62%, 0.24)",
     },
-    features: [
+    grupos: [
       {
-        titulo: "Quadro com as suas colunas",
-        texto:
-          "O status vira coluna, e quem define quais existem é o escritório. Tem lista com filtro por disciplina para quem prefere tabela.",
+        titulo: "O quadro do jeito do escritório",
+        frase: "Colunas, fluxo e responsáveis definidos por quem trabalha, não pelo software.",
+        img: "/screens/projetos-quadro.png",
+        features: [
+          {
+            titulo: "Quadro com as suas colunas",
+            texto:
+              "O status vira coluna, e quem define quais existem é o escritório. Tem lista com filtro por disciplina para quem prefere tabela.",
+          },
+          {
+            titulo: "Fluxo padrão do escritório",
+            texto:
+              "Cadastre a sequência de etapas e disciplinas uma vez, e todo projeto novo nasce com ela e com responsável definido.",
+          },
+          {
+            titulo: "Vários responsáveis por disciplina",
+            texto:
+              "Disciplina raramente é de uma pessoa só. Dá para ter mais de um responsável, com etiqueta, link e comentário no mesmo lugar.",
+          },
+        ],
       },
       {
-        titulo: "Gantt da carteira inteira",
-        texto:
-          "Todos os projetos na linha do tempo. Arraste a borda da barra e a data de início e a previsão gravam direto.",
+        titulo: "Prazo que se defende sozinho",
+        frase: "A carteira inteira na linha do tempo, e cada mudança de data com nome e motivo.",
+        img: "/screens/projetos-cronograma.png",
+        features: [
+          {
+            titulo: "Gantt da carteira inteira",
+            texto:
+              "Todos os projetos na linha do tempo. Arraste a borda da barra e a data de início e a previsão gravam direto.",
+          },
+          {
+            titulo: "Concluiu, o próximo já sabe",
+            texto:
+              "Ao fechar uma disciplina, o responsável da etapa seguinte é avisado. Ninguém precisa lembrar de cobrar.",
+          },
+          {
+            titulo: "Atraso pede justificativa",
+            texto:
+              "Mudou a data, o sistema exige o motivo. O histórico do projeto não fica com buracos na hora da conversa difícil.",
+          },
+        ],
       },
       {
-        titulo: "Concluiu, o próximo já sabe",
-        texto:
-          "Ao fechar uma disciplina, o responsável da etapa seguinte é avisado. Ninguém precisa lembrar de cobrar.",
-      },
-      {
-        titulo: "Fluxo padrão do escritório",
-        texto:
-          "Cadastre a sequência de etapas e disciplinas uma vez, e todo projeto novo nasce com ela e com responsável definido.",
-      },
-      {
-        titulo: "Atraso pede justificativa",
-        texto:
-          "Mudou a data, o sistema exige o motivo. O histórico do projeto não fica com buracos na hora da conversa difícil.",
-      },
-      {
-        titulo: "Vários responsáveis por disciplina",
-        texto:
-          "Disciplina raramente é de uma pessoa só. Dá para ter mais de um responsável, com etiqueta, link e comentário no mesmo lugar.",
-      },
-      {
-        titulo: "Parcelas do contrato à vista",
-        texto: "Valor contratado, recebido, pendente e atrasado na aba do projeto, com um clique para marcar recebido.",
-      },
-      {
-        titulo: "Mapa dos projetos",
-        texto: "Todo contrato em andamento geolocalizado, com filtro por status, para quem atende mais de uma cidade.",
+        titulo: "O contrato mora junto do projeto",
+        frase: "Quanto entrou, quanto falta e onde cada contrato está no mapa.",
+        img: "/screens/projetos-contrato.png",
+        features: [
+          {
+            titulo: "Parcelas do contrato à vista",
+            texto:
+              "Valor contratado, recebido, pendente e atrasado na aba do projeto, com um clique para marcar recebido.",
+          },
+          {
+            titulo: "Mapa dos projetos",
+            texto:
+              "Todo contrato em andamento geolocalizado, com filtro por status, para quem atende mais de uma cidade.",
+          },
+        ],
       },
     ],
     conecta: [
@@ -191,43 +248,65 @@ export const MODULOS: Modulo[] = [
       border: "border-modulo-obra-strong",
       glow: "hsla(32, 78%, 58%, 0.26)",
     },
-    features: [
+    grupos: [
       {
-        titulo: "Diário que chega do celular",
-        texto:
-          "Clima, efetivo, atividade, ocorrência e pendência registrados no canteiro, com foto e medição, já na tela do escritório.",
+        titulo: "O dia chega pronto do canteiro",
+        frase: "O encarregado registra no celular e o escritório recebe sem digitar nada de novo.",
+        img: "/screens/obra-diario.png",
+        features: [
+          {
+            titulo: "Diário que chega do celular",
+            texto:
+              "Clima, efetivo, atividade, ocorrência e pendência registrados no canteiro, com foto e medição, já na tela do escritório.",
+          },
+          {
+            titulo: "Funciona sem sinal",
+            texto:
+              "Sem rede, o dia inteiro fica guardado no aparelho e sobe sozinho quando o sinal volta, foto por foto, sem duplicar.",
+          },
+          {
+            titulo: "Login sem e-mail",
+            texto:
+              "Quem trabalha em obra costuma não ter e-mail corporativo. O gestor gera usuário e senha e entrega na mão, com acesso limitado a uma obra.",
+          },
+        ],
       },
       {
-        titulo: "Funciona sem sinal",
-        texto:
-          "Sem rede, o dia inteiro fica guardado no aparelho e sobe sozinho quando o sinal volta, foto por foto, sem duplicar.",
+        titulo: "Material comprado sem rasteira",
+        frase: "O orçamento do fornecedor entra por foto e sai numa tabela comparável.",
+        img: "/screens/obra-cotacao.png",
+        features: [
+          {
+            titulo: "Orçamento do fornecedor lido por IA",
+            texto:
+              "Fotografe o orçamento ou solte o PDF. O agente reconhece se é cesta ou comparação entre lojas e devolve os itens com preço e prazo.",
+          },
+          {
+            titulo: "Cotação comparada lado a lado",
+            texto:
+              "Propostas de fornecedores na mesma tabela, cesta com vários itens, e a vencedora eleita com histórico.",
+          },
+          {
+            titulo: "Estoque do canteiro",
+            texto: "Entrada, saída e saldo valorizado, para enxergar o dinheiro do cliente parado em material.",
+          },
+        ],
       },
       {
-        titulo: "Login sem e-mail",
-        texto:
-          "Quem trabalha em obra costuma não ter e-mail corporativo. O gestor gera usuário e senha e entrega na mão, com acesso limitado a uma obra.",
-      },
-      {
-        titulo: "Cronograma em dois níveis",
-        texto: "Frentes de serviço com passos dentro, e o campo marca cada tarefa como avançou, concluiu ou parou.",
-      },
-      {
-        titulo: "Orçamento do fornecedor lido por IA",
-        texto:
-          "Fotografe o orçamento ou solte o PDF. O agente reconhece se é cesta ou comparação entre lojas e devolve os itens com preço e prazo.",
-      },
-      {
-        titulo: "Cotação comparada lado a lado",
-        texto: "Propostas de fornecedores na mesma tabela, cesta com vários itens, e a vencedora eleita com histórico.",
-      },
-      {
-        titulo: "Conta da obra",
-        texto:
-          "Aporte do cliente, despesa com comprovante, saldo e a sua taxa de administração calculada a cada lançamento.",
-      },
-      {
-        titulo: "Estoque do canteiro",
-        texto: "Entrada, saída e saldo valorizado, para enxergar o dinheiro do cliente parado em material.",
+        titulo: "Execução e dinheiro na mesma conta",
+        frase: "Cada frente com seu avanço, cada real do cliente prestando contas.",
+        img: "/screens/obra-conta.png",
+        features: [
+          {
+            titulo: "Cronograma em dois níveis",
+            texto: "Frentes de serviço com passos dentro, e o campo marca cada tarefa como avançou, concluiu ou parou.",
+          },
+          {
+            titulo: "Conta da obra",
+            texto:
+              "Aporte do cliente, despesa com comprovante, saldo e a sua taxa de administração calculada a cada lançamento.",
+          },
+        ],
       },
     ],
     conecta: [
@@ -255,24 +334,38 @@ export const MODULOS: Modulo[] = [
       border: "border-modulo-gestao-strong",
       glow: "hsla(102, 73%, 60%, 0.28)",
     },
-    features: [
+    grupos: [
       {
-        titulo: "Um link, sem cadastro",
-        texto: "O cliente abre e vê. Não cria conta, não instala nada, não pede senha para ninguém.",
+        titulo: "Um link resolve",
+        frase: "Sem conta, sem app e sem senha: o cliente abre e vê, e não muda nada.",
+        img: "/screens/portal-link.png",
+        features: [
+          {
+            titulo: "Um link, sem cadastro",
+            texto: "O cliente abre e vê. Não cria conta, não instala nada, não pede senha para ninguém.",
+          },
+          {
+            titulo: "Só leitura, sempre",
+            texto:
+              "Ele acompanha o andamento, mas não altera nada. O que ele vê é o que está no sistema, sem você exportar.",
+          },
+        ],
       },
       {
-        titulo: "Só leitura, sempre",
-        texto:
-          "Ele acompanha o andamento, mas não altera nada. O que ele vê é o que está no sistema, sem você exportar.",
-      },
-      {
-        titulo: "Duas visões, um portal",
-        texto:
-          "Projeto mostra disciplina, entrega e parcela. Obra mostra aporte, despesa com comprovante e saldo em conta.",
-      },
-      {
-        titulo: "Menos cobrança no seu telefone",
-        texto: "A pergunta de sexta à tarde some quando o cliente tem onde olhar no horário dele.",
+        titulo: "Cada contrato, sua visão",
+        frase: "Projeto mostra andamento e parcela; obra mostra o dinheiro prestando contas.",
+        img: "/screens/portal-visoes.png",
+        features: [
+          {
+            titulo: "Duas visões, um portal",
+            texto:
+              "Projeto mostra disciplina, entrega e parcela. Obra mostra aporte, despesa com comprovante e saldo em conta.",
+          },
+          {
+            titulo: "Menos cobrança no seu telefone",
+            texto: "A pergunta de sexta à tarde some quando o cliente tem onde olhar no horário dele.",
+          },
+        ],
       },
     ],
     conecta: [
@@ -297,25 +390,39 @@ export const MODULOS: Modulo[] = [
       border: "border-modulo-obra-strong",
       glow: "hsla(32, 78%, 58%, 0.26)",
     },
-    features: [
+    grupos: [
       {
-        titulo: "Funciona no subsolo",
-        texto:
-          "Sem rede, o dia inteiro fica guardado no aparelho e sobe sozinho quando o sinal volta, foto por foto, sem duplicar.",
+        titulo: "Feito pro canteiro de verdade",
+        frase: "Sem rede e sem e-mail corporativo: as duas realidades da obra, resolvidas.",
+        img: "/screens/campo-offline.png",
+        features: [
+          {
+            titulo: "Funciona no subsolo",
+            texto:
+              "Sem rede, o dia inteiro fica guardado no aparelho e sobe sozinho quando o sinal volta, foto por foto, sem duplicar.",
+          },
+          {
+            titulo: "Login que o gestor entrega na mão",
+            texto:
+              "Quem trabalha em obra costuma não ter e-mail corporativo. O gestor gera usuário e senha, com acesso limitado a uma obra.",
+          },
+        ],
       },
       {
-        titulo: "Login que o gestor entrega na mão",
-        texto:
-          "Quem trabalha em obra costuma não ter e-mail corporativo. O gestor gera usuário e senha, com acesso limitado a uma obra.",
-      },
-      {
-        titulo: "Foto, medição e tarefa na mesma tela",
-        texto:
-          "Clima, efetivo, atividade, foto do serviço, quantidade executada e a tarefa do cronograma marcada como concluída.",
-      },
-      {
-        titulo: "Chega pronto no escritório",
-        texto: "O que o encarregado registrou aparece no diário da obra sem ninguém digitar de novo.",
+        titulo: "Registrar o dia leva minutos",
+        frase: "Uma tela só pro que importa, e o escritório recebe sem redigitar.",
+        img: "/screens/campo-registro.png",
+        features: [
+          {
+            titulo: "Foto, medição e tarefa na mesma tela",
+            texto:
+              "Clima, efetivo, atividade, foto do serviço, quantidade executada e a tarefa do cronograma marcada como concluída.",
+          },
+          {
+            titulo: "Chega pronto no escritório",
+            texto: "O que o encarregado registrou aparece no diário da obra sem ninguém digitar de novo.",
+          },
+        ],
       },
     ],
     conecta: [
