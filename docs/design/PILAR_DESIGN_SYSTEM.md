@@ -79,15 +79,26 @@ Peças oficiais em uso. Use estas, não remonte à mão.
 
 ### Layout de página
 
-- **`PageLayout`** (`src/components/PageLayout.tsx`): shell fixo, padding responsivo, foco/anúncio a11y em troca de rota. Props: `header`, `sidebar`, `children`, `className`, `containerClassName`.
-- **`PageHeader`** (`src/components/PageHeader.tsx`): header fino de 56px. Props: `title`, `breadcrumbs`, `search` (controlada pela página), `primaryAction` (com `feature` gateia por permissão), `children` (ações secundárias). Atalho `/` foca a busca.
+- **`PilarPage`** (`src/components/PilarPage.tsx`): envelopa `PageLayout` + `PageHeader` numa peça só. Props: `title`, `breadcrumbs?`, `search?`, `primaryAction?` (gateia por `feature`), `actions?`, `sidebar?`, `className?`, `containerClassName?`, `children`. **Página de lista nova usa esta, não remonta o par à mão.**
+- **`PageLayout`** (`src/components/PageLayout.tsx`) / **`PageHeader`** (`src/components/PageHeader.tsx`): as peças por baixo do `PilarPage`. Use o par direto só quando a tela precisa de algo que o `PilarPage` não expõe (ex.: página de detalhe com bloco de metadados + abas — ver "Página de detalhe com abas" abaixo). Atalho `/` foca a busca do header.
 
-> Hoje as duas são montadas juntas à mão. A peça `PilarPage` (seção 5) junta as duas. Até ela existir, use o par.
+### Página de detalhe com abas por entidade
+
+Padrão em uso em `src/pages/obras/[id]/index.tsx` e `src/pages/clientes/[id]/index.tsx` (não tem componente próprio — é composição de `PageLayout`/`PageHeader` + `Tabs` do shadcn, seção 4 "Tabela" não se aplica aqui):
+
+- `PageLayout` com `PageHeader` (título = nome da entidade, ações de editar/excluir no `children` do header).
+- Bloco de metadados (status, responsável, datas) logo abaixo do header, fora das abas.
+- `Tabs`/`TabsList`/`TabsTrigger`/`TabsContent` (`src/components/ui/tabs.tsx`) para as seções da entidade. Cada aba é um componente próprio em `components/<Entidade><NomeDaAba>Tab.tsx` (ex.: `ObraContaTab.tsx`), nunca inline na página.
+- Aba controlada por `useState`, inicializada por `useSearchParams().get("tab")` quando a tela precisa aceitar deep-link de fora (ex.: fila de cotações pendentes → `/obras/{id}?tab=cotacoes`, spec 064). Não sincroniza de volta na URL a cada troca.
+- Aba oculta quando a sub-feature está desligada para a empresa (`can("<modulo>_<subfeature>", "view")`, spec 035), não removida do código.
+
+Página de detalhe nova com mais de uma seção segue este padrão em vez de inventar um layout de abas próprio.
 
 ### Modais
 
 - **`ConfirmDialog`** (`src/components/ConfirmDialog.tsx`): confirmação destrutiva. Props: `open`, `onOpenChange`, `onConfirm`, `title`, `description`, `itemName?`, `confirmText?`, `variant?: "default" | "destructive"`, `loading?`. **Toda exclusão passa por aqui.** Não monte `AlertDialogContent` cru.
-- Primitivos shadcn: `Dialog`/`DialogContent`/`DialogHeader`/`DialogFooter` em `src/components/ui/dialog.tsx`. Para modal de formulário, use o `FormDialog` (seção 5) quando existir; até lá, siga a escala de largura da seção 6.
+- **`FormDialog`** (`src/components/FormDialog.tsx`): modal de formulário padrão (largura, footer Cancelar/Salvar, `max-h-[90vh] overflow-y-auto`, estado de envio). Props em seção 5. **Modal de formulário novo usa este, só `sm`/`md`/`lg`.**
+- Primitivos shadcn: `Dialog`/`DialogContent`/`DialogHeader`/`DialogFooter` em `src/components/ui/dialog.tsx`. Só monta à mão fora do `FormDialog` quando o conteúdo genuinamente não é um formulário (ex.: preview, wizard multi-step).
 
 ### Estado da tela
 
@@ -125,9 +136,9 @@ Peças oficiais em uso. Use estas, não remonte à mão.
 
 ---
 
-## 5. Peças a construir (as duas que faltam)
+## 5. `PilarPage` e `FormDialog` (entregues, referência de props)
 
-Estas ainda não existem. São composição do que já temos, sem decisão de arquitetura nova. Quando um agente precisar de página ou modal de form, é isto que ele deve usar (e criar, se ainda não existir).
+As duas já existem e estão em produção (`src/components/PilarPage.tsx`, `src/components/FormDialog.tsx`). Ficam aqui como referência de props; o catálogo da seção 4 é o ponto de entrada.
 
 ### `PilarPage` (envelopa PageLayout + PageHeader)
 
@@ -177,7 +188,7 @@ interface FormDialogProps {
 }
 ```
 
-Padroniza de uma vez: largura, footer Cancelar/Salvar, `max-h-[90vh] overflow-y-auto` e o estado de envio. Ataca ~86 modais montados à mão hoje.
+Padroniza numa peça só: largura, footer Cancelar/Salvar, `max-h-[90vh] overflow-y-auto` e o estado de envio. Em uso em ~17 modais hoje; o resto migra por impacto ao tocar na tela (seção 10), não numa varredura só.
 
 ---
 
@@ -258,7 +269,7 @@ O ADR 0008 fecha o escopo. Ficam de fora: DataTable genérico além do que exist
 | #   | Ação                                                                   | Estado   |
 | --- | ---------------------------------------------------------------------- | -------- |
 | 1   | Subir ESLint de `warn` para `error` + regra `supabase` em `pages/`     | pendente |
-| 2   | Criar `FormDialog` e `PilarPage`                                       | pendente |
+| 2   | Criar `FormDialog` e `PilarPage`                                       | entregue |
 | 3   | Espalhar `MoneyInput`/`NumberInput`/`PercentInput` (10 telas hoje)     | em curso |
 | 4   | Migrar mapas de status locais (~27 arquivos) para o registry           | em curso |
 | 5   | Matar defs locais de moeda (~25) e datas à mão (~38 arquivos)          | em curso |
