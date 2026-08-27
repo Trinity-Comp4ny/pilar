@@ -20,6 +20,9 @@ const VARIABLE_EXAMPLES: Record<string, string> = {
   DATA_HOJE: new Date().toLocaleDateString("pt-BR"),
   VALIDADE: "15/05/2026",
   DISCIPLINAS: "Arquitetura, Estrutural, Elétrica",
+  DISCIPLINAS_FASES: "Arquitetura\nEstrutural\nElétrica",
+  DISCIPLINAS_COM_VALOR: "Arquitetura — R$ 30.000,00\nEstrutural — R$ 35.000,00",
+  DISCIPLINAS_DETALHADO: "Arquitetura — 120h × R$ 250,00/h — R$ 30.000,00",
   OBSERVACAO: "Inclui acompanhamento de obra",
 };
 
@@ -109,8 +112,7 @@ export function VariaveisGuideDialog({ open, onOpenChange }: VariaveisGuideDialo
             <p className="text-sm text-warning-strong">
               Você pode criar suas próprias variáveis! Basta escrever{" "}
               <code className="bg-warning-soft px-1 rounded font-mono text-xs">{"{{MINHA_VARIAVEL}}"}</code> no
-              documento.
-              O sistema vai detectá-la e pedir para você preencher manualmente ao gerar a proposta.
+              documento. O sistema vai detectá-la e pedir para você preencher manualmente ao gerar a proposta.
             </p>
           </div>
         </div>

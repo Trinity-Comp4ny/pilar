@@ -44,6 +44,9 @@ export const AUTO_VARIABLES: Record<string, string> = {
   DATA_HOJE: "Data atual",
   VALIDADE: "Data de validade",
   DISCIPLINAS: "Lista de disciplinas",
+  DISCIPLINAS_FASES: "Disciplinas, uma por linha (nome só)",
+  DISCIPLINAS_COM_VALOR: "Disciplinas, uma por linha, com valor",
+  DISCIPLINAS_DETALHADO: "Disciplinas, uma por linha, com horas + custo/h + valor",
   OBSERVACAO: "Observações",
 };
 
@@ -76,6 +79,22 @@ export function buildVariableData(params: {
 
   const discList = disciplinas?.map((d) => d.disciplina).join(", ") || "";
 
+  // Valor de cada disciplina: usa valor_venda quando existe; senão calcula
+  // horas × custo_hora (propostas antigas podem não ter valor_venda salvo).
+  const valorDisciplina = (d: NonNullable<typeof disciplinas>[number]) =>
+    d.valor_venda ?? d.horas_estimadas * d.custo_hora;
+
+  const disciplinasFases = disciplinas?.map((d) => d.disciplina).join("\n") || "";
+  const disciplinasComValor =
+    disciplinas?.map((d) => `${d.disciplina} — ${formatCurrency(valorDisciplina(d))}`).join("\n") || "";
+  const disciplinasDetalhado =
+    disciplinas
+      ?.map(
+        (d) =>
+          `${d.disciplina} — ${d.horas_estimadas}h × ${formatCurrency(d.custo_hora)}/h — ${formatCurrency(valorDisciplina(d))}`
+      )
+      .join("\n") || "";
+
   return {
     CLIENTE_NOME: contact?.nome || "",
     CLIENTE_EMAIL: contact?.email || "",
@@ -90,6 +109,9 @@ export function buildVariableData(params: {
     DATA_HOJE: new Date().toLocaleDateString("pt-BR"),
     VALIDADE: formatDate(proposta.validade),
     DISCIPLINAS: discList,
+    DISCIPLINAS_FASES: disciplinasFases,
+    DISCIPLINAS_COM_VALOR: disciplinasComValor,
+    DISCIPLINAS_DETALHADO: disciplinasDetalhado,
     OBSERVACAO: proposta.observacao || "",
   };
 }
