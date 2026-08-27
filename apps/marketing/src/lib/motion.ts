@@ -4,7 +4,7 @@
  * Antes existia uma animação só na LP inteira (fade + y, 700ms, em tudo), o que
  * deixava a página com um ritmo único e sem hierarquia. Aqui ficam as durações,
  * curvas e variantes compartilhadas, para que cada seção escolha uma coreografia
- * diferente das vizinhas sem cada uma reinventar números (ver SPEC 060).
+ * diferente das vizinhas sem cada uma reinventar números (ver SPEC 072).
  *
  * Nenhuma dependência nova: os padrões são adaptados à mão sobre o
  * `framer-motion` que já está instalado, mesmo caminho do `ModuleConnector`.

@@ -7,7 +7,7 @@ import type { ModuloSlug } from "../../lib/modules";
  *
  * Antes o card era só texto, e a seção inteira virava uma parede de listas com
  * check. A miniatura dá uma pista visual do que o módulo é antes de o visitante
- * ler qualquer palavra (SPEC 060).
+ * ler qualquer palavra (SPEC 072).
  *
  * Cada uma anima ao entrar em vista com a coreografia do próprio módulo: o
  * funil desloca cartões, o cronograma desenha barras, o diário preenche linhas.

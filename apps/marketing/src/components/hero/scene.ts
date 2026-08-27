@@ -1,5 +1,5 @@
 /**
- * Roteiro da cena da hero (SPEC 060).
+ * Roteiro da cena da hero (SPEC 072).
  *
  * A cena é uma sessão contínua no Pilar conduzida por um agente: ele escreve o
  * pedido em português, monta o lançamento, pede aprovação, o lead atravessa o
@@ -131,7 +131,11 @@ export function moduloAppAtivo(i: number): string {
 }
 
 export const COLUNAS: { nome: string; dot: string; cards: { titulo: string; empresa: string; valor: string }[] }[] = [
-  { nome: "Novo", dot: "bg-chart-info", cards: [{ titulo: "Reforma de laboratório", empresa: "Bioteste", valor: "R$ 38.500" }] },
+  {
+    nome: "Novo",
+    dot: "bg-chart-info",
+    cards: [{ titulo: "Reforma de laboratório", empresa: "Bioteste", valor: "R$ 38.500" }],
+  },
   {
     nome: "Em Contato",
     dot: "bg-pipeline-contato",
@@ -145,7 +149,11 @@ export const COLUNAS: { nome: string; dot: string; cards: { titulo: string; empr
     dot: "bg-chart-warning",
     cards: [{ titulo: "Gases medicinais", empresa: "Clínica Vitta", valor: "R$ 56.000" }],
   },
-  { nome: "Em Negociação", dot: "bg-brand", cards: [{ titulo: "Fotovoltaico", empresa: "Cond. Alvorada", valor: "R$ 71.200" }] },
+  {
+    nome: "Em Negociação",
+    dot: "bg-brand",
+    cards: [{ titulo: "Fotovoltaico", empresa: "Cond. Alvorada", valor: "R$ 71.200" }],
+  },
   { nome: "Ganho", dot: "bg-status-done", cards: [] },
   { nome: "Perdido", dot: "bg-status-cancelled", cards: [] },
 ];
