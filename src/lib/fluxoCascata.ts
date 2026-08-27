@@ -14,7 +14,7 @@ type DisciplinaParaDuracao = Pick<FluxoDisciplinaTemplate, "duracao_dias_uteis" 
  * Duração efetiva de uma disciplina: soma dos itens de checklist que têm
  * duracao_dias_uteis definida. Sem nenhum item com duração, cai no campo
  * manual da disciplina. `horas_estimadas` de um item é sempre decorativo,
- * nunca entra nessa soma (ver spec 067, "Fora de escopo").
+ * nunca entra nessa soma (ver spec 071, "Fora de escopo").
  */
 export function duracaoEfetiva(disciplina: DisciplinaParaDuracao): number | undefined {
   const itensComDias = (disciplina.checklist_padrao ?? []).filter(
@@ -70,7 +70,7 @@ type DisciplinaParaCascata = Pick<
 /**
  * Cascata de datas por disciplina de fluxo, agrupada por `ordem` (disciplinas
  * com o mesmo `ordem` rodam em paralelo, sem entidade "etapa" nomeada — ver
- * spec 067). O grupo seguinte só recebe data_inicio quando todas as
+ * spec 071). O grupo seguinte só recebe data_inicio quando todas as
  * disciplinas do grupo anterior tiverem data_previsao calculada; a maior
  * data_previsao entre elas manda (a mais lenta do grupo). Disciplina sem
  * duração efetiva fica sem data_previsao e não participa desse "maior".

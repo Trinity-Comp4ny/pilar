@@ -7,7 +7,7 @@ import { normalizeFluxoDisciplinas } from "@/types/fluxoDisciplinas";
 /**
  * A coluna no banco (`fluxos_disciplinas.etapas`) mantém o nome histórico —
  * sem migration, é `Json` — mas o shape em memória é a lista flat de
- * disciplinas (spec 067). `normalizeFluxoDisciplinas` também acha fluxos
+ * disciplinas (spec 071). `normalizeFluxoDisciplinas` também acha fluxos
  * salvos no formato antigo (etapa nomeada envolvendo disciplinas).
  */
 export const useFluxosDisciplinas = () => {

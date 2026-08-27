@@ -20,7 +20,7 @@ function parseOptionalNumber(raw: string): number | undefined {
  * Lista de tarefas de um checklist (template de fluxo): uma linha por item, com
  * um checkbox decorativo (nunca marcável, é um template, não uma execução real),
  * texto editável in-place, responsáveis (multi-select — a disciplina não pede
- * mais responsável direto, é a união dos das tarefas, spec 067), dias úteis
+ * mais responsável direto, é a união dos das tarefas, spec 071), dias úteis
  * opcionais (somam na duração da disciplina) e horas opcionais (só informativo,
  * nunca soma em dias) e remoção. Visualmente diferente do LabelsEditor (tags
  * horizontais): aqui a leitura é vertical, como um checklist de verdade.

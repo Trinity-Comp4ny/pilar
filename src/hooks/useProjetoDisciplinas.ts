@@ -428,7 +428,7 @@ export function useBulkSaveDisciplinas() {
               .select("id");
             if (checklistError) throw checklistError;
 
-            // Responsáveis por tarefa (spec 067): cada item do checklist pode ter
+            // Responsáveis por tarefa (spec 071): cada item do checklist pode ter
             // os seus próprios, independente da disciplina. Só na criação, junto
             // com o checklist — não tem fluxo de edição posterior aqui ainda.
             const responsaveisRows = (checklistRows ?? []).flatMap((row, i) =>
