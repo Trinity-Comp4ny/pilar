@@ -66,6 +66,8 @@ export interface Modulo {
   }[];
   /** Para onde este módulo aponta, na seção "Conecta com". */
   conecta: { slug: ModuloSlug; texto: string }[];
+  /** Objeções reais de quem chega na página, respondidas antes do CTA final. */
+  faq: { pergunta: string; resposta: string }[];
   /**
    * Obra ainda não entra em nenhum plano (`includedInPlans: []`) e nasce
    * desligada, então o CTA não pode prometer autoatendimento.
@@ -162,6 +164,22 @@ export const MODULOS: Modulo[] = [
       },
       { slug: "obra", texto: "Quem administra obra presta contas por lá: aporte, despesa com comprovante e sua taxa." },
     ],
+    faq: [
+      {
+        pergunta: "Já uso planilha. A troca dói?",
+        resposta:
+          "Você não para tudo pra migrar: cadastre os projetos ativos e siga. O extrato do banco entra por PDF, lido pela IA, e você aprova antes de gravar qualquer coisa.",
+      },
+      {
+        pergunta: "A proposta sai com a cara do meu escritório?",
+        resposta: "Sai em DOCX no seu template, montada por disciplina, e vai por e-mail sem sair do sistema.",
+      },
+      {
+        pergunta: "Quanto custa?",
+        resposta:
+          "O preço é por escritório, sem cobrança por usuário, e todo plano tem a plataforma inteira. O trial é de 14 dias, sem cartão.",
+      },
+    ],
     ctaPrimario: { label: "Testar grátis", tipo: "cadastro" },
   },
   {
@@ -253,6 +271,22 @@ export const MODULOS: Modulo[] = [
       },
       { slug: "obra", texto: "Quando sai do papel, o cronograma de obra segue em dois níveis, alimentado pelo campo." },
     ],
+    faq: [
+      {
+        pergunta: "Meu fluxo não é igual ao de ninguém. Serve?",
+        resposta:
+          "As colunas do quadro e a sequência de etapas são suas: cadastre uma vez e todo projeto novo nasce nelas, com responsável definido.",
+      },
+      {
+        pergunta: "E quando o prazo muda?",
+        resposta:
+          "Mudou a data, o sistema pede o motivo. O histórico do projeto fica inteiro pra hora da conversa com o cliente.",
+      },
+      {
+        pergunta: "Uma disciplina aqui tem mais de um responsável.",
+        resposta: "Lá também: mais de um responsável por disciplina, com etiqueta, link e comentário no mesmo lugar.",
+      },
+    ],
     ctaPrimario: { label: "Testar grátis", tipo: "cadastro" },
   },
   {
@@ -342,6 +376,21 @@ export const MODULOS: Modulo[] = [
         texto: "A obra executa o que o projeto especificou, e o cliente vê os dois no mesmo portal.",
       },
     ],
+    faq: [
+      {
+        pergunta: "Meu mestre de obras não tem e-mail.",
+        resposta: "Não precisa: o gestor gera usuário e senha e entrega na mão, com acesso limitado àquela obra.",
+      },
+      {
+        pergunta: "O canteiro não tem sinal.",
+        resposta: "O registro fica no aparelho e sobe sozinho quando a rede volta, foto por foto, sem duplicar.",
+      },
+      {
+        pergunta: "Administro obra por taxa. A prestação de contas sai daí?",
+        resposta:
+          "Sai da conta da obra: aporte do cliente, despesa com comprovante e a sua taxa calculada a cada lançamento.",
+      },
+    ],
     ctaPrimario: { label: "Falar com a gente", tipo: "contato" },
   },
   {
@@ -399,6 +448,21 @@ export const MODULOS: Modulo[] = [
     conecta: [
       { slug: "projetos", texto: "O andamento que ele vê vem do cronograma por disciplina." },
       { slug: "obra", texto: "A prestação de contas sai da conta da obra, sem planilha paralela." },
+    ],
+    faq: [
+      {
+        pergunta: "Meu cliente vai precisar de mais um login?",
+        resposta: "Não. É um link só de leitura, sem conta, sem app e sem senha.",
+      },
+      {
+        pergunta: "Ele pode mexer em alguma coisa?",
+        resposta: "Não. O portal é sempre só leitura, e o que ele vê é o que está no sistema, sem você exportar nada.",
+      },
+      {
+        pergunta: "O que ele vê se contratou obra?",
+        resposta:
+          "Aporte, despesa com comprovante e saldo em conta. Quem contratou projeto vê disciplina, entrega e parcela.",
+      },
     ],
     ctaPrimario: { label: "Testar grátis", tipo: "cadastro" },
   },
@@ -458,6 +522,20 @@ export const MODULOS: Modulo[] = [
     conecta: [
       { slug: "obra", texto: "O registro do dia alimenta o diário e o cronograma da obra." },
       { slug: "portal", texto: "O que foi medido no canteiro vira andamento no portal do cliente." },
+    ],
+    faq: [
+      {
+        pergunta: "Precisa instalar aplicativo?",
+        resposta: "Não: abre no navegador do celular. E continua funcionando sem sinal.",
+      },
+      {
+        pergunta: "Quem registra precisa de e-mail?",
+        resposta: "Não. O gestor gera usuário e senha e entrega na mão, com acesso limitado àquela obra.",
+      },
+      {
+        pergunta: "O que acontece com o que foi registrado?",
+        resposta: "Vira diário e avanço de cronograma na tela do escritório, sem ninguém redigitar.",
+      },
     ],
     ctaPrimario: { label: "Falar com a gente", tipo: "contato" },
   },
