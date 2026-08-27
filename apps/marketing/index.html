@@ -11,7 +11,10 @@
     />
     <meta name="author" content="Pilar" />
     <link rel="canonical" href="https://www.pilarsoft.com.br/" />
-    <link rel="preload" href="/fonts/inter-variable-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <!-- Geist é a fonte de verdade (ver index.css); Inter só existe como
+         fallback de @font-face caso Geist falhe, e não deve ser baixada de
+         propósito. Preload forçava os dois downloads em toda visita. -->
+    <link rel="preload" href="/fonts/geist-variable.woff2" as="font" type="font/woff2" crossorigin />
     <meta property="og:title" content="Pilar | Onde times e agentes centralizam gestão, projetos e obras." />
     <meta
       property="og:description"
