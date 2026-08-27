@@ -3,7 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { formatValorToInput, parseCurrencyString } from "@/lib/currencyUtils";
 import { supabase } from "@/integrations/supabase/client";
 import { addBusinessDays, formatDateLocal, parseDateLocal } from "@/lib/businessDays";
-import { calcularDatasFluxo } from "@/lib/fluxoCascata";
+import { calcularDatasFluxo, responsaveisEfetivos } from "@/lib/fluxoCascata";
 import { PROJECT_STATUS, PROJECT_PRIORITY, type ProjectPriority } from "@/constants";
 import {
   type Projeto,
@@ -474,8 +474,9 @@ export function useProjetoForm({
 
     const novasDisciplinas: DisciplinaResponsavel[] = fluxo.disciplinas.map((d, i) => {
       const dataDisc = datas[i];
-      const responsaveisIds = d.responsaveis_ids ?? [];
-      const responsaveisNomes = d.responsaveis_nomes ?? [];
+      // União dos responsáveis das tarefas (ou fallback manual da disciplina,
+      // se nenhuma tarefa tiver responsável) — spec 067 revisão.
+      const { ids: responsaveisIds, nomes: responsaveisNomes } = responsaveisEfetivos(d);
       return {
         disciplina: d.nome,
         responsavel_id: responsaveisIds[0] || "",

@@ -1,11 +1,13 @@
 import { useState, type KeyboardEvent } from "react";
 import { Input } from "@/components/ui/input";
 import { X } from "lucide-react";
+import { MultiSelectFilter } from "@/components/filters/MultiSelectFilter";
 import type { FluxoChecklistItemTemplate } from "@/types/fluxoDisciplinas";
 
 interface TarefasEditorProps {
   value: FluxoChecklistItemTemplate[];
   onChange: (next: FluxoChecklistItemTemplate[]) => void;
+  pessoas: { id: string; nome: string }[];
 }
 
 function parseOptionalNumber(raw: string): number | undefined {
@@ -17,16 +19,22 @@ function parseOptionalNumber(raw: string): number | undefined {
 /**
  * Lista de tarefas de um checklist (template de fluxo): uma linha por item, com
  * um checkbox decorativo (nunca marcável, é um template, não uma execução real),
- * texto editável in-place, dias úteis opcionais (somam na duração da disciplina,
- * spec 067) e horas opcionais (só informativo, nunca soma em dias) e remoção.
- * Visualmente diferente do LabelsEditor (tags horizontais): aqui a leitura é
- * vertical, como um checklist de verdade.
+ * texto editável in-place, responsáveis (multi-select — a disciplina não pede
+ * mais responsável direto, é a união dos das tarefas, spec 067), dias úteis
+ * opcionais (somam na duração da disciplina) e horas opcionais (só informativo,
+ * nunca soma em dias) e remoção. Visualmente diferente do LabelsEditor (tags
+ * horizontais): aqui a leitura é vertical, como um checklist de verdade.
  */
-export function TarefasEditor({ value, onChange }: TarefasEditorProps) {
+export function TarefasEditor({ value, onChange, pessoas }: TarefasEditorProps) {
   const [draft, setDraft] = useState("");
 
   const updateItem = (index: number, patch: Partial<FluxoChecklistItemTemplate>) => {
     onChange(value.map((item, i) => (i === index ? { ...item, ...patch } : item)));
+  };
+
+  const updateResponsaveis = (index: number, ids: string[]) => {
+    const nomes = ids.map((id) => pessoas.find((p) => p.id === id)?.nome).filter((n): n is string => !!n);
+    updateItem(index, { responsaveis_ids: ids, responsaveis_nomes: nomes });
   };
 
   const removeItem = (index: number) => {
@@ -55,7 +63,14 @@ export function TarefasEditor({ value, onChange }: TarefasEditorProps) {
           <Input
             value={item.texto}
             onChange={(e) => updateItem(index, { texto: e.target.value })}
-            className="h-7 flex-1 border-none bg-transparent px-1 text-xs shadow-none focus-visible:ring-1"
+            className="h-7 flex-1 min-w-[80px] border-none bg-transparent px-1 text-xs shadow-none focus-visible:ring-1"
+          />
+          <MultiSelectFilter
+            label="Responsáveis"
+            options={pessoas.map((p) => ({ value: p.id, label: p.nome }))}
+            selected={item.responsaveis_ids ?? []}
+            onChange={(ids) => updateResponsaveis(index, ids)}
+            className="h-7 rounded-md flex-shrink-0 w-[120px] justify-start text-[11px]"
           />
           <Input
             type="number"
@@ -64,7 +79,7 @@ export function TarefasEditor({ value, onChange }: TarefasEditorProps) {
             onChange={(e) => updateItem(index, { duracao_dias_uteis: parseOptionalNumber(e.target.value) })}
             placeholder="dias"
             aria-label={`Dias úteis de ${item.texto}`}
-            className="h-7 w-14 flex-shrink-0 border-none bg-transparent px-1 text-xs text-right shadow-none focus-visible:ring-1"
+            className="h-7 w-12 flex-shrink-0 border-none bg-transparent px-1 text-xs text-right shadow-none focus-visible:ring-1"
           />
           <Input
             type="number"
@@ -73,7 +88,7 @@ export function TarefasEditor({ value, onChange }: TarefasEditorProps) {
             onChange={(e) => updateItem(index, { horas_estimadas: parseOptionalNumber(e.target.value) })}
             placeholder="horas"
             aria-label={`Horas estimadas de ${item.texto}`}
-            className="h-7 w-16 flex-shrink-0 border-none bg-transparent px-1 text-xs text-right shadow-none focus-visible:ring-1"
+            className="h-7 w-14 flex-shrink-0 border-none bg-transparent px-1 text-xs text-right shadow-none focus-visible:ring-1"
           />
           <button
             type="button"

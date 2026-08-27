@@ -4630,6 +4630,56 @@ export type Database = {
           },
         ]
       }
+      projeto_disciplina_checklist_responsaveis: {
+        Row: {
+          checklist_item_id: string
+          created_at: string
+          id: string
+          pessoa_id: string
+        }
+        Insert: {
+          checklist_item_id: string
+          created_at?: string
+          id?: string
+          pessoa_id: string
+        }
+        Update: {
+          checklist_item_id?: string
+          created_at?: string
+          id?: string
+          pessoa_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projeto_disciplina_checklist_responsavei_checklist_item_id_fkey"
+            columns: ["checklist_item_id"]
+            isOneToOne: false
+            referencedRelation: "projeto_disciplina_checklist"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projeto_disciplina_checklist_responsaveis_pessoa_id_fkey"
+            columns: ["pessoa_id"]
+            isOneToOne: false
+            referencedRelation: "pessoas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projeto_disciplina_checklist_responsaveis_pessoa_id_fkey"
+            columns: ["pessoa_id"]
+            isOneToOne: false
+            referencedRelation: "pessoas_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projeto_disciplina_checklist_responsaveis_pessoa_id_fkey"
+            columns: ["pessoa_id"]
+            isOneToOne: false
+            referencedRelation: "view_folha_pagamento"
+            referencedColumns: ["pessoa_id"]
+          },
+        ]
+      }
       projeto_disciplina_responsaveis: {
         Row: {
           id: string

@@ -4,12 +4,17 @@ export interface FluxoChecklistItemTemplate {
   duracao_dias_uteis?: number;
   /** Só informativo (itens de poucas horas). Nunca soma em duracao_dias_uteis. */
   horas_estimadas?: number;
+  /** Responsáveis pela tarefa. Quando algum item da disciplina tem responsável, a
+   *  disciplina não usa mais `responsaveis_ids` manual — vira a união dos das tarefas. */
+  responsaveis_ids?: string[];
+  responsaveis_nomes?: string[];
 }
 
 export interface FluxoDisciplinaTemplate {
   /** Posição/coluna no fluxo. Disciplinas com o mesmo `ordem` rodam em paralelo. */
   ordem: number;
   nome: string;
+  /** Fallback manual, usado só quando nenhuma tarefa do checklist tem responsável. */
   responsaveis_ids?: string[];
   responsaveis_nomes?: string[];
   /** Duração em dias úteis. Ignorada se `checklist_padrao` tiver algum item com duracao_dias_uteis. */

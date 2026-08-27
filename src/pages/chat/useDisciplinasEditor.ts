@@ -9,6 +9,7 @@ import {
 } from "@/types/projetos";
 import type { TemplateProjeto } from "@/hooks/useTemplates";
 import type { FluxoDisciplinas } from "@/types/fluxoDisciplinas";
+import { responsaveisEfetivos } from "@/lib/fluxoCascata";
 
 /**
  * Estado + handlers de edição de disciplinas de projeto, extraídos de useProjetoForm
@@ -257,8 +258,7 @@ export function useDisciplinasEditor({ pessoas, templatesData, fluxosData, curre
       const fluxo = fluxosData.find((f) => f.id === fluxoId);
       if (!fluxo) return;
       const novas: DisciplinaResponsavel[] = fluxo.disciplinas.map((d) => {
-        const responsaveisIds = d.responsaveis_ids ?? [];
-        const responsaveisNomes = d.responsaveis_nomes ?? [];
+        const { ids: responsaveisIds, nomes: responsaveisNomes } = responsaveisEfetivos(d);
         return {
           disciplina: d.nome,
           responsavel_id: responsaveisIds[0] || "",

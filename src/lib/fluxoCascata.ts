@@ -26,6 +26,42 @@ export function duracaoEfetiva(disciplina: DisciplinaParaDuracao): number | unde
   return disciplina.duracao_dias_uteis;
 }
 
+type DisciplinaParaResponsaveis = Pick<
+  FluxoDisciplinaTemplate,
+  "responsaveis_ids" | "responsaveis_nomes" | "checklist_padrao"
+>;
+
+export interface ResponsaveisEfetivos {
+  ids: string[];
+  nomes: string[];
+}
+
+/**
+ * Responsáveis efetivos de uma disciplina: união (sem duplicar) dos responsáveis
+ * das tarefas do checklist que têm algum. Sem nenhuma tarefa com responsável,
+ * cai no fallback manual da disciplina (mesmo padrão de duracaoEfetiva).
+ */
+export function responsaveisEfetivos(disciplina: DisciplinaParaResponsaveis): ResponsaveisEfetivos {
+  const itensComResponsavel = (disciplina.checklist_padrao ?? []).filter(
+    (item) => (item.responsaveis_ids ?? []).length > 0
+  );
+
+  if (itensComResponsavel.length > 0) {
+    const ids: string[] = [];
+    const nomes: string[] = [];
+    for (const item of itensComResponsavel) {
+      (item.responsaveis_ids ?? []).forEach((id, i) => {
+        if (ids.includes(id)) return;
+        ids.push(id);
+        nomes.push(item.responsaveis_nomes?.[i] ?? "");
+      });
+    }
+    return { ids, nomes };
+  }
+
+  return { ids: disciplina.responsaveis_ids ?? [], nomes: disciplina.responsaveis_nomes ?? [] };
+}
+
 type DisciplinaParaCascata = Pick<
   FluxoDisciplinaTemplate,
   "ordem" | "nome" | "duracao_dias_uteis" | "checklist_padrao"

@@ -414,16 +414,35 @@ export function useBulkSaveDisciplinas() {
           // Checklist padrão só é copiado na criação da disciplina (a partir
           // do template do fluxo aplicado); disciplina já existente não é tocada.
           if (disc.checklist_padrao?.length) {
-            const { error: checklistError } = await supabase.from("projeto_disciplina_checklist").insert(
-              disc.checklist_padrao.map((item, i) => ({
-                projeto_disciplina_id: discId!,
-                texto: item.texto,
-                duracao_dias_uteis: item.duracao_dias_uteis ?? null,
-                horas_estimadas: item.horas_estimadas ?? null,
-                ordem: i,
+            const { data: checklistRows, error: checklistError } = await supabase
+              .from("projeto_disciplina_checklist")
+              .insert(
+                disc.checklist_padrao.map((item, i) => ({
+                  projeto_disciplina_id: discId!,
+                  texto: item.texto,
+                  duracao_dias_uteis: item.duracao_dias_uteis ?? null,
+                  horas_estimadas: item.horas_estimadas ?? null,
+                  ordem: i,
+                }))
+              )
+              .select("id");
+            if (checklistError) throw checklistError;
+
+            // Responsáveis por tarefa (spec 067): cada item do checklist pode ter
+            // os seus próprios, independente da disciplina. Só na criação, junto
+            // com o checklist — não tem fluxo de edição posterior aqui ainda.
+            const responsaveisRows = (checklistRows ?? []).flatMap((row, i) =>
+              (disc.checklist_padrao![i].responsaveis_ids ?? []).map((pessoaId) => ({
+                checklist_item_id: row.id,
+                pessoa_id: pessoaId,
               }))
             );
-            if (checklistError) throw checklistError;
+            if (responsaveisRows.length > 0) {
+              const { error: respError } = await supabase
+                .from("projeto_disciplina_checklist_responsaveis")
+                .insert(responsaveisRows);
+              if (respError) throw respError;
+            }
           }
         }
 
