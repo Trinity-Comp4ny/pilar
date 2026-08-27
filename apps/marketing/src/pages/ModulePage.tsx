@@ -1,16 +1,24 @@
 import { useEffect } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Check } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check } from "lucide-react";
 import { APP_URL } from "../config";
 import { trackCta } from "../analytics";
 import { BrowserFrame } from "../components/BrowserFrame";
-import { ModuleScreen } from "../components/mock/ModuleScreens";
+import { CTASection } from "../components/CTASection";
+import { HeroBackdrop } from "../components/hero/HeroBackdrop";
+import { CampoScreen, ModuleScreen } from "../components/mock/ModuleScreens";
 import { Reveal } from "../components/Reveal";
+import { SplitButton } from "../components/ui/SplitButton";
 import { MODULOS_POR_SLUG, type ModuloSlug } from "../lib/modules";
 
 const WHATSAPP = "https://wa.me/5514998721100";
 
-/** Página de um módulo. O conteúdo todo vem de `lib/modules.ts`. */
+/**
+ * Página de um módulo. O conteúdo vem de `lib/modules.ts`; o desenho segue a
+ * home redesenhada: paisagem no hero, headline com o fim em itálico apagado,
+ * tela de produto grande logo abaixo (browser nos módulos de escritório,
+ * celular no Campo), features em cartões e o mesmo fecho da home.
+ */
 export function ModulePage({ slug }: { slug: ModuloSlug }) {
   const modulo = MODULOS_POR_SLUG[slug];
 
@@ -20,127 +28,128 @@ export function ModulePage({ slug }: { slug: ModuloSlug }) {
 
   const primario =
     modulo.ctaPrimario.tipo === "cadastro"
-      ? { href: `${APP_URL}/cadastro`, externo: false }
-      : { href: WHATSAPP, externo: true };
+      ? { href: `${APP_URL}/cadastro`, evento: "testar_gratis" }
+      : { href: WHATSAPP, evento: "falar_conosco" };
 
   return (
     <>
-      <section className="pt-16 pb-16 md:pt-24 md:pb-20">
-        <div className="container mx-auto px-6 md:px-10">
-          <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-10 lg:gap-14 items-center">
-            <div>
-              <span
-                className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-medium uppercase tracking-[0.14em] mb-5 ${modulo.cor.fill} text-ink`}
-              >
-                <span className={`w-1.5 h-1.5 rounded-sm ${modulo.cor.strong}`} />
-                {modulo.numero}
-              </span>
+      <section className="relative isolate overflow-hidden px-5 pb-14 pt-24 md:px-10 md:pb-20 md:pt-28">
+        <HeroBackdrop />
 
-              <h1 className="text-[clamp(30px,4.4vw,48px)] font-medium tracking-[-0.032em] text-ink leading-[1.06] mb-4">
-                {modulo.headline}
-              </h1>
-              <p className="text-base md:text-lg text-ink-soft font-light leading-relaxed mb-7 max-w-lg">
-                {modulo.lede}
-              </p>
+        <div className="relative z-10 mx-auto max-w-6xl">
+          <Reveal variant="down" className="mb-4">
+            <Link
+              to="/"
+              className="inline-flex items-center gap-1.5 text-[13px] text-ink-muted transition-colors hover:text-ink"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" strokeWidth={1.9} />
+              Voltar para a home
+            </Link>
+          </Reveal>
 
-              <div className="flex flex-col sm:flex-row gap-3">
-                <a
-                  href={primario.href}
-                  {...(primario.externo ? { target: "_blank", rel: "noopener noreferrer" } : {})}
-                  onClick={() =>
-                    trackCta(
-                      modulo.ctaPrimario.tipo === "cadastro" ? "testar_gratis" : "falar_conosco",
-                      `modulo_${slug}`
-                    )
-                  }
-                  className="px-7 py-3.5 bg-ink-soft text-white rounded-full font-medium text-sm hover:bg-ink transition-colors inline-flex items-center justify-center gap-2 group"
-                >
-                  {modulo.ctaPrimario.label}
-                  <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-                </a>
-                <a
-                  href={WHATSAPP}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={() => trackCta("agende_demo", `modulo_${slug}`)}
-                  className="px-7 py-3.5 rounded-full font-medium text-sm text-ink-soft border border-paper-border hover:bg-paper-alt transition-colors inline-flex items-center justify-center"
-                >
-                  Agende uma demo
-                </a>
-              </div>
+          <Reveal variant="up" className="max-w-3xl">
+            <span className="mb-5 inline-flex items-center gap-2 rounded-full bg-frame/80 px-3.5 py-1.5 text-[10px] font-medium uppercase tracking-[0.14em] text-ink/70 shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
+              <span className={`h-1.5 w-1.5 rounded-full ${modulo.cor.strong}`} />
+              {modulo.numero}
+            </span>
+
+            <h1 className="mb-5 text-[58px] font-medium leading-[1.06] tracking-[-0.035em] text-ink max-[1100px]:text-[44px] max-[850px]:text-[32px] max-[420px]:text-[27px]">
+              {modulo.headline} <span className="italic text-ink/45">{modulo.headlineFim}</span>
+            </h1>
+            <p className="mb-8 max-w-xl text-[15px] leading-relaxed text-ink-soft md:text-[16px]">{modulo.lede}</p>
+
+            <div className="flex flex-wrap gap-3">
+              <SplitButton href={primario.href} onClick={() => trackCta(primario.evento, `modulo_${slug}`)}>
+                {modulo.ctaPrimario.label}
+              </SplitButton>
+              <SplitButton fantasma href={WHATSAPP} onClick={() => trackCta("agende_demo", `modulo_${slug}`)}>
+                Agende uma demo
+              </SplitButton>
             </div>
+          </Reveal>
 
-            <BrowserFrame url={modulo.url}>
-              <div className="px-5 py-4 text-left min-h-[240px]">
-                <ModuleScreen slug={slug} />
-              </div>
-            </BrowserFrame>
+          {/* A tela de produto, grande e central: é o "print" da página.
+              Campo é um app de celular, então ganha o aparelho, não o browser. */}
+          <Reveal variant="scale" delay={0.15} loose className="mt-12 md:mt-16">
+            {slug === "campo" ? (
+              <CampoScreen />
+            ) : (
+              <BrowserFrame url={modulo.url} className="mx-auto max-w-4xl">
+                <div className="p-5 md:p-7">
+                  <ModuleScreen slug={slug} />
+                </div>
+              </BrowserFrame>
+            )}
+          </Reveal>
+        </div>
+      </section>
+
+      <section className="bg-paper px-5 py-16 md:px-10 md:py-24">
+        <div className="mx-auto max-w-6xl">
+          <Reveal variant="up" className="mb-10 max-w-2xl">
+            <h2 className="text-[40px] font-medium leading-[1.08] tracking-[-0.035em] text-ink max-[1100px]:text-[34px] max-[850px]:text-[27px] max-[420px]:text-[24px]">
+              Tudo isto <span className="italic text-ink/45">já roda hoje.</span>
+            </h2>
+          </Reveal>
+
+          {/* As duas primeiras features de cada módulo são as que vendem; a
+              lavagem verde faz esse ranking sem precisar dizer "principal". */}
+          <div className="grid gap-4 md:grid-cols-2">
+            {modulo.features.map((f, i) => (
+              <Reveal key={f.titulo} variant="up" delay={(i % 2) * 0.06} className="h-full">
+                <div
+                  className={`h-full rounded-[22px] p-6 ${
+                    i < 2 ? "bg-card-brand-soft" : "border border-paper-border/80 bg-frame"
+                  }`}
+                >
+                  <span className="mb-4 flex h-8 w-8 items-center justify-center rounded-full bg-brand">
+                    <Check className="h-4 w-4 text-ink" strokeWidth={2.2} />
+                  </span>
+                  <h3 className="mb-1.5 text-[16px] font-medium text-ink">{f.titulo}</h3>
+                  <p className="text-[13px] leading-relaxed text-ink-muted">{f.texto}</p>
+                </div>
+              </Reveal>
+            ))}
           </div>
         </div>
       </section>
 
-      <section className="py-20 md:py-24 bg-paper-alt border-t border-paper-border">
-        <div className="container mx-auto px-6 md:px-10">
-          <div className="max-w-5xl mx-auto">
-            <Reveal className="mb-12">
-              <p className={`text-[10px] uppercase tracking-[0.14em] font-medium mb-4 ${modulo.cor.text}`}>
-                O que tem dentro
-              </p>
-              <h2 className="text-2xl md:text-4xl font-medium text-ink leading-[1.1] tracking-tight">
-                Tudo isto já roda hoje.
-              </h2>
-            </Reveal>
+      <section className="bg-paper px-5 pb-16 md:px-10 md:pb-24">
+        <div className="mx-auto max-w-6xl">
+          <Reveal variant="up" className="mb-8 max-w-2xl">
+            <h2 className="text-[40px] font-medium leading-[1.08] tracking-[-0.035em] text-ink max-[1100px]:text-[34px] max-[850px]:text-[27px] max-[420px]:text-[24px]">
+              Nada disso <span className="italic text-ink/45">termina aqui.</span>
+            </h2>
+          </Reveal>
 
-            <div className="grid md:grid-cols-2 gap-x-12 gap-y-8">
-              {modulo.features.map((f, i) => (
-                <Reveal key={f.titulo} delay={(i % 2) * 0.06}>
-                  <h3 className="flex items-center gap-2 text-[15px] font-medium text-ink mb-1.5">
-                    <Check className={`w-4 h-4 shrink-0 ${modulo.cor.text}`} strokeWidth={2.2} />
-                    {f.titulo}
-                  </h3>
-                  <p className="text-[13.5px] text-ink-muted font-light leading-relaxed pl-6">{f.texto}</p>
-                </Reveal>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="py-20 md:py-24 bg-paper">
-        <div className="container mx-auto px-6 md:px-10">
-          <div className="max-w-5xl mx-auto">
-            <Reveal className="mb-8">
-              <p className="text-[10px] uppercase tracking-[0.14em] font-medium text-ink-muted mb-4">Conecta com</p>
-              <h2 className="text-2xl md:text-3xl font-medium text-ink leading-[1.1] tracking-tight">
-                Nada disso termina aqui.
-              </h2>
-            </Reveal>
-
-            <div className="grid md:grid-cols-2 gap-4">
-              {modulo.conecta.map((c) => {
-                const outro = MODULOS_POR_SLUG[c.slug];
-                return (
-                  <Reveal key={c.slug}>
-                    <Link
-                      to={`/${outro.slug}`}
-                      className="flex gap-3 items-start p-5 rounded-xl border border-paper-border/60 bg-white hover:border-paper-border transition-colors group"
-                    >
-                      <span className={`w-8 h-8 rounded-lg shrink-0 ${outro.cor.fill}`} />
-                      <span>
-                        <span className="flex items-center gap-1.5 text-[14px] font-medium text-ink mb-1">
-                          {outro.nome}
-                          <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
-                        </span>
-                        <span className="block text-[12.5px] text-ink-muted font-light leading-relaxed">{c.texto}</span>
+          <div className="grid gap-4 md:grid-cols-2">
+            {modulo.conecta.map((c) => {
+              const outro = MODULOS_POR_SLUG[c.slug];
+              return (
+                <Reveal key={c.slug} variant="up" className="h-full">
+                  <Link
+                    to={`/${outro.slug}`}
+                    className="group flex h-full items-start justify-between gap-4 rounded-[22px] bg-card-brand-soft p-6 transition-colors hover:bg-card-brand"
+                  >
+                    <span>
+                      <span className="mb-1.5 block text-[10px] uppercase tracking-[0.14em] text-ink/50">
+                        {outro.numero}
                       </span>
-                    </Link>
-                  </Reveal>
-                );
-              })}
-            </div>
+                      <span className="mb-1.5 block text-[17px] font-medium text-ink">{outro.nome}</span>
+                      <span className="block text-[13px] leading-relaxed text-ink/65">{c.texto}</span>
+                    </span>
+                    <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-ink/15 text-ink transition-colors group-hover:bg-ink group-hover:text-white">
+                      <ArrowRight className="h-4 w-4" strokeWidth={1.9} />
+                    </span>
+                  </Link>
+                </Reveal>
+              );
+            })}
           </div>
         </div>
       </section>
+
+      <CTASection />
     </>
   );
 }
