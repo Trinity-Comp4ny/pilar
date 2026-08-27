@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && node scripts/prerender.mjs",
-    "build:vite-only": "vite build",
+    "build": "vite build",
+    "build:prerender": "vite build && node scripts/prerender.mjs",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "preview": "vite preview"
   },
