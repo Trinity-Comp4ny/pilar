@@ -13,6 +13,21 @@
 
 export type ModuloSlug = "gestao" | "projetos" | "obra" | "portal" | "campo";
 
+export type MockNome =
+  | "kanban"
+  | "financeiro"
+  | "folha"
+  | "quadro"
+  | "gantt"
+  | "parcelas"
+  | "diario"
+  | "cotacao"
+  | "conta-obra"
+  | "portal-projeto"
+  | "portal-obra"
+  | "campo-diario"
+  | "campo-tarefas";
+
 export interface Modulo {
   slug: ModuloSlug;
   numero: string;
@@ -45,6 +60,8 @@ export interface Modulo {
     titulo: string;
     frase: string;
     img: string;
+    /** Qual desenho vetorial mostrar enquanto o print real não existe (ver GroupMock). */
+    mock: MockNome;
     features: { titulo: string; texto: string }[];
   }[];
   /** Para onde este módulo aponta, na seção "Conecta com". */
@@ -78,6 +95,7 @@ export const MODULOS: Modulo[] = [
         titulo: "Do lead à proposta assinada",
         frase: "O comercial inteiro numa tela: quem entrou, em que etapa está e por que saiu.",
         img: "/screens/gestao-comercial.png",
+        mock: "kanban",
         features: [
           {
             titulo: "Funil de leads em kanban",
@@ -99,6 +117,7 @@ export const MODULOS: Modulo[] = [
         titulo: "Aprovou, virou projeto e receita",
         frase: "O aceite do cliente dispara o resto: projeto criado, parcelas no financeiro, nada redigitado.",
         img: "/screens/gestao-financeiro.png",
+        mock: "financeiro",
         features: [
           {
             titulo: "Aprovou, virou projeto",
@@ -121,6 +140,7 @@ export const MODULOS: Modulo[] = [
         titulo: "O mês fecha sem planilha",
         frase: "Folha, comprovante e relatório saem do mesmo lugar em que o dinheiro entrou.",
         img: "/screens/gestao-fechamento.png",
+        mock: "folha",
         features: [
           {
             titulo: "Folha com comprovante em PDF",
@@ -165,6 +185,7 @@ export const MODULOS: Modulo[] = [
         titulo: "O quadro do jeito do escritório",
         frase: "Colunas, fluxo e responsáveis definidos por quem trabalha, não pelo software.",
         img: "/screens/projetos-quadro.png",
+        mock: "quadro",
         features: [
           {
             titulo: "Quadro com as suas colunas",
@@ -187,6 +208,7 @@ export const MODULOS: Modulo[] = [
         titulo: "Prazo que se defende sozinho",
         frase: "A carteira inteira na linha do tempo, e cada mudança de data com nome e motivo.",
         img: "/screens/projetos-cronograma.png",
+        mock: "gantt",
         features: [
           {
             titulo: "Gantt da carteira inteira",
@@ -209,6 +231,7 @@ export const MODULOS: Modulo[] = [
         titulo: "O contrato mora junto do projeto",
         frase: "Quanto entrou, quanto falta e onde cada contrato está no mapa.",
         img: "/screens/projetos-contrato.png",
+        mock: "parcelas",
         features: [
           {
             titulo: "Parcelas do contrato à vista",
@@ -253,6 +276,7 @@ export const MODULOS: Modulo[] = [
         titulo: "O dia chega pronto do canteiro",
         frase: "O encarregado registra no celular e o escritório recebe sem digitar nada de novo.",
         img: "/screens/obra-diario.png",
+        mock: "diario",
         features: [
           {
             titulo: "Diário que chega do celular",
@@ -275,6 +299,7 @@ export const MODULOS: Modulo[] = [
         titulo: "Material comprado sem rasteira",
         frase: "O orçamento do fornecedor entra por foto e sai numa tabela comparável.",
         img: "/screens/obra-cotacao.png",
+        mock: "cotacao",
         features: [
           {
             titulo: "Orçamento do fornecedor lido por IA",
@@ -296,6 +321,7 @@ export const MODULOS: Modulo[] = [
         titulo: "Execução e dinheiro na mesma conta",
         frase: "Cada frente com seu avanço, cada real do cliente prestando contas.",
         img: "/screens/obra-conta.png",
+        mock: "conta-obra",
         features: [
           {
             titulo: "Cronograma em dois níveis",
@@ -339,6 +365,7 @@ export const MODULOS: Modulo[] = [
         titulo: "Um link resolve",
         frase: "Sem conta, sem app e sem senha: o cliente abre e vê, e não muda nada.",
         img: "/screens/portal-link.png",
+        mock: "portal-projeto",
         features: [
           {
             titulo: "Um link, sem cadastro",
@@ -355,6 +382,7 @@ export const MODULOS: Modulo[] = [
         titulo: "Cada contrato, sua visão",
         frase: "Projeto mostra andamento e parcela; obra mostra o dinheiro prestando contas.",
         img: "/screens/portal-visoes.png",
+        mock: "portal-obra",
         features: [
           {
             titulo: "Duas visões, um portal",
@@ -395,6 +423,7 @@ export const MODULOS: Modulo[] = [
         titulo: "Feito pro canteiro de verdade",
         frase: "Sem rede e sem e-mail corporativo: as duas realidades da obra, resolvidas.",
         img: "/screens/campo-offline.png",
+        mock: "campo-diario",
         features: [
           {
             titulo: "Funciona no subsolo",
@@ -412,6 +441,7 @@ export const MODULOS: Modulo[] = [
         titulo: "Registrar o dia leva minutos",
         frase: "Uma tela só pro que importa, e o escritório recebe sem redigitar.",
         img: "/screens/campo-registro.png",
+        mock: "campo-tarefas",
         features: [
           {
             titulo: "Foto, medição e tarefa na mesma tela",
