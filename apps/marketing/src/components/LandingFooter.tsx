@@ -85,9 +85,8 @@ export function LandingFooter() {
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-7 border-t border-ink/10">
+        <div className="pt-7 border-t border-ink/10">
           <p className="text-[12.5px] text-ink/55">© 2026 Pilar. Todos os direitos reservados.</p>
-          <p className="text-[12.5px] text-ink/55">Feito para engenharia multidisciplinar</p>
         </div>
       </div>
     </footer>
