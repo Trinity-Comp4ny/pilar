@@ -18,10 +18,14 @@ const VISTA = { once: true, amount: 0.35 } as const;
 
 /**
  * Celular dos cartões, desenhado à mão em CSS: sem lib de mockup nenhuma,
- * porque isso é trabalho de traço, não de dependência. A moldura é um
- * gradiente escuro (titânio, não um `border` chapado), com botões saindo pra
- * fora da borda e uma ilha dinâmica de verdade (pílula preta com a lente),
- * não um retângulo arredondado centralizado.
+ * porque isso é trabalho de traço, não de dependência.
+ *
+ * A versão anterior tinha bezel em degradê, botão lateral saindo da moldura e
+ * ilha dinâmica com lente de câmera: detalhe de mais, junto com um aparelho
+ * curto (altura só do tamanho do conteúdo). Isso encolhia o celular em vez de
+ * fazer ele parecer um aparelho de verdade. A referência resolve com bem menos
+ * traço: uma moldura fina, uma pílula preta no topo, e o aparelho alto de
+ * propósito (`min-h`), não do tamanho exato do que cabe dentro.
  *
  * Aceita um `flutuante`, um cartão que estoura a borda inferior do aparelho,
  * no truque visual da referência (React Bits): dá peso ao conjunto sem custar
@@ -29,43 +33,11 @@ const VISTA = { once: true, amount: 0.35 } as const;
  */
 function Celular({ children, flutuante }: { children: React.ReactNode; flutuante?: React.ReactNode }) {
   return (
-    <div className="relative mx-auto w-[256px] pb-8">
-      {/* Botões laterais: saem da moldura, não vivem dentro dela. */}
-      <span className="absolute -left-[2px] top-[58px] h-6 w-[3px] rounded-l-[2px] bg-gradient-to-r from-black/50 to-[#1c1c1e]" />
-      <span className="absolute -left-[2px] top-[92px] h-9 w-[3px] rounded-l-[2px] bg-gradient-to-r from-black/50 to-[#1c1c1e]" />
-      <span className="absolute -left-[2px] top-[136px] h-9 w-[3px] rounded-l-[2px] bg-gradient-to-r from-black/50 to-[#1c1c1e]" />
-      <span className="absolute -right-[2px] top-[88px] h-14 w-[3px] rounded-r-[2px] bg-gradient-to-l from-black/50 to-[#1c1c1e]" />
-
-      <div
-        className="rounded-[34px] p-[9px] shadow-[0_28px_60px_-20px_rgba(0,0,0,0.55)]"
-        style={{ background: "linear-gradient(155deg, #48484a, #0a0a0a 45%, #000)" }}
-      >
-        <div className="relative rounded-[25px] bg-frame overflow-hidden">
-          {/* Barra de status: horário à esquerda, sinal/wifi/bateria à direita. */}
-          <div className="relative flex items-center justify-between h-9 px-4">
-            <span className="text-[9.5px] font-semibold text-ink tabular-nums">9:41</span>
-            <span className="flex items-center gap-[3px]">
-              <span className="flex items-end gap-[1.5px] h-[7px]">
-                <span className="w-[2px] h-[3px] rounded-[0.5px] bg-ink/65" />
-                <span className="w-[2px] h-[4.5px] rounded-[0.5px] bg-ink/65" />
-                <span className="w-[2px] h-[6px] rounded-[0.5px] bg-ink/65" />
-                <span className="w-[2px] h-[7px] rounded-[0.5px] bg-ink" />
-              </span>
-              <span className="relative w-[15px] h-[7px] rounded-[2.5px] border border-ink/55 flex items-center p-[1px]">
-                <span className="block w-full h-full bg-ink/80 rounded-[1px]" />
-                <span className="absolute -right-[2px] top-1/2 -translate-y-1/2 h-[3px] w-[1.5px] rounded-r-[1px] bg-ink/55" />
-              </span>
-            </span>
-          </div>
-
-          {/* Ilha dinâmica: pílula preta com a lente da câmera, não um bloco
-              genérico. É o detalhe que faz o mock parecer um aparelho de
-              verdade em vez de um retângulo com cantos redondos. */}
-          <span className="absolute left-1/2 -translate-x-1/2 top-[7px] flex h-[22px] w-[86px] items-center justify-end rounded-full bg-black pr-[5px]">
-            <span className="h-[7px] w-[7px] rounded-full bg-[#161618] ring-1 ring-white/10" />
-          </span>
-
-          <div className="px-3.5 pb-5 pt-1.5">{children}</div>
+    <div className="relative mx-auto w-full max-w-[300px] pb-9">
+      <div className="rounded-[30px] border-[3px] border-ink bg-ink shadow-[0_24px_48px_-18px_rgba(0,0,0,0.4)]">
+        <div className="relative min-h-[400px] flex flex-col rounded-[25px] bg-frame overflow-hidden">
+          <span className="absolute left-1/2 top-3 h-[22px] w-[72px] -translate-x-1/2 rounded-full bg-ink" />
+          <div className="flex flex-1 flex-col px-4 pb-5 pt-11">{children}</div>
         </div>
       </div>
 
@@ -103,7 +75,9 @@ function CartaoGestao() {
         <h3 className="text-[26px] md:text-[30px] font-medium tracking-[-0.03em] leading-[1.1] text-ink text-center mb-2.5">
           Do lead ao dinheiro na conta
         </h3>
-        <p className="text-[13.5px] text-ink/65 text-center leading-relaxed mb-8">Sem redigitar nada entre as etapas.</p>
+        <p className="text-[13.5px] text-ink/65 text-center leading-relaxed mb-6">
+          Sem redigitar nada entre as etapas.
+        </p>
 
         <Celular
           flutuante={
@@ -241,16 +215,87 @@ function CartaoProjetos() {
 }
 
 /**
- * Cartões 3, 4 e 5: Obras, Pilar Campo e Portal do cliente, lado a lado.
+ * Cartão 3: Obras, visão do escritório, frentes de serviço.
  *
  * Antes, Obras não tinha nenhum cartão próprio: o único cartão marcado
  * "Obras · Pilar Campo" mostrava só a lista de checklist do canteiro (que é
- * conteúdo de Pilar Campo, não de Obras) e o link ia pra /campo. O módulo
- * Obras em si, do lado do escritório (frentes de serviço, conta da obra),
- * ficava só no nome, sem nenhuma forma representando ele.
+ * conteúdo de Pilar Campo, não de Obras), e depois um cartão comprimido de
+ * um terço da largura, na mesma fileira de Campo e Portal. Gestão, Projetos e
+ * Obras são os três módulos que carregam o produto: aqui ganha o mesmo peso
+ * de Projetos (largura cheia, empilhado ao lado de Gestão), não mais um
+ * terço espremido ao lado de módulos secundários.
  *
- * Cada um é compacto de propósito: três cartões estreitos lado a lado pedem
- * um elemento gráfico só, não um telefone inteiro.
+ * O gráfico é um anel por frente, não uma barra: ao lado do cronograma
+ * horizontal de Projetos, o par não pode repetir a mesma forma.
+ */
+function CartaoObras() {
+  const reducedMotion = useReducedMotion();
+  const mo = MODULOS[2];
+  const frentes = [
+    { nome: "Fundação", pct: 100 },
+    { nome: "Estrutura", pct: 62 },
+    { nome: "Acabamento", pct: 8 },
+  ];
+
+  return (
+    <Reveal variant="scale" delay={0.16} className="h-full">
+      <div className="h-full rounded-[26px] bg-card-brand-soft p-7 md:p-9 flex flex-col gap-6">
+        <div>
+          <p className="text-[10px] uppercase tracking-[0.16em] text-ink/50 mb-2">Obras</p>
+          <h3 className="text-[24px] md:text-[28px] font-medium tracking-[-0.03em] leading-[1.12] text-ink mb-2.5">
+            Cada frente, sob controle
+          </h3>
+          <p className="text-[13.5px] text-ink/60 leading-relaxed">Fundação, estrutura, acabamento: um olhar só.</p>
+        </div>
+
+        <div className="rounded-2xl bg-frame border border-paper-border/70 p-5 flex items-center justify-around gap-3">
+          {frentes.map((f, i) => (
+            <div key={f.nome} className="flex flex-col items-center gap-2">
+              <div className="relative w-[64px] h-[64px]">
+                <svg viewBox="0 0 44 44" className="w-full h-full -rotate-90">
+                  <circle cx="22" cy="22" r="19" fill="none" stroke="hsl(var(--border-landing))" strokeWidth="5" />
+                  <m.circle
+                    cx="22"
+                    cy="22"
+                    r="19"
+                    fill="none"
+                    stroke={f.pct === 100 ? "hsl(var(--ink))" : "hsl(var(--brand-accent))"}
+                    strokeWidth="5"
+                    strokeLinecap="round"
+                    pathLength={1}
+                    initial={reducedMotion ? false : { pathLength: 0 }}
+                    whileInView={{ pathLength: f.pct / 100 }}
+                    viewport={VISTA}
+                    transition={{ duration: 0.8, delay: 0.2 + i * 0.15, ease: EASE.out }}
+                  />
+                </svg>
+                <span className="absolute inset-0 flex items-center justify-center text-[12px] font-semibold text-ink tabular-nums">
+                  {f.pct}%
+                </span>
+              </div>
+              <span className="text-[10px] text-ink-soft text-center">{f.nome}</span>
+            </div>
+          ))}
+        </div>
+
+        <Link
+          to={`/${mo.slug}`}
+          className="mt-auto pt-2 inline-flex items-center gap-1.5 text-[13.5px] font-medium text-ink group/l"
+        >
+          Ver Obras
+          <ArrowRight className="w-3.5 h-3.5 group-hover/l:translate-x-1 transition-transform" />
+        </Link>
+      </div>
+    </Reveal>
+  );
+}
+
+/**
+ * Cartões 4 e 5: Pilar Campo e Portal do cliente, a dupla secundária.
+ *
+ * Módulos de apoio ao trabalho de campo e ao cliente, não o núcleo do
+ * produto: por isso ficam numa fileira própria, menor, abaixo do bloco
+ * principal, em vez de competir em altura com Gestão/Projetos/Obras.
  */
 
 /** Cartão compacto: rótulo, título curto, legenda, um gráfico, link. */
@@ -295,47 +340,6 @@ function CartaoModulo({
         </Link>
       </div>
     </Reveal>
-  );
-}
-
-/** Cartão 3: Obras, visão do escritório, frentes de serviço. */
-function CartaoObras() {
-  const reducedMotion = useReducedMotion();
-  const frentes = [
-    { nome: "Fundação", pct: 100 },
-    { nome: "Estrutura", pct: 62 },
-    { nome: "Acabamento", pct: 8 },
-  ];
-
-  return (
-    <CartaoModulo
-      rotulo="Obras"
-      titulo="Cada frente, sob controle"
-      legenda="Fundação, estrutura, acabamento: sua barra."
-      href="/obra"
-      linkLabel="Ver Obras"
-      delay={0.16}
-    >
-      <div className="rounded-2xl bg-frame/90 backdrop-blur-sm border border-white/60 p-3.5">
-        {frentes.map((f, i) => (
-          <div key={f.nome} className="mb-2.5 last:mb-0">
-            <div className="flex justify-between text-[9.5px] mb-1">
-              <span className="text-ink-soft">{f.nome}</span>
-              <span className="text-ink-muted tabular-nums">{f.pct}%</span>
-            </div>
-            <div className="h-1.5 rounded-full bg-paper-alt overflow-hidden">
-              <m.span
-                className={`block h-full rounded-full origin-left ${f.pct === 100 ? "bg-ink" : "bg-brand"}`}
-                initial={reducedMotion ? false : { scaleX: 0 }}
-                whileInView={{ scaleX: f.pct / 100 }}
-                viewport={VISTA}
-                transition={{ duration: 0.7, delay: 0.15 + i * 0.15, ease: EASE.out }}
-              />
-            </div>
-          </div>
-        ))}
-      </div>
-    </CartaoModulo>
   );
 }
 
@@ -448,24 +452,26 @@ export function BentoSection() {
       <div className="max-w-6xl mx-auto">
         <Reveal variant="up" className="max-w-2xl mb-10">
           <h2 className="text-[52px] max-[1100px]:text-[42px] max-[850px]:text-[29px] max-[420px]:text-[25px] font-medium tracking-[-0.035em] leading-[1.08] text-ink">
-            Cada módulo resolve uma fase.{" "}
-            <span className="italic text-ink/45">Juntos, fecham o ciclo.</span>
+            Cada módulo resolve uma fase. <span className="italic text-ink/45">Juntos, fecham o ciclo.</span>
           </h2>
         </Reveal>
 
         {/* Alturas desiguais de propósito: é o que separa um bento de uma grade.
-            Cinco módulos: Gestão em destaque à esquerda, Projetos em cima à
-            direita, e Obras/Campo/Portal numa fileira compacta embaixo. */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-[1fr_1.25fr] gap-4">
+            Gestão, Projetos e Obras carregam o produto e dividem o bloco
+            principal em pé de igualdade (Gestão em destaque à esquerda,
+            Projetos e Obras empilhados à direita, cada um do tamanho do
+            outro). Campo e Portal são apoio, não núcleo: ficam numa fileira
+            própria, mais baixa, abaixo do bloco principal. */}
+        <div className="grid md:grid-cols-2 lg:grid-cols-[1fr_1.25fr] gap-4 mb-4">
           <div className="lg:row-span-2">
             <CartaoGestao />
           </div>
           <CartaoProjetos />
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <CartaoObras />
-            <CartaoCampo />
-            <CartaoPortal />
-          </div>
+          <CartaoObras />
+        </div>
+        <div className="grid sm:grid-cols-2 gap-4">
+          <CartaoCampo />
+          <CartaoPortal />
         </div>
       </div>
     </section>
