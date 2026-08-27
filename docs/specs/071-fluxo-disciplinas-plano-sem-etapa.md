@@ -1,7 +1,7 @@
 # SPEC: Fluxo de disciplinas sem a camada "etapa": prazo por disciplina, checklist com duração
 
 **Data:** 2026-08-27
-**Status:** Draft
+**Status:** Em implementação
 **Autor:** Matheus (com apoio de agente de IA)
 **Módulo:** projetos
 **Estende:** [051 — Duração por etapa, fluxo prazo em cascata](051-duracao-por-etapa-fluxo-prazo-cascata.md)
