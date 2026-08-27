@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { callUntypedRpc } from "@/lib/supabaseRpc";
 import type { DisciplinaComentario, ProjetoDisciplinaDB } from "@/types/projetos";
 import type { LinkItem } from "@/components/LinksEditor";
+import type { FluxoChecklistItemTemplate } from "@/types/fluxoDisciplinas";
 
 /**
  * Sincroniza responsáveis de uma disciplina de forma transacional (insere só os novos,
@@ -347,7 +348,7 @@ export function useBulkSaveDisciplinas() {
         horas_estimadas?: number;
         custo_hora?: number;
         ordem_etapa?: number | null;
-        checklist_padrao?: string[];
+        checklist_padrao?: FluxoChecklistItemTemplate[];
         responsavel_ids: string[];
       }>;
     }) => {
@@ -414,9 +415,11 @@ export function useBulkSaveDisciplinas() {
           // do template do fluxo aplicado); disciplina já existente não é tocada.
           if (disc.checklist_padrao?.length) {
             const { error: checklistError } = await supabase.from("projeto_disciplina_checklist").insert(
-              disc.checklist_padrao.map((texto, i) => ({
+              disc.checklist_padrao.map((item, i) => ({
                 projeto_disciplina_id: discId!,
-                texto,
+                texto: item.texto,
+                duracao_dias_uteis: item.duracao_dias_uteis ?? null,
+                horas_estimadas: item.horas_estimadas ?? null,
                 ordem: i,
               }))
             );
