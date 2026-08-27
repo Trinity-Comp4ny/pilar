@@ -29,8 +29,8 @@ um aditivo".
 Um projeto em andamento cujas despesas diretas já ultrapassam o custo estimado
 do escopo aprovado (original + aditivos aprovados), e que não tem nenhum
 aditivo em rascunho ou pendente de aprovação cobrindo essa diferença, gera um
-alerta. O alerta aparece no Radar dos agentes (Início), o mesmo lugar onde já
-aparecem os outros achados automáticos — zero tela nova.
+alerta. O alerta aparece no Radar do agente (`/agentes?tab=revisao`), o mesmo
+lugar onde já aparecem os outros achados automáticos — zero tela nova.
 
 **Fora de escopo:**
 
@@ -39,10 +39,10 @@ aparecem os outros achados automáticos — zero tela nova.
   Reviver timesheet é uma decisão de produto própria, não cabe aqui. Este
   alerta existente fica como está, silencioso; não é desta spec consertá-lo.
 - **UI nova.** O alerta usa a infra que já existe (tabela `alertas` +
-  `rpc_gerar_alertas`, lida pelo dashboard via `buildAlertas`/Radar dos
-  agentes). Nenhum componente novo.
-- **Notificação por e-mail/push.** Só o Radar, como os outros 4 tipos de
-  alerta já gerados hoje.
+  `gerar_alertas_ambient()`, lida em `/agentes?tab=revisao` via `useAlertas()`
+  / `RevisaoInbox.tsx`). Nenhum componente novo.
+- **Notificação por e-mail/push.** Só o Radar do agente, como os outros 8
+  tipos de alerta já gerados hoje.
 - **Threshold configurável por empresa.** Fixo: despesas > orçado, sem % de
   tolerância. Ajustar depois se virar ruído.
 
