@@ -31,6 +31,7 @@ real derivado do que foi reportado no diário, sem edição paralela; (b) recebe
 alerta "concretagem de terça vai pegar chuva forte, reprograme".
 
 **Fora de escopo:**
+
 - Terceiro nível de hierarquia no cronograma (fica Frente → Tarefa; a sub-atividade
   é a observação da linha do diário).
 - Cronograma "reger" materiais, mão de obra e dinheiro por etapa (custeio por etapa
@@ -81,29 +82,36 @@ Não-funcionais:
 
 ## Critérios de aceite
 
-- [ ] Dado uma obra com frentes e tarefas, quando abro "registrar dia" e marco a
+<!-- Checklist revisada em 27/08 contra o código real (estava toda desmarcada
+apesar da feature estar funcionando — checkboxes nunca tinham sido atualizadas
+desde a implementação). -->
+
+- [x] Dado uma obra com frentes e tarefas, quando abro "registrar dia" e marco a
       tarefa "Concretar laje" como `concluiu` e salvo, então a tarefa fica
       `concluida` no cronograma e o avanço da obra recalcula.
 - [ ] Dado que marquei uma tarefa como `parou`, quando salvo, então a tarefa
       aparece sinalizada (atenção) no Gantt, mas o avanço não a conta como concluída.
-- [ ] Dado que a tarefa que fiz não existe, quando clico "criar tarefa" no RDO,
+      **Gap real:** a coluna `sinalizada` é gravada (`obra_tarefas.sinalizada`), mas
+      nenhuma tela lê ou exibe esse valor — zero indicação visual hoje.
+- [x] Dado que a tarefa que fiz não existe, quando clico "criar tarefa" no RDO,
       informo nome e frente e salvo, então a tarefa nasce na frente e já fica
       vinculada ao dia com o resultado marcado.
-- [ ] Dado um RDO com tarefas vinculadas, quando vejo o card do dia no diário,
+- [x] Dado um RDO com tarefas vinculadas, quando vejo o card do dia no diário,
       então vejo cada tarefa com seu resultado e observação.
-- [ ] Dado uma tarefa `concretagem` agendada para um dia com chuva ≥ limiar, quando
+- [x] Dado uma tarefa `concretagem` agendada para um dia com chuva ≥ limiar, quando
       abro a obra, então vejo um alerta citando a tarefa, a data e "chuva prevista",
       com link para a tarefa.
-- [ ] Caso de borda: obra sem lat/long → nenhum alerta de clima e nenhum erro
+- [x] Caso de borda: obra sem lat/long → nenhum alerta de clima e nenhum erro
       (degradação silenciosa, mensagem "defina a localização da obra para alertas de
       clima").
-- [ ] Caso de borda: usuário sem permissão de editar a obra não vê o botão de
+- [x] Caso de borda: usuário sem permissão de editar a obra não vê o botão de
       registrar dia nem consegue escrever em `obra_rdo_tarefa` (RLS).
-- [ ] Multi-tenant: RDO de uma empresa não consegue vincular tarefa de obra de outra.
+- [x] Multi-tenant: RDO de uma empresa não consegue vincular tarefa de obra de outra.
 
 ## Dados e contratos
 
 **Nova tabela `obra_rdo_tarefa`** (ponte RDO ⇄ tarefa):
+
 - `id uuid pk`
 - `rdo_id uuid` → `obra_rdo(id)` on delete cascade
 - `tarefa_id uuid` → `obra_tarefas(id)` on delete cascade
@@ -115,6 +123,7 @@ Não-funcionais:
 - RLS: select/insert/update/delete por `empresa_id = get_user_empresa_id()`.
 
 **Alteração em `obra_tarefas`:**
+
 - `sensivel_clima text null check in ('concretagem','impermeabilizacao','pintura_externa','icamento','telhado','outro')`
 - `sinalizada boolean default false` (para o resultado `parou` do diário).
 
