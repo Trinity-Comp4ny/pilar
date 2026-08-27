@@ -10,6 +10,30 @@ Allow: /
 User-agent: facebookexternalhit
 Allow: /
 
+# Crawlers de IA: liberados de proposito. Ser citado por assistentes de IA
+# ("qual sistema de gestao para escritorio de engenharia?") e canal de
+# descoberta, nao ameaca. Ver tambem /llms.txt.
+User-agent: GPTBot
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-User
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
 User-agent: *
 Allow: /
 
