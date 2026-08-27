@@ -33,8 +33,8 @@ export function ModulesSection() {
 
             <Reveal variant="right" delay={0.15} className="md:pb-2">
               <p className="text-[15px] text-ink-soft font-light leading-relaxed border-l-2 border-brand pl-4">
-                O dado entra uma vez, no lead, e segue até o diário de obra. Nada de exportar planilha entre etapas,
-                nem redigitar cliente, valor e prazo a cada passo.
+                O dado entra uma vez, no lead, e segue até o diário de obra. Nada de exportar planilha entre etapas, nem
+                redigitar cliente, valor e prazo a cada passo.
               </p>
             </Reveal>
           </div>
@@ -43,12 +43,7 @@ export function ModulesSection() {
 
           <div className="grid md:grid-cols-3 gap-4">
             {MODULOS.map((mo, i) => (
-              <Reveal
-                key={mo.slug}
-                variant="scale"
-                delay={i * 0.1}
-                className="h-full"
-              >
+              <Reveal key={mo.slug} variant="scale" delay={i * 0.1} className="h-full">
                 <SpotlightCard
                   glow={mo.cor.glow}
                   className="group h-full flex flex-col rounded-2xl border border-paper-border/70 bg-white p-5 md:p-6 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_20px_50px_-24px_rgba(0,0,0,0.3)] hover:border-paper-border"
@@ -65,7 +60,7 @@ export function ModulesSection() {
                       `resumo` continua servindo ao mega-menu, onde a headline
                       não aparece. */}
                   <h3 className="text-lg md:text-xl font-medium text-ink tracking-tight leading-snug mb-4">
-                    {mo.headline}
+                    {mo.headline} {mo.headlineFim}
                   </h3>
 
                   <ul className="flex flex-col gap-2.5 mb-6">
