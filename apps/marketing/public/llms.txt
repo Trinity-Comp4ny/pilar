@@ -11,6 +11,11 @@
 - [Portal do cliente](https://www.pilarsoft.com.br/portal): link só de leitura em que o cliente acompanha andamento, parcelas e prestação de contas
 - [Pilar Campo](https://www.pilarsoft.com.br/campo): app de celular do canteiro, funciona sem sinal e sem e-mail corporativo
 
+## Comparações
+
+- [Pilar vs Planilha](https://www.pilarsoft.com.br/vs/planilha): diferença lado a lado para quem hoje controla projeto em Excel ou Google Sheets
+- [Pilar vs Trello](https://www.pilarsoft.com.br/vs/trello): diferença lado a lado para quem hoje usa um quadro genérico de tarefas
+
 ## Planos
 
 - [Planos e preços](https://www.pilarsoft.com.br/planos): preço por escritório, sem cobrança por usuário; o que muda entre planos é a quantidade de projetos ativos e a cota mensal de IA. Todo plano tem a plataforma inteira e trial de 14 dias sem cartão.

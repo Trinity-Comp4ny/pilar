@@ -5,8 +5,11 @@ import { APP_URL } from "../config";
 import { trackCta } from "../analytics";
 import { useLoginHint } from "../loginHint";
 import { MODULOS } from "../lib/modules";
+import { COMPARATIVOS } from "../lib/comparativos";
 import { Logo } from "./Logo";
 import { SplitButton } from "./ui/SplitButton";
+
+type MenuNome = "produto" | "comparacoes";
 
 /** Atraso no fechar, pra dar tempo do mouse atravessar o vão até o painel. */
 const FECHAR_MS = 160;
@@ -21,7 +24,7 @@ const FECHAR_MS = 160;
  */
 export function LandingHeader() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [produtoAberto, setProdutoAberto] = useState(false);
+  const [menuAberto, setMenuAberto] = useState<MenuNome | null>(null);
   const [rolou, setRolou] = useState(false);
   const loggedIn = useLoginHint();
   const fecharTimer = useRef<number | null>(null);
@@ -33,17 +36,17 @@ export function LandingHeader() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const abrir = () => {
+  const abrir = (nome: MenuNome) => {
     if (fecharTimer.current) {
       window.clearTimeout(fecharTimer.current);
       fecharTimer.current = null;
     }
-    setProdutoAberto(true);
+    setMenuAberto(nome);
   };
 
   const fechar = (delay = 0) => {
     if (fecharTimer.current) window.clearTimeout(fecharTimer.current);
-    fecharTimer.current = window.setTimeout(() => setProdutoAberto(false), delay);
+    fecharTimer.current = window.setTimeout(() => setMenuAberto(null), delay);
   };
 
   useEffect(
@@ -55,7 +58,7 @@ export function LandingHeader() {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setProdutoAberto(false);
+      if (e.key === "Escape") setMenuAberto(null);
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
@@ -81,16 +84,16 @@ export function LandingHeader() {
           </Link>
 
           <nav className="hidden md:flex items-center gap-1 mx-auto">
-            <div className="relative" onMouseEnter={abrir} onMouseLeave={() => fechar(FECHAR_MS)}>
+            <div className="relative" onMouseEnter={() => abrir("produto")} onMouseLeave={() => fechar(FECHAR_MS)}>
               <button
                 type="button"
                 className={navLink}
-                aria-expanded={produtoAberto}
-                onClick={() => (produtoAberto ? fechar() : abrir())}
+                aria-expanded={menuAberto === "produto"}
+                onClick={() => (menuAberto === "produto" ? fechar() : abrir("produto"))}
               >
                 Produto
                 <ChevronDown
-                  className={`w-3.5 h-3.5 transition-transform duration-200 ${produtoAberto ? "rotate-180" : ""}`}
+                  className={`w-3.5 h-3.5 transition-transform duration-200 ${menuAberto === "produto" ? "rotate-180" : ""}`}
                 />
               </button>
 
@@ -100,7 +103,7 @@ export function LandingHeader() {
                   deixava tudo com o mesmo peso de miniatura. */}
               <div
                 className={`absolute top-[calc(100%+10px)] left-1/2 -translate-x-1/2 w-[420px] rounded-[22px] border border-paper-border bg-frame p-2 shadow-[0_24px_60px_-24px_rgba(0,0,0,0.35)] transition-all duration-200 ${
-                  produtoAberto ? "opacity-100 visible translate-y-0" : "opacity-0 invisible -translate-y-1"
+                  menuAberto === "produto" ? "opacity-100 visible translate-y-0" : "opacity-0 invisible -translate-y-1"
                 }`}
               >
                 {MODULOS.map((mo) => (
@@ -115,6 +118,45 @@ export function LandingHeader() {
                       <span className="block text-[13.5px] font-medium text-ink">{rotuloDe(mo.slug, mo.nome)}</span>
                       <span className="block truncate text-[12px] leading-snug text-ink-muted">{mo.resumo}</span>
                     </span>
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-ink/15 text-ink opacity-0 transition-opacity group-hover:opacity-100">
+                      <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.9} />
+                    </span>
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            {/* Comparações: quem chega já usando outra ferramenta procura
+                exatamente "Pilar vs X". Mesmo painel do Produto, conteúdo
+                diferente. */}
+            <div className="relative" onMouseEnter={() => abrir("comparacoes")} onMouseLeave={() => fechar(FECHAR_MS)}>
+              <button
+                type="button"
+                className={navLink}
+                aria-expanded={menuAberto === "comparacoes"}
+                onClick={() => (menuAberto === "comparacoes" ? fechar() : abrir("comparacoes"))}
+              >
+                Comparações
+                <ChevronDown
+                  className={`w-3.5 h-3.5 transition-transform duration-200 ${menuAberto === "comparacoes" ? "rotate-180" : ""}`}
+                />
+              </button>
+
+              <div
+                className={`absolute top-[calc(100%+10px)] left-1/2 -translate-x-1/2 w-[360px] rounded-[22px] border border-paper-border bg-frame p-2 shadow-[0_24px_60px_-24px_rgba(0,0,0,0.35)] transition-all duration-200 ${
+                  menuAberto === "comparacoes"
+                    ? "opacity-100 visible translate-y-0"
+                    : "opacity-0 invisible -translate-y-1"
+                }`}
+              >
+                {COMPARATIVOS.map((c) => (
+                  <Link
+                    key={c.slug}
+                    to={`/vs/${c.slug}`}
+                    onClick={() => fechar()}
+                    className="group flex items-center justify-between gap-3 rounded-[16px] px-3.5 py-3 hover:bg-card-brand-soft transition-colors"
+                  >
+                    <span className="text-[13.5px] font-medium text-ink">Pilar vs {c.adversario}</span>
                     <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-ink/15 text-ink opacity-0 transition-opacity group-hover:opacity-100">
                       <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.9} />
                     </span>
@@ -181,6 +223,17 @@ export function LandingHeader() {
             >
               <span className={`w-1.5 h-1.5 rounded-full ${mo.cor.strong}`} />
               {rotuloDe(mo.slug, mo.nome)}
+            </Link>
+          ))}
+          <span className="h-px bg-paper-border my-2" />
+          {COMPARATIVOS.map((c) => (
+            <Link
+              key={c.slug}
+              to={`/vs/${c.slug}`}
+              onClick={() => setMobileMenuOpen(false)}
+              className="py-2.5 text-[15px] text-ink"
+            >
+              Pilar vs {c.adversario}
             </Link>
           ))}
           <span className="h-px bg-paper-border my-2" />
