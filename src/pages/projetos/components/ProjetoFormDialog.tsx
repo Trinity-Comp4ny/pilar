@@ -529,6 +529,9 @@ export function ProjetoFormDialog({
                         placeholder="60"
                         className="h-9"
                       />
+                      <p className="text-[10px] text-muted-foreground">
+                        Só calcula a Previsão ao lado; não fica salvo, por isso volta vazio ao reabrir.
+                      </p>
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-3">
