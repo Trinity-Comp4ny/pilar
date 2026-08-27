@@ -256,22 +256,27 @@ export function useDisciplinasEditor({ pessoas, templatesData, fluxosData, curre
       }
       const fluxo = fluxosData.find((f) => f.id === fluxoId);
       if (!fluxo) return;
-      const novas: DisciplinaResponsavel[] = fluxo.etapas.flatMap((etapa) =>
-        etapa.disciplinas.map((d) => ({
+      const novas: DisciplinaResponsavel[] = fluxo.disciplinas.map((d) => {
+        const responsaveisIds = d.responsaveis_ids ?? [];
+        const responsaveisNomes = d.responsaveis_nomes ?? [];
+        return {
           disciplina: d.nome,
-          responsavel_id: d.responsavel_id || "",
-          responsavel_nome: d.responsavel_nome || "",
+          responsavel_id: responsaveisIds[0] || "",
+          responsavel_nome: responsaveisNomes[0] || "",
           status: "Não Iniciado",
-          etapa: etapa.ordem,
+          etapa: d.ordem,
           observacoes: [],
-          responsaveis: d.responsavel_id
-            ? [{ responsavel_id: d.responsavel_id, responsavel_nome: d.responsavel_nome || "", status: "Não Iniciado" }]
-            : [],
-        }))
-      );
+          responsaveis: responsaveisIds.map((id, i) => ({
+            responsavel_id: id,
+            responsavel_nome: responsaveisNomes[i] || "",
+            status: "Não Iniciado",
+          })),
+        };
+      });
+      const colunas = new Set(fluxo.disciplinas.map((d) => d.ordem)).size;
       setProjetosDisciplinas(novas);
       toast.success("Fluxo aplicado", {
-        description: `${novas.length} disciplina(s) em ${fluxo.etapas.length} etapa(s) de "${fluxo.nome}"`,
+        description: `${novas.length} disciplina(s) em ${colunas} coluna(s) de "${fluxo.nome}"`,
       });
     },
     [fluxosData]

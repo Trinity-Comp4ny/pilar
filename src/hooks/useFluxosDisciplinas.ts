@@ -1,9 +1,15 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Json } from "@/integrations/supabase/types";
-import type { FluxoDisciplinas, FluxoInsert, FluxoEtapaRaw } from "@/types/fluxoDisciplinas";
-import { normalizeEtapas } from "@/types/fluxoDisciplinas";
+import type { FluxoDisciplinas, FluxoInsert } from "@/types/fluxoDisciplinas";
+import { normalizeFluxoDisciplinas } from "@/types/fluxoDisciplinas";
 
+/**
+ * A coluna no banco (`fluxos_disciplinas.etapas`) mantém o nome histórico —
+ * sem migration, é `Json` — mas o shape em memória é a lista flat de
+ * disciplinas (spec 067). `normalizeFluxoDisciplinas` também acha fluxos
+ * salvos no formato antigo (etapa nomeada envolvendo disciplinas).
+ */
 export const useFluxosDisciplinas = () => {
   return useQuery({
     queryKey: ["fluxos-disciplinas"],
@@ -19,7 +25,7 @@ export const useFluxosDisciplinas = () => {
 
       return (data || []).map((f) => ({
         ...f,
-        etapas: normalizeEtapas((Array.isArray(f.etapas) ? f.etapas : []) as unknown as FluxoEtapaRaw[]),
+        disciplinas: normalizeFluxoDisciplinas(f.etapas),
       })) as FluxoDisciplinas[];
     },
     staleTime: 1000 * 60 * 5,
@@ -36,7 +42,7 @@ export const useCreateFluxo = () => {
         .insert({
           nome: fluxo.nome,
           descricao: fluxo.descricao || null,
-          etapas: fluxo.etapas as unknown as Json,
+          etapas: fluxo.disciplinas as unknown as Json,
         } as never)
         .select()
         .single();
@@ -60,7 +66,7 @@ export const useUpdateFluxo = () => {
         .update({
           nome: fluxo.nome,
           descricao: fluxo.descricao || null,
-          etapas: fluxo.etapas as unknown as Json,
+          etapas: fluxo.disciplinas as unknown as Json,
         })
         .eq("id", id)
         .select()
