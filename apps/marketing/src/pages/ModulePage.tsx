@@ -10,7 +10,7 @@ import { GroupMock } from "../components/mock/ModuleScreens";
 import { Reveal } from "../components/Reveal";
 import { SplitButton } from "../components/ui/SplitButton";
 import { MODULOS, MODULOS_POR_SLUG, type MockNome, type Modulo, type ModuloSlug } from "../lib/modules";
-import { usePageMeta } from "../lib/seo";
+import { useJsonLd, usePageMeta } from "../lib/seo";
 
 const WHATSAPP = "https://wa.me/5514998721100";
 
@@ -70,6 +70,16 @@ export function ModulePage({ slug }: { slug: ModuloSlug }) {
     titulo: `${modulo.nome} | Pilar`,
     descricao: modulo.lede,
     caminho: `/${slug}`,
+  });
+
+  useJsonLd({
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: modulo.faq.map((f) => ({
+      "@type": "Question",
+      name: f.pergunta,
+      acceptedAnswer: { "@type": "Answer", text: f.resposta },
+    })),
   });
 
   const primario =
@@ -150,6 +160,27 @@ export function ModulePage({ slug }: { slug: ModuloSlug }) {
                   <PrintReal img={g.img} alt={g.titulo} mock={g.mock} modulo={modulo} />
                 </Reveal>
               </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Objeções reais respondidas antes do CTA final: o padrão de toda
+          página de conversão madura (e rende rich result de FAQ na busca). */}
+      <section className="bg-paper px-5 pb-16 md:px-10 md:pb-24">
+        <div className="mx-auto max-w-6xl">
+          <Reveal variant="up" className="mb-8 max-w-2xl">
+            <h2 className="text-[40px] font-medium leading-[1.08] tracking-[-0.035em] text-ink max-[1100px]:text-[34px] max-[850px]:text-[27px] max-[420px]:text-[24px]">
+              Antes de testar, <span className="italic text-ink/45">o que todo mundo pergunta.</span>
+            </h2>
+          </Reveal>
+
+          <div className="grid gap-x-10 gap-y-7 sm:grid-cols-3">
+            {modulo.faq.map((f, i) => (
+              <Reveal key={f.pergunta} variant="up" delay={i * 0.06}>
+                <h3 className="mb-1.5 text-[15px] font-medium text-ink">{f.pergunta}</h3>
+                <p className="text-[13px] leading-relaxed text-ink-muted">{f.resposta}</p>
+              </Reveal>
             ))}
           </div>
         </div>
