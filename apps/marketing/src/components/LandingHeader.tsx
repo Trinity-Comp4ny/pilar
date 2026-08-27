@@ -64,13 +64,9 @@ export function LandingHeader() {
   const navLink =
     "flex items-center gap-1 text-[14px] text-ink-soft px-3 py-2 rounded-full hover:text-ink transition-colors";
 
-  /** Na home, rola suave até os módulos; fora dela, deixa o Link navegar. */
-  const irParaProduto = (e: React.MouseEvent) => {
-    const alvo = document.getElementById("produto");
-    if (!alvo) return;
-    e.preventDefault();
-    alvo.scrollIntoView({ behavior: "smooth" });
-  };
+  /** Os três módulos de escritório levam o prefixo; Portal e Campo são nomes próprios. */
+  const rotuloDe = (slug: string, nome: string) =>
+    slug === "gestao" || slug === "projetos" || slug === "obra" ? `Módulo ${nome}` : nome;
 
   return (
     <header className="fixed inset-x-0 z-50 flex justify-center px-3 md:px-6" style={{ top: "var(--frame-w)" }}>
@@ -116,7 +112,7 @@ export function LandingHeader() {
                   >
                     <span className={`h-2 w-2 shrink-0 rounded-full ${mo.cor.strong}`} />
                     <span className="min-w-0 flex-1">
-                      <span className="block text-[13.5px] font-medium text-ink">{mo.nome}</span>
+                      <span className="block text-[13.5px] font-medium text-ink">{rotuloDe(mo.slug, mo.nome)}</span>
                       <span className="block truncate text-[12px] leading-snug text-ink-muted">{mo.resumo}</span>
                     </span>
                     <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-ink/15 text-ink opacity-0 transition-opacity group-hover:opacity-100">
@@ -127,11 +123,6 @@ export function LandingHeader() {
               </div>
             </div>
 
-            {/* Âncora, não rota: leva à seção dos módulos na home. Fora da
-                home, o Link com hash navega e depois desce até a seção. */}
-            <Link to="/#produto" className={navLink} onClick={irParaProduto}>
-              Funcionalidades
-            </Link>
             <Link to="/planos" className={navLink}>
               Planos
             </Link>
@@ -189,20 +180,10 @@ export function LandingHeader() {
               className="flex items-center gap-2.5 py-2.5 text-[15px] text-ink"
             >
               <span className={`w-1.5 h-1.5 rounded-full ${mo.cor.strong}`} />
-              {mo.nome}
+              {rotuloDe(mo.slug, mo.nome)}
             </Link>
           ))}
           <span className="h-px bg-paper-border my-2" />
-          <Link
-            to="/#produto"
-            onClick={(e) => {
-              setMobileMenuOpen(false);
-              irParaProduto(e);
-            }}
-            className="py-2.5 text-[15px] text-ink"
-          >
-            Funcionalidades
-          </Link>
           <Link to="/planos" onClick={() => setMobileMenuOpen(false)} className="py-2.5 text-[15px] text-ink">
             Planos
           </Link>
