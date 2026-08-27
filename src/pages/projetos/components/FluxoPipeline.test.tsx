@@ -39,15 +39,17 @@ describe("FluxoPipeline", () => {
     vi.unstubAllGlobals();
   });
 
-  it("renderiza uma coluna por etapa, na ordem certa", () => {
+  it("renderiza uma coluna por posição (ordem), na ordem certa, sem rótulo 'Etapa N'", () => {
     render(
       <FluxoPipeline
         disciplinas={[disc({ disciplina: "Estrutural", etapa: 2 }), disc({ disciplina: "Arquitetônico", etapa: 1 })]}
       />
     );
 
-    const headers = screen.getAllByText(/Etapa \d/);
-    expect(headers.map((h) => h.textContent)).toEqual(["Etapa 1", "Etapa 2"]);
+    // Rótulo é só a posição numérica (spec 067): "etapa" fica reservado ao
+    // sub-passo do checklist dentro da disciplina, sem colidir com a coluna.
+    const headers = document.querySelectorAll(".text-info-strong");
+    expect(Array.from(headers).map((h) => h.textContent)).toEqual(["1", "2"]);
   });
 
   it("disciplina com previsão vencida e não concluída aparece marcada como atrasada", () => {

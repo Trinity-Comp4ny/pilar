@@ -1,5 +1,6 @@
 import { type ProjectStatus, type ProjectPriority } from "@/constants";
 import { type LinkItem } from "@/components/LinksEditor";
+import type { FluxoChecklistItemTemplate } from "@/types/fluxoDisciplinas";
 
 export interface DisciplinaObservacao {
   id: string;
@@ -50,7 +51,7 @@ export interface DisciplinaResponsavel {
   links?: LinkItem[];
   comentarios?: DisciplinaComentario[];
   /** Itens de checklist do template do fluxo, propagados até o submit do form de criação. */
-  checklist_padrao?: string[];
+  checklist_padrao?: FluxoChecklistItemTemplate[];
 }
 
 export function isDiscAtrasada(disc: DisciplinaResponsavel): boolean {

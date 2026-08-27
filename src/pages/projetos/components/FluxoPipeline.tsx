@@ -90,7 +90,9 @@ export function groupByEtapa(disciplinas: DisciplinaResponsavel[]) {
   }
 
   for (const [etapa, discs] of Array.from(etapaMap.entries()).sort(([a], [b]) => a - b)) {
-    groups.push({ etapa, nome: `Etapa ${etapa}`, disciplinas: discs });
+    // Rótulo neutro (posição), não "Etapa N": "etapa" já nomeia o sub-passo
+    // dentro do checklist de uma disciplina (spec 067), evita colisão de nome.
+    groups.push({ etapa, nome: String(etapa), disciplinas: discs });
   }
 
   if (semEtapa.length > 0) {

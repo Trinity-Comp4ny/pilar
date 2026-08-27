@@ -4563,6 +4563,8 @@ export type Database = {
           concluido_em: string | null
           concluido_por: string | null
           created_at: string
+          duracao_dias_uteis: number | null
+          horas_estimadas: number | null
           id: string
           ordem: number
           projeto_disciplina_id: string
@@ -4573,6 +4575,8 @@ export type Database = {
           concluido_em?: string | null
           concluido_por?: string | null
           created_at?: string
+          duracao_dias_uteis?: number | null
+          horas_estimadas?: number | null
           id?: string
           ordem?: number
           projeto_disciplina_id: string
@@ -4583,6 +4587,8 @@ export type Database = {
           concluido_em?: string | null
           concluido_por?: string | null
           created_at?: string
+          duracao_dias_uteis?: number | null
+          horas_estimadas?: number | null
           id?: string
           ordem?: number
           projeto_disciplina_id?: string

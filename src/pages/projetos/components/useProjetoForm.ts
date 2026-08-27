@@ -3,7 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { formatValorToInput, parseCurrencyString } from "@/lib/currencyUtils";
 import { supabase } from "@/integrations/supabase/client";
 import { addBusinessDays, formatDateLocal, parseDateLocal } from "@/lib/businessDays";
-import { calcularDatasEtapasFluxo } from "@/lib/fluxoCascata";
+import { calcularDatasFluxo } from "@/lib/fluxoCascata";
 import { PROJECT_STATUS, PROJECT_PRIORITY, type ProjectPriority } from "@/constants";
 import {
   type Projeto,
@@ -470,39 +470,36 @@ export function useProjetoForm({
     const fluxo = fluxosData.find((f) => f.id === fluxoId);
     if (!fluxo) return;
 
-    const datasPorEtapa = new Map(
-      calcularDatasEtapasFluxo(fluxo.etapas, formData.data_inicio || undefined).map((e) => [e.ordem, e])
-    );
+    const datas = calcularDatasFluxo(fluxo.disciplinas, formData.data_inicio || undefined);
 
-    const novasDisciplinas: DisciplinaResponsavel[] = fluxo.etapas.flatMap((etapa) => {
-      const datas = datasPorEtapa.get(etapa.ordem);
-      return etapa.disciplinas.map((d) => ({
+    const novasDisciplinas: DisciplinaResponsavel[] = fluxo.disciplinas.map((d, i) => {
+      const dataDisc = datas[i];
+      const responsaveisIds = d.responsaveis_ids ?? [];
+      const responsaveisNomes = d.responsaveis_nomes ?? [];
+      return {
         disciplina: d.nome,
-        responsavel_id: d.responsavel_id || "",
-        responsavel_nome: d.responsavel_nome || "",
+        responsavel_id: responsaveisIds[0] || "",
+        responsavel_nome: responsaveisNomes[0] || "",
         status: "Não Iniciado",
-        etapa: etapa.ordem,
-        data_inicio: datas?.data_inicio,
-        data_previsao: datas?.data_previsao,
+        etapa: d.ordem,
+        data_inicio: dataDisc?.data_inicio,
+        data_previsao: dataDisc?.data_previsao,
         checklist_padrao: d.checklist_padrao,
         observacoes: [],
-        responsaveis: d.responsavel_id
-          ? [
-              {
-                responsavel_id: d.responsavel_id,
-                responsavel_nome: d.responsavel_nome || "",
-                status: "Não Iniciado",
-                data_inicio: datas?.data_inicio,
-                data_previsao: datas?.data_previsao,
-              },
-            ]
-          : [],
-      }));
+        responsaveis: responsaveisIds.map((id, ri) => ({
+          responsavel_id: id,
+          responsavel_nome: responsaveisNomes[ri] || "",
+          status: "Não Iniciado",
+          data_inicio: dataDisc?.data_inicio,
+          data_previsao: dataDisc?.data_previsao,
+        })),
+      };
     });
 
+    const colunas = new Set(fluxo.disciplinas.map((d) => d.ordem)).size;
     setProjetosDisciplinas(novasDisciplinas);
     toast.success("Fluxo aplicado", {
-      description: `${novasDisciplinas.length} disciplina(s) em ${fluxo.etapas.length} etapa(s) de "${fluxo.nome}"`,
+      description: `${novasDisciplinas.length} disciplina(s) em ${colunas} coluna(s) de "${fluxo.nome}"`,
     });
   };
 

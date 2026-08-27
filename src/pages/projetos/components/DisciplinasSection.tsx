@@ -138,16 +138,19 @@ export function DisciplinasSection({
                 <SelectValue placeholder="Selecione um fluxo (opcional)" />
               </SelectTrigger>
               <SelectContent>
-                {fluxosData.map((f) => (
-                  <SelectItem key={f.id} value={f.id}>
-                    {f.nome} ({f.etapas.length} etapa{f.etapas.length !== 1 ? "s" : ""})
-                  </SelectItem>
-                ))}
+                {fluxosData.map((f) => {
+                  const colunas = new Set(f.disciplinas.map((d) => d.ordem)).size;
+                  return (
+                    <SelectItem key={f.id} value={f.id}>
+                      {f.nome} ({colunas} coluna{colunas !== 1 ? "s" : ""})
+                    </SelectItem>
+                  );
+                })}
               </SelectContent>
             </Select>
           </div>
           <p className="text-[10px] text-muted-foreground mt-1.5">
-            O fluxo define a ordem das disciplinas em etapas sequenciais
+            O fluxo define a ordem das disciplinas em colunas sequenciais
           </p>
         </div>
       )}
