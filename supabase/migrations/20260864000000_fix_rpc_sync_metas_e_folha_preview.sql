@@ -8,6 +8,13 @@
 -- quando a disciplina do projeto tem responsavel_id = "" (string vazia, não
 -- null). NULLIF trata a string vazia como ausência de responsável, igual ao
 -- caso já coberto de d->>'responsavel_id' IS NULL.
+--
+-- Nenhuma das duas está na allowlist de supabase/tests/anon_function_grants.sql
+-- (20260836000000 já revogou as duas do vetor anon). DROP FUNCTION apaga os
+-- grants existentes e a função nasce de novo executável por PUBLIC (default
+-- privilege do supabase_admin, não contornável por ALTER DEFAULT PRIVILEGES —
+-- ver nota em 20260836000000): REVOKE FROM PUBLIC explícito depois do CREATE
+-- evita reabrir a classe de bug daquela migration.
 
 DROP FUNCTION IF EXISTS public.rpc_sync_metas();
 
@@ -109,7 +116,7 @@ BEGIN
 END;
 $$;
 
-GRANT ALL ON FUNCTION "public"."rpc_sync_metas"() TO "anon";
+REVOKE EXECUTE ON FUNCTION "public"."rpc_sync_metas"() FROM PUBLIC;
 GRANT ALL ON FUNCTION "public"."rpc_sync_metas"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."rpc_sync_metas"() TO "service_role";
 
@@ -188,6 +195,6 @@ BEGIN
 END;
 $function$;
 
-GRANT ALL ON FUNCTION "public"."get_folha_preview"(integer, integer) TO "anon";
+REVOKE EXECUTE ON FUNCTION "public"."get_folha_preview"(integer, integer) FROM PUBLIC;
 GRANT ALL ON FUNCTION "public"."get_folha_preview"(integer, integer) TO "authenticated";
 GRANT ALL ON FUNCTION "public"."get_folha_preview"(integer, integer) TO "service_role";
