@@ -1,4 +1,4 @@
--- Spec 067 (revisão): responsável passa a ser por tarefa (item de checklist),
+-- Spec 071 (revisão): responsável passa a ser por tarefa (item de checklist),
 -- não mais só por disciplina. Mesmo padrão de projeto_disciplina_responsaveis
 -- (join table + RLS via join até empresa_id), só que um nível mais fundo.
 -- Igual duracao_dias_uteis/horas_estimadas do item, é populado só na criação

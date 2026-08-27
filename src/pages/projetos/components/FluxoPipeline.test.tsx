@@ -46,7 +46,7 @@ describe("FluxoPipeline", () => {
       />
     );
 
-    // Rótulo é só a posição numérica (spec 067): "etapa" fica reservado ao
+    // Rótulo é só a posição numérica (spec 071): "etapa" fica reservado ao
     // sub-passo do checklist dentro da disciplina, sem colidir com a coluna.
     const headers = document.querySelectorAll(".text-info-strong");
     expect(Array.from(headers).map((h) => h.textContent)).toEqual(["1", "2"]);
