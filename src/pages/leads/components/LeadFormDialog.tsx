@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,6 +7,7 @@ import { FormDialog } from "@/components/FormDialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { formatPhone, formatCNPJ, validateCNPJ, validateEmail, onlyDigits } from "@/lib/maskUtils";
 import { MoneyInput } from "@/components/forms/MoneyInput";
+import { OrigemField } from "@/components/forms/OrigemField";
 import { ValidatedField } from "@/components/forms/ValidatedField";
 import { emailFormatValidator, isPersonalEmail } from "@/lib/emailValidator";
 
@@ -23,12 +24,6 @@ export type LeadFormData = {
   responsavel_id: string;
   notas: string;
 };
-
-// Origens padronizadas do lead. "Outro" libera um campo de texto livre.
-// Evita a bagunça de 'Instagram'/'instagram'/'IG' apontando pra mesma coisa.
-const LEAD_ORIGENS = ["Indicação", "Instagram", "LinkedIn", "Site", "Google", "WhatsApp", "Evento", "Outro"] as const;
-
-const ORIGEM_OUTRO = "Outro";
 
 export const EMPTY_LEAD_FORM: LeadFormData = {
   nome: "",
@@ -76,43 +71,11 @@ export function LeadFormDialog({
   const [emailError, setEmailError] = useState("");
   const [cnpjError, setCnpjError] = useState("");
 
-  // Origem: escolha padronizada + campo livre quando "Outro".
-  const KNOWN_ORIGENS = LEAD_ORIGENS.filter((o) => o !== ORIGEM_OUTRO) as readonly string[];
-  const [origemChoice, setOrigemChoice] = useState("");
-  const [origemCustom, setOrigemCustom] = useState("");
-
-  // Sincroniza a origem local ao abrir (create = vazio, edit = valor do lead).
-  useEffect(() => {
-    if (!open) return;
-    const val = formData.origem ?? "";
-    if (!val) {
-      setOrigemChoice("");
-      setOrigemCustom("");
-    } else if (KNOWN_ORIGENS.includes(val)) {
-      setOrigemChoice(val);
-      setOrigemCustom("");
-    } else {
-      setOrigemChoice(ORIGEM_OUTRO);
-      setOrigemCustom(val);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
-
   const set = (field: keyof LeadFormData, value: string) => {
     if (field === "nome" && nomeError) setNomeError("");
     if (field === "email" && emailError) setEmailError("");
     if (field === "cnpj" && cnpjError) setCnpjError("");
     onFormChange({ ...formData, [field]: value });
-  };
-
-  const handleOrigemSelect = (v: string) => {
-    setOrigemChoice(v);
-    set("origem", v === ORIGEM_OUTRO ? origemCustom : v);
-  };
-
-  const handleOrigemCustom = (v: string) => {
-    setOrigemCustom(v);
-    set("origem", v);
   };
 
   const handleCnpjBlur = () => {
@@ -292,32 +255,7 @@ export function LeadFormDialog({
               </SelectContent>
             </Select>
           </div>
-          <div className="space-y-1.5">
-            <Label htmlFor={`${prefix}origem`} className="text-xs">
-              Origem
-            </Label>
-            <Select value={origemChoice} onValueChange={handleOrigemSelect}>
-              <SelectTrigger id={`${prefix}origem`}>
-                <SelectValue placeholder="Selecione..." />
-              </SelectTrigger>
-              <SelectContent>
-                {LEAD_ORIGENS.map((o) => (
-                  <SelectItem key={o} value={o}>
-                    {o}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {origemChoice === ORIGEM_OUTRO && (
-              <Input
-                aria-label="Origem (outro)"
-                value={origemCustom}
-                onChange={(e) => handleOrigemCustom(e.target.value)}
-                placeholder="Qual origem?"
-                className="mt-1.5"
-              />
-            )}
-          </div>
+          <OrigemField id={`${prefix}origem`} value={formData.origem} onChange={(v) => set("origem", v)} />
         </div>
         <div className="space-y-1.5">
           <Label htmlFor={`${prefix}notas`} className="text-xs">

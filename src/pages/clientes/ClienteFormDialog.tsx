@@ -21,6 +21,7 @@ import {
   onlyDigits,
 } from "@/lib/maskUtils";
 import { Badge } from "@/components/ui/badge";
+import { OrigemField } from "@/components/forms/OrigemField";
 import { useClientes, type Cliente, type ContaBancaria, type ChavePix } from "@/hooks/useClientes";
 import { detectTipoChavePix, normalizarChavePix, TIPO_CHAVE_PIX_LABEL } from "@/lib/pixUtils";
 
@@ -513,17 +514,7 @@ export function ClienteFormDialog({ open, onOpenChange, cliente, onSaved }: Clie
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="cliente-origem" className="text-xs">
-                      Origem
-                    </Label>
-                    <Input
-                      id="cliente-origem"
-                      value={origem}
-                      onChange={(e) => setOrigem(e.target.value)}
-                      placeholder="Ex: Indicação, Instagram, Site"
-                    />
-                  </div>
+                  <OrigemField id="cliente-origem" value={origem} onChange={setOrigem} />
                 </div>
               </div>
             </>
