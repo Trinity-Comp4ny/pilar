@@ -13,7 +13,7 @@ import { MultiSelectFilter } from "@/components/filters/MultiSelectFilter";
 import { toast } from "sonner";
 import { useFluxosDisciplinas, useCreateFluxo, useUpdateFluxo, useDeleteFluxo } from "@/hooks/useFluxosDisciplinas";
 import type { FluxoDisciplinas, FluxoDisciplinaTemplate, FluxoChecklistItemTemplate } from "@/types/fluxoDisciplinas";
-import { duracaoEfetiva } from "@/lib/fluxoCascata";
+import { duracaoEfetiva, responsaveisEfetivos } from "@/lib/fluxoCascata";
 import { FluxoPipelineGraph, type FluxoPipelineStage } from "./FluxoPipelineGraph";
 import { Plus, Trash2, Edit, ArrowUp, ArrowDown, X, ArrowLeft, GitBranch, Layers, ListChecks } from "lucide-react";
 
@@ -54,11 +54,12 @@ function buildPreviewStages(disciplinas: FluxoDisciplinaForm[]): FluxoPipelineSt
       .filter((d) => d.ordem === ordem)
       .map((d) => {
         const dias = duracaoEfetiva(d);
+        const resp = responsaveisEfetivos(d);
         return {
           key: d._key,
           titulo: d.nome,
           status: "nao_iniciado" as const,
-          responsavelNome: d.responsaveis_nomes?.length ? d.responsaveis_nomes.join(", ") : undefined,
+          responsavelNome: resp.nomes.length ? resp.nomes.join(", ") : undefined,
           metaLabel: dias ? `${dias} dias úteis` : undefined,
           checklistLabel: d.checklist_padrao?.length ? `${d.checklist_padrao.length} itens` : undefined,
         };
@@ -387,10 +388,14 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
                             <AccordionContent className="px-3">
                               <div className="space-y-2 pt-1">
                                 {discsDaColuna.map((disc) => {
-                                  const travadoPeloChecklist = (disc.checklist_padrao ?? []).some(
+                                  const duracaoTravada = (disc.checklist_padrao ?? []).some(
                                     (i) => typeof i.duracao_dias_uteis === "number" && i.duracao_dias_uteis > 0
                                   );
+                                  const responsavelTravado = (disc.checklist_padrao ?? []).some(
+                                    (i) => (i.responsaveis_ids ?? []).length > 0
+                                  );
                                   const efetiva = duracaoEfetiva(disc);
+                                  const resp = responsaveisEfetivos(disc);
 
                                   return (
                                     <div key={disc._key} className="rounded-md border bg-muted/30 p-2.5 space-y-2">
@@ -398,50 +403,55 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
                                         <Badge variant="secondary" className="text-sm flex-shrink-0">
                                           {disc.nome}
                                         </Badge>
-                                        <MultiSelectFilter
-                                          label="Responsáveis"
-                                          options={pessoas.map((p) => ({ value: p.id, label: p.nome }))}
-                                          selected={disc.responsaveis_ids ?? []}
-                                          onChange={(ids) => updateResponsaveis(disc._key, ids)}
-                                          className="h-8 rounded-md flex-1 min-w-[140px] justify-start"
-                                        />
                                         <div className="flex items-center gap-1.5 rounded-full border bg-white px-2.5 h-8 flex-shrink-0">
                                           <Input
                                             type="number"
                                             min={1}
-                                            disabled={travadoPeloChecklist}
-                                            value={
-                                              travadoPeloChecklist ? (efetiva ?? "") : (disc.duracao_dias_uteis ?? "")
-                                            }
+                                            disabled={duracaoTravada}
+                                            value={duracaoTravada ? (efetiva ?? "") : (disc.duracao_dias_uteis ?? "")}
                                             onChange={(e) => updateDuracao(disc._key, e.target.value)}
                                             placeholder="—"
                                             title={
-                                              travadoPeloChecklist
-                                                ? "Resolvida pela soma dos dias do checklist"
-                                                : undefined
+                                              duracaoTravada ? "Resolvida pela soma dos dias das tarefas" : undefined
                                             }
                                             className="h-6 w-9 border-none p-0 text-xs text-right shadow-none focus-visible:ring-0 disabled:opacity-100"
                                           />
                                           <span className="text-[11px] text-muted-foreground whitespace-nowrap">
-                                            dias úteis{travadoPeloChecklist ? " 🔒" : ""}
+                                            dias úteis{duracaoTravada ? " 🔒" : ""}
                                           </span>
                                         </div>
                                         <button
                                           type="button"
-                                          className="text-muted-foreground hover:text-danger-mid flex-shrink-0"
+                                          className="ml-auto text-muted-foreground hover:text-danger-mid flex-shrink-0"
                                           onClick={() => removeDisciplina(disc._key)}
                                         >
                                           <X size={14} />
                                         </button>
                                       </div>
+
+                                      {responsavelTravado ? (
+                                        <p className="text-[11px] text-muted-foreground" title="Definidos por tarefa">
+                                          Responsáveis: {resp.nomes.join(", ")} 🔒
+                                        </p>
+                                      ) : (
+                                        <MultiSelectFilter
+                                          label="Responsáveis (sem tarefa definida ainda)"
+                                          options={pessoas.map((p) => ({ value: p.id, label: p.nome }))}
+                                          selected={disc.responsaveis_ids ?? []}
+                                          onChange={(ids) => updateResponsaveis(disc._key, ids)}
+                                          className="h-8 rounded-md w-full justify-start"
+                                        />
+                                      )}
+
                                       <div className="border-t pt-2">
                                         <Label className="text-[11px] text-muted-foreground mb-1 flex items-center gap-1">
-                                          <ListChecks className="h-3 w-3" /> Checklist (dias somam na duração; horas é
-                                          só informativo)
+                                          <ListChecks className="h-3 w-3" /> Tarefas (responsável e dias úteis por
+                                          tarefa; horas é só informativo)
                                         </Label>
                                         <TarefasEditor
                                           value={disc.checklist_padrao ?? []}
                                           onChange={(next) => updateChecklist(disc._key, next)}
+                                          pessoas={pessoas}
                                         />
                                       </div>
                                     </div>

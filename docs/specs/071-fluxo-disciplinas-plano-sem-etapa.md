@@ -1,6 +1,6 @@
 # SPEC: Fluxo de disciplinas sem a camada "etapa": prazo por disciplina, checklist com duração
 
-**Data:** 2026-08-27
+**Data:** 2026-08-27 (atualizada 2026-08-27: responsável também por tarefa)
 **Status:** Em implementação
 **Autor:** Matheus (com apoio de agente de IA)
 **Módulo:** projetos
@@ -59,6 +59,39 @@ igualando a disciplina real.
 - Recálculo automático de `data_previsao` na disciplina real do projeto a
   partir de duração de checklist (isso já existe hoje via `duracao_dias_uteis`
   aplicado uma vez, na criação — ver requisito 6 do spec 051, mantido aqui).
+
+## Adenda (mesma data): responsável também por tarefa, não só por disciplina
+
+Testando o primeiro rascunho desta spec ao vivo, ficou claro (novo feedback,
+ainda o Matheus verificando com o caso real do Rafael) que responsável não
+deveria parar na disciplina: cada **tarefa** (item do checklist) tem sua
+própria pessoa (ou pessoas) responsável, igual já acontecia com duração. Dois
+níveis, não três: disciplina agrupa, tarefa é onde o trabalho de verdade tem
+dono e prazo.
+
+Ajustes sobre os requisitos originais (A e C abaixo):
+
+- `FluxoChecklistItemTemplate` ganha `responsaveis_ids?: string[]` /
+  `responsaveis_nomes?: string[]`, mesmo padrão do já existente em duração.
+- `FluxoDisciplinaTemplate.responsaveis_ids` deixa de ser o campo principal e
+  vira **fallback**: só usado quando nenhuma tarefa do checklist tem
+  responsável. `responsaveisEfetivos(disciplina)` (`fluxoCascata.ts`) resolve
+  isso — união (sem duplicar) dos responsáveis de todas as tarefas que têm
+  algum; sem nenhuma, cai no fallback manual. Espelha `duracaoEfetiva`.
+- No editor (`FluxoDisciplinasDialog`), o multi-select de responsável no
+  nível da disciplina só aparece interativo quando nenhuma tarefa ainda tem
+  responsável; assim que uma tarefa ganha responsável, vira um resumo travado
+  (🔒) mostrando a união, mesma UX já usada para duração.
+- `TarefasEditor` ganha um multi-select de responsáveis por linha (recebe
+  `pessoas` como prop nova).
+- Persistência real: `projeto_disciplina_checklist_responsaveis` (tabela
+  nova, mesmo padrão de `projeto_disciplina_responsaveis` — join até
+  `empresa_id` via `checklist_item → projeto_disciplina → projeto`), inserida
+  junto com o checklist na criação da disciplina (`useProjetoDisciplinas.ts`).
+  A disciplina real continua tendo sua própria lista de responsáveis
+  (`projeto_disciplina_responsaveis`, já existente) — alimentada por
+  `responsaveisEfetivos` no momento em que o fluxo é aplicado, pra o grafo
+  mostrar "quem trabalha nessa disciplina" sem precisar abrir cada tarefa.
 
 ## Requisitos
 
