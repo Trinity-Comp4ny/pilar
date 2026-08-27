@@ -24,6 +24,7 @@ import { Badge } from "@/components/ui/badge";
 import { OrigemField } from "@/components/forms/OrigemField";
 import { useClientes, type Cliente, type ContaBancaria, type ChavePix } from "@/hooks/useClientes";
 import { detectTipoChavePix, normalizarChavePix, TIPO_CHAVE_PIX_LABEL } from "@/lib/pixUtils";
+import { lookupCEP } from "@/lib/brasilApi";
 
 type TipoPessoa = "PF" | "PJ";
 
@@ -139,17 +140,13 @@ export function ClienteFormDialog({ open, onOpenChange, cliente, onSaved }: Clie
     if (digits.length !== 8) return;
     setIsFetchingCep(true);
     try {
-      const res = await fetch(`https://viacep.com.br/ws/${digits}/json/`);
-      const data = await res.json();
-      if (data?.erro) {
+      const end = await lookupCEP(digits);
+      if (!end) {
         toast.error("CEP não encontrado");
         return;
       }
-      const partes = [data.logradouro, data.bairro, data.localidade && `${data.localidade}/${data.uf}`].filter(Boolean);
+      const partes = [end.street, end.neighborhood, end.city && `${end.city}/${end.state}`].filter(Boolean);
       setEndereco(partes.join(", "));
-    } catch (err) {
-      monitoring.captureException(err, { context: "viaCepLookup" });
-      toast.error("Não foi possível buscar o CEP");
     } finally {
       setIsFetchingCep(false);
     }
