@@ -11,8 +11,16 @@ import { INCLUSO_EM_TODOS, PLANOS } from "../lib/planos";
  * ações de IA e nível de atendimento. A lista de funcionalidades saiu porque
  * ela não existe: todo plano tem a plataforma inteira (ADR 0026), e repetir a
  * mesma lista em três colunas sugeria o contrário.
+ *
+ * `modo` decide o que o botão faz, porque as duas telas onde este componente
+ * aparece têm intenção diferente:
+ * - "testar" (home): visitante ainda decidindo, CTA suave pro trial, sem cartão.
+ * - "assinar" (/planos): visitante já escolheu o plano, o botão vai direto pro
+ *   checkout daquele plano (`/checkout?plano=slug`), como a página fazia antes
+ *   de ser reescrita. Trocar isso por um CTA de trial genérico tiraria o
+ *   caminho mais curto até pagamento da própria página comercial.
  */
-export function PlanCards({ contexto }: { contexto: string }) {
+export function PlanCards({ contexto, modo = "testar" }: { contexto: string; modo?: "testar" | "assinar" }) {
   return (
     <RevealGroup className="grid md:grid-cols-3 gap-4 items-stretch" stagger={0.1}>
       {PLANOS.map((p) => (
@@ -42,13 +50,16 @@ export function PlanCards({ contexto }: { contexto: string }) {
             <p className="mb-7 text-[12px] text-ink-muted">A empresa inteira, sem cobrança por usuário</p>
 
             <a
-              href={`${APP_URL}/cadastro`}
-              onClick={() => trackCta("testar_gratis", `${contexto}_${p.slug}`)}
+              href={modo === "assinar" ? `${APP_URL}/checkout?plano=${p.slug}` : `${APP_URL}/cadastro`}
+              onClick={() =>
+                trackCta(modo === "assinar" ? "assinar_plano" : "testar_gratis", `${contexto}_${p.slug}`)
+              }
+              aria-label={modo === "assinar" ? `Assinar plano ${p.nome}` : undefined}
               className={`flex h-11 items-center justify-center rounded-full text-[14px] font-medium transition-colors ${
                 p.destaque ? "bg-brand text-ink hover:bg-brand/85" : "bg-paper-alt text-ink hover:bg-paper-border/60"
               }`}
             >
-              Testar grátis por 14 dias
+              {modo === "assinar" ? `Assinar ${p.nome}` : "Testar grátis por 14 dias"}
             </a>
 
             {/* Só as três réguas que separam um plano do outro. */}
