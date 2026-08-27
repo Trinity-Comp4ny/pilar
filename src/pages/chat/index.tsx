@@ -23,7 +23,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAgentInbox } from "@/pages/revisao-ia/useAgentRuns";
-import { useAlertasNaoLidos } from "@/hooks/useAlertas";
+import { useNotificacoesNaoLidas } from "@/hooks/useNotificacoes";
 import { RevisaoInbox } from "@/pages/revisao-ia/RevisaoInbox";
 import { useChat } from "./useChat";
 import { LeadConfirmationCard } from "./LeadConfirmationCard";
@@ -67,10 +67,10 @@ export default function ChatPage() {
     // Inbox-first (spec 007): a mesa de trabalho é a landing; ?tab=conversa força o chat.
     return searchParams.get("tab") === "conversa" ? "conversa" : "revisao";
   });
-  // Badge = tudo que espera você: alertas do agente (não lidos) + orçamentos a revisar.
+  // Badge = tudo que espera você: notificações do agente (não lidas) + orçamentos a revisar.
   const { data: pendentes } = useAgentInbox({ enabled: podeRevisar });
-  const { data: alertasNaoLidos = 0 } = useAlertasNaoLidos();
-  const totalPendentes = (pendentes?.length ?? 0) + (podeRevisar ? alertasNaoLidos : 0);
+  const { data: notificacoesNaoLidas = 0 } = useNotificacoesNaoLidas();
+  const totalPendentes = (pendentes?.length ?? 0) + (podeRevisar ? notificacoesNaoLidas : 0);
 
   const trocarAba = (nova: "conversa" | "revisao") => {
     setAba(nova);
