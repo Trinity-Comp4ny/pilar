@@ -6,8 +6,6 @@
 import { m, useReducedMotion } from "framer-motion";
 import type { ModuloSlug } from "../../lib/modules";
 
-const LOOP = { repeat: Infinity, repeatDelay: 0 } as const;
-
 /* ── Gestão: funil de leads, com um card trocando de coluna ───────────── */
 
 const LEADS = [
@@ -29,42 +27,25 @@ function Card({ t, v, className = "" }: { t: string; v: string; className?: stri
   );
 }
 
+/**
+ * Estático de propósito: nas páginas de módulo a tela faz papel de print do
+ * produto, e um card se mexendo em loop vira ruído, não demonstração.
+ */
 export function KanbanScreen() {
-  const reduced = useReducedMotion();
-
   return (
     <div>
       <ScreenHead crumb="Gestão · Comercial" title="Funil de leads" chip="+ Novo lead" />
       <div className="grid grid-cols-4 gap-2">
-        {LEADS.map((c, i) => (
+        {LEADS.map((c) => (
           <div key={c.col} className="bg-paper-alt rounded-lg p-2 min-h-[168px]">
             <div className="flex justify-between text-[8px] uppercase tracking-wider text-ink-muted mb-2">
               <span>{c.col}</span>
               <span>{c.n}</span>
             </div>
 
-            {i === 2 && !reduced && (
-              <m.div
-                className="border border-dashed border-modulo-gestao-strong rounded-md mb-1.5"
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: [0, 0, 0.65, 0.65, 0], height: [0, 0, 34, 34, 0] }}
-                transition={{ duration: 6, times: [0, 0.44, 0.52, 0.7, 0.8], ...LOOP }}
-              />
-            )}
-
-            {c.cards.map((card) =>
-              i === 1 && !reduced ? (
-                <m.div
-                  key={card.t}
-                  animate={{ x: [0, 0, 6, 0, 0], y: [0, 0, -4, 0, 0] }}
-                  transition={{ duration: 6, times: [0, 0.42, 0.5, 0.58, 1], ...LOOP }}
-                >
-                  <Card {...card} />
-                </m.div>
-              ) : (
-                <Card key={card.t} {...card} />
-              )
-            )}
+            {c.cards.map((card) => (
+              <Card key={card.t} {...card} />
+            ))}
           </div>
         ))}
       </div>
@@ -141,11 +122,7 @@ export function DiarioScreen() {
             </div>
           ))}
           <div className="flex items-center gap-1.5 mt-2 text-[8px] uppercase tracking-wider text-modulo-gestao-strong">
-            <m.span
-              className="w-1.5 h-1.5 rounded-full bg-modulo-gestao-strong"
-              animate={reduced ? undefined : { opacity: [1, 0.35, 1], scale: [1, 0.8, 1] }}
-              transition={{ duration: 1.7, ...LOOP }}
-            />
+            <span className="w-1.5 h-1.5 rounded-full bg-modulo-gestao-strong" />
             Sincronizado do celular
           </div>
         </div>
@@ -274,11 +251,7 @@ export function CampoScreen() {
                 <p className="text-[13px] font-semibold tracking-tight text-ink">Diário de hoje</p>
               </div>
               <span className="flex items-center gap-1 rounded-full bg-paper-alt px-2 py-1 text-[7.5px] uppercase tracking-wider text-ink-muted">
-                <m.span
-                  className="h-1.5 w-1.5 rounded-full bg-chart-warning"
-                  animate={reduced ? undefined : { opacity: [1, 0.35, 1] }}
-                  transition={{ duration: 1.6, ...LOOP }}
-                />
+                <span className="h-1.5 w-1.5 rounded-full bg-chart-warning" />
                 Sem sinal
               </span>
             </div>

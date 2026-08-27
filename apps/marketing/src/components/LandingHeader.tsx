@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { ChevronDown, Menu, X } from "lucide-react";
+import { ArrowRight, ChevronDown, Menu, X } from "lucide-react";
 import { APP_URL } from "../config";
 import { trackCta } from "../analytics";
 import { useLoginHint } from "../loginHint";
@@ -73,10 +73,7 @@ export function LandingHeader() {
   };
 
   return (
-    <header
-      className="fixed inset-x-0 z-50 flex justify-center px-3 md:px-6"
-      style={{ top: "var(--frame-w)" }}
-    >
+    <header className="fixed inset-x-0 z-50 flex justify-center px-3 md:px-6" style={{ top: "var(--frame-w)" }}>
       <div
         className={`relative w-full max-w-[1216px] rounded-b-[22px] bg-frame transition-shadow duration-300 ${
           rolou ? "shadow-[0_10px_36px_-16px_rgba(0,0,0,0.28)]" : "shadow-[0_2px_10px_-6px_rgba(0,0,0,0.14)]"
@@ -101,25 +98,32 @@ export function LandingHeader() {
                 />
               </button>
 
+              {/* Painel do Produto: uma linha por módulo, com resumo e a seta
+                  redonda da casa aparecendo no hover. O grid de 3 colunas
+                  anterior espremia "Portal do cliente" e "Pilar Campo" e
+                  deixava tudo com o mesmo peso de miniatura. */}
               <div
-                className={`absolute top-[calc(100%+10px)] left-1/2 -translate-x-1/2 w-[620px] rounded-2xl border border-paper-border bg-frame p-2 shadow-[0_24px_60px_-24px_rgba(0,0,0,0.35)] transition-all duration-200 ${
+                className={`absolute top-[calc(100%+10px)] left-1/2 -translate-x-1/2 w-[420px] rounded-[22px] border border-paper-border bg-frame p-2 shadow-[0_24px_60px_-24px_rgba(0,0,0,0.35)] transition-all duration-200 ${
                   produtoAberto ? "opacity-100 visible translate-y-0" : "opacity-0 invisible -translate-y-1"
                 }`}
               >
-                <div className="grid grid-cols-3 gap-1.5">
-                  {MODULOS.map((mo) => (
-                    <Link
-                      key={mo.slug}
-                      to={`/${mo.slug}`}
-                      onClick={() => fechar()}
-                      className="group rounded-xl p-3.5 hover:bg-paper-alt transition-colors"
-                    >
-                      <span className={`block w-2 h-2 rounded-full mb-3 ${mo.cor.strong}`} />
-                      <span className="block text-[13.5px] font-medium text-ink mb-1">{mo.nome}</span>
-                      <span className="block text-[12px] text-ink-muted leading-snug">{mo.resumo}</span>
-                    </Link>
-                  ))}
-                </div>
+                {MODULOS.map((mo) => (
+                  <Link
+                    key={mo.slug}
+                    to={`/${mo.slug}`}
+                    onClick={() => fechar()}
+                    className="group flex items-center gap-3.5 rounded-[16px] px-3.5 py-3 hover:bg-card-brand-soft transition-colors"
+                  >
+                    <span className={`h-2 w-2 shrink-0 rounded-full ${mo.cor.strong}`} />
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-[13.5px] font-medium text-ink">{mo.nome}</span>
+                      <span className="block truncate text-[12px] leading-snug text-ink-muted">{mo.resumo}</span>
+                    </span>
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-ink/15 text-ink opacity-0 transition-opacity group-hover:opacity-100">
+                      <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.9} />
+                    </span>
+                  </Link>
+                ))}
               </div>
             </div>
 
