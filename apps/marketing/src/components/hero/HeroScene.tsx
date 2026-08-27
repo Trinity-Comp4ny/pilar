@@ -27,7 +27,7 @@ function useEscala(alvo: React.RefObject<HTMLDivElement>) {
 
 /**
  * A cena da hero: uma sessão contínua no Pilar conduzida por um agente, em loop
- * de ~20 segundos, sem aba nem clique do visitante (SPEC 060).
+ * de ~20 segundos, sem aba nem clique do visitante (SPEC 072).
  *
  * Substitui o `ProductTour`, que dividia a atenção em três telas e exigia
  * esperar 7 segundos por aba para entender qualquer coisa.
@@ -113,8 +113,8 @@ export function HeroScene() {
           história precisa chegar em quem usa leitor de tela. */}
       <p className="sr-only">
         Demonstração do Pilar: um agente de IA recebe o pedido em português "recebi 128 mil do centro cirúrgico,
-        primeira de três parcelas", monta o lançamento financeiro como rascunho para aprovação, move o lead para
-        ganho no funil, registra a receita no financeiro do mês e recalcula a margem prevista do projeto em 31,4%.
+        primeira de três parcelas", monta o lançamento financeiro como rascunho para aprovação, move o lead para ganho
+        no funil, registra a receita no financeiro do mês e recalcula a margem prevista do projeto em 31,4%.
       </p>
     </div>
   );

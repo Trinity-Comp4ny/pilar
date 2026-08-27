@@ -10,7 +10,7 @@ import { EASE } from "../lib/motion";
  *
  * A versão anterior eram dois cards pequenos num bloco de 825px de altura, com
  * o resto vazio. Agora os cards têm cabeçalho de verdade, barra de progresso e
- * um fecho que amarra a promessa do título (SPEC 060).
+ * um fecho que amarra a promessa do título (SPEC 072).
  */
 
 const PROJETO = {

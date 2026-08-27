@@ -4,7 +4,7 @@ import { REVEAL, VIEWPORT, VIEWPORT_LOOSE, revealTransition, type RevealVariant 
 
 interface RevealProps {
   children?: ReactNode;
-  /** Coreografia de entrada. Cada seção da home usa uma diferente (SPEC 060). */
+  /** Coreografia de entrada. Cada seção da home usa uma diferente (SPEC 072). */
   variant?: RevealVariant;
   delay?: number;
   duration?: number;
@@ -16,7 +16,7 @@ interface RevealProps {
 
 /**
  * Reveal on scroll. Substitui a antiga classe `reveal-up` + IntersectionObserver
- * manual (ver ADR 0023), e desde a SPEC 060 aceita variante: antes era só
+ * manual (ver ADR 0023), e desde a SPEC 072 aceita variante: antes era só
  * fade + y em toda a landing, o que deixava a página com um ritmo só.
  */
 export function Reveal({
