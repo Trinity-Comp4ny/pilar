@@ -71,7 +71,9 @@ export function Planos() {
           </Reveal>
 
           <div className="mb-6">
-            <PlanCards contexto="planos" />
+            {/* Aqui o visitante já decidiu: o botão vai direto pro checkout do
+                plano escolhido, não pro trial genérico da home. */}
+            <PlanCards contexto="planos" modo="assinar" />
           </div>
 
           <Reveal variant="up" delay={0.1}>
