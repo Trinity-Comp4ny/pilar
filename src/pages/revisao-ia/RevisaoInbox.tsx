@@ -14,7 +14,7 @@ import {
   Sparkles,
   X,
 } from "lucide-react";
-import { useAlertas, useMarcarAlertaLido, type Alerta } from "@/hooks/useAlertas";
+import { useNotificacoes, useMarcarLida, type Notificacao } from "@/hooks/useNotificacoes";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -255,11 +255,14 @@ function GrupoHeader({ titulo, count, expansivel = false }: { titulo: string; co
   );
 }
 
-// Categoria de um alerta para o "Foco de hoje" (agrega o que o sócio confia).
+// Categoria de uma notificação para o Panorama (agrega o que o sócio confia).
+// Vocabulário de tipos é o de gerar_notificacoes_ambient() (spec 029/067) —
+// substitui o de alertas/gerar_alertas_ambient(), dormente desde 17/08.
 function categoriaAlerta(tipo: string): "vencido" | "aVencer" | "prazo" | "preencher" | "outro" {
-  if (tipo === "pagamento_atrasado" || tipo === "recebimento_baixo") return "vencido";
+  if (tipo === "pagamento_atrasado" || tipo === "recebimento_atrasado") return "vencido";
   if (tipo === "vencimento_proximo" || tipo === "marco_proximo") return "aVencer";
-  if (tipo === "prazo_estourado" || tipo === "disciplina_atrasada") return "prazo";
+  if (tipo === "projeto_prazo_proximo" || tipo === "disciplina_prazo_proximo") return "aVencer";
+  if (tipo === "projeto_atrasado" || tipo === "disciplina_atrasada" || tipo === "obra_passo_atrasado") return "prazo";
   if (tipo === "custo_nao_lancado") return "preencher";
   return "outro";
 }
@@ -278,20 +281,12 @@ function PanoramaCard({ label, value, alerta }: { label: string; value: string; 
   );
 }
 
-// Rota de destino de um alerta ambient, a partir da referência que o agente gravou.
-function rotaAlerta(a: Alerta): string {
-  if (a.referencia_tipo === "projeto" && a.referencia_id) return `/projetos/${a.referencia_id}`;
-  if (a.referencia_tipo === "despesa" || a.referencia_tipo === "receita") return "/financeiro";
-  if (a.referencia_tipo === "disciplina") return "/projetos";
-  return "/inicio";
-}
-
 const ALERTA_CRITICO = new Set(["critical", "high"]);
 
 /**
- * Achado do agente ambient (spec 007, Fase 3): item da tabela `alertas` gerado pela
- * varredura determinística (vencidos, prazos, atrasos). Clicar abre a origem;
- * "Resolver" marca como lido (some da lista).
+ * Achado do agente ambient (spec 029/067): item da tabela `notificacoes` gerado pela
+ * varredura determinística (vencidos, prazos, atrasos, escopo estourado). Clicar
+ * abre o `link` gravado na origem; "Resolver" marca como lida (some da lista).
  */
 function AlertaCard({
   alerta,
@@ -299,7 +294,7 @@ function AlertaCard({
   onResolver,
   resolvendo,
 }: {
-  alerta: Alerta;
+  alerta: Notificacao;
   onAbrir: (rota: string) => void;
   onResolver: (id: string) => void;
   resolvendo: boolean;
@@ -318,7 +313,7 @@ function AlertaCard({
       <div className="mt-3 flex items-center gap-1">
         <button
           type="button"
-          onClick={() => onAbrir(rotaAlerta(alerta))}
+          onClick={() => onAbrir(alerta.link ?? "/inicio")}
           className="rounded-full px-2.5 py-1 text-xs text-ink-soft hover:bg-black/5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
         >
           Abrir
@@ -338,21 +333,22 @@ function AlertaCard({
 
 /**
  * Mesa de trabalho dos agentes (spec 007): tudo que os agentes produziram num lugar.
- * No topo, os achados do agente AMBIENT (tabela `alertas`: vencidos, prazos, atrasos,
- * gerados por varredura no servidor sem o usuário pedir). Abaixo, os runs do chat/
- * copilots agrupados por estado, com aprovação inline de orçamento. `enabled` desliga
- * as queries para quem não pode revisar (não-owner).
+ * No topo, os achados do agente AMBIENT (tabela `notificacoes`: vencidos, prazos,
+ * atrasos, escopo estourado — gerados por varredura no servidor sem o usuário
+ * pedir, spec 029/067). Abaixo, os runs do chat/copilots agrupados por estado, com
+ * aprovação inline de orçamento. `enabled` desliga as queries para quem não pode
+ * revisar (não-owner).
  */
 export function RevisaoInbox({ enabled = true }: { enabled?: boolean }) {
   const { data: runs, isLoading } = useAgentRunsFeed({ enabled });
-  const { data: alertas = [] } = useAlertas(30);
-  const marcarLido = useMarcarAlertaLido();
+  const { data: alertas = [] } = useNotificacoes("inbox", 30);
+  const marcarLido = useMarcarLida();
   const navigate = useNavigate();
   const [detalheId, setDetalheId] = useState<string | null>(null);
   const [vista, setVista] = useState<"acao" | "historico">("acao");
   const { data: dash } = useDashboardData(); // reusa o cache da Início (mesma queryKey)
 
-  const alertasAbertos = alertas.filter((a) => !a.lido);
+  const alertasAbertos = alertas.filter((a) => !a.lido_em);
 
   if (isLoading) {
     return (
