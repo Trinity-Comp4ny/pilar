@@ -5,34 +5,37 @@ import { APP_URL } from "../config";
 import { trackCta } from "../analytics";
 import { BrowserFrame } from "../components/BrowserFrame";
 import { CTASection } from "../components/CTASection";
-import { CampoScreen, ModuleScreen } from "../components/mock/ModuleScreens";
+import { HeroBackdrop } from "../components/hero/HeroBackdrop";
+import { GroupMock } from "../components/mock/ModuleScreens";
 import { Reveal } from "../components/Reveal";
 import { SplitButton } from "../components/ui/SplitButton";
-import { MODULOS, MODULOS_POR_SLUG, type Modulo, type ModuloSlug } from "../lib/modules";
+import { MODULOS, MODULOS_POR_SLUG, type MockNome, type Modulo, type ModuloSlug } from "../lib/modules";
 
 const WHATSAPP = "https://wa.me/5514998721100";
 
 /**
  * Print real da tela, com rede de segurança: enquanto o PNG não existe em
- * public/screens, o onError derruba pro desenho vetorial do módulo, então a
- * página nunca mostra imagem quebrada. Solte o arquivo no caminho declarado
- * em `modules.ts` e o print assume sem mexer em código.
+ * public/screens, o onError derruba pro desenho vetorial DAQUELE grupo (não
+ * uma tela genérica repetida), então a página nunca mostra imagem quebrada.
+ * Solte o arquivo no caminho declarado em `modules.ts` e o print assume sem
+ * mexer em código.
  */
-function PrintReal({ img, alt, modulo }: { img: string; alt: string; modulo: Modulo }) {
+function PrintReal({ img, alt, mock, modulo }: { img: string; alt: string; mock: MockNome; modulo: Modulo }) {
   const [caiu, setCaiu] = useState(false);
+  const ehFone = mock.startsWith("campo");
 
   if (caiu) {
-    if (modulo.slug === "campo") return <CampoScreen />;
+    if (ehFone) return <GroupMock mock={mock} />;
     return (
       <BrowserFrame url={modulo.url}>
         <div className="p-5 md:p-6">
-          <ModuleScreen slug={modulo.slug} />
+          <GroupMock mock={mock} />
         </div>
       </BrowserFrame>
     );
   }
 
-  if (modulo.slug === "campo") {
+  if (ehFone) {
     return (
       <div className="mx-auto w-[300px] rounded-[36px] border-[3px] border-ink bg-ink shadow-[0_28px_56px_-20px_rgba(0,0,0,0.45)]">
         <div className="overflow-hidden rounded-[32px]">
@@ -51,12 +54,13 @@ function PrintReal({ img, alt, modulo }: { img: string; alt: string; modulo: Mod
 
 /**
  * Página de um módulo. O conteúdo vem de `lib/modules.ts`; o desenho segue a
- * home redesenhada: headline com o fim em itálico apagado, a tela do módulo
- * grande logo abaixo, funcionalidades em grupos temáticos com o print ao lado
- * (não uma lista corrida), as outras frentes no fim e o mesmo fecho da home.
+ * home redesenhada: a paisagem de ondas verdes no hero, headline com o fim em
+ * itálico apagado, funcionalidades em grupos temáticos com a tela daquele
+ * grupo ao lado (não uma lista corrida), as outras frentes no fim e o mesmo
+ * fecho da home.
  *
- * Sem paisagem animada e sem breadcrumb: quem chega aqui veio do bento ou do
- * menu, e o logo do header já volta pra home.
+ * Sem breadcrumb: quem chega aqui veio do bento ou do menu, e o logo do
+ * header já volta pra home.
  */
 export function ModulePage({ slug }: { slug: ModuloSlug }) {
   const modulo = MODULOS_POR_SLUG[slug];
@@ -74,8 +78,9 @@ export function ModulePage({ slug }: { slug: ModuloSlug }) {
 
   return (
     <>
-      <section className="bg-paper px-5 pb-14 pt-24 md:px-10 md:pb-20 md:pt-32">
-        <div className="mx-auto max-w-6xl">
+      <section className="relative isolate overflow-hidden px-5 pb-14 pt-24 md:px-10 md:pb-20 md:pt-32">
+        <HeroBackdrop />
+        <div className="relative z-10 mx-auto max-w-6xl">
           <Reveal variant="up" className="max-w-3xl">
             <p className="mb-4 flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.16em] text-ink/50">
               <span className={`h-1.5 w-1.5 rounded-full ${modulo.cor.strong}`} />
@@ -95,20 +100,6 @@ export function ModulePage({ slug }: { slug: ModuloSlug }) {
                 Agende uma demo
               </SplitButton>
             </div>
-          </Reveal>
-
-          {/* A tela do módulo, grande e central. Campo é um app de celular,
-              então ganha o aparelho, não o browser. */}
-          <Reveal variant="scale" delay={0.15} loose className="mt-12 md:mt-16">
-            {slug === "campo" ? (
-              <CampoScreen />
-            ) : (
-              <BrowserFrame url={modulo.url} className="mx-auto max-w-4xl">
-                <div className="p-5 md:p-7">
-                  <ModuleScreen slug={slug} />
-                </div>
-              </BrowserFrame>
-            )}
           </Reveal>
         </div>
       </section>
@@ -153,7 +144,7 @@ export function ModulePage({ slug }: { slug: ModuloSlug }) {
                   delay={0.1}
                   className={gi % 2 === 0 ? "" : "lg:order-1"}
                 >
-                  <PrintReal img={g.img} alt={g.titulo} modulo={modulo} />
+                  <PrintReal img={g.img} alt={g.titulo} mock={g.mock} modulo={modulo} />
                 </Reveal>
               </div>
             ))}
