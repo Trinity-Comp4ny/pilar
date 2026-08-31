@@ -54,7 +54,6 @@ const Timesheet = lazy(() => import("./pages/Timesheet"));
 const Chat = lazy(() => import("./pages/chat"));
 const Propostas = lazy(() => import("./pages/propostas"));
 const Capacidade = lazy(() => import("./pages/capacidade"));
-const AiHub = lazy(() => import("./pages/ai"));
 const ProjetoDetail = lazy(() => import("./pages/projetos/ProjetoDetail"));
 const ClienteLogin = lazy(() => import("./pages/cliente/ClienteLogin"));
 const CampoLogin = lazy(() => import("./pages/campo/CampoLogin"));
@@ -236,10 +235,6 @@ const App = () => {
                         <Route element={<FeatureRoute feature="capacidade" />}>
                           <Route path="/gestao/capacidade" element={<Capacidade />} />
                         </Route>
-                        <Route element={<FeatureRoute feature="ai_hub" />}>
-                          <Route path="/gestao/ai" element={<AiHub />} />
-                        </Route>
-
                         {/* Projetos (coleção + lentes de recorte; a lente vem do pathname).
                           Estáticas antes de /projetos/:id para o segmento estático vencer. */}
                         <Route element={<FeatureRoute feature="projetos" />}>
@@ -295,7 +290,6 @@ const App = () => {
                           path="/capacidade/*"
                           element={<RedirectPrefix from="/capacidade" to="/gestao/capacidade" />}
                         />
-                        <Route path="/ai/*" element={<RedirectPrefix from="/ai" to="/gestao/ai" />} />
                         <Route
                           path="/fornecedores/*"
                           element={<RedirectPrefix from="/fornecedores" to="/obras/fornecedores" />}
@@ -311,7 +305,7 @@ const App = () => {
 
                         {/* Revisão IA virou aba dentro de Agentes; redireciona links antigos.
                           O gate de owner (ACH-ADM-01) agora vive na própria aba. */}
-                        <Route path="/revisao-ia" element={<Navigate to="/agentes?tab=revisao" replace />} />
+                        <Route path="/revisao-ia" element={<Navigate to="/agentes" replace />} />
                         <Route path="/company-setup" element={<CompanySetup />} />
                         <Route path="/profile-setup" element={<ProfileSetup />} />
                         <Route path="/profile" element={<SettingsRedirect section="conta" />} />

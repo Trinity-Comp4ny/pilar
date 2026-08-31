@@ -26,8 +26,8 @@ describe("isFeatureEnabledForCompany: universal ignora o JSONB da empresa (ADR 0
   });
 
   it("feature NÃO universal (dormant) continua dependendo do boolean explícito", () => {
-    expect(isFeatureEnabledForCompany({}, "ai_hub")).toBe(false);
-    expect(isFeatureEnabledForCompany({ ai_hub: true }, "ai_hub")).toBe(true);
+    expect(isFeatureEnabledForCompany({}, "templates")).toBe(false);
+    expect(isFeatureEnabledForCompany({ templates: true }, "templates")).toBe(true);
   });
 
   it("sub-feature de Obras é universal: liga mesmo sem o pai marcado no JSONB", () => {
@@ -153,9 +153,7 @@ describe("sincronia universal front ↔ backend (_universal_features SQL, ADR 00
     // _universal_features(), ver comentário da função no banco.
     for (const f of FEATURES) {
       if (!f.universal || f.core) continue;
-      expect(sql, `feature universal '${f.key}' ausente em _universal_features() (${latest})`).toContain(
-        `'${f.key}'`
-      );
+      expect(sql, `feature universal '${f.key}' ausente em _universal_features() (${latest})`).toContain(`'${f.key}'`);
     }
   });
 

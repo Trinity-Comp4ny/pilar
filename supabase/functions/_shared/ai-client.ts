@@ -651,8 +651,8 @@ export async function callGeminiStructured<T>(
  * lá sempre lançava, e por isso nunca chegava a atualizar ai_usage nem agent_runs).
  *
  * Sem fluxo de aprovação humana aqui — nasce `executed` porque o resultado já foi
- * devolvido direto ao chamador (diferente de orcamento_honorarios em agent_runs,
- * que nasce `pending_review` e é gravado manualmente por ai-proposta-copilot).
+ * devolvido direto ao chamador (agent_runs também suporta um status `pending_review`
+ * para fluxos com aprovação humana, hoje sem produtor ativo).
  *
  * Falha ao gravar é best-effort — nunca quebra o fluxo principal. Devolve o id do run
  * (ou null quando o insert falhou) para o caller correlacionar o débito de tokens

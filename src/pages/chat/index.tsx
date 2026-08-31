@@ -15,16 +15,13 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { toast } from "sonner";
-import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useSidebar } from "@/components/ui/sidebar";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useAgentInbox } from "@/pages/revisao-ia/useAgentRuns";
-import { useNotificacoesNaoLidas } from "@/hooks/useNotificacoes";
-import { RevisaoInbox } from "@/pages/revisao-ia/RevisaoInbox";
 import { useChat } from "./useChat";
 import { LeadConfirmationCard } from "./LeadConfirmationCard";
 import { ProjetoConfirmationCard } from "./ProjetoConfirmationCard";
@@ -57,25 +54,6 @@ export default function ChatPage() {
   const { state, isMobile } = useSidebar();
   const left = isMobile ? "0px" : state === "collapsed" ? "64px" : "240px";
   const { profile } = useAuth();
-
-  // Revisão IA fundida como aba. Só admin da empresa (ou ultra_admin) revisa —
-  // preserva o gate ACH-ADM-01 que antes era o RequireRole da rota /revisao-ia.
-  const podeRevisar = profile?.role === "admin" || profile?.role === "ultra_admin";
-  const [searchParams, setSearchParams] = useSearchParams();
-  const [aba, setAba] = useState<"conversa" | "revisao">(() => {
-    if (!podeRevisar) return "conversa";
-    // Inbox-first (spec 007): a mesa de trabalho é a landing; ?tab=conversa força o chat.
-    return searchParams.get("tab") === "conversa" ? "conversa" : "revisao";
-  });
-  // Badge = tudo que espera você: notificações do agente (não lidas) + orçamentos a revisar.
-  const { data: pendentes } = useAgentInbox({ enabled: podeRevisar });
-  const { data: notificacoesNaoLidas = 0 } = useNotificacoesNaoLidas();
-  const totalPendentes = (pendentes?.length ?? 0) + (podeRevisar ? notificacoesNaoLidas : 0);
-
-  const trocarAba = (nova: "conversa" | "revisao") => {
-    setAba(nova);
-    setSearchParams(nova === "conversa" ? { tab: "conversa" } : {}, { replace: true });
-  };
 
   const {
     messages,
@@ -121,7 +99,6 @@ export default function ChatPage() {
     const prompt = (location.state as { prompt?: string } | null)?.prompt?.trim();
     if (!prompt || promptInicialEnviado.current) return;
     promptInicialEnviado.current = true;
-    setAba("conversa"); // pergunta vinda do Início abre a conversa, não a fila
     send(prompt);
     navigate(`${location.pathname}${location.search}`, { replace: true, state: null });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -172,10 +149,8 @@ export default function ChatPage() {
 
   const vazio = messages.length === 0;
   const primeiroNome = profile?.first_name || profile?.nome?.split(" ")[0] || null;
-  // Header some no herói vazio, mas reaparece na aba Revisão ou quando há pendências.
-  // Quem revisa tem o toggle Conversa/Trabalho no header, então ele fica sempre visível
-  // (inclusive no herói vazio). Quem não revisa mantém o herói limpo, sem header.
-  const mostrarHeader = podeRevisar || !vazio || aba === "revisao";
+  // Header some no herói vazio, pra dar lugar ao input centralizado.
+  const mostrarHeader = !vazio;
 
   const inputPanel = (
     <InputPanel
@@ -204,85 +179,39 @@ export default function ChatPage() {
             <h1 className="text-base font-medium tracking-tight text-foreground">Agentes</h1>
           </div>
 
-          {/* Toggle central Conversa/Trabalho (spec 007, inspirado no ChatGPT Chat/Work). */}
-          {podeRevisar && (
-            <div className="shrink-0">
-              <div className="inline-flex rounded-full bg-black/5 p-0.5 text-xs font-medium">
-                <button
-                  type="button"
-                  onClick={() => trocarAba("revisao")}
-                  aria-current={aba === "revisao" ? "page" : undefined}
-                  className={cn(
-                    "flex min-h-8 items-center gap-1.5 rounded-full px-4 py-1.5 transition-colors",
-                    aba === "revisao" ? "bg-brand text-ink" : "text-ink-soft hover:text-ink"
-                  )}
-                >
-                  Trabalho
-                  {totalPendentes > 0 && (
-                    <span className="rounded-full bg-black/10 px-1.5 py-0.5 text-[10px] leading-none">
-                      {totalPendentes}
-                    </span>
-                  )}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => trocarAba("conversa")}
-                  aria-current={aba === "conversa" ? "page" : undefined}
-                  className={cn(
-                    "flex min-h-8 items-center rounded-full px-4 py-1.5 transition-colors",
-                    aba === "conversa" ? "bg-brand text-ink" : "text-ink-soft hover:text-ink"
-                  )}
-                >
-                  Conversa
-                </button>
-              </div>
-            </div>
-          )}
-
           <div className="flex flex-1 items-center justify-end gap-2">
-            {aba === "conversa" && (
-              <>
-                {saldo && (
-                  <span
-                    className="hidden lg:flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground"
-                    title={`Créditos de IA restantes este mês (${saldo.usados} de ${saldo.limite} usados)`}
-                  >
-                    <Coins className="h-3.5 w-3.5" />
-                    {saldo.restante} crédito{saldo.restante === 1 ? "" : "s"} restantes
-                  </span>
-                )}
-                {creditosUsados > 0 && (
-                  <span
-                    className="hidden lg:flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground"
-                    title="Créditos de IA debitados nesta conversa"
-                  >
-                    <Coins className="h-3.5 w-3.5" />
-                    {creditosUsados} usado{creditosUsados === 1 ? "" : "s"} agora
-                  </span>
-                )}
-                <button
-                  type="button"
-                  onClick={handleReset}
-                  disabled={loading}
-                  className="flex min-h-11 items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-40"
-                >
-                  <PenLine className="h-3.5 w-3.5" />
-                  Nova conversa
-                </button>
-              </>
+            {saldo && (
+              <span
+                className="hidden lg:flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground"
+                title={`Créditos de IA restantes este mês (${saldo.usados} de ${saldo.limite} usados)`}
+              >
+                <Coins className="h-3.5 w-3.5" />
+                {saldo.restante} crédito{saldo.restante === 1 ? "" : "s"} restantes
+              </span>
             )}
+            {creditosUsados > 0 && (
+              <span
+                className="hidden lg:flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground"
+                title="Créditos de IA debitados nesta conversa"
+              >
+                <Coins className="h-3.5 w-3.5" />
+                {creditosUsados} usado{creditosUsados === 1 ? "" : "s"} agora
+              </span>
+            )}
+            <button
+              type="button"
+              onClick={handleReset}
+              disabled={loading}
+              className="flex min-h-11 items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-40"
+            >
+              <PenLine className="h-3.5 w-3.5" />
+              Nova conversa
+            </button>
           </div>
         </header>
       )}
 
-      {aba === "revisao" ? (
-        /* ── Aba Revisão: fila persistente de trabalho aguardando aprovação ── */
-        <div className="flex-1 overflow-y-auto px-4 py-6">
-          <div className="mx-auto max-w-7xl">
-            <RevisaoInbox enabled={podeRevisar} />
-          </div>
-        </div>
-      ) : vazio ? (
+      {vazio ? (
         /* ── Estado vazio: herói centralizado (padrão agent-first) ── */
         <div className="flex flex-1 flex-col items-center justify-center overflow-y-auto px-4 py-10">
           <div className="w-full max-w-2xl">
