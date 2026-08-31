@@ -10,7 +10,6 @@ import {
   Globe,
   HardHat,
   Home,
-  LayoutTemplate,
   ListTodo,
   MapPin,
   Scale,
@@ -36,8 +35,6 @@ export type FeatureKey =
   | "pessoas"
   | "metas"
   | "portal_cliente"
-  | "capacidade"
-  | "templates"
   | "timesheet"
   | "ai_chat"
   | "meu_trabalho"
@@ -339,30 +336,6 @@ export const FEATURES: readonly FeatureDefinition[] = [
     parent: "obras",
   },
   {
-    key: "capacidade",
-    label: "Capacidade",
-    description: "Alocação vs disponibilidade do time",
-    group: "extras",
-    icon: Workflow,
-    core: false,
-    universal: false,
-    addon: true,
-    addonPriceLabel: "+R$ 49/mês",
-    dormant: true,
-  },
-  {
-    key: "templates",
-    label: "Templates",
-    description: "Modelos reutilizáveis de propostas e projetos",
-    group: "extras",
-    icon: LayoutTemplate,
-    core: false,
-    universal: false,
-    addon: true,
-    addonPriceLabel: "+R$ 29/mês",
-    dormant: true,
-  },
-  {
     key: "timesheet",
     label: "Timesheet",
     description: "Registro de horas por projeto e colaborador",
@@ -416,8 +389,6 @@ export const FEATURE_MODULE: Record<FeatureKey, FeatureModuleId | null> = {
   relatorios: null,
   portal_cliente: null,
   ai_chat: null,
-  capacidade: null,
-  templates: null,
   timesheet: null,
 };
 
