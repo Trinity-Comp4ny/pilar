@@ -16,6 +16,29 @@ Regras de manutenção:
 
 ---
 
+## 2026-08-31 · Camada 2 de IA vira "token", não "ação de IA": reverte a doutrina de nunca expor token
+
+**Decisão:** a unidade de uso de IA visível e comprável pelo cliente passa a ser **token**, pelo
+nome, em toda superfície (saldo, cota do plano, compra de pacote extra). Não existe mais camada
+de tradução "ação de IA" para o usuário final.
+
+**Contexto:** `docs/strategy/PRICING.md` (decisão 17/08, item 3) registrava o oposto: "o cliente
+nunca vê 'token'", com "ação de IA" como unidade traduzida e o token escondido como COGS
+interno. O CEO decidiu direto o contrário: o termo "token" já é conhecido do cliente (mercado de
+IA generalizou o termo) e não precisa de tradução.
+
+**Supera:** o item 3 da revisão 17/08 do PRICING.md e a linha 166-168 ("Camada 2: Ações de IA")
+do mesmo doc — ambos ficam obsoletos nesse ponto específico; o resto da Camada 2 (cota no plano,
+pacote extra, margem ~2,5x custo) continua valendo, só troca a unidade e o nome. Todo texto de
+produto, UI, e checkout que viesse a dizer "ação de IA" usa "token" em vez disso.
+
+**Como aplicar:** o ledger de uso de IA (ver estrutura técnica combinada em 31/08, arquitetura
+descrita na memória do projeto) usa `tokens` como unidade de cota, saldo e cobrança — sem
+`peso_acao` nem conversão. `PRICING.md` precisa de um bloco de atualização apontando pra esta
+entrada na próxima revisão do documento.
+
+---
+
 ## 2026-08-26 (à noite) · Gate D2 fechado: orçamento continua por disciplina/etapa, não por ambiente
 
 **Decisão:** o Pilar não migra pra orçamento paramétrico por ambiente (pavimento → ambiente →

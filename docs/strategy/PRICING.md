@@ -2,6 +2,13 @@
 
 > Rascunho **v3** · atualizado 2026-08-17 (v2 em 2026-08-10, v1 em 2026-07-13) · números indicativos para validação com o design partner, **não** é tabela final de preço.
 > Versão visual (para apresentar): artifact "Como o Pilar vai cobrar".
+>
+> ⚠️ **Superado em parte (2026-08-31):** a Camada 2 deixa de se chamar "ação de IA" e a
+> doutrina "o cliente nunca vê token" caiu por decisão do CEO ([DECISOES.md](./DECISOES.md),
+> entrada 2026-08-31). A unidade exposta e vendida é **token**. O plano completo do motor de
+> tokens (fases, economia, arquitetura) está em [MOTOR_DE_TOKENS.md](./MOTOR_DE_TOKENS.md).
+> O resto deste documento (base flat por projetos ativos, margem do pacote, teto claro)
+> continua valendo; incorporar na v4.
 
 ---
 
