@@ -253,10 +253,13 @@ SELECT lives_ok(
   'gate_tokens roda como service_role'
 );
 
+-- O want cobre os dois mundos: banco com plano 'starter' seedado (staging) usa a cota
+-- dele; banco sem planos (reset do zero no CI deixa a tabela vazia) cai no fallback
+-- 500000 do gate_tokens, o mesmo caminho de empresa sem assinatura.
 SELECT results_eq(
   $$ SELECT saldo_plano, saldo_comprado FROM public.ai_token_saldo
      WHERE empresa_id = 'a70e0000-0000-0000-0000-00000000000c' $$,
-  $$ SELECT p.tokens_mensais, 0::bigint FROM public.pilar_subscription_plans p WHERE p.slug = 'starter' $$,
+  $$ SELECT COALESCE((SELECT p.tokens_mensais FROM public.pilar_subscription_plans p WHERE p.slug = 'starter'), 500000)::bigint, 0::bigint $$,
   'gate concede a cota do ciclo e a sobra do ciclo anterior expira (use-or-lose)'
 );
 
