@@ -18,7 +18,7 @@ import {
   checkRateLimit,
   callGeminiStructured,
   streamGeminiText,
-  recordAiUsage,
+  debitarTokens,
   getAiSaldo,
   GEMINI_MODEL,
   type AiSaldo,
@@ -1051,15 +1051,29 @@ function respondFinal(payload: Record<string, unknown>, req: Request, wantsStrea
   return wantsStream ? sseFinal(payload, req) : jsonResponse(payload, 200, req);
 }
 
-// Registra o uso e devolve o saldo restante (best-effort — nunca quebra o fluxo).
+// Debita o uso no ledger de tokens (fonte única, ADR 0035) e devolve o saldo restante.
+// Cada turno termina em EXATAMENTE um chamador deste helper → um débito por turno.
+// debitarTokens nunca lança (reporta ao Sentry por dentro); a leitura do saldo é best-effort.
 async function recordAndSaldo(
   admin: SupabaseClient,
   empresaId: string,
+  userId: string | null,
+  runId: string | undefined,
   tokIn: number,
   tokOut: number,
   calls: number
 ): Promise<AiSaldo | null> {
-  await recordAiUsageSafe(admin, empresaId, tokIn, tokOut, calls);
+  await debitarTokens(admin, {
+    empresaId,
+    userId,
+    agentKey: FEATURE_KEY,
+    agentRunId: runId ?? null,
+    model: GEMINI_MODEL,
+    tokensInput: tokIn,
+    tokensOutput: tokOut,
+    idempotencyKey: crypto.randomUUID(),
+    calls,
+  });
   try {
     return await getAiSaldo(admin, empresaId);
   } catch {
@@ -1204,7 +1218,15 @@ serve(
           content: aviso,
           meta: { agente, agente_label: AGENTE_LABEL[agente], motivo: rota.data.motivo, model: GEMINI_MODEL },
         });
-        const saldo = await recordAndSaldo(adminClient, empresaId, rota.tokensEntrada, rota.tokensSaida, rota.attempts);
+        const saldo = await recordAndSaldo(
+          adminClient,
+          empresaId,
+          user.id,
+          undefined,
+          rota.tokensEntrada,
+          rota.tokensSaida,
+          rota.attempts
+        );
         return respondFinal(
           {
             sessionId,
@@ -1244,7 +1266,15 @@ serve(
           content: "Escolha o alvo e confirme a ação.",
           meta: { agente, agente_label: label, model: GEMINI_MODEL, acao_run_id: run.id, operacao: rota.data.operacao },
         });
-        const saldo = await recordAndSaldo(adminClient, empresaId, rota.tokensEntrada, rota.tokensSaida, rota.attempts);
+        const saldo = await recordAndSaldo(
+          adminClient,
+          empresaId,
+          user.id,
+          run.id as string,
+          rota.tokensEntrada,
+          rota.tokensSaida,
+          rota.attempts
+        );
         return respondFinal(
           {
             sessionId,
@@ -1319,6 +1349,7 @@ serve(
           agente,
           meta,
           userMessage,
+          userId: user.id,
           runId: consultaRunId,
           rotaTok: { in: rota.tokensEntrada, out: rota.tokensSaida, calls: rota.attempts },
         });
@@ -1350,8 +1381,8 @@ serve(
         tokens_output: tokensOut,
       });
 
-      // Contabiliza uso (rate limit + log granular por feature) e lê o saldo restante.
-      const saldo = await recordAndSaldo(adminClient, empresaId, tokensIn, tokensOut, chamadas);
+      // Contabiliza uso (débito no ledger de tokens) e lê o saldo restante.
+      const saldo = await recordAndSaldo(adminClient, empresaId, user.id, consultaRunId, tokensIn, tokensOut, chamadas);
 
       await logAction(authClient, consultaRunId, "gerar_resposta", undefined, { chars: resp.data.resposta.length });
       if (consultaRunId) {
@@ -1380,20 +1411,6 @@ serve(
   })
 );
 
-async function recordAiUsageSafe(
-  admin: SupabaseClient,
-  empresaId: string,
-  tokIn: number,
-  tokOut: number,
-  calls: number
-) {
-  try {
-    await recordAiUsage(admin, empresaId, FEATURE_KEY, tokIn, tokOut, calls);
-  } catch {
-    // não bloqueia a resposta ao usuário
-  }
-}
-
 type ChatMeta = {
   agente: string;
   agente_label: string;
@@ -1414,6 +1431,7 @@ function streamConsulta(o: {
   agente: Agente;
   meta: ChatMeta;
   userMessage: string;
+  userId: string;
   runId?: string;
   rotaTok: { in: number; out: number; calls: number };
 }): Response {
@@ -1473,7 +1491,7 @@ function streamConsulta(o: {
           tokens_output: tokOut,
         });
 
-        const saldo = await recordAndSaldo(o.admin, o.empresaId, tokIn, tokOut, chamadas);
+        const saldo = await recordAndSaldo(o.admin, o.empresaId, o.userId, o.runId, tokIn, tokOut, chamadas);
 
         await logAction(o.db, o.runId, "gerar_resposta", undefined, { chars: resposta.length });
         if (o.runId) {
@@ -1561,7 +1579,7 @@ async function processarCriacao(o: {
       tokens_input: tokIn,
       tokens_output: tokOut,
     });
-    const saldo = await recordAndSaldo(o.admin, o.empresaId, tokIn, tokOut, chamadas);
+    const saldo = await recordAndSaldo(o.admin, o.empresaId, o.userId, undefined, tokIn, tokOut, chamadas);
     return respondFinal(
       {
         sessionId: o.sessionId,
@@ -1632,7 +1650,7 @@ async function processarCriacao(o: {
     tokens_input: tokIn,
     tokens_output: tokOut,
   });
-  const saldo = await recordAndSaldo(o.admin, o.empresaId, tokIn, tokOut, chamadas);
+  const saldo = await recordAndSaldo(o.admin, o.empresaId, o.userId, runId, tokIn, tokOut, chamadas);
 
   return respondFinal(
     {

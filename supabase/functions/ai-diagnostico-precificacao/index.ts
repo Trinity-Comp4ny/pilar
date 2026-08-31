@@ -6,7 +6,8 @@ import {
   createAdminClient,
   checkRateLimit,
   callGemini,
-  recordAiUsage,
+  debitarTokens,
+  GEMINI_MODEL,
   recordAgentRun,
   type AiRequest,
 } from "../_shared/ai-client.ts";
@@ -222,8 +223,17 @@ Responda em português brasileiro. Retorne JSON:
       };
 
       const aiResponse = await callGemini(aiRequest);
-      await recordAiUsage(adminClient, empresaId, aiRequest.tipo, aiResponse.tokensEntrada, aiResponse.tokensSaida);
-      await recordAgentRun(adminClient, aiRequest, aiResponse, user.id);
+      const runId = await recordAgentRun(adminClient, aiRequest, aiResponse, user.id);
+      await debitarTokens(adminClient, {
+        empresaId,
+        userId: user.id,
+        agentKey: aiRequest.tipo,
+        agentRunId: runId,
+        model: GEMINI_MODEL,
+        tokensInput: aiResponse.tokensEntrada,
+        tokensOutput: aiResponse.tokensSaida,
+        idempotencyKey: crypto.randomUUID(),
+      });
 
       return new Response(JSON.stringify(aiResponse), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },

@@ -1,6 +1,6 @@
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { z } from "./schemas.ts";
-import { recordGenAiSpan, recordMetric, scrub } from "./sentry.ts";
+import { captureException, recordGenAiSpan, recordMetric, scrub } from "./sentry.ts";
 
 const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY") || "";
 export const GEMINI_MODEL = "gemini-2.5-flash";
@@ -60,18 +60,6 @@ interface GeminiApiResponse {
   usageMetadata?: GeminiUsageMetadata;
 }
 
-interface AiUsageRow {
-  total_requests: number;
-  limite_requests: number;
-}
-
-interface AiUsageDetailRow {
-  id: string;
-  total_requests: number;
-  total_tokens_entrada: number;
-  total_tokens_saida: number;
-}
-
 /**
  * Verifica rate limit e retorna se pode prosseguir
  */
@@ -79,31 +67,17 @@ export async function checkRateLimit(supabaseAdmin: SupabaseClient, empresaId: s
   // Janela curta: barra rajada/loop de chamadas antes de olhar o teto mensal.
   const desde = new Date(Date.now() - SHORT_WINDOW_SECONDS * 1000).toISOString();
   const { count } = await supabaseAdmin
-    .from("ai_usage_logs")
+    .from("ai_token_ledger")
     .select("id", { count: "exact", head: true })
     .eq("empresa_id", empresaId)
+    .eq("source", "usage")
     .gte("created_at", desde);
   if ((count ?? 0) >= SHORT_WINDOW_MAX_CALLS) {
     return false;
   }
 
-  const now = new Date();
-  const mes = now.getMonth() + 1;
-  const ano = now.getFullYear();
-
-  const { data } = await supabaseAdmin
-    .from("ai_usage")
-    .select("total_requests, limite_requests")
-    .eq("empresa_id", empresaId)
-    .eq("mes", mes)
-    .eq("ano", ano)
-    .maybeSingle();
-
-  const row = data as AiUsageRow | null;
-  if (row && row.total_requests >= row.limite_requests) {
-    return false;
-  }
-  return true;
+  const { usados, limite } = await getAiSaldo(supabaseAdmin, empresaId);
+  return usados < limite;
 }
 
 export interface AiSaldo {
@@ -113,51 +87,88 @@ export interface AiSaldo {
 }
 
 /**
- * Saldo de uso de IA do mês corrente: teto mensal (limite_requests) menos o já usado
- * (total_requests) em ai_usage. Sem linha ainda → usa o teto padrão e zero usado.
- * `restante` nunca fica negativo. Usa o client admin (bypassa RLS de ai_usage).
+ * Saldo de uso de IA do mês corrente: usados = nº de débitos `usage` do mês no ledger
+ * (ai_token_ledger, fonte única do ADR 0035); limite = teto de requests configurável
+ * por empresa (ai_usage.limite_requests, coluna que segue sendo a config vigente até a
+ * Fase 2 trazer a cota de tokens por plano). Sem linha → teto padrão. `restante` nunca
+ * fica negativo. Usa o client admin (bypassa RLS).
  */
 export async function getAiSaldo(supabaseAdmin: SupabaseClient, empresaId: string): Promise<AiSaldo> {
   const now = new Date();
-  const mes = now.getMonth() + 1;
-  const ano = now.getFullYear();
+  const inicioMes = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString();
+
+  const { count } = await supabaseAdmin
+    .from("ai_token_ledger")
+    .select("id", { count: "exact", head: true })
+    .eq("empresa_id", empresaId)
+    .eq("source", "usage")
+    .gte("created_at", inicioMes);
 
   const { data } = await supabaseAdmin
     .from("ai_usage")
-    .select("total_requests, limite_requests")
+    .select("limite_requests")
     .eq("empresa_id", empresaId)
-    .eq("mes", mes)
-    .eq("ano", ano)
+    .eq("mes", now.getMonth() + 1)
+    .eq("ano", now.getFullYear())
     .maybeSingle();
 
-  const row = data as AiUsageRow | null;
-  const usados = row?.total_requests ?? 0;
-  const limite = row?.limite_requests ?? DEFAULT_LIMITE_REQUESTS;
+  const usados = count ?? 0;
+  const limite = (data as { limite_requests: number } | null)?.limite_requests ?? DEFAULT_LIMITE_REQUESTS;
   return { usados, limite, restante: Math.max(0, limite - usados) };
 }
 
+export interface DebitarTokensParams {
+  empresaId: string;
+  userId: string | null;
+  agentKey: string;
+  agentRunId?: string | null;
+  model: string;
+  tokensInput: number;
+  tokensOutput: number;
+  // Dedupe de retry: a mesma key da mesma empresa nunca gera dois débitos.
+  idempotencyKey: string;
+  // Nº REAL de chamadas ao Gemini no turno (retries contam) — só telemetria Sentry.
+  calls?: number;
+}
+
 /**
- * Registra uso do Gemini na tabela ai_usage_logs para billing granular por feature.
- * Falha silenciosa — nunca quebra o fluxo principal.
+ * Único caminho de escrita de uso de token (ADR 0035): debita no ledger via RPC
+ * debitar_tokens, que insere a linha e o trigger atualiza o saldo em cascata
+ * (plano → comprado) na mesma transação. Shadow mode: falha aqui NUNCA quebra a
+ * resposta ao usuário, mas é reportada ao Sentry — nunca silenciosa (spec 074, req 6).
  */
-async function logAiUsage(
-  supabaseAdmin: SupabaseClient,
-  empresaId: string,
-  featureKey: string,
-  tokensInput: number,
-  tokensOutput: number
-): Promise<void> {
+export async function debitarTokens(supabaseAdmin: SupabaseClient, params: DebitarTokensParams): Promise<void> {
   try {
-    await supabaseAdmin.from("ai_usage_logs").insert({
-      empresa_id: empresaId,
-      feature_key: featureKey,
-      tokens_input: tokensInput,
-      tokens_output: tokensOutput,
-      created_at: new Date().toISOString(),
+    const { data, error } = await supabaseAdmin.rpc("debitar_tokens", {
+      p_empresa_id: params.empresaId,
+      p_user_id: params.userId,
+      p_agent_key: params.agentKey,
+      p_agent_run_id: params.agentRunId ?? null,
+      p_model: params.model,
+      p_tokens_input: params.tokensInput,
+      p_tokens_output: params.tokensOutput,
+      p_idempotency_key: params.idempotencyKey,
     });
-  } catch {
-    // Tabela pode não existir ainda — falha silenciosa intencional
+    if (error) {
+      throw new Error(`debitar_tokens falhou: ${error.message}`);
+    }
+    const row = (data as Array<{ custo_estimado: number | null }> | null)?.[0];
+    if (row && row.custo_estimado === null && params.tokensInput + params.tokensOutput > 0) {
+      await captureException(new Error(`Modelo sem preço em ai_model_precos: ${params.model}`), {
+        fn: "debitarTokens",
+        tags: { empresa_id: params.empresaId, agent_key: params.agentKey },
+      });
+    }
+  } catch (e) {
+    await captureException(e, {
+      fn: "debitarTokens",
+      tags: { empresa_id: params.empresaId, agent_key: params.agentKey },
+    });
   }
+
+  recordMetric("ai.calls", params.calls ?? 1, { tags: { empresa_id: params.empresaId, feature: params.agentKey } });
+  recordMetric("ai.tokens_input", params.tokensInput, { type: "distribution", tags: { feature: params.agentKey } });
+  recordMetric("ai.tokens_output", params.tokensOutput, { type: "distribution", tags: { feature: params.agentKey } });
 }
 
 /**
@@ -643,115 +654,39 @@ export async function callGeminiStructured<T>(
  * devolvido direto ao chamador (diferente de orcamento_honorarios em agent_runs,
  * que nasce `pending_review` e é gravado manualmente por ai-proposta-copilot).
  *
- * Falha ao gravar é best-effort — nunca quebra o fluxo principal (mesmo padrão de
- * logAiUsage). Use ao lado de recordAiUsage(), que cuida do contador de
- * billing/rate-limit — são responsabilidades separadas.
+ * Falha ao gravar é best-effort — nunca quebra o fluxo principal. Devolve o id do run
+ * (ou null quando o insert falhou) para o caller correlacionar o débito de tokens
+ * (debitarTokens, campo agentRunId) — são responsabilidades separadas.
  */
 export async function recordAgentRun(
   supabaseAdmin: SupabaseClient,
   request: AiRequest,
   aiResponse: AiResponse,
   userId: string
-): Promise<void> {
+): Promise<string | null> {
   try {
-    await supabaseAdmin.from("agent_runs").insert({
-      empresa_id: request.empresaId,
-      agent_type: request.tipo,
-      status: "executed",
-      entity_type: request.referenciaTipo ?? null,
-      entity_id: request.referenciaId ?? null,
-      input: { userMessage: request.userMessage },
-      result: aiResponse.conteudo,
-      model: GEMINI_MODEL,
-      tokens_input: aiResponse.tokensEntrada,
-      tokens_output: aiResponse.tokensSaida,
-      created_by: userId,
-    });
+    const { data } = await supabaseAdmin
+      .from("agent_runs")
+      .insert({
+        empresa_id: request.empresaId,
+        agent_type: request.tipo,
+        status: "executed",
+        entity_type: request.referenciaTipo ?? null,
+        entity_id: request.referenciaId ?? null,
+        input: { userMessage: request.userMessage },
+        result: aiResponse.conteudo,
+        model: GEMINI_MODEL,
+        tokens_input: aiResponse.tokensEntrada,
+        tokens_output: aiResponse.tokensSaida,
+        created_by: userId,
+      })
+      .select("id")
+      .single();
+    return (data as { id: string } | null)?.id ?? null;
   } catch {
     // Rastro é best-effort — nunca quebra o fluxo principal.
+    return null;
   }
-}
-
-/**
- * Fallback não-atômico do incremento de uso (read-then-update). Usado só quando o RPC
- * atômico increment_ai_usage ainda não existe no banco. Nunca deve ser o caminho normal.
- */
-async function recordAiUsageFallback(
-  supabaseAdmin: SupabaseClient,
-  empresaId: string,
-  tokensInput: number,
-  tokensOutput: number,
-  calls: number
-): Promise<void> {
-  const now = new Date();
-  const mes = now.getMonth() + 1;
-  const ano = now.getFullYear();
-
-  const { data: existingData } = await supabaseAdmin
-    .from("ai_usage")
-    .select("id, total_requests, total_tokens_entrada, total_tokens_saida")
-    .eq("empresa_id", empresaId)
-    .eq("mes", mes)
-    .eq("ano", ano)
-    .maybeSingle();
-
-  const existing = existingData as AiUsageDetailRow | null;
-
-  if (existing) {
-    await supabaseAdmin
-      .from("ai_usage")
-      .update({
-        total_requests: existing.total_requests + calls,
-        total_tokens_entrada: existing.total_tokens_entrada + tokensInput,
-        total_tokens_saida: existing.total_tokens_saida + tokensOutput,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", existing.id);
-  } else {
-    await supabaseAdmin.from("ai_usage").insert({
-      empresa_id: empresaId,
-      mes,
-      ano,
-      total_requests: calls,
-      total_tokens_entrada: tokensInput,
-      total_tokens_saida: tokensOutput,
-    });
-  }
-}
-
-/**
- * Incrementa o contador mensal de uso (ai_usage — alimenta o rate limit) e
- * registra o log granular por feature (ai_usage_logs). NÃO depende de ai_insights
- * (dropada em 20260429400000). Use nos fluxos agênticos que gravam em agent_runs.
- *
- * `calls` = nº REAL de chamadas ao Gemini no turno (cada retry conta). O padrão 1 mantém
- * o comportamento antigo dos callers que ainda não passam a contagem. O incremento é
- * atômico (RPC increment_ai_usage com col = col + delta) — evita a corrida read-then-update.
- */
-export async function recordAiUsage(
-  supabaseAdmin: SupabaseClient,
-  empresaId: string,
-  featureKey: string,
-  tokensInput: number,
-  tokensOutput: number,
-  calls = 1
-): Promise<void> {
-  const { error } = await supabaseAdmin.rpc("increment_ai_usage", {
-    p_empresa_id: empresaId,
-    p_calls: calls,
-    p_tokens_input: tokensInput,
-    p_tokens_output: tokensOutput,
-  });
-  if (error) {
-    // RPC ainda não aplicado no banco → cai no caminho legado, sem quebrar o fluxo.
-    await recordAiUsageFallback(supabaseAdmin, empresaId, tokensInput, tokensOutput, calls);
-  }
-
-  await logAiUsage(supabaseAdmin, empresaId, featureKey, tokensInput, tokensOutput);
-
-  recordMetric("ai.calls", calls, { tags: { empresa_id: empresaId, feature: featureKey } });
-  recordMetric("ai.tokens_input", tokensInput, { type: "distribution", tags: { feature: featureKey } });
-  recordMetric("ai.tokens_output", tokensOutput, { type: "distribution", tags: { feature: featureKey } });
 }
 
 /**
