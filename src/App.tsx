@@ -49,11 +49,9 @@ const Pessoas = lazy(() => import("./pages/pessoas"));
 const Metas = lazy(() => import("./pages/metas"));
 const CompanySetup = lazy(() => import("./pages/CompanySetup"));
 const ProfileSetup = lazy(() => import("./pages/ProfileSetup"));
-const Templates = lazy(() => import("./pages/templates"));
 const Timesheet = lazy(() => import("./pages/Timesheet"));
 const Chat = lazy(() => import("./pages/chat"));
 const Propostas = lazy(() => import("./pages/propostas"));
-const Capacidade = lazy(() => import("./pages/capacidade"));
 const ProjetoDetail = lazy(() => import("./pages/projetos/ProjetoDetail"));
 const ClienteLogin = lazy(() => import("./pages/cliente/ClienteLogin"));
 const CampoLogin = lazy(() => import("./pages/campo/CampoLogin"));
@@ -226,14 +224,8 @@ const App = () => {
                             <Route path="/gestao/metas" element={<Metas />} />
                           </Route>
                         </Route>
-                        <Route element={<FeatureRoute feature="templates" />}>
-                          <Route path="/gestao/templates" element={<Templates />} />
-                        </Route>
                         <Route element={<FeatureRoute feature="timesheet" />}>
                           <Route path="/gestao/timesheet" element={<Timesheet />} />
-                        </Route>
-                        <Route element={<FeatureRoute feature="capacidade" />}>
-                          <Route path="/gestao/capacidade" element={<Capacidade />} />
                         </Route>
                         {/* Projetos (coleção + lentes de recorte; a lente vem do pathname).
                           Estáticas antes de /projetos/:id para o segmento estático vencer. */}
@@ -279,16 +271,8 @@ const App = () => {
                           element={<RedirectPrefix from="/propostas" to="/gestao/propostas" />}
                         />
                         <Route
-                          path="/templates/*"
-                          element={<RedirectPrefix from="/templates" to="/gestao/templates" />}
-                        />
-                        <Route
                           path="/timesheet/*"
                           element={<RedirectPrefix from="/timesheet" to="/gestao/timesheet" />}
-                        />
-                        <Route
-                          path="/capacidade/*"
-                          element={<RedirectPrefix from="/capacidade" to="/gestao/capacidade" />}
                         />
                         <Route
                           path="/fornecedores/*"
