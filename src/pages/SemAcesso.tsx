@@ -29,6 +29,7 @@ const KNOWN_FEATURES: Feature[] = [
   "obras_conta",
   "admin_portal",
   "billing",
+  "financeiro_folha",
 ];
 
 const FEATURE_LABEL: Record<Feature, string> = {
@@ -56,6 +57,7 @@ const FEATURE_LABEL: Record<Feature, string> = {
   timesheet: "Timesheet",
   admin_portal: "Admin Portal",
   billing: "Assinatura",
+  financeiro_folha: "Folha de pagamento",
 };
 
 function isKnownFeature(value: string | null): value is Feature {

@@ -39,17 +39,32 @@ export function useClienteDetalhe(clienteId: string) {
   const projetosQuery = useQuery({
     queryKey: ["cliente-projetos", clienteId],
     queryFn: async () => {
+      // projetos_safe (view) não embeda projeto_disciplinas via PostgREST — a
+      // relação é resolvida por FK, e a view não tem FK visível. Duas queries:
+      // valor_contrato mascarado vem daqui; disciplinas vêm da tabela normal.
       const { data, error } = await supabase
-        .from("projetos")
-        .select(
-          "id, codigo_projeto, nome, status, valor_contrato, data_inicio, data_previsao, data_final, projeto_disciplinas(status)"
-        )
+        .from("projetos_safe")
+        .select("id, codigo_projeto, nome, status, valor_contrato, data_inicio, data_previsao, data_final")
         .eq("cliente_id", clienteId)
-        .is("deleted_at", null)
         .order("created_at", { ascending: false });
       if (error) throw error;
+
+      const projetoIds = (data ?? []).map((p) => p.id).filter((id): id is string => !!id);
+      const { data: discData, error: discError } =
+        projetoIds.length > 0
+          ? await supabase.from("projeto_disciplinas").select("projeto_id, status").in("projeto_id", projetoIds)
+          : { data: [], error: null };
+      if (discError) throw discError;
+
+      const discsByProjeto = new Map<string, { status: string }[]>();
+      for (const d of discData ?? []) {
+        const list = discsByProjeto.get(d.projeto_id) ?? [];
+        list.push({ status: d.status ?? "" });
+        discsByProjeto.set(d.projeto_id, list);
+      }
+
       return (data ?? []).map((p) => {
-        const discs = (p.projeto_disciplinas ?? []) as { status: string }[];
+        const discs = discsByProjeto.get(p.id ?? "") ?? [];
         return {
           id: p.id,
           codigo_projeto: p.codigo_projeto,

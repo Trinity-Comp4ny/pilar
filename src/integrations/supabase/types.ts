@@ -1580,6 +1580,13 @@ export type Database = {
             referencedRelation: "projetos"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "despesas_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos_safe"
+            referencedColumns: ["id"]
+          },
         ]
       }
       disciplinas: {
@@ -1875,6 +1882,13 @@ export type Database = {
             columns: ["projeto_id"]
             isOneToOne: false
             referencedRelation: "projetos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "escopos_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos_safe"
             referencedColumns: ["id"]
           },
         ]
@@ -2314,6 +2328,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "grupos_parcela_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos_safe"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "grupos_parcela_renegociado_de_fkey"
             columns: ["renegociado_de"]
             isOneToOne: false
@@ -2638,6 +2659,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "marcos_faturamento_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos_safe"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "marcos_faturamento_receita_id_fkey"
             columns: ["receita_id"]
             isOneToOne: false
@@ -2738,6 +2766,13 @@ export type Database = {
             columns: ["projeto_id"]
             isOneToOne: false
             referencedRelation: "projetos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "metas_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos_safe"
             referencedColumns: ["id"]
           },
         ]
@@ -4048,6 +4083,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "obras_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos_safe"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "obras_responsavel_id_fkey"
             columns: ["responsavel_id"]
             isOneToOne: false
@@ -4114,6 +4156,13 @@ export type Database = {
             columns: ["projeto_id"]
             isOneToOne: false
             referencedRelation: "projetos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orcamento_versoes_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos_safe"
             referencedColumns: ["id"]
           },
         ]
@@ -4615,6 +4664,13 @@ export type Database = {
             referencedRelation: "projetos"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "portal_entregas_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos_safe"
+            referencedColumns: ["id"]
+          },
         ]
       }
       profiles: {
@@ -4625,6 +4681,7 @@ export type Database = {
           created_by: string | null
           email: string
           empresa_id: string
+          financeiro_delegado: boolean
           first_name: string
           id: string
           last_name: string
@@ -4642,6 +4699,7 @@ export type Database = {
           created_by?: string | null
           email: string
           empresa_id: string
+          financeiro_delegado?: boolean
           first_name?: string
           id: string
           last_name?: string
@@ -4659,6 +4717,7 @@ export type Database = {
           created_by?: string | null
           email?: string
           empresa_id?: string
+          financeiro_delegado?: boolean
           first_name?: string
           id?: string
           last_name?: string
@@ -4922,6 +4981,13 @@ export type Database = {
             referencedRelation: "projetos"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "projeto_disciplinas_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos_safe"
+            referencedColumns: ["id"]
+          },
         ]
       }
       projeto_etapas: {
@@ -5027,6 +5093,13 @@ export type Database = {
             columns: ["projeto_id"]
             isOneToOne: false
             referencedRelation: "projetos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projeto_orcamento_fases_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos_safe"
             referencedColumns: ["id"]
           },
         ]
@@ -5368,6 +5441,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "propostas_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos_safe"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "propostas_template_id_fkey"
             columns: ["template_id"]
             isOneToOne: false
@@ -5552,6 +5632,13 @@ export type Database = {
             columns: ["projeto_id"]
             isOneToOne: false
             referencedRelation: "projetos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "receitas_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos_safe"
             referencedColumns: ["id"]
           },
         ]
@@ -5910,6 +5997,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "tarefas_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos_safe"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "tarefas_responsavel_id_fkey"
             columns: ["responsavel_id"]
             isOneToOne: false
@@ -6103,6 +6197,13 @@ export type Database = {
             columns: ["projeto_id"]
             isOneToOne: false
             referencedRelation: "projetos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "timesheet_lancamentos_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos_safe"
             referencedColumns: ["id"]
           },
           {
@@ -6381,6 +6482,124 @@ export type Database = {
           },
         ]
       }
+      projetos_safe: {
+        Row: {
+          area_m2: number | null
+          cliente_id: string | null
+          codigo_projeto: string | null
+          comentarios: Json | null
+          created_at: string | null
+          created_by: string | null
+          custo_indireto_pct: number | null
+          data_final: string | null
+          data_inicio: string | null
+          data_previsao: string | null
+          deleted_at: string | null
+          disciplinas: Json | null
+          empresa_id: string | null
+          etapa_id: string | null
+          id: string | null
+          latitude: number | null
+          links: Json | null
+          localizacao: string | null
+          longitude: number | null
+          nome: string | null
+          observacao: string | null
+          parcelas: string | null
+          pode_ver_valor: boolean | null
+          prioridade: string | null
+          status: Database["public"]["Enums"]["status_projeto"] | null
+          status_data: string | null
+          updated_at: string | null
+          updated_by: string | null
+          valor_contrato: number | null
+        }
+        Insert: {
+          area_m2?: number | null
+          cliente_id?: string | null
+          codigo_projeto?: string | null
+          comentarios?: Json | null
+          created_at?: string | null
+          created_by?: string | null
+          custo_indireto_pct?: never
+          data_final?: string | null
+          data_inicio?: string | null
+          data_previsao?: string | null
+          deleted_at?: string | null
+          disciplinas?: Json | null
+          empresa_id?: string | null
+          etapa_id?: string | null
+          id?: string | null
+          latitude?: number | null
+          links?: Json | null
+          localizacao?: string | null
+          longitude?: number | null
+          nome?: string | null
+          observacao?: string | null
+          parcelas?: string | null
+          pode_ver_valor?: never
+          prioridade?: string | null
+          status?: Database["public"]["Enums"]["status_projeto"] | null
+          status_data?: string | null
+          updated_at?: string | null
+          updated_by?: string | null
+          valor_contrato?: never
+        }
+        Update: {
+          area_m2?: number | null
+          cliente_id?: string | null
+          codigo_projeto?: string | null
+          comentarios?: Json | null
+          created_at?: string | null
+          created_by?: string | null
+          custo_indireto_pct?: never
+          data_final?: string | null
+          data_inicio?: string | null
+          data_previsao?: string | null
+          deleted_at?: string | null
+          disciplinas?: Json | null
+          empresa_id?: string | null
+          etapa_id?: string | null
+          id?: string | null
+          latitude?: number | null
+          links?: Json | null
+          localizacao?: string | null
+          longitude?: number | null
+          nome?: string | null
+          observacao?: string | null
+          parcelas?: string | null
+          pode_ver_valor?: never
+          prioridade?: string | null
+          status?: Database["public"]["Enums"]["status_projeto"] | null
+          status_data?: string | null
+          updated_at?: string | null
+          updated_by?: string | null
+          valor_contrato?: never
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projetos_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projetos_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projetos_etapa_id_fkey"
+            columns: ["etapa_id"]
+            isOneToOne: false
+            referencedRelation: "projeto_etapas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       status_current: {
         Row: {
           id: string | null
@@ -6424,6 +6643,13 @@ export type Database = {
             columns: ["projeto_id"]
             isOneToOne: false
             referencedRelation: "projetos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projeto_orcamento_fases_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos_safe"
             referencedColumns: ["id"]
           },
           {
@@ -7584,6 +7810,10 @@ export type Database = {
       }
       set_disciplina_status: {
         Args: { p_bucket: string; p_disciplina_id: string }
+        Returns: undefined
+      }
+      set_financeiro_delegado: {
+        Args: { p_delegado: boolean; p_user_id: string }
         Returns: undefined
       }
       set_onboarding_state: { Args: { patch: Json }; Returns: Json }

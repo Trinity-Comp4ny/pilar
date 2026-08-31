@@ -40,6 +40,7 @@ Um ADR documenta uma decisão técnica relevante, seu contexto e consequências.
 | [0032](./adr/0032-consentimento-de-cookies-por-conta-e-por-dominio.md)           | Consentimento de cookies em cookie de `.pilarsoft.com.br` (vale na landing e no app) e persistido por conta em `cookie_consents`; app deixa de ter banner; revisa o 0022                |
 | [0035](./adr/0035-ledger-de-tokens-fonte-unica-de-uso-de-ia.md)                  | Ledger append-only (`ai_token_ledger`) como fonte única de tokens de IA; saldo por empresa cacheado só por trigger; débito idempotente via RPC; `ai_usage`/`ai_usage_logs` serão absorvidas   |
 | [0033](./adr/0033-resiliencia-de-integracao-com-api-externa.md)                  | CEP passa a ter proxy via edge function com fallback entre provedores; toda resposta de API externa (CEP, clima) valida schema Zod na fronteira e reporta ao Sentry se o formato mudar  |
+| [0034](./adr/0034-financeiro-delegado-eixo-separado-do-role.md)                  | Acesso a dinheiro vira eixo separado do papel: `financeiro_delegado` (boolean, sem JSONB) + papel `coordenador` reaproveitado; folha/PII só admin; complementa o 0029                   |
 
 ## Guias de reúso
 

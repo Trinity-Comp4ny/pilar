@@ -85,15 +85,23 @@ export function MapaTab() {
   } = useQuery({
     queryKey: ["projetos-mapa"],
     queryFn: async () => {
+      // projetos_safe mascara valor_contrato sem financeiro. View não embeda
+      // clientes(nome) via PostgREST (sem FK visível) — resolve à parte.
       const { data, error } = await supabase
-        .from("projetos")
+        .from("projetos_safe")
         .select(
-          "id, nome, codigo_projeto, status, localizacao, latitude, longitude, valor_contrato, area_m2, prioridade, data_inicio, data_previsao, cliente_id, clientes(nome)"
+          "id, nome, codigo_projeto, status, localizacao, latitude, longitude, valor_contrato, area_m2, prioridade, data_inicio, data_previsao, cliente_id"
         )
-        .is("deleted_at", null)
         .limit(1000);
 
       if (error) throw error;
+
+      const clienteIds = [...new Set((data ?? []).map((p) => p.cliente_id).filter((id): id is string => !!id))];
+      const nomeByClienteId = new Map<string, string>();
+      if (clienteIds.length > 0) {
+        const { data: clientesData } = await supabase.from("clientes").select("id, nome").in("id", clienteIds);
+        for (const c of clientesData ?? []) nomeByClienteId.set(c.id, c.nome);
+      }
 
       return (data || []).map((p) => ({
         id: p.id,
@@ -104,7 +112,7 @@ export function MapaTab() {
         latitude: p.latitude,
         longitude: p.longitude,
         valor_contrato: p.valor_contrato,
-        cliente_nome: p.clientes?.nome ?? null,
+        cliente_nome: p.cliente_id ? (nomeByClienteId.get(p.cliente_id) ?? null) : null,
         cliente_id: p.cliente_id,
         data_inicio: p.data_inicio,
         data_previsao: p.data_previsao,

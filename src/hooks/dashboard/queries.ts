@@ -90,12 +90,14 @@ export async function buildDashboardQueries(
       .is("deleted_at", null),
 
     // projetos para listagem (planejamento + em andamento, limite 8)
+    // projetos_safe (view) mascara valor_contrato sem financeiro. Views não
+    // embedam relação via PostgREST (sem FK visível), então clientes(nome)
+    // é resolvido à parte logo depois do Promise.all.
     supabase
-      .from("projetos")
+      .from("projetos_safe")
       .select(
-        "id, codigo_projeto, nome, status, prioridade, status_data, valor_contrato, data_inicio, data_previsao, data_final, cliente_id, clientes(nome)"
+        "id, codigo_projeto, nome, status, prioridade, status_data, valor_contrato, data_inicio, data_previsao, data_final, cliente_id"
       )
-      .is("deleted_at", null)
       .in("status", [PROJECT_STATUS.EM_ANDAMENTO, PROJECT_STATUS.PLANEJAMENTO])
       .order("created_at", { ascending: false })
       .limit(8),
@@ -147,6 +149,19 @@ export async function buildDashboardQueries(
       .is("deleted_at", null)
       .eq("status", PROJECT_STATUS.EM_ANDAMENTO),
   ]);
+
+  // clientes(nome) não vem embedado de projetos_safe (view, sem FK visível pro
+  // PostgREST) — resolve à parte e reinjeta no mesmo formato que buildProjetos espera.
+  const clienteIds = [...new Set((projetos.data ?? []).map((p) => p.cliente_id).filter((id): id is string => !!id))];
+  if (clienteIds.length > 0) {
+    const { data: clientesData } = await supabase.from("clientes").select("id, nome").in("id", clienteIds);
+    const nomeByClienteId = new Map((clientesData ?? []).map((c) => [c.id, c.nome]));
+    for (const p of projetos.data ?? []) {
+      (p as unknown as { clientes: { nome: string } | null }).clientes = p.cliente_id
+        ? { nome: nomeByClienteId.get(p.cliente_id) ?? "" }
+        : null;
+    }
+  }
 
   return {
     receitasMes,
