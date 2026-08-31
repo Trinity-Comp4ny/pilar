@@ -7,7 +7,8 @@ import {
   createAdminClient,
   checkRateLimit,
   callGeminiStructured,
-  recordAiUsage,
+  debitarTokens,
+  GEMINI_MODEL,
   recordAgentRun,
   type AiRequest,
 } from "../_shared/ai-client.ts";
@@ -336,8 +337,7 @@ serve(
       chamadas += ex.chamadas;
 
       console.log(`[ai-cotacao-import] modo=${ex.modo} concluído em ${chamadas} chamada(s)`);
-      await recordAiUsage(adminClient, empresaId, "cotacao-import", tokensEntrada, tokensSaida, chamadas);
-      await recordAgentRun(
+      const runId = await recordAgentRun(
         adminClient,
         { systemPrompt: "", userMessage: contexto, empresaId, tipo: "cotacao-import" },
         {
@@ -348,6 +348,17 @@ serve(
         },
         user.id
       );
+      await debitarTokens(adminClient, {
+        empresaId,
+        userId: user.id,
+        agentKey: "cotacao-import",
+        agentRunId: runId,
+        model: GEMINI_MODEL,
+        tokensInput: tokensEntrada,
+        tokensOutput: tokensSaida,
+        idempotencyKey: crypto.randomUUID(),
+        calls: chamadas,
+      });
 
       return jsonResponse({ modo: ex.modo, classificacao, ...ex.data }, 200, req);
     } catch (err) {

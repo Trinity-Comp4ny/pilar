@@ -7,11 +7,6 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "14.17"
-  }
   graphql_public: {
     Tables: {
       [_ in never]: never
@@ -194,6 +189,128 @@ export type Database = {
             foreignKeyName: "agent_runs_empresa_id_fkey"
             columns: ["empresa_id"]
             isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_model_precos: {
+        Row: {
+          created_at: string
+          modelo: string
+          moeda: string
+          preco_input_por_milhao: number
+          preco_output_por_milhao: number
+          vigente_desde: string
+        }
+        Insert: {
+          created_at?: string
+          modelo: string
+          moeda?: string
+          preco_input_por_milhao: number
+          preco_output_por_milhao: number
+          vigente_desde: string
+        }
+        Update: {
+          created_at?: string
+          modelo?: string
+          moeda?: string
+          preco_input_por_milhao?: number
+          preco_output_por_milhao?: number
+          vigente_desde?: string
+        }
+        Relationships: []
+      }
+      ai_token_ledger: {
+        Row: {
+          agent_key: string
+          agent_run_id: string | null
+          created_at: string
+          custo_estimado: number | null
+          empresa_id: string
+          id: string
+          idempotency_key: string | null
+          model: string | null
+          reference_id: string | null
+          source: string
+          tokens_delta: number
+          tokens_input: number
+          tokens_output: number
+          user_id: string | null
+        }
+        Insert: {
+          agent_key: string
+          agent_run_id?: string | null
+          created_at?: string
+          custo_estimado?: number | null
+          empresa_id: string
+          id?: string
+          idempotency_key?: string | null
+          model?: string | null
+          reference_id?: string | null
+          source: string
+          tokens_delta: number
+          tokens_input?: number
+          tokens_output?: number
+          user_id?: string | null
+        }
+        Update: {
+          agent_key?: string
+          agent_run_id?: string | null
+          created_at?: string
+          custo_estimado?: number | null
+          empresa_id?: string
+          id?: string
+          idempotency_key?: string | null
+          model?: string | null
+          reference_id?: string | null
+          source?: string
+          tokens_delta?: number
+          tokens_input?: number
+          tokens_output?: number
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_token_ledger_agent_run_id_fkey"
+            columns: ["agent_run_id"]
+            isOneToOne: false
+            referencedRelation: "agent_runs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_token_ledger_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_token_saldo: {
+        Row: {
+          empresa_id: string
+          saldo_comprado: number
+          saldo_plano: number
+          updated_at: string
+        }
+        Insert: {
+          empresa_id: string
+          saldo_comprado?: number
+          saldo_plano?: number
+          updated_at?: string
+        }
+        Update: {
+          empresa_id?: string
+          saldo_comprado?: number
+          saldo_plano?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_token_saldo_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: true
             referencedRelation: "empresas"
             referencedColumns: ["id"]
           },
@@ -6318,6 +6435,66 @@ export type Database = {
           },
         ]
       }
+      v_uso_tokens_por_agente: {
+        Row: {
+          agent_key: string | null
+          custo_estimado: number | null
+          empresa_id: string | null
+          eventos: number | null
+          mes: string | null
+          tokens_input: number | null
+          tokens_output: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_token_ledger_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_uso_tokens_por_empresa: {
+        Row: {
+          custo_estimado: number | null
+          empresa_id: string | null
+          eventos: number | null
+          mes: string | null
+          tokens_input: number | null
+          tokens_output: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_token_ledger_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_uso_tokens_por_usuario: {
+        Row: {
+          agent_key: string | null
+          custo_estimado: number | null
+          empresa_id: string | null
+          eventos: number | null
+          mes: string | null
+          tokens_input: number | null
+          tokens_output: number | null
+          user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_token_ledger_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       view_cartao_resumo: {
         Row: {
           conta_pagamento_id: string | null
@@ -6795,6 +6972,23 @@ export type Database = {
         }
       }
       current_pessoa_id: { Args: never; Returns: string }
+      debitar_tokens: {
+        Args: {
+          p_agent_key: string
+          p_agent_run_id: string
+          p_empresa_id: string
+          p_idempotency_key: string
+          p_model: string
+          p_tokens_input: number
+          p_tokens_output: number
+          p_user_id: string
+        }
+        Returns: {
+          custo_estimado: number
+          saldo_comprado: number
+          saldo_plano: number
+        }[]
+      }
       executar_acao_agente: { Args: { p_run_id: string }; Returns: Json }
       fechar_folha_agente: { Args: { p_run_id: string }; Returns: Json }
       find_or_create_fatura: {
@@ -7639,3 +7833,4 @@ export const Constants = {
     },
   },
 } as const
+

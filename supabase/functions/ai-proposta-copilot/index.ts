@@ -6,7 +6,7 @@ import {
   createAdminClient,
   checkRateLimit,
   callGeminiStructured,
-  recordAiUsage,
+  debitarTokens,
   GEMINI_MODEL,
   type AiRequest,
 } from "../_shared/ai-client.ts";
@@ -155,8 +155,18 @@ Retorne APENAS JSON neste formato exato:
         },
       ]);
 
-      // Contabiliza uso (alimenta rate limit mensal + log granular por feature)
-      await recordAiUsage(adminClient, empresaId, "orcamento_honorarios", gen.tokensEntrada, gen.tokensSaida);
+      // Contabiliza uso: débito no ledger de tokens (fonte única, ADR 0035)
+      await debitarTokens(adminClient, {
+        empresaId,
+        userId: user.id,
+        agentKey: "orcamento_honorarios",
+        agentRunId: runId,
+        model: GEMINI_MODEL,
+        tokensInput: gen.tokensEntrada,
+        tokensOutput: gen.tokensSaida,
+        idempotencyKey: crypto.randomUUID(),
+        calls: gen.attempts,
+      });
 
       return new Response(JSON.stringify(run), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },

@@ -1,7 +1,7 @@
 # SPEC: Motor de tokens, fundação: ledger, saldo e débito (shadow mode)
 
 **Data:** 2026-08-31
-**Status:** Aprovada
+**Status:** Em implementação
 **Autor:** Matheus (CEO) + Claude
 **Módulo:** ia / billing (transversal)
 

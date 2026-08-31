@@ -7,7 +7,8 @@ import {
   createAdminClient,
   checkRateLimit,
   callGeminiStructured,
-  recordAiUsage,
+  debitarTokens,
+  GEMINI_MODEL,
   recordAgentRun,
   type AiRequest,
 } from "../_shared/ai-client.ts";
@@ -134,15 +135,7 @@ serve(
 
       const result = await callGeminiStructured(aiRequest, ResultSchema, { maxRetries: 1 });
 
-      await recordAiUsage(
-        adminClient,
-        empresaId,
-        "import-financeiro",
-        result.tokensEntrada,
-        result.tokensSaida,
-        result.attempts
-      );
-      await recordAgentRun(
+      const runId = await recordAgentRun(
         adminClient,
         aiRequest,
         {
@@ -153,6 +146,17 @@ serve(
         },
         user.id
       );
+      await debitarTokens(adminClient, {
+        empresaId,
+        userId: user.id,
+        agentKey: "import-financeiro",
+        agentRunId: runId,
+        model: GEMINI_MODEL,
+        tokensInput: result.tokensEntrada,
+        tokensOutput: result.tokensSaida,
+        idempotencyKey: crypto.randomUUID(),
+        calls: result.attempts,
+      });
 
       return new Response(JSON.stringify(result.data), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
