@@ -2,7 +2,7 @@ import { Suspense, lazy, useEffect } from "react";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { monitoring } from "@/lib/monitoring";
@@ -20,8 +20,8 @@ import { FeatureRoute } from "./components/FeatureRoute";
 import { AdminOnlyRoute } from "./components/AdminOnlyRoute";
 import { ImpersonationBanner } from "./components/ImpersonationBanner";
 import { TrialBanner } from "./components/TrialBanner";
-import { SettingsModalProvider } from "./contexts/SettingsModalContext";
-import { MARKETING_URL } from "./lib/marketingSite";
+import { SettingsModalProvider, useSettingsModal, type SettingsSection } from "./contexts/SettingsModalContext";
+import { MARKETING_URL, isProductionAppHost } from "./lib/marketingSite";
 
 // Modal de configuracoes: so monta quando o usuario abre. Estatico, arrastava os
 // 6 paineis (empresa, pagamento, uso...) pro entry chunk e estourava o budget.
@@ -121,9 +121,32 @@ function RedirectPrefix({ from, to }: { from: string; to: string }) {
 // pilarsoft.com.br (apps/marketing, ADR 0021/0025); estas rotas só existem
 // aqui pra quem ainda tem o link antigo salvo.
 function ExternalRedirect({ path = "" }: { path?: string }) {
+  const navigate = useNavigate();
+
   useEffect(() => {
+    // Fora de app.pilarsoft.com.br (staging, preview, localhost) não existe
+    // marketing correspondente: cair no /login local em vez de vazar pro
+    // marketing de PRODUÇÃO (ver isProductionAppHost).
+    if (!isProductionAppHost()) {
+      navigate("/login", { replace: true });
+      return;
+    }
     window.location.replace(`${MARKETING_URL}${path}`);
-  }, [path]);
+  }, [path, navigate]);
+  return null;
+}
+
+// /profile, /company e /billing viraram abas do SettingsDialog (modal, sem rota
+// própria). Link antigo abre a aba certa em vez de cair no NotFound.
+function SettingsRedirect({ section }: { section: SettingsSection }) {
+  const { openSettings } = useSettingsModal();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    openSettings(section);
+    navigate("/inicio", { replace: true });
+  }, [section, openSettings, navigate]);
+
   return null;
 }
 
@@ -291,6 +314,9 @@ const App = () => {
                         <Route path="/revisao-ia" element={<Navigate to="/agentes?tab=revisao" replace />} />
                         <Route path="/company-setup" element={<CompanySetup />} />
                         <Route path="/profile-setup" element={<ProfileSetup />} />
+                        <Route path="/profile" element={<SettingsRedirect section="conta" />} />
+                        <Route path="/company" element={<SettingsRedirect section="empresa" />} />
+                        <Route path="/billing" element={<SettingsRedirect section="pagamento" />} />
 
                         <Route path="/mfa" element={<MfaChallengePage />} />
                         <Route path="/mfa/setup" element={<MfaSetupPage />} />
@@ -310,8 +336,10 @@ const App = () => {
                         element={<Navigate to="/gestao/financeiro?tab=rentabilidade" replace />}
                       />
 
-                      {/* Portal do Cliente — Autenticado */}
-                      <Route path="/portal" element={<Navigate to="/cliente/login" replace />} />
+                      {/* Portal do Cliente — Autenticado. O splat cobre o portal público
+                        por token legado (/portal/:token/*), removido em 2026-05-06:
+                        cliente com link antigo salvo cai aqui em vez de 404. */}
+                      <Route path="/portal/*" element={<Navigate to="/cliente/login" replace />} />
                       <Route path="/cliente/login" element={<ClienteLogin />} />
                       <Route path="/cliente" element={<ClientePrivateRoute />}>
                         <Route path="dashboard" element={<ClienteDashboard />} />

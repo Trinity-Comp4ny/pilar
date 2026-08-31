@@ -17,6 +17,7 @@ const Faq = lazy(() => import("./pages/Faq").then((m) => ({ default: m.Faq })));
 const Planos = lazy(() => import("./pages/Planos").then((m) => ({ default: m.Planos })));
 const Termos = lazy(() => import("./pages/Termos").then((m) => ({ default: m.Termos })));
 const Privacidade = lazy(() => import("./pages/Privacidade").then((m) => ({ default: m.Privacidade })));
+const NotFound = lazy(() => import("./pages/NotFound").then((m) => ({ default: m.NotFound })));
 
 /**
  * Troca de rota volta ao topo: sem isso a página nova abre no meio.
@@ -67,6 +68,7 @@ export default function App() {
               <Route path="/planos" element={<Planos />} />
               <Route path="/termos" element={<Termos />} />
               <Route path="/privacidade" element={<Privacidade />} />
+              <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>
         </main>
