@@ -27,7 +27,7 @@ describe("canDo", () => {
   });
 
   it("ultra_admin passa em tudo, inclusive no que a empresa não tem", () => {
-    expect(canDo(ctx("ultra_admin" as UserRole), "templates", "manage")).toBe(true);
+    expect(canDo(ctx("ultra_admin" as UserRole), "timesheet", "manage")).toBe(true);
   });
 
   it("sem role não há acesso", () => {
