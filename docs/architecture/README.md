@@ -38,6 +38,7 @@ Um ADR documenta uma decisão técnica relevante, seu contexto e consequências.
 | [0030](./adr/0030-erro-de-fronteira-sempre-reportado.md)                         | Erro de dado é reportado no `fetch` do cliente Supabase (um ponto), não em cada catch de tela; 401/403 como warning agrupado por rota                                                   |
 | [0031](./adr/0031-mfa-opcional-aal2-so-cross-tenant.md)                          | MFA opcional para todo usuário; aal2 obrigatório só no acesso cross-tenant do ultra-admin; recria as RPCs de código de backup                                                           |
 | [0032](./adr/0032-consentimento-de-cookies-por-conta-e-por-dominio.md)           | Consentimento de cookies em cookie de `.pilarsoft.com.br` (vale na landing e no app) e persistido por conta em `cookie_consents`; app deixa de ter banner; revisa o 0022                |
+| [0035](./adr/0035-ledger-de-tokens-fonte-unica-de-uso-de-ia.md)                  | Ledger append-only (`ai_token_ledger`) como fonte única de tokens de IA; saldo por empresa cacheado só por trigger; débito idempotente via RPC; `ai_usage`/`ai_usage_logs` serão absorvidas   |
 | [0033](./adr/0033-resiliencia-de-integracao-com-api-externa.md)                  | CEP passa a ter proxy via edge function com fallback entre provedores; toda resposta de API externa (CEP, clima) valida schema Zod na fronteira e reporta ao Sentry se o formato mudar  |
 
 ## Guias de reúso
