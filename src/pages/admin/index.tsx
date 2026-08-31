@@ -26,6 +26,7 @@ type RawUser = {
   email: string;
   role: string | null;
   contato?: string | null;
+  financeiroDelegado?: boolean;
   isPending?: boolean;
   inviteId?: string | null;
 };
@@ -132,7 +133,7 @@ export default function Admin() {
           const [{ data: companyUsers }, { data: pendingConvites }] = await Promise.all([
             supabase
               .from("profiles")
-              .select("id, first_name, last_name, email, role, contato, onboarding_completed")
+              .select("id, first_name, last_name, email, role, contato, onboarding_completed, financeiro_delegado")
               .eq("empresa_id", profile.empresa_id),
             supabase
               .from("convites")
@@ -152,6 +153,7 @@ export default function Admin() {
             email: u.email,
             role: u.role,
             contato: (u as { contato?: string | null }).contato,
+            financeiroDelegado: (u as { financeiro_delegado?: boolean | null }).financeiro_delegado ?? false,
             isPending: (u as { onboarding_completed?: boolean | null }).onboarding_completed === false,
           }));
 

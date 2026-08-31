@@ -13,7 +13,8 @@
 --  4. feature dormant continua exigindo o early access da empresa
 --  5. dormant com toggle ligado libera
 --  6. sem profile (ou chave fora do catálogo) continua negando
---  7. escrita real em tabela com policy de feature funciona para admin e user
+--  7. escrita real em tabela com policy de feature funciona para admin; user
+--     comum é bloqueado em alertas desde SPEC 073 (exige can_view_financeiro())
 
 BEGIN;
 
@@ -198,10 +199,15 @@ SELECT lives_ok(
 
 SELECT test_set_auth('44444444-0000-0000-0000-000000000002');
 
-SELECT lives_ok(
+-- SPEC 073/ADR 0034: alertas passou a exigir can_view_financeiro() (admin ou
+-- financeiro_delegado), não mais só a feature 'financeiro' da empresa. User
+-- comum sem delegação não escreve mais aqui — era exatamente esse o ponto.
+SELECT throws_ok(
   $$ INSERT INTO public.alertas (empresa_id, tipo, titulo, mensagem)
      VALUES ('00000000-0000-0000-0000-0000000000dd', 'pagamento_atrasado', 'pgtap-user', 'msg') $$,
-  'user comum: INSERT em alertas funciona'
+  '42501',
+  NULL,
+  'user comum sem financeiro_delegado: INSERT em alertas é bloqueado'
 );
 
 SELECT * FROM finish();

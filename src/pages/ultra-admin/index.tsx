@@ -175,6 +175,7 @@ function CapacidadeStat({ label, value, overridden }: { label: string; value: st
 const ROLE_LABEL: Record<PilarRole, string> = {
   ultra_admin: "Ultra Admin",
   admin: "Admin",
+  coordenador: "Coordenador",
   user: "Usuário",
 };
 
@@ -189,6 +190,7 @@ type EmpresaStatus = keyof typeof STATUS_LABEL;
 function normalizeRole(role: string | null | undefined): PilarRole {
   if (role === "ultra_admin") return "ultra_admin";
   if (role === "admin") return "admin";
+  if (role === "coordenador") return "coordenador";
   return "user";
 }
 
@@ -611,7 +613,7 @@ export default function UltraAdmin() {
   );
 
   const handleUpdateUser = useCallback(
-    async (payload: { id: string; role: "admin" | "user" }) => {
+    async (payload: { id: string; role: "admin" | "coordenador" | "user" }) => {
       if (!detail) return;
       try {
         await edgeFetch("ultra-admin-usuarios", {
@@ -658,7 +660,7 @@ export default function UltraAdmin() {
   );
 
   const handleInviteUser = useCallback(
-    async (payload: { name: string; email: string; role: "admin" | "user" }) => {
+    async (payload: { name: string; email: string; role: "admin" | "coordenador" | "user" }) => {
       if (!detail) return;
       try {
         await edgeFetch("ultra-admin-usuarios", {

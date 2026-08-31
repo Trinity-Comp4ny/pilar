@@ -5,7 +5,7 @@ BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 SET search_path = public, extensions;
 
-SELECT plan(6);
+SELECT plan(7);
 
 INSERT INTO public.empresas (id, nome, owner_id, onboarding_completed, features)
 VALUES (
@@ -45,24 +45,37 @@ BEGIN
 END; $$;
 
 -- =============================================
--- Teste 1: pessoas:editor INSERT pessoa
+-- Teste 1: pessoas:editor INSERT pessoa (sem CPF — campo sensível, ver teste 1b)
 -- =============================================
 SELECT test_set_auth('88888888-0000-0000-0000-000000000001');
 
 SELECT lives_ok(
-  $$ INSERT INTO public.pessoas (empresa_id, nome, email, cpf, telefone, primeiro_nome, sobrenome)
-     VALUES ('00000000-0000-0000-0000-000000000ddd', 'Pess pgtap', 'p@t.com', '111.222.333-44', '11999999999', 'Pess', 'Pgtap') $$,
+  $$ INSERT INTO public.pessoas (empresa_id, nome, email, telefone, primeiro_nome, sobrenome)
+     VALUES ('00000000-0000-0000-0000-000000000ddd', 'Pess pgtap', 'p@t.com', '11999999999', 'Pess', 'Pgtap') $$,
   'pessoas:editor INSERT pessoa funciona'
 );
 
 -- =============================================
--- Teste 2: membro da empresa insere pessoa (ADR 0029)
+-- Teste 1b: SPEC 073/ADR 0034 — CPF é campo sensível (mesmo padrão de
+-- salario_fixo/valor_m2/chaves_pix/contas_bancarias), trg_pessoas_protege_sensiveis
+-- bloqueia quem não tem can_view_folha() mesmo sendo editor de pessoas.
+-- =============================================
+SELECT throws_ok(
+  $$ INSERT INTO public.pessoas (empresa_id, nome, email, cpf, telefone, primeiro_nome, sobrenome)
+     VALUES ('00000000-0000-0000-0000-000000000ddd', 'Pess com cpf', 'cpf@t.com', '111.222.333-44', '11999999999', 'Pess', 'Cpf') $$,
+  '42501',
+  NULL,
+  'pessoas:editor sem can_view_folha(): INSERT com CPF é bloqueado'
+);
+
+-- =============================================
+-- Teste 2: membro da empresa insere pessoa (ADR 0029), sem CPF
 -- =============================================
 SELECT test_set_auth('88888888-0000-0000-0000-000000000002');
 
 SELECT lives_ok(
-  $$ INSERT INTO public.pessoas (empresa_id, nome, email, cpf, telefone, primeiro_nome, sobrenome)
-     VALUES ('00000000-0000-0000-0000-000000000ddd', 'Pess membro', 'h@h.com', '999.888.777-66', '11888888888', 'Pess', 'Membro') $$,
+  $$ INSERT INTO public.pessoas (empresa_id, nome, email, telefone, primeiro_nome, sobrenome)
+     VALUES ('00000000-0000-0000-0000-000000000ddd', 'Pess membro', 'h@h.com', '11888888888', 'Pess', 'Membro') $$,
   'membro da empresa insere pessoa (todo membro é editor)'
 );
 

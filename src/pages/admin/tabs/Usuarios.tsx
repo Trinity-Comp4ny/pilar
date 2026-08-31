@@ -13,6 +13,7 @@ type RawUser = {
   nome: string;
   email: string;
   role: string | null;
+  financeiroDelegado?: boolean;
   isPending?: boolean;
   inviteId?: string | null;
 };
@@ -26,6 +27,7 @@ type Props = {
 function normalizeRole(role: string | null | undefined): PilarRole {
   if (role === "ultra_admin") return "ultra_admin";
   if (role === "admin") return "admin";
+  if (role === "coordenador") return "coordenador";
   return "user";
 }
 
@@ -40,13 +42,14 @@ export function UsuariosTab({ users, setUsers, currentUserId }: Props) {
         name: u.nome,
         email: u.email,
         role: normalizeRole(u.role),
+        financeiroDelegado: u.financeiroDelegado ?? false,
         isPending: u.isPending ?? u.id.startsWith("pending-"),
         inviteId: u.inviteId,
       })),
     [users]
   );
 
-  const handleInvite = async (payload: { name: string; email: string; role: "admin" | "user" }) => {
+  const handleInvite = async (payload: { name: string; email: string; role: "admin" | "coordenador" | "user" }) => {
     if (!(await requireAal2())) return;
     setIsInviting(true);
     try {
@@ -120,7 +123,7 @@ export function UsuariosTab({ users, setUsers, currentUserId }: Props) {
     }
   };
 
-  const handleUpdate = async (payload: { id: string; role: "admin" | "user" }) => {
+  const handleUpdate = async (payload: { id: string; role: "admin" | "coordenador" | "user" }) => {
     if (!(await requireAal2())) return;
     try {
       // gen:types ainda não inclui update_user_access
@@ -135,6 +138,27 @@ export function UsuariosTab({ users, setUsers, currentUserId }: Props) {
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Erro inesperado";
       reportInvokeError(err, "ultra-admin-usuarios:salvar-acessos");
+      toast.error("Erro ao salvar", { description: msg });
+    }
+  };
+
+  // ADR 0034: acesso financeiro é concedido/revogado por pessoa, sempre pela
+  // RPC (nunca UPDATE direto — a coluna tem UPDATE revogado de authenticated).
+  const handleSetFinanceiroDelegado = async (userId: string, delegado: boolean) => {
+    if (!(await requireAal2())) return;
+    try {
+      // gen:types ainda não inclui set_financeiro_delegado
+      const { error } = await callUntypedRpc("set_financeiro_delegado", {
+        p_user_id: userId,
+        p_delegado: delegado,
+      });
+      if (error) throw error;
+
+      setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, financeiroDelegado: delegado } : u)));
+      toast.success(delegado ? "Acesso financeiro concedido" : "Acesso financeiro revogado");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Erro inesperado";
+      reportInvokeError(err, "set_financeiro_delegado");
       toast.error("Erro ao salvar", { description: msg });
     }
   };
@@ -163,6 +187,7 @@ export function UsuariosTab({ users, setUsers, currentUserId }: Props) {
       onRequireAuth={requireAal2}
       onInvite={handleInvite}
       onUpdate={handleUpdate}
+      onSetFinanceiroDelegado={handleSetFinanceiroDelegado}
       onDelete={handleDelete}
       onResendInvite={handleResendInvite}
       onCancelInvite={handleCancelInvite}

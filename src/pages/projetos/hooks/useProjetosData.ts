@@ -43,34 +43,55 @@ export function useProjetosData() {
   } = useQuery({
     queryKey: ["projetos"],
     queryFn: async () => {
+      // projetos_safe (view) mascara valor_contrato/custo_indireto_pct sem
+      // financeiro. Views não embedam relação via PostgREST (sem FK visível),
+      // então clientes e projeto_disciplinas (com seus responsáveis) são
+      // resolvidos à parte e remontados no mesmo formato de antes.
       const { data, error } = await supabase
-        .from("projetos")
-        .select(
-          `
-          *,
-          clientes (nome, email),
-          projeto_disciplinas (
-            id, nome, status, data_inicio, data_fim, data_fim_real,
-            prioridade, justificativa_atraso, horas_estimadas, custo_hora,
-            observacoes, created_at, updated_at, projeto_id,
-            projeto_disciplina_responsaveis (
-              pessoa_id,
-              pessoas ( id, nome )
-            )
-          )
-        `
-        )
-        .is("deleted_at", null)
+        .from("projetos_safe")
+        .select("*")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
 
+      const projetoIds = (data ?? []).map((p) => p.id).filter((id): id is string => !!id);
+      const clienteIds = [...new Set((data ?? []).map((p) => p.cliente_id).filter((id): id is string => !!id))];
+
+      const [{ data: clientesData }, { data: discData }] = await Promise.all([
+        clienteIds.length > 0
+          ? supabase.from("clientes").select("id, nome, email").in("id", clienteIds)
+          : Promise.resolve({ data: [] as { id: string; nome: string; email: string }[] }),
+        projetoIds.length > 0
+          ? supabase
+              .from("projeto_disciplinas")
+              .select(
+                `
+                id, nome, status, data_inicio, data_fim, data_fim_real,
+                prioridade, justificativa_atraso, horas_estimadas, custo_hora,
+                observacoes, created_at, updated_at, projeto_id,
+                projeto_disciplina_responsaveis (
+                  pessoa_id,
+                  pessoas ( id, nome )
+                )
+              `
+              )
+              .in("projeto_id", projetoIds)
+          : Promise.resolve({ data: [] as Array<Record<string, unknown>> }),
+      ]);
+
+      const clienteById = new Map((clientesData ?? []).map((c) => [c.id, c]));
+      const discsByProjeto = new Map<string, Array<Record<string, unknown>>>();
+      for (const d of discData ?? []) {
+        const projetoId = (d as { projeto_id: string }).projeto_id;
+        const list = discsByProjeto.get(projetoId) ?? [];
+        list.push(d as Record<string, unknown>);
+        discsByProjeto.set(projetoId, list);
+      }
+
       return (data || []).map((p) => {
-        const proj = p as Record<string, unknown> & {
-          clientes?: { nome: string; email: string };
-          projeto_disciplinas?: Array<Record<string, unknown>>;
-        };
-        const rawDiscs = (proj.projeto_disciplinas || []) as Array<{
+        const proj = p as Record<string, unknown> & { id: string; cliente_id: string | null };
+        const cliente = proj.cliente_id ? clienteById.get(proj.cliente_id) : undefined;
+        const rawDiscs = (discsByProjeto.get(proj.id) ?? []) as Array<{
           id: string;
           projeto_id: string;
           nome: string;
@@ -118,8 +139,8 @@ export function useProjetosData() {
           codigo_projeto: proj.codigo_projeto as string,
           nome: proj.nome as string,
           cliente_id: proj.cliente_id as string,
-          cliente_nome: proj.clientes?.nome,
-          cliente_email: proj.clientes?.email,
+          cliente_nome: cliente?.nome,
+          cliente_email: cliente?.email,
           localizacao: proj.localizacao as string | undefined,
           parcelas: proj.parcelas as string | undefined,
           area_m2: proj.area_m2 as number | undefined,

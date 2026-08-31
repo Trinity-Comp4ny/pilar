@@ -6,6 +6,10 @@
 -- (projeto_disciplinas.horas_realizadas + custo_hora) chega correta nas 3 saídas,
 -- que uma disciplina sem custo_hora conta a hora mas custa R$ 0, e que uma
 -- disciplina sem hora realizada nenhuma some do drill-down (custo_mo).
+--
+-- Persona é admin (não 'user' comum): SPEC 073/ADR 0034 (20260870000000+) pôs
+-- can_view_financeiro() nas 3 RPCs — este teste é sobre a conta de horas
+-- reais, não sobre controle de acesso, então usa a persona que sempre passa.
 
 BEGIN;
 
@@ -25,7 +29,7 @@ ON CONFLICT (id) DO NOTHING;
 SET LOCAL session_replication_role = 'origin';
 
 INSERT INTO public.profiles (id, empresa_id, first_name, last_name, email, role, onboarding_completed)
-VALUES ('eeeeeeee-1111-0000-0000-0000000000f1', 'eeeeeeee-0000-0000-0000-0000000000f1', 'Rentab', 'A', 'rentab_a@test.com', 'user', TRUE)
+VALUES ('eeeeeeee-1111-0000-0000-0000000000f1', 'eeeeeeee-0000-0000-0000-0000000000f1', 'Rentab', 'A', 'rentab_a@test.com', 'admin', TRUE)
 ON CONFLICT (id) DO UPDATE SET empresa_id = EXCLUDED.empresa_id, role = EXCLUDED.role;
 
 INSERT INTO public.projetos (id, empresa_id, nome, status)

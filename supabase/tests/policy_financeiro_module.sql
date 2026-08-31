@@ -1,12 +1,20 @@
 -- pgTAP: módulo financeiro completo cobrindo o lote 20260504270000.
 -- Pattern homogêneo nas 7 tabelas — testamos receitas e despesas como representativas.
+--
+-- SPEC 073/ADR 0034: financeiro deixou de ser gateado por
+-- user_has_feature('financeiro', ...) — ADR 0029 fazia "todo membro é editor"
+-- valer aqui, o que achatou financeiro pra visão geral da empresa. Agora o
+-- gate é can_view_financeiro() (helper puro: admin sempre, ou
+-- profiles.financeiro_delegado = true). Feature module da empresa não entra
+-- mais nessa conta. Este arquivo testa o modelo novo: admin e delegado
+-- passam, user comum sem delegação é bloqueado, ultra_admin bypassa tudo.
 
 BEGIN;
 
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 SET search_path = public, extensions;
 
-SELECT plan(10);
+SELECT plan(11);
 
 -- =============================================
 -- Setup
@@ -26,21 +34,21 @@ SET LOCAL session_replication_role = 'replica';
 
 INSERT INTO auth.users (id, email, raw_user_meta_data, aud, role)
 VALUES
-  ('55555555-0000-0000-0000-000000000001', 'fin_editor@test.com', '{}'::jsonb, 'authenticated', 'authenticated'),
-  ('55555555-0000-0000-0000-000000000002', 'fin_viewer@test.com', '{}'::jsonb, 'authenticated', 'authenticated'),
+  ('55555555-0000-0000-0000-000000000001', 'fin_admin@test.com', '{}'::jsonb, 'authenticated', 'authenticated'),
+  ('55555555-0000-0000-0000-000000000002', 'fin_delegado@test.com', '{}'::jsonb, 'authenticated', 'authenticated'),
   ('55555555-0000-0000-0000-000000000003', 'no_fin@test.com', '{}'::jsonb, 'authenticated', 'authenticated'),
   ('55555555-0000-0000-0000-000000000004', 'ultra_fin@test.com', '{}'::jsonb, 'authenticated', 'authenticated')
 ON CONFLICT (id) DO NOTHING;
 
 SET LOCAL session_replication_role = 'origin';
 
-INSERT INTO public.profiles (id, empresa_id, first_name, last_name, email, role, onboarding_completed)
+INSERT INTO public.profiles (id, empresa_id, first_name, last_name, email, role, financeiro_delegado, onboarding_completed)
 VALUES
-  ('55555555-0000-0000-0000-000000000001', '00000000-0000-0000-0000-0000000000ff', 'Fin', 'Editor', 'fin_editor@test.com', 'user', TRUE),
-  ('55555555-0000-0000-0000-000000000002', '00000000-0000-0000-0000-0000000000ff', 'Fin', 'Viewer', 'fin_viewer@test.com', 'user', TRUE),
-  ('55555555-0000-0000-0000-000000000003', '00000000-0000-0000-0000-0000000000ff', 'No', 'Fin', 'no_fin@test.com', 'user', TRUE),
-  ('55555555-0000-0000-0000-000000000004', '00000000-0000-0000-0000-0000000000ff', 'Ultra', 'Fin', 'ultra_fin@test.com', 'ultra_admin', TRUE)
-ON CONFLICT (id) DO UPDATE SET role = EXCLUDED.role;
+  ('55555555-0000-0000-0000-000000000001', '00000000-0000-0000-0000-0000000000ff', 'Fin', 'Admin', 'fin_admin@test.com', 'admin', FALSE, TRUE),
+  ('55555555-0000-0000-0000-000000000002', '00000000-0000-0000-0000-0000000000ff', 'Fin', 'Delegado', 'fin_delegado@test.com', 'user', TRUE, TRUE),
+  ('55555555-0000-0000-0000-000000000003', '00000000-0000-0000-0000-0000000000ff', 'No', 'Fin', 'no_fin@test.com', 'user', FALSE, TRUE),
+  ('55555555-0000-0000-0000-000000000004', '00000000-0000-0000-0000-0000000000ff', 'Ultra', 'Fin', 'ultra_fin@test.com', 'ultra_admin', FALSE, TRUE)
+ON CONFLICT (id) DO UPDATE SET role = EXCLUDED.role, financeiro_delegado = EXCLUDED.financeiro_delegado;
 
 CREATE OR REPLACE FUNCTION test_set_auth(p_user_id UUID)
 RETURNS VOID LANGUAGE plpgsql AS $$
@@ -68,69 +76,76 @@ VALUES (
 );
 
 -- =============================================
--- Teste 1: viewer lê receitas
+-- Teste 1: admin lê receitas
 -- =============================================
-SELECT test_set_auth('55555555-0000-0000-0000-000000000002');
+SELECT test_set_auth('55555555-0000-0000-0000-000000000001');
 
 SELECT is(
   (SELECT COUNT(*)::INTEGER FROM public.receitas WHERE empresa_id = '00000000-0000-0000-0000-0000000000ff'),
   1,
-  'viewer lê receitas (SELECT permitido)'
+  'admin lê receitas (SELECT permitido)'
 );
 
 -- =============================================
--- Teste 2: membro da empresa escreve receitas (ADR 0029: todo membro é editor;
--- a granularidade viewer/editor por usuário deixou de existir)
+-- Teste 2: admin escreve receitas
 -- =============================================
 SELECT lives_ok(
   $$ INSERT INTO public.receitas (empresa_id, descricao, valor, data_vencimento, status)
-     VALUES ('00000000-0000-0000-0000-0000000000ff', 'insert membro', 100, CURRENT_DATE, 'Pendente') $$,
-  'membro da empresa insere receita'
+     VALUES ('00000000-0000-0000-0000-0000000000ff', 'insert admin', 100, CURRENT_DATE, 'Pendente') $$,
+  'admin insere receita'
 );
 
 -- =============================================
--- Teste 3: membro da empresa atualiza despesa da própria empresa
+-- Teste 3: admin atualiza despesa da própria empresa
 -- =============================================
 WITH updated AS (
-  UPDATE public.despesas SET descricao = 'editado por membro'
+  UPDATE public.despesas SET descricao = 'editado por admin'
   WHERE id = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'
   RETURNING 1
 )
 SELECT is(
   (SELECT COUNT(*)::INTEGER FROM updated),
   1,
-  'membro da empresa: UPDATE despesas afeta a linha'
+  'admin: UPDATE despesas afeta a linha'
 );
 
 -- =============================================
--- Teste 4: editor escreve receitas
+-- Teste 4: user com financeiro_delegado=true lê e escreve receitas
 -- =============================================
-SELECT test_set_auth('55555555-0000-0000-0000-000000000001');
-
-SELECT lives_ok(
-  $$ INSERT INTO public.receitas (empresa_id, descricao, valor, data_vencimento, status)
-     VALUES ('00000000-0000-0000-0000-0000000000ff', 'editor insert', 200, CURRENT_DATE, 'Pendente') $$,
-  'editor INSERT receitas funciona'
-);
-
--- =============================================
--- Teste 5: user sem grant individual lê e escreve no financeiro da empresa.
--- É a consequência explícita da decisão do ADR 0029 (risco registrado lá):
--- o financeiro deixa de ter recorte por usuário.
--- =============================================
-SELECT test_set_auth('55555555-0000-0000-0000-000000000003');
+SELECT test_set_auth('55555555-0000-0000-0000-000000000002');
 
 SELECT cmp_ok(
   (SELECT COUNT(*)::INTEGER FROM public.receitas WHERE empresa_id = '00000000-0000-0000-0000-0000000000ff'),
   '>=',
   1,
-  'user sem grant: lê receitas da própria empresa'
+  'user com financeiro_delegado: lê receitas'
 );
 
 SELECT lives_ok(
   $$ INSERT INTO public.receitas (empresa_id, descricao, valor, data_vencimento, status)
-     VALUES ('00000000-0000-0000-0000-0000000000ff', 'insert sem grant', 100, CURRENT_DATE, 'Pendente') $$,
-  'user sem grant: INSERT receitas funciona'
+     VALUES ('00000000-0000-0000-0000-0000000000ff', 'insert delegado', 200, CURRENT_DATE, 'Pendente') $$,
+  'user com financeiro_delegado: INSERT receitas funciona'
+);
+
+-- =============================================
+-- Teste 5: user comum sem financeiro_delegado NÃO vê nem escreve financeiro.
+-- É o ponto inteiro da SPEC 073/ADR 0034: financeiro deixa de ser visão
+-- padrão de todo membro e passa a exigir concessão explícita.
+-- =============================================
+SELECT test_set_auth('55555555-0000-0000-0000-000000000003');
+
+SELECT is(
+  (SELECT COUNT(*)::INTEGER FROM public.receitas WHERE empresa_id = '00000000-0000-0000-0000-0000000000ff'),
+  0,
+  'user sem financeiro_delegado: SELECT receitas não retorna nada'
+);
+
+SELECT throws_ok(
+  $$ INSERT INTO public.receitas (empresa_id, descricao, valor, data_vencimento, status)
+     VALUES ('00000000-0000-0000-0000-0000000000ff', 'insert sem delegacao', 100, CURRENT_DATE, 'Pendente') $$,
+  '42501',
+  NULL,
+  'user sem financeiro_delegado: INSERT receitas é bloqueado'
 );
 
 -- =============================================
@@ -142,35 +157,35 @@ SELECT cmp_ok(
   (SELECT COUNT(*)::INTEGER FROM public.receitas WHERE empresa_id = '00000000-0000-0000-0000-0000000000ff'),
   '>=',
   1,
-  'ultra_admin lê receitas mesmo sem feature'
+  'ultra_admin lê receitas mesmo sem financeiro_delegado'
 );
 
 SELECT lives_ok(
   $$ INSERT INTO public.despesas (empresa_id, descricao, valor, data_vencimento, status)
      VALUES ('00000000-0000-0000-0000-0000000000ff', 'ultra insert', 50, CURRENT_DATE, 'Pendente') $$,
-  'ultra_admin INSERT despesas funciona sem feature'
+  'ultra_admin INSERT despesas funciona sem financeiro_delegado'
 );
 
 -- =============================================
--- Teste 7: editor lê e escreve em contas/cartoes/fornecedores (smoke)
+-- Teste 7: fornecedores segue o mesmo gate (smoke): admin escreve,
+-- user sem delegação é bloqueado.
 -- =============================================
 SELECT test_set_auth('55555555-0000-0000-0000-000000000001');
 
 SELECT lives_ok(
   $$ INSERT INTO public.fornecedores (empresa_id, nome, cnpj)
      VALUES ('00000000-0000-0000-0000-0000000000ff', 'Forn pgtap', '11.222.333/0001-44') $$,
-  'editor INSERT fornecedores funciona'
+  'admin INSERT fornecedores funciona'
 );
 
--- =============================================
--- Teste 8: membro da empresa escreve em fornecedores
--- =============================================
-SELECT test_set_auth('55555555-0000-0000-0000-000000000002');
+SELECT test_set_auth('55555555-0000-0000-0000-000000000003');
 
-SELECT lives_ok(
+SELECT throws_ok(
   $$ INSERT INTO public.fornecedores (empresa_id, nome, cnpj)
-     VALUES ('00000000-0000-0000-0000-0000000000ff', 'Forn membro', '99.888.777/0001-66') $$,
-  'membro da empresa insere fornecedor'
+     VALUES ('00000000-0000-0000-0000-0000000000ff', 'Forn sem delegacao', '99.888.777/0001-66') $$,
+  '42501',
+  NULL,
+  'user sem financeiro_delegado: INSERT fornecedor é bloqueado'
 );
 
 SELECT * FROM finish();

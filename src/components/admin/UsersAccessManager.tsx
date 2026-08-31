@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
-import { Pencil, Trash2, UserPlus, Users as UsersIcon, ShieldCheck, ShieldAlert } from "lucide-react";
+import { Pencil, Trash2, UserPlus, Users as UsersIcon, ShieldCheck, ShieldAlert, Briefcase, Wallet } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { PilarRole } from "@/lib/roles";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
@@ -23,18 +24,23 @@ export type ManagedUser = {
   name: string;
   email: string;
   role: PilarRole;
+  /** ADR 0034: acesso financeiro geral (não inclui folha, sempre admin-only). */
+  financeiroDelegado?: boolean;
   isPending?: boolean;
   /** id do convite (quando isPending) — necessário para reenviar/cancelar */
   inviteId?: string | null;
 };
 
 /**
- * Acesso é role + módulo habilitado na empresa (ADR 0029): não existe mais
- * nível por feature no usuário, então a UI edita só o tipo de conta.
+ * Acesso tem dois eixos independentes (ADR 0034): o tipo de conta (role, esta
+ * matriz) decide hierarquia; acesso financeiro é um toggle à parte, editado
+ * no EditDialog, que nem admin precisa marcar (tem bypass) nem coordenador
+ * ganha de graça.
  */
 const ROLE_BADGE: Record<PilarRole, string> = {
   ultra_admin: "Ultra admin",
   admin: "Admin da empresa",
+  coordenador: "Coordenador",
   user: "Usuário",
 };
 
@@ -61,6 +67,8 @@ export type UsersAccessManagerProps = {
   onRequireAuth?: () => Promise<boolean>;
   onInvite: (payload: InvitePayload) => void | Promise<void>;
   onUpdate: (payload: UpdatePayload) => void;
+  /** ADR 0034: concessão/revogação de acesso financeiro, sempre pela RPC dedicada. */
+  onSetFinanceiroDelegado?: (userId: string, delegado: boolean) => void | Promise<void>;
   onDelete: (userId: string) => void;
   /** Reenviar convite pendente (opcional — só habilita a ação se fornecido) */
   onResendInvite?: (user: ManagedUser) => void | Promise<void>;
@@ -76,6 +84,7 @@ export function UsersAccessManager({
   onRequireAuth,
   onInvite,
   onUpdate,
+  onSetFinanceiroDelegado,
   onDelete,
   onResendInvite,
   onCancelInvite,
@@ -151,9 +160,17 @@ export function UsersAccessManager({
                       </TableCell>
                       <TableCell className="text-black/70">{u.email}</TableCell>
                       <TableCell>
-                        <Badge variant="outline" className="rounded-full border-black/10 bg-black/5 text-black/70">
-                          {ROLE_BADGE[u.role]}
-                        </Badge>
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <Badge variant="outline" className="rounded-full border-black/10 bg-black/5 text-black/70">
+                            {ROLE_BADGE[u.role]}
+                          </Badge>
+                          {u.role !== "admin" && u.role !== "ultra_admin" && u.financeiroDelegado && (
+                            <Badge variant="outline" className="rounded-full border-brand/20 bg-brand/10 text-ink gap-1">
+                              <Wallet size={11} strokeWidth={1.75} />
+                              Financeiro
+                            </Badge>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell className="text-right">
                         {canManage && u.isPending ? (
@@ -280,9 +297,17 @@ export function UsersAccessManager({
                         )
                       )}
                     </div>
-                    <Badge variant="outline" className="rounded-full border-black/10 bg-black/5 text-black/70">
-                      {ROLE_BADGE[u.role]}
-                    </Badge>
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <Badge variant="outline" className="rounded-full border-black/10 bg-black/5 text-black/70">
+                        {ROLE_BADGE[u.role]}
+                      </Badge>
+                      {u.role !== "admin" && u.role !== "ultra_admin" && u.financeiroDelegado && (
+                        <Badge variant="outline" className="rounded-full border-brand/20 bg-brand/10 text-ink gap-1">
+                          <Wallet size={11} strokeWidth={1.75} />
+                          Financeiro
+                        </Badge>
+                      )}
+                    </div>
                   </CardContent>
                 </Card>
               );
@@ -312,6 +337,9 @@ export function UsersAccessManager({
           onUpdate(payload);
           setEditTarget(null);
         }}
+        onToggleFinanceiro={
+          onSetFinanceiroDelegado ? (delegado) => onSetFinanceiroDelegado(editTarget!.id, delegado) : undefined
+        }
       />
 
       <ConfirmDialog
@@ -440,9 +468,11 @@ type EditDialogProps = {
   user: ManagedUser | null;
   onClose: () => void;
   onSubmit: (payload: UpdatePayload) => void;
+  /** ADR 0034: ausente = tela não oferece o toggle (ex.: sem permissão). */
+  onToggleFinanceiro?: (delegado: boolean) => void;
 };
 
-function EditDialog({ user, onClose, onSubmit }: EditDialogProps) {
+function EditDialog({ user, onClose, onSubmit, onToggleFinanceiro }: EditDialogProps) {
   const [role, setRole] = useState<AssignableRole>("user");
 
   useEffect(() => {
@@ -486,6 +516,27 @@ function EditDialog({ user, onClose, onSubmit }: EditDialogProps) {
 
         <div className="space-y-5">
           <RoleSelector value={role} onChange={setRole} />
+
+          {onToggleFinanceiro && role !== "admin" && (
+            <div className="flex items-start justify-between gap-4 rounded-lg border border-black/10 p-3">
+              <div className="space-y-0.5">
+                <Label htmlFor="toggle-financeiro" className="flex items-center gap-1.5 text-sm font-medium">
+                  <Wallet size={14} strokeWidth={1.75} />
+                  Acesso financeiro
+                </Label>
+                <p className="text-xs text-black/50">
+                  Contas, faturas, valor de contrato e margem de projeto. Não inclui folha de pagamento — isso é só
+                  para administradores.
+                </p>
+              </div>
+              <Switch
+                id="toggle-financeiro"
+                checked={Boolean(user.financeiroDelegado)}
+                onCheckedChange={onToggleFinanceiro}
+                aria-label={`Acesso financeiro de ${user.name}`}
+              />
+            </div>
+          )}
         </div>
 
         <DialogFooter>
@@ -515,13 +566,19 @@ const ROLE_OPTIONS: readonly {
   {
     value: "user",
     title: "Usuário",
-    description: "Usa todos os módulos da empresa",
+    description: "Usa os módulos da empresa; sem financeiro por padrão",
     icon: UsersIcon,
+  },
+  {
+    value: "coordenador",
+    title: "Coordenador",
+    description: "Gerencia projeto e equipe; sem financeiro por padrão",
+    icon: Briefcase,
   },
   {
     value: "admin",
     title: "Admin da empresa",
-    description: "Usa tudo e ainda gerencia usuários, plano e configuração",
+    description: "Usa tudo, inclusive financeiro e folha, e gerencia usuários",
     icon: ShieldCheck,
   },
 ];
@@ -532,7 +589,7 @@ function RoleSelector({ value, onChange }: RoleSelectorProps) {
       <Label className="text-sm font-medium" id="role-selector-label">
         Tipo de conta
       </Label>
-      <div className="mt-2 grid gap-2 sm:grid-cols-2" role="radiogroup" aria-labelledby="role-selector-label">
+      <div className="mt-2 grid gap-2 sm:grid-cols-3" role="radiogroup" aria-labelledby="role-selector-label">
         {ROLE_OPTIONS.map((option) => {
           const active = value === option.value;
           const Icon = option.icon;
