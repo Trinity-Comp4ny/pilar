@@ -26,8 +26,8 @@ describe("isFeatureEnabledForCompany: universal ignora o JSONB da empresa (ADR 0
   });
 
   it("feature NÃO universal (dormant) continua dependendo do boolean explícito", () => {
-    expect(isFeatureEnabledForCompany({}, "templates")).toBe(false);
-    expect(isFeatureEnabledForCompany({ templates: true }, "templates")).toBe(true);
+    expect(isFeatureEnabledForCompany({}, "timesheet")).toBe(false);
+    expect(isFeatureEnabledForCompany({ timesheet: true }, "timesheet")).toBe(true);
   });
 
   it("sub-feature de Obras é universal: liga mesmo sem o pai marcado no JSONB", () => {
