@@ -16,6 +16,38 @@ Regras de manutenção:
 
 ---
 
+## 2026-08-31 · IA Hub inteiro sai do repo, junto com Capacidade e Templates: matar em vez de deixar apodrecer
+
+**Decisão:** removidas as 11 edge functions do IA Hub (`ai-aditivo-copilot`, `ai-diagnostico-precificacao`,
+`ai-proposta-copilot`, `ai-documentos`, `ai-fechamento-mensal`, `ai-pauta-reuniao`,
+`ai-planejador-contratacao`, `ai-previsao-atraso`, `ai-radar-cliente`, `ai-relatorio-executivo`,
+`ai-simulacao-impacto`), a página `/gestao/ai`, a flag `ai_hub`, a fila de revisão de orçamentos
+dentro de `/agentes` (só existia pra aprovar output do `ai-proposta-copilot`), e as páginas de
+Capacidade e Templates. ~7.400 linhas de código morto saíram junto (PRs #370, #371, #372).
+`ai-chat`, `ai-cotacao-import` e `ai-import-financeiro` (as 3 IA vivas de verdade) não foram
+tocadas.
+
+**Contexto:** achado ao investigar o "núcleo defensável" de 3 tools que a discussão de 20/07
+(`docs/strategy/DECISAO_IA_FEATURES_AGENTES_2026-07-20.md`) mandou manter (Aditivo, Precificação,
+Proposta): as 3 estavam quebradas contra o schema atual, liam `.from("timesheets")`/
+`.from("billing_milestones")`, tabelas renomeadas para `timesheet_lancamentos`/
+`marcos_faturamento`. Ninguém ia ligar `ai_hub` (desligada em toda empresa) nos próximos 60 dias.
+Em vez de consertar 2 queries pela metade pra uma feature que não vai ser usada, decidiu-se
+deletar tudo. Capacidade e Templates saíram pelo mesmo padrão: `addon: true, dormant: true`,
+desligadas desde a adoção, zero uso real.
+
+**Supera:** o veredito "manter (tool)" de Aditivo/Precificação/Proposta na discussão de 20/07 —
+essas 3 especificamente. As outras 8 já tinham veredito "matar"/"adiar" lá, sem mudança.
+
+**Como aplicar:** se o IA Hub voltar a ser discutido, o ponto de partida não é "religar" o código
+deletado (git guarda o histórico se precisar de referência) — é reconstruir contra
+`projeto_disciplinas.horas_realizadas`/`tarefas.horas_reais`, que já capturam horas previstas e
+reais por disciplina e por tarefa hoje (achado paralelo: não é o "Timesheet" dormente, é um campo
+manual mais leve, editável em Projetos/Meu Trabalho, que só não estava plugado na conta de
+margem — reconectado em Rentabilidade pelo PR #373).
+
+---
+
 ## 2026-08-31 · Camada 2 de IA vira "token", não "ação de IA": reverte a doutrina de nunca expor token
 
 **Decisão:** a unidade de uso de IA visível e comprável pelo cliente passa a ser **token**, pelo
