@@ -200,8 +200,8 @@ export type ChatMessage = {
   acao?: Acao;
 };
 
-/** Saldo de créditos de IA do mês: teto, usado e restante. Vem no payload da edge. */
-export type Saldo = { usados: number; limite: number; restante: number };
+/** Saldo de tokens de IA da empresa (dois baldes, spec 075). Vem no payload da edge. */
+export type Saldo = { tokens_plano: number; tokens_comprado: number; tokens_restantes: number };
 
 type ChatResponse =
   | { sessionId: string; tipo: "resposta"; resposta: string; agentes: AgenteMeta[]; saldo?: Saldo | null }
@@ -705,20 +705,12 @@ export function useChat() {
     setSessionId(undefined);
   }, [loading]);
 
-  // Créditos de IA debitados nesta conversa (só o que foi de fato criado/executado).
-  const creditosUsados = messages.reduce((total, m) => {
-    if (m.draft?.status === "criado") return total + (m.draft.custoCreditos ?? 0);
-    if (m.acao?.status === "feito") return total + (m.acao.custoCreditos ?? 0);
-    return total;
-  }, 0);
-
   return {
     messages,
     send,
     stop,
     loading,
     reset,
-    creditosUsados,
     saldo,
     confirmarDraft,
     cancelarDraft,
