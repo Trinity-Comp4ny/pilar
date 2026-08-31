@@ -81,7 +81,7 @@ linhas normais do ledger (nenhum contador paralelo).
 
 ## Plano de implementação
 
-1. Migration `20260869...`: coluna+seed, CHECK/trigger com `plan_expire`, `gate_tokens`,
+1. Migration `20260880...`: coluna+seed, CHECK/trigger com `plan_expire`, `gate_tokens`,
    bootstrap; pgTAP dos critérios acima.
 2. `_shared/ai-client.ts`: `verificarTokens()` (gate 402), `checkRateLimit` vira só
    anti-rajada, `getAiSaldo` re-shape em tokens; 14 handlers ganham o gate 402.
